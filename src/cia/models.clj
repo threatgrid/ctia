@@ -2,7 +2,7 @@
   (:require [schema.core :as s]
             [ring.swagger.schema :refer [coerce!]]))
 
-(def EntityType
+(def ObservableType
   (s/enum "IP"
           "IPv6"
           "Domain"
@@ -11,9 +11,9 @@
           "SHA1"
           "URL"))
 
-(s/defschema Entity
+(s/defschema Observable
   {:id s/Str
-   :type EntityType})
+   :type ObservableType})
 
 ;;Allowed disposition values are:
 (def disposition-map
@@ -61,7 +61,7 @@
    (s/optional-key :origin_uri) URI
    
    :observable s/Str
-   :observable_type EntityType
+   :observable_type ObservableType
    (s/optional-key :object_uri) URI
 
    :disposition DispositionNumber
@@ -69,6 +69,7 @@
 
    (s/optional-key :confidence) Confidence
    (s/optional-key :severity) Severity
+
    })
 
 (def Judgement 
@@ -253,18 +254,18 @@
    (s/optional-key :relation_info) {s/Keyword s/Any}
    
    :source s/Str
-   :source_type EntityType
+   :source_type ObservableType
    (s/optional-key :source_uri) URI
    
    :related s/Str
-   :related_type EntityType
+   :related_type ObservableType
    (s/optional-key :related_uri) URI
    })
 
 
 (s/defschema Property
   {:id s/Str
-   :type EntityType
+   :type ObservableType
    :property s/Str})
 
 (def ObjectType
@@ -273,7 +274,7 @@
 (s/defschema ObservedObject
   {:id s/Num
    :type ObjectType
-   :observables [Entity]
+   :observables [Observable]
    :properties [Property]
    })
 

@@ -5,19 +5,24 @@ THIS IS NOT OPERATIONAL
 This is currently a API sketch, with a data model (schema) partially
 defined.  You can run it but most of the API calls will not function.
 
+Documentation for the API is available once you have it running, at:
+
+    http://localhost:3000/index.html
+
 ## Goals
 
  * Sharing actionable threat intel
  * Simple, pragmatic data model
  * Ease of integration and exploration
+ * Extremely fast Verdict lookups
+ * Hypertextual integration with other services
 
 This is not a full STIX/TAXII service.  Its intent is to help
 Analysts know what is important, and for detection and prevention
 tools to know what to look for.
 
-Documentation for the API is available once you have it running, at:
-
-    http://localhost:3000/index.html
+In addition to the RESTful HTTP API, we also want to support a ZeroMQ
+based, highly performant binary protocol for Verdict lookups.
 
 ## Usage
 
@@ -52,6 +57,10 @@ Copyright ©  2015 Cisco
 The intent is for this service to be embedded in other JVM
 applications.
 
+We would like to generate client libaries from the swagger , and
+provide officially supported versions of them for users.  To do this
+we need to ensure we use the most appropriate types, and swagger
+metadata in our API definition (see handler.clj).
 
 ## Data Model
 
