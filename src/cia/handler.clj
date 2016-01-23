@@ -2,6 +2,9 @@
   (:require [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [cia.models :refer :all]
+            [cia.relations :refer :all]
+            [cia.threats :refer :all]
+            [cia.sightings :refer :all]
             [schema.core :as s]))
 
 (def JudgementSort
@@ -224,7 +227,7 @@ Malicious disposition, and so on down to Unknown.
                                  {origin :- s/Str nil}]
                   :path-params [observable_type :- ObservableType
                                 id :- s/Str]
-                  :return [Indicator]
+                  :return [JudgementIndicator]
                   :summary "Returns all the Indiators associated with the specified observable."
                   (ok (find-judgements observable_type id)))
 

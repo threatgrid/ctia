@@ -55,7 +55,8 @@ Copyright ©  2015 Cisco
 ## Implementation Notes
 
 The intent is for this service to be embedded in other JVM
-applications.
+applications.  It currently provides no authentication, or access
+control.
 
 We would like to generate client libaries from the swagger , and
 provide officially supported versions of them for users.  To do this
@@ -64,10 +65,10 @@ metadata in our API definition (see handler.clj).
 
 ## Data Model
 
-## Entities
+## Observables
 
-Simple, atomic observables that have a consistent identity that is
-stable enough to be attributed an intent or nature.
+Simple, atomic value that denotes an entity which as an identity that
+is stable enough to be attributed an intent or nature.
 
 * Checksum (sha256, sha1, md5)
 * IP addr (ipv4 or ipv6)
@@ -76,77 +77,100 @@ stable enough to be attributed an intent or nature.
 
 ## Judgement
 
-A judgement about the intent of an Entity, made by a data source, an Origin.sr
+A statement about the intent of an Observable.
 
-### Disposition
+When you create a new Judgement, you must provide:
 
- * 1 - Clean
- * 2 - Malicious
- * 3 - Suspicious
- * 4 - Common
-
-### Confidence
-
- * Integer 0-100 `confidence`
-
-### Severity
-
- * Integer 0-100 `severity`
-
-### Priority
-
-Should this judgement override an exiting Verdict?  The higher, the
-more priority.  If not provided, defaults to the Origin's priority.
-
- * Optional Integer 0-100 `priority`
-
-### Origin
+ * an observable
+ * disposition or disposition_name
  
-An URI linking back to the supporting data for the judgement, or a
-resource describing the judgement in more detail in the Producing
-system.
+You may include optionally:
 
- * Optional String `origin`
- * Optional URI `origin_uri`
+ * confidence -- default is 100
+ * severity -- default is 100
+ * timestamp -- default is time object is POSTed to server
+ * expires -- default is some Jan 1 2535.
+ * priority -- defaults to a user specific value (or can be supplied by some users)
+ * origin -- string naming source of data
+ * reason 
+ * reason_uri
 
+
+Additional fields will be added to the record:
+
+ * created -- timetamp
+ * origin -- string identifying the creating user
+ 
 ## Verdict
 
-The current collective notion of the intent or nature of the Entity,
-based on Judgements.  In the current Cisco Sandbox API, the
-"disposition" call is very similiar to a Verdict.
+The Verdict is chosen from all of the Judgements on that Observable which
+have not yet expired.  The highest priority Judgement becomes the
+active verdict.  If there is more than one Judgement with that
+priority, than Clean disposition has priority over all others, then
+Malicious disposition, and so on down to Unknown.
 
-### Disposition
- * Clean
- * Malicious
- * Suspicious
- * Common
+## Indicator
 
-## Relations
-
-A relationship between two Entities, such as:
-
-* Downloaded_By
-* Uploaded_To
-* Resolved_To
-* Contains
-
-## Tags
-
-A free form text attached to an Entity, Relationship, or Disposition.
-A tag can be elaborated within the system, adding descriptive text.
+A collection of Judgements.
 
 ## Feedback
 
-A positive or negative feedback on a Disposition
+A positive, neutral or negative feedback on a Judgement
 
-## Origin
+# Design
 
-The author of threat intel, either human or machine.
+## Personas
 
-* String `name`
-* Int `priority`
+### Security Device
 
-## Consumer
+### Security Operator
 
-A device that asks questions of the system, consuming the threat
-intel.
+### Incident Responder
+
+### Threat Analyst
+
+## Use Cases
+
+### As a security device, I would like ask if an IP or Domain is malicious
+
+    curl http://ciahost/cia/ip/192.168.1.1/verdict
+
+or
+
+    curl http://ciahost/cia/domain/badhost.com/verdict
+
+### As a security device, I would like to provide context for why an IP is malicious
+
+    curl http://ciahost/cia/ip/192.168.1.1/judgements
+
+### As an incident responder, I would like to know what malware is asociated with an IP
+
+For each jugement object returned by:
+
+    curl http://ciahost/cia/ip/192.168.1.1/judgements
+
+Extract the IDs from the `indicators` field
+
+Call curl http://ciahost/cia/indicators/ID
+
+### As a security operator, I would like to import a threat feed
+
+For each entry in the feed, based on the source of the feed, and it's
+content, choose a "origin" value such as "Bob's Threat Intel" and a
+reason such as "Known RAT IP"
+
+    curl -XPOST -d'{"disposition": 2, "observable": {...}' http://ciahost/cia/judgements
+
+### As a security operator, I would like to import an indicator
+
+    curl -XPOST -d'{"title":   }' http://ciahost/cia/indicators
+
+Extract the indicator ID from the created Indicator, and then import
+your observables with that indicator id.  Set the origin and reason as
+you would when creating a Judgement without an indicator.
+
+    curl -XPOST -d'{"disposition": 2, "indicator": ID, "observable": {...}' http://ciahost/cia/judgements
+
+### As a security operator, I would like to whitelist my internal IPs
+
+### As a security operator, I would like to record that an indicator was wrong
