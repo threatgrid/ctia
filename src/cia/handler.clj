@@ -68,39 +68,23 @@ Malicious disposition, and so on down to Unknown.
   (context* "/cia" []
             :tags ["version"]
             (GET* "/version" []
-                  :return VersionInfo 
+                  :return VersionInfo
                   ;;:query-params [name :- String]
                   ;;:summary "say hello"
                   (ok {:uuid 1
                        :base "/cia"
                        :version "0.1"
                        :beta true}))
-            
-            
+
+
             (context* "/judgements" []
                       :tags ["Judgement"]
-                      (GET* "/" []
-                            :query-params [{offset :-  Long 0}
-                                           {limit :-  Long 0}
-                                           {after :-  Time nil}
-                                           {before :-  Time nil}
-                                           {sort_by :- JudgementSort "timestamp"}
-                                           {sort_order :- SortOrder "desc"}
-                                           {origin :- s/Str nil}
-                                           {observable :- ObservableType nil}
-                                           {priority :- Long nil}
-                                           {severity :- Long nil}
-                                           {confidence :- s/Str nil}
-                                           {disposition :- DispositionNumber nil}
-                                           {disposition_name :- DispositionName nil}]
-                            :return [Judgement]
-                            :summary "Search Judgements"
-                            :description "Asdad"
-                            (ok (get-judgements)))
+
                       (POST* "/" []
-                             :return Judgement 
+                             :return Judgement
                              :body [judgement NewJudgement {:description "a new Judgement"}]
                              :summary "Adds a new Judgement"
+                             ;;:capabilities [:create-judgment]
                              (ok (add! judgement)))
                       (POST* "/:id/feedback" []
                              :tags ["Feedback"]
@@ -124,14 +108,28 @@ Malicious disposition, and so on down to Unknown.
                       (DELETE* "/:id" []
                                :path-params [id :- Long]
                                :summary "Deletes a Judgement"
-                               (ok (delete! id))))
+                               (ok (delete! id)))
+                      (GET* "/:observable_type/:observable_value" []
+
+                            :path-params [observable_type :- ObservableType
+                                          observable_value :- s/Str]
+                            :return [Judgement]
+                            :summary "Returns the current Verdict associated with the specified observable."
+                            (ok nil))
+                      (GET* "/:indicator_type/:indicator_value" []
+
+                            :path-params [indicator_type :- ObservableType
+                                          indicator_value :- s/Str]
+                            :return [Judgement]
+                            :summary "Returns the current Verdict associated with the specified observable."
+                            (ok nil)))
 
             (context* "/producers" []
                       :tags ["Producer"])
 
             (context* "/campaigns" []
                       :tags ["Campaign"])
-            
+
             (context* "/indicators" []
                       :tags ["Indicator"]
                       (GET* "/:id/judgements" []
@@ -170,7 +168,7 @@ Malicious disposition, and so on down to Unknown.
                                            {sort_order :- SortOrder "desc"}
                                            {origin :- s/Str nil}
                                            {observable :- ObservableType nil}]))
-            
+
             (context* "/actors" []
                       :tags ["Actor"]
                       (GET* "/" []
@@ -200,7 +198,7 @@ Malicious disposition, and so on down to Unknown.
             (context* "/sightings" []
                       :tags ["Sighting"])
 
-            
+
             (GET* "/:observable_type/:id/judgements" []
                   :query-params [{offset :-  Long 0}
                                  {limit :-  Long 0}
@@ -259,7 +257,7 @@ Malicious disposition, and so on down to Unknown.
                   :return [Judgement]
                   :summary "Returns all the Judgements associated with the specified observable."
                   (ok (find-judgements observable_type id)))
-            
+
             (GET* "/:observable_type/:id/verdict" []
                   :tags ["Verdict"]
                   :path-params [observable_type :- ObservableType

@@ -83,7 +83,7 @@ When you create a new Judgement, you must provide:
 
  * an observable
  * disposition or disposition_name
- 
+
 You may include optionally:
 
  * confidence -- default is 100
@@ -92,7 +92,7 @@ You may include optionally:
  * expires -- default is some Jan 1 2535.
  * priority -- defaults to a user specific value (or can be supplied by some users)
  * origin -- string naming source of data
- * reason 
+ * reason
  * reason_uri
 
 
@@ -100,7 +100,7 @@ Additional fields will be added to the record:
 
  * created -- timetamp
  * origin -- string identifying the creating user
- 
+
 ## Verdict
 
 The Verdict is chosen from all of the Judgements on that Observable which
@@ -118,6 +118,14 @@ A collection of Judgements.
 A positive, neutral or negative feedback on a Judgement
 
 # Design
+
+## Requirements
+
+Capabilities: Reading, writing, modifying
+
+For a given API key, a function will call an external service to get a list of capabilities (keywords) which are use to grant permissions to one or more endpoints
+
+Need to decide on a default level
 
 ## Personas
 
