@@ -1,11 +1,11 @@
 (ns cia.handler
   (:require [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
             [cia.models :refer :all]
             [cia.relations :refer :all]
             [cia.threats :refer :all]
             [cia.sightings :refer :all]
-            [schema.core :as s]))
+            [ring.middleware.format :refer [wrap-restful-format]]
+            [ring.util.http-response :refer :all][schema.core :as s]))
 
 (def JudgementSort
   "A sort ordering"
@@ -22,7 +22,7 @@
 (def SortOrder
   (s/enum "asc" "desc"))
 
-(defapi app
+(defapi api-handler
   (swagger-ui)
   (swagger-docs
    {:info {:title "Cisco Intel API "
@@ -68,15 +68,15 @@ Malicious disposition, and so on down to Unknown.
   (context* "/cia" []
             :tags ["version"]
             (GET* "/version" []
-                  :return VersionInfo 
+                  :return VersionInfo
                   ;;:query-params [name :- String]
                   ;;:summary "say hello"
                   (ok {:uuid 1
                        :base "/cia"
                        :version "0.1"
-                       :beta true}))
-            
-            
+                       :beta true
+                       :supported_features []}))
+
             (context* "/judgements" []
                       :tags ["Judgement"]
                       (GET* "/" []
@@ -98,7 +98,7 @@ Malicious disposition, and so on down to Unknown.
                             :description "Asdad"
                             (ok (get-judgements)))
                       (POST* "/" []
-                             :return Judgement 
+                             :return Judgement
                              :body [judgement NewJudgement {:description "a new Judgement"}]
                              :summary "Adds a new Judgement"
                              (ok (add! judgement)))
@@ -131,7 +131,7 @@ Malicious disposition, and so on down to Unknown.
 
             (context* "/campaigns" []
                       :tags ["Campaign"])
-            
+
             (context* "/indicators" []
                       :tags ["Indicator"]
                       (GET* "/:id/judgements" []
@@ -170,7 +170,7 @@ Malicious disposition, and so on down to Unknown.
                                            {sort_order :- SortOrder "desc"}
                                            {origin :- s/Str nil}
                                            {observable :- ObservableType nil}]))
-            
+
             (context* "/actors" []
                       :tags ["Actor"]
                       (GET* "/" []
@@ -200,7 +200,7 @@ Malicious disposition, and so on down to Unknown.
             (context* "/sightings" []
                       :tags ["Sighting"])
 
-            
+
             (GET* "/:observable_type/:id/judgements" []
                   :query-params [{offset :-  Long 0}
                                  {limit :-  Long 0}
@@ -259,7 +259,7 @@ Malicious disposition, and so on down to Unknown.
                   :return [Judgement]
                   :summary "Returns all the Judgements associated with the specified observable."
                   (ok (find-judgements observable_type id)))
-            
+
             (GET* "/:observable_type/:id/verdict" []
                   :tags ["Verdict"]
                   :path-params [observable_type :- ObservableType
@@ -267,3 +267,7 @@ Malicious disposition, and so on down to Unknown.
                   :return (s/maybe Verdict)
                   :summary "Returns the current Verdict associated with the specified observable."
                   (ok (current-verdict observable_type id)))))
+
+(def app
+  (-> api-handler
+      (wrap-restful-format)))
