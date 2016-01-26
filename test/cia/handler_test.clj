@@ -17,8 +17,4 @@
   (testing "cia/version"
     (let [response (get "cia/version")]
       (is (= 200 (:status response)))
-      (is (= "0.1" (get-in response [:parsed-body :version])))))
-
-  (testing "cia/judgements"
-    (let [response (get "cia/judgements")]
-      (is (= 200 (:status response))))))
+      (is (= "0.1" (get-in response [:parsed-body :version]))))))
