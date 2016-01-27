@@ -79,24 +79,6 @@ Malicious disposition, and so on down to Unknown.
             
             (context* "/judgements" []
                       :tags ["Judgement"]
-                      (GET* "/" []
-                            :query-params [{offset :-  Long 0}
-                                           {limit :-  Long 0}
-                                           {after :-  Time nil}
-                                           {before :-  Time nil}
-                                           {sort_by :- JudgementSort "timestamp"}
-                                           {sort_order :- SortOrder "desc"}
-                                           {origin :- s/Str nil}
-                                           {observable :- ObservableType nil}
-                                           {priority :- Long nil}
-                                           {severity :- Long nil}
-                                           {confidence :- s/Str nil}
-                                           {disposition :- DispositionNumber nil}
-                                           {disposition_name :- DispositionName nil}]
-                            :return [Judgement]
-                            :summary "Search Judgements"
-                            :description "Asdad"
-                            (ok (get-judgements)))
                       (POST* "/" []
                              :return Judgement 
                              :body [judgement NewJudgement {:description "a new Judgement"}]
@@ -126,9 +108,6 @@ Malicious disposition, and so on down to Unknown.
                                :summary "Deletes a Judgement"
                                (ok (delete! id))))
 
-            (context* "/producers" []
-                      :tags ["Producer"])
-
             (context* "/campaigns" []
                       :tags ["Campaign"])
             
@@ -149,12 +128,14 @@ Malicious disposition, and so on down to Unknown.
                             :path-params [id :- Long]
                             :summary "Gets all Campaigns associated with the Indicator"
                             (not-found))
-                      (GET* "/:id/actors" []
-                            :return [Actor]
+                      (GET* "/:id/coas" []
+                            :tags ["COA"]
+                            :return [COA]
                             :path-params [id :- Long]
-                            :summary "Gets all Actors associated with the Indicator"
+                            :summary "Gets all TTPs associated with the Indicator"
                             (not-found))
                       (GET* "/:id/ttps" []
+                            :tag ["TTP"]
                             :return [TTP]
                             :path-params [id :- Long]
                             :summary "Gets all TTPs associated with the Indicator"
@@ -168,7 +149,7 @@ Malicious disposition, and so on down to Unknown.
                                            {before :-  Time nil}
                                            {sort_by :- IndicatorSort "timestamp"}
                                            {sort_order :- SortOrder "desc"}
-                                           {origin :- s/Str nil}
+                                           {source :- s/Str nil}
                                            {observable :- ObservableType nil}]))
             
             (context* "/actors" []
@@ -181,7 +162,7 @@ Malicious disposition, and so on down to Unknown.
                                            {before :-  Time nil}
                                            {sort_by :- IndicatorSort "timestamp"}
                                            {sort_order :- SortOrder "desc"}
-                                           {origin :- s/Str nil}
+                                           {source :- s/Str nil}
                                            {observable :- ObservableType nil}]))
 
             (context* "/ttps" []
@@ -194,7 +175,7 @@ Malicious disposition, and so on down to Unknown.
                                            {before :-  Time nil}
                                            {sort_by :- IndicatorSort "timestamp"}
                                            {sort_order :- SortOrder "desc"}
-                                           {origin :- s/Str nil}
+                                           {source :- s/Str nil}
                                            {observable :- ObservableType nil}]))
 
             (context* "/sightings" []
@@ -208,7 +189,7 @@ Malicious disposition, and so on down to Unknown.
                                  {before :-  Time nil}
                                  {sort_by :- JudgementSort "timestamp"}
                                  {sort_order :- SortOrder "desc"}
-                                 {origin :- s/Str nil}
+                                 {source :- s/Str nil}
                                  {disposition :- DispositionNumber nil}
                                  {disposition_name :- DispositionName nil}]
                   :path-params [observable_type :- ObservableType
@@ -224,10 +205,10 @@ Malicious disposition, and so on down to Unknown.
                                  {before :-  Time nil}
                                  {sort_by :- JudgementSort "timestamp"}
                                  {sort_order :- SortOrder "desc"}
-                                 {origin :- s/Str nil}]
+                                 {source :- s/Str nil}]
                   :path-params [observable_type :- ObservableType
                                 id :- s/Str]
-                  :return [JudgementIndicator]
+                  :return [Indicator]
                   :summary "Returns all the Indiators associated with the specified observable."
                   (ok (find-judgements observable_type id)))
 
@@ -238,7 +219,7 @@ Malicious disposition, and so on down to Unknown.
                                  {before :-  Time nil}
                                  {sort_by :- JudgementSort "timestamp"}
                                  {sort_order :- SortOrder "desc"}
-                                 {origin :- s/Str nil}]
+                                 {source :- s/Str nil}]
                   :path-params [observable_type :- ObservableType
                                 id :- s/Str]
                   :return [Sighting]
@@ -252,7 +233,7 @@ Malicious disposition, and so on down to Unknown.
                                  {before :-  Time nil}
                                  {sort_by :- RelationSort "timestamp"}
                                  {sort_order :- SortOrder "desc"}
-                                 {origin :- s/Str nil}
+                                 {source :- s/Str nil}
                                  {relation :- DispositionNumber nil}]
                   :path-params [observable_type :- ObservableType
                                 id :- s/Str]

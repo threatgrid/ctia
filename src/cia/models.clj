@@ -7,6 +7,8 @@
   "Observable type names"
   (s/enum "IP"
           "IPv6"
+          "MAC"
+          "User"
           "Domain"
           "SHA256"
           "MD5"
@@ -18,7 +20,7 @@
   stable enough to be attributed an intent or nature.  This is the
   classic 'indicator' which might appear in a data feed of bad IPs, or
   bad Domains."
-  {:id s/Str
+  {:value s/Str
    :type ObservableType})
 
 ;;Allowed disposition values are:
@@ -49,8 +51,20 @@
   priority of 100, so that humans can always override machines."
   s/Int)
 
+(def ID
+  "A string uniquely identifying an entity."
+  s/Str)
+
 (def URI
   "A URI."
+  s/Str)
+
+(def IDRef
+  "A URI that points to the JSON representation of the object."
+  s/Str)
+
+(def Reference
+  "An entity ID, or a URI referring to a remote one."
   s/Str)
 
 (def Time
@@ -63,20 +77,17 @@
           "Feedback"))
 
 (s/defschema VersionInfo
-  {:uuid Long
+  {:id Long
    :base URI
    :version String
    :beta Boolean
    :supported_features [s/Str]})
 
 (def default-version-info
-  {:uuid 1
-   :base ""
+  {:id "local-cia"
+   :base "http://localhost:3000"
    :version "0.1"
-   :beta true
    :supported_features ["Judgements" "Verdicts" "JudgementIndicators"]})
-
-(def JudgementID s/Str)
 
 (s/defschema Verdict
   "A Verdict is chosen from all of the Judgements on that Observable
@@ -85,14 +96,10 @@ the active verdict.  If there is more than one Judgement with that
 priority, than Clean disposition has priority over all others, then
 Malicious disposition, and so on down to Unknown.
 "
-  {:id JudgementID
-   :observable Observable
-
+  {:judgement ID
    :disposition DispositionNumber
-   :disposition_name DispositionName
-
-})
-
+   (s/optional-key :disposition_name) DispositionName
+   })
 
 (def Judgement
   "A judgement about the intent or nature of an Observable.  For
@@ -102,11 +109,11 @@ Malicious disposition, and so on down to Unknown.
   that it's not likely to be malicious."
   (merge Verdict
          {
-          :owner s/Str
-          :timestamp Time
+          :id ID
+          :observable Observable
           (s/optional-key :expires) Time
-          :origin s/Str
-          (s/optional-key :origin_uri) URI 
+          :source s/Str
+          (s/optional-key :source_uri) URI 
 
           :priority Priority
           (s/optional-key :reason) s/Str
@@ -115,103 +122,126 @@ Malicious disposition, and so on down to Unknown.
           (s/optional-key :confidence) Confidence
           (s/optional-key :severity) Severity
           
-          :indicators [s/Str]
+          :indicators [Reference]
           }))
 
 (def NewJudgement
   "Schema for submitting new Judgements."
-  (dissoc Judgement :id :timestamp :origin))
+  (dissoc Judgement :id))
+
+(def StoredJudgement
+  "A judgement at rest in the storage service"
+  (merge Judgement
+         {:owner s/Str
+          :timestamp Time}))
 
 (s/defschema Feedback
   "Feedback on a Judgement or Verdict.  Is it wrong?  If so why?  Was
   it right-on, and worthy of confirmation?"
   {:id s/Num
-   :owner s/Str
    :judgement_id s/Num
-   :timestamp Time
-   :origin s/Str
+   (s/optional-key :source) s/Str
    :feedback (s/enum -1 0 1)
-   :reason s/Str
-   })
+   :reason s/Str})
 
 (s/defschema NewFeedback
   "Schema for submitting new Feedback"
-  (dissoc Feedback :id :timestamp :origin :judgement_id))
+  (dissoc Feedback :id))
 
-(s/defschema Property
-  {:id s/Str
-   :type ObservableType
-   :property s/Str})
-
-(def ObjectType
-  (apply s/enum "File" "Host" "Process"))
-
-(s/defschema ObservedObject
-  {:id s/Num
-   :type ObjectType
-   :observables [Observable]
-   :properties [Property]
-   })
+(def StoredFeedback
+  "A feedback record at rest in the storage service"
+  (merge Feedback
+         {:owner s/Str
+          :timestamp Time}))
 
 
-(def IndicatorType
-  "Types of Indicator we support Currently only Judgement indicators,
-  which contain a list of Judgements associated with this indicator."
-  (s/enum "Judgement" "ThreatBrain" "SIOC" "Snort"))
-
-;; immutable
-(s/defschema BaseIndicator
-  "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
-  {:id s/Str
-   :owner s/Str
-   :title s/Str
-   :origin s/Str
-   :type  IndicatorType
-   :revision s/Num
-   :timestamp Time
-   :expires Time
-
-   :description s/Str ;; can be markdown
-   :short_description s/Str ;; simple string only
-
-   :severity Severity
-   :confidence Confidence
-
-   :impact s/Str
-   })
-
-(s/defschema JudgementIndicator
+(s/defschema JudgementSpecification
   "An indicator based on a list of judgements.  If any of the
   Observables in it's judgements are encountered, than it may be
   matches against.  If there are any required judgements, they all
   must be matched in order for the indicator to be considered a
   match."
-  (merge BaseIndicator
-         {:judgements [JudgementID]
-          :required_judgements [JudgementID]}))
+  {:type (s/eq "Judgement")
+   :judgements [Reference]
+   :required_judgements [Reference]})
 
-(s/defschema ThreatBrainIndicator
+(s/defschema ThreatBrainSpecification
   "An indicator which runs in threatbrain..."
-  (merge BaseIndicator
-         {:query s/Str
-          :variables [s/Str] }))
+  {:type (s/eq "ThreatBrain")
+   :query s/Str
+   :variables [s/Str] })
 
-(s/defschema SnortIndicator
+(s/defschema SnortSpecification
   "An indicator which runs in snort..."
-  (merge BaseIndicator
-         {:snort_sig s/Str}))
+  {:type (s/eq "Snort")
+   :snort_sig s/Str})
 
-(s/defschema SIOCIndicator
+(s/defschema SIOCSpecification
   "An indicator which runs in snort..."
-  (merge BaseIndicator
-         {:sioc s/Str}))
+  {:type (s/eq "SIOC")
+   :sioc s/Str})
 
-(s/defschema OpenIOCIndicator
+(s/defschema OpenIOCSpecification
   "An indicator which contains an XML blob of an openIOC indicator.."
-  (merge BaseIndicator
-         {:openIOC s/Str}))
+  {:type (s/eq "OpenIOC")
+   :openIOC s/Str})
+
+(def SpecificationType
+  "Types of Indicator we support Currently only Judgement indicators,
+  which contain a list of Judgements associated with this indicator."
+  (s/enum "Judgement" "ThreatBrain" "SIOC" "Snort" "OpenIOC"))
 
 
+(s/defschema Indicator
+  "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
+  {:id s/Str
+   (s/optional-key :alternate_ids) [ID]
+   
+   (s/optional-key :version) s/Num
+
+   :title s/Str
+   
+   (s/optional-key :short_description) s/Str ;; simple string only
+   (s/optional-key :description) s/Str       ;; can be markdown
+
+   (s/optional-key :expires) Time
+
+   (s/optional-key :indicated_ttps) [Reference]
+   (s/optional-key :kill_chain_phases) [s/Str] ;; fixed vocab
+
+   (s/optional-key :test_mechanisms) [s/Str]
+   (s/optional-key :likely_impact) s/Str  ;; fixed vocab
+
+   (s/optional-key :handling) s/Str ;; fixed vocab
+   (s/optional-key :confidence) Confidence
+
+   (s/optional-key :related_indicators) [Reference]
+   (s/optional-key :related_campaigns) [Reference]
+
+   (s/optional-key :related_COAs) [Reference]
+
+   :producer s/Str
+
+   ;; we should use a conditional based on the :type field of the
+   ;; specification, and not an either
+   (s/optional-key :specifications) [(s/either
+                                      JudgementSpecification
+                                      ThreatBrainSpecification
+                                      SnortSpecification
+                                      SIOCSpecification
+                                      OpenIOCSpecification
+                                      )]})
+
+(def NewIndicator
+  (dissoc Indicator :id))
+
+(def StoredIndicator
+  "A feedback record at rest in the storage service"
+  (merge Indicator
+         {:owner s/Str
+          :created Time
+          :timestamp Time}
+         ))
 
 
 (defonce id-seq (atom 0))

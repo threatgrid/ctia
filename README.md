@@ -99,7 +99,7 @@ You may include optionally:
 Additional fields will be added to the record:
 
  * created -- timetamp
- * origin -- string identifying the creating user
+ * owner -- string identifying the creating user
  
 ## Verdict
 
@@ -118,6 +118,10 @@ A collection of Judgements.
 A positive, neutral or negative feedback on a Judgement
 
 # Design
+
+Support multiple CIAs references each other, so the IDs needs to be
+URIs realy, or UUIDs with a namespace that can be turned into a
+hostname easily.
 
 ## Personas
 
@@ -174,3 +178,12 @@ you would when creating a Judgement without an indicator.
 ### As a security operator, I would like to whitelist my internal IPs
 
 ### As a security operator, I would like to record that an indicator was wrong
+
+
+### As a security device, I would like to pull down a set of verdicts as a feed
+ - all new verdicts for a given observable type in this hour, or day?
+ - all verdicts currently active for a given observable type?
+ - limit to N items
+ - needs to be paginated
+  
+
