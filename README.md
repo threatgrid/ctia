@@ -160,7 +160,8 @@ curl -X POST --header "Content-Type: application/json" \
 --header "Accept: application/json" \
 -d '{"observable":{"type":"ip", "value":"127.0.0.1"}, 
      "disposition":2, "source":"internet chat forum"}' "http://localhost:3000/cia/judgements"
-
+```
+	 
 ## Verdict
 
 The Verdict is chosen from all of the Judgements on that Observable which
@@ -181,7 +182,7 @@ have to always remember the mapping of numbers to human words.
 
 ```
 curl http://localhost:3000/cia/ips/127.0.0.1/verdict
-
+```
 
 ## Indicator
 
