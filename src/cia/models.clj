@@ -101,31 +101,31 @@ Malicious disposition, and so on down to Unknown.
    (s/optional-key :disposition_name) DispositionName
    })
 
-(def Judgement
+(s/defschema Judgement
   "A judgement about the intent or nature of an Observable.  For
   example, is it malicious, meaning is is malware and subverts system
   operations.  It could also be clean and be from a known benign, or
   trusted source.  It could also be common, something so widespread
   that it's not likely to be malicious."
-  (merge Verdict
-         {
-          :id ID
-          :observable Observable
-          (s/optional-key :expires) Time
-          :source s/Str
-          (s/optional-key :source_uri) URI 
+  {:id ID
+   :observable Observable
+   :disposition DispositionNumber
+   :source s/Str
+   :priority Priority
+   :confidence Confidence
+   :severity Severity
+   :timestamp Time
+   (s/optional-key :reason) s/Str
+   (s/optional-key :disposition_name) DispositionName
+   (s/optional-key :expires) Time
 
-          :priority Priority
+   (s/optional-key :source_uri) URI 
 
-          (s/optional-key :reason) s/Str
-          (s/optional-key :reason_uri) URI
-          
-          :confidence Confidence
-          :severity Severity
-          :timestamp Time
-
-          (s/optional-key :indicators) [Reference]
-          }))
+   (s/optional-key :reason_uri) URI
+   
+   (s/optional-key :indicators) [Reference]
+   }
+  )
 
 (def NewJudgement
   "Schema for submitting new Judgements."

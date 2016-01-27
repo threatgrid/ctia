@@ -70,17 +70,17 @@ metadata in our API definition (see handler.clj).
 Simple, atomic value that denotes an entity which as an identity that
 is stable enough to be attributed an intent or nature.
 
-| Type | Value Representation |
--------------------------------
-| ip | The IP address of a host in normal form |     {"type": "ip", "value": "192.168.1.1"} |
-| ipv6 | IPv6 address of a host, the format is x:x:x:x:x:x:x:x, where the 'x's are the hexadecimal values of the eight 16-bit pieces of the address. | {"type": "ipv6", "value": "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210"} |
-| device | Hex device address | {"type": "mac", "00:0a:27:02:00:53:24:c4"} |
-| user | A unique identifier string, such as SSO login | {"type": "user", "value": "salesguy"} |
-| domain | a hostname or domain name, like "foo.com" | {"type": "domain", "value": "badsite.com"} |
-| sha256 | A hex representation of the SHA256 of a file | {"type": "sha256", "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" } |
-| md5 | A hex repreentation of the MD5 of a file | {"type": "md5", "value": "d41d8cd98f00b204e9800998ecf8427e"} |
-| sha1 | a hex representation of the SHA1 of a file | {"type": "sha1", "value": "da39a3ee5e6b4b0d3255bfef95601890afd80709"} |
-| url | A string containing a URL | {"type": "url", "value": "https://panacea.threatgrid.com"} |
+ Type | Value Representation |
+-------|-----------------------
+ ip | The IP address of a host in normal form |     {"type": "ip", "value": "192.168.1.1"} 
+ ipv6 | IPv6 address of a host, the format is x:x:x:x:x:x:x:x, where the 'x's are the hexadecimal values of the eight 16-bit pieces of the address. | {"type": "ipv6", "value": "FEDC:BA98:7654:3210:FEDC:BA98:7654:3210"} 
+ device | Hex device address | {"type": "mac", "00:0a:27:02:00:53:24:c4"} 
+ user | A unique identifier string, such as SSO login | {"type": "user", "value": "salesguy"} 
+ domain | a hostname or domain name, like "foo.com" | {"type": "domain", "value": "badsite.com"} 
+ sha256 | A hex representation of the SHA256 of a file | {"type": "sha256", "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" } 
+ md5 | A hex repreentation of the MD5 of a file | {"type": "md5", "value": "d41d8cd98f00b204e9800998ecf8427e"} 
+ sha1 | a hex representation of the SHA1 of a file | {"type": "sha1", "value": "da39a3ee5e6b4b0d3255bfef95601890afd80709"} 
+ url | A string containing a URL | {"type": "url", "value": "https://panacea.threatgrid.com"} 
 
 
 The type should also be in lowercase, it will be coerced to lowercase
@@ -113,7 +113,15 @@ Additional fields will be added to the record when stored, but MAY not be shared
 
  * created -- timetamp
  * owner -- string identifying the creating user
- 
+
+Here is a quick example using curl:
+
+```
+curl -X POST --header "Content-Type: application/json" \
+--header "Accept: application/json" \
+-d '{"observable":{"type":"ip", "value":"127.0.0.1"}, 
+     "disposition":2, "source":"internet chat forum"}' "http://localhost:3000/cia/judgements"
+
 ## Verdict
 
 The Verdict is chosen from all of the Judgements on that Observable which
@@ -130,6 +138,10 @@ The `judgement` field is optional, and is the ID of the judgement that
 determined the final verdict.  The `disposition_name` field is also
 optional, but is intended to be shown to a user, so applications down
 have to always remember the mapping of numbers to human words.
+
+
+```
+curl http://localhost:3000/cia/ips/127.0.0.1/verdict
 
 
 ## Indicator
@@ -153,30 +165,32 @@ Observables that are linked to this indicator, with the ID in the
 
 When you create a judgement you can provide the following fields:
 
-|Field|Required|Format|Description|
-|title|Yes|String|A short title for the indicator|
-|type|Yes|String|The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior
-|confidence|Yes|String|"Low", "Medium" or "High"
-|producer|Yes|A string|An identifier of the system or person that produced this indicator.|
-|short\_description|No|String|A short sentence or two describing the indicator|
-|description|No|String, Markdown|A longer, in-depth description of the indicator|
-|expires|No|ISO8601 Timestamp|When the indicator is no longer valid|
-|indicated\_ttps|No|List of IDs|A list of the IDs of TTPs objects related to this indicator|
-|kill\_chain\_phase|No|List of strings|One or more kill chain phases, like "Delivery"|
-|test\_mechanism|No|List of strings|One or more products or tools that can use the data in this indicator to perform a test for it's presence on a host or network
-|likely\_impact|No|A string|The impact of malware, High, Medium, Low or None
-|related\_indicators|No|A list of IDs|One or more indicator related to this one.|
-|related\_campaigns|No|A list of IDs|One or more campaigns related to this indicator.|
-|related\_coas|No|A list of IDs|One or more COAs related to this indicator.|
+Field|Required|Format|Description
+------|--------|------|-----------
+title|Yes|String|A short title for the indicator
+type|Yes|String|The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior
+confidence|Yes|String|"Low", "Medium" or "High"
+producer|Yes|A string|An identifier of the system or person that produced this indicator.
+short\_description|No|String|A short sentence or two describing the indicator
+description|No|String, Markdown|A longer, in-depth description of the indicator
+expires|No|ISO8601 Timestamp|When the indicator is no longer valid
+indicated\_ttps|No|List of IDs|A list of the IDs of TTPs objects related to this indicator
+kill\_chain\_phase|No|List of strings|One or more kill chain phases, like "Delivery"
+test\_mechanism|No|List of strings|One or more products or tools that can use the data in this indicator to perform a test for it's presence on a host or network
+likely\_impact|No|A string|The impact of malware, High, Medium, Low or None
+related\_indicators|No|A list of IDs|One or more indicator related to this one.
+related\_campaigns|No|A list of IDs|One or more campaigns related to this indicator.
+related\_coas|No|A list of IDs|One or more COAs related to this indicator.
 
 
 Additional fields will be generated upon creation:
 
-|Field|Format|Description|Default|
-|id|String|A UUID asigned|
-|owner|String|The account or identiy that created the indicator in the system.  May not by the definer, or producer.|
-|created|ISO8601 Timestamp|When the indicator was create.|
-|timestamp|ISO8601 Timestamp|When the indicator was lat modified.|
+Field|Format|Description
+------|------|-----------|-------
+id|String|A UUID asigned
+owner|String|The account or identiy that created the indicator in the system.  May not by the definer, or producer.
+created|ISO8601 Timestamp|When the indicator was create.
+timestamp|ISO8601 Timestamp|When the indicator was lat modified.
 
 ## Feedback
 
