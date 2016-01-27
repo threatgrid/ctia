@@ -135,7 +135,7 @@ Malicious disposition, and so on down to Unknown.
                             :summary "Gets all TTPs associated with the Indicator"
                             (not-found))
                       (GET* "/:id/ttps" []
-                            :tag ["TTP"]
+                            :tags ["TTP"]
                             :return [TTP]
                             :path-params [id :- Long]
                             :summary "Gets all TTPs associated with the Indicator"

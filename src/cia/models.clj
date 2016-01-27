@@ -5,15 +5,15 @@
 
 (def ObservableType
   "Observable type names"
-  (s/enum "IP"
-          "IPv6"
-          "MAC"
-          "User"
-          "Domain"
-          "SHA256"
-          "MD5"
-          "SHA1"
-          "URL"))
+  (s/enum "ip"
+          "ipv6"
+          "mac"
+          "user"
+          "domain"
+          "sha256"
+          "md5"
+          "sha1"
+          "url"))
 
 (s/defschema Observable
   "A simple, atomic value which has a consistent identity, and is
@@ -96,8 +96,8 @@ the active verdict.  If there is more than one Judgement with that
 priority, than Clean disposition has priority over all others, then
 Malicious disposition, and so on down to Unknown.
 "
-  {:judgement ID
-   :disposition DispositionNumber
+  {:disposition DispositionNumber
+   (s/optional-key :judgement) ID
    (s/optional-key :disposition_name) DispositionName
    })
 
@@ -116,24 +116,34 @@ Malicious disposition, and so on down to Unknown.
           (s/optional-key :source_uri) URI 
 
           :priority Priority
+
           (s/optional-key :reason) s/Str
           (s/optional-key :reason_uri) URI
           
-          (s/optional-key :confidence) Confidence
-          (s/optional-key :severity) Severity
-          
-          :indicators [Reference]
+          :confidence Confidence
+          :severity Severity
+          :timestamp Time
+
+          (s/optional-key :indicators) [Reference]
           }))
 
 (def NewJudgement
   "Schema for submitting new Judgements."
-  (dissoc Judgement :id))
+  (merge (dissoc Judgement :id
+                 :priority
+                 :timestamp
+                 :severity
+                 :confidence)
+         {(s/optional-key :severity) Severity
+          (s/optional-key :confidence) Confidence
+          (s/optional-key :timestamp) Time
+          (s/optional-key :priority) Priority}))
 
 (def StoredJudgement
   "A judgement at rest in the storage service"
   (merge Judgement
          {:owner s/Str
-          :timestamp Time}))
+          :created Time}))
 
 (s/defschema Feedback
   "Feedback on a Judgement or Verdict.  Is it wrong?  If so why?  Was
@@ -200,10 +210,13 @@ Malicious disposition, and so on down to Unknown.
    (s/optional-key :version) s/Num
 
    :title s/Str
-   
+
+   :type s/Str ;; fixed vocab
+
+   :producer s/Str
    (s/optional-key :short_description) s/Str ;; simple string only
    (s/optional-key :description) s/Str       ;; can be markdown
-
+   
    (s/optional-key :expires) Time
 
    (s/optional-key :indicated_ttps) [Reference]
@@ -218,9 +231,9 @@ Malicious disposition, and so on down to Unknown.
    (s/optional-key :related_indicators) [Reference]
    (s/optional-key :related_campaigns) [Reference]
 
-   (s/optional-key :related_COAs) [Reference]
+   (s/optional-key :related_coas) [Reference]
 
-   :producer s/Str
+
 
    ;; we should use a conditional based on the :type field of the
    ;; specification, and not an either
