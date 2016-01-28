@@ -74,12 +74,6 @@
 
    })
 
-(def Scope
-  (s/either "inclusive" "exclusive"))
-
-(def SecurityCompromise
-  (s/enum "Yes" "No" "Suspected" "Unknown"))
-
 (s/defschema Incident
   "See http://stixproject.github.io/data-model/1.2/incident/IncidentType/"
   {:id ID
@@ -107,7 +101,7 @@
    (s/optional-key :leveraged_ttps) {:scope Scope
                                      :ttps [Reference]}
    (s/optional-key :attributed_actors) {:scope Scope
-                                        :actors [Actor]}
+                                        :actors [Reference]}
    (s/optional-key :related_incidents) {:scope Scope
                                         :incidents [Reference]}
    (s/optional-key :intended_effect) s/Str ;; typed?

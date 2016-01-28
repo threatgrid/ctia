@@ -76,6 +76,12 @@
           "Threats" "Relations" "Feeds"
           "Feedback"))
 
+(def Scope
+  (s/either "inclusive" "exclusive"))
+
+(def SecurityCompromise
+  (s/enum "Yes" "No" "Suspected" "Unknown"))
+
 (s/defschema VersionInfo
   {:id Long
    :base URI
@@ -119,10 +125,10 @@ Malicious disposition, and so on down to Unknown.
    (s/optional-key :disposition_name) DispositionName
    (s/optional-key :expires) Time
 
-   (s/optional-key :source_uri) URI 
+   (s/optional-key :source_uri) URI
 
    (s/optional-key :reason_uri) URI
-   
+
    (s/optional-key :indicators) [Reference]
    }
   )
@@ -206,7 +212,7 @@ Malicious disposition, and so on down to Unknown.
   "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
   {:id s/Str
    (s/optional-key :alternate_ids) [ID]
-   
+
    (s/optional-key :version) s/Num
 
    :title s/Str
@@ -216,7 +222,7 @@ Malicious disposition, and so on down to Unknown.
    :producer s/Str
    (s/optional-key :short_description) s/Str ;; simple string only
    (s/optional-key :description) s/Str       ;; can be markdown
-   
+
    (s/optional-key :expires) Time
 
    (s/optional-key :indicated_ttps) [Reference]
