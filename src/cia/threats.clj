@@ -87,6 +87,8 @@
   {:id ID ;; optional in spec
    :timestamp m/Time ;; timestamp "for this version"; optional in spec
    :description [s/Str] ;; optional in spec
+   :confidence m/Confidence ;; squashed
+
    (s/optional-key :short_description) [s/Str]
    (s/optional-key :status) m/Status
    (s/optional-key :version) s/Str
@@ -99,6 +101,12 @@
    (s/optional-key :affected_assets) m/AffectedAsset
    (s/optional-key :impact_assessment) m/ImpactAssessment
    (s/optional-key :source) m/Source ;; was information_source
+   (s/optional-key :security_compromise) m/SecurityCompromise
+   (s/optional-key :discovery_method) m/DiscoveryMethod
+   (s/optional-key :coa_requested) [m/Reference]
+   (s/optional-key :coa_taken) [m/Reference]
+   (s/optional-key :contact m/Source)
+   (s/optional-key :history) m/History
 
    ;; The seqs of elements below are squashed (they leave out
    ;; structured data such as confidence and source for each element).
@@ -108,17 +116,6 @@
    (s/optional-key :attributed__actors) [m/Reference] ;; was attributed_threat_actors
    (s/optional-key :related_incidents) [m/Reference]
    (s/optional-key :intended_effect) m/IntendedEffect
-
-   :security_compromise m/SecurityCompromise
-   :discover_method m/DiscoveryMethod
-
-   :coa_requested [m/Reference]
-   :coa_taken [m/Reference]
-
-   :confidence m/Confidence ;; squashed
-
-   (s/optional-key :contact m/Source)
-   (s/optional-key :history) m/History
 
    ;; Not provided: idref
    ;; Not provided: URL
