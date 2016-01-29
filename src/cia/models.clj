@@ -3,6 +3,38 @@
             [ring.swagger.schema :refer [coerce!]]
             [clojure.string :as str]))
 
+(def ID
+  "A string uniquely identifying an entity."
+  s/Str)
+
+(def URI
+  "A URI."
+  s/Str)
+
+(def IDRef
+  "A URI that points to the JSON representation of the object."
+  s/Str)
+
+(def Reference
+  "An entity ID, or a URI referring to a remote one."
+  s/Str)
+
+(def Time
+  "Schema definition for all date or timestamp values in GUNDAM."
+  org.joda.time.DateTime)
+
+(s/defschema MinimalStixIdentifiers
+  {;; :id and :idref must be implemented exclusively
+   (s/required-key (s/enum :id :idref)) (s/either ID IDRef)})
+
+(s/defschema GenericStixIdentifiers
+  "These fields are common in STIX data models"
+  (merge
+   MinimalStixIdentifiers
+   {:title s/Str
+    :description [s/Str]
+    (s/optional-key :sort_description) [s/Str]}))
+
 
 (def ObservableType
   "Observable type names"
@@ -59,25 +91,6 @@
   priority of 100, so that humans can always override machines."
   s/Int)
 
-(def ID
-  "A string uniquely identifying an entity."
-  s/Str)
-
-(def URI
-  "A URI."
-  s/Str)
-
-(def IDRef
-  "A URI that points to the JSON representation of the object."
-  s/Str)
-
-(def Reference
-  "An entity ID, or a URI referring to a remote one."
-  s/Str)
-
-(def Time
-  "Schema definition for all date or timestamp values in GUNDAM."
-  org.joda.time.DateTime)
 
 (def CIAFeature
   (s/enum "Judgements" "Verdicts"
@@ -431,25 +444,35 @@ Malicious disposition, and so on down to Unknown.
    (s/optional-key :produced_time) Time
    (s/optional-key :received_time) Time})
 
+(def AttackToolType
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/AttackerToolTypeVocab-1.0/"
+  (s/enum "Malware"
+          "Penetration Testing"
+          "Port Scanner"
+          "Traffic Scanner"
+          "Vulnerability Scanner"
+          "Application Scanner"
+          "Password Cracking"))
+
 (s/defschema Tool
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
-  {(s/optional-key :id) ID
-   (s/optional-key :name) s/Str
-   (s/optional-key :type) [s/Str]
-   (s/optional-key :description) s/Str
-   (s/optional-key :references) [s/Str]
-   (s/optional-key :vendor) s/Str
-   (s/optional-key :version) s/Str
-   (s/optional-key :service_pack) s/Str
-   ;; Not provided: idref
-   ;; Not provided: tool_specific_data
-   ;; Not provided: tool_hashes
-   ;; Not provided: tool_configuration
-   ;; Not provided: execution_environment
-   ;; Not provided: errors
-   ;; Not provided: metadata
-   ;; Not provided: compensation_model
-   })
+  (merge
+   GenericStixIdentifiers
+   {(s/optional-key :name) s/Str
+    (s/optional-key :type) [AttackToolType]
+    (s/optional-key :description) s/Str
+    (s/optional-key :references) [s/Str]
+    (s/optional-key :vendor) s/Str
+    (s/optional-key :version) s/Str
+    (s/optional-key :service_pack) s/Str
+    ;; Not provided: tool_specific_data
+    ;; Not provided: tool_hashes
+    ;; Not provided: tool_configuration
+    ;; Not provided: execution_environment
+    ;; Not provided: errors
+    ;; Not provided: metadata
+    ;; Not provided: compensation_model
+    }))
 
 (s/defschema Source
   "See http://stixproject.github.io/data-model/1.2/stixCommon/InformationSourceType/"
@@ -499,7 +522,7 @@ Malicious disposition, and so on down to Unknown.
           "Traffic Diversion"
           "Unauthorized Access"))
 
-(def DiscoverMethod
+(def DiscoveryMethod
   (s/enum "Agent Disclosure"
           "External - Fraud Detection"
           "Monitoring Service"
@@ -523,6 +546,153 @@ Malicious disposition, and so on down to Unknown.
   "See http://stixproject.github.io/data-model/1.2/incident/HistoryItemType/"
   {(s/optional-key :action_entry) Reference ;; COA
    (s/optional-key :journal_entry) s/Str ;; simplified
+   })
+
+(def MalwareType
+  (s/enum "Automated Transfer Scripts"
+          "Adware"
+          "Dialer"
+          "Bot"
+          "Bot - Credential Theft"
+          "Bot - DDoS"
+          "Bot - Loader"
+          "Bot - Spam"
+          "DoS/ DDoS"
+          "DoS / DDoS - Participatory"
+          "DoS / DDoS - Script"
+          "DoS / DDoS - Stress Test Tools"
+          "Exploit Kit"
+          "POS / ATM Malware"
+          "Ransomware"
+          "Remote Access Trojan"
+          "Rogue Antivirus"
+          "Rootkit"))
+
+(s/defschema AttackPattern
+  "See http://stixproject.github.io/data-model/1.2/ttp/AttackPatternType/"
+  (merge
+   GenericStixIdentifiers
+   {(s/optional-key :capec_id) s/Str}))
+
+(s/defschema MalwareInstance
+  "See http://stixproject.github.io/data-model/1.2/ttp/MalwareInstanceType/"
+  (merge
+   GenericStixIdentifiers
+   {(s/optional-key :type) [MalwareType]
+    ;; Not provided: name ; empty vocab
+    }))
+
+(s/defschema Behavior
+  "See http://stixproject.github.io/data-model/1.2/ttp/BehaviorType/"
+  {(s/optional-key :attack_patterns) [AttackPattern]
+   (s/optional-key :malware_type) [MalwareInstance]
+   ;; Not provided: exploits ; It is abstract
+   })
+
+(def AttackerInfrastructure
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/AttackerInfrastructureTypeVocab-1.0/"
+  (s/enum "Anonymization"
+          "Anonymization - Proxy"
+          "Anonymization - TOR Network"
+          "Anonymization - VPN"
+          "Communications"
+          "Communications - Blogs"
+          "Communications - Forums"
+          "Communications - Internet Relay Chat"
+          "Communications - Micro-Blogs"
+          "Communications - Mobile Communications"
+          "Communications - Social Networks"
+          "Communications - User-Generated Content Websites"
+          "Domain Registration"
+          "Domain Registration - Dynamic DNS Services"
+          "Domain Registration - Legitimate Domain Registration Services"
+          "Domain Registration - Malicious Domain Registrars"
+          "Domain Registration - Top-Level Domain Registrars"
+          "Hosting"
+          "Hosting - Bulletproof / Rogue Hosting"
+          "Hosting - Cloud Hosting"
+          "Hosting - Compromised Server"
+          "Hosting - Fast Flux Botnet Hosting"
+          "Hosting - Legitimate Hosting"
+          "Electronic Payment Methods"))
+
+(s/defschema Infrastructure
+  "See http://stixproject.github.io/data-model/1.2/ttp/InfrastructureType/"
+  (merge
+   GenericStixIdentifiers
+   {:type AttackerInfrastructure
+    ;; Not provided: observable_characterization ; characterization of CybOX observables
+    }))
+
+(s/defschema RelatedIdentity
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedIdentityType/"
+  {(s/optional-key :confidence) Confidence
+   (s/optional-key :information_source) Source
+   (s/optional-key :relationship) s/Str ;; empty vocab
+   :identity Reference ;; Points to Identity
+   })
+
+(s/defschema Identity
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/IdentityType/"
+  (merge
+   MinimalStixIdentifiers
+   {:name s/Str
+    :related_identities [RelatedIdentity]}))
+
+(s/defschema Resource
+  "See http://stixproject.github.io/data-model/1.2/ttp/ResourceType/"
+  {(s/optional-key :tools) [Tool]
+   (s/optional-key :infrastructure) Infrastructure
+   (s/optional-key :providers) [Identity]})
+
+(def SystemType
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/SystemTypeVocab-1.0/"
+  (s/enum "Enterprise Systems"
+          "Enterprise Systems - Application Layer"
+          "Enterprise Systems - Database Layer"
+          "Enterprise Systems - Enterprise Technologies and Support Infrastructure"
+          "Enterprise Systems - Network Systems"
+          "Enterprise Systems - Networking Devices"
+          "Enterprise Systems - Web Layer"
+          "Enterprise Systems - VoIP"
+          "Industrial Control Systems"
+          "Industrial Control Systems - Equipment Under Control"
+          "Industrial Control Systems - Operations Management"
+          "Industrial Control Systems - Safety, Protection and Local Control"
+          "Industrial Control Systems - Supervisory Control"
+          "Mobile Systems"
+          "Mobile Systems - Mobile Operating Systems"
+          "Mobile Systems - Near Field Communications"
+          "Mobile Systems - Mobile Devices"
+          "Third-Party Services"
+          "Third-Party Services - Application Stores"
+          "Third-Party Services - Cloud Services"
+          "Third-Party Services - Security Vendors"
+          "Third-Party Services - Social Media"
+          "Third-Party Services - Software Update"
+          "Users"
+          "Users - Application And Software"
+          "Users - Workstation"
+          "Users - Removable Media"))
+
+(def InformationType
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/InformationTypeVocab-1.0/"
+  (s/enum "Information Assets"
+          "Information Assets - Corporate Employee Information"
+          "Information Assets - Customer PII"
+          "Information Assets - Email Lists / Archives"
+          "Information Assets - Financial Data"
+          "Information Assets - Intellectual Property"
+          "Information Assets - Mobile Phone Contacts"
+          "Information Assets - User Credentials"
+          "Authentication Cookies"))
+
+(s/defschema VictimTargeting
+  "See http://stixproject.github.io/data-model/1.2/ttp/VictimTargetingType/"
+  {(s/optional-key :identity) Identity
+   (s/optional-key :targeted_systems) [SystemType]
+   (s/optional-key :targeted_information) [InformationType]
+   ;; Not provided: targeted_technical_details ; Points to ObservablesType
    })
 
 (defonce id-seq (atom 0))
