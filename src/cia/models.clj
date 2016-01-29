@@ -1,6 +1,7 @@
 (ns cia.models
   (:require [schema.core :as s]
-            [ring.swagger.schema :refer [coerce!]]))
+            [ring.swagger.schema :refer [coerce!]]
+            [clojure.string :as str]))
 
 
 (def ObservableType
@@ -41,7 +42,14 @@
   "String verdict identifiers"
   (apply s/enum (vals disposition-map)))
 
-(def Confidence (s/enum "Low" "Medium" "High"))
+(def Confidence
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/HighMediumLowVocab-1.0/"
+  (s/enum "Low"
+          "Medium"
+          "High"
+          "None"
+          "Unknown"))
+
 (def Severity s/Int)
 (def Priority
   "A value 0-100 that determiend the priority of a judgement.  Curated
@@ -74,7 +82,7 @@
 (def CIAFeature
   (s/enum "Judgements" "Verdicts"
           "Threats" "Relations" "Feeds"
-          "Feedback"))
+          "Feedback" "COAs" "ExploitTargets"))
 
 (def Scope
   (s/either "inclusive" "exclusive"))
@@ -262,6 +270,260 @@ Malicious disposition, and so on down to Unknown.
           :timestamp Time}
          ))
 
+(def OwnershipClass
+  (s/enum "Internally-Owned"
+          "Employee-Owned"
+          "Partner-Owned"
+          "Customer-Owned"
+          "Unkown"))
+
+(def ManagementClass
+  (s/enum "Internally-Managed"
+          "Externally-Management" ;; SIC
+          "CO-Managment"
+          "Unkown"))
+
+(def LocationClass
+  (s/enum "Internally-Located"
+          "Externally-Located"
+          "Co-Located"
+          "Mobile"
+          "Unknown"))
+
+(def LossProperty
+  (s/enum "Confidentiality"
+          "Integrity"
+          "Availability"
+          "Accountability"
+          "Non-Repudiation"))
+
+(def LossDuration
+  (s/enum "Permanent"
+          "Weeks"
+          "Days"
+          "Hours"
+          "Minutes"
+          "Seconds"
+          "Unknown"))
+
+(def SecurityCompromise
+  (s/enum "Yes"
+          "Suspected"
+          "No"
+          "Unkown"))
+
+(s/defschema NonPublicDataCompromised
+  "See http://stixproject.github.io/data-model/1.2/incident/NonPublicDataCompromisedType/"
+  ;; Simplified schema
+  {:security_compromise SecurityCompromise
+   (s/optional-key :data_encrypted) s/Bool})
+
+(s/defschema PropertyAffected
+  "See http://stixproject.github.io/data-model/1.2/incident/PropertyAffectedType/"
+  {(s/optional-key :property) LossProperty
+   (s/optional-key :description_of_effect) s/Str
+   (s/optional-key :type_of_availability_loss) s/Str ;; Vocab is empty
+   (s/optional-key :duration_of_availability_loss) LossDuration
+   (s/optional-key :non_public_data_compromised) NonPublicDataCompromised})
+
+(s/defschema AffectedAsset
+  "See http://stixproject.github.io/data-model/1.2/incident/AffectedAssetType/"
+  {(s/optional-key :type) s/Str
+   (s/optional-key :description) [s/Str]
+   (s/optional-key :ownership_class) OwnershipClass
+   (s/optional-key :managment_class) ManagementClass
+   (s/optional-key :location_class) LocationClass
+   (s/optional-key :property_affected) PropertyAffected ;; Unnested NatureOfSecurityEffect
+   (s/optional-key :identifying_observables) [Reference] ;; Points to Observable
+   ;; Not Provided: business_function_or_role
+   ;; Not Provided: location (undefined/abstract type); Could be [s/Str]
+   })
+
+(def ImpactRating
+  (s/enum "None"
+          "Minor"
+          "Moderate"
+          "Major"
+          "Unknown"))
+
+(s/defschema DirectImpactSummary
+  "See http://stixproject.github.io/data-model/1.2/incident/DirectImpactSummaryType/"
+  {(s/optional-key :asset_losses) ImpactRating
+   (s/optional-key :business_mission_distruption) ImpactRating
+   (s/optional-key :response_and_recovery_costs) ImpactRating})
+
+(s/defschema IndirectImpactSummary
+  "See http://stixproject.github.io/data-model/1.2/incident/IndirectImpactSummaryType/"
+  {(s/optional-key :loss_of_competitive_advantage) SecurityCompromise
+   (s/optional-key :brand_and_market_damage) SecurityCompromise
+   (s/optional-key :increased_operating_costs) SecurityCompromise
+   (s/optional-key :local_and_regulatory_costs) SecurityCompromise})
+
+(s/defschema LossEstimation
+  "See http://stixproject.github.io/data-model/1.2/incident/LossEstimationType/"
+  {(s/optional-key :amount) s/Num
+   (s/optional-key :iso_currency_code) s/Str})
+
+(s/defschema TotalLossEstimation
+  "See http://stixproject.github.io/data-model/1.2/incident/TotalLossEstimationType/"
+  {(s/optional-key :initial_reported_total_loss_estimation) LossEstimation
+   (s/optional-key :actual_total_loss_estimation) LossEstimation})
+
+(def ImpactQualification
+  (s/enum "Insignificant"
+          "Distracting"
+          "Painful"
+          "Damaging"
+          "Catastrophic"
+          "Unknown"))
+
+(def Effect
+  (s/enum "Brand or Image Degradation"
+          "Loss of Competitive Advantage"
+          "Loss of Competitive Advantage - Economic"
+          "Loss of Competitive Advantage - Military"
+          "Loss of Competitive Advantage - Political"
+          "Data Breach or Compromise"
+          "Degradation of Service"
+          "Destruction"
+          "Disruption of Service / Operations"
+          "Financial Loss"
+          "Loss of Confidential / Proprietary Information or Intellectual Property"
+          "Regulatory, Compliance or Legal Impact"
+          "Unintended Access"
+          "User Data Loss"))
+
+(s/defschema ImpactAssessment
+  "See http://stixproject.github.io/data-model/1.2/incident/ImpactAssessmentType/"
+  {(s/optional-key :direct_impact_summary) DirectImpactSummary
+   (s/optional-key :indirect_impact_summary) IndirectImpactSummary
+   (s/optional-key :total_loss_estimation) TotalLossEstimation
+   (s/optional-key :impact_qualification) ImpactQualification
+   (s/optional-key :effects) [Effect]
+   ;; Not provided: external_impact_assessment_model
+   })
+
+(s/defschema IncidentTime
+  "See http://stixproject.github.io/data-model/1.2/incident/TimeType/"
+  {(s/optional-key :first_malicious_action) Time ;; Simplified structure
+   (s/optional-key :initial_compromise) Time
+   (s/optional-key :first_data_exfiltration) Time
+   (s/optional-key :incident_discovery) Time
+   (s/optional-key :incident_opened) Time
+   (s/optional-key :containment_achieved) Time
+   (s/optional-key :restoration_achieved) Time
+   (s/optional-key :incident_reported) Time
+   (s/optional-key :incident_closed) Time})
+
+(def IncidentCategory
+  (s/enum "Exercise/Network Defense Testing"
+          "Unauthorized Access"
+          "Denial of Service"
+          "Malicious Code"
+          "Improper Usage"
+          "Scans/Probes/Attempted Access"
+          "Investigation"))
+
+(s/defschema TimeStructure
+  "See http://stixproject.github.io/data-model/1.2/cyboxCommon/TimeType/"
+  {(s/optional-key :start_time) Time
+   (s/optional-key :end_time) Time
+   (s/optional-key :produced_time) Time
+   (s/optional-key :received_time) Time})
+
+(s/defschema Tool
+  "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
+  {(s/optional-key :id) ID
+   (s/optional-key :name) s/Str
+   (s/optional-key :type) [s/Str]
+   (s/optional-key :description) s/Str
+   (s/optional-key :references) [s/Str]
+   (s/optional-key :vendor) s/Str
+   (s/optional-key :version) s/Str
+   (s/optional-key :service_pack) s/Str
+   ;; Not provided: idref
+   ;; Not provided: tool_specific_data
+   ;; Not provided: tool_hashes
+   ;; Not provided: tool_configuration
+   ;; Not provided: execution_environment
+   ;; Not provided: errors
+   ;; Not provided: metadata
+   ;; Not provided: compensation_model
+   })
+
+(s/defschema Source
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/InformationSourceType/"
+  {(s/optional-key :description) s/Str
+   (s/optional-key :idntity) s/Str ;; greatly simplified
+   (s/optional-key :role) s/Str ;; empty vocab
+   (s/optional-key :contributing_sources) [Reference] ;; more Source's
+   (s/optional-key :time) TimeStructure
+   (s/optional-key :tools) [Tool]
+   ;; Not provided: references
+   })
+
+(def Status
+  (s/enum "New"
+          "Open"
+          "Stalled"
+          "Containment Achieved"
+          "Restoration Achieved"
+          "Incident Reported"
+          "Closed"
+          "Rejected"
+          "Deleted"))
+
+(def IntendedEffect
+  (s/enum "Advantage"
+          "Advantage - Economic"
+          "Advantage - Military"
+          "Advantage - Political"
+          "Theft"
+          "Theft - Intellectual Property"
+          "Theft - Credential Theft"
+          "Theft - Identity Theft"
+          "Theft - Theft of Proprietary Information"
+          "Account Takeover"
+          "Brand Damage"
+          "Competitive Advantage"
+          "Degradation of Service"
+          "Denial and Deception"
+          "Destruction"
+          "Disruption"
+          "Embarrassment"
+          "Exposure"
+          "Extortion"
+          "Fraud"
+          "Harassment"
+          "ICS Control"
+          "Traffic Diversion"
+          "Unauthorized Access"))
+
+(def DiscoverMethod
+  (s/enum "Agent Disclosure"
+          "External - Fraud Detection"
+          "Monitoring Service"
+          "Law Enforcement"
+          "Customer"
+          "Unrelated Party"
+          "Audit"
+          "Antivirus"
+          "Incident Response"
+          "Financial Audit"
+          "Internal - Fraud Detection"
+          "HIPS"
+          "IT Audit"
+          "Log Review"
+          "NIDS"
+          "Security Alarm"
+          "User"
+          "Unknown"))
+
+(s/defschema History
+  "See http://stixproject.github.io/data-model/1.2/incident/HistoryItemType/"
+  {(s/optional-key :action_entry) Reference ;; COA
+   (s/optional-key :journal_entry) s/Str ;; simplified
+   })
 
 (defonce id-seq (atom 0))
 (defonce judgements (atom (array-map)))

@@ -1,7 +1,12 @@
 (ns cia.threats
   (:require [schema.core :as s]
-            [cia.models :refer [Observable Time URI Confidence Reference ID Indicator]]
+            [cia.models
+             :refer [Observable Time URI Confidence Reference ID Indicator]
+             :as m]
             [ring.swagger.schema :refer [coerce!]]))
+
+;; TODO - README for each section
+
 ;;mutable
 (s/defschema TTP
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
@@ -74,48 +79,56 @@
 
    })
 
+;; TODO - Record any fields that are left out, or any squashing in the code
+;; TODO - Write up transforms and variations in the README, include notes for serialization
+;; TODO - Add NewIncident and StoredIncident
 (s/defschema Incident
   "See http://stixproject.github.io/data-model/1.2/incident/IncidentType/"
-  {:id ID
-   :timestamp Time
-
-   :description s/Str
-   :short_description s/Str
-   :status s/Str
-
-   (s/optional-key :categories) [s/Str]
-   (s/optional-key :reporter) s/Str
-   (s/optional-key :responder) s/Str
-   (s/optional-key :coordinator) s/Str
+  {:id ID ;; optional in spec
+   :timestamp m/Time ;; timestamp "for this version"; optional in spec
+   :description [s/Str] ;; optional in spec
+   (s/optional-key :short_description) [s/Str]
+   (s/optional-key :status) m/Status
+   (s/optional-key :version) s/Str
+   (s/optional-key :time) m/IncidentTime
+   (s/optional-key :categories) [m/IncidentCategory]
+   (s/optional-key :reporter) m/Source
+   (s/optional-key :responder) m/Source
+   (s/optional-key :coordinator) m/Source
    (s/optional-key :victim) s/Str
-
-   ;; affected assets ?
-   ;; impact assessment ?
+   (s/optional-key :affected_assets) m/AffectedAsset
+   (s/optional-key :impact_assessment) m/ImpactAssessment
+   (s/optional-key :source) m/Source ;; was information_source
 
    ;; The seqs of elements below are squashed (they leave out
    ;; structured data such as confidence and source for each element).
-   (s/optional-key :related_indicators) {:scope Scope
-                                         :indicators [Reference]}
-   (s/optional-key :related_observables) {:scope Scope
-                                          :observables [Reference]}
-   (s/optional-key :leveraged_ttps) {:scope Scope
-                                     :ttps [Reference]}
-   (s/optional-key :attributed_actors) {:scope Scope
-                                        :actors [Reference]}
-   (s/optional-key :related_incidents) {:scope Scope
-                                        :incidents [Reference]}
-   (s/optional-key :intended_effect) s/Str ;; typed?
+   (s/optional-key :related_indicators) [m/Reference]
+   (s/optional-key :related_observables) [m/Reference]
+   (s/optional-key :leveraged_ttps) [m/Reference]
+   (s/optional-key :attributed__actors) [m/Reference] ;; was attributed_threat_actors
+   (s/optional-key :related_incidents) [m/Reference]
+   (s/optional-key :intended_effect) m/IntendedEffect
 
-   :security_compromise SecurityCompromise
-   :discover_method s/Str ;; typed?
+   :security_compromise m/SecurityCompromise
+   :discover_method m/DiscoveryMethod
 
-   :coa_requested [Reference]
-   :coa_taken [Reference]
+   :coa_requested [m/Reference]
+   :coa_taken [m/Reference]
 
-   :confidence s/Str ;; typed?
+   :confidence m/Confidence ;; squashed
 
-   ;; contact?
-   ;; history?
-   ;; information source?
-   ;; handling?
+   (s/optional-key :contact m/Source)
+   (s/optional-key :history) m/History
+
+   ;; Not provided: idref
+   ;; Not provided: URL
+   ;; Not provided: title (seems redundant with descripton)
+   ;; Not provided: external_id
+   ;; Not provided: handling
+   ;; Not provided: related_packages (deprecated)
    })
+
+(s/defschema ExploitTarget
+  ;; TODO - See if this is worth doing ;; covers Vulnerabilities
+  {}
+  )
