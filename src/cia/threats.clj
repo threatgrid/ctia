@@ -13,6 +13,9 @@
             * Prefer references to nested data structures.  Use named
               references we can tell what the reference points at.
             * Use capital letters in identifiers and keywords for acronyms.
+            * Fields should be renamed to their acronyms when we implement the
+              referenced structure.
+            * Rename fields to shorten *smurfy* names (eg threat_actor -> actor)
             * Rename common fields:
                information_source -> source"}
     cia.threats
@@ -23,9 +26,12 @@
               [ring.swagger.schema :refer [coerce!]]))
 
 ;; TODO - README for each section
-;; TODO - Determine which fields should be required
+;; TODO - Determine which fields should be required/optional
 
 ;; References
+(def ActorReference m/Reference)
+(def AssociatedCampaignReference m/Reference)
+(def CampaignReference m/Reference)
 (def COAReference m/Reference)
 (def ExploitTargetReference m/Reference)
 (def ExploitTargetsReference m/Reference)
@@ -45,10 +51,11 @@
     :TTP TTPReference}))
 
 (s/defschema RelatedTTPs
-  "See http://stixproject.github.io/data-model/1.2/ttp/RelatedTTPsType/"
+  "See http://stixproject.github.io/data-model/1.2/ttp/RelatedTTPsType/
+   and http://stixproject.github.io/data-model/1.2/ta/ObservedTTPsType/"
   (merge
    m/ScopeWrapper
-   {:related_TTP [RelatedTTP]}))
+   {:TTP [RelatedTTP]}))
 
 (s/defschema TTP
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
@@ -75,21 +82,61 @@
     ;; Not provided: related_packages (deprecated)
     }))
 
-;;mutable
-(s/defschema Actor
-  "http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/"
-  {:id ID
-   :title s/Str
-   :source s/Str
-   :type  s/Str
-   :timestamp Time
-   :expires Time
+;; Actor
 
-   :description s/Str
-   :short_description s/Str
+(s/defschema RelatedActor
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedThreatActorType/"
+  {(s/optional-key :confidence) m/Confidence
+   (s/optional-key :source) m/Source
+   (s/optional-key :relationship) s/Str
+   :actor [ActorReference]
    })
 
-;;mutable
+(s/defschema AssociatedActors
+  "See http://stixproject.github.io/data-model/1.2/ta/AssociatedActorsType/"
+  (merge
+   m/ScopeWrapper
+   {:associated_actor [RelatedActor]}))
+
+(s/defschema Actor
+  "http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/"
+  (merge
+   m/GenericStixIdentifiers
+   {:timestamp Time
+    (s/optional-key :source) m/Source
+    (s/optional-key :identity) m/Identity
+    :type m/ThreatActorType
+    (s/optional-key :motivation) m/Motivation
+    (s/optional-key :sophistication) m/Sophistication
+    (s/optional-key :intended_effect) m/IntendedEffect
+    (s/optional-key :planning_and_operational_support) s/Str ; Empty vocab
+    (s/optional-key :observed_TTPs) RelatedTTPsReference
+    (s/optional-key :associated_campaigns) AssociatedCampaignReference
+    (s/optional-key :associated_actors) AssociatedActors
+    (s/optional-key :confidence) m/Confidence
+
+    ;; Extension fields:
+    :expires Time
+
+    ;; Not provided: handling
+    ;; Not provided: related_packages
+    }))
+
+;; Campaign
+
+(s/defschema RelatedCampaign
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedCampaignType/"
+  {(s/optional-key :confidence) m/Confidence
+   (s/optional-key :source) m/Source
+   (s/optional-key :relationship) s/Str
+   :campaign CampaignReference})
+
+(s/defschema AssociatedCampaigns
+  "See http://stixproject.github.io/data-model/1.2/ta/AssociatedCampaignsType/"
+  (merge
+   m/ScopeWrapper
+   {:associated_campaign [RelatedCampaign]}))
+
 (s/defschema Campaign
   "See http://stixproject.github.io/data-model/1.2/campaign/CampaignType/"
   {:id ID
@@ -113,7 +160,7 @@
   {(s/optional-key :confidence) m/Confidence
    (s/optional-key :source) m/Source
    (s/optional-key :relationship) s/Str
-   (s/optional-key :course_of_action) COAReference})
+   (s/optional-key :COA) COAReference})
 
 (s/defschema PotentialCOA
   "See http://stixproject.github.io/data-model/1.2/et/PotentialCOAsType/"

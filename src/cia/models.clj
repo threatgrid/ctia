@@ -731,6 +731,48 @@ Malicious disposition, and so on down to Unknown.
    (s/optional-key :cce_id) s/Str ;; The CCE identifier for a configuration item
    })
 
+(def ThreatActorType
+  (s/enum "Cyber Espionage Operations"
+          "Hacker"
+          "Hacker - White hat"
+          "Hacker - Gray hat"
+          "Hacker - Black hat"
+          "Hacktivist"
+          "State Actor / Agency"
+          "eCrime Actor - Credential Theft Botnet Operator"
+          "eCrime Actor - Credential Theft Botnet Service"
+          "eCrime Actor - Malware Developer"
+          "eCrime Actor - Money Laundering Network"
+          "eCrime Actor - Organized Crime Actor"
+          "eCrime Actor - Spam Service"
+          "eCrime Actor - Traffic Service"
+          "eCrime Actor - Underground Call Service"
+          "Insider Threat"
+          "Disgruntled Customer / User"))
+
+(def Motivation
+  (s/enum "Ideological"
+          "Ideological - Anti-Corruption"
+          "Ideological - Anti-Establishment"
+          "Ideological - Environmental"
+          "Ideological - Ethnic / Nationalist"
+          "Ideological - Information Freedom"
+          "Ideological - Religious"
+          "Ideological - Security Awareness"
+          "Ideological - Human Rights"
+          "Ego"
+          "Financial or Economic"
+          "Military"
+          "Opportunistic"
+          "Political"))
+
+(def Sophistication
+  (s/enum "Innovator"
+          "Expert"
+          "Practitioner"
+          "Novice"
+          "Aspirant"))
+
 
 (defonce id-seq (atom 0))
 (defonce judgements (atom (array-map)))
