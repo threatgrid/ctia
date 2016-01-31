@@ -23,6 +23,7 @@
               [ring.swagger.schema :refer [coerce!]]))
 
 ;; TODO - README for each section
+;; TODO - Determine which fields should be required
 
 ;; References
 (def COAReference m/Reference)
@@ -61,7 +62,7 @@
     (s/optional-key :victim_targeting) m/VictimTargeting
     (s/optional-key :exploit_targets) [RelatedExploitTargetReference]
     (s/optional-key :related_TTPs) RelatedTTPsReference
-    (s/optional-key :source) m/Source ; Renamed from information_source
+    (s/optional-key :source) m/Source
 
     ;; Extension fields:
     :type  s/Str
@@ -110,7 +111,7 @@
 (s/defschema RelatedCOA
   "See http://stixproject.github.data-model/1.2/stixCommon/RelatedCourseOfActionType/"
   {(s/optional-key :confidence) m/Confidence
-   (s/optional-key :information_source) m/Source
+   (s/optional-key :source) m/Source
    (s/optional-key :relationship) s/Str
    (s/optional-key :course_of_action) COAReference})
 
@@ -141,7 +142,6 @@
 
    })
 
-;; TODO - Record any fields that are left out, or any squashing in the code
 ;; TODO - Write up transforms and variations in the README, include notes for serialization
 ;; TODO - Add NewIncident and StoredIncident
 (s/defschema Incident
@@ -161,7 +161,7 @@
     (s/optional-key :victim) s/Str
     (s/optional-key :affected_assets) m/AffectedAsset
     (s/optional-key :impact_assessment) m/ImpactAssessment
-    (s/optional-key :source) m/Source ;; was information_source
+    (s/optional-key :source) m/Source
     (s/optional-key :security_compromise) m/SecurityCompromise
     (s/optional-key :discovery_method) m/DiscoveryMethod
     (s/optional-key :coa_requested) [m/Reference]
@@ -173,7 +173,7 @@
     ;; structured data such as confidence and source for each element).
     (s/optional-key :related_indicators) [m/Reference]
     (s/optional-key :related_observables) [m/Reference]
-    (s/optional-key :leveraged_ttps) [m/Reference]
+    (s/optional-key :leveraged_TTPs) [m/Reference]
     (s/optional-key :attributed_actors) [m/Reference] ;; was attributed_threat_actors
     (s/optional-key :related_incidents) [m/Reference]
     (s/optional-key :intended_effect) m/IntendedEffect
@@ -206,7 +206,7 @@
   (merge
    m/GenericStixIdentifiers
    {:timestamp m/Time
-    :vesion s/Str
+    :version s/Str
     :vulnerability [m/Vulnerability]
     :weakness [m/Weakness]
     :configuration [m/Configuration]
