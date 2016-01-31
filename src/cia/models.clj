@@ -3,6 +3,12 @@
             [ring.swagger.schema :refer [coerce!]]
             [clojure.string :as str]))
 
+;; References
+(def Reference
+  "An entity ID, or a URI referring to a remote one."
+  s/Str)
+(def IndicatorReference Reference)
+
 (def ID
   "A string uniquely identifying an entity."
   s/Str)
@@ -13,10 +19,6 @@
 
 (def IDRef
   "A URI that points to the JSON representation of the object."
-  s/Str)
-
-(def Reference
-  "An entity ID, or a URI referring to a remote one."
   s/Str)
 
 (def Time
@@ -34,7 +36,6 @@
    {:title s/Str
     :description [s/Str]
     (s/optional-key :sort_description) [s/Str]}))
-
 
 (def ObservableType
   "Observable type names"
@@ -99,6 +100,10 @@
 
 (def Scope
   (s/either "inclusive" "exclusive"))
+
+(s/defschema ScopeWrapper
+  "For merging into other structures; Commonly repeated structure"
+  {(s/optional-key :scope) Scope})
 
 (def SecurityCompromise
   (s/enum "Yes" "No" "Suspected" "Unknown"))
@@ -694,6 +699,38 @@ Malicious disposition, and so on down to Unknown.
    (s/optional-key :targeted_information) [InformationType]
    ;; Not provided: targeted_technical_details ; Points to ObservablesType
    })
+
+(s/defschema Vulnerability
+  "See http://stixproject.github.io/data-model/1.2/et/VulnerabilityType/"
+  {(s/optional-key :is_known) s/Bool
+   (s/optional-key :is_public_acknowledged) s/Bool
+   :title s/Str
+   :description [s/Str]
+   (s/optional-key :short_description) [s/Str]
+   (s/optional-key :cve_id) s/Str
+   (s/optional-key :osvdb_id) s/Int
+   (s/optional-key :source) s/Str ; source of CVE or OSVDB ref
+   (s/optional-key :discovered_datetime) Time ; Simplified
+   (s/optional-key :published_datetime) Time ; Simplified
+   ;; TODO - :affected_software below is greatly simplified, should it be expanded?
+   (s/optional-key :affected_software) [s/Str]
+   (s/optional-key :references) [URI]
+   ;; Not provided: CVSS_Score ; Should it be?
+   })
+
+(s/defschema Weakness
+  "See http://stixproject.github.io/data-model/1.2/et/WeaknessType/"
+  {:description [s/Str]
+   (s/optional-key :cwe_id) s/Str ;; CWE identifier for a particular weakness
+   })
+
+(s/defschema Configuration
+  "See http://stixproject.github.io/data-model/1.2/et/ConfigurationType/"
+  {:description [s/Str]
+   (s/optional-key :short_description) [s/Str]
+   (s/optional-key :cce_id) s/Str ;; The CCE identifier for a configuration item
+   })
+
 
 (defonce id-seq (atom 0))
 (defonce judgements (atom (array-map)))
