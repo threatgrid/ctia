@@ -16,14 +16,14 @@
             * Use capital letters in identifiers and keywords for acronyms.
             * Fields should be renamed to their acronyms when we implement the
               referenced structure.
-            * Rename fields to shorten *smurfy* names (eg threat_actor -> actor)
+            * Each stored structure should have a NewStructure and
+              StoredStructure schema to match
+            * Rename fields to shorten smurfy names (eg threat_actor -> actor)
             * Rename common fields:
                information_source -> source"}
     cia.threats
     (:require [schema.core :as s]
-              [cia.models
-               :refer [Observable Time URI Confidence Reference ID Indicator]
-               :as m]
+              [cia.models :as m]
               [ring.swagger.schema :refer [coerce!]]))
 
 ;; TODO - README for each section
@@ -35,6 +35,7 @@
 (def COAReference m/Reference)
 (def ExploitTargetReference m/Reference)
 (def IncidentReference m/Reference)
+(def IndicatorReference m/Reference)
 (def TTPReference m/Reference)
 
 
@@ -64,6 +65,8 @@
    m/ScopeWrapper
    {:levereged_TTPs [RelatedTTP]}))
 
+(declare RelatedExploitTarget)
+
 (s/defschema TTP
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
   (merge
@@ -80,7 +83,7 @@
 
     ;; Extension fields:
     :type  s/Str
-    :expires Time
+    :expires m/Time
     :indicators [m/IndicatorReference]
 
     ;; Not provided: kill_chain_phases
@@ -110,11 +113,13 @@
    m/ScopeWrapper
    {:attributed_actors [RelatedActor]}))
 
+(declare AssociatedCampaigns)
+
 (s/defschema Actor
   "http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/"
   (merge
    m/GenericStixIdentifiers
-   {:timestamp Time
+   {:timestamp m/Time
     (s/optional-key :source) m/Source
     (s/optional-key :identity) m/Identity
     :type m/ThreatActorType
@@ -128,7 +133,7 @@
     (s/optional-key :confidence) m/Confidence
 
     ;; Extension fields:
-    :expires Time
+    :expires m/Time
 
     ;; Not provided: handling
     ;; Not provided: related_packages (deprecated)
@@ -139,7 +144,7 @@
 
 (s/defschema RelatedCampaign
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedCampaignType/"
-  (s/merge
+  (merge
    m/RelatedWrapper
    {:campaigns CampaignReference}))
 
@@ -149,10 +154,18 @@
    m/ScopeWrapper
    {:associated_campaigns [RelatedCampaign]}))
 
+(s/defschema RelatedCampaigns
+  "See http://stixproject.github.io/data-model/1.2/indicator/RelatedCampaignReferencesType/"
+  (merge
+   m/ScopeWrapper
+   {:related_campaigns [RelatedCampaign]}))
+
+(declare RelatedIncidents)
+
 (s/defschema Campaign
   "See http://stixproject.github.io/data-model/1.2/campaign/CampaignType/"
   (merge
-   m/GeneralStixIdentifiers
+   m/GenericStixIdentifiers
    {:timestamp Time
     (s/optional-key :version) s/Str
     (s/optional-key :names) [s/Str]
@@ -190,36 +203,117 @@
    m/ScopeWrapper
    {:potential_COAs [RelatedCOA]}))
 
+(s/defschema RelatedCOAs
+  "See http://stixproject.github.io/data-model/1.2/coa/RelatedCOAsType/"
+  (merge
+   m/ScopeWrapper
+   {:related_COAs [RelatedCOA]}))
+
+(s/defschema SuggestedCOAs
+  "See http://stixproject.github.io/data-model/1.2/indicator/SuggestedCOAsType/"
+  (merge
+   m/ScopeWrapper
+   {:suggested_COAs [RelatedCOA]}))
+
 (s/defschema COA
-  {:id ID
-   :title s/Str
-   :stage s/Str ;;fixed vocab
-   :type s/Str
-   :short_description s/Str
-   :description s/Str
+  (merge
+   m/GenericStixIdentifiers
+   {(s/optional-key :timestamp) m/Time
+    (s/optional-key :stage) m/COAStage
+    (s/optional-key :type) m/COAType
+    (s/optional-key :objective) [s/Str] ;; Squashed / simplified
+    (s/optional-key :impact) s/Str
+    (s/optional-key :cost) m/HighMedLow
+    (s/optional-key :efficacy) m/HighMedLow
+    (s/optional-key :source) m/Source
+    (s/optional-key :related_COAs) RelatedCOAs
 
-   :objective [s/Str]
+    ;; Not provided: handling
+    ;; Not provided: parameter_observables ;; Technical params using the CybOX language
+    ;; Not provided: structured_COA ;; actionable structured representation for automation
+    }))
 
-   :impact s/Str
-   :cost s/Str
-   :efficacy s/Str
+;; Indicator
 
-   :source s/Str
+(s/defschema CompositeIndicatorExpression
+  "See http://stixproject.github.io/data-model/1.2/indicator/CompositeIndicatorExpressionType/"
+  {:operator (s/either "and" "or" "not")
+   :indicators [IndicatorReference]})
 
-   :handling s/Str
-   :related_COAs [PotentialCOA]
+(s/defschema RelatedIndicator
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedIndicatorType/"
+  (merge
+   m/RelatedWrapper
+   {:indicator IndicatorReference}))
 
-   })
+(s/defschema RelatedIndicators
+  "See http://stixproject.github.io/data-model/1.2/indicator/RelatedIndicatorsType/"
+  (merge
+   m/ScopeWrapper
+   {:related_indicators [RelatedIndicator]}))
+
+(s/defschema Indicator
+  "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
+  (merge
+   m/GenericStixIdentifiers
+   {(s/optional-key :alternate_ids) [s/Str]
+    (s/optional-key :version) s/Num
+    (s/optional-key :negate) s/Bool ;; Indicates absence of a pattern
+    (s/optional-key :type) [m/IndicatorType]
+    (s/optional-key :valid_time_position) m/ValidTime
+    ;; TODO - Reconcile our observable model
+    ;; with the STIX observable (which is complex)
+    ;; See http://stixproject.github.io/data-model/1.2/cybox/ObservableType/
+    (s/optional-key :observable) s/Str ;; Not the correct structure!
+    (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
+    (s/optional-key :indicated_TTP) RelatedTTP
+    (s/optional-key :likely_impact) s/Str
+    (s/optional-key :suggested_COAs) SuggestedCOAs
+    (s/optional-key :confidence) m/Confidence
+    (s/optional-key :sightings) m/Sightings
+    (s/optional-key :related_indicators) RelatedIndicators
+    (s/optional-key :related_campaigns) RelatedCampaigns
+    (s/optional-key :related_coas) RelatedCOAs
+
+    ;; we should use a conditional based on the :type field of the
+    ;; specification, and not an either
+    (s/optional-key :specifications) [(s/either
+                                       m/JudgementSpecification
+                                       m/ThreatBrainSpecification
+                                       m/SnortSpecification
+                                       m/SIOCSpecification
+                                       m/OpenIOCSpecification)]
+
+    ;; Extension fields:
+    (s/optional-key :expires) Time
+    :producer s/Str
+
+    ;; Not provided: handling
+    ;; Not provided: kill_chain_phases
+    ;; Not provided: test_mechanisms
+    }))
+
+(def NewIndicator
+  (dissoc Indicator :id :idref))
+
+(def StoredIndicator
+  "A feedback record at rest in the storage service"
+  (merge Indicator
+         {:owner s/Str
+          :created Time
+          :timestamp Time}))
+
 
 ;; Incident
 
-;; TODO - Write up transforms and variations in the README, include notes for serialization
+;; TODO - Write up transforms and variations in the README, include notes for
+;;        serialization
 ;; TODO - Add NewIncident and StoredIncident
 
 (s/defschema RelatedIncident
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedIncidentType/"
   (merge
-   RelatedWrapper
+   m/RelatedWrapper
    {:incident IncidentReference}))
 
 (s/defschema RelatedIncidents
@@ -294,13 +388,14 @@
   (merge
    m/GenericStixIdentifiers
    {:timestamp m/Time
-    :version s/Str
-    :vulnerability [m/Vulnerability]
-    :weakness [m/Weakness]
-    :configuration [m/Configuration]
-    :potential_COAs PotentialCOAs
-    :source m/Source
-    :related_exploit_targets RelatedExploitTargets
+    (s/required-key :version) s/Str
+    (s/required-key :vulnerability) [m/Vulnerability]
+    (s/required-key :weakness) [m/Weakness]
+    (s/required-key :configuration) [m/Configuration]
+    (s/required-key :potential_COAs) PotentialCOAs
+    (s/required-key :source) m/Source
+    (s/required-key :related_exploit_targets) RelatedExploitTargets
+
     ;; Not provided: related_packages (deprecated)
     ;; Not provided: handling
     }))

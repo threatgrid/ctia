@@ -37,6 +37,77 @@
     :description [s/Str]
     (s/optional-key :sort_description) [s/Str]}))
 
+(s/defschema TimeStructure
+  "See http://stixproject.github.io/data-model/1.2/cyboxCommon/TimeType/"
+  {(s/optional-key :start_time) Time
+   (s/optional-key :end_time) Time
+   (s/optional-key :produced_time) Time
+   (s/optional-key :received_time) Time})
+
+(def AttackToolType
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/AttackerToolTypeVocab-1.0/"
+  (s/enum "Malware"
+          "Penetration Testing"
+          "Port Scanner"
+          "Traffic Scanner"
+          "Vulnerability Scanner"
+          "Application Scanner"
+          "Password Cracking"))
+
+(s/defschema Tool
+  "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
+  (merge
+   GenericStixIdentifiers
+   {(s/optional-key :name) s/Str
+    (s/optional-key :type) [AttackToolType]
+    (s/optional-key :description) s/Str
+    (s/optional-key :references) [s/Str]
+    (s/optional-key :vendor) s/Str
+    (s/optional-key :version) s/Str
+    (s/optional-key :service_pack) s/Str
+    ;; Not provided: tool_specific_data
+    ;; Not provided: tool_hashes
+    ;; Not provided: tool_configuration
+    ;; Not provided: execution_environment
+    ;; Not provided: errors
+    ;; Not provided: metadata
+    ;; Not provided: compensation_model
+    }))
+
+(s/defschema Source
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/InformationSourceType/"
+  {(s/optional-key :description) s/Str
+   (s/optional-key :idntity) s/Str ;; greatly simplified
+   (s/optional-key :role) s/Str ;; empty vocab
+   (s/optional-key :contributing_sources) [Reference] ;; more Source's
+   (s/optional-key :time) TimeStructure
+   (s/optional-key :tools) [Tool]
+   ;; Not provided: references
+   })
+
+(def Scope
+  (s/either "inclusive" "exclusive"))
+
+(def HighMedLow
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/HighMediumLowVocab-1.0/"
+  (s/enum "Low"
+          "Medium"
+          "High"
+          "None"
+          "Unknown"))
+
+(def Confidence HighMedLow)
+
+(s/defschema ScopeWrapper
+  "For merging into other structures; Commonly repeated structure"
+  {(s/optional-key :scope) Scope})
+
+(s/defschema RelatedWrapper
+  "For merging into RelatedFoo style structures, where Foo is the structure type"
+  {(s/optional-key :confidence) Confidence
+   (s/optional-key :source) Source
+   (s/optional-key :relationship) s/Str})
+
 (def ObservableType
   "Observable type names"
   (s/enum "ip"
@@ -48,6 +119,20 @@
           "md5"
           "sha1"
           "url"))
+
+(def ObservableReference Reference)
+
+(s/defschema RelatedObservable
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedObservableType/"
+  (merge
+   RelatedWrapper
+   {:observable [ObservableReference]}))
+
+(s/defschema RelatedObservables
+  "See http://stixproject.github.io/data-model/1.2/indicator/RelatedObservablesType/"
+  (merge
+   ScopeWrapper
+   {:related_observable [RelatedObservable]}))
 
 (s/defschema Observable
   "A simple, atomic value which has a consistent identity, and is
@@ -66,7 +151,6 @@
    4 "Common"
    5 "Unknown"})
 
-
 (def DispositionNumber
   "Numeric verdict identifiers"
   (apply s/enum (keys disposition-map)))
@@ -74,14 +158,6 @@
 (def DispositionName
   "String verdict identifiers"
   (apply s/enum (vals disposition-map)))
-
-(def Confidence
-  "See http://stixproject.github.io/data-model/1.2/stixVocabs/HighMediumLowVocab-1.0/"
-  (s/enum "Low"
-          "Medium"
-          "High"
-          "None"
-          "Unknown"))
 
 (def Severity s/Int)
 (def Priority
@@ -97,19 +173,6 @@
   (s/enum "Judgements" "Verdicts"
           "Threats" "Relations" "Feeds"
           "Feedback" "COAs" "ExploitTargets"))
-
-(def Scope
-  (s/either "inclusive" "exclusive"))
-
-(s/defschema ScopeWrapper
-  "For merging into other structures; Commonly repeated structure"
-  {(s/optional-key :scope) Scope})
-
-(s/defschema RelatedWrapper
-  "For merging into RelatedFoo style structures, where Foo is the structure type"
-  {(s/optional-key :confidence) m/Confidence
-   (s/optional-key :source) m/Source
-   (s/optional-key :relationship) s/Str})
 
 (def SecurityCompromise
   (s/enum "Yes" "No" "Suspected" "Unknown"))
@@ -240,59 +303,27 @@ Malicious disposition, and so on down to Unknown.
   (s/enum "Judgement" "ThreatBrain" "SIOC" "Snort" "OpenIOC"))
 
 
-(s/defschema Indicator
-  "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
-  {:id s/Str
-   (s/optional-key :alternate_ids) [ID]
+(def IndicatorType
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/IndicatorTypeVocab-1.1/"
+  (s/enum "Malicious E-mail"
+          "IP Watchlist"
+          "File Hash Watchlist"
+          "Domain Watchlist"
+          "URL Watchlist"
+          "Malware Artifacts"
+          "C2"
+          "Anonymization"
+          "Exfiltration"
+          "Host Characteristics"
+          "Compromised PKI Certificate"
+          "Login Name"
+          "IMEI Watchlist"
+          "IMSI Watchlist"))
 
-   (s/optional-key :version) s/Num
-
-   :title s/Str
-
-   :type s/Str ;; fixed vocab
-
-   :producer s/Str
-   (s/optional-key :short_description) s/Str ;; simple string only
-   (s/optional-key :description) s/Str       ;; can be markdown
-
-   (s/optional-key :expires) Time
-
-   (s/optional-key :indicated_ttps) [Reference]
-   (s/optional-key :kill_chain_phases) [s/Str] ;; fixed vocab
-
-   (s/optional-key :test_mechanisms) [s/Str]
-   (s/optional-key :likely_impact) s/Str  ;; fixed vocab
-
-   (s/optional-key :handling) s/Str ;; fixed vocab
-   (s/optional-key :confidence) Confidence
-
-   (s/optional-key :related_indicators) [Reference]
-   (s/optional-key :related_campaigns) [Reference]
-
-   (s/optional-key :related_coas) [Reference]
-
-
-
-   ;; we should use a conditional based on the :type field of the
-   ;; specification, and not an either
-   (s/optional-key :specifications) [(s/either
-                                      JudgementSpecification
-                                      ThreatBrainSpecification
-                                      SnortSpecification
-                                      SIOCSpecification
-                                      OpenIOCSpecification
-                                      )]})
-
-(def NewIndicator
-  (dissoc Indicator :id))
-
-(def StoredIndicator
-  "A feedback record at rest in the storage service"
-  (merge Indicator
-         {:owner s/Str
-          :created Time
-          :timestamp Time}
-         ))
+(s/defschema ValidTime
+  "See http://stixproject.github.io/data-model/1.2/indicator/ValidTimeType/"
+  {(s/optional-key :start_time) Time
+   (s/optional-key :end_time) Time})
 
 (def OwnershipClass
   (s/enum "Internally-Owned"
@@ -448,53 +479,19 @@ Malicious disposition, and so on down to Unknown.
           "Scans/Probes/Attempted Access"
           "Investigation"))
 
-(s/defschema TimeStructure
-  "See http://stixproject.github.io/data-model/1.2/cyboxCommon/TimeType/"
-  {(s/optional-key :start_time) Time
-   (s/optional-key :end_time) Time
-   (s/optional-key :produced_time) Time
-   (s/optional-key :received_time) Time})
+(s/defschema Sighting
+  "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
+  {(s/optional-key :timestamp) Time
+   (s/optional-key :source) Source
+   (s/optional-key :reference) URI
+   (s/optional-key :confidence) Confidence
+   (s/optional-key :description) [s/Str]
+   (s/optional-key :related_observables) RelatedObservables})
 
-(def AttackToolType
-  "See http://stixproject.github.io/data-model/1.2/stixVocabs/AttackerToolTypeVocab-1.0/"
-  (s/enum "Malware"
-          "Penetration Testing"
-          "Port Scanner"
-          "Traffic Scanner"
-          "Vulnerability Scanner"
-          "Application Scanner"
-          "Password Cracking"))
-
-(s/defschema Tool
-  "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
-  (merge
-   GenericStixIdentifiers
-   {(s/optional-key :name) s/Str
-    (s/optional-key :type) [AttackToolType]
-    (s/optional-key :description) s/Str
-    (s/optional-key :references) [s/Str]
-    (s/optional-key :vendor) s/Str
-    (s/optional-key :version) s/Str
-    (s/optional-key :service_pack) s/Str
-    ;; Not provided: tool_specific_data
-    ;; Not provided: tool_hashes
-    ;; Not provided: tool_configuration
-    ;; Not provided: execution_environment
-    ;; Not provided: errors
-    ;; Not provided: metadata
-    ;; Not provided: compensation_model
-    }))
-
-(s/defschema Source
-  "See http://stixproject.github.io/data-model/1.2/stixCommon/InformationSourceType/"
-  {(s/optional-key :description) s/Str
-   (s/optional-key :idntity) s/Str ;; greatly simplified
-   (s/optional-key :role) s/Str ;; empty vocab
-   (s/optional-key :contributing_sources) [Reference] ;; more Source's
-   (s/optional-key :time) TimeStructure
-   (s/optional-key :tools) [Tool]
-   ;; Not provided: references
-   })
+(s/defschema Sightings
+  "See http://stixproject.github.io/data-model/1.2/indicator/SightingsType/"
+  {(s/optional-key :sightings_count) s/Int
+   :sightings [Sighting]})
 
 (def Status
   (s/enum "New"
@@ -791,13 +788,37 @@ Malicious disposition, and so on down to Unknown.
    (s/optional-key :email) s/Str
    (s/optional-key :phone) s/Str
    (s/optional-key :organization) s/Str
-   (s/optional-key :organization) Time
+   (s/optional-key :date) Time
    (s/optional-key :contribution_location) s/Str})
 
 (s/defschema Activity
   "See http://stixproject.github.io/data-model/1.2/stixCommon/ActivityType/"
   {:date_time Time
    :description s/Str})
+
+(def COAStage
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/COAStageVocab-1.0/"
+  (s/enum "Remedy"
+          "Response"))
+
+(def COAType
+  "See http://stixproject.github.io/data-model/1.2/stixVocabs/CourseOfActionTypeVocab-1.0/"
+  (s/enum "Perimeter Blocking"
+          "Internal Blocking"
+          "Redirection"
+          "Redirection (Honey Pot)"
+          "Hardening"
+          "Patching"
+          "Eradication"
+          "Rebuilding"
+          "Training"
+          "Monitoring"
+          "Physical Access Restrictions"
+          "Logical Access Restrictions"
+          "Public Disclosure"
+          "Diplomatic Actions"
+          "Policy Actions"
+          "Other"))
 
 
 (defonce id-seq (atom 0))
