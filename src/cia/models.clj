@@ -105,6 +105,12 @@
   "For merging into other structures; Commonly repeated structure"
   {(s/optional-key :scope) Scope})
 
+(s/defschema RelatedWrapper
+  "For merging into RelatedFoo style structures, where Foo is the structure type"
+  {(s/optional-key :confidence) m/Confidence
+   (s/optional-key :source) m/Source
+   (s/optional-key :relationship) s/Str})
+
 (def SecurityCompromise
   (s/enum "Yes" "No" "Suspected" "Unknown"))
 
@@ -772,6 +778,26 @@ Malicious disposition, and so on down to Unknown.
           "Practitioner"
           "Novice"
           "Aspirant"))
+
+(def CampaignStatus
+  (s/enum "Ongoing"
+          "Historic"
+          "Future"))
+
+(s/defschema Contributor
+  "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ContributorType/"
+  {(s/optional-key :role) s/Str
+   (s/optional-key :name) s/Str
+   (s/optional-key :email) s/Str
+   (s/optional-key :phone) s/Str
+   (s/optional-key :organization) s/Str
+   (s/optional-key :organization) Time
+   (s/optional-key :contribution_location) s/Str})
+
+(s/defschema Activity
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/ActivityType/"
+  {:date_time Time
+   :description s/Str})
 
 
 (defonce id-seq (atom 0))

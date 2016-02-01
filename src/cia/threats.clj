@@ -12,6 +12,7 @@
             * Note which fields are added by us (not part of STIX).
             * Prefer references to nested data structures.  Use named
               references we can tell what the reference points at.
+            * References should point to stored object types.
             * Use capital letters in identifiers and keywords for acronyms.
             * Fields should be renamed to their acronyms when we implement the
               referenced structure.
@@ -30,32 +31,38 @@
 
 ;; References
 (def ActorReference m/Reference)
-(def AssociatedCampaignReference m/Reference)
 (def CampaignReference m/Reference)
 (def COAReference m/Reference)
 (def ExploitTargetReference m/Reference)
-(def ExploitTargetsReference m/Reference)
-(def PotentialCOAReference m/Reference)
-(def RelatedExploitTargetReference m/Reference)
-(def RelatedTTPsReference m/Reference)
+(def IncidentReference m/Reference)
 (def TTPReference m/Reference)
+
 
 ;; Tools, Techniques, & Processes (TTP)
 
 (s/defschema RelatedTTP
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedTTPType/"
   (merge
-   m/ScopeWrapper
-   {(s/optional-key :confidence) m/Confidence
-    (s/optional-key :relationship) s/Str
-    :TTP TTPReference}))
+   m/RelatedWrapper
+   {:TTP TTPReference}))
 
 (s/defschema RelatedTTPs
-  "See http://stixproject.github.io/data-model/1.2/ttp/RelatedTTPsType/
-   and http://stixproject.github.io/data-model/1.2/ta/ObservedTTPsType/"
+  "See http://stixproject.github.io/data-model/1.2/ttp/RelatedTTPsType/"
   (merge
    m/ScopeWrapper
-   {:TTP [RelatedTTP]}))
+   {:related_TTPs [RelatedTTP]}))
+
+(s/defschema ObservedTTPs
+  "See http://stixproject.github.io/data-model/1.2/ta/ObservedTTPsType/"
+  (merge
+   m/ScopeWrapper
+   {:observed_TTPs [RelatedTTP]}))
+
+(s/defschema LeveragedTTPs
+  "See http://stixproject.github.io/data-model/1.2/incident/LeveragedTTPsType/"
+  (merge
+   m/ScopeWrapper
+   {:levereged_TTPs [RelatedTTP]}))
 
 (s/defschema TTP
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
@@ -67,8 +74,8 @@
     (s/optional-key :behavior) m/Behavior
     (s/optional-key :resources) m/Resource
     (s/optional-key :victim_targeting) m/VictimTargeting
-    (s/optional-key :exploit_targets) [RelatedExploitTargetReference]
-    (s/optional-key :related_TTPs) RelatedTTPsReference
+    (s/optional-key :exploit_targets) [RelatedExploitTarget]
+    (s/optional-key :related_TTPs) RelatedTTPs
     (s/optional-key :source) m/Source
 
     ;; Extension fields:
@@ -82,21 +89,26 @@
     ;; Not provided: related_packages (deprecated)
     }))
 
+
 ;; Actor
 
 (s/defschema RelatedActor
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedThreatActorType/"
-  {(s/optional-key :confidence) m/Confidence
-   (s/optional-key :source) m/Source
-   (s/optional-key :relationship) s/Str
-   :actor [ActorReference]
-   })
+  (merge
+   m/RelatedWrapper
+   {:actor [ActorReference]}))
 
 (s/defschema AssociatedActors
   "See http://stixproject.github.io/data-model/1.2/ta/AssociatedActorsType/"
   (merge
    m/ScopeWrapper
-   {:associated_actor [RelatedActor]}))
+   {:associated_actors [RelatedActor]}))
+
+(s/defschema AttributedActors
+  "See http://stixproject.github.io/data-model/1.2/incident/AttributedThreatActorsType/"
+  (merge
+   m/ScopeWrapper
+   {:attributed_actors [RelatedActor]}))
 
 (s/defschema Actor
   "http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/"
@@ -110,8 +122,8 @@
     (s/optional-key :sophistication) m/Sophistication
     (s/optional-key :intended_effect) m/IntendedEffect
     (s/optional-key :planning_and_operational_support) s/Str ; Empty vocab
-    (s/optional-key :observed_TTPs) RelatedTTPsReference
-    (s/optional-key :associated_campaigns) AssociatedCampaignReference
+    (s/optional-key :observed_TTPs) RelatedTTPs
+    (s/optional-key :associated_campaigns) AssociatedCampaigns
     (s/optional-key :associated_actors) AssociatedActors
     (s/optional-key :confidence) m/Confidence
 
@@ -119,54 +131,64 @@
     :expires Time
 
     ;; Not provided: handling
-    ;; Not provided: related_packages
+    ;; Not provided: related_packages (deprecated)
     }))
+
 
 ;; Campaign
 
 (s/defschema RelatedCampaign
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedCampaignType/"
-  {(s/optional-key :confidence) m/Confidence
-   (s/optional-key :source) m/Source
-   (s/optional-key :relationship) s/Str
-   :campaign CampaignReference})
+  (s/merge
+   m/RelatedWrapper
+   {:campaigns CampaignReference}))
 
 (s/defschema AssociatedCampaigns
   "See http://stixproject.github.io/data-model/1.2/ta/AssociatedCampaignsType/"
   (merge
    m/ScopeWrapper
-   {:associated_campaign [RelatedCampaign]}))
+   {:associated_campaigns [RelatedCampaign]}))
 
 (s/defschema Campaign
   "See http://stixproject.github.io/data-model/1.2/campaign/CampaignType/"
-  {:id ID
-   :title s/Str
-   :source s/Str
-   :type  s/Str
-   :timestamp Time
-   :expires Time
+  (merge
+   m/GeneralStixIdentifiers
+   {:timestamp Time
+    (s/optional-key :version) s/Str
+    (s/optional-key :names) [s/Str]
+    (s/optional-key :intended_effect) [m/IntendedEffect]
+    (s/optional-key :status) m/CampaignStatus
+    (s/optional-key :related_TTPs) RelatedTTPs
+    (s/optional-key :related_incidents) RelatedIncidents
+    (s/optional-key :attribution) AttributedActors
+    (s/optional-key :associated_campaigns) AssociatedCampaigns
+    (s/optional-key :confidence) m/Confidence
+    (s/optional-key :activity) m/Activity
+    (s/optional-key :source) m/Source
 
-   :description s/Str
-   :short_description s/Str
+    ;; Extension fields:
+    :type  s/Str
+    :expires m/Time
+    :indicators [m/Reference] ;; TODO - Specify reference type
 
-   :indicators [Reference]
+    ;; Not provided: Handling
+    ;; Not provided: related_packages (deprecated)
+    }))
 
-   })
 
 ;; Course of Action (COA)
 
 (s/defschema RelatedCOA
   "See http://stixproject.github.data-model/1.2/stixCommon/RelatedCourseOfActionType/"
-  {(s/optional-key :confidence) m/Confidence
-   (s/optional-key :source) m/Source
-   (s/optional-key :relationship) s/Str
-   (s/optional-key :COA) COAReference})
+  (merge
+   m/RelatedWrapper
+   {(s/optional-key :COA) COAReference}))
 
-(s/defschema PotentialCOA
+(s/defschema PotentialCOAs
   "See http://stixproject.github.io/data-model/1.2/et/PotentialCOAsType/"
   (merge
    m/ScopeWrapper
-   {:potential_COA [RelatedCOA]}))
+   {:potential_COAs [RelatedCOA]}))
 
 (s/defschema COA
   {:id ID
@@ -185,22 +207,44 @@
    :source s/Str
 
    :handling s/Str
-   :related_COAs [PotentialCOAReference]
+   :related_COAs [PotentialCOA]
 
    })
 
+;; Incident
+
 ;; TODO - Write up transforms and variations in the README, include notes for serialization
 ;; TODO - Add NewIncident and StoredIncident
+
+(s/defschema RelatedIncident
+  "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedIncidentType/"
+  (merge
+   RelatedWrapper
+   {:incident IncidentReference}))
+
+(s/defschema RelatedIncidents
+  "See http://stixproject.github.io/data-model/1.2/campaign/RelatedIncidentsType/"
+  (merge
+   m/ScopeWrapper
+   {:related_incidents [RelatedIncident]}))
+
+(s/defschema COARequested
+  "See http://stixproject.github.io/data-model/1.2/incident/COARequestedType/
+   and http://stixproject.github.io/data-model/1.2/incident/COATakenType/"
+  {(s/optional-key :time) m/Time
+   (s/optional-key :contributors) [m/Contributor]
+   :COA COAReference})
+
 (s/defschema Incident
   "See http://stixproject.github.io/data-model/1.2/incident/IncidentType/"
   (merge
    m/GenericStixIdentifiers
    {:timestamp m/Time ;; timestamp "for this version"; optional in spec
-    :confidence m/Confidence ;; squashed
+    :confidence m/Confidence ;; squashed; TODO - Consider expanding
 
     (s/optional-key :status) m/Status
     (s/optional-key :version) s/Str
-    (s/optional-key :time) m/IncidentTime
+    (s/optional-key :incident_time) m/IncidentTime ;; Was "time"; renamed for clarity
     (s/optional-key :categories) [m/IncidentCategory]
     (s/optional-key :reporter) m/Source
     (s/optional-key :responder) m/Source
@@ -211,18 +255,18 @@
     (s/optional-key :source) m/Source
     (s/optional-key :security_compromise) m/SecurityCompromise
     (s/optional-key :discovery_method) m/DiscoveryMethod
-    (s/optional-key :coa_requested) [m/Reference]
-    (s/optional-key :coa_taken) [m/Reference]
+    (s/optional-key :coa_requested) [m/COARequested]
+    (s/optional-key :coa_taken) [m/COARequested]
     (s/optional-key :contact) m/Source
     (s/optional-key :history) m/History
 
     ;; The seqs of elements below are squashed (they leave out
     ;; structured data such as confidence and source for each element).
-    (s/optional-key :related_indicators) [m/Reference]
-    (s/optional-key :related_observables) [m/Reference]
-    (s/optional-key :leveraged_TTPs) [m/Reference]
-    (s/optional-key :attributed_actors) [m/Reference] ;; was attributed_threat_actors
-    (s/optional-key :related_incidents) [m/Reference]
+    (s/optional-key :related_indicators) [RelatedIndicators]
+    (s/optional-key :related_observables) [m/Reference] ;; TODO - Specify the reference type
+    (s/optional-key :leveraged_TTPs) [LeveragedTTPs]
+    (s/optional-key :attributed_actors) [AttributedActors] ;; was attributed_threat_actors
+    (s/optional-key :related_incidents) [RelatedIncidents]
     (s/optional-key :intended_effect) m/IntendedEffect
 
     ;; Not provided: URL
@@ -231,17 +275,14 @@
     ;; Not provided: related_packages (deprecated)
     }))
 
+
 ;; Exploit Target
 
-;; TODO - Is this too much information?  This is a wrapper around ExploitTarget.
-;;        Could we just live without it?
 (s/defschema RelatedExploitTarget
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedExploitTargetType/"
-  {(s/optional-key :confidence) m/Confidence
-   (s/optional-key :source) m/Source
-   (s/optional-key :relationship) s/Str
-   :exploit_target  ExploitTargetReference
-   })
+  (merge
+   m/RelatedWrapper
+   {:exploit_target  ExploitTargetReference}))
 
 (s/defschema ExploitTargets
   "See http://stixproject.github.io/data-model/1.2/ttp/ExploitTargetsType/"
@@ -257,9 +298,9 @@
     :vulnerability [m/Vulnerability]
     :weakness [m/Weakness]
     :configuration [m/Configuration]
-    :potential_COAs PotentialCOAReference
+    :potential_COAs PotentialCOAs
     :source m/Source
-    :related_exploit_targets RelatedExploitTargetReference
+    :related_exploit_targets RelatedExploitTargets
     ;; Not provided: related_packages (deprecated)
     ;; Not provided: handling
     }))
