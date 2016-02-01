@@ -166,7 +166,7 @@
   "See http://stixproject.github.io/data-model/1.2/campaign/CampaignType/"
   (merge
    m/GenericStixIdentifiers
-   {:timestamp Time
+   {:timestamp m/Time
     (s/optional-key :version) s/Str
     (s/optional-key :names) [s/Str]
     (s/optional-key :intended_effect) [m/IntendedEffect]
@@ -285,7 +285,7 @@
                                        m/OpenIOCSpecification)]
 
     ;; Extension fields:
-    (s/optional-key :expires) Time
+    (s/optional-key :expires) m/Time
     :producer s/Str
 
     ;; Not provided: handling
@@ -300,8 +300,8 @@
   "A feedback record at rest in the storage service"
   (merge Indicator
          {:owner s/Str
-          :created Time
-          :timestamp Time}))
+          :created m/Time
+          :timestamp m/Time}))
 
 
 ;; Incident
@@ -349,8 +349,8 @@
     (s/optional-key :source) m/Source
     (s/optional-key :security_compromise) m/SecurityCompromise
     (s/optional-key :discovery_method) m/DiscoveryMethod
-    (s/optional-key :coa_requested) [m/COARequested]
-    (s/optional-key :coa_taken) [m/COARequested]
+    (s/optional-key :coa_requested) [COARequested]
+    (s/optional-key :coa_taken) [COARequested]
     (s/optional-key :contact) m/Source
     (s/optional-key :history) m/History
 
@@ -378,7 +378,7 @@
    m/RelatedWrapper
    {:exploit_target  ExploitTargetReference}))
 
-(s/defschema ExploitTargets
+(s/defschema RelatedExploitTargets
   "See http://stixproject.github.io/data-model/1.2/ttp/ExploitTargetsType/"
   {(s/optional-key :scope) m/Scope
    :exploit_targets [RelatedExploitTarget]})
