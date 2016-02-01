@@ -86,7 +86,7 @@
    })
 
 (def Scope
-  (s/either "inclusive" "exclusive"))
+  (s/enum "inclusive" "exclusive"))
 
 (def HighMedLow
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/HighMediumLowVocab-1.0/"
