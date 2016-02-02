@@ -57,7 +57,7 @@
     (s/optional-key :behavior) Behavior
     (s/optional-key :resources) Resource
     (s/optional-key :victim_targeting) VictimTargeting
-    (s/optional-key :exploit_targets) [rel/RelatedExploitTarget]
+    (s/optional-key :exploit_targets) rel/RelatedExploitTargets
     (s/optional-key :related_TTPs) rel/RelatedTTPs
     (s/optional-key :source) c/Source
 

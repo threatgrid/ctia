@@ -20,8 +20,8 @@ STIX project data structures converted to Prismatic schemas
   - [ ] Expand exploit_target -> Vulnerability -> :affected_software?
   - [ ] Provide exploit_target -> Vulnerability -> CVSS_Score?
   - [ ] Add NewFoo and StoredFoo for each structure
-  - [ ] Where structures are wrapped with scope, confidence, etc., should we
-    allow direct references?  (probably yes)
+  - [X] Where relationships are wrapped with scope, confidence, etc., should we
+    allow direct references?  (yes)
 
 * How to convert a STIX specification to one of our schemas:
 

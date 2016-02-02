@@ -47,7 +47,6 @@
    GenericStixIdentifiers
    {(s/optional-key :name) s/Str
     (s/optional-key :type) [v/AttackToolType]
-    (s/optional-key :description) s/Str
     (s/optional-key :references) [s/Str]
     (s/optional-key :vendor) s/Str
     (s/optional-key :version) s/Str

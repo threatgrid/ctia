@@ -18,6 +18,19 @@
    (s/optional-key :source) c/Source
    (s/optional-key :relationship) s/Str})
 
+(defmacro defrel
+  "Create the common scoped relationship structure in STIX, but also allow it be
+   replaced with a simple vector of references"
+  ([name reference merge-map]
+   `(defrel ~name "" ~reference ~merge-map))
+  ([name doc reference merge-map]
+   `(s/defschema ~name
+      (s/either
+       (merge
+        c/ScopeWrapper
+        ~merge-map)
+       [~reference]))))
+
 ;; indicator
 
 (s/defschema RelatedIndicator
@@ -26,11 +39,9 @@
    RelatedWrapper
    {:indicator IndicatorReference}))
 
-(s/defschema RelatedIndicators
+(defrel RelatedIndicators
   "See http://stixproject.github.io/data-model/1.2/indicator/RelatedIndicatorsType/"
-  (merge
-   c/ScopeWrapper
-   {:related_indicators [RelatedIndicator]}))
+  IndicatorReference {:related_indicators [RelatedIndicator]})
 
 ;; actor
 
@@ -40,17 +51,13 @@
    RelatedWrapper
    {:actor [ActorReference]}))
 
-(s/defschema AssociatedActors
+(defrel AssociatedActors
   "See http://stixproject.github.io/data-model/1.2/ta/AssociatedActorsType/"
-  (merge
-   c/ScopeWrapper
-   {:associated_actors [RelatedActor]}))
+  ActorReference {:associated_actors [RelatedActor]})
 
-(s/defschema AttributedActors
+(defrel AttributedActors
   "See http://stixproject.github.io/data-model/1.2/incident/AttributedThreatActorsType/"
-  (merge
-   c/ScopeWrapper
-   {:attributed_actors [RelatedActor]}))
+  ActorReference {:attributed_actors [RelatedActor]})
 
 ;; campaign
 
@@ -60,17 +67,13 @@
    RelatedWrapper
    {:campaigns CampaignReference}))
 
-(s/defschema AssociatedCampaigns
+(defrel AssociatedCampaigns
   "See http://stixproject.github.io/data-model/1.2/ta/AssociatedCampaignsType/"
-  (merge
-   c/ScopeWrapper
-   {:associated_campaigns [RelatedCampaign]}))
+  CampaignReference {:associated_campaigns [RelatedCampaign]})
 
-(s/defschema RelatedCampaigns
+(defrel RelatedCampaigns
   "See http://stixproject.github.io/data-model/1.2/indicator/RelatedCampaignReferencesType/"
-  (merge
-   c/ScopeWrapper
-   {:related_campaigns [RelatedCampaign]}))
+  CampaignReference {:related_campaigns [RelatedCampaign]})
 
 ;; coa
 
@@ -80,23 +83,17 @@
    RelatedWrapper
    {(s/optional-key :COA) COAReference}))
 
-(s/defschema PotentialCOAs
+(defrel PotentialCOAs
   "See http://stixproject.github.io/data-model/1.2/et/PotentialCOAsType/"
-  (merge
-   c/ScopeWrapper
-   {:potential_COAs [RelatedCOA]}))
+  COAReference {:potential_COAs [RelatedCOA]})
 
-(s/defschema RelatedCOAs
+(defrel RelatedCOAs
   "See http://stixproject.github.io/data-model/1.2/coa/RelatedCOAsType/"
-  (merge
-   c/ScopeWrapper
-   {:related_COAs [RelatedCOA]}))
+  COAReference {:related_COAs [RelatedCOA]})
 
-(s/defschema SuggestedCOAs
+(defrel SuggestedCOAs
   "See http://stixproject.github.io/data-model/1.2/indicator/SuggestedCOAsType/"
-  (merge
-   c/ScopeWrapper
-   {:suggested_COAs [RelatedCOA]}))
+  COAReference {:suggested_COAs [RelatedCOA]})
 
 (s/defschema COARequested
   "See http://stixproject.github.io/data-model/1.2/incident/COARequestedType/
@@ -113,11 +110,9 @@
    RelatedWrapper
    {:exploit_target ExploitTargetReference}))
 
-(s/defschema RelatedExploitTargets
+(defrel RelatedExploitTargets
   "See http://stixproject.github.io/data-model/1.2/ttp/ExploitTargetsType/"
-  (merge
-   c/ScopeWrapper
-   {:exploit_targets [RelatedExploitTarget]}))
+  ExploitTargetReference {:exploit_targets [RelatedExploitTarget]})
 
 ;; incident
 
@@ -127,11 +122,9 @@
    RelatedWrapper
    {:incident IncidentReference}))
 
-(s/defschema RelatedIncidents
+(defrel RelatedIncidents
   "See http://stixproject.github.io/data-model/1.2/campaign/RelatedIncidentsType/"
-  (merge
-   c/ScopeWrapper
-   {:related_incidents [RelatedIncident]}))
+  IncidentReference {:related_incidents [RelatedIncident]})
 
 ;; indicator
 
@@ -148,23 +141,17 @@
    RelatedWrapper
    {:TTP TTPReference}))
 
-(s/defschema RelatedTTPs
+(defrel RelatedTTPs
   "See http://stixproject.github.io/data-model/1.2/ttp/RelatedTTPsType/"
-  (merge
-   c/ScopeWrapper
-   {:related_TTPs [RelatedTTP]}))
+  TTPReference {:related_TTPs [RelatedTTP]})
 
-(s/defschema ObservedTTPs
+(defrel ObservedTTPs
   "See http://stixproject.github.io/data-model/1.2/ta/ObservedTTPsType/"
-  (merge
-   c/ScopeWrapper
-   {:observed_TTPs [RelatedTTP]}))
+  TTPReference {:observed_TTPs [RelatedTTP]})
 
-(s/defschema LeveragedTTPs
+(defrel LeveragedTTPs
   "See http://stixproject.github.io/data-model/1.2/incident/LeveragedTTPsType/"
-  (merge
-   c/ScopeWrapper
-   {:levereged_TTPs [RelatedTTP]}))
+  TTPReference {:levereged_TTPs [RelatedTTP]})
 
 ;; observable
 
@@ -174,8 +161,6 @@
    RelatedWrapper
    {:observable [ObservableReference]}))
 
-(s/defschema RelatedObservables
+(defrel RelatedObservables
   "See http://stixproject.github.io/data-model/1.2/indicator/RelatedObservablesType/"
-  (merge
-   c/ScopeWrapper
-   {:related_observable [RelatedObservable]}))
+  ObservableReference {:related_observable [RelatedObservable]})
