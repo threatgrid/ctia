@@ -25,6 +25,7 @@
    `(defrel ~name "" ~reference ~merge-map))
   ([name doc reference merge-map]
    `(s/defschema ~name
+      ~doc
       (s/either
        (merge
         c/ScopeWrapper
