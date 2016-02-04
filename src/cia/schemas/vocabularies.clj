@@ -272,7 +272,7 @@
           "Employee-Owned"
           "Partner-Owned"
           "Customer-Owned"
-          "Unkown"))
+          "Unknown"))
 
 (def Scope
   "Not a defined vocab, this enum is commonly repeated"

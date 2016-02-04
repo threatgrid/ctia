@@ -14,7 +14,7 @@
   "See http://stixproject.github.io/data-model/1.2/ttp/MalwareInstanceType/"
   (merge
    c/GenericStixIdentifiers
-   {(s/optional-key :type) [v/MalwareType]
+   {:type [v/MalwareType]
     ;; Not provided: name ; empty vocab
     }))
 

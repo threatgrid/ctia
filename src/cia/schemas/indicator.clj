@@ -34,12 +34,12 @@
 (s/defschema SIOCSpecification
   "An indicator which runs in snort..."
   {:type (s/eq "SIOC")
-   :sioc s/Str})
+   :SIOC s/Str})
 
 (s/defschema OpenIOCSpecification
   "An indicator which contains an XML blob of an openIOC indicator.."
   {:type (s/eq "OpenIOC")
-   :openIOC s/Str})
+   :open_IOC s/Str})
 
 (s/defschema Sighting
   "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
@@ -64,10 +64,7 @@
     (s/optional-key :negate) s/Bool ;; Indicates absence of a pattern
     (s/optional-key :type) [v/IndicatorType]
     (s/optional-key :valid_time_position) ValidTime
-    ;; TODO - Reconcile our observable model
-    ;; with the STIX observable (which is complex)
-    ;; See http://stixproject.github.io/data-model/1.2/cybox/ObservableType/
-    (s/optional-key :observable) s/Str ;; Not the correct structure!
+    (s/optional-key :observable) rel/ObservableReference
     (s/optional-key :composite_indicator_expression) rel/CompositeIndicatorExpression
     (s/optional-key :indicated_TTP) rel/RelatedTTP
     (s/optional-key :likely_impact) s/Str
@@ -76,7 +73,7 @@
     (s/optional-key :sightings) Sightings
     (s/optional-key :related_indicators) rel/RelatedIndicators
     (s/optional-key :related_campaigns) rel/RelatedCampaigns
-    (s/optional-key :related_coas) rel/RelatedCOAs
+    (s/optional-key :related_COAs) rel/RelatedCOAs
 
     ;; Extension fields:
     (s/optional-key :expires) c/Time

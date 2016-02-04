@@ -26,11 +26,11 @@
   ([name doc reference merge-map]
    `(s/defschema ~name
       ~doc
-      (s/either
-       (merge
-        c/ScopeWrapper
-        ~merge-map)
-       [~reference]))))
+      (s/conditional
+       map? (merge
+             c/ScopeWrapper
+             ~merge-map)
+       :else [~reference]))))
 
 ;; indicator
 
@@ -66,7 +66,7 @@
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedCampaignType/"
   (merge
    RelatedWrapper
-   {:campaigns CampaignReference}))
+   {:campaign CampaignReference}))
 
 (defrel AssociatedCampaigns
   "See http://stixproject.github.io/data-model/1.2/ta/AssociatedCampaignsType/"

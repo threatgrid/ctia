@@ -22,8 +22,12 @@ STIX project data structures converted to Prismatic schemas
   - [ ] Add NewFoo and StoredFoo for each structure
   - [X] Where relationships are wrapped with scope, confidence, etc., should we
     allow direct references?  (yes)
+  - [ ] Consider dropping incident history
+  - [ ] Should every structure with an id/idref field be stored (such as Tool)?
 
 * How to convert a STIX specification to one of our schemas:
+
+** Update the data_structures.md document for any schema changes!
 
 ** Value practical and concrete over extensible and abstract
 

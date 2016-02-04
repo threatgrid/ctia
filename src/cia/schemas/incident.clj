@@ -23,10 +23,10 @@
   {(s/optional-key :type) s/Str
    (s/optional-key :description) [s/Str]
    (s/optional-key :ownership_class) v/OwnershipClass
-   (s/optional-key :managment_class) v/ManagementClass
+   (s/optional-key :management_class) v/ManagementClass
    (s/optional-key :location_class) v/LocationClass
    (s/optional-key :property_affected) PropertyAffected ;; Unnested NatureOfSecurityEffect
-   (s/optional-key :identifying_observables) [c/Reference] ;; Points to Observable ; TODO - Name
+   (s/optional-key :identifying_observables) rel/RelatedObservables
    ;; Not Provided: business_function_or_role
    ;; Not Provided: location (undefined/abstract type); Could be [s/Str]
    })
@@ -78,7 +78,7 @@
 
 (s/defschema History
   "See http://stixproject.github.io/data-model/1.2/incident/HistoryItemType/"
-  {(s/optional-key :action_entry) c/Reference ;; COA
+  {(s/optional-key :action_entry) [rel/COARequested]
    (s/optional-key :journal_entry) s/Str ;; simplified
    })
 
@@ -97,7 +97,7 @@
     (s/optional-key :responder) c/Source
     (s/optional-key :coordinator) c/Source
     (s/optional-key :victim) s/Str
-    (s/optional-key :affected_assets) AffectedAsset
+    (s/optional-key :affected_assets) [AffectedAsset]
     (s/optional-key :impact_assessment) ImpactAssessment
     (s/optional-key :source) c/Source
     (s/optional-key :security_compromise) v/SecurityCompromise
@@ -105,15 +105,15 @@
     (s/optional-key :coa_requested) [rel/COARequested]
     (s/optional-key :coa_taken) [rel/COARequested]
     (s/optional-key :contact) c/Source
-    (s/optional-key :history) History
+    (s/optional-key :history) [History]
 
     ;; The seqs of elements below are squashed (they leave out
     ;; structured data such as confidence and source for each element).
-    (s/optional-key :related_indicators) [rel/RelatedIndicators]
-    (s/optional-key :related_observables) [c/Reference] ;; TODO - Specify the reference type
-    (s/optional-key :leveraged_TTPs) [rel/LeveragedTTPs]
-    (s/optional-key :attributed_actors) [rel/AttributedActors] ;; was attributed_threat_actors
-    (s/optional-key :related_incidents) [rel/RelatedIncidents]
+    (s/optional-key :related_indicators) rel/RelatedIndicators
+    (s/optional-key :related_observables) rel/RelatedObservables ;; TODO - Specify the reference type
+    (s/optional-key :leveraged_TTPs) rel/LeveragedTTPs
+    (s/optional-key :attributed_actors) rel/AttributedActors ;; was attributed_threat_actors
+    (s/optional-key :related_incidents) rel/RelatedIncidents
     (s/optional-key :intended_effect) v/IntendedEffect
 
     ;; Not provided: URL
