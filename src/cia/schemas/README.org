@@ -4,7 +4,7 @@ STIX project data structures converted to Prismatic schemas
 
   - [ ] Pull judgment out of models.clj
   - [ ] Pull verdict out of models.clj
-  - [ ] Document in README how to transformations (with variations),
+  - [ ] Document in README how to do transformations (with variations),
     including notes for serialization
   - [ ] "Extension fields", eg fields that we are adding in addition
     to the spec, need to be validated
@@ -24,6 +24,7 @@ STIX project data structures converted to Prismatic schemas
     allow direct references?  (yes)
   - [ ] Consider dropping incident history
   - [ ] Should every structure with an id/idref field be stored (such as Tool)?
+  - [ ] Add JSON examples for each stored data structure
 
 * How to convert a STIX specification to one of our schemas:
 

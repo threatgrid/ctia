@@ -259,7 +259,7 @@
   "Observable type names"
   (s/enum "ip"
           "ipv6"
-          "mac"
+          "device" ;; Was "mac"
           "user"
           "domain"
           "sha256"

@@ -6,9 +6,12 @@
 - [Campaign](#campaign)
 - [Course of Action](#coa)
 - [Exploit Target](#exploit_target)
+- [Feedback](#feedback)
 - [Incident](#incident)
 - [Indicator](#indicator)
+- [Judgement](#judgement)
 - [Tools, Techniques, & Procedures](#ttp)
+- [Verdict](#verdict)
 - [Shared Structures](#shared_structures)
 - [Relationship Structures](#relationship_structures)
 - [Vocabularies](#vocabularies)
@@ -18,7 +21,7 @@
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
+id | [ID](#id) | &#10003;
 title | string | &#10003;
 description | (string, ...) | &#10003;
 short_description | (string, ...) | &#10003;
@@ -45,7 +48,7 @@ STIX [ThreatActorType](http://stixproject.github.io/data-model/1.2/ta/ThreatActo
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
+id | [ID](#id) | &#10003;
 title | string | &#10003;
 description | (string, ...) | &#10003;
 short_description | (string, ...) | &#10003;
@@ -74,7 +77,7 @@ STIX [CampaignType](http://stixproject.github.io/data-model/1.2/campaign/Campaig
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
+id | [ID](#id) | &#10003;
 title | string | &#10003;
 description | (string, ...) | &#10003;
 short_description | (string, ...) | &#10003;
@@ -97,7 +100,7 @@ STIX [CourseOfActionType](http://stixproject.github.io/data-model/1.2/coa/Course
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
+id | [ID](#id) | &#10003;
 title | string | &#10003;
 description | (string, ...) | &#10003;
 short_description | (string, ...) | &#10003;
@@ -149,12 +152,23 @@ references | (string, ...) |
 
 STIX [ExploitTargetType](http://stixproject.github.io/data-model/1.2/et/ExploitTargetType/)
 
+<a name="feedback"/>
+## Feedback
+
+Key | Value | Mandatory?
+--- | --- | ---
+id | [ID](#id) | &#10003;
+judgement | [JudgementReference](#judgement_reference) | &#10003;
+source | string |
+feedback | -1 &#124; 0 &#124; 1 | &#10003;
+reason | string | &#10003;
+
 <a name="incident"/>
 ## Incident
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
+id | [ID](#id) | &#10003;
 title | string | &#10003;
 description | (string, ...) | &#10003;
 short_description | (string, ...) | &#10003;
@@ -178,7 +192,7 @@ coa_taken | ([COARequested](#coa_requested), ...) |
 contact | [Source](#source) |
 history | ([History](#history), ...) |
 related_indicators | [RelatedIndicators](#related_indicators) |
-related_observables | [RelatedObservables](#related_observables) |
+related_observables | ([Observable](#observable), ...) |
 leveraged_TTPs | [LeveragedTTPs](#leveraged_ttps) |
 attributed_actors | [AttributedActors](#attributed_actors) |
 related_incidents | [RelatedIncidents](#related_incidents) |
@@ -264,7 +278,7 @@ ownership_class | [OwnershipClass](#ownership_class) |
 management_class | [ManagementClass](#management_class) |
 location_class | [LocationClass](#location_class) |
 property_affected | [PropertyAffected](#property_affected) |
-identifying_observables | [RelatedObservables](#related_observables) |
+identifying_observables | ([Observable](#observable), ...) |
 
 <a name="property_affected"/>
 ### PropertyAffected
@@ -294,7 +308,7 @@ STIX [IncidentType](http://stixproject.github.io/data-model/1.2/incident/Inciden
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
+id | [ID](#id) | &#10003;
 title | string | &#10003;
 description | (string, ...) | &#10003;
 short_description | (string, ...) | &#10003;
@@ -303,7 +317,7 @@ version | number |
 negate | boolean |
 type | ([IndicatorType](#indicator_type), ...) |
 valid_time_position | [ValidTime](#valid_time) |
-observable | [ObservableReference](#observable_reference) |
+observable | [Observable](#observable) |
 composite_indicator_expression | [CompositeIndicatorExpression](#composite_indicator_expression) |
 indicated_TTP | [RelatedTTP](#related_ttp) |
 likely_impact | string |
@@ -335,7 +349,7 @@ source | [Source](#source) |
 reference | [URI](#uri) |
 confidence | [HighMedLow](#high_med_low) |
 description | (string, ...) |
-related_observables | [RelatedObservables](#related_observables) |
+related_observables | ([Observable](#observable), ...) |
 
 <a name="open_ioc_specification"/>
 ### OpenIOCSpecification
@@ -391,12 +405,32 @@ end_time | [Time](#time) |
 
 STIX [IndicatorType](http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/)
 
+<a name="judgement"/>
+## Judgement
+
+Key | Value | Mandatory?
+--- | --- | ---
+id | [ID](#id) | &#10003;
+observable | [Observable](#observable) | &#10003;
+disposition | [DispositionNumber](#disposition_number) | &#10003;
+source | [Source](#source) | &#10003;
+priority | integer (0-100) | &#10003;
+confidence | [HighMedLow](#high_med_low) | &#10003;
+severity | integer | &#10003;
+timestamp | [Time](#time) | &#10003;
+reason | string |
+disposition_name | [DispositionName](#disposition_name) |
+expires | [Time](#time) |
+source_uri | [URI](#uri) |
+reason_uri | [URI](#uri) |
+indicators | [RelatedIndicators](#related_indicators) |
+
 <a name="ttp"/>
 ## Tools, Techniques, & Procedures (TTP)
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
+id | [ID](#id) | &#10003;
 title | string | &#10003;
 description | (string, ...) | &#10003;
 short_description | (string, ...) | &#10003;
@@ -421,6 +455,7 @@ Key | Value | Mandatory?
 indentity | [Identity](#identity) |
 targeted_systems | ([SystemType](#system_type), ...) |
 targeted_information | ([InformationType](#information_type), ...) |
+targeted_observables | ([Observable](#observable), ..) |
 
 <a name="resource"/>
 ### Resource
@@ -436,10 +471,7 @@ providers | [Identity](#identity) |
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
-title | string | &#10003;
-description | (string, ...) | &#10003;
-short_description | (string, ...) | &#10003;
+description | string | &#10003;
 type | [AttackerInfrastructure](#attacker_infrastructure) | &#10003;
 
 <a name="behavior"/>
@@ -455,29 +487,49 @@ malware_type | ([MalwareInstance](#malware_instance), ...) |
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
-title | string | &#10003;
-description | (string, ...) | &#10003;
-short_description | (string, ...) | &#10003;
+description | string | &#10003;
 type | ([MalwareType](#malware_type), ...) | &#10003;
 
 <a name="attack_pattern"/>
 ### AttackPattern
 
+The capec_id field below refers to an entry in the Common Attack
+Pattern Enumeration and Classification
+[CAPEC](https://capec.mitre.org).
+
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
-title | string | &#10003;
-description | (string, ...) | &#10003;
-short_description | (string, ...) | &#10003;
+description | string | &#10003;
 capec_id | string |
 
 ### References
 
 STIX [TTPType](http://stixproject.github.io/data-model/1.2/ttp/TTPType)
 
+<a name="verdict"/>
+## Verdict
+
+Key | Value | Mandatory?
+--- | --- | ---
+disposition | [DispositionNumber](#disposition_number) | &#10003;
+judgement | [JudgementReference](#judgement_reference) |
+disposition_name | [DispositionName](#disposition_name) |
+
 <a name="shared_structures"/>
 ## Shared Structures
+
+<a name="id"/>
+### ID
+
+string
+
+The ID field is related to the [Referene](#reference) field.  IDs are
+strings of the form: type-<128bitUUID>, for example
+`judgment-de305d54-75b4-431b-adb2-eb6b9e546014` for a
+[Judgement](#judgement).
+
+The CIA _ID_ field compares to the STIX _id_ field.  The optional STIX
+_idref_ field is not used.
 
 <a name="uri"/>
 ### URI
@@ -505,11 +557,7 @@ received_time | [Time](#time) |
 
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
-title | string | &#10003;
-description | (string, ...) | &#10003;
-short_description | (string, ...) | &#10003;
-name | string |
+description | string | &#10003;
 type | [AttackToolType](#attack_tool_type) |
 references | (string, ...) |
 vendor | string |
@@ -520,7 +568,7 @@ service_pack | string |
 ### Source
 Key | Value | Mandatory?
 --- | --- | ---
-description | string |
+description | string | &#10003;
 identity | string |
 role | string |
 contributing_sources | [SourceReference](#source_reference) |
@@ -554,8 +602,7 @@ identity | [IdentityReference](#identity_reference) | &#10003;
 ### Identity
 Key | Value | Mandatory?
 --- | --- | ---
-id &#124; idref | string | &#10003;
-name | string | &#10003;
+description | string | &#10003;
 related_identities | [RelatedIdentity](#related_identity) | &#10003;
 
 <a name="activity"/>
@@ -565,6 +612,35 @@ Key | Value | Mandatory?
 --- | --- | ---
 date_time | [Time](#time) | &#10003;
 description | string | &#10003;
+
+<a name="observable"/>
+### Observable
+
+Key | Value | Mandatory?
+--- | --- | ---
+value | string | &#10003;
+type | [ObservableType](#observable_type) | &#10003;
+
+<a name="dispositions"/>
+### Dispositions
+
+Integer | Value
+--- | ---
+1 | Clean
+2 | Malicious
+3 | Suspicious
+4 | Common
+5 | Unknown
+
+<a name="disposition_number"/>
+### DispositionNumber
+
+An integer from the [Dispositions](#dispositions) table above.
+
+<a name="disposition_name"/>
+### DispositionName
+
+A value from the [Dispositions](#dispositions) table above.
 
 <a name="relationship_structures"/>
 ## Relationship Structures
@@ -605,17 +681,25 @@ example, both of the following JSON structures are proper
 <a name="campaign_reference"/>
 <a name="coa_reference"/>
 <a name="exploit_target_reference"/>
+<a name="feedback_reference"/>
 <a name="identity_reference"/>
 <a name="incident_reference"/>
 <a name="indicator_reference"/>
-<a name="observable_reference"/>
+<a name="judgement_reference"/>
 <a name="source_reference"/>
 <a name="ttp_reference"/>
+<a name="verdict_reference"/>
 ### Reference
 
 A string identifier that points to a stored data structure.  Named
-references in this document indicates the type of object that is being
-pointed to.
+references in this document (in the form of _FooReference_) indicate
+the type of object that is being pointed to.
+
+A reference may be an [ID](#id) when the object is available on the
+same CIA instance.  When the reference points to a remote CIA
+instance, the reference must be full URL, such as
+`https://cia.someplace.else.org/judgement/de305d54-75b4-431b-adb2-eb6b9e546014`
+and that object should be retrievable at that URI.
 
 <a name="related_indicator"/>
 ### RelatedIndicator
@@ -807,24 +891,6 @@ Key | Value | Mandatory?
 --- | --- | ---
 scope | [Scope](#scope) |
 levereged_TTPs | ([RelatedTPP](#related_ttp), ...) | &#10003;
-
-<a name="related_observable"/>
-### RelatedObservable
-
-Key | Value | Mandatory?
---- | --- | ---
-confidence | [HighMedLow](#high_med_low) |
-source | [Source](#source) |
-relationship | string |
-observable | [ObservableReference](#observable_reference) | &#10003;
-
-<a name="related_observables"/>
-### RelatedObservables
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-related_observables | ([RelatedObservable](#related_observable), ...) | &#10003;
 
 <a name="vocabularies"/>
 ## Vocabularies
@@ -1123,7 +1189,7 @@ one of the possible values for a given field.
 
 - ip
 - ipv6
-- mac
+- device
 - user
 - domain
 - sha256

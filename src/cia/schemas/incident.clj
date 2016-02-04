@@ -26,7 +26,7 @@
    (s/optional-key :management_class) v/ManagementClass
    (s/optional-key :location_class) v/LocationClass
    (s/optional-key :property_affected) PropertyAffected ;; Unnested NatureOfSecurityEffect
-   (s/optional-key :identifying_observables) rel/RelatedObservables
+   (s/optional-key :identifying_observables) [c/Observable]
    ;; Not Provided: business_function_or_role
    ;; Not Provided: location (undefined/abstract type); Could be [s/Str]
    })
@@ -110,7 +110,7 @@
     ;; The seqs of elements below are squashed (they leave out
     ;; structured data such as confidence and source for each element).
     (s/optional-key :related_indicators) rel/RelatedIndicators
-    (s/optional-key :related_observables) rel/RelatedObservables ;; TODO - Specify the reference type
+    (s/optional-key :related_observables) c/Observables ;; Was related_observables
     (s/optional-key :leveraged_TTPs) rel/LeveragedTTPs
     (s/optional-key :attributed_actors) rel/AttributedActors ;; was attributed_threat_actors
     (s/optional-key :related_incidents) rel/RelatedIncidents
