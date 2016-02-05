@@ -74,6 +74,8 @@
     (s/optional-key :related_indicators) rel/RelatedIndicators
     (s/optional-key :related_campaigns) rel/RelatedCampaigns
     (s/optional-key :related_COAs) rel/RelatedCOAs
+    (s/optional-key :kill_chain_phases) [s/Str] ;; simplified
+    (s/optional-key :test_mechanisms) [s/Str] ;; simplified
 
     ;; Extension fields:
     (s/optional-key :expires) c/Time
@@ -90,8 +92,6 @@
                                        OpenIOCSpecification)]
 
     ;; Not provided: handling
-    ;; Not provided: kill_chain_phases
-    ;; Not provided: test_mechanisms
     }))
 
 (def NewIndicator

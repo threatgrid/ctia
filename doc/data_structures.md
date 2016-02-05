@@ -1,5 +1,31 @@
 # Data Structures
 
+The data model of CIA is closely based on
+[STIX](http://stixproject.github.io/data-model/) with a few
+simplifications:
+
+  * The base Types cannot be documented inside of each other.  It's
+  like always having to use an `idref`.  This is because we intend to
+  build a hypermedia threat intel web combining global and local
+  threat intel.
+
+  * It's built on top of a "verdict service" so we simplify
+  Observables into their most commonly observed properties.  You no
+  longer have to say, "a file, with the sha256 checksum equal to X"
+  you would simple say, "a sha256 checksum".  We cross index
+  everything on these observables, and distill the indicators down
+  into verdicts that allow q quick looking to see if an observable is
+  of interest.
+
+  * We flatten some structured data to make it easier to deal with as
+  JSON and simpler, since we are dealing with specific cases in CIA.
+  We will use default vocabularies whenever they are available.
+
+  * We assume specific string representations for descriptions and
+  such, instead of the more complex structured data which allows the
+  specification of multiple formats.  This is to enforce a more secure
+  representation fromat suitable for embedding in web applications.
+
 ##### Table of Contents
 
 - [Actor](#actor)
@@ -39,6 +65,13 @@ associated_actors | [AssociatedActors](#associated_actors) |
 confidence | [HighMedLow](#high_med_low) |
 expires | [Time](#time) | &#10003;
 
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
+
 ### References
 
 STIX [ThreatActorType](http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/)
@@ -68,6 +101,13 @@ type | string | &#10003;
 expires | [Time](#time) | &#10003;
 indicators | [RelatedIndicators](#related_indicators) | &#10003;
 
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
+
 ### References
 
 STIX [CampaignType](http://stixproject.github.io/data-model/1.2/campaign/CampaignType/)
@@ -91,6 +131,13 @@ efficacy | [HighMedLow](#high_med_low) |
 source | [Source](#source) |
 related_COAs | [RelatedCOAs](#related_coas) |
 
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
+
 ### References
 
 STIX [CourseOfActionType](http://stixproject.github.io/data-model/1.2/coa/CourseOfActionType/)
@@ -112,6 +159,13 @@ configuration | [Configuration](#configuration) |
 potential_COAs | [PotentialCOAs](#potential_coas) |
 source | [Source](#source) |
 related_exploit_targets | [RelatedExploitTargets](#related_exploit_targets) |
+
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
 
 <a name="configuration"/>
 ### Configuration
@@ -155,6 +209,8 @@ STIX [ExploitTargetType](http://stixproject.github.io/data-model/1.2/et/ExploitT
 <a name="feedback"/>
 ## Feedback
 
+A positive, neutral or negative feedback on a Judgement
+
 Key | Value | Mandatory?
 --- | --- | ---
 id | [ID](#id) | &#10003;
@@ -162,6 +218,13 @@ judgement | [JudgementReference](#judgement_reference) | &#10003;
 source | string |
 feedback | -1 &#124; 0 &#124; 1 | &#10003;
 reason | string | &#10003;
+
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
 
 <a name="incident"/>
 ## Incident
@@ -197,6 +260,13 @@ leveraged_TTPs | [LeveragedTTPs](#leveraged_ttps) |
 attributed_actors | [AttributedActors](#attributed_actors) |
 related_incidents | [RelatedIncidents](#related_incidents) |
 intended_effect | [IntendedEffect](#intended_effect) |
+
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
 
 <a name="history"/>
 ### History
@@ -306,30 +376,65 @@ STIX [IncidentType](http://stixproject.github.io/data-model/1.2/incident/Inciden
 <a name="indicator"/>
 ## Indicator
 
-Key | Value | Mandatory?
+An indicator is a test, or a collection of judgements that define
+criteria for identifying the activity, or presence of malware, or
+other unwanted software.
+
+We follow the
+[STiX IndicatorType](http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/)
+closely, with the exception of not including observables within the
+indicator, and preferring a `specification` object encoded in JSON as
+opposed to an opaque `implemntation` block.
+
+Additional, you will want to either define judgements against
+Observables that are linked to this indicator, with the ID in the
+`indicators` field of those Judgements, or you can provide a
+`specification` value.
+
+Key | Value | Mandatory? | Description
 --- | --- | ---
-id | [ID](#id) | &#10003;
-title | string | &#10003;
-description | (string, ...) | &#10003;
-short_description | (string, ...) | &#10003;
-alternate_ids | (string, ...) |
-version | number |
-negate | boolean |
-type | ([IndicatorType](#indicator_type), ...) |
-valid_time_position | [ValidTime](#valid_time) |
+id | [ID](#id) | &#10003; |
+title | string | &#10003; | A short and hopefully descriptive and unique title
+description | (string, ...) | &#10003; | A longer, in-depth description of the indicator
+short_description | (string, ...) | &#10003; | A short sentence or two describing the indicator
+alternate_ids | (string, ...) | |
+version | number | |
+negate | boolean | |
+type | ([IndicatorType](#indicator_type), ...) | | The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior
+valid_time_position | [ValidTime](#valid_time) | |
 observable | [Observable](#observable) |
-composite_indicator_expression | [CompositeIndicatorExpression](#composite_indicator_expression) |
-indicated_TTP | [RelatedTTP](#related_ttp) |
-likely_impact | string |
-suggested_COAs | [SuggestedCOAs](#suggested_coas) |
-confidence | [HighMedLow](#high_med_low) |
-sightings | [Sightings](#sightings) |
-related_indicators | [RelatedIndicators](#related_indicators) |
-related_campaigns | [RelatedCampaigns](#related_campaigns) |
-related_COAs | [RelatedCOAs](#related_coas) |
-expires | [Time](#time) |
-producer | string | &#10003;
-specifications | (&#91;[JudgementSpecification](#judgement_specification) &#124; [ThreatBrainSpecification](#threat_brain_specification) &#124; [SnortSpecification](#snort_specification) &#124; [SIOCSpecification](#sioc_specification) &#124; [OpenIOCSpecification](#open_ioc_specification)&#93;, ...) |
+composite_indicator_expression | [CompositeIndicatorExpression](#composite_indicator_expression) | |
+indicated_TTP | [RelatedTTP](#related_ttp) | | | A list of the IDs of TTPs objects related to this indicator
+likely_impact | string | | The impact of malware, High, Medium, Low or None
+suggested_COAs | [SuggestedCOAs](#suggested_coas) | |
+confidence | [HighMedLow](#high_med_low) | |
+sightings | [Sightings](#sightings) | |
+related_indicators | [RelatedIndicators](#related_indicators) | | One or more indicator related to this one.
+related_campaigns | [RelatedCampaigns](#related_campaigns) | | One or more campaigns related to this indicator.
+related_COAs | [RelatedCOAs](#related_coas) | | One or more COAs related to this indicator.
+kill_chain_phases | (string, ...) | | One or more kill chain phases, like "Delivery"
+test_mechanisms | (string, ...) | | One or more products or tools that can use the data in this indicator to perform a test for it's presence on a host or network
+expires | [Time](#time) | | When the indicator is no longer valid
+producer | string | &#10003; | |An identifier of the system or person that produced this indicator
+specifications | ([Specification](#specification), ...) | |
+
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
+
+<a name="specification"/>
+### Specification
+
+One of the following structures:
+
+- [JudgementSpecification](#judgement_specification)
+- [ThreatBrainSpecification](#threat_brain_specification)
+- [SnortSpecification](#snort_specification)
+- [SIOCSpecification](#sioc_specification)
+- [OpenIOCSpecification](#open_ioc_specification)
 
 <a name="sightings"/>
 ### Sightings
@@ -408,22 +513,46 @@ STIX [IndicatorType](http://stixproject.github.io/data-model/1.2/indicator/Indic
 <a name="judgement"/>
 ## Judgement
 
-Key | Value | Mandatory?
+A statement about the intent of an Observable.  Since a core goal of
+the CIA is to provide a simple verdict service, these judgements are
+the basis for the returned verdicts.  These are also the primary means
+by which users of the CIA go from observables on their system, to the
+indicators and threat intelligence data in CIA.
+
+Key | Value | Mandatory? | default | description
 --- | --- | ---
-id | [ID](#id) | &#10003;
-observable | [Observable](#observable) | &#10003;
-disposition | [DispositionNumber](#disposition_number) | &#10003;
-source | [Source](#source) | &#10003;
-priority | integer (0-100) | &#10003;
-confidence | [HighMedLow](#high_med_low) | &#10003;
-severity | integer | &#10003;
-timestamp | [Time](#time) | &#10003;
-reason | string |
-disposition_name | [DispositionName](#disposition_name) |
-expires | [Time](#time) |
-source_uri | [URI](#uri) |
-reason_uri | [URI](#uri) |
-indicators | [RelatedIndicators](#related_indicators) |
+id | [ID](#id) | &#10003; | |
+observable | [Observable](#observable) | &#10003; | |
+disposition | [DispositionNumber](#disposition_number) | &#10003; | |
+source | [Source](#source) | &#10003; | |
+priority | integer (0-100) | &#10003; | user specific |
+confidence | [HighMedLow](#high_med_low) | &#10003; | 100 |
+severity | integer | &#10003; | 100 |
+timestamp | [Time](#time) | &#10003; | POST time |
+reason | string | | | short description of why the judgement was made
+disposition_name | [DispositionName](#disposition_name) | | |
+expires | [Time](#time) | | Jan 1 2535 |
+source_uri | [URI](#uri) | | | link where a user can see what the source thinks of the observable
+reason_uri | [URI](#uri) | | | link where a user can get information supporting the reason
+indicators | [RelatedIndicators](#related_indicators) | | |
+
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
+
+### Judgement Example
+
+Here is a quick example using curl:
+
+```shell
+curl -X POST --header "Content-Type: application/json" \
+--header "Accept: application/json" \
+-d '{"observable":{"type":"ip", "value":"127.0.0.1"},
+     "disposition":2, "source":"internet chat forum"}' "http://localhost:3000/cia/judgements"
+```
 
 <a name="ttp"/>
 ## Tools, Techniques, & Procedures (TTP)
@@ -446,6 +575,13 @@ source | [Source](#source) |
 type | string | &#10003;
 expires | [Time](#time) | &#10003;
 indicators | ([IndicatorReference](#indicator_reference), ...) | &#10003;
+
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
 
 <a name="victim_targeting"/>
 ### VictimTargeting
@@ -509,11 +645,36 @@ STIX [TTPType](http://stixproject.github.io/data-model/1.2/ttp/TTPType)
 <a name="verdict"/>
 ## Verdict
 
+The Verdict is chosen from all of the Judgements on that Observable which
+have not yet expired.  The highest priority Judgement becomes the
+active verdict.  If there is more than one Judgement with that
+priority, than Clean disposition has priority over all others, then
+Malicious disposition, and so on down to Unknown.
+
 Key | Value | Mandatory?
 --- | --- | ---
 disposition | [DispositionNumber](#disposition_number) | &#10003;
 judgement | [JudgementReference](#judgement_reference) |
 disposition_name | [DispositionName](#disposition_name) |
+
+The disposition_name field is optional, but is intended to be show to
+a user.  Applications must therefore remember the mapping of numbers
+to human words.
+
+Stored instances will also receive the following fields, but MAY not be shared:
+
+Key | Value | Description
+--- | --- | ---
+created | [Time](#time) | Timestamp when object was created in CIA
+owner | string | String identifying the creating user
+
+### Example Verdict
+
+```json
+    { "judgement": "judgmeent-de305d54-75b4-431b-adb2-eb6b9e546014",
+      "disposition": 1,
+      "disposition_name": "Clean" }
+```
 
 <a name="shared_structures"/>
 ## Shared Structures
@@ -616,10 +777,29 @@ description | string | &#10003;
 <a name="observable"/>
 ### Observable
 
+An observable is a simple, atomic value that denotes an entity which
+as an identity that is stable enough to be attributed an intent or
+nature.  These do not exist as objects within the CIA storage model,
+you never create an observable.
+
 Key | Value | Mandatory?
 --- | --- | ---
 value | string | &#10003;
 type | [ObservableType](#observable_type) | &#10003;
+
+#### Observable Examples
+
+ Type | Representation | Example (JSON)
+-------|---------------|-------
+ ip | The IP address of a host in normal form | {"type": "ip", "value": "192.168.1.1"}
+ ipv6 | IPv6 address of a host, the format is x\:x\:x\:x\:x\:x\:x\:x, where the 'x's are the hexadecimal values of the eight 16-bit pieces of the address.  Letters must be lowercase | {"type": "ipv6", "value": "fedc:ba98:7654:3210:fedc:ba98:7654:3210"}
+ device | Hex device address, letters must be lowercase. | {"type": "mac", "00:0a:27:02:00:53:24:c4"}
+ user | A unique identifier string, such as SSO login | {"type": "user", "value": "salesguy"}
+ domain | a hostname or domain name, like "foo.com" | {"type": "domain", "value": "badsite.com"}
+ sha256 | A hex representation of the SHA256 of a file, letters lowercased. | {"type": "sha256", "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }
+ md5 | A hex repreentation of the MD5 of a file, letters lowercased. | {"type": "md5", "value": "d41d8cd98f00b204e9800998ecf8427e"}
+ sha1 | a hex representation of the SHA1 of a file, letters lowercased. | {"type": "sha1", "value": "da39a3ee5e6b4b0d3255bfef95601890afd80709"}
+ url | A string containing a URL | {"type": "url", "value": "https://panacea.threatgrid.com"}
 
 <a name="dispositions"/>
 ### Dispositions
