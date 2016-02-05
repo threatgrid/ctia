@@ -393,7 +393,7 @@ Observables that are linked to this indicator, with the ID in the
 
 Key | Value | Mandatory? | Description
 --- | --- | ---
-id | [ID](#id) | &#10003; |
+id | [ID](#id) | &#10003; | |
 title | string | &#10003; | A short and hopefully descriptive and unique title
 description | (string, ...) | &#10003; | A longer, in-depth description of the indicator
 short_description | (string, ...) | &#10003; | A short sentence or two describing the indicator
@@ -402,9 +402,9 @@ version | number | |
 negate | boolean | |
 type | ([IndicatorType](#indicator_type), ...) | | The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior
 valid_time_position | [ValidTime](#valid_time) | |
-observable | [Observable](#observable) |
+observable | [Observable](#observable) | |
 composite_indicator_expression | [CompositeIndicatorExpression](#composite_indicator_expression) | |
-indicated_TTP | [RelatedTTP](#related_ttp) | | | A list of the IDs of TTPs objects related to this indicator
+indicated_TTP | [RelatedTTP](#related_ttp) | | A list of the IDs of TTPs objects related to this indicator
 likely_impact | string | | The impact of malware, High, Medium, Low or None
 suggested_COAs | [SuggestedCOAs](#suggested_coas) | |
 confidence | [HighMedLow](#high_med_low) | |
@@ -415,7 +415,7 @@ related_COAs | [RelatedCOAs](#related_coas) | | One or more COAs related to this
 kill_chain_phases | (string, ...) | | One or more kill chain phases, like "Delivery"
 test_mechanisms | (string, ...) | | One or more products or tools that can use the data in this indicator to perform a test for it's presence on a host or network
 expires | [Time](#time) | | When the indicator is no longer valid
-producer | string | &#10003; | |An identifier of the system or person that produced this indicator
+producer | string | &#10003; | An identifier of the system or person that produced this indicator
 specifications | ([Specification](#specification), ...) | |
 
 Stored instances will also receive the following fields, but MAY not be shared:
