@@ -2,28 +2,30 @@ STIX project data structures converted to Prismatic schemas
 
 * TODOs
 
-  - [ ] Pull judgment out of models.clj
-  - [ ] Pull verdict out of models.clj
+  - [X] Pull judgment out of models.clj
+  - [X] Pull verdict out of models.clj
   - [ ] Document in README how to do transformations (with variations),
     including notes for serialization
-  - [ ] "Extension fields", eg fields that we are adding in addition
-    to the spec, need to be validated
+  - [ ] "Extension fields", fields that we are adding in addition
+    to the spec, need to be confirmed
   - [ ] Update README with a section for each structure
-  - [ ] Determine which fields should be require / optional
-  - [ ] Understand and reconcile things...
+  - [ ] Determine which fields should be required / optional
+  - [-] Understand and reconcile things...
     - [ ] What is the indicator :specifications field for?
-    - [ ] Indicator references observables, but the STIX observable is
+    - [X] Indicator references observables, but the STIX observable is
       different from ours
-      - [ ] Name reference to observable in indident.clj
-    - [ ] What should the judgement schema look like?
-      - [ ] Name judgement references in indicator.clj
+      - [X] Name reference to observable in indident.clj
+    - [X] What should the judgement schema look like?
+      - [X] Name judgement references in indicator.clj
+    - [ ] In Indicator, aren't composite_indicator_expression and
+      related_indicators redundant?
   - [ ] Expand exploit_target -> Vulnerability -> :affected_software?
   - [ ] Provide exploit_target -> Vulnerability -> CVSS_Score?
   - [ ] Add NewFoo and StoredFoo for each structure
   - [X] Where relationships are wrapped with scope, confidence, etc., should we
     allow direct references?  (yes)
   - [ ] Consider dropping incident history
-  - [ ] Should every structure with an id/idref field be stored (such as Tool)?
+  - [X] Should every structure with an id/idref field be stored (such as Tool)?
   - [ ] Add JSON examples for each stored data structure
 
 * How to convert a STIX specification to one of our schemas:
@@ -43,7 +45,7 @@ STIX project data structures converted to Prismatic schemas
 
 ** Note which fields are added by us (not part of STIX).
 
-** Prefer references to nested data structures.
+** Prefer references over nested data structures.
 
   Use named references so that we can tell what the reference points at.
 

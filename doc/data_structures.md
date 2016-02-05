@@ -250,8 +250,8 @@ impact_assessment | [ImpactAssessment](#impact_assessment) |
 sources | [Source](#source) |
 security_compromise | string |
 discovery_method | [DiscoveryMethod](#discovery_method) |
-coa_requested | ([COARequested](#coa_requested), ...) |
-coa_taken | ([COARequested](#coa_requested), ...) |
+COA_requested | ([COARequested](#coa_requested), ...) |
+COA_taken | ([COARequested](#coa_requested), ...) |
 contact | [Source](#source) |
 history | ([History](#history), ...) |
 related_indicators | [RelatedIndicators](#related_indicators) |
@@ -495,8 +495,8 @@ variables | (string, ...) | &#10003;
 Key | Value | Mandatory?
 --- | --- | ---
 type | "Judgement" | &#10003;
-judgements | ([Reference](#reference), ...) | &#10003;
-required_judgements | ([Reference](#reference), ...) | &#10003;
+judgements | ([JudgementReference](#judgement_reference), ...) | &#10003;
+required_judgements | ([JudgementReference](#judgement_reference), ...) | &#10003;
 
 <a name="valid_time"/>
 ### ValidTime

@@ -102,8 +102,8 @@
     (s/optional-key :source) c/Source
     (s/optional-key :security_compromise) v/SecurityCompromise
     (s/optional-key :discovery_method) v/DiscoveryMethod
-    (s/optional-key :coa_requested) [rel/COARequested]
-    (s/optional-key :coa_taken) [rel/COARequested]
+    (s/optional-key :COA_requested) [rel/COARequested]
+    (s/optional-key :COA_taken) [rel/COARequested]
     (s/optional-key :contact) c/Source
     (s/optional-key :history) [History]
 
