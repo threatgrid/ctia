@@ -5,7 +5,7 @@ The data model of CIA is closely based on
 simplifications:
 
   * The base Types cannot be documented inside of each other.  It's
-  like always having to use an `idref`.  This is because we intend to
+  like always having to use an _idref_.  This is because we intend to
   build a hypermedia threat intel web combining global and local
   threat intel.
 
@@ -383,16 +383,16 @@ other unwanted software.
 We follow the
 [STiX IndicatorType](http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/)
 closely, with the exception of not including observables within the
-indicator, and preferring a `specification` object encoded in JSON as
-opposed to an opaque `implemntation` block.
+indicator, and preferring a _specification_ object encoded in JSON as
+opposed to an opaque _implemntation_ block.
 
 Additional, you will want to either define judgements against
 Observables that are linked to this indicator, with the ID in the
-`indicators` field of those Judgements, or you can provide a
-`specification` value.
+_indicators_ field of those Judgements, or you can provide a
+_specification_ value.
 
 Key | Value | Mandatory? | Description
---- | --- | --- | --
+--- | --- | --- | ---
 id | [ID](#id) | &#10003; |
 title | string | &#10003; | A short and hopefully descriptive and unique title
 description | (string, ...) | &#10003; | A longer, in-depth description of the indicator
