@@ -520,7 +520,7 @@ by which users of the CIA go from observables on their system, to the
 indicators and threat intelligence data in CIA.
 
 Key | Value | Mandatory? | default | description
---- | --- | ---
+--- | --- | --- | --- | ---
 id | [ID](#id) | &#10003; | |
 observable | [Observable](#observable) | &#10003; | |
 disposition | [DispositionNumber](#disposition_number) | &#10003; | |
