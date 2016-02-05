@@ -392,7 +392,7 @@ Observables that are linked to this indicator, with the ID in the
 `specification` value.
 
 Key | Value | Mandatory? | Description
---- | --- | ---
+--- | --- | --- | --
 id | [ID](#id) | &#10003; |
 title | string | &#10003; | A short and hopefully descriptive and unique title
 description | (string, ...) | &#10003; | A longer, in-depth description of the indicator
