@@ -1,6 +1,7 @@
 (ns cia.relations
   (:require [schema.core :as s]
-            [cia.models :refer [Observable ObservableType Time URI]]
+            [cia.schemas.common :refer [Observable Time URI]]
+            [cia.schemas.vocabularies :refer [ObservableType]]
             [ring.swagger.schema :refer [coerce!]]))
 
 (def relations-map
@@ -150,13 +151,11 @@
    :timestamp Time
    :origin s/Str
    (s/optional-key :origin_uri) URI
-   
+
    :relation RelationType
    (s/optional-key :relation_info) {s/Keyword s/Any}
-   
+
    :source Observable
-   
+
    :related Observable
    })
-
-

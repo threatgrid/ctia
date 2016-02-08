@@ -1,5 +1,7 @@
 (ns cia.models
-  (:require [cia.schemas.vocabularies :refer :all]
+  (:require [cia.schemas.common :as c]
+            [cia.schemas.vocabularies :refer :all]
+            [cia.schemas.judgement :refer [Judgement]]
             [ring.swagger.schema :refer [coerce!]]
             [schema.core :as s]))
 
@@ -10,8 +12,7 @@
           "Feedback" "COAs" "ExploitTargets"))
 
 (s/defschema VersionInfo
-  {:id Long
-   :base URI
+  {:base c/URI
    :version String
    :beta Boolean
    :supported_features [s/Str]})

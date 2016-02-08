@@ -7,7 +7,7 @@
   (list-judgements-by-observable [this observable])
   (list-judgements-by-indicator [this indicator-id])
   (calculate-verdict
-   "Returns the current verdict an observable based on stored judgements."
+   ;; Returns the current verdict an observable based on stored judgements.
    [this observable]))
 
 (defprotocol IIndicatorStore
@@ -90,3 +90,14 @@
 ;; relations
 (defonce relation-store (atom nil))
 
+(defonce stores
+  [judgement-store
+   indicator-store
+   feedback-store
+   ttp-store
+   campaign-store
+   actor-store
+   coa-store
+   sightings-store
+   incident-store
+   relation-store])
