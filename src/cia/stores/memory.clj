@@ -65,9 +65,18 @@
      (swap! state swap-create-feedback new-feedback new-id judgement-id)
      new-id)))
 
+(s/defn handle-list-feedback :- (s/maybe [Feedback])
+  [state :- (s/atom {s/Str Feedback})
+   filter-map :- {s/Keyword s/Any}]
+  (filter (fn [feedback]
+            (every? (fn [[k v]]
+                      (= v (get feedback k ::not-found)))
+                    filter-map))
+          (vals @state)))
+
 (defrecord FeedbackStore [state]
   IFeedbackStore
   (create-feedback [_ new-feedback judgement-id]
     (handle-create-feedback state new-feedback judgement-id))
-  (list-feedback [_ filtermap]
-    nil))
+  (list-feedback [_ filter-map]
+    (handle-list-feedback state filter-map)))

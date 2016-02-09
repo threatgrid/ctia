@@ -105,7 +105,7 @@ Malicious disposition, and so on down to Unknown.
                             :return [Feedback]
                             :path-params [judgement-id :- s/Str]
                             :summary "Gets all Feedback for this Judgement."
-                            (not-found))
+                            (ok (list-feedback @feedback-store {:judgement judgement-id})))
                       (GET* "/:id" []
                             :return (s/maybe Judgement)
                             :path-params [id :- s/Str]
