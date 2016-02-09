@@ -1,7 +1,8 @@
 (ns cia.handler
   (:require [compojure.api.sweet :refer :all]
             [cia.models :refer :all]
-            [cia.relations :refer :all]
+            [cia.printers :refer :all]
+            ;;[cia.relations :refer :all]
             [cia.schemas.campaign :refer [Campaign]]
             [cia.schemas.coa :refer [COA]]
             [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
@@ -11,8 +12,10 @@
             [cia.schemas.ttp :refer [TTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
+            [cia.store :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
-            [ring.util.http-response :refer :all][schema.core :as s]))
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (def JudgementSort
   "A sort ordering"
@@ -83,36 +86,39 @@ Malicious disposition, and so on down to Unknown.
                        :beta true
                        :supported_features []}))
 
-            (context* "/judgements" []
+            (context* "/judgement" []
                       :tags ["Judgement"]
                       (POST* "/" []
                              :return Judgement
                              :body [judgement NewJudgement {:description "a new Judgement"}]
                              :summary "Adds a new Judgement"
-                             (ok (add! judgement)))
-                      (POST* "/:id/feedback" []
+                             (ok (create-judgement @judgement-store judgement)))
+                      (POST* "/:judgement-id/feedback" []
                              :tags ["Feedback"]
                              :return Feedback
+                             :path-params [judgement-id :- s/Str]
                              :body [feedback NewFeedback {:description "a new Feedback on a Judgement"}]
-                             :summary "Adds a Feedback to a Judgeent"
-                             (ok (add! feedback)))
-                      (GET* "/:id/feedback" []
+                             :summary "Adds a Feedback to a Judgement"
+                             (ok (create-feedback @feedback-store feedback judgement-id)))
+                      (GET* "/:judgement-id/feedback" []
                             :tags ["Feedback"]
                             :return [Feedback]
-                            :path-params [id :- Long]
+                            :path-params [judgement-id :- s/Str]
                             :summary "Gets all Feedback for this Judgement."
                             (not-found))
                       (GET* "/:id" []
                             :return (s/maybe Judgement)
-                            :path-params [id :- Long]
+                            :path-params [id :- s/Str]
                             :summary "Gets a Judgement by ID"
-                            (if-let [d (get-judgement id)]
+                            (if-let [d (read-judgement @judgement-store id)]
                               (ok d)
                               (not-found)))
                       (DELETE* "/:id" []
-                               :path-params [id :- Long]
+                               :path-params [id :- s/Str]
                                :summary "Deletes a Judgement"
-                               (ok (delete! id))))
+                               (if (delete-judgement @judgement-store id)
+                                 (no-content)
+                                 (not-found))))
 
             (context* "/campaigns" []
                       :tags ["Campaign"])

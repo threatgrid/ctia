@@ -17,7 +17,7 @@
   (list-indicators [this filtermap]))
 
 (defprotocol IFeedbackStore
-  (create-feedback [this feedback])
+  (create-feedback [this new-feedback judgement-id])
   (list-feedback [this filtermap]))
 
 (defprotocol ITTPStore
@@ -89,15 +89,3 @@
 
 ;; relations
 (defonce relation-store (atom nil))
-
-(defonce stores
-  [judgement-store
-   indicator-store
-   feedback-store
-   ttp-store
-   campaign-store
-   actor-store
-   coa-store
-   sightings-store
-   incident-store
-   relation-store])

@@ -6,7 +6,7 @@
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]))
 
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
-                                    helpers/fixture-clean-state
+                                    helpers/fixture-in-memory-store
                                     helpers/fixture-schema-validation]))
 
 (deftest test-version-routes
@@ -21,3 +21,93 @@
     (let [response (get "cia/version")]
       (is (= 200 (:status response)))
       (is (= "0.1" (get-in response [:parsed-body :version]))))))
+
+(deftest test-judgement-routes
+  (testing "POST /cia/judgement/"
+    (let [response (post "cia/judgement/"
+                         :body {:indicators []
+                                :observable {:value "1.2.3.4"
+                                             :type "ip"}
+                                :disposition 2
+                                :source "test"})
+          judgement (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:observable {:value "1.2.3.4", :type "ip"},
+              :indicators [],
+              :disposition 2,
+              :priority 100,
+              :severity 100,
+              :confidence "Low",
+              :source "test"}
+             (dissoc judgement
+                     :id
+                     :timestamp)))
+
+      (testing "GET /cia/judgement/:id"
+        (let [response (get (str "cia/judgement/" (:id judgement)))
+              judgement (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:observable {:value "1.2.3.4", :type "ip"},
+                  :indicators [],
+                  :disposition 2,
+                  :priority 100,
+                  :severity 100,
+                  :confidence "Low",
+                  :source "test"}
+                 (dissoc judgement
+                         :id
+                         :timestamp)))))
+
+      (testing "DELETE /cia/judgement/:id"
+        (let [temp-judgement (-> (post "cia/judgement/"
+                                       :body {:indicators []
+                                              :observable {:value "9.8.7.6"
+                                                           :type "ip"}
+                                              :disposition 3
+                                              :source "test"})
+                                 :parsed-body)
+              response (delete (str "cia/judgement/" (:id temp-judgement)))]
+          (is (= 204 (:status response)))
+          (let [response (get (str "cia/judgement/" (:id temp-judgement)))]
+            (is (= 404 (:status response))))))
+
+      (testing "POST /cia/judgement/:id/feedback"
+        (let [response (post (str "cia/judgement/" (:id judgement) "/feedback")
+                             :body {:feedback -1
+                                    :reason "false positive"})
+              feedback (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:judgement (:id judgement),
+                  :feedback -1,
+                  :reason "false positive"}
+                 (dissoc feedback
+                         :id
+                         :timestamp))))
+
+        (testing "GET /cia/judgement/:id/feedback"
+          ;; create some more feedbacks
+          (let [response (post "cia/judgement/"
+                               :body {:indicators []
+                                      :observable {:value "4.5.6.7"
+                                                   :type "ip"}
+                                      :disposition 1
+                                      :source "test"})
+                another-judgement (:parsed-body response)]
+            (post (str "cia/judgement/" (:id another-judgement) "/feedback")
+                  :body {:feedback 0
+                         :reason "yolo"}))
+          (post (str "cia/judgement/" (:id judgement) "/feedback")
+                :body {:feedback 1
+                       :reason "true positive"})
+
+          (let [response (get (str "cia/judgement/" (:id judgement) "/feedback"))
+                feedbacks (:parsed-body response)]
+            (is (= 200 (:status response)))
+            (is (= [{:judgement (:id judgement),
+                     :feedback -1,
+                     :reason "false positive"}
+                    {:judgement (:id judgement),
+                     :feedback 1,
+                     :reason "true positive"}]
+                   (map #(dissoc % :id :timestamp)
+                        feedbacks)))))))))
