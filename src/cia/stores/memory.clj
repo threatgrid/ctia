@@ -1,5 +1,6 @@
 (ns cia.stores.memory
   (:require [cia.schemas.actor :refer [Actor NewActor realize-actor]]
+            [cia.schemas.campaign :refer [Campaign NewCampaign realize-campaign]]
             [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement realize-judgement]]
             [cia.store :refer :all]
@@ -55,8 +56,29 @@
   (create-actor [_ new-actor]
     (handle-create-actor state new-actor))
   (update-actor [_ actor])
-  (delete-actor [_ id])
+  (delete-actor [_ id]
+    (handle-delete-actor state id))
   (list-actors [_ filter-map]))
+
+;; Campaign
+
+(def-create-handler handle-create-campaign
+  Campaign NewCampaign (make-swap-fn realize-campaign))
+
+(def-read-handler handle-read-campaign Campaign)
+
+(def-delete-handler handle-delete-campaign Campaign)
+
+(defrecord CampaignStore [state]
+  ICampaignStore
+  (read-campaign [_ id]
+    (handle-read-campaign state id))
+  (create-campaign [_ new-campaign]
+    (handle-create-campaign state new-campaign))
+  (update-campaign [_ campaign])
+  (delete-campaign [_ id]
+    (handle-delete-campaign state id))
+  (list-campaigns [_ filter-map]))
 
 ;; Feedback
 

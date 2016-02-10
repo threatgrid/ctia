@@ -1,13 +1,9 @@
 (ns cia.schemas.actor
-  (:require [clj-time.format :as time-format]
-            [clj-time.core :as time]
-            [cia.schemas.common :as c]
+  (:require [cia.schemas.common :as c]
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
             [schema.core :as s]
             [schema-tools.core :as st]))
-
-(def default-expires-in-days 7)
 
 (s/defschema Actor
   "http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/"
@@ -34,7 +30,7 @@
     }))
 
 (s/defschema NewActor
-  "Schema or submitting new Actors"
+  "Schema for submitting new Actors"
   (st/merge
    (st/dissoc Actor
               :id
@@ -45,11 +41,11 @@
 (s/defn realize-actor :- Actor
   [new-actor :- NewActor
    id :- s/Str]
-  (let [now (time/now)
+  (let [timestamp (c/timestamp)
         expires (if-let [expire-str (get new-actor :expires)]
-                  (time-format/parse (time-format/formatters :date-time) expire-str)
-                  (time/plus now (time/days default-expires-in-days)))]
+                  (c/expire-on expire-str)
+                  (c/expire-after timestamp))]
     (assoc new-actor
            :id id
-           :timestamp now
+           :timestamp timestamp
            :expires expires)))

@@ -15,7 +15,8 @@
 (defn fixture-in-memory-store [f]
   (let [store-impls {store/actor-store mem/->ActorStore
                      store/judgement-store mem/->JudgementStore
-                     store/feedback-store mem/->FeedbackStore}]
+                     store/feedback-store mem/->FeedbackStore
+                     store/campaign-store mem/->CampaignStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))
     (f)

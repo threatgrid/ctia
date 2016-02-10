@@ -1,5 +1,7 @@
 (ns cia.schemas.common
   (:require [cia.schemas.vocabularies :as v]
+            [clj-time.core :as time]
+            [clj-time.format :as time-format]
             [schema.core :as s]))
 
 (def Reference
@@ -121,3 +123,17 @@
 (def DispositionName
   "String verdict identifiers"
   (apply s/enum (vals disposition-map)))
+
+;; helper fns used by schemas
+
+(def timestamp time/now)
+
+(defn expire-after
+  ([now]
+   (expire-after now 7))
+  ([now in-days]
+   (time/plus now (time/days in-days))))
+
+(defn expire-on [expire-str]
+  (time-format/parse (time-format/formatters :date-time)
+                     expire-str))

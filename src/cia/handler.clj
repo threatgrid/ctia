@@ -4,7 +4,7 @@
             [cia.printers :refer :all]
             ;;[cia.relations :refer :all]
             [cia.schemas.actor :refer [Actor NewActor]]
-            [cia.schemas.campaign :refer [Campaign]]
+            [cia.schemas.campaign :refer [Campaign NewCampaign]]
             [cia.schemas.coa :refer [COA]]
             [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
             [cia.schemas.indicator :refer [Indicator Sighting]]
@@ -100,7 +100,34 @@ Malicious disposition, and so on down to Unknown.
                             :path-params [id :- s/Str]
                             (if-let [d (read-actor @actor-store id)]
                               (ok d)
-                              (not-found))))
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes an Actor"
+                               (if (delete-actor @actor-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/campaign" []
+                      :tags ["Campaign"]
+                      (POST* "/" []
+                             :return Campaign
+                             :body [campaign NewCampaign {:description "a new campaign"}]
+                             :summary "Adds a new Campaign"
+                             (ok (create-campaign @campaign-store campaign)))
+                      (GET* "/:id" []
+                            :return (s/maybe Campaign)
+                            :summary "Gets a Campaign by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-campaign @campaign-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes a Campaign"
+                               (if (delete-campaign @campaign-store id)
+                                 (no-content)
+                                 (not-found))))
 
             (context* "/judgement" []
                       :tags ["Judgement"]
@@ -135,9 +162,6 @@ Malicious disposition, and so on down to Unknown.
                                (if (delete-judgement @judgement-store id)
                                  (no-content)
                                  (not-found))))
-
-            (context* "/campaigns" []
-                      :tags ["Campaign"])
 
             (context* "/indicators" []
                       :tags ["Indicator"]

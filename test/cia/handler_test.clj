@@ -25,7 +25,7 @@
 (deftest test-actor-routes
   (testing "POST /cia/actor"
     (let [response (post "cia/actor"
-                         :body {:title "title"
+                         :body {:title "actor"
                                 :description ["description"]
                                 :type "Hacker"
                                 :source {:description "a source"}
@@ -34,7 +34,7 @@
       (is (= 200 (:status response)))
       (is (= {:description ["description"],
               :type "Hacker",
-              :title "title",
+              :title "actor",
               :confidence "High",
               :source {:description "a source"}}
              (dissoc actor
@@ -48,7 +48,7 @@
           (is (= 200 (:status response)))
           (is (= {:description ["description"],
                   :type "Hacker",
-                  :title "title",
+                  :title "actor",
                   :confidence "High",
                   :source {:description "a source"}}
                  (dissoc actor
@@ -60,6 +60,46 @@
         (let [response (delete (str "cia/actor/" (:id actor)))]
           (is (= 204 (:status response)))
           (let [response (get (str "cia/actor/" (:id actor)))]
+            (is (= 404 (:status response)))))))))
+
+(deftest test-campaign-routes
+  (testing "POST /cia/campaign"
+    (let [response (post "cia/campaign"
+                         :body {:title "campaign"
+                                :description ["description"]
+                                :type "anything goes here"
+                                :intended_effect ["Theft"]
+                                :indicators ["indicator-foo" "indicator-bar"]})
+          campaign (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:title "campaign"
+              :description ["description"]
+              :type "anything goes here"
+              :intended_effect ["Theft"]
+              :indicators ["indicator-foo" "indicator-bar"]}
+             (dissoc campaign
+                     :id
+                     :timestamp
+                     :expires)))
+
+      (testing "GET /cia/campaign/:id"
+        (let [response (get (str "cia/campaign/" (:id campaign)))
+              campaign (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:title "campaign"
+                  :description ["description"]
+                  :type "anything goes here"
+                  :intended_effect ["Theft"]
+                  :indicators ["indicator-foo" "indicator-bar"]}
+                 (dissoc campaign
+                         :id
+                         :timestamp
+                         :expires)))))
+
+      (testing "DELETE /cia/campaign/:id"
+        (let [response (delete (str "cia/campaign/" (:id campaign)))]
+          (is (= 204 (:status response)))
+          (let [response (get (str "cia/campaign/" (:id campaign)))]
             (is (= 404 (:status response)))))))))
 
 (deftest test-judgement-routes

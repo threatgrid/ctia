@@ -3,8 +3,7 @@
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
             [schema.core :as s]
-            [schema-tools.core :as st])
-  (:import org.joda.time.DateTime))
+            [schema-tools.core :as st]))
 
 (def Severity s/Int)
 
@@ -64,7 +63,7 @@
    id :- s/Str]
   (assoc new-judgement
          :id id
-         :timestamp (DateTime.)
+         :timestamp (c/timestamp)
          :priority 100
          :severity 100
          :confidence "Low"))
