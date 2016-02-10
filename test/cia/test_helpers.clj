@@ -19,7 +19,8 @@
                      store/campaign-store mem/->CampaignStore
                      store/coa-store mem/->COAStore
                      store/exploit-target-store mem/->ExplitTargetStore
-                     store/incident-store mem/->IncidentStore}]
+                     store/incident-store mem/->IncidentStore
+                     store/indicator-store mem/->IndicatorStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))
     (f)

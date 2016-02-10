@@ -6,6 +6,8 @@
              :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
             [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
             [cia.schemas.incident :refer [Incident NewIncident realize-incident]]
+            [cia.schemas.indicator
+             :refer [Indicator NewIndicator realize-indicator]]
             [cia.schemas.judgement
              :refer [Judgement NewJudgement realize-judgement]]
             [cia.store :refer :all]
@@ -175,6 +177,25 @@
   (delete-incident [_ id]
     (handle-delete-incident state id))
   (list-incidents [_ filter-map]))
+
+;; Indicator
+
+(def-create-handler handle-create-indicator
+  Indicator NewIndicator (make-swap-fn realize-indicator))
+
+(def-read-handler handle-read-indicator Indicator)
+
+(def-delete-handler handle-delete-indicator Indicator)
+
+(defrecord IndicatorStore [state]
+  IIndicatorStore
+  (create-indicator [_ new-indicator]
+    (handle-create-indicator state new-indicator))
+  (read-indicator [_ id]
+    (handle-read-indicator state id))
+  (delete-indicator [_ id]
+    (handle-delete-indicator state id))
+  (list-indicators [_ filter-map]))
 
 ;; Judgement
 

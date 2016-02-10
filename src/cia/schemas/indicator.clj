@@ -1,9 +1,10 @@
 (ns cia.schemas.indicator
-  (:require [cia.schemas.common :refer :all]
+  (:require [cia.schemas.common :as c]
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
+            [lonocloud.synthread :as ->]
             [schema.core :as s]
-            [cia.schemas.common :as c]))
+            [schema-tools.core :as st]))
 
 (s/defschema ValidTime
   "See http://stixproject.github.io/data-model/1.2/indicator/ValidTimeType/"
@@ -94,12 +95,25 @@
     ;; Not provided: handling
     }))
 
-(def NewIndicator
-  (dissoc Indicator :id :idref))
+(s/defschema NewIndicator
+  (st/merge
+   (st/dissoc Indicator
+              :id
+              :expires)
+   {(s/optional-key :expires) s/Str}))
 
-(def StoredIndicator
+(s/defschema StoredIndicator
   "A feedback record at rest in the storage service"
-  (merge Indicator
-         {:owner s/Str
-          :created c/Time
-          :timestamp c/Time}))
+  (st/merge Indicator
+            {:owner s/Str
+             :created c/Time}))
+
+(s/defn realize-indicator :- Indicator
+  [new-indicator :- NewIndicator
+   id :- s/Str]
+  (let [indicator (st/assoc new-indicator
+                            :id id)
+        expires (:expires new-indicator)]
+    (if expires
+      (assoc indicator :expires (c/expire-on expires))
+      indicator)))

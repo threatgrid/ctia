@@ -10,7 +10,8 @@
             [cia.schemas.exploit-target
              :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
             [cia.schemas.incident :refer [Incident NewIncident realize-incident]]
-            [cia.schemas.indicator :refer [Indicator Sighting]]
+            [cia.schemas.indicator
+             :refer [Indicator NewIndicator Sighting realize-indicator]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
             [cia.schemas.ttp :refer [TTP]]
@@ -229,7 +230,7 @@ Malicious disposition, and so on down to Unknown.
                                  (no-content)
                                  (not-found))))
 
-            (context* "/indicators" []
+            (context* "/indicator" []
                       :tags ["Indicator"]
                       (GET* "/:id/judgements" []
                             :return [Judgement]
@@ -259,16 +260,33 @@ Malicious disposition, and so on down to Unknown.
                             :summary "Gets all TTPs associated with the Indicator"
                             (not-found))
 
-                      (GET* "/" []
-                            :description "This is a little decription"
-                            :query-params [{offset :-  Long {:summary "asdads" :default 0}}
-                                           {limit :-  Long 0}
-                                           {after :-  Time nil}
-                                           {before :-  Time nil}
-                                           {sort_by :- IndicatorSort "timestamp"}
-                                           {sort_order :- SortOrder "desc"}
-                                           {source :- s/Str nil}
-                                           {observable :- ObservableType nil}]))
+                      (POST* "/" []
+                             :return Indicator
+                             :body [indicator NewIndicator {:description "a new Indicator"}]
+                             :summary "Adds a new Indicator"
+                             (ok (create-indicator @indicator-store indicator)))
+                      (GET* "/:id" []
+                            :return (s/maybe Indicator)
+                            :summary "Gets an Indicator by ID"
+                            :path-params [id :- s/Str]
+                            ;; :description "This is a little decription"
+                            ;; :query-params [{offset :-  Long {:summary "asdads" :default 0}}
+                            ;;                {limit :-  Long 0}
+                            ;;                {after :-  Time nil}
+                            ;;                {before :-  Time nil}
+                            ;;                {sort_by :- IndicatorSort "timestamp"}
+                            ;;                {sort_order :- SortOrder "desc"}
+                            ;;                {source :- s/Str nil}
+                            ;;                {observable :- ObservableType nil}]
+                            (if-let [d (read-indicator @indicator-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes an Actor"
+                               (if (delete-indicator @indicator-store id)
+                                 (no-content)
+                                 (not-found))))
 
             (context* "/ttps" []
                       :tags ["TTP"]

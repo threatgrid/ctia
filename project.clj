@@ -4,7 +4,8 @@
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
                  [metosin/schema-tools "0.7.0"]
                  [metosin/compojure-api "0.23.1"]
-                 [ring-middleware-format "0.7.0"]]
+                 [ring-middleware-format "0.7.0"]
+                 [lonocloud/synthread "1.4.0"]]
   :ring {:handler cia.handler/app
          :nrepl {:start? true}}
   :uberjar-name "server.jar"

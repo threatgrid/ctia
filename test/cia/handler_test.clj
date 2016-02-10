@@ -210,6 +210,35 @@
           (let [response (get (str "cia/incident/" (:id incident)))]
             (is (= 404 (:status response)))))))))
 
+(deftest test-indicator-routes
+  (testing "POST /cia/indicator"
+    (let [response (post "cia/indicator"
+                         :body {:title "indicator"
+                                :description ["description"]
+                                :producer "producer"
+                                :type ["C2" "IP Watchlist"]})
+          indicator (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:title "indicator"
+              :description ["description"]
+              :producer "producer"
+              :type ["C2" "IP Watchlist"]}
+             (dissoc indicator
+                     :id
+                     :timestamp)))
+
+      (testing "GET /cia/indicator"
+        (let [response (get (str "cia/indicator/" (:id indicator)))
+              indicator (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:title "indicator"
+                  :description ["description"]
+                  :producer "producer"
+                  :type ["C2" "IP Watchlist"]}
+                 (dissoc indicator
+                         :id
+                         :timestamp))))))))
+
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
     (let [response (post "cia/judgement"
