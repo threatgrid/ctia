@@ -2,8 +2,15 @@
   (:require [compojure.api.sweet :refer :all]
             [cia.models :refer :all]
             [cia.relations :refer :all]
-            [cia.threats :refer :all]
-            [cia.sightings :refer :all]
+            [cia.schemas.campaign :refer [Campaign]]
+            [cia.schemas.coa :refer [COA]]
+            [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
+            [cia.schemas.indicator :refer [Indicator Sighting]]
+            [cia.schemas.feedback :refer [Feedback NewFeedback]]
+            [cia.schemas.judgement :refer [Judgement NewJudgement]]
+            [cia.schemas.ttp :refer [TTP]]
+            [cia.schemas.vocabularies :refer [ObservableType]]
+            [cia.schemas.verdict :refer [Verdict]]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer :all][schema.core :as s]))
 
@@ -71,8 +78,7 @@ Malicious disposition, and so on down to Unknown.
                   :return VersionInfo
                   ;;:query-params [name :- String]
                   ;;:summary "say hello"
-                  (ok {:uuid 1
-                       :base "/cia"
+                  (ok {:base "/cia"
                        :version "0.1"
                        :beta true
                        :supported_features []}))

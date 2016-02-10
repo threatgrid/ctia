@@ -6,17 +6,15 @@
 
 (s/defschema AttackPattern
   "See http://stixproject.github.io/data-model/1.2/ttp/AttackPatternType/"
-  (merge
-   c/GenericStixIdentifiers
-   {(s/optional-key :capec_id) s/Str}))
+  {:description s/Str
+   (s/optional-key :capec_id) s/Str})
 
 (s/defschema MalwareInstance
   "See http://stixproject.github.io/data-model/1.2/ttp/MalwareInstanceType/"
-  (merge
-   c/GenericStixIdentifiers
-   {:type [v/MalwareType]
-    ;; Not provided: name ; empty vocab
-    }))
+  {:description s/Str
+   :type [v/MalwareType]
+   ;; Not provided: name ; empty vocab
+   })
 
 (s/defschema Behavior
   "See http://stixproject.github.io/data-model/1.2/ttp/BehaviorType/"
@@ -27,11 +25,10 @@
 
 (s/defschema Infrastructure
   "See http://stixproject.github.io/data-model/1.2/ttp/InfrastructureType/"
-  (merge
-   c/GenericStixIdentifiers
-   {:type v/AttackerInfrastructure
-    ;; Not provided: observable_characterization ; characterization of CybOX observables
-    }))
+  {:description s/Str
+   :type v/AttackerInfrastructure
+   ;; Not provided: observable_characterization ; characterization of CybOX observables
+   })
 
 (s/defschema Resource
   "See http://stixproject.github.io/data-model/1.2/ttp/ResourceType/"
@@ -44,8 +41,7 @@
   {(s/optional-key :identity) c/Identity
    (s/optional-key :targeted_systems) [v/SystemType]
    (s/optional-key :targeted_information) [v/InformationType]
-   ;; Not provided: targeted_technical_details ; Points to ObservablesType
-   })
+   (s/optional-key :targeted_observables) [c/Observable]}) ;; Was targeted_technical_details
 
 (s/defschema TTP
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"

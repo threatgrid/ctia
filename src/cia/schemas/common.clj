@@ -43,26 +43,24 @@
 
 (s/defschema Tool
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
-  (merge
-   GenericStixIdentifiers
-   {(s/optional-key :name) s/Str
-    (s/optional-key :type) [v/AttackToolType]
-    (s/optional-key :references) [s/Str]
-    (s/optional-key :vendor) s/Str
-    (s/optional-key :version) s/Str
-    (s/optional-key :service_pack) s/Str
-    ;; Not provided: tool_specific_data
-    ;; Not provided: tool_hashes
-    ;; Not provided: tool_configuration
-    ;; Not provided: execution_environment
-    ;; Not provided: errors
-    ;; Not provided: metadata
-    ;; Not provided: compensation_model
-    }))
+  {:description s/Str
+   (s/optional-key :type) [v/AttackToolType]
+   (s/optional-key :references) [s/Str]
+   (s/optional-key :vendor) s/Str
+   (s/optional-key :version) s/Str
+   (s/optional-key :service_pack) s/Str
+   ;; Not provided: tool_specific_data
+   ;; Not provided: tool_hashes
+   ;; Not provided: tool_configuration
+   ;; Not provided: execution_environment
+   ;; Not provided: errors
+   ;; Not provided: metadata
+   ;; Not provided: compensation_model
+   })
 
 (s/defschema Source
   "See http://stixproject.github.io/data-model/1.2/stixCommon/InformationSourceType/"
-  {(s/optional-key :description) s/Str
+  {:description s/Str
    (s/optional-key :idntity) s/Str ;; greatly simplified
    (s/optional-key :role) s/Str ;; empty vocab
    (s/optional-key :contributing_sources) [Reference] ;; more Source's
@@ -95,12 +93,35 @@
 
 (s/defschema Identity
   "See http://stixproject.github.io/data-model/1.2/stixCommon/IdentityType/"
-  (merge
-   MinimalStixIdentifiers
-   {:name s/Str
-    :related_identities [RelatedIdentity]}))
+  {:description s/Str
+   :related_identities [RelatedIdentity]})
 
 (s/defschema Activity
   "See http://stixproject.github.io/data-model/1.2/stixCommon/ActivityType/"
   {:date_time Time
    :description s/Str})
+
+(s/defschema Observable
+  "A simple, atomic value which has a consistent identity, and is
+  stable enough to be attributed an intent or nature.  This is the
+  classic 'indicator' which might appear in a data feed of bad IPs, or
+  bad Domains."
+  {:value s/Str
+   :type v/ObservableType})
+
+;;Allowed disposition values are:
+(def disposition-map
+  "Map of disposition numeric values to disposition names, as humans might use them."
+  {1 "Clean"
+   2 "Malicious"
+   3 "Suspicious"
+   4 "Common"
+   5 "Unknown"})
+
+(def DispositionNumber
+  "Numeric verdict identifiers"
+  (apply s/enum (keys disposition-map)))
+
+(def DispositionName
+  "String verdict identifiers"
+  (apply s/enum (vals disposition-map)))

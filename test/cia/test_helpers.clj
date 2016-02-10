@@ -1,8 +1,19 @@
 (ns cia.test-helpers
+  (:refer-clojure :exclude [get])
   (:require [cheshire.core :as json]
+            [cia.store :as store]
             [clj-http.client :as http]
             [clojure.edn :as edn]
-            [ring.adapter.jetty :as jetty]))
+            [ring.adapter.jetty :as jetty]
+            [schema.core :as schema]))
+
+(defn fixture-schema-validation [f]
+  (schema/with-fn-validation
+    (f)))
+
+(defn fixture-clean-state [f]
+  (run! #(reset! % nil) store/stores)
+  (f))
 
 (def http-port 3000)
 
@@ -22,25 +33,60 @@
   ([path port]
    (format "http://localhost:%d/%s" port path)))
 
-(defn starts-with? [^String str ^String test]
-  (.startsWith str test))
+;; Replace this with clojure.string/includes? once we are at Clojure 1.8
+(defn includes?
+  [^CharSequence s ^CharSequence substr]
+  (.contains (.toString s) substr))
 
-(defn json? [content-type]
-  (starts-with? content-type "application/json"))
+(defn content-type? [expected-str]
+  (fn [test-str]
+    (if (some? test-str)
+      (includes? (name test-str) expected-str)
+      false)))
 
-(defn edn? [content-type]
-  (starts-with? content-type "application/edn"))
+(def json? (content-type? "json"))
+
+(def edn? (content-type? "edn"))
+
+(defn parse-body
+  ([http-response]
+   (parse-body http-response nil))
+  ([{{content-type "Content-Type"} :headers
+     body :body}
+    default]
+   (cond
+     (edn? content-type) (edn/read-string body)
+     (json? content-type) (json/parse-string body)
+     :else default)))
+
+(defn encode-body
+  [body content-type]
+  (cond
+    (edn? content-type) (pr-str body)
+    (json? content-type) (json/generate-string body)
+    :else body))
 
 (defn get [path & {:as options}]
-  (let [{body :body
-         {content-type "Content-Type"} :headers
-         :as response}
-        (http/get (url path)
-                  (merge {:accept :edn
-                          :throw-exceptions false}
-                         options))]
-    (assoc response
-           :parsed-body
-           (cond
-             (edn? content-type) (edn/read-string body)
-             (json? content-type) (json/parse-string body)))))
+  (let [response (http/get (url path)
+                           (merge {:accept :edn
+                                   :throw-exceptions false}
+                                  options))]
+    (assoc response :parsed-body (parse-body response))))
+
+(defn post [path & {:as options}]
+  (let [{:keys [body content-type]
+         :as options}
+        (merge {:content-type :edn
+                :accept :edn
+                :throw-exceptions false
+                :socket-timeout 200
+                :conn-timeout 200}
+               options)
+        response (http/post (url path)
+                            (assoc options :body (encode-body body content-type)))]
+    (assoc response :parsed-body (parse-body response))))
+
+(defn delete [path & {:as options}]
+  (http/delete (url path)
+               (merge {:throw-exceptions false}
+                      options)))

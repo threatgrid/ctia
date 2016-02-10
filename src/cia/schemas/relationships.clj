@@ -7,10 +7,12 @@
 (def CampaignReference c/Reference)
 (def COAReference c/Reference)
 (def ExploitTargetReference c/Reference)
+(def FeedbackReference c/Reference)
 (def IncidentReference c/Reference)
 (def IndicatorReference c/Reference)
-(def ObservableReference c/Reference)
+(def JudgementReference c/Reference)
 (def TTPReference c/Reference)
+(def VerdictReference c/Reference)
 
 (s/defschema RelatedWrapper
   "For merging into RelatedFoo style structures, where Foo is the structure type"
@@ -153,15 +155,3 @@
 (defrel LeveragedTTPs
   "See http://stixproject.github.io/data-model/1.2/incident/LeveragedTTPsType/"
   TTPReference {:levereged_TTPs [RelatedTTP]})
-
-;; observable
-
-(s/defschema RelatedObservable
-  "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedObservableType/"
-  (merge
-   RelatedWrapper
-   {:observable [ObservableReference]}))
-
-(defrel RelatedObservables
-  "See http://stixproject.github.io/data-model/1.2/indicator/RelatedObservablesType/"
-  ObservableReference {:related_observable [RelatedObservable]})
