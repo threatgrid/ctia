@@ -117,7 +117,25 @@
               :objective ["foo" "bar"]}
              (dissoc coa
                      :id
-                     :timestamp))))))
+                     :timestamp)))
+
+      (testing "GET /cia/coa/:id"
+        (let [response (get (str "cia/coa/" (:id coa)))
+              coa (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:title "coa"
+                  :description ["description"]
+                  :type "Eradication"
+                  :objective ["foo" "bar"]}
+                 (dissoc coa
+                         :id
+                         :timestamp)))))
+
+      (testing "DELETE /cia/coa/:id"
+        (let [response (delete (str "/cia/coa/" (:id coa)))]
+          (is (= 204 (:status response)))
+          (let [response (get (str "/cia/coa/" (:id coa)))]
+            (is (= 404 (:status response)))))))))
 
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
