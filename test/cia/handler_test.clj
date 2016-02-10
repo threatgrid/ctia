@@ -172,6 +172,44 @@
           (let [response (get (str "cia/exploit-target/" (:id exploit-target)))]
             (is (= 404 (:status response)))))))))
 
+(deftest test-incident-routes
+  (testing "POST /cia/incident"
+    (let [response (post "cia/incident"
+                         :body {:title "incident"
+                                :description ["description"]
+                                :confidence "High"
+                                :categories ["Denial of Service"
+                                             "Improper Usage"]})
+          incident (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:title "incident"
+              :description ["description"]
+              :confidence "High"
+              :categories ["Denial of Service"
+                           "Improper Usage"]}
+             (dissoc incident
+                     :id
+                     :timestamp)))
+
+      (testing "GET /cia/incident/:id"
+        (let [response (get (str "cia/incident/" (:id incident)))
+              incident (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:title "incident"
+                  :description ["description"]
+                  :confidence "High"
+                  :categories ["Denial of Service"
+                               "Improper Usage"]}
+                 (dissoc incident
+                         :id
+                         :timestamp)))))
+
+      (testing "DELETE /cia/incident/:id"
+        (let [response (delete (str "cia/incident/" (:id incident)))]
+          (is (= 204 (:status response)))
+          (let [response (get (str "cia/incident/" (:id incident)))]
+            (is (= 404 (:status response)))))))))
+
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
     (let [response (post "cia/judgement"

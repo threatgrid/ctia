@@ -9,6 +9,7 @@
             [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
             [cia.schemas.exploit-target
              :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
+            [cia.schemas.incident :refer [Incident NewIncident realize-incident]]
             [cia.schemas.indicator :refer [Indicator Sighting]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
@@ -170,6 +171,27 @@ Malicious disposition, and so on down to Unknown.
                                :path-params [id :- s/Str]
                                :summary "Deletes a COA"
                                (if (delete-coa @coa-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/incident" []
+                      :tags ["Incident"]
+                      (POST* "/" []
+                             :return Incident
+                             :body [incident NewIncident {:description "a new incident"}]
+                             :summary "Adds a new Incident"
+                             (ok (create-incident @incident-store incident)))
+                      (GET* "/:id" []
+                            :return (s/maybe Incident)
+                            :summary "Gets an Incident by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-incident @incident-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes an Incident"
+                               (if (delete-incident @incident-store id)
                                  (no-content)
                                  (not-found))))
 

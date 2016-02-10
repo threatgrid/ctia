@@ -5,6 +5,7 @@
             [cia.schemas.exploit-target
              :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
             [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
+            [cia.schemas.incident :refer [Incident NewIncident realize-incident]]
             [cia.schemas.judgement
              :refer [Judgement NewJudgement realize-judgement]]
             [cia.store :refer :all]
@@ -154,6 +155,26 @@
     (handle-create-feedback state new-feedback judgement-id))
   (list-feedback [_ filter-map]
     (handle-list-feedback state filter-map)))
+
+;; Incident
+
+(def-create-handler handle-create-incident
+  Incident NewIncident (make-swap-fn realize-incident))
+
+(def-read-handler handle-read-incident Incident)
+
+(def-delete-handler handle-delete-incident Incident)
+
+(defrecord IncidentStore [state]
+  IIncidentStore
+  (read-incident [_ id]
+    (handle-read-incident state id))
+  (create-incident [_ new-incident]
+    (handle-create-incident state new-incident))
+  (update-incident [_ incident])
+  (delete-incident [_ id]
+    (handle-delete-incident state id))
+  (list-incidents [_ filter-map]))
 
 ;; Judgement
 
