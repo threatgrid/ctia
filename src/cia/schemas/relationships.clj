@@ -133,7 +133,7 @@
 
 (s/defschema CompositeIndicatorExpression
   "See http://stixproject.github.io/data-model/1.2/indicator/CompositeIndicatorExpressionType/"
-  {:operator (s/either "and" "or" "not")
+  {:operator (s/enum "and" "or" "not")
    :indicators [IndicatorReference]})
 
 ;; ttp
