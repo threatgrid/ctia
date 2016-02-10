@@ -102,6 +102,23 @@
           (let [response (get (str "cia/campaign/" (:id campaign)))]
             (is (= 404 (:status response)))))))))
 
+(deftest test-coa-routes
+  (testing "POST /cia/coa"
+    (let [response (post "cia/coa"
+                         :body {:title "coa"
+                                :description ["description"]
+                                :type "Eradication"
+                                :objective ["foo" "bar"]})
+          coa (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:title "coa"
+              :description ["description"]
+              :type "Eradication"
+              :objective ["foo" "bar"]}
+             (dissoc coa
+                     :id
+                     :timestamp))))))
+
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
     (let [response (post "cia/judgement"

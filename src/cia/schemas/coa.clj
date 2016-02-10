@@ -2,7 +2,8 @@
   (:require [cia.schemas.common :as c]
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (s/defschema COA
   (merge
@@ -21,3 +22,16 @@
     ;; Not provided: parameter_observables ;; Technical params using the CybOX language
     ;; Not provided: structured_COA ;; actionable structured representation for automation
     }))
+
+(s/defschema NewCOA
+  "Schema for submitting new COAs"
+  (st/dissoc COA
+             :id
+             :timestamp))
+
+(s/defn realize-coa :- COA
+  [new-coa :- NewCOA
+   id :- s/Str]
+  (assoc new-coa
+         :id id
+         :timestamp (c/timestamp)))

@@ -1,6 +1,7 @@
 (ns cia.stores.memory
   (:require [cia.schemas.actor :refer [Actor NewActor realize-actor]]
             [cia.schemas.campaign :refer [Campaign NewCampaign realize-campaign]]
+            [cia.schemas.coa :refer [COA NewCOA realize-coa]]
             [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement realize-judgement]]
             [cia.store :refer :all]
@@ -79,6 +80,26 @@
   (delete-campaign [_ id]
     (handle-delete-campaign state id))
   (list-campaigns [_ filter-map]))
+
+;; COA
+
+(def-create-handler handle-create-coa
+  COA NewCOA (make-swap-fn realize-coa))
+
+(def-read-handler handle-read-coa COA)
+
+(def-delete-handler handle-delete-coa COA)
+
+(defrecord COAStore [state]
+  ICOAStore
+  (read-coa [_ id]
+    (handle-read-coa state id))
+  (create-coa [_ new-coa]
+    (handle-create-coa state new-coa))
+  (update-coa [_ coa])
+  (delete-coa [_ id]
+    (handle-delete-coa state id))
+  (list-coas [_ filter-map]))
 
 ;; Feedback
 

@@ -16,7 +16,8 @@
   (let [store-impls {store/actor-store mem/->ActorStore
                      store/judgement-store mem/->JudgementStore
                      store/feedback-store mem/->FeedbackStore
-                     store/campaign-store mem/->CampaignStore}]
+                     store/campaign-store mem/->CampaignStore
+                     store/coa-store mem/->COAStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))
     (f)

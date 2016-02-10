@@ -5,7 +5,7 @@
             ;;[cia.relations :refer :all]
             [cia.schemas.actor :refer [Actor NewActor]]
             [cia.schemas.campaign :refer [Campaign NewCampaign]]
-            [cia.schemas.coa :refer [COA]]
+            [cia.schemas.coa :refer [COA NewCOA]]
             [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
             [cia.schemas.indicator :refer [Indicator Sighting]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
@@ -126,6 +126,27 @@ Malicious disposition, and so on down to Unknown.
                                :path-params [id :- s/Str]
                                :summary "Deletes a Campaign"
                                (if (delete-campaign @campaign-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/coa" []
+                      :tags ["coa"]
+                      (POST* "/" []
+                             :return COA
+                             :body [coa NewCOA {:description "a new COA"}]
+                             :summary "Adds a new COA"
+                             (ok (create-coa @coa-store coa)))
+                      (GET* "/:id" []
+                            :return (s/maybe COA)
+                            :summary "Gets a COA by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-coa @coa-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes a COA"
+                               (if (delete-coa @coa-store id)
                                  (no-content)
                                  (not-found))))
 
