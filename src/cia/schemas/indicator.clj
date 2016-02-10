@@ -2,7 +2,6 @@
   (:require [cia.schemas.common :as c]
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
-            [lonocloud.synthread :as ->]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
