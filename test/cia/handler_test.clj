@@ -227,7 +227,7 @@
                      :id
                      :timestamp)))
 
-      (testing "GET /cia/indicator"
+      (testing "GET /cia/indicator/:id"
         (let [response (get (str "cia/indicator/" (:id indicator)))
               indicator (:parsed-body response)]
           (is (= 200 (:status response)))
@@ -237,7 +237,13 @@
                   :type ["C2" "IP Watchlist"]}
                  (dissoc indicator
                          :id
-                         :timestamp))))))))
+                         :timestamp)))))
+
+      (testing "DELETE /cia/indicator/:id"
+        (let [response (delete (str "cia/indicator/" (:id indicator)))]
+          (is (= 204 (:status response)))
+          (let [response (get (str "cia/indicator/" (:id indicator)))]
+            (is (= 404 (:status responseg)))))))))
 
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
