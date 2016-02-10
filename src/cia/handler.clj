@@ -14,7 +14,7 @@
              :refer [Indicator NewIndicator Sighting realize-indicator]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
-            [cia.schemas.ttp :refer [TTP]]
+            [cia.schemas.ttp :refer [NewTTP TTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.store :refer :all]
@@ -288,18 +288,35 @@ Malicious disposition, and so on down to Unknown.
                                  (no-content)
                                  (not-found))))
 
-            (context* "/ttps" []
+            (context* "/ttp" []
                       :tags ["TTP"]
-                      (GET* "/" []
-                            :description "This is a little decription"
-                            :query-params [{offset :-  Long 0}
-                                           {limit :-  Long 0}
-                                           {after :-  Time nil}
-                                           {before :-  Time nil}
-                                           {sort_by :- IndicatorSort "timestamp"}
-                                           {sort_order :- SortOrder "desc"}
-                                           {source :- s/Str nil}
-                                           {observable :- ObservableType nil}]))
+                      (POST* "/" []
+                             :return TTP
+                             :body [ttp NewTTP {:description "a new TTP"}]
+                             :summary "Adds a new TTP"
+                             (ok (create-ttp @ttp-store ttp)))
+                      (GET* "/:id" []
+                            :return (s/maybe TTP)
+                            :summary "Gets a TTP by ID"
+                            ;;:description "This is a little decription"
+                            ;; :query-params [{offset :-  Long 0}
+                            ;;                {limit :-  Long 0}
+                            ;;                {after :-  Time nil}
+                            ;;                {before :-  Time nil}
+                            ;;                {sort_by :- IndicatorSort "timestamp"}
+                            ;;                {sort_order :- SortOrder "desc"}
+                            ;;                {source :- s/Str nil}
+                            ;;                {observable :- ObservableType nil}]
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-ttp @ttp-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes a TTP"
+                               (if (delete-ttp @ttp-store id)
+                                 (no-content)
+                                 (not-found))))
 
             (context* "/sightings" []
                       :tags ["Sighting"])

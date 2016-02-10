@@ -243,7 +243,7 @@
         (let [response (delete (str "cia/indicator/" (:id indicator)))]
           (is (= 204 (:status response)))
           (let [response (get (str "cia/indicator/" (:id indicator)))]
-            (is (= 404 (:status responseg)))))))))
+            (is (= 404 (:status response)))))))))
 
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
@@ -334,3 +334,40 @@
                      :reason "true positive"}]
                    (map #(dissoc % :id :timestamp)
                         feedbacks)))))))))
+
+(deftest test-ttp-routes
+  (testing "POST /cia/ttp"
+    (let [response (post "cia/ttp"
+                         :body {:title "ttp"
+                                :description ["description"]
+                                :type "foo"
+                                :indicators ["indicator-1" "indicator-2"]})
+          ttp (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:title "ttp"
+              :description ["description"]
+              :type "foo"
+              :indicators ["indicator-1" "indicator-2"]}
+             (dissoc ttp
+                     :id
+                     :timestamp
+                     :expires)))
+
+      (testing "GET /cia/ttp/:id"
+        (let [response (get (str "cia/ttp/" (:id ttp)))
+              ttp (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:title "ttp"
+                  :description ["description"]
+                  :type "foo"
+                  :indicators ["indicator-1" "indicator-2"]}
+                 (dissoc ttp
+                         :id
+                         :timestamp
+                         :expires)))))
+
+      (testing "DELETE /cia/ttp/:id"
+        (let [response (delete (str "cia/ttp/" (:id ttp)))]
+          (is (= 204 (:status response)))
+          (let [response (get (str "cia/ttp/" (:id ttp)))]
+            (is (= 404 (:status response)))))))))

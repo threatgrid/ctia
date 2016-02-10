@@ -10,6 +10,7 @@
              :refer [Indicator NewIndicator realize-indicator]]
             [cia.schemas.judgement
              :refer [Judgement NewJudgement realize-judgement]]
+            [cia.schemas.ttp :refer [NewTTP TTP realize-ttp]]
             [cia.store :refer :all]
             [clojure.string :as str]
             [schema.core :as s])
@@ -217,3 +218,22 @@
   (list-judgements-by-observable [this observable])
   (list-judgements-by-indicator [this indicator-id])
   (calculate-verdict [this observable]))
+
+;; ttp
+
+(def-create-handler handle-create-ttp TTP NewTTP (make-swap-fn realize-ttp))
+
+(def-read-handler handle-read-ttp TTP)
+
+(def-delete-handler handle-delete-ttp TTP)
+
+(defrecord TTPStore [state]
+  ITTPStore
+  (read-ttp [_ id]
+    (handle-read-ttp state id))
+  (create-ttp [_ new-ttp]
+    (handle-create-ttp state new-ttp))
+  (update-ttp [_ ttp])
+  (delete-ttp [_ id]
+    (handle-delete-ttp state id))
+  (list-ttps [_ filter-map]))
