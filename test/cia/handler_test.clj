@@ -22,9 +22,49 @@
       (is (= 200 (:status response)))
       (is (= "0.1" (get-in response [:parsed-body :version]))))))
 
+(deftest test-actor-routes
+  (testing "POST /cia/actor"
+    (let [response (post "cia/actor"
+                         :body {:title "title"
+                                :description ["description"]
+                                :type "Hacker"
+                                :source {:description "a source"}
+                                :confidence "High"})
+          actor (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:description ["description"],
+              :type "Hacker",
+              :title "title",
+              :confidence "High",
+              :source {:description "a source"}}
+             (dissoc actor
+                     :id
+                     :timestamp
+                     :expires)))
+
+      (testing "GET /cia/actor/:id"
+        (let [response (get (str "cia/actor/" (:id actor)))
+              actor (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:description ["description"],
+                  :type "Hacker",
+                  :title "title",
+                  :confidence "High",
+                  :source {:description "a source"}}
+                 (dissoc actor
+                         :id
+                         :timestamp
+                         :expires)))))
+
+      (testing "DELETE /cia/actor/:id"
+        (let [response (delete (str "cia/actor/" (:id actor)))]
+          (is (= 204 (:status response)))
+          (let [response (get (str "cia/actor/" (:id actor)))]
+            (is (= 404 (:status response)))))))))
+
 (deftest test-judgement-routes
-  (testing "POST /cia/judgement/"
-    (let [response (post "cia/judgement/"
+  (testing "POST /cia/judgement"
+    (let [response (post "cia/judgement"
                          :body {:indicators []
                                 :observable {:value "1.2.3.4"
                                              :type "ip"}
@@ -59,7 +99,7 @@
                          :timestamp)))))
 
       (testing "DELETE /cia/judgement/:id"
-        (let [temp-judgement (-> (post "cia/judgement/"
+        (let [temp-judgement (-> (post "cia/judgement"
                                        :body {:indicators []
                                               :observable {:value "9.8.7.6"
                                                            :type "ip"}
@@ -86,7 +126,7 @@
 
         (testing "GET /cia/judgement/:id/feedback"
           ;; create some more feedbacks
-          (let [response (post "cia/judgement/"
+          (let [response (post "cia/judgement"
                                :body {:indicators []
                                       :observable {:value "4.5.6.7"
                                                    :type "ip"}

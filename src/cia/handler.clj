@@ -3,6 +3,7 @@
             [cia.models :refer :all]
             [cia.printers :refer :all]
             ;;[cia.relations :refer :all]
+            [cia.schemas.actor :refer [Actor NewActor]]
             [cia.schemas.campaign :refer [Campaign]]
             [cia.schemas.coa :refer [COA]]
             [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
@@ -76,15 +77,30 @@ Malicious disposition, and so on down to Unknown.
 "}
     :tags [{:name "threat", :description "Threat Intelligence"}]})
   (context* "/cia" []
-            :tags ["version"]
-            (GET* "/version" []
-                  :return VersionInfo
-                  ;;:query-params [name :- String]
-                  ;;:summary "say hello"
-                  (ok {:base "/cia"
-                       :version "0.1"
-                       :beta true
-                       :supported_features []}))
+            (context* "/version" []
+                      :tags ["version"]
+                      (GET* "/" []
+                            :return VersionInfo
+                            :summary "API version details"
+                            (ok {:base "/cia"
+                                 :version "0.1"
+                                 :beta true
+                                 :supported_features []})))
+
+            (context* "/actor" []
+                      :tags ["Actor"]
+                      (POST* "/" []
+                             :return Actor
+                             :body [actor NewActor {:description "a new Actor"}]
+                             :summary "Adds a new Actor"
+                             (ok (create-actor @actor-store actor)))
+                      (GET* "/:id" []
+                            :return (s/maybe Actor)
+                            :summary "Gets an Actor by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-actor @actor-store id)]
+                              (ok d)
+                              (not-found))))
 
             (context* "/judgement" []
                       :tags ["Judgement"]
@@ -156,19 +172,6 @@ Malicious disposition, and so on down to Unknown.
                       (GET* "/" []
                             :description "This is a little decription"
                             :query-params [{offset :-  Long {:summary "asdads" :default 0}}
-                                           {limit :-  Long 0}
-                                           {after :-  Time nil}
-                                           {before :-  Time nil}
-                                           {sort_by :- IndicatorSort "timestamp"}
-                                           {sort_order :- SortOrder "desc"}
-                                           {source :- s/Str nil}
-                                           {observable :- ObservableType nil}]))
-
-            (context* "/actors" []
-                      :tags ["Actor"]
-                      (GET* "/" []
-                            :description "This is a little decription"
-                            :query-params [{offset :-  Long 0}
                                            {limit :-  Long 0}
                                            {after :-  Time nil}
                                            {before :-  Time nil}

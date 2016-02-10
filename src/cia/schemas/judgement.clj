@@ -3,7 +3,8 @@
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
             [schema.core :as s]
-            [schema-tools.core :as st]))
+            [schema-tools.core :as st])
+  (:import org.joda.time.DateTime))
 
 (def Severity s/Int)
 
@@ -57,3 +58,13 @@
   (st/merge Judgement
             {:owner s/Str
              :created c/Time}))
+
+(s/defn realize-judgement :- Judgement
+  [new-judgement :- NewJudgement
+   id :- s/Str]
+  (assoc new-judgement
+         :id id
+         :timestamp (DateTime.)
+         :priority 100
+         :severity 100
+         :confidence "Low"))

@@ -14,17 +14,13 @@
   "A URI."
   s/Str)
 
-(def IDRef
-  "A URI that points to the JSON representation of the object."
-  s/Str)
-
 (def Time
   "Schema definition for all date or timestamp values in GUNDAM."
   org.joda.time.DateTime)
 
 (s/defschema MinimalStixIdentifiers
   {;; :id and :idref must be implemented exclusively
-   (s/required-key (s/enum :id :idref)) (s/either ID IDRef)})
+   :id ID})
 
 (s/defschema GenericStixIdentifiers
   "These fields are common in STIX data models"

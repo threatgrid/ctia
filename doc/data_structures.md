@@ -214,6 +214,7 @@ A positive, neutral or negative feedback on a Judgement
 Key | Value | Mandatory?
 --- | --- | ---
 id | [ID](#id) | &#10003;
+timestamp | [Time](#time) | &#10003;
 judgement | [JudgementReference](#judgement_reference) | &#10003;
 source | string |
 feedback | -1 &#124; 0 &#124; 1 | &#10003;

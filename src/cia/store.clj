@@ -1,5 +1,12 @@
 (ns cia.store)
 
+(defprotocol IActorStore
+  (read-actor [this id])
+  (create-actor [this new-actor])
+  (update-actor [this actor])
+  (delete-actor [this id])
+  (list-actors [this filtermap]))
+
 (defprotocol IJudgementStore
   (create-judgement [this new-judgement])
   (read-judgement [this id])
@@ -33,13 +40,6 @@
   (update-campaign [this campaign])
   (delete-campaign [this id])
   (list-campaigns [this filtermap]))
-
-(defprotocol IActorStore
-  (read-actor [this id])
-  (create-actor [this new-actor])
-  (update-actor [this actor])
-  (delete-actor [this id])
-  (list-actors [this filtermap]))
 
 (defprotocol ICOAStore
   (read-coa [this id])

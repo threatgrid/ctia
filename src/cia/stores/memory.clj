@@ -1,60 +1,64 @@
 (ns cia.stores.memory
-  (:require [cia.schemas.feedback :refer [Feedback NewFeedback]]
-            [cia.schemas.judgement :refer [Judgement NewJudgement]]
+  (:require [cia.schemas.actor :refer [Actor NewActor realize-actor]]
+            [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
+            [cia.schemas.judgement :refer [Judgement NewJudgement realize-judgement]]
             [cia.store :refer :all]
+            [clojure.string :as str]
             [schema.core :as s])
   (:import org.joda.time.DateTime
            java.util.UUID))
 
-;; Judgement
+(defn make-id [schema]
+  (str (str/lower-case (s/schema-name schema)) "-" (UUID/randomUUID)))
 
-(defn swap-create-judgement [judgements judgement id]
-  (assoc judgements id (assoc judgement
-                              :id (str id)
-                              :priority 100
-                              :timestamp (DateTime.)
-                              :severity 100
-                              :confidence "Low")))
+(defmacro def-read-handler [name Model]
+  `(s/defn ~name :- (s/maybe ~Model)
+     [state# :- (s/atom {s/Str ~Model})
+      id# :- s/Str]
+     (get (deref state#) id#)))
 
-(s/defn handle-create-judgement :- Judgement
-  [state :- (s/atom {s/Str Judgement})
-   new-judgement :- NewJudgement]
-  (let [new-id (str "judgement-" (UUID/randomUUID))]
-    (get
-     (swap! state swap-create-judgement new-judgement new-id)
-     new-id)))
+(defmacro def-create-handler [name Model NewModel swap-fn]
+  `(s/defn ~name :- ~Model
+     [state# :- (s/atom {s/Str ~Model})
+      new-model# :- ~NewModel]
+     (let [new-id# (make-id ~Model)]
+       (get
+        (swap! state# ~swap-fn new-model# new-id#)
+        new-id#))))
 
-(s/defn handle-read-judgement :- (s/maybe Judgement)
-  [state :- (s/atom {s/Str Judgement})
-   judgement-id :- s/Str]
-  (get @state judgement-id))
+(defmacro def-delete-handler [name Model]
+  `(s/defn ~name :- s/Bool
+     [state# :- (s/atom {s/Str ~Model})
+      id# :- s/Str]
+     (if (contains? (deref state#) id#)
+       (do (swap! state# dissoc id#)
+           true)
+       false)))
 
-(s/defn handle-delete-judgement :- s/Bool
-  [state :- (s/atom {s/Str Judgement})
-   judgement-id :- s/Str]
-  (if (contains? @state judgement-id)
-    (do (swap! state dissoc judgement-id)
-        true)
-    false))
+(defn make-swap-fn [realize-fn]
+  (fn [state-map & [new-model id :as args]]
+    (assoc state-map id (apply realize-fn args))))
 
-(defrecord JudgementStore [state]
-  IJudgementStore
-  (create-judgement [_ new-judgement]
-    (handle-create-judgement state new-judgement))
-  (read-judgement [_ id]
-    (handle-read-judgement state id))
-  (delete-judgement [_ id]
-    (handle-delete-judgement state id))
-  (list-judgements-by-observable [this observable])
-  (list-judgements-by-indicator [this indicator-id])
-  (calculate-verdict [this observable]))
+;; Actor
+
+(def-create-handler handle-create-actor
+  Actor NewActor (make-swap-fn realize-actor))
+
+(def-read-handler handle-read-actor Actor)
+
+(def-delete-handler handle-delete-actor Actor)
+
+(defrecord ActorStore [state]
+  IActorStore
+  (read-actor [_ id]
+    (handle-read-actor state id))
+  (create-actor [_ new-actor]
+    (handle-create-actor state new-actor))
+  (update-actor [_ actor])
+  (delete-actor [_ id])
+  (list-actors [_ filter-map]))
 
 ;; Feedback
-
-(defn swap-create-feedback [feedbacks feedback id judgement-id]
-  (assoc feedbacks id (assoc feedback
-                             :id id
-                             :judgement judgement-id)))
 
 (s/defn handle-create-feedback :- Feedback
   [state :- (s/atom {s/Str Feedback})
@@ -62,7 +66,11 @@
    judgement-id :- s/Str]
   (let [new-id (str "feedback-" (UUID/randomUUID))]
     (get
-     (swap! state swap-create-feedback new-feedback new-id judgement-id)
+     (swap! state
+            (make-swap-fn realize-feedback)
+            new-feedback
+            new-id
+            judgement-id)
      new-id)))
 
 (s/defn handle-list-feedback :- (s/maybe [Feedback])
@@ -80,3 +88,24 @@
     (handle-create-feedback state new-feedback judgement-id))
   (list-feedback [_ filter-map]
     (handle-list-feedback state filter-map)))
+
+;; Judgement
+
+(def-create-handler handle-create-judgement
+  Judgement NewJudgement (make-swap-fn realize-judgement))
+
+(def-read-handler handle-read-judgement Judgement)
+
+(def-delete-handler handle-delete-judgement Judgement)
+
+(defrecord JudgementStore [state]
+  IJudgementStore
+  (create-judgement [_ new-judgement]
+    (handle-create-judgement state new-judgement))
+  (read-judgement [_ id]
+    (handle-read-judgement state id))
+  (delete-judgement [_ id]
+    (handle-delete-judgement state id))
+  (list-judgements-by-observable [this observable])
+  (list-judgements-by-indicator [this indicator-id])
+  (calculate-verdict [this observable]))
