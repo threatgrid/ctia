@@ -1,17 +1,16 @@
 (ns cia.handler
   (:require [compojure.api.sweet :refer :all]
-            [cia.models :refer :all]
             [cia.printers :refer :all]
-            ;;[cia.relations :refer :all]
             [cia.schemas.actor :refer [Actor NewActor]]
             [cia.schemas.campaign :refer [Campaign NewCampaign]]
             [cia.schemas.coa :refer [COA NewCOA]]
-            [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
+            [cia.schemas.common
+             :refer [DispositionName DispositionNumber Time VersionInfo]]
             [cia.schemas.exploit-target
-             :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
-            [cia.schemas.incident :refer [Incident NewIncident realize-incident]]
+             :refer [ExploitTarget NewExploitTarget]]
+            [cia.schemas.incident :refer [Incident NewIncident]]
             [cia.schemas.indicator
-             :refer [Indicator NewIndicator Sighting realize-indicator]]
+             :refer [Indicator NewIndicator Sighting]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
             [cia.schemas.ttp :refer [NewTTP TTP]]
@@ -336,7 +335,7 @@ Malicious disposition, and so on down to Unknown.
                                 id :- s/Str]
                   :return [Judgement]
                   :summary "Returns all the Judgements associated with the specified observable."
-                  (ok (find-judgements observable_type id)))
+                  (not-found))
 
             (GET* "/:observable_type/:id/indicators" []
                   :query-params [{offset :-  Long 0}
@@ -350,7 +349,7 @@ Malicious disposition, and so on down to Unknown.
                                 id :- s/Str]
                   :return [Indicator]
                   :summary "Returns all the Indiators associated with the specified observable."
-                  (ok (find-judgements observable_type id)))
+                  (not-found))
 
             (GET* "/:observable_type/:id/sightings" []
                   :query-params [{offset :-  Long 0}
@@ -364,7 +363,7 @@ Malicious disposition, and so on down to Unknown.
                                 id :- s/Str]
                   :return [Sighting]
                   :summary "Returns all the Sightings associated with the specified observable."
-                  (ok (find-judgements observable_type id)))
+                  (not-found))
 
             (GET* "/:observable_type/:id/relations" []
                   :query-params [{offset :-  Long 0}
@@ -379,7 +378,7 @@ Malicious disposition, and so on down to Unknown.
                                 id :- s/Str]
                   :return [Judgement]
                   :summary "Returns all the Judgements associated with the specified observable."
-                  (ok (find-judgements observable_type id)))
+                  (not-found))
 
             (GET* "/:observable_type/:id/verdict" []
                   :tags ["Verdict"]
@@ -387,7 +386,7 @@ Malicious disposition, and so on down to Unknown.
                                 id :- s/Str]
                   :return (s/maybe Verdict)
                   :summary "Returns the current Verdict associated with the specified observable."
-                  (ok (current-verdict observable_type id)))))
+                  (not-found))))
 
 (def app
   (-> api-handler

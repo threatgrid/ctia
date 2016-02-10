@@ -20,6 +20,31 @@
   "Schema definition for all date or timestamp values in GUNDAM."
   org.joda.time.DateTime)
 
+(s/defschema VersionInfo
+  {:base URI
+   :version s/Str
+   :beta s/Bool
+   :supported_features [s/Str]})
+
+(def CIAFeature
+  (s/enum "Judgements"
+          "Verdicts"
+          "Threats"
+          "Relations"
+          "Feeds"
+          "Feedback"
+          "COAs"
+          "ExploitTargets"))
+
+(def SpecificationType
+  "Types of Indicator we support Currently only Judgement indicators,
+  which contain a list of Judgements associated with this indicator."
+  (s/enum "Judgement"
+          "ThreatBrain"
+          "SIOC"
+          "Snort"
+          "OpenIOC"))
+
 (s/defschema MinimalStixIdentifiers
   {;; :id and :idref must be implemented exclusively
    :id ID})
