@@ -2,8 +2,11 @@
   (:require [cia.schemas.actor :refer [Actor NewActor realize-actor]]
             [cia.schemas.campaign :refer [Campaign NewCampaign realize-campaign]]
             [cia.schemas.coa :refer [COA NewCOA realize-coa]]
+            [cia.schemas.exploit-target
+             :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
             [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
-            [cia.schemas.judgement :refer [Judgement NewJudgement realize-judgement]]
+            [cia.schemas.judgement
+             :refer [Judgement NewJudgement realize-judgement]]
             [cia.store :refer :all]
             [clojure.string :as str]
             [schema.core :as s])
@@ -100,6 +103,26 @@
   (delete-coa [_ id]
     (handle-delete-coa state id))
   (list-coas [_ filter-map]))
+
+;; ExploitTarget
+
+(def-create-handler handle-create-exploit-target
+  ExploitTarget NewExploitTarget (make-swap-fn realize-exploit-target))
+
+(def-read-handler handle-read-exploit-target ExploitTarget)
+
+(def-delete-handler handle-delete-exploit-target ExploitTarget)
+
+(defrecord ExplitTargetStore [state]
+  IExploitTargetStore
+  (read-exploit-target [_ id]
+    (handle-read-exploit-target state id))
+  (create-exploit-target [_ new-exploit-target]
+    (handle-create-exploit-target state new-exploit-target))
+  (update-exploit-target [_ exploit-target])
+  (delete-exploit-target [_ id]
+    (handle-delete-exploit-target state id))
+  (list-exploit-targets [_ filter-map]))
 
 ;; Feedback
 

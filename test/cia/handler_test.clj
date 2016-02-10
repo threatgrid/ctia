@@ -137,6 +137,41 @@
           (let [response (get (str "/cia/coa/" (:id coa)))]
             (is (= 404 (:status response)))))))))
 
+(deftest test-exploit-target-routes
+  (testing "POST /cia/exploit-target"
+    (let [response (post "cia/exploit-target"
+                         :body {:title "exploit-target"
+                                :description ["description"]
+                                :vulnerability [{:title "vulnerability"
+                                                 :description ["description"]}]})
+          exploit-target (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:title "exploit-target"
+              :description ["description"]
+              :vulnerability [{:title "vulnerability"
+                               :description ["description"]}]}
+             (dissoc exploit-target
+                     :id
+                     :timestamp)))
+
+      (testing "GET /cia/exploit-target/:id"
+        (let [response (get (str "cia/exploit-target/" (:id exploit-target)))
+              exploit-target (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:title "exploit-target"
+                  :description ["description"]
+                  :vulnerability [{:title "vulnerability"
+                                   :description ["description"]}]}
+                 (dissoc exploit-target
+                         :id
+                         :timestamp)))))
+
+      (testing "DELETE /cia/exploit-target/:id"
+        (let [response (delete (str "cia/exploit-target/" (:id exploit-target)))]
+          (is (= 204 (:status response)))
+          (let [response (get (str "cia/exploit-target/" (:id exploit-target)))]
+            (is (= 404 (:status response)))))))))
+
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
     (let [response (post "cia/judgement"

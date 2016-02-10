@@ -7,6 +7,8 @@
             [cia.schemas.campaign :refer [Campaign NewCampaign]]
             [cia.schemas.coa :refer [COA NewCOA]]
             [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
+            [cia.schemas.exploit-target
+             :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
             [cia.schemas.indicator :refer [Indicator Sighting]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
@@ -126,6 +128,27 @@ Malicious disposition, and so on down to Unknown.
                                :path-params [id :- s/Str]
                                :summary "Deletes a Campaign"
                                (if (delete-campaign @campaign-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/exploit-target" []
+                      :tags ["ExploitTarget"]
+                      (POST* "/" []
+                             :return ExploitTarget
+                             :body [exploit-target NewExploitTarget {:description "a new exploit target"}]
+                             :summary "Adds a new ExploitTarget"
+                             (ok (create-exploit-target @exploit-target-store exploit-target)))
+                      (GET* "/:id" []
+                            :return (s/maybe ExploitTarget)
+                            :summary "Gets an ExploitTarget by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-exploit-target @exploit-target-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes an ExploitTarget"
+                               (if (delete-exploit-target @exploit-target-store id)
                                  (no-content)
                                  (not-found))))
 

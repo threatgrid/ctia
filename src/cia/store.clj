@@ -23,6 +23,13 @@
   (delete-indicator [this id])
   (list-indicators [this filtermap]))
 
+(defprotocol IExploitTargetStore
+  (read-exploit-target [this id])
+  (create-exploit-target [this new-exploit-target])
+  (update-exploit-target [this exploit-target])
+  (delete-exploit-target [this id])
+  (list-exploit-targets [this filtermap]))
+
 (defprotocol IFeedbackStore
   (create-feedback [this new-feedback judgement-id])
   (list-feedback [this filtermap]))
@@ -80,6 +87,7 @@
 (defonce campaign-store (atom nil))
 (defonce actor-store (atom nil))
 (defonce coa-store (atom nil))
+(defonce exploit-target-store (atom nil))
 
 ;; sightings
 (defonce sightings-store (atom nil))

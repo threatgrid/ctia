@@ -17,7 +17,8 @@
                      store/judgement-store mem/->JudgementStore
                      store/feedback-store mem/->FeedbackStore
                      store/campaign-store mem/->CampaignStore
-                     store/coa-store mem/->COAStore}]
+                     store/coa-store mem/->COAStore
+                     store/exploit-target-store mem/->ExplitTargetStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))
     (f)
