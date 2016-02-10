@@ -1,18 +1,26 @@
 (ns cia.handler
   (:require [compojure.api.sweet :refer :all]
             [cia.models :refer :all]
-            [cia.relations :refer :all]
-            [cia.schemas.campaign :refer [Campaign]]
-            [cia.schemas.coa :refer [COA]]
+            [cia.printers :refer :all]
+            ;;[cia.relations :refer :all]
+            [cia.schemas.actor :refer [Actor NewActor]]
+            [cia.schemas.campaign :refer [Campaign NewCampaign]]
+            [cia.schemas.coa :refer [COA NewCOA]]
             [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
-            [cia.schemas.indicator :refer [Indicator Sighting]]
+            [cia.schemas.exploit-target
+             :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
+            [cia.schemas.incident :refer [Incident NewIncident realize-incident]]
+            [cia.schemas.indicator
+             :refer [Indicator NewIndicator Sighting realize-indicator]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
             [cia.schemas.ttp :refer [TTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
+            [cia.store :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
-            [ring.util.http-response :refer :all][schema.core :as s]))
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (def JudgementSort
   "A sort ordering"
@@ -73,51 +81,156 @@ Malicious disposition, and so on down to Unknown.
 "}
     :tags [{:name "threat", :description "Threat Intelligence"}]})
   (context* "/cia" []
-            :tags ["version"]
-            (GET* "/version" []
-                  :return VersionInfo
-                  ;;:query-params [name :- String]
-                  ;;:summary "say hello"
-                  (ok {:base "/cia"
-                       :version "0.1"
-                       :beta true
-                       :supported_features []}))
+            (context* "/version" []
+                      :tags ["version"]
+                      (GET* "/" []
+                            :return VersionInfo
+                            :summary "API version details"
+                            (ok {:base "/cia"
+                                 :version "0.1"
+                                 :beta true
+                                 :supported_features []})))
 
-            (context* "/judgements" []
+            (context* "/actor" []
+                      :tags ["Actor"]
+                      (POST* "/" []
+                             :return Actor
+                             :body [actor NewActor {:description "a new Actor"}]
+                             :summary "Adds a new Actor"
+                             (ok (create-actor @actor-store actor)))
+                      (GET* "/:id" []
+                            :return (s/maybe Actor)
+                            :summary "Gets an Actor by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-actor @actor-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes an Actor"
+                               (if (delete-actor @actor-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/campaign" []
+                      :tags ["Campaign"]
+                      (POST* "/" []
+                             :return Campaign
+                             :body [campaign NewCampaign {:description "a new campaign"}]
+                             :summary "Adds a new Campaign"
+                             (ok (create-campaign @campaign-store campaign)))
+                      (GET* "/:id" []
+                            :return (s/maybe Campaign)
+                            :summary "Gets a Campaign by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-campaign @campaign-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes a Campaign"
+                               (if (delete-campaign @campaign-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/exploit-target" []
+                      :tags ["ExploitTarget"]
+                      (POST* "/" []
+                             :return ExploitTarget
+                             :body [exploit-target NewExploitTarget {:description "a new exploit target"}]
+                             :summary "Adds a new ExploitTarget"
+                             (ok (create-exploit-target @exploit-target-store exploit-target)))
+                      (GET* "/:id" []
+                            :return (s/maybe ExploitTarget)
+                            :summary "Gets an ExploitTarget by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-exploit-target @exploit-target-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes an ExploitTarget"
+                               (if (delete-exploit-target @exploit-target-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/coa" []
+                      :tags ["coa"]
+                      (POST* "/" []
+                             :return COA
+                             :body [coa NewCOA {:description "a new COA"}]
+                             :summary "Adds a new COA"
+                             (ok (create-coa @coa-store coa)))
+                      (GET* "/:id" []
+                            :return (s/maybe COA)
+                            :summary "Gets a COA by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-coa @coa-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes a COA"
+                               (if (delete-coa @coa-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/incident" []
+                      :tags ["Incident"]
+                      (POST* "/" []
+                             :return Incident
+                             :body [incident NewIncident {:description "a new incident"}]
+                             :summary "Adds a new Incident"
+                             (ok (create-incident @incident-store incident)))
+                      (GET* "/:id" []
+                            :return (s/maybe Incident)
+                            :summary "Gets an Incident by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-incident @incident-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes an Incident"
+                               (if (delete-incident @incident-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/judgement" []
                       :tags ["Judgement"]
                       (POST* "/" []
                              :return Judgement
                              :body [judgement NewJudgement {:description "a new Judgement"}]
                              :summary "Adds a new Judgement"
-                             (ok (add! judgement)))
-                      (POST* "/:id/feedback" []
+                             (ok (create-judgement @judgement-store judgement)))
+                      (POST* "/:judgement-id/feedback" []
                              :tags ["Feedback"]
                              :return Feedback
+                             :path-params [judgement-id :- s/Str]
                              :body [feedback NewFeedback {:description "a new Feedback on a Judgement"}]
-                             :summary "Adds a Feedback to a Judgeent"
-                             (ok (add! feedback)))
-                      (GET* "/:id/feedback" []
+                             :summary "Adds a Feedback to a Judgement"
+                             (ok (create-feedback @feedback-store feedback judgement-id)))
+                      (GET* "/:judgement-id/feedback" []
                             :tags ["Feedback"]
                             :return [Feedback]
-                            :path-params [id :- Long]
+                            :path-params [judgement-id :- s/Str]
                             :summary "Gets all Feedback for this Judgement."
-                            (not-found))
+                            (ok (list-feedback @feedback-store {:judgement judgement-id})))
                       (GET* "/:id" []
                             :return (s/maybe Judgement)
-                            :path-params [id :- Long]
+                            :path-params [id :- s/Str]
                             :summary "Gets a Judgement by ID"
-                            (if-let [d (get-judgement id)]
+                            (if-let [d (read-judgement @judgement-store id)]
                               (ok d)
                               (not-found)))
                       (DELETE* "/:id" []
-                               :path-params [id :- Long]
+                               :path-params [id :- s/Str]
                                :summary "Deletes a Judgement"
-                               (ok (delete! id))))
+                               (if (delete-judgement @judgement-store id)
+                                 (no-content)
+                                 (not-found))))
 
-            (context* "/campaigns" []
-                      :tags ["Campaign"])
-
-            (context* "/indicators" []
+            (context* "/indicator" []
                       :tags ["Indicator"]
                       (GET* "/:id/judgements" []
                             :return [Judgement]
@@ -147,29 +260,33 @@ Malicious disposition, and so on down to Unknown.
                             :summary "Gets all TTPs associated with the Indicator"
                             (not-found))
 
-                      (GET* "/" []
-                            :description "This is a little decription"
-                            :query-params [{offset :-  Long {:summary "asdads" :default 0}}
-                                           {limit :-  Long 0}
-                                           {after :-  Time nil}
-                                           {before :-  Time nil}
-                                           {sort_by :- IndicatorSort "timestamp"}
-                                           {sort_order :- SortOrder "desc"}
-                                           {source :- s/Str nil}
-                                           {observable :- ObservableType nil}]))
-
-            (context* "/actors" []
-                      :tags ["Actor"]
-                      (GET* "/" []
-                            :description "This is a little decription"
-                            :query-params [{offset :-  Long 0}
-                                           {limit :-  Long 0}
-                                           {after :-  Time nil}
-                                           {before :-  Time nil}
-                                           {sort_by :- IndicatorSort "timestamp"}
-                                           {sort_order :- SortOrder "desc"}
-                                           {source :- s/Str nil}
-                                           {observable :- ObservableType nil}]))
+                      (POST* "/" []
+                             :return Indicator
+                             :body [indicator NewIndicator {:description "a new Indicator"}]
+                             :summary "Adds a new Indicator"
+                             (ok (create-indicator @indicator-store indicator)))
+                      (GET* "/:id" []
+                            :return (s/maybe Indicator)
+                            :summary "Gets an Indicator by ID"
+                            :path-params [id :- s/Str]
+                            ;; :description "This is a little decription"
+                            ;; :query-params [{offset :-  Long {:summary "asdads" :default 0}}
+                            ;;                {limit :-  Long 0}
+                            ;;                {after :-  Time nil}
+                            ;;                {before :-  Time nil}
+                            ;;                {sort_by :- IndicatorSort "timestamp"}
+                            ;;                {sort_order :- SortOrder "desc"}
+                            ;;                {source :- s/Str nil}
+                            ;;                {observable :- ObservableType nil}]
+                            (if-let [d (read-indicator @indicator-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes an Actor"
+                               (if (delete-indicator @indicator-store id)
+                                 (no-content)
+                                 (not-found))))
 
             (context* "/ttps" []
                       :tags ["TTP"]

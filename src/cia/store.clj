@@ -1,5 +1,12 @@
 (ns cia.store)
 
+(defprotocol IActorStore
+  (read-actor [this id])
+  (create-actor [this new-actor])
+  (update-actor [this actor])
+  (delete-actor [this id])
+  (list-actors [this filtermap]))
+
 (defprotocol IJudgementStore
   (create-judgement [this new-judgement])
   (read-judgement [this id])
@@ -16,8 +23,15 @@
   (delete-indicator [this id])
   (list-indicators [this filtermap]))
 
+(defprotocol IExploitTargetStore
+  (read-exploit-target [this id])
+  (create-exploit-target [this new-exploit-target])
+  (update-exploit-target [this exploit-target])
+  (delete-exploit-target [this id])
+  (list-exploit-targets [this filtermap]))
+
 (defprotocol IFeedbackStore
-  (create-feedback [this feedback])
+  (create-feedback [this new-feedback judgement-id])
   (list-feedback [this filtermap]))
 
 (defprotocol ITTPStore
@@ -33,13 +47,6 @@
   (update-campaign [this campaign])
   (delete-campaign [this id])
   (list-campaigns [this filtermap]))
-
-(defprotocol IActorStore
-  (read-actor [this id])
-  (create-actor [this new-actor])
-  (update-actor [this actor])
-  (delete-actor [this id])
-  (list-actors [this filtermap]))
 
 (defprotocol ICOAStore
   (read-coa [this id])
@@ -80,6 +87,7 @@
 (defonce campaign-store (atom nil))
 (defonce actor-store (atom nil))
 (defonce coa-store (atom nil))
+(defonce exploit-target-store (atom nil))
 
 ;; sightings
 (defonce sightings-store (atom nil))
@@ -89,15 +97,3 @@
 
 ;; relations
 (defonce relation-store (atom nil))
-
-(defonce stores
-  [judgement-store
-   indicator-store
-   feedback-store
-   ttp-store
-   campaign-store
-   actor-store
-   coa-store
-   sightings-store
-   incident-store
-   relation-store])

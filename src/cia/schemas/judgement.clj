@@ -2,7 +2,8 @@
   (:require [cia.schemas.common :as c]
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (def Severity s/Int)
 
@@ -38,21 +39,31 @@
 
    (s/optional-key :indicators) rel/RelatedIndicators})
 
-(def NewJudgement
+(s/defschema NewJudgement
   "Schema for submitting new Judgements."
-  (merge (dissoc Judgement
-                 :id
-                 :priority
-                 :timestamp
-                 :severity
-                 :confidence)
-         {(s/optional-key :severity) Severity
-          (s/optional-key :confidence) v/HighMedLow
-          (s/optional-key :timestamp) c/Time
-          (s/optional-key :priority) Priority}))
+  (st/merge (st/dissoc Judgement
+                       :id
+                       :priority
+                       :timestamp
+                       :severity
+                       :confidence)
+            {(s/optional-key :severity) Severity
+             (s/optional-key :confidence) v/HighMedLow
+             (s/optional-key :timestamp) c/Time
+             (s/optional-key :priority) Priority}))
 
-(def StoredJudgement
+(s/defschema StoredJudgement
   "A judgement at rest in the storage service"
-  (merge Judgement
-         {:owner s/Str
-          :created c/Time}))
+  (st/merge Judgement
+            {:owner s/Str
+             :created c/Time}))
+
+(s/defn realize-judgement :- Judgement
+  [new-judgement :- NewJudgement
+   id :- s/Str]
+  (assoc new-judgement
+         :id id
+         :timestamp (c/timestamp)
+         :priority 100
+         :severity 100
+         :confidence "Low"))

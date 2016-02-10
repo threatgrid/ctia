@@ -2,7 +2,8 @@
   (:require [cia.schemas.common :as c]
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (s/defschema NonPublicDataCompromised
   "See http://stixproject.github.io/data-model/1.2/incident/NonPublicDataCompromisedType/"
@@ -84,7 +85,7 @@
 
 (s/defschema Incident
   "See http://stixproject.github.io/data-model/1.2/incident/IncidentType/"
-  (merge
+  (st/merge
    c/GenericStixIdentifiers
    {:timestamp c/Time ;; timestamp "for this version"; optional in spec
     :confidence v/HighMedLow ;; squashed; TODO - Consider expanding
@@ -110,7 +111,7 @@
     ;; The seqs of elements below are squashed (they leave out
     ;; structured data such as confidence and source for each element).
     (s/optional-key :related_indicators) rel/RelatedIndicators
-    (s/optional-key :related_observables) c/Observables ;; Was related_observables
+    (s/optional-key :related_observables) [c/Observable] ;; Was related_observables
     (s/optional-key :leveraged_TTPs) rel/LeveragedTTPs
     (s/optional-key :attributed_actors) rel/AttributedActors ;; was attributed_threat_actors
     (s/optional-key :related_incidents) rel/RelatedIncidents
@@ -121,3 +122,15 @@
     ;; Not provided: handling
     ;; Not provided: related_packages (deprecated)
     }))
+
+(s/defschema NewIncident
+  (st/dissoc Incident
+             :id
+             :timestamp))
+
+(s/defn realize-incident :- Incident
+  [new-incident :- NewIncident
+   id :- s/Str]
+  (assoc new-incident
+         :id id
+         :timestamp (c/timestamp)))

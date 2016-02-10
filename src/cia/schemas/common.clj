@@ -1,5 +1,7 @@
 (ns cia.schemas.common
   (:require [cia.schemas.vocabularies :as v]
+            [clj-time.core :as time]
+            [clj-time.format :as time-format]
             [schema.core :as s]))
 
 (def Reference
@@ -14,17 +16,13 @@
   "A URI."
   s/Str)
 
-(def IDRef
-  "A URI that points to the JSON representation of the object."
-  s/Str)
-
 (def Time
   "Schema definition for all date or timestamp values in GUNDAM."
   org.joda.time.DateTime)
 
 (s/defschema MinimalStixIdentifiers
   {;; :id and :idref must be implemented exclusively
-   (s/required-key (s/enum :id :idref)) (s/either ID IDRef)})
+   :id ID})
 
 (s/defschema GenericStixIdentifiers
   "These fields are common in STIX data models"
@@ -125,3 +123,17 @@
 (def DispositionName
   "String verdict identifiers"
   (apply s/enum (vals disposition-map)))
+
+;; helper fns used by schemas
+
+(def timestamp time/now)
+
+(defn expire-after
+  ([now]
+   (expire-after now 7))
+  ([now in-days]
+   (time/plus now (time/days in-days))))
+
+(defn expire-on [expire-str]
+  (time-format/parse (time-format/formatters :date-time)
+                     expire-str))

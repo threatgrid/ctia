@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [cheshire.core :as json]
             [cia.store :as store]
+            [cia.stores.memory :as mem]
             [clj-http.client :as http]
             [clojure.edn :as edn]
             [ring.adapter.jetty :as jetty]
@@ -11,9 +12,20 @@
   (schema/with-fn-validation
     (f)))
 
-(defn fixture-clean-state [f]
-  (run! #(reset! % nil) store/stores)
-  (f))
+(defn fixture-in-memory-store [f]
+  (let [store-impls {store/actor-store mem/->ActorStore
+                     store/judgement-store mem/->JudgementStore
+                     store/feedback-store mem/->FeedbackStore
+                     store/campaign-store mem/->CampaignStore
+                     store/coa-store mem/->COAStore
+                     store/exploit-target-store mem/->ExplitTargetStore
+                     store/incident-store mem/->IncidentStore
+                     store/indicator-store mem/->IndicatorStore}]
+    (doseq [[store impl-fn] store-impls]
+      (reset! store (impl-fn (atom {}))))
+    (f)
+    (doseq  [store (keys store-impls)]
+      (reset! store nil))))
 
 (def http-port 3000)
 
