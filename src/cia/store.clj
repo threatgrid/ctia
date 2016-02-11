@@ -76,19 +76,10 @@
   (delete-relation [this id])
   (list-relations [this filtermap]))
 
-(defprotocol IVerdictStore
-  (read-verdict [this id])
-  (create-verdict [this new-verdict])
-  (update-verdict [this verdict])
-  (delete-verdict [this id])
-  (list-verdicts [this filtermap]))
-
 ;; core model
 (defonce judgement-store (atom nil))
 (defonce indicator-store (atom nil))
 (defonce feedback-store (atom nil))
-(defonce verdict-store (atom nil))
-
 
 ;; threats
 (defonce ttp-store (atom nil))

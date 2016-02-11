@@ -229,27 +229,6 @@ Malicious disposition, and so on down to Unknown.
                                  (no-content)
                                  (not-found))))
 
-            (context* "/verdict" []
-                      :tags ["Verdict"]
-                      (POST* "/" []
-                             :return Verdict
-                             :body [verdict NewVerdict {:description "a new verdict"}]
-                             :summary "Adds a new Verdict"
-                             (ok (create-verdict @verdict-store verdict)))
-                      (GET* "/:id" []
-                            :return (s/maybe Verdict)
-                            :summary "Gets a Verdict by ID"
-                            :path-params [id :- s/Str]
-                            (if-let [d (read-verdict @verdict-store id)]
-                              (ok d)
-                              (not-found)))
-                      (DELETE* "/:id" []
-                               :path-params [id :- s/Str]
-                               :summary "Deletes a Verdict"
-                               (if (delete-verdict @verdict-store id)
-                                 (no-content)
-                                 (not-found))))
-
             (context* "/indicator" []
                       :tags ["Indicator"]
                       (GET* "/:id/judgements" []
