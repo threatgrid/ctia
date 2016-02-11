@@ -353,6 +353,163 @@
                    (map #(dissoc % :id :timestamp)
                         feedbacks)))))))))
 
+(deftest test-observable-judgements-route
+
+  (testing "test setup: create a judgement (1)"
+    (let [response (post "cia/judgement"
+                         :body {:indicators []
+                                :observable {:value "1.2.3.4"
+                                             :type "ip"}
+                                :disposition 2
+                                :source "test"
+                                :priority 100
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+  (testing "test setup: create a judgement (2)"
+    (let [response (post "cia/judgement"
+                         :body {:indicators []
+                                :observable {:value "10.0.0.1"
+                                             :type "ip"}
+                                :disposition 2
+                                :source "test"
+                                :priority 100
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+  (testing "test setup: create a judgement (3)"
+    (let [response (post "cia/judgement"
+                         :body {:indicators []
+                                :observable {:value "10.0.0.1"
+                                             :type "ip"}
+                                :disposition 1
+                                :source "test"
+                                :priority 50
+                                :severity 60
+                                :confidence "High"
+                                :timestamp "2016-02-11T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+
+  (testing "GET /cia/:observable_type/:observable_value/judgements"
+    (let [response (get "cia/ip/10.0.0.1/judgements")
+          judgements (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= [{:indicators []
+               :observable {:value "10.0.0.1"
+                            :type "ip"}
+               :disposition 2
+               :source "test"
+               :priority 100
+               :severity 100
+               :confidence "Low"
+               :timestamp #inst "2016-02-12T00:00:00.000"}
+              {:indicators []
+               :observable {:value "10.0.0.1"
+                            :type "ip"}
+               :disposition 1
+               :source "test"
+               :priority 50
+               :severity 60
+               :confidence "High"
+               :timestamp #inst "2016-02-11T00:00:00.000-00:00"}]
+             (->> judgements
+                  (map #(dissoc % :id))))))))
+
+(deftest test-observable-indicators-and-sightings-routes
+
+  (testing "test setup: create an indicator (1)"
+    (let [response (post "cia/indicator"
+                         :body {:title "indicator"
+                                :observable {:value "1.2.3.4"
+                                             :type "ip"}
+                                :sightings [{:timestamp "2016-02-01T00:00:00.000-00:00"
+                                             :source {:description "foo"}
+                                             :confidence "Medium"}
+                                            {:timestamp "2016-02-01T12:00:00.000-00:00"
+                                             :source {:description "bar"}
+                                             :confidence "High"}]
+                                :description ["description"]
+                                :producer "producer"
+                                :type ["C2" "IP Watchlist"]
+                                :expires "2016-02-12T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+  (testing "test setup: create an indicator (2)"
+    (let [response (post "cia/indicator"
+                         :body {:title "indicator"
+                                :observable {:value "10.0.0.1"
+                                             :type "ip"}
+                                :sightings [{:timestamp "2016-02-04T12:00:00.000-00:00"
+                                             :source {:description "spam"}
+                                             :confidence "None"}]
+                                :description ["description"]
+                                :producer "producer"
+                                :type ["C2" "IP Watchlist"]
+                                :expires "2016-02-12T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+  (testing "test setup: create an indicator (1)"
+    (let [response (post "cia/indicator"
+                         :body {:title "indicator"
+                                :observable {:value "10.0.0.1"
+                                             :type "ip"}
+                                :sightings [{:timestamp "2016-02-05T01:00:00.000-00:00"
+                                             :source {:description "foo"}
+                                             :confidence "High"}
+                                            {:timestamp "2016-02-05T02:00:00.000-00:00"
+                                             :source {:description "bar"}
+                                             :confidence "Low"}]
+                                :description ["description"]
+                                :producer "producer"
+                                :type ["C2" "IP Watchlist"]
+                                :expires "2016-02-11T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+
+  (testing "GET /cia/:observable_type/:observable_value/indicators"
+    (let [response (get "cia/ip/10.0.0.1/indicators")
+          indicators (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= [{:title "indicator"
+               :observable {:value "10.0.0.1"
+                            :type "ip"}
+               :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
+                            :source {:description "spam"}
+                            :confidence "None"}]
+               :description ["description"]
+               :producer "producer"
+               :type ["C2" "IP Watchlist"]
+               :expires #inst "2016-02-12T00:00:00.000-00:00"}
+              {:title "indicator"
+               :observable {:value "10.0.0.1"
+                            :type "ip"}
+               :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
+                            :source {:description "foo"}
+                            :confidence "High"}
+                           {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
+                            :source {:description "bar"}
+                            :confidence "Low"}]
+               :description ["description"]
+               :producer "producer"
+               :type ["C2" "IP Watchlist"]
+               :expires #inst "2016-02-11T00:00:00.000-00:00"}]
+             (->> indicators
+                  (map #(dissoc % :id)))))))
+
+  (testing "GET /cia/:observable_type/:observable_value/sightings"
+    (let [response (get "cia/ip/10.0.0.1/sightings")
+          sightings (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
+               :source {:description "spam"}
+               :confidence "None"}
+              {:timestamp #inst "2016-02-05T01:00:00.000-00:00"
+               :source {:description "foo"}
+               :confidence "High"}
+              {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
+               :source {:description "bar"}
+               :confidence "Low"}]
+             sightings)))))
+
 (deftest test-ttp-routes
   (testing "POST /cia/ttp"
     (let [response (post "cia/ttp"

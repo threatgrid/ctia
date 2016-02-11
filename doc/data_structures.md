@@ -409,7 +409,7 @@ indicated_TTP | [RelatedTTP](#related_ttp) | | A list of the IDs of TTPs objects
 likely_impact | string | | The impact of malware, High, Medium, Low or None
 suggested_COAs | [SuggestedCOAs](#suggested_coas) | |
 confidence | [HighMedLow](#high_med_low) | |
-sightings | [Sightings](#sightings) | |
+sightings | ([Sighting](#sighting), ...) | |
 related_indicators | [RelatedIndicators](#related_indicators) | | One or more indicator related to this one.
 related_campaigns | [RelatedCampaigns](#related_campaigns) | | One or more campaigns related to this indicator.
 related_COAs | [RelatedCOAs](#related_coas) | | One or more COAs related to this indicator.
@@ -436,14 +436,6 @@ One of the following structures:
 - [SnortSpecification](#snort_specification)
 - [SIOCSpecification](#sioc_specification)
 - [OpenIOCSpecification](#open_ioc_specification)
-
-<a name="sightings"/>
-### Sightings
-
-Key | Value | Mandatory?
---- | --- | ---
-Sightings_count | Integer |
-sightings | ([Sighting](#sighting), ...) | &#10003;
 
 <a name="sighting"/>
 ### Sighting

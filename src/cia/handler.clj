@@ -297,7 +297,7 @@ Malicious disposition, and so on down to Unknown.
                       (GET* "/:id" []
                             :return (s/maybe TTP)
                             :summary "Gets a TTP by ID"
-                            ;;:description "This is a little decription"
+                            ;;:description "This is a little description"
                             ;; :query-params [{offset :-  Long 0}
                             ;;                {limit :-  Long 0}
                             ;;                {after :-  Time nil}
@@ -321,7 +321,7 @@ Malicious disposition, and so on down to Unknown.
                       :tags ["Sighting"])
 
 
-            (GET* "/:observable_type/:id/judgements" []
+            (GET* "/:observable_type/:observable_value/judgements" []
                   :query-params [{offset :-  Long 0}
                                  {limit :-  Long 0}
                                  {after :-  Time nil}
@@ -332,12 +332,14 @@ Malicious disposition, and so on down to Unknown.
                                  {disposition :- DispositionNumber nil}
                                  {disposition_name :- DispositionName nil}]
                   :path-params [observable_type :- ObservableType
-                                id :- s/Str]
+                                observable_value :- s/Str]
                   :return [Judgement]
                   :summary "Returns all the Judgements associated with the specified observable."
-                  (not-found))
+                  (ok (list-judgements @judgement-store
+                                       {[:observable :type]  observable_type
+                                        [:observable :value] observable_value})))
 
-            (GET* "/:observable_type/:id/indicators" []
+            (GET* "/:observable_type/:observable_value/indicators" []
                   :query-params [{offset :-  Long 0}
                                  {limit :-  Long 0}
                                  {after :-  Time nil}
@@ -346,12 +348,14 @@ Malicious disposition, and so on down to Unknown.
                                  {sort_order :- SortOrder "desc"}
                                  {source :- s/Str nil}]
                   :path-params [observable_type :- ObservableType
-                                id :- s/Str]
+                                observable_value :- s/Str]
                   :return [Indicator]
                   :summary "Returns all the Indiators associated with the specified observable."
-                  (not-found))
+                  (ok (list-indicators @indicator-store
+                                       {[:observable :type] observable_type
+                                        [:observable :value] observable_value})))
 
-            (GET* "/:observable_type/:id/sightings" []
+            (GET* "/:observable_type/:observable_value/sightings" []
                   :query-params [{offset :-  Long 0}
                                  {limit :-  Long 0}
                                  {after :-  Time nil}
@@ -360,10 +364,12 @@ Malicious disposition, and so on down to Unknown.
                                  {sort_order :- SortOrder "desc"}
                                  {source :- s/Str nil}]
                   :path-params [observable_type :- ObservableType
-                                id :- s/Str]
+                                observable_value :- s/Str]
                   :return [Sighting]
                   :summary "Returns all the Sightings associated with the specified observable."
-                  (not-found))
+                  (ok (list-indicator-sightings @indicator-store
+                                                {[:observable :type] observable_type
+                                                 [:observable :value] observable_value})))
 
             (GET* "/:observable_type/:id/relations" []
                   :query-params [{offset :-  Long 0}
