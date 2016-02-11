@@ -15,8 +15,7 @@
             [cia.store :refer :all]
             [clojure.string :as str]
             [schema.core :as s])
-  (:import org.joda.time.DateTime
-           java.util.UUID))
+  (:import java.util.UUID))
 
 (defn make-id [schema]
   (str (str/lower-case (s/schema-name schema)) "-" (UUID/randomUUID)))

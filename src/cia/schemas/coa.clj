@@ -8,7 +8,7 @@
 (s/defschema COA
   (merge
    c/GenericStixIdentifiers
-   {(s/optional-key :timestamp) c/Time
+   {:timestamp c/Time
     (s/optional-key :stage) v/COAStage
     (s/optional-key :type) v/COAType
     (s/optional-key :objective) [s/Str] ;; Squashed / simplified
@@ -25,13 +25,14 @@
 
 (s/defschema NewCOA
   "Schema for submitting new COAs"
-  (st/dissoc COA
-             :id
-             :timestamp))
+  (st/merge (st/dissoc COA
+                       :id
+                       :timestamp)
+            {(s/optional-key :timestamp) s/Str}))
 
 (s/defn realize-coa :- COA
   [new-coa :- NewCOA
    id :- s/Str]
-  (assoc new-coa
-         :id id
-         :timestamp (c/timestamp)))
+  (st/assoc new-coa
+            :id id
+            :timestamp (c/timestamp (:timestamp new-coa))))

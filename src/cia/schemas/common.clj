@@ -151,14 +151,24 @@
 
 ;; helper fns used by schemas
 
-(def timestamp time/now)
+(defn timestamp
+  ([]
+   (time/now))
+  ([time-str]
+   (if (nil? time-str)
+     (time/now)
+     (time-format/parse (time-format/formatters :date-time)
+                        time-str))))
+
+(def default-expire-in-days 7)
 
 (defn expire-after
-  ([now]
-   (expire-after now 7))
-  ([now in-days]
-   (time/plus now (time/days in-days))))
+  ([]
+   (expire-after (time/now) default-expire-in-days))
+  ([after-time]
+   (expire-after after-time default-expire-in-days))
+  ([after-time in-days]
+   (time/plus after-time (time/days in-days))))
 
 (defn expire-on [expire-str]
-  (time-format/parse (time-format/formatters :date-time)
-                     expire-str))
+  (timestamp expire-str))

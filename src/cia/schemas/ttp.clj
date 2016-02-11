@@ -75,16 +75,15 @@
               :id
               :timestamp
               :expires)
-   {(s/optional-key :expires) s/Str}))
+   {(s/optional-key :expires) s/Str
+    (s/optional-key :timestamp) s/Str}))
 
 (s/defn realize-ttp :- TTP
   [new-ttp :- NewTTP
    id :- s/Str]
-  (let [timestamp (c/timestamp)
-        expires (if-let [expire-str (get new-ttp :expires)]
-                  (c/expire-on expire-str)
-                  (c/expire-after timestamp))]
-    (assoc new-ttp
-           :id id
-           :timestamp timestamp
-           :expires expires)))
+  (assoc new-ttp
+         :id id
+         :timestamp (c/timestamp (:timestamp new-ttp))
+         :expires (if-let [expire-str (:expires new-ttp)]
+                    (c/expire-on expire-str)
+                    (c/expire-after))))

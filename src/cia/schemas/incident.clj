@@ -124,13 +124,13 @@
     }))
 
 (s/defschema NewIncident
-  (st/dissoc Incident
-             :id
-             :timestamp))
+  (st/merge (st/dissoc Incident
+                       :id)
+            {(s/optional-key :timestamp) s/Str}))
 
 (s/defn realize-incident :- Incident
   [new-incident :- NewIncident
    id :- s/Str]
   (assoc new-incident
          :id id
-         :timestamp (c/timestamp)))
+         :timestamp (c/timestamp (:timestamp new-incident))))

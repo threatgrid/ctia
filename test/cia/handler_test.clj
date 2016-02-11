@@ -29,18 +29,20 @@
                                 :description ["description"]
                                 :type "Hacker"
                                 :source {:description "a source"}
-                                :confidence "High"})
+                                :confidence "High"
+                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :expires "2016-07-11T00:40:48.212-00:00"})
           actor (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:description ["description"],
               :type "Hacker",
               :title "actor",
               :confidence "High",
-              :source {:description "a source"}}
+              :source {:description "a source"}
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :expires #inst "2016-07-11T00:40:48.212-00:00"}
              (dissoc actor
-                     :id
-                     :timestamp
-                     :expires)))
+                     :id)))
 
       (testing "GET /cia/actor/:id"
         (let [response (get (str "cia/actor/" (:id actor)))
@@ -50,11 +52,11 @@
                   :type "Hacker",
                   :title "actor",
                   :confidence "High",
-                  :source {:description "a source"}}
+                  :source {:description "a source"}
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :expires #inst "2016-07-11T00:40:48.212-00:00"}
                  (dissoc actor
-                         :id
-                         :timestamp
-                         :expires)))))
+                         :id)))))
 
       (testing "DELETE /cia/actor/:id"
         (let [response (delete (str "cia/actor/" (:id actor)))]
@@ -69,18 +71,20 @@
                                 :description ["description"]
                                 :type "anything goes here"
                                 :intended_effect ["Theft"]
-                                :indicators ["indicator-foo" "indicator-bar"]})
+                                :indicators ["indicator-foo" "indicator-bar"]
+                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :expires "2016-07-11T00:40:48.212-00:00"})
           campaign (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "campaign"
               :description ["description"]
               :type "anything goes here"
               :intended_effect ["Theft"]
-              :indicators ["indicator-foo" "indicator-bar"]}
+              :indicators ["indicator-foo" "indicator-bar"]
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :expires #inst "2016-07-11T00:40:48.212-00:00"}
              (dissoc campaign
-                     :id
-                     :timestamp
-                     :expires)))
+                     :id)))
 
       (testing "GET /cia/campaign/:id"
         (let [response (get (str "cia/campaign/" (:id campaign)))
@@ -90,11 +94,11 @@
                   :description ["description"]
                   :type "anything goes here"
                   :intended_effect ["Theft"]
-                  :indicators ["indicator-foo" "indicator-bar"]}
+                  :indicators ["indicator-foo" "indicator-bar"]
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :expires #inst "2016-07-11T00:40:48.212-00:00"}
                  (dissoc campaign
-                         :id
-                         :timestamp
-                         :expires)))))
+                         :id)))))
 
       (testing "DELETE /cia/campaign/:id"
         (let [response (delete (str "cia/campaign/" (:id campaign)))]
@@ -108,16 +112,17 @@
                          :body {:title "coa"
                                 :description ["description"]
                                 :type "Eradication"
-                                :objective ["foo" "bar"]})
+                                :objective ["foo" "bar"]
+                                :timestamp "2016-02-11T00:40:48.212-00:00"})
           coa (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "coa"
               :description ["description"]
               :type "Eradication"
-              :objective ["foo" "bar"]}
+              :objective ["foo" "bar"]
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
              (dissoc coa
-                     :id
-                     :timestamp)))
+                     :id)))
 
       (testing "GET /cia/coa/:id"
         (let [response (get (str "cia/coa/" (:id coa)))
@@ -126,10 +131,10 @@
           (is (= {:title "coa"
                   :description ["description"]
                   :type "Eradication"
-                  :objective ["foo" "bar"]}
+                  :objective ["foo" "bar"]
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
                  (dissoc coa
-                         :id
-                         :timestamp)))))
+                         :id)))))
 
       (testing "DELETE /cia/coa/:id"
         (let [response (delete (str "/cia/coa/" (:id coa)))]
@@ -143,16 +148,17 @@
                          :body {:title "exploit-target"
                                 :description ["description"]
                                 :vulnerability [{:title "vulnerability"
-                                                 :description ["description"]}]})
+                                                 :description ["description"]}]
+                                :timestamp "2016-02-11T00:40:48.212-00:00"})
           exploit-target (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "exploit-target"
               :description ["description"]
               :vulnerability [{:title "vulnerability"
-                               :description ["description"]}]}
+                               :description ["description"]}]
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
              (dissoc exploit-target
-                     :id
-                     :timestamp)))
+                     :id)))
 
       (testing "GET /cia/exploit-target/:id"
         (let [response (get (str "cia/exploit-target/" (:id exploit-target)))
@@ -161,10 +167,10 @@
           (is (= {:title "exploit-target"
                   :description ["description"]
                   :vulnerability [{:title "vulnerability"
-                                   :description ["description"]}]}
+                                   :description ["description"]}]
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
                  (dissoc exploit-target
-                         :id
-                         :timestamp)))))
+                         :id)))))
 
       (testing "DELETE /cia/exploit-target/:id"
         (let [response (delete (str "cia/exploit-target/" (:id exploit-target)))]
@@ -179,17 +185,18 @@
                                 :description ["description"]
                                 :confidence "High"
                                 :categories ["Denial of Service"
-                                             "Improper Usage"]})
+                                             "Improper Usage"]
+                                :timestamp "2016-02-11T00:40:48.212-00:00"})
           incident (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "incident"
               :description ["description"]
               :confidence "High"
               :categories ["Denial of Service"
-                           "Improper Usage"]}
+                           "Improper Usage"]
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
              (dissoc incident
-                     :id
-                     :timestamp)))
+                     :id)))
 
       (testing "GET /cia/incident/:id"
         (let [response (get (str "cia/incident/" (:id incident)))
@@ -199,10 +206,10 @@
                   :description ["description"]
                   :confidence "High"
                   :categories ["Denial of Service"
-                               "Improper Usage"]}
+                               "Improper Usage"]
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
                  (dissoc incident
-                         :id
-                         :timestamp)))))
+                         :id)))))
 
       (testing "DELETE /cia/incident/:id"
         (let [response (delete (str "cia/incident/" (:id incident)))]
@@ -216,16 +223,17 @@
                          :body {:title "indicator"
                                 :description ["description"]
                                 :producer "producer"
-                                :type ["C2" "IP Watchlist"]})
+                                :type ["C2" "IP Watchlist"]
+                                :expires "2016-07-11T00:40:48.212-00:00"})
           indicator (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "indicator"
               :description ["description"]
               :producer "producer"
-              :type ["C2" "IP Watchlist"]}
+              :type ["C2" "IP Watchlist"]
+              :expires #inst "2016-07-11T00:40:48.212-00:00"}
              (dissoc indicator
-                     :id
-                     :timestamp)))
+                     :id)))
 
       (testing "GET /cia/indicator/:id"
         (let [response (get (str "cia/indicator/" (:id indicator)))
@@ -234,10 +242,10 @@
           (is (= {:title "indicator"
                   :description ["description"]
                   :producer "producer"
-                  :type ["C2" "IP Watchlist"]}
+                  :type ["C2" "IP Watchlist"]
+                  :expires #inst "2016-07-11T00:40:48.212-00:00"}
                  (dissoc indicator
-                         :id
-                         :timestamp)))))
+                         :id)))))
 
       (testing "DELETE /cia/indicator/:id"
         (let [response (delete (str "cia/indicator/" (:id indicator)))]
@@ -252,34 +260,40 @@
                                 :observable {:value "1.2.3.4"
                                              :type "ip"}
                                 :disposition 2
-                                :source "test"})
+                                :source "test"
+                                :priority 100
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-11T00:40:48.212-00:00"})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (= {:observable {:value "1.2.3.4", :type "ip"},
-              :indicators [],
-              :disposition 2,
-              :priority 100,
-              :severity 100,
-              :confidence "Low",
-              :source "test"}
+      (is (= {:observable {:value "1.2.3.4"
+                           :type "ip"}
+              :indicators []
+              :disposition 2
+              :priority 100
+              :severity 100
+              :confidence "Low"
+              :source "test"
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
              (dissoc judgement
-                     :id
-                     :timestamp)))
+                     :id)))
 
       (testing "GET /cia/judgement/:id"
         (let [response (get (str "cia/judgement/" (:id judgement)))
               judgement (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= {:observable {:value "1.2.3.4", :type "ip"},
-                  :indicators [],
-                  :disposition 2,
-                  :priority 100,
-                  :severity 100,
-                  :confidence "Low",
-                  :source "test"}
+          (is (= {:observable {:value "1.2.3.4"
+                               :type "ip"}
+                  :indicators []
+                  :disposition 2
+                  :priority 100
+                  :severity 100
+                  :confidence "Low"
+                  :source "test"
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
                  (dissoc judgement
-                         :id
-                         :timestamp)))))
+                         :id)))))
 
       (testing "DELETE /cia/judgement/:id"
         (let [temp-judgement (-> (post "cia/judgement"
@@ -287,7 +301,11 @@
                                               :observable {:value "9.8.7.6"
                                                            :type "ip"}
                                               :disposition 3
-                                              :source "test"})
+                                              :source "test"
+                                              :priority 100
+                                              :severity 100
+                                              :confidence "Low"
+                                              :timestamp "2016-02-11T00:40:48.212-00:00"})
                                  :parsed-body)
               response (delete (str "cia/judgement/" (:id temp-judgement)))]
           (is (= 204 (:status response)))
@@ -341,17 +359,19 @@
                          :body {:title "ttp"
                                 :description ["description"]
                                 :type "foo"
-                                :indicators ["indicator-1" "indicator-2"]})
+                                :indicators ["indicator-1" "indicator-2"]
+                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :expires "2016-07-11T00:40:48.212-00:00"})
           ttp (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "ttp"
               :description ["description"]
               :type "foo"
-              :indicators ["indicator-1" "indicator-2"]}
+              :indicators ["indicator-1" "indicator-2"]
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :expires #inst "2016-07-11T00:40:48.212-00:00"}
              (dissoc ttp
-                     :id
-                     :timestamp
-                     :expires)))
+                     :id)))
 
       (testing "GET /cia/ttp/:id"
         (let [response (get (str "cia/ttp/" (:id ttp)))
@@ -360,11 +380,11 @@
           (is (= {:title "ttp"
                   :description ["description"]
                   :type "foo"
-                  :indicators ["indicator-1" "indicator-2"]}
+                  :indicators ["indicator-1" "indicator-2"]
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :expires #inst "2016-07-11T00:40:48.212-00:00"}
                  (dissoc ttp
-                         :id
-                         :timestamp
-                         :expires)))))
+                         :id)))))
 
       (testing "DELETE /cia/ttp/:id"
         (let [response (delete (str "cia/ttp/" (:id ttp)))]
