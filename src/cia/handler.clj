@@ -15,7 +15,7 @@
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
             [cia.schemas.ttp :refer [NewTTP TTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
-            [cia.schemas.verdict :refer [Verdict]]
+            [cia.schemas.verdict :refer [NewVerdict Verdict]]
             [cia.store :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer :all]
@@ -226,6 +226,27 @@ Malicious disposition, and so on down to Unknown.
                                :path-params [id :- s/Str]
                                :summary "Deletes a Judgement"
                                (if (delete-judgement @judgement-store id)
+                                 (no-content)
+                                 (not-found))))
+
+            (context* "/verdict" []
+                      :tags ["Verdict"]
+                      (POST* "/" []
+                             :return Verdict
+                             :body [verdict NewVerdict {:description "a new verdict"}]
+                             :summary "Adds a new Verdict"
+                             (ok (create-verdict @verdict-store verdict)))
+                      (GET* "/:id" []
+                            :return (s/maybe Verdict)
+                            :summary "Gets a Verdict by ID"
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-verdict @verdict-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes a Verdict"
+                               (if (delete-verdict @verdict-store id)
                                  (no-content)
                                  (not-found))))
 

@@ -11,6 +11,7 @@
             [cia.schemas.judgement
              :refer [Judgement NewJudgement realize-judgement]]
             [cia.schemas.ttp :refer [NewTTP TTP realize-ttp]]
+            [cia.schemas.verdict :refer [NewVerdict Verdict realize-verdict]]
             [cia.store :refer :all]
             [clojure.string :as str]
             [schema.core :as s])
@@ -237,3 +238,23 @@
   (delete-ttp [_ id]
     (handle-delete-ttp state id))
   (list-ttps [_ filter-map]))
+
+;; verdict
+
+(def-create-handler handle-create-verdict
+  Verdict NewVerdict (make-swap-fn realize-verdict))
+
+(def-read-handler handle-read-verdict Verdict)
+
+(def-delete-handler handle-delete-verdict Verdict)
+
+(defrecord VerdictStore [state]
+  IVerdictStore
+  (read-verdict [_ id]
+    (handle-read-verdict state id))
+  (create-verdict [_ new-verdict]
+    (handle-create-verdict state new-verdict))
+  (update-verdict [_ verdict])
+  (delete-verdict [_ id]
+    (handle-delete-verdict state id))
+  (list-verdicts [_ filter-map]))

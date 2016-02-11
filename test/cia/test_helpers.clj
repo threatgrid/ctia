@@ -21,7 +21,8 @@
                      store/exploit-target-store mem/->ExplitTargetStore
                      store/incident-store mem/->IncidentStore
                      store/indicator-store mem/->IndicatorStore
-                     store/ttp-store mem/->TTPStore}]
+                     store/ttp-store mem/->TTPStore
+                     store/verdict-store mem/->VerdictStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))
     (f)

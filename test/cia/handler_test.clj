@@ -371,3 +371,28 @@
           (is (= 204 (:status response)))
           (let [response (get (str "cia/ttp/" (:id ttp)))]
             (is (= 404 (:status response)))))))))
+
+(deftest test-verdict-routes
+  (testing "POST /cia/verdict"
+    (let [response (post "cia/verdict"
+                         :body {:disposition 1
+                                :judgement "judgement-foo"})
+          verdict (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:disposition 1
+              :judgement "judgement-foo"}
+             (dissoc verdict
+                     :id)))
+
+      (let [response (get (str "cia/verdict/" (:id verdict)))
+            verdict (:parsed-body response)]
+        (is (= 200 (:status response)))
+        (is (= {:disposition 1
+                :judgement "judgement-foo"}
+               (dissoc verdict
+                       :id))))
+
+      (let [response (delete (str "cia/verdict/" (:id verdict)))]
+        (is (= 204 (:status response)))
+        (let [response (get (str "cia/verdict/" (:id verdict)))]
+          (is (= 404 (:status response))))))))
