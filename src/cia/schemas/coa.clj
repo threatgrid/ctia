@@ -25,14 +25,11 @@
 
 (s/defschema NewCOA
   "Schema for submitting new COAs"
-  (st/merge (st/dissoc COA
-                       :id
-                       :timestamp)
-            {(s/optional-key :timestamp) s/Str}))
+  (st/dissoc COA
+             :id))
 
 (s/defn realize-coa :- COA
   [new-coa :- NewCOA
    id :- s/Str]
   (st/assoc new-coa
-            :id id
-            :timestamp (c/timestamp (:timestamp new-coa))))
+            :id id))

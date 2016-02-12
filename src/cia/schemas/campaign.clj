@@ -35,17 +35,12 @@
   "Schema for submitting new Campaigns"
   (st/merge (st/dissoc Campaign
                        :id
-                       :timestamp
                        :expires)
-            {(s/optional-key :expires) s/Str
-             :timestamp s/Str}))
+            {(s/optional-key :expires) c/Time}))
 
 (s/defn realize-campaign :- Campaign
   [new-campaign :- NewCampaign
    id :- s/Str]
   (assoc new-campaign
          :id id
-         :timestamp (c/timestamp (:timestamp new-campaign))
-         :expires (if-let [expire-str (:expires new-campaign)]
-                    (c/expire-on expire-str)
-                    (c/expire-after))))
+         :expires (or (:expires new-campaign) (c/expire-after))))

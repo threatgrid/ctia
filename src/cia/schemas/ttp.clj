@@ -73,17 +73,12 @@
   (st/merge
    (st/dissoc TTP
               :id
-              :timestamp
               :expires)
-   {(s/optional-key :expires) s/Str
-    (s/optional-key :timestamp) s/Str}))
+   {(s/optional-key :expires) c/Time}))
 
 (s/defn realize-ttp :- TTP
   [new-ttp :- NewTTP
    id :- s/Str]
   (assoc new-ttp
          :id id
-         :timestamp (c/timestamp (:timestamp new-ttp))
-         :expires (if-let [expire-str (:expires new-ttp)]
-                    (c/expire-on expire-str)
-                    (c/expire-after))))
+         :expires (or (:expires new-ttp) (c/expire-after))))

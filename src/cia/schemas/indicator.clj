@@ -94,7 +94,7 @@
    (st/dissoc Indicator
               :id
               :expires)
-   {(s/optional-key :expires) s/Str}))
+   {(s/optional-key :expires) c/Time}))
 
 (s/defschema StoredIndicator
   "A feedback record at rest in the storage service"
@@ -105,9 +105,6 @@
 (s/defn realize-indicator :- Indicator
   [new-indicator :- NewIndicator
    id :- s/Str]
-  (let [indicator (st/assoc new-indicator
-                            :id id)
-        expires (:expires new-indicator)]
-    (if expires
-      (assoc indicator :expires (c/expire-on expires))
-      indicator)))
+  (assoc new-indicator
+         :id id
+         :expires (or (:expires new-indicator) (c/expire-after))))

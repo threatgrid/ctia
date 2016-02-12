@@ -39,11 +39,9 @@
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
   (st/merge (st/dissoc Judgement
-                       :id
-                       :timestamp)
+                       :id)
             {(s/optional-key :severity) Severity
              (s/optional-key :confidence) v/HighMedLow
-             :timestamp s/Str
              (s/optional-key :priority) Priority}))
 
 (s/defschema StoredJudgement
@@ -56,5 +54,4 @@
   [new-judgement :- NewJudgement
    id :- s/Str]
   (assoc new-judgement
-         :id id
-         :timestamp (c/timestamp (:timestamp new-judgement))))
+         :id id))

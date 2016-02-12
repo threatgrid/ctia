@@ -31,20 +31,14 @@
 
 (s/defschema NewActor
   "Schema for submitting new Actors"
-  (st/merge
-   (st/dissoc Actor
-              :id
-              :expires
-              :timestamp)
-   {(s/optional-key :expires) s/Str
-    (s/optional-key :timestamp) s/Str}))
+  (st/merge (st/dissoc Actor
+                       :id
+                       :expires)
+            {(s/optional-key :expires) c/Time}))
 
 (s/defn realize-actor :- Actor
   [new-actor :- NewActor
    id :- s/Str]
   (assoc new-actor
          :id id
-         :timestamp (c/timestamp (:timestamp new-actor))
-         :expires (if-let [expire-str (:expires new-actor)]
-                    (c/expire-on expire-str)
-                    (c/expire-after))))
+         :expires (or (:expires new-actor) (c/expire-after))))
