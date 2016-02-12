@@ -371,21 +371,6 @@ Malicious disposition, and so on down to Unknown.
                                                 {[:observable :type] observable_type
                                                  [:observable :value] observable_value})))
 
-            (GET* "/:observable_type/:id/relations" []
-                  :query-params [{offset :-  Long 0}
-                                 {limit :-  Long 0}
-                                 {after :-  Time nil}
-                                 {before :-  Time nil}
-                                 {sort_by :- RelationSort "timestamp"}
-                                 {sort_order :- SortOrder "desc"}
-                                 {source :- s/Str nil}
-                                 {relation :- DispositionNumber nil}]
-                  :path-params [observable_type :- ObservableType
-                                id :- s/Str]
-                  :return [Judgement]
-                  :summary "Returns all the Judgements associated with the specified observable."
-                  (not-found))
-
             (GET* "/:observable_type/:id/verdict" []
                   :tags ["Verdict"]
                   :path-params [observable_type :- ObservableType
