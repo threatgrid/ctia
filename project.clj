@@ -6,6 +6,7 @@
                  [metosin/compojure-api "0.23.1"]
                  [ring-middleware-format "0.7.0"]]
   :ring {:handler cia.handler/app
+         :init cia.init/init-store
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
   :profiles {:dev {:dependencies [[clj-http "2.0.1"]
