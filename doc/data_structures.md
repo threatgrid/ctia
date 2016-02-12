@@ -392,6 +392,25 @@ Observables that are linked to this indicator, with the ID in the
 _indicators_ field of those Judgements, or you can provide a
 _specification_ value.
 
+JSON Example:
+
+```json
+{
+  "description": ["Indicator example"],
+  "producer": "test",
+  "observable": {
+    "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "type": "sha256"},
+  "type": ["File Hash Watchlist"],
+  "title": "string",
+  "expires": "2016-02-22T20:49:30.766Z",
+  "confidence": "High",
+  "valid_time_position": {
+    "start_time": "2016-02-10T20:49:30.767Z",
+    "end_time": "2016-02-15T20:49:30.767Z"}
+}
+```
+
 Key | Value | Mandatory? | Description
 --- | --- | --- | ---
 id | [ID](#id) | &#10003; |
