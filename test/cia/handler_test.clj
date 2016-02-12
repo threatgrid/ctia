@@ -448,7 +448,7 @@
                                 :type ["C2" "IP Watchlist"]
                                 :expires "2016-02-12T00:00:00.000-00:00"})]
       (is (= 200 (:status response)))))
-  (testing "test setup: create an indicator (1)"
+  (testing "test setup: create an indicator (3)"
     (let [response (post "cia/indicator"
                          :body {:title "indicator"
                                 :observable {:value "10.0.0.1"
