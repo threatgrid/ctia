@@ -234,7 +234,7 @@
   (let [[judgement-1 judgement-2 :as judgements] (sort-by :timestamp judgements)]
     (cond
       (some nil? judgements)
-      (some some? judgements)
+      (first (remove nil? judgements))
 
       (not= (:priority judgement-1) (:priority judgement-2))
       (last (sort-by :priority judgements))

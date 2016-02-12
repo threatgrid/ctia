@@ -3,7 +3,8 @@
   (:require [cia.handler :as handler]
             [cia.test-helpers :refer [get post delete] :as helpers]
             [clj-http.client :as http]
-            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]))
+            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+            [cia.schemas.common :as c]))
 
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
                                     helpers/fixture-in-memory-store
@@ -587,6 +588,51 @@
                   :disposition_name "Malicious"
                   :judgement (:id judgement-1)}
                  verdict)))))))
+
+(deftest test-observable-verdict-route-2
+  ;; This test case catches a bug that was in the in-memory store
+  ;; It tests the code path where priority is equal but dispositions differ
+  (testing "test setup: create a judgement (1)"
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "string",
+                                             :type "device"},
+                                :reason_uri "string",
+                                :source "string",
+                                :disposition 1,
+                                :expires "2016-02-12T14:56:26.719-00:00",
+                                :reason "string",
+                                :source_uri "string",
+                                :disposition_name "Common",
+                                :priority 99,
+                                :severity 50,
+                                :timestamp "2016-02-12T14:56:26.814-00:00",
+                                :confidence "Medium"})]
+      (is (= 200 (:status response)))))
+  (testing "with a verdict judgement"
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "10.0.0.1",
+                                             :type "ip"},
+                                :reason_uri "string",
+                                :source "string",
+                                :disposition 2,
+                                :reason "string",
+                                :source_uri "string",
+                                :priority 99,
+                                :severity 50,
+                                :timestamp "2016-02-12T14:56:26.814-00:00",
+                                :confidence "Medium"})
+          judgement (:parsed-body response)]
+      (is (= 200 (:status response)))
+
+      (testing "GET /cia/:observable_type/:observable_value/verdict"
+        (with-redefs [clj-time.core/now (constantly (c/timestamp "2016-02-12T15:42:58.232-00:00"))]
+          (let [response (get "cia/ip/10.0.0.1/verdict")
+                verdict (:parsed-body response)]
+            (is (= 200 (:status response)))
+            (is (= {:disposition 2
+                    :disposition_name "Malicious"
+                    :judgement (:id judgement)}
+                   verdict))))))))
 
 (deftest test-ttp-routes
   (testing "POST /cia/ttp"
