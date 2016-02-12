@@ -15,7 +15,7 @@
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
             [cia.schemas.ttp :refer [NewTTP TTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
-            [cia.schemas.verdict :refer [NewVerdict Verdict]]
+            [cia.schemas.verdict :refer [Verdict]]
             [cia.store :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer :all]
@@ -371,13 +371,14 @@ Malicious disposition, and so on down to Unknown.
                                                 {[:observable :type] observable_type
                                                  [:observable :value] observable_value})))
 
-            (GET* "/:observable_type/:id/verdict" []
+            (GET* "/:observable_type/:observable_value/verdict" []
                   :tags ["Verdict"]
                   :path-params [observable_type :- ObservableType
-                                id :- s/Str]
+                                observable_value :- s/Str]
                   :return (s/maybe Verdict)
                   :summary "Returns the current Verdict associated with the specified observable."
-                  (not-found))))
+                  (ok (calculate-verdict @judgement-store {:type observable_type
+                                                           :value observable_value})))))
 
 (def app
   (-> api-handler

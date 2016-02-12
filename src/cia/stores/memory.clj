@@ -2,6 +2,7 @@
   (:require [cia.schemas.actor :refer [Actor NewActor realize-actor]]
             [cia.schemas.campaign :refer [Campaign NewCampaign realize-campaign]]
             [cia.schemas.coa :refer [COA NewCOA realize-coa]]
+            [cia.schemas.common :as c]
             [cia.schemas.exploit-target
              :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
             [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
@@ -11,9 +12,10 @@
             [cia.schemas.judgement
              :refer [Judgement NewJudgement realize-judgement]]
             [cia.schemas.ttp :refer [NewTTP TTP realize-ttp]]
-            [cia.schemas.verdict :refer [NewVerdict Verdict realize-verdict]]
+            [cia.schemas.verdict :refer [Verdict]]
             [cia.schemas.vocabularies :as v]
             [cia.store :refer :all]
+            [clj-time.core :as time]
             [clojure.string :as str]
             [schema.core :as s])
   (:import java.util.UUID))
@@ -222,6 +224,55 @@
 
 (def-list-handler handle-list-judgements Judgement)
 
+(defn judgement-expired? [judgement now]
+  (if-let [expires (:expires judgement)]
+    (time/after? now expires)
+    false))
+
+(defn higest-priority [& judgements]
+  ;; pre-sort for deterministic tie breaking
+  (let [[judgement-1 judgement-2 :as judgements] (sort-by :timestamp judgements)]
+    (cond
+      (some nil? judgements)
+      (some some? judgements)
+
+      (not= (:priority judgement-1) (:priority judgement-2))
+      (last (sort-by :priority judgements))
+
+      :else (loop [[d-num & rest-d-nums] (sort (keys c/disposition-map))]
+              (cond
+                (nil? d-num) nil
+                (= d-num (:disposition judgement-1)) judgement-1
+                (= d-num (:disposition judgement-2)) judgement-2
+                :else (recur rest-d-nums))))))
+
+(s/defn make-verdict :- Verdict
+  [judgement :- Judgement]
+  {:disposition (:disposition judgement)
+   :judgement (:id judgement)
+   :disposition_name (get c/disposition-map (:disposition judgement))})
+
+(s/defn handle-calculate-verdict :- (s/maybe Verdict)
+  [state :- (s/atom {s/Str Judgement})
+   observable :- c/Observable]
+  (if-let [judgement
+           (let [now (time/now)]
+             (loop [[judgement & more-judgements] (vals @state)
+                    result nil]
+               (cond
+                 (nil? judgement)
+                 result
+
+                 (not= observable (:observable judgement))
+                 (recur more-judgements result)
+
+                 (judgement-expired? judgement now)
+                 (recur more-judgements result)
+
+                 :else
+                 (recur more-judgements (higest-priority judgement result)))))]
+    (make-verdict judgement)))
+
 (defrecord JudgementStore [state]
   IJudgementStore
   (create-judgement [_ new-judgement]
@@ -230,9 +281,10 @@
     (handle-read-judgement state id))
   (delete-judgement [_ id]
     (handle-delete-judgement state id))
-  (list-judgements [this filter-map]
+  (list-judgements [_ filter-map]
     (handle-list-judgements state filter-map))
-  (calculate-verdict [this observable]))
+  (calculate-verdict [_ observable]
+    (handle-calculate-verdict state observable)))
 
 ;; ttp
 

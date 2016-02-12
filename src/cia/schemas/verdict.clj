@@ -11,18 +11,6 @@ the active verdict.  If there is more than one Judgement with that
 priority, than Clean disposition has priority over all others, then
 Malicious disposition, and so on down to Unknown.
 "
-  {:id c/ID
-   :disposition c/DispositionNumber
+  {:disposition c/DispositionNumber
    (s/optional-key :judgement) rel/JudgementReference
-   (s/optional-key :disposition_name) c/DispositionName
-   })
-
-(s/defschema NewVerdict
-  (st/dissoc Verdict
-             :id))
-
-(s/defn realize-verdict :- Verdict
-  [new-verdict :- NewVerdict
-   id :- s/Str]
-  (assoc new-verdict
-         :id id))
+   (s/optional-key :disposition_name) c/DispositionName})

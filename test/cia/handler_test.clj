@@ -510,6 +510,84 @@
                :confidence "Low"}]
              sightings)))))
 
+(deftest test-observable-verdict-route
+
+  (testing "test setup: create a judgement (1)"
+    ;; Incorrect observable
+    (let [response (post "cia/judgement"
+                         :body {:indicators []
+                                :observable {:value "127.0.0.1"
+                                             :type "ip"}
+                                :disposition 1
+                                :source "test"
+                                :priority 100
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+
+  (testing "test setup: create a judgement (2)"
+    ;; Lower priority
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "10.0.0.1"
+                                             :type "ip"}
+                                :disposition 1
+                                :source "test"
+                                :priority 90
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+
+  (testing "test setup: create a judgement (3)"
+    ;; Wrong disposition
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "10.0.0.1"
+                                             :type "ip"}
+                                :disposition 3
+                                :source "test"
+                                :priority 99
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+      (is (= 200 (:status response)))))
+
+  (testing "test setup: create a judgement (4)"
+    ;; Loses a tie because of its timestamp being later
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "10.0.0.1"
+                                             :type "ip"}
+                                :disposition 2
+                                :source "test"
+                                :priority 99
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-12T00:00:00.000-00:01"})
+          judgement-1 (:parsed-body response)]
+      (is (= 200 (:status response)))))
+
+  (testing "with a highest-priority judgement"
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "10.0.0.1"
+                                             :type "ip"}
+                                :disposition 2
+                                :source "test"
+                                :priority 99
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-12T00:00:00.000-00:00"})
+          judgement-1 (:parsed-body response)]
+      (is (= 200 (:status response))) ;; success creating judgement
+
+      (testing "GET /cia/:observable_type/:observable_value/verdict"
+        (let [response (get "cia/ip/10.0.0.1/verdict")
+              verdict (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:disposition 2
+                  :disposition_name "Malicious"
+                  :judgement (:id judgement-1)}
+                 verdict)))))))
+
 (deftest test-ttp-routes
   (testing "POST /cia/ttp"
     (let [response (post "cia/ttp"
