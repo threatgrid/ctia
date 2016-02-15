@@ -24,13 +24,13 @@
   {:id c/ID
    :observable c/Observable
    :disposition c/DispositionNumber
+   :disposition_name c/DispositionName
    :source s/Str
    :priority Priority
    :confidence v/HighMedLow
    :severity Severity
    :timestamp c/Time
    (s/optional-key :reason) s/Str
-   (s/optional-key :disposition_name) c/DispositionName
    (s/optional-key :expires) c/Time
    (s/optional-key :source_uri) c/URI
    (s/optional-key :reason_uri) c/URI
@@ -39,7 +39,8 @@
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
   (st/merge (st/dissoc Judgement
-                       :id)
+                       :id
+                       :disposition_name)
             {(s/optional-key :severity) Severity
              (s/optional-key :confidence) v/HighMedLow
              (s/optional-key :priority) Priority}))
@@ -54,4 +55,5 @@
   [new-judgement :- NewJudgement
    id :- s/Str]
   (assoc new-judgement
-         :id id))
+         :id id
+         :disposition_name (get c/disposition-map (:disposition new-judgement) "Unknown")))

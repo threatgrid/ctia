@@ -272,6 +272,7 @@
                            :type "ip"}
               :indicators []
               :disposition 2
+              :disposition_name "Malicious"
               :priority 100
               :severity 100
               :confidence "Low"
@@ -288,6 +289,7 @@
                                :type "ip"}
                   :indicators []
                   :disposition 2
+                  :disposition_name "Malicious"
                   :priority 100
                   :severity 100
                   :confidence "Low"
@@ -401,6 +403,7 @@
                :observable {:value "10.0.0.1"
                             :type "ip"}
                :disposition 2
+               :disposition_name "Malicious"
                :source "test"
                :priority 100
                :severity 100
@@ -410,6 +413,7 @@
                :observable {:value "10.0.0.1"
                             :type "ip"}
                :disposition 1
+               :disposition_name "Clean"
                :source "test"
                :priority 50
                :severity 60
@@ -602,7 +606,6 @@
                                 :expires "2016-02-12T14:56:26.719-00:00",
                                 :reason "string",
                                 :source_uri "string",
-                                :disposition_name "Common",
                                 :priority 99,
                                 :severity 50,
                                 :timestamp "2016-02-12T14:56:26.814-00:00",
