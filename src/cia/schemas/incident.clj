@@ -125,12 +125,10 @@
 
 (s/defschema NewIncident
   (st/dissoc Incident
-             :id
-             :timestamp))
+             :id))
 
 (s/defn realize-incident :- Incident
   [new-incident :- NewIncident
    id :- s/Str]
   (assoc new-incident
-         :id id
-         :timestamp (c/timestamp)))
+         :id id))

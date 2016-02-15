@@ -2,7 +2,8 @@
   (:require [cia.schemas.common :as c]
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (s/defschema AttackPattern
   "See http://stixproject.github.io/data-model/1.2/ttp/AttackPatternType/"
@@ -67,3 +68,17 @@
     ;; Not provided: handling
     ;; Not provided: related_packages (deprecated)
     }))
+
+(s/defschema NewTTP
+  (st/merge
+   (st/dissoc TTP
+              :id
+              :expires)
+   {(s/optional-key :expires) c/Time}))
+
+(s/defn realize-ttp :- TTP
+  [new-ttp :- NewTTP
+   id :- s/Str]
+  (assoc new-ttp
+         :id id
+         :expires (or (:expires new-ttp) (c/expire-after))))

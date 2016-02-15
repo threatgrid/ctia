@@ -50,11 +50,6 @@
    (s/optional-key :description) [s/Str]
    (s/optional-key :related_observables) [c/Observable]})
 
-(s/defschema Sightings
-  "See http://stixproject.github.io/data-model/1.2/indicator/SightingsType/"
-  {(s/optional-key :sightings_count) s/Int
-   :sightings [Sighting]})
-
 (s/defschema Indicator
   "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
   (merge
@@ -70,7 +65,7 @@
     (s/optional-key :likely_impact) s/Str
     (s/optional-key :suggested_COAs) rel/SuggestedCOAs
     (s/optional-key :confidence) v/HighMedLow
-    (s/optional-key :sightings) Sightings
+    (s/optional-key :sightings) [Sighting] ;; simplified
     (s/optional-key :related_indicators) rel/RelatedIndicators
     (s/optional-key :related_campaigns) rel/RelatedCampaigns
     (s/optional-key :related_COAs) rel/RelatedCOAs
@@ -99,7 +94,7 @@
    (st/dissoc Indicator
               :id
               :expires)
-   {(s/optional-key :expires) s/Str}))
+   {(s/optional-key :expires) c/Time}))
 
 (s/defschema StoredIndicator
   "A feedback record at rest in the storage service"
@@ -110,9 +105,6 @@
 (s/defn realize-indicator :- Indicator
   [new-indicator :- NewIndicator
    id :- s/Str]
-  (let [indicator (st/assoc new-indicator
-                            :id id)
-        expires (:expires new-indicator)]
-    (if expires
-      (assoc indicator :expires (c/expire-on expires))
-      indicator)))
+  (assoc new-indicator
+         :id id
+         :expires (or (:expires new-indicator) (c/expire-after))))

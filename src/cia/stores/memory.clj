@@ -2,6 +2,7 @@
   (:require [cia.schemas.actor :refer [Actor NewActor realize-actor]]
             [cia.schemas.campaign :refer [Campaign NewCampaign realize-campaign]]
             [cia.schemas.coa :refer [COA NewCOA realize-coa]]
+            [cia.schemas.common :as c]
             [cia.schemas.exploit-target
              :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
             [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
@@ -10,11 +11,14 @@
              :refer [Indicator NewIndicator realize-indicator]]
             [cia.schemas.judgement
              :refer [Judgement NewJudgement realize-judgement]]
+            [cia.schemas.ttp :refer [NewTTP TTP realize-ttp]]
+            [cia.schemas.verdict :refer [Verdict]]
+            [cia.schemas.vocabularies :as v]
             [cia.store :refer :all]
+            [clj-time.core :as time]
             [clojure.string :as str]
             [schema.core :as s])
-  (:import org.joda.time.DateTime
-           java.util.UUID))
+  (:import java.util.UUID))
 
 (defn make-id [schema]
   (str (str/lower-case (s/schema-name schema)) "-" (UUID/randomUUID)))
@@ -42,6 +46,19 @@
        (do (swap! state# dissoc id#)
            true)
        false)))
+
+(defmacro def-list-handler [name Model]
+  `(s/defn ~name :- (s/maybe [~Model])
+    [state# :- (s/atom {s/Str ~Model})
+     filter-map# :- {(s/either s/Keyword [s/Keyword]) s/Any}]
+    (into []
+          (filter (fn [model#]
+                    (every? (fn [[k# v#]]
+                              (if (sequential? k#)
+                                (= v# (get-in model# k# ::not-found))
+                                (= v# (get model# k# ::not-found))))
+                            filter-map#))
+                  (vals (deref state#))))))
 
 (defn make-swap-fn [realize-fn]
   (fn [state-map & [new-model id :as args]]
@@ -142,14 +159,7 @@
             judgement-id)
      new-id)))
 
-(s/defn handle-list-feedback :- (s/maybe [Feedback])
-  [state :- (s/atom {s/Str Feedback})
-   filter-map :- {s/Keyword s/Any}]
-  (filter (fn [feedback]
-            (every? (fn [[k v]]
-                      (= v (get feedback k ::not-found)))
-                    filter-map))
-          (vals @state)))
+(def-list-handler handle-list-feedback Feedback)
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
@@ -187,6 +197,8 @@
 
 (def-delete-handler handle-delete-indicator Indicator)
 
+(def-list-handler handle-list-indicators Indicator)
+
 (defrecord IndicatorStore [state]
   IIndicatorStore
   (create-indicator [_ new-indicator]
@@ -195,7 +207,11 @@
     (handle-read-indicator state id))
   (delete-indicator [_ id]
     (handle-delete-indicator state id))
-  (list-indicators [_ filter-map]))
+  (list-indicators [_ filter-map]
+    (handle-list-indicators state filter-map))
+  (list-indicator-sightings [_ filter-map]
+    (->> (handle-list-indicators state filter-map)
+         (mapcat :sightings))))
 
 ;; Judgement
 
@@ -206,6 +222,57 @@
 
 (def-delete-handler handle-delete-judgement Judgement)
 
+(def-list-handler handle-list-judgements Judgement)
+
+(defn judgement-expired? [judgement now]
+  (if-let [expires (:expires judgement)]
+    (time/after? now expires)
+    false))
+
+(defn higest-priority [& judgements]
+  ;; pre-sort for deterministic tie breaking
+  (let [[judgement-1 judgement-2 :as judgements] (sort-by :timestamp judgements)]
+    (cond
+      (some nil? judgements)
+      (first (remove nil? judgements))
+
+      (not= (:priority judgement-1) (:priority judgement-2))
+      (last (sort-by :priority judgements))
+
+      :else (loop [[d-num & rest-d-nums] (sort (keys c/disposition-map))]
+              (cond
+                (nil? d-num) nil
+                (= d-num (:disposition judgement-1)) judgement-1
+                (= d-num (:disposition judgement-2)) judgement-2
+                :else (recur rest-d-nums))))))
+
+(s/defn make-verdict :- Verdict
+  [judgement :- Judgement]
+  {:disposition (:disposition judgement)
+   :judgement (:id judgement)
+   :disposition_name (get c/disposition-map (:disposition judgement))})
+
+(s/defn handle-calculate-verdict :- (s/maybe Verdict)
+  [state :- (s/atom {s/Str Judgement})
+   observable :- c/Observable]
+  (if-let [judgement
+           (let [now (time/now)]
+             (loop [[judgement & more-judgements] (vals @state)
+                    result nil]
+               (cond
+                 (nil? judgement)
+                 result
+
+                 (not= observable (:observable judgement))
+                 (recur more-judgements result)
+
+                 (judgement-expired? judgement now)
+                 (recur more-judgements result)
+
+                 :else
+                 (recur more-judgements (higest-priority judgement result)))))]
+    (make-verdict judgement)))
+
 (defrecord JudgementStore [state]
   IJudgementStore
   (create-judgement [_ new-judgement]
@@ -214,6 +281,26 @@
     (handle-read-judgement state id))
   (delete-judgement [_ id]
     (handle-delete-judgement state id))
-  (list-judgements-by-observable [this observable])
-  (list-judgements-by-indicator [this indicator-id])
-  (calculate-verdict [this observable]))
+  (list-judgements [_ filter-map]
+    (handle-list-judgements state filter-map))
+  (calculate-verdict [_ observable]
+    (handle-calculate-verdict state observable)))
+
+;; ttp
+
+(def-create-handler handle-create-ttp TTP NewTTP (make-swap-fn realize-ttp))
+
+(def-read-handler handle-read-ttp TTP)
+
+(def-delete-handler handle-delete-ttp TTP)
+
+(defrecord TTPStore [state]
+  ITTPStore
+  (read-ttp [_ id]
+    (handle-read-ttp state id))
+  (create-ttp [_ new-ttp]
+    (handle-create-ttp state new-ttp))
+  (update-ttp [_ ttp])
+  (delete-ttp [_ id]
+    (handle-delete-ttp state id))
+  (list-ttps [_ filter-map]))

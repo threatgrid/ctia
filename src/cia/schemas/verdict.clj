@@ -1,7 +1,8 @@
 (ns cia.schemas.verdict
   (:require [cia.schemas.common :as c]
             [cia.schemas.relationships :as rel]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (s/defschema Verdict
   "A Verdict is chosen from all of the Judgements on that Observable
@@ -12,5 +13,4 @@ Malicious disposition, and so on down to Unknown.
 "
   {:disposition c/DispositionNumber
    (s/optional-key :judgement) rel/JudgementReference
-   (s/optional-key :disposition_name) c/DispositionName
-   })
+   (s/optional-key :disposition_name) c/DispositionName})

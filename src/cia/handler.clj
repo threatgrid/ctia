@@ -1,20 +1,19 @@
 (ns cia.handler
   (:require [compojure.api.sweet :refer :all]
-            [cia.models :refer :all]
             [cia.printers :refer :all]
-            ;;[cia.relations :refer :all]
             [cia.schemas.actor :refer [Actor NewActor]]
             [cia.schemas.campaign :refer [Campaign NewCampaign]]
             [cia.schemas.coa :refer [COA NewCOA]]
-            [cia.schemas.common :refer [DispositionName DispositionNumber Time]]
+            [cia.schemas.common
+             :refer [DispositionName DispositionNumber Time VersionInfo]]
             [cia.schemas.exploit-target
-             :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
-            [cia.schemas.incident :refer [Incident NewIncident realize-incident]]
+             :refer [ExploitTarget NewExploitTarget]]
+            [cia.schemas.incident :refer [Incident NewIncident]]
             [cia.schemas.indicator
-             :refer [Indicator NewIndicator Sighting realize-indicator]]
+             :refer [Indicator NewIndicator Sighting]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
             [cia.schemas.judgement :refer [Judgement NewJudgement]]
-            [cia.schemas.ttp :refer [TTP]]
+            [cia.schemas.ttp :refer [NewTTP TTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.store :refer :all]
@@ -288,24 +287,41 @@ Malicious disposition, and so on down to Unknown.
                                  (no-content)
                                  (not-found))))
 
-            (context* "/ttps" []
+            (context* "/ttp" []
                       :tags ["TTP"]
-                      (GET* "/" []
-                            :description "This is a little decription"
-                            :query-params [{offset :-  Long 0}
-                                           {limit :-  Long 0}
-                                           {after :-  Time nil}
-                                           {before :-  Time nil}
-                                           {sort_by :- IndicatorSort "timestamp"}
-                                           {sort_order :- SortOrder "desc"}
-                                           {source :- s/Str nil}
-                                           {observable :- ObservableType nil}]))
+                      (POST* "/" []
+                             :return TTP
+                             :body [ttp NewTTP {:description "a new TTP"}]
+                             :summary "Adds a new TTP"
+                             (ok (create-ttp @ttp-store ttp)))
+                      (GET* "/:id" []
+                            :return (s/maybe TTP)
+                            :summary "Gets a TTP by ID"
+                            ;;:description "This is a little description"
+                            ;; :query-params [{offset :-  Long 0}
+                            ;;                {limit :-  Long 0}
+                            ;;                {after :-  Time nil}
+                            ;;                {before :-  Time nil}
+                            ;;                {sort_by :- IndicatorSort "timestamp"}
+                            ;;                {sort_order :- SortOrder "desc"}
+                            ;;                {source :- s/Str nil}
+                            ;;                {observable :- ObservableType nil}]
+                            :path-params [id :- s/Str]
+                            (if-let [d (read-ttp @ttp-store id)]
+                              (ok d)
+                              (not-found)))
+                      (DELETE* "/:id" []
+                               :path-params [id :- s/Str]
+                               :summary "Deletes a TTP"
+                               (if (delete-ttp @ttp-store id)
+                                 (no-content)
+                                 (not-found))))
 
             (context* "/sightings" []
                       :tags ["Sighting"])
 
 
-            (GET* "/:observable_type/:id/judgements" []
+            (GET* "/:observable_type/:observable_value/judgements" []
                   :query-params [{offset :-  Long 0}
                                  {limit :-  Long 0}
                                  {after :-  Time nil}
@@ -316,12 +332,14 @@ Malicious disposition, and so on down to Unknown.
                                  {disposition :- DispositionNumber nil}
                                  {disposition_name :- DispositionName nil}]
                   :path-params [observable_type :- ObservableType
-                                id :- s/Str]
+                                observable_value :- s/Str]
                   :return [Judgement]
                   :summary "Returns all the Judgements associated with the specified observable."
-                  (ok (find-judgements observable_type id)))
+                  (ok (list-judgements @judgement-store
+                                       {[:observable :type]  observable_type
+                                        [:observable :value] observable_value})))
 
-            (GET* "/:observable_type/:id/indicators" []
+            (GET* "/:observable_type/:observable_value/indicators" []
                   :query-params [{offset :-  Long 0}
                                  {limit :-  Long 0}
                                  {after :-  Time nil}
@@ -330,12 +348,14 @@ Malicious disposition, and so on down to Unknown.
                                  {sort_order :- SortOrder "desc"}
                                  {source :- s/Str nil}]
                   :path-params [observable_type :- ObservableType
-                                id :- s/Str]
+                                observable_value :- s/Str]
                   :return [Indicator]
                   :summary "Returns all the Indiators associated with the specified observable."
-                  (ok (find-judgements observable_type id)))
+                  (ok (list-indicators @indicator-store
+                                       {[:observable :type] observable_type
+                                        [:observable :value] observable_value})))
 
-            (GET* "/:observable_type/:id/sightings" []
+            (GET* "/:observable_type/:observable_value/sightings" []
                   :query-params [{offset :-  Long 0}
                                  {limit :-  Long 0}
                                  {after :-  Time nil}
@@ -344,33 +364,21 @@ Malicious disposition, and so on down to Unknown.
                                  {sort_order :- SortOrder "desc"}
                                  {source :- s/Str nil}]
                   :path-params [observable_type :- ObservableType
-                                id :- s/Str]
+                                observable_value :- s/Str]
                   :return [Sighting]
                   :summary "Returns all the Sightings associated with the specified observable."
-                  (ok (find-judgements observable_type id)))
+                  (ok (list-indicator-sightings @indicator-store
+                                                {[:observable :type] observable_type
+                                                 [:observable :value] observable_value})))
 
-            (GET* "/:observable_type/:id/relations" []
-                  :query-params [{offset :-  Long 0}
-                                 {limit :-  Long 0}
-                                 {after :-  Time nil}
-                                 {before :-  Time nil}
-                                 {sort_by :- RelationSort "timestamp"}
-                                 {sort_order :- SortOrder "desc"}
-                                 {source :- s/Str nil}
-                                 {relation :- DispositionNumber nil}]
-                  :path-params [observable_type :- ObservableType
-                                id :- s/Str]
-                  :return [Judgement]
-                  :summary "Returns all the Judgements associated with the specified observable."
-                  (ok (find-judgements observable_type id)))
-
-            (GET* "/:observable_type/:id/verdict" []
+            (GET* "/:observable_type/:observable_value/verdict" []
                   :tags ["Verdict"]
                   :path-params [observable_type :- ObservableType
-                                id :- s/Str]
+                                observable_value :- s/Str]
                   :return (s/maybe Verdict)
                   :summary "Returns the current Verdict associated with the specified observable."
-                  (ok (current-verdict observable_type id)))))
+                  (ok (calculate-verdict @judgement-store {:type observable_type
+                                                           :value observable_value})))))
 
 (def app
   (-> api-handler

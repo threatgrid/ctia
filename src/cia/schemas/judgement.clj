@@ -32,24 +32,16 @@
    (s/optional-key :reason) s/Str
    (s/optional-key :disposition_name) c/DispositionName
    (s/optional-key :expires) c/Time
-
    (s/optional-key :source_uri) c/URI
-
    (s/optional-key :reason_uri) c/URI
-
    (s/optional-key :indicators) rel/RelatedIndicators})
 
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
   (st/merge (st/dissoc Judgement
-                       :id
-                       :priority
-                       :timestamp
-                       :severity
-                       :confidence)
+                       :id)
             {(s/optional-key :severity) Severity
              (s/optional-key :confidence) v/HighMedLow
-             (s/optional-key :timestamp) c/Time
              (s/optional-key :priority) Priority}))
 
 (s/defschema StoredJudgement
@@ -62,8 +54,4 @@
   [new-judgement :- NewJudgement
    id :- s/Str]
   (assoc new-judgement
-         :id id
-         :timestamp (c/timestamp)
-         :priority 100
-         :severity 100
-         :confidence "Low"))
+         :id id))

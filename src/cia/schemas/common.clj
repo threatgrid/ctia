@@ -20,6 +20,31 @@
   "Schema definition for all date or timestamp values in GUNDAM."
   org.joda.time.DateTime)
 
+(s/defschema VersionInfo
+  {:base URI
+   :version s/Str
+   :beta s/Bool
+   :supported_features [s/Str]})
+
+(def CIAFeature
+  (s/enum "Judgements"
+          "Verdicts"
+          "Threats"
+          "Relations"
+          "Feeds"
+          "Feedback"
+          "COAs"
+          "ExploitTargets"))
+
+(def SpecificationType
+  "Types of Indicator we support Currently only Judgement indicators,
+  which contain a list of Judgements associated with this indicator."
+  (s/enum "Judgement"
+          "ThreatBrain"
+          "SIOC"
+          "Snort"
+          "OpenIOC"))
+
 (s/defschema MinimalStixIdentifiers
   {;; :id and :idref must be implemented exclusively
    :id ID})
@@ -30,7 +55,7 @@
    MinimalStixIdentifiers
    {:title s/Str
     :description [s/Str]
-    (s/optional-key :sort_description) [s/Str]}))
+    (s/optional-key :short_description) [s/Str]}))
 
 (s/defschema TimeStructure
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/TimeType/"
@@ -126,14 +151,24 @@
 
 ;; helper fns used by schemas
 
-(def timestamp time/now)
+(defn timestamp
+  ([]
+   (time/now))
+  ([time-str]
+   (if (nil? time-str)
+     (time/now)
+     (time-format/parse (time-format/formatters :date-time)
+                        time-str))))
+
+(def default-expire-in-days 7)
 
 (defn expire-after
-  ([now]
-   (expire-after now 7))
-  ([now in-days]
-   (time/plus now (time/days in-days))))
+  ([]
+   (expire-after (time/now) default-expire-in-days))
+  ([after-time]
+   (expire-after after-time default-expire-in-days))
+  ([after-time in-days]
+   (time/plus after-time (time/days in-days))))
 
 (defn expire-on [expire-str]
-  (time-format/parse (time-format/formatters :date-time)
-                     expire-str))
+  (timestamp expire-str))
