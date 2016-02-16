@@ -16,8 +16,8 @@
     (s/optional-key :status) v/CampaignStatus
     (s/optional-key :related_TTPs) rel/RelatedTTPs
     (s/optional-key :related_incidents) rel/RelatedIncidents
-    (s/optional-key :attribution) rel/AttributedActors
-    (s/optional-key :associated_campaigns) rel/AssociatedCampaigns
+    (s/optional-key :attribution) rel/RelatedActors
+    (s/optional-key :associated_campaigns) rel/RelatedCampaigns
     (s/optional-key :confidence) v/HighMedLow
     (s/optional-key :activity) c/Activity
     (s/optional-key :source) c/Source

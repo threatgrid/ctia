@@ -18,8 +18,8 @@
     (s/optional-key :intended_effect) v/IntendedEffect
     (s/optional-key :planning_and_operational_support) s/Str ; Empty vocab
     (s/optional-key :observed_TTPs) rel/RelatedTTPs
-    (s/optional-key :associated_campaigns) rel/AssociatedCampaigns
-    (s/optional-key :associated_actors) rel/AssociatedActors
+    (s/optional-key :associated_campaigns) rel/RelatedCampaigns
+    (s/optional-key :associated_actors) rel/RelatedActors
     (s/optional-key :confidence) v/HighMedLow
 
     ;; Extension fields:
