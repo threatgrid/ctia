@@ -5,6 +5,13 @@
             [schema.core :as s]
             [schema-tools.core :as st]))
 
+(s/defschema COARequested
+  "See http://stixproject.github.io/data-model/1.2/incident/COARequestedType/
+   and http://stixproject.github.io/data-model/1.2/incident/COATakenType/"
+  {(s/optional-key :time) c/Time
+   (s/optional-key :contributors) [c/Contributor]
+   :COA rel/COAReference})
+
 (s/defschema NonPublicDataCompromised
   "See http://stixproject.github.io/data-model/1.2/incident/NonPublicDataCompromisedType/"
   ;; Simplified schema
@@ -79,7 +86,7 @@
 
 (s/defschema History
   "See http://stixproject.github.io/data-model/1.2/incident/HistoryItemType/"
-  {(s/optional-key :action_entry) [rel/COARequested]
+  {(s/optional-key :action_entry) [COARequested]
    (s/optional-key :journal_entry) s/Str ;; simplified
    })
 
@@ -103,8 +110,8 @@
     (s/optional-key :source) c/Source
     (s/optional-key :security_compromise) v/SecurityCompromise
     (s/optional-key :discovery_method) v/DiscoveryMethod
-    (s/optional-key :COA_requested) [rel/COARequested]
-    (s/optional-key :COA_taken) [rel/COARequested]
+    (s/optional-key :COA_requested) [COARequested]
+    (s/optional-key :COA_taken) [COARequested]
     (s/optional-key :contact) c/Source
     (s/optional-key :history) [History]
 
@@ -112,8 +119,8 @@
     ;; structured data such as confidence and source for each element).
     (s/optional-key :related_indicators) rel/RelatedIndicators
     (s/optional-key :related_observables) [c/Observable] ;; Was related_observables
-    (s/optional-key :leveraged_TTPs) rel/LeveragedTTPs
-    (s/optional-key :attributed_actors) rel/AttributedActors ;; was attributed_threat_actors
+    (s/optional-key :leveraged_TTPs) rel/RelatedTTPs
+    (s/optional-key :attributed_actors) rel/RelatedActors ;; was attributed_threat_actors
     (s/optional-key :related_incidents) rel/RelatedIncidents
     (s/optional-key :intended_effect) v/IntendedEffect
 

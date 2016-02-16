@@ -50,6 +50,11 @@
    (s/optional-key :description) [s/Str]
    (s/optional-key :related_observables) [c/Observable]})
 
+(s/defschema CompositeIndicatorExpression
+  "See http://stixproject.github.io/data-model/1.2/indicator/CompositeIndicatorExpressionType/"
+  {:operator (s/enum "and" "or" "not")
+   :indicators [rel/IndicatorReference]})
+
 (s/defschema Indicator
   "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
   (merge
@@ -60,10 +65,10 @@
     (s/optional-key :type) [v/IndicatorType]
     (s/optional-key :valid_time_position) ValidTime
     (s/optional-key :observable) c/Observable
-    (s/optional-key :composite_indicator_expression) rel/CompositeIndicatorExpression
+    (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
     (s/optional-key :indicated_TTP) rel/RelatedTTP
     (s/optional-key :likely_impact) s/Str
-    (s/optional-key :suggested_COAs) rel/SuggestedCOAs
+    (s/optional-key :suggested_COAs) rel/RelatedCOAs
     (s/optional-key :confidence) v/HighMedLow
     (s/optional-key :sightings) [Sighting] ;; simplified
     (s/optional-key :related_indicators) rel/RelatedIndicators
