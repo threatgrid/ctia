@@ -18,7 +18,7 @@
   match."
   {:type (s/eq "Judgement")
    :judgements [rel/JudgementReference]
-   :required_judgements [rel/JudgementReference]})
+   :required_judgements rel/RelatedJudgements})
 
 (s/defschema ThreatBrainSpecification
   "An indicator which runs in threatbrain..."
@@ -48,7 +48,7 @@
    (s/optional-key :reference) c/URI
    (s/optional-key :confidence) v/HighMedLow
    (s/optional-key :description) [s/Str]
-   (s/optional-key :related_observables) [c/Observable]})
+   (s/optional-key :related_judgements) rel/RelatedJudgements})
 
 (s/defschema CompositeIndicatorExpression
   "See http://stixproject.github.io/data-model/1.2/indicator/CompositeIndicatorExpressionType/"
@@ -64,7 +64,7 @@
     (s/optional-key :negate) s/Bool ;; Indicates absence of a pattern
     (s/optional-key :type) [v/IndicatorType]
     (s/optional-key :valid_time_position) ValidTime
-    (s/optional-key :observable) c/Observable
+    (s/optional-key :judgements) rel/RelatedJudgements
     (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
     (s/optional-key :indicated_TTP) rel/RelatedTTP
     (s/optional-key :likely_impact) s/Str
