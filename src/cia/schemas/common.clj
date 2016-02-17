@@ -55,8 +55,8 @@
   (merge
    MinimalStixIdentifiers
    {:title s/Str
-    :description [s/Str]
-    (s/optional-key :short_description) [s/Str]}))
+    :description s/Str
+    (s/optional-key :short_description) s/Str}))
 
 (s/defschema TimeStructure
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/TimeType/"
