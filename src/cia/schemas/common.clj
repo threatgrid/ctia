@@ -158,8 +158,8 @@
 (defn determine-disposition-id
   "Takes a judgement and determines the disposition.
    Defaults to 'Unknown' disposition (in case none is provided).
-   Throws an exception if the provided disposition and disposition_name
-   do not match."
+   Throws an bad-request! if the provided disposition and
+   disposition_name do not match."
   [{:keys [disposition disposition_name] :as judgement}]
   (cond
     (every? nil? [disposition disposition_name]) (get disposition-map-inverted "Unknown")
