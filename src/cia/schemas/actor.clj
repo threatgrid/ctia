@@ -11,7 +11,7 @@
    c/GenericStixIdentifiers
    {:timestamp c/Time
     :type v/ThreatActorType
-    (s/optional-key :source) c/Source
+    (s/optional-key :source) s/Str
     (s/optional-key :identity) c/Identity
     (s/optional-key :motivation) v/Motivation
     (s/optional-key :sophistication) v/Sophistication

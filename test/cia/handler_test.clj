@@ -29,7 +29,7 @@
                          :body {:title "actor"
                                 :description "description"
                                 :type "Hacker"
-                                :source {:description "a source"}
+                                :source "a source"
                                 :confidence "High"
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :expires "2016-07-11T00:40:48.212-00:00"
@@ -42,7 +42,7 @@
               :type "Hacker",
               :title "actor",
               :confidence "High",
-              :source {:description "a source"}
+              :source "a source"
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :expires #inst "2016-07-11T00:40:48.212-00:00"
               :associated_actors ["actor-123" "actor-456"]
@@ -59,7 +59,7 @@
                   :type "Hacker",
                   :title "actor",
                   :confidence "High",
-                  :source {:description "a source"}
+                  :source "a source"
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :associated_actors ["actor-123" "actor-456"]
@@ -634,10 +634,10 @@
                                 :observable {:value "1.2.3.4"
                                              :type "ip"}
                                 :sightings [{:timestamp "2016-02-01T00:00:00.000-00:00"
-                                             :source {:description "foo"}
+                                             :source "foo"
                                              :confidence "Medium"}
                                             {:timestamp "2016-02-01T12:00:00.000-00:00"
-                                             :source {:description "bar"}
+                                             :source "bar"
                                              :confidence "High"}]
                                 :description "description"
                                 :producer "producer"
@@ -650,7 +650,7 @@
                                 :observable {:value "10.0.0.1"
                                              :type "ip"}
                                 :sightings [{:timestamp "2016-02-04T12:00:00.000-00:00"
-                                             :source {:description "spam"}
+                                             :source "spam"
                                              :confidence "None"}]
                                 :description "description"
                                 :producer "producer"
@@ -663,10 +663,10 @@
                                 :observable {:value "10.0.0.1"
                                              :type "ip"}
                                 :sightings [{:timestamp "2016-02-05T01:00:00.000-00:00"
-                                             :source {:description "foo"}
+                                             :source "foo"
                                              :confidence "High"}
                                             {:timestamp "2016-02-05T02:00:00.000-00:00"
-                                             :source {:description "bar"}
+                                             :source "bar"
                                              :confidence "Low"}]
                                 :description "description"
                                 :producer "producer"
@@ -682,7 +682,7 @@
                :observable {:value "10.0.0.1"
                             :type "ip"}
                :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
-                            :source {:description "spam"}
+                            :source "spam"
                             :confidence "None"}]
                :description "description"
                :producer "producer"
@@ -692,10 +692,10 @@
                :observable {:value "10.0.0.1"
                             :type "ip"}
                :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
-                            :source {:description "foo"}
+                            :source "foo"
                             :confidence "High"}
                            {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
-                            :source {:description "bar"}
+                            :source "bar"
                             :confidence "Low"}]
                :description "description"
                :producer "producer"
@@ -709,13 +709,13 @@
           sightings (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
-               :source {:description "spam"}
+               :source "spam"
                :confidence "None"}
               {:timestamp #inst "2016-02-05T01:00:00.000-00:00"
-               :source {:description "foo"}
+               :source "foo"
                :confidence "High"}
               {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
-               :source {:description "bar"}
+               :source "bar"
                :confidence "Low"}]
              sightings)))))
 

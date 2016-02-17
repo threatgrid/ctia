@@ -101,18 +101,18 @@
     (s/optional-key :version) s/Str
     (s/optional-key :incident_time) IncidentTime ;; Was "time"; renamed for clarity
     (s/optional-key :categories) [v/IncidentCategory]
-    (s/optional-key :reporter) c/Source
-    (s/optional-key :responder) c/Source
-    (s/optional-key :coordinator) c/Source
+    (s/optional-key :reporter) s/Str
+    (s/optional-key :responder) s/Str
+    (s/optional-key :coordinator) s/Str
     (s/optional-key :victim) s/Str
     (s/optional-key :affected_assets) [AffectedAsset]
     (s/optional-key :impact_assessment) ImpactAssessment
-    (s/optional-key :source) c/Source
+    (s/optional-key :source) s/Str
     (s/optional-key :security_compromise) v/SecurityCompromise
     (s/optional-key :discovery_method) v/DiscoveryMethod
     (s/optional-key :COA_requested) [COARequested]
     (s/optional-key :COA_taken) [COARequested]
-    (s/optional-key :contact) c/Source
+    (s/optional-key :contact) s/Str
     (s/optional-key :history) [History]
 
     ;; The seqs of elements below are squashed (they leave out

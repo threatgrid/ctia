@@ -20,7 +20,7 @@
     (s/optional-key :associated_campaigns) rel/RelatedCampaigns
     (s/optional-key :confidence) v/HighMedLow
     (s/optional-key :activity) c/Activity
-    (s/optional-key :source) c/Source
+    (s/optional-key :source) s/Str
 
     ;; Extension fields:
     :type  s/Str
