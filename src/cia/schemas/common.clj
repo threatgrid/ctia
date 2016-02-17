@@ -2,6 +2,7 @@
   (:require [cia.schemas.vocabularies :as v]
             [clj-time.core :as time]
             [clj-time.format :as time-format]
+            [ring.util.http-response :as http-response]
             [schema.core :as s]))
 
 (def Reference
@@ -141,6 +142,9 @@
    4 "Common"
    5 "Unknown"})
 
+(def disposition-map-inverted
+  (clojure.set/map-invert disposition-map))
+
 (def DispositionNumber
   "Numeric verdict identifiers"
   (apply s/enum (keys disposition-map)))
@@ -150,6 +154,21 @@
   (apply s/enum (vals disposition-map)))
 
 ;; helper fns used by schemas
+
+(defn determine-disposition-id
+  "Takes a judgement and determines the disposition.
+   Defaults to 'Unknown' disposition (in case none is provided).
+   Throws an exception if the provided disposition and disposition_name
+   do not match."
+  [{:keys [disposition disposition_name] :as judgement}]
+  (cond
+    (every? nil? [disposition disposition_name]) (get disposition-map-inverted "Unknown")
+    (nil? disposition) (get disposition-map-inverted disposition_name)
+    (nil? disposition_name) disposition
+    (= disposition (get disposition-map-inverted disposition_name)) disposition
+    :else (http-response/bad-request!
+           {:error "Mismatching :dispostion and dispositon_name for judgement"
+            :judgement judgement})))
 
 (defn timestamp
   ([]

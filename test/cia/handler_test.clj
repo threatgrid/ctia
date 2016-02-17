@@ -464,6 +464,102 @@
                    (map #(dissoc % :id :timestamp)
                         feedbacks)))))))))
 
+(deftest test-judgement-routes-for-dispositon-determination
+  (testing "POST a judgement with dispositon (id)"
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "1.2.3.4"
+                                             :type "ip"}
+                                :disposition 2
+                                :source "test"
+                                :priority 100
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+          judgement (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:observable {:value "1.2.3.4"
+                           :type "ip"}
+              :disposition 2
+              :disposition_name "Malicious"
+              :source "test"
+              :priority 100
+              :severity 100
+              :confidence "Low"
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+             (dissoc judgement
+                     :id)))))
+
+  (testing "POST a judgement with disposition_name"
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "1.2.3.4"
+                                             :type "ip"}
+                                :disposition_name "Malicious"
+                                :source "test"
+                                :priority 100
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+          judgement (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:observable {:value "1.2.3.4"
+                           :type "ip"}
+              :disposition 2
+              :disposition_name "Malicious"
+              :source "test"
+              :priority 100
+              :severity 100
+              :confidence "Low"
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+             (dissoc judgement
+                     :id)))))
+
+  (testing "POST a judgement without disposition"
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "1.2.3.4"
+                                             :type "ip"}
+                                :source "test"
+                                :priority 100
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+          judgement (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (= {:observable {:value "1.2.3.4"
+                           :type "ip"}
+              :disposition 5
+              :disposition_name "Unknown"
+              :source "test"
+              :priority 100
+              :severity 100
+              :confidence "Low"
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+             (dissoc judgement
+                     :id)))))
+
+  (testing "POST a judgement with mismatching disposition/disposition_name"
+    (let [response (post "cia/judgement"
+                         :body {:observable {:value "1.2.3.4"
+                                             :type "ip"}
+                                :disposition 1
+                                :disposition_name "Unknown"
+                                :source "test"
+                                :priority 100
+                                :severity 100
+                                :confidence "Low"
+                                :timestamp "2016-02-11T00:40:48.212-00:00"})]
+      (is (= 400 (:status response)))
+      (is (= {:error "Mismatching :dispostion and dispositon_name for judgement",
+              :judgement {:observable {:value "1.2.3.4"
+                                       :type "ip"}
+                          :disposition 1
+                          :disposition_name "Unknown"
+                          :source "test"
+                          :priority 100
+                          :severity 100
+                          :confidence "Low"
+                          :timestamp #inst "2016-02-11T00:40:48.212-00:00"}}
+             (:parsed-body response))))))
+
 (deftest test-observable-judgements-route
 
   (testing "test setup: create a judgement (1)"
