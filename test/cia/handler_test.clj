@@ -27,7 +27,7 @@
   (testing "POST /cia/actor"
     (let [response (post "cia/actor"
                          :body {:title "actor"
-                                :description ["description"]
+                                :description "description"
                                 :type "Hacker"
                                 :source {:description "a source"}
                                 :confidence "High"
@@ -38,7 +38,7 @@
                                 :observed_TTPs ["ttp-333" "ttp-999"]})
           actor (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (= {:description ["description"],
+      (is (= {:description "description",
               :type "Hacker",
               :title "actor",
               :confidence "High",
@@ -55,7 +55,7 @@
         (let [response (get (str "cia/actor/" (:id actor)))
               actor (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= {:description ["description"],
+          (is (= {:description "description",
                   :type "Hacker",
                   :title "actor",
                   :confidence "High",
@@ -78,7 +78,7 @@
   (testing "POST /cia/campaign"
     (let [response (post "cia/campaign"
                          :body {:title "campaign"
-                                :description ["description"]
+                                :description "description"
                                 :type "anything goes here"
                                 :intended_effect ["Theft"]
                                 :indicators ["indicator-foo" "indicator-bar"]
@@ -99,7 +99,7 @@
           campaign (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "campaign"
-              :description ["description"]
+              :description "description"
               :type "anything goes here"
               :intended_effect ["Theft"]
               :indicators ["indicator-foo" "indicator-bar"]
@@ -125,7 +125,7 @@
               campaign (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "campaign"
-                  :description ["description"]
+                  :description "description"
                   :type "anything goes here"
                   :intended_effect ["Theft"]
                   :indicators ["indicator-foo" "indicator-bar"]
@@ -156,14 +156,14 @@
   (testing "POST /cia/coa"
     (let [response (post "cia/coa"
                          :body {:title "coa"
-                                :description ["description"]
+                                :description "description"
                                 :type "Eradication"
                                 :objective ["foo" "bar"]
                                 :timestamp "2016-02-11T00:40:48.212-00:00"})
           coa (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "coa"
-              :description ["description"]
+              :description "description"
               :type "Eradication"
               :objective ["foo" "bar"]
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
@@ -175,7 +175,7 @@
               coa (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "coa"
-                  :description ["description"]
+                  :description "description"
                   :type "Eradication"
                   :objective ["foo" "bar"]
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
@@ -192,9 +192,9 @@
   (testing "POST /cia/exploit-target"
     (let [response (post "cia/exploit-target"
                          :body {:title "exploit-target"
-                                :description ["description"]
+                                :description "description"
                                 :vulnerability [{:title "vulnerability"
-                                                 :description ["description"]}]
+                                                 :description "description"}]
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :potential_COAs ["coa-777" "coa-333"]
                                 :related_exploit_targets [{:confidence "High"
@@ -204,9 +204,9 @@
           exploit-target (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "exploit-target"
-              :description ["description"]
+              :description "description"
               :vulnerability [{:title "vulnerability"
-                               :description ["description"]}]
+                               :description "description"}]
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :potential_COAs ["coa-777" "coa-333"]
               :related_exploit_targets [{:confidence "High"
@@ -221,9 +221,9 @@
               exploit-target (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "exploit-target"
-                  :description ["description"]
+                  :description "description"
                   :vulnerability [{:title "vulnerability"
-                                   :description ["description"]}]
+                                   :description "description"}]
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :potential_COAs ["coa-777" "coa-333"]
                   :related_exploit_targets [{:confidence "High"
@@ -243,7 +243,7 @@
   (testing "POST /cia/incident"
     (let [response (post "cia/incident"
                          :body {:title "incident"
-                                :description ["description"]
+                                :description "description"
                                 :confidence "High"
                                 :categories ["Denial of Service"
                                              "Improper Usage"]
@@ -256,7 +256,7 @@
           incident (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "incident"
-              :description ["description"]
+              :description "description"
               :confidence "High"
               :categories ["Denial of Service"
                            "Improper Usage"]
@@ -274,7 +274,7 @@
               incident (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "incident"
-                  :description ["description"]
+                  :description "description"
                   :confidence "High"
                   :categories ["Denial of Service"
                                "Improper Usage"]
@@ -297,7 +297,7 @@
   (testing "POST /cia/indicator"
     (let [response (post "cia/indicator"
                          :body {:title "indicator"
-                                :description ["description"]
+                                :description "description"
                                 :producer "producer"
                                 :type ["C2" "IP Watchlist"]
                                 :expires "2016-07-11T00:40:48.212-00:00"
@@ -313,7 +313,7 @@
           indicator (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "indicator"
-              :description ["description"]
+              :description "description"
               :producer "producer"
               :type ["C2" "IP Watchlist"]
               :expires #inst "2016-07-11T00:40:48.212-00:00"
@@ -334,7 +334,7 @@
               indicator (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "indicator"
-                  :description ["description"]
+                  :description "description"
                   :producer "producer"
                   :type ["C2" "IP Watchlist"]
                   :expires #inst "2016-07-11T00:40:48.212-00:00"
@@ -654,7 +654,7 @@
                                  {:timestamp "2016-02-01T12:00:00.000-00:00"
                                   :source {:description "bar"}
                                   :confidence "High"}]
-                     :description ["description"]
+                     :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
                      :expires "2016-02-12T00:00:00.000-00:00"})
@@ -679,7 +679,7 @@
                      :sightings [{:timestamp "2016-02-04T12:00:00.000-00:00"
                                   :source {:description "spam"}
                                   :confidence "None"}]
-                     :description ["description"]
+                     :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
                      :expires "2016-02-12T00:00:00.000-00:00"})
@@ -708,7 +708,7 @@
                                  {:timestamp "2016-02-05T02:00:00.000-00:00"
                                   :source {:description "bar"}
                                   :confidence "Low"}]
-                     :description ["description"]
+                     :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
                      :expires "2016-02-11T00:00:00.000-00:00"})]
@@ -730,7 +730,7 @@
                  :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
                               :source {:description "spam"}
                               :confidence "None"}]
-                 :description ["description"]
+                 :description "description"
                  :producer "producer"
                  :type ["C2" "IP Watchlist"]
                  :expires #inst "2016-02-12T00:00:00.000-00:00"}
@@ -743,7 +743,7 @@
                              {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
                               :source {:description "bar"}
                               :confidence "Low"}]
-                 :description ["description"]
+                 :description "description"
                  :producer "producer"
                  :type ["C2" "IP Watchlist"]
                  :expires #inst "2016-02-11T00:00:00.000-00:00"}]
@@ -891,7 +891,7 @@
   (testing "POST /cia/ttp"
     (let [response (post "cia/ttp"
                          :body {:title "ttp"
-                                :description ["description"]
+                                :description "description"
                                 :type "foo"
                                 :indicators ["indicator-1" "indicator-2"]
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
@@ -901,7 +901,7 @@
           ttp (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "ttp"
-              :description ["description"]
+              :description "description"
               :type "foo"
               :indicators ["indicator-1" "indicator-2"]
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
@@ -916,7 +916,7 @@
               ttp (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "ttp"
-                  :description ["description"]
+                  :description "description"
                   :type "foo"
                   :indicators ["indicator-1" "indicator-2"]
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"

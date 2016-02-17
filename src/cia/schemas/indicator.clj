@@ -47,7 +47,7 @@
    (s/optional-key :source) c/Source
    (s/optional-key :reference) c/URI
    (s/optional-key :confidence) v/HighMedLow
-   (s/optional-key :description) [s/Str]
+   (s/optional-key :description) s/Str
    (s/optional-key :related_judgements) rel/RelatedJudgements})
 
 (s/defschema CompositeIndicatorExpression
@@ -66,7 +66,7 @@
     (s/optional-key :valid_time_position) ValidTime
     (s/optional-key :judgements) rel/RelatedJudgements
     (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
-    (s/optional-key :indicated_TTP) rel/RelatedTTP
+    (s/optional-key :indicated_TTP) rel/RelatedTTPs
     (s/optional-key :likely_impact) s/Str
     (s/optional-key :suggested_COAs) rel/RelatedCOAs
     (s/optional-key :confidence) v/HighMedLow

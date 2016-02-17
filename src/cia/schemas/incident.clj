@@ -29,7 +29,7 @@
 (s/defschema AffectedAsset
   "See http://stixproject.github.io/data-model/1.2/incident/AffectedAssetType/"
   {(s/optional-key :type) s/Str
-   (s/optional-key :description) [s/Str]
+   (s/optional-key :description) s/Str
    (s/optional-key :ownership_class) v/OwnershipClass
    (s/optional-key :management_class) v/ManagementClass
    (s/optional-key :location_class) v/LocationClass
