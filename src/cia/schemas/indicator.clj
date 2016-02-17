@@ -47,7 +47,7 @@
    (s/optional-key :source) c/Source
    (s/optional-key :reference) c/URI
    (s/optional-key :confidence) v/HighMedLow
-   (s/optional-key :description) [s/Str]
+   (s/optional-key :description) s/Str
    (s/optional-key :related_observables) [c/Observable]})
 
 (s/defschema CompositeIndicatorExpression
