@@ -85,15 +85,15 @@
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :expires "2016-07-11T00:40:48.212-00:00"
                                 :attribution [{:confidence "High"
-                                               :source {:description "source"}
+                                               :source "source"
                                                :relationship "relationship"
                                                :actor "actor-123"}]
                                 :related_incidents [{:confidence "High"
-                                                     :source {:description "source"}
+                                                     :source "source"
                                                      :relationship "relationship"
                                                      :incident "incident-222"}]
                                 :related_TTPs [{:confidence "High"
-                                                :source {:description "source"}
+                                                :source "source"
                                                 :relationship "relationship"
                                                 :ttp "ttp-999"}]})
           campaign (:parsed-body response)]
@@ -106,15 +106,15 @@
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :expires #inst "2016-07-11T00:40:48.212-00:00"
               :attribution [{:confidence "High"
-                             :source {:description "source"}
+                             :source "source"
                              :relationship "relationship"
                              :actor "actor-123"}]
               :related_incidents [{:confidence "High"
-                                   :source {:description "source"}
+                                   :source "source"
                                    :relationship "relationship"
                                    :incident "incident-222"}]
               :related_TTPs [{:confidence "High"
-                              :source {:description "source"}
+                              :source "source"
                               :relationship "relationship"
                               :ttp "ttp-999"}]}
              (dissoc campaign
@@ -132,15 +132,15 @@
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :attribution [{:confidence "High"
-                                 :source {:description "source"}
+                                 :source "source"
                                  :relationship "relationship"
                                  :actor "actor-123"}]
                   :related_incidents [{:confidence "High"
-                                       :source {:description "source"}
+                                       :source "source"
                                        :relationship "relationship"
                                        :incident "incident-222"}]
                   :related_TTPs [{:confidence "High"
-                                  :source {:description "source"}
+                                  :source "source"
                                   :relationship "relationship"
                                   :ttp "ttp-999"}]}
                  (dissoc campaign
@@ -198,7 +198,7 @@
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :potential_COAs ["coa-777" "coa-333"]
                                 :related_exploit_targets [{:confidence "High"
-                                                           :source {:description "source"}
+                                                           :source "source"
                                                            :relationship "relationship"
                                                            :exploit_target "exploit-target-123"}]})
           exploit-target (:parsed-body response)]
@@ -210,7 +210,7 @@
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :potential_COAs ["coa-777" "coa-333"]
               :related_exploit_targets [{:confidence "High"
-                                         :source {:description "source"}
+                                         :source "source"
                                          :relationship "relationship"
                                          :exploit_target "exploit-target-123"}]}
              (dissoc exploit-target
@@ -227,7 +227,7 @@
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :potential_COAs ["coa-777" "coa-333"]
                   :related_exploit_targets [{:confidence "High"
-                                             :source {:description "source"}
+                                             :source "source"
                                              :relationship "relationship"
                                              :exploit_target "exploit-target-123"}]}
                  (dissoc exploit-target
@@ -249,7 +249,7 @@
                                              "Improper Usage"]
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :related_indicators [{:confidence "High"
-                                                      :source {:description "source"}
+                                                      :source "source"
                                                       :relationship "relationship"
                                                       :indicator "indicator-123"}]
                                 :related_incidents ["incident-123" "indicent-789"]})
@@ -262,7 +262,7 @@
                            "Improper Usage"]
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :related_indicators [{:confidence "High"
-                                    :source {:description "source"}
+                                    :source "source"
                                     :relationship "relationship"
                                     :indicator "indicator-123"}]
               :related_incidents ["incident-123" "indicent-789"]}
@@ -280,7 +280,7 @@
                                "Improper Usage"]
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :related_indicators [{:confidence "High"
-                                        :source {:description "source"}
+                                        :source "source"
                                         :relationship "relationship"
                                         :indicator "indicator-123"}]
                   :related_incidents ["incident-123" "indicent-789"]}
@@ -302,11 +302,11 @@
                                 :type ["C2" "IP Watchlist"]
                                 :expires "2016-07-11T00:40:48.212-00:00"
                                 :related_campaigns [{:confidence "High"
-                                                     :source {:description "source"}
+                                                     :source "source"
                                                      :relationship "relationship"
                                                      :campaign "campaign-123"}]
                                 :related_COAs [{:confidence "High"
-                                                :source {:description "source"}
+                                                :source "source"
                                                 :relationship "relationship"
                                                 :COA "coa-123"}]})
           indicator (:parsed-body response)]
@@ -317,11 +317,11 @@
               :type ["C2" "IP Watchlist"]
               :expires #inst "2016-07-11T00:40:48.212-00:00"
               :related_campaigns [{:confidence "High"
-                                   :source {:description "source"}
+                                   :source "source"
                                    :relationship "relationship"
                                    :campaign "campaign-123"}]
               :related_COAs [{:confidence "High"
-                              :source {:description "source"}
+                              :source "source"
                               :relationship "relationship"
                               :COA "coa-123"}]}
              (dissoc indicator
@@ -337,11 +337,11 @@
                   :type ["C2" "IP Watchlist"]
                   :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :related_campaigns [{:confidence "High"
-                                       :source {:description "source"}
+                                       :source "source"
                                        :relationship "relationship"
                                        :campaign "campaign-123"}]
                   :related_COAs [{:confidence "High"
-                                  :source {:description "source"}
+                                  :source "source"
                                   :relationship "relationship"
                                   :COA "coa-123"}]}
                  (dissoc indicator
@@ -365,7 +365,7 @@
                                 :confidence "Low"
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :indicators [{:confidence "High"
-                                              :source {:description "source"}
+                                              :source "source"
                                               :relationship "relationship"
                                               :indicator "indicator-123"}]})
           judgement (:parsed-body response)]
@@ -380,7 +380,7 @@
               :source "test"
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :indicators [{:confidence "High"
-                            :source {:description "source"}
+                            :source "source"
                             :relationship "relationship"
                             :indicator "indicator-123"}]}
              (dissoc judgement
@@ -400,7 +400,7 @@
                   :source "test"
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :indicators [{:confidence "High"
-                                :source {:description "source"}
+                                :source "source"
                                 :relationship "relationship"
                                 :indicator "indicator-123"}]}
                  (dissoc judgement
