@@ -66,7 +66,7 @@
     (s/optional-key :valid_time_position) ValidTime
     (s/optional-key :observable) c/Observable
     (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
-    (s/optional-key :indicated_TTP) rel/RelatedTTP
+    (s/optional-key :indicated_TTP) rel/RelatedTTPs
     (s/optional-key :likely_impact) s/Str
     (s/optional-key :suggested_COAs) rel/RelatedCOAs
     (s/optional-key :confidence) v/HighMedLow
