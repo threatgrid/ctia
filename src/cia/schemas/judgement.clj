@@ -24,13 +24,13 @@
   {:id c/ID
    :observable c/Observable
    :disposition c/DispositionNumber
+   :disposition_name c/DispositionName
    :source s/Str
    :priority Priority
    :confidence v/HighMedLow
    :severity Severity
    :timestamp c/Time
    (s/optional-key :reason) s/Str
-   (s/optional-key :disposition_name) c/DispositionName
    (s/optional-key :expires) c/Time
    (s/optional-key :source_uri) c/URI
    (s/optional-key :reason_uri) c/URI
@@ -39,10 +39,14 @@
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
   (st/merge (st/dissoc Judgement
-                       :id)
+                       :id
+                       :disposition
+                       :disposition_name)
             {(s/optional-key :severity) Severity
              (s/optional-key :confidence) v/HighMedLow
-             (s/optional-key :priority) Priority}))
+             (s/optional-key :priority) Priority
+             (s/optional-key :disposition) c/DispositionNumber
+             (s/optional-key :disposition_name) c/DispositionName}))
 
 (s/defschema StoredJudgement
   "A judgement at rest in the storage service"
@@ -53,5 +57,9 @@
 (s/defn realize-judgement :- Judgement
   [new-judgement :- NewJudgement
    id :- s/Str]
-  (assoc new-judgement
-         :id id))
+  (let [disposition (c/determine-disposition-id new-judgement)
+        disposition_name (get c/disposition-map disposition)]
+    (assoc new-judgement
+           :id id
+           :disposition disposition
+           :disposition_name disposition_name)))
