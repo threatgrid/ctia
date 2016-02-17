@@ -32,7 +32,10 @@
                                 :source {:description "a source"}
                                 :confidence "High"
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"})
+                                :expires "2016-07-11T00:40:48.212-00:00"
+                                :associated_actors ["actor-123" "actor-456"]
+                                :associated_campaigns ["campaign-444" "campaign-555"]
+                                :observed_TTPs ["ttp-333" "ttp-999"]})
           actor (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:description ["description"],
@@ -41,7 +44,10 @@
               :confidence "High",
               :source {:description "a source"}
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"}
+              :expires #inst "2016-07-11T00:40:48.212-00:00"
+              :associated_actors ["actor-123" "actor-456"]
+              :associated_campaigns ["campaign-444" "campaign-555"]
+              :observed_TTPs ["ttp-333" "ttp-999"]}
              (dissoc actor
                      :id)))
 
@@ -55,7 +61,10 @@
                   :confidence "High",
                   :source {:description "a source"}
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"}
+                  :expires #inst "2016-07-11T00:40:48.212-00:00"
+                  :associated_actors ["actor-123" "actor-456"]
+                  :associated_campaigns ["campaign-444" "campaign-555"]
+                  :observed_TTPs ["ttp-333" "ttp-999"]}
                  (dissoc actor
                          :id)))))
 
@@ -74,7 +83,19 @@
                                 :intended_effect ["Theft"]
                                 :indicators ["indicator-foo" "indicator-bar"]
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"})
+                                :expires "2016-07-11T00:40:48.212-00:00"
+                                :attribution [{:confidence "High"
+                                               :source {:description "source"}
+                                               :relationship "relationship"
+                                               :actor "actor-123"}]
+                                :related_incidents [{:confidence "High"
+                                                     :source {:description "source"}
+                                                     :relationship "relationship"
+                                                     :incident "incident-222"}]
+                                :related_TTPs [{:confidence "High"
+                                                :source {:description "source"}
+                                                :relationship "relationship"
+                                                :ttp "ttp-999"}]})
           campaign (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "campaign"
@@ -83,7 +104,19 @@
               :intended_effect ["Theft"]
               :indicators ["indicator-foo" "indicator-bar"]
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"}
+              :expires #inst "2016-07-11T00:40:48.212-00:00"
+              :attribution [{:confidence "High"
+                             :source {:description "source"}
+                             :relationship "relationship"
+                             :actor "actor-123"}]
+              :related_incidents [{:confidence "High"
+                                   :source {:description "source"}
+                                   :relationship "relationship"
+                                   :incident "incident-222"}]
+              :related_TTPs [{:confidence "High"
+                              :source {:description "source"}
+                              :relationship "relationship"
+                              :ttp "ttp-999"}]}
              (dissoc campaign
                      :id)))
 
@@ -97,7 +130,19 @@
                   :intended_effect ["Theft"]
                   :indicators ["indicator-foo" "indicator-bar"]
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"}
+                  :expires #inst "2016-07-11T00:40:48.212-00:00"
+                  :attribution [{:confidence "High"
+                                 :source {:description "source"}
+                                 :relationship "relationship"
+                                 :actor "actor-123"}]
+                  :related_incidents [{:confidence "High"
+                                       :source {:description "source"}
+                                       :relationship "relationship"
+                                       :incident "incident-222"}]
+                  :related_TTPs [{:confidence "High"
+                                  :source {:description "source"}
+                                  :relationship "relationship"
+                                  :ttp "ttp-999"}]}
                  (dissoc campaign
                          :id)))))
 
@@ -150,14 +195,24 @@
                                 :description ["description"]
                                 :vulnerability [{:title "vulnerability"
                                                  :description ["description"]}]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :potential_COAs ["coa-777" "coa-333"]
+                                :related_exploit_targets [{:confidence "High"
+                                                           :source {:description "source"}
+                                                           :relationship "relationship"
+                                                           :exploit_target "exploit-target-123"}]})
           exploit-target (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "exploit-target"
               :description ["description"]
               :vulnerability [{:title "vulnerability"
                                :description ["description"]}]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :potential_COAs ["coa-777" "coa-333"]
+              :related_exploit_targets [{:confidence "High"
+                                         :source {:description "source"}
+                                         :relationship "relationship"
+                                         :exploit_target "exploit-target-123"}]}
              (dissoc exploit-target
                      :id)))
 
@@ -169,7 +224,12 @@
                   :description ["description"]
                   :vulnerability [{:title "vulnerability"
                                    :description ["description"]}]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :potential_COAs ["coa-777" "coa-333"]
+                  :related_exploit_targets [{:confidence "High"
+                                             :source {:description "source"}
+                                             :relationship "relationship"
+                                             :exploit_target "exploit-target-123"}]}
                  (dissoc exploit-target
                          :id)))))
 
@@ -187,7 +247,12 @@
                                 :confidence "High"
                                 :categories ["Denial of Service"
                                              "Improper Usage"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :related_indicators [{:confidence "High"
+                                                      :source {:description "source"}
+                                                      :relationship "relationship"
+                                                      :indicator "indicator-123"}]
+                                :related_incidents ["incident-123" "indicent-789"]})
           incident (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "incident"
@@ -195,7 +260,12 @@
               :confidence "High"
               :categories ["Denial of Service"
                            "Improper Usage"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :related_indicators [{:confidence "High"
+                                    :source {:description "source"}
+                                    :relationship "relationship"
+                                    :indicator "indicator-123"}]
+              :related_incidents ["incident-123" "indicent-789"]}
              (dissoc incident
                      :id)))
 
@@ -208,7 +278,12 @@
                   :confidence "High"
                   :categories ["Denial of Service"
                                "Improper Usage"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :related_indicators [{:confidence "High"
+                                        :source {:description "source"}
+                                        :relationship "relationship"
+                                        :indicator "indicator-123"}]
+                  :related_incidents ["incident-123" "indicent-789"]}
                  (dissoc incident
                          :id)))))
 
@@ -225,14 +300,30 @@
                                 :description ["description"]
                                 :producer "producer"
                                 :type ["C2" "IP Watchlist"]
-                                :expires "2016-07-11T00:40:48.212-00:00"})
+                                :expires "2016-07-11T00:40:48.212-00:00"
+                                :related_campaigns [{:confidence "High"
+                                                     :source {:description "source"}
+                                                     :relationship "relationship"
+                                                     :campaign "campaign-123"}]
+                                :related_COAs [{:confidence "High"
+                                                :source {:description "source"}
+                                                :relationship "relationship"
+                                                :COA "coa-123"}]})
           indicator (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "indicator"
               :description ["description"]
               :producer "producer"
               :type ["C2" "IP Watchlist"]
-              :expires #inst "2016-07-11T00:40:48.212-00:00"}
+              :expires #inst "2016-07-11T00:40:48.212-00:00"
+              :related_campaigns [{:confidence "High"
+                                   :source {:description "source"}
+                                   :relationship "relationship"
+                                   :campaign "campaign-123"}]
+              :related_COAs [{:confidence "High"
+                              :source {:description "source"}
+                              :relationship "relationship"
+                              :COA "coa-123"}]}
              (dissoc indicator
                      :id)))
 
@@ -244,7 +335,15 @@
                   :description ["description"]
                   :producer "producer"
                   :type ["C2" "IP Watchlist"]
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"}
+                  :expires #inst "2016-07-11T00:40:48.212-00:00"
+                  :related_campaigns [{:confidence "High"
+                                       :source {:description "source"}
+                                       :relationship "relationship"
+                                       :campaign "campaign-123"}]
+                  :related_COAs [{:confidence "High"
+                                  :source {:description "source"}
+                                  :relationship "relationship"
+                                  :COA "coa-123"}]}
                  (dissoc indicator
                          :id)))))
 
@@ -257,27 +356,33 @@
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
     (let [response (post "cia/judgement"
-                         :body {:indicators []
-                                :observable {:value "1.2.3.4"
+                         :body {:observable {:value "1.2.3.4"
                                              :type "ip"}
                                 :disposition 2
                                 :source "test"
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :indicators [{:confidence "High"
+                                              :source {:description "source"}
+                                              :relationship "relationship"
+                                              :indicator "indicator-123"}]})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:observable {:value "1.2.3.4"
                            :type "ip"}
-              :indicators []
               :disposition 2
               :disposition_name "Malicious"
               :priority 100
               :severity 100
               :confidence "Low"
               :source "test"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :indicators [{:confidence "High"
+                            :source {:description "source"}
+                            :relationship "relationship"
+                            :indicator "indicator-123"}]}
              (dissoc judgement
                      :id)))
 
@@ -287,20 +392,23 @@
           (is (= 200 (:status response)))
           (is (= {:observable {:value "1.2.3.4"
                                :type "ip"}
-                  :indicators []
                   :disposition 2
                   :disposition_name "Malicious"
                   :priority 100
                   :severity 100
                   :confidence "Low"
                   :source "test"
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :indicators [{:confidence "High"
+                                :source {:description "source"}
+                                :relationship "relationship"
+                                :indicator "indicator-123"}]}
                  (dissoc judgement
                          :id)))))
 
       (testing "DELETE /cia/judgement/:id"
         (let [temp-judgement (-> (post "cia/judgement"
-                                       :body {:indicators []
+                                       :body {:indicators ["indicator-123"]
                                               :observable {:value "9.8.7.6"
                                                            :type "ip"}
                                               :disposition 3
@@ -331,7 +439,7 @@
         (testing "GET /cia/judgement/:id/feedback"
           ;; create some more feedbacks
           (let [response (post "cia/judgement"
-                               :body {:indicators []
+                               :body {:indicators ["indicator-222"]
                                       :observable {:value "4.5.6.7"
                                                    :type "ip"}
                                       :disposition 1
@@ -645,7 +753,9 @@
                                 :type "foo"
                                 :indicators ["indicator-1" "indicator-2"]
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"})
+                                :expires "2016-07-11T00:40:48.212-00:00"
+                                :exploit_targets ["exploit-target-123"
+                                                   "exploit-target-234"]})
           ttp (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "ttp"
@@ -653,7 +763,9 @@
               :type "foo"
               :indicators ["indicator-1" "indicator-2"]
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"}
+              :expires #inst "2016-07-11T00:40:48.212-00:00"
+              :exploit_targets ["exploit-target-123"
+                                 "exploit-target-234"]}
              (dissoc ttp
                      :id)))
 
@@ -666,7 +778,9 @@
                   :type "foo"
                   :indicators ["indicator-1" "indicator-2"]
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"}
+                  :expires #inst "2016-07-11T00:40:48.212-00:00"
+                  :exploit_targets ["exploit-target-123"
+                                     "exploit-target-234"]}
                  (dissoc ttp
                          :id)))))
 

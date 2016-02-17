@@ -59,9 +59,9 @@ motivation | [Motivation](#motivation) |
 sophistication | [Sophistication](#sophistication) |
 intended_effect | [IntendedEffect](#intended_effect) |
 planning_and_operational_support | string |
-observed_TTPs | [RelatedTTPs](#related_ttps) |
-associated_campaigns | [AssociatedCampaigns](#associated_campaigns) |
-associated_actors | [AssociatedActors](#associated_actors) |
+observed_TTPs | ([RelatedTTP](#related_ttp), ...) |
+associated_campaigns | ([RelatedCampaign](#associated_campaign), ...) |
+associated_actors | ([RelatedActor](#related_actor), ...) |
 confidence | [HighMedLow](#high_med_low) |
 expires | [Time](#time) | &#10003;
 
@@ -90,16 +90,16 @@ version | string |
 names | string |
 intended_effect | [IntendedEffect](#intended_effect) |
 status | [CampaignStatus](#campaign_status) |
-related_TTPs | [RelatedTTPs](#related_ttps) |
-related_incidents | [RelatedIncidents](#related_incidents) |
-attribution | [AttributedActors](#attributed_actors) |
-associated_campaigns | [AssociatedCampaigns](#associated_campaigns) |
+related_TTPs | ([RelatedTTP](#related_ttp), ...) |
+related_incidents | ([RelatedIncident](#related_incident), ...) |
+attribution | ([RelatedActor](#related_actor), ...) |
+associated_campaigns | ([RelatedCampaign](#realted_campaign), ...) |
 confidence | [HighMedLow](#high_med_low) |
 activity | [Activity](#activity) |
 source | [Source](#source) |
 type | string | &#10003;
 expires | [Time](#time) | &#10003;
-indicators | [RelatedIndicators](#related_indicators) | &#10003;
+indicators | ([RelatedIndicator](#related_indicator), ...) | &#10003;
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
@@ -129,7 +129,7 @@ impact | string |
 cost | [HighMedLow](#high_med_low) |
 efficacy | [HighMedLow](#high_med_low) |
 source | [Source](#source) |
-related_COAs | [RelatedCOAs](#related_coas) |
+related_COAs | ([RelatedCOA](#related_coa), ...) |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
@@ -156,9 +156,9 @@ version | string |
 vulnerability | [Vulnerability](#vulnerability) |
 weakness | [Weakness](#weakness) |
 configuration | [Configuration](#configuration) |
-potential_COAs | [PotentialCOAs](#potential_coas) |
+potential_COAs | ([RelatedCOAs](#related_coa), ...) |
 source | [Source](#source) |
-related_exploit_targets | [RelatedExploitTargets](#related_exploit_targets) |
+related_exploit_targets | ([RelatedExploitTarget](#related_exploit_target), ...) |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
@@ -255,11 +255,11 @@ COA_requested | ([COARequested](#coa_requested), ...) |
 COA_taken | ([COARequested](#coa_requested), ...) |
 contact | [Source](#source) |
 history | ([History](#history), ...) |
-related_indicators | [RelatedIndicators](#related_indicators) |
+related_indicators | ([RelatedIndicator](#related_indicator), ...) |
 related_observables | ([Observable](#observable), ...) |
 leveraged_TTPs | [LeveragedTTPs](#leveraged_ttps) |
-attributed_actors | [AttributedActors](#attributed_actors) |
-related_incidents | [RelatedIncidents](#related_incidents) |
+attributed_actors | ([RelatedActor](#related_actors), ...) |
+related_incidents | ([RelatedIncident](#related_incident), ...) |
 intended_effect | [IntendedEffect](#intended_effect) |
 
 Stored instances will also receive the following fields, but MAY not be shared:
@@ -426,12 +426,12 @@ observable | [Observable](#observable) | |
 composite_indicator_expression | [CompositeIndicatorExpression](#composite_indicator_expression) | |
 indicated_TTP | [RelatedTTP](#related_ttp) | | A list of the IDs of TTPs objects related to this indicator
 likely_impact | string | | The impact of malware, High, Medium, Low or None
-suggested_COAs | [SuggestedCOAs](#suggested_coas) | |
+suggested_COAs | ([RelatedCOAs](#related_coas), ...) | |
 confidence | [HighMedLow](#high_med_low) | |
 sightings | ([Sighting](#sighting), ...) | |
-related_indicators | [RelatedIndicators](#related_indicators) | | One or more indicator related to this one.
-related_campaigns | [RelatedCampaigns](#related_campaigns) | | One or more campaigns related to this indicator.
-related_COAs | [RelatedCOAs](#related_coas) | | One or more COAs related to this indicator.
+related_indicators | ([RelatedIndicator](#related_indicator), ...) | | One or more indicator related to this one.
+related_campaigns | ([RelatedCampaign](#related_campaign), ...) | | One or more campaigns related to this indicator.
+related_COAs | ([RelatedCOA](#related_coa), ...) | | One or more COAs related to this indicator.
 kill_chain_phases | (string, ...) | | One or more kill chain phases, like "Delivery"
 test_mechanisms | (string, ...) | | One or more products or tools that can use the data in this indicator to perform a test for it's presence on a host or network
 expires | [Time](#time) | | When the indicator is no longer valid
@@ -546,7 +546,7 @@ disposition_name | [DispositionName](#disposition_name) | | |
 expires | [Time](#time) | | Jan 1 2535 |
 source_uri | [URI](#uri) | | | link where a user can see what the source thinks of the observable
 reason_uri | [URI](#uri) | | | link where a user can get information supporting the reason
-indicators | [RelatedIndicators](#related_indicators) | | |
+indicators | ([RelatedIndicator](#related_indicator), ...) | | |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
@@ -581,8 +581,8 @@ intended_effect | [IntendedEffect](#intended_effect) |
 behavior | [Behavior](#behavior) |
 resources | [Resource](#resource) |
 victim_targeting | [VictimTargeting](#victim_targeting) |
-exploit_targeting | [RelatedExploitTargets](#related_exploit_targets) |
-related_TTPs | [RelatedTTPs](#related_ttps) |
+exploit_targeting | ([RelatedExploitTarget](#related_exploit_target), ...) |
+related_TTPs | ([RelatedTTP](#related_ttp), ...) |
 source | [Source](#source) |
 type | string | &#10003;
 expires | [Time](#time) | &#10003;
@@ -837,26 +837,22 @@ A value from the [Dispositions](#dispositions) table above.
 <a name="relationship_structures"/>
 ## Relationship Structures
 
-There are three types of relationship structures:
+There are two types of relationship structures:
 
 1. References; see [Reference](#reference) below.
 2. Related object structures, which contain references along with
-   other fields about the relationship.
-3. Scoped objects structures, which contain related object structures
-   and an optional [Scope](#scope) field.
+   meta data about the relationship.
 
 ### References short-cut
 
 All _RelatedFoo_ style structures may be replaced with a list of
-references, when adding scope and similar fields is not desired.  For
-example, both of the following JSON structures are proper
-[RelatedCampaigns](#related_campaigns).
+references, when adding meta data is not desired.  For example, both
+of the following JSON structures are valid [RelatedCampaigns](#related_campaigns).
 
 #### RelatedCampaigns full form
 
 ```json
-{"scope": "inclusive",
- "related_campaigns": [{"campaign": "campaign-sample-1",
+{"related_campaigns": [{"campaign": "campaign-sample-1",
                         "confidence": "High"},
                        {"campaign": "campaign-sample-2",
                         "confidence": "Low"}]}
@@ -865,7 +861,7 @@ example, both of the following JSON structures are proper
 #### RelatedCampaigns short-cut form
 
 ```json
-["campaign-sample-1", "campaign-sample-2"]
+{"related_campaigns": ["campaign-sample-1", "campaign-sample-2"]
 ```
 
 <a name="reference"/>
@@ -903,14 +899,6 @@ source | [Source](#source) |
 relationship | string |
 indicator | [IndicatorReference](#indicator_reference) | &#10003;
 
-<a name="related_indicators"/>
-### RelatedIndicators
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-related_indicators | ([RelatedIndicator](#related_indicator), ...) | &#10003;
-
 <a name="related_actor"/>
 ### RelatedActor
 
@@ -920,22 +908,6 @@ confidence | [HighMedLow](#high_med_low) |
 source | [Source](#source) |
 relationship | string |
 actor | [ActorReference](#actor_reference) | &#10003;
-
-<a name="associated_actors"/>
-### AssociatedActors
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-associated_actors | ([RelatedActor](#related_actor), ...) | &#10003;
-
-<a name="attributed_actors"/>
-### AttributedActors
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-attributed_actors | ([RelatedActor](#related_actor), ...) | &#10003;
 
 <a name="related_campaign"/>
 ### RelatedCampaign
@@ -947,22 +919,6 @@ source | [Source](#source) |
 relationship | string |
 campaign | [CampaignReference](#campaign_reference) | &#10003;
 
-<a name="associated_campaigns"/>
-### AssociatedCampaigns
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-associated_campaigns | ([RelatedCampaign](#related_campaign), ...) | &#10003;
-
-<a name="related_campaigns"/>
-### RelatedCampaigns
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-related_campaigns | ([RelatedCampaign](#related_campaign), ...) | &#10003;
-
 <a name="related_coa"/>
 ### RelatedCOA
 
@@ -972,30 +928,6 @@ confidence | [HighMedLow](#high_med_low) |
 source | [Source](#source) |
 relationship | string |
 COA | [COAReference](#coa_reference) | &#10003;
-
-<a name="potential_coas"/>
-### PotentialCOAs
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-potential_COAs | ([RelatedCOA](#related_coa), ...) | &#10003;
-
-<a name="related_coas"/>
-### RelatedCOAs
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-related_COAs | ([RelatedCOA](#related_coa), ...) | &#10003;
-
-<a name="suggested_coas"/>
-### SuggestedCOAs
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-suggested_COAs | ([RelatedCOA](#related_coa), ...) | &#10003;
 
 <a name="coa_requested"/>
 ### COARequested
@@ -1016,14 +948,6 @@ source | [Source](#source) |
 relationship | string |
 exploit_target | [ExploitTargetReference](#exploit_target_reference) | &#10003;
 
-<a name="related_exploit_targets"/>
-### RelatedExploitTargets
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-exploit_targets | ([RelatedExploitTarget](#related_exploit_target), ...) | &#10003;
-
 <a name="related_incident"/>
 ### RelatedIncident
 
@@ -1033,14 +957,6 @@ confidence | [HighMedLow](#high_med_low) |
 source | [Source](#source) |
 relationship | string |
 incident | [IncidentReference](#incident_reference) | &#10003;
-
-<a name="related_incidents"/>
-### RelatedIncidents
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-incidents | ([RelatedIncident](#related_incident), ...) | &#10003;
 
 <a name="composite_indicator_expression"/>
 ### CompositeIndicatorExpression
@@ -1059,30 +975,6 @@ confidence | [HighMedLow](#high_med_low) |
 source | [Source](#source) |
 relationship | string |
 TTP | [TTPReference](#ttp_reference) | &#10003;
-
-<a name="related_ttps"/>
-### RelatedTTPs
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-related_TTPs | ([RelatedTPP](#related_ttp), ...) | &#10003;
-
-<a name="observed_ttps"/>
-### ObservedTTPs
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-observed_TTPs | ([RelatedTPP](#related_ttp), ...) | &#10003;
-
-<a name="levereged_ttps"/>
-### LeveregedTTPs
-
-Key | Value | Mandatory?
---- | --- | ---
-scope | [Scope](#scope) |
-levereged_TTPs | ([RelatedTPP](#related_ttp), ...) | &#10003;
 
 <a name="vocabularies"/>
 ## Vocabularies
