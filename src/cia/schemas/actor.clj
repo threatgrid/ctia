@@ -9,7 +9,7 @@
   "http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/"
   (merge
    c/GenericStixIdentifiers
-   {:timestamp c/Time
+   {:valid_time c/ValidTime
     :type v/ThreatActorType
     (s/optional-key :source) s/Str
     (s/optional-key :identity) c/Identity
@@ -22,23 +22,30 @@
     (s/optional-key :associated_actors) rel/RelatedActors
     (s/optional-key :confidence) v/HighMedLow
 
-    ;; Extension fields:
-    :expires c/Time
-
     ;; Not provided: handling
     ;; Not provided: related_packages (deprecated)
     }))
 
 (s/defschema NewActor
   "Schema for submitting new Actors"
-  (st/merge (st/dissoc Actor
-                       :id
-                       :expires)
-            {(s/optional-key :expires) c/Time}))
+  (st/dissoc Actor
+             :id))
 
-(s/defn realize-actor :- Actor
+(s/defschema StoredActor
+  "An actor as stored in the data store"
+  (st/merge Actor
+            {:owner s/Str
+             :created c/Time}))
+
+(s/defn realize-actor :- StoredActor
   [new-actor :- NewActor
    id :- s/Str]
-  (assoc new-actor
-         :id id
-         :expires (or (:expires new-actor) (c/expire-after))))
+  (let [now (c/timestamp)]
+    (assoc new-actor
+           :id id
+           :owner "not implemented"
+           :created now
+           :valid_time {:end_time (or (get-in new-actor [:valid_time :end_time])
+                                      c/default-expire-date)
+                        :start_time (or (get-in new-actor [:valid_time :start_time])
+                                        now)})))

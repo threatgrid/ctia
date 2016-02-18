@@ -1,6 +1,6 @@
 (ns cia.stores.memory
-  (:require [cia.schemas.actor :refer [Actor NewActor realize-actor]]
-            [cia.schemas.campaign :refer [Campaign NewCampaign realize-campaign]]
+  (:require [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
+            [cia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
             [cia.schemas.coa :refer [COA NewCOA realize-coa]]
             [cia.schemas.common :as c]
             [cia.schemas.exploit-target
@@ -68,11 +68,11 @@
 ;; Actor
 
 (def-create-handler handle-create-actor
-  Actor NewActor (make-swap-fn realize-actor) (random-id "actor"))
+  StoredActor NewActor (make-swap-fn realize-actor) (random-id "actor"))
 
-(def-read-handler handle-read-actor Actor)
+(def-read-handler handle-read-actor StoredActor)
 
-(def-delete-handler handle-delete-actor Actor)
+(def-delete-handler handle-delete-actor StoredActor)
 
 (defrecord ActorStore [state]
   IActorStore
@@ -88,11 +88,11 @@
 ;; Campaign
 
 (def-create-handler handle-create-campaign
-  Campaign NewCampaign (make-swap-fn realize-campaign) (random-id "campaign"))
+  StoredCampaign NewCampaign (make-swap-fn realize-campaign) (random-id "campaign"))
 
-(def-read-handler handle-read-campaign Campaign)
+(def-read-handler handle-read-campaign StoredCampaign)
 
-(def-delete-handler handle-delete-campaign Campaign)
+(def-delete-handler handle-delete-campaign StoredCampaign)
 
 (defrecord CampaignStore [state]
   ICampaignStore

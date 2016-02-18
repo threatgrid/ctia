@@ -1,8 +1,8 @@
 (ns cia.handler
   (:require [compojure.api.sweet :refer :all]
             [cia.printers :refer :all]
-            [cia.schemas.actor :refer [Actor NewActor]]
-            [cia.schemas.campaign :refer [Campaign NewCampaign]]
+            [cia.schemas.actor :refer [NewActor StoredActor]]
+            [cia.schemas.campaign :refer [NewCampaign StoredCampaign]]
             [cia.schemas.coa :refer [COA NewCOA]]
             [cia.schemas.common
              :refer [DispositionName DispositionNumber Time VersionInfo]]
@@ -93,12 +93,12 @@ Malicious disposition, and so on down to Unknown.
             (context* "/actor" []
                       :tags ["Actor"]
                       (POST* "/" []
-                             :return Actor
+                             :return StoredActor
                              :body [actor NewActor {:description "a new Actor"}]
                              :summary "Adds a new Actor"
                              (ok (create-actor @actor-store actor)))
                       (GET* "/:id" []
-                            :return (s/maybe Actor)
+                            :return (s/maybe StoredActor)
                             :summary "Gets an Actor by ID"
                             :path-params [id :- s/Str]
                             (if-let [d (read-actor @actor-store id)]
@@ -114,12 +114,12 @@ Malicious disposition, and so on down to Unknown.
             (context* "/campaign" []
                       :tags ["Campaign"]
                       (POST* "/" []
-                             :return Campaign
+                             :return StoredCampaign
                              :body [campaign NewCampaign {:description "a new campaign"}]
                              :summary "Adds a new Campaign"
                              (ok (create-campaign @campaign-store campaign)))
                       (GET* "/:id" []
-                            :return (s/maybe Campaign)
+                            :return (s/maybe StoredCampaign)
                             :summary "Gets a Campaign by ID"
                             :path-params [id :- s/Str]
                             (if-let [d (read-campaign @campaign-store id)]
@@ -242,7 +242,7 @@ Malicious disposition, and so on down to Unknown.
                             :summary "Gets all Sightings associated with the Indicator"
                             (not-found))
                       (GET* "/:id/campaigns" []
-                            :return [Campaign]
+                            :return [StoredCampaign]
                             :path-params [id :- Long]
                             :summary "Gets all Campaigns associated with the Indicator"
                             (not-found))

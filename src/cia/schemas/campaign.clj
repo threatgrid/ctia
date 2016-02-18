@@ -9,7 +9,7 @@
   "See http://stixproject.github.io/data-model/1.2/campaign/CampaignType/"
   (merge
    c/GenericStixIdentifiers
-   {:timestamp c/Time
+   {:valid_time c/ValidTime
     (s/optional-key :version) s/Str
     (s/optional-key :names) [s/Str]
     (s/optional-key :intended_effect) [v/IntendedEffect]
@@ -24,7 +24,6 @@
 
     ;; Extension fields:
     :type  s/Str
-    :expires c/Time
     :indicators rel/RelatedIndicators
 
     ;; Not provided: Handling
@@ -33,14 +32,24 @@
 
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"
-  (st/merge (st/dissoc Campaign
-                       :id
-                       :expires)
-            {(s/optional-key :expires) c/Time}))
+  (st/dissoc Campaign
+             :id))
 
-(s/defn realize-campaign :- Campaign
+(s/defschema StoredCampaign
+  "A schema as stored in the data store"
+  (st/merge Campaign
+            {:owner s/Str
+             :created c/Time}))
+
+(s/defn realize-campaign :- StoredCampaign
   [new-campaign :- NewCampaign
    id :- s/Str]
-  (assoc new-campaign
-         :id id
-         :expires (or (:expires new-campaign) (c/expire-after))))
+  (let [now (c/timestamp)]
+    (assoc new-campaign
+           :id id
+           :owner "not implemented"
+           :created now
+           :valid_time {:end_time (or (get-in new-campaign [:valid_time :end_time])
+                                      c/default-expire-date)
+                        :start_time (or (get-in new-campaign [:valid_time :start_time])
+                                        now)})))

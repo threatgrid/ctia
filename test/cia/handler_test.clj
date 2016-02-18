@@ -31,11 +31,11 @@
                                 :type "Hacker"
                                 :source "a source"
                                 :confidence "High"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"
                                 :associated_actors ["actor-123" "actor-456"]
                                 :associated_campaigns ["campaign-444" "campaign-555"]
-                                :observed_TTPs ["ttp-333" "ttp-999"]})
+                                :observed_TTPs ["ttp-333" "ttp-999"]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                             :end_time "2016-07-11T00:40:48.212-00:00"}})
           actor (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:description "description",
@@ -43,13 +43,15 @@
               :title "actor",
               :confidence "High",
               :source "a source"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"
               :associated_actors ["actor-123" "actor-456"]
               :associated_campaigns ["campaign-444" "campaign-555"]
-              :observed_TTPs ["ttp-333" "ttp-999"]}
+              :observed_TTPs ["ttp-333" "ttp-999"]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+              :owner "not implemented"}
              (dissoc actor
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/actor/:id"
         (let [response (get (str "cia/actor/" (:id actor)))
@@ -60,13 +62,15 @@
                   :title "actor",
                   :confidence "High",
                   :source "a source"
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :associated_actors ["actor-123" "actor-456"]
                   :associated_campaigns ["campaign-444" "campaign-555"]
-                  :observed_TTPs ["ttp-333" "ttp-999"]}
+                  :observed_TTPs ["ttp-333" "ttp-999"]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :owner "not implemented"}
                  (dissoc actor
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/actor/:id"
         (let [response (delete (str "cia/actor/" (:id actor)))]
@@ -82,8 +86,6 @@
                                 :type "anything goes here"
                                 :intended_effect ["Theft"]
                                 :indicators ["indicator-foo" "indicator-bar"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"
                                 :attribution [{:confidence "High"
                                                :source "source"
                                                :relationship "relationship"
@@ -95,7 +97,9 @@
                                 :related_TTPs [{:confidence "High"
                                                 :source "source"
                                                 :relationship "relationship"
-                                                :ttp "ttp-999"}]})
+                                                :ttp "ttp-999"}]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                             :end_time "2016-07-11T00:40:48.212-00:00"}})
           campaign (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "campaign"
@@ -103,8 +107,6 @@
               :type "anything goes here"
               :intended_effect ["Theft"]
               :indicators ["indicator-foo" "indicator-bar"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"
               :attribution [{:confidence "High"
                              :source "source"
                              :relationship "relationship"
@@ -116,35 +118,41 @@
               :related_TTPs [{:confidence "High"
                               :source "source"
                               :relationship "relationship"
-                              :ttp "ttp-999"}]}
+                              :ttp "ttp-999"}]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+              :owner "not implemented"}
              (dissoc campaign
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/campaign/:id"
         (let [response (get (str "cia/campaign/" (:id campaign)))
               campaign (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "campaign"
-                  :description "description"
-                  :type "anything goes here"
-                  :intended_effect ["Theft"]
-                  :indicators ["indicator-foo" "indicator-bar"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"
-                  :attribution [{:confidence "High"
-                                 :source "source"
-                                 :relationship "relationship"
-                                 :actor "actor-123"}]
-                  :related_incidents [{:confidence "High"
-                                       :source "source"
-                                       :relationship "relationship"
-                                       :incident "incident-222"}]
-                  :related_TTPs [{:confidence "High"
-                                  :source "source"
-                                  :relationship "relationship"
-                                  :ttp "ttp-999"}]}
+              :description "description"
+              :type "anything goes here"
+              :intended_effect ["Theft"]
+              :indicators ["indicator-foo" "indicator-bar"]
+              :attribution [{:confidence "High"
+                             :source "source"
+                             :relationship "relationship"
+                             :actor "actor-123"}]
+              :related_incidents [{:confidence "High"
+                                   :source "source"
+                                   :relationship "relationship"
+                                   :incident "incident-222"}]
+              :related_TTPs [{:confidence "High"
+                              :source "source"
+                              :relationship "relationship"
+                              :ttp "ttp-999"}]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+              :owner "not implemented"}
                  (dissoc campaign
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/campaign/:id"
         (let [response (delete (str "cia/campaign/" (:id campaign)))]

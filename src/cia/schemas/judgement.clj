@@ -45,7 +45,7 @@
              (s/optional-key :disposition_name) c/DispositionName}))
 
 (s/defschema StoredJudgement
-  "A judgement at rest in the storage service"
+  "A judgement as stored in the data store"
   (st/merge Judgement
             {:owner s/Str
              :created c/Time}))
@@ -53,16 +53,16 @@
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
    id :- s/Str]
-  (let [now (c/timestamp)]
-    (let [disposition (c/determine-disposition-id new-judgement)
-          disposition_name (get c/disposition-map disposition)]
-      (-> new-judgement
-          (assoc :id id
-                 :disposition disposition
-                 :disposition_name disposition_name
-                 :owner "not implemented"
-                 :created now)
-          (assoc-in [:valid_time :end_time] (or (get-in new-judgement [:valid_time :end-time])
-                                                c/default-expire-date))
-          (assoc-in [:valid_time :start_time] (or (get-in new-judgement [:valid_time :start_time])
-                                                  now))))))
+  (let [now (c/timestamp)
+        disposition (c/determine-disposition-id new-judgement)
+        disposition_name (get c/disposition-map disposition)]
+    (assoc new-judgement
+           :id id
+           :disposition disposition
+           :disposition_name disposition_name
+           :owner "not implemented"
+           :created now
+           :valid_time {:end_time (or (get-in new-judgement [:valid_time :end-time])
+                                      c/default-expire-date)
+                        :start_time (or (get-in new-judgement [:valid_time :start_time])
+                                        now)})))
