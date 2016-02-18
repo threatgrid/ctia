@@ -199,6 +199,23 @@
 
 (def-list-handler handle-list-indicators Indicator)
 
+(s/defn handle-list-indicators-by-observable :- [Indicator]
+  [indicator-state :- (s/atom {s/Str Indicator})
+   judgement-store :- (s/protocol IJudgementStore)
+   observable :- c/Observable]
+  (let [judgements (list-judgements judgement-store
+                                    {[:observable :type] (:type observable)
+                                     [:observable :value] (:value observable)})
+        judgement-ids (set (map :id judgements))]
+    (filter (fn [indicator]
+              (some (fn [judgement-relation]
+                      (let [judgement-id (if (map? judgement-relation)
+                                          (:judgement judgement-relation)
+                                          judgement-relation)]
+                        (contains? judgement-ids judgement-id)))
+                    (:judgements indicator)))
+            (vals @indicator-state))))
+
 (defrecord IndicatorStore [state]
   IIndicatorStore
   (create-indicator [_ new-indicator]
@@ -209,8 +226,14 @@
     (handle-delete-indicator state id))
   (list-indicators [_ filter-map]
     (handle-list-indicators state filter-map))
-  (list-indicator-sightings [_ filter-map]
-    (->> (handle-list-indicators state filter-map)
+  (list-indicators-by-observable [_ judgement-store observable]
+    (handle-list-indicators-by-observable state
+                                          judgement-store
+                                          observable))
+  (list-indicator-sightings-by-observable [_ judgement-store observable]
+    (->> (handle-list-indicators-by-observable state
+                                               judgement-store
+                                               observable)
          (mapcat :sightings))))
 
 ;; Judgement
