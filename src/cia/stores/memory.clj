@@ -1,17 +1,17 @@
 (ns cia.stores.memory
   (:require [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
             [cia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
-            [cia.schemas.coa :refer [COA NewCOA realize-coa]]
+            [cia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]
             [cia.schemas.common :as c]
             [cia.schemas.exploit-target
-             :refer [ExploitTarget NewExploitTarget realize-exploit-target]]
-            [cia.schemas.feedback :refer [Feedback NewFeedback realize-feedback]]
-            [cia.schemas.incident :refer [Incident NewIncident realize-incident]]
+             :refer [NewExploitTarget StoredExploitTarget realize-exploit-target]]
+            [cia.schemas.feedback :refer [NewFeedback StoredFeedback realize-feedback]]
+            [cia.schemas.incident :refer [NewIncident StoredIncident realize-incident]]
             [cia.schemas.indicator
-             :refer [Indicator NewIndicator realize-indicator]]
+             :refer [NewIndicator StoredIndicator realize-indicator]]
             [cia.schemas.judgement
              :refer [NewJudgement StoredJudgement realize-judgement]]
-            [cia.schemas.ttp :refer [NewTTP TTP realize-ttp]]
+            [cia.schemas.ttp :refer [NewTTP StoredTTP realize-ttp]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.schemas.vocabularies :as v]
             [cia.store :refer :all]
@@ -108,11 +108,11 @@
 ;; COA
 
 (def-create-handler handle-create-coa
-  COA NewCOA (make-swap-fn realize-coa) (random-id "coa"))
+  StoredCOA NewCOA (make-swap-fn realize-coa) (random-id "coa"))
 
-(def-read-handler handle-read-coa COA)
+(def-read-handler handle-read-coa StoredCOA)
 
-(def-delete-handler handle-delete-coa COA)
+(def-delete-handler handle-delete-coa StoredCOA)
 
 (defrecord COAStore [state]
   ICOAStore
@@ -128,11 +128,11 @@
 ;; ExploitTarget
 
 (def-create-handler handle-create-exploit-target
-  ExploitTarget NewExploitTarget (make-swap-fn realize-exploit-target) (random-id "exploit-target"))
+  StoredExploitTarget NewExploitTarget (make-swap-fn realize-exploit-target) (random-id "exploit-target"))
 
-(def-read-handler handle-read-exploit-target ExploitTarget)
+(def-read-handler handle-read-exploit-target StoredExploitTarget)
 
-(def-delete-handler handle-delete-exploit-target ExploitTarget)
+(def-delete-handler handle-delete-exploit-target StoredExploitTarget)
 
 (defrecord ExplitTargetStore [state]
   IExploitTargetStore
@@ -147,8 +147,8 @@
 
 ;; Feedback
 
-(s/defn handle-create-feedback :- Feedback
-  [state :- (s/atom {s/Str Feedback})
+(s/defn handle-create-feedback :- StoredFeedback
+  [state :- (s/atom {s/Str StoredFeedback})
    new-feedback :- NewFeedback
    judgement-id :- s/Str]
   (let [new-id ((random-id "feedback") new-feedback)]
@@ -160,7 +160,7 @@
             judgement-id)
      new-id)))
 
-(def-list-handler handle-list-feedback Feedback)
+(def-list-handler handle-list-feedback StoredFeedback)
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
@@ -172,11 +172,11 @@
 ;; Incident
 
 (def-create-handler handle-create-incident
-  Incident NewIncident (make-swap-fn realize-incident) (random-id "incident"))
+  StoredIncident NewIncident (make-swap-fn realize-incident) (random-id "incident"))
 
-(def-read-handler handle-read-incident Incident)
+(def-read-handler handle-read-incident StoredIncident)
 
-(def-delete-handler handle-delete-incident Incident)
+(def-delete-handler handle-delete-incident StoredIncident)
 
 (defrecord IncidentStore [state]
   IIncidentStore
@@ -192,16 +192,16 @@
 ;; Indicator
 
 (def-create-handler handle-create-indicator
-  Indicator NewIndicator (make-swap-fn realize-indicator) (random-id "indicator"))
+  StoredIndicator NewIndicator (make-swap-fn realize-indicator) (random-id "indicator"))
 
-(def-read-handler handle-read-indicator Indicator)
+(def-read-handler handle-read-indicator StoredIndicator)
 
-(def-delete-handler handle-delete-indicator Indicator)
+(def-delete-handler handle-delete-indicator StoredIndicator)
 
-(def-list-handler handle-list-indicators Indicator)
+(def-list-handler handle-list-indicators StoredIndicator)
 
-(s/defn handle-list-indicators-by-observable :- [Indicator]
-  [indicator-state :- (s/atom {s/Str Indicator})
+(s/defn handle-list-indicators-by-observable :- [StoredIndicator]
+  [indicator-state :- (s/atom {s/Str StoredIndicator})
    judgement-store :- (s/protocol IJudgementStore)
    observable :- c/Observable]
   (let [judgements (list-judgements judgement-store
@@ -312,11 +312,15 @@
 
 ;; ttp
 
-(def-create-handler handle-create-ttp TTP NewTTP (make-swap-fn realize-ttp) (random-id "ttp"))
+(def-create-handler handle-create-ttp
+  StoredTTP
+  NewTTP
+  (make-swap-fn realize-ttp)
+  (random-id "ttp"))
 
-(def-read-handler handle-read-ttp TTP)
+(def-read-handler handle-read-ttp StoredTTP)
 
-(def-delete-handler handle-delete-ttp TTP)
+(def-delete-handler handle-delete-ttp StoredTTP)
 
 (defrecord TTPStore [state]
   ITTPStore

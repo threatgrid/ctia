@@ -28,8 +28,11 @@
 
 (s/defschema NewActor
   "Schema for submitting new Actors"
-  (st/dissoc Actor
-             :id))
+  (st/merge
+   (st/dissoc Actor
+              :id
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
 (s/defschema StoredActor
   "An actor as stored in the data store"

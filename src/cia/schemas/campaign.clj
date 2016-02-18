@@ -32,8 +32,11 @@
 
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"
-  (st/dissoc Campaign
-             :id))
+  (st/merge
+   (st/dissoc Campaign
+              :id
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
 (s/defschema StoredCampaign
   "A schema as stored in the data store"

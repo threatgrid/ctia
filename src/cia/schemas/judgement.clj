@@ -29,7 +29,7 @@
    :priority Priority
    :confidence v/HighMedLow
    :severity Severity
-   (s/optional-key :valid_time) c/ValidTime
+   :valid_time c/ValidTime
    (s/optional-key :reason) s/Str
    (s/optional-key :source_uri) c/URI
    (s/optional-key :reason_uri) c/URI
@@ -37,12 +37,15 @@
 
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
-  (st/merge (st/dissoc Judgement
-                       :id
-                       :disposition
-                       :disposition_name)
-            {(s/optional-key :disposition) c/DispositionNumber
-             (s/optional-key :disposition_name) c/DispositionName}))
+  (st/merge
+   (st/dissoc Judgement
+              :id
+              :disposition
+              :disposition_name
+              :valid_time)
+   {(s/optional-key :disposition) c/DispositionNumber
+    (s/optional-key :disposition_name) c/DispositionName
+    (s/optional-key :valid_time) c/ValidTime}))
 
 (s/defschema StoredJudgement
   "A judgement as stored in the data store"

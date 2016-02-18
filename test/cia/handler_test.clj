@@ -167,16 +167,19 @@
                                 :description "description"
                                 :type "Eradication"
                                 :objective ["foo" "bar"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           coa (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "coa"
               :description "description"
               :type "Eradication"
               :objective ["foo" "bar"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc coa
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/coa/:id"
         (let [response (get (str "cia/coa/" (:id coa)))
@@ -186,9 +189,12 @@
                   :description "description"
                   :type "Eradication"
                   :objective ["foo" "bar"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :owner "not implemented"}
                  (dissoc coa
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/coa/:id"
         (let [response (delete (str "/cia/coa/" (:id coa)))]
@@ -203,26 +209,29 @@
                                 :description "description"
                                 :vulnerability [{:title "vulnerability"
                                                  :description "description"}]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :potential_COAs ["coa-777" "coa-333"]
                                 :related_exploit_targets [{:confidence "High"
                                                            :source "source"
                                                            :relationship "relationship"
-                                                           :exploit_target "exploit-target-123"}]})
+                                                           :exploit_target "exploit-target-123"}]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           exploit-target (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "exploit-target"
               :description "description"
               :vulnerability [{:title "vulnerability"
                                :description "description"}]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :potential_COAs ["coa-777" "coa-333"]
               :related_exploit_targets [{:confidence "High"
                                          :source "source"
                                          :relationship "relationship"
-                                         :exploit_target "exploit-target-123"}]}
+                                         :exploit_target "exploit-target-123"}]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc exploit-target
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/exploit-target/:id"
         (let [response (get (str "cia/exploit-target/" (:id exploit-target)))
@@ -232,14 +241,17 @@
                   :description "description"
                   :vulnerability [{:title "vulnerability"
                                    :description "description"}]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :potential_COAs ["coa-777" "coa-333"]
                   :related_exploit_targets [{:confidence "High"
                                              :source "source"
                                              :relationship "relationship"
-                                             :exploit_target "exploit-target-123"}]}
+                                             :exploit_target "exploit-target-123"}]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :owner "not implemented"}
                  (dissoc exploit-target
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/exploit-target/:id"
         (let [response (delete (str "cia/exploit-target/" (:id exploit-target)))]
@@ -255,7 +267,7 @@
                                 :confidence "High"
                                 :categories ["Denial of Service"
                                              "Improper Usage"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                                 :related_indicators [{:confidence "High"
                                                       :source "source"
                                                       :relationship "relationship"
@@ -268,14 +280,17 @@
               :confidence "High"
               :categories ["Denial of Service"
                            "Improper Usage"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
               :related_indicators [{:confidence "High"
                                     :source "source"
                                     :relationship "relationship"
                                     :indicator "indicator-123"}]
-              :related_incidents ["incident-123" "indicent-789"]}
+              :related_incidents ["incident-123" "indicent-789"]
+              :owner "not implemented"}
              (dissoc incident
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/incident/:id"
         (let [response (get (str "cia/incident/" (:id incident)))
@@ -286,14 +301,17 @@
                   :confidence "High"
                   :categories ["Denial of Service"
                                "Improper Usage"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                   :related_indicators [{:confidence "High"
                                         :source "source"
                                         :relationship "relationship"
                                         :indicator "indicator-123"}]
-                  :related_incidents ["incident-123" "indicent-789"]}
+                  :related_incidents ["incident-123" "indicent-789"]
+                  :owner "not implemented"}
                  (dissoc incident
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/incident/:id"
         (let [response (delete (str "cia/incident/" (:id incident)))]
@@ -308,7 +326,8 @@
                                 :description "description"
                                 :producer "producer"
                                 :type ["C2" "IP Watchlist"]
-                                :expires "2016-07-11T00:40:48.212-00:00"
+                                :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
+                                             :end_time "2016-07-11T00:40:48.212-00:00"}
                                 :related_campaigns [{:confidence "High"
                                                      :source "source"
                                                      :relationship "relationship"
@@ -324,7 +343,8 @@
               :description "description"
               :producer "producer"
               :type ["C2" "IP Watchlist"]
-              :expires #inst "2016-07-11T00:40:48.212-00:00"
+              :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
               :related_campaigns [{:confidence "High"
                                    :source "source"
                                    :relationship "relationship"
@@ -333,9 +353,11 @@
                               :source "source"
                               :relationship "relationship"
                               :COA "coa-123"}]
-              :judgements ["judgement-123" "judgement-234"]}
+              :judgements ["judgement-123" "judgement-234"]
+              :owner "not implemented"}
              (dissoc indicator
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/indicator/:id"
         (let [response (get (str "cia/indicator/" (:id indicator)))
@@ -345,7 +367,8 @@
                   :description "description"
                   :producer "producer"
                   :type ["C2" "IP Watchlist"]
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"
+                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                   :related_campaigns [{:confidence "High"
                                        :source "source"
                                        :relationship "relationship"
@@ -354,9 +377,11 @@
                                   :source "source"
                                   :relationship "relationship"
                                   :COA "coa-123"}]
-                  :judgements ["judgement-123" "judgement-234"]}
+                  :judgements ["judgement-123" "judgement-234"]
+                  :owner "not implemented"}
                  (dissoc indicator
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/indicator/:id"
         (let [response (delete (str "cia/indicator/" (:id indicator)))]
@@ -448,10 +473,11 @@
           (is (= 200 (:status response)))
           (is (= {:judgement (:id judgement),
                   :feedback -1,
-                  :reason "false positive"}
+                  :reason "false positive"
+                  :owner "not implemented"}
                  (dissoc feedback
                          :id
-                         :timestamp))))
+                         :created))))
 
         (testing "GET /cia/judgement/:id/feedback"
           ;; create some more feedbacks
@@ -474,11 +500,13 @@
             (is (= 200 (:status response)))
             (is (= [{:judgement (:id judgement),
                      :feedback -1,
-                     :reason "false positive"}
+                     :reason "false positive"
+                     :owner "not implemented"}
                     {:judgement (:id judgement),
                      :feedback 1,
-                     :reason "true positive"}]
-                   (map #(dissoc % :id :timestamp)
+                     :reason "true positive"
+                     :owner "not implemented"}]
+                   (map #(dissoc % :id :created)
                         feedbacks)))))))))
 
 (deftest test-judgement-routes-for-dispositon-determination
@@ -684,7 +712,7 @@
                      :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
-                     :expires "2016-02-12T00:00:00.000-00:00"})
+                     :valid_time {:end_time "2016-02-12T00:00:00.000-00:00"}})
 
         {judgement-2 :parsed-body
          judgement-2-status :status}
@@ -709,7 +737,8 @@
                      :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
-                     :expires "2016-02-12T00:00:00.000-00:00"})
+                     :valid_time {:start_time "2016-01-12T00:00:00.000-00:00"
+                                  :end_time "2016-02-12T00:00:00.000-00:00"}})
 
         {judgement-3 :parsed-body
          judgement-3-status :status}
@@ -738,7 +767,8 @@
                      :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
-                     :expires "2016-02-11T00:00:00.000-00:00"})]
+                     :valid_time {:start_time "2016-01-11T00:00:00.000-00:00"
+                                  :end_time "2016-02-11T00:00:00.000-00:00"}})]
 
     (testing "Test setup succeeded"
       (is (= 200 judgement-1-status))
@@ -760,7 +790,9 @@
                  :description "description"
                  :producer "producer"
                  :type ["C2" "IP Watchlist"]
-                 :expires #inst "2016-02-12T00:00:00.000-00:00"}
+                 :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
+                              :end_time #inst "2016-02-12T00:00:00.000-00:00"}
+                 :owner "not implemented"}
                 {:title "indicator"
                  :judgements [{:judgement (:id judgement-3)
                                :confidence "High"}]
@@ -773,9 +805,11 @@
                  :description "description"
                  :producer "producer"
                  :type ["C2" "IP Watchlist"]
-                 :expires #inst "2016-02-11T00:00:00.000-00:00"}]
+                 :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
+                              :end_time #inst "2016-02-11T00:00:00.000-00:00"}
+                 :owner "not implemented"}]
                (->> indicators
-                    (map #(dissoc % :id))))))))
+                    (map #(dissoc % :id :created))))))))
 
   (testing "GET /cia/:observable_type/:observable_value/sightings"
     (let [response (get "cia/ip/10.0.0.1/sightings")
@@ -921,22 +955,24 @@
                                 :description "description"
                                 :type "foo"
                                 :indicators ["indicator-1" "indicator-2"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"
                                 :exploit_targets ["exploit-target-123"
-                                                   "exploit-target-234"]})
+                                                  "exploit-target-234"]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                             :end_time "2016-07-11T00:40:48.212-00:00"}})
           ttp (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "ttp"
               :description "description"
               :type "foo"
               :indicators ["indicator-1" "indicator-2"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"
               :exploit_targets ["exploit-target-123"
-                                 "exploit-target-234"]}
+                                "exploit-target-234"]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+              :owner "not implemented"}
              (dissoc ttp
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/ttp/:id"
         (let [response (get (str "cia/ttp/" (:id ttp)))
@@ -946,12 +982,14 @@
                   :description "description"
                   :type "foo"
                   :indicators ["indicator-1" "indicator-2"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :exploit_targets ["exploit-target-123"
-                                     "exploit-target-234"]}
+                                    "exploit-target-234"]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :owner "not implemented"}
                  (dissoc ttp
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/ttp/:id"
         (let [response (delete (str "cia/ttp/" (:id ttp)))]
