@@ -308,7 +308,8 @@
                                 :related_COAs [{:confidence "High"
                                                 :source "source"
                                                 :relationship "relationship"
-                                                :COA "coa-123"}]})
+                                                :COA "coa-123"}]
+                                :judgements ["judgement-123" "judgement-234"]})
           indicator (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "indicator"
@@ -323,7 +324,8 @@
               :related_COAs [{:confidence "High"
                               :source "source"
                               :relationship "relationship"
-                              :COA "coa-123"}]}
+                              :COA "coa-123"}]
+              :judgements ["judgement-123" "judgement-234"]}
              (dissoc indicator
                      :id)))
 
@@ -343,15 +345,15 @@
                   :related_COAs [{:confidence "High"
                                   :source "source"
                                   :relationship "relationship"
-                                  :COA "coa-123"}]}
+                                  :COA "coa-123"}]
+                  :judgements ["judgement-123" "judgement-234"]}
                  (dissoc indicator
                          :id)))))
 
       (testing "DELETE /cia/indicator/:id"
         (let [response (delete (str "cia/indicator/" (:id indicator)))]
-          (is (= 204 (:status response)))
-          (let [response (get (str "cia/indicator/" (:id indicator)))]
-            (is (= 404 (:status response)))))))))
+          ;; Deleting indicators is not allowed
+          (is (= 404 (:status response))))))))
 
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
@@ -628,81 +630,124 @@
 
 (deftest test-observable-indicators-and-sightings-routes
 
-  (testing "test setup: create an indicator (1)"
-    (let [response (post "cia/indicator"
-                         :body {:title "indicator"
-                                :observable {:value "1.2.3.4"
-                                             :type "ip"}
-                                :sightings [{:timestamp "2016-02-01T00:00:00.000-00:00"
-                                             :source "foo"
-                                             :confidence "Medium"}
-                                            {:timestamp "2016-02-01T12:00:00.000-00:00"
-                                             :source "bar"
-                                             :confidence "High"}]
-                                :description "description"
-                                :producer "producer"
-                                :type ["C2" "IP Watchlist"]
-                                :expires "2016-02-12T00:00:00.000-00:00"})]
-      (is (= 200 (:status response)))))
-  (testing "test setup: create an indicator (2)"
-    (let [response (post "cia/indicator"
-                         :body {:title "indicator"
-                                :observable {:value "10.0.0.1"
-                                             :type "ip"}
-                                :sightings [{:timestamp "2016-02-04T12:00:00.000-00:00"
-                                             :source "spam"
-                                             :confidence "None"}]
-                                :description "description"
-                                :producer "producer"
-                                :type ["C2" "IP Watchlist"]
-                                :expires "2016-02-12T00:00:00.000-00:00"})]
-      (is (= 200 (:status response)))))
-  (testing "test setup: create an indicator (3)"
-    (let [response (post "cia/indicator"
-                         :body {:title "indicator"
-                                :observable {:value "10.0.0.1"
-                                             :type "ip"}
-                                :sightings [{:timestamp "2016-02-05T01:00:00.000-00:00"
-                                             :source "foo"
-                                             :confidence "High"}
-                                            {:timestamp "2016-02-05T02:00:00.000-00:00"
-                                             :source "bar"
-                                             :confidence "Low"}]
-                                :description "description"
-                                :producer "producer"
-                                :type ["C2" "IP Watchlist"]
-                                :expires "2016-02-11T00:00:00.000-00:00"})]
-      (is (= 200 (:status response)))))
+  (let [{judgement-1 :parsed-body
+         judgement-1-status :status}
+        (post "cia/judgement"
+              :body {:indicators []
+                     :observable {:value "1.2.3.4"
+                                  :type "ip"}
+                     :disposition 2
+                     :source "test"
+                     :priority 100
+                     :severity 100
+                     :confidence "Low"
+                     :timestamp "2016-02-01T00:00:00.000-00:00"})
 
-  (testing "GET /cia/:observable_type/:observable_value/indicators"
-    (let [response (get "cia/ip/10.0.0.1/indicators")
-          indicators (:parsed-body response)]
-      (is (= 200 (:status response)))
-      (is (= [{:title "indicator"
-               :observable {:value "10.0.0.1"
-                            :type "ip"}
-               :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
-                            :source "spam"
-                            :confidence "None"}]
-               :description "description"
-               :producer "producer"
-               :type ["C2" "IP Watchlist"]
-               :expires #inst "2016-02-12T00:00:00.000-00:00"}
-              {:title "indicator"
-               :observable {:value "10.0.0.1"
-                            :type "ip"}
-               :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
-                            :source "foo"
-                            :confidence "High"}
-                           {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
-                            :source "bar"
-                            :confidence "Low"}]
-               :description "description"
-               :producer "producer"
-               :type ["C2" "IP Watchlist"]
-               :expires #inst "2016-02-11T00:00:00.000-00:00"}]
-             (->> indicators
-                  (map #(dissoc % :id)))))))
+        {indicator-1-status :status}
+        (post "cia/indicator"
+              :body {:title "indicator"
+                     :judgements [(:id judgement-1)]
+                     :sightings [{:timestamp "2016-02-01T00:00:00.000-00:00"
+                                  :source "foo"
+                                  :confidence "Medium"}
+                                 {:timestamp "2016-02-01T12:00:00.000-00:00"
+                                  :source "bar"
+                                  :confidence "High"}]
+                     :description "description"
+                     :producer "producer"
+                     :type ["C2" "IP Watchlist"]
+                     :expires "2016-02-12T00:00:00.000-00:00"})
+
+        {judgement-2 :parsed-body
+         judgement-2-status :status}
+        (post "cia/judgement"
+              :body {:indicators []
+                     :observable {:value "10.0.0.1"
+                                  :type "ip"}
+                     :disposition 2
+                     :source "test"
+                     :priority 100
+                     :severity 100
+                     :confidence "Low"
+                     :timestamp "2016-02-01T00:00:00.000-00:00"})
+
+        {indicator-2-status :status}
+        (post "cia/indicator"
+              :body {:title "indicator"
+                     :judgements [(:id judgement-2)]
+                     :sightings [{:timestamp "2016-02-04T12:00:00.000-00:00"
+                                  :source "spam"
+                                  :confidence "None"}]
+                     :description "description"
+                     :producer "producer"
+                     :type ["C2" "IP Watchlist"]
+                     :expires "2016-02-12T00:00:00.000-00:00"})
+
+        {judgement-3 :parsed-body
+         judgement-3-status :status}
+        (post "cia/judgement"
+              :body {:indicators []
+                     :observable {:value "10.0.0.1"
+                                  :type "ip"}
+                     :disposition 2
+                     :source "test"
+                     :priority 100
+                     :severity 100
+                     :confidence "Low"
+                     :timestamp "2016-02-01T00:00:00.000-00:00"})
+
+        {indicator-3-status :status}
+        (post "cia/indicator"
+              :body {:title "indicator"
+                     :judgements [{:judgement (:id judgement-3)
+                                   :confidence "High"}]
+                     :sightings [{:timestamp "2016-02-05T01:00:00.000-00:00"
+                                  :source "foo"
+                                  :confidence "High"}
+                                 {:timestamp "2016-02-05T02:00:00.000-00:00"
+                                  :source "bar"
+                                  :confidence "Low"}]
+                     :description "description"
+                     :producer "producer"
+                     :type ["C2" "IP Watchlist"]
+                     :expires "2016-02-11T00:00:00.000-00:00"})]
+
+    (testing "Test setup succeeded"
+      (is (= 200 judgement-1-status))
+      (is (= 200 indicator-1-status))
+      (is (= 200 judgement-2-status))
+      (is (= 200 indicator-2-status))
+      (is (= 200 judgement-3-status))
+      (is (= 200 indicator-3-status)))
+
+    (testing "GET /cia/:observable_type/:observable_value/indicators"
+      (let [response (get "cia/ip/10.0.0.1/indicators")
+            indicators (:parsed-body response)]
+        (is (= 200 (:status response)))
+        (is (= [{:title "indicator"
+                 :judgements [(:id judgement-2)]
+                 :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
+                              :source "spam"
+                              :confidence "None"}]
+                 :description "description"
+                 :producer "producer"
+                 :type ["C2" "IP Watchlist"]
+                 :expires #inst "2016-02-12T00:00:00.000-00:00"}
+                {:title "indicator"
+                 :judgements [{:judgement (:id judgement-3)
+                               :confidence "High"}]
+                 :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
+                              :source "foo"
+                              :confidence "High"}
+                             {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
+                              :source "bar"
+                              :confidence "Low"}]
+                 :description "description"
+                 :producer "producer"
+                 :type ["C2" "IP Watchlist"]
+                 :expires #inst "2016-02-11T00:00:00.000-00:00"}]
+               (->> indicators
+                    (map #(dissoc % :id))))))))
 
   (testing "GET /cia/:observable_type/:observable_value/sightings"
     (let [response (get "cia/ip/10.0.0.1/sightings")

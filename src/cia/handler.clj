@@ -280,12 +280,7 @@ Malicious disposition, and so on down to Unknown.
                             (if-let [d (read-indicator @indicator-store id)]
                               (ok d)
                               (not-found)))
-                      (DELETE* "/:id" []
-                               :path-params [id :- s/Str]
-                               :summary "Deletes an Actor"
-                               (if (delete-indicator @indicator-store id)
-                                 (no-content)
-                                 (not-found))))
+                      )
 
             (context* "/ttp" []
                       :tags ["TTP"]
@@ -351,9 +346,10 @@ Malicious disposition, and so on down to Unknown.
                                 observable_value :- s/Str]
                   :return [Indicator]
                   :summary "Returns all the Indiators associated with the specified observable."
-                  (ok (list-indicators @indicator-store
-                                       {[:observable :type] observable_type
-                                        [:observable :value] observable_value})))
+                  (ok (list-indicators-by-observable @indicator-store
+                                                     @judgement-store
+                                                     {:type observable_type
+                                                      :value observable_value})))
 
             (GET* "/:observable_type/:observable_value/sightings" []
                   :query-params [{offset :-  Long 0}
@@ -367,9 +363,10 @@ Malicious disposition, and so on down to Unknown.
                                 observable_value :- s/Str]
                   :return [Sighting]
                   :summary "Returns all the Sightings associated with the specified observable."
-                  (ok (list-indicator-sightings @indicator-store
-                                                {[:observable :type] observable_type
-                                                 [:observable :value] observable_value})))
+                  (ok (list-indicator-sightings-by-observable @indicator-store
+                                                              @judgement-store
+                                                              {:type observable_type
+                                                               :value observable_value})))
 
             (GET* "/:observable_type/:observable_value/verdict" []
                   :tags ["Verdict"]

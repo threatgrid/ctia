@@ -55,6 +55,10 @@
   [(relation IndicatorReference
              (enriched-ref {:indicator IndicatorReference}))])
 
+(s/defschema RelatedJudgements
+  [(relation JudgementReference
+             (enriched-ref {:judgement JudgementReference}))])
+
 (s/defschema RelatedTTP
   (enriched-ref {:ttp TTPReference}))
 
