@@ -13,17 +13,16 @@
   (delete-judgement [this id])
   (list-judgements [this filter-map])
   (calculate-verdict
-   ;; Returns the current verdict an observable based on stored judgements.
-   [this observable]))
+    ;; Returns the current verdict an observable based on stored judgements.
+    [this observable]))
 
 (defprotocol IIndicatorStore
   (create-indicator [this new-indicator])
   (read-indicator [this id])
   (delete-indicator [this id])
   (list-indicators [this filtermap])
-  (list-indicator-sightings
-    ;; Returns sightings by applying the filtermap to stored indicators
-    [this filtermap]))
+  (list-indicators-by-observable [this judgement-store observable])
+  (list-indicator-sightings-by-observable [this judgement-store observable]))
 
 (defprotocol IExploitTargetStore
   (read-exploit-target [this id])
