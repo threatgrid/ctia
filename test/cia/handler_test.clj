@@ -385,9 +385,8 @@
 
       (testing "DELETE /cia/indicator/:id"
         (let [response (delete (str "cia/indicator/" (:id indicator)))]
-          (is (= 204 (:status response)))
-          (let [response (get (str "cia/indicator/" (:id indicator)))]
-            (is (= 404 (:status response)))))))))
+          ;; Deleting indicators is not allowed
+          (is (= 404 (:status response))))))))
 
 (deftest test-judgement-routes
   (testing "POST /cia/judgement"
