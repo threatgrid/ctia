@@ -280,12 +280,7 @@ Malicious disposition, and so on down to Unknown.
                             (if-let [d (read-indicator @indicator-store id)]
                               (ok d)
                               (not-found)))
-                      (DELETE* "/:id" []
-                               :path-params [id :- s/Str]
-                               :summary "Deletes an Actor"
-                               (if (delete-indicator @indicator-store id)
-                                 (no-content)
-                                 (not-found))))
+                      )
 
             (context* "/ttp" []
                       :tags ["TTP"]
