@@ -10,7 +10,7 @@
             [cia.schemas.indicator
              :refer [Indicator NewIndicator realize-indicator]]
             [cia.schemas.judgement
-             :refer [Judgement NewJudgement realize-judgement]]
+             :refer [NewJudgement StoredJudgement realize-judgement]]
             [cia.schemas.ttp :refer [NewTTP TTP realize-ttp]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.schemas.vocabularies :as v]
@@ -20,8 +20,9 @@
             [schema.core :as s])
   (:import java.util.UUID))
 
-(defn make-id [schema]
-  (str (str/lower-case (s/schema-name schema)) "-" (UUID/randomUUID)))
+(defn random-id [prefix]
+  (fn [_new-entity_]
+    (str prefix "-" (UUID/randomUUID))))
 
 (defmacro def-read-handler [name Model]
   `(s/defn ~name :- (s/maybe ~Model)
@@ -29,11 +30,11 @@
       id# :- s/Str]
      (get (deref state#) id#)))
 
-(defmacro def-create-handler [name Model NewModel swap-fn]
+(defmacro def-create-handler [name Model NewModel swap-fn id-fn]
   `(s/defn ~name :- ~Model
      [state# :- (s/atom {s/Str ~Model})
       new-model# :- ~NewModel]
-     (let [new-id# (make-id ~Model)]
+     (let [new-id# (~id-fn new-model#)]
        (get
         (swap! state# ~swap-fn new-model# new-id#)
         new-id#))))
@@ -67,7 +68,7 @@
 ;; Actor
 
 (def-create-handler handle-create-actor
-  Actor NewActor (make-swap-fn realize-actor))
+  Actor NewActor (make-swap-fn realize-actor) (random-id "actor"))
 
 (def-read-handler handle-read-actor Actor)
 
@@ -87,7 +88,7 @@
 ;; Campaign
 
 (def-create-handler handle-create-campaign
-  Campaign NewCampaign (make-swap-fn realize-campaign))
+  Campaign NewCampaign (make-swap-fn realize-campaign) (random-id "campaign"))
 
 (def-read-handler handle-read-campaign Campaign)
 
@@ -107,7 +108,7 @@
 ;; COA
 
 (def-create-handler handle-create-coa
-  COA NewCOA (make-swap-fn realize-coa))
+  COA NewCOA (make-swap-fn realize-coa) (random-id "coa"))
 
 (def-read-handler handle-read-coa COA)
 
@@ -127,7 +128,7 @@
 ;; ExploitTarget
 
 (def-create-handler handle-create-exploit-target
-  ExploitTarget NewExploitTarget (make-swap-fn realize-exploit-target))
+  ExploitTarget NewExploitTarget (make-swap-fn realize-exploit-target) (random-id "exploit-target"))
 
 (def-read-handler handle-read-exploit-target ExploitTarget)
 
@@ -150,7 +151,7 @@
   [state :- (s/atom {s/Str Feedback})
    new-feedback :- NewFeedback
    judgement-id :- s/Str]
-  (let [new-id (str "feedback-" (UUID/randomUUID))]
+  (let [new-id ((random-id "feedback") new-feedback)]
     (get
      (swap! state
             (make-swap-fn realize-feedback)
@@ -171,7 +172,7 @@
 ;; Incident
 
 (def-create-handler handle-create-incident
-  Incident NewIncident (make-swap-fn realize-incident))
+  Incident NewIncident (make-swap-fn realize-incident) (random-id "incident"))
 
 (def-read-handler handle-read-incident Incident)
 
@@ -191,7 +192,7 @@
 ;; Indicator
 
 (def-create-handler handle-create-indicator
-  Indicator NewIndicator (make-swap-fn realize-indicator))
+  Indicator NewIndicator (make-swap-fn realize-indicator) (random-id "indicator"))
 
 (def-read-handler handle-read-indicator Indicator)
 
@@ -239,22 +240,22 @@
 ;; Judgement
 
 (def-create-handler handle-create-judgement
-  Judgement NewJudgement (make-swap-fn realize-judgement))
+  StoredJudgement NewJudgement (make-swap-fn realize-judgement) (random-id "judgement"))
 
-(def-read-handler handle-read-judgement Judgement)
+(def-read-handler handle-read-judgement StoredJudgement)
 
-(def-delete-handler handle-delete-judgement Judgement)
+(def-delete-handler handle-delete-judgement StoredJudgement)
 
-(def-list-handler handle-list-judgements Judgement)
+(def-list-handler handle-list-judgements StoredJudgement)
 
 (defn judgement-expired? [judgement now]
-  (if-let [expires (:expires judgement)]
+  (if-let [expires (get-in judgement [:valid_time :end_time])]
     (time/after? now expires)
     false))
 
 (defn higest-priority [& judgements]
   ;; pre-sort for deterministic tie breaking
-  (let [[judgement-1 judgement-2 :as judgements] (sort-by :timestamp judgements)]
+  (let [[judgement-1 judgement-2 :as judgements] (sort-by (comp :end_time :valid_time) judgements)]
     (cond
       (some nil? judgements)
       (first (remove nil? judgements))
@@ -270,13 +271,13 @@
                 :else (recur rest-d-nums))))))
 
 (s/defn make-verdict :- Verdict
-  [judgement :- Judgement]
+  [judgement :- StoredJudgement]
   {:disposition (:disposition judgement)
    :judgement (:id judgement)
    :disposition_name (get c/disposition-map (:disposition judgement))})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
-  [state :- (s/atom {s/Str Judgement})
+  [state :- (s/atom {s/Str StoredJudgement})
    observable :- c/Observable]
   (if-let [judgement
            (let [now (time/now)]
@@ -311,7 +312,7 @@
 
 ;; ttp
 
-(def-create-handler handle-create-ttp TTP NewTTP (make-swap-fn realize-ttp))
+(def-create-handler handle-create-ttp TTP NewTTP (make-swap-fn realize-ttp) (random-id "ttp"))
 
 (def-read-handler handle-read-ttp TTP)
 

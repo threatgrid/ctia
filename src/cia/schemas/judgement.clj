@@ -29,9 +29,8 @@
    :priority Priority
    :confidence v/HighMedLow
    :severity Severity
-   :timestamp c/Time
+   (s/optional-key :valid_time) c/ValidTime
    (s/optional-key :reason) s/Str
-   (s/optional-key :expires) c/Time
    (s/optional-key :source_uri) c/URI
    (s/optional-key :reason_uri) c/URI
    (s/optional-key :indicators) rel/RelatedIndicators})
@@ -42,10 +41,7 @@
                        :id
                        :disposition
                        :disposition_name)
-            {(s/optional-key :severity) Severity
-             (s/optional-key :confidence) v/HighMedLow
-             (s/optional-key :priority) Priority
-             (s/optional-key :disposition) c/DispositionNumber
+            {(s/optional-key :disposition) c/DispositionNumber
              (s/optional-key :disposition_name) c/DispositionName}))
 
 (s/defschema StoredJudgement
@@ -54,12 +50,19 @@
             {:owner s/Str
              :created c/Time}))
 
-(s/defn realize-judgement :- Judgement
+(s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
    id :- s/Str]
-  (let [disposition (c/determine-disposition-id new-judgement)
-        disposition_name (get c/disposition-map disposition)]
-    (assoc new-judgement
-           :id id
-           :disposition disposition
-           :disposition_name disposition_name)))
+  (let [now (c/timestamp)]
+    (let [disposition (c/determine-disposition-id new-judgement)
+          disposition_name (get c/disposition-map disposition)]
+      (-> new-judgement
+          (assoc :id id
+                 :disposition disposition
+                 :disposition_name disposition_name
+                 :owner "not implemented"
+                 :created now)
+          (assoc-in [:valid_time :end_time] (or (get-in new-judgement [:valid_time :end-time])
+                                                c/default-expire-date))
+          (assoc-in [:valid_time :start_time] (or (get-in new-judgement [:valid_time :start_time])
+                                                  now))))))

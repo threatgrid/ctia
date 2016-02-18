@@ -5,11 +5,6 @@
             [schema.core :as s]
             [schema-tools.core :as st]))
 
-(s/defschema ValidTime
-  "See http://stixproject.github.io/data-model/1.2/indicator/ValidTimeType/"
-  {(s/optional-key :start_time) c/Time
-   (s/optional-key :end_time) c/Time})
-
 (s/defschema JudgementSpecification
   "An indicator based on a list of judgements.  If any of the
   Observables in it's judgements are encountered, than it may be
@@ -63,7 +58,7 @@
     (s/optional-key :version) s/Num
     (s/optional-key :negate) s/Bool ;; Indicates absence of a pattern
     (s/optional-key :type) [v/IndicatorType]
-    (s/optional-key :valid_time_position) ValidTime
+    (s/optional-key :valid_time) c/ValidTime
     (s/optional-key :judgements) rel/RelatedJudgements
     (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
     (s/optional-key :indicated_TTP) rel/RelatedTTPs

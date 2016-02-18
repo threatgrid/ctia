@@ -366,7 +366,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                                 :indicators [{:confidence "High"
                                               :source "source"
                                               :relationship "relationship"
@@ -381,13 +381,16 @@
               :severity 100
               :confidence "Low"
               :source "test"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
               :indicators [{:confidence "High"
                             :source "source"
                             :relationship "relationship"
-                            :indicator "indicator-123"}]}
+                            :indicator "indicator-123"}]
+              :owner "not implemented"}
              (dissoc judgement
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/judgement/:id"
         (let [response (get (str "cia/judgement/" (:id judgement)))
@@ -401,13 +404,16 @@
                   :severity 100
                   :confidence "Low"
                   :source "test"
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                   :indicators [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :indicator "indicator-123"}]}
+                                :indicator "indicator-123"}]
+                  :owner "not implemented"}
                  (dissoc judgement
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/judgement/:id"
         (let [temp-judgement (-> (post "cia/judgement"
@@ -419,7 +425,7 @@
                                               :priority 100
                                               :severity 100
                                               :confidence "Low"
-                                              :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                              :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
                                  :parsed-body)
               response (delete (str "cia/judgement/" (:id temp-judgement)))]
           (is (= 204 (:status response)))
@@ -477,7 +483,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:observable {:value "1.2.3.4"
@@ -488,9 +494,12 @@
               :priority 100
               :severity 100
               :confidence "Low"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc judgement
-                     :id)))))
+                     :id
+                     :created)))))
 
   (testing "POST a judgement with disposition_name"
     (let [response (post "cia/judgement"
@@ -501,7 +510,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:observable {:value "1.2.3.4"
@@ -512,9 +521,12 @@
               :priority 100
               :severity 100
               :confidence "Low"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc judgement
-                     :id)))))
+                     :id
+                     :created)))))
 
   (testing "POST a judgement without disposition"
     (let [response (post "cia/judgement"
@@ -524,7 +536,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:observable {:value "1.2.3.4"
@@ -535,9 +547,12 @@
               :priority 100
               :severity 100
               :confidence "Low"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc judgement
-                     :id)))))
+                     :id
+                     :created)))))
 
   (testing "POST a judgement with mismatching disposition/disposition_name"
     (let [response (post "cia/judgement"
@@ -549,7 +564,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
       (is (= 400 (:status response)))
       (is (= {:error "Mismatching :dispostion and dispositon_name for judgement",
               :judgement {:observable {:value "1.2.3.4"
@@ -560,7 +575,7 @@
                           :priority 100
                           :severity 100
                           :confidence "Low"
-                          :timestamp #inst "2016-02-11T00:40:48.212-00:00"}}
+                          :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
              (:parsed-body response))))))
 
 (deftest test-observable-judgements-route
@@ -575,7 +590,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
   (testing "test setup: create a judgement (2)"
     (let [response (post "cia/judgement"
@@ -587,7 +602,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
   (testing "test setup: create a judgement (3)"
     (let [response (post "cia/judgement"
@@ -599,7 +614,7 @@
                                 :priority 50
                                 :severity 60
                                 :confidence "High"
-                                :timestamp "2016-02-11T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
 
   (testing "GET /cia/:observable_type/:observable_value/judgements"
@@ -615,7 +630,9 @@
                :priority 100
                :severity 100
                :confidence "Low"
-               :timestamp #inst "2016-02-12T00:00:00.000"}
+               :valid_time {:start_time #inst "2016-02-12T00:00:00.000"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+               :owner "not implemented"}
               {:indicators []
                :observable {:value "10.0.0.1"
                             :type "ip"}
@@ -625,9 +642,11 @@
                :priority 50
                :severity 60
                :confidence "High"
-               :timestamp #inst "2016-02-11T00:00:00.000-00:00"}]
+               :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+               :owner "not implemented"}]
              (->> judgements
-                  (map #(dissoc % :id))))))))
+                  (map #(dissoc % :id :created))))))))
 
 (deftest test-observable-indicators-and-sightings-routes
 
@@ -642,7 +661,7 @@
                      :priority 100
                      :severity 100
                      :confidence "Low"
-                     :timestamp "2016-02-01T00:00:00.000-00:00"})
+                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}})
 
         {indicator-1-status :status}
         (post "cia/indicator"
@@ -670,7 +689,7 @@
                      :priority 100
                      :severity 100
                      :confidence "Low"
-                     :timestamp "2016-02-01T00:00:00.000-00:00"})
+                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}})
 
         {indicator-2-status :status}
         (post "cia/indicator"
@@ -695,7 +714,7 @@
                      :priority 100
                      :severity 100
                      :confidence "Low"
-                     :timestamp "2016-02-01T00:00:00.000-00:00"})
+                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}})
 
         {indicator-3-status :status}
         (post "cia/indicator"
@@ -778,7 +797,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
 
   (testing "test setup: create a judgement (2)"
@@ -791,7 +810,7 @@
                                 :priority 90
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
 
   (testing "test setup: create a judgement (3)"
@@ -804,7 +823,7 @@
                                 :priority 99
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
 
   (testing "test setup: create a judgement (4)"
@@ -817,7 +836,7 @@
                                 :priority 99
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:01"})
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:01"}})
           judgement-1 (:parsed-body response)]
       (is (= 200 (:status response)))))
 
@@ -830,7 +849,7 @@
                                 :priority 99
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})
           judgement-1 (:parsed-body response)]
       (is (= 200 (:status response))) ;; success creating judgement
 
@@ -853,12 +872,12 @@
                                 :reason_uri "string",
                                 :source "string",
                                 :disposition 1,
-                                :expires "2016-02-12T14:56:26.719-00:00",
                                 :reason "string",
                                 :source_uri "string",
                                 :priority 99,
                                 :severity 50,
-                                :timestamp "2016-02-12T14:56:26.814-00:00",
+                                :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
+                                             :end_time "2016-02-12T14:56:26.719-00:00"}
                                 :confidence "Medium"})]
       (is (= 200 (:status response)))))
   (testing "with a verdict judgement"
@@ -872,7 +891,7 @@
                                 :source_uri "string",
                                 :priority 99,
                                 :severity 50,
-                                :timestamp "2016-02-12T14:56:26.814-00:00",
+                                :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"}
                                 :confidence "Medium"})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))

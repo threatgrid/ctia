@@ -12,7 +12,7 @@
             [cia.schemas.indicator
              :refer [Indicator NewIndicator Sighting]]
             [cia.schemas.feedback :refer [Feedback NewFeedback]]
-            [cia.schemas.judgement :refer [Judgement NewJudgement]]
+            [cia.schemas.judgement :refer [NewJudgement StoredJudgement]]
             [cia.schemas.ttp :refer [NewTTP TTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
@@ -198,7 +198,7 @@ Malicious disposition, and so on down to Unknown.
             (context* "/judgement" []
                       :tags ["Judgement"]
                       (POST* "/" []
-                             :return Judgement
+                             :return StoredJudgement
                              :body [judgement NewJudgement {:description "a new Judgement"}]
                              :summary "Adds a new Judgement"
                              (ok (create-judgement @judgement-store judgement)))
@@ -216,7 +216,7 @@ Malicious disposition, and so on down to Unknown.
                             :summary "Gets all Feedback for this Judgement."
                             (ok (list-feedback @feedback-store {:judgement judgement-id})))
                       (GET* "/:id" []
-                            :return (s/maybe Judgement)
+                            :return (s/maybe StoredJudgement)
                             :path-params [id :- s/Str]
                             :summary "Gets a Judgement by ID"
                             (if-let [d (read-judgement @judgement-store id)]
@@ -232,7 +232,7 @@ Malicious disposition, and so on down to Unknown.
             (context* "/indicator" []
                       :tags ["Indicator"]
                       (GET* "/:id/judgements" []
-                            :return [Judgement]
+                            :return [StoredJudgement]
                             :path-params [id :- Long]
                             :summary "Gets all Judgements associated with the Indicator"
                             (not-found))
@@ -333,7 +333,7 @@ Malicious disposition, and so on down to Unknown.
                                  {disposition_name :- DispositionName nil}]
                   :path-params [observable_type :- ObservableType
                                 observable_value :- s/Str]
-                  :return [Judgement]
+                  :return [StoredJudgement]
                   :summary "Returns all the Judgements associated with the specified observable."
                   (ok (list-judgements @judgement-store
                                        {[:observable :type]  observable_type
