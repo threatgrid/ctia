@@ -56,7 +56,7 @@
     (s/optional-key :victim_targeting) VictimTargeting
     (s/optional-key :exploit_targets) rel/RelatedExploitTargets
     (s/optional-key :related_TTPs) rel/RelatedTTPs
-    (s/optional-key :source) c/Source
+    (s/optional-key :source) s/Str
 
     ;; Extension fields:
     :type  s/Str

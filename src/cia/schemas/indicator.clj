@@ -44,7 +44,7 @@
 (s/defschema Sighting
   "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
   {(s/optional-key :timestamp) c/Time
-   (s/optional-key :source) c/Source
+   (s/optional-key :source) s/Str
    (s/optional-key :reference) c/URI
    (s/optional-key :confidence) v/HighMedLow
    (s/optional-key :description) s/Str

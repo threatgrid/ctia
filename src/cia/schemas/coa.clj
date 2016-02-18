@@ -15,7 +15,7 @@
     (s/optional-key :impact) s/Str
     (s/optional-key :cost) v/HighMedLow
     (s/optional-key :efficacy) v/HighMedLow
-    (s/optional-key :source) c/Source
+    (s/optional-key :source) s/Str
     (s/optional-key :related_COAs) rel/RelatedCOAs
 
     ;; Not provided: handling
