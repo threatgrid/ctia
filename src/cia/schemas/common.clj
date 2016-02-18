@@ -167,5 +167,3 @@
                         time-str))))
 
 (def default-expire-date (time/date-time 2525 1 1))
-
-(def expire-after (constantly default-expire-date))
