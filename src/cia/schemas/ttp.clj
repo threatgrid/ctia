@@ -48,7 +48,7 @@
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
   (merge
    c/GenericStixIdentifiers
-   {:timestamp c/Time
+   {:valid_time c/ValidTime
     (s/optional-key :version) s/Str
     (s/optional-key :intended_effect) v/IntendedEffect
     (s/optional-key :behavior) Behavior
@@ -60,7 +60,6 @@
 
     ;; Extension fields:
     :type  s/Str
-    :expires c/Time
     :indicators [rel/IndicatorReference]
 
     ;; Not provided: kill_chain_phases
@@ -73,12 +72,24 @@
   (st/merge
    (st/dissoc TTP
               :id
-              :expires)
-   {(s/optional-key :expires) c/Time}))
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
-(s/defn realize-ttp :- TTP
+(s/defschema StoredTTP
+  "A TTP as stored in the data store"
+  (st/merge TTP
+            {:created c/Time
+             :owner s/Str}))
+
+(s/defn realize-ttp :- StoredTTP
   [new-ttp :- NewTTP
    id :- s/Str]
-  (assoc new-ttp
-         :id id
-         :expires (or (:expires new-ttp) (c/expire-after))))
+  (let [now (c/timestamp)]
+    (assoc new-ttp
+           :id id
+           :owner "not implemented"
+           :created now
+           :valid_time {:start_time (or (get-in new-ttp [:valid_time :start_time])
+                                        now)
+                        :end_time (or (get-in new-ttp [:valid_time :end_time])
+                                      c/default-expire-date)})))

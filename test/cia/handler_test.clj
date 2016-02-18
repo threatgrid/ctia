@@ -31,11 +31,11 @@
                                 :type "Hacker"
                                 :source "a source"
                                 :confidence "High"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"
                                 :associated_actors ["actor-123" "actor-456"]
                                 :associated_campaigns ["campaign-444" "campaign-555"]
-                                :observed_TTPs ["ttp-333" "ttp-999"]})
+                                :observed_TTPs ["ttp-333" "ttp-999"]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                             :end_time "2016-07-11T00:40:48.212-00:00"}})
           actor (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:description "description",
@@ -43,13 +43,15 @@
               :title "actor",
               :confidence "High",
               :source "a source"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"
               :associated_actors ["actor-123" "actor-456"]
               :associated_campaigns ["campaign-444" "campaign-555"]
-              :observed_TTPs ["ttp-333" "ttp-999"]}
+              :observed_TTPs ["ttp-333" "ttp-999"]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+              :owner "not implemented"}
              (dissoc actor
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/actor/:id"
         (let [response (get (str "cia/actor/" (:id actor)))
@@ -60,13 +62,15 @@
                   :title "actor",
                   :confidence "High",
                   :source "a source"
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :associated_actors ["actor-123" "actor-456"]
                   :associated_campaigns ["campaign-444" "campaign-555"]
-                  :observed_TTPs ["ttp-333" "ttp-999"]}
+                  :observed_TTPs ["ttp-333" "ttp-999"]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :owner "not implemented"}
                  (dissoc actor
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/actor/:id"
         (let [response (delete (str "cia/actor/" (:id actor)))]
@@ -82,8 +86,6 @@
                                 :type "anything goes here"
                                 :intended_effect ["Theft"]
                                 :indicators ["indicator-foo" "indicator-bar"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"
                                 :attribution [{:confidence "High"
                                                :source "source"
                                                :relationship "relationship"
@@ -95,7 +97,9 @@
                                 :related_TTPs [{:confidence "High"
                                                 :source "source"
                                                 :relationship "relationship"
-                                                :ttp "ttp-999"}]})
+                                                :ttp "ttp-999"}]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                             :end_time "2016-07-11T00:40:48.212-00:00"}})
           campaign (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "campaign"
@@ -103,8 +107,6 @@
               :type "anything goes here"
               :intended_effect ["Theft"]
               :indicators ["indicator-foo" "indicator-bar"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"
               :attribution [{:confidence "High"
                              :source "source"
                              :relationship "relationship"
@@ -116,35 +118,41 @@
               :related_TTPs [{:confidence "High"
                               :source "source"
                               :relationship "relationship"
-                              :ttp "ttp-999"}]}
+                              :ttp "ttp-999"}]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+              :owner "not implemented"}
              (dissoc campaign
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/campaign/:id"
         (let [response (get (str "cia/campaign/" (:id campaign)))
               campaign (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "campaign"
-                  :description "description"
-                  :type "anything goes here"
-                  :intended_effect ["Theft"]
-                  :indicators ["indicator-foo" "indicator-bar"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"
-                  :attribution [{:confidence "High"
-                                 :source "source"
-                                 :relationship "relationship"
-                                 :actor "actor-123"}]
-                  :related_incidents [{:confidence "High"
-                                       :source "source"
-                                       :relationship "relationship"
-                                       :incident "incident-222"}]
-                  :related_TTPs [{:confidence "High"
-                                  :source "source"
-                                  :relationship "relationship"
-                                  :ttp "ttp-999"}]}
+              :description "description"
+              :type "anything goes here"
+              :intended_effect ["Theft"]
+              :indicators ["indicator-foo" "indicator-bar"]
+              :attribution [{:confidence "High"
+                             :source "source"
+                             :relationship "relationship"
+                             :actor "actor-123"}]
+              :related_incidents [{:confidence "High"
+                                   :source "source"
+                                   :relationship "relationship"
+                                   :incident "incident-222"}]
+              :related_TTPs [{:confidence "High"
+                              :source "source"
+                              :relationship "relationship"
+                              :ttp "ttp-999"}]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+              :owner "not implemented"}
                  (dissoc campaign
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/campaign/:id"
         (let [response (delete (str "cia/campaign/" (:id campaign)))]
@@ -159,16 +167,19 @@
                                 :description "description"
                                 :type "Eradication"
                                 :objective ["foo" "bar"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           coa (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "coa"
               :description "description"
               :type "Eradication"
               :objective ["foo" "bar"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc coa
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/coa/:id"
         (let [response (get (str "cia/coa/" (:id coa)))
@@ -178,9 +189,12 @@
                   :description "description"
                   :type "Eradication"
                   :objective ["foo" "bar"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :owner "not implemented"}
                  (dissoc coa
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/coa/:id"
         (let [response (delete (str "/cia/coa/" (:id coa)))]
@@ -195,26 +209,29 @@
                                 :description "description"
                                 :vulnerability [{:title "vulnerability"
                                                  :description "description"}]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :potential_COAs ["coa-777" "coa-333"]
                                 :related_exploit_targets [{:confidence "High"
                                                            :source "source"
                                                            :relationship "relationship"
-                                                           :exploit_target "exploit-target-123"}]})
+                                                           :exploit_target "exploit-target-123"}]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           exploit-target (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "exploit-target"
               :description "description"
               :vulnerability [{:title "vulnerability"
                                :description "description"}]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :potential_COAs ["coa-777" "coa-333"]
               :related_exploit_targets [{:confidence "High"
                                          :source "source"
                                          :relationship "relationship"
-                                         :exploit_target "exploit-target-123"}]}
+                                         :exploit_target "exploit-target-123"}]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc exploit-target
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/exploit-target/:id"
         (let [response (get (str "cia/exploit-target/" (:id exploit-target)))
@@ -224,14 +241,17 @@
                   :description "description"
                   :vulnerability [{:title "vulnerability"
                                    :description "description"}]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :potential_COAs ["coa-777" "coa-333"]
                   :related_exploit_targets [{:confidence "High"
                                              :source "source"
                                              :relationship "relationship"
-                                             :exploit_target "exploit-target-123"}]}
+                                             :exploit_target "exploit-target-123"}]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :owner "not implemented"}
                  (dissoc exploit-target
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/exploit-target/:id"
         (let [response (delete (str "cia/exploit-target/" (:id exploit-target)))]
@@ -247,7 +267,7 @@
                                 :confidence "High"
                                 :categories ["Denial of Service"
                                              "Improper Usage"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                                 :related_indicators [{:confidence "High"
                                                       :source "source"
                                                       :relationship "relationship"
@@ -260,14 +280,17 @@
               :confidence "High"
               :categories ["Denial of Service"
                            "Improper Usage"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
               :related_indicators [{:confidence "High"
                                     :source "source"
                                     :relationship "relationship"
                                     :indicator "indicator-123"}]
-              :related_incidents ["incident-123" "indicent-789"]}
+              :related_incidents ["incident-123" "indicent-789"]
+              :owner "not implemented"}
              (dissoc incident
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/incident/:id"
         (let [response (get (str "cia/incident/" (:id incident)))
@@ -278,14 +301,17 @@
                   :confidence "High"
                   :categories ["Denial of Service"
                                "Improper Usage"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                   :related_indicators [{:confidence "High"
                                         :source "source"
                                         :relationship "relationship"
                                         :indicator "indicator-123"}]
-                  :related_incidents ["incident-123" "indicent-789"]}
+                  :related_incidents ["incident-123" "indicent-789"]
+                  :owner "not implemented"}
                  (dissoc incident
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/incident/:id"
         (let [response (delete (str "cia/incident/" (:id incident)))]
@@ -300,7 +326,8 @@
                                 :description "description"
                                 :producer "producer"
                                 :type ["C2" "IP Watchlist"]
-                                :expires "2016-07-11T00:40:48.212-00:00"
+                                :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
+                                             :end_time "2016-07-11T00:40:48.212-00:00"}
                                 :related_campaigns [{:confidence "High"
                                                      :source "source"
                                                      :relationship "relationship"
@@ -316,7 +343,8 @@
               :description "description"
               :producer "producer"
               :type ["C2" "IP Watchlist"]
-              :expires #inst "2016-07-11T00:40:48.212-00:00"
+              :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
               :related_campaigns [{:confidence "High"
                                    :source "source"
                                    :relationship "relationship"
@@ -325,9 +353,11 @@
                               :source "source"
                               :relationship "relationship"
                               :COA "coa-123"}]
-              :judgements ["judgement-123" "judgement-234"]}
+              :judgements ["judgement-123" "judgement-234"]
+              :owner "not implemented"}
              (dissoc indicator
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/indicator/:id"
         (let [response (get (str "cia/indicator/" (:id indicator)))
@@ -337,7 +367,8 @@
                   :description "description"
                   :producer "producer"
                   :type ["C2" "IP Watchlist"]
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"
+                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                   :related_campaigns [{:confidence "High"
                                        :source "source"
                                        :relationship "relationship"
@@ -346,9 +377,11 @@
                                   :source "source"
                                   :relationship "relationship"
                                   :COA "coa-123"}]
-                  :judgements ["judgement-123" "judgement-234"]}
+                  :judgements ["judgement-123" "judgement-234"]
+                  :owner "not implemented"}
                  (dissoc indicator
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/indicator/:id"
         (let [response (delete (str "cia/indicator/" (:id indicator)))]
@@ -365,7 +398,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                                 :indicators [{:confidence "High"
                                               :source "source"
                                               :relationship "relationship"
@@ -380,13 +413,16 @@
               :severity 100
               :confidence "Low"
               :source "test"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
               :indicators [{:confidence "High"
                             :source "source"
                             :relationship "relationship"
-                            :indicator "indicator-123"}]}
+                            :indicator "indicator-123"}]
+              :owner "not implemented"}
              (dissoc judgement
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/judgement/:id"
         (let [response (get (str "cia/judgement/" (:id judgement)))
@@ -400,13 +436,16 @@
                   :severity 100
                   :confidence "Low"
                   :source "test"
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                   :indicators [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :indicator "indicator-123"}]}
+                                :indicator "indicator-123"}]
+                  :owner "not implemented"}
                  (dissoc judgement
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/judgement/:id"
         (let [temp-judgement (-> (post "cia/judgement"
@@ -418,7 +457,7 @@
                                               :priority 100
                                               :severity 100
                                               :confidence "Low"
-                                              :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                              :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
                                  :parsed-body)
               response (delete (str "cia/judgement/" (:id temp-judgement)))]
           (is (= 204 (:status response)))
@@ -433,10 +472,11 @@
           (is (= 200 (:status response)))
           (is (= {:judgement (:id judgement),
                   :feedback -1,
-                  :reason "false positive"}
+                  :reason "false positive"
+                  :owner "not implemented"}
                  (dissoc feedback
                          :id
-                         :timestamp))))
+                         :created))))
 
         (testing "GET /cia/judgement/:id/feedback"
           ;; create some more feedbacks
@@ -459,11 +499,13 @@
             (is (= 200 (:status response)))
             (is (= [{:judgement (:id judgement),
                      :feedback -1,
-                     :reason "false positive"}
+                     :reason "false positive"
+                     :owner "not implemented"}
                     {:judgement (:id judgement),
                      :feedback 1,
-                     :reason "true positive"}]
-                   (map #(dissoc % :id :timestamp)
+                     :reason "true positive"
+                     :owner "not implemented"}]
+                   (map #(dissoc % :id :created)
                         feedbacks)))))))))
 
 (deftest test-judgement-routes-for-dispositon-determination
@@ -476,7 +518,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:observable {:value "1.2.3.4"
@@ -487,9 +529,12 @@
               :priority 100
               :severity 100
               :confidence "Low"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc judgement
-                     :id)))))
+                     :id
+                     :created)))))
 
   (testing "POST a judgement with disposition_name"
     (let [response (post "cia/judgement"
@@ -500,7 +545,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:observable {:value "1.2.3.4"
@@ -511,9 +556,12 @@
               :priority 100
               :severity 100
               :confidence "Low"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc judgement
-                     :id)))))
+                     :id
+                     :created)))))
 
   (testing "POST a judgement without disposition"
     (let [response (post "cia/judgement"
@@ -523,7 +571,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:observable {:value "1.2.3.4"
@@ -534,9 +582,12 @@
               :priority 100
               :severity 100
               :confidence "Low"
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"}
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
              (dissoc judgement
-                     :id)))))
+                     :id
+                     :created)))))
 
   (testing "POST a judgement with mismatching disposition/disposition_name"
     (let [response (post "cia/judgement"
@@ -548,7 +599,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-11T00:40:48.212-00:00"})]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
       (is (= 400 (:status response)))
       (is (= {:error "Mismatching :dispostion and dispositon_name for judgement",
               :judgement {:observable {:value "1.2.3.4"
@@ -559,7 +610,7 @@
                           :priority 100
                           :severity 100
                           :confidence "Low"
-                          :timestamp #inst "2016-02-11T00:40:48.212-00:00"}}
+                          :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
              (:parsed-body response))))))
 
 (deftest test-observable-judgements-route
@@ -574,7 +625,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
   (testing "test setup: create a judgement (2)"
     (let [response (post "cia/judgement"
@@ -586,7 +637,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
   (testing "test setup: create a judgement (3)"
     (let [response (post "cia/judgement"
@@ -598,7 +649,7 @@
                                 :priority 50
                                 :severity 60
                                 :confidence "High"
-                                :timestamp "2016-02-11T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
 
   (testing "GET /cia/:observable_type/:observable_value/judgements"
@@ -614,7 +665,9 @@
                :priority 100
                :severity 100
                :confidence "Low"
-               :timestamp #inst "2016-02-12T00:00:00.000"}
+               :valid_time {:start_time #inst "2016-02-12T00:00:00.000"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+               :owner "not implemented"}
               {:indicators []
                :observable {:value "10.0.0.1"
                             :type "ip"}
@@ -624,9 +677,11 @@
                :priority 50
                :severity 60
                :confidence "High"
-               :timestamp #inst "2016-02-11T00:00:00.000-00:00"}]
+               :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+               :owner "not implemented"}]
              (->> judgements
-                  (map #(dissoc % :id))))))))
+                  (map #(dissoc % :id :created))))))))
 
 (deftest test-observable-indicators-and-sightings-routes
 
@@ -641,7 +696,7 @@
                      :priority 100
                      :severity 100
                      :confidence "Low"
-                     :timestamp "2016-02-01T00:00:00.000-00:00"})
+                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}})
 
         {indicator-1-status :status}
         (post "cia/indicator"
@@ -656,7 +711,7 @@
                      :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
-                     :expires "2016-02-12T00:00:00.000-00:00"})
+                     :valid_time {:end_time "2016-02-12T00:00:00.000-00:00"}})
 
         {judgement-2 :parsed-body
          judgement-2-status :status}
@@ -669,7 +724,7 @@
                      :priority 100
                      :severity 100
                      :confidence "Low"
-                     :timestamp "2016-02-01T00:00:00.000-00:00"})
+                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}})
 
         {indicator-2-status :status}
         (post "cia/indicator"
@@ -681,7 +736,8 @@
                      :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
-                     :expires "2016-02-12T00:00:00.000-00:00"})
+                     :valid_time {:start_time "2016-01-12T00:00:00.000-00:00"
+                                  :end_time "2016-02-12T00:00:00.000-00:00"}})
 
         {judgement-3 :parsed-body
          judgement-3-status :status}
@@ -694,7 +750,7 @@
                      :priority 100
                      :severity 100
                      :confidence "Low"
-                     :timestamp "2016-02-01T00:00:00.000-00:00"})
+                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}})
 
         {indicator-3-status :status}
         (post "cia/indicator"
@@ -710,7 +766,8 @@
                      :description "description"
                      :producer "producer"
                      :type ["C2" "IP Watchlist"]
-                     :expires "2016-02-11T00:00:00.000-00:00"})]
+                     :valid_time {:start_time "2016-01-11T00:00:00.000-00:00"
+                                  :end_time "2016-02-11T00:00:00.000-00:00"}})]
 
     (testing "Test setup succeeded"
       (is (= 200 judgement-1-status))
@@ -732,7 +789,9 @@
                  :description "description"
                  :producer "producer"
                  :type ["C2" "IP Watchlist"]
-                 :expires #inst "2016-02-12T00:00:00.000-00:00"}
+                 :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
+                              :end_time #inst "2016-02-12T00:00:00.000-00:00"}
+                 :owner "not implemented"}
                 {:title "indicator"
                  :judgements [{:judgement (:id judgement-3)
                                :confidence "High"}]
@@ -745,9 +804,11 @@
                  :description "description"
                  :producer "producer"
                  :type ["C2" "IP Watchlist"]
-                 :expires #inst "2016-02-11T00:00:00.000-00:00"}]
+                 :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
+                              :end_time #inst "2016-02-11T00:00:00.000-00:00"}
+                 :owner "not implemented"}]
                (->> indicators
-                    (map #(dissoc % :id))))))))
+                    (map #(dissoc % :id :created))))))))
 
   (testing "GET /cia/:observable_type/:observable_value/sightings"
     (let [response (get "cia/ip/10.0.0.1/sightings")
@@ -777,7 +838,7 @@
                                 :priority 100
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
 
   (testing "test setup: create a judgement (2)"
@@ -790,7 +851,7 @@
                                 :priority 90
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
 
   (testing "test setup: create a judgement (3)"
@@ -803,7 +864,7 @@
                                 :priority 99
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})]
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})]
       (is (= 200 (:status response)))))
 
   (testing "test setup: create a judgement (4)"
@@ -816,7 +877,7 @@
                                 :priority 99
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:01"})
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:01"}})
           judgement-1 (:parsed-body response)]
       (is (= 200 (:status response)))))
 
@@ -829,7 +890,7 @@
                                 :priority 99
                                 :severity 100
                                 :confidence "Low"
-                                :timestamp "2016-02-12T00:00:00.000-00:00"})
+                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}})
           judgement-1 (:parsed-body response)]
       (is (= 200 (:status response))) ;; success creating judgement
 
@@ -852,12 +913,12 @@
                                 :reason_uri "string",
                                 :source "string",
                                 :disposition 1,
-                                :expires "2016-02-12T14:56:26.719-00:00",
                                 :reason "string",
                                 :source_uri "string",
                                 :priority 99,
                                 :severity 50,
-                                :timestamp "2016-02-12T14:56:26.814-00:00",
+                                :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
+                                             :end_time "2016-02-12T14:56:26.719-00:00"}
                                 :confidence "Medium"})]
       (is (= 200 (:status response)))))
   (testing "with a verdict judgement"
@@ -871,7 +932,7 @@
                                 :source_uri "string",
                                 :priority 99,
                                 :severity 50,
-                                :timestamp "2016-02-12T14:56:26.814-00:00",
+                                :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"}
                                 :confidence "Medium"})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
@@ -893,22 +954,24 @@
                                 :description "description"
                                 :type "foo"
                                 :indicators ["indicator-1" "indicator-2"]
-                                :timestamp "2016-02-11T00:40:48.212-00:00"
-                                :expires "2016-07-11T00:40:48.212-00:00"
                                 :exploit_targets ["exploit-target-123"
-                                                   "exploit-target-234"]})
+                                                  "exploit-target-234"]
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                             :end_time "2016-07-11T00:40:48.212-00:00"}})
           ttp (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= {:title "ttp"
               :description "description"
               :type "foo"
               :indicators ["indicator-1" "indicator-2"]
-              :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-              :expires #inst "2016-07-11T00:40:48.212-00:00"
               :exploit_targets ["exploit-target-123"
-                                 "exploit-target-234"]}
+                                "exploit-target-234"]
+              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+              :owner "not implemented"}
              (dissoc ttp
-                     :id)))
+                     :id
+                     :created)))
 
       (testing "GET /cia/ttp/:id"
         (let [response (get (str "cia/ttp/" (:id ttp)))
@@ -918,12 +981,14 @@
                   :description "description"
                   :type "foo"
                   :indicators ["indicator-1" "indicator-2"]
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :exploit_targets ["exploit-target-123"
-                                     "exploit-target-234"]}
+                                    "exploit-target-234"]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :owner "not implemented"}
                  (dissoc ttp
-                         :id)))))
+                         :id
+                         :created)))))
 
       (testing "DELETE /cia/ttp/:id"
         (let [response (delete (str "cia/ttp/" (:id ttp)))]

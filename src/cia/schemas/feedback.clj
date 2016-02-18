@@ -9,7 +9,6 @@
   "Feedback on a Judgement or Verdict.  Is it wrong?  If so why?  Was
   it right-on, and worthy of confirmation?"
   {:id c/ID
-   :timestamp c/Time
    :judgement rel/JudgementReference
    (s/optional-key :source) s/Str
    :feedback (s/enum -1 0 1)
@@ -17,20 +16,22 @@
 
 (s/defschema NewFeedback
   "Schema for submitting new Feedback"
-  (st/merge
-   (st/dissoc Feedback :id :timestamp :judgement)
-   {(s/optional-key :judgement) rel/JudgementReference}))
+  (st/dissoc Feedback
+             :id
+             :judgement))
 
 (s/defschema StoredFeedback
   "A feedback record at rest in the storage service"
   (st/merge Feedback
-            {:owner s/Str}))
+            {:owner s/Str
+             :created c/Time}))
 
-(s/defn realize-feedback :- Feedback
+(s/defn realize-feedback :- StoredFeedback
   [new-feedback :- NewFeedback
    id :- s/Str
    judgement-id :- s/Str]
   (assoc new-feedback
          :id id
-         :timestamp (DateTime.)
+         :created (c/timestamp)
+         :owner "not implemented"
          :judgement judgement-id))

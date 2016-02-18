@@ -115,6 +115,11 @@
   {:value s/Str
    :type v/ObservableType})
 
+(s/defschema ValidTime
+  "See http://stixproject.github.io/data-model/1.2/indicator/ValidTimeType/"
+  {(s/optional-key :start_time) Time
+   (s/optional-key :end_time) Time})
+
 ;;Allowed disposition values are:
 (def disposition-map
   "Map of disposition numeric values to disposition names, as humans might use them."
@@ -161,15 +166,4 @@
      (time-format/parse (time-format/formatters :date-time)
                         time-str))))
 
-(def default-expire-in-days 7)
-
-(defn expire-after
-  ([]
-   (expire-after (time/now) default-expire-in-days))
-  ([after-time]
-   (expire-after after-time default-expire-in-days))
-  ([after-time in-days]
-   (time/plus after-time (time/days in-days))))
-
-(defn expire-on [expire-str]
-  (timestamp expire-str))
+(def default-expire-date (time/date-time 2525 1 1))

@@ -29,37 +29,43 @@
    :priority Priority
    :confidence v/HighMedLow
    :severity Severity
-   :timestamp c/Time
+   :valid_time c/ValidTime
    (s/optional-key :reason) s/Str
-   (s/optional-key :expires) c/Time
    (s/optional-key :source_uri) c/URI
    (s/optional-key :reason_uri) c/URI
    (s/optional-key :indicators) rel/RelatedIndicators})
 
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
-  (st/merge (st/dissoc Judgement
-                       :id
-                       :disposition
-                       :disposition_name)
-            {(s/optional-key :severity) Severity
-             (s/optional-key :confidence) v/HighMedLow
-             (s/optional-key :priority) Priority
-             (s/optional-key :disposition) c/DispositionNumber
-             (s/optional-key :disposition_name) c/DispositionName}))
+  (st/merge
+   (st/dissoc Judgement
+              :id
+              :disposition
+              :disposition_name
+              :valid_time)
+   {(s/optional-key :disposition) c/DispositionNumber
+    (s/optional-key :disposition_name) c/DispositionName
+    (s/optional-key :valid_time) c/ValidTime}))
 
 (s/defschema StoredJudgement
-  "A judgement at rest in the storage service"
+  "A judgement as stored in the data store"
   (st/merge Judgement
             {:owner s/Str
              :created c/Time}))
 
-(s/defn realize-judgement :- Judgement
+(s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
    id :- s/Str]
-  (let [disposition (c/determine-disposition-id new-judgement)
+  (let [now (c/timestamp)
+        disposition (c/determine-disposition-id new-judgement)
         disposition_name (get c/disposition-map disposition)]
     (assoc new-judgement
            :id id
            :disposition disposition
-           :disposition_name disposition_name)))
+           :disposition_name disposition_name
+           :owner "not implemented"
+           :created now
+           :valid_time {:end_time (or (get-in new-judgement [:valid_time :end-time])
+                                      c/default-expire-date)
+                        :start_time (or (get-in new-judgement [:valid_time :start_time])
+                                        now)})))

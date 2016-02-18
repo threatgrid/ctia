@@ -5,11 +5,6 @@
             [schema.core :as s]
             [schema-tools.core :as st]))
 
-(s/defschema ValidTime
-  "See http://stixproject.github.io/data-model/1.2/indicator/ValidTimeType/"
-  {(s/optional-key :start_time) c/Time
-   (s/optional-key :end_time) c/Time})
-
 (s/defschema JudgementSpecification
   "An indicator based on a list of judgements.  If any of the
   Observables in it's judgements are encountered, than it may be
@@ -59,11 +54,11 @@
   "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
   (merge
    c/GenericStixIdentifiers
-   {(s/optional-key :alternate_ids) [s/Str]
+   {:valid_time c/ValidTime
+    (s/optional-key :alternate_ids) [s/Str]
     (s/optional-key :version) s/Num
     (s/optional-key :negate) s/Bool ;; Indicates absence of a pattern
     (s/optional-key :type) [v/IndicatorType]
-    (s/optional-key :valid_time_position) ValidTime
     (s/optional-key :judgements) rel/RelatedJudgements
     (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
     (s/optional-key :indicated_TTP) rel/RelatedTTPs
@@ -78,7 +73,6 @@
     (s/optional-key :test_mechanisms) [s/Str] ;; simplified
 
     ;; Extension fields:
-    (s/optional-key :expires) c/Time
     :producer s/Str
 
     ;; Extension field :specification
@@ -98,8 +92,8 @@
   (st/merge
    (st/dissoc Indicator
               :id
-              :expires)
-   {(s/optional-key :expires) c/Time}))
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
 (s/defschema StoredIndicator
   "A feedback record at rest in the storage service"
@@ -107,9 +101,15 @@
             {:owner s/Str
              :created c/Time}))
 
-(s/defn realize-indicator :- Indicator
+(s/defn realize-indicator :- StoredIndicator
   [new-indicator :- NewIndicator
    id :- s/Str]
-  (assoc new-indicator
-         :id id
-         :expires (or (:expires new-indicator) (c/expire-after))))
+  (let [now (c/timestamp)]
+    (assoc new-indicator
+           :id id
+           :owner "not implemented"
+           :created now
+           :valid_time {:start_time (or (get-in new-indicator [:valid_time :start_time])
+                                       now)
+                       :end_time (or (get-in new-indicator [:valid_time :end_time])
+                                     c/default-expire-date)})))

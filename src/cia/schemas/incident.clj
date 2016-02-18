@@ -94,9 +94,8 @@
   "See http://stixproject.github.io/data-model/1.2/incident/IncidentType/"
   (st/merge
    c/GenericStixIdentifiers
-   {:timestamp c/Time ;; timestamp "for this version"; optional in spec
-    :confidence v/HighMedLow ;; squashed; TODO - Consider expanding
-
+   {:valid_time c/ValidTime
+    :confidence v/HighMedLow
     (s/optional-key :status) v/Status
     (s/optional-key :version) s/Str
     (s/optional-key :incident_time) IncidentTime ;; Was "time"; renamed for clarity
@@ -131,11 +130,27 @@
     }))
 
 (s/defschema NewIncident
-  (st/dissoc Incident
-             :id))
+  (st/merge
+   (st/dissoc Incident
+              :id
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
-(s/defn realize-incident :- Incident
+(s/defschema StoredIncident
+  "An incident as stored in the data store"
+  (st/merge Incident
+            {:owner s/Str
+             :created c/Time}))
+
+(s/defn realize-incident :- StoredIncident
   [new-incident :- NewIncident
    id :- s/Str]
-  (assoc new-incident
-         :id id))
+  (let [now (c/timestamp)]
+    (assoc new-incident
+           :id id
+           :owner "not implemented"
+           :created now
+           :valid_time {:start_time (or (get-in new-incident [:valid_time :start_time])
+                                        now)
+                        :end_time (or (get-in new-incident [:valid_time :end_time])
+                                      c/default-expire-date)})))
