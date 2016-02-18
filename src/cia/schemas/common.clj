@@ -58,13 +58,6 @@
     :description s/Str
     (s/optional-key :short_description) s/Str}))
 
-(s/defschema TimeStructure
-  "See http://stixproject.github.io/data-model/1.2/cyboxCommon/TimeType/"
-  {(s/optional-key :start_time) Time
-   (s/optional-key :end_time) Time
-   (s/optional-key :produced_time) Time
-   (s/optional-key :received_time) Time})
-
 (s/defschema Tool
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
   {:description s/Str
@@ -80,17 +73,6 @@
    ;; Not provided: errors
    ;; Not provided: metadata
    ;; Not provided: compensation_model
-   })
-
-(s/defschema Source
-  "See http://stixproject.github.io/data-model/1.2/stixCommon/InformationSourceType/"
-  {:description s/Str
-   (s/optional-key :idntity) s/Str ;; greatly simplified
-   (s/optional-key :role) s/Str ;; empty vocab
-   (s/optional-key :contributing_sources) [Reference] ;; more Source's
-   (s/optional-key :time) TimeStructure
-   (s/optional-key :tools) [Tool]
-   ;; Not provided: references
    })
 
 (s/defschema ScopeWrapper
@@ -110,7 +92,7 @@
 (s/defschema RelatedIdentity
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedIdentityType/"
   {(s/optional-key :confidence) v/HighMedLow
-   (s/optional-key :information_source) Source
+   (s/optional-key :information_source) s/Str
    (s/optional-key :relationship) s/Str ;; empty vocab
    :identity Reference ;; Points to Identity
    })

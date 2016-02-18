@@ -29,7 +29,7 @@
                          :body {:title "actor"
                                 :description "description"
                                 :type "Hacker"
-                                :source {:description "a source"}
+                                :source "a source"
                                 :confidence "High"
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :expires "2016-07-11T00:40:48.212-00:00"
@@ -42,7 +42,7 @@
               :type "Hacker",
               :title "actor",
               :confidence "High",
-              :source {:description "a source"}
+              :source "a source"
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :expires #inst "2016-07-11T00:40:48.212-00:00"
               :associated_actors ["actor-123" "actor-456"]
@@ -59,7 +59,7 @@
                   :type "Hacker",
                   :title "actor",
                   :confidence "High",
-                  :source {:description "a source"}
+                  :source "a source"
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :associated_actors ["actor-123" "actor-456"]
@@ -85,15 +85,15 @@
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :expires "2016-07-11T00:40:48.212-00:00"
                                 :attribution [{:confidence "High"
-                                               :source {:description "source"}
+                                               :source "source"
                                                :relationship "relationship"
                                                :actor "actor-123"}]
                                 :related_incidents [{:confidence "High"
-                                                     :source {:description "source"}
+                                                     :source "source"
                                                      :relationship "relationship"
                                                      :incident "incident-222"}]
                                 :related_TTPs [{:confidence "High"
-                                                :source {:description "source"}
+                                                :source "source"
                                                 :relationship "relationship"
                                                 :ttp "ttp-999"}]})
           campaign (:parsed-body response)]
@@ -106,15 +106,15 @@
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :expires #inst "2016-07-11T00:40:48.212-00:00"
               :attribution [{:confidence "High"
-                             :source {:description "source"}
+                             :source "source"
                              :relationship "relationship"
                              :actor "actor-123"}]
               :related_incidents [{:confidence "High"
-                                   :source {:description "source"}
+                                   :source "source"
                                    :relationship "relationship"
                                    :incident "incident-222"}]
               :related_TTPs [{:confidence "High"
-                              :source {:description "source"}
+                              :source "source"
                               :relationship "relationship"
                               :ttp "ttp-999"}]}
              (dissoc campaign
@@ -132,15 +132,15 @@
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :attribution [{:confidence "High"
-                                 :source {:description "source"}
+                                 :source "source"
                                  :relationship "relationship"
                                  :actor "actor-123"}]
                   :related_incidents [{:confidence "High"
-                                       :source {:description "source"}
+                                       :source "source"
                                        :relationship "relationship"
                                        :incident "incident-222"}]
                   :related_TTPs [{:confidence "High"
-                                  :source {:description "source"}
+                                  :source "source"
                                   :relationship "relationship"
                                   :ttp "ttp-999"}]}
                  (dissoc campaign
@@ -198,7 +198,7 @@
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :potential_COAs ["coa-777" "coa-333"]
                                 :related_exploit_targets [{:confidence "High"
-                                                           :source {:description "source"}
+                                                           :source "source"
                                                            :relationship "relationship"
                                                            :exploit_target "exploit-target-123"}]})
           exploit-target (:parsed-body response)]
@@ -210,7 +210,7 @@
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :potential_COAs ["coa-777" "coa-333"]
               :related_exploit_targets [{:confidence "High"
-                                         :source {:description "source"}
+                                         :source "source"
                                          :relationship "relationship"
                                          :exploit_target "exploit-target-123"}]}
              (dissoc exploit-target
@@ -227,7 +227,7 @@
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :potential_COAs ["coa-777" "coa-333"]
                   :related_exploit_targets [{:confidence "High"
-                                             :source {:description "source"}
+                                             :source "source"
                                              :relationship "relationship"
                                              :exploit_target "exploit-target-123"}]}
                  (dissoc exploit-target
@@ -249,7 +249,7 @@
                                              "Improper Usage"]
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :related_indicators [{:confidence "High"
-                                                      :source {:description "source"}
+                                                      :source "source"
                                                       :relationship "relationship"
                                                       :indicator "indicator-123"}]
                                 :related_incidents ["incident-123" "indicent-789"]})
@@ -262,7 +262,7 @@
                            "Improper Usage"]
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :related_indicators [{:confidence "High"
-                                    :source {:description "source"}
+                                    :source "source"
                                     :relationship "relationship"
                                     :indicator "indicator-123"}]
               :related_incidents ["incident-123" "indicent-789"]}
@@ -280,7 +280,7 @@
                                "Improper Usage"]
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :related_indicators [{:confidence "High"
-                                        :source {:description "source"}
+                                        :source "source"
                                         :relationship "relationship"
                                         :indicator "indicator-123"}]
                   :related_incidents ["incident-123" "indicent-789"]}
@@ -302,11 +302,11 @@
                                 :type ["C2" "IP Watchlist"]
                                 :expires "2016-07-11T00:40:48.212-00:00"
                                 :related_campaigns [{:confidence "High"
-                                                     :source {:description "source"}
+                                                     :source "source"
                                                      :relationship "relationship"
                                                      :campaign "campaign-123"}]
                                 :related_COAs [{:confidence "High"
-                                                :source {:description "source"}
+                                                :source "source"
                                                 :relationship "relationship"
                                                 :COA "coa-123"}]
                                 :judgements ["judgement-123" "judgement-234"]})
@@ -318,11 +318,11 @@
               :type ["C2" "IP Watchlist"]
               :expires #inst "2016-07-11T00:40:48.212-00:00"
               :related_campaigns [{:confidence "High"
-                                   :source {:description "source"}
+                                   :source "source"
                                    :relationship "relationship"
                                    :campaign "campaign-123"}]
               :related_COAs [{:confidence "High"
-                              :source {:description "source"}
+                              :source "source"
                               :relationship "relationship"
                               :COA "coa-123"}]
               :judgements ["judgement-123" "judgement-234"]}
@@ -339,11 +339,11 @@
                   :type ["C2" "IP Watchlist"]
                   :expires #inst "2016-07-11T00:40:48.212-00:00"
                   :related_campaigns [{:confidence "High"
-                                       :source {:description "source"}
+                                       :source "source"
                                        :relationship "relationship"
                                        :campaign "campaign-123"}]
                   :related_COAs [{:confidence "High"
-                                  :source {:description "source"}
+                                  :source "source"
                                   :relationship "relationship"
                                   :COA "coa-123"}]
                   :judgements ["judgement-123" "judgement-234"]}
@@ -368,7 +368,7 @@
                                 :confidence "Low"
                                 :timestamp "2016-02-11T00:40:48.212-00:00"
                                 :indicators [{:confidence "High"
-                                              :source {:description "source"}
+                                              :source "source"
                                               :relationship "relationship"
                                               :indicator "indicator-123"}]})
           judgement (:parsed-body response)]
@@ -383,7 +383,7 @@
               :source "test"
               :timestamp #inst "2016-02-11T00:40:48.212-00:00"
               :indicators [{:confidence "High"
-                            :source {:description "source"}
+                            :source "source"
                             :relationship "relationship"
                             :indicator "indicator-123"}]}
              (dissoc judgement
@@ -403,7 +403,7 @@
                   :source "test"
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :indicators [{:confidence "High"
-                                :source {:description "source"}
+                                :source "source"
                                 :relationship "relationship"
                                 :indicator "indicator-123"}]}
                  (dissoc judgement
@@ -649,10 +649,10 @@
               :body {:title "indicator"
                      :judgements [(:id judgement-1)]
                      :sightings [{:timestamp "2016-02-01T00:00:00.000-00:00"
-                                  :source {:description "foo"}
+                                  :source "foo"
                                   :confidence "Medium"}
                                  {:timestamp "2016-02-01T12:00:00.000-00:00"
-                                  :source {:description "bar"}
+                                  :source "bar"
                                   :confidence "High"}]
                      :description "description"
                      :producer "producer"
@@ -677,7 +677,7 @@
               :body {:title "indicator"
                      :judgements [(:id judgement-2)]
                      :sightings [{:timestamp "2016-02-04T12:00:00.000-00:00"
-                                  :source {:description "spam"}
+                                  :source "spam"
                                   :confidence "None"}]
                      :description "description"
                      :producer "producer"
@@ -703,10 +703,10 @@
                      :judgements [{:judgement (:id judgement-3)
                                    :confidence "High"}]
                      :sightings [{:timestamp "2016-02-05T01:00:00.000-00:00"
-                                  :source {:description "foo"}
+                                  :source "foo"
                                   :confidence "High"}
                                  {:timestamp "2016-02-05T02:00:00.000-00:00"
-                                  :source {:description "bar"}
+                                  :source "bar"
                                   :confidence "Low"}]
                      :description "description"
                      :producer "producer"
@@ -728,7 +728,7 @@
         (is (= [{:title "indicator"
                  :judgements [(:id judgement-2)]
                  :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
-                              :source {:description "spam"}
+                              :source "spam"
                               :confidence "None"}]
                  :description "description"
                  :producer "producer"
@@ -738,10 +738,10 @@
                  :judgements [{:judgement (:id judgement-3)
                                :confidence "High"}]
                  :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
-                              :source {:description "foo"}
+                              :source "foo"
                               :confidence "High"}
                              {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
-                              :source {:description "bar"}
+                              :source "bar"
                               :confidence "Low"}]
                  :description "description"
                  :producer "producer"
@@ -755,13 +755,13 @@
           sightings (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (= [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
-               :source {:description "spam"}
+               :source "spam"
                :confidence "None"}
               {:timestamp #inst "2016-02-05T01:00:00.000-00:00"
-               :source {:description "foo"}
+               :source "foo"
                :confidence "High"}
               {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
-               :source {:description "bar"}
+               :source "bar"
                :confidence "Low"}]
              sightings)))))
 
