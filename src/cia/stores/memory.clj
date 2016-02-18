@@ -49,16 +49,16 @@
 
 (defmacro def-list-handler [name Model]
   `(s/defn ~name :- (s/maybe [~Model])
-    [state# :- (s/atom {s/Str ~Model})
-     filter-map# :- {(s/either s/Keyword [s/Keyword]) s/Any}]
-    (into []
-          (filter (fn [model#]
-                    (every? (fn [[k# v#]]
-                              (if (sequential? k#)
-                                (= v# (get-in model# k# ::not-found))
-                                (= v# (get model# k# ::not-found))))
-                            filter-map#))
-                  (vals (deref state#))))))
+     [state# :- (s/atom {s/Str ~Model})
+      filter-map# :- {s/Any s/Any}]
+     (into []
+           (filter (fn [model#]
+                     (every? (fn [[k# v#]]
+                               (if (sequential? k#)
+                                 (= v# (get-in model# k# ::not-found))
+                                 (= v# (get model# k# ::not-found))))
+                             filter-map#))
+                   (vals (deref state#))))))
 
 (defn make-swap-fn [realize-fn]
   (fn [state-map & [new-model id :as args]]
