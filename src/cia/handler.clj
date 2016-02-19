@@ -97,6 +97,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [actor NewActor {:description "a new Actor"}]
                              :summary "Adds a new Actor"
                              (ok (create-actor @actor-store actor)))
+                      (PUT* "/:id" []
+                            :return StoredActor
+                            :body [actor NewActor {:description "an updated Actor"}]
+                            :summary "Updates an Actor"
+                            :path-params [id :- s/Str]
+                            (ok (update-actor @actor-store id actor)))
                       (GET* "/:id" []
                             :return (s/maybe StoredActor)
                             :summary "Gets an Actor by ID"

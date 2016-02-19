@@ -3,7 +3,7 @@
 (defprotocol IActorStore
   (read-actor [this id])
   (create-actor [this new-actor])
-  (update-actor [this actor])
+  (update-actor [this id actor])
   (delete-actor [this id])
   (list-actors [this filtermap]))
 

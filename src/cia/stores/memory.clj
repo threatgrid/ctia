@@ -1,5 +1,6 @@
 (ns cia.stores.memory
-  (:require [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
+  (:require [cia.schemas.actor
+             :refer [NewActor StoredActor realize-actor replace-actor]]
             [cia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
             [cia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]
             [cia.schemas.common :as c]
@@ -61,9 +62,9 @@
                             filter-map#))
                   (vals (deref state#))))))
 
-(defn make-swap-fn [realize-fn]
+(defn make-swap-fn [entity-fn]
   (fn [state-map & [new-model id :as args]]
-    (assoc state-map id (apply realize-fn args))))
+    (assoc state-map id (apply entity-fn args))))
 
 ;; Actor
 
@@ -74,13 +75,26 @@
 
 (def-delete-handler handle-delete-actor StoredActor)
 
+(s/defn handle-update-actor :- StoredActor
+  [state :- (s/atom {s/Str StoredActor})
+   id :- c/ID
+   updated-actor :- NewActor]
+  (get
+   (swap! state
+          (make-swap-fn replace-actor)
+          updated-actor
+          id
+          (get @state id))
+   id))
+
 (defrecord ActorStore [state]
   IActorStore
   (read-actor [_ id]
     (handle-read-actor state id))
   (create-actor [_ new-actor]
     (handle-create-actor state new-actor))
-  (update-actor [_ actor])
+  (update-actor [_ id actor]
+    (handle-update-actor state id actor))
   (delete-actor [_ id]
     (handle-delete-actor state id))
   (list-actors [_ filter-map]))

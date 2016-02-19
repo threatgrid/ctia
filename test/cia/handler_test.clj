@@ -1,7 +1,7 @@
 (ns cia.handler-test
   (:refer-clojure :exclude [get])
   (:require [cia.handler :as handler]
-            [cia.test-helpers :refer [get post delete] :as helpers]
+            [cia.test-helpers :refer [delete get post put] :as helpers]
             [clj-http.client :as http]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [cia.schemas.common :as c]))
@@ -51,7 +51,8 @@
               :owner "not implemented"}
              (dissoc actor
                      :id
-                     :created)))
+                     :created
+                     :modified)))
 
       (testing "GET /cia/actor/:id"
         (let [response (get (str "cia/actor/" (:id actor)))
@@ -70,7 +71,38 @@
                   :owner "not implemented"}
                  (dissoc actor
                          :id
-                         :created)))))
+                         :created
+                         :modified)))))
+
+      (testing "PUT /cia/actor/:id"
+        (let [response (put (str "cia/actor/" (:id actor))
+                            :body {:title "modified actor"
+                                   :description "updated description"
+                                   :type "Hacktivist"
+                                   :source "a source"
+                                   :confidence "High"
+                                   :associated_actors ["actor-789"]
+                                   :associated_campaigns ["campaign-444" "campaign-555"]
+                                   :observed_TTPs ["ttp-333" "ttp-999"]
+                                   :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                                :end_time "2016-07-11T00:40:48.212-00:00"}})
+              actor (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:title "modified actor"
+                  :description "updated description"
+                  :type "Hacktivist"
+                  :source "a source"
+                  :confidence "High"
+                  :associated_actors ["actor-789"]
+                  :associated_campaigns ["campaign-444" "campaign-555"]
+                  :observed_TTPs ["ttp-333" "ttp-999"]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :owner "not implemented"}
+                 (dissoc actor
+                         :id
+                         :created
+                         :modified)))))
 
       (testing "DELETE /cia/actor/:id"
         (let [response (delete (str "cia/actor/" (:id actor)))]

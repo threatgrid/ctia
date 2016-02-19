@@ -103,3 +103,16 @@
   (http/delete (url path)
                (merge {:throw-exceptions false}
                       options)))
+
+(defn put [path & {:as options}]
+  (let [{:keys [body content-type]
+         :as options}
+        (merge {:content-type :edn
+                :accept :edn
+                :throw-exceptions false
+                :socket-timeout 200
+                :conn-timeout 200}
+               options)
+        response (http/put (url path)
+                           (assoc options :body (encode-body body content-type)))]
+    (assoc response :parsed-body (parse-body response))))
