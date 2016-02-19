@@ -3,6 +3,7 @@
             [cia.schemas.relationships :as rel]
             [cia.schemas.vocabularies :as v]
             [schema.core :as s]
+            [ring.swagger.schema :refer [describe]]
             [schema-tools.core :as st]))
 
 (s/defschema JudgementSpecification
@@ -55,22 +56,23 @@
   (merge
    c/GenericStixIdentifiers
    {:valid_time c/ValidTime
-    (s/optional-key :alternate_ids) [s/Str]
-    (s/optional-key :version) s/Num
-    (s/optional-key :negate) s/Bool ;; Indicates absence of a pattern
-    (s/optional-key :type) [v/IndicatorType]
-    (s/optional-key :judgements) rel/RelatedJudgements
+    (s/optional-key :alternate_ids) (describe [s/Str] "alternative identifier (or alias)")
+    (s/optional-key :version) (describe s/Num "schema version for this content")
+    (s/optional-key :negate) (describe s/Bool "specifies the absence of the pattern")
+    (s/optional-key :type) (describe [v/IndicatorType] "Specifies the type or types for this Indicator")
+    (s/optional-key :observable) (describe c/Observable "a relevant cyber observable for this Indicator")
+    (s/optional-key :judgements) (describe rel/RelatedJudgements "related Judgements for this Indicator")
     (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
-    (s/optional-key :indicated_TTP) rel/RelatedTTPs
-    (s/optional-key :likely_impact) s/Str
-    (s/optional-key :suggested_COAs) rel/RelatedCOAs
-    (s/optional-key :confidence) v/HighMedLow
-    (s/optional-key :sightings) [Sighting] ;; simplified
-    (s/optional-key :related_indicators) rel/RelatedIndicators
-    (s/optional-key :related_campaigns) rel/RelatedCampaigns
-    (s/optional-key :related_COAs) rel/RelatedCOAs
-    (s/optional-key :kill_chain_phases) [s/Str] ;; simplified
-    (s/optional-key :test_mechanisms) [s/Str] ;; simplified
+    (s/optional-key :indicated_TTP) (describe rel/RelatedTTPs "the relevant TTP indicated by this Indicator")
+    (s/optional-key :likely_impact) (describe s/Str "likely potential impact within the relevant context if this Indicator were to occur")
+    (s/optional-key :suggested_COAs) (describe rel/RelatedCOAs "suggested Courses of Action")
+    (s/optional-key :confidence) (describe v/HighMedLow "level of confidence held in the accuracy of this Indicator")
+    (s/optional-key :sightings) (describe [Sighting] "a set of sighting reports")
+    (s/optional-key :related_indicators) (describe rel/RelatedIndicators "relationship between the enclosing indicator and a disparate indicator")
+    (s/optional-key :related_campaigns) (describe rel/RelatedCampaigns "references to related campaigns")
+    (s/optional-key :related_COAs) (describe rel/RelatedCOAs "related Courses of Actions for this cyber threat Indicator")
+    (s/optional-key :kill_chain_phases) (describe [s/Str] "relevant kill chain phases indicated by this Indicator") ;; simplified
+    (s/optional-key :test_mechanisms) (describe [s/Str] "Test Mechanisms effective at identifying the cyber Observables specified in this cyber threat Indicator") ;; simplified
 
     ;; Extension fields:
     :producer s/Str
