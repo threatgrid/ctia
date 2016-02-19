@@ -1190,7 +1190,8 @@
               :owner "not implemented"}
              (dissoc ttp
                      :id
-                     :created)))
+                     :created
+                     :modified)))
 
       (testing "GET /cia/ttp/:id"
         (let [response (get (str "cia/ttp/" (:id ttp)))
@@ -1207,7 +1208,35 @@
                   :owner "not implemented"}
                  (dissoc ttp
                          :id
-                         :created)))))
+                         :created
+                         :modified)))))
+
+      (testing "PUT /cia/ttp/:id"
+        (let [{status :status
+               updated-ttp :parsed-body}
+              (put (str "cia/ttp/" (:id ttp))
+                   :body {:title "updated ttp"
+                          :description "updated description"
+                          :type "bar"
+                          :indicators ["indicator-1" "indicator-2"]
+                          :exploit_targets ["exploit-target-123"
+                                            "exploit-target-234"]
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                       :end_time "2016-07-11T00:40:48.212-00:00"}})]
+          (is (= 200 status))
+          (is (= {:id (:id ttp)
+                  :created (:created ttp)
+                  :title "updated ttp"
+                  :description "updated description"
+                  :type "bar"
+                  :indicators ["indicator-1" "indicator-2"]
+                  :exploit_targets ["exploit-target-123"
+                                    "exploit-target-234"]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :owner "not implemented"}
+                 (dissoc updated-ttp
+                         :modified)))))
 
       (testing "DELETE /cia/ttp/:id"
         (let [response (delete (str "cia/ttp/" (:id ttp)))]

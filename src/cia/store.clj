@@ -39,7 +39,7 @@
 (defprotocol ITTPStore
   (read-ttp [this id])
   (create-ttp [this new-ttp])
-  (update-ttp [this ttp])
+  (update-ttp [this id ttp])
   (delete-ttp [this id])
   (list-ttps [this filtermap]))
 

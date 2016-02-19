@@ -296,6 +296,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [indicator NewIndicator {:description "a new Indicator"}]
                              :summary "Adds a new Indicator"
                              (ok (create-indicator @indicator-store indicator)))
+                      (PUT* "/:id" []
+                            :return StoredIndicator
+                            :body [indicator NewIndicator {:description "an updated Indicator"}]
+                            :summary "Updates an Indicator"
+                            :path-params [id :- s/Str]
+                            (ok (update-indicator @indicator-store id indicator)))
                       (GET* "/:id" []
                             :return (s/maybe StoredIndicator)
                             :summary "Gets an Indicator by ID"
@@ -321,6 +327,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [ttp NewTTP {:description "a new TTP"}]
                              :summary "Adds a new TTP"
                              (ok (create-ttp @ttp-store ttp)))
+                      (PUT* "/:id" []
+                            :return StoredTTP
+                            :body [ttp NewTTP {:description "an updated TTP"}]
+                            :summary "Updated a TTP"
+                            :path-params [id :- s/Str]
+                            (ok (update-ttp @ttp-store id ttp)))
                       (GET* "/:id" []
                             :return (s/maybe StoredTTP)
                             :summary "Gets a TTP by ID"

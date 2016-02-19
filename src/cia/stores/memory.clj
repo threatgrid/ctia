@@ -363,15 +363,17 @@
 
 ;; ttp
 
+(def swap-ttp (make-swap-fn realize-ttp))
+
 (def-create-handler handle-create-ttp
-  StoredTTP
-  NewTTP
-  (make-swap-fn realize-ttp)
-  (random-id "ttp"))
+  StoredTTP NewTTP swap-ttp (random-id "ttp"))
 
 (def-read-handler handle-read-ttp StoredTTP)
 
 (def-delete-handler handle-delete-ttp StoredTTP)
+
+(def-update-handler handle-update-ttp
+  StoredTTP NewTTP swap-ttp)
 
 (defrecord TTPStore [state]
   ITTPStore
@@ -379,7 +381,8 @@
     (handle-read-ttp state id))
   (create-ttp [_ new-ttp]
     (handle-create-ttp state new-ttp))
-  (update-ttp [_ ttp])
+  (update-ttp [_ id new-ttp]
+    (handle-update-ttp state id new-ttp))
   (delete-ttp [_ id]
     (handle-delete-ttp state id))
   (list-ttps [_ filter-map]))
