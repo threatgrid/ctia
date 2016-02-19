@@ -95,18 +95,25 @@
 (s/defschema StoredTTP
   "A TTP as stored in the data store"
   (st/merge TTP
-            {:created c/Time
-             :owner s/Str}))
+            {:owner s/Str
+             :created c/Time
+             :modified c/Time}))
 
 (s/defn realize-ttp :- StoredTTP
-  [new-ttp :- NewTTP
-   id :- s/Str]
-  (let [now (c/timestamp)]
-    (assoc new-ttp
-           :id id
-           :owner "not implemented"
-           :created now
-           :valid_time {:start_time (or (get-in new-ttp [:valid_time :start_time])
-                                        now)
-                        :end_time (or (get-in new-ttp [:valid_time :end_time])
-                                      c/default-expire-date)})))
+  ([new-ttp :- NewTTP
+    id :- s/Str]
+   (realize-ttp new-ttp id nil))
+  ([new-ttp :- NewTTP
+    id :- s/Str
+    prev-ttp :- (s/maybe StoredTTP)]
+   (let [now (c/timestamp)]
+     (assoc new-ttp
+            :id id
+            :owner "not implemented"
+            :created (or (:created prev-ttp) now)
+            :modified now
+            :valid_time (or (:valid_time prev-ttp)
+                            {:start_time (or (get-in new-ttp [:valid_time :start_time])
+                                             now)
+                             :end_time (or (get-in new-ttp [:valid_time :end_time])
+                                           c/default-expire-date)})))))

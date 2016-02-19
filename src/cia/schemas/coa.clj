@@ -43,17 +43,24 @@
   "A COA as stored in the data store"
   (st/merge COA
             {:owner s/Str
-             :created c/Time}))
+             :created c/Time
+             :modified c/Time}))
 
 (s/defn realize-coa :- StoredCOA
-  [new-coa :- NewCOA
-   id :- s/Str]
-  (let [now (c/timestamp)]
-    (st/assoc new-coa
-              :id id
-              :owner "not implemented"
-              :created now
-              :valid_time {:end_time (or (get-in new-coa [:valid_time :end_time])
-                                         c/default-expire-date)
-                           :start_time (or (get-in new-coa [:valid_time :start_time])
-                                           now)})))
+  ([new-coa :- NewCOA
+    id :- s/Str]
+   (realize-coa new-coa id nil))
+  ([new-coa :- NewCOA
+    id :- s/Str
+    prev-coa :- (s/maybe StoredCOA)]
+   (let [now (c/timestamp)]
+     (st/assoc new-coa
+               :id id
+               :owner "not implemented"
+               :created (or (:created prev-coa) now)
+               :modified now
+               :valid_time (or (:valid_time prev-coa)
+                               {:end_time (or (get-in new-coa [:valid_time :end_time])
+                                              c/default-expire-date)
+                                :start_time (or (get-in new-coa [:valid_time :start_time])
+                                                now)})))))

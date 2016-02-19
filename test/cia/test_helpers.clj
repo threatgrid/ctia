@@ -6,7 +6,23 @@
             [clj-http.client :as http]
             [clojure.edn :as edn]
             [ring.adapter.jetty :as jetty]
-            [schema.core :as schema]))
+            [schema.core :as schema]
+            [clojure.test :as ct]
+            [clojure.data :as cd]))
+
+(defmethod ct/assert-expr 'deep= [msg form]
+  (let [a (second form)
+        b (nth form 2)]
+    `(let [[only-a# only-b# _] (cd/diff ~a ~b)]
+       (if (or only-a# only-b#)
+         (let [only-msg# (str (when only-a# (str "Only in A: " only-a#))
+                              (when (and only-a# only-b#) ", ")
+                              (when only-b# (str "Only in B: " only-b#)))]
+           (ct/do-report {:type :fail, :message ~msg,
+                          :expected '~form, :actual only-msg#}))
+         (ct/do-report {:type :pass, :message ~msg,
+                        :expected '~form, :actual nil})))))
+
 
 (defn fixture-schema-validation [f]
   (schema/with-fn-validation
@@ -92,8 +108,8 @@
         (merge {:content-type :edn
                 :accept :edn
                 :throw-exceptions false
-                :socket-timeout 200
-                :conn-timeout 200}
+                :socket-timeout 2000
+                :conn-timeout 2000}
                options)
         response (http/post (url path)
                             (assoc options :body (encode-body body content-type)))]
@@ -103,3 +119,16 @@
   (http/delete (url path)
                (merge {:throw-exceptions false}
                       options)))
+
+(defn put [path & {:as options}]
+  (let [{:keys [body content-type]
+         :as options}
+        (merge {:content-type :edn
+                :accept :edn
+                :throw-exceptions false
+                :socket-timeout 2000
+                :conn-timeout 2000}
+               options)
+        response (http/put (url path)
+                           (assoc options :body (encode-body body content-type)))]
+    (assoc response :parsed-body (parse-body response))))

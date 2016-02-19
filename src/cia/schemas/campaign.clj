@@ -54,17 +54,24 @@
   "A schema as stored in the data store"
   (st/merge Campaign
             {:owner s/Str
-             :created c/Time}))
+             :created c/Time
+             :modified c/Time}))
 
 (s/defn realize-campaign :- StoredCampaign
-  [new-campaign :- NewCampaign
-   id :- s/Str]
-  (let [now (c/timestamp)]
-    (assoc new-campaign
-           :id id
-           :owner "not implemented"
-           :created now
-           :valid_time {:end_time (or (get-in new-campaign [:valid_time :end_time])
-                                      c/default-expire-date)
-                        :start_time (or (get-in new-campaign [:valid_time :start_time])
-                                        now)})))
+  ([new-campaign :- NewCampaign
+    id :- s/Str]
+   (realize-campaign new-campaign id nil))
+  ([new-campaign :- NewCampaign
+    id :- s/Str
+    prev-campaign :- (s/maybe StoredCampaign)]
+   (let [now (c/timestamp)]
+     (assoc new-campaign
+            :id id
+            :owner "not implemented"
+            :created (or (:created prev-campaign) now)
+            :modified now
+            :valid_time (or (:valid_time prev-campaign)
+                            {:end_time (or (get-in new-campaign [:valid_time :end_time])
+                                           c/default-expire-date)
+                             :start_time (or (get-in new-campaign [:valid_time :start_time])
+                                             now)})))))

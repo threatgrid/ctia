@@ -38,17 +38,24 @@
   "An actor as stored in the data store"
   (st/merge Actor
             {:owner s/Str
-             :created c/Time}))
+             :created c/Time
+             :modified c/Time}))
 
 (s/defn realize-actor :- StoredActor
-  [new-actor :- NewActor
-   id :- s/Str]
-  (let [now (c/timestamp)]
-    (assoc new-actor
-           :id id
-           :owner "not implemented"
-           :created now
-           :valid_time {:end_time (or (get-in new-actor [:valid_time :end_time])
-                                      c/default-expire-date)
-                        :start_time (or (get-in new-actor [:valid_time :start_time])
-                                        now)})))
+  ([new-actor :- NewActor
+    id :- s/Str]
+   (realize-actor new-actor id nil))
+  ([new-actor :- NewActor
+    id :- s/Str
+    prev-actor :- (s/maybe StoredActor)]
+   (let [now (c/timestamp)]
+     (assoc new-actor
+            :id id
+            :owner "not implemented"
+            :created (or (:created prev-actor) now)
+            :modified now
+            :valid_time (or (:valid_time prev-actor)
+                            {:end_time (or (get-in new-actor [:valid_time :end_time])
+                                           c/default-expire-date)
+                             :start_time (or (get-in new-actor [:valid_time :start_time])
+                                             now)})))))

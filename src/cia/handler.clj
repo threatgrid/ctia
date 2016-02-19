@@ -97,6 +97,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [actor NewActor {:description "a new Actor"}]
                              :summary "Adds a new Actor"
                              (ok (create-actor @actor-store actor)))
+                      (PUT* "/:id" []
+                            :return StoredActor
+                            :body [actor NewActor {:description "an updated Actor"}]
+                            :summary "Updates an Actor"
+                            :path-params [id :- s/Str]
+                            (ok (update-actor @actor-store id actor)))
                       (GET* "/:id" []
                             :return (s/maybe StoredActor)
                             :summary "Gets an Actor by ID"
@@ -118,6 +124,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [campaign NewCampaign {:description "a new campaign"}]
                              :summary "Adds a new Campaign"
                              (ok (create-campaign @campaign-store campaign)))
+                      (PUT* "/:id" []
+                            :return StoredCampaign
+                            :body [campaign NewCampaign {:description "an updated campaign"}]
+                            :summary "Updates a campaign"
+                            :path-params [id :- s/Str]
+                            (ok (update-campaign @campaign-store id campaign)))
                       (GET* "/:id" []
                             :return (s/maybe StoredCampaign)
                             :summary "Gets a Campaign by ID"
@@ -139,6 +151,14 @@ Malicious disposition, and so on down to Unknown.
                              :body [exploit-target NewExploitTarget {:description "a new exploit target"}]
                              :summary "Adds a new ExploitTarget"
                              (ok (create-exploit-target @exploit-target-store exploit-target)))
+                      (PUT* "/:id" []
+                            :return StoredExploitTarget
+                            :body [exploit-target
+                                   NewExploitTarget
+                                   {:description "an updated exploit target"}]
+                            :summary "Updates an exploit target"
+                            :path-params [id :- s/Str]
+                            (ok (update-exploit-target @exploit-target-store id exploit-target)))
                       (GET* "/:id" []
                             :return (s/maybe StoredExploitTarget)
                             :summary "Gets an ExploitTarget by ID"
@@ -160,6 +180,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [coa NewCOA {:description "a new COA"}]
                              :summary "Adds a new COA"
                              (ok (create-coa @coa-store coa)))
+                      (PUT* "/:id" []
+                            :return StoredCOA
+                            :body [coa NewCOA {:description "an updated COA"}]
+                            :summary "Updates a COA"
+                            :path-params [id :- s/Str]
+                            (ok (update-coa @coa-store id coa)))
                       (GET* "/:id" []
                             :return (s/maybe StoredCOA)
                             :summary "Gets a COA by ID"
@@ -181,6 +207,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [incident NewIncident {:description "a new incident"}]
                              :summary "Adds a new Incident"
                              (ok (create-incident @incident-store incident)))
+                      (PUT* "/:id" []
+                            :return StoredIncident
+                            :body [incident NewIncident {:description "an updated incident"}]
+                            :summary "Updates an Incident"
+                            :path-params [id :- s/Str]
+                            (ok (update-incident @incident-store id incident)))
                       (GET* "/:id" []
                             :return (s/maybe StoredIncident)
                             :summary "Gets an Incident by ID"
@@ -264,6 +296,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [indicator NewIndicator {:description "a new Indicator"}]
                              :summary "Adds a new Indicator"
                              (ok (create-indicator @indicator-store indicator)))
+                      (PUT* "/:id" []
+                            :return StoredIndicator
+                            :body [indicator NewIndicator {:description "an updated Indicator"}]
+                            :summary "Updates an Indicator"
+                            :path-params [id :- s/Str]
+                            (ok (update-indicator @indicator-store id indicator)))
                       (GET* "/:id" []
                             :return (s/maybe StoredIndicator)
                             :summary "Gets an Indicator by ID"
@@ -289,6 +327,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [ttp NewTTP {:description "a new TTP"}]
                              :summary "Adds a new TTP"
                              (ok (create-ttp @ttp-store ttp)))
+                      (PUT* "/:id" []
+                            :return StoredTTP
+                            :body [ttp NewTTP {:description "an updated TTP"}]
+                            :summary "Updated a TTP"
+                            :path-params [id :- s/Str]
+                            (ok (update-ttp @ttp-store id ttp)))
                       (GET* "/:id" []
                             :return (s/maybe StoredTTP)
                             :summary "Gets a TTP by ID"

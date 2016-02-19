@@ -182,17 +182,24 @@
   "An incident as stored in the data store"
   (st/merge Incident
             {:owner s/Str
-             :created c/Time}))
+             :created c/Time
+             :modified c/Time}))
 
 (s/defn realize-incident :- StoredIncident
-  [new-incident :- NewIncident
-   id :- s/Str]
-  (let [now (c/timestamp)]
-    (assoc new-incident
-           :id id
-           :owner "not implemented"
-           :created now
-           :valid_time {:start_time (or (get-in new-incident [:valid_time :start_time])
-                                        now)
-                        :end_time (or (get-in new-incident [:valid_time :end_time])
-                                      c/default-expire-date)})))
+  ([new-incident :- NewIncident
+    id :- s/Str]
+   (realize-incident new-incident id nil))
+  ([new-incident :- NewIncident
+     id :- s/Str
+    prev-incident :- (s/maybe StoredIncident)]
+   (let [now (c/timestamp)]
+     (assoc new-incident
+            :id id
+            :owner "not implemented"
+            :created (or (:created prev-incident) now)
+            :modified now
+            :valid_time (or (:valid_time prev-incident)
+                            {:start_time (or (get-in new-incident [:valid_time :start_time])
+                                             now)
+                             :end_time (or (get-in new-incident [:valid_time :end_time])
+                                           c/default-expire-date)})))))
