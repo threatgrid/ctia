@@ -261,7 +261,8 @@
               :owner "not implemented"}
              (dissoc coa
                      :id
-                     :created)))
+                     :created
+                     :modified)))
 
       (testing "GET /cia/coa/:id"
         (let [response (get (str "cia/coa/" (:id coa)))
@@ -276,7 +277,30 @@
                   :owner "not implemented"}
                  (dissoc coa
                          :id
-                         :created)))))
+                         :created
+                         :modified)))))
+
+      (testing "PUT /cia/coa/:id"
+        (let [{coa :parsed-body
+               status :status}
+              (put (str "cia/coa/" (:id coa))
+                   :body {:title "updated coa"
+                          :description "updated description"
+                          :type "Hardening"
+                          :objective ["foo" "bar"]
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
+          (is (= 200 status))
+          (is (= {:title "updated coa"
+                  :description "updated description"
+                  :type "Hardening"
+                  :objective ["foo" "bar"]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :owner "not implemented"}
+                 (dissoc coa
+                         :id
+                         :created
+                         :modified)))))
 
       (testing "DELETE /cia/coa/:id"
         (let [response (delete (str "/cia/coa/" (:id coa)))]

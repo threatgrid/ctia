@@ -137,13 +137,17 @@
 
 (def-delete-handler handle-delete-coa StoredCOA)
 
+(def-update-handler handle-update-coa
+  StoredCOA NewCOA (make-swap-fn realize-coa))
+
 (defrecord COAStore [state]
   ICOAStore
   (read-coa [_ id]
     (handle-read-coa state id))
   (create-coa [_ new-coa]
     (handle-create-coa state new-coa))
-  (update-coa [_ coa])
+  (update-coa [_ id new-coa]
+    (handle-update-coa state id new-coa))
   (delete-coa [_ id]
     (handle-delete-coa state id))
   (list-coas [_ filter-map]))

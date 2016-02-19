@@ -52,7 +52,7 @@
 (defprotocol ICOAStore
   (read-coa [this id])
   (create-coa [this new-coa])
-  (update-coa [this coa])
+  (update-coa [this id coa])
   (delete-coa [this id])
   (list-coas [this filtermap]))
 

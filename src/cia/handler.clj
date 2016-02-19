@@ -172,6 +172,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [coa NewCOA {:description "a new COA"}]
                              :summary "Adds a new COA"
                              (ok (create-coa @coa-store coa)))
+                      (PUT* "/:id" []
+                            :return StoredCOA
+                            :body [coa NewCOA {:description "an updated COA"}]
+                            :summary "Updates a COA"
+                            :path-params [id :- s/Str]
+                            (ok (update-coa @coa-store id coa)))
                       (GET* "/:id" []
                             :return (s/maybe StoredCOA)
                             :summary "Gets a COA by ID"
