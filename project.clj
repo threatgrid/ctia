@@ -11,5 +11,6 @@
   :uberjar-name "server.jar"
   :profiles {:dev {:dependencies [[clj-http "2.0.1"]
                                   [cheshire "5.5.0"]
-                                  [javax.servlet/servlet-api "2.5"]]
+                                  [javax.servlet/servlet-api "2.5"]
+                                  [ring/ring-jetty-adapter "1.4.0"]]
                    :plugins [[lein-ring "0.9.6"]]}})
