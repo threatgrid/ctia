@@ -9,24 +9,23 @@
 (s/defschema COA
   (merge
    c/GenericStixIdentifiers
-   {:timestamp c/Time
+   {:valid_time c/ValidTime
     (s/optional-key :stage)
-    (describe v/COAStage "stage in the cyber threat management lifecycle this CourseOfAction is relevant to")
+    (describe v/COAStage "specifies what stage in the cyber threat management lifecycle this Course Of Action is relevant to ")
     (s/optional-key :type)
-    (describe v/COAType "type of this Course Of Action")
+    (describe v/COAType "type of this CourseOfAction")
     (s/optional-key :objective)
     (describe [s/Str] "characterizes the objective of this Course Of Action") ;; Squashed / simplified
     (s/optional-key :impact)
-    (describe s/Str "estimated impact of applying this Course Of Action")
+    (describe s/Str "characterizes the estimated impact of applying this Course Of Action")
     (s/optional-key :cost)
-    (describe v/HighMedLow "estimated cost for applying this Course Of Action")
+    (describe v/HighMedLow "characterizes the estimated cost for applying this Course Of Action")
     (s/optional-key :efficacy)
     (describe v/HighMedLow "effectiveness of this Course Of Action in achieving its targeted Objective")
     (s/optional-key :source)
-    (describe c/Source "source of this course of action")
+    (describe s/Str "Source of this Course Of Action")
     (s/optional-key :related_COAs)
-    (describe rel/RelatedCOAs "relationships to one or more related courses of action")
-
+    (describe rel/RelatedCOAs "identifies or characterizes relationships to one or more related courses of action")
     ;; Not provided: handling
     ;; Not provided: parameter_observables ;; Technical params using the CybOX language
     ;; Not provided: structured_COA ;; actionable structured representation for automation
@@ -34,11 +33,27 @@
 
 (s/defschema NewCOA
   "Schema for submitting new COAs"
-  (st/dissoc COA
-             :id))
+  (st/merge
+   (st/dissoc COA
+              :id
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
-(s/defn realize-coa :- COA
+(s/defschema StoredCOA
+  "A COA as stored in the data store"
+  (st/merge COA
+            {:owner s/Str
+             :created c/Time}))
+
+(s/defn realize-coa :- StoredCOA
   [new-coa :- NewCOA
    id :- s/Str]
-  (st/assoc new-coa
-            :id id))
+  (let [now (c/timestamp)]
+    (st/assoc new-coa
+              :id id
+              :owner "not implemented"
+              :created now
+              :valid_time {:end_time (or (get-in new-coa [:valid_time :end_time])
+                                         c/default-expire-date)
+                           :start_time (or (get-in new-coa [:valid_time :start_time])
+                                           now)})))

@@ -50,7 +50,7 @@
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
   (merge
    c/GenericStixIdentifiers
-   {:timestamp (describe c/Time "a timestamp for the definition of a specific version of a TTP item")
+   {:valid_time (describe c/ValidTime "a timestamp for the definition of a specific version of a TTP item")
     (s/optional-key :version)
     (describe s/Str "the relevant schema version for this content")
 
@@ -73,13 +73,12 @@
     (describe rel/RelatedTTPs "specifies other TTPs asserted to be related to this cyber threat TTP")
 
     (s/optional-key :source)
-    (describe c/Source "source of this cyber threat TTP")
+    (describe s/Str "source of this cyber threat TTP")
 
     ;; Extension fields:
     :type  (describe s/Str "type of this TTP")
     :expires (describe c/Time "expiration time")
     :indicators (describe [rel/IndicatorReference] "related indicators")
-
     ;; Not provided: kill_chain_phases
     ;; Not provided: kill_chains
     ;; Not provided: handling
@@ -90,12 +89,24 @@
   (st/merge
    (st/dissoc TTP
               :id
-              :expires)
-   {(s/optional-key :expires) c/Time}))
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
-(s/defn realize-ttp :- TTP
+(s/defschema StoredTTP
+  "A TTP as stored in the data store"
+  (st/merge TTP
+            {:created c/Time
+             :owner s/Str}))
+
+(s/defn realize-ttp :- StoredTTP
   [new-ttp :- NewTTP
    id :- s/Str]
-  (assoc new-ttp
-         :id id
-         :expires (or (:expires new-ttp) (c/expire-after))))
+  (let [now (c/timestamp)]
+    (assoc new-ttp
+           :id id
+           :owner "not implemented"
+           :created now
+           :valid_time {:start_time (or (get-in new-ttp [:valid_time :start_time])
+                                        now)
+                        :end_time (or (get-in new-ttp [:valid_time :end_time])
+                                      c/default-expire-date)})))

@@ -6,11 +6,6 @@
             [ring.swagger.schema :refer [describe]]
             [schema-tools.core :as st]))
 
-(s/defschema ValidTime
-  "See http://stixproject.github.io/data-model/1.2/indicator/ValidTimeType/"
-  {(s/optional-key :start_time) c/Time
-   (s/optional-key :end_time) c/Time})
-
 (s/defschema JudgementSpecification
   "An indicator based on a list of judgements.  If any of the
   Observables in it's judgements are encountered, than it may be
@@ -19,7 +14,7 @@
   match."
   {:type (s/eq "Judgement")
    :judgements [rel/JudgementReference]
-   :required_judgements [rel/JudgementReference]})
+   :required_judgements rel/RelatedJudgements})
 
 (s/defschema ThreatBrainSpecification
   "An indicator which runs in threatbrain..."
@@ -45,11 +40,11 @@
 (s/defschema Sighting
   "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
   {(s/optional-key :timestamp) c/Time
-   (s/optional-key :source) c/Source
+   (s/optional-key :source) s/Str
    (s/optional-key :reference) c/URI
    (s/optional-key :confidence) v/HighMedLow
    (s/optional-key :description) s/Str
-   (s/optional-key :related_observables) [c/Observable]})
+   (s/optional-key :related_judgements) rel/RelatedJudgements})
 
 (s/defschema CompositeIndicatorExpression
   "See http://stixproject.github.io/data-model/1.2/indicator/CompositeIndicatorExpressionType/"
@@ -60,12 +55,13 @@
   "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
   (merge
    c/GenericStixIdentifiers
-   {(s/optional-key :alternate_ids) (describe [s/Str] "alternative identifier (or alias)")
+   {:valid_time c/ValidTime
+    (s/optional-key :alternate_ids) (describe [s/Str] "alternative identifier (or alias)")
     (s/optional-key :version) (describe s/Num "schema version for this content")
     (s/optional-key :negate) (describe s/Bool "specifies the absence of the pattern")
     (s/optional-key :type) (describe [v/IndicatorType] "Specifies the type or types for this Indicator")
-    (s/optional-key :valid_time_position) (describe ValidTime "the time window for which this Indicator is valid")
     (s/optional-key :observable) (describe c/Observable "a relevant cyber observable for this Indicator")
+    (s/optional-key :judgements) (describe rel/RelatedJudgements "related Judgements for this Indicator")
     (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
     (s/optional-key :indicated_TTP) (describe rel/RelatedTTPs "the relevant TTP indicated by this Indicator")
     (s/optional-key :likely_impact) (describe s/Str "likely potential impact within the relevant context if this Indicator were to occur")
@@ -79,8 +75,7 @@
     (s/optional-key :test_mechanisms) (describe [s/Str] "Test Mechanisms effective at identifying the cyber Observables specified in this cyber threat Indicator") ;; simplified
 
     ;; Extension fields:
-    (s/optional-key :expires) (describe c/Time "expiration time")
-    :producer (describe s/Str "details the source of this entry")
+    :producer s/Str
 
     ;; Extension field :specification
     ;; we should use a conditional based on the :type field of the
@@ -99,8 +94,8 @@
   (st/merge
    (st/dissoc Indicator
               :id
-              :expires)
-   {(s/optional-key :expires) c/Time}))
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
 (s/defschema StoredIndicator
   "A feedback record at rest in the storage service"
@@ -108,9 +103,15 @@
             {:owner s/Str
              :created c/Time}))
 
-(s/defn realize-indicator :- Indicator
+(s/defn realize-indicator :- StoredIndicator
   [new-indicator :- NewIndicator
    id :- s/Str]
-  (assoc new-indicator
-         :id id
-         :expires (or (:expires new-indicator) (c/expire-after))))
+  (let [now (c/timestamp)]
+    (assoc new-indicator
+           :id id
+           :owner "not implemented"
+           :created now
+           :valid_time {:start_time (or (get-in new-indicator [:valid_time :start_time])
+                                       now)
+                       :end_time (or (get-in new-indicator [:valid_time :end_time])
+                                     c/default-expire-date)})))

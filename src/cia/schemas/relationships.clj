@@ -18,7 +18,7 @@
 (defn enriched-ref [reference-map]
   (st/merge
    {(s/optional-key :confidence) v/HighMedLow
-    (s/optional-key :source) c/Source
+    (s/optional-key :source) s/Str
     (s/optional-key :relationship) s/Str}
    reference-map))
 
@@ -54,6 +54,10 @@
 (s/defschema RelatedIndicators
   [(relation IndicatorReference
              (enriched-ref {:indicator IndicatorReference}))])
+
+(s/defschema RelatedJudgements
+  [(relation JudgementReference
+             (enriched-ref {:judgement JudgementReference}))])
 
 (s/defschema RelatedTTP
   (enriched-ref {:ttp TTPReference}))
