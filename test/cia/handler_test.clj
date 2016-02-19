@@ -156,35 +156,85 @@
               :owner "not implemented"}
              (dissoc campaign
                      :id
-                     :created)))
+                     :created
+                     :modified)))
 
       (testing "GET /cia/campaign/:id"
         (let [response (get (str "cia/campaign/" (:id campaign)))
               campaign (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= {:title "campaign"
-              :description "description"
-              :type "anything goes here"
-              :intended_effect ["Theft"]
-              :indicators ["indicator-foo" "indicator-bar"]
-              :attribution [{:confidence "High"
-                             :source "source"
-                             :relationship "relationship"
-                             :actor "actor-123"}]
-              :related_incidents [{:confidence "High"
-                                   :source "source"
-                                   :relationship "relationship"
-                                   :incident "incident-222"}]
-              :related_TTPs [{:confidence "High"
-                              :source "source"
-                              :relationship "relationship"
-                              :ttp "ttp-999"}]
-              :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                           :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-              :owner "not implemented"}
+                  :description "description"
+                  :type "anything goes here"
+                  :intended_effect ["Theft"]
+                  :indicators ["indicator-foo" "indicator-bar"]
+                  :attribution [{:confidence "High"
+                                 :source "source"
+                                 :relationship "relationship"
+                                 :actor "actor-123"}]
+                  :related_incidents [{:confidence "High"
+                                       :source "source"
+                                       :relationship "relationship"
+                                       :incident "incident-222"}]
+                  :related_TTPs [{:confidence "High"
+                                  :source "source"
+                                  :relationship "relationship"
+                                  :ttp "ttp-999"}]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :owner "not implemented"}
                  (dissoc campaign
                          :id
-                         :created)))))
+                         :created
+                         :modified)))))
+
+      (testing "PUT /cia/campaign/:id"
+        (let [response (put (str "cia/campaign/" (:id campaign))
+                            :body {:title "modified campaign"
+                                   :description "different description"
+                                   :type "anything goes here"
+                                   :intended_effect ["Brand Damage"]
+                                   :indicators ["indicator-foo" "indicator-bar"]
+                                   :attribution [{:confidence "High"
+                                                  :source "source"
+                                                  :relationship "relationship"
+                                                  :actor "actor-123"}]
+                                   :related_incidents [{:confidence "High"
+                                                        :source "source"
+                                                        :relationship "relationship"
+                                                        :incident "incident-222"}]
+                                   :related_TTPs [{:confidence "High"
+                                                   :source "source"
+                                                   :relationship "relationship"
+                                                   :ttp "ttp-999"}]
+                                   :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                                :end_time "2016-07-11T00:40:48.212-00:00"}})
+              campaign (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= {:title "modified campaign"
+                  :description "different description"
+                  :type "anything goes here"
+                  :intended_effect ["Brand Damage"]
+                  :indicators ["indicator-foo" "indicator-bar"]
+                  :attribution [{:confidence "High"
+                                 :source "source"
+                                 :relationship "relationship"
+                                 :actor "actor-123"}]
+                  :related_incidents [{:confidence "High"
+                                       :source "source"
+                                       :relationship "relationship"
+                                       :incident "incident-222"}]
+                  :related_TTPs [{:confidence "High"
+                                  :source "source"
+                                  :relationship "relationship"
+                                  :ttp "ttp-999"}]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :owner "not implemented"}
+                 (dissoc campaign
+                         :id
+                         :created
+                         :modified)))))
 
       (testing "DELETE /cia/campaign/:id"
         (let [response (delete (str "cia/campaign/" (:id campaign)))]

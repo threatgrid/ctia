@@ -124,6 +124,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [campaign NewCampaign {:description "a new campaign"}]
                              :summary "Adds a new Campaign"
                              (ok (create-campaign @campaign-store campaign)))
+                      (PUT* "/:id" []
+                            :return StoredCampaign
+                            :body [campaign NewCampaign {:description "an updated campaign"}]
+                            :summary "Updates a campaign"
+                            :path-params [id :- s/Str]
+                            (ok (update-campaign @campaign-store id campaign)))
                       (GET* "/:id" []
                             :return (s/maybe StoredCampaign)
                             :summary "Gets a Campaign by ID"

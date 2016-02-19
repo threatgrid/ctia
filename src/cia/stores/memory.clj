@@ -1,7 +1,8 @@
 (ns cia.stores.memory
   (:require [cia.schemas.actor
              :refer [NewActor StoredActor realize-actor replace-actor]]
-            [cia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
+            [cia.schemas.campaign
+             :refer [NewCampaign StoredCampaign realize-campaign replace-campaign]]
             [cia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]
             [cia.schemas.common :as c]
             [cia.schemas.exploit-target
@@ -40,6 +41,19 @@
         (swap! state# ~swap-fn new-model# new-id#)
         new-id#))))
 
+(defmacro def-update-handler [name Model NewModel swap-fn]
+  `(s/defn ~name :- ~Model
+     [state# :- (s/atom {s/Str ~Model})
+      id# :- c/ID
+      updated-model# :- ~NewModel]
+     (get
+      (swap! state#
+             ~swap-fn
+             updated-model#
+             id#
+             (get (deref state#) id#))
+      id#)))
+
 (defmacro def-delete-handler [name Model]
   `(s/defn ~name :- s/Bool
      [state# :- (s/atom {s/Str ~Model})
@@ -75,17 +89,8 @@
 
 (def-delete-handler handle-delete-actor StoredActor)
 
-(s/defn handle-update-actor :- StoredActor
-  [state :- (s/atom {s/Str StoredActor})
-   id :- c/ID
-   updated-actor :- NewActor]
-  (get
-   (swap! state
-          (make-swap-fn replace-actor)
-          updated-actor
-          id
-          (get @state id))
-   id))
+(def-update-handler handle-update-actor
+  StoredActor NewActor (make-swap-fn replace-actor))
 
 (defrecord ActorStore [state]
   IActorStore
@@ -108,13 +113,17 @@
 
 (def-delete-handler handle-delete-campaign StoredCampaign)
 
+(def-update-handler handle-update-campaign
+  StoredCampaign NewCampaign (make-swap-fn replace-campaign))
+
 (defrecord CampaignStore [state]
   ICampaignStore
   (read-campaign [_ id]
     (handle-read-campaign state id))
   (create-campaign [_ new-campaign]
     (handle-create-campaign state new-campaign))
-  (update-campaign [_ campaign])
+  (update-campaign [_ id campaign]
+    (handle-update-campaign state id campaign))
   (delete-campaign [_ id]
     (handle-delete-campaign state id))
   (list-campaigns [_ filter-map]))

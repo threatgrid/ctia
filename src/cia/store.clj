@@ -45,7 +45,7 @@
 (defprotocol ICampaignStore
   (read-campaign [this id])
   (create-campaign [this new-campaign])
-  (update-campaign [this campaign])
+  (update-campaign [this id campaign])
   (delete-campaign [this id])
   (list-campaigns [this filtermap]))
 
