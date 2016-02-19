@@ -86,9 +86,11 @@
                                    :observed_TTPs ["ttp-333" "ttp-999"]
                                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                                 :end_time "2016-07-11T00:40:48.212-00:00"}})
-              actor (:parsed-body response)]
+              updated-actor (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= {:title "modified actor"
+          (is (= {:id (:id actor)
+                  :created (:created actor)
+                  :title "modified actor"
                   :description "updated description"
                   :type "Hacktivist"
                   :source "a source"
@@ -99,9 +101,7 @@
                   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                   :owner "not implemented"}
-                 (dissoc actor
-                         :id
-                         :created
+                 (dissoc updated-actor
                          :modified)))))
 
       (testing "DELETE /cia/actor/:id"
@@ -209,9 +209,11 @@
                                                    :ttp "ttp-999"}]
                                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                                 :end_time "2016-07-11T00:40:48.212-00:00"}})
-              campaign (:parsed-body response)]
+              updated-campaign (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= {:title "modified campaign"
+          (is (= {:id (:id campaign)
+                  :created (:created campaign)
+                  :title "modified campaign"
                   :description "different description"
                   :type "anything goes here"
                   :intended_effect ["Brand Damage"]
@@ -231,9 +233,7 @@
                   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                   :owner "not implemented"}
-                 (dissoc campaign
-                         :id
-                         :created
+                 (dissoc updated-campaign
                          :modified)))))
 
       (testing "DELETE /cia/campaign/:id"
@@ -281,7 +281,7 @@
                          :modified)))))
 
       (testing "PUT /cia/coa/:id"
-        (let [{coa :parsed-body
+        (let [{updated-coa :parsed-body
                status :status}
               (put (str "cia/coa/" (:id coa))
                    :body {:title "updated coa"
@@ -290,16 +290,16 @@
                           :objective ["foo" "bar"]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
           (is (= 200 status))
-          (is (= {:title "updated coa"
+          (is (= {:id (:id coa)
+                  :created (:created coa)
+                  :title "updated coa"
                   :description "updated description"
                   :type "Hardening"
                   :objective ["foo" "bar"]
                   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                   :owner "not implemented"}
-                 (dissoc coa
-                         :id
-                         :created
+                 (dissoc updated-coa
                          :modified)))))
 
       (testing "DELETE /cia/coa/:id"
@@ -337,7 +337,8 @@
               :owner "not implemented"}
              (dissoc exploit-target
                      :id
-                     :created)))
+                     :created
+                     :modified)))
 
       (testing "GET /cia/exploit-target/:id"
         (let [response (get (str "cia/exploit-target/" (:id exploit-target)))
@@ -357,7 +358,40 @@
                   :owner "not implemented"}
                  (dissoc exploit-target
                          :id
-                         :created)))))
+                         :created
+                         :modified)))))
+
+      (testing "PUT /cia/exploit-target/:id"
+        (let [{updated-exploit-target :parsed-body
+               status :status}
+              (put (str "cia/exploit-target/" (:id exploit-target))
+                   :body {:title "updated exploit-target"
+                          :description "updated description"
+                          :vulnerability [{:title "vulnerability"
+                                           :description "description"}]
+                          :potential_COAs ["coa-777" "coa-333"]
+                          :related_exploit_targets [{:confidence "Medium"
+                                                     :source "source"
+                                                     :relationship "another relationship"
+                                                     :exploit_target "exploit-target-123"}]
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
+          (is (= 200 status))
+          (is (= {:id (:id exploit-target)
+                  :title "updated exploit-target"
+                  :description "updated description"
+                  :vulnerability [{:title "vulnerability"
+                                   :description "description"}]
+                  :potential_COAs ["coa-777" "coa-333"]
+                  :related_exploit_targets [{:confidence "Medium"
+                                             :source "source"
+                                             :relationship "another relationship"
+                                             :exploit_target "exploit-target-123"}]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :owner "not implemented"
+                  :created (:created exploit-target)}
+                 (dissoc updated-exploit-target
+                         :modified)))))
 
       (testing "DELETE /cia/exploit-target/:id"
         (let [response (delete (str "cia/exploit-target/" (:id exploit-target)))]
@@ -396,7 +430,8 @@
               :owner "not implemented"}
              (dissoc incident
                      :id
-                     :created)))
+                     :created
+                     :modified)))
 
       (testing "GET /cia/incident/:id"
         (let [response (get (str "cia/incident/" (:id incident)))
@@ -417,7 +452,42 @@
                   :owner "not implemented"}
                  (dissoc incident
                          :id
-                         :created)))))
+                         :created
+                         :modified)))))
+
+      (testing "PUT /cia/incident/:id"
+        (let [{status :status
+               updated-incident :parsed-body}
+              (put (str "cia/incident/" (:id incident))
+                   :body {:title "updated incident"
+                          :description "updated description"
+                          :confidence "Low"
+                          :categories ["Denial of Service"
+                                       "Improper Usage"]
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                          :related_indicators [{:confidence "High"
+                                                :source "another source"
+                                                :relationship "relationship"
+                                                :indicator "indicator-234"}]
+                          :related_incidents ["incident-123" "indicent-789"]})]
+          (is (= 200 status))
+          (is (= {:id (:id incident)
+                  :created (:created incident)
+                  :title "updated incident"
+                  :description "updated description"
+                  :confidence "Low"
+                  :categories ["Denial of Service"
+                               "Improper Usage"]
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :related_indicators [{:confidence "High"
+                                        :source "another source"
+                                        :relationship "relationship"
+                                        :indicator "indicator-234"}]
+                  :related_incidents ["incident-123" "indicent-789"]
+                  :owner "not implemented"}
+                 (dissoc updated-incident
+                         :modified)))))
 
       (testing "DELETE /cia/incident/:id"
         (let [response (delete (str "cia/incident/" (:id incident)))]

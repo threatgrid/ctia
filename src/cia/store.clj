@@ -27,7 +27,7 @@
 (defprotocol IExploitTargetStore
   (read-exploit-target [this id])
   (create-exploit-target [this new-exploit-target])
-  (update-exploit-target [this exploit-target])
+  (update-exploit-target [this id exploit-target])
   (delete-exploit-target [this id])
   (list-exploit-targets [this filtermap]))
 
@@ -66,7 +66,7 @@
 (defprotocol IIncidentStore
   (read-incident [this id])
   (create-incident [this new-incident])
-  (update-incident [this incident])
+  (update-incident [this id incident])
   (delete-incident [this id])
   (list-incidents [this filtermap]))
 

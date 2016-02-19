@@ -159,12 +159,17 @@
 
 ;; ExploitTarget
 
+(def swap-exploit-target (make-swap-fn realize-exploit-target))
+
 (def-create-handler handle-create-exploit-target
-  StoredExploitTarget NewExploitTarget (make-swap-fn realize-exploit-target) (random-id "exploit-target"))
+  StoredExploitTarget NewExploitTarget swap-exploit-target (random-id "exploit-target"))
 
 (def-read-handler handle-read-exploit-target StoredExploitTarget)
 
 (def-delete-handler handle-delete-exploit-target StoredExploitTarget)
+
+(def-update-handler handle-update-exploit-target
+  StoredExploitTarget NewExploitTarget swap-exploit-target)
 
 (defrecord ExplitTargetStore [state]
   IExploitTargetStore
@@ -172,7 +177,8 @@
     (handle-read-exploit-target state id))
   (create-exploit-target [_ new-exploit-target]
     (handle-create-exploit-target state new-exploit-target))
-  (update-exploit-target [_ exploit-target])
+  (update-exploit-target [_ id new-exploit-target]
+    (handle-update-exploit-target state id new-exploit-target))
   (delete-exploit-target [_ id]
     (handle-delete-exploit-target state id))
   (list-exploit-targets [_ filter-map]))
@@ -203,12 +209,17 @@
 
 ;; Incident
 
+(def swap-incident (make-swap-fn realize-incident))
+
 (def-create-handler handle-create-incident
-  StoredIncident NewIncident (make-swap-fn realize-incident) (random-id "incident"))
+  StoredIncident NewIncident swap-incident (random-id "incident"))
 
 (def-read-handler handle-read-incident StoredIncident)
 
 (def-delete-handler handle-delete-incident StoredIncident)
+
+(def-update-handler handle-update-incident
+  StoredIncident NewIncident swap-incident)
 
 (defrecord IncidentStore [state]
   IIncidentStore
@@ -216,7 +227,8 @@
     (handle-read-incident state id))
   (create-incident [_ new-incident]
     (handle-create-incident state new-incident))
-  (update-incident [_ incident])
+  (update-incident [_ id new-incident]
+    (handle-update-incident state id new-incident))
   (delete-incident [_ id]
     (handle-delete-incident state id))
   (list-incidents [_ filter-map]))

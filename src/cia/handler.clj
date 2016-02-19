@@ -151,6 +151,14 @@ Malicious disposition, and so on down to Unknown.
                              :body [exploit-target NewExploitTarget {:description "a new exploit target"}]
                              :summary "Adds a new ExploitTarget"
                              (ok (create-exploit-target @exploit-target-store exploit-target)))
+                      (PUT* "/:id" []
+                            :return StoredExploitTarget
+                            :body [exploit-target
+                                   NewExploitTarget
+                                   {:description "an updated exploit target"}]
+                            :summary "Updates an exploit target"
+                            :path-params [id :- s/Str]
+                            (ok (update-exploit-target @exploit-target-store id exploit-target)))
                       (GET* "/:id" []
                             :return (s/maybe StoredExploitTarget)
                             :summary "Gets an ExploitTarget by ID"
@@ -199,6 +207,12 @@ Malicious disposition, and so on down to Unknown.
                              :body [incident NewIncident {:description "a new incident"}]
                              :summary "Adds a new Incident"
                              (ok (create-incident @incident-store incident)))
+                      (PUT* "/:id" []
+                            :return StoredIncident
+                            :body [incident NewIncident {:description "an updated incident"}]
+                            :summary "Updates an Incident"
+                            :path-params [id :- s/Str]
+                            (ok (update-incident @incident-store id incident)))
                       (GET* "/:id" []
                             :return (s/maybe StoredIncident)
                             :summary "Gets an Incident by ID"
