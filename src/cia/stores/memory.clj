@@ -235,12 +235,17 @@
 
 ;; Indicator
 
+(def swap-indicator (make-swap-fn realize-indicator))
+
 (def-create-handler handle-create-indicator
-  StoredIndicator NewIndicator (make-swap-fn realize-indicator) (random-id "indicator"))
+  StoredIndicator NewIndicator swap-indicator (random-id "indicator"))
 
 (def-read-handler handle-read-indicator StoredIndicator)
 
 (def-delete-handler handle-delete-indicator StoredIndicator)
+
+(def-update-handler handle-update-indicator
+  StoredIndicator NewIndicator swap-indicator)
 
 (def-list-handler handle-list-indicators StoredIndicator)
 
@@ -265,6 +270,8 @@
   IIndicatorStore
   (create-indicator [_ new-indicator]
     (handle-create-indicator state new-indicator))
+  (update-indicator [_ id new-indicator]
+    (handle-update-indicator state id new-indicator))
   (read-indicator [_ id]
     (handle-read-indicator state id))
   (delete-indicator [_ id]

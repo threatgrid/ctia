@@ -18,6 +18,7 @@
 
 (defprotocol IIndicatorStore
   (create-indicator [this new-indicator])
+  (update-indicator [this id indicator])
   (read-indicator [this id])
   (delete-indicator [this id])
   (list-indicators [this filtermap])

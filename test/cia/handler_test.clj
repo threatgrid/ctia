@@ -533,7 +533,8 @@
               :owner "not implemented"}
              (dissoc indicator
                      :id
-                     :created)))
+                     :created
+                     :modified)))
 
       (testing "GET /cia/indicator/:id"
         (let [response (get (str "cia/indicator/" (:id indicator)))
@@ -557,7 +558,49 @@
                   :owner "not implemented"}
                  (dissoc indicator
                          :id
-                         :created)))))
+                         :created
+                         :modified)))))
+
+      (testing "PUT /cia/indicator/:id"
+        (let [{status :status
+               updated-indicator :parsed-body}
+              (put (str "cia/indicator/" (:id indicator))
+                   :body {:title "updated indicator"
+                          :description "updated description"
+                          :producer "producer"
+                          :type ["IP Watchlist"]
+                          :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
+                                       :end_time "2016-07-11T00:40:48.212-00:00"}
+                          :related_campaigns [{:confidence "Low"
+                                               :source "source"
+                                               :relationship "relationship"
+                                               :campaign "campaign-123"}]
+                          :related_COAs [{:confidence "High"
+                                          :source "source"
+                                          :relationship "relationship"
+                                          :COA "coa-123"}]
+                          :judgements ["judgement-123" "judgement-234"]})]
+          (is (= 200 status))
+          (is (= {:id (:id indicator)
+                  :created (:created indicator)
+                  :title "updated indicator"
+                  :description "updated description"
+                  :producer "producer"
+                  :type ["IP Watchlist"]
+                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
+                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                  :related_campaigns [{:confidence "Low"
+                                       :source "source"
+                                       :relationship "relationship"
+                                       :campaign "campaign-123"}]
+                  :related_COAs [{:confidence "High"
+                                  :source "source"
+                                  :relationship "relationship"
+                                  :COA "coa-123"}]
+                  :judgements ["judgement-123" "judgement-234"]
+                  :owner "not implemented"}
+                 (dissoc updated-indicator
+                         :modified)))))
 
       (testing "DELETE /cia/indicator/:id"
         (let [response (delete (str "cia/indicator/" (:id indicator)))]
@@ -984,7 +1027,7 @@
                               :end_time #inst "2016-02-11T00:00:00.000-00:00"}
                  :owner "not implemented"}]
                (->> indicators
-                    (map #(dissoc % :id :created))))))))
+                    (map #(dissoc % :id :created :modified))))))))
 
   (testing "GET /cia/:observable_type/:observable_value/sightings"
     (let [response (get "cia/ip/10.0.0.1/sightings")

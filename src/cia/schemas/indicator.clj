@@ -99,17 +99,24 @@
   "A feedback record at rest in the storage service"
   (st/merge Indicator
             {:owner s/Str
-             :created c/Time}))
+             :created c/Time
+             :modified c/Time}))
 
 (s/defn realize-indicator :- StoredIndicator
-  [new-indicator :- NewIndicator
-   id :- s/Str]
-  (let [now (c/timestamp)]
-    (assoc new-indicator
-           :id id
-           :owner "not implemented"
-           :created now
-           :valid_time {:start_time (or (get-in new-indicator [:valid_time :start_time])
-                                       now)
-                       :end_time (or (get-in new-indicator [:valid_time :end_time])
-                                     c/default-expire-date)})))
+  ([new-indicator :- NewIndicator
+    id :- s/Str]
+   (realize-indicator new-indicator id nil))
+  ([new-indicator :- NewIndicator
+    id :- s/Str
+    prev-indicator :- (s/maybe StoredIndicator)]
+   (let [now (c/timestamp)]
+     (assoc new-indicator
+            :id id
+            :owner "not implemented"
+            :created (or (:created prev-indicator) now)
+            :modified now
+            :valid_time (or (:valid_time prev-indicator)
+                            {:start_time (or (get-in new-indicator [:valid_time :start_time])
+                                             now)
+                             :end_time (or (get-in new-indicator [:valid_time :end_time])
+                                           c/default-expire-date)})))))
