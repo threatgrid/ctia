@@ -1,8 +1,7 @@
 (ns cia.stores.memory
-  (:require [cia.schemas.actor
-             :refer [NewActor StoredActor realize-actor replace-actor]]
+  (:require [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
             [cia.schemas.campaign
-             :refer [NewCampaign StoredCampaign realize-campaign replace-campaign]]
+             :refer [NewCampaign StoredCampaign realize-campaign]]
             [cia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]
             [cia.schemas.common :as c]
             [cia.schemas.exploit-target
@@ -82,15 +81,17 @@
 
 ;; Actor
 
+(def swap-actor (make-swap-fn realize-actor))
+
 (def-create-handler handle-create-actor
-  StoredActor NewActor (make-swap-fn realize-actor) (random-id "actor"))
+  StoredActor NewActor swap-actor (random-id "actor"))
 
 (def-read-handler handle-read-actor StoredActor)
 
 (def-delete-handler handle-delete-actor StoredActor)
 
 (def-update-handler handle-update-actor
-  StoredActor NewActor (make-swap-fn replace-actor))
+  StoredActor NewActor swap-actor)
 
 (defrecord ActorStore [state]
   IActorStore
@@ -106,15 +107,17 @@
 
 ;; Campaign
 
+(def swap-campaign (make-swap-fn realize-campaign))
+
 (def-create-handler handle-create-campaign
-  StoredCampaign NewCampaign (make-swap-fn realize-campaign) (random-id "campaign"))
+  StoredCampaign NewCampaign swap-campaign (random-id "campaign"))
 
 (def-read-handler handle-read-campaign StoredCampaign)
 
 (def-delete-handler handle-delete-campaign StoredCampaign)
 
 (def-update-handler handle-update-campaign
-  StoredCampaign NewCampaign (make-swap-fn replace-campaign))
+  StoredCampaign NewCampaign swap-campaign)
 
 (defrecord CampaignStore [state]
   ICampaignStore
@@ -122,23 +125,25 @@
     (handle-read-campaign state id))
   (create-campaign [_ new-campaign]
     (handle-create-campaign state new-campaign))
-  (update-campaign [_ id campaign]
-    (handle-update-campaign state id campaign))
+  (update-campaign [_ id new-campaign]
+    (handle-update-campaign state id new-campaign))
   (delete-campaign [_ id]
     (handle-delete-campaign state id))
   (list-campaigns [_ filter-map]))
 
 ;; COA
 
+(def swap-coa (make-swap-fn realize-coa))
+
 (def-create-handler handle-create-coa
-  StoredCOA NewCOA (make-swap-fn realize-coa) (random-id "coa"))
+  StoredCOA NewCOA swap-coa (random-id "coa"))
 
 (def-read-handler handle-read-coa StoredCOA)
 
 (def-delete-handler handle-delete-coa StoredCOA)
 
 (def-update-handler handle-update-coa
-  StoredCOA NewCOA (make-swap-fn realize-coa))
+  StoredCOA NewCOA swap-coa)
 
 (defrecord COAStore [state]
   ICOAStore

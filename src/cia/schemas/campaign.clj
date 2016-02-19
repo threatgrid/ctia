@@ -46,25 +46,20 @@
              :modified c/Time}))
 
 (s/defn realize-campaign :- StoredCampaign
-  [new-campaign :- NewCampaign
-   id :- s/Str]
-  (let [now (c/timestamp)]
-    (assoc new-campaign
-           :id id
-           :owner "not implemented"
-           :created now
-           :modified now
-           :valid_time {:end_time (or (get-in new-campaign [:valid_time :end_time])
-                                      c/default-expire-date)
-                        :start_time (or (get-in new-campaign [:valid_time :start_time])
-                                        now)})))
-
-(s/defn replace-campaign :- StoredCampaign
-  [new-campaign :- NewCampaign
-   id :- s/Str
-   old-campaign :- StoredCampaign]
-  (assoc new-campaign
-         :id (:id old-campaign)
-         :owner "not implemented"
-         :created (:created old-campaign)
-         :modified (c/timestamp)))
+  ([new-campaign :- NewCampaign
+    id :- s/Str]
+   (realize-campaign new-campaign id nil))
+  ([new-campaign :- NewCampaign
+    id :- s/Str
+    prev-campaign :- (s/maybe StoredCampaign)]
+   (let [now (c/timestamp)]
+     (assoc new-campaign
+            :id id
+            :owner "not implemented"
+            :created (or (:created prev-campaign) now)
+            :modified now
+            :valid_time (or (:valid_time prev-campaign)
+                            {:end_time (or (get-in new-campaign [:valid_time :end_time])
+                                           c/default-expire-date)
+                             :start_time (or (get-in new-campaign [:valid_time :start_time])
+                                             now)})))))
