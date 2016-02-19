@@ -8,14 +8,14 @@
 (s/defschema COA
   (merge
    c/GenericStixIdentifiers
-   {:timestamp c/Time
+   {:valid_time c/ValidTime
     (s/optional-key :stage) v/COAStage
     (s/optional-key :type) v/COAType
     (s/optional-key :objective) [s/Str] ;; Squashed / simplified
     (s/optional-key :impact) s/Str
     (s/optional-key :cost) v/HighMedLow
     (s/optional-key :efficacy) v/HighMedLow
-    (s/optional-key :source) c/Source
+    (s/optional-key :source) s/Str
     (s/optional-key :related_COAs) rel/RelatedCOAs
 
     ;; Not provided: handling
@@ -25,11 +25,27 @@
 
 (s/defschema NewCOA
   "Schema for submitting new COAs"
-  (st/dissoc COA
-             :id))
+  (st/merge
+   (st/dissoc COA
+              :id
+              :valid_time)
+   {(s/optional-key :valid_time) c/ValidTime}))
 
-(s/defn realize-coa :- COA
+(s/defschema StoredCOA
+  "A COA as stored in the data store"
+  (st/merge COA
+            {:owner s/Str
+             :created c/Time}))
+
+(s/defn realize-coa :- StoredCOA
   [new-coa :- NewCOA
    id :- s/Str]
-  (st/assoc new-coa
-            :id id))
+  (let [now (c/timestamp)]
+    (st/assoc new-coa
+              :id id
+              :owner "not implemented"
+              :created now
+              :valid_time {:end_time (or (get-in new-coa [:valid_time :end_time])
+                                         c/default-expire-date)
+                           :start_time (or (get-in new-coa [:valid_time :start_time])
+                                           now)})))

@@ -1,19 +1,19 @@
 (ns cia.handler
   (:require [compojure.api.sweet :refer :all]
             [cia.printers :refer :all]
-            [cia.schemas.actor :refer [Actor NewActor]]
-            [cia.schemas.campaign :refer [Campaign NewCampaign]]
-            [cia.schemas.coa :refer [COA NewCOA]]
+            [cia.schemas.actor :refer [NewActor StoredActor]]
+            [cia.schemas.campaign :refer [NewCampaign StoredCampaign]]
+            [cia.schemas.coa :refer [NewCOA StoredCOA]]
             [cia.schemas.common
              :refer [DispositionName DispositionNumber Time VersionInfo]]
             [cia.schemas.exploit-target
-             :refer [ExploitTarget NewExploitTarget]]
-            [cia.schemas.incident :refer [Incident NewIncident]]
+             :refer [NewExploitTarget StoredExploitTarget]]
+            [cia.schemas.incident :refer [NewIncident StoredIncident]]
             [cia.schemas.indicator
-             :refer [Indicator NewIndicator Sighting]]
-            [cia.schemas.feedback :refer [Feedback NewFeedback]]
-            [cia.schemas.judgement :refer [Judgement NewJudgement]]
-            [cia.schemas.ttp :refer [NewTTP TTP]]
+             :refer [NewIndicator Sighting StoredIndicator]]
+            [cia.schemas.feedback :refer [NewFeedback StoredFeedback]]
+            [cia.schemas.judgement :refer [NewJudgement StoredJudgement]]
+            [cia.schemas.ttp :refer [NewTTP StoredTTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.store :refer :all]
@@ -67,8 +67,7 @@
   have not yet expired.  The highest priority Judgement becomes the
   active verdict.  If there is more than one Judgement with that
   priority, than Clean disposition has priority over all others, then
-  Malicious disposition, and so on down to Unknown.
-  ")
+  Malicious disposition, and so on down to Unknown.")
 
 (defapi api-handler
   {:swagger {:ui "/"
@@ -81,7 +80,6 @@
                                      :email "cisco-intel-api-support@cisco.com"}
                            :description api-description}
                     :tags [{:name "threat", :description "Threat Intelligence"}]}}}
-
   (context "/cia" []
     (context "/version" []
       :tags ["version"]
@@ -96,12 +94,12 @@
     (context "/actor" []
       :tags ["Actor"]
       (POST "/" []
-        :return Actor
+        :return StoredActor
         :body [actor NewActor {:description "a new Actor"}]
         :summary "Adds a new Actor"
         (ok (create-actor @actor-store actor)))
       (GET "/:id" []
-        :return (s/maybe Actor)
+        :return (s/maybe StoredActor)
         :summary "Gets an Actor by ID"
         :path-params [id :- s/Str]
         (if-let [d (read-actor @actor-store id)]
@@ -117,12 +115,12 @@
     (context "/campaign" []
       :tags ["Campaign"]
       (POST "/" []
-        :return Campaign
+        :return StoredCampaign
         :body [campaign NewCampaign {:description "a new campaign"}]
         :summary "Adds a new Campaign"
         (ok (create-campaign @campaign-store campaign)))
       (GET "/:id" []
-        :return (s/maybe Campaign)
+        :return (s/maybe StoredCampaign)
         :summary "Gets a Campaign by ID"
         :path-params [id :- s/Str]
         (if-let [d (read-campaign @campaign-store id)]
@@ -138,12 +136,12 @@
     (context "/exploit-target" []
       :tags ["ExploitTarget"]
       (POST "/" []
-        :return ExploitTarget
+        :return StoredExploitTarget
         :body [exploit-target NewExploitTarget {:description "a new exploit target"}]
         :summary "Adds a new ExploitTarget"
         (ok (create-exploit-target @exploit-target-store exploit-target)))
       (GET "/:id" []
-        :return (s/maybe ExploitTarget)
+        :return (s/maybe StoredExploitTarget)
         :summary "Gets an ExploitTarget by ID"
         :path-params [id :- s/Str]
         (if-let [d (read-exploit-target @exploit-target-store id)]
@@ -159,12 +157,12 @@
     (context "/coa" []
       :tags ["coa"]
       (POST "/" []
-        :return COA
+        :return StoredCOA
         :body [coa NewCOA {:description "a new COA"}]
         :summary "Adds a new COA"
         (ok (create-coa @coa-store coa)))
       (GET "/:id" []
-        :return (s/maybe COA)
+        :return (s/maybe StoredCOA)
         :summary "Gets a COA by ID"
         :path-params [id :- s/Str]
         (if-let [d (read-coa @coa-store id)]
@@ -180,12 +178,12 @@
     (context "/incident" []
       :tags ["Incident"]
       (POST "/" []
-        :return Incident
+        :return StoredIncident
         :body [incident NewIncident {:description "a new incident"}]
         :summary "Adds a new Incident"
         (ok (create-incident @incident-store incident)))
       (GET "/:id" []
-        :return (s/maybe Incident)
+        :return (s/maybe StoredIncident)
         :summary "Gets an Incident by ID"
         :path-params [id :- s/Str]
         (if-let [d (read-incident @incident-store id)]
@@ -201,25 +199,25 @@
     (context "/judgement" []
       :tags ["Judgement"]
       (POST "/" []
-        :return Judgement
+        :return StoredJudgement
         :body [judgement NewJudgement {:description "a new Judgement"}]
         :summary "Adds a new Judgement"
         (ok (create-judgement @judgement-store judgement)))
       (POST "/:judgement-id/feedback" []
         :tags ["Feedback"]
-        :return Feedback
+        :return StoredFeedback
         :path-params [judgement-id :- s/Str]
         :body [feedback NewFeedback {:description "a new Feedback on a Judgement"}]
         :summary "Adds a Feedback to a Judgement"
         (ok (create-feedback @feedback-store feedback judgement-id)))
       (GET "/:judgement-id/feedback" []
         :tags ["Feedback"]
-        :return [Feedback]
+        :return [StoredFeedback]
         :path-params [judgement-id :- s/Str]
         :summary "Gets all Feedback for this Judgement."
         (ok (list-feedback @feedback-store {:judgement judgement-id})))
       (GET "/:id" []
-        :return (s/maybe Judgement)
+        :return (s/maybe StoredJudgement)
         :path-params [id :- s/Str]
         :summary "Gets a Judgement by ID"
         (if-let [d (read-judgement @judgement-store id)]
@@ -235,7 +233,7 @@
     (context "/indicator" []
       :tags ["Indicator"]
       (GET "/:id/judgements" []
-        :return [Judgement]
+        :return [StoredJudgement]
         :path-params [id :- Long]
         :summary "Gets all Judgements associated with the Indicator"
         (not-found))
@@ -245,30 +243,29 @@
         :summary "Gets all Sightings associated with the Indicator"
         (not-found))
       (GET "/:id/campaigns" []
-        :return [Campaign]
+        :return [StoredCampaign]
         :path-params [id :- Long]
         :summary "Gets all Campaigns associated with the Indicator"
         (not-found))
       (GET "/:id/coas" []
         :tags ["COA"]
-        :return [COA]
+        :return [StoredCOA]
         :path-params [id :- Long]
         :summary "Gets all TTPs associated with the Indicator"
         (not-found))
       (GET "/:id/ttps" []
         :tags ["TTP"]
-        :return [TTP]
+        :return [StoredTTP]
         :path-params [id :- Long]
         :summary "Gets all TTPs associated with the Indicator"
         (not-found))
-
       (POST "/" []
-        :return Indicator
+        :return StoredIndicator
         :body [indicator NewIndicator {:description "a new Indicator"}]
         :summary "Adds a new Indicator"
         (ok (create-indicator @indicator-store indicator)))
       (GET "/:id" []
-        :return (s/maybe Indicator)
+        :return (s/maybe StoredIndicator)
         :summary "Gets an Indicator by ID"
         :path-params [id :- s/Str]
         ;; :description "This is a little decription"
@@ -282,17 +279,18 @@
         ;;                {observable :- ObservableType nil}]
         (if-let [d (read-indicator @indicator-store id)]
           (ok d)
-          (not-found))))
+          (not-found)))
+      )
 
     (context "/ttp" []
       :tags ["TTP"]
       (POST "/" []
-        :return TTP
+        :return StoredTTP
         :body [ttp NewTTP {:description "a new TTP"}]
         :summary "Adds a new TTP"
         (ok (create-ttp @ttp-store ttp)))
       (GET "/:id" []
-        :return (s/maybe TTP)
+        :return (s/maybe StoredTTP)
         :summary "Gets a TTP by ID"
         ;;:description "This is a little description"
         ;; :query-params [{offset :-  Long 0}
@@ -330,7 +328,7 @@
                      {disposition_name :- DispositionName nil}]
       :path-params [observable_type :- ObservableType
                     observable_value :- s/Str]
-      :return [Judgement]
+      :return [StoredJudgement]
       :summary "Returns all the Judgements associated with the specified observable."
       (ok (list-judgements @judgement-store
                            {[:observable :type]  observable_type
@@ -346,7 +344,7 @@
                      {source :- s/Str nil}]
       :path-params [observable_type :- ObservableType
                     observable_value :- s/Str]
-      :return [Indicator]
+      :return [StoredIndicator]
       :summary "Returns all the Indiators associated with the specified observable."
       (ok (list-indicators-by-observable @indicator-store
                                          @judgement-store
