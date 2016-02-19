@@ -127,34 +127,43 @@
   "See http://stixproject.github.io/data-model/1.2/incident/IncidentType/"
   (st/merge
    c/GenericStixIdentifiers
-   {:valid_time c/ValidTime
-    :confidence v/HighMedLow
-    (s/optional-key :status) v/Status
-    (s/optional-key :version) s/Str
-    (s/optional-key :incident_time) IncidentTime ;; Was "time"; renamed for clarity
-    (s/optional-key :categories) [v/IncidentCategory]
-    (s/optional-key :reporter) s/Str
-    (s/optional-key :responder) s/Str
-    (s/optional-key :coordinator) s/Str
-    (s/optional-key :victim) s/Str
-    (s/optional-key :affected_assets) [AffectedAsset]
-    (s/optional-key :impact_assessment) ImpactAssessment
+   {:valid_time
+    (describe c/ValidTime "timestamp for the definition of a specific version of an Incident")
+    :confidence (describe v/HighMedLow "level of confidence held in the characterization of this Incident")
+    (s/optional-key :status) (describe v/Status "current status of the incident")
+    (s/optional-key :version) (describe s/Str "schema version for this content")
+    (s/optional-key :incident_time) (describe IncidentTime "relevant time values associated with this Incident") ;; Was "time"; renamed for clarity
+    (s/optional-key :categories) (describe [v/IncidentCategory] "a set of categories for this incident")
+    (s/optional-key :reporter) (describe s/Str "information about the reporting source of this Incident")
+    (s/optional-key :responder) (describe s/Str "information about the assigned responder for this Incident")
+    (s/optional-key :coordinator) (describe s/Str "information about the assigned coordinator for this Incident")
+    (s/optional-key :victim) (describe s/Str "information about a victim of this Incident")
+    (s/optional-key :affected_assets) (describe [AffectedAsset] "particular assets affected during the Incident")
+    (s/optional-key :impact_assessment) (describe ImpactAssessment "a summary assessment of impact for this cyber threat Incident")
     (s/optional-key :source) s/Str
-    (s/optional-key :security_compromise) v/SecurityCompromise
-    (s/optional-key :discovery_method) v/DiscoveryMethod
-    (s/optional-key :COA_requested) [COARequested]
-    (s/optional-key :COA_taken) [COARequested]
-    (s/optional-key :contact) s/Str
-    (s/optional-key :history) [History]
+    (s/optional-key :security_compromise)
+    (describe v/SecurityCompromise "knowledge of whether the Incident involved a compromise of security properties")
+    (s/optional-key :discovery_method) (describe v/DiscoveryMethod "identifies how the incident was discovered")
+    (s/optional-key :COA_requested)
+    (describe [COARequested] "specifies and characterizes requested Course Of Action for this Incident as specified by the Producer for the Consumer of the Incident Report")
+    (s/optional-key :COA_taken) (describe [COARequested] "specifies and characterizes a Course Of Action taken for this Incident")
+    (s/optional-key :contact) (describe s/Str "identifies and characterizes organizations or personnel involved in this Incident")
+    (s/optional-key :history) (describe [History] "a log of events or actions taken during the handling of the Incident")
 
     ;; The seqs of elements below are squashed (they leave out
     ;; structured data such as confidence and source for each element).
-    (s/optional-key :related_indicators) rel/RelatedIndicators
-    (s/optional-key :related_observables) [c/Observable] ;; Was related_observables
-    (s/optional-key :leveraged_TTPs) rel/RelatedTTPs
-    (s/optional-key :attributed_actors) rel/RelatedActors ;; was attributed_threat_actors
-    (s/optional-key :related_incidents) rel/RelatedIncidents
-    (s/optional-key :intended_effect) v/IntendedEffect
+    (s/optional-key :related_indicators)
+    (describe rel/RelatedIndicators "identifies or characterizes one or more cyber threat Indicators related to this cyber threat Incident")
+    (s/optional-key :related_observables)
+    (describe [c/Observable] "identifies or characterizes one or more cyber observables related to this cyber threat incident") ;; Was related_observables
+    (s/optional-key :leveraged_TTPs)
+    (describe rel/RelatedTTPs "specifies TTPs asserted to be related to this cyber threat Incident")
+    (s/optional-key :attributed_actors)
+    (describe rel/RelatedActors "identifies ThreatActors asserted to be attributed for this Incident") ;; was attributed_threat_actors
+    (s/optional-key :related_incidents)
+    (describe rel/RelatedIncidents "identifies or characterizes one or more other Incidents related to this cyber threat Incident")
+    (s/optional-key :intended_effect)
+    (describe v/IntendedEffect "specifies the suspected intended effect of this incident")
 
     ;; Not provided: URL
     ;; Not provided: external_id
