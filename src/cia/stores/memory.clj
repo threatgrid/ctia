@@ -1,6 +1,7 @@
 (ns cia.stores.memory
   (:require [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
-            [cia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
+            [cia.schemas.campaign
+             :refer [NewCampaign StoredCampaign realize-campaign]]
             [cia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]
             [cia.schemas.common :as c]
             [cia.schemas.exploit-target
@@ -39,6 +40,19 @@
         (swap! state# ~swap-fn new-model# new-id#)
         new-id#))))
 
+(defmacro def-update-handler [name Model NewModel swap-fn]
+  `(s/defn ~name :- ~Model
+     [state# :- (s/atom {s/Str ~Model})
+      id# :- c/ID
+      updated-model# :- ~NewModel]
+     (get
+      (swap! state#
+             ~swap-fn
+             updated-model#
+             id#
+             (get (deref state#) id#))
+      id#)))
+
 (defmacro def-delete-handler [name Model]
   `(s/defn ~name :- s/Bool
      [state# :- (s/atom {s/Str ~Model})
@@ -61,18 +75,23 @@
                              filter-map#))
                    (vals (deref state#))))))
 
-(defn make-swap-fn [realize-fn]
+(defn make-swap-fn [entity-fn]
   (fn [state-map & [new-model id :as args]]
-    (assoc state-map id (apply realize-fn args))))
+    (assoc state-map id (apply entity-fn args))))
 
 ;; Actor
 
+(def swap-actor (make-swap-fn realize-actor))
+
 (def-create-handler handle-create-actor
-  StoredActor NewActor (make-swap-fn realize-actor) (random-id "actor"))
+  StoredActor NewActor swap-actor (random-id "actor"))
 
 (def-read-handler handle-read-actor StoredActor)
 
 (def-delete-handler handle-delete-actor StoredActor)
+
+(def-update-handler handle-update-actor
+  StoredActor NewActor swap-actor)
 
 (defrecord ActorStore [state]
   IActorStore
@@ -80,19 +99,25 @@
     (handle-read-actor state id))
   (create-actor [_ new-actor]
     (handle-create-actor state new-actor))
-  (update-actor [_ actor])
+  (update-actor [_ id actor]
+    (handle-update-actor state id actor))
   (delete-actor [_ id]
     (handle-delete-actor state id))
   (list-actors [_ filter-map]))
 
 ;; Campaign
 
+(def swap-campaign (make-swap-fn realize-campaign))
+
 (def-create-handler handle-create-campaign
-  StoredCampaign NewCampaign (make-swap-fn realize-campaign) (random-id "campaign"))
+  StoredCampaign NewCampaign swap-campaign (random-id "campaign"))
 
 (def-read-handler handle-read-campaign StoredCampaign)
 
 (def-delete-handler handle-delete-campaign StoredCampaign)
+
+(def-update-handler handle-update-campaign
+  StoredCampaign NewCampaign swap-campaign)
 
 (defrecord CampaignStore [state]
   ICampaignStore
@@ -100,19 +125,25 @@
     (handle-read-campaign state id))
   (create-campaign [_ new-campaign]
     (handle-create-campaign state new-campaign))
-  (update-campaign [_ campaign])
+  (update-campaign [_ id new-campaign]
+    (handle-update-campaign state id new-campaign))
   (delete-campaign [_ id]
     (handle-delete-campaign state id))
   (list-campaigns [_ filter-map]))
 
 ;; COA
 
+(def swap-coa (make-swap-fn realize-coa))
+
 (def-create-handler handle-create-coa
-  StoredCOA NewCOA (make-swap-fn realize-coa) (random-id "coa"))
+  StoredCOA NewCOA swap-coa (random-id "coa"))
 
 (def-read-handler handle-read-coa StoredCOA)
 
 (def-delete-handler handle-delete-coa StoredCOA)
+
+(def-update-handler handle-update-coa
+  StoredCOA NewCOA swap-coa)
 
 (defrecord COAStore [state]
   ICOAStore
@@ -120,19 +151,25 @@
     (handle-read-coa state id))
   (create-coa [_ new-coa]
     (handle-create-coa state new-coa))
-  (update-coa [_ coa])
+  (update-coa [_ id new-coa]
+    (handle-update-coa state id new-coa))
   (delete-coa [_ id]
     (handle-delete-coa state id))
   (list-coas [_ filter-map]))
 
 ;; ExploitTarget
 
+(def swap-exploit-target (make-swap-fn realize-exploit-target))
+
 (def-create-handler handle-create-exploit-target
-  StoredExploitTarget NewExploitTarget (make-swap-fn realize-exploit-target) (random-id "exploit-target"))
+  StoredExploitTarget NewExploitTarget swap-exploit-target (random-id "exploit-target"))
 
 (def-read-handler handle-read-exploit-target StoredExploitTarget)
 
 (def-delete-handler handle-delete-exploit-target StoredExploitTarget)
+
+(def-update-handler handle-update-exploit-target
+  StoredExploitTarget NewExploitTarget swap-exploit-target)
 
 (defrecord ExplitTargetStore [state]
   IExploitTargetStore
@@ -140,7 +177,8 @@
     (handle-read-exploit-target state id))
   (create-exploit-target [_ new-exploit-target]
     (handle-create-exploit-target state new-exploit-target))
-  (update-exploit-target [_ exploit-target])
+  (update-exploit-target [_ id new-exploit-target]
+    (handle-update-exploit-target state id new-exploit-target))
   (delete-exploit-target [_ id]
     (handle-delete-exploit-target state id))
   (list-exploit-targets [_ filter-map]))
@@ -171,12 +209,17 @@
 
 ;; Incident
 
+(def swap-incident (make-swap-fn realize-incident))
+
 (def-create-handler handle-create-incident
-  StoredIncident NewIncident (make-swap-fn realize-incident) (random-id "incident"))
+  StoredIncident NewIncident swap-incident (random-id "incident"))
 
 (def-read-handler handle-read-incident StoredIncident)
 
 (def-delete-handler handle-delete-incident StoredIncident)
+
+(def-update-handler handle-update-incident
+  StoredIncident NewIncident swap-incident)
 
 (defrecord IncidentStore [state]
   IIncidentStore
@@ -184,19 +227,25 @@
     (handle-read-incident state id))
   (create-incident [_ new-incident]
     (handle-create-incident state new-incident))
-  (update-incident [_ incident])
+  (update-incident [_ id new-incident]
+    (handle-update-incident state id new-incident))
   (delete-incident [_ id]
     (handle-delete-incident state id))
   (list-incidents [_ filter-map]))
 
 ;; Indicator
 
+(def swap-indicator (make-swap-fn realize-indicator))
+
 (def-create-handler handle-create-indicator
-  StoredIndicator NewIndicator (make-swap-fn realize-indicator) (random-id "indicator"))
+  StoredIndicator NewIndicator swap-indicator (random-id "indicator"))
 
 (def-read-handler handle-read-indicator StoredIndicator)
 
 (def-delete-handler handle-delete-indicator StoredIndicator)
+
+(def-update-handler handle-update-indicator
+  StoredIndicator NewIndicator swap-indicator)
 
 (def-list-handler handle-list-indicators StoredIndicator)
 
@@ -221,6 +270,8 @@
   IIndicatorStore
   (create-indicator [_ new-indicator]
     (handle-create-indicator state new-indicator))
+  (update-indicator [_ id new-indicator]
+    (handle-update-indicator state id new-indicator))
   (read-indicator [_ id]
     (handle-read-indicator state id))
   (delete-indicator [_ id]
@@ -312,15 +363,17 @@
 
 ;; ttp
 
+(def swap-ttp (make-swap-fn realize-ttp))
+
 (def-create-handler handle-create-ttp
-  StoredTTP
-  NewTTP
-  (make-swap-fn realize-ttp)
-  (random-id "ttp"))
+  StoredTTP NewTTP swap-ttp (random-id "ttp"))
 
 (def-read-handler handle-read-ttp StoredTTP)
 
 (def-delete-handler handle-delete-ttp StoredTTP)
+
+(def-update-handler handle-update-ttp
+  StoredTTP NewTTP swap-ttp)
 
 (defrecord TTPStore [state]
   ITTPStore
@@ -328,7 +381,8 @@
     (handle-read-ttp state id))
   (create-ttp [_ new-ttp]
     (handle-create-ttp state new-ttp))
-  (update-ttp [_ ttp])
+  (update-ttp [_ id new-ttp]
+    (handle-update-ttp state id new-ttp))
   (delete-ttp [_ id]
     (handle-delete-ttp state id))
   (list-ttps [_ filter-map]))

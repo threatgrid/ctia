@@ -3,7 +3,7 @@
 (defprotocol IActorStore
   (read-actor [this id])
   (create-actor [this new-actor])
-  (update-actor [this actor])
+  (update-actor [this id actor])
   (delete-actor [this id])
   (list-actors [this filtermap]))
 
@@ -18,6 +18,7 @@
 
 (defprotocol IIndicatorStore
   (create-indicator [this new-indicator])
+  (update-indicator [this id indicator])
   (read-indicator [this id])
   (delete-indicator [this id])
   (list-indicators [this filtermap])
@@ -27,7 +28,7 @@
 (defprotocol IExploitTargetStore
   (read-exploit-target [this id])
   (create-exploit-target [this new-exploit-target])
-  (update-exploit-target [this exploit-target])
+  (update-exploit-target [this id exploit-target])
   (delete-exploit-target [this id])
   (list-exploit-targets [this filtermap]))
 
@@ -38,21 +39,21 @@
 (defprotocol ITTPStore
   (read-ttp [this id])
   (create-ttp [this new-ttp])
-  (update-ttp [this ttp])
+  (update-ttp [this id ttp])
   (delete-ttp [this id])
   (list-ttps [this filtermap]))
 
 (defprotocol ICampaignStore
   (read-campaign [this id])
   (create-campaign [this new-campaign])
-  (update-campaign [this campaign])
+  (update-campaign [this id campaign])
   (delete-campaign [this id])
   (list-campaigns [this filtermap]))
 
 (defprotocol ICOAStore
   (read-coa [this id])
   (create-coa [this new-coa])
-  (update-coa [this coa])
+  (update-coa [this id coa])
   (delete-coa [this id])
   (list-coas [this filtermap]))
 
@@ -66,7 +67,7 @@
 (defprotocol IIncidentStore
   (read-incident [this id])
   (create-incident [this new-incident])
-  (update-incident [this incident])
+  (update-incident [this id incident])
   (delete-incident [this id])
   (list-incidents [this filtermap]))
 
