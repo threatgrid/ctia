@@ -76,16 +76,12 @@
 
     ;; Extension fields:
     :producer s/Str
-
-    ;; Extension field :specification
-    ;; we should use a conditional based on the :type field of the
-    ;; specification, and not an either
-    (s/optional-key :specifications) [(s/either
-                                       JudgementSpecification
-                                       ThreatBrainSpecification
-                                       SnortSpecification
-                                       SIOCSpecification
-                                       OpenIOCSpecification)]
+    (s/optional-key :specifications) [(s/conditional
+                                       #(= "Judgement" (:type %)) JudgementSpecification
+                                       #(= "ThreatBrain" (:type %)) ThreatBrainSpecification
+                                       #(= "Snort" (:type %)) SnortSpecification
+                                       #(= "SIOC" (:type %)) SIOCSpecification
+                                       #(= "OpenIOC" (:type %)) OpenIOCSpecification)]
 
     ;; Not provided: handling
     }))
