@@ -18,14 +18,19 @@
    mapping
    doc
    :id (:id doc))
-
   (get-doc conn index-name mapping (:id doc)))
+
+(defn update-doc
+  "update a document on es return the updated document"
+  [conn index-name mapping id doc]
+  (document/update-with-partial-doc @conn index-name mapping id doc)
+  (get-doc conn index-name mapping id))
 
 (defn delete-doc
   "delete a document on es and return nil if ok"
   [conn index-name mapping id]
-  (document/delete @conn index-name mapping id)
-  nil)
+  (:found?
+   (document/delete @conn index-name mapping id)))
 
 (defn mk-filter-val [v]
   "lower case any string"

@@ -16,11 +16,11 @@
                      {"cluster.name" cluster-name})))
 
 (defn setup-index! []
-  (when (idx/exists? @es-conn "cia_dev")
-    (idx/delete @es-conn "cia_dev"))
-  (idx/create @es-conn "cia_dev" :mappings mappings))
+  (when (idx/exists? @es-conn index-name)
+    (idx/delete @es-conn index-name))
+  (idx/create @es-conn index-name :mappings mappings))
 
 (setup-conn!)
-
+(setup-index!)
 
 

@@ -11,7 +11,7 @@
                                    delete-doc
                                    search-docs]]))
 
-(def mapping "judgement")
+(def ^{:private true} mapping "judgement")
 
 (defn- make-id [schema j]
   (str "judgement" "-" (UUID/randomUUID)))

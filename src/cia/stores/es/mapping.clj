@@ -1,6 +1,6 @@
 (ns cia.stores.es.mapping)
 
-(def ts {:type "date" :format "basic_date_time"})
+(def ts {:type "date" :format "date_time"})
 
 (def related
   {:confidence {:type "string"}
@@ -10,8 +10,8 @@
 (def valid-time
   {:type "object"
    :properties
-   {:start_time {:type "date" :format "basic_date_time"}
-    :end_time {:type "date" :format "basic_date_time"}}})
+   {:start_time ts
+    :end_time ts}})
 
 (def observable
   {:type "object"
@@ -79,7 +79,8 @@
      :reason {:type "string"}
      :source_uri {:type "string"}
      :reason_uri {:type "string"}
-     :indicators related-indicators
+     ;;:indicators related-indicators TBD check if varying
+     :indicators {:type "object" :enabled false}
      :owner {:type "string"
              :created ts
              :modified ts}}}})
@@ -93,7 +94,8 @@
      :negate {:type "boolean"}
      :type {:type "string"}
      :observable observable
-     :judgements related-judgements
+     ;; :judgements related-judgements TBD check if varying
+     :judgements {:type "object" :enabled false}
      :composite_indicator_expression {:type "object"
                                       :operator {:type "string"}
                                       :indicators {:type "string"}}
