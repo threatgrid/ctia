@@ -4,7 +4,9 @@
    [cia.stores.es.judgement :refer :all]
    [cia.stores.es.feedback  :refer :all]
    [cia.stores.es.indicator :refer :all]
-   [cia.stores.es.ttp :refer :all]))
+   [cia.stores.es.ttp :refer :all]
+   [cia.stores.es.actor :refer :all]
+   ))
 
 
 (defrecord JudgementStore [state]
@@ -60,3 +62,15 @@
   (delete-ttp [_ id]
     (handle-delete-ttp state id))
   (list-ttps [_ filter-map]))
+
+(defrecord ActorStore [state]
+  IActorStore
+  (read-actor [_ id]
+    (handle-read-actor state id))
+  (create-actor [_ new-actor]
+    (handle-create-actor state new-actor))
+  (update-actor [_ id actor]
+    (handle-update-actor state id actor))
+  (delete-actor [_ id]
+    (handle-delete-actor state id))
+  (list-actors [_ filter-map]))

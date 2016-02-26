@@ -60,6 +60,11 @@
    :properties (assoc related
                       :identity string)})
 
+(def related-actors
+  {:type "nested"
+   :properties (assoc related
+                      :actor string)})
+
 (def identity
   {:type "nested"
    :properties
@@ -215,9 +220,30 @@
      :expires ts
      :indicators string}}})
 
+(def actor-mapping
+  {"actor"
+   {:properties
+    {:id string
+     :valid_time valid-time
+     :type string
+     :source string
+     :identity identity
+     :motivation string
+     :sophistication string
+     :intended_effect string
+     :planning_and_operational_support string
+     ;;:observed_TTPs related-ttps TBD check if varying
+     :observed_TTPs {:type "nested" :enabled false}
+     ;;:associated_campaigns related-campaigns
+     :associated_campaigns {:type "nested" :enabled false}
+     ;;:associated_actors related-actors
+     :associated_actors {:type "nested" :enabled false}
+     :confidence string}}})
+
 
 (def mappings
   (merge {}
          judgement-mapping
          indicator-mapping
-         feedback-mapping))
+         feedback-mapping
+         actor-mapping))
