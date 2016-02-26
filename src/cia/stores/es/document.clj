@@ -1,6 +1,7 @@
 (ns cia.stores.es.document
   (:require
    [clojurewerkz.elastisch.native.document :as document]
+   [clojurewerkz.elastisch.query :as q]
    [clojurewerkz.elastisch.native.response :refer :all]))
 
 (defn get-doc
@@ -37,21 +38,45 @@
   (if (string? v)
     (clojure.string/lower-case v) v))
 
-(defn filter-map->terms-query [filter-map]
-  "transforms a filter map to en ES terms query"
-  (let [terms (map #(hash-map
-                     :term
-                     {(keyword (key %))
-                      (mk-filter-val (val %))}) filter-map)]
+(defn mk-nested-filter [n-index]
+  (map
+   #(hash-map :nested
+              {:path (name (key %))
+               :query {:bool
+                       {:must
+                        (map (fn [kv]
+                               (q/term (->> (key kv)
+                                            (map name)
+                                            (clojure.string/join "."))
+                                       (val kv))) (mk-filter-val
+                                                   (val %)))}}}) n-index))
 
-    {:filtered {:query {:match_all {}}
-                :filter {:bool {:must terms}}}}))
+(defn mk-flat-filter [flat-terms]
+  (map #(hash-map (q/term (key %)
+                          (mk-filter-val (val %)))) flat-terms))
+
+(defn filter-map->terms-query [filter-map]
+  "transforms a filter map to en ES terms query
+   only supports one level of nesting"
+  (let [flat-terms (into {}
+                         (filter #(keyword? (first %)) filter-map))
+        nested-terms (into {}
+                           (filter #(vector? (first %)) filter-map))
+        n-index (group-by #(ffirst %) nested-terms)
+        nested-fmt (mk-nested-filter n-index)
+        flat-fmt (mk-flat-filter flat-terms)]
+
+    {:filtered
+     {:query {:match_all {}}
+      :filter {:bool
+               {:must (concat nested-fmt
+                              flat-fmt)}}}}))
 
 (defn search-docs
   "search for documents on es, return only the docs"
   [conn index-name mapping filter-map]
-
-  (->> (document/search @conn index-name mapping
-                        :query (filter-map->terms-query filter-map))
-       hits-from
-       (map :_source)))
+  (let [filters (filter-map->terms-query filter-map)
+        res (document/search @conn index-name mapping :query filters)]
+    (->> res
+         hits-from
+         (map :_source))))

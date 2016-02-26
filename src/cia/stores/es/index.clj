@@ -21,6 +21,8 @@
   (idx/create @es-conn index-name :mappings mappings))
 
 (setup-conn!)
-(setup-index!)
+;;(setup-index!)
+
+
 
 

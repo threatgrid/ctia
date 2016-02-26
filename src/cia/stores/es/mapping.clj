@@ -14,7 +14,7 @@
     :end_time ts}})
 
 (def observable
-  {:type "object"
+  {:type "nested"
    :properties
    {:type {:type "string"}
     :value {:type "string"}}})
