@@ -15,11 +15,70 @@
    {:start_time ts
     :end_time ts}})
 
+(def attack-pattern
+  {:type "nested"
+   :properties
+   {:description string
+    :capec_id string}})
+
+(def malware-instance
+  {:type "nested"
+   :properties
+   {:description string
+    :malware_type string}})
+
 (def observable
   {:type "nested"
    :properties
    {:type string
     :value string}})
+
+(def behavior
+  {:type "nested"
+   :properties
+   {:attack_patterns attack-pattern
+    :malware_type malware-instance}})
+
+(def tool
+  {:type "nested"
+   :properties
+   {:description string
+    :type string
+    :references string
+    :vendor string
+    :version string
+    :service_pack string}})
+
+(def infrastructure
+  {:type "nested"
+   :properties
+   {:description string
+    :type string}})
+
+(def related-identities
+  {:type "nested"
+   :properties (assoc related
+                      :identity string)})
+
+(def identity
+  {:type "nested"
+   :properties
+   {:description string
+    :related_identities related-identities}})
+
+(def victim-targeting
+  {:type "nested"
+   :properties
+   {:identity identity
+    :targeted_systems string
+    :targeted_information string
+    :targeted_observables observable}})
+
+(def resource
+  {:type "nested"
+   :tools tool
+   :infrastructure infrastructure
+   :providers identity})
 
 (def related-indicators
   {:type "nested"
@@ -44,6 +103,15 @@
    :properties
    (assoc related
           :campaign string)})
+
+(def related-exploit-targets
+  {:type "nested"
+   :properties (assoc related
+                      :exploit_target string)})
+(def related-ttps
+  {:type "nested"
+   :properties (assoc related
+                      :ttp string)})
 
 (def specifications
   {:type "nested"
@@ -129,6 +197,24 @@
      :owner string
      :created ts
      :modified ts}}})
+
+(def ttp-mapping
+  {"ttp"
+   {:properties
+    {:id string
+     :valid_time valid-time
+     :version string
+     :intended_effect string
+     :behavior behavior
+     :resources resource
+     :victim_targeting victim-targeting
+     :exploit_targets related-exploit-targets
+     :related_TTPs related-ttps
+     :source string
+     :type string
+     :expires ts
+     :indicators string}}})
+
 
 (def mappings
   (merge {}

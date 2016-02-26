@@ -3,7 +3,8 @@
    [cia.store :refer :all]
    [cia.stores.es.judgement :refer :all]
    [cia.stores.es.feedback  :refer :all]
-   [cia.stores.es.indicator :refer :all]))
+   [cia.stores.es.indicator :refer :all]
+   [cia.stores.es.ttp :refer :all]))
 
 
 (defrecord JudgementStore [state]
@@ -47,3 +48,15 @@
                                                judgement-store
                                                observable)
          (mapcat :sightings))))
+
+(defrecord TTPStore [state]
+  ITTPStore
+  (read-ttp [_ id]
+    (handle-read-ttp state id))
+  (create-ttp [_ new-ttp]
+    (handle-create-ttp state new-ttp))
+  (update-ttp [_ id new-ttp]
+    (handle-update-ttp state id new-ttp))
+  (delete-ttp [_ id]
+    (handle-delete-ttp state id))
+  (list-ttps [_ filter-map]))
