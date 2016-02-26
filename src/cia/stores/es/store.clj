@@ -2,6 +2,7 @@
   (:require
    [cia.store :refer :all]
    [cia.stores.es.judgement :refer :all]
+   [cia.stores.es.feedback  :refer :all]
    [cia.stores.es.indicator :refer :all]))
 
 
@@ -17,6 +18,13 @@
     (handle-list-judgements state filter-map))
   (calculate-verdict [_ observable]
     (handle-calculate-verdict state observable)))
+
+(defrecord FeedbackStore [state]
+  IFeedbackStore
+  (create-feedback [_ new-feedback judgement-id]
+    (handle-create-feedback state new-feedback judgement-id))
+  (list-feedback [_ filter-map]
+    (handle-list-feedback state filter-map)))
 
 (defrecord IndicatorStore [state]
   IIndicatorStore

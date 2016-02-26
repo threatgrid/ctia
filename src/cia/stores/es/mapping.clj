@@ -1,6 +1,8 @@
 (ns cia.stores.es.mapping)
 
 (def ts {:type "date" :format "date_time"})
+(def string {:type "string" :index "not_analyzed"})
+
 
 (def related
   {:confidence {:type "string"}
@@ -8,7 +10,7 @@
    :relationship {:type "string"}})
 
 (def valid-time
-  {:type "object"
+  {:type "nested"
    :properties
    {:start_time ts
     :end_time ts}})
@@ -16,106 +18,120 @@
 (def observable
   {:type "nested"
    :properties
-   {:type {:type "string"}
-    :value {:type "string"}}})
+   {:type string
+    :value string}})
 
 (def related-indicators
-  {:type "object"
+  {:type "nested"
    :properties
    (assoc related
-          :indicator {:type "string"})})
+          :indicator string)})
 
 (def related-judgements
-  {:type "object"
+  {:type "nested"
    :properties
    (assoc related
-          :judgement {:type "string"})})
+          :judgement string)})
 
 (def related-coas
-  {:type "object"
+  {:type "nested"
    :properties
    (assoc related
-          :COA {:type "string"})})
+          :COA string)})
 
 (def related-campaigns
-  {:type "object"
+  {:type "nested"
    :properties
    (assoc related
-          :campaign {:type "string"})})
+          :campaign string)})
 
 (def specifications
-  {:type "object"
+  {:type "nested"
    :properties
-   {:judgements {:type "string"}
+   {:judgements string
     :required_judgements related-judgements
-    :query {:type "string"}
-    :variables {:type "string"}
-    :snort_sig {:type "string"}
-    :SIOC {:type "string"}
-    :open_IOC {:type "string"}}})
+    :query string
+    :variables string
+    :snort_sig string
+    :SIOC string
+    :open_IOC string}})
 
 (def sighting
-  {:type "object"
+  {:type "nested"
    :properties
    {:timestamp ts
-    :source {:type "string"}
-    :reference {:type "string"}
-    :confidence {:type "string"}
-    :description {:type "string"}
+    :source string
+    :reference string
+    :confidence string
+    :description string
     :related_judgements related-judgements}})
 
 (def judgement-mapping
   {"judgement"
    {:properties
-    {:id {:type "string"}
+    {:id string
      :observable observable
      :disposition {:type "long"}
-     :disposition_name {:type "string"}
-     :source {:type "string"}
+     :disposition_name string
+     :source string
      :priority {:type "integer"}
-     :confidence {:type "string"}
+     :confidence string
      :severity {:type "integer"}
      :valid_time valid-time
-     :reason {:type "string"}
-     :source_uri {:type "string"}
-     :reason_uri {:type "string"}
+     :reason string
+     :source_uri string
+     :reason_uri string
      ;;:indicators related-indicators TBD check if varying
-     :indicators {:type "object" :enabled false}
-     :owner {:type "string"
-             :created ts
-             :modified ts}}}})
+     :indicators {:type "nested" :enabled false}
+     :owner string
+     :created ts
+     :modified ts}}})
+
+(def feedback-mapping
+  {"feedback"
+   {:properties
+    {:id string
+     :judgement string
+     :source string
+     :feedback {:type "integer"}
+     :reason string
+     :owner string
+     :created ts
+     :modified ts}}})
 
 (def indicator-mapping
   {"indicator"
    {:properties
-    {:id {:type "string"}
-     :alternate_ids {:type "string"}
+    {:id string
+     :alternate_ids string
      :version {:type "integer"}
      :negate {:type "boolean"}
-     :type {:type "string"}
+     :type string
      :observable observable
      ;; :judgements related-judgements TBD check if varying
-     :judgements {:type "object" :enabled false}
-     :composite_indicator_expression {:type "object"
-                                      :operator {:type "string"}
-                                      :indicators {:type "string"}}
-     :indicated_TTP {:type "object"}
-     :likely_impact {:type "string"}
+     :judgements {:type "nested" :enabled false}
+     :composite_indicator_expression {:type "nested"
+                                      :properties
+                                      {:operator string
+                                       :indicators string}}
+     :indicated_TTP {:type "nested"}
+     :likely_impact string
      :suggested_COAs related-coas
-     :confidence {:type "string"}
+     :confidence string
      :sightings sighting
      :related_indicators related-indicators
      :related_campaigns related-campaigns
      :related_COAs related-coas
-     :kill_chain_phases {:type "string"}
-     :test_mechanisms {:type "string"}
-     :producer {:type "string"}
+     :kill_chain_phases string
+     :test_mechanisms string
+     :producer string
      :specifications specifications
-     :owner {:type "string"}
+     :owner string
      :created ts
      :modified ts}}})
 
 (def mappings
   (merge {}
          judgement-mapping
-         indicator-mapping))
+         indicator-mapping
+         feedback-mapping))

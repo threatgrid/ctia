@@ -18,7 +18,8 @@
    index-name
    mapping
    doc
-   :id (:id doc))
+   :id (:id doc)
+   :refresh true)
   (get-doc conn index-name mapping (:id doc)))
 
 (defn update-doc
@@ -52,8 +53,8 @@
                                                    (val %)))}}}) n-index))
 
 (defn mk-flat-filter [flat-terms]
-  (map #(hash-map (q/term (key %)
-                          (mk-filter-val (val %)))) flat-terms))
+  (map #(q/terms (key %)
+                 (mk-filter-val [(val %)])) flat-terms))
 
 (defn filter-map->terms-query [filter-map]
   "transforms a filter map to en ES terms query
