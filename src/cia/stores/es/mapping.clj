@@ -65,7 +65,7 @@
    :properties (assoc related
                       :actor string)})
 
-(def identity
+(def tg-identity
   {:type "nested"
    :properties
    {:description string
@@ -74,16 +74,23 @@
 (def victim-targeting
   {:type "nested"
    :properties
-   {:identity identity
+   {:identity tg-identity
     :targeted_systems string
     :targeted_information string
     :targeted_observables observable}})
 
 (def resource
   {:type "nested"
-   :tools tool
-   :infrastructure infrastructure
-   :providers identity})
+   :properties
+   {:tools tool
+    :infrastructure infrastructure
+    :providers identity}})
+
+(def activity
+  {:type "nested"
+   :properties
+   {:date_time ts
+    :description string}})
 
 (def related-indicators
   {:type "nested"
@@ -117,6 +124,12 @@
   {:type "nested"
    :properties (assoc related
                       :ttp string)})
+
+(def related-incidents
+  {:type "nested"
+   :properties (assoc related
+                      :incident string)})
+
 
 (def specifications
   {:type "nested"
@@ -218,7 +231,10 @@
      :source string
      :type string
      :expires ts
-     :indicators string}}})
+     :indicators string
+     :owner string
+     :created ts
+     :modified ts}}})
 
 (def actor-mapping
   {"actor"
@@ -227,7 +243,7 @@
      :valid_time valid-time
      :type string
      :source string
-     :identity identity
+     :identity tg-identity
      :motivation string
      :sophistication string
      :intended_effect string
@@ -238,7 +254,31 @@
      :associated_campaigns {:type "nested" :enabled false}
      ;;:associated_actors related-actors
      :associated_actors {:type "nested" :enabled false}
-     :confidence string}}})
+     :confidence string
+     :owner string
+     :created ts
+     :modified ts}}})
+
+(def campaign-mapping
+  {"campagin"
+   {:properties
+    {:id string
+     :valid_time valid-time
+     :names string
+     :intended_effect string
+     :status string
+     :related_TTPs related-ttps
+     :related_incidents related-incidents
+     :attribution related-actors
+     :associated_campaigns related-campaigns
+     :confidence string
+     :activity activity
+     :source string
+     :type string
+     :indicators related-indicators
+     :owner string
+     :created ts
+     :modified ts}}})
 
 
 (def mappings
@@ -246,4 +286,5 @@
          judgement-mapping
          indicator-mapping
          feedback-mapping
-         actor-mapping))
+         actor-mapping
+         campaign-mapping))
