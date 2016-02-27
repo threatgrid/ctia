@@ -1,4 +1,4 @@
-(ns cia.test-helpers
+(ns cia.test-helpers.core
   (:refer-clojure :exclude [get])
   (:require [cheshire.core :as json]
             [cia.store :as store]
@@ -28,21 +28,34 @@
   (schema/with-fn-validation
     (f)))
 
-(defn fixture-in-memory-store [f]
-  (let [store-impls {store/actor-store mem/->ActorStore
-                     store/judgement-store mem/->JudgementStore
-                     store/feedback-store mem/->FeedbackStore
-                     store/campaign-store mem/->CampaignStore
-                     store/coa-store mem/->COAStore
-                     store/exploit-target-store mem/->ExplitTargetStore
-                     store/incident-store mem/->IncidentStore
-                     store/indicator-store mem/->IndicatorStore
-                     store/ttp-store mem/->TTPStore}]
-    (doseq [[store impl-fn] store-impls]
-      (reset! store (impl-fn (atom {}))))
-    (f)
-    (doseq  [store (keys store-impls)]
-      (reset! store nil))))
+(defn init-atom [f]
+  (fn []
+    (f (atom {}))))
+
+(def memory-stores
+  {store/actor-store          (init-atom mem/->ActorStore)
+   store/judgement-store      (init-atom mem/->JudgementStore)
+   store/feedback-store       (init-atom mem/->FeedbackStore)
+   store/campaign-store       (init-atom mem/->CampaignStore)
+   store/coa-store            (init-atom mem/->COAStore)
+   store/exploit-target-store (init-atom mem/->ExplitTargetStore)
+   store/incident-store       (init-atom mem/->IncidentStore)
+   store/indicator-store      (init-atom mem/->IndicatorStore)
+   store/ttp-store            (init-atom mem/->TTPStore)})
+
+(defn fixture-store
+  ([store-map]
+   (fixture-store store-map nil))
+  ([store-map init-fn]
+   (fn [f]
+     (let [store-impls store-map]
+       (doseq [[store impl-fn] store-impls]
+         (reset! store (impl-fn)))
+       (f)
+       (doseq  [store (keys store-impls)]
+         (reset! store nil))))))
+
+(def fixture-in-memory-store (fixture-store memory-stores))
 
 (def http-port 3000)
 
@@ -132,3 +145,10 @@
         response (http/put (url path)
                            (assoc options :body (encode-body body content-type)))]
     (assoc response :parsed-body (parse-body response))))
+
+(defmacro deftest-for-each-fixture [test-name fixture-map & body]
+  `(do
+     ~@(for [[name-key fixture-fn] fixture-map]
+         `(clojure.test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
+                      {(keyword test-name) true})
+            (~fixture-fn (fn [] ~@body))))))
