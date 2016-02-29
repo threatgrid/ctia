@@ -7,7 +7,8 @@
    [cia.stores.es.ttp :refer :all]
    [cia.stores.es.actor :refer :all]
    [cia.stores.es.campaign :refer :all]
-   [cia.stores.es.coa :refer :all]))
+   [cia.stores.es.coa :refer :all]
+   [cia.stores.es.incident :refer :all]))
 
 
 (defrecord JudgementStore [state]
@@ -99,3 +100,15 @@
   (delete-coa [_ id]
     (handle-delete-coa state id))
   (list-coas [_ filter-map]))
+
+(defrecord IncidentStore [state]
+  IIncidentStore
+  (read-incident [_ id]
+    (handle-read-incident state id))
+  (create-incident [_ new-incident]
+    (handle-create-incident state new-incident))
+  (update-incident [_ id new-incident]
+    (handle-update-incident state id new-incident))
+  (delete-incident [_ id]
+    (handle-delete-incident state id))
+  (list-incidents [_ filter-map]))

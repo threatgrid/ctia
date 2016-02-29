@@ -130,7 +130,6 @@
    :properties (assoc related
                       :incident string)})
 
-
 (def specifications
   {:type "nested"
    :properties
@@ -141,6 +140,108 @@
     :snort_sig string
     :SIOC string
     :open_IOC string}})
+
+(def incident-time
+  {:type "nested"
+   :properties
+   {:first_malicious_action ts
+    :initial_compromise ts
+    :first_data_exfiltration ts
+    :incident_discovery ts
+    :incident_opened ts
+    :containment_achieved ts
+    :restoration_achieved ts
+    :incident_reported ts
+    :incident_closed ts}})
+
+
+(def non-public-data-compromised
+  {:type "nested"
+   :properties
+   {:security_compromise string
+    :data_encrypted {:type "boolean"}}})
+
+(def property-affected
+  {:type "nested"
+   :properties
+   {:property string
+    :description_of_effect string
+    :type_of_availability_loss string
+    :duration_of_availability_loss string
+    :non_public_data_compromised non-public-data-compromised}})
+
+(def affected-asset
+  {:type "nested"
+   :properties
+   {:type string
+    :description string
+    :ownership_class string
+    :management_class string
+    :location_class string
+    :property_affected property-affected
+    :identifying_observables observable}})
+
+(def direct-impact-summary
+  {:type "nested"
+   :properties
+   {:asset_losses string
+    :business_mission_distruption string
+    :response_and_recovery_costs string}})
+
+(def indirect-impact-summary
+  {:type "nested"
+   :properties
+   {:loss_of_competitive_advantage string
+    :brand_and_market_damage string
+    :increased_operating_costs string
+    :local_and_regulatory_costs string}})
+
+(def loss-estimation
+  {:type "nested"
+   :properties
+   {:amount {:type "long"}
+    :iso_currency_code string}})
+
+(def total-loss-estimation
+  {:type "nested"
+   :properties
+   {:initial_reported_total_loss_estimation loss-estimation
+    :actual_total_loss_estimation loss-estimation
+    :impact_qualification string
+    :effects string}})
+
+(def impact-assessment
+  {:type "nested"
+   :properties
+   {:direct_impact_summary direct-impact-summary
+    :indirect_impact_summary indirect-impact-summary
+    :total_loss_estimation total-loss-estimation
+    :impact_qualification string
+    :effects string}})
+
+(def contributor
+  {:type "nested"
+   :properties
+   {:role string
+    :name string
+    :email string
+    :phone string
+    :organization string
+    :date ts
+    :contribution_location string}})
+
+(def coa-requested
+  {:type "nested"
+   :properties
+   {:time ts
+    :contributors contributor
+    :COA string}})
+
+(def history
+  {:type "nested"
+   :properties
+   {:action_entry coa-requested
+    :journal_entry string}})
 
 (def sighting
   {:type "nested"
@@ -294,6 +395,36 @@
      :source string
      :related_COAs related-coas}}})
 
+(def incident-mapping
+  {"incident"
+   {:properties
+    {:id string
+     :valid_time valid-time
+     :confidence string
+     :status string
+     :version string
+     :incident_time incident-time
+     :categories string
+     :reporter string
+     :responder string
+     :coordinator string
+     :victim string
+     :affected_assets affected-asset
+     :impact_assessment impact-assessment
+     :source string
+     :security_compromise string
+     :discovery_method string
+     :COA_requested coa-requested
+     :COA_taken coa-requested
+     :contact string
+     :history history
+     :related_indicators related-indicators
+     :related_observables observable
+     :leveraged_TTPs related-ttps
+     :attributed_actors related-actors
+     ;; :related_incidents related-incidents
+     :related_incidents {:type "nested" :enabled false}
+     :intended_effect string}}})
 
 (def mappings
   (merge {}
@@ -302,4 +433,6 @@
          feedback-mapping
          actor-mapping
          campaign-mapping
-         coa-mapping))
+         coa-mapping
+         incident-mapping
+         ))
