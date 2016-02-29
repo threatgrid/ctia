@@ -86,6 +86,8 @@
              :judgement_id "judgement_id"
              :indicator_id "indicator_id"}
             {:judgement_id "judgement_id"
+             :indicator_id "indicator_id"}
+            {:judgement_id "judgement_id"
              :indicator_id "indicator_id"}]
            (sut
             [{:id "judgement_id"
@@ -94,7 +96,9 @@
                             :relationship "relationship"
                             :indicator "indicator_id"}]}
              {:id "judgement_id"
-              :indicators [{:indicator "indicator_id"}]}])))))
+              :indicators [{:indicator "indicator_id"}]}
+             {:id "judgement_id"
+              :indicators ["indicator_id"]}])))))
 
 (deftest filter-map->where-map
   (is (= {:observable_type "type"
