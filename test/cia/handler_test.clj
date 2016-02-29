@@ -14,7 +14,7 @@
 (defmacro deftest-for-each-store [test-name & body]
   `(helpers/deftest-for-each-fixture ~test-name
      {:memory-store helpers/fixture-in-memory-store
-      :sql-tore     (join-fixtures [db-helpers/fixture-sql-store
+      :sql-store    (join-fixtures [db-helpers/fixture-sql-store
                                     db-helpers/fixture-clean-db])}
      ~@body))
 
