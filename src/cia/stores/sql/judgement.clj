@@ -40,7 +40,7 @@
   (transform/db-relationship->schema-relationship
    judgement-indicator-relationship-map))
 
-(def entities->db-indicators
+(def judgements->db-indicators
   (transform/entities->db-relationships
    judgement-indicator-relationship-map))
 
@@ -54,7 +54,7 @@
                                select/judgement-entity-values
                                (map transform/to-db-observable)
                                (map transform/to-db-valid-time)))
-     (c/insert @judgement-indicator (entities->db-indicators judgements)))
+     (c/insert @judgement-indicator (judgements->db-indicators judgements)))
     realized-judgements))
 
 (defn select-judgements [filter-map]
