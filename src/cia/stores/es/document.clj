@@ -73,13 +73,15 @@
                {:must (concat nested-fmt
                               flat-fmt)}}}}))
 
-(defn raw-search-docs [conn index-name mapping query & options]
+(defn raw-search-docs [conn index-name mapping query sort]
+  (println sort)
+
   (->> (document/search
         @conn
         index-name
         mapping
         :query query
-        :sort (:sort options))
+        :sort sort)
        hits-from
        (map :_source)))
 

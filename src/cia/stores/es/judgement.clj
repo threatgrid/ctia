@@ -37,7 +37,13 @@
 (defn list-unexpired-judgements-by-observable
   [{:keys [value type]}]
 
-  (let [sort {:priority "desc"}
+  (let [sort {:priority "desc"
+              :disposition "asc"
+              "valid_time.start_time"
+              {:order "asc"
+               :mode "min"
+               :nested_filter
+               {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}
         observable-filter
         {:nested {:path "observable"
                   :query
@@ -64,7 +70,6 @@
      mapping
      query
      sort)))
-
 
 (defn- make-verdict [judgement]
   {:disposition (:disposition judgement)
