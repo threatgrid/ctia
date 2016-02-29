@@ -8,7 +8,8 @@
    [cia.stores.es.actor :refer :all]
    [cia.stores.es.campaign :refer :all]
    [cia.stores.es.coa :refer :all]
-   [cia.stores.es.incident :refer :all]))
+   [cia.stores.es.incident :refer :all]
+   [cia.stores.es.exploit-target :refer :all]))
 
 
 (defrecord JudgementStore [state]
@@ -112,3 +113,16 @@
   (delete-incident [_ id]
     (handle-delete-incident state id))
   (list-incidents [_ filter-map]))
+
+;; TBD rename
+(defrecord ExplitTargetStore [state]
+  IExploitTargetStore
+  (read-exploit-target [_ id]
+    (handle-read-exploit-target state id))
+  (create-exploit-target [_ new-exploit-target]
+    (handle-create-exploit-target state new-exploit-target))
+  (update-exploit-target [_ id new-exploit-target]
+    (handle-update-exploit-target state id new-exploit-target))
+  (delete-exploit-target [_ id]
+    (handle-delete-exploit-target state id))
+  (list-exploit-targets [_ filter-map]))

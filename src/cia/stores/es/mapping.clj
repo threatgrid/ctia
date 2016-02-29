@@ -243,6 +243,34 @@
    {:action_entry coa-requested
     :journal_entry string}})
 
+(def vulnerability
+  {:type "nested"
+   :properties
+   {:title string
+    :description string
+    :is_known {:type "boolean"}
+    :is_public_acknowledged {:type "boolean"}
+    :short_description string
+    :cve_id string
+    :osvdb_id string
+    :source string
+    :discovered_datetime ts
+    :published_datetime ts
+    :affected_software string
+    :references string}})
+
+(def weakness
+  {:type "nested"
+   :properties
+   {:description string
+    :cwe_id string}})
+
+(def configuration
+  {:type "nested"
+   :description string
+   :short_description string
+   :cce_id string})
+
 (def sighting
   {:type "nested"
    :properties
@@ -393,7 +421,10 @@
      :cost string
      :efficacy string
      :source string
-     :related_COAs related-coas}}})
+     :related_COAs related-coas
+     :owner string
+     :created ts
+     :modified ts}}})
 
 (def incident-mapping
   {"incident"
@@ -424,7 +455,26 @@
      :attributed_actors related-actors
      ;; :related_incidents related-incidents
      :related_incidents {:type "nested" :enabled false}
-     :intended_effect string}}})
+     :intended_effect string
+     :owner string
+     :created ts
+     :modifed ts}}})
+
+(def exploit-target-mapping
+  {"exploit-target"
+   {:properties
+    {:id string
+     :valid_time valid-time
+     :version string
+     :vulnerability vulnerability
+     :weakness weakness
+     :configuration configuration
+     :potential_COAs related-coas
+     :source string
+     :related_exploit_targets related-exploit-targets
+     :owner string
+     :created ts
+     :modified ts}}})
 
 (def mappings
   (merge {}
@@ -435,4 +485,4 @@
          campaign-mapping
          coa-mapping
          incident-mapping
-         ))
+         exploit-target-mapping))
