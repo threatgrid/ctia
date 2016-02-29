@@ -45,12 +45,11 @@
 
 (defn fixture-store [store-map]
   (fn [f]
-    (let [store-impls store-map]
-      (doseq [[store impl-fn] store-impls]
-        (reset! store (impl-fn)))
-      (f)
-      (doseq  [store (keys store-impls)]
-        (reset! store nil)))))
+    (doseq [[store impl-fn] store-map]
+      (reset! store (impl-fn)))
+    (f)
+    (doseq  [store (keys store-map)]
+      (reset! store nil))))
 
 (def fixture-in-memory-store (fixture-store memory-stores))
 
