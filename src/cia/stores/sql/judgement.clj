@@ -83,9 +83,11 @@
 (defn delete-judgement [id]
   (kdb/transaction
    (let [num-rows-deleted
-         (k/delete @judgement (k/where {:id id}))]
-     (k/delete @judgement-indicator
-               (k/where {:judgement_id id}))
+         (+
+          (k/delete @judgement
+                    (k/where {:id id}))
+          (k/delete @judgement-indicator
+                    (k/where {:judgement_id id})))]
      (> num-rows-deleted 0))))
 
 (defn calculate-verdict [{:keys [type value] :as _observable_}]
