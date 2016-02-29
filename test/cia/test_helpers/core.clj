@@ -43,17 +43,14 @@
    store/indicator-store      (init-atom mem/->IndicatorStore)
    store/ttp-store            (init-atom mem/->TTPStore)})
 
-(defn fixture-store
-  ([store-map]
-   (fixture-store store-map nil))
-  ([store-map init-fn]
-   (fn [f]
-     (let [store-impls store-map]
-       (doseq [[store impl-fn] store-impls]
-         (reset! store (impl-fn)))
-       (f)
-       (doseq  [store (keys store-impls)]
-         (reset! store nil))))))
+(defn fixture-store [store-map]
+  (fn [f]
+    (let [store-impls store-map]
+      (doseq [[store impl-fn] store-impls]
+        (reset! store (impl-fn)))
+      (f)
+      (doseq  [store (keys store-impls)]
+        (reset! store nil)))))
 
 (def fixture-in-memory-store (fixture-store memory-stores))
 
