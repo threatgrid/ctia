@@ -280,6 +280,20 @@
      :created ts
      :modified ts}}})
 
+(def coa-mapping
+  {"coa"
+   {:properties
+    {:id string
+     :valid_time valid-time
+     :stage string
+     :type string
+     :objective string
+     :impact string
+     :cost string
+     :efficacy string
+     :source string
+     :related_COAs related-coas}}})
+
 
 (def mappings
   (merge {}
@@ -287,4 +301,5 @@
          indicator-mapping
          feedback-mapping
          actor-mapping
-         campaign-mapping))
+         campaign-mapping
+         coa-mapping))

@@ -6,7 +6,8 @@
    [cia.stores.es.indicator :refer :all]
    [cia.stores.es.ttp :refer :all]
    [cia.stores.es.actor :refer :all]
-   [cia.stores.es.campaign :refer :all]))
+   [cia.stores.es.campaign :refer :all]
+   [cia.stores.es.coa :refer :all]))
 
 
 (defrecord JudgementStore [state]
@@ -86,3 +87,15 @@
   (delete-campaign [_ id]
     (handle-delete-campaign state id))
   (list-campaigns [_ filter-map]))
+
+(defrecord COAStore [state]
+  ICOAStore
+  (read-coa [_ id]
+    (handle-read-coa state id))
+  (create-coa [_ new-coa]
+    (handle-create-coa state new-coa))
+  (update-coa [_ id new-coa]
+    (handle-update-coa state id new-coa))
+  (delete-coa [_ id]
+    (handle-delete-coa state id))
+  (list-coas [_ filter-map]))
