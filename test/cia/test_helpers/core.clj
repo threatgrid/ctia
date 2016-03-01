@@ -38,7 +38,7 @@
    store/feedback-store       (init-atom mem/->FeedbackStore)
    store/campaign-store       (init-atom mem/->CampaignStore)
    store/coa-store            (init-atom mem/->COAStore)
-   store/exploit-target-store (init-atom mem/->ExplitTargetStore)
+   store/exploit-target-store (init-atom mem/->ExploitTargetStore)
    store/incident-store       (init-atom mem/->IncidentStore)
    store/indicator-store      (init-atom mem/->IndicatorStore)
    store/ttp-store            (init-atom mem/->TTPStore)})

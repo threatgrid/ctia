@@ -171,7 +171,7 @@
 (def-update-handler handle-update-exploit-target
   StoredExploitTarget NewExploitTarget swap-exploit-target)
 
-(defrecord ExplitTargetStore [state]
+(defrecord ExploitTargetStore [state]
   IExploitTargetStore
   (read-exploit-target [_ id]
     (handle-read-exploit-target state id))
