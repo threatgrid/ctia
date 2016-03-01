@@ -527,7 +527,8 @@
                                                 :source "source"
                                                 :relationship "relationship"
                                                 :COA "coa-123"}]
-                                :judgements ["judgement-123" "judgement-234"]})
+                                :judgements [{:judgement "judgement-123"}
+                                             {:judgement "judgement-234"}]})
           indicator (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
@@ -545,7 +546,8 @@
                             :source "source"
                             :relationship "relationship"
                             :COA "coa-123"}]
-            :judgements ["judgement-123" "judgement-234"]
+            :judgements [{:judgement "judgement-123"}
+                         {:judgement "judgement-234"}]
             :owner "not implemented"}
            (dissoc indicator
                    :id
@@ -571,7 +573,8 @@
                                 :source "source"
                                 :relationship "relationship"
                                 :COA "coa-123"}]
-                :judgements ["judgement-123" "judgement-234"]
+                :judgements [{:judgement "judgement-123"}
+                             {:judgement "judgement-234"}]
                 :owner "not implemented"}
                (dissoc indicator
                        :id
@@ -596,7 +599,8 @@
                                           :source "source"
                                           :relationship "relationship"
                                           :COA "coa-123"}]
-                          :judgements ["judgement-123" "judgement-234"]})]
+                          :judgements [{:judgement "judgement-123"}
+                                       {:judgement "judgement-234"}]})]
           (is (= 200 status))
           (is (deep=
                {:id (:id indicator)
@@ -615,7 +619,8 @@
                                 :source "source"
                                 :relationship "relationship"
                                 :COA "coa-123"}]
-                :judgements ["judgement-123" "judgement-234"]
+                :judgements [{:judgement "judgement-123"}
+                             {:judgement "judgement-234"}]
                 :owner "not implemented"}
                (dissoc updated-indicator
                        :modified)))))
@@ -875,7 +880,7 @@
   (testing "test setup: create a judgement (2)"
     (let [response (post "cia/judgement"
                          :body {:indicators []
-                                :observable {:value "10.0.0.1"
+                                :observable {:value "42.42.42.1"
                                              :type "ip"}
                                 :disposition 2
                                 :source "test"
@@ -887,7 +892,7 @@
   (testing "test setup: create a judgement (3)"
     (let [response (post "cia/judgement"
                          :body {:indicators []
-                                :observable {:value "10.0.0.1"
+                                :observable {:value "42.42.42.1"
                                              :type "ip"}
                                 :disposition 1
                                 :source "test"
@@ -898,36 +903,36 @@
       (is (= 200 (:status response)))))
 
   (testing "GET /cia/:observable_type/:observable_value/judgements"
-    (let [response (get "cia/ip/10.0.0.1/judgements")
+    (let [response (get "cia/ip/42.42.42.1/judgements")
           judgements (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           [{:indicators []
-             :observable {:value "10.0.0.1"
-                          :type "ip"}
-             :disposition 2
-             :disposition_name "Malicious"
-             :source "test"
-             :priority 100
-             :severity 100
-             :confidence "Low"
-             :valid_time {:start_time #inst "2016-02-12T00:00:00.000"
-                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-             :owner "not implemented"}
-            {:indicators []
-             :observable {:value "10.0.0.1"
-                          :type "ip"}
-             :disposition 1
-             :disposition_name "Clean"
-             :source "test"
-             :priority 50
-             :severity 60
-             :confidence "High"
-             :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
-                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-             :owner "not implemented"}]
-           (->> judgements
-                (map #(dissoc % :id :created))))))))
+           (set [{:indicators []
+                  :observable {:value "42.42.42.1"
+                               :type "ip"}
+                  :disposition 2
+                  :disposition_name "Malicious"
+                  :source "test"
+                  :priority 100
+                  :severity 100
+                  :confidence "Low"
+                  :valid_time {:start_time #inst "2016-02-12T00:00:00.000"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :owner "not implemented"}
+                 {:indicators []
+                  :observable {:value "42.42.42.1"
+                               :type "ip"}
+                  :disposition 1
+                  :disposition_name "Clean"
+                  :source "test"
+                  :priority 50
+                  :severity 60
+                  :confidence "High"
+                  :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                  :owner "not implemented"}])
+           (set (->> judgements
+                     (map #(dissoc % :id :created)))))))))
 
 (deftest test-observable-indicators-and-sightings-routes
 
@@ -947,7 +952,7 @@
         {indicator-1-status :status}
         (post "cia/indicator"
               :body {:title "indicator"
-                     :judgements [(:id judgement-1)]
+                     :judgements [{:judgement (:id judgement-1)}]
                      :sightings [{:timestamp "2016-02-01T00:00:00.000-00:00"
                                   :source "foo"
                                   :confidence "Medium"}
@@ -975,7 +980,7 @@
         {indicator-2-status :status}
         (post "cia/indicator"
               :body {:title "indicator"
-                     :judgements [(:id judgement-2)]
+                     :judgements [{:judgement (:id judgement-2)}]
                      :sightings [{:timestamp "2016-02-04T12:00:00.000-00:00"
                                   :source "spam"
                                   :confidence "None"}]
@@ -1028,50 +1033,50 @@
             indicators (:parsed-body response)]
         (is (= 200 (:status response)))
         (is (deep=
-             [{:title "indicator"
-               :judgements [(:id judgement-2)]
-               :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
-                            :source "spam"
-                            :confidence "None"}]
-               :description "description"
-               :producer "producer"
-               :type ["C2" "IP Watchlist"]
-               :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
-                            :end_time #inst "2016-02-12T00:00:00.000-00:00"}
-               :owner "not implemented"}
-              {:title "indicator"
-               :judgements [{:judgement (:id judgement-3)
-                             :confidence "High"}]
-               :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
-                            :source "foo"
-                            :confidence "High"}
-                           {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
-                            :source "bar"
-                            :confidence "Low"}]
-               :description "description"
-               :producer "producer"
-               :type ["C2" "IP Watchlist"]
-               :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
-                            :end_time #inst "2016-02-11T00:00:00.000-00:00"}
-               :owner "not implemented"}]
-             (->> indicators
-                  (map #(dissoc % :id :created :modified))))))))
+             (set [{:title "indicator"
+                    :judgements [{:judgement (:id judgement-2)}]
+                    :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
+                                 :source "spam"
+                                 :confidence "None"}]
+                    :description "description"
+                    :producer "producer"
+                    :type ["C2" "IP Watchlist"]
+                    :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
+                                 :end_time #inst "2016-02-12T00:00:00.000-00:00"}
+                    :owner "not implemented"}
+                   {:title "indicator"
+                    :judgements [{:judgement (:id judgement-3)
+                                  :confidence "High"}]
+                    :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
+                                 :source "foo"
+                                 :confidence "High"}
+                                {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
+                                 :source "bar"
+                                 :confidence "Low"}]
+                    :description "description"
+                    :producer "producer"
+                    :type ["C2" "IP Watchlist"]
+                    :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
+                                 :end_time #inst "2016-02-11T00:00:00.000-00:00"}
+                    :owner "not implemented"}])
+             (set (->> indicators
+                       (map #(dissoc % :id :created :modified)))))))))
 
   (testing "GET /cia/:observable_type/:observable_value/sightings"
     (let [response (get "cia/ip/10.0.0.1/sightings")
           sightings (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
-             :source "spam"
-             :confidence "None"}
-            {:timestamp #inst "2016-02-05T01:00:00.000-00:00"
-             :source "foo"
-             :confidence "High"}
-            {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
-             :source "bar"
-             :confidence "Low"}]
-           sightings)))))
+           (set [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
+                  :source "spam"
+                  :confidence "None"}
+                 {:timestamp #inst "2016-02-05T01:00:00.000-00:00"
+                  :source "foo"
+                  :confidence "High"}
+                 {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
+                  :source "bar"
+                  :confidence "Low"}])
+           (set sightings))))))
 
 (deftest test-observable-verdict-route
 

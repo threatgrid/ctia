@@ -130,6 +130,13 @@
    :properties (assoc related
                       :incident string)})
 
+(def indicator-sightings
+  {:type "nested"
+   :properties
+   {:timestamp ts
+    :source string
+    :confidence string}})
+
 (def specifications
   {:type "nested"
    :properties
@@ -323,8 +330,8 @@
      :negate {:type "boolean"}
      :type string
      :observable observable
-     ;; :judgements related-judgements TBD check if varying
-     :judgements {:type "nested" :enabled false}
+     :judgements related-judgements
+     ;;:judgements {:type "nested"}
      :composite_indicator_expression {:type "nested"
                                       :properties
                                       {:operator string
@@ -333,7 +340,7 @@
      :likely_impact string
      :suggested_COAs related-coas
      :confidence string
-     :sightings sighting
+     :sightings indicator-sightings
      :related_indicators related-indicators
      :related_campaigns related-campaigns
      :related_COAs related-coas
