@@ -14,6 +14,7 @@
             [cia.schemas.feedback :refer [NewFeedback StoredFeedback]]
             [cia.schemas.judgement :refer [NewJudgement StoredJudgement]]
             [cia.schemas.ttp :refer [NewTTP StoredTTP]]
+            [cia.schemas.sighting :refer [NewSighting StoredSighting]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.store :refer :all]
@@ -358,7 +359,27 @@
           (not-found))))
 
     (context "/sightings" []
-      :tags ["Sighting"])
+      :tags ["Sightings"]
+      (POST "/" []
+        :return StoredSighting
+        :body [sightings NewSighting {:description "a new Sighting"}]
+        :summary "Adds a new Sighting"
+        (ok {}))
+      (PUT "/:id" []
+        :return StoredSighting
+        :body [sightings NewSighting {:description "an updated Sightings"}]
+        :summary "Updated a Sighting"
+        :path-params [id :- s/Str]
+        (ok {:id id}))
+      (GET "/:id" []
+        :return (s/maybe StoredSighting)
+        :summary "Gets a Sighting by ID"
+        :path-params [id :- s/Str]
+        (ok {:id id}))
+      (DELETE "/:id" []
+        :path-params [id :- s/Str]
+        :summary "Deletes a Sighting"
+        (ok {:id id})))
 
 
     (GET "/:observable_type/:observable_value/judgements" []
