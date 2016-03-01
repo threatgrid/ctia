@@ -8,7 +8,7 @@
                      store/feedback-store mem/->FeedbackStore
                      store/campaign-store mem/->CampaignStore
                      store/coa-store mem/->COAStore
-                     store/exploit-target-store mem/->ExplitTargetStore
+                     store/exploit-target-store mem/->ExploitTargetStore
                      store/incident-store mem/->IncidentStore
                      store/indicator-store mem/->IndicatorStore
                      store/ttp-store mem/->TTPStore}]
