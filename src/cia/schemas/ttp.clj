@@ -77,7 +77,6 @@
 
     ;; Extension fields:
     :type  (describe s/Str "type of this TTP")
-    :expires (describe c/Time "expiration time")
     :indicators (describe [rel/IndicatorReference] "related indicators")
     ;; Not provided: kill_chain_phases
     ;; Not provided: kill_chains

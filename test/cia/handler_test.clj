@@ -1,16 +1,24 @@
 (ns cia.handler-test
   (:refer-clojure :exclude [get])
   (:require [cia.handler :as handler]
-            [cia.test-helpers :refer [delete get post put] :as helpers]
-            [clj-http.client :as http]
+            [cia.test-helpers.core :refer [delete get post put] :as helpers]
+            [cia.test-helpers.db :as db-helpers]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [cia.schemas.common :as c]))
 
+(use-fixtures :once db-helpers/fixture-init-db)
+
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
-                                    helpers/fixture-in-memory-store
                                     helpers/fixture-schema-validation]))
 
-(deftest test-version-routes
+(defmacro deftest-for-each-store [test-name & body]
+  `(helpers/deftest-for-each-fixture ~test-name
+     {:memory-store helpers/fixture-in-memory-store
+      :sql-store    (join-fixtures [db-helpers/fixture-sql-store
+                                    db-helpers/fixture-clean-db])}
+     ~@body))
+
+(deftest-for-each-store test-version-routes
   (testing "we can request different content types"
     (let [response (get "cia/version" :accept :json)]
       (is (= "/cia" (get-in response [:parsed-body "base"]))))
@@ -23,7 +31,7 @@
       (is (= 200 (:status response)))
       (is (= "0.1" (get-in response [:parsed-body :version]))))))
 
-(deftest test-actor-routes
+(deftest-for-each-store test-actor-routes
   (testing "POST /cia/actor"
     (let [response (post "cia/actor"
                          :body {:title "actor"
@@ -113,7 +121,7 @@
           (let [response (get (str "cia/actor/" (:id actor)))]
             (is (= 404 (:status response)))))))))
 
-(deftest test-campaign-routes
+(deftest-for-each-store test-campaign-routes
   (testing "POST /cia/campaign"
     (let [response (post "cia/campaign"
                          :body {:title "campaign"
@@ -248,7 +256,7 @@
           (let [response (get (str "cia/campaign/" (:id campaign)))]
             (is (= 404 (:status response)))))))))
 
-(deftest test-coa-routes
+(deftest-for-each-store test-coa-routes
   (testing "POST /cia/coa"
     (let [response (post "cia/coa"
                          :body {:title "coa"
@@ -317,7 +325,7 @@
           (let [response (get (str "/cia/coa/" (:id coa)))]
             (is (= 404 (:status response)))))))))
 
-(deftest test-exploit-target-routes
+(deftest-for-each-store test-exploit-target-routes
   (testing "POST /cia/exploit-target"
     (let [response (post "cia/exploit-target"
                          :body {:title "exploit-target"
@@ -411,7 +419,7 @@
           (let [response (get (str "cia/exploit-target/" (:id exploit-target)))]
             (is (= 404 (:status response)))))))))
 
-(deftest test-incident-routes
+(deftest-for-each-store test-incident-routes
   (testing "POST /cia/incident"
     (let [response (post "cia/incident"
                          :body {:title "incident"
@@ -510,7 +518,7 @@
           (let [response (get (str "cia/incident/" (:id incident)))]
             (is (= 404 (:status response)))))))))
 
-(deftest test-indicator-routes
+(deftest-for-each-store test-indicator-routes
   (testing "POST /cia/indicator"
     (let [response (post "cia/indicator"
                          :body {:title "indicator"
@@ -625,7 +633,7 @@
           ;; Deleting indicators is not allowed
           (is (= 404 (:status response))))))))
 
-(deftest test-judgement-routes
+(deftest-for-each-store test-judgement-routes
   (testing "POST /cia/judgement"
     (let [response (post "cia/judgement"
                          :body {:observable {:value "1.2.3.4"
@@ -749,7 +757,7 @@
                  (map #(dissoc % :id :created)
                       feedbacks)))))))))
 
-(deftest test-judgement-routes-for-dispositon-determination
+(deftest-for-each-store test-judgement-routes-for-dispositon-determination
   (testing "POST a judgement with dispositon (id)"
     (let [response (post "cia/judgement"
                          :body {:observable {:value "1.2.3.4"
@@ -858,11 +866,11 @@
                         :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
            (:parsed-body response))))))
 
-(deftest test-observable-judgements-route
+(deftest-for-each-store test-observable-judgements-route
 
   (testing "test setup: create a judgement (1)"
     (let [response (post "cia/judgement"
-                         :body {:indicators []
+                         :body {:indicators [{:indicator "indicator-111"}]
                                 :observable {:value "1.2.3.4"
                                              :type "ip"}
                                 :disposition 2
@@ -874,7 +882,7 @@
       (is (= 200 (:status response)))))
   (testing "test setup: create a judgement (2)"
     (let [response (post "cia/judgement"
-                         :body {:indicators []
+                         :body {:indicators [{:indicator "indicator-222"}]
                                 :observable {:value "10.0.0.1"
                                              :type "ip"}
                                 :disposition 2
@@ -886,7 +894,7 @@
       (is (= 200 (:status response)))))
   (testing "test setup: create a judgement (3)"
     (let [response (post "cia/judgement"
-                         :body {:indicators []
+                         :body {:indicators [{:indicator "indicator-333"}]
                                 :observable {:value "10.0.0.1"
                                              :type "ip"}
                                 :disposition 1
@@ -902,40 +910,40 @@
           judgements (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           [{:indicators []
-             :observable {:value "10.0.0.1"
-                          :type "ip"}
-             :disposition 2
-             :disposition_name "Malicious"
-             :source "test"
-             :priority 100
-             :severity 100
-             :confidence "Low"
-             :valid_time {:start_time #inst "2016-02-12T00:00:00.000"
-                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-             :owner "not implemented"}
-            {:indicators []
-             :observable {:value "10.0.0.1"
-                          :type "ip"}
-             :disposition 1
-             :disposition_name "Clean"
-             :source "test"
-             :priority 50
-             :severity 60
-             :confidence "High"
-             :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
-                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-             :owner "not implemented"}]
+           #{{:indicators [{:indicator "indicator-222"}]
+              :observable {:value "10.0.0.1"
+                           :type "ip"}
+              :disposition 2
+              :disposition_name "Malicious"
+              :source "test"
+              :priority 100
+              :severity 100
+              :confidence "Low"
+              :valid_time {:start_time #inst "2016-02-12T00:00:00.000"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}
+             {:indicators [{:indicator "indicator-333"}]
+              :observable {:value "10.0.0.1"
+                           :type "ip"}
+              :disposition 1
+              :disposition_name "Clean"
+              :source "test"
+              :priority 50
+              :severity 60
+              :confidence "High"
+              :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+              :owner "not implemented"}}
            (->> judgements
-                (map #(dissoc % :id :created))))))))
+                (map #(dissoc % :id :created))
+                set))))))
 
-(deftest test-observable-indicators-and-sightings-routes
+(deftest-for-each-store test-observable-indicators-and-sightings-routes
 
   (let [{judgement-1 :parsed-body
          judgement-1-status :status}
         (post "cia/judgement"
-              :body {:indicators []
-                     :observable {:value "1.2.3.4"
+              :body {:observable {:value "1.2.3.4"
                                   :type "ip"}
                      :disposition 2
                      :source "test"
@@ -962,8 +970,7 @@
         {judgement-2 :parsed-body
          judgement-2-status :status}
         (post "cia/judgement"
-              :body {:indicators []
-                     :observable {:value "10.0.0.1"
+              :body {:observable {:value "10.0.0.1"
                                   :type "ip"}
                      :disposition 2
                      :source "test"
@@ -988,8 +995,7 @@
         {judgement-3 :parsed-body
          judgement-3-status :status}
         (post "cia/judgement"
-              :body {:indicators []
-                     :observable {:value "10.0.0.1"
+              :body {:observable {:value "10.0.0.1"
                                   :type "ip"}
                      :disposition 2
                      :source "test"
@@ -1073,7 +1079,7 @@
              :confidence "Low"}]
            sightings)))))
 
-(deftest test-observable-verdict-route
+(deftest-for-each-store test-observable-verdict-route
 
   (testing "test setup: create a judgement (1)"
     ;; Incorrect observable
@@ -1125,7 +1131,7 @@
                                 :priority 99
                                 :severity 100
                                 :confidence "Low"
-                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:01"}})
+                                :valid_time {:start_time "2016-02-12T00:01:00.000-00:00"}})
           judgement-1 (:parsed-body response)]
       (is (= 200 (:status response)))))
 
@@ -1151,7 +1157,7 @@
                   :judgement (:id judgement-1)}
                  verdict)))))))
 
-(deftest test-observable-verdict-route-2
+(deftest-for-each-store test-observable-verdict-route-2
   ;; This test case catches a bug that was in the in-memory store
   ;; It tests the code path where priority is equal but dispositions differ
   (testing "test setup: create a judgement (1)"
@@ -1195,7 +1201,7 @@
                     :judgement (:id judgement)}
                    verdict))))))))
 
-(deftest test-ttp-routes
+(deftest-for-each-store test-ttp-routes
   (testing "POST /cia/ttp"
     (let [response (post "cia/ttp"
                          :body {:title "ttp"
