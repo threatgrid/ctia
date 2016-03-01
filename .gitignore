@@ -1,3 +1,4 @@
 .lein-failures
 .nrepl-port
+.*.swp
 /target/
