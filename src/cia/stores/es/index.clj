@@ -1,28 +1,42 @@
 (ns cia.stores.es.index
   (:require
+   [clojure.java.io :as io]
+   [clojure.string :refer [split]]
+   [schema.core :as s]
+   [schema.coerce :as coerce]
    [clojurewerkz.elastisch.native :as n]
    [clojurewerkz.elastisch.native.index :as idx]
-   [cia.stores.es.mapping :refer [mappings]]))
+   [cia.stores.es.mapping :refer [mappings]])
+  (:import java.util.Properties))
 
-
+(def index-properties-file "es-index.properties")
 (def es-conn (atom nil))
-(def cluster-name "cia_dev")
-(def index-name "cia-dev")
+(def index-name (atom nil))
 
+(defn read-index-spec []
+  (let [props (Properties.)]
+    (.load props (-> index-properties-file
+                     io/resource
+                     io/reader))
 
-(defn setup-conn! []
-  (reset! es-conn
-          (n/connect [["127.0.0.1" 9300]]
-                     {"cluster.name" cluster-name})))
+    (into {} (map (fn [[k v]]
+                    [(keyword k) v])
+                  props))))
 
-(defn setup-index! []
-  (when (idx/exists? @es-conn index-name)
-    (idx/delete @es-conn index-name))
-  (idx/create @es-conn index-name :mappings mappings))
+(defn init! []
+  (let [props (read-index-spec)]
+    (reset! index-name (:indexname props))
+    (reset! es-conn
+            (n/connect [[(:host props) (Integer. (:port props))]]
+                       {"cluster.name" (:clustername props)}))))
 
-(setup-conn!)
-(setup-index!)
+(defn flush! [conn]
+  (idx/flush @conn @index-name))
 
+(defn delete! [conn]
+  (when (idx/exists? @conn @index-name)
+    (idx/delete @conn @index-name)))
 
-
-
+(defn create! [conn]
+  (when-not (idx/exists? @conn @index-name)
+    (idx/create @conn @index-name :mappings mappings)))
