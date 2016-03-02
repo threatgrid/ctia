@@ -17,6 +17,11 @@
          :init cia.init/init-store
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
+
+  :test-selectors {:default (fn [m] (not (or (:integration m)
+                                            (:regression m))))
+                   :integration :integration}
+
   :profiles {:dev {:dependencies [[clj-http "2.0.1"]
                                   [cheshire "5.5.0"]
                                   [clojurewerkz/elastisch "2.2.1"]

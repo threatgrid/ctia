@@ -7,8 +7,8 @@
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [cia.schemas.common :as c]))
 
-(use-fixtures :once #((db-helpers/fixture-init-db %)
-                      (index-helpers/fixture-init-index %)))
+(use-fixtures :once (join-fixtures [#(db-helpers/fixture-init-db %)
+                                    #(index-helpers/fixture-init-index %)]))
 
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
                                     helpers/fixture-schema-validation]))
@@ -18,8 +18,10 @@
      {:memory-store helpers/fixture-in-memory-store
       :sql-store    (join-fixtures [db-helpers/fixture-sql-store
                                     db-helpers/fixture-clean-db])
-      :es-store     (join-fixtures [index-helpers/fixture-es-store
-                                    index-helpers/fixture-clean-index])}
+      :es-store ^:integration (join-fixtures [index-helpers/fixture-es-store
+                                              index-helpers/fixture-clean-index])}
+
+
      ~@body))
 
 (deftest-for-each-store test-version-routes

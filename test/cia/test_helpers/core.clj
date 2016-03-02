@@ -146,5 +146,9 @@
   `(do
      ~@(for [[name-key fixture-fn] fixture-map]
          `(clojure.test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
-                      {(keyword test-name) true})
+                                   (merge
+                                    (when (:integration
+                                           (meta fixture-fn))
+                                      {:integration true})
+                                    {(keyword test-name) true}))
             (~fixture-fn (fn [] ~@body))))))
