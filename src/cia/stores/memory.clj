@@ -171,7 +171,7 @@
 (def-update-handler handle-update-exploit-target
   StoredExploitTarget NewExploitTarget swap-exploit-target)
 
-(defrecord ExplitTargetStore [state]
+(defrecord ExploitTargetStore [state]
   IExploitTargetStore
   (read-exploit-target [_ id]
     (handle-read-exploit-target state id))
@@ -306,7 +306,7 @@
 
 (defn higest-priority [& judgements]
   ;; pre-sort for deterministic tie breaking
-  (let [[judgement-1 judgement-2 :as judgements] (sort-by (comp :end_time :valid_time) judgements)]
+  (let [[judgement-1 judgement-2 :as judgements] (sort-by (comp :start_time :valid_time) judgements)]
     (cond
       (some nil? judgements)
       (first (remove nil? judgements))
