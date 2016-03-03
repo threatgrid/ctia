@@ -6,19 +6,22 @@
             [cia.test-helpers.core :as h]
             [clojure.java.io :as io]))
 
+(defn clean-index! []
+  (es-index/delete! es-conn)
+  (es-index/create! es-conn))
+
 (defn fixture-init-index [test]
   (try
     (es-index/init!)
-    (es-index/delete! es-conn)
-    (es-index/create! es-conn)
+    (clean-index!)
     (test)
     (es-index/delete! es-conn)
     (catch org.elasticsearch.client.transport.NoNodeAvailableException e
-      (do  (println "ES unavailable")
+      (do  (println "ES instance Unavailable")
            (test)))))
 
 (defn fixture-clean-index [f]
-  (es-index/flush! es-conn)
+  (clean-index!)
   (f))
 
 (defn init-state [f]
@@ -37,4 +40,5 @@
    store/ttp-store            (init-state es-store/->TTPStore)})
 
 
-(def fixture-es-store (h/fixture-store es-stores))
+(def fixture-es-store
+  (h/fixture-store es-stores))

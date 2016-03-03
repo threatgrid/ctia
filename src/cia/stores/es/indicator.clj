@@ -43,10 +43,8 @@
 (defn handle-list-indicators [state  filter-map]
   (search-docs es-conn index-name mapping filter-map))
 
-(s/defn handle-list-indicators-by-observable
-  [indicator-state :- (s/atom {s/Str StoredIndicator})
-   judgement-store :- (s/protocol IJudgementStore)
-   observable :- Observable]
+(defn handle-list-indicators-by-observable
+  [indicator-state judgement-store observable]
 
   (let [judgements (list-judgements judgement-store
                                     {[:observable :type] (:type observable)
