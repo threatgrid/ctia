@@ -7,10 +7,7 @@
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [cia.schemas.common :as c]))
 
-(use-fixtures :once (join-fixtures [#(db-helpers/fixture-init-db %)
-                                    ;;#(index-helpers/fixture-init-index %)
-                                    ]))
-
+(use-fixtures :once db-helpers/fixture-init-db)
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
                                     helpers/fixture-schema-validation]))
 
@@ -758,16 +755,16 @@
                 feedbacks (:parsed-body response)]
             (is (= 200 (:status response)))
             (is (deep=
-                 [{:judgement (:id judgement),
-                   :feedback -1,
-                   :reason "false positive"
-                   :owner "not implemented"}
-                  {:judgement (:id judgement),
-                   :feedback 1,
-                   :reason "true positive"
-                   :owner "not implemented"}]
-                 (map #(dissoc % :id :created)
-                      feedbacks)))))))))
+                 (set  [{:judgement (:id judgement),
+                         :feedback -1,
+                         :reason "false positive"
+                         :owner "not implemented"}
+                        {:judgement (:id judgement),
+                         :feedback 1,
+                         :reason "true positive"
+                         :owner "not implemented"}])
+                 (set (map #(dissoc % :id :created)
+                           feedbacks))))))))))
 
 (deftest-for-each-store test-judgement-routes-for-dispositon-determination
   (testing "POST a judgement with dispositon (id)"
