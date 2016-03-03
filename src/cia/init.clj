@@ -1,8 +1,10 @@
 (ns cia.init
   (:require [cia.store :as store]
-            [cia.stores.memory :as mem]))
+            [cia.stores.memory :as mem]
+            [cia.stores.es.store :as es]
+            [cia.stores.es.index :as es-index]))
 
-(defn init-store []
+(defn init-mem-store []
   (let [store-impls {store/actor-store mem/->ActorStore
                      store/judgement-store mem/->JudgementStore
                      store/feedback-store mem/->FeedbackStore
@@ -14,3 +16,23 @@
                      store/ttp-store mem/->TTPStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))))
+
+(defn init-es-store []
+  (let [es-conn (es-index/init!)
+        store-impls {store/actor-store es/->ActorStore
+                     store/judgement-store es/->JudgementStore
+                     store/feedback-store es/->FeedbackStore
+                     store/campaign-store es/->CampaignStore
+                     store/coa-store es/->COAStore
+                     store/exploit-target-store es/->ExploitTargetStore
+                     store/incident-store es/->IncidentStore
+                     store/indicator-store es/->IndicatorStore
+                     store/ttp-store es/->TTPStore}]
+    (doseq [[store impl-fn] store-impls]
+      (es-index/create! es-conn)
+      (reset! store (impl-fn {:es-conn es-conn})))))
+
+
+(defn init-store []
+  ;;(init-mem-store)
+  (init-es-store))

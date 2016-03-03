@@ -30,13 +30,10 @@
             (n/connect [[(:host props) (Integer. (:port props))]]
                        {"cluster.name" (:clustername props)}))))
 
-(defn flush! [conn]
-  (idx/flush @conn @index-name))
-
 (defn delete! [conn]
-  (when (idx/exists? @conn @index-name)
-    (idx/delete @conn @index-name)))
+  (when (idx/exists? conn @index-name)
+    (idx/delete conn @index-name)))
 
 (defn create! [conn]
-  (when-not (idx/exists? @conn @index-name)
-    (idx/create @conn @index-name :mappings mappings)))
+  (when-not (idx/exists? conn @index-name)
+    (idx/create conn @index-name :mappings mappings)))

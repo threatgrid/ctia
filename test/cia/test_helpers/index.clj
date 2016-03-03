@@ -7,15 +7,15 @@
             [clojure.java.io :as io]))
 
 (defn clean-index! []
-  (es-index/delete! es-conn)
-  (es-index/create! es-conn))
+  (es-index/delete! @es-conn)
+  (es-index/create! @es-conn))
 
 (defn fixture-init-index [test]
   (try
     (es-index/init!)
     (clean-index!)
     (test)
-    (es-index/delete! es-conn)
+    (es-index/delete! @es-conn)
     (catch org.elasticsearch.client.transport.NoNodeAvailableException e
       (do  (println "ES instance Unavailable")
            (test)))))
