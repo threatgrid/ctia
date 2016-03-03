@@ -3,7 +3,6 @@
   (:require
    [schema.core :as s]
    [clj-time.core :as t]
-   [cia.stores.es.index :refer [es-conn index-name]]
    [cia.schemas.common :refer [disposition-map]]
    [cia.schemas.judgement :refer [Judgement
                                   NewJudgement
@@ -23,19 +22,32 @@
 (defn handle-create-judgement [state new-judgement]
   (let [id (make-id Judgement new-judgement)
         realized (realize-judgement new-judgement id)]
-    (create-doc es-conn index-name mapping realized)))
+
+    (create-doc (:conn state)
+                (:index state)
+                mapping
+                realized)))
 
 (defn handle-read-judgement [state id]
-  (get-doc es-conn index-name mapping id))
+  (get-doc (:conn state)
+           (:index state)
+           mapping
+           id))
 
 (defn handle-delete-judgement [state id]
-  (delete-doc es-conn index-name mapping id))
+  (delete-doc (:conn state)
+              (:index state)
+              mapping
+              id))
 
 (defn handle-list-judgements [state filter-map]
-  (search-docs es-conn index-name mapping filter-map))
+  (search-docs (:conn state)
+               (:index state)
+               mapping
+               filter-map))
 
 (defn list-unexpired-judgements-by-observable
-  [{:keys [value type]}]
+  [state {:keys [value type]}]
 
   (let [sort {:priority "desc"
               :disposition "asc"
@@ -64,12 +76,11 @@
                 {:bool
                  {:must time-filter}}}}]
 
-    (raw-search-docs
-     es-conn
-     index-name
-     mapping
-     query
-     sort)))
+    (raw-search-docs (:conn state)
+                     (:index state)
+                     mapping
+                     query
+                     sort)))
 
 (defn- make-verdict [judgement]
   {:disposition (:disposition judgement)
@@ -77,6 +88,6 @@
    :disposition_name (get disposition-map (:disposition judgement))})
 
 (defn handle-calculate-verdict [state observable]
-  (-> (list-unexpired-judgements-by-observable observable)
+  (-> (list-unexpired-judgements-by-observable state observable)
       first
       make-verdict))

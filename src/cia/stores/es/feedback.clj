@@ -2,7 +2,6 @@
   (:import java.util.UUID)
   (:require
    [schema.core :as s]
-   [cia.stores.es.index :refer [es-conn index-name]]
    [cia.schemas.feedback :refer [Feedback
                                  NewFeedback
                                  realize-feedback]]
@@ -18,10 +17,19 @@
 (defn handle-create-feedback [state new-feedback judgement-id]
   (let [id (make-id Feedback new-feedback)
         realized (realize-feedback new-feedback id judgement-id)]
-    (create-doc es-conn index-name mapping realized)))
+    (create-doc (:conn state)
+                (:index state)
+                mapping
+                realized)))
 
 (defn handle-delete-feedback [state id]
-  (delete-doc es-conn index-name mapping id))
+  (delete-doc (:conn state)
+              (:index state)
+              mapping
+              id))
 
 (defn handle-list-feedback [state filter-map]
-  (search-docs es-conn index-name mapping filter-map))
+  (search-docs (:conn state)
+               (:index state)
+               mapping
+               filter-map))

@@ -2,7 +2,6 @@
   (:import java.util.UUID)
   (:require
    [schema.core :as s]
-   [cia.stores.es.index :refer [es-conn index-name]]
    [cia.schemas.incident :refer [Incident
                                  NewIncident
                                  realize-incident]]
@@ -20,21 +19,32 @@
 (defn handle-create-incident [state new-incident]
   (let [id (make-id Incident new-incident)
         realized (realize-incident new-incident id)]
-    (create-doc es-conn index-name mapping realized)))
+    (create-doc (:conn state)
+                (:index state)
+                mapping
+                realized)))
 
 (defn handle-update-incident [state id new-incident]
-  (update-doc
-   es-conn
-   index-name
-   mapping
-   id
-   new-incident))
+  (update-doc (:conn state)
+              (:index state)
+              mapping
+              id
+              new-incident))
 
 (defn handle-read-incident [state id]
-  (get-doc es-conn index-name mapping id))
+  (get-doc (:conn state)
+           (:index state)
+           mapping
+           id))
 
 (defn handle-delete-incident [state id]
-  (delete-doc es-conn index-name mapping id))
+  (delete-doc (:conn state)
+              (:index state)
+              mapping
+              id))
 
 (defn handle-list-incidents [state filter-map]
-  (search-docs es-conn index-name mapping filter-map))
+  (search-docs (:conn state)
+               (:index state)
+               mapping
+               filter-map))

@@ -8,7 +8,8 @@
             [cia.schemas.common :as c]))
 
 (use-fixtures :once (join-fixtures [#(db-helpers/fixture-init-db %)
-                                    #(index-helpers/fixture-init-index %)]))
+                                    ;;#(index-helpers/fixture-init-index %)
+                                    ]))
 
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
                                     helpers/fixture-schema-validation]))

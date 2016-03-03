@@ -18,7 +18,7 @@
       (reset! store (impl-fn (atom {}))))))
 
 (defn init-es-store []
-  (let [es-conn (es-index/init!)
+  (let [store-state (es-index/init-conn)
         store-impls {store/actor-store es/->ActorStore
                      store/judgement-store es/->JudgementStore
                      store/feedback-store es/->FeedbackStore
@@ -28,9 +28,12 @@
                      store/incident-store es/->IncidentStore
                      store/indicator-store es/->IndicatorStore
                      store/ttp-store es/->TTPStore}]
+
+    (es-index/create! (:conn store-state)
+                      (:index store-state))
+
     (doseq [[store impl-fn] store-impls]
-      (es-index/create! es-conn)
-      (reset! store (impl-fn {:es-conn es-conn})))))
+      (reset! store (impl-fn store-state)))))
 
 
 (defn init-store []

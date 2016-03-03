@@ -2,7 +2,6 @@
   (:import java.util.UUID)
   (:require
    [schema.core :as s]
-   [cia.stores.es.index :refer [es-conn index-name]]
    [cia.schemas.coa :refer [COA
                             NewCOA
                             realize-coa]]
@@ -20,21 +19,32 @@
 (defn handle-create-coa [state new-coa]
   (let [id (make-id COA new-coa)
         realized (realize-coa new-coa id)]
-    (create-doc es-conn index-name mapping realized)))
+    (create-doc (:conn state)
+                (:index state)
+                mapping
+                realized)))
 
 (defn handle-update-coa [state id new-coa]
-  (update-doc
-   es-conn
-   index-name
-   mapping
-   id
-   new-coa))
+  (update-doc (:conn state)
+              (:index state)
+              mapping
+              id
+              new-coa))
 
 (defn handle-read-coa [state id]
-  (get-doc es-conn index-name mapping id))
+  (get-doc (:conn state)
+           (:index state)
+           mapping
+           id))
 
 (defn handle-delete-coa [state id]
-  (delete-doc es-conn index-name mapping id))
+  (delete-doc (:conn state)
+              (:index state)
+              mapping
+              id))
 
 (defn handle-list-coas [state filter-map]
-  (search-docs es-conn index-name mapping filter-map))
+  (search-docs (:conn state)
+               (:index state)
+               mapping
+               filter-map))
