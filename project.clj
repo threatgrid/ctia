@@ -12,19 +12,18 @@
                  ;; Database
                  [korma "0.4.2"]
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
-                 ]
+                 [clojurewerkz/elastisch "2.2.1"]]
   :ring {:handler cia.handler/app
          :init cia.init/init-store
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
 
-  :test-selectors {:default (fn [m] (not (or (:integration m)
-                                            (:regression m))))
-                   :integration :integration}
+  :test-selectors {:integration :integration
+                   :default (fn [m] (not (or (:integration m)
+                                            (:regression m))))}
 
   :profiles {:dev {:dependencies [[clj-http "2.0.1"]
                                   [cheshire "5.5.0"]
-                                  [clojurewerkz/elastisch "2.2.1"]
                                   [javax.servlet/servlet-api "2.5"]
                                   [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]]
