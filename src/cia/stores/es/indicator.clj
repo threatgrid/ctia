@@ -8,6 +8,7 @@
                                   NewIndicator
                                   StoredIndicator
                                   realize-indicator]]
+   [cia.stores.es.filter :refer [indicators-by-observable-query]]
    [cia.stores.es.document :refer [create-doc
                                    update-doc
                                    get-doc
@@ -54,23 +55,15 @@
                filter-map))
 
 (defn handle-list-indicators-by-observable
-  [state judgement-store observable]
+  [state judgement-store {:keys [:type :value]}]
 
   (let [judgements (list-judgements judgement-store
-                                    {[:observable :type] (:type observable)
-                                     [:observable :value] (:value observable)})
-        judgements-ids (set (map :id judgements))
-        query {:filtered
-               {:filter
-                {:nested
-                 {:path "judgements"
-                  :query
-                  {:bool
-                   {:must
-                    {:terms
-                     {:judgements.judgement judgements-ids}}}}}}}}]
+                                    {[:observable :type] type
+                                     [:observable :value] value})
+        judgement-ids (set (map :id judgements))]
+
     (raw-search-docs  (:conn state)
                       (:index state)
                       mapping
-                      query
+                      (indicators-by-observable-query judgement-ids)
                       {:timestamp "desc"})))

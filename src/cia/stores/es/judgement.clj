@@ -7,12 +7,14 @@
    [cia.schemas.judgement :refer [Judgement
                                   NewJudgement
                                   realize-judgement]]
+   [cia.stores.es.filter :refer
+    [unexpired-judgements-by-observable-query]]
+
    [cia.stores.es.document :refer [create-doc
                                    get-doc
                                    delete-doc
                                    search-docs
-                                   raw-search-docs
-                                   ]]))
+                                   raw-search-docs]]))
 
 (def ^{:private true} mapping "judgement")
 
@@ -47,7 +49,7 @@
                filter-map))
 
 (defn list-unexpired-judgements-by-observable
-  [state {:keys [value type]}]
+  [state observable]
 
   (let [sort {:priority "desc"
               :disposition "asc"
@@ -56,25 +58,8 @@
                :mode "min"
                :nested_filter
                {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}
-        observable-filter
-        {:nested {:path "observable"
-                  :query
-                  {:bool
-                   {:must [{:term {"observable.type" type}}
-                           {:term {"observable.value" value}}]}}}}
-        time-filter
-        {:nested {:path "valid_time"
-                  :query
-                  {:bool
-                   {:must [{:range
-                            {"valid_time.start_time" {"lt" "now/d"}}}
-                           {:range
-                            {"valid_time.end_time" {"gt" "now/d"}}}]}}}}
-        query {:filtered
-               {:query observable-filter
-                :filter
-                {:bool
-                 {:must time-filter}}}}]
+        query
+        (unexpired-judgements-by-observable-query observable)]
 
     (raw-search-docs (:conn state)
                      (:index state)
