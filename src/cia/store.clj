@@ -79,7 +79,7 @@
   (list-relations [this filtermap]))
 
 (defprotocol IAuthRoleStore
-  (read-auth-role [this org-id role])
+  (read-auth-role [this org-id role] [this identity])
   (create-auth-role [this new-auth-role])
   (delete-auth-role [this org-id role]))
 

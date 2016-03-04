@@ -1,5 +1,6 @@
 (ns cia.stores.memory
-  (:require [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
+  (:require [cia.auth :as auth]
+            [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
             [cia.schemas.auth-role :as auth-role]
             [cia.schemas.campaign
              :refer [NewCampaign StoredCampaign realize-campaign]]
@@ -404,10 +405,13 @@
      id)))
 
 (s/defn handle-read-auth-role :- (s/maybe auth-role/AuthRole)
-  [state :- auth-role-state
-   org-id :- auth-role/OrgId
-   role :- auth-role/Role]
-  (get @state [org-id role]))
+  ([state :- auth-role-state
+    identity :- (s/protocol auth/IIdentity)]
+   (apply handle-read-auth-role state (auth/identity-key identity)))
+  ([state :- auth-role-state
+    org-id :- auth-role/OrgId
+    role :- auth-role/Role]
+   (get @state [org-id role])))
 
 (s/defn handle-delete-auth-role :- s/Bool
   [state :- auth-role-state
@@ -421,6 +425,8 @@
 
 (defrecord AuthRoleStore [state]
   IAuthRoleStore
+  (read-auth-role [_ identity]
+    (handle-read-auth-role state identity))
   (read-auth-role [_ org-id role]
     (handle-read-auth-role state org-id role))
   (create-auth-role [_ new-auth-role]

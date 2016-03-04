@@ -54,9 +54,7 @@
          (capabilities-for-identity this)))
 
   (capabilities-for-identity [_ id]
-    (some-> (store/read-auth-role @store/auth-role-store
-                                  (:org-id id)
-                                  (:role id))
+    (some-> (store/read-auth-role @store/auth-role-store id)
             :capabilities
             set))
 
