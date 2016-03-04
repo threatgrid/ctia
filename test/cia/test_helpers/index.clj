@@ -1,4 +1,5 @@
 (ns cia.test-helpers.index
+  "ES Index test helpers"
   (:require [cia.store :as store]
             [cia.stores.es.index :as es-index]
             [cia.stores.es.mapping :as mapping]
@@ -6,22 +7,26 @@
             [cia.test-helpers.core :as h]
             [clojure.java.io :as io]))
 
-(def state-fixture
+(def conn-state-fixture
+  "for testing the same es conn for all ES Stores"
   (atom nil))
 
 (defn clean-index! []
-  (es-index/delete! (:conn @state-fixture)
-                    (:index @state-fixture))
-  (es-index/create! (:conn @state-fixture)
-                    (:index @state-fixture)))
+  "delete and recreate the index"
+  (es-index/delete! (:conn @conn-state-fixture)
+                    (:index @conn-state-fixture))
+  (es-index/create! (:conn @conn-state-fixture)
+                    (:index @conn-state-fixture)))
 
 (defn fixture-clean-index [f]
   (clean-index!)
   (f))
 
 (defn init-store-state [f]
+  "spwan the ES stores
+   with a conn and index name as state"
   (fn []
-    (f @state-fixture)))
+    (f @conn-state-fixture)))
 
 (def es-stores
   {store/actor-store          (init-store-state es-store/->ActorStore)
@@ -36,5 +41,6 @@
 
 
 (def fixture-es-store
-  (do (reset! state-fixture (es-index/init-conn))
+  (do (reset! conn-state-fixture
+              (es-index/init-conn))
       (h/fixture-store es-stores)))

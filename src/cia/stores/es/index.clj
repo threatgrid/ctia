@@ -31,12 +31,14 @@
      :conn (n/connect [[(:host props) (Integer. (:port props))]]
                       {"cluster.name" (:clustername props)})}))
 
-(defn delete! [conn index-name]
+(defn delete!
   "delete an index, abort if non existant"
+  [conn index-name]
   (when (idx/exists? conn index-name)
     (idx/delete conn index-name)))
 
-(defn create! [conn index-name]
+(defn create!
   "create an index, abort if already exists"
+  [conn index-name]
   (when-not (idx/exists? conn index-name)
     (idx/create conn index-name :mappings mappings)))
