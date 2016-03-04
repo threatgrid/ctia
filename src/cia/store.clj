@@ -78,6 +78,11 @@
   (delete-relation [this id])
   (list-relations [this filtermap]))
 
+(defprotocol IAuthRoleStore
+  (read-auth-role [this org-id role])
+  (create-auth-role [this new-auth-role])
+  (delete-auth-role [this org-id role]))
+
 ;; core model
 (defonce judgement-store (atom nil))
 (defonce indicator-store (atom nil))
@@ -98,3 +103,6 @@
 
 ;; relations
 (defonce relation-store (atom nil))
+
+;; internal
+(defonce auth-role-store (atom nil))

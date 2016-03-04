@@ -11,6 +11,7 @@
                      store/exploit-target-store mem/->ExploitTargetStore
                      store/incident-store mem/->IncidentStore
                      store/indicator-store mem/->IndicatorStore
-                     store/ttp-store mem/->TTPStore}]
+                     store/ttp-store mem/->TTPStore
+                     store/auth-role-store mem/->AuthRoleStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))))

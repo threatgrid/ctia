@@ -1,5 +1,5 @@
 (ns cia.handler
-  (:require [compojure.api.sweet :refer :all]
+  (:require [cia.auth.middleware :as auth]
             [cia.printers :refer :all]
             [cia.schemas.actor :refer [NewActor StoredActor]]
             [cia.schemas.campaign :refer [NewCampaign StoredCampaign]]
@@ -17,6 +17,7 @@
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.store :refer :all]
+            [compojure.api.sweet :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
@@ -98,24 +99,32 @@
       (POST "/" []
         :return StoredActor
         :body [actor NewActor {:description "a new Actor"}]
+        :header-params [api_key :- s/Str]
         :summary "Adds a new Actor"
+        :capabilities :create-actor
         (ok (create-actor @actor-store actor)))
       (PUT "/:id" []
         :return StoredActor
         :body [actor NewActor {:description "an updated Actor"}]
+        :header-params [api_key :- s/Str]
         :summary "Updates an Actor"
         :path-params [id :- s/Str]
+        :capabilities :create-actor
         (ok (update-actor @actor-store id actor)))
       (GET "/:id" []
         :return (s/maybe StoredActor)
         :summary "Gets an Actor by ID"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :read-actor
         (if-let [d (read-actor @actor-store id)]
           (ok d)
           (not-found)))
       (DELETE "/:id" []
         :path-params [id :- s/Str]
         :summary "Deletes an Actor"
+        :header-params [api_key :- s/Str]
+        :capabilities :delete-actor
         (if (delete-actor @actor-store id)
           (no-content)
           (not-found))))
@@ -126,23 +135,31 @@
         :return StoredCampaign
         :body [campaign NewCampaign {:description "a new campaign"}]
         :summary "Adds a new Campaign"
+        :header-params [api_key :- s/Str]
+        :capabilities :create-campaign
         (ok (create-campaign @campaign-store campaign)))
       (PUT "/:id" []
         :return StoredCampaign
         :body [campaign NewCampaign {:description "an updated campaign"}]
         :summary "Updates a campaign"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :create-campaign
         (ok (update-campaign @campaign-store id campaign)))
       (GET "/:id" []
         :return (s/maybe StoredCampaign)
         :summary "Gets a Campaign by ID"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :read-campaign
         (if-let [d (read-campaign @campaign-store id)]
           (ok d)
           (not-found)))
       (DELETE "/:id" []
         :path-params [id :- s/Str]
         :summary "Deletes a Campaign"
+        :header-params [api_key :- s/Str]
+        :capabilities :delete-campaign
         (if (delete-campaign @campaign-store id)
           (no-content)
           (not-found))))
@@ -153,6 +170,8 @@
         :return StoredExploitTarget
         :body [exploit-target NewExploitTarget {:description "a new exploit target"}]
         :summary "Adds a new ExploitTarget"
+        :header-params [api_key :- s/Str]
+        :capabilities :create-exploit-target
         (ok (create-exploit-target @exploit-target-store exploit-target)))
       (PUT "/:id" []
         :return StoredExploitTarget
@@ -161,17 +180,23 @@
                {:description "an updated exploit target"}]
         :summary "Updates an exploit target"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :create-exploit-target
         (ok (update-exploit-target @exploit-target-store id exploit-target)))
       (GET "/:id" []
         :return (s/maybe StoredExploitTarget)
         :summary "Gets an ExploitTarget by ID"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :read-exploit-target
         (if-let [d (read-exploit-target @exploit-target-store id)]
           (ok d)
           (not-found)))
       (DELETE "/:id" []
         :path-params [id :- s/Str]
         :summary "Deletes an ExploitTarget"
+        :header-params [api_key :- s/Str]
+        :capabilities :delete-exploit-target
         (if (delete-exploit-target @exploit-target-store id)
           (no-content)
           (not-found))))
@@ -182,23 +207,31 @@
         :return StoredCOA
         :body [coa NewCOA {:description "a new COA"}]
         :summary "Adds a new COA"
+        :header-params [api_key :- s/Str]
+        :capabilities :create-coa
         (ok (create-coa @coa-store coa)))
       (PUT "/:id" []
         :return StoredCOA
         :body [coa NewCOA {:description "an updated COA"}]
         :summary "Updates a COA"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :create-coa
         (ok (update-coa @coa-store id coa)))
       (GET "/:id" []
         :return (s/maybe StoredCOA)
         :summary "Gets a COA by ID"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :read-coa
         (if-let [d (read-coa @coa-store id)]
           (ok d)
           (not-found)))
       (DELETE "/:id" []
         :path-params [id :- s/Str]
         :summary "Deletes a COA"
+        :header-params [api_key :- s/Str]
+        :capabilities :delete-coa
         (if (delete-coa @coa-store id)
           (no-content)
           (not-found))))
@@ -209,23 +242,31 @@
         :return StoredIncident
         :body [incident NewIncident {:description "a new incident"}]
         :summary "Adds a new Incident"
+        :header-params [api_key :- s/Str]
+        :capabilities :create-incident
         (ok (create-incident @incident-store incident)))
       (PUT "/:id" []
         :return StoredIncident
         :body [incident NewIncident {:description "an updated incident"}]
         :summary "Updates an Incident"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :create-incident
         (ok (update-incident @incident-store id incident)))
       (GET "/:id" []
         :return (s/maybe StoredIncident)
         :summary "Gets an Incident by ID"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :read-incident
         (if-let [d (read-incident @incident-store id)]
           (ok d)
           (not-found)))
       (DELETE "/:id" []
         :path-params [id :- s/Str]
         :summary "Deletes an Incident"
+        :header-params [api_key :- s/Str]
+        :capabilities :delete-incident
         (if (delete-incident @incident-store id)
           (no-content)
           (not-found))))
@@ -235,31 +276,41 @@
       (POST "/" []
         :return StoredJudgement
         :body [judgement NewJudgement {:description "a new Judgement"}]
+        :header-params [api_key :- s/Str]
         :summary "Adds a new Judgement"
+        :capabilities :create-judgement
         (ok (create-judgement @judgement-store judgement)))
       (POST "/:judgement-id/feedback" []
         :tags ["Feedback"]
         :return StoredFeedback
         :path-params [judgement-id :- s/Str]
         :body [feedback NewFeedback {:description "a new Feedback on a Judgement"}]
+        :header-params [api_key :- s/Str]
         :summary "Adds a Feedback to a Judgement"
+        :capabilities :create-feedback
         (ok (create-feedback @feedback-store feedback judgement-id)))
       (GET "/:judgement-id/feedback" []
         :tags ["Feedback"]
         :return [StoredFeedback]
         :path-params [judgement-id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :read-feedback
         :summary "Gets all Feedback for this Judgement."
         (ok (list-feedback @feedback-store {:judgement judgement-id})))
       (GET "/:id" []
         :return (s/maybe StoredJudgement)
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
         :summary "Gets a Judgement by ID"
+        :capabilities :read-judgement
         (if-let [d (read-judgement @judgement-store id)]
           (ok d)
           (not-found)))
       (DELETE "/:id" []
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
         :summary "Deletes a Judgement"
+        :capabilities :delete-judgement
         (if (delete-judgement @judgement-store id)
           (no-content)
           (not-found))))
@@ -297,17 +348,23 @@
         :return StoredIndicator
         :body [indicator NewIndicator {:description "a new Indicator"}]
         :summary "Adds a new Indicator"
+        :header-params [api_key :- s/Str]
+        :capabilities :create-indicator
         (ok (create-indicator @indicator-store indicator)))
       (PUT "/:id" []
         :return StoredIndicator
         :body [indicator NewIndicator {:description "an updated Indicator"}]
         :summary "Updates an Indicator"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :create-indicator
         (ok (update-indicator @indicator-store id indicator)))
       (GET "/:id" []
         :return (s/maybe StoredIndicator)
         :summary "Gets an Indicator by ID"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :read-indicator
         ;; :description "This is a little decription"
         ;; :query-params [{offset :-  Long {:summary "asdads" :default 0}}
         ;;                {limit :-  Long 0}
@@ -327,16 +384,22 @@
         :return StoredTTP
         :body [ttp NewTTP {:description "a new TTP"}]
         :summary "Adds a new TTP"
+        :header-params [api_key :- s/Str]
+        :capabilities :create-ttp
         (ok (create-ttp @ttp-store ttp)))
       (PUT "/:id" []
         :return StoredTTP
         :body [ttp NewTTP {:description "an updated TTP"}]
         :summary "Updated a TTP"
         :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities :create-ttp
         (ok (update-ttp @ttp-store id ttp)))
       (GET "/:id" []
         :return (s/maybe StoredTTP)
         :summary "Gets a TTP by ID"
+        :header-params [api_key :- s/Str]
+        :capabilities :read-ttp
         ;;:description "This is a little description"
         ;; :query-params [{offset :-  Long 0}
         ;;                {limit :-  Long 0}
@@ -353,6 +416,8 @@
       (DELETE "/:id" []
         :path-params [id :- s/Str]
         :summary "Deletes a TTP"
+        :header-params [api_key :- s/Str]
+        :capabilities :delete-ttp
         (if (delete-ttp @ttp-store id)
           (no-content)
           (not-found))))
@@ -375,6 +440,8 @@
                     observable_value :- s/Str]
       :return [StoredJudgement]
       :summary "Returns all the Judgements associated with the specified observable."
+      :header-params [api_key :- s/Str]
+      :capabilities :list-judgements-by-observable
       (ok (list-judgements @judgement-store
                            {[:observable :type]  observable_type
                             [:observable :value] observable_value})))
@@ -391,6 +458,8 @@
                     observable_value :- s/Str]
       :return [StoredIndicator]
       :summary "Returns all the Indiators associated with the specified observable."
+      :header-params [api_key :- s/Str]
+      :capabilities :list-judgements-by-indicator
       (ok (list-indicators-by-observable @indicator-store
                                          @judgement-store
                                          {:type observable_type
@@ -406,6 +475,8 @@
                      {source :- s/Str nil}]
       :path-params [observable_type :- ObservableType
                     observable_value :- s/Str]
+      :header-params [api_key :- s/Str]
+      :capabilities :list-sightings-by-indicator
       :return [Sighting]
       :summary "Returns all the Sightings associated with the specified observable."
       (ok (list-indicator-sightings-by-observable @indicator-store
@@ -419,9 +490,12 @@
                     observable_value :- s/Str]
       :return (s/maybe Verdict)
       :summary "Returns the current Verdict associated with the specified observable."
+      :header-params [api_key :- s/Str]
+      :capabilities :get-verdict
       (ok (calculate-verdict @judgement-store {:type observable_type
                                                :value observable_value})))))
 
 (def app
   (-> api-handler
+      auth/wrap-authentication
       (wrap-restful-format)))

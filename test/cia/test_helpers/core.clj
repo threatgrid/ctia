@@ -1,14 +1,14 @@
 (ns cia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [cheshire.core :as json]
-            [cia.store :as store]
+  (:require [cia.store :as store]
             [cia.stores.memory :as mem]
+            [cheshire.core :as json]
             [clj-http.client :as http]
+            [clojure.data :as cd]
             [clojure.edn :as edn]
-            [ring.adapter.jetty :as jetty]
-            [schema.core :as schema]
             [clojure.test :as ct]
-            [clojure.data :as cd]))
+            [ring.adapter.jetty :as jetty]
+            [schema.core :as schema]))
 
 (defmethod ct/assert-expr 'deep= [msg form]
   (let [a (second form)
@@ -41,7 +41,8 @@
    store/exploit-target-store (init-atom mem/->ExploitTargetStore)
    store/incident-store       (init-atom mem/->IncidentStore)
    store/indicator-store      (init-atom mem/->IndicatorStore)
-   store/ttp-store            (init-atom mem/->TTPStore)})
+   store/ttp-store            (init-atom mem/->TTPStore)
+   store/auth-role-store      (init-atom mem/->AuthRoleStore)})
 
 (defn fixture-store [store-map]
   (fn [f]
@@ -64,6 +65,12 @@
                                    :join? false})]
       (f)
       (.stop server))))
+
+(defn set-capabilities! [org-id role caps]
+  (store/create-auth-role @store/auth-role-store
+                         {:org_id org-id
+                          :role role
+                          :capabilities caps}))
 
 (defn url
   ([path]
@@ -90,7 +97,8 @@
   ([http-response]
    (parse-body http-response nil))
   ([{{content-type "Content-Type"} :headers
-     body :body}
+     body :body
+     :as request}
     default]
    (cond
      (edn? content-type) (edn/read-string body)
@@ -102,13 +110,18 @@
   (cond
     (edn? content-type) (pr-str body)
     (json? content-type) (json/generate-string body)
-    :else body))
+    :else (str body)))
 
 (defn get [path & {:as options}]
-  (let [response (http/get (url path)
-                           (merge {:accept :edn
-                                   :throw-exceptions false}
-                                  options))]
+  (let [{:keys [body]
+         :as options}
+        (merge {:accept :edn
+                :throw-exceptions false}
+               options)
+
+        response
+        (http/get (url path)
+                  options)]
     (assoc response :parsed-body (parse-body response))))
 
 (defn post [path & {:as options}]
@@ -120,8 +133,11 @@
                 :socket-timeout 2000
                 :conn-timeout 2000}
                options)
-        response (http/post (url path)
-                            (assoc options :body (encode-body body content-type)))]
+
+        response
+        (http/post (url path)
+                   (-> options
+                       (cond-> body (assoc :body (encode-body body content-type)))))]
     (assoc response :parsed-body (parse-body response))))
 
 (defn delete [path & {:as options}]
@@ -138,8 +154,11 @@
                 :socket-timeout 2000
                 :conn-timeout 2000}
                options)
-        response (http/put (url path)
-                           (assoc options :body (encode-body body content-type)))]
+
+        response
+        (http/put (url path)
+                  (-> options
+                      (cond-> body (assoc :body (encode-body body content-type)))))]
     (assoc response :parsed-body (parse-body response))))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]

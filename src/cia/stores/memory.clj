@@ -1,5 +1,6 @@
 (ns cia.stores.memory
   (:require [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
+            [cia.schemas.auth-role :as auth-role]
             [cia.schemas.campaign
              :refer [NewCampaign StoredCampaign realize-campaign]]
             [cia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]
@@ -386,3 +387,43 @@
   (delete-ttp [_ id]
     (handle-delete-ttp state id))
   (list-ttps [_ filter-map]))
+
+;; auth-role
+
+(s/defschema auth-role-state
+  (s/atom {[(s/one auth-role/OrgId "org-id")
+            (s/one auth-role/Role "role")]
+           auth-role/AuthRole}))
+
+(s/defn handle-create-auth-role :- auth-role/AuthRole
+  [state :- auth-role-state
+   new-auth-role :- auth-role/AuthRole]
+  (let [id [(:org_id new-auth-role) (:role new-auth-role)]]
+    (get
+     (swap! state (fn [s] (assoc s id new-auth-role)))
+     id)))
+
+(s/defn handle-read-auth-role :- (s/maybe auth-role/AuthRole)
+  [state :- auth-role-state
+   org-id :- auth-role/OrgId
+   role :- auth-role/Role]
+  (get @state [org-id role]))
+
+(s/defn handle-delete-auth-role :- s/Bool
+  [state :- auth-role-state
+   org-id :- auth-role/OrgId
+   role :- auth-role/Role]
+  (let [id [org-id role]]
+    (if (contains? @state id)
+      (do (swap! state dissoc id)
+          true)
+      false)))
+
+(defrecord AuthRoleStore [state]
+  IAuthRoleStore
+  (read-auth-role [_ org-id role]
+    (handle-read-auth-role state org-id role))
+  (create-auth-role [_ new-auth-role]
+    (handle-create-auth-role state new-auth-role))
+  (delete-auth-role [_ org-id role]
+    (handle-delete-auth-role state org-id role)))

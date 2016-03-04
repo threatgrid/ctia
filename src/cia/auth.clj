@@ -1,90 +1,85 @@
-(ns cia.auth)
+(ns cia.auth
+  (:require [cheshire.core :as json]
+            [cia.store :as store]
+            [clojure.core.memoize :as memo]
+            [clj-http.client :as http]
+            [clojure.set :as set]))
 
-(def capabilities
-  [:get-verdict
-
-   ;; judgements
-   :create-judgement
-   :read-judgement
-   :delete-judgement
-   :list-judgements-by-observable
-   :list-judgements-by-indicator
-
-   ;; indicators
-   :create-indicator
-   :read-indicator
-   :read-indicator-implementation
-   :update-indicator
-   :delete-indicator
-   :list-indicators
-
-   ;; feedback
-   :create-feedback
-
-
-   ;; threats
-   :create-ttp
-   :update-ttp
-   :delete-ttp
-   :read-ttp
-   :list-ttps
-
-   :create-campaign
-   :update-campaign
-   :delete-campaign
-   :read-campaign
-   :list-campaigns
-
-   :create-actor
-   :update-actor
-   :delete-actor
-   :read-actor
-   :list-actors
-
-
-   ;; sightings
-   :create-sighting
-   :update-sighting
-   :delete-sighting
-   :read-sighting
-   :list-sightings-by-observable
-   :list-sightings-by-indicator
-   :list-sightings
-
-   ;; incidents
-   :create-incident
-   :update-incident
-   :delete-incident
-   :read-incident
-   :list-incidents-by-observable
-   :list-incidents-by-indicator
-   :list-incidents
-
-   ;; relations
-   :create-relation
-   :delete-relation
-   :update-relation
-   :read-relation
-   :list-relations
-   
-   ])
+(defprotocol IIdentity
+  (identity-key [this])
+  (printable-identity [this]))
 
 (defprotocol IAuth
-  (default-capabilities [this])
   (capabilities-for-token [this token])
-  (owner-for-token [this token]))
+  (capabilities-for-identity [this identity])
+  (identity-for-token [this token])
+  (identity-has-capability? [this desired-capability identity]))
 
-(defonce auth-service
-  (atom
-   (reify IAuth
-     (default-capabilities [this]
-       capabilities)
-     
-     (capabilities-for-token [this token]
-       capabilities)
+(defprotocol IWhoAmI
+  (whoami [this token]))
 
-     (owner-for-token [this token]
-       "default"))))
+(defn make-whoami-fn [whoami-url]
+  (fn [token]
+    (let [response (http/get whoami-url {:accept :json
+                                         :throw-exceptions false
+                                         :query-params {"api_key" token}})]
+      (if (= 200 (:status response))
+        (-> (:body response)
+            json/parse-string)))))
 
+(defrecord WhoamiService [url whoami-fn]
+  IWhoAmI
+  (whoami [_ token]
+    (whoami-fn token)))
 
+(defn make-whoami-service
+  ([] (make-whoami-service "https://panacea.threatgrid.com/api/v3/session/whoami"))
+  ([url]
+   (WhoamiService.
+    url
+    (memo/ttl (make-whoami-fn url)
+              :ttl/threshold (* 100 50 5)))))
 
+(defrecord Identity [org-id role]
+  IIdentity
+  (identity-key [_]
+    [org-id role])
+  (printable-identity [_]
+    (str "org:" org-id ";role:" role)))
+
+(defrecord AuthService [whoami-service]
+  IAuth
+  (capabilities-for-token [this token]
+    (->> (identity-for-token this token)
+         (capabilities-for-identity this)))
+
+  (capabilities-for-identity [_ id]
+    (some-> (store/read-auth-role @store/auth-role-store
+                                  (:org-id id)
+                                  (:role id))
+            :capabilities
+            set))
+
+  (identity-for-token [_ token]
+    (if-let [{{:strs [organization_id role]} "data"} (whoami whoami-service
+                                                             token)]
+      (->Identity organization_id role)))
+
+  (identity-has-capability? [this desired-capability identity]
+    (let [allowed-capabilities (capabilities-for-identity this identity)]
+      (some?
+       (first
+        (set/intersection
+         (cond (set? desired-capability) desired-capability
+               (keyword? desired-capability) #{desired-capability}
+               (sequential? desired-capability) (set desired-capability))
+         allowed-capabilities))))))
+
+(defn make-auth-service [whoami-service]
+  (AuthService. whoami-service))
+
+;; TODO - get whoami URL from a properties file
+(defonce auth-service (atom (make-auth-service (make-whoami-service))))
+
+(defn set-whoami-service! [whoami-service]
+  (swap! auth-service assoc :whoami-service whoami-service))
