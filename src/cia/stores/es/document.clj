@@ -1,7 +1,7 @@
 (ns cia.stores.es.document
   (:require
    [clojure.string :as str]
-   [cia.stores.es.filter :refer :all]
+   [cia.stores.es.query :refer :all]
    [clojurewerkz.elastisch.native.document :as document]
    [clojurewerkz.elastisch.native.response :refer :all]))
 

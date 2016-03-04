@@ -7,7 +7,7 @@
    [cia.schemas.judgement :refer [Judgement
                                   NewJudgement
                                   realize-judgement]]
-   [cia.stores.es.filter :refer
+   [cia.stores.es.query :refer
     [unexpired-judgements-by-observable-query]]
 
    [cia.stores.es.document :refer [create-doc

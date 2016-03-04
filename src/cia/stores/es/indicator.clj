@@ -8,7 +8,7 @@
                                   NewIndicator
                                   StoredIndicator
                                   realize-indicator]]
-   [cia.stores.es.filter :refer [indicators-by-judgements-query]]
+   [cia.stores.es.query :refer [indicators-by-judgements-query]]
    [cia.stores.es.document :refer [create-doc
                                    update-doc
                                    get-doc
