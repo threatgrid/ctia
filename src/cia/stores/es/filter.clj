@@ -3,36 +3,46 @@
    [clojure.string :as str]
    [clojurewerkz.elastisch.query :as q]))
 
-(defn make-nested-query [[k v] filters]
-  (map (fn [[k v]]
-         (q/terms (->> k
-                       (map name)
-                       (str/join ".")) [v]))
-       filters))
+(defn nested-terms [filters]
+  "make nested terms from a cia filter:
+  [[[:observable :type] ip] [[:observable :value] 42.42.42.1]]
+  ->
+  [{:terms {observable.type [ip]}} {:terms {observable.value [42.42.42.1]}}]"
+  (vec (map (fn [[k v]]
+              (q/terms (->> k
+                            (map name)
+                            (str/join ".")) [v]))
+            filters)))
 
 (defn mk-nested-filter [n-index]
   "transformed a nested filter map grouped by parent path to an ES nested filter:
    {:observable [[[:observable :type] ip] [[:observable :value] 42.42.42.1]]}
+   ->
    ({:nested {:path observable,
               :query {:bool
                        {:must ({:terms {observable.type [ip]}}
                                {:terms {observable.value [42.42.42.1]}})}}}})"
-  (map (fn [[path filters & _ :as group]]
-         (q/nested
-          :path (name path)
-          :query (q/bool
-                  {:must (make-nested-query group filters)}))) n-index))
+  (map (fn [[path filters]]
+         (let [nested (nested-terms filters)]
+           (q/nested
+            :path (name path)
+            :query (q/bool
+                    {:must nested})))) n-index))
 
 (defn mk-flat-filter [flat-terms]
   "transform simple filters to ES terms:
   {:judgement judgement-a71c737f-a3bc-428d-a644-1676e00a758d}
+  ->
   ({:terms {:judgement [judgement-a71c737f-a3bc-428d-a644-1676e00a758d]}})"
 
-  (map (fn [[k v]] (q/terms k [v])) flat-terms))
+  (vec (map (fn [[k v]] (q/terms k [v])) flat-terms)))
 
-(defn filter-map->terms-query [filter-map]
+(defn filter-map->terms-query
   "transforms a filter map to en ES terms query
    only supports one level of nesting"
+
+  [filter-map]
+
   (let [flat-terms (into {}
                          (filter #(keyword? (first %)) filter-map))
         nested-terms (into {}
@@ -46,9 +56,10 @@
       :filter (q/bool {:must (concat nested-fmt
                                      flat-fmt)})}}))
 
-(defn indicators-by-judgements-query [judgement-ids]
+(defn indicators-by-judgements-query
   "nested filter to get all indicators
    matching a set of judgement ids"
+  [judgement-ids]
 
   (let [f (q/nested
            :path "judgements"
