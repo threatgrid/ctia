@@ -114,7 +114,6 @@
     (handle-delete-incident state id))
   (list-incidents [_ filter-map]))
 
-;; TBD rename
 (defrecord ExploitTargetStore [state]
   IExploitTargetStore
   (read-exploit-target [_ id]
