@@ -8,7 +8,7 @@
                                   NewIndicator
                                   StoredIndicator
                                   realize-indicator]]
-   [cia.stores.es.filter :refer [indicators-by-observable-query]]
+   [cia.stores.es.filter :refer [indicators-by-judgements-query]]
    [cia.stores.es.document :refer [create-doc
                                    update-doc
                                    get-doc
@@ -65,5 +65,5 @@
     (raw-search-docs  (:conn state)
                       (:index state)
                       mapping
-                      (indicators-by-observable-query judgement-ids)
+                      (indicators-by-judgements-query judgement-ids)
                       {:timestamp "desc"})))
