@@ -22,7 +22,8 @@
     :list-sightings-by-indicator
     :get-verdict})
 
-(use-fixtures :once (join-fixtures [db-helpers/fixture-init-db
+(use-fixtures :once (join-fixtures [helpers/fixture-properties
+                                    db-helpers/fixture-init-db
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)

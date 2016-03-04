@@ -1,6 +1,7 @@
 (ns cia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [cia.store :as store]
+  (:require [cia.properties :as props]
+            [cia.store :as store]
             [cia.stores.memory :as mem]
             [cheshire.core :as json]
             [clj-http.client :as http]
@@ -22,6 +23,10 @@
                           :expected '~form, :actual only-msg#}))
          (ct/do-report {:type :pass, :message ~msg,
                         :expected '~form, :actual nil})))))
+
+(defn fixture-properties [f]
+  (props/init!)
+  (f))
 
 
 (defn fixture-schema-validation [f]
@@ -163,5 +168,5 @@
   `(do
      ~@(for [[name-key fixture-fn] fixture-map]
          `(clojure.test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
-                      {(keyword test-name) true})
+                                   {(keyword test-name) true})
             (~fixture-fn (fn [] ~@body))))))
