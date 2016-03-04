@@ -97,8 +97,7 @@
   ([http-response]
    (parse-body http-response nil))
   ([{{content-type "Content-Type"} :headers
-     body :body
-     :as request}
+     body :body}
     default]
    (cond
      (edn? content-type) (edn/read-string body)
@@ -110,11 +109,10 @@
   (cond
     (edn? content-type) (pr-str body)
     (json? content-type) (json/generate-string body)
-    :else (str body)))
+    :else body))
 
 (defn get [path & {:as options}]
-  (let [{:keys [body]
-         :as options}
+  (let [options
         (merge {:accept :edn
                 :throw-exceptions false}
                options)
