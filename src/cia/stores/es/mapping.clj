@@ -3,7 +3,6 @@
 (def ts {:type "date" :format "date_time"})
 (def string {:type "string" :index "not_analyzed"})
 
-
 (def related
   {:confidence {:type "string"}
    :source {:type "string"}
@@ -303,7 +302,8 @@
      :reason string
      :source_uri string
      :reason_uri string
-     ;;:indicators related-indicators TBD check if varying
+     ;;:indicators related-indicators
+     ;;TBD enable again when proper schema is integrated
      :indicators {:type "nested" :enabled false}
      :owner string
      :created ts
@@ -384,7 +384,8 @@
      :sophistication string
      :intended_effect string
      :planning_and_operational_support string
-     ;;:observed_TTPs related-ttps TBD check if varying
+     ;;:observed_TTPs
+     ;; related-ttps TBD enable again when schema is stricter
      :observed_TTPs {:type "nested" :enabled false}
      ;;:associated_campaigns related-campaigns
      :associated_campaigns {:type "nested" :enabled false}
