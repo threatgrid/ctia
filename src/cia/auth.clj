@@ -38,7 +38,7 @@
    (WhoamiService.
     url
     (memo/ttl (make-whoami-fn url)
-              :ttl/threshold (* 100 50 5)))))
+              :ttl/threshold (* 1000 60 5)))))
 
 (defrecord Identity [org-id role]
   IIdentity
