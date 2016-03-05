@@ -2,22 +2,18 @@
   (:refer-clojure :exclude [load])
   (:require [clojure.java.io :as io]
             [clojure.string :as str])
-  (:import java.util.Properties))
+  (:import java.util.Properties
+           java.io.BufferedReader
+           java.io.File))
 
-(def properties-file-name "cia.properties")
-(def default-properties-file-name "cia-default.properties")
+(def property-files ["cia.properties"
+                     "cia-default.properties"])
 
-(defonce properties (atom nil))
-(defonce default-properties (atom nil))
+(defonce properties (atom {}))
 
-(defn load [file-name]
-  (try
-    (doto (Properties.)
-      (.load (-> file-name
-                 io/resource
-                 io/reader)))
-    (catch Throwable e
-      (println (format "Could not load '%s' properties file" file-name)))))
+(defn load [^BufferedReader reader]
+  (doto (Properties.)
+    (.load reader)))
 
 (defn transform [properties]
   (reduce (fn [accum [k v]]
@@ -29,11 +25,24 @@
           {}
           properties))
 
-(defn init! []
-  (reset! properties (transform (load properties-file-name)))
-  (reset! default-properties (transform (load default-properties-file-name))))
+(defn set-properties! [file]
+  (->> (io/reader file)
+       load
+       transform
+       (reset! properties)))
 
-(defn prop [& key-path]
-  (->> (map #(get-in % key-path ::miss) [@properties @default-properties])
-       (filter #(not= % ::miss))
-       first))
+(defn p [x]
+  (clojure.pprint/pprint x)
+  x)
+
+(defn init!
+  ([]
+   (some->> (map #(-> % io/resource io/file) property-files)
+            (filter some?)
+            (filter #(.canRead ^File %))
+            first
+            set-properties!))
+  ([file]
+   (-> file
+       io/resource
+       set-properties!)))

@@ -1,8 +1,10 @@
 (ns cia.init
-  (:require [cia.store :as store]
+  (:require [cia.properties :as properties]
+            [cia.store :as store]
             [cia.stores.memory :as mem]))
 
 (defn init-store []
+  (properties/init!)
   (let [store-impls {store/actor-store mem/->ActorStore
                      store/judgement-store mem/->JudgementStore
                      store/feedback-store mem/->FeedbackStore

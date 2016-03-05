@@ -25,7 +25,7 @@
                         :expected '~form, :actual nil})))))
 
 (defn fixture-properties [f]
-  (props/init!)
+  (props/init! "cia-test.properties")
   (f))
 
 
