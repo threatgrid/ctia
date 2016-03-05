@@ -1,6 +1,7 @@
 (ns cia.test-helpers.fake-whoami-service
   (:require [cheshire.core :as json]
             [cia.auth :as auth]
+            [cia.auth.threatgrid :as threatgrid]
             [schema.core :as s]
             [cia.auth :as cia-auth]
             [ring.adapter.jetty :as jetty]
@@ -72,7 +73,7 @@
                            "title" title}})})))))
 
 (defrecord FakeWhoAmIService [whoami-fn server requests url port token->response]
-  auth/IWhoAmI
+  threatgrid/IWhoAmI
   (whoami [_ token]
     (whoami-fn token))
   IFakeWhoAmIServer
@@ -106,7 +107,7 @@
 (defn make-fake-whoami-service [port]
   (let [url (str "http://127.0.0.1:" port "/")]
     (map->FakeWhoAmIService
-     {:whoami-fn (auth/make-whoami-fn url)
+     {:whoami-fn (threatgrid/make-whoami-fn url)
       :server (atom nil)
       :requests (atom [])
       :url url
@@ -153,18 +154,19 @@
 
 (defn fixture-server [test]
   (try
-    (let [orig-whoami (:whoami-service @auth/auth-service)]
+    (let [orig-auth-srvc @auth/auth-service]
       (try
-        (auth/set-whoami-service! (make-fake-whoami-service (available-port)))
+        (reset! auth/auth-service (threatgrid/make-auth-service
+                                   (make-fake-whoami-service (available-port))))
         (start-server (:whoami-service @auth/auth-service))
         (test)
         (finally
           (stop-server (:whoami-service @auth/auth-service))
-          (auth/set-whoami-service! orig-whoami))))))
+          (reset! auth/auth-service orig-auth-srvc))))))
 
 (defn fixture-reset-state
   "Meant to be triggered inside of fixture-server, eg fixture :once
    fixture-server and fixture :each fixture-reset-state."
-  [f]
+  [test]
   (clear-all (:whoami-service @auth/auth-service))
-  (f))
+  (test))

@@ -16,7 +16,7 @@
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
                  ]
   :ring {:handler cia.handler/app
-         :init cia.init/init-store
+         :init cia.init/init!
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
