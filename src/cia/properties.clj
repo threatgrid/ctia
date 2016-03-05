@@ -31,10 +31,6 @@
        transform
        (reset! properties)))
 
-(defn p [x]
-  (clojure.pprint/pprint x)
-  x)
-
 (defn init!
   ([]
    (some->> (map #(-> % io/resource io/file) property-files)
