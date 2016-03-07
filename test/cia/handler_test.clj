@@ -755,14 +755,14 @@
                 feedbacks (:parsed-body response)]
             (is (= 200 (:status response)))
             (is (deep=
-                 (set  [{:judgement (:id judgement),
-                         :feedback -1,
-                         :reason "false positive"
-                         :owner "not implemented"}
-                        {:judgement (:id judgement),
-                         :feedback 1,
-                         :reason "true positive"
-                         :owner "not implemented"}])
+                 #{{:judgement (:id judgement),
+                    :feedback -1,
+                    :reason "false positive"
+                    :owner "not implemented"}
+                   {:judgement (:id judgement),
+                    :feedback 1,
+                    :reason "true positive"
+                    :owner "not implemented"}}
                  (set (map #(dissoc % :id :created)
                            feedbacks))))))))))
 
