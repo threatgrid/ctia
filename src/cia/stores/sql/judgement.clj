@@ -25,10 +25,11 @@
               (k/table :judgement_indicator)
               (k/database @db))))
 
-(defn realize-judgements [new-judgements]
+(defn realize-judgements [login new-judgements]
   (for [new-judgement new-judgements]
     (judgement-schema/realize-judgement new-judgement
-                                        (str "judgement-" (UUID/randomUUID)))))
+                                        (str "judgement-" (UUID/randomUUID))
+                                        login)))
 
 (def judgement-indicator-relationship-map
   {:entity-relationship-key :indicators
@@ -44,9 +45,8 @@
   (transform/entities->db-relationships
    judgement-indicator-relationship-map))
 
-(defn insert-judgements [& new-judgements]
-  (let [realized-judgements (-> new-judgements
-                                realize-judgements)
+(defn insert-judgements [login & new-judgements]
+  (let [realized-judgements (realize-judgements login new-judgements)
         judgements (-> realized-judgements
                        transform/datetimes-to-sqltimes)]
     (kdb/transaction

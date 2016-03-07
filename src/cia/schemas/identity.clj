@@ -1,10 +1,11 @@
-(ns cia.schemas.auth-role
+(ns cia.schemas.identity
   (:require [cia.schemas.common :as c]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
 (def capabilities
-  [:get-verdict
+  [:admin
+   :get-verdict
 
    ;; judgements
    :create-judgement
@@ -79,11 +80,11 @@
 (def Capability
   (apply s/enum capabilities))
 
-(def OrgId s/Int)
-
 (def Role s/Str)
 
-(s/defschema AuthRole
-  {:org_id OrgId
-   :role Role
-   :capabilities #{Capability}})
+(def Login s/Str)
+
+(s/defschema Identity
+  {:role Role
+   :capabilities #{Capability}
+   :login s/Str})

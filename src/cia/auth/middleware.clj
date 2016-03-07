@@ -16,13 +16,10 @@
       (nil? id)
       (http-response/forbidden! {:message "Only authenticated users allowed"})
 
-      (not (auth/identity-has-capability? @auth-service required-capabilities id))
+      (not (auth/allowed-capability? id required-capabilities))
       (http-response/unauthorized! {:message "Missing capability"
                                     :required required-capabilities
-                                    :current (auth/capabilities-for-identity
-                                              @auth-service
-                                              id)
-                                    :owner (auth/printable-identity id)}))))
+                                    :owner (auth/login id)}))))
 
 
 ;; Create a compojure-api meta-data handler for capability-based
@@ -38,3 +35,6 @@
              into
              ['_ `(require-capability! ~capabilities
                                        (:identity ~'+compojure-api-request+))]))
+
+(defmethod meta/restructure-param :login [_ bind-to acc]
+  (update-in acc [:lets] into [bind-to `(get-in  ~'+compojure-api-request+ [:identity :login])]))

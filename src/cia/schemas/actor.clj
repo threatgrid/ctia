@@ -43,15 +43,17 @@
 
 (s/defn realize-actor :- StoredActor
   ([new-actor :- NewActor
-    id :- s/Str]
-   (realize-actor new-actor id nil))
+    id :- s/Str
+    login :- s/Str]
+   (realize-actor new-actor id login nil))
   ([new-actor :- NewActor
     id :- s/Str
+    login :- s/Str
     prev-actor :- (s/maybe StoredActor)]
    (let [now (c/timestamp)]
      (assoc new-actor
             :id id
-            :owner "not implemented"
+            :owner login
             :created (or (:created prev-actor) now)
             :modified now
             :valid_time (or (:valid_time prev-actor)

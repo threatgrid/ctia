@@ -51,8 +51,8 @@
       (is (= "0.1" (get-in response [:parsed-body :version]))))))
 
 (deftest-for-each-store test-actor-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /cia/actor"
     (let [response (post "cia/actor"
@@ -80,7 +80,7 @@
             :observed_TTPs ["ttp-333" "ttp-999"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc actor
                    :id
                    :created
@@ -102,7 +102,7 @@
                 :observed_TTPs ["ttp-333" "ttp-999"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc actor
                        :id
                        :created
@@ -136,7 +136,7 @@
                 :observed_TTPs ["ttp-333" "ttp-999"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc updated-actor
                        :modified)))))
 
@@ -149,8 +149,8 @@
             (is (= 404 (:status response)))))))))
 
 (deftest-for-each-store test-campaign-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /cia/campaign"
     (let [response (post "cia/campaign"
@@ -196,7 +196,7 @@
                             :ttp "ttp-999"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc campaign
                    :id
                    :created
@@ -227,7 +227,7 @@
                                 :ttp "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc campaign
                        :id
                        :created
@@ -279,7 +279,7 @@
                                 :ttp "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc updated-campaign
                        :modified)))))
 
@@ -292,8 +292,8 @@
             (is (= 404 (:status response)))))))))
 
 (deftest-for-each-store test-coa-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /cia/coa"
     (let [response (post "cia/coa"
@@ -312,7 +312,7 @@
             :objective ["foo" "bar"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc coa
                    :id
                    :created
@@ -330,7 +330,7 @@
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc coa
                        :id
                        :created
@@ -356,7 +356,7 @@
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc updated-coa
                        :modified)))))
 
@@ -369,8 +369,8 @@
             (is (= 404 (:status response)))))))))
 
 (deftest-for-each-store test-exploit-target-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /cia/exploit-target"
     (let [response (post "cia/exploit-target"
@@ -399,7 +399,7 @@
                                        :exploit_target "exploit-target-123"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc exploit-target
                    :id
                    :created
@@ -422,7 +422,7 @@
                                            :exploit_target "exploit-target-123"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc exploit-target
                        :id
                        :created
@@ -457,7 +457,7 @@
                                            :exploit_target "exploit-target-123"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :owner "not implemented"
+                :owner "foouser"
                 :created (:created exploit-target)}
                (dissoc updated-exploit-target
                        :modified)))))
@@ -471,8 +471,8 @@
             (is (= 404 (:status response)))))))))
 
 (deftest-for-each-store test-incident-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /cia/incident"
     (let [response (post "cia/incident"
@@ -503,7 +503,7 @@
                                   :relationship "relationship"
                                   :indicator "indicator-123"}]
             :related_incidents ["incident-123" "indicent-789"]
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc incident
                    :id
                    :created
@@ -527,7 +527,7 @@
                                       :relationship "relationship"
                                       :indicator "indicator-123"}]
                 :related_incidents ["incident-123" "indicent-789"]
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc incident
                        :id
                        :created
@@ -565,7 +565,7 @@
                                       :relationship "relationship"
                                       :indicator "indicator-234"}]
                 :related_incidents ["incident-123" "indicent-789"]
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc updated-incident
                        :modified)))))
 
@@ -578,8 +578,8 @@
             (is (= 404 (:status response)))))))))
 
 (deftest-for-each-store test-indicator-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /cia/indicator"
     (let [response (post "cia/indicator"
@@ -617,7 +617,7 @@
                             :relationship "relationship"
                             :COA "coa-123"}]
             :judgements ["judgement-123" "judgement-234"]
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc indicator
                    :id
                    :created
@@ -644,7 +644,7 @@
                                 :relationship "relationship"
                                 :COA "coa-123"}]
                 :judgements ["judgement-123" "judgement-234"]
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc indicator
                        :id
                        :created
@@ -689,7 +689,7 @@
                                 :relationship "relationship"
                                 :COA "coa-123"}]
                 :judgements ["judgement-123" "judgement-234"]
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc updated-indicator
                        :modified)))))
 
@@ -700,8 +700,8 @@
           (is (= 404 (:status response))))))))
 
 (deftest-for-each-store test-judgement-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /cia/judgement"
     (let [response (post "cia/judgement"
@@ -735,7 +735,7 @@
                           :source "source"
                           :relationship "relationship"
                           :indicator "indicator-123"}]
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc judgement
                    :id
                    :created)))
@@ -760,7 +760,7 @@
                               :source "source"
                               :relationship "relationship"
                               :indicator "indicator-123"}]
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc judgement
                        :id
                        :created)))))
@@ -796,7 +796,7 @@
                {:judgement (:id judgement),
                 :feedback -1,
                 :reason "false positive"
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc feedback
                        :id
                        :created))))
@@ -828,17 +828,17 @@
                  [{:judgement (:id judgement),
                    :feedback -1,
                    :reason "false positive"
-                   :owner "not implemented"}
+                   :owner "foouser"}
                   {:judgement (:id judgement),
                    :feedback 1,
                    :reason "true positive"
-                   :owner "not implemented"}]
+                   :owner "foouser"}]
                  (map #(dissoc % :id :created)
                       feedbacks)))))))))
 
 (deftest-for-each-store test-judgement-routes-for-dispositon-determination
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST a judgement with dispositon (id)"
     (let [response (post "cia/judgement"
@@ -864,7 +864,7 @@
             :confidence "Low"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc judgement
                    :id
                    :created)))))
@@ -893,7 +893,7 @@
             :confidence "Low"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc judgement
                    :id
                    :created)))))
@@ -921,7 +921,7 @@
             :confidence "Low"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc judgement
                    :id
                    :created)))))
@@ -953,8 +953,8 @@
            (:parsed-body response))))))
 
 (deftest-for-each-store test-observable-judgements-route
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "test setup: create a judgement (1)"
     (let [response (post "cia/judgement"
@@ -1013,7 +1013,7 @@
               :confidence "Low"
               :valid_time {:start_time #inst "2016-02-12T00:00:00.000"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-              :owner "not implemented"}
+              :owner "foouser"}
              {:indicators [{:indicator "indicator-333"}]
               :observable {:value "10.0.0.1"
                            :type "ip"}
@@ -1025,14 +1025,14 @@
               :confidence "High"
               :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-              :owner "not implemented"}}
+              :owner "foouser"}}
            (->> judgements
                 (map #(dissoc % :id :created))
                 set))))))
 
 (deftest-for-each-store test-observable-indicators-and-sightings-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (let [{judgement-1 :parsed-body
          judgement-1-status :status}
@@ -1145,7 +1145,7 @@
                :type ["C2" "IP Watchlist"]
                :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
                             :end_time #inst "2016-02-12T00:00:00.000-00:00"}
-               :owner "not implemented"}
+               :owner "foouser"}
               {:title "indicator"
                :judgements [{:judgement (:id judgement-3)
                              :confidence "High"}]
@@ -1160,7 +1160,7 @@
                :type ["C2" "IP Watchlist"]
                :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
                             :end_time #inst "2016-02-11T00:00:00.000-00:00"}
-               :owner "not implemented"}]
+               :owner "foouser"}]
              (->> indicators
                   (map #(dissoc % :id :created :modified))))))))
 
@@ -1182,8 +1182,8 @@
            sightings)))))
 
 (deftest-for-each-store test-observable-verdict-route
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "test setup: create a judgement (1)"
     ;; Incorrect observable
@@ -1268,8 +1268,8 @@
                  verdict)))))))
 
 (deftest-for-each-store test-observable-verdict-route-2
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   ;; This test case catches a bug that was in the in-memory store
   ;; It tests the code path where priority is equal but dispositions differ
@@ -1318,8 +1318,8 @@
                    verdict))))))))
 
 (deftest-for-each-store test-ttp-routes
-  (helpers/set-capabilities! 100 "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" 100 "user")
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /cia/ttp"
     (let [response (post "cia/ttp"
@@ -1343,7 +1343,7 @@
                               "exploit-target-234"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-            :owner "not implemented"}
+            :owner "foouser"}
            (dissoc ttp
                    :id
                    :created
@@ -1363,7 +1363,7 @@
                                   "exploit-target-234"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc ttp
                        :id
                        :created
@@ -1394,7 +1394,7 @@
                                   "exploit-target-234"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "not implemented"}
+                :owner "foouser"}
                (dissoc updated-ttp
                        :modified)))))
 

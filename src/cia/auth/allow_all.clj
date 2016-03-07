@@ -1,23 +1,21 @@
 (ns cia.auth.allow-all
-  (:require [cia.auth :refer [IIdentity IAuth]]))
+  (:require [cia.auth
+             :refer [IIdentity IAuth]
+             :as auth]))
 
 (defrecord Identity []
   IIdentity
-  (identity-key [_]
-    [0 "admin"])
-  (printable-identity [_]
-    "allow-all"))
+  (login [_]
+    "admin")
+  (allowed-capabilities [_]
+    (get auth/default-capabilities :admin))
+  (allowed-capability? [_ _]
+    true))
 
 (def identity-singleton
   (->Identity))
 
 (defrecord AuthService []
   IAuth
-  (capabilities-for-token [_ _]
-    :admin)
-  (capabilities-for-identity [_ _]
-    :admin)
   (identity-for-token [_ _]
-    identity-singleton)
-  (identity-has-capability? [_ _ _]
-    true))
+    identity-singleton))

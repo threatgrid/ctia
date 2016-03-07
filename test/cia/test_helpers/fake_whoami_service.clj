@@ -122,27 +122,27 @@
 (s/defschema WhoAmIResponse
   {(s/optional-key "api_version") s/Any
    (s/optional-key "id") s/Any
-   (s/required-key "data") {(s/required-key "organization_id") s/Int
+   (s/required-key "data") {(s/required-key "login") s/Str
                             (s/required-key "role") s/Str
+                            (s/optional-key "organization_id") s/Any
                             (s/optional-key "email") s/Any
                             (s/optional-key "name") s/Any
-                            (s/optional-key "login") s/Any
                             (s/optional-key "title") s/Any}})
 
 (s/defn ->whoami-response :- WhoAmIResponse
-  [org-id :- s/Int
+  [login :- s/Str
    role :- s/Str]
-  {"data" {"organization_id" org-id
+  {"data" {"login" login
            "role" role}})
 
 (s/defn set-whoami-response
   "Meant to be called from code that is wrapped in 'fixture-server'
    because it assumes that FakeWhoAmIService is being used"
-  ([token :- String
-    org-id :- s/Int
-    role :- String]
-   (set-whoami-response token (->whoami-response org-id role)))
-  ([token :- String
+  ([token :- s/Str
+    login :- s/Str
+    role :- s/Str]
+   (set-whoami-response token (->whoami-response login role)))
+  ([token :- s/Str
     response :- WhoAmIResponse]
    (register-token-response (:whoami-service @auth/auth-service)
                             token
@@ -157,7 +157,8 @@
     (let [orig-auth-srvc @auth/auth-service]
       (try
         (reset! auth/auth-service (threatgrid/make-auth-service
-                                   (make-fake-whoami-service (available-port))))
+                                   (make-fake-whoami-service (available-port))
+                                   threatgrid/lookup-stored-identity))
         (start-server (:whoami-service @auth/auth-service))
         (test)
         (finally

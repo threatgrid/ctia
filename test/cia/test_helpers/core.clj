@@ -47,7 +47,7 @@
    store/incident-store       (init-atom mem/->IncidentStore)
    store/indicator-store      (init-atom mem/->IndicatorStore)
    store/ttp-store            (init-atom mem/->TTPStore)
-   store/auth-role-store      (init-atom mem/->AuthRoleStore)})
+   store/identity-store       (init-atom mem/->IdentityStore)})
 
 (defn fixture-store [store-map]
   (fn [f]
@@ -71,9 +71,9 @@
       (f)
       (.stop server))))
 
-(defn set-capabilities! [org-id role caps]
-  (store/create-auth-role @store/auth-role-store
-                         {:org_id org-id
+(defn set-capabilities! [login role caps]
+  (store/create-identity @store/identity-store
+                         {:login login
                           :role role
                           :capabilities caps}))
 

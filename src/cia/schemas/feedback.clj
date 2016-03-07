@@ -29,9 +29,10 @@
 (s/defn realize-feedback :- StoredFeedback
   [new-feedback :- NewFeedback
    id :- s/Str
+   login :- s/Str
    judgement-id :- s/Str]
   (assoc new-feedback
          :id id
          :created (c/timestamp)
-         :owner "not implemented"
+         :owner login
          :judgement judgement-id))

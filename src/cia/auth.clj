@@ -1,13 +1,29 @@
 (ns cia.auth)
 
 (defprotocol IIdentity
-  (identity-key [this])
-  (printable-identity [this]))
+  (login [this])
+  (allowed-capabilities [this])
+  (allowed-capability? [this capability]))
 
 (defprotocol IAuth
-  (capabilities-for-token [this token])
-  (capabilities-for-identity [this identity])
-  (identity-for-token [this token])
-  (identity-has-capability? [this desired-capability identity]))
+  (identity-for-token [this token]))
 
 (defonce auth-service (atom nil))
+
+(def default-capabilities
+  {:user
+   #{:read-judgement
+     :list-judgements-by-observable
+     :list-judgements-by-indicator
+     :read-indicator
+     :read-feedback
+     :reat-ttp
+     :read-campaign
+     :read-actor
+     :read-exploit-target
+     :read-coa
+     :read-sighting
+     :read-incident
+     :read-relation}
+   :admin
+   #{:admin}})

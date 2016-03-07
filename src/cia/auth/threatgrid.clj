@@ -5,14 +5,25 @@
             [cia.store :as store]
             [clj-http.client :as http]
             [clojure.core.memoize :as memo]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [clojure.string :as str]))
 
-(defrecord Identity [org-id role]
+(def cache-ttl-ms (* 1000 60 5))
+
+(defrecord Identity [role login capabilities]
   auth/IIdentity
-  (identity-key [_]
-    [org-id role])
-  (printable-identity [_]
-    (str "org:" org-id ";role:" role)))
+  (login [_]
+    login)
+  (allowed-capabilities [_]
+    capabilities)
+  (allowed-capability? [this desired-capability]
+    (some?
+     (first
+      (set/intersection
+       (cond (set? desired-capability) desired-capability
+             (keyword? desired-capability) #{desired-capability}
+             (sequential? desired-capability) (set desired-capability))
+       (auth/allowed-capabilities this))))))
 
 (defprotocol IWhoAmI
   (whoami [this token]))
@@ -37,33 +48,28 @@
    (WhoamiService.
     url
     (memo/ttl (make-whoami-fn url)
-              :ttl/threshold (* 1000 60 5)))))
+              :ttl/threshold cache-ttl-ms))))
 
-(defrecord AuthService [whoami-service]
+(defn lookup-stored-identity [login]
+  (store/read-identity @store/identity-store login))
+
+(defrecord AuthService [whoami-service lookup-stored-identity-fn]
   auth/IAuth
-  (capabilities-for-token [this token]
-    (->> (auth/identity-for-token this token)
-         (auth/capabilities-for-identity this)))
-
-  (capabilities-for-identity [_ id]
-    (some-> (store/read-auth-role @store/auth-role-store id)
-            :capabilities
-            set))
-
   (identity-for-token [_ token]
-    (if-let [{{:strs [organization_id role]} "data"} (whoami whoami-service
-                                                             token)]
-      (->Identity organization_id role)))
+    (if-let [{{:strs [role login]} "data"}
+             (whoami whoami-service token)]
+      (map->Identity (or (lookup-stored-identity-fn login)
+                         {:login login
+                          :role role
+                          :capabilities (->> (str/lower-case role)
+                                             keyword
+                                             (get auth/default-capabilities))})))))
 
-  (identity-has-capability? [this desired-capability identity]
-    (let [allowed-capabilities (auth/capabilities-for-identity this identity)]
-      (some?
-       (first
-        (set/intersection
-         (cond (set? desired-capability) desired-capability
-               (keyword? desired-capability) #{desired-capability}
-               (sequential? desired-capability) (set desired-capability))
-         allowed-capabilities))))))
-
-(defn make-auth-service [whoami-service]
-  (AuthService. whoami-service))
+(defn make-auth-service
+  ([whoami-service]
+   (make-auth-service whoami-service
+                      (memo/ttl lookup-stored-identity
+                                :ttl/threshold cache-ttl-ms)))
+  ([whoami-service lookup-stored-identity-fn]
+   (AuthService. whoami-service
+                 lookup-stored-identity-fn)))
