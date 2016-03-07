@@ -701,7 +701,9 @@
 
 (deftest-for-each-store test-judgement-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (helpers/set-capabilities! "baruser" "user" #{})
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
 
   (testing "POST /cia/judgement"
     (let [response (post "cia/judgement"
@@ -764,6 +766,30 @@
                (dissoc judgement
                        :id
                        :created)))))
+
+      (testing "GET /cia/judgement/:id authentication failures"
+        (testing "no api_key"
+          (let [{body :parsed-body status :status}
+                (get (str "cia/judgement/" (:id judgement)))]
+            (is (= 403 status))
+            (is (= {:message "Only authenticated users allowed"} body))))
+
+        (testing "unknown api_key"
+          (let [{body :parsed-body status :status}
+                (get (str "cia/judgement/" (:id judgement))
+                     :headers {"api_key" "1111111111111"})]
+            (is (= 403 status))
+            (is (= {:message "Only authenticated users allowed"} body))))
+
+        (testing "doesn't have read capability"
+          (let [{body :parsed-body status :status}
+                (get (str "cia/judgement/" (:id judgement))
+                     :headers {"api_key" "2222222222222"})]
+            (is (= 401 status))
+            (is (= {:message "Missing capability",
+                    :capabilities #{:admin :read-judgement},
+                    :owner "baruser"}
+                   body)))))
 
       (testing "DELETE /cia/judgement/:id"
         (let [temp-judgement (-> (post "cia/judgement"

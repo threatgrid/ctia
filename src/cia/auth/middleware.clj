@@ -10,15 +10,15 @@
             :identity (some->> (get-in request [:headers "api_key"])
                                (auth/identity-for-token @auth-service))))))
 
-(defn require-capability! [required-capabilities id]
-  (if required-capabilities
+(defn require-capability! [granting-capabilities id]
+  (if granting-capabilities
     (cond
       (nil? id)
       (http-response/forbidden! {:message "Only authenticated users allowed"})
 
-      (not (auth/allowed-capability? id required-capabilities))
+      (not (auth/allowed-capability? id granting-capabilities))
       (http-response/unauthorized! {:message "Missing capability"
-                                    :required required-capabilities
+                                    :capabilities granting-capabilities
                                     :owner (auth/login id)}))))
 
 
