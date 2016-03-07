@@ -24,16 +24,20 @@
                    doc
                    :id (:id doc)
                    :refresh true)
-  (get-doc conn index-name mapping (:id doc)))
+  doc)
 
 (defn update-doc
   "update a document on es return the updated document"
   [conn index-name mapping id doc]
-  (document/update-with-partial-doc conn index-name mapping id doc)
-  (get-doc conn
-           index-name
-           mapping
-           id))
+
+  (-> (document/update-with-partial-doc conn
+                                        index-name
+                                        mapping
+                                        id
+                                        doc
+                                        {:fields "_source"})
+      :get-result
+      :source))
 
 (defn delete-doc
   "delete a document on es and return nil if ok"
