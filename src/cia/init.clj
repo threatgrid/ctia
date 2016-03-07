@@ -37,5 +37,6 @@
 
 
 (defn init-store []
-  ;;(init-mem-store)
-  (init-es-store))
+  (init-mem-store)
+  ;;(init-es-store)
+  )
