@@ -18,9 +18,12 @@
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
 
-  :test-selectors {:integration :integration
-                   :default (fn [m] (not (or (:integration m)
-                                            (:regression m))))}
+  :test-selectors {:es-store #(.contains (name (:name %)) "-es-store")
+                   :default #(not (or (.contains (name (:name %)) "-es-store")
+                                      (:integration %)
+                                      (:regression %)))
+                   :integration #(or (.contains (name (:name %)) "-es-store")
+                                     (:integation %))}
 
   :profiles {:dev {:dependencies [[clj-http "2.0.1"]
                                   [cheshire "5.5.0"]
