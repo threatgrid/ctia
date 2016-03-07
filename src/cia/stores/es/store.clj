@@ -1,127 +1,142 @@
 (ns cia.stores.es.store
   (:require
-   [cia.store :refer :all]
-   [cia.stores.es.judgement :refer :all]
-   [cia.stores.es.feedback  :refer :all]
-   [cia.stores.es.indicator :refer :all]
-   [cia.stores.es.ttp :refer :all]
-   [cia.stores.es.actor :refer :all]
-   [cia.stores.es.campaign :refer :all]
-   [cia.stores.es.coa :refer :all]
-   [cia.stores.es.incident :refer :all]
-   [cia.stores.es.exploit-target :refer :all]))
+   [cia.store :refer [IActorStore
+                      IJudgementStore
+                      IIndicatorStore
+                      IExploitTargetStore
+                      IFeedbackStore
+                      ITTPStore
+                      ICampaignStore
+                      ICOAStore
+                      ISightingStore
+                      IIncidentStore]]
 
+   [cia.stores.es.judgement :as ju]
+   [cia.stores.es.feedback  :as fe]
+   [cia.stores.es.indicator :as in]
+   [cia.stores.es.ttp :as ttp]
+   [cia.stores.es.actor :as ac]
+   [cia.stores.es.campaign :as ca]
+   [cia.stores.es.coa :as coa]
+   [cia.stores.es.incident :as inc]
+   [cia.stores.es.exploit-target :as et]))
 
 (defrecord JudgementStore [state]
   IJudgementStore
   (create-judgement [_ new-judgement]
-    (handle-create-judgement state new-judgement))
+    (ju/handle-create-judgement state new-judgement))
   (read-judgement [_ id]
-    (handle-read-judgement state id))
+    (ju/handle-read-judgement state id))
   (delete-judgement [_ id]
-    (handle-delete-judgement state id))
+    (ju/handle-delete-judgement state id))
   (list-judgements [_ filter-map]
-    (handle-list-judgements state filter-map))
+    (ju/handle-list-judgements state filter-map))
   (calculate-verdict [_ observable]
-    (handle-calculate-verdict state observable)))
+    (ju/handle-calculate-verdict state observable)))
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
   (create-feedback [_ new-feedback judgement-id]
-    (handle-create-feedback state new-feedback judgement-id))
+    (fe/handle-create-feedback state new-feedback judgement-id))
   (list-feedback [_ filter-map]
-    (handle-list-feedback state filter-map)))
+    (fe/handle-list-feedback state filter-map)))
 
 (defrecord IndicatorStore [state]
   IIndicatorStore
   (create-indicator [_ new-indicator]
-    (handle-create-indicator state new-indicator))
+    (in/handle-create-indicator state new-indicator))
   (update-indicator [_ id new-indicator]
-    (handle-update-indicator state id new-indicator))
+    (in/handle-update-indicator state id new-indicator))
   (read-indicator [_ id]
-    (handle-read-indicator state id))
+    (in/handle-read-indicator state id))
   (delete-indicator [_ id]
-    (handle-delete-indicator state id))
+    (in/handle-delete-indicator state id))
   (list-indicators [_ filter-map]
-    (handle-list-indicators state filter-map))
+    (in/handle-list-indicators state filter-map))
   (list-indicators-by-observable [_ judgement-store observable]
-    (handle-list-indicators-by-observable state
-                                          judgement-store
-                                          observable))
+    (in/handle-list-indicators-by-observable state
+                                             judgement-store
+                                             observable))
   (list-indicator-sightings-by-observable [_ judgement-store observable]
-    (->> (handle-list-indicators-by-observable state
-                                               judgement-store
-                                               observable)
+    (->> (in/handle-list-indicators-by-observable state
+                                                  judgement-store
+                                                  observable)
          (mapcat :sightings))))
 
 (defrecord TTPStore [state]
   ITTPStore
   (read-ttp [_ id]
-    (handle-read-ttp state id))
+    (ttp/handle-read-ttp state id))
   (create-ttp [_ new-ttp]
-    (handle-create-ttp state new-ttp))
+    (ttp/handle-create-ttp state new-ttp))
   (update-ttp [_ id new-ttp]
-    (handle-update-ttp state id new-ttp))
+    (ttp/handle-update-ttp state id new-ttp))
   (delete-ttp [_ id]
-    (handle-delete-ttp state id))
-  (list-ttps [_ filter-map]))
+    (ttp/handle-delete-ttp state id))
+  (list-ttps [_ filter-map]
+    (ttp/handle-list-ttps state filter-map)))
 
 (defrecord ActorStore [state]
   IActorStore
   (read-actor [_ id]
-    (handle-read-actor state id))
+    (ac/handle-read-actor state id))
   (create-actor [_ new-actor]
-    (handle-create-actor state new-actor))
+    (ac/handle-create-actor state new-actor))
   (update-actor [_ id actor]
-    (handle-update-actor state id actor))
+    (ac/handle-update-actor state id actor))
   (delete-actor [_ id]
-    (handle-delete-actor state id))
-  (list-actors [_ filter-map]))
+    (ac/handle-delete-actor state id))
+  (list-actors [_ filter-map]
+    (ac/handle-list-actors state filter-map)))
 
 (defrecord CampaignStore [state]
   ICampaignStore
   (read-campaign [_ id]
-    (handle-read-campaign state id))
+    (ca/handle-read-campaign state id))
   (create-campaign [_ new-campaign]
-    (handle-create-campaign state new-campaign))
+    (ca/handle-create-campaign state new-campaign))
   (update-campaign [_ id new-campaign]
-    (handle-update-campaign state id new-campaign))
+    (ca/handle-update-campaign state id new-campaign))
   (delete-campaign [_ id]
-    (handle-delete-campaign state id))
-  (list-campaigns [_ filter-map]))
+    (ca/handle-delete-campaign state id))
+  (list-campaigns [_ filter-map]
+    (ca/handle-list-campaigns state filter-map)))
 
 (defrecord COAStore [state]
   ICOAStore
   (read-coa [_ id]
-    (handle-read-coa state id))
+    (coa/handle-read-coa state id))
   (create-coa [_ new-coa]
-    (handle-create-coa state new-coa))
+    (coa/handle-create-coa state new-coa))
   (update-coa [_ id new-coa]
-    (handle-update-coa state id new-coa))
+    (coa/handle-update-coa state id new-coa))
   (delete-coa [_ id]
-    (handle-delete-coa state id))
-  (list-coas [_ filter-map]))
+    (coa/handle-delete-coa state id))
+  (list-coas [_ filter-map]
+    (coa/handle-list-coas state filter-map)))
 
 (defrecord IncidentStore [state]
   IIncidentStore
   (read-incident [_ id]
-    (handle-read-incident state id))
+    (inc/handle-read-incident state id))
   (create-incident [_ new-incident]
-    (handle-create-incident state new-incident))
+    (inc/handle-create-incident state new-incident))
   (update-incident [_ id new-incident]
-    (handle-update-incident state id new-incident))
+    (inc/handle-update-incident state id new-incident))
   (delete-incident [_ id]
-    (handle-delete-incident state id))
-  (list-incidents [_ filter-map]))
+    (inc/handle-delete-incident state id))
+  (list-incidents [_ filter-map]
+    (inc/handle-list-incidents state filter-map)))
 
 (defrecord ExploitTargetStore [state]
   IExploitTargetStore
   (read-exploit-target [_ id]
-    (handle-read-exploit-target state id))
+    (et/handle-read-exploit-target state id))
   (create-exploit-target [_ new-exploit-target]
-    (handle-create-exploit-target state new-exploit-target))
+    (et/handle-create-exploit-target state new-exploit-target))
   (update-exploit-target [_ id new-exploit-target]
-    (handle-update-exploit-target state id new-exploit-target))
+    (et/handle-update-exploit-target state id new-exploit-target))
   (delete-exploit-target [_ id]
-    (handle-delete-exploit-target state id))
-  (list-exploit-targets [_ filter-map]))
+    (et/handle-delete-exploit-target state id))
+  (list-exploit-targets [_ filter-map]
+    (et/handle-list-exploit-targets state filter-map)))
