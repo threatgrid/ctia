@@ -4,6 +4,8 @@
             [cia.auth.threatgrid :as threatgrid]
             [cia.properties :as properties]
             [cia.store :as store]
+            [cia.stores.es.store :as es]
+            [cia.stores.es.index :as es-index]
             [cia.stores.memory :as mem]))
 
 (defn init-auth-service! []
