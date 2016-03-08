@@ -30,11 +30,11 @@
 ;; https://github.com/metosin/compojure-api/wiki/Creating-your-own-metadata-handlers
 (defmethod meta/restructure-param :capabilities
   [_ capabilities acc]
-  (update-in acc
-             [:lets]
-             into
-             ['_ `(require-capability! ~capabilities
-                                       (:identity ~'+compojure-api-request+))]))
+  (update acc :lets into
+          ['_ `(require-capability! ~capabilities
+                                    (:identity ~'+compojure-api-request+))]))
 
 (defmethod meta/restructure-param :login [_ bind-to acc]
-  (update-in acc [:lets] into [bind-to `(get-in  ~'+compojure-api-request+ [:identity :login])]))
+  (update acc :lets into
+          [bind-to `(-> (:identity ~'+compojure-api-request+)
+                        auth/login)]))
