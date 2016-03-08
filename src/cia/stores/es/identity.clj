@@ -30,14 +30,18 @@
                         (:index state)
                         mapping
                         transformed)]
-    (update-in res [:capabilities] capabilities->capabilities-set)))
+    (-> res
+        (update-in [:capabilities] capabilities->capabilities-set)
+        (dissoc :id))))
 
-(defn handle-read-identity [state login]
+(s/defn handle-read-identity :- Identity
+  [state :- s/Any login :- s/Str]
   (-> (get-doc (:conn state)
                (:index state)
                mapping
                login)
-      (update-in [:capabilities] capabilities->capabilities-set)))
+      (update-in [:capabilities] capabilities->capabilities-set)
+      (dissoc :id)))
 
 (defn handle-delete-identity [state login]
   (delete-doc (:conn state)
