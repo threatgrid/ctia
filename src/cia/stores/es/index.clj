@@ -1,26 +1,13 @@
 (ns cia.stores.es.index
   (:require
-   [clojure.java.io :as io]
-   [clojure.string :refer [split]]
-   [schema.core :as s]
-   [schema.coerce :as coerce]
    [clojurewerkz.elastisch.native :as n]
    [clojurewerkz.elastisch.native.index :as idx]
-   [cia.stores.es.mapping :refer [mappings]])
-  (:import java.util.Properties))
-
-(def index-properties-file "es-index.properties")
+   [cia.stores.es.mapping :refer [mappings]]
+   [cia.properties :refer [properties]]))
 
 (defn read-index-spec []
   "read es index config properties, returns an option map"
-  (let [props (Properties.)]
-    (.load props (-> index-properties-file
-                     io/resource
-                     io/reader))
-
-    (into {} (map (fn [[k v]]
-                    [(keyword k) v])
-                  props))))
+  (get-in @properties [:cia :store :es]))
 
 (defn init-conn []
   "initiate an ES connection returns a map containing transport and

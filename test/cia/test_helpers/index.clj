@@ -5,6 +5,7 @@
             [cia.stores.es.mapping :as mapping]
             [cia.stores.es.store :as es-store]
             [cia.test-helpers.core :as h]
+            [cia.properties :as properties]
             [clojure.java.io :as io]))
 
 (def conn-state-fixture
@@ -42,6 +43,8 @@
 
 
 (def fixture-es-store
-  (do (reset! conn-state-fixture
-              (es-index/init-conn))
-      (h/fixture-store es-stores)))
+  (do
+    (properties/init!)
+    (reset! conn-state-fixture
+            (es-index/init-conn))
+    (h/fixture-store es-stores)))
