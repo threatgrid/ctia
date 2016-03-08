@@ -27,9 +27,9 @@
 
 
 ;; Create a compojure-api meta-data handler for capability-based
-;; security. The :owner field must by on the request object
-;; already, put there by buddy-auth.  This lets us add :capabilities
-;; to the handler spec.
+;; security. The :identity field must by on the request object
+;; already, put there by the wrap-authentication middleware. This
+;; lets us add :capabilities to the handler spec.
 ;; Reference:
 ;; https://github.com/metosin/compojure-api/wiki/Creating-your-own-metadata-handlers
 (defmethod meta/restructure-param :capabilities [_ capabilities acc]
