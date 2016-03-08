@@ -2,13 +2,20 @@
   (:require [cheshire.core :as json]
             [cia.auth :as auth]
             [cia.properties :refer [properties]]
+            [cia.schemas.identity :as id]
             [cia.store :as store]
             [clj-http.client :as http]
             [clojure.core.memoize :as memo]
             [clojure.set :as set]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [schema.core :as s]))
 
 (def cache-ttl-ms (* 1000 60 5))
+
+(defn- as-set [x]
+  (cond (set? x) x
+        (keyword? x) #{x}
+        (sequential? x) (set x)))
 
 (defrecord Identity [role login capabilities]
   auth/IIdentity
@@ -20,9 +27,7 @@
     (some?
      (first
       (set/intersection
-       (cond (set? desired-capability) desired-capability
-             (keyword? desired-capability) #{desired-capability}
-             (sequential? desired-capability) (set desired-capability))
+       (as-set desired-capability)
        (auth/allowed-capabilities this))))))
 
 (defprotocol IWhoAmI
@@ -50,7 +55,8 @@
     (memo/ttl (make-whoami-fn url)
               :ttl/threshold cache-ttl-ms))))
 
-(defn lookup-stored-identity [login]
+(s/defn lookup-stored-identity :- (s/maybe id/Identity)
+  [login :- s/Str]
   (store/read-identity @store/identity-store login))
 
 (defrecord AuthService [whoami-service lookup-stored-identity-fn]
