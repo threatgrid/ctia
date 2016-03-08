@@ -484,6 +484,14 @@
      :created ts
      :modified ts}}})
 
+(def identity-mapping
+  {"identity"
+   {:properties
+    {:id string
+     :role string
+     :capabilities string
+     :login string}}})
+
 (def mappings
   (merge {}
          judgement-mapping
@@ -493,4 +501,5 @@
          campaign-mapping
          coa-mapping
          incident-mapping
-         exploit-target-mapping))
+         exploit-target-mapping
+         identity-mapping))

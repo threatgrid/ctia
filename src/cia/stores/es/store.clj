@@ -9,7 +9,8 @@
                       ICampaignStore
                       ICOAStore
                       ISightingStore
-                      IIncidentStore]]
+                      IIncidentStore
+                      IIdentityStore]]
 
    [cia.stores.es.judgement :as ju]
    [cia.stores.es.feedback  :as fe]
@@ -19,7 +20,8 @@
    [cia.stores.es.campaign :as ca]
    [cia.stores.es.coa :as coa]
    [cia.stores.es.incident :as inc]
-   [cia.stores.es.exploit-target :as et]))
+   [cia.stores.es.exploit-target :as et]
+   [cia.stores.es.identity :as id]))
 
 (defrecord JudgementStore [state]
   IJudgementStore
@@ -140,3 +142,12 @@
     (et/handle-delete-exploit-target state id))
   (list-exploit-targets [_ filter-map]
     (et/handle-list-exploit-targets state filter-map)))
+
+(defrecord IdentityStore [state]
+  IIdentityStore
+  (read-identity [_ login]
+    (id/handle-read-identity state login))
+  (create-identity [_ new-identity]
+    (id/handle-create-identity state new-identity))
+  (delete-identity [_ org-id role]
+    (id/handle-delete-identity state org-id role)))

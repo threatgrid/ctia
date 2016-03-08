@@ -37,7 +37,8 @@
    store/exploit-target-store (init-store-state es-store/->ExploitTargetStore)
    store/incident-store       (init-store-state es-store/->IncidentStore)
    store/indicator-store      (init-store-state es-store/->IndicatorStore)
-   store/ttp-store            (init-store-state es-store/->TTPStore)})
+   store/ttp-store            (init-store-state es-store/->TTPStore)
+   store/identity-store       (init-store-state es-store/->IdentityStore)})
 
 
 (def fixture-es-store
