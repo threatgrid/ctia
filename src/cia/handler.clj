@@ -19,7 +19,8 @@
             [cia.store :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [cia.routes.docs :refer [documentation-routes]]))
 
 (def JudgementSort
   "A sort ordering"
@@ -82,6 +83,9 @@
                                      :email "cisco-intel-api-support@cisco.com"}
                            :description api-description}
                     :tags [{:name "threat", :description "Threat Intelligence"}]}}}
+
+  documentation-routes
+
   (context "/cia" []
     (context "/version" []
       :tags ["version"]

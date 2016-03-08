@@ -45,25 +45,25 @@ simplifications:
 <a name="actor"/>
 ## Actor
 
-Key | Value | Mandatory?
---- | --- | ---
-id | [ID](#id) | &#10003;
-title | string | &#10003;
-description | (string, ...) | &#10003;
-short_description | (string, ...) | &#10003;
-timestamp | [Time](#time) | &#10003;
-source | [Source](#source) |
-identity | [Identity](#identity) |
-type | [ThreatActorType](#threat_actor_type) | &#10003;
-motivation | [Motivation](#motivation) |
-sophistication | [Sophistication](#sophistication) |
-intended_effect | [IntendedEffect](#intended_effect) |
-planning_and_operational_support | string |
-observed_TTPs | ([RelatedTTP](#related_ttp), ...) |
-associated_campaigns | ([RelatedCampaign](#associated_campaign), ...) |
-associated_actors | ([RelatedActor](#related_actor), ...) |
-confidence | [HighMedLow](#high_med_low) |
-expires | [Time](#time) | &#10003;
+| Key | Value | Mandatory? |
+| --- | ----- | ---------- |
+| id | [ID](#id) | &#10003; |
+| title | string | &#10003; |
+| description | (string, ...) | &#10003; |
+| short_description | (string, ...) | &#10003; |
+| timestamp | [Time](#time) | &#10003; |
+| source | [Source](#source) |
+| identity | [Identity](#identity) |
+| type | [ThreatActorType](#threat_actor_type) | &#10003; |
+| motivation | [Motivation](#motivation) |
+| sophistication | [Sophistication](#sophistication) |
+| Intended_effect | [IntendedEffect](#intended_effect) |
+| planning_and_operational_support | string |
+| observed_TTPs | ([RelatedTTP](#related_ttp), ...) |
+| associated_campaigns | ([RelatedCampaign](#associated_campaign), ...) |
+| associated_actors | ([RelatedActor](#related_actor), ...) |
+| confidence | [HighMedLow](#high_med_low) |
+| expires | [Time](#time) | &#10003; |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 

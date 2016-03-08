@@ -12,7 +12,9 @@
                  ;; Database
                  [korma "0.4.2"]
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
-                 ]
+
+                 ;; Docs
+                 [markdown-clj "0.9.86"]]
   :ring {:handler cia.handler/app
          :init cia.init/init-store
          :nrepl {:start? true}}
