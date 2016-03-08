@@ -1171,32 +1171,32 @@
             indicators (:parsed-body response)]
         (is (= 200 (:status response)))
         (is (deep=
-             (set #{{:title "indicator"
-                     :judgements [{:judgement (:id judgement-2)}]
-                     :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
-                                  :source "spam"
-                                  :confidence "None"}]
-                     :description "description"
-                     :producer "producer"
-                     :type ["C2" "IP Watchlist"]
-                     :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
-                                  :end_time #inst "2016-02-12T00:00:00.000-00:00"}
-                     :owner "foouser"}
-                    {:title "indicator"
-                     :judgements [{:judgement (:id judgement-3)
-                                   :confidence "High"}]
-                     :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
-                                  :source "foo"
-                                  :confidence "High"}
-                                 {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
-                                  :source "bar"
-                                  :confidence "Low"}]
-                     :description "description"
-                     :producer "producer"
-                     :type ["C2" "IP Watchlist"]
-                     :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
-                                  :end_time #inst "2016-02-11T00:00:00.000-00:00"}
-                     :owner "foouser"}})
+             #{{:title "indicator"
+                :judgements [{:judgement (:id judgement-2)}]
+                :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
+                             :source "spam"
+                             :confidence "None"}]
+                :description "description"
+                :producer "producer"
+                :type ["C2" "IP Watchlist"]
+                :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
+                             :end_time #inst "2016-02-12T00:00:00.000-00:00"}
+                :owner "foouser"}
+               {:title "indicator"
+                :judgements [{:judgement (:id judgement-3)
+                              :confidence "High"}]
+                :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
+                             :source "foo"
+                             :confidence "High"}
+                            {:timestamp #inst "2016-02-05T02:00:00.000-00:00"
+                             :source "bar"
+                             :confidence "Low"}]
+                :description "description"
+                :producer "producer"
+                :type ["C2" "IP Watchlist"]
+                :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
+                             :end_time #inst "2016-02-11T00:00:00.000-00:00"}
+                :owner "foouser"}}
              (->> indicators
                   (map #(dissoc % :id :created :modified))
                   set))))))
