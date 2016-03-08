@@ -28,6 +28,7 @@
 
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [javax.servlet/servlet-api "2.5"]
+                                  [org.clojure/tools.cli "0.3.3"]
                                   [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]]
                    :plugins [[lein-ring "0.9.6"]]

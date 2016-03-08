@@ -3,11 +3,11 @@
   (:import [javax.xml.bind DatatypeConverter])
   (:require [cheshire.core :as json]
             [clojure.tools.cli :refer [parse-opts]]
+            [clojure.string :refer [join]]
             [clj-time.core :as t]
+            [clj-time.coerce :as tc]
             [clj-time.format :as f]
-            [clj-http.client :as http]
-            [clojure.edn :as edn]
-            ))
+            [clj-http.client :as http]))
 
 (defn feed-judgements
   "Extract Judgement objects from a list of TG feed entries"
@@ -23,28 +23,26 @@
                                                          days-valid 30
                                                          disposition 2
                                                          }}]
-  (map
-   (fn [entry]
-     (let [formatter (f/formatters :date-time-no-ms)
-           start (clj-time.coerce/from-date
-                  (.getTime (DatatypeConverter/parseDateTime (:timestamp entry))))]
-       {:observable {:type  observable-type
-                     :value (get entry observable-field)}
-        :disposition disposition
-        :valid_time {:start_time (f/unparse formatter start)
-                     :end_time (f/unparse formatter (t/plus start
-                                                  (t/days days-valid)))}
-        :confidence confidence
-        :severity severity
-        :source source
-        :priority priority
-        :source_uri (:info entry)
-        :reason (:description entry)
-        :reason_uri (:sample entry)
-        }))
-   feed-entries))
+  (let [formatter (f/formatters :date-time-no-ms)]
+    (for [entry feed-entries
+          :let [start (tc/from-date
+                       (.getTime (DatatypeConverter/parseDateTime (:timestamp entry))))]]
+      {:observable {:type  observable-type
+                    :value (get entry observable-field)}
+       :disposition disposition
+       :valid_time {:start_time (f/unparse formatter start)
+                    :end_time (f/unparse formatter (t/plus start
+                                                           (t/days days-valid)))}
+       :confidence confidence
+       :severity severity
+       :source source
+       :priority priority
+       :source_uri (:info entry)
+       :reason (:description entry)
+       :reason_uri (:sample entry)})))
 
-(defn load-judgements-from-feed-file [file cia-url observable-type observable-field & {:as options}]
+(defn load-judgements-from-feed-file
+  [file cia-url observable-type observable-field & {:as options}]
   (let [entries (json/parse-string (slurp file) true)
         judgements (apply feed-judgements entries
                           observable-type observable-field options)
@@ -61,11 +59,15 @@
          judgements)))
 
 (comment
-  (load-judgements-from-feed-file "test/data/rat-dns.json" "http://localhost:3000/" "domain" :domain))
+  (load-judgements-from-feed-file "test/data/rat-dns.json"
+                                  "http://localhost:3000/"
+                                  "domain"
+                                  :domain))
 
-(def commands                           ; FIXME replace with function
-                                        ; to support redefinition.
-  {"import-feed" import-feed-comment})
+(def commands
+  ;; FIXME replace with function
+  ;; to support redefinition.
+  {"import-feed" (constantly -1)})
 
 (defn global-arguments []
   [["-?" "--help" "Print Usage"
@@ -75,27 +77,38 @@
    ["-v" "--verbose" "Turn on info logging"
     :default false]
    [nil "--cia URL" "CIA URL"
-    :default "http://localhost:3000"]])
+    :default "http://localhost:3000/"]])
+
+(defn usage
+  [summary text]
+  (print (str text
+              "\n\nAvailable Commands:\n  "
+              (join ", " (keys commands))
+              "\n\nGlobal Options:\n" summary))
+  -1)
 
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]}
         (parse-opts args (global-arguments) :in-order true)
+
         [command & command-arguments]
         arguments
-        usage (fn [text]
-                (print (str text "\n\nAvailable Commands:\n  "
-                            (join ", " (keys commands))
-                            "\n\nGlobal Options:\n" summary))
-                -1)]
-    (let [command (or command "import-feed")]
-      (cond errors                        ; unknown arguments
-            (usage (join "\n" errors))
-            (:help options)               ; help
-            (usage "Usage")
-            (not command)                 ; missing command
-            (usage "No command provided.")
-            (not (get commands command))  ; unknown command
-            (usage (str "Unknown command: '" command "'"))
-            true                          ; continue processing
-            ((get commands command) global-options command-arguments)))))
 
+        usage
+        (partial usage summary)]
+    (let [command (or command "import-feed")]
+      (cond
+        errors ;; unknown arguments
+        (usage (join "\n" errors))
+
+        (:help options) ;; help
+        (usage "Usage")
+
+        (not command) ;; missing command
+        (usage "No command provided.")
+
+        (not (get commands command)) ;; unknown command
+        (usage (str "Unknown command: '" command "'"))
+
+        :else ;; continue processing
+        ((get commands command) options command-arguments)))))
