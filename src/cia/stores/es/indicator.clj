@@ -21,15 +21,15 @@
 (defn- make-id [schema j]
   (str "indicator" "-" (UUID/randomUUID)))
 
-(defn handle-create-indicator [state new-indicator]
+(defn handle-create-indicator [state login new-indicator]
   (let [id (make-id Indicator new-indicator)
-        realized (realize-indicator new-indicator id)]
+        realized (realize-indicator new-indicator id login)]
     (create-doc (:conn state)
                 (:index state)
                 mapping
                 realized)))
 
-(defn handle-update-indicator [state id new-indicator]
+(defn handle-update-indicator [state login id new-indicator]
   (update-doc (:conn state)
               (:index state)
               mapping

@@ -21,9 +21,9 @@
 (defn- make-id [schema j]
   (str "judgement" "-" (UUID/randomUUID)))
 
-(defn handle-create-judgement [state new-judgement]
+(defn handle-create-judgement [state login new-judgement]
   (let [id (make-id Judgement new-judgement)
-        realized (realize-judgement new-judgement id)]
+        realized (realize-judgement new-judgement id login)]
 
     (create-doc (:conn state)
                 (:index state)
