@@ -4,8 +4,8 @@
 
 (defrecord JudgementStore []
   IJudgementStore
-  (create-judgement [_ new-judgement]
-    (first (judgement/insert-judgements new-judgement)))
+  (create-judgement [_ login new-judgement]
+    (first (judgement/insert-judgements login new-judgement)))
   (read-judgement [_ id]
     (first (judgement/select-judgements {:id id})))
   (delete-judgement [_ id]

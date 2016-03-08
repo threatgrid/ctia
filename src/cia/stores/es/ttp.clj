@@ -16,15 +16,15 @@
 (defn- make-id [schema j]
   (str "ttp" "-" (UUID/randomUUID)))
 
-(defn handle-create-ttp [state new-ttp]
+(defn handle-create-ttp [state login new-ttp]
   (let [id (make-id TTP new-ttp)
-        realized (realize-ttp new-ttp id)]
+        realized (realize-ttp new-ttp id login)]
     (create-doc (:conn state)
                 (:index state)
                 mapping
                 realized)))
 
-(defn handle-update-ttp [state id new-ttp]
+(defn handle-update-ttp [state login id new-ttp]
   (update-doc (:conn state)
               (:index state)
               mapping

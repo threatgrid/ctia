@@ -9,7 +9,8 @@
                       ICampaignStore
                       ICOAStore
                       ISightingStore
-                      IIncidentStore]]
+                      IIncidentStore
+                      IIdentityStore]]
 
    [cia.stores.es.judgement :as ju]
    [cia.stores.es.feedback  :as fe]
@@ -19,12 +20,13 @@
    [cia.stores.es.campaign :as ca]
    [cia.stores.es.coa :as coa]
    [cia.stores.es.incident :as inc]
-   [cia.stores.es.exploit-target :as et]))
+   [cia.stores.es.exploit-target :as et]
+   [cia.stores.es.identity :as id]))
 
 (defrecord JudgementStore [state]
   IJudgementStore
-  (create-judgement [_ new-judgement]
-    (ju/handle-create-judgement state new-judgement))
+  (create-judgement [_ login new-judgement]
+    (ju/handle-create-judgement state login new-judgement))
   (read-judgement [_ id]
     (ju/handle-read-judgement state id))
   (delete-judgement [_ id]
@@ -36,17 +38,17 @@
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
-  (create-feedback [_ new-feedback judgement-id]
-    (fe/handle-create-feedback state new-feedback judgement-id))
+  (create-feedback [_ new-feedback login judgement-id]
+    (fe/handle-create-feedback state new-feedback login judgement-id))
   (list-feedback [_ filter-map]
     (fe/handle-list-feedback state filter-map)))
 
 (defrecord IndicatorStore [state]
   IIndicatorStore
-  (create-indicator [_ new-indicator]
-    (in/handle-create-indicator state new-indicator))
-  (update-indicator [_ id new-indicator]
-    (in/handle-update-indicator state id new-indicator))
+  (create-indicator [_ login new-indicator]
+    (in/handle-create-indicator state login new-indicator))
+  (update-indicator [_ id login new-indicator]
+    (in/handle-update-indicator state login id new-indicator))
   (read-indicator [_ id]
     (in/handle-read-indicator state id))
   (delete-indicator [_ id]
@@ -67,10 +69,10 @@
   ITTPStore
   (read-ttp [_ id]
     (ttp/handle-read-ttp state id))
-  (create-ttp [_ new-ttp]
-    (ttp/handle-create-ttp state new-ttp))
-  (update-ttp [_ id new-ttp]
-    (ttp/handle-update-ttp state id new-ttp))
+  (create-ttp [_ login new-ttp]
+    (ttp/handle-create-ttp state login new-ttp))
+  (update-ttp [_ id login new-ttp]
+    (ttp/handle-update-ttp state login id new-ttp))
   (delete-ttp [_ id]
     (ttp/handle-delete-ttp state id))
   (list-ttps [_ filter-map]
@@ -80,10 +82,10 @@
   IActorStore
   (read-actor [_ id]
     (ac/handle-read-actor state id))
-  (create-actor [_ new-actor]
-    (ac/handle-create-actor state new-actor))
-  (update-actor [_ id actor]
-    (ac/handle-update-actor state id actor))
+  (create-actor [_ login new-actor]
+    (ac/handle-create-actor state login new-actor))
+  (update-actor [_ id login actor]
+    (ac/handle-update-actor state login id actor))
   (delete-actor [_ id]
     (ac/handle-delete-actor state id))
   (list-actors [_ filter-map]
@@ -93,10 +95,10 @@
   ICampaignStore
   (read-campaign [_ id]
     (ca/handle-read-campaign state id))
-  (create-campaign [_ new-campaign]
-    (ca/handle-create-campaign state new-campaign))
-  (update-campaign [_ id new-campaign]
-    (ca/handle-update-campaign state id new-campaign))
+  (create-campaign [_ login new-campaign]
+    (ca/handle-create-campaign state login new-campaign))
+  (update-campaign [_ id login new-campaign]
+    (ca/handle-update-campaign state login id new-campaign))
   (delete-campaign [_ id]
     (ca/handle-delete-campaign state id))
   (list-campaigns [_ filter-map]
@@ -106,10 +108,10 @@
   ICOAStore
   (read-coa [_ id]
     (coa/handle-read-coa state id))
-  (create-coa [_ new-coa]
-    (coa/handle-create-coa state new-coa))
-  (update-coa [_ id new-coa]
-    (coa/handle-update-coa state id new-coa))
+  (create-coa [_ login new-coa]
+    (coa/handle-create-coa state login new-coa))
+  (update-coa [_ id login new-coa]
+    (coa/handle-update-coa state login id new-coa))
   (delete-coa [_ id]
     (coa/handle-delete-coa state id))
   (list-coas [_ filter-map]
@@ -119,10 +121,10 @@
   IIncidentStore
   (read-incident [_ id]
     (inc/handle-read-incident state id))
-  (create-incident [_ new-incident]
-    (inc/handle-create-incident state new-incident))
-  (update-incident [_ id new-incident]
-    (inc/handle-update-incident state id new-incident))
+  (create-incident [_ login new-incident]
+    (inc/handle-create-incident state login new-incident))
+  (update-incident [_ id login new-incident]
+    (inc/handle-update-incident state login id new-incident))
   (delete-incident [_ id]
     (inc/handle-delete-incident state id))
   (list-incidents [_ filter-map]
@@ -132,11 +134,20 @@
   IExploitTargetStore
   (read-exploit-target [_ id]
     (et/handle-read-exploit-target state id))
-  (create-exploit-target [_ new-exploit-target]
-    (et/handle-create-exploit-target state new-exploit-target))
-  (update-exploit-target [_ id new-exploit-target]
-    (et/handle-update-exploit-target state id new-exploit-target))
+  (create-exploit-target [_ login new-exploit-target]
+    (et/handle-create-exploit-target state login new-exploit-target))
+  (update-exploit-target [_ id login new-exploit-target]
+    (et/handle-update-exploit-target state login id new-exploit-target))
   (delete-exploit-target [_ id]
     (et/handle-delete-exploit-target state id))
   (list-exploit-targets [_ filter-map]
     (et/handle-list-exploit-targets state filter-map)))
+
+(defrecord IdentityStore [state]
+  IIdentityStore
+  (read-identity [_ login]
+    (id/handle-read-identity state login))
+  (create-identity [_ new-identity]
+    (id/handle-create-identity state new-identity))
+  (delete-identity [_ org-id role]
+    (id/handle-delete-identity state org-id role)))

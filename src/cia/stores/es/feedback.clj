@@ -14,9 +14,9 @@
 (defn- make-id [schema j]
   (str "feedback" "-" (UUID/randomUUID)))
 
-(defn handle-create-feedback [state new-feedback judgement-id]
+(defn handle-create-feedback [state new-feedback login judgement-id]
   (let [id (make-id Feedback new-feedback)
-        realized (realize-feedback new-feedback id judgement-id)]
+        realized (realize-feedback new-feedback id login judgement-id)]
     (create-doc (:conn state)
                 (:index state)
                 mapping

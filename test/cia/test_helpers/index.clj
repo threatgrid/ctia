@@ -5,6 +5,7 @@
             [cia.stores.es.mapping :as mapping]
             [cia.stores.es.store :as es-store]
             [cia.test-helpers.core :as h]
+            [cia.properties :as properties]
             [clojure.java.io :as io]))
 
 (def conn-state-fixture
@@ -37,10 +38,13 @@
    store/exploit-target-store (init-store-state es-store/->ExploitTargetStore)
    store/incident-store       (init-store-state es-store/->IncidentStore)
    store/indicator-store      (init-store-state es-store/->IndicatorStore)
-   store/ttp-store            (init-store-state es-store/->TTPStore)})
+   store/ttp-store            (init-store-state es-store/->TTPStore)
+   store/identity-store       (init-store-state es-store/->IdentityStore)})
 
 
 (def fixture-es-store
-  (do (reset! conn-state-fixture
-              (es-index/init-conn))
-      (h/fixture-store es-stores)))
+  (do
+    (properties/init!)
+    (reset! conn-state-fixture
+            (es-index/init-conn))
+    (h/fixture-store es-stores)))

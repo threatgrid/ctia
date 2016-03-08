@@ -102,15 +102,17 @@
 
 (s/defn realize-indicator :- StoredIndicator
   ([new-indicator :- NewIndicator
-    id :- s/Str]
-   (realize-indicator new-indicator id nil))
+    id :- s/Str
+    login :- s/Str]
+   (realize-indicator new-indicator id login nil))
   ([new-indicator :- NewIndicator
     id :- s/Str
+    login :- s/Str
     prev-indicator :- (s/maybe StoredIndicator)]
    (let [now (c/timestamp)]
      (assoc new-indicator
             :id id
-            :owner "not implemented"
+            :owner login
             :created (or (:created prev-indicator) now)
             :modified now
             :valid_time (or (:valid_time prev-indicator)

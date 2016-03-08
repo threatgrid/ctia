@@ -55,7 +55,8 @@
 
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
-   id :- s/Str]
+   id :- s/Str
+   login :- s/Str]
   (let [now (c/timestamp)
         disposition (c/determine-disposition-id new-judgement)
         disposition_name (get c/disposition-map disposition)]
@@ -63,7 +64,7 @@
            :id id
            :disposition disposition
            :disposition_name disposition_name
-           :owner "not implemented"
+           :owner login
            :created now
            :valid_time {:end_time (or (get-in new-judgement [:valid_time :end-time])
                                       c/default-expire-date)
