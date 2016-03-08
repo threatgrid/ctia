@@ -14,11 +14,18 @@
                  ;; Database
                  [korma "0.4.2"]
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
-                 ]
+                 [clojurewerkz/elastisch "2.2.1"]]
   :ring {:handler cia.handler/app
          :init cia.init/init!
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
+  :test-selectors {:es-store #(.contains (name (:name %)) "-es-store")
+                   :default #(not (or (.contains (name (:name %)) "-es-store")
+                                      (:integration %)
+                                      (:regression %)))
+                   :integration #(or (.contains (name (:name %)) "-es-store")
+                                     (:integation %))}
+
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [javax.servlet/servlet-api "2.5"]
                                   [ring/ring-jetty-adapter "1.4.0"]
