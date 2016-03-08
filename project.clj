@@ -14,7 +14,10 @@
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
 
                  ;; Docs
-                 [markdown-clj "0.9.86"]]
+                 [markdown-clj "0.9.86"]
+                 [hiccup "1.0.5"]
+                 [hiccup-bridge "1.0.1"]]
+
   :ring {:handler cia.handler/app
          :init cia.init/init-store
          :nrepl {:start? true}}
