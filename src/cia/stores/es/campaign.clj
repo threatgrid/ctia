@@ -16,15 +16,15 @@
 (defn- make-id [schema j]
   (str "campagin" "-" (UUID/randomUUID)))
 
-(defn handle-create-campaign [state new-campaign]
+(defn handle-create-campaign [state login new-campaign]
   (let [id (make-id Campaign new-campaign)
-        realized (realize-campaign new-campaign id)]
+        realized (realize-campaign new-campaign id login)]
     (create-doc (:conn state)
                 (:index state)
                 mapping
                 realized)))
 
-(defn handle-update-campaign [state id new-campaign]
+(defn handle-update-campaign [state login id new-campaign]
   (update-doc (:conn state)
               (:index state)
               mapping

@@ -16,15 +16,15 @@
 (defn- make-id [schema j]
   (str "incident" "-" (UUID/randomUUID)))
 
-(defn handle-create-incident [state new-incident]
+(defn handle-create-incident [state login new-incident]
   (let [id (make-id Incident new-incident)
-        realized (realize-incident new-incident id)]
+        realized (realize-incident new-incident id login)]
     (create-doc (:conn state)
                 (:index state)
                 mapping
                 realized)))
 
-(defn handle-update-incident [state id new-incident]
+(defn handle-update-incident [state login id new-incident]
   (update-doc (:conn state)
               (:index state)
               mapping

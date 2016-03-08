@@ -16,15 +16,15 @@
 (defn- make-id [schema j]
   (str "coa" "-" (UUID/randomUUID)))
 
-(defn handle-create-coa [state new-coa]
+(defn handle-create-coa [state login new-coa]
   (let [id (make-id COA new-coa)
-        realized (realize-coa new-coa id)]
+        realized (realize-coa new-coa id login)]
     (create-doc (:conn state)
                 (:index state)
                 mapping
                 realized)))
 
-(defn handle-update-coa [state id new-coa]
+(defn handle-update-coa [state login id new-coa]
   (update-doc (:conn state)
               (:index state)
               mapping

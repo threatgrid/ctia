@@ -11,12 +11,12 @@
 (defn init-auth-service! []
   (let [auth-service-name (get-in @properties/properties [:auth :service])]
     (case auth-service-name
-        "allow-all" (reset! auth/auth-service (allow-all/->AuthService))
-        "threatgrid" (reset! auth/auth-service (threatgrid/make-auth-service
-                                                (threatgrid/make-whoami-service)))
-        (throw (ex-info "Auth service not configured"
-                        {:message "Unknown service"
-                         :requested-service auth-service-name})))))
+      "allow-all" (reset! auth/auth-service (allow-all/->AuthService))
+      "threatgrid" (reset! auth/auth-service (threatgrid/make-auth-service
+                                              (threatgrid/make-whoami-service)))
+      (throw (ex-info "Auth service not configured"
+                      {:message "Unknown service"
+                       :requested-service auth-service-name})))))
 
 (defn init-mem-store! []
   (let [store-impls {store/actor-store mem/->ActorStore
@@ -42,7 +42,8 @@
                      store/exploit-target-store es/->ExploitTargetStore
                      store/incident-store es/->IncidentStore
                      store/indicator-store es/->IndicatorStore
-                     store/ttp-store es/->TTPStore}]
+                     store/ttp-store es/->TTPStore
+                     store/identity-store es/->IdentityStore}]
 
     (es-index/create! (:conn store-state)
                       (:index store-state))
