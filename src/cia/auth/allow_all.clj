@@ -6,7 +6,7 @@
 (defrecord Identity []
   IIdentity
   (login [_]
-    "admin")
+    "unknown")
   (allowed-capabilities [_]
     (get auth/default-capabilities :admin))
   (allowed-capability? [_ _]

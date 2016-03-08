@@ -26,7 +26,7 @@
                      store/incident-store mem/->IncidentStore
                      store/indicator-store mem/->IndicatorStore
                      store/ttp-store mem/->TTPStore
-                     store/auth-role-store mem/->AuthRoleStore}]
+                     store/identity-store mem/->IdentityStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))))
 
