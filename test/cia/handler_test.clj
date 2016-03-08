@@ -777,6 +777,33 @@
                        :id
                        :created)))))
 
+      (testing "GET /cia/judgement/:id with query-param api_key"
+        (let [{status :status
+               judgement :parsed-body
+               :as response}
+              (get (str "cia/judgement/" (:id judgement))
+                   :query-params {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 (:status response)))
+          (is (deep=
+               {:observable {:value "1.2.3.4"
+                             :type "ip"}
+                :disposition 2
+                :disposition_name "Malicious"
+                :priority 100
+                :severity 100
+                :confidence "Low"
+                :source "test"
+                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                :indicators [{:confidence "High"
+                              :source "source"
+                              :relationship "relationship"
+                              :indicator "indicator-123"}]
+                :owner "foouser"}
+               (dissoc judgement
+                       :id
+                       :created)))))
+
       (testing "GET /cia/judgement/:id authentication failures"
         (testing "no api_key"
           (let [{body :parsed-body status :status}

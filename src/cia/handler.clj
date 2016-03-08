@@ -19,6 +19,7 @@
             [cia.store :refer :all]
             [compojure.api.sweet :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
+            [ring.middleware.params :as params]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -514,4 +515,5 @@
 (def app
   (-> api-handler
       auth/wrap-authentication
-      (wrap-restful-format)))
+      params/wrap-params
+      wrap-restful-format))

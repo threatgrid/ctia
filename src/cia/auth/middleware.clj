@@ -5,10 +5,14 @@
 
 (defn wrap-authentication [handler]
   (fn [request]
-    (handler
-     (assoc request
-            :identity (some->> (get-in request [:headers "api_key"])
-                               (auth/identity-for-token @auth-service))))))
+    (let [api_key (or (get-in request [:headers "api_key"])
+                      (get-in request [:query-params "api_key"]))
+          id (if api_key (auth/identity-for-token @auth-service api_key))]
+      (handler
+       (-> request
+           (assoc :identity id
+                  :login (if id (auth/login id)))
+           (assoc-in [:headers "api_key"] api_key))))))
 
 (defn require-capability! [granting-capabilities id]
   (if granting-capabilities
@@ -28,13 +32,11 @@
 ;; to the handler spec.
 ;; Reference:
 ;; https://github.com/metosin/compojure-api/wiki/Creating-your-own-metadata-handlers
-(defmethod meta/restructure-param :capabilities
-  [_ capabilities acc]
+(defmethod meta/restructure-param :capabilities [_ capabilities acc]
   (update acc :lets into
           ['_ `(require-capability! ~capabilities
                                     (:identity ~'+compojure-api-request+))]))
 
 (defmethod meta/restructure-param :login [_ bind-to acc]
   (update acc :lets into
-          [bind-to `(-> (:identity ~'+compojure-api-request+)
-                        auth/login)]))
+          [bind-to `(:login ~'+compojure-api-request+)]))
