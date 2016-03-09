@@ -2,12 +2,15 @@
   (:gen-class)
   (:import [javax.xml.bind DatatypeConverter])
   (:require [cheshire.core :as json]
+            [cia.schemas.indicator :as si]
+            [cia.schemas.external.ioc-indicators :as sei]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :refer [join]]
             [clj-time.core :as t]
             [clj-time.coerce :as tc]
             [clj-time.format :as f]
-            [clj-http.client :as http]))
+            [clj-http.client :as http]
+            [schema.core :as s]))
 
 (defn feed-judgements
   "Extract Judgement objects from a list of TG feed entries"
@@ -43,7 +46,7 @@
 
 (defn load-judgements-from-feed-file
   [file cia-url observable-type observable-field & {:as options}]
-  (let [entries (json/parse-string (slurp file) true)
+  (let [entries (json/parse-string (slurp file))
         judgements (apply feed-judgements entries
                           observable-type observable-field options)
         target-url (str cia-url "/cia/judgement")]
@@ -57,6 +60,43 @@
                   response (http/post target-url options)]
               response))
          judgements)))
+
+(defn ioc-indicators->cia-indicators
+  [ioc-indicators & {:keys [validate?]}]
+  (let [validate-ioc (if validate?
+                       (partial s/validate sei/IoCIndicator)
+                       identity)
+        validate-ind (if validate?
+                       (partial s/validate si/Indicator)
+                       identity)]
+    (for [ioc-indicator ioc-indicators]
+      (let [{:strs [title description confidence severity variables author]}
+            (validate-ioc ioc-indicator)
+
+            indicator
+            {:title title
+             :description description
+             :confidence confidence
+             :severity severity
+             :owner author
+             :producer {:type "ThreatBrain"
+                        :query ""
+                        :variables variables}}]
+        (validate-ind indicator)))))
+
+(defn load-indicators-from-ioc-file
+  [file cia-url]
+  (let [target-url (str cia-url "/cia/indicator")]
+    (doseq [indicator (-> (slurp file)
+                          json/parse-string
+                          ioc-indicators->cia-indicators)]
+      (http/post target-url
+                 {:content-type :edn
+                  :accept :edn
+                  :throw-exceptions false
+                  :socket-timeout 2000
+                  :conn-timeout 2000
+                  :body (pr-str indicator)}))))
 
 (comment
   (load-judgements-from-feed-file "test/data/rat-dns.json"
