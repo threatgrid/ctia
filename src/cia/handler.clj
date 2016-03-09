@@ -20,7 +20,7 @@
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
-            [cia.routes.docs :refer [documentation-routes]]))
+            [cia.routes.documentation :refer [documentation-routes]]))
 
 (def JudgementSort
   "A sort ordering"

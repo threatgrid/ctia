@@ -18,6 +18,7 @@
                  [hiccup "1.0.5"]
                  [hiccup-bridge "1.0.1"]]
 
+  :resource-paths ["doc"]
   :ring {:handler cia.handler/app
          :init cia.init/init-store
          :nrepl {:start? true}}
