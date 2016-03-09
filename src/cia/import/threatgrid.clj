@@ -2,10 +2,12 @@
   (:gen-class)
   (:import [javax.xml.bind DatatypeConverter])
   (:require [cheshire.core :as json]
+            [cia.domain.conversion :refer [->confidence]]
             [cia.schemas.indicator :as si]
             [cia.schemas.external.ioc-indicators :as sei]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :refer [join]]
+            [clojure.set :as set]
             [clj-time.core :as t]
             [clj-time.coerce :as tc]
             [clj-time.format :as f]
@@ -67,21 +69,25 @@
                        (partial s/validate sei/IoCIndicator)
                        identity)
         validate-ind (if validate?
-                       (partial s/validate si/Indicator)
+                       (partial s/validate si/NewIndicator)
                        identity)]
     (for [ioc-indicator ioc-indicators]
-      (let [{:strs [title description confidence severity variables author]}
+      (let [{:strs [name title description confidence variables created-at tags
+                    category]}
             (validate-ioc ioc-indicator)
 
             indicator
-            {:title title
+            {:title name
+             :short_description title
              :description description
-             :confidence confidence
-             :severity severity
-             :owner author
-             :producer {:type "ThreatBrain"
-                        :query ""
-                        :variables variables}}]
+             :confidence (->confidence confidence)
+             ;; :severity is available but not recorded
+             :tags (vec (set (concat tags category)))
+             :producer "ThreatGrid"
+             :specifications [{:type "ThreatBrain"
+                               :variables variables}]
+             :valid_time {:start_time (f/parse (:basic-date f/formatters)
+                                               created-at)}}]
         (validate-ind indicator)))))
 
 (defn load-indicators-from-ioc-file
