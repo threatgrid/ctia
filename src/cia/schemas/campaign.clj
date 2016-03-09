@@ -59,15 +59,17 @@
 
 (s/defn realize-campaign :- StoredCampaign
   ([new-campaign :- NewCampaign
-    id :- s/Str]
-   (realize-campaign new-campaign id nil))
+    id :- s/Str
+    login :- s/Str]
+   (realize-campaign new-campaign id login nil))
   ([new-campaign :- NewCampaign
     id :- s/Str
+    login :- s/Str
     prev-campaign :- (s/maybe StoredCampaign)]
    (let [now (c/timestamp)]
      (assoc new-campaign
             :id id
-            :owner "not implemented"
+            :owner login
             :created (or (:created prev-campaign) now)
             :modified now
             :valid_time (or (:valid_time prev-campaign)

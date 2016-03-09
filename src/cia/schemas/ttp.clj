@@ -100,15 +100,17 @@
 
 (s/defn realize-ttp :- StoredTTP
   ([new-ttp :- NewTTP
-    id :- s/Str]
-   (realize-ttp new-ttp id nil))
+    id :- s/Str
+    login :- s/Str]
+   (realize-ttp new-ttp id login nil))
   ([new-ttp :- NewTTP
     id :- s/Str
+    login :- s/Str
     prev-ttp :- (s/maybe StoredTTP)]
    (let [now (c/timestamp)]
      (assoc new-ttp
             :id id
-            :owner "not implemented"
+            :owner login
             :created (or (:created prev-ttp) now)
             :modified now
             :valid_time (or (:valid_time prev-ttp)

@@ -187,15 +187,17 @@
 
 (s/defn realize-incident :- StoredIncident
   ([new-incident :- NewIncident
-    id :- s/Str]
-   (realize-incident new-incident id nil))
+    id :- s/Str
+    login :- s/Str]
+   (realize-incident new-incident id login nil))
   ([new-incident :- NewIncident
-     id :- s/Str
+    id :- s/Str
+    login :- s/Str
     prev-incident :- (s/maybe StoredIncident)]
    (let [now (c/timestamp)]
      (assoc new-incident
             :id id
-            :owner "not implemented"
+            :owner login
             :created (or (:created prev-incident) now)
             :modified now
             :valid_time (or (:valid_time prev-incident)

@@ -1,5 +1,7 @@
 (ns cia.stores.memory
-  (:require [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
+  (:require [cia.auth :as auth]
+            [cia.schemas.actor :refer [NewActor StoredActor realize-actor]]
+            [cia.schemas.identity :as identity]
             [cia.schemas.campaign
              :refer [NewCampaign StoredCampaign realize-campaign]]
             [cia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]
@@ -34,22 +36,25 @@
 (defmacro def-create-handler [name Model NewModel swap-fn id-fn]
   `(s/defn ~name :- ~Model
      [state# :- (s/atom {s/Str ~Model})
+      login# :- s/Str
       new-model# :- ~NewModel]
      (let [new-id# (~id-fn new-model#)]
        (get
-        (swap! state# ~swap-fn new-model# new-id#)
+        (swap! state# ~swap-fn new-model# new-id# login#)
         new-id#))))
 
 (defmacro def-update-handler [name Model NewModel swap-fn]
   `(s/defn ~name :- ~Model
      [state# :- (s/atom {s/Str ~Model})
       id# :- c/ID
+      login# :- s/Str
       updated-model# :- ~NewModel]
      (get
       (swap! state#
              ~swap-fn
              updated-model#
              id#
+             login#
              (get (deref state#) id#))
       id#)))
 
@@ -97,10 +102,10 @@
   IActorStore
   (read-actor [_ id]
     (handle-read-actor state id))
-  (create-actor [_ new-actor]
-    (handle-create-actor state new-actor))
-  (update-actor [_ id actor]
-    (handle-update-actor state id actor))
+  (create-actor [_ login new-actor]
+    (handle-create-actor state login new-actor))
+  (update-actor [_ id login actor]
+    (handle-update-actor state id login actor))
   (delete-actor [_ id]
     (handle-delete-actor state id))
   (list-actors [_ filter-map]))
@@ -123,10 +128,10 @@
   ICampaignStore
   (read-campaign [_ id]
     (handle-read-campaign state id))
-  (create-campaign [_ new-campaign]
-    (handle-create-campaign state new-campaign))
-  (update-campaign [_ id new-campaign]
-    (handle-update-campaign state id new-campaign))
+  (create-campaign [_ login new-campaign]
+    (handle-create-campaign state login new-campaign))
+  (update-campaign [_ id login new-campaign]
+    (handle-update-campaign state id login new-campaign))
   (delete-campaign [_ id]
     (handle-delete-campaign state id))
   (list-campaigns [_ filter-map]))
@@ -149,10 +154,10 @@
   ICOAStore
   (read-coa [_ id]
     (handle-read-coa state id))
-  (create-coa [_ new-coa]
-    (handle-create-coa state new-coa))
-  (update-coa [_ id new-coa]
-    (handle-update-coa state id new-coa))
+  (create-coa [_ login new-coa]
+    (handle-create-coa state login new-coa))
+  (update-coa [_ id login new-coa]
+    (handle-update-coa state id login new-coa))
   (delete-coa [_ id]
     (handle-delete-coa state id))
   (list-coas [_ filter-map]))
@@ -175,10 +180,10 @@
   IExploitTargetStore
   (read-exploit-target [_ id]
     (handle-read-exploit-target state id))
-  (create-exploit-target [_ new-exploit-target]
-    (handle-create-exploit-target state new-exploit-target))
-  (update-exploit-target [_ id new-exploit-target]
-    (handle-update-exploit-target state id new-exploit-target))
+  (create-exploit-target [_ login new-exploit-target]
+    (handle-create-exploit-target state login new-exploit-target))
+  (update-exploit-target [_ id login new-exploit-target]
+    (handle-update-exploit-target state id login new-exploit-target))
   (delete-exploit-target [_ id]
     (handle-delete-exploit-target state id))
   (list-exploit-targets [_ filter-map]))
@@ -188,6 +193,7 @@
 (s/defn handle-create-feedback :- StoredFeedback
   [state :- (s/atom {s/Str StoredFeedback})
    new-feedback :- NewFeedback
+   login :- s/Str
    judgement-id :- s/Str]
   (let [new-id ((random-id "feedback") new-feedback)]
     (get
@@ -195,6 +201,7 @@
             (make-swap-fn realize-feedback)
             new-feedback
             new-id
+            login
             judgement-id)
      new-id)))
 
@@ -202,8 +209,8 @@
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
-  (create-feedback [_ new-feedback judgement-id]
-    (handle-create-feedback state new-feedback judgement-id))
+  (create-feedback [_ new-feedback login judgement-id]
+    (handle-create-feedback state new-feedback login judgement-id))
   (list-feedback [_ filter-map]
     (handle-list-feedback state filter-map)))
 
@@ -225,10 +232,10 @@
   IIncidentStore
   (read-incident [_ id]
     (handle-read-incident state id))
-  (create-incident [_ new-incident]
-    (handle-create-incident state new-incident))
-  (update-incident [_ id new-incident]
-    (handle-update-incident state id new-incident))
+  (create-incident [_ login new-incident]
+    (handle-create-incident state login new-incident))
+  (update-incident [_ id login incident]
+    (handle-update-incident state id login incident))
   (delete-incident [_ id]
     (handle-delete-incident state id))
   (list-incidents [_ filter-map]))
@@ -268,10 +275,10 @@
 
 (defrecord IndicatorStore [state]
   IIndicatorStore
-  (create-indicator [_ new-indicator]
-    (handle-create-indicator state new-indicator))
-  (update-indicator [_ id new-indicator]
-    (handle-update-indicator state id new-indicator))
+  (create-indicator [_ login new-indicator]
+    (handle-create-indicator state login new-indicator))
+  (update-indicator [_ id login new-indicator]
+    (handle-update-indicator state id login new-indicator))
   (read-indicator [_ id]
     (handle-read-indicator state id))
   (delete-indicator [_ id]
@@ -350,8 +357,8 @@
 
 (defrecord JudgementStore [state]
   IJudgementStore
-  (create-judgement [_ new-judgement]
-    (handle-create-judgement state new-judgement))
+  (create-judgement [_ login new-judgement]
+    (handle-create-judgement state login new-judgement))
   (read-judgement [_ id]
     (handle-read-judgement state id))
   (delete-judgement [_ id]
@@ -379,10 +386,42 @@
   ITTPStore
   (read-ttp [_ id]
     (handle-read-ttp state id))
-  (create-ttp [_ new-ttp]
-    (handle-create-ttp state new-ttp))
-  (update-ttp [_ id new-ttp]
-    (handle-update-ttp state id new-ttp))
+  (create-ttp [_ login new-ttp]
+    (handle-create-ttp state login new-ttp))
+  (update-ttp [_ id login new-ttp]
+    (handle-update-ttp state id login new-ttp))
   (delete-ttp [_ id]
     (handle-delete-ttp state id))
   (list-ttps [_ filter-map]))
+
+;; identity
+
+(s/defn handle-create-identity :- identity/Identity
+  [state :- (s/atom {identity/Login identity/Identity})
+   new-identity :- identity/Identity]
+  (let [id (:login new-identity)]
+    (get
+     (swap! state assoc id new-identity)
+     id)))
+
+(s/defn handle-read-identity :- (s/maybe identity/Identity)
+  [state :- (s/atom {identity/Login identity/Identity})
+   login :- identity/Login]
+  (get @state login))
+
+(s/defn handle-delete-identity :- s/Bool
+  [state :- (s/atom {identity/Login identity/Identity})
+   login :- identity/Login]
+  (if (contains? @state login)
+    (do (swap! state dissoc login)
+        true)
+    false))
+
+(defrecord IdentityStore [state]
+  IIdentityStore
+  (read-identity [_ login]
+    (handle-read-identity state login))
+  (create-identity [_ new-identity]
+    (handle-create-identity state new-identity))
+  (delete-identity [_ org-id role]
+    (handle-delete-identity state org-id role)))

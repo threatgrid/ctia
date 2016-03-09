@@ -48,15 +48,17 @@
 
 (s/defn realize-coa :- StoredCOA
   ([new-coa :- NewCOA
-    id :- s/Str]
-   (realize-coa new-coa id nil))
+    id :- s/Str
+    login :- s/Str]
+   (realize-coa new-coa id login nil))
   ([new-coa :- NewCOA
     id :- s/Str
+    login :- s/Str
     prev-coa :- (s/maybe StoredCOA)]
    (let [now (c/timestamp)]
      (st/assoc new-coa
                :id id
-               :owner "not implemented"
+               :owner login
                :created (or (:created prev-coa) now)
                :modified now
                :valid_time (or (:valid_time prev-coa)
