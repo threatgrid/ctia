@@ -19,7 +19,7 @@
 (s/defschema ThreatBrainSpecification
   "An indicator which runs in threatbrain..."
   {:type (s/eq "ThreatBrain")
-   :query s/Str
+   (s/optional-key :query) s/Str
    :variables [s/Str] })
 
 (s/defschema SnortSpecification
@@ -71,6 +71,10 @@
     (s/optional-key :type)
     (describe [v/IndicatorType]
               "Specifies the type or types for this Indicator")
+
+    (s/optional-key :tags)
+    (describe [s/Str]
+              "Descriptors for this indicator")
 
     (s/optional-key :observable)
     (describe c/Observable
@@ -124,7 +128,7 @@
               "Test Mechanisms effective at identifying the cyber Observables specified in this cyber threat Indicator")
 
     ;; Extension fields:
-    :producer s/Str
+    :producer s/Str ;; TODO - Document what is supposed to be in this field!
     (s/optional-key :specifications) [(s/conditional
                                        #(= "Judgement" (:type %)) JudgementSpecification
                                        #(= "ThreatBrain" (:type %)) ThreatBrainSpecification
