@@ -19,6 +19,7 @@
          :init cia.init/init!
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
+  :min-lein-version "2.4.0"
   :test-selectors {:es-store #(.contains (name (:name %)) "-es-store")
                    :default #(not (or (.contains (name (:name %)) "-es-store")
                                       (:integration %)
