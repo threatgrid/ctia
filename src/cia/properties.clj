@@ -31,11 +31,18 @@
        transform
        (reset! properties)))
 
+(defn try-read-file [file]
+  (try
+    (-> file io/resource io/reader)
+    (catch Throwable e nil)))
+
+(defn try-read-files [files]
+  (map try-read-file files))
+
 (defn init!
   ([]
-   (some->> (map #(-> % io/resource io/file) property-files)
+   (some->> (try-read-files property-files)
             (filter some?)
-            (filter #(.canRead ^File %))
             first
             set-properties!))
   ([file]

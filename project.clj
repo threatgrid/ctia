@@ -21,7 +21,7 @@
                  [hiccup "1.0.5"]
                  [hiccup-bridge "1.0.1"]]
 
-  :resource-paths ["doc"]
+  :resource-paths ["resources" "doc"]
   :ring {:handler cia.handler/app
          :init cia.init/init!
          :nrepl {:start? true}}
@@ -38,4 +38,5 @@
                                   [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]]
                    :plugins [[lein-ring "0.9.6"]]
-                   :resource-paths ["model" "test/resources"]}})
+                   :resource-paths ["model"
+                                    "test/resources"]}})
