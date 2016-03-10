@@ -12,9 +12,15 @@
                  [ring-middleware-format "0.7.0"]
 
                  ;; Database
+                 [clojurewerkz/elastisch "2.2.1"]
                  [korma "0.4.2"]
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
-                 [clojurewerkz/elastisch "2.2.1"]]
+
+                 ;; Docs
+                 [markdown-clj "0.9.86"]
+                 [hiccup "1.0.5"]]
+
+  :resource-paths ["resources" "doc"]
   :ring {:handler cia.handler/app
          :init cia.init/init!
          :nrepl {:start? true}}
@@ -32,4 +38,5 @@
                                   [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]]
                    :plugins [[lein-ring "0.9.6"]]
-                   :resource-paths ["model" "test/resources"]}})
+                   :resource-paths ["model"
+                                    "test/resources"]}})
