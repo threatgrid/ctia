@@ -124,6 +124,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes an Actor"
         :header-params [api_key :- s/Str]
@@ -161,6 +162,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes a Campaign"
         :header-params [api_key :- s/Str]
@@ -200,6 +202,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes an ExploitTarget"
         :header-params [api_key :- s/Str]
@@ -237,6 +240,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes a COA"
         :header-params [api_key :- s/Str]
@@ -274,6 +278,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes an Incident"
         :header-params [api_key :- s/Str]
@@ -320,6 +325,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :header-params [api_key :- s/Str]
         :summary "Deletes a Judgement"
@@ -431,6 +437,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes a TTP"
         :header-params [api_key :- s/Str]
