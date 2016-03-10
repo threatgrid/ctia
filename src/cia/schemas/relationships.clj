@@ -51,7 +51,3 @@
 
 (s/defschema RelatedTTPs
   [(enriched-ref {:ttp_id TTPReference})])
-
-;; (s/defschema RelatedTTPs
-;;   [(relation TTPReference
-;;              RelatedTTP)])
