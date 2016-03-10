@@ -69,9 +69,9 @@
     "text/markdown" (render-markdown file)
     (render-default file type)))
 
-(defn render-request [req]
+(defn render-request [path-info]
   "read the requested file from resources, render it if needed"
-  (let [file-path (subs (:path-info req) 1)
+  (let [file-path (subs path-info 1)
         file-content (get-file-content file-path)
         file-type (ext-mime-type file-path mime-overrides)]
 
@@ -90,4 +90,4 @@
   (context "/doc" []
     (GET "/*.*" req
       :no-doc true
-      (render-request-with-cache req))))
+      (render-request-with-cache (:path-info req)))))
