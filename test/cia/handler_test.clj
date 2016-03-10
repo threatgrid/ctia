@@ -36,6 +36,7 @@
      {:memory-store helpers/fixture-in-memory-store
       :sql-store    (join-fixtures [db-helpers/fixture-sql-store
                                     db-helpers/fixture-clean-db])
+
       :es-store     (join-fixtures [index-helpers/fixture-es-store
                                     index-helpers/fixture-clean-index])}
 
@@ -66,9 +67,12 @@
                                 :type "Hacker"
                                 :source "a source"
                                 :confidence "High"
-                                :associated_actors ["actor-123" "actor-456"]
-                                :associated_campaigns ["campaign-444" "campaign-555"]
-                                :observed_TTPs ["ttp-333" "ttp-999"]
+                                :associated_actors [{:actor_id "actor-123"}
+                                                    {:actor_id "actor-456"}]
+                                :associated_campaigns [{:campaign_id "campaign-444"}
+                                                       {:campaign_id "campaign-555"}]
+                                :observed_TTPs [{:ttp_id "ttp-333"}
+                                                {:ttp_id "ttp-999"}]
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                              :end_time "2016-07-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
@@ -80,9 +84,12 @@
             :title "actor",
             :confidence "High",
             :source "a source"
-            :associated_actors ["actor-123" "actor-456"]
-            :associated_campaigns ["campaign-444" "campaign-555"]
-            :observed_TTPs ["ttp-333" "ttp-999"]
+            :associated_actors [{:actor_id "actor-123"}
+                                {:actor_id "actor-456"}]
+            :associated_campaigns [{:campaign_id "campaign-444"}
+                                   {:campaign_id "campaign-555"}]
+            :observed_TTPs [{:ttp_id "ttp-333"}
+                            {:ttp_id "ttp-999"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :owner "foouser"}
@@ -102,9 +109,12 @@
                 :title "actor",
                 :confidence "High",
                 :source "a source"
-                :associated_actors ["actor-123" "actor-456"]
-                :associated_campaigns ["campaign-444" "campaign-555"]
-                :observed_TTPs ["ttp-333" "ttp-999"]
+                :associated_actors [{:actor_id "actor-123"}
+                                    {:actor_id "actor-456"}]
+                :associated_campaigns [{:campaign_id "campaign-444"}
+                                       {:campaign_id "campaign-555"}]
+                :observed_TTPs [{:ttp_id "ttp-333"}
+                                {:ttp_id "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
@@ -120,9 +130,11 @@
                                    :type "Hacktivist"
                                    :source "a source"
                                    :confidence "High"
-                                   :associated_actors ["actor-789"]
-                                   :associated_campaigns ["campaign-444" "campaign-555"]
-                                   :observed_TTPs ["ttp-333" "ttp-999"]
+                                   :associated_actors [{:actor_id "actor-789"}]
+                                   :associated_campaigns [{:campaign_id "campaign-444"}
+                                                          {:campaign_id "campaign-555"}]
+                                   :observed_TTPs [{:ttp_id "ttp-333"}
+                                                   {:ttp_id "ttp-999"}]
                                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                                 :end_time "2016-07-11T00:40:48.212-00:00"}}
                             :headers {"api_key" "45c1f5e3f05d0"})
@@ -136,9 +148,11 @@
                 :type "Hacktivist"
                 :source "a source"
                 :confidence "High"
-                :associated_actors ["actor-789"]
-                :associated_campaigns ["campaign-444" "campaign-555"]
-                :observed_TTPs ["ttp-333" "ttp-999"]
+                :associated_actors [{:actor_id "actor-789"}]
+                :associated_campaigns [{:campaign_id "campaign-444"}
+                                       {:campaign_id "campaign-555"}]
+                :observed_TTPs [{:ttp_id "ttp-333"}
+                                {:ttp_id  "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
@@ -163,19 +177,20 @@
                                 :description "description"
                                 :type "anything goes here"
                                 :intended_effect ["Theft"]
-                                :indicators ["indicator-foo" "indicator-bar"]
+                                :indicators [{:indicator_id "indicator-foo"}
+                                             {:indicator_id "indicator-bar"}]
                                 :attribution [{:confidence "High"
                                                :source "source"
                                                :relationship "relationship"
-                                               :actor "actor-123"}]
+                                               :actor_id "actor-123"}]
                                 :related_incidents [{:confidence "High"
                                                      :source "source"
                                                      :relationship "relationship"
-                                                     :incident "incident-222"}]
+                                                     :incident_id "incident-222"}]
                                 :related_TTPs [{:confidence "High"
                                                 :source "source"
                                                 :relationship "relationship"
-                                                :ttp "ttp-999"}]
+                                                :ttp_id "ttp-999"}]
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                              :end_time "2016-07-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
@@ -186,19 +201,20 @@
             :description "description"
             :type "anything goes here"
             :intended_effect ["Theft"]
-            :indicators ["indicator-foo" "indicator-bar"]
+            :indicators [{:indicator_id "indicator-foo"}
+                         {:indicator_id "indicator-bar"}]
             :attribution [{:confidence "High"
                            :source "source"
                            :relationship "relationship"
-                           :actor "actor-123"}]
+                           :actor_id "actor-123"}]
             :related_incidents [{:confidence "High"
                                  :source "source"
                                  :relationship "relationship"
-                                 :incident "incident-222"}]
+                                 :incident_id "incident-222"}]
             :related_TTPs [{:confidence "High"
                             :source "source"
                             :relationship "relationship"
-                            :ttp "ttp-999"}]
+                            :ttp_id "ttp-999"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :owner "foouser"}
@@ -217,19 +233,20 @@
                 :description "description"
                 :type "anything goes here"
                 :intended_effect ["Theft"]
-                :indicators ["indicator-foo" "indicator-bar"]
+                :indicators [{:indicator_id "indicator-foo"}
+                             {:indicator_id "indicator-bar"}]
                 :attribution [{:confidence "High"
                                :source "source"
                                :relationship "relationship"
-                               :actor "actor-123"}]
+                               :actor_id "actor-123"}]
                 :related_incidents [{:confidence "High"
                                      :source "source"
                                      :relationship "relationship"
-                                     :incident "incident-222"}]
+                                     :incident_id "incident-222"}]
                 :related_TTPs [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :ttp "ttp-999"}]
+                                :ttp_id "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
@@ -244,19 +261,20 @@
                                    :description "different description"
                                    :type "anything goes here"
                                    :intended_effect ["Brand Damage"]
-                                   :indicators ["indicator-foo" "indicator-bar"]
+                                   :indicators [{:indicator_id "indicator-foo"}
+                                                {:indicator_id "indicator-bar"}]
                                    :attribution [{:confidence "High"
                                                   :source "source"
                                                   :relationship "relationship"
-                                                  :actor "actor-123"}]
+                                                  :actor_id "actor-123"}]
                                    :related_incidents [{:confidence "High"
                                                         :source "source"
                                                         :relationship "relationship"
-                                                        :incident "incident-222"}]
+                                                        :incident_id "incident-222"}]
                                    :related_TTPs [{:confidence "High"
                                                    :source "source"
                                                    :relationship "relationship"
-                                                   :ttp "ttp-999"}]
+                                                   :ttp_id "ttp-999"}]
                                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                                 :end_time "2016-07-11T00:40:48.212-00:00"}}
                             :headers {"api_key" "45c1f5e3f05d0"})
@@ -269,19 +287,20 @@
                 :description "different description"
                 :type "anything goes here"
                 :intended_effect ["Brand Damage"]
-                :indicators ["indicator-foo" "indicator-bar"]
+                :indicators [{:indicator_id "indicator-foo"}
+                             {:indicator_id "indicator-bar"}]
                 :attribution [{:confidence "High"
                                :source "source"
                                :relationship "relationship"
-                               :actor "actor-123"}]
+                               :actor_id "actor-123"}]
                 :related_incidents [{:confidence "High"
                                      :source "source"
                                      :relationship "relationship"
-                                     :incident "incident-222"}]
+                                     :incident_id "incident-222"}]
                 :related_TTPs [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :ttp "ttp-999"}]
+                                :ttp_id "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
@@ -383,11 +402,12 @@
                                 :description "description"
                                 :vulnerability [{:title "vulnerability"
                                                  :description "description"}]
-                                :potential_COAs ["coa-777" "coa-333"]
+                                :potential_COAs [{:COA_id "coa-777"}
+                                                 {:COA_id "coa-333"}]
                                 :related_exploit_targets [{:confidence "High"
                                                            :source "source"
                                                            :relationship "relationship"
-                                                           :exploit_target "exploit-target-123"}]
+                                                           :exploit_target_id "exploit-target-123"}]
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           exploit-target (:parsed-body response)]
@@ -397,11 +417,12 @@
             :description "description"
             :vulnerability [{:title "vulnerability"
                              :description "description"}]
-            :potential_COAs ["coa-777" "coa-333"]
+            :potential_COAs [{:COA_id "coa-777"}
+                             {:COA_id "coa-333"}]
             :related_exploit_targets [{:confidence "High"
                                        :source "source"
                                        :relationship "relationship"
-                                       :exploit_target "exploit-target-123"}]
+                                       :exploit_target_id "exploit-target-123"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -420,11 +441,12 @@
                 :description "description"
                 :vulnerability [{:title "vulnerability"
                                  :description "description"}]
-                :potential_COAs ["coa-777" "coa-333"]
+                :potential_COAs [{:COA_id "coa-777"}
+                                 {:COA_id "coa-333"}]
                 :related_exploit_targets [{:confidence "High"
                                            :source "source"
                                            :relationship "relationship"
-                                           :exploit_target "exploit-target-123"}]
+                                           :exploit_target_id "exploit-target-123"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :owner "foouser"}
@@ -441,11 +463,12 @@
                           :description "updated description"
                           :vulnerability [{:title "vulnerability"
                                            :description "description"}]
-                          :potential_COAs ["coa-777" "coa-333"]
+                          :potential_COAs [{:COA_id "coa-777"}
+                                           {:COA_id "coa-333"}]
                           :related_exploit_targets [{:confidence "Medium"
                                                      :source "source"
                                                      :relationship "another relationship"
-                                                     :exploit_target "exploit-target-123"}]
+                                                     :exploit_target_id "exploit-target-123"}]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
@@ -455,11 +478,12 @@
                 :description "updated description"
                 :vulnerability [{:title "vulnerability"
                                  :description "description"}]
-                :potential_COAs ["coa-777" "coa-333"]
+                :potential_COAs [{:COA_id "coa-777"}
+                                 {:COA_id "coa-333"}]
                 :related_exploit_targets [{:confidence "Medium"
                                            :source "source"
                                            :relationship "another relationship"
-                                           :exploit_target "exploit-target-123"}]
+                                           :exploit_target_id "exploit-target-123"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :owner "foouser"
@@ -490,8 +514,9 @@
                                 :related_indicators [{:confidence "High"
                                                       :source "source"
                                                       :relationship "relationship"
-                                                      :indicator "indicator-123"}]
-                                :related_incidents ["incident-123" "indicent-789"]}
+                                                      :indicator_id "indicator-123"}]
+                                :related_incidents [{:incident_id "incident-123"}
+                                                    {:incident_id "indicent-789"}]}
                          :headers {"api_key" "45c1f5e3f05d0"})
           incident (:parsed-body response)]
       (is (= 200 (:status response)))
@@ -506,8 +531,10 @@
             :related_indicators [{:confidence "High"
                                   :source "source"
                                   :relationship "relationship"
-                                  :indicator "indicator-123"}]
-            :related_incidents ["incident-123" "indicent-789"]
+                                  :indicator_id "indicator-123"}]
+
+            :related_incidents [{:incident_id "incident-123"}
+                                {:incident_id "indicent-789"}]
             :owner "foouser"}
            (dissoc incident
                    :id
@@ -530,8 +557,9 @@
                 :related_indicators [{:confidence "High"
                                       :source "source"
                                       :relationship "relationship"
-                                      :indicator "indicator-123"}]
-                :related_incidents ["incident-123" "indicent-789"]
+                                      :indicator_id "indicator-123"}]
+                :related_incidents [{:incident_id "incident-123"}
+                                    {:incident_id "indicent-789"}]
                 :owner "foouser"}
                (dissoc incident
                        :id
@@ -551,8 +579,9 @@
                           :related_indicators [{:confidence "High"
                                                 :source "another source"
                                                 :relationship "relationship"
-                                                :indicator "indicator-234"}]
-                          :related_incidents ["incident-123" "indicent-789"]}
+                                                :indicator_id "indicator-234"}]
+                          :related_incidents [{:incident_id "incident-123"}
+                                              {:incident_id "indicent-789"}]}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
@@ -568,8 +597,9 @@
                 :related_indicators [{:confidence "High"
                                       :source "another source"
                                       :relationship "relationship"
-                                      :indicator "indicator-234"}]
-                :related_incidents ["incident-123" "indicent-789"]
+                                      :indicator_id "indicator-234"}]
+                :related_incidents [{:incident_id "incident-123"}
+                                    {:incident_id "indicent-789"}]
                 :owner "foouser"}
                (dissoc updated-incident
                        :modified)))))
@@ -597,14 +627,14 @@
                                 :related_campaigns [{:confidence "High"
                                                      :source "source"
                                                      :relationship "relationship"
-                                                     :campaign "campaign-123"}]
+                                                     :campaign_id "campaign-123"}]
                                 :related_COAs [{:confidence "High"
                                                 :source "source"
                                                 :relationship "relationship"
-                                                :COA "coa-123"}]
-                                :judgements [{:judgement "judgement-123"}
-                                             {:judgement "judgement-234"}]}
-                                :headers {"api_key" "45c1f5e3f05d0"})
+                                                :COA_id "coa-123"}]
+                                :judgements [{:judgement_id "judgement-123"}
+                                             {:judgement_id "judgement-234"}]}
+                         :headers {"api_key" "45c1f5e3f05d0"})
           indicator (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
@@ -617,13 +647,13 @@
             :related_campaigns [{:confidence "High"
                                  :source "source"
                                  :relationship "relationship"
-                                 :campaign "campaign-123"}]
+                                 :campaign_id "campaign-123"}]
             :related_COAs [{:confidence "High"
                             :source "source"
                             :relationship "relationship"
-                            :COA "coa-123"}]
-            :judgements [{:judgement "judgement-123"}
-                         {:judgement "judgement-234"}]
+                            :COA_id "coa-123"}]
+            :judgements [{:judgement_id "judgement-123"}
+                         {:judgement_id "judgement-234"}]
             :owner "foouser"}
            (dissoc indicator
                    :id
@@ -645,13 +675,13 @@
                 :related_campaigns [{:confidence "High"
                                      :source "source"
                                      :relationship "relationship"
-                                     :campaign "campaign-123"}]
+                                     :campaign_id "campaign-123"}]
                 :related_COAs [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :COA "coa-123"}]
-                :judgements [{:judgement "judgement-123"}
-                             {:judgement "judgement-234"}]
+                                :COA_id "coa-123"}]
+                :judgements [{:judgement_id "judgement-123"}
+                             {:judgement_id "judgement-234"}]
                 :owner "foouser"}
                (dissoc indicator
                        :id
@@ -671,14 +701,14 @@
                           :related_campaigns [{:confidence "Low"
                                                :source "source"
                                                :relationship "relationship"
-                                               :campaign "campaign-123"}]
+                                               :campaign_id "campaign-123"}]
                           :related_COAs [{:confidence "High"
                                           :source "source"
                                           :relationship "relationship"
-                                          :COA "coa-123"}]
-                          :judgements [{:judgement "judgement-123"}
-                                       {:judgement "judgement-234"}]}
-                          :headers {"api_key" "45c1f5e3f05d0"})]
+                                          :COA_id "coa-123"}]
+                          :judgements [{:judgement_id "judgement-123"}
+                                       {:judgement_id "judgement-234"}]}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
                {:id (:id indicator)
@@ -692,13 +722,13 @@
                 :related_campaigns [{:confidence "Low"
                                      :source "source"
                                      :relationship "relationship"
-                                     :campaign "campaign-123"}]
+                                     :campaign_id "campaign-123"}]
                 :related_COAs [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :COA "coa-123"}]
-                :judgements [{:judgement "judgement-123"}
-                             {:judgement "judgement-234"}]
+                                :COA_id "coa-123"}]
+                :judgements [{:judgement_id "judgement-123"}
+                             {:judgement_id "judgement-234"}]
                 :owner "foouser"}
                (dissoc updated-indicator
                        :modified)))))
@@ -728,7 +758,7 @@
                                 :indicators [{:confidence "High"
                                               :source "source"
                                               :relationship "relationship"
-                                              :indicator "indicator-123"}]}
+                                              :indicator_id "indicator-123"}]}
                          :headers {"api_key" "45c1f5e3f05d0"})
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
@@ -746,7 +776,7 @@
             :indicators [{:confidence "High"
                           :source "source"
                           :relationship "relationship"
-                          :indicator "indicator-123"}]
+                          :indicator_id "indicator-123"}]
             :owner "foouser"}
            (dissoc judgement
                    :id
@@ -771,7 +801,7 @@
                 :indicators [{:confidence "High"
                               :source "source"
                               :relationship "relationship"
-                              :indicator "indicator-123"}]
+                              :indicator_id "indicator-123"}]
                 :owner "foouser"}
                (dissoc judgement
                        :id
@@ -798,7 +828,7 @@
                 :indicators [{:confidence "High"
                               :source "source"
                               :relationship "relationship"
-                              :indicator "indicator-123"}]
+                              :indicator_id "indicator-123"}]
                 :owner "foouser"}
                (dissoc judgement
                        :id
@@ -830,7 +860,7 @@
 
       (testing "DELETE /cia/judgement/:id"
         (let [temp-judgement (-> (post "cia/judgement"
-                                       :body {:indicators ["indicator-123"]
+                                       :body {:indicators [{:indicator_id "indicator-123"}]
                                               :observable {:value "9.8.7.6"
                                                            :type "ip"}
                                               :disposition 3
@@ -1021,7 +1051,7 @@
 
   (testing "test setup: create a judgement (1)"
     (let [response (post "cia/judgement"
-                         :body {:indicators [{:indicator "indicator-111"}]
+                         :body {:indicators [{:indicator_id "indicator-111"}]
                                 :observable {:value "1.2.3.4"
                                              :type "ip"}
                                 :disposition 2
@@ -1034,7 +1064,7 @@
       (is (= 200 (:status response)))))
   (testing "test setup: create a judgement (2)"
     (let [response (post "cia/judgement"
-                         :body {:indicators [{:indicator "indicator-222"}]
+                         :body {:indicators [{:indicator_id "indicator-222"}]
                                 :observable {:value "42.42.42.1"
                                              :type "ip"}
                                 :disposition 2
@@ -1047,7 +1077,7 @@
       (is (= 200 (:status response)))))
   (testing "test setup: create a judgement (3)"
     (let [response (post "cia/judgement"
-                         :body {:indicators [{:indicator "indicator-333"}]
+                         :body {:indicators [{:indicator_id "indicator-333"}]
                                 :observable {:value "42.42.42.1"
                                              :type "ip"}
                                 :disposition 1
@@ -1065,7 +1095,7 @@
           judgements (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           #{{:indicators [{:indicator "indicator-222"}]
+           #{{:indicators [{:indicator_id "indicator-222"}]
               :observable {:value "42.42.42.1"
                            :type "ip"}
               :disposition 2
@@ -1077,7 +1107,7 @@
               :valid_time {:start_time #inst "2016-02-12T00:00:00.000"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
               :owner "foouser"}
-             {:indicators [{:indicator "indicator-333"}]
+             {:indicators [{:indicator_id "indicator-333"}]
               :observable {:value "42.42.42.1"
                            :type "ip"}
               :disposition 1
@@ -1113,7 +1143,7 @@
         {indicator-1-status :status}
         (post "cia/indicator"
               :body {:title "indicator"
-                     :judgements [{:judgement (:id judgement-1)}]
+                     :judgements [{:judgement_id (:id judgement-1)}]
                      :sightings [{:timestamp "2016-02-01T00:00:00.000-00:00"
                                   :source "foo"
                                   :confidence "Medium"}
@@ -1142,7 +1172,7 @@
         {indicator-2-status :status}
         (post "cia/indicator"
               :body {:title "indicator"
-                     :judgements [{:judgement (:id judgement-2)}]
+                     :judgements [{:judgement_id (:id judgement-2)}]
                      :sightings [{:timestamp "2016-02-04T12:00:00.000-00:00"
                                   :source "spam"
                                   :confidence "None"}]
@@ -1169,7 +1199,7 @@
         {indicator-3-status :status}
         (post "cia/indicator"
               :body {:title "indicator"
-                     :judgements [{:judgement (:id judgement-3)
+                     :judgements [{:judgement_id (:id judgement-3)
                                    :confidence "High"}]
                      :sightings [{:timestamp "2016-02-05T01:00:00.000-00:00"
                                   :source "foo"
@@ -1199,7 +1229,7 @@
         (is (= 200 (:status response)))
         (is (deep=
              #{{:title "indicator"
-                :judgements [{:judgement (:id judgement-2)}]
+                :judgements [{:judgement_id (:id judgement-2)}]
                 :sightings [{:timestamp #inst "2016-02-04T12:00:00.000-00:00"
                              :source "spam"
                              :confidence "None"}]
@@ -1210,7 +1240,7 @@
                              :end_time #inst "2016-02-12T00:00:00.000-00:00"}
                 :owner "foouser"}
                {:title "indicator"
-                :judgements [{:judgement (:id judgement-3)
+                :judgements [{:judgement_id (:id judgement-3)
                               :confidence "High"}]
                 :sightings [{:timestamp #inst "2016-02-05T01:00:00.000-00:00"
                              :source "foo"
@@ -1391,8 +1421,8 @@
                                 :description "description"
                                 :type "foo"
                                 :indicators ["indicator-1" "indicator-2"]
-                                :exploit_targets ["exploit-target-123"
-                                                  "exploit-target-234"]
+                                :exploit_targets [{:exploit_target_id "exploit-target-123"}
+                                                  {:exploit_target_id "exploit-target-234"}]
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                              :end_time "2016-07-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
@@ -1403,8 +1433,8 @@
             :description "description"
             :type "foo"
             :indicators ["indicator-1" "indicator-2"]
-            :exploit_targets ["exploit-target-123"
-                              "exploit-target-234"]
+            :exploit_targets [{:exploit_target_id "exploit-target-123"}
+                              {:exploit_target_id "exploit-target-234"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :owner "foouser"}
@@ -1423,8 +1453,8 @@
                 :description "description"
                 :type "foo"
                 :indicators ["indicator-1" "indicator-2"]
-                :exploit_targets ["exploit-target-123"
-                                  "exploit-target-234"]
+                :exploit_targets [{:exploit_target_id "exploit-target-123"}
+                                  {:exploit_target_id "exploit-target-234"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
@@ -1441,8 +1471,8 @@
                           :description "updated description"
                           :type "bar"
                           :indicators ["indicator-1" "indicator-2"]
-                          :exploit_targets ["exploit-target-123"
-                                            "exploit-target-234"]
+                          :exploit_targets [{:exploit_target_id "exploit-target-123"}
+                                            {:exploit_target_id "exploit-target-234"}]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}}
                    :headers {"api_key" "45c1f5e3f05d0"})]
@@ -1454,8 +1484,8 @@
                 :description "updated description"
                 :type "bar"
                 :indicators ["indicator-1" "indicator-2"]
-                :exploit_targets ["exploit-target-123"
-                                  "exploit-target-234"]
+                :exploit_targets [{:exploit_target_id "exploit-target-123"}
+                                  {:exploit_target_id "exploit-target-234"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
