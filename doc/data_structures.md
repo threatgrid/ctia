@@ -45,32 +45,32 @@ simplifications:
 <a name="actor"/>
 ## Actor
 
-| Key | Value | Mandatory? |
+| Key                                 | Value                                          | Mandatory? |
 | --- | ----- | ---------- |
-| id | [ID](#id) | &#10003; |
-| title | string | &#10003; |
-| description | (string, ...) | &#10003; |
-| short_description | (string, ...) | &#10003; |
-| timestamp | [Time](#time) | &#10003; |
-| source | [Source](#source) |
-| identity | [Identity](#identity) |
-| type | [ThreatActorType](#threat_actor_type) | &#10003; |
-| motivation | [Motivation](#motivation) |
-| sophistication | [Sophistication](#sophistication) |
-| Intended_effect | [IntendedEffect](#intended_effect) |
-| planning_and_operational_support | string |
-| observed_TTPs | ([RelatedTTP](#related_ttp), ...) |
-| associated_campaigns | ([RelatedCampaign](#associated_campaign), ...) |
-| associated_actors | ([RelatedActor](#related_actor), ...) |
-| confidence | [HighMedLow](#high_med_low) |
-| expires | [Time](#time) | &#10003; |
+| id                                  | [ID](#id)                                      | &#10003;   |
+| title                               | string                                         | &#10003;   |
+| description                         | (string, ...)                                  | &#10003;   |
+| short_description                   | (string, ...)                                  | &#10003;   |
+| timestamp                           | [Time](#time)                                  | &#10003;   |
+| source                              | [Source](#source)                              |            |
+| identity                            | [Identity](#identity)                          |            |
+| type                                | [ThreatActorType](#threat_actor_type)          | &#10003;   |
+| motivation                          | [Motivation](#motivation)                      |            |
+| sophistication                      | [Sophistication](#sophistication)              |            |
+| Intended\_effect                    | [IntendedEffect](#intended_effect)             |            |
+| planning\_and\_operational\_support | string                                         |            |
+| observed_TTPs                       | ([RelatedTTP](#related_ttp), ...)              |            |
+| associated_campaigns                | ([RelatedCampaign](#associated_campaign), ...) |            |
+| associated_actors                   | ([RelatedActor](#related_actor), ...)          |            |
+| confidence                          | [HighMedLow](#high_med_low)                    |            |
+| expires                             | [Time](#time)                                  | &#10003;   |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 ### References
 
@@ -79,34 +79,34 @@ STIX [ThreatActorType](http://stixproject.github.io/data-model/1.2/ta/ThreatActo
 <a name="campaign"/>
 ## Campaign
 
-| Key | Value | Mandatory? |
+| Key                  | Value                                         | Mandatory? |
 | --- | --- | --- |
-| id | [ID](#id) | &#10003; |
-| title | string | &#10003; |
-| description | (string, ...) | &#10003; |
-| short_description | (string, ...) | &#10003; |
-| timestamp | [Time](#time) | &#10003; |
-| version | string |
-| names | string |
-| intended_effect | [IntendedEffect](#intended_effect) |
-| status | [CampaignStatus](#campaign_status) |
-| related_TTPs | ([RelatedTTP](#related_ttp), ...) |
-| related_incidents | ([RelatedIncident](#related_incident), ...) |
-| attribution | ([RelatedActor](#related_actor), ...) |
-| associated_campaigns | ([RelatedCampaign](#realted_campaign), ...) |
-| confidence | [HighMedLow](#high_med_low) |
-| activity | [Activity](#activity) |
-| source | [Source](#source) |
-| type | string | &#10003; |
-| expires | [Time](#time) | &#10003; |
-| indicators | ([RelatedIndicator](#related_indicator), ...) | &#10003; |
+| id                   | [ID](#id)                                     | &#10003;   |
+| title                | string                                        | &#10003;   |
+| description          | (string, ...)                                 | &#10003;   |
+| short_description    | (string, ...)                                 | &#10003;   |
+| timestamp            | [Time](#time)                                 | &#10003;   |
+| version              | string                                        |            |
+| names                | string                                        |            |
+| intended_effect      | [IntendedEffect](#intended_effect)            |            |
+| status               | [CampaignStatus](#campaign_status)            |            |
+| related_TTPs         | ([RelatedTTP](#related_ttp), ...)             |            |
+| related_incidents    | ([RelatedIncident](#related_incident), ...)   |            |
+| attribution          | ([RelatedActor](#related_actor), ...)         |            |
+| associated_campaigns | ([RelatedCampaign](#realted_campaign), ...)   |            |
+| confidence           | [HighMedLow](#high_med_low)                   |            |
+| activity             | [Activity](#activity)                         |            |
+| source               | [Source](#source)                             |            |
+| type                 | string                                        | &#10003;   |
+| expires              | [Time](#time)                                 | &#10003;   |
+| indicators           | ([RelatedIndicator](#related_indicator), ...) | &#10003;   |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 ### References
 
@@ -115,28 +115,28 @@ STIX [CampaignType](http://stixproject.github.io/data-model/1.2/campaign/Campaig
 <a name="coa"/>
 ## Course of Action (COA)
 
-| Key | Value | Mandatory? |
+| Key                | Value                             | Mandatory? |
 | --- | --- | --- |
-| id | [ID](#id) | &#10003; |
-| title | string | &#10003; |
-| description | (string, ...) | &#10003; |
-| short_description | (string, ...) | &#10003; |
-| timestamp | [Time](#time) |
-| stage | [COAStage](#coa_stage) |
-| type | [COAType](#coa_type) |
-| objective | (string, ...) |
-| impact | string |
-| cost | [HighMedLow](#high_med_low) |
-| efficacy | [HighMedLow](#high_med_low) |
-| source | [Source](#source) |
-| related_COAs | ([RelatedCOA](#related_coa), ...) |
+| id                 | [ID](#id)                         | &#10003;   |
+| title              | string                            | &#10003;   |
+| description        | (string, ...)                     | &#10003;   |
+| short\_description | (string, ...)                     | &#10003;   |
+| timestamp          | [Time](#time)                     |            |
+| stage              | [COAStage](#coa_stage)            |            |
+| type               | [COAType](#coa_type)              |            |
+| objective          | (string, ...)                     |            |
+| impact             | string                            |            |
+| cost               | [HighMedLow](#high_med_low)       |            |
+| efficacy           | [HighMedLow](#high_med_low)       |            |
+| source             | [Source](#source)                 |            |
+| related_COAs       | ([RelatedCOA](#related_coa), ...) |            |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 ### References
 
@@ -145,62 +145,62 @@ STIX [CourseOfActionType](http://stixproject.github.io/data-model/1.2/coa/Course
 <a name="exploit_target"/>
 ## Exploit Target
 
-| Key | Value | Mandatory? |
+| Key                      | Value                                                  | Mandatory? |
 | --- | --- | --- |
-| id | [ID](#id) | &#10003; |
-| title | string | &#10003; |
-| description | (string, ...) | &#10003; |
-| short_description | (string, ...) | &#10003; |
-| timestamp | string | &#10003; |
-| version | string |
-| vulnerability | [Vulnerability](#vulnerability) |
-| weakness | [Weakness](#weakness) |
-| configuration | [Configuration](#configuration) |
-| potential_COAs | ([RelatedCOAs](#related_coa), ...) |
-| source | [Source](#source) |
-| related_exploit_targets | ([RelatedExploitTarget](#related_exploit_target), ...) |
+| id                       | [ID](#id)                                              | &#10003;   |
+| title                    | string                                                 | &#10003;   |
+| description              | (string, ...)                                          | &#10003;   |
+| short_description        | (string, ...)                                          | &#10003;   |
+| timestamp                | string                                                 | &#10003;   |
+| version                  | string                                                 |            |
+| vulnerability            | [Vulnerability](#vulnerability)                        |            |
+| weakness                 | [Weakness](#weakness)                                  |            |
+| configuration            | [Configuration](#configuration)                        |            |
+| potential\_COAs          | ([RelatedCOAs](#related_coa), ...)                     |            |
+| source                   | [Source](#source)                                      |            |
+| related\_exploit_targets | ([RelatedExploitTarget](#related_exploit_target), ...) |            |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 <a name="configuration"/>
 ### Configuration
 
-| Key | Value | Mandatory? |
+| Key                | Value         | Mandatory? |
 | --- | --- | --- |
-| description | (string, ...) | &#10003; |
-| short_description | (string, ...) |
-| cce_id | string |
+| description        | (string, ...) | &#10003;   |
+| short\_description | (string, ...) |            |
+| cce_id             | string        |            |
 
 <a name="weakness"/>
 ### Weakness
 
-| Key | Value | Mandatory? |
+| Key         | Value         | Mandatory? |
 | --- | --- | --- |
-| description | (string, ...) | &#10003; |
-| cwe_id | string |
+| description | (string, ...) | &#10003;   |
+| cwe_id      | string        |            |
 
 <a name="vulnerability"/>
 ### Vulnerability
 
-| Key | Value | Mandatory? |
+| Key                      | Value         | Mandatory? |
 | --- | --- | --- |
-| is_known | boolean |
-| is_public_acknowledged | boolean |
-| title | string | &#10003; |
-| description | (string, ...) | &#10003; |
-| short_description | (string, ...) |
-| cve_id | string |
-| osvdb_id | integer |
-| source | string |
-| discovered_datetime | [Time](#time) |
-| published_datetime | [Time](#time) |
-| affected_software | (string, ...) |
-| references | (string, ...) |
+| is\_known                | boolean       |            |
+| is\_public\_acknowledged | boolean       |            |
+| title                    | string        | &#10003;   |
+| description              | (string, ...) | &#10003;   |
+| short\_description       | (string, ...) |            |
+| cve\_id                  | string        |            |
+| osvdb\_id                | integer       |            |
+| source                   | string        |            |
+| discovered\_datetime     | [Time](#time) |            |
+| published\_datetime      | [Time](#time) |            |
+| affected_software        | (string, ...) |            |
+| references               | (string, ...) |            |
 
 ### References
 
@@ -211,164 +211,164 @@ STIX [ExploitTargetType](http://stixproject.github.io/data-model/1.2/et/ExploitT
 
 A positive, neutral or negative feedback on a Judgement
 
-| Key | Value | Mandatory? |
+| Key       | Value                                      | Mandatory? |
 | --- | --- | --- |
-| id | [ID](#id) | &#10003; |
-| timestamp | [Time](#time) | &#10003; |
-| judgement | [JudgementReference](#judgement_reference) | &#10003; |
-| source | string |
-| feedback | -1 &#124; 0 &#124; 1 | &#10003; |
-| reason | string | &#10003; |
+| id        | [ID](#id)                                  | &#10003;   |
+| timestamp | [Time](#time)                              | &#10003;   |
+| judgement | [JudgementReference](#judgement_reference) | &#10003;   |
+| source    | string                                     |            |
+| feedback  | -1 &#124; 0 &#124; 1                       | &#10003;   |
+| reason    | string                                     | &#10003;   |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 <a name="incident"/>
 ## Incident
 
-| Key | Value | Mandatory? |
+| Key                  | Value                                          | Mandatory? |
 | --- | --- | --- |
-| id | [ID](#id) | &#10003; |
-| title | string | &#10003; |
-| description | (string, ...) | &#10003; |
-| short_description | (string, ...) | &#10003; |
-| timestamp | [Time](#time)  | &#10003; |
-| confidence | [HighMedLow](#high_med_low) | &#10003; |
-| status | [Status](#status) |
-| version | string |
-| incident_time | [IncidentTime](#incident_time) |
-| categories | ([IncidentCategory](#incident_category), ...) |
-| reporter | [Source](#source) |
-| responder | [Source](#source) |
-| coordinator | [Source](#source) |
-| victim | string |
-| affected_assets | ([AffectedAsset](#affected_asset), ...) |
-| impact_assessment | [ImpactAssessment](#impact_assessment) |
-| sources | [Source](#source) |
-| security_compromise | string |
-| discovery_method | [DiscoveryMethod](#discovery_method) |
-| COA_requested | ([COARequested](#coa_requested), ...) |
-| COA_taken | ([COARequested](#coa_requested), ...) |
-| contact | [Source](#source) |
-| history | ([History](#history), ...) |
-| related_indicators | ([RelatedIndicator](#related_indicator), ...) |
-| related_observables | ([Observable](#observable), ...) |
-| leveraged_TTPs | [LeveragedTTPs](#leveraged_ttps) |
-| attributed_actors | ([RelatedActor](#related_actors), ...) |
-| related_incidents | ([RelatedIncident](#related_incident), ...) |
-| intended_effect | [IntendedEffect](#intended_effect) |
+| id                   | [ID](#id)                                      | &#10003;   |
+| title                | string                                         | &#10003;   |
+| description          | (string, ...)                                  | &#10003;   |
+| short\_description   | (string, ...)                                  | &#10003;   |
+| timestamp            | [Time](#time)                                  | &#10003;   |
+| confidence           | [HighMedLow](#high\_med_low)                   | &#10003;   |
+| status               | [Status](#status)                              |            |
+| version              | string                                         |            |
+| incident\_time       | [IncidentTime](#incident\_time)                |            |
+| categories           | ([IncidentCategory](#incident\_category), ...) |            |
+| reporter             | [Source](#source)                              |            |
+| responder            | [Source](#source)                              |            |
+| coordinator          | [Source](#source)                              |            |
+| victim               | string                                         |            |
+| affected\_assets     | ([AffectedAsset](#affected\_asset), ...)       |            |
+| impact\_assessment   | [ImpactAssessment](#impact\_assessment)        |            |
+| sources              | [Source](#source)                              |            |
+| security\_compromise | string                                         |            |
+| discovery\_method    | [DiscoveryMethod](#discovery\_method)          |            |
+| COA\_requested       | ([COARequested](#coa\_requested), ...)         |            |
+| COA_taken            | ([COARequested](#coa\_requested), ...)         |            |
+| contact              | [Source](#source)                              |            |
+| history              | ([History](#history), ...)                     |            |
+| related\_indicators  | ([RelatedIndicator](#related\_indicator), ...) |            |
+| related\_observables | ([Observable](#observable), ...)               |            |
+| leveraged\_TTPs      | [LeveragedTTPs](#leveraged\_ttps)              |            |
+| attributed\_actors   | ([RelatedActor](#related\_actors), ...)        |            |
+| related\_incidents   | ([RelatedIncident](#related\_incident), ...)   |            |
+| intended\_effect     | [IntendedEffect](#intended_effect)             |            |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 <a name="history"/>
 ### History
 
-| Key | Value | Mandatory? |
+| Key            | Value                          | Mandatory? |
 | --- | --- | --- |
-| action_entry | [COARequested](#coa_requested) |
-| journal_entry | string |
+| action\_entry  | [COARequested](#coa_requested) |            |
+| journal\_entry | string                         |            |
 
 <a name="incident_time"/>
 ### IncidentTime
 
-| Key | Value | Mandatory? |
+| Key                        | Value         | Mandatory? |
 | --- | --- | --- |
-| first_malicious_action | [Time](#time) |
-| intial_compromoise | [Time](#time) |
-| first_data_exfiltration | [Time](#time) |
-| incident_discovery | [Time](#time) |
-| incident_opened | [Time](#time) |
-| containment_achieved | [Time](#time) |
-| restoration_achieved | [Time](#time) |
-| incident_reported | [Time](#time) |
-| incident_closed | [Time](#time) |
+| first\_malicious\_action   | [Time](#time) |            |
+| intial\_compromoise        | [Time](#time) |            |
+| first\_data\_exfiltration  | [Time](#time) |            |
+| incident\_discovery        | [Time](#time) |            |
+| incident\_opened           | [Time](#time) |            |
+| containment\_achieved      | [Time](#time) |            |
+| restoration\_achieved      | [Time](#time) |            |
+| incident\_reported         | [Time](#time) |            |
+| incident_closed            | [Time](#time) |            |
 
 <a name="impact_assessment"/>
 ### ImpactAssessment
 
-| Key | Value | Mandatory? |
+| Key                       | Value                                               | Mandatory? |
 | --- | --- | --- |
-| direct_impact_summary | [DirectImpactSummary](#direct_impact_summary) |
-| indirect_impact_summary | [IndirectImpactSummary](#indirect_impact_summary) |
-| total_loss_estimation | [TotalLossEstimation](#total_loss_estimation) |
-| impact_qualification | [ImpactQualification](#impact_qualification) |
-| effects | ([Effect](#effect), ...) |
+| direct\_impact\_summary   | [DirectImpactSummary](#direct\_impact\_summary)     |            |
+| indirect\_impact\_summary | [IndirectImpactSummary](#indirect\_impact\_summary) |            |
+| total\_loss\_estimation   | [TotalLossEstimation](#total_loss_estimation)       |            |
+| impact\_qualification     | [ImpactQualification](#impact_qualification)        |            |
+| effects                   | ([Effect](#effect), ...)                            |            |
 
 <a name="total_loss_estimation"/>
 ### TotalLossEstimation
 
-| Key | Value | Mandatory? |
+| Key                                        | Value                               | Mandatory? |
 | --- | --- | --- |
-| initial_reported_total_loss_estimation | [LossEstimation](#loss_estimation) |
-| actual_total_loss_estimation | [LossEstimation](#loss_estimation) |
+| initial\_reported\_total\_loss\_estimation | [LossEstimation](#loss\_estimation) |            |
+| actual\_total\_loss\_estimation            | [LossEstimation](#loss\_estimation) |            |
 
 <a name="loss_estimation"/>
 ### LossEstimation
 
-| Key | Value | Mandatory? |
+| Key                 | Value  | Mandatory? |
 | --- | --- | --- |
-| amount | number |
-| iso_currency_code | number |
+| amount              | number |            |
+| iso\_currency\_code | number |            |
 
 <a name="indirect_impact_summary"/>
 ### IndirectImpactSummary
 
-| Key | Value | Mandatory? |
+| Key                              | Value                                       | Mandatory? |
 | --- | --- | --- |
-| loss_of_competitive_advantage | [SecurityCompromise](#security_compromise) |
-| brand_and_market_damage | [SecurityCompromise](#security_compromise) |
-| increased_operating_costs | [SecurityCompromise](#security_compromise) |
-| local_and_regulatory_costs | [SecurityCompromise](#security_compromise) |
+| loss\_of\_competitive\_advantage | [SecurityCompromise](#security\_compromise) |            |
+| brand\_and\_market\_damage       | [SecurityCompromise](#security\_compromise) |            |
+| increased\_operating\_costs      | [SecurityCompromise](#security\_compromise) |            |
+| local\_and\_regulatory\_costs    | [SecurityCompromise](#security\_compromise) |            |
 
 <a name="direct_impact_summary"/>
 ### DirectImpactSummary
 
-| Key | Value | Mandatory? |
+| Key                            | Value                           | Mandatory? |
 | --- | --- | --- |
-| asset_losses | [ImpactRating](#impact_rating) |
-| business_mission_distruption | [ImpactRating](#impact_rating) |
-| response_and_recovery_costs | [ImpactRating](#impact_rating) |
+| asset\_losses                  | [ImpactRating](#impact\_rating) |            |
+| business\_mission\_distruption | [ImpactRating](#impact\_rating) |            |
+| response\_and\_recovery\_costs | [ImpactRating](#impact\_rating) |            |
 
 <a name="affected_asset"/>
 ### AffectedAsset
 
-| Key | Value | Mandatory? |
+| Key                      | Value                                   | Mandatory? |
 | --- | --- | --- |
-| type | string |
-| description | (string, ...) |
-| ownership_class | [OwnershipClass](#ownership_class) |
-| management_class | [ManagementClass](#management_class) |
-| location_class | [LocationClass](#location_class) |
-| property_affected | [PropertyAffected](#property_affected) |
-| identifying_observables | ([Observable](#observable), ...) |
+| type                     | string                                  |            |
+| description              | (string, ...)                           |            |
+| ownership\_class         | [OwnershipClass](#ownership\_class)     |            |
+| management\_class        | [ManagementClass](#management\_class)   |            |
+| location\_class          | [LocationClass](#location\_class)       |            |
+| property\_affected       | [PropertyAffected](#property\_affected) |            |
+| identifying\_observables | ([Observable](#observable), ...)        |            |
 
 <a name="property_affected"/>
 ### PropertyAffected
 
-| Key | Value | Mandatory? |
+| Key                              | Value                                                       | Mandatory? |
 | --- | --- | --- |
-| property | [LossProperty](#loss_property) |
-| description_of_effect | string |
-| type_of_availability_loss | string |
-| duration_of_availability_loss | [LossDuration](#loss_duration) |
-| non_public_data_compromised | [NonPublicDataCompromised](#non_public_data_compromised) |
+| property                         | [LossProperty](#loss\_property)                             |            |
+| description\_of\_effect          | string                                                      |            |
+| type\_of\_availability\_loss     | string                                                      |            |
+| duration\_of\_availability\_loss | [LossDuration](#loss\_duration)                             |            |
+| non\_public\_data\_compromised   | [NonPublicDataCompromised](#non\_public\_data\_compromised) |            |
 
 <a name="non_public_data_compromised"/>
 ### NontPublicDataCompromised
 
-| Key | Value | Mandatory? |
+| Key                  | Value                                       | Mandatory? |
 | --- | --- | --- |
-| security_compromise | [SecurityCompromise](#security_compromise) | &#10003; |
-| data_encrypted | boolean |
+| security\_compromise | [SecurityCompromise](#security\_compromise) | &#10003;   |
+| data\_encrypted      | boolean                                     |            |
 
 ### References
 
@@ -413,37 +413,37 @@ JSON Example:
 
 | Key | Value | Mandatory? | Description |
 | --- | --- | --- | --- |
-| id | [ID](#id) | &#10003; |
+| id | [ID](#id) | &#10003; | |
 | title | string | &#10003; | A short and hopefully descriptive and unique title |
 | description | (string, ...) | &#10003; | A longer, in-depth description of the indicator |
-| short_description | (string, ...) | &#10003; | A short sentence or two describing the indicator |
-| alternate_ids | (string, ...) | |
-| version | number | |
-| negate | boolean | |
+| short\_description | (string, ...) | &#10003; | A short sentence or two describing the indicator |
+| alternate\_ids | (string, ...) | | |
+| version | number | | |
+| negate | boolean | | |
 | type | ([IndicatorType](#indicator_type), ...) | | The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior |
-| valid_time_position | [ValidTime](#valid_time) | |
-| observable | [Observable](#observable) | |
-| composite_indicator_expression | [CompositeIndicatorExpression](#composite_indicator_expression) | |
-| indicated_TTP | [RelatedTTP](#related_ttp) | | A list of the IDs of TTPs objects related to this indicator |
-| likely_impact | string | | The impact of malware, High, Medium, Low or None |
-| suggested_COAs | ([RelatedCOAs](#related_coas), ...) | |
-| confidence | [HighMedLow](#high_med_low) | |
-| sightings | ([Sighting](#sighting), ...) | |
-| related_indicators | ([RelatedIndicator](#related_indicator), ...) | | One or more indicator related to this one. |
-| related_campaigns | ([RelatedCampaign](#related_campaign), ...) | | One or more campaigns related to this indicator. |
-| related_COAs | ([RelatedCOA](#related_coa), ...) | | One or more COAs related to this indicator. |
-| kill_chain_phases | (string, ...) | | One or more kill chain phases, like "Delivery" |
-| test_mechanisms | (string, ...) | | One or more products or tools that can use the data in this indicator to perform a test for it's presence on a host or network |
-| expires | [Time](#time) | | When the indicator is no longer valid |
-| producer | string | &#10003; | An identifier of the system or person that produced this indicator |
-| specifications | ([Specification](#specification), ...) | |
+| valid\_time\_position | [ValidTime](#valid\_time) | | |
+| observable | [Observable](#observable) | | |
+| composite\_indicator\_expression | [CompositeIndicatorExpression](#composite\_indicator\_expression) | | |
+| indicated\_TTP | [RelatedTTP](#related\_ttp) | | A list of the IDs of TTPs objects related to this indicator |
+| likely\_impact | string | | The impact of malware, High, Medium, Low or None |
+| suggested\_COAs | ([RelatedCOAs](#related\_coas), ...) | | |
+| confidence | [HighMedLow](#high_med_low) | | |
+| sightings | ([Sighting](#sighting), ...) | | |
+| related\_indicators | ([RelatedIndicator](#related\_indicator), ...) | | One or more indicator related to this one. | |
+| related\_campaigns | ([RelatedCampaign](#related\_campaign), ...) | | One or more campaigns related to this indicator. | |
+| related\_COAs | ([RelatedCOA](#related\_coa), ...) | | One or more COAs related to this indicator. | |
+| kill\_chain\_phases | (string, ...) | | One or more kill chain phases, like "Delivery" | |
+| test_mechanisms | (string, ...) | | One or more products or tools that can use the data in this indicator to perform a test for it's presence on a host or network | |
+| expires | [Time](#time) | | When the indicator is no longer valid | |
+| producer | string | &#10003; | An identifier of the system or person that produced this indicator | |
+| specifications | ([Specification](#specification), ...) | | |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 <a name="specification"/>
 ### Specification
@@ -459,64 +459,64 @@ One of the following structures:
 <a name="sighting"/>
 ### Sighting
 
-| Key | Value | Mandatory? |
+| Key                 | Value                            | Mandatory? |
 | --- | --- | --- |
-| timestamp | [Time](#time) |
-| source | [Source](#source) |
-| reference | [URI](#uri) |
-| confidence | [HighMedLow](#high_med_low) |
-| description | (string, ...) |
-| related_observables | ([Observable](#observable), ...) |
+| timestamp           | [Time](#time)                    |            |
+| source              | [Source](#source)                |            |
+| reference           | [URI](#uri)                      |            |
+| confidence          | [HighMedLow](#high_med_low)      |            |
+| description         | (string, ...)                    |            |
+| related_observables | ([Observable](#observable), ...) |            |
 
 <a name="open_ioc_specification"/>
 ### OpenIOCSpecification
 
-| Key | Value | Mandatory? |
+| Key      | Value     | Mandatory? |
 | --- | --- | --- |
-| type | "OpenIOC" | &#10003; |
-| open_IOC | string | &#10003; |
+| type     | "OpenIOC" | &#10003;   |
+| open_IOC | string    | &#10003;   |
 
 <a name="sioc_specification"/>
 ### SIOCSpecification
 
-| Key | Value | Mandatory? |
+| Key  | Value  | Mandatory? |
 | --- | --- | --- |
-| type | "SIOC" | &#10003; |
-| SIOC | string | &#10003; |
+| type | "SIOC" | &#10003;   |
+| SIOC | string | &#10003;   |
 
 <a name="snort_specification"/>
 ### SnortSpecification
 
-| Key | Value | Mandatory? |
+| Key       | Value   | Mandatory? |
 | --- | --- | --- |
-| type | "Snort" | &#10003; |
-| snort_sig | string | &#10003; |
+| type      | "Snort" | &#10003;   |
+| snort_sig | string  | &#10003;   |
 
 <a name="threat_brain_specification"/>
 ### ThreatBrainSpecification
 
-| Key | Value | Mandatory? |
+| Key       | Value         | Mandatory? |
 | --- | --- | --- |
-| type | "ThreatBrain" | &#10003; |
-| query | string | &#10003; |
-| variables | (string, ...) | &#10003; |
+| type      | "ThreatBrain" | &#10003;   |
+| query     | string        | &#10003;   |
+| variables | (string, ...) | &#10003;   |
 
 <a name="judgement_specification"/>
 ### JudgementSpecification
 
-| Key | Value | Mandatory? |
+| Key                  | Value                                              | Mandatory? |
 | --- | --- | --- |
-| type | "Judgement" | &#10003; |
-| judgements | ([JudgementReference](#judgement_reference), ...) | &#10003; |
-| required_judgements | ([JudgementReference](#judgement_reference), ...) | &#10003; |
+| type                 | "Judgement"                                        | &#10003;   |
+| judgements           | ([JudgementReference](#judgement\_reference), ...) | &#10003;   |
+| required\_judgements | ([JudgementReference](#judgement_reference), ...)  | &#10003;   |
 
 <a name="valid_time"/>
 ### ValidTime
 
-| Key | Value | Mandatory? |
+| Key         | Value         | Mandatory? |
 | --- | --- | --- |
-| start_time | [Time](#time) |
-| end_time | [Time](#time) |
+| start_time  | [Time](#time) |            |
+| end\_time   | [Time](#time) |            |
 
 ### References
 
@@ -531,29 +531,29 @@ the basis for the returned verdicts.  These are also the primary means
 by which users of the CIA go from observables on their system, to the
 indicators and threat intelligence data in CIA.
 
-| Key | Value | Mandatory? | default | description |
+| Key               | Value                                         | Mandatory? | default       | description                                                        |
 | --- | --- | --- | --- | --- |
-| id | [ID](#id) | &#10003; | |
-| observable | [Observable](#observable) | &#10003; | |
-| disposition | [DispositionNumber](#disposition_number) | &#10003; | |
-| source | [Source](#source) | &#10003; | |
-| priority | integer (0-100) | &#10003; | user specific |
-| confidence | [HighMedLow](#high_med_low) | &#10003; | 100 |
-| severity | integer | &#10003; | 100 |
-| timestamp | [Time](#time) | &#10003; | POST time |
-| reason | string | | | short description of why the judgement was made |
-| disposition_name | [DispositionName](#disposition_name) | | |
-| expires | [Time](#time) | | Jan 1 2535 |
-| source_uri | [URI](#uri) | | | link where a user can see what the source thinks of the observable |
-| reason_uri | [URI](#uri) | | | link where a user can get information supporting the reason |
-| indicators | ([RelatedIndicator](#related_indicator), ...) | | |
+| id                | [ID](#id)                                     | &#10003;   |               |                                                                    |
+| observable        | [Observable](#observable)                     | &#10003;   |               |                                                                    |
+| disposition       | [DispositionNumber](#disposition\_number)     | &#10003;   |               |                                                                    |
+| source            | [Source](#source)                             | &#10003;   |               |                                                                    |
+| priority          | integer (0-100)                               | &#10003;   | user specific |                                                                    |
+| confidence        | [HighMedLow](#high_med_low)                   | &#10003;   | 100           |                                                                    |
+| severity          | integer                                       | &#10003;   | 100           |                                                                    |
+| timestamp         | [Time](#time)                                 | &#10003;   | POST time     |                                                                    |
+| reason            | string                                        |            |               | short description of why the judgement was made                    |
+| disposition\_name | [DispositionName](#disposition\_name)         |            |               |                                                                    |
+| expires           | [Time](#time)                                 |            | Jan 1 2535    |                                                                    |
+| source\_uri       | [URI](#uri)                                   |            |               | link where a user can see what the source thinks of the observable |
+| reason\_uri       | [URI](#uri)                                   |            |               | link where a user can get information supporting the reason        |
+| indicators        | ([RelatedIndicator](#related_indicator), ...) |            |               |                                                                    |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 ### Judgement Example
 
@@ -569,74 +569,74 @@ curl -X POST --header "Content-Type: application/json" \
 <a name="ttp"/>
 ## Tools, Techniques, & Procedures (TTP)
 
-| Key | Value | Mandatory? |
+| Key                | Value                                                  | Mandatory? |
 | --- | --- | --- |
-| id | [ID](#id) | &#10003; |
-| title | string | &#10003; |
-| description | (string, ...) | &#10003; |
-| short_description | (string, ...) | &#10003; |
-| timestamp | [Time](#time) | &#10003; |
-| version | string |
-| intended_effect | [IntendedEffect](#intended_effect) |
-| behavior | [Behavior](#behavior) |
-| resources | [Resource](#resource) |
-| victim_targeting | [VictimTargeting](#victim_targeting) |
-| exploit_targeting | ([RelatedExploitTarget](#related_exploit_target), ...) |
-| related_TTPs | ([RelatedTTP](#related_ttp), ...) |
-| source | [Source](#source) |
-| type | string | &#10003; |
-| expires | [Time](#time) | &#10003; |
-| indicators | ([IndicatorReference](#indicator_reference), ...) | &#10003; |
+| id                 | [ID](#id)                                              | &#10003;   |
+| title              | string                                                 | &#10003;   |
+| description        | (string, ...)                                          | &#10003;   |
+| short_description  | (string, ...)                                          | &#10003;   |
+| timestamp          | [Time](#time)                                          | &#10003;   |
+| version            | string                                                 |            |
+| intended_effect    | [IntendedEffect](#intended_effect)                     |            |
+| behavior           | [Behavior](#behavior)                                  |            |
+| resources          | [Resource](#resource)                                  |            |
+| victim\_targeting  | [VictimTargeting](#victim_targeting)                   |            |
+| exploit\_targeting | ([RelatedExploitTarget](#related_exploit_target), ...) |            |
+| related\_TTPs      | ([RelatedTTP](#related\_ttp), ...)                     |            |
+| source             | [Source](#source)                                      |            |
+| type               | string                                                 | &#10003;   |
+| expires            | [Time](#time)                                          | &#10003;   |
+| indicators         | ([IndicatorReference](#indicator_reference), ...)      | &#10003;   |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 <a name="victim_targeting"/>
 ### VictimTargeting
 
-| Key | Value | Mandatory? |
+| Key                   | Value                                        | Mandatory? |
 | --- | --- | --- |
-| indentity | [Identity](#identity) |
-| targeted_systems | ([SystemType](#system_type), ...) |
-| targeted_information | ([InformationType](#information_type), ...) |
-| targeted_observables | ([Observable](#observable), ..) |
+| indentity             | [Identity](#identity)                        |            |
+| targeted\_systems     | ([SystemType](#system\_type), ...)           |            |
+| targeted\_information | ([InformationType](#information\_type), ...) |            |
+| targeted_observables  | ([Observable](#observable), ..)              |            |
 
 <a name="resource"/>
 ### Resource
 
-| Key | Value | Mandatory? |
+| Key            | Value                             | Mandatory? |
 | --- | --- | --- |
-| tools | ([Tool](#tool), ...) |
-| infrastructure | [Infrastructure](#infrastructure) |
-| providers | [Identity](#identity) |
+| tools          | ([Tool](#tool), ...)              |            |
+| infrastructure | [Infrastructure](#infrastructure) |            |
+| providers      | [Identity](#identity)             |            |
 
 <a name="infrastructure"/>
 ### Infrastructure
 
-| Key | Value | Mandatory? |
+| Key         | Value                                              | Mandatory? |
 | --- | --- | --- |
-| description | string | &#10003; |
-| type | [AttackerInfrastructure](#attacker_infrastructure) | &#10003; |
+| description | string                                             | &#10003;   |
+| type        | [AttackerInfrastructure](#attacker_infrastructure) | &#10003;   |
 
 <a name="behavior"/>
 ### Behavior
 
-| Key | Value | Mandatory? |
+| Key              | Value                                        | Mandatory? |
 | --- | --- | --- |
-| attack_patterns | ([AttackPattern](#attack_pattern), ...) |
-| malware_type | ([MalwareInstance](#malware_instance), ...) |
+| attack\_patterns | ([AttackPattern](#attack\_pattern), ...)     |            |
+| malware\_type    | ([MalwareInstance](#malware\_instance), ...) |            |
 
 <a name="malware_instance"/>
 ### MalwareInstance
 
-| Key | Value | Mandatory? |
+| Key         | Value                               | Mandatory? |
 | --- | --- | --- |
-| description | string | &#10003; |
-| type | ([MalwareType](#malware_type), ...) | &#10003; |
+| description | string                              | &#10003;   |
+| type        | ([MalwareType](#malware_type), ...) | &#10003;   |
 
 <a name="attack_pattern"/>
 ### AttackPattern
@@ -645,10 +645,10 @@ The capec_id field below refers to an entry in the Common Attack
 Pattern Enumeration and Classification
 [CAPEC](https://capec.mitre.org).
 
-| Key | Value | Mandatory? |
+| Key         | Value  | Mandatory? |
 | --- | --- | --- |
-| description | string | &#10003; |
-| capec_id | string |
+| description | string | &#10003;   |
+| capec_id    | string |            |
 
 ### References
 
@@ -663,11 +663,11 @@ active verdict.  If there is more than one Judgement with that
 priority, than Clean disposition has priority over all others, then
 Malicious disposition, and so on down to Unknown.
 
-| Key | Value | Mandatory? |
+| Key               | Value                                       | Mandatory? |
 | --- | --- | --- |
-| disposition | [DispositionNumber](#disposition_number) | &#10003; |
-| judgement | [JudgementReference](#judgement_reference) |
-| disposition_name | [DispositionName](#disposition_name) |
+| disposition       | [DispositionNumber](#disposition\_number)   | &#10003;   |
+| judgement         | [JudgementReference](#judgement\_reference) |            |
+| disposition\_name | [DispositionName](#disposition_name)        |            |
 
 The disposition_name field is optional, but is intended to be show to
 a user.  Applications must therefore remember the mapping of numbers
@@ -675,10 +675,10 @@ to human words.
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key | Value | Description |
+| Key     | Value         | Description                              |
 | --- | --- | --- |
 | created | [Time](#time) | Timestamp when object was created in CIA |
-| owner | string | String identifying the creating user |
+| owner   | string        | String identifying the creating user     |
 
 ### Example Verdict
 
@@ -718,73 +718,73 @@ string the field should follow the rules of the ISO8601 standard.
 <a name="time_structure"/>
 ### TimeStructure
 
-| Key | Value | Mandatory? |
+| Key            | Value         | Mandatory? |
 | --- | --- | --- |
-| start_time | [Time](#time) |
-| end_time | [Time](#time) |
-| produced_time | [Time](#time) |
-| received_time | [Time](#time) |
+| start\_time    | [Time](#time) |            |
+| end\_time      | [Time](#time) |            |
+| produced\_time | [Time](#time) |            |
+| received\_time | [Time](#time) |            |
 
 <a name="tool"/>
 ### Tool
 
-| Key | Value | Mandatory? |
+| Key          | Value                               | Mandatory? |
 | --- | --- | --- |
-| description | string | &#10003; |
-| type | [AttackToolType](#attack_tool_type) |
-| references | (string, ...) |
-| vendor | string |
-| version | string |
-| service_pack | string |
+| description  | string                              | &#10003;   |
+| type         | [AttackToolType](#attack_tool_type) |            |
+| references   | (string, ...)                       |            |
+| vendor       | string                              |            |
+| version      | string                              |            |
+| service_pack | string                              |            |
 
 <a name="source"/>
 ### Source
-| Key | Value | Mandatory? |
+| Key                   | Value                                 | Mandatory? |
 | --- | --- | --- |
-| description | string | &#10003; |
-| identity | string |
-| role | string |
-| contributing_sources | [SourceReference](#source_reference) |
-| time | [TimeStructure](#time_structure) |
-| tools | ([Tool](#tool), ..) |
+| description           | string                                | &#10003;   |
+| identity              | string                                |            |
+| role                  | string                                |            |
+| contributing\_sources | [SourceReference](#source\_reference) |            |
+| time                  | [TimeStructure](#time_structure)      |            |
+| tools                 | ([Tool](#tool), ..)                   |            |
 
 <a name="contributor"/>
 ### Contributor
 
-| Key | Value | Mandatory? |
+| Key                    | Value         | Mandatory? |
 | --- | --- | --- |
-| role | string |
-| name | string |
-| email | string |
-| phone | string |
-| organization | string |
-| date | [Time](#time) |
-| contribution_location | string |
+| role                   | string        |            |
+| name                   | string        |            |
+| email                  | string        |            |
+| phone                  | string        |            |
+| organization           | string        |            |
+| date                   | [Time](#time) |            |
+| contribution\_location | string        |            |
 
 <a name="related_identity"/>
 ### RelatedIdentity
 
-| Key | Value | Mandatory? |
+| Key                 | Value                                     | Mandatory? |
 | --- | --- | --- |
-| confidence | [HighMedLow](#high_med_low) |
-| information_source | [Source](#source) |
-| relationship | string |
-| identity | [IdentityReference](#identity_reference) | &#10003; |
+| confidence          | [HighMedLow](#high\_med\_low)             |            |
+| information\_source | [Source](#source)                         |            |
+| relationship        | string                                    |            |
+| identity            | [IdentityReference](#identity\_reference) | &#10003;   |
 
 <a name="identity"/>
 ### Identity
-| Key | Value | Mandatory? |
+| Key                 | Value                                 | Mandatory? |
 | --- | --- | --- |
-| description | string | &#10003; |
-| related_identities | [RelatedIdentity](#related_identity) | &#10003; |
+| description         | string                                | &#10003;   |
+| related\_identities | [RelatedIdentity](#related\_identity) | &#10003;   |
 
 <a name="activity"/>
 ### Activity
 
-| Key | Value | Mandatory? |
+| Key         | Value         | Mandatory? |
 | --- | --- | --- |
-| date_time | [Time](#time) | &#10003; |
-| description | string | &#10003; |
+| date_time   | [Time](#time) | &#10003;   |
+| description | string        | &#10003;   |
 
 <a name="observable"/>
 ### Observable
@@ -794,10 +794,10 @@ as an identity that is stable enough to be attributed an intent or
 nature.  These do not exist as objects within the CIA storage model,
 you never create an observable.
 
-| Key | Value | Mandatory? |
+| Key   | Value                              | Mandatory? |
 | --- | --- | --- |
-| value | string | &#10003; |
-| type | [ObservableType](#observable_type) | &#10003; |
+| value | string                             | &#10003;   |
+| type  | [ObservableType](#observable_type) | &#10003;   |
 
 #### Observable Examples
 
@@ -816,13 +816,13 @@ you never create an observable.
 <a name="dispositions"/>
 ### Dispositions
 
-| Integer | Value |
+| Integer | Value      |
 | --- | --- |
-| 1 | Clean |
-| 2 | Malicious |
-| 3 | Suspicious |
-| 4 | Common |
-| 5 | Unknown |
+|       1 | Clean      |
+|       2 | Malicious  |
+|       3 | Suspicious |
+|       4 | Common     |
+|       5 | Unknown    |
 
 <a name="disposition_number"/>
 ### DispositionNumber
@@ -892,89 +892,89 @@ and that object should be retrievable at that URI.
 <a name="related_indicator"/>
 ### RelatedIndicator
 
-| Key | Value | Mandatory? |
+| Key          | Value                                      | Mandatory? |
 | --- | --- | --- |
-| confidence | [HighMedLow](#high_med_low) |
-| source | [Source](#source) |
-| relationship | string |
-| indicator | [IndicatorReference](#indicator_reference) | &#10003; |
+| confidence   | [HighMedLow](#high_med_low)                |            |
+| source       | [Source](#source)                          |            |
+| relationship | string                                     |            |
+| indicator    | [IndicatorReference](#indicator_reference) | &#10003;   |
 
 <a name="related_actor"/>
 ### RelatedActor
 
-| Key | Value | Mandatory? |
+| Key          | Value                              | Mandatory? |
 | --- | --- | --- |
-| confidence | [HighMedLow](#high_med_low) |
-| source | [Source](#source) |
-| relationship | string |
-| actor | [ActorReference](#actor_reference) | &#10003; |
+| confidence   | [HighMedLow](#high\_med\_low)      |            |
+| source       | [Source](#source)                  |            |
+| relationship | string                             |            |
+| actor        | [ActorReference](#actor_reference) | &#10003;   |
 
 <a name="related_campaign"/>
 ### RelatedCampaign
 
-| Key | Value | Mandatory? |
+| Key          | Value                                    | Mandatory? |
 | --- | --- | --- |
-| confidence | [HighMedLow](#high_med_low) |
-| source | [Source](#source) |
-| relationship | string |
-| campaign | [CampaignReference](#campaign_reference) | &#10003; |
+| confidence   | [HighMedLow](#high_med_low)              |            |
+| source       | [Source](#source)                        |            |
+| relationship | string                                   |            |
+| campaign     | [CampaignReference](#campaign_reference) | &#10003;   |
 
 <a name="related_coa"/>
 ### RelatedCOA
 
-| Key | Value | Mandatory? |
+| Key          | Value                          | Mandatory? |
 | --- | --- | --- |
-| confidence | [HighMedLow](#high_med_low) |
-| source | [Source](#source) |
-| relationship | string |
-| COA | [COAReference](#coa_reference) | &#10003; |
+| confidence   | [HighMedLow](#high\_med\_low)  |            |
+| source       | [Source](#source)              |            |
+| relationship | string                         |            |
+| COA          | [COAReference](#coa_reference) | &#10003;   |
 
 <a name="coa_requested"/>
 ### COARequested
 
-| Key | Value | Mandatory? |
+| Key          | Value                          | Mandatory? |
 | --- | --- | --- |
-| time | [Time](#time) |
-| contributors | [Contributors](#contributors) |
-| COA | [COAReference](#coa_reference) | &#10003; |
+| time         | [Time](#time)                  |            |
+| contributors | [Contributors](#contributors)  |            |
+| COA          | [COAReference](#coa_reference) | &#10003;   |
 
 <a name="related_exploit_target"/>
 ### RelatedExploitTarget
 
-| Key | Value | Mandatory? |
+| Key             | Value                                                 | Mandatory? |
 | --- | --- | --- |
-| confidence | [HighMedLow](#high_med_low) |
-| source | [Source](#source) |
-| relationship | string |
-| exploit_target | [ExploitTargetReference](#exploit_target_reference) | &#10003; |
+| confidence      | [HighMedLow](#high_med_low)                           |            |
+| source          | [Source](#source)                                     |            |
+| relationship    | string                                                |            |
+| exploit\_target | [ExploitTargetReference](#exploit\_target\_reference) | &#10003;   |
 
 <a name="related_incident"/>
 ### RelatedIncident
 
-| Key | Value | Mandatory? |
+| Key          | Value                                    | Mandatory? |
 | --- | --- | --- |
-| confidence | [HighMedLow](#high_med_low) |
-| source | [Source](#source) |
-| relationship | string |
-| incident | [IncidentReference](#incident_reference) | &#10003; |
+| confidence   | [HighMedLow](#high_med_low)              |            |
+| source       | [Source](#source)                        |            |
+| relationship | string                                   |            |
+| incident     | [IncidentReference](#incident_reference) | &#10003;   |
 
 <a name="composite_indicator_expression"/>
 ### CompositeIndicatorExpression
 
-| Key | Value | Mandatory? |
+| Key        | Value                                             | Mandatory? |
 | --- | --- | --- |
-| operator | "and" &#124; "or" &#124; "not" | &#10003; |
-| indicators | ([IndicatorReference](#indicator_reference), ...) | &#10003; |
+| operator   | "and" &#124; "or" &#124; "not"                    | &#10003;   |
+| indicators | ([IndicatorReference](#indicator_reference), ...) | &#10003;   |
 
 <a name="related_ttp"/>
 ### RelatedTTP
 
-| Key | Value | Mandatory? |
+| Key          | Value                          | Mandatory? |
 | --- | --- | --- |
-| confidence | [HighMedLow](#high_med_low) |
-| source | [Source](#source) |
-| relationship | string |
-| TTP | [TTPReference](#ttp_reference) | &#10003; |
+| confidence   | [HighMedLow](#high_med_low)    |            |
+| source       | [Source](#source)              |            |
+| relationship | string                         |            |
+| TTP          | [TTPReference](#ttp_reference) | &#10003;   |
 
 <a name="vocabularies"/>
 ## Vocabularies

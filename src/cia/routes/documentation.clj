@@ -5,7 +5,6 @@
    [markdown.core :refer [md-to-html-string]]
    [hiccup.core :as h]
    [hiccup.page :as page]
-   [hiccup-bridge.core :as hicv]
    [ring.util.mime-type :refer [ext-mime-type]]
    [clojure.java.io :as io]))
 
@@ -27,16 +26,14 @@
    [:body
     [:div {:style page-style
            :class page-class}
-     (-> (hicv/html->hiccup html-body)
-         first
-         last
-         rest)]]))
+     html-body]]))
 
 (defn render-markdown [file]
   "render a mardown file into an html webpage"
   (let [response  (-> file
                       md-to-html-string
-                      decorate)]
+                      decorate
+                      )]
     {:status 200
      :headers {"Content-Type" "text/html"}
      :body response}))
