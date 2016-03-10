@@ -65,7 +65,7 @@
            :path "judgements"
            :query
            (q/bool {:must
-                    (q/terms :judgements.judgement
+                    (q/terms :judgements.judgement_id
                              judgement-ids)}))]
 
     (q/filtered :filter f)))
