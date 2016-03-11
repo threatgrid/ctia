@@ -33,7 +33,7 @@
 
 (def judgement-indicator-relationship-map
   {:entity-relationship-key :indicators
-   :relationship-reference-key :indicator
+   :relationship-reference-key :indicator_id
    :entity-id-key :judgement_id
    :other-id-key :indicator_id})
 
@@ -97,7 +97,7 @@
 
 (defn calculate-verdict [{:keys [type value] :as _observable_}]
   (k/select @judgement
-            (k/fields :disposition [:id :judgement] :disposition_name)
+            (k/fields :disposition [:id :judgement_id] :disposition_name)
             (k/where {:observable_type type
                       :observable_value value})
             (k/where (or (= :valid_time_end_time nil)

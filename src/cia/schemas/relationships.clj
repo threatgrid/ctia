@@ -23,53 +23,38 @@
     (s/optional-key :relationship) s/Str}
    reference-map))
 
-(defn relation [string-type map-type]
-  (s/conditional
-   map? map-type
-   :else string-type))
-
 (s/defschema RelatedIndicators
-  [(relation IndicatorReference
-             (enriched-ref {:indicator IndicatorReference}))])
+  [(enriched-ref {:indicator_id IndicatorReference})])
 
 (s/defschema RelatedActors
-  [(relation ActorReference
-             (enriched-ref {:actor ActorReference}))])
+  [(enriched-ref {:actor_id ActorReference})])
 
 (s/defschema RelatedCampaigns
-  [(relation CampaignReference
-             (enriched-ref {:campaign CampaignReference}))])
+  [(enriched-ref {:campaign_id CampaignReference})])
 
 (s/defschema RelatedCOAs
-  [(relation COAReference
-             (enriched-ref {:COA COAReference}))])
+  [(enriched-ref {:COA_id COAReference})])
 
 (s/defschema RelatedExploitTargets
-  [(relation ExploitTargetReference
-             (enriched-ref {:exploit_target ExploitTargetReference}))])
+  [(enriched-ref {:exploit_target_id ExploitTargetReference})])
 
 (s/defschema RelatedIncidents
-  [(relation IncidentReference
-             (enriched-ref {:incident IncidentReference}))])
+  [(enriched-ref {:incident_id IncidentReference})])
 
 (s/defschema RelatedIndicator
-  (enriched-ref {:indicator IndicatorReference}))
+  (enriched-ref {:indicator_id IndicatorReference}))
 
 (s/defschema RelatedIndicators
-  [(relation IndicatorReference
-             RelatedIndicator)])
+  [RelatedIndicator])
 
 (s/defschema RelatedJudgements
-  [(relation JudgementReference
-             (enriched-ref {:judgement JudgementReference}))])
+  [(enriched-ref {:judgement_id JudgementReference})])
 
 (s/defschema RelatedSightings
-  [(relation SightingReference
-             (enriched-ref {:sighting SightingReference}))])
+  [(enriched-ref {:sighting_id SightingReference})])
 
 (s/defschema RelatedTTP
-  (enriched-ref {:ttp TTPReference}))
+  (enriched-ref {:ttp_id TTPReference}))
 
 (s/defschema RelatedTTPs
-  [(relation TTPReference
-             RelatedTTP)])
+  [RelatedTTP])

@@ -24,7 +24,8 @@
             [ring.middleware.params :as params]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
-            [cia.schemas.relationships :as rel]))
+            [cia.schemas.relationships :as rel]
+            [cia.routes.documentation :refer [documentation-routes]]))
 
 (def JudgementSort
   "A sort ordering"
@@ -72,7 +73,9 @@
   have not yet expired.  The highest priority Judgement becomes the
   active verdict.  If there is more than one Judgement with that
   priority, than Clean disposition has priority over all others, then
-  Malicious disposition, and so on down to Unknown.")
+  Malicious disposition, and so on down to Unknown.
+
+  <a href='/doc/data_structures.md'>Data structures documentation</a>")
 
 
 
@@ -87,6 +90,9 @@
                                      :email "cisco-intel-api-support@cisco.com"}
                            :description api-description}
                     :tags [{:name "threat", :description "Threat Intelligence"}]}}}
+
+  documentation-routes
+
   (context "/cia" []
     (context "/version" []
       :tags ["version"]
@@ -127,6 +133,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes an Actor"
         :header-params [api_key :- s/Str]
@@ -164,6 +171,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes a Campaign"
         :header-params [api_key :- s/Str]
@@ -203,6 +211,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes an ExploitTarget"
         :header-params [api_key :- s/Str]
@@ -240,6 +249,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes a COA"
         :header-params [api_key :- s/Str]
@@ -277,6 +287,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes an Incident"
         :header-params [api_key :- s/Str]
@@ -337,6 +348,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :header-params [api_key :- s/Str]
         :summary "Deletes a Judgement"
@@ -448,6 +460,7 @@
           (ok d)
           (not-found)))
       (DELETE "/:id" []
+        :no-doc true
         :path-params [id :- s/Str]
         :summary "Deletes a TTP"
         :header-params [api_key :- s/Str]
@@ -492,7 +505,6 @@
         (if (delete-sighting @sighting-store id)
           (no-content)
           (not-found))))
-
 
     (GET "/:observable_type/:observable_value/judgements" []
       :query-params [{offset :-  Long 0}

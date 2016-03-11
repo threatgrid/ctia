@@ -12,5 +12,5 @@ priority, than Clean disposition has priority over all others, then
 Malicious disposition, and so on down to Unknown.
 "
   {:disposition c/DispositionNumber
-   (s/optional-key :judgement) rel/JudgementReference
+   (s/optional-key :judgement_id) rel/JudgementReference
    (s/optional-key :disposition_name) c/DispositionName})

@@ -270,7 +270,7 @@
     (filter (fn [indicator]
               (some (fn [judgement-relationship]
                       (let [judgement-id (if (map? judgement-relationship)
-                                           (:judgement judgement-relationship)
+                                           (:judgement_id judgement-relationship)
                                            judgement-relationship)]
                         (contains? judgement-ids judgement-id)))
                     (:judgements indicator)))
@@ -318,7 +318,7 @@
          (map (fn [sighting-relationship]
                 (cond
                   (string? sighting-relationship) sighting-relationship
-                  (map? sighting-relationship) (:sighting sighting-relationship))))
+                  (map? sighting-relationship) (:sighting_id sighting-relationship))))
          (remove nil?)
          (map (fn [s-id]
                 (get sightings-map s-id)))
@@ -375,7 +375,7 @@
 (s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]
   {:disposition (:disposition judgement)
-   :judgement (:id judgement)
+   :judgement_id (:id judgement)
    :disposition_name (get c/disposition-map (:disposition judgement))})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
