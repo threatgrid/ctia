@@ -56,9 +56,6 @@
 
 (defn handle-list-indicators-by-judgements
   [state judgements]
-
-  (println "guillaume" (map :id judgements))
-
   (raw-search-docs  (:conn state)
                     (:index state)
                     mapping

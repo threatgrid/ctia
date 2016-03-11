@@ -51,7 +51,7 @@
              :query
              {:bool
               {:must
-               {:terms {:judgements.judgement
+               {:terms {:judgements.judgement_id
                         #{"judgement-41dae4cf-1721-4b25-a111-77cf28e8ca6d"
                           "judgement-734f0a85-f862-4abd-83e0-beda53556e29"}}}}}}}}})))
 

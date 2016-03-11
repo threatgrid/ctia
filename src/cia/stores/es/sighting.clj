@@ -28,7 +28,7 @@
                 mapping
                 realized)))
 
-(defn handle-update-sighting [state login id new-sighting]
+(defn handle-update-sighting [state id login new-sighting]
   (update-doc (:conn state)
               (:index state)
               mapping
@@ -53,5 +53,14 @@
                mapping
                filter-map))
 
-(defn handle-list-sightings-by-indicators [state indicators]
-  (println indicators))
+(defn handle-list-sightings-by-indicators
+  [state indicators]
+
+  (let [sighting-ids (->> indicators
+                          (mapcat :sightings)
+                          (map :sighting_id))]
+    (raw-search-docs  (:conn state)
+                      (:index state)
+                      mapping
+                      {:terms {:id sighting-ids}}
+                      {:created "desc"})))

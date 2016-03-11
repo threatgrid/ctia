@@ -35,7 +35,8 @@
                                             mapping
                                             id
                                             doc
-                                            {:fields "_source"})
+                                            {:refresh true
+                                             :fields "_source"})
           [:get-result :source]))
 
 (defn delete-doc

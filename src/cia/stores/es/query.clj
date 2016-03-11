@@ -27,7 +27,7 @@
            (q/nested
             :path (name path)
             :query (q/bool
-                    {:must nested})))) n-index))
+                    {:must (vec nested)})))) n-index))
 
 (defn mk-flat-filter [flat-terms]
   "transform simple filters to ES terms:
@@ -50,7 +50,6 @@
         n-index (group-by #(ffirst %) nested-terms)
         nested-fmt (mk-nested-filter n-index)
         flat-fmt (mk-flat-filter flat-terms)]
-
     {:filtered
      {:query {:match_all {}}
       :filter (q/bool {:must (concat nested-fmt

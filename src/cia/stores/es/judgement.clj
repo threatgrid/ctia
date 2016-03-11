@@ -51,7 +51,6 @@
                 mapping
                 judgement-id
                 updated)
-
     indicator-rel))
 
 (defn handle-delete-judgement [state id]
