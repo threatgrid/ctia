@@ -267,8 +267,8 @@
     (filter (fn [indicator]
               (some (fn [judgement-relation]
                       (let [judgement-id (if (map? judgement-relation)
-                                          (:judgement judgement-relation)
-                                          judgement-relation)]
+                                           (:judgement_id judgement-relation)
+                                           judgement-relation)]
                         (contains? judgement-ids judgement-id)))
                     (:judgements indicator)))
             (vals @indicator-state))))

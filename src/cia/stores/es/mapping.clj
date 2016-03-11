@@ -57,12 +57,12 @@
 (def related-identities
   {:type "nested"
    :properties (assoc related
-                      :identity string)})
+                      :identity_id string)})
 
 (def related-actors
   {:type "nested"
    :properties (assoc related
-                      :actor string)})
+                      :actor_id string)})
 
 (def tg-identity
   {:type "nested"
@@ -95,39 +95,39 @@
   {:type "nested"
    :properties
    (assoc related
-          :indicator string)})
+          :indicator_id string)})
 
 (def related-judgements
   {:type "nested"
    :properties
    (assoc related
-          :judgement string)})
+          :judgement_id string)})
 
 (def related-coas
   {:type "nested"
    :properties
    (assoc related
-          :COA string)})
+          :COA_id string)})
 
 (def related-campaigns
   {:type "nested"
    :properties
    (assoc related
-          :campaign string)})
+          :campaign_id string)})
 
 (def related-exploit-targets
   {:type "nested"
    :properties (assoc related
-                      :exploit_target string)})
+                      :exploit_target_id string)})
 (def related-ttps
   {:type "nested"
    :properties (assoc related
-                      :ttp string)})
+                      :ttp_id string)})
 
 (def related-incidents
   {:type "nested"
    :properties (assoc related
-                      :incident string)})
+                      :incident_id string)})
 
 (def indicator-sightings
   {:type "nested"
@@ -302,9 +302,7 @@
      :reason string
      :source_uri string
      :reason_uri string
-     ;;:indicators related-indicators
-     ;;TBD enable again when proper schema is integrated
-     :indicators {:type "nested" :enabled false}
+     :indicators related-indicators
      :owner string
      :created ts
      :modified ts}}})
@@ -331,7 +329,6 @@
      :type string
      :observable observable
      :judgements related-judgements
-     ;;:judgements {:type "nested"}
      :composite_indicator_expression {:type "nested"
                                       :properties
                                       {:operator string
@@ -384,13 +381,9 @@
      :sophistication string
      :intended_effect string
      :planning_and_operational_support string
-     ;;:observed_TTPs
-     ;; related-ttps TBD enable again when schema is stricter
-     :observed_TTPs {:type "nested" :enabled false}
-     ;;:associated_campaigns related-campaigns
-     :associated_campaigns {:type "nested" :enabled false}
-     ;;:associated_actors related-actors
-     :associated_actors {:type "nested" :enabled false}
+     :observed-ttps related-ttps
+     :associated_campaigns related-campaigns
+     :associated_actors related-actors
      :confidence string
      :owner string
      :created ts
@@ -461,8 +454,7 @@
      :related_observables observable
      :leveraged_TTPs related-ttps
      :attributed_actors related-actors
-     ;; :related_incidents related-incidents
-     :related_incidents {:type "nested" :enabled false}
+     :related_incidents related-incidents
      :intended_effect string
      :owner string
      :created ts
