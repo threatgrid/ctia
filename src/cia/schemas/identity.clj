@@ -13,6 +13,7 @@
    :delete-judgement
    :list-judgements-by-observable
    :list-judgements-by-indicator
+   :create-judgement-indicator
 
    ;; indicators
    :create-indicator
@@ -20,6 +21,12 @@
    ;;:read-indicator-implementation
    :delete-indicator
    :list-indicators
+   :list-indicators-by-observable
+
+   :create-sightings
+   :read-sightings
+   :delete-sightings
+   :list-sightings
 
    ;; feedback
    :create-feedback
@@ -58,7 +65,6 @@
    :delete-sighting
    :read-sighting
    :list-sightings-by-observable
-   :list-sightings-by-indicator
    :list-sightings
 
    ;; incidents

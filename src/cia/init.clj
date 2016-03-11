@@ -27,6 +27,7 @@
                      store/exploit-target-store mem/->ExploitTargetStore
                      store/incident-store mem/->IncidentStore
                      store/indicator-store mem/->IndicatorStore
+                     store/sighting-store mem/->SightingStore
                      store/ttp-store mem/->TTPStore
                      store/identity-store mem/->IdentityStore}]
     (doseq [[store impl-fn] store-impls]
