@@ -69,7 +69,9 @@
                           :role role
                           :capabilities (->> (str/lower-case role)
                                              keyword
-                                             (get auth/default-capabilities))})))))
+                                             (get auth/default-capabilities))}))))
+  (require-login? [_]
+    true))
 
 (defn make-auth-service
   ([whoami-service]

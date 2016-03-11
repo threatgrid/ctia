@@ -15,7 +15,8 @@
            (assoc-in [:headers "api_key"] api_key))))))
 
 (defn require-capability! [granting-capabilities id]
-  (if granting-capabilities
+  (if (and granting-capabilities
+           (auth/require-login? @auth/auth-service))
     (cond
       (nil? id)
       (http-response/forbidden! {:message "Only authenticated users allowed"})
