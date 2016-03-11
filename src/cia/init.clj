@@ -44,6 +44,7 @@
                      store/incident-store es/->IncidentStore
                      store/indicator-store es/->IndicatorStore
                      store/ttp-store es/->TTPStore
+                     store/sighting-store es/->SightingStore
                      store/identity-store es/->IdentityStore}]
 
     (es-index/create! (:conn store-state)
