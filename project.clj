@@ -20,11 +20,6 @@
                  [markdown-clj "0.9.86"]
                  [hiccup "1.0.5"]]
 
-  :jvm-opts ["-Xss16m"
-             "-Xms512m"
-             "-Xmx512m"
-             "-XX:MaxPermSize=512m"
-             "-Djava.awt.headless=true"]
   :resource-paths ["resources" "doc"]
   :ring {:handler cia.handler/app
          :init cia.init/init!
