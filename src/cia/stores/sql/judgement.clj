@@ -41,9 +41,14 @@
   (transform/db-relationship->schema-relationship
    judgement-indicator-relationship-map))
 
+(def schema-indicator->db-indicator
+  (transform/schema-relationship->db-relationship
+   judgement-indicator-relationship-map))
+
 (def judgements->db-indicators
   (transform/entities->db-relationships
-   judgement-indicator-relationship-map))
+   judgement-indicator-relationship-map
+   schema-indicator->db-indicator))
 
 (defn insert-judgements [login & new-judgements]
   (let [realized-judgements (realize-judgements login new-judgements)
@@ -92,7 +97,7 @@
 
 (defn calculate-verdict [{:keys [type value] :as _observable_}]
   (k/select @judgement
-            (k/fields :disposition [:id :judgement] :disposition_name)
+            (k/fields :disposition [:id :judgement_id] :disposition_name)
             (k/where {:observable_type type
                       :observable_value value})
             (k/where (or (= :valid_time_end_time nil)
@@ -101,3 +106,9 @@
             (k/order :disposition)
             (k/order :valid_time_start_time)
             (k/limit 1)))
+
+(defn create-judgement-indicator [judgement-id indicator-rel]
+  (when (seq (k/select @judgement (k/where {:id judgement-id})))
+    (c/insert @judgement-indicator
+              [(schema-indicator->db-indicator judgement-id indicator-rel)])
+    indicator-rel))

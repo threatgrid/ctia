@@ -13,4 +13,10 @@
   (list-judgements [_ filter-map]
     (judgement/select-judgements filter-map))
   (calculate-verdict [_ observable]
-    (first (judgement/calculate-verdict observable))))
+    (first (judgement/calculate-verdict observable)))
+  (list-judgements-by-observable [this observable]
+    (list-judgements this {[:observable :type]  (:type observable)
+                           [:observable :value] (:value observable)}))
+  (add-indicator-to-judgement [_ judgement-id indicator-rel]
+    (if (judgement/create-judgement-indicator judgement-id indicator-rel)
+      indicator-rel)))

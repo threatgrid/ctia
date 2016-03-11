@@ -18,4 +18,6 @@
 (defrecord AuthService []
   IAuth
   (identity-for-token [_ _]
-    identity-singleton))
+    identity-singleton)
+  (require-login? [_]
+    false))
