@@ -1,6 +1,7 @@
 (ns cia.events
-  (:require #_[cia.events.schemas :as es]
+  (:require [cia.events.schemas :as es]
             [cia.schemas.common :as c]
+            [cia.schemas.verdict :as v]
             [clj-time.core :as time]
             [clojure.core.async :as a]
             [schema.core :as s])
@@ -20,18 +21,6 @@
    :chan Channel
    :mult Mult})
 
-(s/defschema Event
-  "Describes an event"
-  {:who s/Str
-   :request-params Map
-   (s/optional-key :when) c/Time})
-
-(def Triple [(s/one s/Str "s") (s/one s/Str "p") (s/one s/Str "o")])
-
-(def Update
-  (merge Event
-         {:triples [Triple]}))
-
 (s/defn new-event-channel :- EventChannel []
   (let [b (a/buffer 1000)
         c (a/chan b)
@@ -41,7 +30,7 @@
      :mult p}))
 
 (defn init! []
-  (reset! central-channel (new-event)))
+  (reset! central-channel (new-event-channel)))
 
 (s/defn shutdown-channel :- Long
   "Shuts down a provided event channel."
@@ -68,10 +57,10 @@
 
 (s/defn send-event
   "Send an event to a channel. Use the central channel by default"
-  ([event :- Event]
+  ([event :- es/ModelEventBase]
    (send-event @central-channel event))
   ([{ch :event-chan} :- EventChannel
-    {:keys [who when request-params] :as event} :- Event]
+    {:keys [who when request-params] :as event} :- es/ModelEventBase]
    (assert who "Events cannot be registered without user info")
    (assert request-params "HTTP request parameters are required on all events")
    (let [event (if when event (assoc event :when (time/now)))]
@@ -81,37 +70,56 @@
   "Builds a creation event and sends it to the provided channel. Use the central channel by default."
   ([model-type
     new-model
-    http-params :- Map]
+    http-params :- c/HttpParams]  ; maybe { s/Key s/Any }
    (send-create-event model-type new-model http-params @central-channel))
-  ([model-type
-    new-model
-    http-params :- Map
-    {chan :event-chan} :- EventChannel]
-   (send-event chan {:type es/CreateEventType
-                     :who "not implemented"
-                     :when (time/now)
-                     :model model-type
-                     :id (:id new-model)
-                     :what new-model})))
+  ([echan :- EventChannel
+    owner :- s/Str
+    http-params :- c/HttpParams
+    model-type :- s/Str
+    new-model :- {s/Any s/Any}]
+   (send-event echan {:type es/CreateEventType
+                      :owner owner
+                      :timestamp (time/now)
+                      :http-params http-params
+                      :model-type model-type
+                      :id (:id new-model)
+                      :model new-model})))
 
-(defn send-created-model
-  ([created-model] (send-created-model created-model @central-channel))
-  ([chan :- EventChannel
-    created-model]
-   (send-event chan created-model)))
-
-(defn send-updated-model
+(s/defn send-updated-model
+  "Builds an updated model event and sends it to the provided channel. Use the central channel by default."
   ([updates] (send-updated-model updates @central-channel))
-  ([chan :- EventChannel
-    {triples :triples :as update} :- Update]
-   (send-event chan update)))
+  ([echan :- EventChannel
+    owner :- s/Str
+    http-params :- c/HttpParams
+    triples :- [es/UpdateTriple]]
+   (send-event echan {:type es/UpdateEventType
+                      :owner owner
+                      :timestamp (time/now)
+                      :http-params http-params
+                      :fields triples})))
 
-(defn send-deleted-model
+(s/defn send-deleted-model
+  "Builds a delete event and sends it to the provided channel. Use the central channel by default."
   ([] (send-deleted-model @central-channel))
-  ([chan]
-   (send-event chan {})))
+  ([echan :- EventChannel
+    owner :- s/Str
+    http-params :- c/HttpParams
+    id :- s/Str]
+   (send-event echan {:type es/DeleteEventType
+                      :owner owner
+                      :timestamp (time/now)
+                      :id id})))
 
-(defn send-verdict-change
+(s/defn send-verdict-change
+  "Builds a verdict change event and sends it to the provided channel. Use the central channel by default."
   ([] (send-verdict-change @central-channel))
-  ([chan]
-   (send-event chan {})))
+  ([echan :- EventChannel
+    owner :- s/Str
+    http-params :- c/HttpParams
+    id :- s/Str
+    verdict :- v/Verdict]
+   (send-event echan {:type es/VerdictChangeEventType
+                      :owner owner
+                      :timestamp (time/now)
+                      :judgement_id id
+                      :verdict verdict})))
