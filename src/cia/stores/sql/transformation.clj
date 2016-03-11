@@ -81,9 +81,7 @@
            other-id-key]}]
   (fn [entity-id
        {:keys [confidence source relationship] :as related-structure}]
-    (-> {other-id-key (if (map? related-structure)
-                        (get related-structure relationship-reference-key)
-                        related-structure)
+    (-> {other-id-key (get related-structure relationship-reference-key)
          entity-id-key entity-id}
         (cond-> confidence   (assoc :confidence confidence)
                 source       (assoc :source source)

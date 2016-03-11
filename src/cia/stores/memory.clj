@@ -269,9 +269,7 @@
     ;; relationships.  Not sure which is more correct.
     (filter (fn [indicator]
               (some (fn [judgement-relationship]
-                      (let [judgement-id (if (map? judgement-relationship)
-                                           (:judgement_id judgement-relationship)
-                                           judgement-relationship)]
+                      (let [judgement-id (:judgement_id judgement-relationship)]
                         (contains? judgement-ids judgement-id)))
                     (:judgements indicator)))
             (vals @indicator-state))))
@@ -315,10 +313,7 @@
     (->> indicators
          (map :sightings)
          flatten
-         (map (fn [sighting-relationship]
-                (cond
-                  (string? sighting-relationship) sighting-relationship
-                  (map? sighting-relationship) (:sighting_id sighting-relationship))))
+         (map :sighting_id)
          (remove nil?)
          (map (fn [s-id]
                 (get sightings-map s-id)))
