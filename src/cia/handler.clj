@@ -523,7 +523,7 @@
       :header-params [api_key :- s/Str]
       :capabilities #{:get-verdict :admin}
       (if-let [d (calculate-verdict @judgement-store {:type observable_type
-                                                   :value observable_value})]
+                                                      :value observable_value})]
         (ok d)
         (not-found)))))
 
