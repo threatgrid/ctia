@@ -55,15 +55,16 @@
     (in/handle-delete-indicator state id))
   (list-indicators [_ filter-map]
     (in/handle-list-indicators state filter-map))
-  (list-indicators-by-observable [_ judgement-store observable]
-    (in/handle-list-indicators-by-observable state
-                                             judgement-store
-                                             observable))
-  (list-indicator-sightings-by-observable [_ judgement-store observable]
-    (->> (in/handle-list-indicators-by-observable state
-                                                  judgement-store
-                                                  observable)
-         (mapcat :sightings))))
+  ;; (list-indicators-by-observable [_ judgement-store observable]
+  ;;   (in/handle-list-indicators-by-observable state
+  ;;                                            judgement-store
+  ;;                                            observable))
+  ;; (list-indicator-sightings-by-observable [_ judgement-store observable]
+  ;;   (->> (in/handle-list-indicators-by-observable state
+  ;;                                                 judgement-store
+  ;;                                                 observable)
+  ;;        (mapcat :sightings)))
+  )
 
 (defrecord TTPStore [state]
   ITTPStore

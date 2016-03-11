@@ -14,13 +14,16 @@
              :refer [NewIndicator StoredIndicator realize-indicator]]
             [cia.schemas.judgement
              :refer [NewJudgement StoredJudgement realize-judgement]]
+            [cia.schemas.sighting
+             :refer [NewSighting StoredSighting realize-sighting]]
             [cia.schemas.ttp :refer [NewTTP StoredTTP realize-ttp]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.schemas.vocabularies :as v]
             [cia.store :refer :all]
             [clj-time.core :as time]
             [clojure.string :as str]
-            [schema.core :as s])
+            [schema.core :as s]
+            [cia.schemas.relationships :as rel])
   (:import java.util.UUID))
 
 (defn random-id [prefix]
@@ -256,19 +259,17 @@
 
 (def-list-handler handle-list-indicators StoredIndicator)
 
-(s/defn handle-list-indicators-by-observable :- [StoredIndicator]
+(s/defn handle-list-indicators-by-judgements :- (s/maybe [StoredIndicator])
   [indicator-state :- (s/atom {s/Str StoredIndicator})
-   judgement-store :- (s/protocol IJudgementStore)
-   observable :- c/Observable]
-  (let [judgements (list-judgements judgement-store
-                                    {[:observable :type] (:type observable)
-                                     [:observable :value] (:value observable)})
-        judgement-ids (set (map :id judgements))]
+   judgements :- [StoredJudgement]]
+  (let [judgement-ids (set (map :id judgements))]
+    ;; Note (polygloton, 2016-03-10):
+    ;; Find indicators using the :judgements relationship on the indicators.
+    ;; It could be done the other way around, since judgements have :indicators
+    ;; relationships.  Not sure which is more correct.
     (filter (fn [indicator]
-              (some (fn [judgement-relation]
-                      (let [judgement-id (if (map? judgement-relation)
-                                           (:judgement_id judgement-relation)
-                                           judgement-relation)]
+              (some (fn [judgement-relationship]
+                      (let [judgement-id (:judgement_id judgement-relationship)]
                         (contains? judgement-ids judgement-id)))
                     (:judgements indicator)))
             (vals @indicator-state))))
@@ -285,15 +286,53 @@
     (handle-delete-indicator state id))
   (list-indicators [_ filter-map]
     (handle-list-indicators state filter-map))
-  (list-indicators-by-observable [_ judgement-store observable]
-    (handle-list-indicators-by-observable state
-                                          judgement-store
-                                          observable))
-  (list-indicator-sightings-by-observable [_ judgement-store observable]
-    (->> (handle-list-indicators-by-observable state
-                                               judgement-store
-                                               observable)
-         (mapcat :sightings))))
+  (list-indicators-by-judgements [_ judgements]
+    (handle-list-indicators-by-judgements state judgements)))
+
+;; Sighting
+
+(def swap-sighting (make-swap-fn realize-sighting))
+
+(def-create-handler handle-create-sighting
+  StoredSighting NewSighting swap-sighting (random-id "sighting"))
+
+(def-update-handler handle-update-sighting
+  StoredSighting NewSighting swap-sighting)
+
+(def-read-handler handle-read-sighting StoredSighting)
+
+(def-delete-handler handle-delete-sighting StoredSighting)
+
+(def-list-handler handle-list-sightings StoredSighting)
+
+(s/defn handle-list-sightings-by-indicators :- (s/maybe [StoredSighting])
+  [sightings-state :- (s/atom {s/Str StoredSighting})
+   indicators :- (s/maybe [StoredIndicator])]
+  ;; Find sightings using the :sightings relationship on indicators
+  (let [sightings-map @sightings-state]
+    (->> indicators
+         (map :sightings)
+         flatten
+         (map :sighting_id)
+         (remove nil?)
+         (map (fn [s-id]
+                (get sightings-map s-id)))
+         (remove nil?))))
+
+(defrecord SightingStore [state]
+  ISightingStore
+  (read-sighting [_ id]
+    (handle-read-sighting state id))
+  (create-sighting [_ login new-sighting]
+    (handle-create-sighting state login new-sighting))
+  (update-sighting [_ id login sighting]
+    (handle-update-sighting state id login sighting))
+  (delete-sighting [_ id]
+    (handle-delete-sighting state id))
+  (list-sightings [_ filter-map]
+    (handle-list-sightings state filter-map))
+  (list-sightings-by-indicators [_ indicators]
+    (handle-list-sightings-by-indicators state indicators)))
 
 ;; Judgement
 
@@ -331,7 +370,7 @@
 (s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]
   {:disposition (:disposition judgement)
-   :judgement (:id judgement)
+   :judgement_id (:id judgement)
    :disposition_name (get c/disposition-map (:disposition judgement))})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
@@ -355,6 +394,15 @@
                  (recur more-judgements (higest-priority judgement result)))))]
     (make-verdict judgement)))
 
+(s/defn handle-add-indicator-to-judgement :- (s/maybe rel/RelatedIndicator)
+  [state :- (s/atom {s/Str StoredJudgement})
+   judgement-id :- s/Str
+   indicator-rel :- rel/RelatedIndicator]
+  ;; Possible concurrency issue, maybe state should be a ref?
+  (when (contains? @state judgement-id)
+    (swap! state update-in [judgement-id :indicators] conj indicator-rel)
+    indicator-rel))
+
 (defrecord JudgementStore [state]
   IJudgementStore
   (create-judgement [_ login new-judgement]
@@ -366,7 +414,12 @@
   (list-judgements [_ filter-map]
     (handle-list-judgements state filter-map))
   (calculate-verdict [_ observable]
-    (handle-calculate-verdict state observable)))
+    (handle-calculate-verdict state observable))
+  (list-judgements-by-observable [this observable]
+    (list-judgements this {[:observable :type]  (:type observable)
+                           [:observable :value] (:value observable)}))
+  (add-indicator-to-judgement [_ judgement-id indicator-rel]
+    (handle-add-indicator-to-judgement state judgement-id indicator-rel)))
 
 ;; ttp
 

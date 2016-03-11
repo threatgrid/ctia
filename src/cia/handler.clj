@@ -10,9 +10,11 @@
              :refer [NewExploitTarget StoredExploitTarget]]
             [cia.schemas.incident :refer [NewIncident StoredIncident]]
             [cia.schemas.indicator
-             :refer [NewIndicator Sighting StoredIndicator]]
+             :refer [NewIndicator StoredIndicator]]
             [cia.schemas.feedback :refer [NewFeedback StoredFeedback]]
             [cia.schemas.judgement :refer [NewJudgement StoredJudgement]]
+            [cia.schemas.relationships :as rel]
+            [cia.schemas.sighting :refer [NewSighting StoredSighting]]
             [cia.schemas.ttp :refer [NewTTP StoredTTP]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
@@ -22,6 +24,7 @@
             [ring.middleware.params :as params]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
+            [cia.schemas.relationships :as rel]
             [cia.routes.documentation :refer [documentation-routes]]))
 
 (def JudgementSort
@@ -315,12 +318,26 @@
         (ok (create-feedback @feedback-store feedback login judgement-id)))
       (GET "/:judgement-id/feedback" []
         :tags ["Feedback"]
-        :return [StoredFeedback]
+        :return (s/maybe [StoredFeedback])
         :path-params [judgement-id :- s/Str]
         :header-params [api_key :- s/Str]
         :capabilities #{:read-feedback :admin}
         :summary "Gets all Feedback for this Judgement."
-        (ok (list-feedback @feedback-store {:judgement judgement-id})))
+        (if-let [d (list-feedback @feedback-store {:judgement judgement-id})]
+          (ok d)
+          (not-found)))
+      (POST "/:judgement-id/indicator" []
+        :return (s/maybe rel/RelatedIndicator)
+        :path-params [judgement-id :- s/Str]
+        :body [indicator-relationship rel/RelatedIndicator]
+        :header-params [api_key :- s/Str]
+        :summary "Ads an indicator to a judgement"
+        :capabilities #{:create-judgement-indicator}
+        (if-let [d (add-indicator-to-judgement @judgement-store
+                                            judgement-id
+                                            indicator-relationship)]
+          (ok d)
+          (not-found)))
       (GET "/:id" []
         :return (s/maybe StoredJudgement)
         :path-params [id :- s/Str]
@@ -348,7 +365,7 @@
         :summary "Gets all Judgements associated with the Indicator"
         (not-found))
       (GET "/:id/sightings" []
-        :return [Sighting]
+        :return [StoredSighting]
         :path-params [id :- Long]
         :summary "Gets all Sightings associated with the Indicator"
         (not-found))
@@ -452,9 +469,42 @@
           (no-content)
           (not-found))))
 
-    (context "/sightings" []
-      :tags ["Sighting"])
-
+    (context "/sighting" []
+      :tags ["Sighting"]
+      (POST "/" []
+        :return StoredSighting
+        :body [sighting NewSighting {:description "A new Sighting"}]
+        :header-params [api_key :- s/Str]
+        :summary "Adds a new Sighting"
+        :capabilities #{:create-sighting :admin}
+        :login login
+        (ok (create-sighting @sighting-store login sighting)))
+      (PUT "/:id" []
+        :return StoredSighting
+        :body [sighting NewSighting {:description "An updated Sighting"}]
+        :header-params [api_key :- s/Str]
+        :summary "Updates a Sighting"
+        :path-params [id :- s/Str]
+        :capabilities #{:create-sighting :admin}
+        :login login
+        (ok (update-sighting @sighting-store id login sighting)))
+      (GET "/:id" []
+        :return (s/maybe StoredSighting)
+        :summary "Gets a Sighting by ID"
+        :path-params [id :- s/Str]
+        :header-params [api_key :- s/Str]
+        :capabilities #{:read-sighting :admin}
+        (if-let [d (read-sighting @sighting-store id)]
+          (ok d)
+          (not-found)))
+      (DELETE "/:id" []
+        :path-params [id :- s/Str]
+        :summary "Deletes a sighting"
+        :header-params [api_key :- s/Str]
+        :capabilities #{:delete-sighting :admin}
+        (if (delete-sighting @sighting-store id)
+          (no-content)
+          (not-found))))
 
     (GET "/:observable_type/:observable_value/judgements" []
       :query-params [{offset :-  Long 0}
@@ -468,13 +518,14 @@
                      {disposition_name :- DispositionName nil}]
       :path-params [observable_type :- ObservableType
                     observable_value :- s/Str]
-      :return [StoredJudgement]
+      :return (s/maybe [StoredJudgement])
       :summary "Returns all the Judgements associated with the specified observable."
       :header-params [api_key :- s/Str]
       :capabilities #{:list-judgements-by-observable :admin}
-      (ok (list-judgements @judgement-store
-                           {[:observable :type]  observable_type
-                            [:observable :value] observable_value})))
+      (ok
+       (some->> {:type observable_type
+                 :value observable_value}
+                (list-judgements-by-observable @judgement-store))))
 
     (GET "/:observable_type/:observable_value/indicators" []
       :query-params [{offset :-  Long 0}
@@ -486,14 +537,15 @@
                      {source :- s/Str nil}]
       :path-params [observable_type :- ObservableType
                     observable_value :- s/Str]
-      :return [StoredIndicator]
+      :return (s/maybe [StoredIndicator])
       :summary "Returns all the Indiators associated with the specified observable."
       :header-params [api_key :- s/Str]
-      :capabilities #{:list-judgements-by-indicator :admin}
-      (ok (list-indicators-by-observable @indicator-store
-                                         @judgement-store
-                                         {:type observable_type
-                                          :value observable_value})))
+      :capabilities #{:list-indicators-by-observable :admin}
+      (ok
+       (some->> {:type observable_type
+                 :value observable_value}
+                (list-judgements-by-observable @judgement-store)
+                (list-indicators-by-judgements @indicator-store))))
 
     (GET "/:observable_type/:observable_value/sightings" []
       :query-params [{offset :-  Long 0}
@@ -506,13 +558,15 @@
       :path-params [observable_type :- ObservableType
                     observable_value :- s/Str]
       :header-params [api_key :- s/Str]
-      :capabilities #{:list-sightings-by-indicator :admin}
-      :return [Sighting]
+      :capabilities #{:list-sightings-by-observable :admin}
+      :return (s/maybe [StoredSighting])
       :summary "Returns all the Sightings associated with the specified observable."
-      (ok (list-indicator-sightings-by-observable @indicator-store
-                                                  @judgement-store
-                                                  {:type observable_type
-                                                   :value observable_value})))
+      (ok
+       (some->> {:type observable_type
+                 :value observable_value}
+                (list-judgements-by-observable @judgement-store)
+                (list-indicators-by-judgements @indicator-store)
+                (list-sightings-by-indicators @sighting-store))))
 
     (GET "/:observable_type/:observable_value/verdict" []
       :tags ["Verdict"]

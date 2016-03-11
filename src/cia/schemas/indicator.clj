@@ -37,15 +37,6 @@
   {:type (s/eq "OpenIOC")
    :open_IOC s/Str})
 
-(s/defschema Sighting
-  "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
-  {(s/optional-key :timestamp) c/Time
-   (s/optional-key :source) s/Str
-   (s/optional-key :reference) c/URI
-   (s/optional-key :confidence) v/HighMedLow
-   (s/optional-key :description) s/Str
-   (s/optional-key :related_judgements) rel/RelatedJudgements})
-
 (s/defschema CompositeIndicatorExpression
   "See http://stixproject.github.io/data-model/1.2/indicator/CompositeIndicatorExpressionType/"
   {:operator (s/enum "and" "or" "not")
@@ -104,7 +95,7 @@
               "level of confidence held in the accuracy of this Indicator")
 
     (s/optional-key :sightings)
-    (describe [Sighting]
+    (describe rel/RelatedSightings
               "a set of sighting reports")
 
     (s/optional-key :related_indicators)

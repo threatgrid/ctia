@@ -46,6 +46,7 @@
    store/exploit-target-store (init-atom mem/->ExploitTargetStore)
    store/incident-store       (init-atom mem/->IncidentStore)
    store/indicator-store      (init-atom mem/->IndicatorStore)
+   store/sighting-store       (init-atom mem/->SightingStore)
    store/ttp-store            (init-atom mem/->TTPStore)
    store/identity-store       (init-atom mem/->IdentityStore)})
 
