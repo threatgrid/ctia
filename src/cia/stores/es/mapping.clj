@@ -129,12 +129,10 @@
    :properties (assoc related
                       :incident_id string)})
 
-(def indicator-sightings
+(def related-sightings
   {:type "nested"
-   :properties
-   {:timestamp ts
-    :source string
-    :confidence string}})
+   :properties (assoc related
+                      :sighting_id string)})
 
 (def specifications
   {:type "nested"
@@ -337,7 +335,7 @@
      :likely_impact string
      :suggested_COAs related-coas
      :confidence string
-     :sightings indicator-sightings
+     :sightings related-sightings
      :related_indicators related-indicators
      :related_campaigns related-campaigns
      :related_COAs related-coas
@@ -484,6 +482,19 @@
      :capabilities string
      :login string}}})
 
+(def sighting-mapping
+  {"sighting"
+   {:properties
+    {:id string
+     :timestamp ts
+     :source string
+     :reference string
+     :confidence string
+     :related-judgements related-judgements
+     :owner string
+     :created ts
+     :modified ts}}})
+
 (def mappings
   (merge {}
          judgement-mapping
@@ -494,4 +505,5 @@
          coa-mapping
          incident-mapping
          exploit-target-mapping
+         sighting-mapping
          identity-mapping))

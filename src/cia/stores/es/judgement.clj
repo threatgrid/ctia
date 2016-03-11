@@ -11,6 +11,7 @@
     [unexpired-judgements-by-observable-query]]
 
    [cia.stores.es.document :refer [create-doc
+                                   update-doc
                                    get-doc
                                    delete-doc
                                    search-docs
@@ -35,6 +36,23 @@
            (:index state)
            mapping
            id))
+
+(defn handle-add-indicator-to-judgement
+  "add an indicator relation to a judgement"
+  [state judgement-id indicator-rel]
+
+  (let [judgement (handle-read-judgement state judgement-id)
+        indicator-rels (:indicators judgement)
+        updated-rels (conj indicator-rels indicator-rel)
+        updated {:indicators (set updated-rels)}]
+
+    (update-doc (:conn state)
+                (:index state)
+                mapping
+                judgement-id
+                updated)
+
+    indicator-rel))
 
 (defn handle-delete-judgement [state id]
   (delete-doc (:conn state)

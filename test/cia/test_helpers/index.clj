@@ -39,8 +39,8 @@
    store/incident-store       (init-store-state es-store/->IncidentStore)
    store/indicator-store      (init-store-state es-store/->IndicatorStore)
    store/ttp-store            (init-store-state es-store/->TTPStore)
+   store/sighting-store       (init-store-state es-store/->SightingStore)
    store/identity-store       (init-store-state es-store/->IdentityStore)})
-
 
 (def fixture-es-store
   (do

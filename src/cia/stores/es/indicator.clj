@@ -54,16 +54,10 @@
                mapping
                filter-map))
 
-(defn handle-list-indicators-by-observable
-  [state judgement-store {:keys [:type :value]}]
-
-  (let [judgements (list-judgements judgement-store
-                                    {[:observable :type] type
-                                     [:observable :value] value})
-        judgement-ids (set (map :id judgements))]
-
-    (raw-search-docs  (:conn state)
-                      (:index state)
-                      mapping
-                      (indicators-by-judgements-query judgement-ids)
-                      {:timestamp "desc"})))
+(defn handle-list-indicators-by-judgements
+  [state judgement-ids]
+  (raw-search-docs  (:conn state)
+                    (:index state)
+                    mapping
+                    (indicators-by-judgements-query judgement-ids)
+                    {:timestamp "desc"}))
