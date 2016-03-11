@@ -57,52 +57,56 @@
                            :accept :edn
                            :throw-exceptions false
                            :socket-timeout 2000
-                           :conn-timeout 2000
+                           :conn-timeout 200
                            :body (pr-str judgement)}
                   response (http/post target-url options)]
               response))
          judgements)))
 
+(defn ioc-indicator->cia-indicator [validate-ioc-fn validate-cia-fn]
+  (fn [{:strs [name title description confidence variables created-at tags category]
+        :as ioc-indicator}]
+    (validate-ioc-fn ioc-indicator)
+    (validate-cia-fn (-> {:title name
+                          :short_description title
+                          :description (str description)
+                          :confidence (->confidence confidence)
+                          ;; :severity is available but not recorded
+                          :tags (vec (set (concat tags category)))
+                          :producer "ThreatGrid"
+                          :specifications [{:type "ThreatBrain"
+                                            :variables variables}]}
+                         (cond-> created-at (assoc-in [:valid_time :start_time]
+                                                      (f/parse (:basic-date f/formatters)
+                                                               created-at)))))))
+
 (defn ioc-indicators->cia-indicators
-  [ioc-indicators & {:keys [validate?]}]
+  [ioc-indicators & {:keys [validate?]
+                     :or {validate? false}}]
   (let [validate-ioc (if validate?
                        (partial s/validate sei/IoCIndicator)
                        identity)
         validate-ind (if validate?
                        (partial s/validate si/NewIndicator)
-                       identity)]
+                       identity)
+        transform (ioc-indicator->cia-indicator validate-ioc validate-ind)]
     (for [ioc-indicator ioc-indicators]
-      (let [{:strs [name title description confidence variables created-at tags
-                    category]}
-            (validate-ioc ioc-indicator)
-
-            indicator
-            {:title name
-             :short_description title
-             :description description
-             :confidence (->confidence confidence)
-             ;; :severity is available but not recorded
-             :tags (vec (set (concat tags category)))
-             :producer "ThreatGrid"
-             :specifications [{:type "ThreatBrain"
-                               :variables variables}]
-             :valid_time {:start_time (f/parse (:basic-date f/formatters)
-                                               created-at)}}]
-        (validate-ind indicator)))))
+      (transform ioc-indicator))))
 
 (defn load-indicators-from-ioc-file
   [file cia-url]
   (let [target-url (str cia-url "/cia/indicator")]
-    (doseq [indicator (-> (slurp file)
+    (for [indicator (-> (slurp file)
                           json/parse-string
                           ioc-indicators->cia-indicators)]
       (http/post target-url
-                 {:content-type :edn
-                  :accept :edn
+                 {:content-type :json
+                  :accept :json
                   :throw-exceptions false
-                  :socket-timeout 2000
-                  :conn-timeout 2000
-                  :body (pr-str indicator)}))))
+                  :socket-timeout 30000
+                  :conn-timeout 30000
+                  :body (json/generate-string indicator)
+                  :headers {"api_key" "123"}}))))
 
 (comment
   (load-judgements-from-feed-file "test/data/rat-dns.json"
@@ -158,3 +162,21 @@
 
         :else ;; continue processing
         ((get commands command) options command-arguments)))))
+
+
+(comment
+  (first
+   (loop [[indicator & rest-indicators] (->> (slurp "/Users/stevsloa/Downloads/ioc-definitions-2.json")
+                                             json/parse-string)
+          validation-failures []]
+     (cond
+       (nil? indicator)
+       validation-failures
+
+       (try (ioc-indicator->cia-indicator indicator)
+            true
+            (catch Throwable _ false))
+       (recur rest-indicators validation-failures)
+
+       :else
+       (recur rest-indicators (conj validation-failures indicator))))))
