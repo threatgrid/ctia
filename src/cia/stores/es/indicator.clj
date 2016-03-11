@@ -55,9 +55,12 @@
                filter-map))
 
 (defn handle-list-indicators-by-judgements
-  [state judgement-ids]
+  [state judgements]
+
+  (println "guillaume" (map :id judgements))
+
   (raw-search-docs  (:conn state)
                     (:index state)
                     mapping
-                    (indicators-by-judgements-query judgement-ids)
-                    {:timestamp "desc"}))
+                    (indicators-by-judgements-query (map :id judgements))
+                    {:created "desc"}))

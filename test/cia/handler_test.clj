@@ -1373,6 +1373,9 @@
              :as response}
             (get "cia/ip/10.0.0.1/sightings"
                  :headers {"api_key" "45c1f5e3f05d0"})]
+
+        (println "guillaume" sightings)
+        
         (is (= 200 status))
         (is (deep=
              #{{:id sighting-3-id

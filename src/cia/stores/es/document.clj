@@ -59,6 +59,7 @@
 (defn search-docs
   "search for documents on es, return only the docs"
   [conn index-name mapping filter-map]
+
   (let [filters (filter-map->terms-query filter-map)
         res (document/search conn
                              index-name

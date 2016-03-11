@@ -36,6 +36,9 @@
     (ju/handle-delete-judgement state id))
   (list-judgements [_ filter-map]
     (ju/handle-list-judgements state filter-map))
+  (list-judgements-by-observable [this observable]
+    (ju/handle-list-judgements state {[:observable :type]  (:type observable)
+                                      [:observable :value] (:value observable)}))
   (calculate-verdict [_ observable]
     (ju/handle-calculate-verdict state observable)))
 

@@ -68,7 +68,6 @@
 
 (defn list-unexpired-judgements-by-observable
   [state observable]
-
   (let [sort {:priority "desc"
               :disposition "asc"
               "valid_time.start_time"
@@ -87,7 +86,7 @@
 
 (defn- make-verdict [judgement]
   {:disposition (:disposition judgement)
-   :judgement (:id judgement)
+   :judgement_id (:id judgement)
    :disposition_name (get disposition-map (:disposition judgement))})
 
 (defn handle-calculate-verdict [state observable]
