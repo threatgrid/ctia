@@ -576,8 +576,10 @@
       :summary "Returns the current Verdict associated with the specified observable."
       :header-params [api_key :- s/Str]
       :capabilities #{:get-verdict :admin}
-      (ok (calculate-verdict @judgement-store {:type observable_type
-                                               :value observable_value})))))
+      (if-let [d (calculate-verdict @judgement-store {:type observable_type
+                                                      :value observable_value})]
+        (ok d)
+        (not-found)))))
 
 (def app
   (-> api-handler
