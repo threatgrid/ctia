@@ -12,6 +12,7 @@
 (def IncidentReference c/Reference)
 (def IndicatorReference c/Reference)
 (def JudgementReference c/Reference)
+(def SightingReference c/Reference)
 (def TTPReference c/Reference)
 (def VerdictReference c/Reference)
 
@@ -51,13 +52,20 @@
   [(relation IncidentReference
              (enriched-ref {:incident IncidentReference}))])
 
+(s/defschema RelatedIndicator
+  (enriched-ref {:indicator IndicatorReference}))
+
 (s/defschema RelatedIndicators
   [(relation IndicatorReference
-             (enriched-ref {:indicator IndicatorReference}))])
+             RelatedIndicator)])
 
 (s/defschema RelatedJudgements
   [(relation JudgementReference
              (enriched-ref {:judgement JudgementReference}))])
+
+(s/defschema RelatedSightings
+  [(relation SightingReference
+             (enriched-ref {:sighting SightingReference}))])
 
 (s/defschema RelatedTTP
   (enriched-ref {:ttp TTPReference}))

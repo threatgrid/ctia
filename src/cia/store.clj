@@ -14,7 +14,9 @@
   (list-judgements [this filter-map])
   (calculate-verdict
     ;; Returns the current verdict an observable based on stored judgements.
-    [this observable]))
+    [this observable])
+  (list-judgements-by-observable [this observable])
+  (add-indicator-to-judgement [this judgement-id indicator-relationship]))
 
 (defprotocol IIndicatorStore
   (create-indicator [this login new-indicator])
@@ -22,8 +24,7 @@
   (read-indicator [this id])
   (delete-indicator [this id])
   (list-indicators [this filtermap])
-  (list-indicators-by-observable [this judgement-store observable])
-  (list-indicator-sightings-by-observable [this judgement-store observable]))
+  (list-indicators-by-judgements [this judgements]))
 
 (defprotocol IExploitTargetStore
   (read-exploit-target [this id])
@@ -60,9 +61,10 @@
 (defprotocol ISightingStore
   (read-sighting [this id])
   (create-sighting [this login new-sighting])
-  (update-sighting [this login sighting])
+  (update-sighting [this id login sighting])
   (delete-sighting [this id])
-  (list-sightings [this filtermap]))
+  (list-sightings [this filtermap])
+  (list-sightings-by-indicators [this indicators]))
 
 (defprotocol IIncidentStore
   (read-incident [this id])
@@ -96,7 +98,7 @@
 (defonce exploit-target-store (atom nil))
 
 ;; sightings
-(defonce sightings-store (atom nil))
+(defonce sighting-store (atom nil))
 
 ;; incidents
 (defonce incident-store (atom nil))

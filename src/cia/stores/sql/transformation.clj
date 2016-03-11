@@ -70,24 +70,38 @@
                 source       (assoc :source source)
                 relationship (assoc :relationship relationship)))))
 
-(defn entities->db-relationships
+(defn schema-relationship->db-relationship
+  "Make an fn that takes one CIA schema style relationship and
+  converts it to a structure that can be inserted into the DB.  Takes
+  a relationship description map.  The fn takes an entity ID and
+  relationship structure (which doesn't have the entity ID)."
   [{:keys [entity-relationship-key
            relationship-reference-key
            entity-id-key
            other-id-key]}]
-  (fn [entities]
-    (for [{entity-id :id :as entity}
-          entities
+  (fn [entity-id
+       {:keys [confidence source relationship] :as related-structure}]
+    (-> {other-id-key (if (map? related-structure)
+                        (get related-structure relationship-reference-key)
+                        related-structure)
+         entity-id-key entity-id}
+        (cond-> confidence   (assoc :confidence confidence)
+                source       (assoc :source source)
+                relationship (assoc :relationship relationship)))))
 
-          {:keys [confidence source relationship] :as related-structure}
-          (get entity entity-relationship-key)]
-      (-> {other-id-key (if (map? related-structure)
-                          (get related-structure relationship-reference-key)
-                          related-structure)
-           entity-id-key entity-id}
-          (cond-> confidence   (assoc :confidence confidence)
-                  source       (assoc :source source)
-                  relationship (assoc :relationship relationship))))))
+(defn entities->db-relationships
+  ([relationship-description]
+   (entities->db-relationships relationship-description
+                               (schema-relationship->db-relationship
+                                relationship-description)))
+  ([{:keys [entity-relationship-key]}
+    schema-relationship->db-relationship-fn]
+   (fn [entities]
+     (for [{entity-id :id :as entity} entities
+           relationship-map (get entity entity-relationship-key)]
+       (schema-relationship->db-relationship-fn
+        entity-id
+        relationship-map)))))
 
 (defn filter-map->where-map [filter-map]
   (into {}
