@@ -179,4 +179,17 @@
        (recur rest-indicators validation-failures)
 
        :else
-       (recur rest-indicators (conj validation-failures indicator))))))
+       (recur rest-indicators (conj validation-failures indicator)))))
+
+  (def results
+    (doall
+     (load-indicators-from-ioc-file
+      "/Users/stevsloa/Downloads/ioc-definitions-2.json"
+      "http://128.107.19.200:3000")))
+
+  (->> results
+       (map :body)
+       (map json/parse-string)
+       (map #(hash-map (get % "title") (get % "id")))
+       pr-str
+       (spit "/Users/stevsloa/Desktop/ioc_indicator_names.edn")))
