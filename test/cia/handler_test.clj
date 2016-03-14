@@ -1280,7 +1280,7 @@
         {judgement-3-update-status :status}
         (post (str "cia/judgement/" judgement-3-id "/indicator")
               :body {:indicator_id indicator-3-id}
-             :headers {"api_key" "45c1f5e3f05d0"})]
+              :headers {"api_key" "45c1f5e3f05d0"})]
 
     (testing "With successful test setup"
       (is (= 200 judgement-1-status))

@@ -11,6 +11,7 @@
     [unexpired-judgements-by-observable-query]]
 
    [cia.stores.es.document :refer [create-doc
+                                   update-doc
                                    get-doc
                                    delete-doc
                                    search-docs
@@ -36,6 +37,22 @@
            mapping
            id))
 
+(defn handle-add-indicator-to-judgement
+  "add an indicator relation to a judgement"
+  [state judgement-id indicator-rel]
+
+  (let [judgement (handle-read-judgement state judgement-id)
+        indicator-rels (:indicators judgement)
+        updated-rels (conj indicator-rels indicator-rel)
+        updated {:indicators (set updated-rels)}]
+
+    (update-doc (:conn state)
+                (:index state)
+                mapping
+                judgement-id
+                updated)
+    indicator-rel))
+
 (defn handle-delete-judgement [state id]
   (delete-doc (:conn state)
               (:index state)
@@ -50,7 +67,6 @@
 
 (defn list-unexpired-judgements-by-observable
   [state observable]
-
   (let [sort {:priority "desc"
               :disposition "asc"
               "valid_time.start_time"
@@ -69,7 +85,7 @@
 
 (defn- make-verdict [judgement]
   {:disposition (:disposition judgement)
-   :judgement (:id judgement)
+   :judgement_id (:id judgement)
    :disposition_name (get disposition-map (:disposition judgement))})
 
 (defn handle-calculate-verdict [state observable]
