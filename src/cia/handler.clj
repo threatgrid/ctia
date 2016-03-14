@@ -421,6 +421,15 @@
         (if-let [d (read-indicator @indicator-store id)]
           (ok d)
           (not-found)))
+      (GET "/title/:title" []
+        :return (s/maybe [StoredIndicator])
+        :summary "Gets an indicator by title"
+        :path-params [title :- s/Str]
+        :header-params [api_key :- (s/maybe s/Str)]
+        :capabilities #{:list-indicators-by-title :admin}
+        (if-let [d (list-indicators @indicator-store {:title title})]
+          (ok d)
+          (not-found)))
       (POST "/:id/sighting" []
         :return StoredSighting
         :path-params [id :- s/Str]

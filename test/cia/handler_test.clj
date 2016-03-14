@@ -19,6 +19,7 @@
     :create-feedback :read-feedback
     :create-sighting :read-sighting :delete-sighting
     :create-indicator :read-indicator
+    :list-indicators-by-title
     :create-ttp :read-ttp :delete-ttp
     :list-judgements-by-observable
     :list-judgements-by-indicator
@@ -621,7 +622,7 @@
 
   (testing "POST /cia/indicator"
     (let [response (post "cia/indicator"
-                         :body {:title "indicator"
+                         :body {:title "indicator-title"
                                 :description "description"
                                 :producer "producer"
                                 :type ["C2" "IP Watchlist"]
@@ -641,7 +642,7 @@
           indicator (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:title "indicator"
+           {:title "indicator-title"
             :description "description"
             :producer "producer"
             :type ["C2" "IP Watchlist"]
@@ -669,7 +670,7 @@
               indicator (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:title "indicator"
+               {:title "indicator-title"
                 :description "description"
                 :producer "producer"
                 :type ["C2" "IP Watchlist"]
@@ -690,6 +691,33 @@
                        :id
                        :created
                        :modified)))))
+
+      (testing "GET /cia/indicator/title/:title"
+        (let [{status :status
+               indicators :parsed-body
+               :as response}
+              (get "cia/indicator/title/indicator-title"
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+          (is (deep=
+               [{:title "indicator-title"
+                 :description "description"
+                 :producer "producer"
+                 :type ["C2" "IP Watchlist"]
+                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
+                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                 :related_campaigns [{:confidence "High"
+                                      :source "source"
+                                      :relationship "relationship"
+                                      :campaign_id "campaign-123"}]
+                 :related_COAs [{:confidence "High"
+                                 :source "source"
+                                 :relationship "relationship"
+                                 :COA_id "coa-123"}]
+                 :judgements [{:judgement_id "judgement-123"}
+                              {:judgement_id "judgement-234"}]
+                 :owner "foouser"}]
+               (map #(dissoc % :id :created :modified) indicators)))))
 
       (testing "PUT /cia/indicator/:id"
         (let [{status :status
