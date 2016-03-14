@@ -19,6 +19,8 @@
 
 (defrecord Identity [role login capabilities]
   auth/IIdentity
+  (authenticated? [_]
+    true)
   (login [_]
     login)
   (allowed-capabilities [_]
@@ -62,14 +64,15 @@
 (defrecord AuthService [whoami-service lookup-stored-identity-fn]
   auth/IAuth
   (identity-for-token [_ token]
-    (if-let [{{:strs [role login]} "data"}
-             (whoami whoami-service token)]
-      (map->Identity (or (lookup-stored-identity-fn login)
-                         {:login login
-                          :role role
-                          :capabilities (->> (str/lower-case role)
-                                             keyword
-                                             (get auth/default-capabilities))}))))
+    (let [{{:strs [role login]} "data"} (if token (whoami whoami-service token))]
+      (if (and role login)
+        (map->Identity (or (lookup-stored-identity-fn login)
+                           {:login login
+                            :role role
+                            :capabilities (->> (str/lower-case role)
+                                               keyword
+                                               (get auth/default-capabilities))}))
+        auth/denied-identity-singleton)))
   (require-login? [_]
     true))
 

@@ -7,18 +7,18 @@
   (fn [request]
     (let [api_key (or (get-in request [:headers "api_key"])
                       (get-in request [:query-params "api_key"]))
-          id (if api_key (auth/identity-for-token @auth-service api_key))]
+          id (auth/identity-for-token @auth-service api_key)]
       (handler
        (-> request
            (assoc :identity id
-                  :login (if id (auth/login id)))
+                  :login (auth/login id))
            (assoc-in [:headers "api_key"] api_key))))))
 
 (defn require-capability! [granting-capabilities id]
   (if (and granting-capabilities
            (auth/require-login? @auth/auth-service))
     (cond
-      (nil? id)
+      (not (auth/authenticated? id))
       (http-response/forbidden! {:message "Only authenticated users allowed"})
 
       (not (auth/allowed-capability? id granting-capabilities))
