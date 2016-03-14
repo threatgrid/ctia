@@ -23,8 +23,11 @@
     (s/optional-key :relationship) s/Str}
    reference-map))
 
+(s/defschema RelatedIndicator
+  (enriched-ref {:indicator_id IndicatorReference}))
+
 (s/defschema RelatedIndicators
-  [(enriched-ref {:indicator_id IndicatorReference})])
+  [RelatedIndicator])
 
 (s/defschema RelatedActors
   [(enriched-ref {:actor_id ActorReference})])

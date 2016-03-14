@@ -10,7 +10,7 @@
              :refer [NewExploitTarget StoredExploitTarget]]
             [cia.schemas.incident :refer [NewIncident StoredIncident]]
             [cia.schemas.indicator
-             :refer [NewIndicator StoredIndicator]]
+             :refer [NewIndicator StoredIndicator generalize-indicator]]
             [cia.schemas.feedback :refer [NewFeedback StoredFeedback]]
             [cia.schemas.judgement :refer [NewJudgement StoredJudgement]]
             [cia.schemas.relationships :as rel]
@@ -420,7 +420,25 @@
         ;;                {observable :- ObservableType nil}]
         (if-let [d (read-indicator @indicator-store id)]
           (ok d)
-          (not-found))))
+          (not-found)))
+      (POST "/:id/sighting" []
+        :return StoredSighting
+        :path-params [id :- s/Str]
+        :body [sighting NewSighting {:description "a new Sighting"}]
+        :summary "Adds a new Sighting for the given indicator"
+        :header-params [api_key :- (s/maybe s/Str)]
+        :capabilities #{:create-sighting :admin}
+        :login login
+        (if-let [indicator (read-indicator @indicator-store id)]
+          (let [sighting (create-sighting @sighting-store login
+                                          (assoc sighting
+                                                 :indicator {:indicator_id id}))]
+            (update-indicator @indicator-store id login
+                              (-> (generalize-indicator indicator)
+                                  (update :sightings
+                                          conj {:sighting_id (:id sighting)})))
+            (ok sighting))
+         (not-found))))
 
     (context "/ttp" []
       :tags ["TTP"]

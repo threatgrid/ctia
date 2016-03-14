@@ -13,7 +13,8 @@
    (s/optional-key :source) s/Str
    (s/optional-key :reference) c/URI
    (s/optional-key :confidence) v/HighMedLow
-   (s/optional-key :related_judgements) rel/RelatedJudgements})
+   (s/optional-key :related_judgements) rel/RelatedJudgements
+   (s/optional-key :indicator) rel/RelatedIndicator})
 
 (s/defschema NewSighting
   (st/merge
