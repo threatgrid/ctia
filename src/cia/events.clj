@@ -11,7 +11,7 @@
            [java.util Map]))
 
 (def shutdown-max-wait-ms (* 1000 60 60))
-(def event-buffer-size 1000)
+(def ^:dynamic *event-buffer-size* 1000)
 
 (defonce central-channel (atom nil))
 
@@ -22,7 +22,7 @@
    :mult Mult})
 
 (s/defn new-event-channel :- EventChannel []
-  (let [b (a/buffer 1000)
+  (let [b (a/buffer *event-buffer-size*)
         c (a/chan b)
         p (a/mult c)]
     {:chan-buf b
@@ -59,18 +59,18 @@
   "Send an event to a channel. Use the central channel by default"
   ([event :- es/ModelEventBase]
    (send-event @central-channel event))
-  ([{ch :event-chan} :- EventChannel
-    {:keys [who when request-params] :as event} :- es/ModelEventBase]
-   (assert who "Events cannot be registered without user info")
-   (assert request-params "HTTP request parameters are required on all events")
-   (let [event (if when event (assoc event :when (time/now)))]
+  ([{ch :chan} :- EventChannel
+    {:keys [owner timestamp http-params] :as event} :- es/ModelEventBase]
+   (assert owner "Events cannot be registered without user info")
+   (let [event (if timestamp event (assoc event :timestamp (time/now)))]
      (a/>!! ch event))))
 
 (s/defn send-create-event
   "Builds a creation event and sends it to the provided channel. Use the central channel by default."
-  ([model-type
-    new-model
-    http-params :- c/HttpParams]  ; maybe { s/Key s/Any }
+  ([owner :- s/Str
+    http-params :- c/HttpParams  ; maybe { s/Key s/Any }
+    model-type :- s/Str
+    new-model :- {s/Any s/Any}]
    (send-create-event model-type new-model http-params @central-channel))
   ([echan :- EventChannel
     owner :- s/Str

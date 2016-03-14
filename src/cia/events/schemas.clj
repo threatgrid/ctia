@@ -6,7 +6,7 @@
 
 (s/defschema ModelEventBase
   {:owner s/Str
-   :timestamp c/Time
+   (s/optional-key :timestamp) c/Time
    :model s/Str
    :id s/Str
    (s/optional-key :http-params) {s/Any s/Any}})
