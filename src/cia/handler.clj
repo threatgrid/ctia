@@ -18,6 +18,7 @@
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
             [cia.events.schemas :refer [ModelEventBase]]
+            [cia.events :refer [recent-events]]
             [cia.store :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer :all]
@@ -387,7 +388,7 @@
       (GET "/log" []
         :return [ModelEventBase]
         :summary "Recent Event log"
-        (ok (e/recent-events))))
+        (ok (recent-events))))
 
 
     (GET "/:observable_type/:observable_value/judgements" []
