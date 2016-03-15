@@ -71,7 +71,7 @@
     http-params :- c/HttpParams  ; maybe { s/Key s/Any }
     model-type :- s/Str
     new-model :- {s/Any s/Any}]
-   (send-create-event model-type new-model http-params @central-channel))
+   (send-create-event @central-channel owner http-params model-type new-model))
   ([echan :- EventChannel
     owner :- s/Str
     http-params :- c/HttpParams
@@ -87,7 +87,10 @@
 
 (s/defn send-updated-model
   "Builds an updated model event and sends it to the provided channel. Use the central channel by default."
-  ([updates] (send-updated-model updates @central-channel))
+  ([owner :- s/Str
+    http-params :- c/HttpParams
+    triples :- [es/UpdateTriple]]
+   (send-updated-model @central-channel owner http-params triples))
   ([echan :- EventChannel
     owner :- s/Str
     http-params :- c/HttpParams
@@ -100,7 +103,10 @@
 
 (s/defn send-deleted-model
   "Builds a delete event and sends it to the provided channel. Use the central channel by default."
-  ([] (send-deleted-model @central-channel))
+  ([owner :- s/Str
+    http-params :- c/HttpParams
+    id :- s/Str]
+   (send-deleted-model @central-channel owner http-params id))
   ([echan :- EventChannel
     owner :- s/Str
     http-params :- c/HttpParams
@@ -112,7 +118,11 @@
 
 (s/defn send-verdict-change
   "Builds a verdict change event and sends it to the provided channel. Use the central channel by default."
-  ([] (send-verdict-change @central-channel))
+  ([owner :- s/Str
+    http-params :- c/HttpParams
+    id :- s/Str
+    verdict :- v/Verdict]
+   (send-verdict-change @central-channel owner http-params id verdict))
   ([echan :- EventChannel
     owner :- s/Str
     http-params :- c/HttpParams
