@@ -5,23 +5,39 @@
                  [metosin/schema-tools "0.7.0"]
                  [com.rpl/specter "0.9.2"]
                  [org.clojure/core.async "0.2.374"]
+                 [clj-http "2.0.1"]
+                 [org.clojure/core.memoize "0.5.8"]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]
                  [ring-middleware-format "0.7.0"]
 
                  ;; Database
+                 [clojurewerkz/elastisch "2.2.1"]
                  [korma "0.4.2"]
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
-                 ]
+
+                 ;; Docs
+                 [markdown-clj "0.9.86"]
+                 [hiccup "1.0.5"]]
+
+  :resource-paths ["resources" "doc"]
   :ring {:handler cia.handler/app
-         :init cia.init/init-store
+         :init cia.init/init!
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
-  :profiles {:dev {:dependencies [[clj-http "2.0.1"]
-                                  [cheshire "5.5.0"]
+  :min-lein-version "2.4.0"
+  :test-selectors {:es-store #(.contains (name (:name %)) "-es-store")
+                   :default #(not (or (.contains (name (:name %)) "-es-store")
+                                      (:integration %)
+                                      (:regression %)))
+                   :integration #(or (.contains (name (:name %)) "-es-store")
+                                     (:integation %))}
+
+  :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [javax.servlet/servlet-api "2.5"]
                                   [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]]
                    :plugins [[lein-ring "0.9.6"]]
-                   :resource-paths ["model" "test/resources"]}})
+                   :resource-paths ["model"
+                                    "test/resources"]}})

@@ -1,90 +1,47 @@
 (ns cia.auth)
 
-(def capabilities
-  [:get-verdict
-
-   ;; judgements
-   :create-judgement
-   :read-judgement
-   :delete-judgement
-   :list-judgements-by-observable
-   :list-judgements-by-indicator
-
-   ;; indicators
-   :create-indicator
-   :read-indicator
-   :read-indicator-implementation
-   :update-indicator
-   :delete-indicator
-   :list-indicators
-
-   ;; feedback
-   :create-feedback
-
-
-   ;; threats
-   :create-ttp
-   :update-ttp
-   :delete-ttp
-   :read-ttp
-   :list-ttps
-
-   :create-campaign
-   :update-campaign
-   :delete-campaign
-   :read-campaign
-   :list-campaigns
-
-   :create-actor
-   :update-actor
-   :delete-actor
-   :read-actor
-   :list-actors
-
-
-   ;; sightings
-   :create-sighting
-   :update-sighting
-   :delete-sighting
-   :read-sighting
-   :list-sightings-by-observable
-   :list-sightings-by-indicator
-   :list-sightings
-
-   ;; incidents
-   :create-incident
-   :update-incident
-   :delete-incident
-   :read-incident
-   :list-incidents-by-observable
-   :list-incidents-by-indicator
-   :list-incidents
-
-   ;; relations
-   :create-relation
-   :delete-relation
-   :update-relation
-   :read-relation
-   :list-relations
-   
-   ])
+(defprotocol IIdentity
+  (authenticated? [this])
+  (login [this])
+  (allowed-capabilities [this])
+  (allowed-capability? [this capability]))
 
 (defprotocol IAuth
-  (default-capabilities [this])
-  (capabilities-for-token [this token])
-  (owner-for-token [this token]))
+  (require-login? [this])
+  (identity-for-token [this token]))
 
-(defonce auth-service
-  (atom
-   (reify IAuth
-     (default-capabilities [this]
-       capabilities)
-     
-     (capabilities-for-token [this token]
-       capabilities)
+(defonce auth-service (atom nil))
 
-     (owner-for-token [this token]
-       "default"))))
+(def default-capabilities
+  {:user
+   #{:read-judgement
+     :list-judgements-by-observable
+     :list-judgements-by-indicator
+     :read-indicator
+     :list-indicators-by-title
+     :read-feedback
+     :reat-ttp
+     :read-campaign
+     :read-actor
+     :read-exploit-target
+     :read-coa
+     :read-sighting
+     :read-incident
+     :read-relation}
+   :admin
+   #{:admin}})
 
+(def not-logged-in-owner "Unknown")
 
+(defrecord DeniedIdentity []
+  IIdentity
+  (authenticated? [_]
+    false)
+  (login [_]
+    not-logged-in-owner)
+  (allowed-capabilities [_]
+    #{})
+  (allowed-capability? [_ _]
+    false))
 
+(def denied-identity-singleton (->DeniedIdentity))

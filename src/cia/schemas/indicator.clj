@@ -19,7 +19,7 @@
 (s/defschema ThreatBrainSpecification
   "An indicator which runs in threatbrain..."
   {:type (s/eq "ThreatBrain")
-   :query s/Str
+   (s/optional-key :query) s/Str
    :variables [s/Str] })
 
 (s/defschema SnortSpecification
@@ -37,15 +37,6 @@
   {:type (s/eq "OpenIOC")
    :open_IOC s/Str})
 
-(s/defschema Sighting
-  "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
-  {(s/optional-key :timestamp) c/Time
-   (s/optional-key :source) s/Str
-   (s/optional-key :reference) c/URI
-   (s/optional-key :confidence) v/HighMedLow
-   (s/optional-key :description) s/Str
-   (s/optional-key :related_judgements) rel/RelatedJudgements})
-
 (s/defschema CompositeIndicatorExpression
   "See http://stixproject.github.io/data-model/1.2/indicator/CompositeIndicatorExpressionType/"
   {:operator (s/enum "and" "or" "not")
@@ -56,26 +47,79 @@
   (merge
    c/GenericStixIdentifiers
    {:valid_time c/ValidTime
-    (s/optional-key :alternate_ids) (describe [s/Str] "alternative identifier (or alias)")
-    (s/optional-key :version) (describe s/Num "schema version for this content")
-    (s/optional-key :negate) (describe s/Bool "specifies the absence of the pattern")
-    (s/optional-key :type) (describe [v/IndicatorType] "Specifies the type or types for this Indicator")
-    (s/optional-key :observable) (describe c/Observable "a relevant cyber observable for this Indicator")
-    (s/optional-key :judgements) (describe rel/RelatedJudgements "related Judgements for this Indicator")
-    (s/optional-key :composite_indicator_expression) CompositeIndicatorExpression
-    (s/optional-key :indicated_TTP) (describe rel/RelatedTTPs "the relevant TTP indicated by this Indicator")
-    (s/optional-key :likely_impact) (describe s/Str "likely potential impact within the relevant context if this Indicator were to occur")
-    (s/optional-key :suggested_COAs) (describe rel/RelatedCOAs "suggested Courses of Action")
-    (s/optional-key :confidence) (describe v/HighMedLow "level of confidence held in the accuracy of this Indicator")
-    (s/optional-key :sightings) (describe [Sighting] "a set of sighting reports")
-    (s/optional-key :related_indicators) (describe rel/RelatedIndicators "relationship between the enclosing indicator and a disparate indicator")
-    (s/optional-key :related_campaigns) (describe rel/RelatedCampaigns "references to related campaigns")
-    (s/optional-key :related_COAs) (describe rel/RelatedCOAs "related Courses of Actions for this cyber threat Indicator")
-    (s/optional-key :kill_chain_phases) (describe [s/Str] "relevant kill chain phases indicated by this Indicator") ;; simplified
-    (s/optional-key :test_mechanisms) (describe [s/Str] "Test Mechanisms effective at identifying the cyber Observables specified in this cyber threat Indicator") ;; simplified
+    (s/optional-key :alternate_ids)
+    (describe [s/Str]
+              "alternative identifier (or alias)")
+
+    (s/optional-key :version)
+    (describe s/Num
+              "schema version for this content")
+
+    (s/optional-key :negate)
+    (describe s/Bool
+              "specifies the absence of the pattern")
+
+    (s/optional-key :type)
+    (describe [v/IndicatorType]
+              "Specifies the type or types for this Indicator")
+
+    (s/optional-key :tags)
+    (describe [s/Str]
+              "Descriptors for this indicator")
+
+    (s/optional-key :observable)
+    (describe c/Observable
+              "a relevant cyber observable for this Indicator")
+
+    (s/optional-key :judgements)
+    (describe rel/RelatedJudgements
+              "related Judgements for this Indicator")
+
+    (s/optional-key :composite_indicator_expression)
+    CompositeIndicatorExpression
+
+    (s/optional-key :indicated_TTP)
+    (describe rel/RelatedTTPs
+              "the relevant TTP indicated by this Indicator")
+
+    (s/optional-key :likely_impact)
+    (describe s/Str
+              "likely potential impact within the relevant context if this Indicator were to occur")
+
+    (s/optional-key :suggested_COAs)
+    (describe rel/RelatedCOAs
+              "suggested Courses of Action")
+
+    (s/optional-key :confidence)
+    (describe v/HighMedLow
+              "level of confidence held in the accuracy of this Indicator")
+
+    (s/optional-key :sightings)
+    (describe rel/RelatedSightings
+              "a set of sighting reports")
+
+    (s/optional-key :related_indicators)
+    (describe rel/RelatedIndicators
+              "relationship between the enclosing indicator and a disparate indicator")
+
+    (s/optional-key :related_campaigns)
+    (describe rel/RelatedCampaigns
+              "references to related campaigns")
+
+    (s/optional-key :related_COAs)
+    (describe rel/RelatedCOAs
+              "related Courses of Actions for this cyber threat Indicator")
+
+    (s/optional-key :kill_chain_phases) ;; simplified
+    (describe [s/Str]
+              "relevant kill chain phases indicated by this Indicator")
+
+    (s/optional-key :test_mechanisms) ;; simplified
+    (describe [s/Str]
+              "Test Mechanisms effective at identifying the cyber Observables specified in this cyber threat Indicator")
 
     ;; Extension fields:
-    :producer s/Str
+    :producer s/Str ;; TODO - Document what is supposed to be in this field!
     (s/optional-key :specifications) [(s/conditional
                                        #(= "Judgement" (:type %)) JudgementSpecification
                                        #(= "ThreatBrain" (:type %)) ThreatBrainSpecification
@@ -102,15 +146,17 @@
 
 (s/defn realize-indicator :- StoredIndicator
   ([new-indicator :- NewIndicator
-    id :- s/Str]
-   (realize-indicator new-indicator id nil))
+    id :- s/Str
+    login :- s/Str]
+   (realize-indicator new-indicator id login nil))
   ([new-indicator :- NewIndicator
     id :- s/Str
+    login :- s/Str
     prev-indicator :- (s/maybe StoredIndicator)]
    (let [now (c/timestamp)]
      (assoc new-indicator
             :id id
-            :owner "not implemented"
+            :owner login
             :created (or (:created prev-indicator) now)
             :modified now
             :valid_time (or (:valid_time prev-indicator)
@@ -118,3 +164,12 @@
                                              now)
                              :end_time (or (get-in new-indicator [:valid_time :end_time])
                                            c/default-expire-date)})))))
+
+(defn generalize-indicator
+  "Strips off realized fields"
+  [indicator]
+  (dissoc indicator
+          :id
+          :created
+          :modified
+          :owner))

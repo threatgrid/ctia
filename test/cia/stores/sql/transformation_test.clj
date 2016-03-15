@@ -56,7 +56,7 @@
 
 (def relationship-example
   {:entity-relationship-key :indicators
-   :relationship-reference-key :indicator
+   :relationship-reference-key :indicator_id
    :entity-id-key :judgement_id
    :other-id-key :indicator_id})
 
@@ -65,7 +65,7 @@
     (is (= {:confidence "confidence"
             :source "source"
             :relationship "relationship"
-            :indicator "indicator_id"}
+            :indicator_id "indicator_id"}
            (sut
             {:confidence "confidence"
              :source "source"
@@ -73,7 +73,7 @@
              :judgement_id "judgement_id"
              :indicator_id "indicator_id"})))
 
-    (is (= {:indicator "indicator_id"}
+    (is (= {:indicator_id "indicator_id"}
            (sut
             {:judgement_id "judgement_id"
              :indicator_id "indicator_id"})))))
@@ -86,19 +86,15 @@
              :judgement_id "judgement_id"
              :indicator_id "indicator_id"}
             {:judgement_id "judgement_id"
-             :indicator_id "indicator_id"}
-            {:judgement_id "judgement_id"
              :indicator_id "indicator_id"}]
            (sut
             [{:id "judgement_id"
               :indicators [{:confidence "confidence"
                             :source "source"
                             :relationship "relationship"
-                            :indicator "indicator_id"}]}
+                            :indicator_id "indicator_id"}]}
              {:id "judgement_id"
-              :indicators [{:indicator "indicator_id"}]}
-             {:id "judgement_id"
-              :indicators ["indicator_id"]}])))))
+              :indicators [{:indicator_id "indicator_id"}]}])))))
 
 (deftest filter-map->where-map
   (is (= {:observable_type "type"

@@ -12,6 +12,7 @@
 (def IncidentReference c/Reference)
 (def IndicatorReference c/Reference)
 (def JudgementReference c/Reference)
+(def SightingReference c/Reference)
 (def TTPReference c/Reference)
 (def VerdictReference c/Reference)
 
@@ -22,46 +23,41 @@
     (s/optional-key :relationship) s/Str}
    reference-map))
 
-(defn relation [string-type map-type]
-  (s/conditional
-   map? map-type
-   :else string-type))
+(s/defschema RelatedIndicator
+  (enriched-ref {:indicator_id IndicatorReference}))
 
 (s/defschema RelatedIndicators
-  [(relation IndicatorReference
-             (enriched-ref {:indicator IndicatorReference}))])
+  [RelatedIndicator])
 
 (s/defschema RelatedActors
-  [(relation ActorReference
-             (enriched-ref {:actor ActorReference}))])
+  [(enriched-ref {:actor_id ActorReference})])
 
 (s/defschema RelatedCampaigns
-  [(relation CampaignReference
-             (enriched-ref {:campaign CampaignReference}))])
+  [(enriched-ref {:campaign_id CampaignReference})])
 
 (s/defschema RelatedCOAs
-  [(relation COAReference
-             (enriched-ref {:COA COAReference}))])
+  [(enriched-ref {:COA_id COAReference})])
 
 (s/defschema RelatedExploitTargets
-  [(relation ExploitTargetReference
-             (enriched-ref {:exploit_target ExploitTargetReference}))])
+  [(enriched-ref {:exploit_target_id ExploitTargetReference})])
 
 (s/defschema RelatedIncidents
-  [(relation IncidentReference
-             (enriched-ref {:incident IncidentReference}))])
+  [(enriched-ref {:incident_id IncidentReference})])
+
+(s/defschema RelatedIndicator
+  (enriched-ref {:indicator_id IndicatorReference}))
 
 (s/defschema RelatedIndicators
-  [(relation IndicatorReference
-             (enriched-ref {:indicator IndicatorReference}))])
+  [RelatedIndicator])
 
 (s/defschema RelatedJudgements
-  [(relation JudgementReference
-             (enriched-ref {:judgement JudgementReference}))])
+  [(enriched-ref {:judgement_id JudgementReference})])
+
+(s/defschema RelatedSightings
+  [(enriched-ref {:sighting_id SightingReference})])
 
 (s/defschema RelatedTTP
-  (enriched-ref {:ttp TTPReference}))
+  (enriched-ref {:ttp_id TTPReference}))
 
 (s/defschema RelatedTTPs
-  [(relation TTPReference
-             RelatedTTP)])
+  [RelatedTTP])

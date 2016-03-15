@@ -11,21 +11,38 @@
    c/GenericStixIdentifiers
    {:valid_time c/ValidTime
     (s/optional-key :stage)
-    (describe v/COAStage "specifies what stage in the cyber threat management lifecycle this Course Of Action is relevant to ")
+
+    (describe v/COAStage
+              "specifies what stage in the cyber threat management lifecycle this Course Of Action is relevant to ")
+
     (s/optional-key :type)
-    (describe v/COAType "type of this CourseOfAction")
+    (describe v/COAType
+              "type of this CourseOfAction")
+
     (s/optional-key :objective)
-    (describe [s/Str] "characterizes the objective of this Course Of Action") ;; Squashed / simplified
+    (describe [s/Str]
+              "characterizes the objective of this Course Of Action") ;; Squashed / simplified
+
     (s/optional-key :impact)
-    (describe s/Str "characterizes the estimated impact of applying this Course Of Action")
+    (describe s/Str
+              "characterizes the estimated impact of applying this Course Of Action")
+
     (s/optional-key :cost)
-    (describe v/HighMedLow "characterizes the estimated cost for applying this Course Of Action")
+    (describe v/HighMedLow
+              "characterizes the estimated cost for applying this Course Of Action")
+
     (s/optional-key :efficacy)
-    (describe v/HighMedLow "effectiveness of this Course Of Action in achieving its targeted Objective")
+    (describe v/HighMedLow
+              "effectiveness of this Course Of Action in achieving its targeted Objective")
+
     (s/optional-key :source)
-    (describe s/Str "Source of this Course Of Action")
+    (describe s/Str
+              "Source of this Course Of Action")
+
     (s/optional-key :related_COAs)
-    (describe rel/RelatedCOAs "identifies or characterizes relationships to one or more related courses of action")
+    (describe rel/RelatedCOAs
+              "identifies or characterizes relationships to one or more related courses of action")
+
     ;; Not provided: handling
     ;; Not provided: parameter_observables ;; Technical params using the CybOX language
     ;; Not provided: structured_COA ;; actionable structured representation for automation
@@ -48,15 +65,17 @@
 
 (s/defn realize-coa :- StoredCOA
   ([new-coa :- NewCOA
-    id :- s/Str]
-   (realize-coa new-coa id nil))
+    id :- s/Str
+    login :- s/Str]
+   (realize-coa new-coa id login nil))
   ([new-coa :- NewCOA
     id :- s/Str
+    login :- s/Str
     prev-coa :- (s/maybe StoredCOA)]
    (let [now (c/timestamp)]
      (st/assoc new-coa
                :id id
-               :owner "not implemented"
+               :owner login
                :created (or (:created prev-coa) now)
                :modified now
                :valid_time (or (:valid_time prev-coa)

@@ -25,14 +25,15 @@
               (k/table :judgement_indicator)
               (k/database @db))))
 
-(defn realize-judgements [new-judgements]
+(defn realize-judgements [login new-judgements]
   (for [new-judgement new-judgements]
     (judgement-schema/realize-judgement new-judgement
-                                        (str "judgement-" (UUID/randomUUID)))))
+                                        (str "judgement-" (UUID/randomUUID))
+                                        login)))
 
 (def judgement-indicator-relationship-map
   {:entity-relationship-key :indicators
-   :relationship-reference-key :indicator
+   :relationship-reference-key :indicator_id
    :entity-id-key :judgement_id
    :other-id-key :indicator_id})
 
@@ -40,13 +41,17 @@
   (transform/db-relationship->schema-relationship
    judgement-indicator-relationship-map))
 
-(def judgements->db-indicators
-  (transform/entities->db-relationships
+(def schema-indicator->db-indicator
+  (transform/schema-relationship->db-relationship
    judgement-indicator-relationship-map))
 
-(defn insert-judgements [& new-judgements]
-  (let [realized-judgements (-> new-judgements
-                                realize-judgements)
+(def judgements->db-indicators
+  (transform/entities->db-relationships
+   judgement-indicator-relationship-map
+   schema-indicator->db-indicator))
+
+(defn insert-judgements [login & new-judgements]
+  (let [realized-judgements (realize-judgements login new-judgements)
         judgements (-> realized-judgements
                        transform/datetimes-to-sqltimes)]
     (kdb/transaction
@@ -92,7 +97,7 @@
 
 (defn calculate-verdict [{:keys [type value] :as _observable_}]
   (k/select @judgement
-            (k/fields :disposition [:id :judgement] :disposition_name)
+            (k/fields :disposition [:id :judgement_id] :disposition_name)
             (k/where {:observable_type type
                       :observable_value value})
             (k/where (or (= :valid_time_end_time nil)
@@ -101,3 +106,9 @@
             (k/order :disposition)
             (k/order :valid_time_start_time)
             (k/limit 1)))
+
+(defn create-judgement-indicator [judgement-id indicator-rel]
+  (when (seq (k/select @judgement (k/where {:id judgement-id})))
+    (c/insert @judgement-indicator
+              [(schema-indicator->db-indicator judgement-id indicator-rel)])
+    indicator-rel))

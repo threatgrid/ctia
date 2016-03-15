@@ -1,14 +1,17 @@
 (ns cia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [cheshire.core :as json]
+  (:require [cia.auth :as auth]
+            [cia.auth.allow-all :as aa]
+            [cia.properties :as props]
             [cia.store :as store]
             [cia.stores.memory :as mem]
+            [cheshire.core :as json]
             [clj-http.client :as http]
+            [clojure.data :as cd]
             [clojure.edn :as edn]
-            [ring.adapter.jetty :as jetty]
-            [schema.core :as schema]
             [clojure.test :as ct]
-            [clojure.data :as cd]))
+            [ring.adapter.jetty :as jetty]
+            [schema.core :as schema]))
 
 (defmethod ct/assert-expr 'deep= [msg form]
   (let [a (second form)
@@ -23,10 +26,20 @@
          (ct/do-report {:type :pass, :message ~msg,
                         :expected '~form, :actual nil})))))
 
+(defn fixture-properties [f]
+  (props/init! "cia-test.properties")
+  (f))
+
 
 (defn fixture-schema-validation [f]
   (schema/with-fn-validation
     (f)))
+
+(defn fixture-allow-all-auth [f]
+  (let [orig-auth-srvc @auth/auth-service]
+    (reset! auth/auth-service (aa/->AuthService))
+    (f)
+    (reset! auth/auth-service orig-auth-srvc)))
 
 (defn init-atom [f]
   (fn []
@@ -41,7 +54,9 @@
    store/exploit-target-store (init-atom mem/->ExploitTargetStore)
    store/incident-store       (init-atom mem/->IncidentStore)
    store/indicator-store      (init-atom mem/->IndicatorStore)
-   store/ttp-store            (init-atom mem/->TTPStore)})
+   store/sighting-store       (init-atom mem/->SightingStore)
+   store/ttp-store            (init-atom mem/->TTPStore)
+   store/identity-store       (init-atom mem/->IdentityStore)})
 
 (defn fixture-store [store-map]
   (fn [f]
@@ -64,6 +79,12 @@
                                    :join? false})]
       (f)
       (.stop server))))
+
+(defn set-capabilities! [login role caps]
+  (store/create-identity @store/identity-store
+                         {:login login
+                          :role role
+                          :capabilities caps}))
 
 (defn url
   ([path]
@@ -105,10 +126,14 @@
     :else body))
 
 (defn get [path & {:as options}]
-  (let [response (http/get (url path)
-                           (merge {:accept :edn
-                                   :throw-exceptions false}
-                                  options))]
+  (let [options
+        (merge {:accept :edn
+                :throw-exceptions false}
+               options)
+
+        response
+        (http/get (url path)
+                  options)]
     (assoc response :parsed-body (parse-body response))))
 
 (defn post [path & {:as options}]
@@ -120,8 +145,11 @@
                 :socket-timeout 2000
                 :conn-timeout 2000}
                options)
-        response (http/post (url path)
-                            (assoc options :body (encode-body body content-type)))]
+
+        response
+        (http/post (url path)
+                   (-> options
+                       (cond-> body (assoc :body (encode-body body content-type)))))]
     (assoc response :parsed-body (parse-body response))))
 
 (defn delete [path & {:as options}]
@@ -138,13 +166,16 @@
                 :socket-timeout 2000
                 :conn-timeout 2000}
                options)
-        response (http/put (url path)
-                           (assoc options :body (encode-body body content-type)))]
+
+        response
+        (http/put (url path)
+                  (-> options
+                      (cond-> body (assoc :body (encode-body body content-type)))))]
     (assoc response :parsed-body (parse-body response))))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
   `(do
      ~@(for [[name-key fixture-fn] fixture-map]
          `(clojure.test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
-                      {(keyword test-name) true})
+                                   {(keyword test-name) true})
             (~fixture-fn (fn [] ~@body))))))
