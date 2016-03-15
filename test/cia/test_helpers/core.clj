@@ -2,7 +2,17 @@
   (:refer-clojure :exclude [get])
   (:require [cia.properties :as props]
             [cia.store :as store]
-            [cia.stores.memory :as mem]
+            [cia.stores.memory.actor :as ma]
+            [cia.stores.memory.campaign :as mca]
+            [cia.stores.memory.coa :as mco]
+            [cia.stores.memory.exploit-target :as me]
+            [cia.stores.memory.feedback :as mf]
+            [cia.stores.memory.identity :as mi]
+            [cia.stores.memory.incident :as mic]
+            [cia.stores.memory.indicator :as min]
+            [cia.stores.memory.judgement :as mj]
+            [cia.stores.memory.sighting :as ms]
+            [cia.stores.memory.ttp :as mt]
             [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.data :as cd]
@@ -38,17 +48,17 @@
     (f (atom {}))))
 
 (def memory-stores
-  {store/actor-store          (init-atom mem/->ActorStore)
-   store/judgement-store      (init-atom mem/->JudgementStore)
-   store/feedback-store       (init-atom mem/->FeedbackStore)
-   store/campaign-store       (init-atom mem/->CampaignStore)
-   store/coa-store            (init-atom mem/->COAStore)
-   store/exploit-target-store (init-atom mem/->ExploitTargetStore)
-   store/incident-store       (init-atom mem/->IncidentStore)
-   store/indicator-store      (init-atom mem/->IndicatorStore)
-   store/sighting-store       (init-atom mem/->SightingStore)
-   store/ttp-store            (init-atom mem/->TTPStore)
-   store/identity-store       (init-atom mem/->IdentityStore)})
+  {store/actor-store          (init-atom ma/->ActorStore)
+   store/judgement-store      (init-atom mj/->JudgementStore)
+   store/feedback-store       (init-atom mf/->FeedbackStore)
+   store/campaign-store       (init-atom mca/->CampaignStore)
+   store/coa-store            (init-atom mco/->COAStore)
+   store/exploit-target-store (init-atom me/->ExploitTargetStore)
+   store/incident-store       (init-atom mic/->IncidentStore)
+   store/indicator-store      (init-atom min/->IndicatorStore)
+   store/sighting-store       (init-atom ms/->SightingStore)
+   store/ttp-store            (init-atom mt/->TTPStore)
+   store/identity-store       (init-atom mi/->IdentityStore)})
 
 (defn fixture-store [store-map]
   (fn [f]
