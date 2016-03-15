@@ -1,6 +1,8 @@
 (ns cia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [cia.properties :as props]
+  (:require [cia.auth :as auth]
+            [cia.auth.allow-all :as aa]
+            [cia.properties :as props]
             [cia.store :as store]
             [cia.stores.memory :as mem]
             [cheshire.core :as json]
@@ -32,6 +34,12 @@
 (defn fixture-schema-validation [f]
   (schema/with-fn-validation
     (f)))
+
+(defn fixture-allow-all-auth [f]
+  (let [orig-auth-srvc @auth/auth-service]
+    (reset! auth/auth-service (aa/->AuthService))
+    (f)
+    (reset! auth/auth-service orig-auth-srvc)))
 
 (defn init-atom [f]
   (fn []

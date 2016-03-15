@@ -1,6 +1,7 @@
 (ns cia.auth)
 
 (defprotocol IIdentity
+  (authenticated? [this])
   (login [this])
   (allowed-capabilities [this])
   (allowed-capability? [this capability]))
@@ -29,3 +30,18 @@
      :read-relation}
    :admin
    #{:admin}})
+
+(def not-logged-in-owner "Unknown")
+
+(defrecord DeniedIdentity []
+  IIdentity
+  (authenticated? [_]
+    false)
+  (login [_]
+    not-logged-in-owner)
+  (allowed-capabilities [_]
+    #{})
+  (allowed-capability? [_ _]
+    false))
+
+(def denied-identity-singleton (->DeniedIdentity))

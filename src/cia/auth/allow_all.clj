@@ -5,8 +5,10 @@
 
 (defrecord Identity []
   IIdentity
+  (authenticated? [_]
+    false)
   (login [_]
-    "unknown")
+    auth/not-logged-in-owner)
   (allowed-capabilities [_]
     (get auth/default-capabilities :admin))
   (allowed-capability? [_ _]

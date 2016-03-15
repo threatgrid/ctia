@@ -66,7 +66,7 @@
            :disposition_name disposition_name
            :owner login
            :created now
-           :valid_time {:end_time (or (get-in new-judgement [:valid_time :end-time])
+           :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
                                       c/default-expire-date)
                         :start_time (or (get-in new-judgement [:valid_time :start_time])
                                         now)})))
