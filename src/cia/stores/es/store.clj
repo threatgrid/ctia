@@ -21,18 +21,24 @@
    [cia.stores.es.coa :as coa]
    [cia.stores.es.incident :as inc]
    [cia.stores.es.exploit-target :as et]
+   [cia.stores.es.sighting :as sig]
    [cia.stores.es.identity :as id]))
 
 (defrecord JudgementStore [state]
   IJudgementStore
   (create-judgement [_ login new-judgement]
     (ju/handle-create-judgement state login new-judgement))
+  (add-indicator-to-judgement [_ judgement-id indicator-rel]
+    (ju/handle-add-indicator-to-judgement state judgement-id indicator-rel))
   (read-judgement [_ id]
     (ju/handle-read-judgement state id))
   (delete-judgement [_ id]
     (ju/handle-delete-judgement state id))
   (list-judgements [_ filter-map]
     (ju/handle-list-judgements state filter-map))
+  (list-judgements-by-observable [this observable]
+    (ju/handle-list-judgements state {[:observable :type]  (:type observable)
+                                      [:observable :value] (:value observable)}))
   (calculate-verdict [_ observable]
     (ju/handle-calculate-verdict state observable)))
 
@@ -55,16 +61,8 @@
     (in/handle-delete-indicator state id))
   (list-indicators [_ filter-map]
     (in/handle-list-indicators state filter-map))
-  ;; (list-indicators-by-observable [_ judgement-store observable]
-  ;;   (in/handle-list-indicators-by-observable state
-  ;;                                            judgement-store
-  ;;                                            observable))
-  ;; (list-indicator-sightings-by-observable [_ judgement-store observable]
-  ;;   (->> (in/handle-list-indicators-by-observable state
-  ;;                                                 judgement-store
-  ;;                                                 observable)
-  ;;        (mapcat :sightings)))
-  )
+  (list-indicators-by-judgements [_ judgements]
+    (in/handle-list-indicators-by-judgements state judgements)))
 
 (defrecord TTPStore [state]
   ITTPStore
@@ -152,3 +150,18 @@
     (id/handle-create-identity state new-identity))
   (delete-identity [_ org-id role]
     (id/handle-delete-identity state org-id role)))
+
+(defrecord SightingStore [state]
+  ISightingStore
+  (read-sighting [_ id]
+    (sig/handle-read-sighting state id))
+  (create-sighting [_ login new-sighting]
+    (sig/handle-create-sighting state login new-sighting))
+  (update-sighting [_ id login sighting]
+    (sig/handle-update-sighting state id login sighting))
+  (delete-sighting [_ id]
+    (sig/handle-delete-sighting state id))
+  (list-sightings [_ filter-map]
+    (sig/handle-list-sightings state filter-map))
+  (list-sightings-by-indicators [_ indicators]
+    (sig/handle-list-sightings-by-indicators state indicators)))

@@ -35,7 +35,8 @@
                                             mapping
                                             id
                                             doc
-                                            {:fields "_source"})
+                                            {:refresh true
+                                             :fields "_source"})
           [:get-result :source]))
 
 (defn delete-doc
@@ -59,6 +60,7 @@
 (defn search-docs
   "search for documents on es, return only the docs"
   [conn index-name mapping filter-map]
+
   (let [filters (filter-map->terms-query filter-map)
         res (document/search conn
                              index-name
