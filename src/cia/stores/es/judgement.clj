@@ -89,6 +89,9 @@
    :disposition_name (get disposition-map (:disposition judgement))})
 
 (defn handle-calculate-verdict [state observable]
-  (-> (list-unexpired-judgements-by-observable state observable)
-      first
-      make-verdict))
+  (let [verdict (-> (list-unexpired-judgements-by-observable state observable)
+                    first
+                    make-verdict)]
+
+    (when (:judgement_id verdict)
+      verdict)))

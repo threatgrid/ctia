@@ -321,6 +321,7 @@
   {"indicator"
    {:properties
     {:id string
+     :title string
      :alternate_ids string
      :version {:type "integer"}
      :negate {:type "boolean"}
