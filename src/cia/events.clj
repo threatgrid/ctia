@@ -19,15 +19,19 @@
   "This structure holds a channel, its associated buffer, and a multichan"
   {:chan-buf FixedBuffer
    :chan Channel
-   :mult Mult})
+   :mult Mult
+   :recent Channel})
 
 (s/defn new-event-channel :- EventChannel []
   (let [b (a/buffer *event-buffer-size*)
         c (a/chan b)
-        p (a/mult c)]
+        p (a/mult c)
+        r (a/chan (a/sliding-buffer *event-buffer-size*))]
+    (a/tap p r)
     {:chan-buf b
      :chan c
-     :mult p}))
+     :mult p
+     :recent r}))
 
 (defn init! []
   (reset! central-channel (new-event-channel)))
@@ -133,3 +137,16 @@
                       :timestamp (time/now)
                       :judgement_id id
                       :verdict verdict})))
+
+(s/defn drain :- [es/ModelEventBase]
+  "Pull everything out of a channel until it is empty, and return in a seq"
+  [c :- Channel]
+  (loop [acc []]
+    (if-let [x (a/poll! c)]
+      (recur (conj acc x))
+      acc)))
+
+(s/defn recent-events :- [es/ModelEventBase]
+  "Return the N most recent items"
+  []
+  (drain (:recent @central-channel)))

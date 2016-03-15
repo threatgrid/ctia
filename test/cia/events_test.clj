@@ -3,12 +3,6 @@
             [clojure.test :as t :refer :all]
             [clojure.core.async :refer [poll! chan tap <!!]]))
 
-(defn drain [c]
-  (loop [acc []]
-    (if-let [x (poll! c)]
-      (recur (conj acc x))
-      acc)))
-
 (deftest test-send-event
   "Tests the basic action of sending an event"
   (let [{b :chan-buf c :chan m :mult :as ec} (new-event-channel)
@@ -75,3 +69,17 @@
       (is (= 7 (-> v :judgement_id)))
       (is (= 2 (-> v :verdict :disposition))))))
 
+(deftest test-recents
+  "Tests that the sliding window works, and is repeatable"
+  (binding [*event-buffer-size* 3]
+    (init!)
+    (send-create-event "tester" {} "TestModelType" {:data 1})
+    (send-create-event "tester" {} "TestModelType" {:data 2})
+    (send-create-event "tester" {} "TestModelType" {:data 3})
+    (is (= [1 2 3] (map (comp :data :model) (recent-events))))
+    (send-create-event "tester" {} "TestModelType" {:data 4})
+    (send-create-event "tester" {} "TestModelType" {:data 5})
+    (send-create-event "tester" {} "TestModelType" {:data 6})
+    (send-create-event "tester" {} "TestModelType" {:data 7})
+    (Thread/sleep 100)
+    (is (= [5 6 7] (map (comp :data :model) (recent-events))))))

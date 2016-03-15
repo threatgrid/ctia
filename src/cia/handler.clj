@@ -17,6 +17,7 @@
             [cia.schemas.sighting :refer [NewSighting StoredSighting]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
+            [cia.events.schemas :refer [ModelEventBase]]
             [cia.store :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.util.http-response :refer :all]
@@ -380,6 +381,13 @@
         :path-params [id :- s/Str]
         :summary "Deletes a Sighting"
         (ok {:id id})))
+
+    (context "/events" []
+      :tags ["Events"]
+      (GET "/log" []
+        :return [ModelEventBase]
+        :summary "Recent Event log"
+        (ok (e/recent-events))))
 
 
     (GET "/:observable_type/:observable_value/judgements" []
