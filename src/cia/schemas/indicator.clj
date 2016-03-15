@@ -164,3 +164,12 @@
                                              now)
                              :end_time (or (get-in new-indicator [:valid_time :end_time])
                                            c/default-expire-date)})))))
+
+(defn generalize-indicator
+  "Strips off realized fields"
+  [indicator]
+  (dissoc indicator
+          :id
+          :created
+          :modified
+          :owner))

@@ -22,6 +22,7 @@
    :delete-indicator
    :list-indicators
    :list-indicators-by-observable
+   :list-indicators-by-title
 
    :create-sightings
    :read-sightings

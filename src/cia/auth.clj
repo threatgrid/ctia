@@ -17,6 +17,7 @@
      :list-judgements-by-observable
      :list-judgements-by-indicator
      :read-indicator
+     :list-indicators-by-title
      :read-feedback
      :reat-ttp
      :read-campaign
