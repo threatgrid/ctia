@@ -94,19 +94,20 @@
       (transform ioc-indicator))))
 
 (defn load-indicators-from-ioc-file
-  [file cia-url]
-  (let [target-url (str cia-url "/cia/indicator")]
-    (for [indicator (-> (slurp file)
-                          json/parse-string
-                          ioc-indicators->cia-indicators)]
-      (http/post target-url
-                 {:content-type :json
-                  :accept :json
-                  :throw-exceptions false
-                  :socket-timeout 30000
-                  :conn-timeout 30000
-                  :body (json/generate-string indicator)
-                  :headers {"api_key" "123"}}))))
+  [{:keys [dry-run? cia-url api-key]} file]
+  (let [ioc-indicators (-> (slurp file) json/parse-string)]
+    (if dry-run?
+      (doall (ioc-indicators->cia-indicators ioc-indicators :validate? true))
+      (doall
+       (for [indicator (ioc-indicators->cia-indicators ioc-indicators)]
+         (http/post (str cia-url "/cia/indicator")
+                    (-> {:content-type :json
+                         :accept :json
+                         :throw-exceptions false
+                         :socket-timeout 30000
+                         :conn-timeout 30000
+                         :body (json/generate-string indicator)}
+                        (cond-> api-key (assoc :headers {"api_key" api-key})))))))))
 
 (comment
   (load-judgements-from-feed-file "test/data/rat-dns.json"
@@ -117,7 +118,12 @@
 (def commands
   ;; FIXME replace with function
   ;; to support redefinition.
-  {"import-feed" (constantly -1)})
+  {"import-feed" (constantly -1)
+   "import-ioc-indicators" load-indicators-from-ioc-file})
+
+(def command-usage
+  {"import-feed" "(out of order)"
+   "import-ioc-indicators" "<file>"})
 
 (defn global-arguments []
   [["-?" "--help" "Print Usage"
@@ -127,13 +133,18 @@
    ["-v" "--verbose" "Turn on info logging"
     :default false]
    [nil "--cia URL" "CIA URL"
-    :default "http://localhost:3000/"]])
+    :default "http://localhost:3000/"
+    :id :cia-url]
+   ["-a" "--api-key KEY" "API key"]
+   ["-y" "--dry-run" "Do a dry run (no load)"
+    :default false
+    :id :dry-run?]])
 
 (defn usage
   [summary text]
   (print (str text
               "\n\nAvailable Commands:\n  "
-              (join ", " (keys commands))
+              (join "\n  " (->> (keys commands) (map #(str % " " (get command-usage %)))))
               "\n\nGlobal Options:\n" summary))
   -1)
 
