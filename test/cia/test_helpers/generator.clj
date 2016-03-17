@@ -44,16 +44,16 @@
 
 (defn schema-kw->schema [schema-kw]
   "get a schema from a schema keyword"
-  (schema-kw schema-mapping))
+  (get schema-mapping schema-kw))
 
-(defn generate [nb schema]
-  "generate nb records of a schema"
+(defn generate [num schema]
+  "generate num records of a schema"
   (gen/sample
-   (g/generator schema leaf-generators) nb))
+   (g/generator schema leaf-generators) num))
 
-(defn generate-by-kw [nb schema-kw]
-  "generate nb records of a schema-kw"
-  (generate nb (schema-kw->schema schema-kw)))
+(defn generate-by-kw [num schema-kw]
+  "generate num records of a schema-kw"
+  (generate num (schema-kw->schema schema-kw)))
 
 (defn generate-random-model-record []
   (let [model (->> schema-mapping
