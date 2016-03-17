@@ -4,6 +4,7 @@
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
                  [metosin/schema-tools "0.7.0"]
                  [com.rpl/specter "0.9.2"]
+                 [org.clojure/core.async "0.2.374"]
                  [clj-http "2.0.1"]
                  [org.clojure/core.memoize "0.5.8"]
 

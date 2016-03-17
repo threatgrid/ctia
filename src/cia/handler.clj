@@ -16,8 +16,11 @@
             [cia.schemas.relationships :as rel]
             [cia.schemas.sighting :refer [NewSighting StoredSighting]]
             [cia.schemas.ttp :refer [NewTTP StoredTTP]]
+            [cia.schemas.sighting :refer [NewSighting StoredSighting]]
             [cia.schemas.vocabularies :refer [ObservableType]]
             [cia.schemas.verdict :refer [Verdict]]
+            [cia.events.schemas :refer [ModelEventBase]]
+            [cia.events :refer [recent-events]]
             [cia.store :refer :all]
             [compojure.api.sweet :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
@@ -532,6 +535,14 @@
         (if (delete-sighting @sighting-store id)
           (no-content)
           (not-found))))
+
+    (context "/events" []
+      :tags ["Events"]
+      (GET "/log" []
+        :return [ModelEventBase]
+        :summary "Recent Event log"
+        :capabilities #{:admin}
+        (ok (recent-events))))
 
     (GET "/:observable_type/:observable_value/judgements" []
       :query-params [{offset :-  Long 0}

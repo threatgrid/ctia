@@ -158,6 +158,10 @@
   "String verdict identifiers"
   (apply s/enum (vals disposition-map)))
 
+(s/defschema HttpParams
+  "HTTP Parameters. TODO: Presuming either keyword or string keys for now."
+  {s/Any s/Any})
+
 ;; helper fns used by schemas
 
 (defn determine-disposition-id
