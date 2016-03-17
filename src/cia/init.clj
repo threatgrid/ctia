@@ -6,7 +6,17 @@
             [cia.store :as store]
             [cia.stores.es.store :as es]
             [cia.stores.es.index :as es-index]
-            [cia.stores.memory :as mem]))
+            [cia.stores.memory.actor :as ma]
+            [cia.stores.memory.campaign :as mca]
+            [cia.stores.memory.coa :as mco]
+            [cia.stores.memory.exploit-target :as me]
+            [cia.stores.memory.feedback :as mf]
+            [cia.stores.memory.identity :as mi]
+            [cia.stores.memory.incident :as mic]
+            [cia.stores.memory.indicator :as min]
+            [cia.stores.memory.judgement :as mj]
+            [cia.stores.memory.sighting :as ms]
+            [cia.stores.memory.ttp :as mt]))
 
 (defn init-auth-service! []
   (let [auth-service-name (get-in @properties/properties [:auth :service])]
@@ -19,17 +29,17 @@
                        :requested-service auth-service-name})))))
 
 (defn init-mem-store! []
-  (let [store-impls {store/actor-store mem/->ActorStore
+  (let [store-impls {store/actor-store     ma/->ActorStore
                      store/judgement-store mem/->JudgementStore
-                     store/feedback-store mem/->FeedbackStore
-                     store/campaign-store mem/->CampaignStore
-                     store/coa-store mem/->COAStore
-                     store/exploit-target-store mem/->ExploitTargetStore
-                     store/incident-store mem/->IncidentStore
-                     store/indicator-store mem/->IndicatorStore
-                     store/sighting-store mem/->SightingStore
-                     store/ttp-store mem/->TTPStore
-                     store/identity-store mem/->IdentityStore}]
+                     store/feedback-store  mf/->FeedbackStore
+                     store/campaign-store  mca/->CampaignStore
+                     store/coa-store       mco/->COAStore
+                     store/exploit-target-store me/->ExploitTargetStore
+                     store/incident-store  mic/->IncidentStore
+                     store/indicator-store min/->IndicatorStore
+                     store/sighting-store  ms/->SightingStore
+                     store/ttp-store       mt/->TTPStore
+                     store/identity-store  mi/->IdentityStore}]
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn (atom {}))))))
 
