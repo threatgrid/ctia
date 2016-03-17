@@ -88,7 +88,7 @@
                       :timestamp (time/now)
                       :http-params http-params
                       :model-type model-type
-                      :id (:id new-model)
+                      :id (or (:id new-model) (gensym "event"))
                       :model new-model})))
 
 (s/defn send-updated-model

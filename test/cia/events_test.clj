@@ -12,14 +12,10 @@
         output (chan)]
     (tap m output)
     (send-create-event ec "tester" {} "TestModelType" {:data 1})
-    (is (= 0 (count b))) ;; the output channel buffers 1
     (send-create-event ec "tester" {} "TestModelType" {:data 2})
-    (is (= 1 (count b)))
     (is (thrown? AssertionError
                  (send-event ec {:http-params {}})))
-    (is (= 1 (count b)))
     (send-event ec {:owner "tester" :http-params {} :data 3})
-    (is (= 2 (count b)))
     (is (= 1 (-> (<!! output) :model :data)))
     (is (= 2 (-> (<!! output) :model :data)))
     (is (= 3 (-> (<!! output) :data)))))
