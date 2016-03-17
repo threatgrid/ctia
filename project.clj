@@ -18,7 +18,10 @@
 
                  ;; Docs
                  [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+
+                 ;; Generator
+                 [org.clojure/test.check "0.9.0"]]
 
   :resource-paths ["resources" "doc"]
   :ring {:handler cia.handler/app
