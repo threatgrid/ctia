@@ -7,7 +7,7 @@
 (s/defschema ModelEventBase
   {:owner s/Str
    (s/optional-key :timestamp) c/Time
-   :model s/Str
+   :model (s/if string? s/Str {s/Any s/Any})
    :id s/Str
    (s/optional-key :http-params) {s/Any s/Any}})
 
@@ -17,7 +17,7 @@
   (st/merge
    ModelEventBase
    {:type CreateEventType
-    :model s/Any}))
+    :model {s/Any s/Any}}))
 
 (def UpdateEventType "UpdatedModel")
 

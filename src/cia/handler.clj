@@ -541,6 +541,7 @@
       (GET "/log" []
         :return [ModelEventBase]
         :summary "Recent Event log"
+        :capabilities #{:admin}
         (ok (recent-events))))
 
     (GET "/:observable_type/:observable_value/judgements" []

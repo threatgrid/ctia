@@ -15,6 +15,8 @@
 
 (defonce central-channel (atom nil))
 
+(def ModelEvent (assoc es/ModelEventBase s/Any s/Any))
+
 (s/defschema EventChannel
   "This structure holds a channel, its associated buffer, and a multichan"
   {:chan-buf FixedBuffer
@@ -61,10 +63,10 @@
 
 (s/defn send-event
   "Send an event to a channel. Use the central channel by default"
-  ([event :- es/ModelEventBase]
+  ([event]
    (send-event @central-channel event))
   ([{ch :chan} :- EventChannel
-    {:keys [owner timestamp http-params] :as event} :- es/ModelEventBase]
+    {:keys [owner timestamp http-params] :as event}]
    (assert owner "Events cannot be registered without user info")
    (let [event (if timestamp event (assoc event :timestamp (time/now)))]
      (a/>!! ch event))))
@@ -138,15 +140,15 @@
                       :judgement_id id
                       :verdict verdict})))
 
-(s/defn drain :- [es/ModelEventBase]
-  "Pull everything out of a channel until it is empty, and return in a seq"
+(s/defn ^:private drain :- [ModelEvent]
+  "Extract elements from a channel into a lazy-seq.
+   Reading the seq reads from the channel."
   [c :- Channel]
-  (loop [acc []]
-    (if-let [x (a/poll! c)]
-      (recur (conj acc x))
-      acc)))
+  (if-let [x (a/poll! c)]
+    (cons x (lazy-seq (drain c)))))
 
-(s/defn recent-events :- [es/ModelEventBase]
-  "Return the N most recent items"
-  []
-  (drain (:recent @central-channel)))
+(s/defn recent-events :- [ModelEvent]
+  "Returns up to the requested number of the  most recent events.
+   Defaults to attempting to get *event-buffer-size* events."
+  ([] (recent-events *event-buffer-size*))
+  ([n :- Long] (take n (drain (:recent @central-channel)))))
