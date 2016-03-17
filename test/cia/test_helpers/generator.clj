@@ -1,4 +1,4 @@
-(ns cia.generator
+(ns cia.test-helpers.generator
   (:require
    [cia.schemas.actor :refer [Actor]]
    [cia.schemas.campaign :refer [Campaign]]
