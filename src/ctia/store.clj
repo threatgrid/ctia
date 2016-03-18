@@ -108,3 +108,15 @@
 
 ;; internal
 (defonce identity-store (atom nil))
+
+(defonce model {:judgement-store (atom nil)
+                :indicator-store (atom nil)
+                :feedback-store (atom nil)
+                :ttp-store (atom nil)
+                :campaign-store (atom nil)
+                :coa-store (atom nil)
+                :exploit-target-store (atom nil)
+                :sighting-store (atom nil)
+                :incident-store (atom nil)
+                :relation-store (atom nil)
+                :identity-store (atom nil)})

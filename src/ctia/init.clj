@@ -16,7 +16,8 @@
             [ctia.stores.memory.indicator :as min]
             [ctia.stores.memory.judgement :as mj]
             [ctia.stores.memory.sighting :as ms]
-            [ctia.stores.memory.ttp :as mt]))
+            [ctia.stores.memory.ttp :as mt]
+            [ctia.init-file-store :refer [init-file-store!]]))
 
 (defn init-auth-service! []
   (let [auth-service-name (get-in @properties/properties [:auth :service])]
