@@ -30,7 +30,7 @@
 
 (defn init-mem-store! []
   (let [store-impls {store/actor-store     ma/->ActorStore
-                     store/judgement-store mem/->JudgementStore
+                     store/judgement-store mj/->JudgementStore
                      store/feedback-store  mf/->FeedbackStore
                      store/campaign-store  mca/->CampaignStore
                      store/coa-store       mco/->COAStore
