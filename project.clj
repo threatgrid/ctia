@@ -18,10 +18,7 @@
 
                  ;; Docs
                  [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]
-
-                 ;; Generator
-                 [org.clojure/test.check "0.9.0"]]
+                 [hiccup "1.0.5"]]
 
   :resource-paths ["resources" "doc"]
   :ring {:handler cia.handler/app
@@ -39,7 +36,8 @@
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [javax.servlet/servlet-api "2.5"]
                                   [ring/ring-jetty-adapter "1.4.0"]
-                                  [com.h2database/h2 "1.4.191"]]
+                                  [com.h2database/h2 "1.4.191"]
+                                  [org.clojure/test.check "0.9.0"]]
                    :plugins [[lein-ring "0.9.6"]]
                    :resource-paths ["model"
                                     "test/resources"]}})
