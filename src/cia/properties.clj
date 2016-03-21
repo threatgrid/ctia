@@ -1,7 +1,11 @@
 (ns cia.properties
   (:refer-clojure :exclude [load])
   (:require [clojure.java.io :as io]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [cprop.source :refer [from-system-props
+                                  from-env]]
+            [cprop.core :refer [load-config]])
+
   (:import java.util.Properties
            java.io.BufferedReader
            java.io.File))
@@ -15,21 +19,14 @@
   (doto (Properties.)
     (.load reader)))
 
-(defn transform [properties]
-  (reduce (fn [accum [k v]]
-            (let [parts (str/split k #"\.")]
-              (cond
-                (empty? parts) accum
-                (= 1 (count parts)) (assoc accum (keyword k) v)
-                :else (assoc-in accum (map keyword parts) v))))
-          {}
-          properties))
+(defn set-system-properties! [file]
 
-(defn set-properties! [file]
-  (->> (io/reader file)
-       load
-       transform
-       (reset! properties)))
+  (let [props (->> (io/reader file)
+                   load)]
+
+    (dorun (map (fn [[k v]]
+                  (let [sk (clojure.string/replace k #"\." "_")]
+                    (System/setProperty sk v))) props))))
 
 (defn try-read-file [file]
   (try
@@ -44,8 +41,14 @@
    (some->> (try-read-files property-files)
             (filter some?)
             first
-            set-properties!))
+            set-system-properties!)
+
+   (reset! properties
+           (load-config :merge [(from-system-props)
+                                (from-env)])))
   ([file]
-   (-> file
-       io/resource
-       set-properties!)))
+   (some->> (try-read-file file)
+            set-system-properties!)
+   (reset! properties
+           (load-config :merge [(from-system-props)
+                                (from-env)]))))

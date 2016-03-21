@@ -19,7 +19,10 @@
 
                  ;; Docs
                  [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+
+                 ;; Config
+                 [cprop "0.1.6"]]
 
   :resource-paths ["resources" "doc"]
   :ring {:handler cia.handler/app
@@ -34,7 +37,8 @@
                    :integration #(or (.contains (name (:name %)) "-es-store")
                                      (:integation %))}
 
-  :profiles {:dev {:dependencies [[cheshire "5.5.0"]
+  :profiles {:dev {:jvm-opts ["-Dconf=resources/config.edn"]
+                   :dependencies [[cheshire "5.5.0"]
                                   [javax.servlet/servlet-api "2.5"]
                                   [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]
