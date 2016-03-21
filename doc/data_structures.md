@@ -1,6 +1,6 @@
 # Data Structures
 
-The data model of CIA is closely based on
+The data model of CTIA is closely based on
 [STIX](http://stixproject.github.io/data-model/) with a few
 simplifications:
 
@@ -18,7 +18,7 @@ simplifications:
   of interest.
 
   * We flatten some structured data to make it easier to deal with as
-  JSON and simpler, since we are dealing with specific cases in CIA.
+  JSON and simpler, since we are dealing with specific cases in CTIA.
   We will use default vocabularies whenever they are available.
 
   * We assume specific string representations for descriptions and
@@ -69,7 +69,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 ### References
@@ -105,7 +105,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 ### References
@@ -135,7 +135,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 ### References
@@ -164,7 +164,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 <a name="configuration"/>
@@ -224,7 +224,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 <a name="incident"/>
@@ -266,7 +266,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 <a name="history"/>
@@ -442,7 +442,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 <a name="specification"/>
@@ -526,10 +526,10 @@ STIX [IndicatorType](http://stixproject.github.io/data-model/1.2/indicator/Indic
 ## Judgement
 
 A statement about the intent of an Observable.  Since a core goal of
-the CIA is to provide a simple verdict service, these judgements are
+the CTIA is to provide a simple verdict service, these judgements are
 the basis for the returned verdicts.  These are also the primary means
-by which users of the CIA go from observables on their system, to the
-indicators and threat intelligence data in CIA.
+by which users of the CTIA go from observables on their system, to the
+indicators and threat intelligence data in CTIA.
 
 | Key               | Value                                         | Mandatory? | default       | description                                                        |
 | --- | --- | --- | --- | --- |
@@ -552,7 +552,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 ### Judgement Example
@@ -563,7 +563,7 @@ Here is a quick example using curl:
 curl -X POST --header "Content-Type: application/json" \
 --header "Accept: application/json" \
 -d '{"observable":{"type":"ip", "value":"127.0.0.1"},
-     "disposition":2, "source":"internet chat forum"}' "http://localhost:3000/cia/judgements"
+     "disposition":2, "source":"internet chat forum"}' "http://localhost:3000/ctia/judgements"
 ```
 
 <a name="ttp"/>
@@ -592,7 +592,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 <a name="victim_targeting"/>
@@ -677,7 +677,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 | Key     | Value         | Description                              |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
 | owner   | string        | String identifying the creating user     |
 
 ### Example Verdict
@@ -701,7 +701,7 @@ strings of the form: type-<128bitUUID>, for example
 `judgment-de305d54-75b4-431b-adb2-eb6b9e546014` for a
 [Judgement](#judgement).
 
-The CIA _ID_ field compares to the STIX _id_ field.  The optional STIX
+The CTIA _ID_ field compares to the STIX _id_ field.  The optional STIX
 _idref_ field is not used.
 
 <a name="uri"/>
@@ -791,7 +791,7 @@ string the field should follow the rules of the ISO8601 standard.
 
 An observable is a simple, atomic value that denotes an entity which
 as an identity that is stable enough to be attributed an intent or
-nature.  These do not exist as objects within the CIA storage model,
+nature.  These do not exist as objects within the CTIA storage model,
 you never create an observable.
 
 | Key   | Value                              | Mandatory? |
@@ -884,9 +884,9 @@ references in this document (in the form of _FooReference_) indicate
 the type of object that is being pointed to.
 
 A reference may be an [ID](#id) when the object is available on the
-same CIA instance.  When the reference points to a remote CIA
+same CTIA instance.  When the reference points to a remote CIA
 instance, the reference must be full URL, such as
-`https://cia.someplace.else.org/judgement/de305d54-75b4-431b-adb2-eb6b9e546014`
+`https://ctia.someplace.else.org/judgement/de305d54-75b4-431b-adb2-eb6b9e546014`
 and that object should be retrievable at that URI.
 
 <a name="related_indicator"/>

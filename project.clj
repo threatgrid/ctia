@@ -1,4 +1,4 @@
-(defproject cia "0.1.0-SNAPSHOT"
+(defproject ctia "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
@@ -22,8 +22,8 @@
                  [hiccup "1.0.5"]]
 
   :resource-paths ["resources" "doc"]
-  :ring {:handler cia.handler/app
-         :init cia.init/init!
+  :ring {:handler ctia.handler/app
+         :init ctia.init/init!
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
