@@ -72,7 +72,7 @@
     :default false]
    ["-v" "--verbose" "Turn on info logging"
     :default false]
-   [nil "--ctiaURL" "CTIA URL"
+   [nil "--ctia URL" "CTIA URL"
     :default "http://localhost:3000"]])
 
 (defn -main [& args]
