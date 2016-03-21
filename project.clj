@@ -30,6 +30,7 @@
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
+  :jvm-opts ["-Dconf=resources/config.edn"]
   :test-selectors {:es-store #(.contains (name (:name %)) "-es-store")
                    :default #(not (or (.contains (name (:name %)) "-es-store")
                                       (:integration %)
@@ -37,8 +38,7 @@
                    :integration #(or (.contains (name (:name %)) "-es-store")
                                      (:integation %))}
 
-  :profiles {:dev {:jvm-opts ["-Dconf=resources/config.edn"]
-                   :dependencies [[cheshire "5.5.0"]
+  :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [javax.servlet/servlet-api "2.5"]
                                   [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]

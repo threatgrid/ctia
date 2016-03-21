@@ -20,30 +20,33 @@
   (doto (Properties.)
     (.load reader)))
 
-(defn set-system-property! [sk v]
+(defn set-system-property!
   "set one system property when not defined from cli"
-  (let [sys-key (clojure.string/replace k #"\." "_")]
+  [sk v]
+  (let [sys-key (clojure.string/replace sk #"\." "_")]
     (when-not (System/getProperty sys-key)
       (System/setProperty sys-key v))))
 
 (defn set-system-properties!
   "set default system properties when not defined from cli"
   [file]
-
   (let [props (->> (io/reader file)
                    load)]
 
     (dorun (map (fn [[k v]]
                   (set-system-property! k v)) props))))
 
-(defn try-read-file [file]
+(defn try-read-file
   "try read one prop file"
+  [file]
   (try
     (-> file io/resource io/reader)
     (catch Throwable e nil)))
 
-(defn try-read-files [files]
+(defn try-read-files
   "try read all prop files"
+  [files]
+
   (map try-read-file files))
 
 (defn init!
