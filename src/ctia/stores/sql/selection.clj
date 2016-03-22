@@ -6,6 +6,7 @@
   (map
    #(select-keys %
                  [:id
+                  :type
                   :observable
                   :disposition
                   :disposition_name

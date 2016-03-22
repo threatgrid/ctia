@@ -181,7 +181,8 @@
 (s/defschema StoredIncident
   "An incident as stored in the data store"
   (st/merge Incident
-            {:owner s/Str
+            {:type (s/eq "incident")
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -197,6 +198,7 @@
    (let [now (c/timestamp)]
      (assoc new-incident
             :id id
+            :type "incident"
             :owner login
             :created (or (:created prev-incident) now)
             :modified now

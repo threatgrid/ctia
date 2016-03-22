@@ -104,7 +104,7 @@
     (describe s/Str "source of this cyber threat TTP")
 
     ;; Extension fields:
-    :type
+    :ttp_type
     (describe s/Str "type of this TTP")
 
     :indicators
@@ -126,7 +126,8 @@
 (s/defschema StoredTTP
   "A TTP as stored in the data store"
   (st/merge TTP
-            {:owner s/Str
+            {:type (s/eq "ttp")
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -142,6 +143,7 @@
    (let [now (c/timestamp)]
      (assoc new-ttp
             :id id
+            :type "ttp"
             :owner login
             :created (or (:created prev-ttp) now)
             :modified now

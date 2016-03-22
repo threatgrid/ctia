@@ -10,7 +10,7 @@
   (merge
    c/GenericStixIdentifiers
    {:valid_time c/ValidTime
-    :type v/ThreatActorType
+    :actor_type v/ThreatActorType
     (s/optional-key :source) s/Str
     (s/optional-key :identity) c/Identity
     (s/optional-key :motivation) v/Motivation
@@ -37,7 +37,8 @@
 (s/defschema StoredActor
   "An actor as stored in the data store"
   (st/merge Actor
-            {:owner s/Str
+            {:type (s/eq "actor")
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -53,6 +54,7 @@
    (let [now (c/timestamp)]
      (assoc new-actor
             :id id
+            :type "actor"
             :owner login
             :created (or (:created prev-actor) now)
             :modified now

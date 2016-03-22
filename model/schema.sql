@@ -1,6 +1,7 @@
 CREATE TABLE judgement
 (
   id varchar PRIMARY KEY,
+  type varchar NOT NULL,
   disposition integer NOT NULL,
   source varchar NOT NULL,
   priority int NOT NULL,

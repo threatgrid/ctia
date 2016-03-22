@@ -50,7 +50,8 @@
 (s/defschema StoredJudgement
   "A judgement as stored in the data store"
   (st/merge Judgement
-            {:owner s/Str
+            {:type (s/eq "judgement")
+             :owner s/Str
              :created c/Time}))
 
 (s/defn realize-judgement :- StoredJudgement
@@ -62,6 +63,7 @@
         disposition_name (get c/disposition-map disposition)]
     (assoc new-judgement
            :id id
+           :type "judgement"
            :disposition disposition
            :disposition_name disposition_name
            :owner login

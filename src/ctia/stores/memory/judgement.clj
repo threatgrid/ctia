@@ -46,7 +46,8 @@
 
 (s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]
-  {:disposition (:disposition judgement)
+  {:type "verdict"
+   :disposition (:disposition judgement)
    :judgement_id (:id judgement)
    :disposition_name (get c/disposition-map (:disposition judgement))})
 

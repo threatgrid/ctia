@@ -19,11 +19,13 @@
 (s/defschema NewSighting
   (st/merge
    (st/dissoc Sighting
-              :id)))
+              :id
+              :type)))
 
 (s/defschema StoredSighting
   (st/merge Sighting
-            {:owner s/Str
+            {:type (s/eq "sighting")
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -39,6 +41,7 @@
    (let [now (c/timestamp)]
      (assoc new-sighting
             :id id
+            :type "sighting"
             :owner login
             :created (or (:created prev-sighting) now)
             :modified now))))

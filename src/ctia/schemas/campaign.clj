@@ -35,7 +35,7 @@
     (s/optional-key :source)
     (describe s/Str "source of this Campaign")
     ;; Extension fields:
-    :type  s/Str
+    :campaign_type  s/Str
     :indicators rel/RelatedIndicators
 
     ;; Not provided: Handling
@@ -53,7 +53,8 @@
 (s/defschema StoredCampaign
   "A schema as stored in the data store"
   (st/merge Campaign
-            {:owner s/Str
+            {:type (s/eq "campaign")
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -69,6 +70,7 @@
    (let [now (c/timestamp)]
      (assoc new-campaign
             :id id
+            :type "campaign"
             :owner login
             :created (or (:created prev-campaign) now)
             :modified now

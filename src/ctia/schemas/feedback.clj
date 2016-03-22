@@ -23,7 +23,8 @@
 (s/defschema StoredFeedback
   "A feedback record at rest in the storage service"
   (st/merge Feedback
-            {:owner s/Str
+            {:type (s/eq "feedback")
+             :owner s/Str
              :created c/Time}))
 
 (s/defn realize-feedback :- StoredFeedback
@@ -33,6 +34,7 @@
    judgement-id :- s/Str]
   (assoc new-feedback
          :id id
+         :type "feedback"
          :created (c/timestamp)
          :owner login
          :judgement judgement-id))

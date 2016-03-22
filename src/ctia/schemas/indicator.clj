@@ -59,7 +59,7 @@
     (describe s/Bool
               "specifies the absence of the pattern")
 
-    (s/optional-key :type)
+    (s/optional-key :indicator_type)
     (describe [v/IndicatorType]
               "Specifies the type or types for this Indicator")
 
@@ -140,7 +140,8 @@
 (s/defschema StoredIndicator
   "A feedback record at rest in the storage service"
   (st/merge Indicator
-            {:owner s/Str
+            {:type (s/eq "indicator")
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -156,6 +157,7 @@
    (let [now (c/timestamp)]
      (assoc new-indicator
             :id id
+            :type "indicator"
             :owner login
             :created (or (:created prev-indicator) now)
             :modified now
@@ -170,6 +172,7 @@
   [indicator]
   (dissoc indicator
           :id
+          :type
           :created
           :modified
           :owner))

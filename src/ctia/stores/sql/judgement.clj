@@ -96,16 +96,18 @@
      (> num-rows-deleted 0))))
 
 (defn calculate-verdict [{:keys [type value] :as _observable_}]
-  (k/select @judgement
-            (k/fields :disposition [:id :judgement_id] :disposition_name)
-            (k/where {:observable_type type
-                      :observable_value value})
-            (k/where (or (= :valid_time_end_time nil)
-                         (> :valid_time_end_time (coerce/to-sql-time (time/now)))))
-            (k/order :priority :DESC)
-            (k/order :disposition)
-            (k/order :valid_time_start_time)
-            (k/limit 1)))
+  (some-> (k/select @judgement
+                    (k/fields :disposition [:id :judgement_id] :disposition_name)
+                    (k/where {:observable_type type
+                              :observable_value value})
+                    (k/where (or (= :valid_time_end_time nil)
+                                 (> :valid_time_end_time (coerce/to-sql-time (time/now)))))
+                    (k/order :priority :DESC)
+                    (k/order :disposition)
+                    (k/order :valid_time_start_time)
+                    (k/limit 1))
+          first
+          (merge {:type "verdict"})))
 
 (defn create-judgement-indicator [judgement-id indicator-rel]
   (when (seq (k/select @judgement (k/where {:id judgement-id})))
