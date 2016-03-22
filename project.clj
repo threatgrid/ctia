@@ -19,7 +19,10 @@
 
                  ;; Docs
                  [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+
+                 ;; Persistence
+                 [alandipert/enduro "1.2.0"]]
 
   :resource-paths ["resources" "doc"]
   :ring {:handler ctia.handler/app
