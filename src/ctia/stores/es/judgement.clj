@@ -84,7 +84,8 @@
                      sort)))
 
 (defn- make-verdict [judgement]
-  {:disposition (:disposition judgement)
+  {:type "verdict"
+   :disposition (:disposition judgement)
    :judgement_id (:id judgement)
    :disposition_name (get disposition-map (:disposition judgement))})
 

@@ -289,6 +289,7 @@
   {"judgement"
    {:properties
     {:id string
+     :type string
      :observable observable
      :disposition {:type "long"}
      :disposition_name string
@@ -309,6 +310,7 @@
   {"feedback"
    {:properties
     {:id string
+     :type string
      :judgement string
      :source string
      :feedback {:type "integer"}
@@ -321,11 +323,12 @@
   {"indicator"
    {:properties
     {:id string
+     :type string
      :title string
      :alternate_ids string
      :version {:type "integer"}
      :negate {:type "boolean"}
-     :type string
+     :indicator_type string
      :observable observable
      :judgements related-judgements
      :composite_indicator_expression {:type "nested"
@@ -352,6 +355,7 @@
   {"ttp"
    {:properties
     {:id string
+     :type string
      :valid_time valid-time
      :version string
      :intended_effect string
@@ -361,7 +365,7 @@
      :exploit_targets related-exploit-targets
      :related_TTPs related-ttps
      :source string
-     :type string
+     :ttp_type string
      :expires ts
      :indicators string
      :owner string
@@ -372,8 +376,9 @@
   {"actor"
    {:properties
     {:id string
-     :valid_time valid-time
      :type string
+     :valid_time valid-time
+     :actor_type string
      :source string
      :identity tg-identity
      :motivation string
@@ -392,6 +397,7 @@
   {"campagin"
    {:properties
     {:id string
+     :type string
      :valid_time valid-time
      :names string
      :intended_effect string
@@ -403,7 +409,7 @@
      :confidence string
      :activity activity
      :source string
-     :type string
+     :campaign_type string
      :indicators related-indicators
      :owner string
      :created ts
@@ -413,9 +419,10 @@
   {"coa"
    {:properties
     {:id string
+     :type string
      :valid_time valid-time
      :stage string
-     :type string
+     :coa_type string
      :objective string
      :impact string
      :cost string
@@ -430,6 +437,7 @@
   {"incident"
    {:properties
     {:id string
+     :type string
      :valid_time valid-time
      :confidence string
      :status string
@@ -463,6 +471,7 @@
   {"exploit-target"
    {:properties
     {:id string
+     :type string
      :valid_time valid-time
      :version string
      :vulnerability vulnerability
@@ -487,6 +496,7 @@
   {"sighting"
    {:properties
     {:id string
+     :type string
      :timestamp ts
      :source string
      :reference string
