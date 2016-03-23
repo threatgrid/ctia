@@ -853,27 +853,6 @@ There are two types of relationship structures:
 2. Related object structures, which contain references along with
    meta data about the relationship.
 
-### References short-cut
-
-All _RelatedFoo_ style structures may be replaced with a list of
-references, when adding meta data is not desired.  For example, both
-of the following JSON structures are valid [RelatedCampaigns](#related_campaigns).
-
-#### RelatedCampaigns full form
-
-```json
-{"related_campaigns": [{"campaign": "campaign-sample-1",
-                        "confidence": "High"},
-                       {"campaign": "campaign-sample-2",
-                        "confidence": "Low"}]}
-```
-
-#### RelatedCampaigns short-cut form
-
-```json
-{"related_campaigns": ["campaign-sample-1", "campaign-sample-2"]
-```
-
 <a name="reference"/>
 <a name="actor_reference"/>
 <a name="campaign_reference"/>
