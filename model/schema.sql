@@ -21,6 +21,7 @@ CREATE TABLE judgement
 
 CREATE TABLE judgement_indicator
 (
+  type varchar NOT NULL,
   confidence varchar,
   source varchar,
   relationship varchar,

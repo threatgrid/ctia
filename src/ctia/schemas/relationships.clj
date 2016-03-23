@@ -24,40 +24,50 @@
    reference-map))
 
 (s/defschema RelatedIndicator
-  (enriched-ref {:indicator_id IndicatorReference}))
+  (enriched-ref {:type (s/eq "indicator")
+                 :indicator_id IndicatorReference}))
 
 (s/defschema RelatedIndicators
   [RelatedIndicator])
 
 (s/defschema RelatedActors
-  [(enriched-ref {:actor_id ActorReference})])
+  [(enriched-ref {:type (s/eq "actor")
+                  :actor_id ActorReference})])
 
 (s/defschema RelatedCampaigns
-  [(enriched-ref {:campaign_id CampaignReference})])
+  [(enriched-ref {:type (s/eq "campaign")
+                  :campaign_id CampaignReference})])
 
 (s/defschema RelatedCOAs
-  [(enriched-ref {:COA_id COAReference})])
+  [(enriched-ref {:type (s/eq "COA")
+                  :COA_id COAReference})])
 
 (s/defschema RelatedExploitTargets
-  [(enriched-ref {:exploit_target_id ExploitTargetReference})])
+  [(enriched-ref {:type (s/eq "exploit-target")
+                  :exploit_target_id ExploitTargetReference})])
 
 (s/defschema RelatedIncidents
-  [(enriched-ref {:incident_id IncidentReference})])
+  [(enriched-ref {:type (s/eq "incident")
+                  :incident_id IncidentReference})])
 
 (s/defschema RelatedIndicator
-  (enriched-ref {:indicator_id IndicatorReference}))
+  (enriched-ref {:type (s/eq "indicator")
+                 :indicator_id IndicatorReference}))
 
 (s/defschema RelatedIndicators
   [RelatedIndicator])
 
 (s/defschema RelatedJudgements
-  [(enriched-ref {:judgement_id JudgementReference})])
+  [(enriched-ref {:type (s/eq "judgement")
+                  :judgement_id JudgementReference})])
 
 (s/defschema RelatedSightings
-  [(enriched-ref {:sighting_id SightingReference})])
+  [(enriched-ref {:type (s/eq "sighting")
+                  :sighting_id SightingReference})])
 
 (s/defschema RelatedTTP
-  (enriched-ref {:ttp_id TTPReference}))
+  (enriched-ref {:type (s/eq "ttp")
+                 :ttp_id TTPReference}))
 
 (s/defschema RelatedTTPs
   [RelatedTTP])
