@@ -50,7 +50,7 @@ simplifications:
 | id                                         | [ID](#id)                                      | &#10003;   |
 | title                                      | string                                         | &#10003;   |
 | description                                | (string, ...)                                  | &#10003;   |
-| short_descriptio n                         | (string, ...)                                  | &#10003;   |
+| short_description                          | (string, ...)                                  | &#10003;   |
 | timestamp                                  | [Time](#time)                                  | &#10003;   |
 | source                                     | [Source](#source)                              |            |
 | identity                                   | [Identity](#identity)                          |            |
