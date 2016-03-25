@@ -19,7 +19,10 @@
 
                  ;; Docs
                  [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+
+                 ;; Config
+                 [cprop "0.1.6"]]
 
   :resource-paths ["resources" "doc"]
   :ring {:handler ctia.handler/app
@@ -27,6 +30,7 @@
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
+  :jvm-opts ["-Dconf=resources/config.edn"]
   :test-selectors {:es-store #(.contains (name (:name %)) "-es-store")
                    :default #(not (or (.contains (name (:name %)) "-es-store")
                                       (:integration %)

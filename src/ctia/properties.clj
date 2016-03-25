@@ -1,7 +1,10 @@
 (ns ctia.properties
   (:refer-clojure :exclude [load])
   (:require [clojure.java.io :as io]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [cprop.core :refer [load-config]]
+            [cprop.source :refer [from-system-props
+                                  from-env]])
   (:import java.util.Properties
            java.io.BufferedReader
            java.io.File))
@@ -11,41 +14,55 @@
 
 (defonce properties (atom {}))
 
-(defn load [^BufferedReader reader]
+(defn load
+  "load a props file"
+  [^BufferedReader reader]
   (doto (Properties.)
     (.load reader)))
 
-(defn transform [properties]
-  (reduce (fn [accum [k v]]
-            (let [parts (str/split k #"\.")]
-              (cond
-                (empty? parts) accum
-                (= 1 (count parts)) (assoc accum (keyword k) v)
-                :else (assoc-in accum (map keyword parts) v))))
-          {}
-          properties))
+(defn set-system-property!
+  "set one system property when not defined from cli"
+  [sk v]
+  (let [sys-key (clojure.string/replace sk #"\." "_")]
+    (when-not (System/getProperty sys-key)
+      (System/setProperty sys-key v))))
 
-(defn set-properties! [file]
-  (->> (io/reader file)
-       load
-       transform
-       (reset! properties)))
+(defn set-system-properties!
+  "set default system properties when not defined from cli"
+  [file]
+  (let [props (->> (io/reader file)
+                   load)]
 
-(defn try-read-file [file]
+    (dorun (map (fn [[k v]]
+                  (set-system-property! k v)) props))))
+
+(defn try-read-file
+  "try read one prop file"
+  [file]
   (try
     (-> file io/resource io/reader)
     (catch Throwable e nil)))
 
-(defn try-read-files [files]
+(defn try-read-files
+  "try read all prop files"
+  [files]
+
   (map try-read-file files))
 
 (defn init!
+  "setup the properties atom,
+  either by reading first avail prop file or supplying a file"
   ([]
    (some->> (try-read-files property-files)
             (filter some?)
             first
-            set-properties!))
+            set-system-properties!)
+   (reset! properties
+           (load-config :merge [(from-system-props)
+                                (from-env)])))
   ([file]
-   (-> file
-       io/resource
-       set-properties!)))
+   (some->> (try-read-file file)
+            set-system-properties!)
+   (reset! properties
+           (load-config :merge [(from-system-props)
+                                (from-env)]))))
