@@ -50,8 +50,11 @@
 (s/defschema RelatedIndicators
   [RelatedIndicator])
 
+(s/defschema RelatedJudgement
+  (enriched-ref {:judgement_id JudgementReference}))
+
 (s/defschema RelatedJudgements
-  [(enriched-ref {:judgement_id JudgementReference})])
+  [RelatedJudgement])
 
 (s/defschema RelatedSightings
   [(enriched-ref {:sighting_id SightingReference})])

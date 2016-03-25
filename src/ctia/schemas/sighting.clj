@@ -17,9 +17,8 @@
    (s/optional-key :indicator) rel/RelatedIndicator})
 
 (s/defschema NewSighting
-  (st/merge
-   (st/dissoc Sighting
-              :id)))
+  (st/dissoc Sighting
+             :id))
 
 (s/defschema StoredSighting
   (st/merge Sighting
