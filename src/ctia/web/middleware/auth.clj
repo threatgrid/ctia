@@ -1,4 +1,4 @@
-(ns ctia.auth.middleware
+(ns ctia.web.middleware.auth
   (:require [ctia.auth :as auth :refer [auth-service]]
             [compojure.api.meta :as meta]
             [ring.util.http-response :as http-response]))
