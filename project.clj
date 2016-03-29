@@ -19,7 +19,10 @@
 
                  ;; Docs
                  [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+
+                 ;; XML
+                 [org.mitre/stix "1.2.0"]]
 
   :resource-paths ["resources" "doc"]
   :ring {:handler ctia.web.handler/app
@@ -38,7 +41,9 @@
                                   [javax.servlet/servlet-api "2.5"]
                                   [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]
-                                  [org.clojure/test.check "0.9.0"]]
+                                  [org.clojure/test.check "0.9.0"]
+                                  [org.clojure/data.xml "0.0.8"]
+                                  [stencil "0.5.0"]]
                    :plugins [[lein-ring "0.9.6"]]
                    :resource-paths ["model"
                                     "test/resources"]}})

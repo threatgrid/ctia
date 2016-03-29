@@ -28,7 +28,8 @@
             [schema.core :as s]
             [ctia.schemas.relationships :as rel]
             [ctia.web.middleware.auth :as auth]
-            [ctia.web.routes.documentation :refer [documentation-routes]]))
+            [ctia.web.routes.documentation :refer [documentation-routes]]
+            [ctia.web.routes.stix12 :refer [stix12-routes]]))
 
 (def JudgementSort
   "A sort ordering"
@@ -97,6 +98,8 @@
   documentation-routes
 
   (context "/ctia" []
+    stix12-routes
+
     (context "/version" []
       :tags ["version"]
       (GET "/" []
