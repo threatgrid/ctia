@@ -85,7 +85,7 @@
 (defapi api-handler
   {:swagger {:ui "/"
              :spec "/swagger.json"
-             :data {:info {:title "Cisco Intel API "
+             :data {:info {:title "Cisco Threat Intel API "
                            :license {:name "All Rights Reserved",
                                      :url ""}
                            :contact {:name "Cisco Security Business Group -- Advanced Threat "
@@ -158,7 +158,7 @@
       (PUT "/:id" []
         :return StoredCampaign
         :body [campaign NewCampaign {:description "an updated campaign"}]
-        :summary "Updates a campaign"
+        :summary "Updates a Campaign"
         :path-params [id :- s/Str]
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-campaign :admin}
@@ -187,7 +187,7 @@
       :tags ["ExploitTarget"]
       (POST "/" []
         :return StoredExploitTarget
-        :body [exploit-target NewExploitTarget {:description "a new exploit target"}]
+        :body [exploit-target NewExploitTarget {:description "a new ExploitTarget"}]
         :summary "Adds a new ExploitTarget"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-exploit-target :admin}
@@ -197,8 +197,8 @@
         :return StoredExploitTarget
         :body [exploit-target
                NewExploitTarget
-               {:description "an updated exploit target"}]
-        :summary "Updates an exploit target"
+               {:description "an updated ExploitTarget"}]
+        :summary "Updates an ExploitTarget"
         :path-params [id :- s/Str]
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-exploit-target :admin}
@@ -224,7 +224,7 @@
           (not-found))))
 
     (context "/coa" []
-      :tags ["coa"]
+      :tags ["COA"]
       (POST "/" []
         :return StoredCOA
         :body [coa NewCOA {:description "a new COA"}]
@@ -334,7 +334,7 @@
         :path-params [judgement-id :- s/Str]
         :body [indicator-relationship rel/RelatedIndicator]
         :header-params [api_key :- s/Str]
-        :summary "Ads an indicator to a judgement"
+        :summary "Adds an Indicator to a Judgement"
         :capabilities #{:create-judgement-indicator}
         (if-let [d (add-indicator-to-judgement @judgement-store
                                                judgement-id
@@ -381,7 +381,7 @@
         :tags ["COA"]
         :return [StoredCOA]
         :path-params [id :- Long]
-        :summary "Gets all TTPs associated with the Indicator"
+        :summary "Gets all COAs associated with the Indicator"
         (not-found))
       (GET "/:id/ttps" []
         :tags ["TTP"]
@@ -426,7 +426,7 @@
           (not-found)))
       (GET "/title/:title" []
         :return (s/maybe [StoredIndicator])
-        :summary "Gets an indicator by title"
+        :summary "Gets an Indicator by title"
         :path-params [title :- s/Str]
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:list-indicators-by-title :admin}
@@ -437,7 +437,7 @@
         :return StoredSighting
         :path-params [id :- s/Str]
         :body [sighting NewSighting {:description "a new Sighting"}]
-        :summary "Adds a new Sighting for the given indicator"
+        :summary "Adds a new Sighting for the given Indicator"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-sighting :admin}
         :login login
@@ -467,7 +467,7 @@
       (PUT "/:id" []
         :return StoredTTP
         :body [ttp NewTTP {:description "an updated TTP"}]
-        :summary "Updated a TTP"
+        :summary "Updates a TTP"
         :path-params [id :- s/Str]
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-ttp :admin}
@@ -531,7 +531,7 @@
           (not-found)))
       (DELETE "/:id" []
         :path-params [id :- s/Str]
-        :summary "Deletes a sighting"
+        :summary "Deletes a Sighting"
         :header-params [api_key :- s/Str]
         :capabilities #{:delete-sighting :admin}
         (if (delete-sighting @sighting-store id)
@@ -547,6 +547,7 @@
         (ok (recent-events))))
 
     (GET "/:observable_type/:observable_value/judgements" []
+      :tags ["Judgement"]
       :query-params [{offset :-  Long 0}
                      {limit :-  Long 0}
                      {after :-  Time nil}
@@ -568,6 +569,7 @@
                 (list-judgements-by-observable @judgement-store))))
 
     (GET "/:observable_type/:observable_value/indicators" []
+      :tags ["Indicator"]
       :query-params [{offset :-  Long 0}
                      {limit :-  Long 0}
                      {after :-  Time nil}
@@ -578,7 +580,7 @@
       :path-params [observable_type :- ObservableType
                     observable_value :- s/Str]
       :return (s/maybe [StoredIndicator])
-      :summary "Returns all the Indiators associated with the specified observable."
+      :summary "Returns all the Indicators associated with the specified observable."
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:list-indicators-by-observable :admin}
       (ok
@@ -588,6 +590,7 @@
                 (list-indicators-by-judgements @indicator-store))))
 
     (GET "/:observable_type/:observable_value/sightings" []
+      :tags ["Sighting"]
       :query-params [{offset :-  Long 0}
                      {limit :-  Long 0}
                      {after :-  Time nil}

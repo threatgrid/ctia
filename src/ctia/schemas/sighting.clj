@@ -22,8 +22,7 @@
 (s/defschema NewSighting
   (st/merge
    (st/dissoc Sighting
-              :id
-              :type)
+              :id)
    {(s/optional-key :type) Type}))
 
 (s/defschema StoredSighting

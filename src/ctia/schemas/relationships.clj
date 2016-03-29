@@ -57,9 +57,12 @@
 (s/defschema RelatedIndicators
   [RelatedIndicator])
 
+(s/defschema RelatedJudgement
+  (enriched-ref {:type (s/eq "judgement")
+                 :judgement_id JudgementReference}))
+
 (s/defschema RelatedJudgements
-  [(enriched-ref {:type (s/eq "judgement")
-                  :judgement_id JudgementReference})])
+  [RelatedJudgement])
 
 (s/defschema RelatedSightings
   [(enriched-ref {:type (s/eq "sighting")
