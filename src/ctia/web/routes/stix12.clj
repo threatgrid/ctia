@@ -14,7 +14,9 @@
     "/indicator" []
 
     (GET "/:id" []
+         :summary "Get an Indicator in STIX 1.2 XML format"
          :path-params [id :- s/Str]
+         :header-params [api_key :- (s/maybe s/Str)]
          :capabilities #{:read-indicator :admin}
          (if-let [d (indicator/read-xml id)]
            (ok d)
