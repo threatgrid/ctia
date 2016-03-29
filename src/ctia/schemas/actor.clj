@@ -26,18 +26,22 @@
     ;; Not provided: related_packages (deprecated)
     }))
 
+(s/defschema Type
+  (s/eq "actor"))
+
 (s/defschema NewActor
   "Schema for submitting new Actors"
   (st/merge
    (st/dissoc Actor
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredActor
   "An actor as stored in the data store"
   (st/merge Actor
-            {:type (s/eq "actor")
+            {:type Type
              :owner s/Str
              :created c/Time
              :modified c/Time}))

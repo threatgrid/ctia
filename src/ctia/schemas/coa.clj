@@ -48,18 +48,22 @@
     ;; Not provided: structured_COA ;; actionable structured representation for automation
     }))
 
+(s/defschema Type
+  (s/eq "COA"))
+
 (s/defschema NewCOA
   "Schema for submitting new COAs"
   (st/merge
    (st/dissoc COA
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredCOA
   "A COA as stored in the data store"
   (st/merge COA
-            {:type (s/eq "COA")
+            {:type Type
              :owner s/Str
              :created c/Time
              :modified c/Time}))

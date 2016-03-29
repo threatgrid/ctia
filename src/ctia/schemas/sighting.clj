@@ -16,15 +16,19 @@
    (s/optional-key :related_judgements) rel/RelatedJudgements
    (s/optional-key :indicator) rel/RelatedIndicator})
 
+(s/defschema Type
+  (s/eq "sighting"))
+
 (s/defschema NewSighting
   (st/merge
    (st/dissoc Sighting
               :id
-              :type)))
+              :type)
+   {(s/optional-key :type) Type}))
 
 (s/defschema StoredSighting
   (st/merge Sighting
-            {:type (s/eq "sighting")
+            {:type Type
              :owner s/Str
              :created c/Time
              :modified c/Time}))

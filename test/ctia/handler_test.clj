@@ -152,6 +152,7 @@
                             :body {:title "modified actor"
                                    :description "updated description"
                                    :actor_type "Hacktivist"
+                                   :type "actor"
                                    :source "a source"
                                    :confidence "High"
                                    :associated_actors [{:type "actor"

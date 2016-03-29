@@ -130,17 +130,21 @@
     ;; Not provided: handling
     }))
 
+(s/defschema Type
+  (s/eq "indicator"))
+
 (s/defschema NewIndicator
   (st/merge
    (st/dissoc Indicator
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredIndicator
   "A feedback record at rest in the storage service"
   (st/merge Indicator
-            {:type (s/eq "indicator")
+            {:type Type
              :owner s/Str
              :created c/Time
              :modified c/Time}))

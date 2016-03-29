@@ -42,18 +42,22 @@
     ;; Not provided: related_packages (deprecated)
     }))
 
+(s/defschema Type
+  (s/eq "campaign"))
+
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"
   (st/merge
    (st/dissoc Campaign
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredCampaign
   "A schema as stored in the data store"
   (st/merge Campaign
-            {:type (s/eq "campaign")
+            {:type Type
              :owner s/Str
              :created c/Time
              :modified c/Time}))
