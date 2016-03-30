@@ -1,4 +1,4 @@
-(ns ctia.web.handlers.stix12.indicator.likely-impact
+(ns ctia.http.handlers.stix12.indicator.likely-impact
   (:import [org.mitre.stix.common_1
             StatementType
             StructuredTextType]

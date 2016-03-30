@@ -1,4 +1,4 @@
-(ns ctia.web.handlers.stix12.indicator.related-indicators
+(ns ctia.http.handlers.stix12.indicator.related-indicators
   (:require [ctia.store :as store])
   (:import [org.mitre.stix.common_1
             ConfidenceType

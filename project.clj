@@ -25,16 +25,18 @@
                  [org.mitre/stix "1.2.0"]]
 
   :resource-paths ["resources" "doc"]
-  :ring {:handler ctia.web.handler/app
+  :ring {:handler ctia.http.handler/app
          :init ctia.init/init!
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
-  :test-selectors {:es-store #(.contains (name (:name %)) "-es-store")
-                   :default #(not (or (.contains (name (:name %)) "-es-store")
+  :test-selectors {:memory-store :memory-store
+                   :sql-store :sql-store
+                   :es-store :es-store
+                   :default #(not (or (:es-store %)
                                       (:integration %)
                                       (:regression %)))
-                   :integration #(or (.contains (name (:name %)) "-es-store")
+                   :integration #(or (:es-store %)
                                      (:integation %))}
 
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]

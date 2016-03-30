@@ -1,7 +1,7 @@
-(ns ctia.web.routes.stix12
+(ns ctia.http.routes.stix12
   (:require [compojure.api.sweet
              :refer [defapi context GET]]
-            [ctia.web.handlers.stix12.indicator :as indicator]
+            [ctia.http.handlers.stix12.indicator :as indicator]
             [ring.util.http-response
              :refer [ok not-found]]
             [schema.core :as s]))

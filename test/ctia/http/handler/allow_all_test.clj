@@ -1,7 +1,7 @@
-(ns ctia.web.handler.allow-all-test
+(ns ctia.http.handler.allow-all-test
   (:refer-clojure :exclude [get])
   (:require [ctia.auth :as auth]
-            [ctia.web.handler :as handler]
+            [ctia.http.handler :as handler]
             [ctia.test-helpers.core :as helpers :refer [post get]]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]))
 

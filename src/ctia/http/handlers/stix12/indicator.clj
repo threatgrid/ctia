@@ -1,6 +1,6 @@
-(ns ctia.web.handlers.stix12.indicator
+(ns ctia.http.handlers.stix12.indicator
   (:require [ctia.store :as store]
-            [ctia.web.handlers.stix12.indicator
+            [ctia.http.handlers.stix12.indicator
              [composite-indicator-expression
               :refer [composite-indicator-expression?
                       attach-composite-indicator-expression]]
@@ -16,7 +16,7 @@
               :refer [tags? attach-tags]]
              [type
               :refer [type? attach-type]]]
-            [ctia.web.handlers.stix12.observable
+            [ctia.http.handlers.stix12.observable
              :refer [ctia-observable->stix-observable]])
   (:import javax.xml.namespace.QName
 

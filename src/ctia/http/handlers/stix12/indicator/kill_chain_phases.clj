@@ -1,4 +1,4 @@
-(ns ctia.web.handlers.stix12.indicator.kill-chain-phases
+(ns ctia.http.handlers.stix12.indicator.kill-chain-phases
   (:import [org.mitre.stix.common_1
             KillChainPhaseReferenceType
             KillChainPhasesReferenceType]

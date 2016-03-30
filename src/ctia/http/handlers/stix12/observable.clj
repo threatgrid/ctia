@@ -1,4 +1,4 @@
-(ns ctia.web.handlers.stix12.observable
+(ns ctia.http.handlers.stix12.observable
   (:require [clojure.string :as str])
   (:import [org.mitre.cybox.cybox_2
             ObjectType

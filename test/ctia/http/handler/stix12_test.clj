@@ -1,9 +1,9 @@
-(ns ctia.web.handler.stix12-test
+(ns ctia.http.handler.stix12-test
   (:require [clj-http.client :as http]
             [clojure.data.xml :as xml]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers.core :as helpers :refer [post]]
-            [ctia.web.handler :as handler]
+            [ctia.http.handler :as handler]
             [stencil.core :refer [render-file]])
   (:import java.io.StringReader))
 

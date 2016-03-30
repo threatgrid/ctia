@@ -1,4 +1,4 @@
-(ns ctia.web.handlers.stix12.indicator.type
+(ns ctia.http.handlers.stix12.indicator.type
   (:import [org.mitre.stix.common_1
             ControlledVocabularyStringType]
 

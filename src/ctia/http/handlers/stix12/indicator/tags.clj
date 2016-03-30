@@ -1,4 +1,4 @@
-(ns ctia.web.handlers.stix12.indicator.tags
+(ns ctia.http.handlers.stix12.indicator.tags
   (:require [clojure.string :as str])
   (:import [org.mitre.stix.common_1
             StructuredTextType]

@@ -1,4 +1,4 @@
-(ns ctia.web.handlers.stix12.indicator.composite-indicator-expression
+(ns ctia.http.handlers.stix12.indicator.composite-indicator-expression
   (:require [clojure.string :as str]
             [ctia.store :as store])
   (:import [org.mitre.stix.indicator_2

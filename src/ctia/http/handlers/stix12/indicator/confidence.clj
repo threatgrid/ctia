@@ -1,4 +1,4 @@
-(ns ctia.web.handlers.stix12.indicator.confidence
+(ns ctia.http.handlers.stix12.indicator.confidence
   (:import [org.mitre.stix.common_1
             ConfidenceType
             ControlledVocabularyStringType]
