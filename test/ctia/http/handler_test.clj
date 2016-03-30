@@ -1,6 +1,6 @@
-(ns ctia.web.handler-test
+(ns ctia.http.handler-test
   (:refer-clojure :exclude [get])
-  (:require [ctia.web.handler :as handler]
+  (:require [ctia.http.handler :as handler]
             [ctia.test-helpers.core :refer [delete get post put] :as helpers]
             [ctia.test-helpers.db :as db-helpers]
             [ctia.test-helpers.index :as index-helpers]

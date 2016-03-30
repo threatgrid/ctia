@@ -22,7 +22,7 @@
                  [hiccup "1.0.5"]]
 
   :resource-paths ["resources" "doc"]
-  :ring {:handler ctia.web.handler/app
+  :ring {:handler ctia.http.handler/app
          :init ctia.init/init!
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
