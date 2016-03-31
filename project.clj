@@ -5,14 +5,17 @@
             :distribution :repo}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
-                 [metosin/schema-tools "0.7.0"]
+                 [prismatic/schema "1.1.0"]
+                 [metosin/schema-tools "0.7.0"
+                  :exclusions [prismatic/schema]]
                  [com.rpl/specter "0.9.2"]
                  [org.clojure/core.async "0.2.374"]
                  [clj-http "2.0.1"]
                  [org.clojure/core.memoize "0.5.8"]
 
                  ;; Web server
-                 [metosin/compojure-api "1.0.0"]
+                 [metosin/compojure-api "1.0.0"
+                  :exclusions [prismatic/schema]]
                  [ring-middleware-format "0.7.0"]
 
                  ;; Database
