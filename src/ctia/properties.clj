@@ -1,51 +1,44 @@
 (ns ctia.properties
   (:refer-clojure :exclude [load])
   (:require [clojure.java.io :as io]
-            [clojure.string :as str])
-  (:import java.util.Properties
-           java.io.BufferedReader
-           java.io.File))
+            [clojure.string :as str]
+            [ctia.lib.map :as map])
+  (:import java.util.Properties))
 
 (def property-files ["ctia.properties"
                      "ctia-default.properties"])
 
 (defonce properties (atom {}))
 
-(defn load [^BufferedReader reader]
-  (doto (Properties.)
-    (.load reader)))
+(defn- read-property-file []
+  (->>
+   (loop [[file & more-files] property-files]
+     (if file
+       (if-let [reader (some-> file io/resource io/reader)]
+         (try
+           (doto (Properties.)
+             (.load reader))
+           (finally (.close reader)))
+         (recur more-files))))
+   (into {})))
 
-(defn transform [properties]
+(defn- transform [properties]
   (reduce (fn [accum [k v]]
-            (let [parts (str/split k #"\.")]
+            (let [parts (->> (str/split k #"\.")
+                             (map keyword))]
+              parts
               (cond
                 (empty? parts) accum
-                (= 1 (count parts)) (assoc accum (keyword k) v)
-                :else (assoc-in accum (map keyword parts) v))))
+                (= 1 (count parts)) (assoc accum (first parts) v)
+                :else (map/rmerge accum
+                                  (assoc-in {} parts v)))))
           {}
           properties))
 
-(defn set-properties! [file]
-  (->> (io/reader file)
-       load
-       transform
-       (reset! properties)))
-
-(defn try-read-file [file]
-  (try
-    (-> file io/resource io/reader)
-    (catch Throwable e nil)))
-
-(defn try-read-files [files]
-  (map try-read-file files))
-
-(defn init!
-  ([]
-   (some->> (try-read-files property-files)
-            (filter some?)
-            first
-            set-properties!))
-  ([file]
-   (-> file
-       io/resource
-       set-properties!)))
+(defn init! []
+  (reset! properties
+          (transform
+           (let [properties-from-file (read-property-file)]
+             (merge properties-from-file
+                    (select-keys (System/getProperties)
+                                 (keys properties-from-file)))))))
