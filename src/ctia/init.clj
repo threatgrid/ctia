@@ -19,8 +19,8 @@
             [ctia.stores.memory.ttp :as mt]))
 
 (defn init-auth-service! []
-  (let [auth-service-name (get-in @properties/properties [:auth :service :name])]
-    {case auth-service-name
+  (let [auth-service-type (get-in @properties/properties [:auth :service :type])]
+    {case auth-service-type
       :allow-all (reset! auth/auth-service (allow-all/->AuthService))
       :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service
                                               (threatgrid/make-whoami-service)))
