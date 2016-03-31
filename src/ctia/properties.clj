@@ -11,16 +11,14 @@
 (defonce properties (atom {}))
 
 (defn- read-property-file []
-  (->>
-   (loop [[file & more-files] property-files]
-     (if file
-       (if-let [reader (some-> file io/resource io/reader)]
-         (try
-           (doto (Properties.)
-             (.load reader))
-           (finally (.close reader)))
-         (recur more-files))))
-   (into {})))
+  (->> property-files
+       (keep (fn [file]
+               (when-let [rdr (some-> file io/resource io/reader)]
+                 (with-open [rdr rdr]
+                   (doto (Properties.)
+                     (.load rdr))))))
+       first
+       (into {})))
 
 (defn- transform [properties]
   (reduce (fn [accum [k v]]
