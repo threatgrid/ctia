@@ -1,4 +1,4 @@
-(ns ctia.routes.documentation
+(ns ctia.http.routes.documentation
   (:require
    [compojure.api.sweet :refer :all]
    [ring.util.http-response :refer :all]
