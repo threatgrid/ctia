@@ -1,6 +1,5 @@
 (ns ctia.http.handler
-  (:require [ctia.printers :refer :all]
-            [ctia.schemas.actor :refer [NewActor StoredActor]]
+  (:require [ctia.schemas.actor :refer [NewActor StoredActor]]
             [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]
             [ctia.schemas.coa :refer [NewCOA StoredCOA]]
             [ctia.schemas.common

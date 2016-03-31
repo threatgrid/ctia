@@ -1,5 +1,6 @@
 (ns ctia.schemas.coa
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -77,7 +78,7 @@
     id :- s/Str
     login :- s/Str
     prev-coa :- (s/maybe StoredCOA)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (st/assoc new-coa
                :id id
                :type "COA"

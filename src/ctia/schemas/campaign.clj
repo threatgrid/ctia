@@ -1,5 +1,6 @@
 (ns ctia.schemas.campaign
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -71,7 +72,7 @@
     id :- s/Str
     login :- s/Str
     prev-campaign :- (s/maybe StoredCampaign)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-campaign
             :id id
             :type "campaign"

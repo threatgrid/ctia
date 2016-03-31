@@ -22,7 +22,7 @@
 
 
 (def leaf-generators
-  {org.joda.time.DateTime
+  {java.util.Date
    ;; very simplistic randomized date
    (gen/fmap #(-> (t/now)
                   (t/plus (t/weeks %))) gen/int)})

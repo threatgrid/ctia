@@ -1,7 +1,6 @@
 (ns ctia.schemas.common
-  (:require [ctia.schemas.vocabularies :as v]
-            [clj-time.core :as time]
-            [clj-time.format :as time-format]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.vocabularies :as v]
             [ring.util.http-response :as http-response]
             [ring.swagger.schema :refer [describe]]
             [schema.core :as s]))
@@ -20,7 +19,7 @@
 
 (def Time
   "Schema definition for all date or timestamp values in GUNDAM."
-  org.joda.time.DateTime)
+  s/Inst)
 
 (s/defschema VersionInfo
   {:base URI
@@ -134,9 +133,12 @@
 (s/defschema ValidTime
   "See http://stixproject.github.io/data-model/1.2/indicator/ValidTimeType/"
   {(s/optional-key :start_time)
-   (describe Time "If not present, the valid time position of the indicator does not have a lower bound")
+   (describe Time
+             "If not present, the valid time position of the indicator does not have a lower bound")
+
    (s/optional-key :end_time)
-   (describe Time "If not present, the valid time position of the indicator does not have an upper bound")})
+   (describe Time
+             "If not present, the valid time position of the indicator does not have an upper bound")})
 
 ;;Allowed disposition values are:
 (def disposition-map
@@ -179,13 +181,4 @@
            {:error "Mismatching :dispostion and dispositon_name for judgement"
             :judgement judgement})))
 
-(defn timestamp
-  ([]
-   (time/now))
-  ([time-str]
-   (if (nil? time-str)
-     (time/now)
-     (time-format/parse (time-format/formatters :date-time)
-                        time-str))))
-
-(def default-expire-date (time/date-time 2525 1 1))
+(def default-expire-date time/default-expire-date)

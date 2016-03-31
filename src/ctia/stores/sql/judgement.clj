@@ -53,7 +53,7 @@
 (defn insert-judgements [login & new-judgements]
   (let [realized-judgements (realize-judgements login new-judgements)
         judgements (-> realized-judgements
-                       transform/datetimes-to-sqltimes)]
+                       transform/dates-to-sqltimes)]
     (kdb/transaction
      (c/insert @judgement (->> judgements
                                select/judgement-entity-values
@@ -71,7 +71,7 @@
              (sp/transform path/all-last
                            (comp transform/to-schema-observable
                               transform/to-schema-valid-time
-                              transform/sqltimes-to-datetimes
+                              transform/sqltimes-to-dates
                               transform/drop-nils
                               first)))
 

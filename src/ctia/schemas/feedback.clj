@@ -1,9 +1,9 @@
 (ns ctia.schemas.feedback
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [schema.core :as s]
-            [schema-tools.core :as st])
-  (:import org.joda.time.DateTime))
+            [schema-tools.core :as st]))
 
 (s/defschema Feedback
   "Feedback on a Judgement or Verdict.  Is it wrong?  If so why?  Was
@@ -40,6 +40,6 @@
   (assoc new-feedback
          :id id
          :type "feedback"
-         :created (c/timestamp)
+         :created (time/now)
          :owner login
          :judgement judgement-id))

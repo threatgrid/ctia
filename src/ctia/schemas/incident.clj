@@ -1,5 +1,6 @@
 (ns ctia.schemas.incident
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -199,7 +200,7 @@
     id :- s/Str
     login :- s/Str
     prev-incident :- (s/maybe StoredIncident)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-incident
             :id id
             :type "incident"
