@@ -170,7 +170,7 @@
                             {:start_time (or (get-in new-indicator [:valid_time :start_time])
                                              now)
                              :end_time (or (get-in new-indicator [:valid_time :end_time])
-                                           c/default-expire-date)})))))
+                                           time/default-expire-date)})))))
 
 (defn generalize-indicator
   "Strips off realized fields"

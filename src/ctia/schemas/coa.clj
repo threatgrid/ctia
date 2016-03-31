@@ -87,6 +87,6 @@
                :modified now
                :valid_time (or (:valid_time prev-coa)
                                {:end_time (or (get-in new-coa [:valid_time :end_time])
-                                              c/default-expire-date)
+                                              time/default-expire-date)
                                 :start_time (or (get-in new-coa [:valid_time :start_time])
                                                 now)})))))

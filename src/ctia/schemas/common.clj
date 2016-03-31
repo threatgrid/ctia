@@ -180,5 +180,3 @@
     :else (http-response/bad-request!
            {:error "Mismatching :dispostion and dispositon_name for judgement"
             :judgement judgement})))
-
-(def default-expire-date time/default-expire-date)

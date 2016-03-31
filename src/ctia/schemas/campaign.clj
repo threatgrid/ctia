@@ -81,6 +81,6 @@
             :modified now
             :valid_time (or (:valid_time prev-campaign)
                             {:end_time (or (get-in new-campaign [:valid_time :end_time])
-                                           c/default-expire-date)
+                                           time/default-expire-date)
                              :start_time (or (get-in new-campaign [:valid_time :start_time])
                                              now)})))))

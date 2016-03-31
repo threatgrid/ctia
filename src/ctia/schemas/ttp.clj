@@ -152,4 +152,4 @@
                             {:start_time (or (get-in new-ttp [:valid_time :start_time])
                                              now)
                              :end_time (or (get-in new-ttp [:valid_time :end_time])
-                                           c/default-expire-date)})))))
+                                           time/default-expire-date)})))))

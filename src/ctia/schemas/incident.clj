@@ -211,4 +211,4 @@
                             {:start_time (or (get-in new-incident [:valid_time :start_time])
                                              now)
                              :end_time (or (get-in new-incident [:valid_time :end_time])
-                                           c/default-expire-date)})))))
+                                           time/default-expire-date)})))))
