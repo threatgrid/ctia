@@ -2,7 +2,6 @@
   (:import java.util.UUID)
   (:require
    [schema.core :as s]
-   [clj-time.core :as t]
    [ctia.schemas.sighting :refer [Sighting
                                  NewSighting
                                  realize-sighting]]
