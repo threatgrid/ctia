@@ -4,10 +4,9 @@
 (def string {:type "string" :index "not_analyzed"})
 
 (def related
-  {:type string
-   :confidence string
-   :source string
-   :relationship string})
+  {:confidence {:type "string"}
+   :source {:type "string"}
+   :relationship {:type "string"}})
 
 (def valid-time
   {:type "nested"
