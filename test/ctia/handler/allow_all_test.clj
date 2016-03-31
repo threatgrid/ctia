@@ -26,8 +26,7 @@
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                     :end_time "2016-03-11T00:00:00.000-00:00"}
-                       :indicators [{:type "indicator"
-                                     :indicator_id "indicator-123"}]})]
+                       :indicators [{:indicator_id "indicator-123"}]})]
       (is (= 200 status))
       (is (deep=
            {:type "judgement"
@@ -41,8 +40,7 @@
             :confidence "Low"
             :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
                          :end_time #inst "2016-03-11T00:00:00.000-00:00"}
-            :indicators [{:type "indicator"
-                          :indicator_id "indicator-123"}]
+            :indicators [{:indicator_id "indicator-123"}]
             :owner auth/not-logged-in-owner}
            (dissoc judgement :id :created)))
 
@@ -64,7 +62,6 @@
                 :confidence "Low"
                 :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
                              :end_time #inst "2016-03-11T00:00:00.000-00:00"}
-                :indicators [{:type "indicator"
-                              :indicator_id "indicator-123"}]
+                :indicators [{:indicator_id "indicator-123"}]
                 :owner auth/not-logged-in-owner}
                (dissoc get-judgement :created))))))))

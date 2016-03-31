@@ -34,7 +34,6 @@
 (def judgement-indicator-relationship-map
   {:entity-relationship-key :indicators
    :relationship-reference-key :indicator_id
-   :relationship-type :type
    :entity-id-key :judgement_id
    :other-id-key :indicator_id})
 

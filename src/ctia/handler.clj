@@ -444,13 +444,11 @@
         (if-let [indicator (read-indicator @indicator-store id)]
           (let [sighting (create-sighting @sighting-store login
                                           (assoc sighting
-                                                 :indicator {:type "indicator"
-                                                             :indicator_id id}))]
+                                                 :indicator {:indicator_id id}))]
             (update-indicator @indicator-store id login
                               (-> (generalize-indicator indicator)
                                   (update :sightings
-                                          conj {:type "sighting"
-                                                :sighting_id (:id sighting)})))
+                                          conj {:sighting_id (:id sighting)})))
             (ok sighting))
           (not-found))))
 

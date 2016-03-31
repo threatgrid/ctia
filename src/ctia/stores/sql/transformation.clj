@@ -63,12 +63,11 @@
            relationship-reference-key
            entity-id-key
            other-id-key]}]
-  (fn [{:keys [confidence source relationship type]
+  (fn [{:keys [confidence source relationship]
         :as db-relationship}]
     (-> {relationship-reference-key (get db-relationship other-id-key)}
         (cond-> confidence   (assoc :confidence confidence)
                 source       (assoc :source source)
-                type         (assoc :type type )
                 relationship (assoc :relationship relationship)))))
 
 (defn schema-relationship->db-relationship
@@ -81,12 +80,11 @@
            entity-id-key
            other-id-key]}]
   (fn [entity-id
-       {:keys [confidence source relationship type] :as related-structure}]
+       {:keys [confidence source relationship] :as related-structure}]
     (-> {other-id-key (get related-structure relationship-reference-key)
          entity-id-key entity-id}
         (cond-> confidence   (assoc :confidence confidence)
                 source       (assoc :source source)
-                type         (assoc :type type)
                 relationship (assoc :relationship relationship)))))
 
 (defn entities->db-relationships
