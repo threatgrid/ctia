@@ -60,7 +60,8 @@
   (let [{b :chan-buf c :chan m :mult} @central-channel
         output (chan)]
     (tap m output)
-    (send-verdict-change "tester" {"User-Agent" "clojure"} "7" {:disposition 2})
+    (send-verdict-change "tester" {"User-Agent" "clojure"} "7" {:type "verdict"
+                                                                :disposition 2})
     (let [v (<!! output)]
       (is (= "7" (-> v :judgement_id)))
       (is (= 2 (-> v :verdict :disposition))))))

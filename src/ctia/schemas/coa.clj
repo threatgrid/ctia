@@ -15,7 +15,7 @@
     (describe v/COAStage
               "specifies what stage in the cyber threat management lifecycle this Course Of Action is relevant to ")
 
-    (s/optional-key :type)
+    (s/optional-key :coa_type)
     (describe v/COAType
               "type of this CourseOfAction")
 
@@ -48,18 +48,23 @@
     ;; Not provided: structured_COA ;; actionable structured representation for automation
     }))
 
+(s/defschema Type
+  (s/eq "COA"))
+
 (s/defschema NewCOA
   "Schema for submitting new COAs"
   (st/merge
    (st/dissoc COA
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredCOA
   "A COA as stored in the data store"
   (st/merge COA
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -75,6 +80,7 @@
    (let [now (c/timestamp)]
      (st/assoc new-coa
                :id id
+               :type "COA"
                :owner login
                :created (or (:created prev-coa) now)
                :modified now

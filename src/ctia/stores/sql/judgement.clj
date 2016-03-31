@@ -58,7 +58,8 @@
      (c/insert @judgement (->> judgements
                                select/judgement-entity-values
                                (map transform/to-db-observable)
-                               (map transform/to-db-valid-time)))
+                               (map transform/to-db-valid-time)
+                               (map #(dissoc % :type))))
      (c/insert @judgement-indicator (judgements->db-indicators judgements)))
     realized-judgements))
 
@@ -69,10 +70,10 @@
              (group-by :id)
              (sp/transform path/all-last
                            (comp transform/to-schema-observable
-                                 transform/to-schema-valid-time
-                                 transform/sqltimes-to-datetimes
-                                 transform/drop-nils
-                                 first)))
+                              transform/to-schema-valid-time
+                              transform/sqltimes-to-datetimes
+                              transform/drop-nils
+                              first)))
 
         judgement-indicators
         (if-let [ids (keys judgements)]
@@ -83,7 +84,8 @@
                              db-indicator->schema-indicator)))]
 
     (for [[id judgement] judgements]
-      (assoc judgement :indicators (get judgement-indicators id)))))
+      (merge judgement {:type "judgement"
+                        :indicators (get judgement-indicators id)}))))
 
 (defn delete-judgement [id]
   (kdb/transaction
@@ -96,16 +98,18 @@
      (> num-rows-deleted 0))))
 
 (defn calculate-verdict [{:keys [type value] :as _observable_}]
-  (k/select @judgement
-            (k/fields :disposition [:id :judgement_id] :disposition_name)
-            (k/where {:observable_type type
-                      :observable_value value})
-            (k/where (or (= :valid_time_end_time nil)
-                         (> :valid_time_end_time (coerce/to-sql-time (time/now)))))
-            (k/order :priority :DESC)
-            (k/order :disposition)
-            (k/order :valid_time_start_time)
-            (k/limit 1)))
+  (some-> (k/select @judgement
+                    (k/fields :disposition [:id :judgement_id] :disposition_name)
+                    (k/where {:observable_type type
+                              :observable_value value})
+                    (k/where (or (= :valid_time_end_time nil)
+                                 (> :valid_time_end_time (coerce/to-sql-time (time/now)))))
+                    (k/order :priority :DESC)
+                    (k/order :disposition)
+                    (k/order :valid_time_start_time)
+                    (k/limit 1))
+          first
+          (merge {:type "verdict"})))
 
 (defn create-judgement-indicator [judgement-id indicator-rel]
   (when (seq (k/select @judgement (k/where {:id judgement-id})))

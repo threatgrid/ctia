@@ -14,16 +14,22 @@
    :feedback (s/enum -1 0 1)
    :reason s/Str})
 
+(s/defschema Type
+  (s/eq "feedback"))
+
 (s/defschema NewFeedback
   "Schema for submitting new Feedback"
-  (st/dissoc Feedback
-             :id
-             :judgement))
+  (st/merge
+   (st/dissoc Feedback
+              :id
+              :judgement)
+   {(s/optional-key :type) Type}))
 
 (s/defschema StoredFeedback
   "A feedback record at rest in the storage service"
   (st/merge Feedback
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time}))
 
 (s/defn realize-feedback :- StoredFeedback
@@ -33,6 +39,7 @@
    judgement-id :- s/Str]
   (assoc new-feedback
          :id id
+         :type "feedback"
          :created (c/timestamp)
          :owner login
          :judgement judgement-id))

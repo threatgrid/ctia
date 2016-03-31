@@ -35,12 +35,15 @@
     (s/optional-key :source)
     (describe s/Str "source of this Campaign")
     ;; Extension fields:
-    :type  s/Str
+    :campaign_type  s/Str
     :indicators rel/RelatedIndicators
 
     ;; Not provided: Handling
     ;; Not provided: related_packages (deprecated)
     }))
+
+(s/defschema Type
+  (s/eq "campaign"))
 
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"
@@ -48,12 +51,14 @@
    (st/dissoc Campaign
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredCampaign
   "A schema as stored in the data store"
   (st/merge Campaign
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -69,6 +74,7 @@
    (let [now (c/timestamp)]
      (assoc new-campaign
             :id id
+            :type "campaign"
             :owner login
             :created (or (:created prev-campaign) now)
             :modified now

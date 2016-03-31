@@ -16,13 +16,19 @@
    (s/optional-key :related_judgements) rel/RelatedJudgements
    (s/optional-key :indicator) rel/RelatedIndicator})
 
+(s/defschema Type
+  (s/eq "sighting"))
+
 (s/defschema NewSighting
-  (st/dissoc Sighting
-             :id))
+  (st/merge
+   (st/dissoc Sighting
+              :id)
+   {(s/optional-key :type) Type}))
 
 (s/defschema StoredSighting
   (st/merge Sighting
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -38,6 +44,7 @@
    (let [now (c/timestamp)]
      (assoc new-sighting
             :id id
+            :type "sighting"
             :owner login
             :created (or (:created prev-sighting) now)
             :modified now))))

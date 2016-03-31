@@ -29,7 +29,8 @@
                        :indicators [{:indicator_id "indicator-123"}]})]
       (is (= 200 status))
       (is (deep=
-           {:observable {:value "1.2.3.4"
+           {:type "judgement"
+            :observable {:value "1.2.3.4"
                          :type "ip"}
             :disposition 2
             :disposition_name "Malicious"
@@ -50,6 +51,7 @@
           (is (= 200 status))
           (is (deep=
                {:id (:id judgement)
+                :type "judgement"
                 :observable {:value "1.2.3.4"
                              :type "ip"}
                 :disposition 2

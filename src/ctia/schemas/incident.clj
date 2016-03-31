@@ -171,17 +171,22 @@
     ;; Not provided: related_packages (deprecated)
     }))
 
+(s/defschema Type
+  (s/eq "incident"))
+
 (s/defschema NewIncident
   (st/merge
    (st/dissoc Incident
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredIncident
   "An incident as stored in the data store"
   (st/merge Incident
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -197,6 +202,7 @@
    (let [now (c/timestamp)]
      (assoc new-incident
             :id id
+            :type "incident"
             :owner login
             :created (or (:created prev-incident) now)
             :modified now

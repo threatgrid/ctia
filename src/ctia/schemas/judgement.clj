@@ -35,6 +35,9 @@
    (s/optional-key :reason_uri) c/URI
    (s/optional-key :indicators) rel/RelatedIndicators})
 
+(s/defschema Type
+  (s/eq "judgement"))
+
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
   (st/merge
@@ -45,12 +48,14 @@
               :valid_time)
    {(s/optional-key :disposition) c/DispositionNumber
     (s/optional-key :disposition_name) c/DispositionName
-    (s/optional-key :valid_time) c/ValidTime}))
+    (s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredJudgement
   "A judgement as stored in the data store"
   (st/merge Judgement
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time}))
 
 (s/defn realize-judgement :- StoredJudgement
@@ -62,6 +67,7 @@
         disposition_name (get c/disposition-map disposition)]
     (assoc new-judgement
            :id id
+           :type "judgement"
            :disposition disposition
            :disposition_name disposition_name
            :owner login

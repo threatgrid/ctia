@@ -68,7 +68,7 @@
     (let [response (post "ctia/actor"
                          :body {:title "actor"
                                 :description "description"
-                                :type "Hacker"
+                                :actor_type "Hacker"
                                 :source "a source"
                                 :confidence "High"
                                 :associated_actors [{:actor_id "actor-123"}
@@ -83,8 +83,9 @@
           actor (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:description "description",
-            :type "Hacker",
+           {:type "actor"
+            :description "description",
+            :actor_type "Hacker",
             :title "actor",
             :confidence "High",
             :source "a source"
@@ -108,8 +109,9 @@
               actor (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:description "description",
-                :type "Hacker",
+               {:type "actor"
+                :description "description",
+                :actor_type "Hacker",
                 :title "actor",
                 :confidence "High",
                 :source "a source"
@@ -131,7 +133,8 @@
         (let [response (put (str "ctia/actor/" (:id actor))
                             :body {:title "modified actor"
                                    :description "updated description"
-                                   :type "Hacktivist"
+                                   :actor_type "Hacktivist"
+                                   :type "actor"
                                    :source "a source"
                                    :confidence "High"
                                    :associated_actors [{:actor_id "actor-789"}]
@@ -146,10 +149,11 @@
           (is (= 200 (:status response)))
           (is (deep=
                {:id (:id actor)
+                :type "actor"
                 :created (:created actor)
                 :title "modified actor"
                 :description "updated description"
-                :type "Hacktivist"
+                :actor_type "Hacktivist"
                 :source "a source"
                 :confidence "High"
                 :associated_actors [{:actor_id "actor-789"}]
@@ -179,7 +183,7 @@
     (let [response (post "ctia/campaign"
                          :body {:title "campaign"
                                 :description "description"
-                                :type "anything goes here"
+                                :campaign_type "anything goes here"
                                 :intended_effect ["Theft"]
                                 :indicators [{:indicator_id "indicator-foo"}
                                              {:indicator_id "indicator-bar"}]
@@ -201,9 +205,10 @@
           campaign (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:title "campaign"
+           {:type "campaign"
+            :title "campaign"
             :description "description"
-            :type "anything goes here"
+            :campaign_type "anything goes here"
             :intended_effect ["Theft"]
             :indicators [{:indicator_id "indicator-foo"}
                          {:indicator_id "indicator-bar"}]
@@ -233,9 +238,10 @@
               campaign (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:title "campaign"
+               {:type "campaign"
+                :title "campaign"
                 :description "description"
-                :type "anything goes here"
+                :campaign_type "anything goes here"
                 :intended_effect ["Theft"]
                 :indicators [{:indicator_id "indicator-foo"}
                              {:indicator_id "indicator-bar"}]
@@ -263,7 +269,7 @@
         (let [response (put (str "ctia/campaign/" (:id campaign))
                             :body {:title "modified campaign"
                                    :description "different description"
-                                   :type "anything goes here"
+                                   :campaign_type "anything goes here"
                                    :intended_effect ["Brand Damage"]
                                    :indicators [{:indicator_id "indicator-foo"}
                                                 {:indicator_id "indicator-bar"}]
@@ -286,10 +292,11 @@
           (is (= 200 (:status response)))
           (is (deep=
                {:id (:id campaign)
+                :type "campaign"
                 :created (:created campaign)
                 :title "modified campaign"
                 :description "different description"
-                :type "anything goes here"
+                :campaign_type "anything goes here"
                 :intended_effect ["Brand Damage"]
                 :indicators [{:indicator_id "indicator-foo"}
                              {:indicator_id "indicator-bar"}]
@@ -327,16 +334,17 @@
     (let [response (post "ctia/coa"
                          :body {:title "coa"
                                 :description "description"
-                                :type "Eradication"
+                                :coa_type "Eradication"
                                 :objective ["foo" "bar"]
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           coa (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:title "coa"
+           {:type "COA"
+            :title "coa"
             :description "description"
-            :type "Eradication"
+            :coa_type "Eradication"
             :objective ["foo" "bar"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -352,9 +360,10 @@
               coa (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:title "coa"
+               {:type "COA"
+                :title "coa"
                 :description "description"
-                :type "Eradication"
+                :coa_type "Eradication"
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -370,17 +379,18 @@
               (put (str "ctia/coa/" (:id coa))
                    :body {:title "updated coa"
                           :description "updated description"
-                          :type "Hardening"
+                          :coa_type "Hardening"
                           :objective ["foo" "bar"]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
                {:id (:id coa)
+                :type "COA"
                 :created (:created coa)
                 :title "updated coa"
                 :description "updated description"
-                :type "Hardening"
+                :coa_type "Hardening"
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -417,7 +427,8 @@
           exploit-target (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:title "exploit-target"
+           {:type "exploit-target"
+            :title "exploit-target"
             :description "description"
             :vulnerability [{:title "vulnerability"
                              :description "description"}]
@@ -441,7 +452,8 @@
               exploit-target (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:title "exploit-target"
+               {:type "exploit-target"
+                :title "exploit-target"
                 :description "description"
                 :vulnerability [{:title "vulnerability"
                                  :description "description"}]
@@ -478,6 +490,7 @@
           (is (= 200 status))
           (is (deep=
                {:id (:id exploit-target)
+                :type "exploit-target"
                 :title "updated exploit-target"
                 :description "updated description"
                 :vulnerability [{:title "vulnerability"
@@ -525,7 +538,8 @@
           incident (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:title "incident"
+           {:type "incident"
+            :title "incident"
             :description "description"
             :confidence "High"
             :categories ["Denial of Service"
@@ -551,7 +565,8 @@
               incident (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:title "incident"
+               {:type "incident"
+                :title "incident"
                 :description "description"
                 :confidence "High"
                 :categories ["Denial of Service"
@@ -589,7 +604,8 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               {:id (:id incident)
+               {:type "incident"
+                :id (:id incident)
                 :created (:created incident)
                 :title "updated incident"
                 :description "updated description"
@@ -625,7 +641,7 @@
                          :body {:title "indicator-title"
                                 :description "description"
                                 :producer "producer"
-                                :type ["C2" "IP Watchlist"]
+                                :indicator_type ["C2" "IP Watchlist"]
                                 :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                              :end_time "2016-07-11T00:40:48.212-00:00"}
                                 :related_campaigns [{:confidence "High"
@@ -642,10 +658,11 @@
           indicator (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:title "indicator-title"
+           {:type "indicator"
+            :title "indicator-title"
             :description "description"
             :producer "producer"
-            :type ["C2" "IP Watchlist"]
+            :indicator_type ["C2" "IP Watchlist"]
             :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :related_campaigns [{:confidence "High"
@@ -670,10 +687,11 @@
               indicator (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:title "indicator-title"
+               {:type "indicator"
+                :title "indicator-title"
                 :description "description"
                 :producer "producer"
-                :type ["C2" "IP Watchlist"]
+                :indicator_type ["C2" "IP Watchlist"]
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :related_campaigns [{:confidence "High"
@@ -700,10 +718,11 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               [{:title "indicator-title"
+               [{:type "indicator"
+                 :title "indicator-title"
                  :description "description"
                  :producer "producer"
-                 :type ["C2" "IP Watchlist"]
+                 :indicator_type ["C2" "IP Watchlist"]
                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                  :related_campaigns [{:confidence "High"
@@ -726,7 +745,7 @@
                    :body {:title "updated indicator"
                           :description "updated description"
                           :producer "producer"
-                          :type ["IP Watchlist"]
+                          :indicator_type ["IP Watchlist"]
                           :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}
                           :related_campaigns [{:confidence "Low"
@@ -743,11 +762,12 @@
           (is (= 200 status))
           (is (deep=
                {:id (:id indicator)
+                :type "indicator"
                 :created (:created indicator)
                 :title "updated indicator"
                 :description "updated description"
                 :producer "producer"
-                :type ["IP Watchlist"]
+                :indicator_type ["IP Watchlist"]
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :related_campaigns [{:confidence "Low"
@@ -778,7 +798,8 @@
                     :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               {:timestamp #inst "2016-05-11T00:40:48.212-00:00"
+               {:type "sighting"
+                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
                 :source "source"
                 :reference "http://example.com/123"
                 :confidence "High"
@@ -800,11 +821,12 @@
               (is (= 200 status))
               (is (deep=
                    {:id (:id indicator)
+                    :type "indicator"
                     :created (:created indicator)
                     :title "updated indicator"
                     :description "updated description"
                     :producer "producer"
-                    :type ["IP Watchlist"]
+                    :indicator_type ["IP Watchlist"]
                     :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                                  :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                     :related_campaigns [{:confidence "Low"
@@ -847,7 +869,8 @@
                 :headers {"api_key" "45c1f5e3f05d0"})]
       (is (= 200 status))
       (is (deep=
-           {:timestamp #inst "2016-05-11T00:40:48.212-00:00"
+           {:type "sighting"
+            :timestamp #inst "2016-05-11T00:40:48.212-00:00"
             :source "source"
             :reference "http://example.com/123"
             :confidence "High"
@@ -867,7 +890,8 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               {:timestamp #inst "2016-05-11T00:40:48.212-00:00"
+               {:type "sighting"
+                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
                 :source "source"
                 :reference "http://example.com/123"
                 :confidence "High"
@@ -894,7 +918,8 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               {:timestamp #inst "2016-05-11T00:40:48.212-00:00"
+               {:type "sighting"
+                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
                 :source "updated source"
                 :reference "http://example.com/123"
                 :confidence "Medium"
@@ -939,7 +964,8 @@
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:observable {:value "1.2.3.4"
+           {:type "judgement"
+            :observable {:value "1.2.3.4"
                          :type "ip"}
             :disposition 2
             :disposition_name "Malicious"
@@ -964,7 +990,8 @@
               judgement (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:observable {:value "1.2.3.4"
+               {:type "judgement"
+                :observable {:value "1.2.3.4"
                              :type "ip"}
                 :disposition 2
                 :disposition_name "Malicious"
@@ -991,7 +1018,8 @@
                    :query-params {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 (:status response)))
           (is (deep=
-               {:observable {:value "1.2.3.4"
+               {:type "judgement"
+                :observable {:value "1.2.3.4"
                              :type "ip"}
                 :disposition 2
                 :disposition_name "Malicious"
@@ -1062,7 +1090,8 @@
               feedback (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:judgement (:id judgement),
+               {:type "feedback"
+                :judgement (:id judgement),
                 :feedback -1,
                 :reason "false positive"
                 :owner "foouser"}
@@ -1094,11 +1123,13 @@
                 feedbacks (:parsed-body response)]
             (is (= 200 (:status response)))
             (is (deep=
-                 #{{:judgement (:id judgement),
+                 #{{:type "feedback"
+                    :judgement (:id judgement),
                     :feedback -1,
                     :reason "false positive"
                     :owner "foouser"}
-                   {:judgement (:id judgement),
+                   {:type "feedback"
+                    :judgement (:id judgement),
                     :feedback 1,
                     :reason "true positive"
                     :owner "foouser"}}
@@ -1123,7 +1154,8 @@
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:observable {:value "1.2.3.4"
+           {:type "judgement"
+            :observable {:value "1.2.3.4"
                          :type "ip"}
             :disposition 2
             :disposition_name "Malicious"
@@ -1152,7 +1184,8 @@
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:observable {:value "1.2.3.4"
+           {:type "judgement"
+            :observable {:value "1.2.3.4"
                          :type "ip"}
             :disposition 2
             :disposition_name "Malicious"
@@ -1180,7 +1213,8 @@
           judgement (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:observable {:value "1.2.3.4"
+           {:type "judgement"
+            :observable {:value "1.2.3.4"
                          :type "ip"}
             :disposition 5
             :disposition_name "Unknown"
@@ -1266,7 +1300,7 @@
                                  {:sighting_id sighting-2-id}]
                      :description "indicator 1"
                      :producer "producer"
-                     :type ["C2" "IP Watchlist"]
+                     :indicator_type ["C2" "IP Watchlist"]
                      :valid_time {:end_time "2016-02-12T00:00:00.000-00:00"}}
               :headers {"api_key" "45c1f5e3f05d0"})
 
@@ -1306,7 +1340,7 @@
                      :sightings [{:sighting_id sighting-3-id}]
                      :description "indicator 2"
                      :producer "producer"
-                     :type ["C2" "IP Watchlist"]
+                     :indicator_type ["C2" "IP Watchlist"]
                      :valid_time {:start_time "2016-01-12T00:00:00.000-00:00"
                                   :end_time "2016-02-12T00:00:00.000-00:00"}}
               :headers {"api_key" "45c1f5e3f05d0"})
@@ -1358,7 +1392,7 @@
                                  {:sighting_id sighting-5-id}]
                      :description "indicator 3"
                      :producer "producer"
-                     :type ["C2" "IP Watchlist"]
+                     :indicator_type ["C2" "IP Watchlist"]
                      :valid_time {:start_time "2016-01-11T00:00:00.000-00:00"
                                   :end_time "2016-02-11T00:00:00.000-00:00"}}
               :headers {"api_key" "45c1f5e3f05d0"})
@@ -1392,6 +1426,7 @@
         (is (= 200 status))
         (is (deep=
              #{{:id judgement-2-id
+                :type "judgement"
                 :observable {:value "10.0.0.1"
                              :type "ip"}
                 :disposition 2
@@ -1405,6 +1440,7 @@
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :owner "foouser"}
                {:id judgement-3-id
+                :type "judgement"
                 :observable {:value "10.0.0.1"
                              :type "ip"}
                 :disposition 2
@@ -1428,16 +1464,18 @@
         (is (= 200 (:status response)))
         (is (deep=
              #{{:id indicator-2-id
+                :type "indicator"
                 :title "indicator"
                 :judgements [{:judgement_id judgement-2-id}]
                 :sightings [{:sighting_id sighting-3-id}]
                 :description "indicator 2"
                 :producer "producer"
-                :type ["C2" "IP Watchlist"]
+                :indicator_type ["C2" "IP Watchlist"]
                 :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
                              :end_time #inst "2016-02-12T00:00:00.000-00:00"}
                 :owner "foouser"}
                {:id indicator-3-id
+                :type "indicator"
                 :title "indicator"
                 :judgements [{:judgement_id judgement-3-id
                               :confidence "High"}]
@@ -1445,7 +1483,7 @@
                             {:sighting_id sighting-5-id}]
                 :description "indicator 3"
                 :producer "producer"
-                :type ["C2" "IP Watchlist"]
+                :indicator_type ["C2" "IP Watchlist"]
                 :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
                              :end_time #inst "2016-02-11T00:00:00.000-00:00"}
                 :owner "foouser"}}
@@ -1462,18 +1500,21 @@
         (is (= 200 status))
         (is (deep=
              #{{:id sighting-3-id
+                :type "sighting"
                 :timestamp #inst "2016-02-04T12:00:00.000-00:00"
                 :source "spam"
                 :confidence "None"
                 :description "sighting 3"
                 :owner "foouser"}
                {:id sighting-4-id
+                :type "sighting"
                 :timestamp #inst "2016-02-05T01:00:00.000-00:00"
                 :source "foo"
                 :confidence "High"
                 :description "sighting 4"
                 :owner "foouser"}
                {:id sighting-5-id
+                :type "sighting"
                 :timestamp #inst "2016-02-05T02:00:00.000-00:00"
                 :source "bar"
                 :confidence "Low"
@@ -1570,7 +1611,8 @@
                             :headers {"api_key" "45c1f5e3f05d0"})
               verdict (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= {:disposition 2
+          (is (= {:type "verdict"
+                  :disposition 2
                   :disposition_name "Malicious"
                   :judgement_id (:id judgement-1)}
                  verdict)))))))
@@ -1620,7 +1662,8 @@
                               :headers {"api_key" "45c1f5e3f05d0"})
                 verdict (:parsed-body response)]
             (is (= 200 (:status response)))
-            (is (= {:disposition 2
+            (is (= {:type "verdict"
+                    :disposition 2
                     :disposition_name "Malicious"
                     :judgement_id (:id judgement)}
                    verdict))))))))
@@ -1633,7 +1676,7 @@
     (let [response (post "ctia/ttp"
                          :body {:title "ttp"
                                 :description "description"
-                                :type "foo"
+                                :ttp_type "foo"
                                 :indicators ["indicator-1" "indicator-2"]
                                 :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                                   {:exploit_target_id "exploit-target-234"}]
@@ -1643,9 +1686,10 @@
           ttp (:parsed-body response)]
       (is (= 200 (:status response)))
       (is (deep=
-           {:title "ttp"
+           {:type "ttp"
+            :title "ttp"
             :description "description"
-            :type "foo"
+            :ttp_type "foo"
             :indicators ["indicator-1" "indicator-2"]
             :exploit_targets [{:exploit_target_id "exploit-target-123"}
                               {:exploit_target_id "exploit-target-234"}]
@@ -1663,9 +1707,10 @@
               ttp (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:title "ttp"
+               {:type "ttp"
+                :title "ttp"
                 :description "description"
-                :type "foo"
+                :ttp_type "foo"
                 :indicators ["indicator-1" "indicator-2"]
                 :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                   {:exploit_target_id "exploit-target-234"}]
@@ -1683,7 +1728,7 @@
               (put (str "ctia/ttp/" (:id ttp))
                    :body {:title "updated ttp"
                           :description "updated description"
-                          :type "bar"
+                          :ttp_type "bar"
                           :indicators ["indicator-1" "indicator-2"]
                           :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                             {:exploit_target_id "exploit-target-234"}]
@@ -1693,10 +1738,11 @@
           (is (= 200 status))
           (is (deep=
                {:id (:id ttp)
+                :type "ttp"
                 :created (:created ttp)
                 :title "updated ttp"
                 :description "updated description"
-                :type "bar"
+                :ttp_type "bar"
                 :indicators ["indicator-1" "indicator-2"]
                 :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                   {:exploit_target_id "exploit-target-234"}]
