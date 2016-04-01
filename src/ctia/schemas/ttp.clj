@@ -1,5 +1,6 @@
 (ns ctia.schemas.ttp
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -140,7 +141,7 @@
     id :- s/Str
     login :- s/Str
     prev-ttp :- (s/maybe StoredTTP)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-ttp
             :id id
             :type "ttp"
@@ -151,4 +152,4 @@
                             {:start_time (or (get-in new-ttp [:valid_time :start_time])
                                              now)
                              :end_time (or (get-in new-ttp [:valid_time :end_time])
-                                           c/default-expire-date)})))))
+                                           time/default-expire-date)})))))

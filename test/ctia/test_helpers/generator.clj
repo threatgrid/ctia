@@ -1,31 +1,30 @@
 (ns ctia.test-helpers.generator
-  (:require
-   [ctia.schemas.actor :refer [Actor]]
-   [ctia.schemas.campaign :refer [Campaign]]
-   [ctia.schemas.coa :refer [COA]]
-   [ctia.schemas.exploit-target :refer [ExploitTarget]]
-   [ctia.schemas.feedback :refer [Feedback]]
-   [ctia.schemas.identity :refer [Identity]]
-   [ctia.schemas.incident :refer [Incident]]
-   [ctia.schemas.indicator :refer [Indicator]]
-   [ctia.schemas.judgement :refer [Judgement]]
-   [ctia.schemas.sighting :refer [Sighting]]
-   [ctia.schemas.ttp :refer [TTP]]
-   [ctia.schemas.verdict :refer [Verdict]]
-   [schema.experimental.generators :as g]
-   [schema.core :as s]
-   [clj-time.core :as t]
-   [clojure.test.check.generators :as gen]))
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.actor :refer [Actor]]
+            [ctia.schemas.campaign :refer [Campaign]]
+            [ctia.schemas.coa :refer [COA]]
+            [ctia.schemas.exploit-target :refer [ExploitTarget]]
+            [ctia.schemas.feedback :refer [Feedback]]
+            [ctia.schemas.identity :refer [Identity]]
+            [ctia.schemas.incident :refer [Incident]]
+            [ctia.schemas.indicator :refer [Indicator]]
+            [ctia.schemas.judgement :refer [Judgement]]
+            [ctia.schemas.sighting :refer [Sighting]]
+            [ctia.schemas.ttp :refer [TTP]]
+            [ctia.schemas.verdict :refer [Verdict]]
+            [schema.experimental.generators :as g]
+            [schema.core :as s]
+            [clojure.test.check.generators :as gen]))
 
 
 (def default-complexity 20)
 
 
 (def leaf-generators
-  {org.joda.time.DateTime
+  {java.util.Date
    ;; very simplistic randomized date
-   (gen/fmap #(-> (t/now)
-                  (t/plus (t/weeks %))) gen/int)})
+   (gen/fmap #(-> (time/now)
+                  time/plus-n-weeks) gen/int)})
 
 (def schema-mapping
   "a map to easily request a schema"

@@ -1,11 +1,11 @@
 (ns ctia.stores.atom.judgement
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.judgement
              :refer [NewJudgement StoredJudgement realize-judgement]]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.verdict :refer [Verdict]]
             [ctia.stores.atom.common :as mc]
-            [clj-time.core :as time]
             [schema.core :as s]))
 
 (mc/def-create-handler handle-create-judgement

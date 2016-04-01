@@ -1657,7 +1657,7 @@
       (is (= 200 (:status response)))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
-        (with-redefs [clj-time.core/now (constantly (c/timestamp "2016-02-12T15:42:58.232-00:00"))]
+        (with-redefs [ctia.lib.time/now (constantly (ctia.lib.time/timestamp "2016-02-12T15:42:58.232-00:00"))]
           (let [response (get "ctia/ip/10.0.0.1/verdict"
                               :headers {"api_key" "45c1f5e3f05d0"})
                 verdict (:parsed-body response)]

@@ -1,5 +1,6 @@
 (ns ctia.schemas.judgement
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -62,7 +63,7 @@
   [new-judgement :- NewJudgement
    id :- s/Str
    login :- s/Str]
-  (let [now (c/timestamp)
+  (let [now (time/now)
         disposition (c/determine-disposition-id new-judgement)
         disposition_name (get c/disposition-map disposition)]
     (assoc new-judgement
@@ -73,6 +74,6 @@
            :owner login
            :created now
            :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
-                                      c/default-expire-date)
+                                      time/default-expire-date)
                         :start_time (or (get-in new-judgement [:valid_time :start_time])
                                         now)})))

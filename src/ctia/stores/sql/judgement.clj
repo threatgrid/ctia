@@ -1,12 +1,11 @@
 (ns ctia.stores.sql.judgement
   (:require [ctia.lib.specter.paths :as path]
+            [ctia.lib.time :as time]
             [ctia.schemas.judgement :as judgement-schema]
             [ctia.stores.sql.common :as c]
             [ctia.stores.sql.db :refer [db]]
             [ctia.stores.sql.selection :as select]
             [ctia.stores.sql.transformation :as transform]
-            [clj-time.core :as time]
-            [clj-time.coerce :as coerce]
             [com.rpl.specter :as sp]
             [korma.core :as k]
             [korma.db :as kdb])
@@ -53,7 +52,7 @@
 (defn insert-judgements [login & new-judgements]
   (let [realized-judgements (realize-judgements login new-judgements)
         judgements (-> realized-judgements
-                       transform/datetimes-to-sqltimes)]
+                       transform/dates-to-sqltimes)]
     (kdb/transaction
      (c/insert @judgement (->> judgements
                                select/judgement-entity-values
@@ -71,7 +70,7 @@
              (sp/transform path/all-last
                            (comp transform/to-schema-observable
                               transform/to-schema-valid-time
-                              transform/sqltimes-to-datetimes
+                              transform/sqltimes-to-dates
                               transform/drop-nils
                               first)))
 
@@ -103,7 +102,7 @@
                     (k/where {:observable_type type
                               :observable_value value})
                     (k/where (or (= :valid_time_end_time nil)
-                                 (> :valid_time_end_time (coerce/to-sql-time (time/now)))))
+                                 (> :valid_time_end_time (time/sql-now))))
                     (k/order :priority :DESC)
                     (k/order :disposition)
                     (k/order :valid_time_start_time)
