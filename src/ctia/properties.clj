@@ -75,10 +75,9 @@
    validate it, transform it into a nested map with keyword keys, and
    then store it in memory."
   []
-  (->> (let [properties-from-file (read-property-file)]
-         (merge properties-from-file
-                (select-keys (System/getProperties)
-                             configurable-properties)))
+  (->> (merge (read-property-file)
+              (select-keys (System/getProperties)
+                           configurable-properties))
        coerce-properties
        transform
        (reset! properties)))
