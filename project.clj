@@ -1,5 +1,8 @@
 (defproject ctia "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "Cisco Threat Intelligence API"
+  :license {:name "Eclipse Public License - v 1.0"
+            :url "http://www.eclipse.org/legal/epl-v10.html"
+            :distribution :repo}
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
                  [metosin/schema-tools "0.7.0"]
@@ -27,7 +30,7 @@
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
-  :test-selectors {:memory-store :memory-store
+  :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
                    :default #(not (or (:es-store %)

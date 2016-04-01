@@ -49,7 +49,8 @@ java -jar target/server.jar
 
 ## License
 
-Copyright ©  2015 Cisco
+Copyright © 2015-2016 Cisco Systems
+Eclipse Public License v1.0
 
 
 ## Implementation Notes
