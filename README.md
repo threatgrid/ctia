@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/threatgrid/ctia.png?label=ready&title=Ready)](https://waffle.io/threatgrid/ctia)
 # Cisco Threat Intel API
 
 THIS IS NOT OPERATIONAL
