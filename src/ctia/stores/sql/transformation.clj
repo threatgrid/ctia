@@ -1,6 +1,6 @@
 (ns ctia.stores.sql.transformation
   (:require [ctia.lib.specter.paths :as path]
-            [clj-time.coerce :as coerce]
+            [ctia.lib.time :as time]
             [clojure.string :as str]
             [com.rpl.specter :refer :all]))
 
@@ -46,14 +46,14 @@
   "walk entities and convert joda DateTimes to sql Timestamps"
   [entities]
   (transform path/walk-dates
-             (comp coerce/to-sql-time coerce/from-date)
+             time/to-sql-time
              entities))
 
 (defn sqltimes-to-dates
   "walk entities and convert sql Timestamps to joda java.util.Dates"
   [entities]
   (transform path/walk-sqltimes
-             (comp coerce/to-date coerce/from-sql-time)
+             time/from-sql-time
              entities))
 
 (defn db-relationship->schema-relationship

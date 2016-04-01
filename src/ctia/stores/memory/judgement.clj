@@ -1,13 +1,12 @@
 (ns ctia.stores.memory.judgement
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.judgement
              :refer [NewJudgement StoredJudgement realize-judgement]]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.verdict :refer [Verdict]]
             [ctia.store :refer [IJudgementStore list-judgements]]
             [ctia.stores.memory.common :as mc]
-            [clj-time.core :as time]
-            [clj-time.coerce :as time-coerce]
             [schema.core :as s]))
 
 (mc/def-create-handler handle-create-judgement
@@ -24,13 +23,7 @@
 
 (defn judgement-expired? [judgement now]
   (if-let [expires (get-in judgement [:valid_time :end_time])]
-    (let [expires (if (instance? org.joda.time.DateTime expires)
-                    expires
-                    (time-coerce/from-date expires))
-          now (if (instance? org.joda.time.DateTime now)
-                now
-                (time-coerce/from-date now))]
-      (time/after? now expires))
+    (time/after? now expires)
     false))
 
 (defn higest-priority [& judgements]

@@ -1,8 +1,7 @@
 (ns ctia.stores.sql.transformation-test
-  (:require [ctia.stores.sql.transformation :as t]
+  (:require [ctia.lib.time :as time]
+            [ctia.stores.sql.transformation :as t]
             [ctia.test-helpers.core]
-            [clj-time.core :as time]
-            [clj-time.coerce :as coerce]
             [clojure.test :refer [deftest is]])
   (:import java.util.Date))
 
@@ -31,9 +30,8 @@
           {:foo :bar :valid_time_start_time "start" :valid_time_end_time "end"}))))
 
 (deftest dates-to-sqltimes-test
-  (let [now-dt (time/now)
-        now (coerce/to-date now-dt)
-        sql-now (coerce/to-sql-time now-dt)]
+  (let [now (time/now)
+        sql-now (time/to-sql-time now)]
     (is (deep=
          [{:foo :bar}
           {:a :a :b sql-now :c :c}
@@ -44,9 +42,8 @@
            {:a now :b {:c now :d {:e now}}}])))))
 
 (deftest sqltimes-to-dates-test
-  (let [now-dt (time/date-time 2016 2 29 7 6 0)
-        now (coerce/to-date now-dt)
-        sql-now (coerce/to-sql-time now-dt)]
+  (let [now (time/now)
+        sql-now (time/to-sql-time now)]
     (is (deep=
          [{:foo :bar}
           {:a :a :b now :c :c}
