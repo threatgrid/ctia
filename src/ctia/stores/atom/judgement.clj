@@ -1,11 +1,10 @@
-(ns ctia.stores.memory.judgement
+(ns ctia.stores.atom.judgement
   (:require [ctia.schemas.common :as c]
             [ctia.schemas.judgement
              :refer [NewJudgement StoredJudgement realize-judgement]]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.verdict :refer [Verdict]]
-            [ctia.store :refer [IJudgementStore list-judgements]]
-            [ctia.stores.memory.common :as mc]
+            [ctia.stores.atom.common :as mc]
             [clj-time.core :as time]
             [schema.core :as s]))
 
@@ -80,21 +79,3 @@
   (when (contains? @state judgement-id)
     (swap! state update-in [judgement-id :indicators] conj indicator-rel)
     indicator-rel))
-
-(defrecord JudgementStore [state]
-  IJudgementStore
-  (create-judgement [_ login new-judgement]
-    (handle-create-judgement state login new-judgement))
-  (read-judgement [_ id]
-    (handle-read-judgement state id))
-  (delete-judgement [_ id]
-    (handle-delete-judgement state id))
-  (list-judgements [_ filter-map]
-    (handle-list-judgements state filter-map))
-  (calculate-verdict [_ observable]
-    (handle-calculate-verdict state observable))
-  (list-judgements-by-observable [this observable]
-    (list-judgements this {[:observable :type]  (:type observable)
-                           [:observable :value] (:value observable)}))
-  (add-indicator-to-judgement [_ judgement-id indicator-rel]
-    (handle-add-indicator-to-judgement state judgement-id indicator-rel)))

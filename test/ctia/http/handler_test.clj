@@ -37,7 +37,7 @@
 
 (defmacro deftest-for-each-store [test-name & body]
   `(helpers/deftest-for-each-fixture ~test-name
-     {:memory-store helpers/fixture-in-memory-store
+     {:atom-store helpers/fixture-atom-store
       :sql-store    (join-fixtures [db-helpers/fixture-sql-store
                                     db-helpers/fixture-clean-db])
 
@@ -1621,7 +1621,7 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  ;; This test case catches a bug that was in the in-memory store
+  ;; This test case catches a bug that was in the atom store
   ;; It tests the code path where priority is equal but dispositions differ
   (testing "test setup: create a judgement (1)"
     (let [response (post "ctia/judgement"

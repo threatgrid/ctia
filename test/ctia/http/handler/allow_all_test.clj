@@ -10,7 +10,7 @@
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
                                     helpers/fixture-schema-validation
                                     helpers/fixture-allow-all-auth
-                                    helpers/fixture-in-memory-store]))
+                                    helpers/fixture-atom-store]))
 
 (deftest allow-all-auth-judgement-routes-test
   (testing "POST /ctia/judgement"
