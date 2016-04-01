@@ -30,7 +30,7 @@
          :nrepl {:start? true}}
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
-  :test-selectors {:memory-store :memory-store
+  :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
                    :default #(not (or (:es-store %)

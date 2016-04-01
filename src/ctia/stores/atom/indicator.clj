@@ -1,9 +1,8 @@
-(ns ctia.stores.memory.indicator
+(ns ctia.stores.atom.indicator
   (:require [ctia.schemas.indicator
              :refer [NewIndicator StoredIndicator realize-indicator]]
             [ctia.schemas.judgement :refer [StoredJudgement]]
-            [ctia.store :refer [IIndicatorStore]]
-            [ctia.stores.memory.common :as mc]
+            [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
 (def swap-indicator (mc/make-swap-fn realize-indicator))
@@ -34,18 +33,3 @@
                         (contains? judgement-ids judgement-id)))
                     (:judgements indicator)))
             (vals @indicator-state))))
-
-(defrecord IndicatorStore [state]
-  IIndicatorStore
-  (create-indicator [_ login new-indicator]
-    (handle-create-indicator state login new-indicator))
-  (update-indicator [_ id login new-indicator]
-    (handle-update-indicator state id login new-indicator))
-  (read-indicator [_ id]
-    (handle-read-indicator state id))
-  (delete-indicator [_ id]
-    (handle-delete-indicator state id))
-  (list-indicators [_ filter-map]
-    (handle-list-indicators state filter-map))
-  (list-indicators-by-judgements [_ judgements]
-    (handle-list-indicators-by-judgements state judgements)))

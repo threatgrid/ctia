@@ -57,5 +57,5 @@
 (def sql-stores
   {store/judgement-store sql-store/->JudgementStore})
 
-(def fixture-sql-store (h/fixture-store (merge h/memory-stores
+(def fixture-sql-store (h/fixture-store (merge h/atom-stores
                                                sql-stores)))

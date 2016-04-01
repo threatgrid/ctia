@@ -1,9 +1,9 @@
-(ns ctia.stores.memory.sighting
+(ns ctia.stores.atom.sighting
   (:require [ctia.schemas.indicator :refer [StoredIndicator]]
             [ctia.schemas.sighting
              :refer [NewSighting StoredSighting realize-sighting]]
             [ctia.store :refer [ISightingStore]]
-            [ctia.stores.memory.common :as mc]
+            [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
 (def swap-sighting (mc/make-swap-fn realize-sighting))
@@ -33,18 +33,3 @@
          (map (fn [s-id]
                 (get sightings-map s-id)))
          (remove nil?))))
-
-(defrecord SightingStore [state]
-  ISightingStore
-  (read-sighting [_ id]
-    (handle-read-sighting state id))
-  (create-sighting [_ login new-sighting]
-    (handle-create-sighting state login new-sighting))
-  (update-sighting [_ id login sighting]
-    (handle-update-sighting state id login sighting))
-  (delete-sighting [_ id]
-    (handle-delete-sighting state id))
-  (list-sightings [_ filter-map]
-    (handle-list-sightings state filter-map))
-  (list-sightings-by-indicators [_ indicators]
-    (handle-list-sightings-by-indicators state indicators)))
