@@ -1,8 +1,12 @@
 [![Stories in Ready](https://badge.waffle.io/threatgrid/ctia.png?label=ready&title=Ready)](https://waffle.io/threatgrid/ctia)
 # Cisco Threat Intel API
 
+A Pragmattic, Operationalized Threat Intel Service and Data Model
 
-Documentation for the API is available once you have it running, at:
+For full documentation see [doc/index.md](doc/index.md)
+
+Interactive, browser based documentation for the API is available once
+you have it running, at:
 
     http://localhost:3000/index.html
 

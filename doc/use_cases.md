@@ -1,6 +1,7 @@
 This document is intended to capture use cases, and also document how
 to execute them for users.
 
+
 # Roles and Use Cases
 
 ## Security Device
@@ -109,6 +110,10 @@ Post judgements as we make them, and link them to the indicators
 
 ### 4.7 As an intel producer I would like record a new type of Malware
 
+### 4.8 as an integrator, I would like to export data as STIX 1.2 XML
+
+### 4.9 as an integrator, I would like to import data as STIX 1.2 XML
+
 
 ## Integrator
 
@@ -123,6 +128,18 @@ Interfaces that Java, or other JVM languages, can implement.
 
 ### 5.2 As an integrator, I would like to be able to provide my own storage layer
 
-### 5.3 as an integrator, I would like to authenticate against my existing system
+### 5.3 as an integrator, I would like a supported Python Client
 
 ### 5.4 as an integrator, I would like to authenticate against my existing system
+
+### 5.5 as an integrator, I would like to replicate data from one instance to another
+
+### 5.6 as an integrator, I would like to define my own event hooks
+
+### 5.7 as an integrator, I would like to define my own business logic hooks
+
+### 5.8 as an integrator, I would like to define my own event consumers
+
+
+
+

@@ -1,5 +1,8 @@
 # Data Structures
 
+[Data Model Graph](model.png)
+[Data Model Graph as `.dot` ](model.dot)
+
 The data model of CTIA is closely based on
 [STIX](http://stixproject.github.io/data-model/) with a few
 simplifications:
