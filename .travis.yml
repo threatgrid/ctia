@@ -8,7 +8,11 @@ jdk:
 # branches:
 #     only:
 #         - master
-# services:
-#     - elasticsearch
+before_script:
+    - cp resources/ctia-default.properties.ci resources/ctia-default.properties
+    # Wait ES
+    - until curl http://localhost:9200/; do sleep 1; done
+services:
+    - elasticsearch
 # notifications:
 #   hipchat: [api token]@[room id or name]
