@@ -725,7 +725,7 @@ string
 <a name="time"/>
 ### Time
 
-Time is stored internally as a Joda DateTime object, serialized as a
+Time is stored internally as a java.util.Date object, serialized as a
 string the field should follow the rules of the ISO8601 standard.
 
 <a name="time_structure"/>
