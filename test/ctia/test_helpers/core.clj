@@ -131,7 +131,9 @@
 (defn get [path & {:as options}]
   (let [options
         (merge {:accept :edn
-                :throw-exceptions false}
+                :throw-exceptions false
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
@@ -145,8 +147,8 @@
         (merge {:content-type :edn
                 :accept :edn
                 :throw-exceptions false
-                :socket-timeout 2000
-                :conn-timeout 2000}
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
@@ -166,8 +168,8 @@
         (merge {:content-type :edn
                 :accept :edn
                 :throw-exceptions false
-                :socket-timeout 2000
-                :conn-timeout 2000}
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
