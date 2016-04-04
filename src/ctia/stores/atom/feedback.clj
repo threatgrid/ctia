@@ -1,7 +1,6 @@
-(ns ctia.stores.memory.feedback
+(ns ctia.stores.atom.feedback
   (:require [ctia.schemas.feedback :refer [NewFeedback StoredFeedback realize-feedback]]
-            [ctia.store :refer [IFeedbackStore]]
-            [ctia.stores.memory.common :as mc]
+            [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
 (s/defn handle-create-feedback :- StoredFeedback
@@ -20,10 +19,3 @@
      new-id)))
 
 (mc/def-list-handler handle-list-feedback StoredFeedback)
-
-(defrecord FeedbackStore [state]
-  IFeedbackStore
-  (create-feedback [_ new-feedback login judgement-id]
-    (handle-create-feedback state new-feedback login judgement-id))
-  (list-feedback [_ filter-map]
-    (handle-list-feedback state filter-map)))

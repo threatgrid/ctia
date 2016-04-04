@@ -1,10 +1,9 @@
 (ns ctia.stores.sql.transformation-test
-  (:require [ctia.stores.sql.transformation :as t]
+  (:require [ctia.lib.time :as time]
+            [ctia.stores.sql.transformation :as t]
             [ctia.test-helpers.core]
-            [clj-time.core :as time]
-            [clj-time.coerce :as coerce]
             [clojure.test :refer [deftest is]])
-  (:import org.joda.time.DateTime))
+  (:import java.util.Date))
 
 (deftest drop-nils-test
   (is (= {:a :foo :c :bar}
@@ -30,26 +29,26 @@
          (t/to-schema-valid-time
           {:foo :bar :valid_time_start_time "start" :valid_time_end_time "end"}))))
 
-(deftest datetimes-to-sqltimes-test
-  (let [now (DateTime.)
-        sql-now (coerce/to-sql-time now)]
+(deftest dates-to-sqltimes-test
+  (let [now (time/now)
+        sql-now (time/to-sql-time now)]
     (is (deep=
          [{:foo :bar}
           {:a :a :b sql-now :c :c}
           {:a sql-now :b {:c sql-now :d {:e sql-now}}}]
-         (t/datetimes-to-sqltimes
+         (t/dates-to-sqltimes
           [{:foo :bar}
            {:a :a :b now :c :c}
            {:a now :b {:c now :d {:e now}}}])))))
 
-(deftest sqltimes-to-datetimes-test
-  (let [now (time/date-time 2016 2 29 7 6 0)
-        sql-now (coerce/to-sql-time now)]
+(deftest sqltimes-to-dates-test
+  (let [now (time/now)
+        sql-now (time/to-sql-time now)]
     (is (deep=
          [{:foo :bar}
           {:a :a :b now :c :c}
           {:a now :b {:c now :d {:e now}}}]
-         (t/sqltimes-to-datetimes
+         (t/sqltimes-to-dates
           [{:foo :bar}
            {:a :a :b sql-now :c :c}
            {:a sql-now :b {:c sql-now :d {:e sql-now}}}])))))

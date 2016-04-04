@@ -1,5 +1,6 @@
 (ns ctia.schemas.incident
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -171,17 +172,22 @@
     ;; Not provided: related_packages (deprecated)
     }))
 
+(s/defschema Type
+  (s/eq "incident"))
+
 (s/defschema NewIncident
   (st/merge
    (st/dissoc Incident
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredIncident
   "An incident as stored in the data store"
   (st/merge Incident
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -194,9 +200,10 @@
     id :- s/Str
     login :- s/Str
     prev-incident :- (s/maybe StoredIncident)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-incident
             :id id
+            :type "incident"
             :owner login
             :created (or (:created prev-incident) now)
             :modified now
@@ -204,4 +211,4 @@
                             {:start_time (or (get-in new-incident [:valid_time :start_time])
                                              now)
                              :end_time (or (get-in new-incident [:valid_time :end_time])
-                                           c/default-expire-date)})))))
+                                           time/default-expire-date)})))))

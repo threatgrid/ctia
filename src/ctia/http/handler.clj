@@ -1,7 +1,5 @@
-(ns ctia.handler
-  (:require [ctia.auth.middleware :as auth]
-            [ctia.printers :refer :all]
-            [ctia.schemas.actor :refer [NewActor StoredActor]]
+(ns ctia.http.handler
+  (:require [ctia.schemas.actor :refer [NewActor StoredActor]]
             [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]
             [ctia.schemas.coa :refer [NewCOA StoredCOA]]
             [ctia.schemas.common
@@ -28,7 +26,8 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]
             [ctia.schemas.relationships :as rel]
-            [ctia.routes.documentation :refer [documentation-routes]]))
+            [ctia.http.middleware.auth :as auth]
+            [ctia.http.routes.documentation :refer [documentation-routes]]))
 
 (def JudgementSort
   "A sort ordering"

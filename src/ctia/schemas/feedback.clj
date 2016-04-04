@@ -1,9 +1,9 @@
 (ns ctia.schemas.feedback
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [schema.core :as s]
-            [schema-tools.core :as st])
-  (:import org.joda.time.DateTime))
+            [schema-tools.core :as st]))
 
 (s/defschema Feedback
   "Feedback on a Judgement or Verdict.  Is it wrong?  If so why?  Was
@@ -14,16 +14,22 @@
    :feedback (s/enum -1 0 1)
    :reason s/Str})
 
+(s/defschema Type
+  (s/eq "feedback"))
+
 (s/defschema NewFeedback
   "Schema for submitting new Feedback"
-  (st/dissoc Feedback
-             :id
-             :judgement))
+  (st/merge
+   (st/dissoc Feedback
+              :id
+              :judgement)
+   {(s/optional-key :type) Type}))
 
 (s/defschema StoredFeedback
   "A feedback record at rest in the storage service"
   (st/merge Feedback
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time}))
 
 (s/defn realize-feedback :- StoredFeedback
@@ -33,6 +39,7 @@
    judgement-id :- s/Str]
   (assoc new-feedback
          :id id
-         :created (c/timestamp)
+         :type "feedback"
+         :created (time/now)
          :owner login
          :judgement judgement-id))

@@ -1,5 +1,6 @@
 (ns ctia.schemas.coa
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -15,7 +16,7 @@
     (describe v/COAStage
               "specifies what stage in the cyber threat management lifecycle this Course Of Action is relevant to ")
 
-    (s/optional-key :type)
+    (s/optional-key :coa_type)
     (describe v/COAType
               "type of this CourseOfAction")
 
@@ -48,18 +49,23 @@
     ;; Not provided: structured_COA ;; actionable structured representation for automation
     }))
 
+(s/defschema Type
+  (s/eq "COA"))
+
 (s/defschema NewCOA
   "Schema for submitting new COAs"
   (st/merge
    (st/dissoc COA
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredCOA
   "A COA as stored in the data store"
   (st/merge COA
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -72,14 +78,15 @@
     id :- s/Str
     login :- s/Str
     prev-coa :- (s/maybe StoredCOA)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (st/assoc new-coa
                :id id
+               :type "COA"
                :owner login
                :created (or (:created prev-coa) now)
                :modified now
                :valid_time (or (:valid_time prev-coa)
                                {:end_time (or (get-in new-coa [:valid_time :end_time])
-                                              c/default-expire-date)
+                                              time/default-expire-date)
                                 :start_time (or (get-in new-coa [:valid_time :start_time])
                                                 now)})))))

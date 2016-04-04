@@ -1,7 +1,7 @@
-(ns ctia.handler.allow-all-test
+(ns ctia.http.handler.allow-all-test
   (:refer-clojure :exclude [get])
   (:require [ctia.auth :as auth]
-            [ctia.handler :as handler]
+            [ctia.http.handler :as handler]
             [ctia.test-helpers.core :as helpers :refer [post get]]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]))
 
@@ -10,7 +10,7 @@
 (use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
                                     helpers/fixture-schema-validation
                                     helpers/fixture-allow-all-auth
-                                    helpers/fixture-in-memory-store]))
+                                    helpers/fixture-atom-store]))
 
 (deftest allow-all-auth-judgement-routes-test
   (testing "POST /ctia/judgement"
@@ -29,7 +29,8 @@
                        :indicators [{:indicator_id "indicator-123"}]})]
       (is (= 200 status))
       (is (deep=
-           {:observable {:value "1.2.3.4"
+           {:type "judgement"
+            :observable {:value "1.2.3.4"
                          :type "ip"}
             :disposition 2
             :disposition_name "Malicious"
@@ -50,6 +51,7 @@
           (is (= 200 status))
           (is (deep=
                {:id (:id judgement)
+                :type "judgement"
                 :observable {:value "1.2.3.4"
                              :type "ip"}
                 :disposition 2

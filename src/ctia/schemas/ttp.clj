@@ -1,5 +1,6 @@
 (ns ctia.schemas.ttp
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -104,7 +105,7 @@
     (describe s/Str "source of this cyber threat TTP")
 
     ;; Extension fields:
-    :type
+    :ttp_type
     (describe s/Str "type of this TTP")
 
     :indicators
@@ -126,7 +127,8 @@
 (s/defschema StoredTTP
   "A TTP as stored in the data store"
   (st/merge TTP
-            {:owner s/Str
+            {:type (s/eq "ttp")
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -139,9 +141,10 @@
     id :- s/Str
     login :- s/Str
     prev-ttp :- (s/maybe StoredTTP)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-ttp
             :id id
+            :type "ttp"
             :owner login
             :created (or (:created prev-ttp) now)
             :modified now
@@ -149,4 +152,4 @@
                             {:start_time (or (get-in new-ttp [:valid_time :start_time])
                                              now)
                              :end_time (or (get-in new-ttp [:valid_time :end_time])
-                                           c/default-expire-date)})))))
+                                           time/default-expire-date)})))))

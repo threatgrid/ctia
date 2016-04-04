@@ -1,4 +1,4 @@
-(ns ctia.stores.memory.common
+(ns ctia.stores.atom.common
   (:require [ctia.schemas.common :as c]
             [schema.core :as s])
   (:import java.util.UUID))

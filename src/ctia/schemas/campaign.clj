@@ -1,5 +1,6 @@
 (ns ctia.schemas.campaign
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -35,12 +36,15 @@
     (s/optional-key :source)
     (describe s/Str "source of this Campaign")
     ;; Extension fields:
-    :type  s/Str
+    :campaign_type  s/Str
     :indicators rel/RelatedIndicators
 
     ;; Not provided: Handling
     ;; Not provided: related_packages (deprecated)
     }))
+
+(s/defschema Type
+  (s/eq "campaign"))
 
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"
@@ -48,12 +52,14 @@
    (st/dissoc Campaign
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredCampaign
   "A schema as stored in the data store"
   (st/merge Campaign
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -66,14 +72,15 @@
     id :- s/Str
     login :- s/Str
     prev-campaign :- (s/maybe StoredCampaign)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-campaign
             :id id
+            :type "campaign"
             :owner login
             :created (or (:created prev-campaign) now)
             :modified now
             :valid_time (or (:valid_time prev-campaign)
                             {:end_time (or (get-in new-campaign [:valid_time :end_time])
-                                           c/default-expire-date)
+                                           time/default-expire-date)
                              :start_time (or (get-in new-campaign [:valid_time :start_time])
                                              now)})))))

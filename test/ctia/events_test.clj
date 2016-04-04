@@ -60,7 +60,8 @@
   (let [{b :chan-buf c :chan m :mult} @central-channel
         output (chan)]
     (tap m output)
-    (send-verdict-change "tester" {"User-Agent" "clojure"} "7" {:disposition 2})
+    (send-verdict-change "tester" {"User-Agent" "clojure"} "7" {:type "verdict"
+                                                                :disposition 2})
     (let [v (<!! output)]
       (is (= "7" (-> v :judgement_id)))
       (is (= 2 (-> v :verdict :disposition))))))
@@ -72,6 +73,7 @@
     (send-create-event "tester" {} "TestModelType" {:id "1"})
     (send-create-event "tester" {} "TestModelType" {:id "2"})
     (send-create-event "tester" {} "TestModelType" {:id "3"})
+    (Thread/sleep 100)
     (is (= ["1" "2" "3"] (map (comp :id :model) (recent-events))))
     (send-create-event "tester" {} "TestModelType" {:id "4"})
     (send-create-event "tester" {} "TestModelType" {:id "5"})

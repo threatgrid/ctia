@@ -1,5 +1,6 @@
 (ns ctia.schemas.actor
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -10,7 +11,7 @@
   (merge
    c/GenericStixIdentifiers
    {:valid_time c/ValidTime
-    :type v/ThreatActorType
+    :actor_type v/ThreatActorType
     (s/optional-key :source) s/Str
     (s/optional-key :identity) c/Identity
     (s/optional-key :motivation) v/Motivation
@@ -26,18 +27,23 @@
     ;; Not provided: related_packages (deprecated)
     }))
 
+(s/defschema Type
+  (s/eq "actor"))
+
 (s/defschema NewActor
   "Schema for submitting new Actors"
   (st/merge
    (st/dissoc Actor
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredActor
   "An actor as stored in the data store"
   (st/merge Actor
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -50,14 +56,15 @@
     id :- s/Str
     login :- s/Str
     prev-actor :- (s/maybe StoredActor)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-actor
             :id id
+            :type "actor"
             :owner login
             :created (or (:created prev-actor) now)
             :modified now
             :valid_time (or (:valid_time prev-actor)
                             {:end_time (or (get-in new-actor [:valid_time :end_time])
-                                           c/default-expire-date)
+                                           time/default-expire-date)
                              :start_time (or (get-in new-actor [:valid_time :start_time])
                                              now)})))))

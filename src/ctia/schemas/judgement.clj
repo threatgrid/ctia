@@ -1,5 +1,6 @@
 (ns ctia.schemas.judgement
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -35,6 +36,9 @@
    (s/optional-key :reason_uri) c/URI
    (s/optional-key :indicators) rel/RelatedIndicators})
 
+(s/defschema Type
+  (s/eq "judgement"))
+
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
   (st/merge
@@ -45,28 +49,31 @@
               :valid_time)
    {(s/optional-key :disposition) c/DispositionNumber
     (s/optional-key :disposition_name) c/DispositionName
-    (s/optional-key :valid_time) c/ValidTime}))
+    (s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredJudgement
   "A judgement as stored in the data store"
   (st/merge Judgement
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time}))
 
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
    id :- s/Str
    login :- s/Str]
-  (let [now (c/timestamp)
+  (let [now (time/now)
         disposition (c/determine-disposition-id new-judgement)
         disposition_name (get c/disposition-map disposition)]
     (assoc new-judgement
            :id id
+           :type "judgement"
            :disposition disposition
            :disposition_name disposition_name
            :owner login
            :created now
            :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
-                                      c/default-expire-date)
+                                      time/default-expire-date)
                         :start_time (or (get-in new-judgement [:valid_time :start_time])
                                         now)})))

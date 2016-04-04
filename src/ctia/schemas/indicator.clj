@@ -1,5 +1,6 @@
 (ns ctia.schemas.indicator
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -59,7 +60,7 @@
     (describe s/Bool
               "specifies the absence of the pattern")
 
-    (s/optional-key :type)
+    (s/optional-key :indicator_type)
     (describe [v/IndicatorType]
               "Specifies the type or types for this Indicator")
 
@@ -130,17 +131,22 @@
     ;; Not provided: handling
     }))
 
+(s/defschema Type
+  (s/eq "indicator"))
+
 (s/defschema NewIndicator
   (st/merge
    (st/dissoc Indicator
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) Type}))
 
 (s/defschema StoredIndicator
   "A feedback record at rest in the storage service"
   (st/merge Indicator
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -153,9 +159,10 @@
     id :- s/Str
     login :- s/Str
     prev-indicator :- (s/maybe StoredIndicator)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-indicator
             :id id
+            :type "indicator"
             :owner login
             :created (or (:created prev-indicator) now)
             :modified now
@@ -163,13 +170,14 @@
                             {:start_time (or (get-in new-indicator [:valid_time :start_time])
                                              now)
                              :end_time (or (get-in new-indicator [:valid_time :end_time])
-                                           c/default-expire-date)})))))
+                                           time/default-expire-date)})))))
 
 (defn generalize-indicator
   "Strips off realized fields"
   [indicator]
   (dissoc indicator
           :id
+          :type
           :created
           :modified
           :owner))

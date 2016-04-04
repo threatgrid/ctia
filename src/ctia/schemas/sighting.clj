@@ -1,5 +1,6 @@
 (ns ctia.schemas.sighting
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.time :as time]
+            [ctia.schemas.common :as c]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.vocabularies :as v]
             [schema.core :as s]
@@ -16,13 +17,19 @@
    (s/optional-key :related_judgements) rel/RelatedJudgements
    (s/optional-key :indicator) rel/RelatedIndicator})
 
+(s/defschema Type
+  (s/eq "sighting"))
+
 (s/defschema NewSighting
-  (st/dissoc Sighting
-             :id))
+  (st/merge
+   (st/dissoc Sighting
+              :id)
+   {(s/optional-key :type) Type}))
 
 (s/defschema StoredSighting
   (st/merge Sighting
-            {:owner s/Str
+            {:type Type
+             :owner s/Str
              :created c/Time
              :modified c/Time}))
 
@@ -35,9 +42,10 @@
     id :- s/Str
     login :- s/Str
     prev-sighting :- (s/maybe StoredSighting)]
-   (let [now (c/timestamp)]
+   (let [now (time/now)]
      (assoc new-sighting
             :id id
+            :type "sighting"
             :owner login
             :created (or (:created prev-sighting) now)
             :modified now))))

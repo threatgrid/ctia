@@ -2,7 +2,6 @@
   (:import java.util.UUID)
   (:require
    [schema.core :as s]
-   [clj-time.core :as t]
    [ctia.schemas.common :refer [disposition-map]]
    [ctia.schemas.judgement :refer [Judgement
                                   NewJudgement
@@ -84,7 +83,8 @@
                      sort)))
 
 (defn- make-verdict [judgement]
-  {:disposition (:disposition judgement)
+  {:type "verdict"
+   :disposition (:disposition judgement)
    :judgement_id (:id judgement)
    :disposition_name (get disposition-map (:disposition judgement))})
 

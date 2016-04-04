@@ -1,8 +1,8 @@
 (ns ctia.events
   (:require [ctia.events.schemas :as es]
+            [ctia.lib.time :as time]
             [ctia.schemas.common :as c]
             [ctia.schemas.verdict :as v]
-            [clj-time.core :as time]
             [clojure.core.async :as a]
             [schema.core :as s])
   (:import [clojure.core.async Mult]

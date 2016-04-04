@@ -1,7 +1,6 @@
-(ns ctia.stores.memory.identity
+(ns ctia.stores.atom.identity
   (:require [ctia.schemas.identity :as identity]
-            [ctia.store :refer [IIdentityStore]]
-            [ctia.stores.memory.common :as mc]
+            [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
 (s/defn handle-create-identity :- identity/Identity
@@ -24,12 +23,3 @@
     (do (swap! state dissoc login)
         true)
     false))
-
-(defrecord IdentityStore [state]
-  IIdentityStore
-  (read-identity [_ login]
-    (handle-read-identity state login))
-  (create-identity [_ new-identity]
-    (handle-create-identity state new-identity))
-  (delete-identity [_ org-id role]
-    (handle-delete-identity state org-id role)))

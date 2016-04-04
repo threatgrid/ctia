@@ -1,0 +1,18 @@
+language: clojure
+lein: lein2
+script: lein2 do clean, javac, test
+jdk:
+    - openjdk7
+    - oraclejdk7
+    - oraclejdk8
+# branches:
+#     only:
+#         - master
+before_script:
+    - cp test/resources/ctia-default.properties.ci resources/ctia-default.properties
+    # Wait ES
+    - until curl http://localhost:9200/; do sleep 1; done
+services:
+    - elasticsearch
+# notifications:
+#   hipchat: [api token]@[room id or name]
