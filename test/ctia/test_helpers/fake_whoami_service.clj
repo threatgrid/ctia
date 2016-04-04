@@ -81,8 +81,8 @@
     (reset! server (jetty/run-jetty (-> (make-handler this)
                                         params/wrap-params)
                                     {:port port
-                                     :min-threads 6
-                                     :max-threads 6
+                                     :min-threads 9
+                                     :max-threads 10
                                      :join? false})))
   (stop-server [_]
     (swap! server (fn [^Server s]

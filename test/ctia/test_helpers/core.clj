@@ -76,7 +76,9 @@
     (let [server (jetty/run-jetty app
                                   {:host "localhost"
                                    :port port
-                                   :join? false})]
+                                   :join? false
+                                   :max-threads 10
+                                   :min-threads 9})]
       (f)
       (.stop server))))
 
