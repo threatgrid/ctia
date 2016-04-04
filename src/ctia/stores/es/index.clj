@@ -15,7 +15,7 @@
 
   (let [props (read-index-spec)]
     {:index (:indexname props)
-     :conn (n/connect [[(:host props) (Integer. (:port props))]]
+     :conn (n/connect [[(:host props) (:port props)]]
                       {"cluster.name" (:clustername props)})}))
 
 (defn delete!
