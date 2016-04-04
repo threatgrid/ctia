@@ -9,7 +9,7 @@ jdk:
 #     only:
 #         - master
 before_script:
-    - cp resources/ctia-default.properties.ci resources/ctia-default.properties
+    - cp test/resources/ctia-default.properties.ci resources/ctia-default.properties
     # Wait ES
     - until curl http://localhost:9200/; do sleep 1; done
 services:
