@@ -2,14 +2,14 @@
   (:require [ctia.auth :as auth]
             [ctia.auth.allow-all :as allow-all]
             [ctia.auth.threatgrid :as threatgrid]
-            [ctia.properties :as properties]
+            [ctia.properties :refer [properties]]
             [ctia.store :as store]
             [ctia.stores.es.store :as es]
             [ctia.stores.es.index :as es-index]
             [ctia.stores.atom.store :as as]))
 
 (defn init-auth-service! []
-  (let [auth-service-type (get-in @properties/properties [:auth :service :type])]
+  (let [auth-service-type (get-in @properties [:auth :service :type])]
     {case auth-service-type
       :allow-all (reset! auth/auth-service (allow-all/->AuthService))
       :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service

@@ -13,7 +13,7 @@
             [clj-time.coerce :as coerce])
   (:import java.util.Properties))
 
-(def property-files
+(def files
   "Property file names, in order of preference"
   ["ctia.properties"
    "ctia-default.properties"])
@@ -48,7 +48,7 @@
               c/string-coercion-matcher))
 
 (defn- read-property-file []
-  (->> property-files
+  (->> files
        (keep (fn [file]
                (when-let [rdr (some-> file io/resource io/reader)]
                  (with-open [rdr rdr]

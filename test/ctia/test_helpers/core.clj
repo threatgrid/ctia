@@ -27,7 +27,7 @@
                         :expected '~form, :actual nil})))))
 
 (defn fixture-properties [f]
-  (with-redefs [props/property-files ["ctia-test.properties"]]
+  (with-redefs [props/files ["ctia-test.properties"]]
     (props/init!))
   (f))
 
