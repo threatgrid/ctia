@@ -47,3 +47,10 @@
    {:type VerdictChangeEvent
     :judgement_id s/Str
     :verdict v/Verdict}))
+
+(s/defschema Event
+  (s/conditional
+   #(= "CreatedModel"  (:type %)) CreateEvent
+   #(= "UpdatedModel"  (:type %)) UpdateEvent
+   #(= "DeletedModel"  (:type %)) DeleteEvent
+   #(= "VerdictChange" (:type %)) VerdictChangeEvent))

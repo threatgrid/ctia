@@ -5,7 +5,7 @@
             [ctia.properties :as properties]
             [ctia.store :as store]
             [ctia.stores.es.store :as es]
-            [ctia.stores.es.index :as es-index]
+            [ctia.lib.es.index :as es-index]
             [ctia.stores.atom.store :as as]))
 
 (defn init-auth-service! []
@@ -34,7 +34,7 @@
       (reset! store (impl-fn (atom {}))))))
 
 (defn init-es-store! []
-  (let [store-state (es-index/init-conn)
+  (let [store-state (es-index/init-store-conn)
         store-impls {store/actor-store es/->ActorStore
                      store/judgement-store es/->JudgementStore
                      store/feedback-store es/->FeedbackStore
@@ -48,7 +48,8 @@
                      store/identity-store es/->IdentityStore}]
 
     (es-index/create! (:conn store-state)
-                      (:index store-state))
+                      (:index store-state)
+                      (:mapping store-state))
 
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn store-state)))))

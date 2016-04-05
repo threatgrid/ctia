@@ -5,6 +5,7 @@
             [ctia.properties :as props]
             [ctia.store :as store]
             [ctia.stores.atom.store :as as]
+            [ctia.events.producer :as producer]
             [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.data :as cd]
@@ -65,6 +66,14 @@
     (f)
     (doseq  [store (keys store-map)]
       (reset! store nil))))
+
+(defn fixture-producers [producers]
+  (fn [f]
+    (dorun
+     (map #(swap! producer/event-producers conj (%)) producers))
+    (f)
+    (reset! producer/event-producers [])))
+
 
 (def fixture-atom-store (fixture-store atom-stores))
 
