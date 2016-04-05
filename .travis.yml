@@ -2,17 +2,15 @@ language: clojure
 lein: lein2
 script: lein2 do clean, javac, test :all
 jdk:
-    - openjdk7
-    - oraclejdk7
-    - oraclejdk8
-# branches:
-#     only:
-#         - master
+- openjdk7
+- oraclejdk7
+- oraclejdk8
 before_script:
-    - cp test/resources/ctia-test.properties.ci resources/ctia-default.properties
-    # Wait ES
-    - until curl http://localhost:9200/; do sleep 1; done
+- cp test/resources/ctia-test.properties.ci resources/ctia-default.properties
+- until curl http://localhost:9200/; do sleep 1; done
 services:
-    - elasticsearch
-# notifications:
-#   hipchat: [api token]@[room id or name]
+- elasticsearch
+notifications:
+  hipchat:
+    rooms:
+      secure: O5fY0WJzAiRawdVVYNImgKEKR86AS+Z+pAHmFmDhy3Ow7keAPNZwaK6gTTbS4Hjag9rB/nedqHPzhwoDazvh4X+jAlVEbWTUYkeJTSwU+lXvpaj0sNiXbQeR7YNvZyg3alSKmWNBG31uOuslkfIHasjTftui9k41os8I9Wb4H39U7ijnQcdOi4VBrdxfJNnAgifbI6BHPgneWeT9m34npx/pRuN8gelZQq+GUx4DoCZqO6CwPtm/d6mdaFx1K/Ux/w/uE3xAvVPCLDNm4pmdry7sNOJdwxAax+28plms12ymN5zpTul3eYebYbtldbHXybEHu/ivzuNKjGFisXa7K256dTaqDz4rKxtgQcmodAfsB8Skg5APTkPRJzgydPknkNKuR35Htldtn6+W5DQOPxMFVbBups+L0pBqLiaoGX3fvNnC3dNkjwdjDjuYegLfFHO30l/D0pj9zEMoVjWzQRCPusgAidA0+HO995m+BiEhtPAAp/tsqz+s9d0MX08oyLp34KsVhPXf960Iiq2eQ4v7MkZSMCE8bSo0ZoJwkRJ4VHvGBFUSHWght5/e/QOJJcW+qp5yzn+BMQBezB1FoNl+p095Z0vp4tXiqV7Yoi4CmUKWG6rySJaiHSnxSeBQHTWrWt1fbUdlZ0WSWRdfebj9St5eTo23T249lmn3kck=
