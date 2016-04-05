@@ -28,7 +28,8 @@
                         :expected '~form, :actual nil})))))
 
 (defn fixture-properties [f]
-  (props/init! "ctia-test.properties")
+  (with-redefs [props/files ["ctia-test.properties"]]
+    (props/init!))
   (f))
 
 
@@ -85,7 +86,9 @@
     (let [server (jetty/run-jetty app
                                   {:host "localhost"
                                    :port port
-                                   :join? false})]
+                                   :join? false
+                                   :max-threads 10
+                                   :min-threads 9})]
       (f)
       (.stop server))))
 
@@ -137,7 +140,9 @@
 (defn get [path & {:as options}]
   (let [options
         (merge {:accept :edn
-                :throw-exceptions false}
+                :throw-exceptions false
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
@@ -151,8 +156,8 @@
         (merge {:content-type :edn
                 :accept :edn
                 :throw-exceptions false
-                :socket-timeout 2000
-                :conn-timeout 2000}
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
@@ -172,8 +177,8 @@
         (merge {:content-type :edn
                 :accept :edn
                 :throw-exceptions false
-                :socket-timeout 2000
-                :conn-timeout 2000}
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
