@@ -1,5 +1,5 @@
 (ns ctia.http.handler
-  (:require [ctia.schemas.actor :refer [NewActor StoredActor]]
+  (:require [ctia.schemas.actor :refer [NewActor StoredActor realize-actor]]
             [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]
             [ctia.schemas.coa :refer [NewCOA StoredCOA]]
             [ctia.schemas.common
@@ -20,6 +20,7 @@
             [ctia.events.schemas :refer [ModelEventBase]]
             [ctia.events :refer [recent-events]]
             [ctia.store :refer :all]
+            [ctia.flows.crud :as flows]
             [compojure.api.sweet :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.params :as params]
@@ -115,7 +116,14 @@
         :summary "Adds a new Actor"
         :capabilities #{:create-actor :admin}
         :login login
-        (ok (create-actor @actor-store login actor)))
+        (comment
+          "WITH MACRO"
+          (ok (let [realized (flows/realize :before-create :actor login actor)]
+                (create-actor @actor-store login realized))))
+        (ok (let [id (flows/make-id "actor" actor)
+                  realized (realize-actor actor id login)
+                  hooked (hooks/apply-hooks :actor realized :before-create)]
+              (create-actor @actor-store login hooked))))
       (PUT "/:id" []
         :return StoredActor
         :body [actor NewActor {:description "an updated Actor"}]

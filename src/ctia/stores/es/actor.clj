@@ -16,13 +16,11 @@
 (defn- make-id [schema j]
   (str "actor" "-" (UUID/randomUUID)))
 
-(defn handle-create-actor [state login new-actor]
-  (let [id (make-id Actor new-actor)
-        realized (realize-actor new-actor id login)]
-    (create-doc (:conn state)
-                (:index state)
-                mapping
-                realized)))
+(defn handle-create-actor [state _ realized-actor]
+  (create-doc (:conn state)
+              (:index state)
+              mapping
+              realized-actor))
 
 (defn handle-update-actor [state login id new-actor]
   (update-doc (:conn state)
