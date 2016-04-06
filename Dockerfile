@@ -6,3 +6,4 @@ RUN lein deps
 COPY . /usr/src/app
 RUN lein ring uberjar
 CMD ["java", "-jar", "target/server.jar"]
+EXPOSE 3000
