@@ -10,5 +10,5 @@ ctia.store.es.clustername=elasticsearch
 ctia.store.es.indexname=elasticsearch
 ctia.producer.es.host=127.0.0.1
 ctia.producer.es.port=9300
-ctia.producer.es.clustername=ctia_dev
-ctia.producer.es.indexname=ctia_events_dev
+ctia.producer.es.clustername=elasticsearch
+ctia.producer.es.indexname=elasticsearch
