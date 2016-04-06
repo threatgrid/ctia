@@ -59,14 +59,14 @@
 (def es-producer
   (init-producer-state es-producer/->EventProducer))
 
-(def fixture-es-store
+(defn fixture-es-store []
   (do
     (properties/init!)
     (reset! store-conn-state-fixture
             (es-index/init-store-conn))
     (h/fixture-store es-stores)))
 
-(def fixture-es-producer
+(defn fixture-es-producer []
   (do
     (properties/init!)
     (reset! producer-conn-state-fixture
