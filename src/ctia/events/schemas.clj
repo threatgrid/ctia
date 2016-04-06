@@ -44,7 +44,7 @@
 (s/defschema VerdictChangeEvent
   (st/merge
    ModelEventBase
-   {:type (s/eq VerdictChangeEvent)
+   {:type (s/eq VerdictChangeEventType)
     :judgement_id s/Str
     :verdict v/Verdict}))
 
@@ -53,4 +53,4 @@
    #(= CreateEventType        (:type %)) CreateEvent
    #(= UpdateEventType        (:type %)) UpdateEvent
    #(= DeleteEventType        (:type %)) DeleteEvent
-   #(= VerdictChangeEventType (:type %)) DeleteEvent))
+   #(= VerdictChangeEventType (:type %)) VerdictChangeEvent))

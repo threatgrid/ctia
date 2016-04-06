@@ -71,7 +71,8 @@
 (defn fixture-producers [producers]
   (fn [f]
     (dorun
-     (map #(swap! producer/event-producers conj (%)) producers))
+     (map (fn [impl-fn]
+            (swap! producer/event-producers conj (impl-fn))) producers))
     (f)
     (reset! producer/event-producers [])))
 

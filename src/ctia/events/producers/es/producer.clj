@@ -6,17 +6,29 @@
    [ctia.events.schemas :refer [Event]]
    [ctia.events.producer :refer [IEventProducer]]))
 
-(def mapping "event")
 
-(s/defn handle-produce-event
+(s/defn transform-fields [e :- Event]
+  "for ES compat, transform field data to a map"
+  (if-let [fields (:fields e)]
+    (assoc e :fields
+           (map #(hash-map :field (first %)
+                           :action (second %)
+                           :change (last %)) fields))
+
+    e))
+
+(s/defn handle-produce-event :- s/Str
+  "given a conn state and an event write the event to ES"
   [state :- ESConnState
    event :- Event]
 
-  (document/create (:conn state)
-                   (:index-name state)
-                   mapping
-                   event
-                   :refresh true))
+  (->> event
+       transform-fields
+       (document/create (:conn state)
+                        (:index state)
+                        "event")
+
+       :id))
 
 (defrecord EventProducer [state]
   IEventProducer
