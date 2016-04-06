@@ -41,8 +41,8 @@
       :sql-store    (join-fixtures [db-helpers/fixture-sql-store
                                     db-helpers/fixture-clean-db])
 
-      :es-store     (join-fixtures [index-helpers/fixture-es-store
-                                    index-helpers/fixture-clean-index])}
+      :es-store     (join-fixtures [(index-helpers/fixture-es-store)
+                                    index-helpers/fixture-clean-store-index])}
 
 
      ~@body))

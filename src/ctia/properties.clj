@@ -36,7 +36,11 @@
    (s/optional-key "ctia.store.es.host") s/Str
    (s/optional-key "ctia.store.es.port") s/Int
    (s/optional-key "ctia.store.es.clustername") s/Str
-   (s/optional-key "ctia.store.es.indexname") s/Str})
+   (s/optional-key "ctia.store.es.indexname") s/Str
+   (s/optional-key "ctia.producer.es.host") s/Str
+   (s/optional-key "ctia.producer.es.port") s/Int
+   (s/optional-key "ctia.producer.es.clustername") s/Str
+   (s/optional-key "ctia.producer.es.indexname") s/Str})
 
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."

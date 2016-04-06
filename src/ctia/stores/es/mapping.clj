@@ -506,7 +506,7 @@
      :created ts
      :modified ts}}})
 
-(def mappings
+(def store-mappings
   (merge {}
          judgement-mapping
          indicator-mapping

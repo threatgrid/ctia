@@ -33,11 +33,14 @@
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
+                   :es-producer :es-producer
                    :default #(not (or (:es-store %)
+                                      (:es-producer %)
                                       (:integration %)
                                       (:regression %)))
                    :integration #(or (:es-store %)
-                                     (:integation %))}
+                                     (:integation %)
+                                     (:es-producer %))}
 
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [javax.servlet/servlet-api "2.5"]

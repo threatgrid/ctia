@@ -1,33 +1,47 @@
 (ns ctia.test-helpers.index
   "ES Index test helpers"
   (:require [ctia.store :as store]
-            [ctia.stores.es.index :as es-index]
-            [ctia.stores.es.mapping :as mapping]
+            [ctia.lib.es.index :as es-index]
             [ctia.stores.es.store :as es-store]
+            [ctia.events.producers.es.producer :as es-producer]
             [ctia.test-helpers.core :as h]
-            [ctia.properties :as properties]
-            [clojure.java.io :as io]))
+            [ctia.properties :as properties]))
 
-(def conn-state-fixture
+(def store-conn-state-fixture
   "for testing the same es conn for all ES Stores"
   (atom nil))
 
-(defn clean-index! []
-  "delete and recreate the index"
-  (es-index/delete! (:conn @conn-state-fixture)
-                    (:index @conn-state-fixture))
-  (es-index/create! (:conn @conn-state-fixture)
-                    (:index @conn-state-fixture)))
+(def producer-conn-state-fixture
+  "for testing the same es conn for all ES Stores"
+  (atom nil))
 
-(defn fixture-clean-index [f]
-  (clean-index!)
+(defn clean-index! [state-fixture]
+  "delete and recreate the index"
+  (es-index/delete! (:conn state-fixture)
+                    (:index state-fixture))
+  (es-index/create! (:conn state-fixture)
+                    (:index state-fixture)
+                    (:mapping state-fixture)))
+
+(defn fixture-clean-store-index [f]
+  (clean-index! @store-conn-state-fixture)
+  (f))
+
+(defn fixture-clean-producer-index [f]
+  (clean-index! @producer-conn-state-fixture)
   (f))
 
 (defn init-store-state [f]
-  "spwan the ES stores
-   with a conn and index name as state"
+  "spawn a store state
+   with a conn index name and mapping as state"
   (fn []
-    (f @conn-state-fixture)))
+    (f @store-conn-state-fixture)))
+
+(defn init-producer-state [f]
+  "spawn a producer state
+   with a conn index name and mapping as state"
+  (fn []
+    (f @producer-conn-state-fixture)))
 
 (def es-stores
   {store/actor-store          (init-store-state es-store/->ActorStore)
@@ -42,9 +56,19 @@
    store/sighting-store       (init-store-state es-store/->SightingStore)
    store/identity-store       (init-store-state es-store/->IdentityStore)})
 
-(def fixture-es-store
+(def es-producer
+  (init-producer-state es-producer/->EventProducer))
+
+(defn fixture-es-store []
   (do
     (properties/init!)
-    (reset! conn-state-fixture
-            (es-index/init-conn))
+    (reset! store-conn-state-fixture
+            (es-index/init-store-conn))
     (h/fixture-store es-stores)))
+
+(defn fixture-es-producer []
+  (do
+    (properties/init!)
+    (reset! producer-conn-state-fixture
+            (es-index/init-producer-conn))
+    (h/fixture-producers [es-producer])))
