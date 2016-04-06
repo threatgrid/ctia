@@ -11,6 +11,5 @@
 (s/defn produce [e :- Event]
   "Produce an event
    triggers all registered event producers"
-
   (doall
    (pmap #(produce-event % e) @event-producers)))

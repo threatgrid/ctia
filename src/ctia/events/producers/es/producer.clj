@@ -6,7 +6,6 @@
    [ctia.events.schemas :refer [Event]]
    [ctia.events.producer :refer [IEventProducer]]))
 
-
 (s/defn transform-fields [e :- Event]
   "for ES compat, transform field data to a map"
   (if-let [fields (:fields e)]

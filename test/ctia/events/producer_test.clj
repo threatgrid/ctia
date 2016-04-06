@@ -83,4 +83,4 @@
 
           produced (produce event)]
 
-      (is string? produced))))
+      (is string? (produce event)))))
