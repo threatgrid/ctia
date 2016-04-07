@@ -33,6 +33,7 @@
    (s/optional-key "ctia.store.sql.db.subprotocol") s/Str
    (s/optional-key "ctia.store.sql.db.subname") s/Str
    (s/optional-key "ctia.store.sql.db.delimiters") s/Str
+   (s/optional-key "ctia.store.es.uri") s/Str
    (s/optional-key "ctia.store.es.host") s/Str
    (s/optional-key "ctia.store.es.port") s/Int
    (s/optional-key "ctia.store.es.clustername") s/Str
