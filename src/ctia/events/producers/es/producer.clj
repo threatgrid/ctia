@@ -25,15 +25,13 @@
   "given a conn state and an event write the event to ES"
   [state :- ESConnState
    event :- Event]
-
   (->> event
        transform-fields
        ((create-doc-fn (:conn state))
         (:conn state)
         (:index state)
         "event")
-
-       :id))
+       :_id))
 
 (defrecord EventProducer [state]
   IEventProducer

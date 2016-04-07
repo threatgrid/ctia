@@ -63,8 +63,7 @@
   (let [props (read-producer-index-spec)]
     {:index (:indexname props)
      :mapping producer-mappings
-     :conn (n/connect [[(:host props) (Integer. (:port props))]]
-                      {"cluster.name" (:clustername props)})}))
+     :conn (connect props)}))
 
 (defn delete!
   "delete an index, abort if non existant"
