@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns139:Indicator id="{{indicator-4-id}}"
+    negate="false" version="1"
+    xmlns:AddressObj="http://cybox.mitre.org/objects#AddressObject-2"
+    xmlns:cybox="http://cybox.mitre.org/cybox-2"
+    xmlns:indicator="http://stix.mitre.org/Indicator-2"
+    xmlns:ns139="http://xml/metadataSharing.xsd" xmlns:stixCommon="http://stix.mitre.org/common-1">
+    <indicator:Title>indicator 4</indicator:Title>
+    <indicator:Type vocab_name="IndicatorTypeVocab-1.1">C2</indicator:Type>
+    <indicator:Type vocab_name="IndicatorTypeVocab-1.1">IP Watchlist</indicator:Type>
+    <indicator:Alternative_ID>foo</indicator:Alternative_ID>
+    <indicator:Alternative_ID>bar</indicator:Alternative_ID>
+    <indicator:Description>a mostly complete indicator</indicator:Description>
+    <indicator:Description>producer: producer</indicator:Description>
+    <indicator:Description>tags: spam, eggs</indicator:Description>
+    <indicator:Short_Description>short description</indicator:Short_Description>
+    <indicator:Composite_Indicator_Expression operator="AND">
+        <indicator:Indicator id="{{indicator-2-id}}">
+            <indicator:Title>indicator 2</indicator:Title>
+            <indicator:Description>a minimal indicator</indicator:Description>
+            <indicator:Description>producer: producer</indicator:Description>
+            <indicator:Observable>
+                <cybox:Title>ip: 1.2.3.4</cybox:Title>
+                <cybox:Object>
+                    <cybox:Properties category="ipv4-addr"
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="AddressObj:AddressObjectType">
+                        <AddressObj:Address_Value>1.2.3.4</AddressObj:Address_Value>
+                    </cybox:Properties>
+                </cybox:Object>
+            </indicator:Observable>
+        </indicator:Indicator>
+        <indicator:Indicator id="{{indicator-3-id}}">
+            <indicator:Title>indicator 3</indicator:Title>
+            <indicator:Description>a minimal indicator</indicator:Description>
+            <indicator:Description>producer: producer</indicator:Description>
+            <indicator:Observable>
+                <cybox:Title>ip: 1.2.3.4</cybox:Title>
+                <cybox:Object>
+                    <cybox:Properties category="ipv4-addr"
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="AddressObj:AddressObjectType">
+                        <AddressObj:Address_Value>1.2.3.4</AddressObj:Address_Value>
+                    </cybox:Properties>
+                </cybox:Object>
+            </indicator:Observable>
+        </indicator:Indicator>
+    </indicator:Composite_Indicator_Expression>
+    <indicator:Observable>
+        <cybox:Title>ip: 1.2.3.4</cybox:Title>
+        <cybox:Object>
+            <cybox:Properties category="ipv4-addr"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="AddressObj:AddressObjectType">
+                <AddressObj:Address_Value>1.2.3.4</AddressObj:Address_Value>
+            </cybox:Properties>
+        </cybox:Object>
+    </indicator:Observable>
+    <indicator:Kill_Chain_Phases>
+        <stixCommon:Kill_Chain_Phase name="phase 1"/>
+        <stixCommon:Kill_Chain_Phase name="phase 2"/>
+        <stixCommon:Kill_Chain_Phase name="phase 3"/>
+    </indicator:Kill_Chain_Phases>
+    <indicator:Likely_Impact>
+        <stixCommon:Description>likely impact</stixCommon:Description>
+    </indicator:Likely_Impact>
+    <indicator:Confidence>
+        <stixCommon:Value vocab_name="HighMediumLowVocab-1.0">High</stixCommon:Value>
+    </indicator:Confidence>
+    <indicator:Related_Indicators>
+        <indicator:Related_Indicator>
+            <stixCommon:Confidence>
+                <stixCommon:Value vocab_name="HighMediumLowVocab-1.0">High</stixCommon:Value>
+            </stixCommon:Confidence>
+            <stixCommon:Information_Source>
+                <stixCommon:Description>relationship</stixCommon:Description>
+            </stixCommon:Information_Source>
+            <stixCommon:Relationship vocab_name="Any">relationship</stixCommon:Relationship>
+            <stixCommon:Indicator
+                id="{{indicator-1-id}}"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="indicator:IndicatorType">
+                <indicator:Title>indicator 1</indicator:Title>
+                <indicator:Description>a minimal indicator</indicator:Description>
+                <indicator:Description>producer: producer</indicator:Description>
+                <indicator:Observable>
+                    <cybox:Title>ip: 1.2.3.4</cybox:Title>
+                    <cybox:Object>
+                        <cybox:Properties category="ipv4-addr" xsi:type="AddressObj:AddressObjectType">
+                            <AddressObj:Address_Value>1.2.3.4</AddressObj:Address_Value>
+                        </cybox:Properties>
+                    </cybox:Object>
+                </indicator:Observable>
+            </stixCommon:Indicator>
+        </indicator:Related_Indicator>
+    </indicator:Related_Indicators>
+</ns139:Indicator>
