@@ -3,12 +3,12 @@ redis-dev:
   ports:
     - "6379:6379"
 elasticsearch-dev:
-  image: elasticsearch
+  image: elasticsearch:1.7
   ports:
     - "9200:9200"
     - "9300:9300"
 kibana-dev:
-  image: kibana
+  image: kibana:4.1
   ports:
     - "5601:5601"
   environment:

@@ -29,6 +29,7 @@
    with the properties file."
   {(s/required-key "auth.service.type") s/Keyword
    (s/optional-key "auth.service.threatgrid.url") s/Str
+   (s/optional-key "ctia.store.default") s/Keyword
    (s/optional-key "ctia.store.sql.db.classname") s/Str
    (s/optional-key "ctia.store.sql.db.subprotocol") s/Str
    (s/optional-key "ctia.store.sql.db.subname") s/Str
