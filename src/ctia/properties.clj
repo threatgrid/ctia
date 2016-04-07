@@ -4,12 +4,12 @@
             alternative properties file on the classpath, or by
             setting system properties."}
     ctia.properties
-    (:require [clojure.java.io :as io]
-              [clojure.string :as str]
-              [ctia.lib.map :as map]
-              [schema.coerce :as c]
-              [schema.core :as s])
-    (:import java.util.Properties))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [ctia.lib.map :as map]
+            [schema.coerce :as c]
+            [schema.core :as s])
+  (:import java.util.Properties))
 
 (def files
   "Property file names, they will be merged, with last one winning"
@@ -48,7 +48,8 @@
    (s/optional-key "ctia.producer.es.host") s/Str
    (s/optional-key "ctia.producer.es.port") s/Int
    (s/optional-key "ctia.producer.es.clustername") s/Str
-   (s/optional-key "ctia.producer.es.indexname") s/Str})
+   (s/optional-key "ctia.producer.es.indexname") s/Str
+   (s/optional-key "ctia.producer.es.slice") s/Keyword})
 
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."

@@ -11,10 +11,9 @@
 (defmacro deftest-for-each-producer [test-name & body]
   `(helpers/deftest-for-each-fixture ~test-name
      {:es-producer (join-fixtures [(index-helpers/fixture-es-producer)
-                                   index-helpers/fixture-clean-producer-index
+                                   ;;index-helpers/fixture-clean-producer-index
+
                                    ])}
-
-
      ~@body))
 
 (deftest-for-each-producer test-producer-event-create

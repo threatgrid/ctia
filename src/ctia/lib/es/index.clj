@@ -1,6 +1,7 @@
 (ns ctia.lib.es.index
   (:require
    [schema.core :as s]
+   [clj-time.core :as t]
    [clojurewerkz.elastisch.native :as n]
    [clojurewerkz.elastisch.rest :as h]
    [clojurewerkz.elastisch.native.index :as native-index]
@@ -9,12 +10,16 @@
    [ctia.events.producers.es.mapping :refer [producer-mappings]]
    [ctia.properties :refer [properties]]))
 
+(s/defschema ESConn
+  (s/either
+   clojurewerkz.elastisch.rest.Connection
+   org.elasticsearch.client.transport.TransportClient))
+
 (s/defschema ESConnState
   {:index s/Str
+   :props {s/Any s/Any}
    :mapping {s/Any s/Any}
-   :conn (s/either
-          clojurewerkz.elastisch.rest.Connection
-          org.elasticsearch.client.transport.TransportClient)})
+   :conn ESConn})
 
 (defn native-conn? [conn]
   (not (:uri conn)))
@@ -33,6 +38,11 @@
   (if (native-conn? conn)
     native-index/delete
     rest-index/delete))
+
+(defn update-alias-fn [conn]
+  (if (native-conn? conn)
+    native-index/update-aliases
+    rest-index/update-aliases))
 
 (defn read-store-index-spec []
   "read es store index config properties, returns an option map"
@@ -54,6 +64,7 @@
    mapping, and the configured index name"
   (let [props (read-store-index-spec)]
     {:index (:indexname props)
+     :props props
      :mapping store-mappings
      :conn (connect props)}))
 
@@ -62,6 +73,7 @@
    mapping and the configured index name"
   (let [props (read-producer-index-spec)]
     {:index (:indexname props)
+     :props props
      :mapping producer-mappings
      :conn (connect props)}))
 
@@ -76,3 +88,13 @@
   [conn index-name mappings]
   (when-not ((index-exists?-fn conn) conn index-name)
     ((index-create-fn conn) conn index-name :mappings mappings)))
+
+(defn create-alias!
+  "create an index alias"
+  [conn index alias routing filter]
+  ((update-alias-fn conn)
+   conn
+   {:add {:index index
+          :alias alias
+          :routing routing
+          :filter filter}}))
