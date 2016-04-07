@@ -10,6 +10,7 @@
                  [org.clojure/core.async "0.2.374"]
                  [clj-http "2.0.1"]
                  [org.clojure/core.memoize "0.5.8"]
+                 [org.clojure/tools.logging "0.3.1"]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]
