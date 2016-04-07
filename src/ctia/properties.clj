@@ -38,6 +38,7 @@
    (s/optional-key "ctia.store.es.port") s/Int
    (s/optional-key "ctia.store.es.clustername") s/Str
    (s/optional-key "ctia.store.es.indexname") s/Str
+   (s/optional-key "ctia.producer.es.uri") s/Str
    (s/optional-key "ctia.producer.es.host") s/Str
    (s/optional-key "ctia.producer.es.port") s/Int
    (s/optional-key "ctia.producer.es.clustername") s/Str
