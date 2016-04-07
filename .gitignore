@@ -4,3 +4,4 @@
 .nrepl-port
 .*.swp
 /target/
+resources/ctia.properties
