@@ -18,6 +18,15 @@
                       {:message "Unknown service"
                        :requested-service auth-service-name}))}))
 
+(defn init-store-service! []
+  (let [store-service-default (or (get-in @properties [:store :service :default]) :memory)]
+    {case store-service-default
+     :es (init-es-store!)
+     :memory (init-mem-store!)
+     (throw (ex-info "Store service not configured"
+                     {:message "Unknown service"
+                      :requested-service store-service-default}))}))
+
 (defn init-mem-store! []
   (let [store-impls {store/actor-store     as/->ActorStore
                      store/judgement-store as/->JudgementStore
