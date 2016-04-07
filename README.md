@@ -60,6 +60,8 @@ The easiest way to get running it to install
 [Docker Toolbox](https://www.docker.com/products/docker-toolbox) which
 includes all the dependencies you need to run Docker containers.
 
+On Mac OS X, start a terminal using "Docker QuickStart Terminal" application.
+
 You can then bring up a development environemnt:
 ```
 docker-compose -f docker-compose-dev.yml build
