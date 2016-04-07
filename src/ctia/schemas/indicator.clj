@@ -53,7 +53,7 @@
               "alternative identifier (or alias)")
 
     (s/optional-key :version)
-    (describe s/Num
+    (describe s/Str
               "schema version for this content")
 
     (s/optional-key :negate)
