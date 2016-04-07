@@ -58,7 +58,7 @@ dependencies you need in containers.
 
 The easiest way to get running it to install
 [Docker Toolbox](https://www.docker.com/products/docker-toolbox) which
-includes all teh dependencies you need to run Docker containers.
+includes all the dependencies you need to run Docker containers.
 
 You can then bring up a development environemnt:
 ```
