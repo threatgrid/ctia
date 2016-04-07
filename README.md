@@ -73,15 +73,21 @@ your own `resources/ctia.properties` file with the following values:
 
 ```
 ctia.store.default=es
-ctia.store.es.host=192.168.99.100
-ctia.store.es.post=9200
-ctia.producer.es.host=192.168.99.100
-ctia.producer.es.post=9200
+ctia.store.es.uri=http://192.168.99.100:9200
+ctia.producer.es.uri=1http://92.168.99.100:9200
 ```
 
 It can be very useful to use _Kitematic_ to monitor and interact with
 your containers.  You can also use _VirtualBox_ to modify the
 resources available to the VM that is running all of your containers.
+
+If you ever need to reset your entire dev environemnt, you can run
+tell `docker-compose` to rebuild all the containers from scratch:
+
+```
+docker-compose -f docker-compose-dev.yml up --force-recreate
+```
+
 
 ## License
 
