@@ -9,5 +9,5 @@
   "Logging an event channel indefinitely. Returns the channel for a go loop that never ends."
   [{m :mult :as ev} :- e/EventChannel]
   (go (loop [ev (<! m)]
-        (log/info ev)
+        (log/info "event: " ev)
         (recur (<! m)))))
