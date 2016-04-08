@@ -25,7 +25,8 @@
 
 (deftest indicators-by-judgements-query-test
   (is (= {:filtered
-          {:filter
+          {:query {:match_all {}}
+           :filter
            {:bool
             {:must
              {:terms
