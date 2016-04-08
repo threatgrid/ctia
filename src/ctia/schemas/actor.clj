@@ -41,7 +41,7 @@
 
 (s/defschema StoredActor
   "An actor as stored in the data store"
-  (c/storedSchema Type Actor))
+  (c/stored-schema Type Actor))
 
 (s/defn realize-actor :- StoredActor
   ([new-actor :- NewActor

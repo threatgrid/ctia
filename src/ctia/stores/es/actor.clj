@@ -13,21 +13,18 @@
 
 (def ^{:private true} mapping "actor")
 
-(defn- make-id [schema j]
-  (str "actor" "-" (UUID/randomUUID)))
-
 (defn handle-create-actor [state _ realized-actor]
   (create-doc (:conn state)
               (:index state)
               mapping
               realized-actor))
 
-(defn handle-update-actor [state login id new-actor]
+(defn handle-update-actor [state login id realized-actor]
   (update-doc (:conn state)
               (:index state)
               mapping
               id
-              new-actor))
+              realized-actor))
 
 (defn handle-read-actor [state id]
   (get-doc (:conn state)

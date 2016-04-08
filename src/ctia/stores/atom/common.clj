@@ -43,6 +43,19 @@
         (swap! state# ~swap-fn new-model# new-id# login#)
         new-id#))))
 
+(defmacro def-update-handler-from-realized [name Model]
+  `(s/defn ~name :- ~Model
+     [state# :- (s/atom {s/Str ~Model})
+      id# :- c/ID
+      login# :- s/Str ;; won't be used
+      updated-model# :- ~Model]
+     (get
+      (swap! state#
+             assoc
+             id#
+             updated-model#)
+      id#)))
+
 (defmacro def-update-handler [name Model NewModel swap-fn]
   `(s/defn ~name :- ~Model
      [state# :- (s/atom {s/Str ~Model})
