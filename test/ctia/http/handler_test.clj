@@ -31,7 +31,7 @@
                                     db-helpers/fixture-init-db
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
+(use-fixtures :each (join-fixtures [helpers/fixture-http-server
                                     helpers/fixture-schema-validation
                                     whoami-helpers/fixture-reset-state]))
 

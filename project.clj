@@ -13,7 +13,13 @@
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]
+                 [ring/ring-jetty-adapter "1.4.0"]
+                 [javax.servlet/servlet-api "2.5"]
                  [ring-middleware-format "0.7.0"]
+
+                 ;; nREPL server
+                 [org.clojure/tools.nrepl "0.2.12"]
+                 [cider/cider-nrepl "0.11.0"]
 
                  ;; Database
                  [clojurewerkz/elastisch "2.2.1"]
@@ -25,9 +31,7 @@
                  [hiccup "1.0.5"]]
 
   :resource-paths ["resources" "doc"]
-  :ring {:handler ctia.http.handler/app
-         :init ctia.init/init!
-         :nrepl {:start? true}}
+  :main ctia.main
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
   :test-selectors {:atom-store :atom-store
@@ -43,8 +47,6 @@
                                      (:es-producer %))}
 
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
-                                  [javax.servlet/servlet-api "2.5"]
-                                  [ring/ring-jetty-adapter "1.4.0"]
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]]
                    :plugins [[lein-ring "0.9.6"]]

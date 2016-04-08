@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [ctia.auth :as auth]
             [ctia.auth.allow-all :as aa]
+            [ctia.http.server :as http-server]
             [ctia.properties :as props]
             [ctia.store :as store]
             [ctia.stores.atom.store :as as]
@@ -11,7 +12,6 @@
             [clojure.data :as cd]
             [clojure.edn :as edn]
             [clojure.test :as ct]
-            [ring.adapter.jetty :as jetty]
             [schema.core :as schema]))
 
 (defmethod ct/assert-expr 'deep= [msg form]
@@ -79,19 +79,10 @@
 
 (def fixture-atom-store (fixture-store atom-stores))
 
-(def http-port 3000)
-
-(defn fixture-server [app & {:keys [port]
-                             :or {port http-port}}]
-  (fn [f]
-    (let [server (jetty/run-jetty app
-                                  {:host "localhost"
-                                   :port port
-                                   :join? false
-                                   :max-threads 10
-                                   :min-threads 9})]
-      (f)
-      (.stop server))))
+(defn fixture-http-server [f]
+  (http-server/start! :join? false)
+  (f)
+  (http-server/stop!))
 
 (defn set-capabilities! [login role caps]
   (store/create-identity @store/identity-store
@@ -101,7 +92,7 @@
 
 (defn url
   ([path]
-   (url path http-port))
+   (url path (get-in @props/properties [:ctia :http :port])))
   ([path port]
    (format "http://localhost:%d/%s" port path)))
 

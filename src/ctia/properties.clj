@@ -28,7 +28,12 @@
    set.  This is also used for selecting system properties to merge
    with the properties file."
   {(s/required-key "auth.service.type") s/Keyword
+   (s/required-key "ctia.http.port") s/Int
+   (s/required-key "ctia.http.min-threads") s/Int
+   (s/required-key "ctia.http.max-threads") s/Int
+   (s/required-key "ctia.nrepl.enabled") s/Bool
    (s/optional-key "auth.service.threatgrid.url") s/Str
+   (s/optional-key "ctia.nrepl.port") s/Int
    (s/optional-key "ctia.store.default") s/Keyword
    (s/optional-key "ctia.store.sql.db.classname") s/Str
    (s/optional-key "ctia.store.sql.db.subprotocol") s/Str
