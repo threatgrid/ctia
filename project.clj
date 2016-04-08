@@ -9,6 +9,7 @@
                  [com.rpl/specter "0.9.2"]
                  [org.clojure/core.async "0.2.374"]
                  [clj-http "2.0.1"]
+                 [org.slf4j/slf4j-log4j12 "1.7.21"]
                  [org.clojure/core.memoize "0.5.8"]
                  [org.clojure/tools.logging "0.3.1"]
 
