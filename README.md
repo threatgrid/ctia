@@ -60,6 +60,8 @@ The easiest way to get running it to install
 [Docker Toolbox](https://www.docker.com/products/docker-toolbox) which
 includes all the dependencies you need to run Docker containers.
 
+On Mac OS X, start a terminal using "Docker QuickStart Terminal" application.
+
 You can then bring up a development environemnt:
 ```
 docker-compose -f docker-compose-dev.yml build
@@ -74,7 +76,7 @@ your own `resources/ctia.properties` file with the following values:
 ```
 ctia.store.default=es
 ctia.store.es.uri=http://192.168.99.100:9200
-ctia.producer.es.uri=1http://92.168.99.100:9200
+ctia.producer.es.uri=http://92.168.99.100:9200
 ```
 
 It can be very useful to use _Kitematic_ to monitor and interact with

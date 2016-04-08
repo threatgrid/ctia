@@ -66,4 +66,4 @@
 (defn init! []
   (p/init!)
   (init-auth-service!)
-  (init-mem-store!))
+  (init-store-service!))

@@ -14,9 +14,10 @@
   (:import java.util.Properties))
 
 (def files
-  "Property file names, in order of preference"
-  ["ctia.properties"
-   "ctia-default.properties"])
+  "Property file names, they will be merged, with last one winning"
+  ["ctia-default.properties"
+   "ctia.properties"
+   ])
 
 (defonce properties
   (atom {}))
@@ -66,7 +67,7 @@
                  (with-open [rdr rdr]
                    (doto (Properties.)
                      (.load rdr))))))
-       first
+       concat
        (into {})))
 
 (defn- transform [properties]

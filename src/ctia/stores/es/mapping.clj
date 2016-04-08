@@ -326,7 +326,7 @@
      :type string
      :title string
      :alternate_ids string
-     :version {:type "integer"}
+     :version string
      :negate {:type "boolean"}
      :indicator_type string
      :observable observable
