@@ -58,9 +58,11 @@
   [state judgements]
   (let [ids (some->> judgements
                      (map :indicators)
-                     (mapcat #(map :indicator_id %)))]
+                     (mapcat #(map :indicator_id %))
+                     set)]
     (when ids
       (search-docs (:conn state)
                    (:index state)
                    mapping
-                   {:id ids}))))
+                   {:type "indicator"
+                    :id (vec ids)}))))

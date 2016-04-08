@@ -1445,11 +1445,11 @@
                           :headers {"api_key" "45c1f5e3f05d0"})
             indicators (:parsed-body response)]
         (is (= 200 (:status response)))
+
         (is (deep=
              #{{:id indicator-2-id
                 :type "indicator"
                 :title "indicator"
-                :judgements [{:judgement_id judgement-2-id}]
                 :sightings [{:sighting_id sighting-3-id}]
                 :description "indicator 2"
                 :producer "producer"
@@ -1460,8 +1460,6 @@
                {:id indicator-3-id
                 :type "indicator"
                 :title "indicator"
-                :judgements [{:judgement_id judgement-3-id
-                              :confidence "High"}]
                 :sightings [{:sighting_id sighting-4-id}
                             {:sighting_id sighting-5-id}]
                 :description "indicator 3"
@@ -1473,6 +1471,8 @@
              (->> indicators
                   (map #(dissoc % :created :modified))
                   set)))))
+
+
 
     (testing "GET /ctia/:observable_type/:observable_value/sightings"
       (let [{status :status
