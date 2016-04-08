@@ -32,6 +32,7 @@
    (s/required-key "ctia.http.port") s/Int
    (s/required-key "ctia.http.min-threads") s/Int
    (s/required-key "ctia.http.max-threads") s/Int
+   (s/optional-key "ctia.http.dev-reload") s/Bool
    (s/required-key "ctia.nrepl.enabled") s/Bool
    (s/optional-key "auth.service.threatgrid.url") s/Str
    (s/optional-key "ctia.nrepl.port") s/Int

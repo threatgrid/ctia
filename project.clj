@@ -16,6 +16,7 @@
                  [ring/ring-jetty-adapter "1.4.0"]
                  [javax.servlet/servlet-api "2.5"]
                  [ring-middleware-format "0.7.0"]
+                 [ring/ring-devel "1.4.0"]
 
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.12"]
