@@ -16,8 +16,7 @@
             filters)))
 
 (defn filter-map->terms-query
-  "transforms a filter map to en ES terms query
-   only supports one level of nesting"
+  "transforms a filter map to en ES terms query"
   [filter-map]
 
   (let [terms (map (fn [[k v]]
@@ -29,7 +28,7 @@
       :filter (q/bool {:must (nested-terms terms)})}}))
 
 (defn indicators-by-judgements-query
-  "nested filter to get all indicators
+  "filter to get all indicators
    matching a set of judgement ids"
   [judgement-ids]
 
