@@ -117,14 +117,11 @@
         :summary "Adds a new Actor"
         :capabilities #{:create-actor :admin}
         :login login
-        (comment
-          "WITH MACRO"
-          (ok (let [realized (flows/realize :before-create :actor login actor)]
-                (create-actor @actor-store login realized))))
-        (ok (let [id (flows/make-id "actor" actor)
-                  realized (realize-actor actor id login)
-                  hooked (hooks/apply-hooks :actor realized :before-create)]
-              (create-actor @actor-store login hooked))))
+        (ok (flows/create-flow realize-actor
+                               #(create-actor @actor-store login %)
+                               :actor
+                               login
+                               actor)))
       (PUT "/:id" []
         :return StoredActor
         :body [actor NewActor {:description "an updated Actor"}]
@@ -133,7 +130,13 @@
         :path-params [id :- s/Str]
         :capabilities #{:create-actor :admin}
         :login login
-        (ok (update-actor @actor-store id login actor)))
+        (ok (flows/update-flow #(read-actor @actor-store %)
+                               realize-actor
+                               #(update-actor @actor-store "" login %)
+                               :actor
+                               id
+                               login
+                               actor)))
       (GET "/:id" []
         :return (s/maybe StoredActor)
         :summary "Gets an Actor by ID"
@@ -149,7 +152,10 @@
         :summary "Deletes an Actor"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-actor :admin}
-        (if (delete-actor @actor-store id)
+        (if (flows/delete-flow #(read-actor @actor-store %)
+                               #(delete-actor @actor-store %)
+                               :actor
+                               id)
           (no-content)
           (not-found))))
 

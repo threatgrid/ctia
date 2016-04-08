@@ -184,7 +184,7 @@
            {:error "Mismatching :dispostion and dispositon_name for judgement"
             :judgement judgement})))
 
-(defn storedSchema
+(defn stored-schema
   "Given a schema X generate a StoredX schema"
   [type-name a-schema]
   (st/merge a-schema {:type type-name
@@ -198,7 +198,7 @@
     login :- s/Str
     type-name :- s/Str]
    (realize-object new-object id login type-name nil))
-  ([new-object
+  ([new-object :- s/Any
     id :- s/Str
     login :- s/Str
     type-name :- s/Str

@@ -3,7 +3,11 @@
 
 (def default-hooks
   {:before-create []
-   :before-send-to-event-chan []})
+   :after-create []
+   :before-update []
+   :after-update []
+   :before-delete []
+   :after-delete []})
 
 (def hooks (atom default-hooks))
 
