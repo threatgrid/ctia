@@ -289,7 +289,7 @@
      :confidence string
      :severity {:type "integer"}
      :valid_time valid-time
-     :reason string
+     :reason text
      :source_uri string
      :reason_uri string
      :indicators related-indicators
@@ -365,7 +365,7 @@
      :source string
      :ttp_type string
      :expires ts
-     :indicators string
+     :indicators all_string
      :owner string
      :created ts
      :modified ts}}})
