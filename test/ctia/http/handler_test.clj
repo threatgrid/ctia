@@ -651,11 +651,10 @@
                                 :related_COAs [{:confidence "High"
                                                 :source "source"
                                                 :relationship "relationship"
-                                                :COA_id "coa-123"}]
-                                :judgements [{:judgement_id "judgement-123"}
-                                             {:judgement_id "judgement-234"}]}
+                                                :COA_id "coa-123"}]}
                          :headers {"api_key" "45c1f5e3f05d0"})
           indicator (:parsed-body response)]
+
       (is (= 200 (:status response)))
       (is (deep=
            {:type "indicator"
@@ -673,8 +672,6 @@
                             :source "source"
                             :relationship "relationship"
                             :COA_id "coa-123"}]
-            :judgements [{:judgement_id "judgement-123"}
-                         {:judgement_id "judgement-234"}]
             :owner "foouser"}
            (dissoc indicator
                    :id
@@ -702,8 +699,6 @@
                                 :source "source"
                                 :relationship "relationship"
                                 :COA_id "coa-123"}]
-                :judgements [{:judgement_id "judgement-123"}
-                             {:judgement_id "judgement-234"}]
                 :owner "foouser"}
                (dissoc indicator
                        :id
@@ -733,8 +728,6 @@
                                  :source "source"
                                  :relationship "relationship"
                                  :COA_id "coa-123"}]
-                 :judgements [{:judgement_id "judgement-123"}
-                              {:judgement_id "judgement-234"}]
                  :owner "foouser"}]
                (map #(dissoc % :id :created :modified) indicators)))))
 
@@ -755,9 +748,7 @@
                           :related_COAs [{:confidence "High"
                                           :source "source"
                                           :relationship "relationship"
-                                          :COA_id "coa-123"}]
-                          :judgements [{:judgement_id "judgement-123"}
-                                       {:judgement_id "judgement-234"}]}
+                                          :COA_id "coa-123"}]}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
@@ -778,8 +769,6 @@
                                 :source "source"
                                 :relationship "relationship"
                                 :COA_id "coa-123"}]
-                :judgements [{:judgement_id "judgement-123"}
-                             {:judgement_id "judgement-234"}]
                 :owner "foouser"}
                (dissoc updated-indicator
                        :modified)))))
@@ -837,8 +826,6 @@
                                     :source "source"
                                     :relationship "relationship"
                                     :COA_id "coa-123"}]
-                    :judgements [{:judgement_id "judgement-123"}
-                                 {:judgement_id "judgement-234"}]
                     :sightings [{:sighting_id (:id sighting)}]
                     :owner "foouser"}
                    (dissoc indicator
@@ -1295,7 +1282,6 @@
          {indicator-1-id :id} :parsed-body}
         (post "ctia/indicator"
               :body {:title "indicator"
-                     :judgements [{:judgement_id judgement-1-id}]
                      :sightings [{:sighting_id sighting-1-id}
                                  {:sighting_id sighting-2-id}]
                      :description "indicator 1"
@@ -1336,7 +1322,6 @@
          {indicator-2-id :id} :parsed-body}
         (post "ctia/indicator"
               :body {:title "indicator"
-                     :judgements [{:judgement_id judgement-2-id}]
                      :sightings [{:sighting_id sighting-3-id}]
                      :description "indicator 2"
                      :producer "producer"
@@ -1386,8 +1371,6 @@
          {indicator-3-id :id} :parsed-body}
         (post "ctia/indicator"
               :body {:title "indicator"
-                     :judgements [{:judgement_id judgement-3-id
-                                   :confidence "High"}]
                      :sightings [{:sighting_id sighting-4-id}
                                  {:sighting_id sighting-5-id}]
                      :description "indicator 3"
@@ -1462,11 +1445,11 @@
                           :headers {"api_key" "45c1f5e3f05d0"})
             indicators (:parsed-body response)]
         (is (= 200 (:status response)))
+
         (is (deep=
              #{{:id indicator-2-id
                 :type "indicator"
                 :title "indicator"
-                :judgements [{:judgement_id judgement-2-id}]
                 :sightings [{:sighting_id sighting-3-id}]
                 :description "indicator 2"
                 :producer "producer"
@@ -1477,8 +1460,6 @@
                {:id indicator-3-id
                 :type "indicator"
                 :title "indicator"
-                :judgements [{:judgement_id judgement-3-id
-                              :confidence "High"}]
                 :sightings [{:sighting_id sighting-4-id}
                             {:sighting_id sighting-5-id}]
                 :description "indicator 3"
@@ -1490,6 +1471,8 @@
              (->> indicators
                   (map #(dissoc % :created :modified))
                   set)))))
+
+
 
     (testing "GET /ctia/:observable_type/:observable_value/sightings"
       (let [{status :status
