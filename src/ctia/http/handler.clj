@@ -21,6 +21,7 @@
             [ctia.events :refer [recent-events]]
             [ctia.store :refer :all]
             [ctia.flows.crud :as flows]
+            [ctia.flows.hooks :as hooks]
             [compojure.api.sweet :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.params :as params]
