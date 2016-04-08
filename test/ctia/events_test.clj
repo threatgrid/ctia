@@ -73,6 +73,7 @@
     (send-create-event "tester" {} "TestModelType" {:id "1"})
     (send-create-event "tester" {} "TestModelType" {:id "2"})
     (send-create-event "tester" {} "TestModelType" {:id "3"})
+    (Thread/sleep 100)
     (is (= ["1" "2" "3"] (map (comp :id :model) (recent-events))))
     (send-create-event "tester" {} "TestModelType" {:id "4"})
     (send-create-event "tester" {} "TestModelType" {:id "5"})

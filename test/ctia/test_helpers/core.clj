@@ -5,6 +5,7 @@
             [ctia.properties :as props]
             [ctia.store :as store]
             [ctia.stores.atom.store :as as]
+            [ctia.events.producer :as producer]
             [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.data :as cd]
@@ -27,7 +28,8 @@
                         :expected '~form, :actual nil})))))
 
 (defn fixture-properties [f]
-  (props/init! "ctia-test.properties")
+  (with-redefs [props/files ["ctia-test.properties"]]
+    (props/init!))
   (f))
 
 
@@ -66,6 +68,15 @@
     (doseq  [store (keys store-map)]
       (reset! store nil))))
 
+(defn fixture-producers [producers]
+  (fn [f]
+    (dorun
+     (map (fn [impl-fn]
+            (swap! producer/event-producers conj (impl-fn))) producers))
+    (f)
+    (reset! producer/event-producers [])))
+
+
 (def fixture-atom-store (fixture-store atom-stores))
 
 (def http-port 3000)
@@ -76,7 +87,9 @@
     (let [server (jetty/run-jetty app
                                   {:host "localhost"
                                    :port port
-                                   :join? false})]
+                                   :join? false
+                                   :max-threads 10
+                                   :min-threads 9})]
       (f)
       (.stop server))))
 
@@ -128,7 +141,9 @@
 (defn get [path & {:as options}]
   (let [options
         (merge {:accept :edn
-                :throw-exceptions false}
+                :throw-exceptions false
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
@@ -142,8 +157,8 @@
         (merge {:content-type :edn
                 :accept :edn
                 :throw-exceptions false
-                :socket-timeout 2000
-                :conn-timeout 2000}
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
@@ -163,8 +178,8 @@
         (merge {:content-type :edn
                 :accept :edn
                 :throw-exceptions false
-                :socket-timeout 2000
-                :conn-timeout 2000}
+                :socket-timeout 10000
+                :conn-timeout 10000}
                options)
 
         response
