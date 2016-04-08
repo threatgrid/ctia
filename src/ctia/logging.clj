@@ -1,6 +1,6 @@
 (ns ctia.logging
   (:require [clojure.tools.logging :as log]
-            [clojure.core.async :as a :refer [go <! chan tap]]
+            [clojure.core.async :as a :refer [go-loop <! chan tap close!]]
             [ctia.events :as e]
             [schema.core :as s])
   (:import [clojure.core.async.impl.protocols Channel]))
@@ -10,6 +10,10 @@
   [{m :mult :as ev} :- e/EventChannel]
   (let [events (chan)]
     (tap m events)
-    (go (loop [ev (<! events)]
-          (log/info "event:" ev)
-          (recur (<! events))))))
+    (let [ch (go-loop []
+               (when-let [ev (<! events)]
+                 (log/info "event:" ev)
+                 (recur)))]
+      (.addShutdownHook (Runtime/getRuntime)
+                        (Thread. #(do (close! ch))))
+      ch)))
