@@ -55,7 +55,7 @@
       (reset! store (impl-fn store-state)))))
 
 (defn init-store-service! []
-  (let [store-service-default (or (get-in @p/properties [:ctia :store :default]) :memory)]
+  (let [store-service-default (or (get-in @p/properties [:store :service :default]) :memory)]
     (case store-service-default
       :es (init-es-store!)
       :memory (init-mem-store!)

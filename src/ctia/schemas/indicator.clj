@@ -68,6 +68,14 @@
     (describe [s/Str]
               "Descriptors for this indicator")
 
+    (s/optional-key :observable)
+    (describe c/Observable
+              "a relevant cyber observable for this Indicator")
+
+    (s/optional-key :judgements)
+    (describe rel/RelatedJudgements
+              "related Judgements for this Indicator")
+
     (s/optional-key :composite_indicator_expression)
     CompositeIndicatorExpression
 
