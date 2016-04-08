@@ -22,14 +22,9 @@
 (s/defn handle-list-indicators-by-judgements :- (s/maybe [StoredIndicator])
   [indicator-state :- (s/atom {s/Str StoredIndicator})
    judgements :- [StoredJudgement]]
-  (let [judgement-ids (set (map :id judgements))]
-    ;; Note (polygloton, 2016-03-10):
-    ;; Find indicators using the :judgements relationship on the indicators.
-    ;; It could be done the other way around, since judgements have :indicators
-    ;; relationships.  Not sure which is more correct.
+  (let [indicator-ids (some->> (map :indicators judgements)
+                               (mapcat #(map :indicator_id %))
+                               set)]
     (filter (fn [indicator]
-              (some (fn [judgement-relationship]
-                      (let [judgement-id (:judgement_id judgement-relationship)]
-                        (contains? judgement-ids judgement-id)))
-                    (:judgements indicator)))
+              (clojure.set/subset? #{(:id indicator)} indicator-ids))
             (vals @indicator-state))))
