@@ -13,6 +13,26 @@
       id# :- s/Str]
      (get (deref state#) id#)))
 
+(defmacro def-create-handler-from-realized [name Model]
+  `(s/defn ~name :- ~Model
+     [state# :- (s/atom {s/Str ~Model})
+      login# :- s/Str ;; Won't be used
+      model# :- ~Model]
+     (let [id# (:id model#)]
+       (get
+        (swap! state# assoc id# model#)
+        id#))))
+
+(defmacro def-create-handler [name Model NewModel swap-fn id-fn]
+  `(s/defn ~name :- ~Model
+     [state# :- (s/atom {s/Str ~Model})
+      login# :- s/Str
+      new-model# :- ~NewModel]
+     (let [new-id# (~id-fn new-model#)]
+       (get
+        (swap! state# ~swap-fn new-model# new-id# login#)
+        new-id#))))
+
 (defmacro def-create-handler [name Model NewModel swap-fn id-fn]
   `(s/defn ~name :- ~Model
      [state# :- (s/atom {s/Str ~Model})
