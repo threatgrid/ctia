@@ -90,6 +90,12 @@ tell `docker-compose` to rebuild all the containers from scratch:
 docker-compose -f docker-compose-dev.yml up --force-recreate
 ```
 
+### Kibana
+
+We have also provided a Kibana configuration, in
+`resources/kibana-dashboards.json` which you can load into Kibana,
+which will be listening on port 5601 of your `docker-machine ip`
+
 
 ## License
 
