@@ -50,8 +50,7 @@
    schema-indicator->db-indicator))
 
 (defn insert-judgements [login & new-judgements]
-  (let [realized-judgements (realize-judgements login new-judgements)
-        judgements (-> realized-judgements
+  (let [judgements (-> new-judgements
                        transform/dates-to-sqltimes)]
     (kdb/transaction
      (c/insert @judgement (->> judgements
@@ -60,7 +59,7 @@
                                (map transform/to-db-valid-time)
                                (map #(dissoc % :type))))
      (c/insert @judgement-indicator (judgements->db-indicators judgements)))
-    realized-judgements))
+    new-judgements))
 
 (defn select-judgements [filter-map]
   (let [judgements

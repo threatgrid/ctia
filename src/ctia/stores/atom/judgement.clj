@@ -8,11 +8,7 @@
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
-(mc/def-create-handler handle-create-judgement
-  StoredJudgement
-  NewJudgement
-  (mc/make-swap-fn realize-judgement)
-  (mc/random-id "judgement"))
+(mc/def-create-handler-from-realized handle-create-judgement StoredJudgement)
 
 (mc/def-read-handler handle-read-judgement StoredJudgement)
 

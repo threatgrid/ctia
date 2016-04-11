@@ -10,7 +10,7 @@
             [ctia.schemas.indicator
              :refer [NewIndicator StoredIndicator generalize-indicator]]
             [ctia.schemas.feedback :refer [NewFeedback StoredFeedback]]
-            [ctia.schemas.judgement :refer [NewJudgement StoredJudgement]]
+            [ctia.schemas.judgement :refer [NewJudgement StoredJudgement realize-judgement]]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.sighting :refer [NewSighting StoredSighting]]
             [ctia.schemas.ttp :refer [NewTTP StoredTTP realize-ttp]]
@@ -374,7 +374,11 @@
         :summary "Adds a new Judgement"
         :capabilities #{:create-judgement :admin}
         :login login
-        (ok (create-judgement @judgement-store login judgement)))
+        (ok (flows/create-flow realize-judgement
+                               #(create-judgement @judgement-store login %)
+                               :judgement
+                               login
+                               judgement)))
       (POST "/:judgement-id/feedback" []
         :tags ["Feedback"]
         :return StoredFeedback
