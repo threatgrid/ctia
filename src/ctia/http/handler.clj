@@ -1,6 +1,6 @@
 (ns ctia.http.handler
   (:require [ctia.schemas.actor :refer [NewActor StoredActor realize-actor]]
-            [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]
+            [ctia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
             [ctia.schemas.coa :refer [NewCOA StoredCOA]]
             [ctia.schemas.common
              :refer [DispositionName DispositionNumber Time VersionInfo]]
@@ -168,7 +168,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-campaign :admin}
         :login login
-        (ok (create-campaign @campaign-store login campaign)))
+        (ok (flows/create-flow realize-campaign
+                               #(create-campaign @campaign-store login %)
+                               :campaign
+                               login
+                               campaign)))
       (PUT "/:id" []
         :return StoredCampaign
         :body [campaign NewCampaign {:description "an updated campaign"}]
@@ -177,7 +181,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-campaign :admin}
         :login login
-        (ok (update-campaign @campaign-store id login campaign)))
+        (ok (flows/update-flow #(read-campaign @campaign-store %)
+                               realize-campaign
+                               #(update-campaign @campaign-store (:id %) login %)
+                               :campaign
+                               id
+                               login
+                               campaign)))
       (GET "/:id" []
         :return (s/maybe StoredCampaign)
         :summary "Gets a Campaign by ID"
@@ -193,7 +203,10 @@
         :summary "Deletes a Campaign"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-campaign :admin}
-        (if (delete-campaign @campaign-store id)
+        (if (flows/delete-flow #(read-campaign @campaign-store %)
+                               #(delete-campaign @campaign-store %)
+                               :campaign
+                               id)
           (no-content)
           (not-found))))
 
