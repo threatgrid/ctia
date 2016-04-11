@@ -1,11 +1,11 @@
 (ns ctia.http.handler
   (:require [ctia.schemas.actor :refer [NewActor StoredActor realize-actor]]
             [ctia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
-            [ctia.schemas.coa :refer [NewCOA StoredCOA]]
+            [ctia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]
             [ctia.schemas.common
              :refer [DispositionName DispositionNumber Time VersionInfo]]
             [ctia.schemas.exploit-target
-             :refer [NewExploitTarget StoredExploitTarget]]
+             :refer [NewExploitTarget StoredExploitTarget realize-exploit-target]]
             [ctia.schemas.incident :refer [NewIncident StoredIncident]]
             [ctia.schemas.indicator
              :refer [NewIndicator StoredIndicator generalize-indicator]]
@@ -219,7 +219,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-exploit-target :admin}
         :login login
-        (ok (create-exploit-target @exploit-target-store login exploit-target)))
+        (ok (flows/create-flow realize-exploit-target
+                               #(create-exploit-target @exploit-target-store login %)
+                               :exploit-target
+                               login
+                               exploit-target)))
       (PUT "/:id" []
         :return StoredExploitTarget
         :body [exploit-target
@@ -230,7 +234,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-exploit-target :admin}
         :login login
-        (ok (update-exploit-target @exploit-target-store id login exploit-target)))
+        (ok (flows/update-flow #(read-exploit-target @exploit-target-store %)
+                               realize-exploit-target
+                               #(update-exploit-target @exploit-target-store (:id %) login %)
+                               :exploit-target
+                               id
+                               login
+                               exploit-target)))
       (GET "/:id" []
         :return (s/maybe StoredExploitTarget)
         :summary "Gets an ExploitTarget by ID"
@@ -246,7 +256,10 @@
         :summary "Deletes an ExploitTarget"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-exploit-target :admin}
-        (if (delete-exploit-target @exploit-target-store id)
+        (if (flows/delete-flow #(read-exploit-target @exploit-target-store %)
+                               #(delete-exploit-target @exploit-target-store %)
+                               :exploit-target
+                               id)
           (no-content)
           (not-found))))
 
@@ -259,7 +272,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-coa :admin}
         :login login
-        (ok (create-coa @coa-store login coa)))
+        (ok (flows/create-flow realize-coa
+                               #(create-coa @coa-store login %)
+                               :coa
+                               login
+                               coa)))
       (PUT "/:id" []
         :return StoredCOA
         :body [coa NewCOA {:description "an updated COA"}]
@@ -268,7 +285,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-coa :admin}
         :login login
-        (ok (update-coa @coa-store id login coa)))
+        (ok (flows/update-flow #(read-coa @coa-store %)
+                               realize-coa
+                               #(update-coa @coa-store (:id %) login %)
+                               :coa
+                               id
+                               login
+                               coa)))
       (GET "/:id" []
         :return (s/maybe StoredCOA)
         :summary "Gets a COA by ID"
@@ -284,7 +307,10 @@
         :summary "Deletes a COA"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-coa :admin}
-        (if (delete-coa @coa-store id)
+        (if (flows/delete-flow #(read-coa @coa-store %)
+                               #(delete-coa @coa-store %)
+                               :coa
+                               id)
           (no-content)
           (not-found))))
 
