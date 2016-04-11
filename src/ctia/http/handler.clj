@@ -1,6 +1,6 @@
 (ns ctia.http.handler
-  (:require [ctia.schemas.actor :refer [NewActor StoredActor]]
-            [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]
+  (:require [ctia.schemas.actor :refer [NewActor StoredActor realize-actor]]
+            [ctia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
             [ctia.schemas.coa :refer [NewCOA StoredCOA]]
             [ctia.schemas.common
              :refer [DispositionName DispositionNumber Time VersionInfo]]
@@ -20,6 +20,8 @@
             [ctia.events.schemas :refer [ModelEventBase]]
             [ctia.events :refer [recent-events]]
             [ctia.store :refer :all]
+            [ctia.flows.crud :as flows]
+            [ctia.flows.hooks :as hooks]
             [compojure.api.sweet :refer :all]
             [ring.middleware.format :refer [wrap-restful-format]]
             [ring.middleware.params :as params]
@@ -115,7 +117,11 @@
         :summary "Adds a new Actor"
         :capabilities #{:create-actor :admin}
         :login login
-        (ok (create-actor @actor-store login actor)))
+        (ok (flows/create-flow realize-actor
+                               #(create-actor @actor-store login %)
+                               :actor
+                               login
+                               actor)))
       (PUT "/:id" []
         :return StoredActor
         :body [actor NewActor {:description "an updated Actor"}]
@@ -124,7 +130,13 @@
         :path-params [id :- s/Str]
         :capabilities #{:create-actor :admin}
         :login login
-        (ok (update-actor @actor-store id login actor)))
+        (ok (flows/update-flow #(read-actor @actor-store %)
+                               realize-actor
+                               #(update-actor @actor-store (:id %) login %)
+                               :actor
+                               id
+                               login
+                               actor)))
       (GET "/:id" []
         :return (s/maybe StoredActor)
         :summary "Gets an Actor by ID"
@@ -140,7 +152,10 @@
         :summary "Deletes an Actor"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-actor :admin}
-        (if (delete-actor @actor-store id)
+        (if (flows/delete-flow #(read-actor @actor-store %)
+                               #(delete-actor @actor-store %)
+                               :actor
+                               id)
           (no-content)
           (not-found))))
 
@@ -153,7 +168,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-campaign :admin}
         :login login
-        (ok (create-campaign @campaign-store login campaign)))
+        (ok (flows/create-flow realize-campaign
+                               #(create-campaign @campaign-store login %)
+                               :campaign
+                               login
+                               campaign)))
       (PUT "/:id" []
         :return StoredCampaign
         :body [campaign NewCampaign {:description "an updated campaign"}]
@@ -162,7 +181,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-campaign :admin}
         :login login
-        (ok (update-campaign @campaign-store id login campaign)))
+        (ok (flows/update-flow #(read-campaign @campaign-store %)
+                               realize-campaign
+                               #(update-campaign @campaign-store (:id %) login %)
+                               :campaign
+                               id
+                               login
+                               campaign)))
       (GET "/:id" []
         :return (s/maybe StoredCampaign)
         :summary "Gets a Campaign by ID"
@@ -178,7 +203,10 @@
         :summary "Deletes a Campaign"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-campaign :admin}
-        (if (delete-campaign @campaign-store id)
+        (if (flows/delete-flow #(read-campaign @campaign-store %)
+                               #(delete-campaign @campaign-store %)
+                               :campaign
+                               id)
           (no-content)
           (not-found))))
 

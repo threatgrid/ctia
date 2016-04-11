@@ -2,9 +2,12 @@
   (:import java.util.UUID)
   (:require
    [schema.core :as s]
+   [schema.coerce :as c]
+   [ring.swagger.coerce :as sc]
    [ctia.schemas.actor :refer [Actor
                                NewActor
-                               realize-actor]]
+                               realize-actor
+                               StoredActor]]
    [ctia.stores.es.document :refer [create-doc
                                     update-doc
                                     get-doc
@@ -13,29 +16,31 @@
 
 (def ^{:private true} mapping "actor")
 
-(defn- make-id [schema j]
-  (str "actor" "-" (UUID/randomUUID)))
+(def coerce-stored-actor
+  (c/coercer! (s/maybe StoredActor)
+              sc/json-schema-coercion-matcher))
 
-(defn handle-create-actor [state login new-actor]
-  (let [id (make-id Actor new-actor)
-        realized (realize-actor new-actor id login)]
-    (create-doc (:conn state)
-                (:index state)
-                mapping
-                realized)))
+(defn handle-create-actor [state _ realized-actor]
+  (-> (create-doc (:conn state)
+                  (:index state)
+                  mapping
+                  realized-actor)
+      coerce-stored-actor))
 
-(defn handle-update-actor [state login id new-actor]
-  (update-doc (:conn state)
-              (:index state)
-              mapping
-              id
-              new-actor))
+(defn handle-update-actor [state id login realized-actor]
+  (-> (update-doc (:conn state)
+                  (:index state)
+                  mapping
+                  id
+                  realized-actor)
+      coerce-stored-actor))
 
 (defn handle-read-actor [state id]
-  (get-doc (:conn state)
-           (:index state)
-           mapping
-           id))
+  (-> (get-doc (:conn state)
+               (:index state)
+               mapping
+               id)
+      coerce-stored-actor))
 
 (defn handle-delete-actor [state id]
   (delete-doc (:conn state)
@@ -44,7 +49,8 @@
               id))
 
 (defn handle-list-actors [state judgement-store filter-map]
-  (search-docs (:conn state)
-               (:index state)
-               mapping
-               filter-map))
+  (-> (search-docs (:conn state)
+                   (:index state)
+                   mapping
+                   filter-map)
+      (map coerce-stored-actor)))
