@@ -97,7 +97,7 @@
   (create-campaign [_ login new-campaign]
     (ca/handle-create-campaign state login new-campaign))
   (update-campaign [_ id login new-campaign]
-    (ca/handle-update-campaign state login id new-campaign))
+    (ca/handle-update-campaign state id login new-campaign))
   (delete-campaign [_ id]
     (ca/handle-delete-campaign state id))
   (list-campaigns [_ filter-map]
@@ -110,7 +110,7 @@
   (create-coa [_ login new-coa]
     (coa/handle-create-coa state login new-coa))
   (update-coa [_ id login new-coa]
-    (coa/handle-update-coa state login id new-coa))
+    (coa/handle-update-coa state id login new-coa))
   (delete-coa [_ id]
     (coa/handle-delete-coa state id))
   (list-coas [_ filter-map]
@@ -136,7 +136,7 @@
   (create-exploit-target [_ login new-exploit-target]
     (et/handle-create-exploit-target state login new-exploit-target))
   (update-exploit-target [_ id login new-exploit-target]
-    (et/handle-update-exploit-target state login id new-exploit-target))
+    (et/handle-update-exploit-target state id login new-exploit-target))
   (delete-exploit-target [_ id]
     (et/handle-delete-exploit-target state id))
   (list-exploit-targets [_ filter-map]
