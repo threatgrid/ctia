@@ -13,7 +13,7 @@
             [ctia.schemas.judgement :refer [NewJudgement StoredJudgement]]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.sighting :refer [NewSighting StoredSighting]]
-            [ctia.schemas.ttp :refer [NewTTP StoredTTP]]
+            [ctia.schemas.ttp :refer [NewTTP StoredTTP realize-ttp]]
             [ctia.schemas.sighting :refer [NewSighting StoredSighting]]
             [ctia.schemas.vocabularies :refer [ObservableType]]
             [ctia.schemas.verdict :refer [Verdict]]
@@ -527,7 +527,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-ttp :admin}
         :login login
-        (ok (create-ttp @ttp-store login ttp)))
+        (ok (flows/create-flow realize-ttp
+                               #(create-ttp @ttp-store login %)
+                               :ttp
+                               login
+                               ttp)))
       (PUT "/:id" []
         :return StoredTTP
         :body [ttp NewTTP {:description "an updated TTP"}]
@@ -536,7 +540,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-ttp :admin}
         :login login
-        (ok (update-ttp @ttp-store id login ttp)))
+        (ok (flows/update-flow #(read-ttp @ttp-store %)
+                               realize-ttp
+                               #(update-ttp @ttp-store (:id %) login %)
+                               :ttp
+                               id
+                               login
+                               ttp)))
       (GET "/:id" []
         :return (s/maybe StoredTTP)
         :summary "Gets a TTP by ID"
@@ -561,7 +571,10 @@
         :summary "Deletes a TTP"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-ttp :admin}
-        (if (delete-ttp @ttp-store id)
+        (if (flows/delete-flow #(read-ttp @ttp-store %)
+                               #(delete-ttp @ttp-store %)
+                               :ttp
+                               id)
           (no-content)
           (not-found))))
 

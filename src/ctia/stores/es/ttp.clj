@@ -13,16 +13,11 @@
 
 (def ^{:private true} mapping "ttp")
 
-(defn- make-id [schema j]
-  (str "ttp" "-" (UUID/randomUUID)))
-
-(defn handle-create-ttp [state login new-ttp]
-  (let [id (make-id TTP new-ttp)
-        realized (realize-ttp new-ttp id login)]
-    (create-doc (:conn state)
-                (:index state)
-                mapping
-                realized)))
+(defn handle-create-ttp [state login realized-new-ttp]
+  (create-doc (:conn state)
+                 (:index state)
+                 mapping
+                 realized-new-ttp))
 
 (defn handle-update-ttp [state login id new-ttp]
   (update-doc (:conn state)
