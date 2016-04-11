@@ -71,7 +71,7 @@
   (create-ttp [_ login new-ttp]
     (ttp/handle-create-ttp state login new-ttp))
   (update-ttp [_ id login new-ttp]
-    (ttp/handle-update-ttp state login id new-ttp))
+    (ttp/handle-update-ttp state id login new-ttp))
   (delete-ttp [_ id]
     (ttp/handle-delete-ttp state id))
   (list-ttps [_ filter-map]
