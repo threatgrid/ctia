@@ -17,7 +17,7 @@
 (def ^{:private true} mapping "actor")
 
 (def coerce-stored-actor
-  (c/coercer! StoredActor
+  (c/coercer! (s/maybe StoredActor)
               sc/json-schema-coercion-matcher))
 
 (defn handle-create-actor [state _ realized-actor]
@@ -28,10 +28,6 @@
       coerce-stored-actor))
 
 (defn handle-update-actor [state id login realized-actor]
-
-  (println "guillaume")
-  (println id)
-
   (-> (update-doc (:conn state)
                   (:index state)
                   mapping
@@ -53,7 +49,8 @@
               id))
 
 (defn handle-list-actors [state judgement-store filter-map]
-  (search-docs (:conn state)
-               (:index state)
-               mapping
-               filter-map))
+  (-> (search-docs (:conn state)
+                   (:index state)
+                   mapping
+                   filter-map)
+      (map coerce-stored-actor)))
