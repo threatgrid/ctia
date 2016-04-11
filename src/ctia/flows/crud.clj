@@ -8,7 +8,7 @@
 (defn make-id
   "Apprently `make-id` is the same for all stores."
   [type-name _]
-  (str type-name "-" (UUID/randomUUID)))
+  (str (name type-name) "-" (UUID/randomUUID)))
 
 (defn create-flow
   "This function centralize the create workflow.
