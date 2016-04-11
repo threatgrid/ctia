@@ -2,12 +2,10 @@
   (:require [ctia.schemas.incident :refer [NewIncident StoredIncident realize-incident]]
             [ctia.stores.atom.common :as mc]))
 
-(def swap-incident (mc/make-swap-fn realize-incident))
-
-(mc/def-create-handler-from-realized handle-create-incident StoredIncident)
+(def handle-create-incident (mc/create-handler-from-realized StoredIncident))
 
 (mc/def-read-handler handle-read-incident StoredIncident)
 
 (mc/def-delete-handler handle-delete-incident StoredIncident)
 
-(mc/def-update-handler-from-realized handle-update-incident StoredIncident)
+(def handle-update-incident (mc/update-handler-from-realized StoredIncident))

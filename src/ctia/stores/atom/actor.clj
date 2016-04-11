@@ -3,12 +3,10 @@
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
-(def swap-actor (mc/make-swap-fn realize-actor))
-
-(mc/def-create-handler-from-realized handle-create-actor StoredActor)
+(def handle-create-actor (mc/create-handler-from-realized StoredActor))
 
 (mc/def-read-handler handle-read-actor StoredActor)
 
 (mc/def-delete-handler handle-delete-actor StoredActor)
 
-(mc/def-update-handler-from-realized handle-update-actor StoredActor)
+(def handle-update-actor (mc/update-handler-from-realized StoredActor))

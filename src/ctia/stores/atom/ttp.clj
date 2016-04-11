@@ -4,10 +4,10 @@
 
 (def swap-ttp (mc/make-swap-fn realize-ttp))
 
-(mc/def-create-handler-from-realized handle-create-ttp StoredTTP)
+(def handle-create-ttp (mc/create-handler-from-realized StoredTTP))
 
 (mc/def-read-handler handle-read-ttp StoredTTP)
 
 (mc/def-delete-handler handle-delete-ttp StoredTTP)
 
-(mc/def-update-handler-from-realized handle-update-ttp StoredTTP)
+(def handle-update-ttp (mc/update-handler-from-realized StoredTTP))

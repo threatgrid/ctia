@@ -8,7 +8,7 @@
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
-(mc/def-create-handler-from-realized handle-create-judgement StoredJudgement)
+(def handle-create-judgement (mc/create-handler-from-realized StoredJudgement))
 
 (mc/def-read-handler handle-read-judgement StoredJudgement)
 
