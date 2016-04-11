@@ -27,7 +27,7 @@
                   realized-new-coa)
       coerce-stored-coa))
 
-(defn handle-update-coa [state login id new-coa]
+(defn handle-update-coa [state id login new-coa]
   (-> (update-doc (:conn state)
                   (:index state)
                   mapping

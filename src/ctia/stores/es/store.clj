@@ -123,7 +123,7 @@
   (create-incident [_ login new-incident]
     (inc/handle-create-incident state login new-incident))
   (update-incident [_ id login new-incident]
-    (inc/handle-update-incident state login id new-incident))
+    (inc/handle-update-incident state id login new-incident))
   (delete-incident [_ id]
     (inc/handle-delete-incident state id))
   (list-incidents [_ filter-map]

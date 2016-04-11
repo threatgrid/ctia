@@ -27,7 +27,7 @@
                   realized-new-campaign)
       coerce-stored-campaign))
 
-(defn handle-update-campaign [state id login new-campaign]
+(defn handle-update-campaign [state id login new-campaign] 
   (-> (update-doc (:conn state)
                   (:index state)
                   mapping
