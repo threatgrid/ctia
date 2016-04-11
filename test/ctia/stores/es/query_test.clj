@@ -38,7 +38,7 @@
           #{"judgement-41dae4cf-1721-4b25-a111-77cf28e8ca6d"
             "judgement-734f0a85-f862-4abd-83e0-beda53556e29"}))))
 
-(deftest unexpired-judgements-by-observable-query-test
+(deftest active-judgements-by-observable-query-test
   (is (= {:filtered
           {:query
            {:bool
@@ -51,5 +51,5 @@
              [{:range {"valid_time.start_time" {"lt" "now/d"}}}
               {:range {"valid_time.end_time" {"gt" "now/d"}}}]}}}}
 
-         (q/unexpired-judgements-by-observable-query
+         (q/active-judgements-by-observable-query
           {:type "ip" :value "10.0.0.1"}))))
