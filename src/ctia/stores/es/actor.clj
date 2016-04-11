@@ -6,8 +6,8 @@
    [ring.swagger.coerce :as sc]
    [ctia.schemas.actor :refer [Actor
                                NewActor
-                               realize-actor
-                               StoredActor]]
+                               StoredActor
+                               realize-actor]]
    [ctia.stores.es.document :refer [create-doc
                                     update-doc
                                     get-doc
@@ -49,8 +49,8 @@
               id))
 
 (defn handle-list-actors [state judgement-store filter-map]
-  (-> (search-docs (:conn state)
-                   (:index state)
-                   mapping
-                   filter-map)
-      (map coerce-stored-actor)))
+  (->> (search-docs (:conn state)
+                    (:index state)
+                    mapping
+                    filter-map)
+       (map coerce-stored-actor)))
