@@ -9,10 +9,8 @@
             [schema.core :as s]))
 
 (def handle-create-judgement (mc/create-handler-from-realized StoredJudgement))
-
-(mc/def-read-handler handle-read-judgement StoredJudgement)
-
-(mc/def-delete-handler handle-delete-judgement StoredJudgement)
+(def handle-read-judgement (mc/read-handler StoredJudgement))
+(def handle-delete-judgement (mc/delete-handler StoredJudgement))
 
 (mc/def-list-handler handle-list-judgements StoredJudgement)
 

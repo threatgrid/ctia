@@ -10,9 +10,9 @@
 (mc/def-create-handler handle-create-indicator
   StoredIndicator NewIndicator swap-indicator (mc/random-id "indicator"))
 
-(mc/def-read-handler handle-read-indicator StoredIndicator)
+(def handle-read-indicator (mc/read-handler StoredIndicator))
 
-(mc/def-delete-handler handle-delete-indicator StoredIndicator)
+(def handle-delete-indicator (mc/delete-handler StoredIndicator))
 
 (mc/def-update-handler handle-update-indicator
   StoredIndicator NewIndicator swap-indicator)
