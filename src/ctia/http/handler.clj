@@ -9,7 +9,7 @@
             [ctia.schemas.incident :refer [NewIncident StoredIncident realize-incident]]
             [ctia.schemas.indicator
              :refer [NewIndicator StoredIndicator generalize-indicator]]
-            [ctia.schemas.feedback :refer [NewFeedback StoredFeedback]]
+            [ctia.schemas.feedback :refer [NewFeedback StoredFeedback realize-feedback]]
             [ctia.schemas.judgement :refer [NewJudgement StoredJudgement realize-judgement]]
             [ctia.schemas.relationships :as rel]
             [ctia.schemas.sighting :refer [NewSighting StoredSighting]]
@@ -388,7 +388,11 @@
         :summary "Adds a Feedback to a Judgement"
         :capabilities #{:create-feedback :admin}
         :login login
-        (ok (create-feedback @feedback-store feedback login judgement-id)))
+        (ok (flows/create-flow #(realize-feedback %1 %2 %3 judgement-id)
+                               #(create-feedback @feedback-store % login judgement-id)
+                               :feedback
+                               login
+                               feedback)))
       (GET "/:judgement-id/feedback" []
         :tags ["Feedback"]
         :return (s/maybe [StoredFeedback])

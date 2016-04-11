@@ -5,17 +5,10 @@
 
 (s/defn handle-create-feedback :- StoredFeedback
   [state :- (s/atom {s/Str StoredFeedback})
-   new-feedback :- NewFeedback
+   new-feedback :- StoredFeedback
    login :- s/Str
    judgement-id :- s/Str]
-  (let [new-id ((mc/random-id "feedback") new-feedback)]
-    (get
-     (swap! state
-            (mc/make-swap-fn realize-feedback)
-            new-feedback
-            new-id
-            login
-            judgement-id)
-     new-id)))
+  (let [id (:id new-feedback)]
+    (get (swap! state assoc id new-feedback) id)))
 
 (mc/def-list-handler handle-list-feedback StoredFeedback)
