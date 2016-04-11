@@ -13,14 +13,11 @@
 
 (def ^{:private true} mapping "campaign")
 
-(defn- make-id [schema j]
-  (str "campagin" "-" (UUID/randomUUID)))
-
-(defn handle-create-campaign [state login realized]
+(defn handle-create-campaign [state login realized-new-campaign]
   (create-doc (:conn state)
               (:index state)
               mapping
-              realized))
+              realized-new-campaign))
 
 (defn handle-update-campaign [state login id new-campaign]
   (update-doc (:conn state)
