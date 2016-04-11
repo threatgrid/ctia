@@ -7,6 +7,12 @@
   (fn [_new-entity_]
     (str prefix "-" (UUID/randomUUID))))
 
+(defn read-handler [Model]
+  (s/fn :- (s/maybe Model)
+    [state :- (s/atom {s/Str Model})
+     id :- s/Str]
+    (get (deref state) id)))
+
 (defmacro def-read-handler [name Model]
   `(s/defn ~name :- (s/maybe ~Model)
      [state# :- (s/atom {s/Str ~Model})
@@ -16,19 +22,21 @@
 (defn create-handler-from-realized
   "Create a new resource from a realized object"
   [Model]
-  (s/fn [state :- (s/atom {s/Str Model})
-         _ :- s/Any ;; Deprecated; to refactor
-         model :- Model]
+  (s/fn :- Model
+    [state :- (s/atom {s/Str Model})
+     _ :- s/Any ;; Deprecated; to refactor
+     model :- Model]
     (let [id (:id model)]
       (get (swap! state assoc id model) id))))
 
 (defn update-handler-from-realized
   "Update a resource using an id and a realized object"
   [Model]
-  (s/fn [state :- (s/atom {s/Str Model})
-         id :- c/ID
-         _ :- s/Any ;; Deprecated; to refactor
-         updated-model :- Model]
+  (s/fn :- Model
+    [state :- (s/atom {s/Str Model})
+     id :- c/ID
+     _ :- s/Any ;; Deprecated; to refactor
+     updated-model :- Model]
     (get (swap! state assoc id updated-model) id)))
 
 
@@ -56,6 +64,15 @@
              login#
              (get (deref state#) id#))
       id#)))
+
+(defn delete-handler [Model]
+  (s/fn :- s/Bool
+    [state :- (s/atom {s/Str Model})
+     id :- s/Str]
+    (if (contains? (deref state) id)
+      (do (swap! state dissoc id)
+          true)
+      false)))
 
 (defmacro def-delete-handler [name Model]
   `(s/defn ~name :- s/Bool
