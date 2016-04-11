@@ -1,39 +1,11 @@
 (ns ctia.stores.es.feedback
-  (:import java.util.UUID)
-  (:require
-   [schema.core :as s]
-   [schema.coerce :as c]
-   [ring.swagger.coerce :as sc]
-   [ctia.schemas.feedback :refer [Feedback
-                                  NewFeedback
-                                  StoredFeedback
-                                  realize-feedback]]
-   [ctia.stores.es.document :refer [create-doc
-                                    delete-doc
-                                    search-docs]]))
+  (:require [ctia.stores.es.crud :as crud]
+            [ctia.schemas.feedback :refer [StoredFeedback]]))
 
-(def ^{:private true} mapping "feedback")
-
-(def coerce-stored-feedback
-  (c/coercer! (s/maybe StoredFeedback)
-              sc/json-schema-coercion-matcher))
-
-(defn handle-create-feedback [state realized-new-feedback _ _]
-  (-> (create-doc (:conn state)
-                  (:index state)
-                  mapping
-                  realized-new-feedback)
-      coerce-stored-feedback))
-
-(defn handle-delete-feedback [state id]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              id))
-
-(defn handle-list-feedback [state filter-map]
-  (->> (search-docs (:conn state)
-                    (:index state)
-                    mapping
-                    filter-map)
-       (map coerce-stored-feedback)))
+(def handle-create-feedback
+  (fn [a b c _]
+    ((crud/handle-create :feedback StoredFeedback) a c b)))
+(def handle-read-feedback (crud/handle-read :feedback StoredFeedback))
+(def handle-update-feedback (crud/handle-update :feedback StoredFeedback))
+(def handle-delete-feedback (crud/handle-delete :feedback StoredFeedback))
+(def handle-list-feedback (crud/handle-find :feedback StoredFeedback))

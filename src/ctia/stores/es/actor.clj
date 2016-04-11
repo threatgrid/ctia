@@ -1,5 +1,4 @@
 (ns ctia.stores.es.actor
-  (:import java.util.UUID)
   (:require [ctia.stores.es.crud :as crud]
             [ctia.schemas.actor :refer [StoredActor]]))
 

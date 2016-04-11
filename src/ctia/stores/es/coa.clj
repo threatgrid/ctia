@@ -1,56 +1,9 @@
 (ns ctia.stores.es.coa
-  (:import java.util.UUID)
-  (:require
-   [schema.core :as s]
-   [schema.coerce :as c]
-   [ring.swagger.coerce :as sc]
-   [ctia.schemas.coa :refer [COA
-                             NewCOA
-                             StoredCOA
-                             realize-coa]]
-   [ctia.stores.es.document :refer [create-doc
-                                    update-doc
-                                    get-doc
-                                    delete-doc
-                                    search-docs]]))
+  (:require [ctia.stores.es.crud :as crud]
+            [ctia.schemas.coa :refer [StoredCOA]]))
 
-(def ^{:private true} mapping "coa")
-
-(def coerce-stored-coa
-  (c/coercer! (s/maybe StoredCOA)
-              sc/json-schema-coercion-matcher))
-
-(defn handle-create-coa [state login realized-new-coa]
-  (-> (create-doc (:conn state)
-                  (:index state)
-                  mapping
-                  realized-new-coa)
-      coerce-stored-coa))
-
-(defn handle-update-coa [state id login new-coa]
-  (-> (update-doc (:conn state)
-                  (:index state)
-                  mapping
-                  id
-                  new-coa)
-      coerce-stored-coa))
-
-(defn handle-read-coa [state id]
-  (-> (get-doc (:conn state)
-               (:index state)
-               mapping
-               id)
-      coerce-stored-coa))
-
-(defn handle-delete-coa [state id]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              id))
-
-(defn handle-list-coas [state filter-map]
-  (->> (search-docs (:conn state)
-                    (:index state)
-                    mapping
-                    filter-map)
-       (map coerce-stored-coa)))
+(def handle-create-coa (crud/handle-create :coa StoredCOA))
+(def handle-read-coa (crud/handle-read :coa StoredCOA))
+(def handle-update-coa (crud/handle-update :coa StoredCOA))
+(def handle-delete-coa (crud/handle-delete :coa StoredCOA))
+(def handle-list-coas (crud/handle-find :coa StoredCOA))

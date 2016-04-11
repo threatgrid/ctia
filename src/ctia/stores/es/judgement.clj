@@ -3,6 +3,9 @@
   (:require
    [schema.core :as s]
    [schema.coerce :as c]
+
+   [ctia.stores.es.crud :as crud]
+
    [ring.swagger.coerce :as sc]
    [ctia.schemas.common :refer [disposition-map]]
    [ctia.schemas.verdict :refer [Verdict]]
@@ -26,19 +29,10 @@
   (c/coercer! (s/maybe StoredJudgement)
               sc/json-schema-coercion-matcher))
 
-(defn handle-create-judgement [state login realized-new-judgement]
-  (-> (create-doc (:conn state)
-                  (:index state)
-                  mapping
-                  realized-new-judgement)
-      coerce-stored-judgement))
-
-(defn handle-read-judgement [state id]
-  (-> (get-doc (:conn state)
-               (:index state)
-               mapping
-               id)
-      coerce-stored-judgement))
+(def handle-create-judgement (crud/handle-create :judgement StoredJudgement))
+(def handle-read-judgement (crud/handle-read :judgement StoredJudgement))
+(def handle-delete-judgement (crud/handle-delete :judgement StoredJudgement))
+(def handle-list-judgements (crud/handle-find :judgement StoredJudgement))
 
 (defn handle-add-indicator-to-judgement
   "add an indicator relation to a judgement"
@@ -56,18 +50,6 @@
                 updated)
     indicator-rel))
 
-(defn handle-delete-judgement [state id]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              id))
-
-(defn handle-list-judgements [state filter-map]
-  (->> (search-docs (:conn state)
-                    (:index state)
-                    mapping
-                    filter-map)
-       (map coerce-stored-judgement)))
 
 (defn list-active-judgements-by-observable
   [state observable]
