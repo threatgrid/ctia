@@ -11,7 +11,7 @@
                                    StoredJudgement
                                    realize-judgement]]
    [ctia.stores.es.query :refer
-    [unexpired-judgements-by-observable-query]]
+    [active-judgements-by-observable-query]]
 
    [ctia.stores.es.document :refer [create-doc
                                     update-doc
@@ -69,7 +69,7 @@
                     filter-map)
        (map coerce-stored-judgement)))
 
-(defn list-unexpired-judgements-by-observable
+(defn list-active-judgements-by-observable
   [state observable]
   (let [sort {:priority "desc"
               :disposition "asc"
@@ -79,7 +79,7 @@
                :nested_filter
                {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}
         query
-        (unexpired-judgements-by-observable-query observable)]
+        (active-judgements-by-observable-query observable)]
 
     (->> (raw-search-docs (:conn state)
                           (:index state)
@@ -96,12 +96,10 @@
    :judgement_id (:id judgement)
    :disposition_name (get disposition-map (:disposition judgement))})
 
-(s/defn handle-calculate-verdict :- Verdict
+(s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [state observable]
-  (let [verdict
-        (->> (list-unexpired-judgements-by-observable state observable)
-             first
-             make-verdict)]
+  (let [judgement-verdict
+        (first (list-active-judgements-by-observable state observable))]
 
-    (when (:judgement_id verdict)
-      verdict)))
+    (when-let [jv judgement-verdict]
+      (make-verdict jv))))
