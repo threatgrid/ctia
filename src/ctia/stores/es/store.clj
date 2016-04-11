@@ -84,7 +84,7 @@
   (create-actor [_ login new-actor]
     (ac/handle-create-actor state login new-actor))
   (update-actor [_ id login actor]
-    (ac/handle-update-actor state login id actor))
+    (ac/handle-update-actor state id login actor))
   (delete-actor [_ id]
     (ac/handle-delete-actor state id))
   (list-actors [_ filter-map]

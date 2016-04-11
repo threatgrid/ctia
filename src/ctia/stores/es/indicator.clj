@@ -56,8 +56,13 @@
 
 (defn handle-list-indicators-by-judgements
   [state judgements]
-  (raw-search-docs  (:conn state)
-                    (:index state)
-                    mapping
-                    (indicators-by-judgements-query (map :id judgements))
-                    {:created "desc"}))
+  (let [ids (some->> judgements
+                     (map :indicators)
+                     (mapcat #(map :indicator_id %))
+                     set)]
+    (when ids
+      (search-docs (:conn state)
+                   (:index state)
+                   mapping
+                   {:type "indicator"
+                    :id (vec ids)}))))

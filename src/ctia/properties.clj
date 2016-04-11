@@ -14,9 +14,10 @@
   (:import java.util.Properties))
 
 (def files
-  "Property file names, in order of preference"
-  ["ctia.properties"
-   "ctia-default.properties"])
+  "Property file names, they will be merged, with last one winning"
+  ["ctia-default.properties"
+   "ctia.properties"
+   ])
 
 (defonce properties
   (atom {}))
@@ -29,14 +30,21 @@
    with the properties file."
   {(s/required-key "auth.service.type") s/Keyword
    (s/optional-key "auth.service.threatgrid.url") s/Str
+   (s/optional-key "ctia.store.default") s/Keyword
    (s/optional-key "ctia.store.sql.db.classname") s/Str
    (s/optional-key "ctia.store.sql.db.subprotocol") s/Str
    (s/optional-key "ctia.store.sql.db.subname") s/Str
    (s/optional-key "ctia.store.sql.db.delimiters") s/Str
+   (s/optional-key "ctia.store.es.uri") s/Str
    (s/optional-key "ctia.store.es.host") s/Str
    (s/optional-key "ctia.store.es.port") s/Int
    (s/optional-key "ctia.store.es.clustername") s/Str
-   (s/optional-key "ctia.store.es.indexname") s/Str})
+   (s/optional-key "ctia.store.es.indexname") s/Str
+   (s/optional-key "ctia.producer.es.uri") s/Str
+   (s/optional-key "ctia.producer.es.host") s/Str
+   (s/optional-key "ctia.producer.es.port") s/Int
+   (s/optional-key "ctia.producer.es.clustername") s/Str
+   (s/optional-key "ctia.producer.es.indexname") s/Str})
 
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."
@@ -54,7 +62,7 @@
                  (with-open [rdr rdr]
                    (doto (Properties.)
                      (.load rdr))))))
-       first
+       concat
        (into {})))
 
 (defn- transform [properties]

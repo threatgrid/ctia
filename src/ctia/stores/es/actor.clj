@@ -2,9 +2,12 @@
   (:import java.util.UUID)
   (:require
    [schema.core :as s]
+   [schema.coerce :as c]
+   [ring.swagger.coerce :as sc]
    [ctia.schemas.actor :refer [Actor
                                NewActor
-                               realize-actor]]
+                               realize-actor
+                               StoredActor]]
    [ctia.stores.es.document :refer [create-doc
                                     update-doc
                                     get-doc
@@ -13,24 +16,35 @@
 
 (def ^{:private true} mapping "actor")
 
-(defn handle-create-actor [state _ realized-actor]
-  (create-doc (:conn state)
-              (:index state)
-              mapping
-              realized-actor))
+(def coerce-stored-actor
+  (c/coercer! StoredActor
+              sc/json-schema-coercion-matcher))
 
-(defn handle-update-actor [state login id realized-actor]
-  (update-doc (:conn state)
-              (:index state)
-              mapping
-              id
-              realized-actor))
+(defn handle-create-actor [state _ realized-actor]
+  (-> (create-doc (:conn state)
+                  (:index state)
+                  mapping
+                  realized-actor)
+      coerce-stored-actor))
+
+(defn handle-update-actor [state id login realized-actor]
+
+  (println "guillaume")
+  (println id)
+
+  (-> (update-doc (:conn state)
+                  (:index state)
+                  mapping
+                  id
+                  realized-actor)
+      coerce-stored-actor))
 
 (defn handle-read-actor [state id]
-  (get-doc (:conn state)
-           (:index state)
-           mapping
-           id))
+  (-> (get-doc (:conn state)
+               (:index state)
+               mapping
+               id)
+      coerce-stored-actor))
 
 (defn handle-delete-actor [state id]
   (delete-doc (:conn state)

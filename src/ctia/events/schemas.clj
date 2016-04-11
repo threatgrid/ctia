@@ -16,7 +16,7 @@
 (s/defschema CreateEvent
   (st/merge
    ModelEventBase
-   {:type CreateEventType
+   {:type (s/eq CreateEventType)
     :model {s/Any s/Any}}))
 
 (def UpdateEventType "UpdatedModel")
@@ -29,7 +29,7 @@
 (s/defschema UpdateEvent
   (st/merge
    ModelEventBase
-   {:type UpdateEventType
+   {:type (s/eq UpdateEventType)
     :fields [UpdateTriple]}))
 
 (def DeleteEventType "DeletedModel")
@@ -37,13 +37,20 @@
 (s/defschema DeleteEvent
   (st/merge
    ModelEventBase
-   {:type DeleteEventType}))
+   {:type (s/eq DeleteEventType)}))
 
 (def VerdictChangeEventType "VerdictChange")
 
 (s/defschema VerdictChangeEvent
   (st/merge
    ModelEventBase
-   {:type VerdictChangeEvent
+   {:type (s/eq VerdictChangeEventType)
     :judgement_id s/Str
     :verdict v/Verdict}))
+
+(s/defschema Event
+  (s/conditional
+   #(= CreateEventType        (:type %)) CreateEvent
+   #(= UpdateEventType        (:type %)) UpdateEvent
+   #(= DeleteEventType        (:type %)) DeleteEvent
+   #(= VerdictChangeEventType (:type %)) VerdictChangeEvent))

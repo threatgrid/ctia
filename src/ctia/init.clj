@@ -2,21 +2,21 @@
   (:require [ctia.auth :as auth]
             [ctia.auth.allow-all :as allow-all]
             [ctia.auth.threatgrid :as threatgrid]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [ctia.store :as store]
             [ctia.stores.es.store :as es]
-            [ctia.stores.es.index :as es-index]
+            [ctia.lib.es.index :as es-index]
             [ctia.stores.atom.store :as as]))
 
 (defn init-auth-service! []
-  (let [auth-service-type (get-in @properties [:auth :service :type])]
-    {case auth-service-type
+  (let [auth-service-type (get-in @p/properties [:auth :service :type])]
+    (case auth-service-type
       :allow-all (reset! auth/auth-service (allow-all/->AuthService))
       :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service
                                               (threatgrid/make-whoami-service)))
       (throw (ex-info "Auth service not configured"
                       {:message "Unknown service"
-                       :requested-service auth-service-name}))}))
+                       :requested-service auth-service-type})))))
 
 (defn init-mem-store! []
   (let [store-impls {store/actor-store     as/->ActorStore
@@ -34,7 +34,7 @@
       (reset! store (impl-fn (atom {}))))))
 
 (defn init-es-store! []
-  (let [store-state (es-index/init-conn)
+  (let [store-state (es-index/init-store-conn)
         store-impls {store/actor-store es/->ActorStore
                      store/judgement-store es/->JudgementStore
                      store/feedback-store es/->FeedbackStore
@@ -48,12 +48,22 @@
                      store/identity-store es/->IdentityStore}]
 
     (es-index/create! (:conn store-state)
-                      (:index store-state))
+                      (:index store-state)
+                      (:mapping store-state))
 
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn store-state)))))
 
+(defn init-store-service! []
+  (let [store-service-default (or (get-in @p/properties [:store :service :default]) :memory)]
+    (case store-service-default
+      :es (init-es-store!)
+      :memory (init-mem-store!)
+      (throw (ex-info "Store service not configured"
+                      {:message "Unknown service"
+                       :requested-service store-service-default})))))
+
 (defn init! []
-  (properties/init!)
+  (p/init!)
   (init-auth-service!)
-  (init-mem-store!))
+  (init-store-service!))

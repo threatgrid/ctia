@@ -59,41 +59,4 @@
          judgements)))
 
 (comment
-  (load-judgements-from-feed-file "test/data/rat-dns.json" "http://localhost:3000/" "domain" :domain))
-
-(def commands                           ; FIXME replace with function
-                                        ; to support redefinition.
-  {"import-feed" import-feed-comment})
-
-(defn global-arguments []
-  [["-?" "--help" "Print Usage"
-    :default false]
-   ["-d" "--debug" "Turn on debug logging"
-    :default false]
-   ["-v" "--verbose" "Turn on info logging"
-    :default false]
-   [nil "--ctia URL" "CTIA URL"
-    :default "http://localhost:3000"]])
-
-(defn -main [& args]
-  (let [{:keys [options arguments errors summary]}
-        (parse-opts args (global-arguments) :in-order true)
-        [command & command-arguments]
-        arguments
-        usage (fn [text]
-                (print (str text "\n\nAvailable Commands:\n  "
-                            (join ", " (keys commands))
-                            "\n\nGlobal Options:\n" summary))
-                -1)]
-    (let [command (or command "import-feed")]
-      (cond errors                        ; unknown arguments
-            (usage (join "\n" errors))
-            (:help options)               ; help
-            (usage "Usage")
-            (not command)                 ; missing command
-            (usage "No command provided.")
-            (not (get commands command))  ; unknown command
-            (usage (str "Unknown command: '" command "'"))
-            true                          ; continue processing
-            ((get commands command) global-options command-arguments)))))
-
+  (load-judgements-from-feed-file "test/data/rat-dns.json" "http://localhost:4000/" "domain" :domain))
