@@ -6,7 +6,7 @@
              :refer [DispositionName DispositionNumber Time VersionInfo]]
             [ctia.schemas.exploit-target
              :refer [NewExploitTarget StoredExploitTarget realize-exploit-target]]
-            [ctia.schemas.incident :refer [NewIncident StoredIncident]]
+            [ctia.schemas.incident :refer [NewIncident StoredIncident realize-incident]]
             [ctia.schemas.indicator
              :refer [NewIndicator StoredIndicator generalize-indicator]]
             [ctia.schemas.feedback :refer [NewFeedback StoredFeedback]]
@@ -323,7 +323,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-incident :admin}
         :login login
-        (ok (create-incident @incident-store login incident)))
+        (ok (flows/create-flow realize-incident
+                               #(create-incident @incident-store login %)
+                               :incident
+                               login
+                               incident)))
       (PUT "/:id" []
         :return StoredIncident
         :body [incident NewIncident {:description "an updated incident"}]
@@ -332,7 +336,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-incident :admin}
         :login login
-        (ok (update-incident @incident-store id login incident)))
+        (ok (flows/update-flow #(read-incident @incident-store %)
+                               realize-incident
+                               #(update-incident @incident-store (:id %) login %)
+                               :incident
+                               id
+                               login
+                               incident)))
       (GET "/:id" []
         :return (s/maybe StoredIncident)
         :summary "Gets an Incident by ID"
@@ -348,7 +358,10 @@
         :summary "Deletes an Incident"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-incident :admin}
-        (if (delete-incident @incident-store id)
+        (if (flows/delete-flow #(read-incident @incident-store %)
+                               #(delete-incident @incident-store %)
+                               :incident
+                               id)
           (no-content)
           (not-found))))
 

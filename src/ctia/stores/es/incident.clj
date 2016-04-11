@@ -13,16 +13,11 @@
 
 (def ^{:private true} mapping "incident")
 
-(defn- make-id [schema j]
-  (str "incident" "-" (UUID/randomUUID)))
-
-(defn handle-create-incident [state login new-incident]
-  (let [id (make-id Incident new-incident)
-        realized (realize-incident new-incident id login)]
-    (create-doc (:conn state)
-                (:index state)
-                mapping
-                realized)))
+(defn handle-create-incident [state login realized-new-incident]
+  (create-doc (:conn state)
+              (:index state)
+              mapping
+              realized-new-incident))
 
 (defn handle-update-incident [state login id new-incident]
   (update-doc (:conn state)
