@@ -426,7 +426,10 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :summary "Deletes a Judgement"
         :capabilities #{:delete-judgement :admin}
-        (if (delete-judgement @judgement-store id)
+        (if (flows/delete-flow #(read-judgement @judgement-store %)
+                               #(delete-judgement @judgement-store %)
+                               :judgement
+                               id)
           (no-content)
           (not-found))))
 
