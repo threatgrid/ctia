@@ -132,7 +132,7 @@
         :login login
         (ok (flows/update-flow #(read-actor @actor-store %)
                                realize-actor
-                               #(update-actor @actor-store "" login %)
+                               #(update-actor @actor-store (:id %) login %)
                                :actor
                                id
                                login
