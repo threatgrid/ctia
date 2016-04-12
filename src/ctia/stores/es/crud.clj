@@ -19,7 +19,6 @@
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe Model)
       [state :- ESConnState
-       _ :- s/Any ;; Depecrated; to refactor
        realized :- Model]
       (-> (create-doc (:conn state)
                       (:index state)
@@ -34,7 +33,6 @@
     (s/fn :- (s/maybe Model)
       [state :- ESConnState
        id :- s/Str
-       _ :- s/Any ;; Depecrated; to refactor
        realized :- Model]
       (-> (update-doc (:conn state)
                       (:index state)

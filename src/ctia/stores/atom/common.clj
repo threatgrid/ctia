@@ -24,7 +24,6 @@
   [Model]
   (s/fn :- Model
     [state :- (s/atom {s/Str Model})
-     _ :- s/Any ;; Deprecated; to refactor
      model :- Model]
     (let [id (:id model)]
       (get (swap! state assoc id model) id))))
@@ -35,7 +34,6 @@
   (s/fn :- Model
     [state :- (s/atom {s/Str Model})
      id :- c/ID
-     _ :- s/Any ;; Deprecated; to refactor
      updated-model :- Model]
     (get (swap! state assoc id updated-model) id)))
 
@@ -82,6 +80,19 @@
        (do (swap! state# dissoc id#)
            true)
        false)))
+
+(defn list-handler [Model]
+  (s/fn :- (s/maybe Model)
+    [state :- (s/atom {s/Str Model})
+     filter-map :- {s/Any s/Any}]
+    (into []
+          (filter (fn [model]
+                    (every? (fn [[k v]]
+                              (if (sequential? k)
+                                (= v (get-in model k ::not-found))
+                                (= v (get model k ::not-found))))
+                            filter-map))
+                  (vals (deref state))))))
 
 (defmacro def-list-handler [name Model]
   `(s/defn ~name :- (s/maybe [~Model])

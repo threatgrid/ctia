@@ -49,7 +49,7 @@
    judgement-indicator-relationship-map
    schema-indicator->db-indicator))
 
-(defn insert-judgements [login & new-judgements]
+(defn insert-judgements [& new-judgements]
   (let [judgements (-> new-judgements
                        transform/dates-to-sqltimes)]
     (kdb/transaction

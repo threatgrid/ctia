@@ -8,13 +8,12 @@
              :refer [NewExploitTarget StoredExploitTarget realize-exploit-target]]
             [ctia.schemas.incident :refer [NewIncident StoredIncident realize-incident]]
             [ctia.schemas.indicator
-             :refer [NewIndicator StoredIndicator generalize-indicator]]
+             :refer [NewIndicator StoredIndicator generalize-indicator realize-indicator]]
             [ctia.schemas.feedback :refer [NewFeedback StoredFeedback realize-feedback]]
             [ctia.schemas.judgement :refer [NewJudgement StoredJudgement realize-judgement]]
             [ctia.schemas.relationships :as rel]
-            [ctia.schemas.sighting :refer [NewSighting StoredSighting]]
+            [ctia.schemas.sighting :refer [NewSighting StoredSighting realize-sighting]]
             [ctia.schemas.ttp :refer [NewTTP StoredTTP realize-ttp]]
-            [ctia.schemas.sighting :refer [NewSighting StoredSighting]]
             [ctia.schemas.vocabularies :refer [ObservableType]]
             [ctia.schemas.verdict :refer [Verdict]]
             [ctia.events.schemas :refer [ModelEventBase]]
@@ -118,7 +117,7 @@
         :capabilities #{:create-actor :admin}
         :login login
         (ok (flows/create-flow realize-actor
-                               #(create-actor @actor-store login %)
+                               #(create-actor @actor-store %)
                                :actor
                                login
                                actor)))
@@ -132,7 +131,7 @@
         :login login
         (ok (flows/update-flow #(read-actor @actor-store %)
                                realize-actor
-                               #(update-actor @actor-store (:id %) login %)
+                               #(update-actor @actor-store (:id %) %)
                                :actor
                                id
                                login
@@ -169,7 +168,7 @@
         :capabilities #{:create-campaign :admin}
         :login login
         (ok (flows/create-flow realize-campaign
-                               #(create-campaign @campaign-store login %)
+                               #(create-campaign @campaign-store %)
                                :campaign
                                login
                                campaign)))
@@ -183,7 +182,7 @@
         :login login
         (ok (flows/update-flow #(read-campaign @campaign-store %)
                                realize-campaign
-                               #(update-campaign @campaign-store (:id %) login %)
+                               #(update-campaign @campaign-store (:id %) %)
                                :campaign
                                id
                                login
@@ -220,7 +219,7 @@
         :capabilities #{:create-exploit-target :admin}
         :login login
         (ok (flows/create-flow realize-exploit-target
-                               #(create-exploit-target @exploit-target-store login %)
+                               #(create-exploit-target @exploit-target-store %)
                                :exploit-target
                                login
                                exploit-target)))
@@ -236,7 +235,7 @@
         :login login
         (ok (flows/update-flow #(read-exploit-target @exploit-target-store %)
                                realize-exploit-target
-                               #(update-exploit-target @exploit-target-store (:id %) login %)
+                               #(update-exploit-target @exploit-target-store (:id %) %)
                                :exploit-target
                                id
                                login
@@ -273,7 +272,7 @@
         :capabilities #{:create-coa :admin}
         :login login
         (ok (flows/create-flow realize-coa
-                               #(create-coa @coa-store login %)
+                               #(create-coa @coa-store %)
                                :coa
                                login
                                coa)))
@@ -287,7 +286,7 @@
         :login login
         (ok (flows/update-flow #(read-coa @coa-store %)
                                realize-coa
-                               #(update-coa @coa-store (:id %) login %)
+                               #(update-coa @coa-store (:id %) %)
                                :coa
                                id
                                login
@@ -324,7 +323,7 @@
         :capabilities #{:create-incident :admin}
         :login login
         (ok (flows/create-flow realize-incident
-                               #(create-incident @incident-store login %)
+                               #(create-incident @incident-store %)
                                :incident
                                login
                                incident)))
@@ -338,7 +337,7 @@
         :login login
         (ok (flows/update-flow #(read-incident @incident-store %)
                                realize-incident
-                               #(update-incident @incident-store (:id %) login %)
+                               #(update-incident @incident-store (:id %) %)
                                :incident
                                id
                                login
@@ -375,7 +374,7 @@
         :capabilities #{:create-judgement :admin}
         :login login
         (ok (flows/create-flow realize-judgement
-                               #(create-judgement @judgement-store login %)
+                               #(create-judgement @judgement-store %)
                                :judgement
                                login
                                judgement)))
@@ -389,7 +388,7 @@
         :capabilities #{:create-feedback :admin}
         :login login
         (ok (flows/create-flow #(realize-feedback %1 %2 %3 judgement-id)
-                               #(create-feedback @feedback-store % login judgement-id)
+                               #(create-feedback @feedback-store %)
                                :feedback
                                login
                                feedback)))
@@ -473,7 +472,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-indicator :admin}
         :login login
-        (ok (create-indicator @indicator-store login indicator)))
+        (ok (flows/create-flow realize-indicator
+                               #(create-indicator @indicator-store %)
+                               :indicator
+                               login
+                               indicator)))
       (PUT "/:id" []
         :return StoredIndicator
         :body [indicator NewIndicator {:description "an updated Indicator"}]
@@ -482,7 +485,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-indicator :admin}
         :login login
-        (ok (update-indicator @indicator-store id login indicator)))
+        (ok (flows/update-flow #(read-indicator @indicator-store %)
+                               realize-indicator
+                               #(update-indicator @indicator-store (:id %) %)
+                               :indicator
+                               id
+                               login
+                               indicator)))
       (GET "/:id" []
         :return (s/maybe StoredIndicator)
         :summary "Gets an Indicator by ID"
@@ -519,13 +528,22 @@
         :capabilities #{:create-sighting :admin}
         :login login
         (if-let [indicator (read-indicator @indicator-store id)]
-          (let [sighting (create-sighting @sighting-store login
-                                          (assoc sighting
-                                                 :indicator {:indicator_id id}))]
-            (update-indicator @indicator-store id login
-                              (-> (generalize-indicator indicator)
-                                  (update :sightings
-                                          conj {:sighting_id (:id sighting)})))
+          (let [sighting (flows/create-flow realize-sighting
+                                            #(create-sighting @sighting-store %)
+                                            :sighting
+                                            login
+                                            (assoc sighting
+                                                   :indicator
+                                                   {:indicator_id id}))]
+            (flows/update-flow #(read-indicator @indicator-store %)
+                               realize-indicator
+                               #(update-indicator @indicator-store (:id %) %)
+                               :indicator
+                               id
+                               login
+                               (-> (generalize-indicator indicator)
+                                   (update :sightings
+                                           conj {:sighting_id (:id sighting)})))
             (ok sighting))
           (not-found))))
 
@@ -539,7 +557,7 @@
         :capabilities #{:create-ttp :admin}
         :login login
         (ok (flows/create-flow realize-ttp
-                               #(create-ttp @ttp-store login %)
+                               #(create-ttp @ttp-store %)
                                :ttp
                                login
                                ttp)))
@@ -553,7 +571,7 @@
         :login login
         (ok (flows/update-flow #(read-ttp @ttp-store %)
                                realize-ttp
-                               #(update-ttp @ttp-store (:id %) login %)
+                               #(update-ttp @ttp-store (:id %) %)
                                :ttp
                                id
                                login
@@ -598,7 +616,11 @@
         :summary "Adds a new Sighting"
         :capabilities #{:create-sighting :admin}
         :login login
-        (ok (create-sighting @sighting-store login sighting)))
+        (ok (flows/create-flow realize-sighting
+                               #(create-sighting @sighting-store %)
+                               :sighting
+                               login
+                               sighting)))
       (PUT "/:id" []
         :return StoredSighting
         :body [sighting NewSighting {:description "An updated Sighting"}]
@@ -607,7 +629,13 @@
         :path-params [id :- s/Str]
         :capabilities #{:create-sighting :admin}
         :login login
-        (ok (update-sighting @sighting-store id login sighting)))
+        (ok (flows/update-flow #(read-sighting @sighting-store %)
+                               realize-sighting
+                               #(update-sighting @sighting-store (:id %) %)
+                               :sighting
+                               id
+                               login
+                               sighting)))
       (GET "/:id" []
         :return (s/maybe StoredSighting)
         :summary "Gets a Sighting by ID"
