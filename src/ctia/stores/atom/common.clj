@@ -13,12 +13,6 @@
      id :- s/Str]
     (get (deref state) id)))
 
-(defmacro def-read-handler [name Model]
-  `(s/defn ~name :- (s/maybe ~Model)
-     [state# :- (s/atom {s/Str ~Model})
-      id# :- s/Str]
-     (get (deref state#) id#)))
-
 (defn create-handler-from-realized
   "Create a new resource from a realized object"
   [Model]
@@ -38,31 +32,6 @@
     (get (swap! state assoc id updated-model) id)))
 
 
-(defmacro def-create-handler [name Model NewModel swap-fn id-fn]
-  `(s/defn ~name :- ~Model
-     [state# :- (s/atom {s/Str ~Model})
-      login# :- s/Str
-      new-model# :- ~NewModel]
-     (let [new-id# (~id-fn new-model#)]
-       (get
-        (swap! state# ~swap-fn new-model# new-id# login#)
-        new-id#))))
-
-(defmacro def-update-handler [name Model NewModel swap-fn]
-  `(s/defn ~name :- ~Model
-     [state# :- (s/atom {s/Str ~Model})
-      id# :- c/ID
-      login# :- s/Str
-      updated-model# :- ~NewModel]
-     (get
-      (swap! state#
-             ~swap-fn
-             updated-model#
-             id#
-             login#
-             (get (deref state#) id#))
-      id#)))
-
 (defn delete-handler [Model]
   (s/fn :- s/Bool
     [state :- (s/atom {s/Str Model})
@@ -71,15 +40,6 @@
       (do (swap! state dissoc id)
           true)
       false)))
-
-(defmacro def-delete-handler [name Model]
-  `(s/defn ~name :- s/Bool
-     [state# :- (s/atom {s/Str ~Model})
-      id# :- s/Str]
-     (if (contains? (deref state#) id#)
-       (do (swap! state# dissoc id#)
-           true)
-       false)))
 
 (defn list-handler [Model]
   (s/fn :- (s/maybe Model)
@@ -106,7 +66,3 @@
                                  (= v# (get model# k# ::not-found))))
                              filter-map#))
                    (vals (deref state#))))))
-
-(defn make-swap-fn [entity-fn]
-  (fn [state-map & [new-model id :as args]]
-    (assoc state-map id (apply entity-fn args))))
