@@ -4,14 +4,12 @@
             alternative properties file on the classpath, or by
             setting system properties."}
     ctia.properties
-  (:refer-clojure :exclude [load])
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [ctia.lib.map :as map]
-            [schema.coerce :as c]
-            [schema.core :as s]
-            [clj-time.coerce :as coerce])
-  (:import java.util.Properties))
+    (:require [clojure.java.io :as io]
+              [clojure.string :as str]
+              [ctia.lib.map :as map]
+              [schema.coerce :as c]
+              [schema.core :as s])
+    (:import java.util.Properties))
 
 (def files
   "Property file names, they will be merged, with last one winning"
@@ -75,7 +73,6 @@
   (reduce (fn [accum [k v]]
             (let [parts (->> (str/split k #"\.")
                              (map keyword))]
-              parts
               (cond
                 (empty? parts) accum
                 (= 1 (count parts)) (assoc accum (first parts) v)
