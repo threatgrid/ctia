@@ -7,7 +7,7 @@
 
 (use-fixtures :once helpers/fixture-properties)
 
-(use-fixtures :each (join-fixtures [(helpers/fixture-server handler/app)
+(use-fixtures :each (join-fixtures [helpers/fixture-http-server
                                     helpers/fixture-schema-validation
                                     helpers/fixture-allow-all-auth
                                     helpers/fixture-atom-store]))

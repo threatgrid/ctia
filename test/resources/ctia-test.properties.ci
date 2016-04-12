@@ -1,5 +1,8 @@
 auth.service.type=threatgrid
-auth.service.threatgrid.url=
+ctia.http.port=3000
+ctia.http.min-threads=9
+ctia.http.max-threads=10
+ctia.nrepl.enabled=false
 ctia.store.sql.db.classname=org.h2.Driver
 ctia.store.sql.db.subprotocol=h2
 ctia.store.sql.db.subname=/tmp/ctia-h2-db;DATABASE_TO_UPPER=false
