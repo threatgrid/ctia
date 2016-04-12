@@ -8,17 +8,10 @@
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
-(mc/def-create-handler handle-create-judgement
-  StoredJudgement
-  NewJudgement
-  (mc/make-swap-fn realize-judgement)
-  (mc/random-id "judgement"))
-
-(mc/def-read-handler handle-read-judgement StoredJudgement)
-
-(mc/def-delete-handler handle-delete-judgement StoredJudgement)
-
-(mc/def-list-handler handle-list-judgements StoredJudgement)
+(def handle-create-judgement (mc/create-handler-from-realized StoredJudgement))
+(def handle-read-judgement (mc/read-handler StoredJudgement))
+(def handle-delete-judgement (mc/delete-handler StoredJudgement))
+(def handle-list-judgements (mc/list-handler StoredJudgement))
 
 (defn judgement-expired? [judgement now]
   (if-let [expires (get-in judgement [:valid_time :end_time])]

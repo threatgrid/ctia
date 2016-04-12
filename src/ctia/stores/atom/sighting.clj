@@ -6,19 +6,11 @@
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
-(def swap-sighting (mc/make-swap-fn realize-sighting))
-
-(mc/def-create-handler handle-create-sighting
-  StoredSighting NewSighting swap-sighting (mc/random-id "sighting"))
-
-(mc/def-update-handler handle-update-sighting
-  StoredSighting NewSighting swap-sighting)
-
-(mc/def-read-handler handle-read-sighting StoredSighting)
-
-(mc/def-delete-handler handle-delete-sighting StoredSighting)
-
-(mc/def-list-handler handle-list-sightings StoredSighting)
+(def handle-create-sighting (mc/create-handler-from-realized StoredSighting))
+(def handle-read-sighting (mc/read-handler StoredSighting))
+(def handle-update-sighting (mc/update-handler-from-realized StoredSighting))
+(def handle-delete-sighting (mc/delete-handler StoredSighting))
+(def handle-list-sightings (mc/list-handler StoredSighting))
 
 (s/defn handle-list-sightings-by-indicators :- (s/maybe [StoredSighting])
   [sightings-state :- (s/atom {s/Str StoredSighting})

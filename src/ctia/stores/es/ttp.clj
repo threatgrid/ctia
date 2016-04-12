@@ -1,50 +1,9 @@
 (ns ctia.stores.es.ttp
-  (:import java.util.UUID)
-  (:require
-   [schema.core :as s]
-   [ctia.schemas.ttp :refer [TTP
-                            NewTTP
-                            realize-ttp]]
-   [ctia.stores.es.document :refer [create-doc
-                                   update-doc
-                                   get-doc
-                                   delete-doc
-                                   search-docs]]))
+  (:require [ctia.stores.es.crud :as crud]
+            [ctia.schemas.ttp :refer [StoredTTP]]))
 
-(def ^{:private true} mapping "ttp")
-
-(defn- make-id [schema j]
-  (str "ttp" "-" (UUID/randomUUID)))
-
-(defn handle-create-ttp [state login new-ttp]
-  (let [id (make-id TTP new-ttp)
-        realized (realize-ttp new-ttp id login)]
-    (create-doc (:conn state)
-                (:index state)
-                mapping
-                realized)))
-
-(defn handle-update-ttp [state login id new-ttp]
-  (update-doc (:conn state)
-              (:index state)
-              mapping
-              id
-              new-ttp))
-
-(defn handle-read-ttp [state id]
-  (get-doc (:conn state)
-           (:index state)
-           mapping
-           id))
-
-(defn handle-delete-ttp [state id]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              id))
-
-(defn handle-list-ttps [state filter-map]
-  (search-docs (:conn state)
-               (:index state)
-               mapping
-               filter-map))
+(def handle-create-ttp (crud/handle-create :ttp StoredTTP))
+(def handle-read-ttp (crud/handle-read :ttp StoredTTP))
+(def handle-update-ttp (crud/handle-update :ttp StoredTTP))
+(def handle-delete-ttp (crud/handle-delete :ttp StoredTTP))
+(def handle-list-ttps (crud/handle-find :ttp StoredTTP))

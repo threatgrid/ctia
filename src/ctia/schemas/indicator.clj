@@ -143,34 +143,11 @@
     (s/optional-key :type) Type}))
 
 (s/defschema StoredIndicator
-  "A feedback record at rest in the storage service"
-  (st/merge Indicator
-            {:type Type
-             :owner s/Str
-             :created c/Time
-             :modified c/Time}))
+  "An indicator as stored in the data store"
+  (c/stored-schema "indicator" Indicator))
 
-(s/defn realize-indicator :- StoredIndicator
-  ([new-indicator :- NewIndicator
-    id :- s/Str
-    login :- s/Str]
-   (realize-indicator new-indicator id login nil))
-  ([new-indicator :- NewIndicator
-    id :- s/Str
-    login :- s/Str
-    prev-indicator :- (s/maybe StoredIndicator)]
-   (let [now (time/now)]
-     (assoc new-indicator
-            :id id
-            :type "indicator"
-            :owner login
-            :created (or (:created prev-indicator) now)
-            :modified now
-            :valid_time (or (:valid_time prev-indicator)
-                            {:start_time (or (get-in new-indicator [:valid_time :start_time])
-                                             now)
-                             :end_time (or (get-in new-indicator [:valid_time :end_time])
-                                           time/default-expire-date)})))))
+(def realize-indicator
+  (c/default-realize-fn "indicator" NewIndicator StoredIndicator))
 
 (defn generalize-indicator
   "Strips off realized fields"

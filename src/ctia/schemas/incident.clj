@@ -183,32 +183,10 @@
    {(s/optional-key :valid_time) c/ValidTime
     (s/optional-key :type) Type}))
 
+
 (s/defschema StoredIncident
   "An incident as stored in the data store"
-  (st/merge Incident
-            {:type Type
-             :owner s/Str
-             :created c/Time
-             :modified c/Time}))
+  (c/stored-schema "incident" Incident))
 
-(s/defn realize-incident :- StoredIncident
-  ([new-incident :- NewIncident
-    id :- s/Str
-    login :- s/Str]
-   (realize-incident new-incident id login nil))
-  ([new-incident :- NewIncident
-    id :- s/Str
-    login :- s/Str
-    prev-incident :- (s/maybe StoredIncident)]
-   (let [now (time/now)]
-     (assoc new-incident
-            :id id
-            :type "incident"
-            :owner login
-            :created (or (:created prev-incident) now)
-            :modified now
-            :valid_time (or (:valid_time prev-incident)
-                            {:start_time (or (get-in new-incident [:valid_time :start_time])
-                                             now)
-                             :end_time (or (get-in new-incident [:valid_time :end_time])
-                                           time/default-expire-date)})))))
+(def realize-incident
+  (c/default-realize-fn "incident" NewIncident StoredIncident))

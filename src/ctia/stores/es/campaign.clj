@@ -1,50 +1,9 @@
 (ns ctia.stores.es.campaign
-  (:import java.util.UUID)
-  (:require
-   [schema.core :as s]
-   [ctia.schemas.campaign :refer [Campaign
-                                  NewCampaign
-                                  realize-campaign]]
-   [ctia.stores.es.document :refer [create-doc
-                                    update-doc
-                                    get-doc
-                                    delete-doc
-                                    search-docs]]))
+  (:require [ctia.stores.es.crud :as crud]
+            [ctia.schemas.campaign :refer [StoredCampaign]]))
 
-(def ^{:private true} mapping "campaign")
-
-(defn- make-id [schema j]
-  (str "campagin" "-" (UUID/randomUUID)))
-
-(defn handle-create-campaign [state login new-campaign]
-  (let [id (make-id Campaign new-campaign)
-        realized (realize-campaign new-campaign id login)]
-    (create-doc (:conn state)
-                (:index state)
-                mapping
-                realized)))
-
-(defn handle-update-campaign [state login id new-campaign]
-  (update-doc (:conn state)
-              (:index state)
-              mapping
-              id
-              new-campaign))
-
-(defn handle-read-campaign [state id]
-  (get-doc (:conn state)
-           (:index state)
-           mapping
-           id))
-
-(defn handle-delete-campaign [state id]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              id))
-
-(defn handle-list-campaigns [state filter-map]
-  (search-docs (:conn state)
-               (:index state)
-               mapping
-               filter-map))
+(def handle-create-campaign (crud/handle-create :campaign StoredCampaign))
+(def handle-read-campaign (crud/handle-read :campaign StoredCampaign))
+(def handle-update-campaign (crud/handle-update :campaign StoredCampaign))
+(def handle-delete-campaign (crud/handle-delete :campaign StoredCampaign))
+(def handle-list-campaigns (crud/handle-find :campaign StoredCampaign))

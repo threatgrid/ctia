@@ -1,23 +1,14 @@
 (ns ctia.stores.atom.indicator
-  (:require [ctia.schemas.indicator
-             :refer [NewIndicator StoredIndicator realize-indicator]]
+  (:require [ctia.schemas.indicator :refer [StoredIndicator]]
             [ctia.schemas.judgement :refer [StoredJudgement]]
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
-(def swap-indicator (mc/make-swap-fn realize-indicator))
-
-(mc/def-create-handler handle-create-indicator
-  StoredIndicator NewIndicator swap-indicator (mc/random-id "indicator"))
-
-(mc/def-read-handler handle-read-indicator StoredIndicator)
-
-(mc/def-delete-handler handle-delete-indicator StoredIndicator)
-
-(mc/def-update-handler handle-update-indicator
-  StoredIndicator NewIndicator swap-indicator)
-
-(mc/def-list-handler handle-list-indicators StoredIndicator)
+(def handle-create-indicator (mc/create-handler-from-realized StoredIndicator))
+(def handle-read-indicator (mc/read-handler StoredIndicator))
+(def handle-update-indicator (mc/update-handler-from-realized StoredIndicator))
+(def handle-delete-indicator (mc/delete-handler StoredIndicator))
+(def handle-list-indicators (mc/list-handler StoredIndicator))
 
 (s/defn handle-list-indicators-by-judgements :- (s/maybe [StoredIndicator])
   [indicator-state :- (s/atom {s/Str StoredIndicator})

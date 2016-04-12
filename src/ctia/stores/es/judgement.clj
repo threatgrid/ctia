@@ -2,39 +2,37 @@
   (:import java.util.UUID)
   (:require
    [schema.core :as s]
+   [schema.coerce :as c]
+
+   [ctia.stores.es.crud :as crud]
+
+   [ring.swagger.coerce :as sc]
    [ctia.schemas.common :refer [disposition-map]]
+   [ctia.schemas.verdict :refer [Verdict]]
    [ctia.schemas.judgement :refer [Judgement
-                                  NewJudgement
-                                  realize-judgement]]
+                                   NewJudgement
+                                   StoredJudgement
+                                   realize-judgement]]
    [ctia.stores.es.query :refer
-    [unexpired-judgements-by-observable-query]]
+    [active-judgements-by-observable-query]]
 
    [ctia.stores.es.document :refer [create-doc
-                                   update-doc
-                                   get-doc
-                                   delete-doc
-                                   search-docs
-                                   raw-search-docs]]))
+                                    update-doc
+                                    get-doc
+                                    delete-doc
+                                    search-docs
+                                    raw-search-docs]]))
 
 (def ^{:private true} mapping "judgement")
 
-(defn- make-id [schema j]
-  (str "judgement" "-" (UUID/randomUUID)))
+(def coerce-stored-judgement
+  (c/coercer! (s/maybe StoredJudgement)
+              sc/json-schema-coercion-matcher))
 
-(defn handle-create-judgement [state login new-judgement]
-  (let [id (make-id Judgement new-judgement)
-        realized (realize-judgement new-judgement id login)]
-
-    (create-doc (:conn state)
-                (:index state)
-                mapping
-                realized)))
-
-(defn handle-read-judgement [state id]
-  (get-doc (:conn state)
-           (:index state)
-           mapping
-           id))
+(def handle-create-judgement (crud/handle-create :judgement StoredJudgement))
+(def handle-read-judgement (crud/handle-read :judgement StoredJudgement))
+(def handle-delete-judgement (crud/handle-delete :judgement StoredJudgement))
+(def handle-list-judgements (crud/handle-find :judgement StoredJudgement))
 
 (defn handle-add-indicator-to-judgement
   "add an indicator relation to a judgement"
@@ -52,19 +50,8 @@
                 updated)
     indicator-rel))
 
-(defn handle-delete-judgement [state id]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              id))
 
-(defn handle-list-judgements [state filter-map]
-  (search-docs (:conn state)
-               (:index state)
-               mapping
-               filter-map))
-
-(defn list-unexpired-judgements-by-observable
+(defn list-active-judgements-by-observable
   [state observable]
   (let [sort {:priority "desc"
               :disposition "asc"
@@ -74,24 +61,27 @@
                :nested_filter
                {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}
         query
-        (unexpired-judgements-by-observable-query observable)]
+        (active-judgements-by-observable-query observable)]
 
-    (raw-search-docs (:conn state)
-                     (:index state)
-                     mapping
-                     query
-                     sort)))
+    (->> (raw-search-docs (:conn state)
+                          (:index state)
+                          mapping
+                          query
+                          sort)
 
-(defn- make-verdict [judgement]
+         (map coerce-stored-judgement))))
+
+(s/defn make-verdict :- Verdict
+  [judgement :- StoredJudgement]
   {:type "verdict"
    :disposition (:disposition judgement)
    :judgement_id (:id judgement)
    :disposition_name (get disposition-map (:disposition judgement))})
 
-(defn handle-calculate-verdict [state observable]
-  (let [verdict (-> (list-unexpired-judgements-by-observable state observable)
-                    first
-                    make-verdict)]
+(s/defn handle-calculate-verdict :- (s/maybe Verdict)
+  [state observable]
+  (let [judgement-verdict
+        (first (list-active-judgements-by-observable state observable))]
 
-    (when (:judgement_id verdict)
-      verdict)))
+    (when-let [jv judgement-verdict]
+      (make-verdict jv))))
