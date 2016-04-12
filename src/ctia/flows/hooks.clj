@@ -19,7 +19,8 @@
   (init [this])
   (handle [this
            type-name
-           stored-object])
+           stored-object
+           prev-object])
   (destroy [this]))
 
 (defn find-hooks
@@ -64,24 +65,25 @@
   "bind high level type would be:
 
     RealizedObject
-    -> (Type -> RealizedObject -> Maybe RealizedObject)
+    -> (Type -> RealizedObject -> RealizedObject -> Maybe RealizedObject)
+    -> RealizedObject
     -> RealizedObject
 
   If The hook return nil, doens't modify the realized object returned."
-  [realized-object hook type-name]
-  (let [result (handle hook type-name realized-object)]
+  [realized-object hook prev-object type-name]
+  (let [result (handle hook type-name realized-object prev-object)]
     (if (nil? result)
       realized-object
       result)))
 
 (defn apply-hook-list
   "Apply all hooks to some realized object of some type"
-  [type-name realized-object hook-list]
+  [type-name realized-object prev-object hook-list]
   (reduce (fn [acc f]
-            (bind-realized acc f type-name)) realized-object hook-list))
+            (bind-realized acc f prev-object type-name)) realized-object hook-list))
 
 (defn apply-hooks
   "Apply all hooks for some hook-name"
-  [type-name realized-object hook-name]
-  (apply-hook-list type-name realized-object (get @hooks hook-name)))
+  [type-name realized-object prev-object hook-name]
+  (apply-hook-list type-name realized-object prev-object (get @hooks hook-name)))
 

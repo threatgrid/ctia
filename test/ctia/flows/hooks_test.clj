@@ -7,7 +7,7 @@
 (defrecord Dummy [name]
   h/Hook
   (init [this] :noop)
-  (handle [_ type-name stored-object]
+  (handle [_ type-name stored-object prev-object]
     (into stored-object {(keyword name) "passed"}))
   (destroy [this] :noop))
 
@@ -20,12 +20,12 @@
   (do
     (h/reset-hooks!)
     (test-adding-dummy-hooks)
-    (t/is (= (h/apply-hooks "foo" {:x "x"} :before-create)
+    (t/is (= (h/apply-hooks "foo" {:x "x"} nil :before-create)
              {:x "x"
               :hook1 "passed"
               :hook2 "passed"
               :hook3 "passed"}))
-    (t/is (= (h/apply-hooks "foo" {:x "x"} :before-send-to-event-chan)
+    (t/is (= (h/apply-hooks "foo" {:x "x"} nil :before-send-to-event-chan)
              {:x "x"}))))
 
 ;; -----------------------------------------------------------------------------
@@ -33,7 +33,7 @@
 (defrecord Nil [name]
   h/Hook
   (init [this] :noop)
-  (handle [_ type-name stored-object] nil)
+  (handle [_ type-name stored-object prev-object] nil)
   (destroy [this] :noop))
 
 (defn test-adding-nil-hooks []
@@ -45,7 +45,32 @@
   (do
     (h/reset-hooks!)
     (test-adding-nil-hooks)
-    (t/is (= (h/apply-hooks "foo" {:x "x"} :before-create)
+    (t/is (= (h/apply-hooks "foo" {:x "x"} nil :before-create)
              {:x "x"}))
-    (t/is (= (h/apply-hooks "foo" {:x "x"} :before-send-to-event-chan)
+    (t/is (= (h/apply-hooks "foo" {:x "x"} nil :before-send-to-event-chan)
              {:x "x"}))))
+
+;; -----------------------------------------------------------------------------
+;; Memory Hook
+(defrecord Memory [name]
+  h/Hook
+  (init [this] :noop)
+  (handle [_ type-name stored-object prev-object]
+    (into stored-object {:previous prev-object}))
+  (destroy [this] :noop))
+
+
+(defn test-adding-memory-hooks []
+  (h/add-hook! :before-create (Memory. "memory1"))
+  (h/add-hook! :before-create (Memory. "memory2"))
+  (h/add-hook! :before-create (Memory. "memory3")))
+
+(t/deftest check-memory-hook
+  (let [memory {:y "y"}]
+    (do
+      (h/reset-hooks!)
+      (test-adding-memory-hooks)
+      (t/is (= (h/apply-hooks "foo" {:x "x"} memory :before-create)
+               {:x "x" :previous {:y "y"}}))
+      (t/is (= (h/apply-hooks "foo" {:x "x"} memory :before-send-to-event-chan)
+               {:x "x"})))))

@@ -26,9 +26,9 @@
    object]
   (let [id (make-id object-type object)
         realized (realize-fn object id login)
-        pre-hooked (apply-hooks object-type realized :before-create)
+        pre-hooked (apply-hooks object-type realized nil :before-create)
         stored (store-fn pre-hooked)]
-    (apply-hooks object-type stored :after-create)
+    (apply-hooks object-type stored nil :after-create)
     stored))
 
 (defn update-flow
@@ -49,12 +49,9 @@
    object]
   (let [old-object (get-fn id)
         realized (realize-fn object id login old-object)
-        ;; Remark: it might be nice to provide the stored object and the new object
-        ;; To the hooks, but it will make hook code more complicated
-        ;; Typical usage: check the update won't modify some field
-        pre-hooked (apply-hooks object-type realized :before-update)
+        pre-hooked (apply-hooks object-type realized old-object :before-update)
         stored (update-fn pre-hooked)]
-    (apply-hooks object-type stored :after-update)
+    (apply-hooks object-type stored old-object :after-update)
     stored))
 
 (defn delete-flow
@@ -72,7 +69,7 @@
    object-type
    id]
   (let [object (get-fn id)
-        pre-hooked (apply-hooks object-type object :before-delete)
+        pre-hooked (apply-hooks object-type object object :before-delete)
         existed? (delete-fn id)]
-    (apply-hooks object-type pre-hooked :after-delete)
+    (apply-hooks object-type pre-hooked object :after-delete)
     existed?))
