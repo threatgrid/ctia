@@ -116,11 +116,11 @@
         :summary "Adds a new Actor"
         :capabilities #{:create-actor :admin}
         :login login
-        (ok (flows/create-flow realize-actor
-                               #(create-actor @actor-store %)
-                               :actor
-                               login
-                               actor)))
+        (ok (flows/create-flow :realize-fn realize-actor
+                               :store-fn #(create-actor @actor-store %)
+                               :object-type :actor
+                               :login login
+                               :object actor)))
       (PUT "/:id" []
         :return StoredActor
         :body [actor NewActor {:description "an updated Actor"}]
@@ -129,13 +129,13 @@
         :path-params [id :- s/Str]
         :capabilities #{:create-actor :admin}
         :login login
-        (ok (flows/update-flow #(read-actor @actor-store %)
-                               realize-actor
-                               #(update-actor @actor-store (:id %) %)
-                               :actor
-                               id
-                               login
-                               actor)))
+        (ok (flows/update-flow :get-fn #(read-actor @actor-store %)
+                               :realize-fn realize-actor
+                               :update-fn #(update-actor @actor-store (:id %) %)
+                               :object-type :actor
+                               :id id
+                               :login login
+                               :object actor)))
       (GET "/:id" []
         :return (s/maybe StoredActor)
         :summary "Gets an Actor by ID"
@@ -151,10 +151,10 @@
         :summary "Deletes an Actor"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-actor :admin}
-        (if (flows/delete-flow #(read-actor @actor-store %)
-                               #(delete-actor @actor-store %)
-                               :actor
-                               id)
+        (if (flows/delete-flow :get-fn #(read-actor @actor-store %)
+                               :delete-fn #(delete-actor @actor-store %)
+                               :object-type :actor
+                               :id id)
           (no-content)
           (not-found))))
 
@@ -167,11 +167,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-campaign :admin}
         :login login
-        (ok (flows/create-flow realize-campaign
-                               #(create-campaign @campaign-store %)
-                               :campaign
-                               login
-                               campaign)))
+        (ok (flows/create-flow :realize-fn realize-campaign
+                               :store-fn #(create-campaign @campaign-store %)
+                               :object-type :campaign
+                               :login login
+                               :object campaign)))
       (PUT "/:id" []
         :return StoredCampaign
         :body [campaign NewCampaign {:description "an updated campaign"}]
@@ -180,13 +180,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-campaign :admin}
         :login login
-        (ok (flows/update-flow #(read-campaign @campaign-store %)
-                               realize-campaign
-                               #(update-campaign @campaign-store (:id %) %)
-                               :campaign
-                               id
-                               login
-                               campaign)))
+        (ok (flows/update-flow :get-fn #(read-campaign @campaign-store %)
+                               :realize-fn realize-campaign
+                               :update-fn #(update-campaign @campaign-store (:id %) %)
+                               :object-type :campaign
+                               :id id
+                               :login login
+                               :object campaign)))
       (GET "/:id" []
         :return (s/maybe StoredCampaign)
         :summary "Gets a Campaign by ID"
@@ -202,10 +202,10 @@
         :summary "Deletes a Campaign"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-campaign :admin}
-        (if (flows/delete-flow #(read-campaign @campaign-store %)
-                               #(delete-campaign @campaign-store %)
-                               :campaign
-                               id)
+        (if (flows/delete-flow :get-fn #(read-campaign @campaign-store %)
+                               :delete-fn #(delete-campaign @campaign-store %)
+                               :object-type :campaign
+                               :id id)
           (no-content)
           (not-found))))
 
@@ -218,11 +218,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-exploit-target :admin}
         :login login
-        (ok (flows/create-flow realize-exploit-target
-                               #(create-exploit-target @exploit-target-store %)
-                               :exploit-target
-                               login
-                               exploit-target)))
+        (ok (flows/create-flow :realize-fn realize-exploit-target
+                               :store-fn #(create-exploit-target @exploit-target-store %)
+                               :object-type :exploit-target
+                               :login login
+                               :object exploit-target)))
       (PUT "/:id" []
         :return StoredExploitTarget
         :body [exploit-target
@@ -233,13 +233,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-exploit-target :admin}
         :login login
-        (ok (flows/update-flow #(read-exploit-target @exploit-target-store %)
-                               realize-exploit-target
-                               #(update-exploit-target @exploit-target-store (:id %) %)
-                               :exploit-target
-                               id
-                               login
-                               exploit-target)))
+        (ok (flows/update-flow :get-fn #(read-exploit-target @exploit-target-store %)
+                               :realize-fn realize-exploit-target
+                               :update-fn #(update-exploit-target @exploit-target-store (:id %) %)
+                               :object-type :exploit-target
+                               :id id
+                               :login login
+                               :object exploit-target)))
       (GET "/:id" []
         :return (s/maybe StoredExploitTarget)
         :summary "Gets an ExploitTarget by ID"
@@ -255,10 +255,10 @@
         :summary "Deletes an ExploitTarget"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-exploit-target :admin}
-        (if (flows/delete-flow #(read-exploit-target @exploit-target-store %)
-                               #(delete-exploit-target @exploit-target-store %)
-                               :exploit-target
-                               id)
+        (if (flows/delete-flow :get-fn #(read-exploit-target @exploit-target-store %)
+                               :delete-fn #(delete-exploit-target @exploit-target-store %)
+                               :object-type :exploit-target
+                               :id id)
           (no-content)
           (not-found))))
 
@@ -271,11 +271,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-coa :admin}
         :login login
-        (ok (flows/create-flow realize-coa
-                               #(create-coa @coa-store %)
-                               :coa
-                               login
-                               coa)))
+        (ok (flows/create-flow :realize-fn realize-coa
+                               :store-fn #(create-coa @coa-store %)
+                               :object-type :coa
+                               :login login
+                               :object coa)))
       (PUT "/:id" []
         :return StoredCOA
         :body [coa NewCOA {:description "an updated COA"}]
@@ -284,13 +284,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-coa :admin}
         :login login
-        (ok (flows/update-flow #(read-coa @coa-store %)
-                               realize-coa
-                               #(update-coa @coa-store (:id %) %)
-                               :coa
-                               id
-                               login
-                               coa)))
+        (ok (flows/update-flow :get-fn #(read-coa @coa-store %)
+                               :realize-fn realize-coa
+                               :update-fn #(update-coa @coa-store (:id %) %)
+                               :object-type :coa
+                               :id id
+                               :login login
+                               :object coa)))
       (GET "/:id" []
         :return (s/maybe StoredCOA)
         :summary "Gets a COA by ID"
@@ -306,10 +306,10 @@
         :summary "Deletes a COA"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-coa :admin}
-        (if (flows/delete-flow #(read-coa @coa-store %)
-                               #(delete-coa @coa-store %)
-                               :coa
-                               id)
+        (if (flows/delete-flow :get-fn #(read-coa @coa-store %)
+                               :delete-fn #(delete-coa @coa-store %)
+                               :object-type :coa
+                               :id id)
           (no-content)
           (not-found))))
 
@@ -322,11 +322,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-incident :admin}
         :login login
-        (ok (flows/create-flow realize-incident
-                               #(create-incident @incident-store %)
-                               :incident
-                               login
-                               incident)))
+        (ok (flows/create-flow :realize-fn realize-incident
+                               :store-fn #(create-incident @incident-store %)
+                               :object-type :incident
+                               :login login
+                               :object incident)))
       (PUT "/:id" []
         :return StoredIncident
         :body [incident NewIncident {:description "an updated incident"}]
@@ -335,13 +335,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-incident :admin}
         :login login
-        (ok (flows/update-flow #(read-incident @incident-store %)
-                               realize-incident
-                               #(update-incident @incident-store (:id %) %)
-                               :incident
-                               id
-                               login
-                               incident)))
+        (ok (flows/update-flow :get-fn #(read-incident @incident-store %)
+                               :realize-fn realize-incident
+                               :update-fn #(update-incident @incident-store (:id %) %)
+                               :object-type :incident
+                               :id id
+                               :login login
+                               :object incident)))
       (GET "/:id" []
         :return (s/maybe StoredIncident)
         :summary "Gets an Incident by ID"
@@ -357,10 +357,10 @@
         :summary "Deletes an Incident"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-incident :admin}
-        (if (flows/delete-flow #(read-incident @incident-store %)
-                               #(delete-incident @incident-store %)
-                               :incident
-                               id)
+        (if (flows/delete-flow :get-fn #(read-incident @incident-store %)
+                               :delete-fn #(delete-incident @incident-store %)
+                               :object-type :incident
+                               :id id)
           (no-content)
           (not-found))))
 
@@ -373,11 +373,11 @@
         :summary "Adds a new Judgement"
         :capabilities #{:create-judgement :admin}
         :login login
-        (ok (flows/create-flow realize-judgement
-                               #(create-judgement @judgement-store %)
-                               :judgement
-                               login
-                               judgement)))
+        (ok (flows/create-flow :realize-fn realize-judgement
+                               :store-fn #(create-judgement @judgement-store %)
+                               :object-type :judgement
+                               :login login
+                               :object judgement)))
       (POST "/:judgement-id/feedback" []
         :tags ["Feedback"]
         :return StoredFeedback
@@ -387,11 +387,11 @@
         :summary "Adds a Feedback to a Judgement"
         :capabilities #{:create-feedback :admin}
         :login login
-        (ok (flows/create-flow #(realize-feedback %1 %2 %3 judgement-id)
-                               #(create-feedback @feedback-store %)
-                               :feedback
-                               login
-                               feedback)))
+        (ok (flows/create-flow :realize-fn #(realize-feedback %1 %2 %3 judgement-id)
+                               :store-fn #(create-feedback @feedback-store %)
+                               :object-type :feedback
+                               :login login
+                               :object feedback)))
       (GET "/:judgement-id/feedback" []
         :tags ["Feedback"]
         :return (s/maybe [StoredFeedback])
@@ -429,10 +429,10 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :summary "Deletes a Judgement"
         :capabilities #{:delete-judgement :admin}
-        (if (flows/delete-flow #(read-judgement @judgement-store %)
-                               #(delete-judgement @judgement-store %)
-                               :judgement
-                               id)
+        (if (flows/delete-flow :get-fn #(read-judgement @judgement-store %)
+                               :delete-fn #(delete-judgement @judgement-store %)
+                               :object-type :judgement
+                               :id id)
           (no-content)
           (not-found))))
 
@@ -472,11 +472,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-indicator :admin}
         :login login
-        (ok (flows/create-flow realize-indicator
-                               #(create-indicator @indicator-store %)
-                               :indicator
-                               login
-                               indicator)))
+        (ok (flows/create-flow :realize-fn realize-indicator
+                               :store-fn #(create-indicator @indicator-store %)
+                               :object-type :indicator
+                               :login login
+                               :object indicator)))
       (PUT "/:id" []
         :return StoredIndicator
         :body [indicator NewIndicator {:description "an updated Indicator"}]
@@ -485,13 +485,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-indicator :admin}
         :login login
-        (ok (flows/update-flow #(read-indicator @indicator-store %)
-                               realize-indicator
-                               #(update-indicator @indicator-store (:id %) %)
-                               :indicator
-                               id
-                               login
-                               indicator)))
+        (ok (flows/update-flow :get-fn #(read-indicator @indicator-store %)
+                               :realize-fn realize-indicator
+                               :update-fn #(update-indicator @indicator-store (:id %) %)
+                               :object-type :indicator
+                               :id id
+                               :login login
+                               :object indicator)))
       (GET "/:id" []
         :return (s/maybe StoredIndicator)
         :summary "Gets an Indicator by ID"
@@ -528,22 +528,22 @@
         :capabilities #{:create-sighting :admin}
         :login login
         (if-let [indicator (read-indicator @indicator-store id)]
-          (let [sighting (flows/create-flow realize-sighting
-                                            #(create-sighting @sighting-store %)
-                                            :sighting
-                                            login
-                                            (assoc sighting
-                                                   :indicator
-                                                   {:indicator_id id}))]
-            (flows/update-flow #(read-indicator @indicator-store %)
-                               realize-indicator
-                               #(update-indicator @indicator-store (:id %) %)
-                               :indicator
-                               id
-                               login
-                               (-> (generalize-indicator indicator)
-                                   (update :sightings
-                                           conj {:sighting_id (:id sighting)})))
+          (let [sighting (flows/create-flow :realize-fn realize-sighting
+                                            :store-fn #(create-sighting @sighting-store %)
+                                            :object-type :sighting
+                                            :login login
+                                            :object (assoc sighting
+                                                           :indicator
+                                                           {:indicator_id id}))]
+            (flows/update-flow :get-fn #(read-indicator @indicator-store %)
+                               :realize-fn realize-indicator
+                               :update-fn #(update-indicator @indicator-store (:id %) %)
+                               :object-type :indicator
+                               :id id
+                               :login login
+                               :object (-> (generalize-indicator indicator)
+                                           (update :sightings
+                                                   conj {:sighting_id (:id sighting)})))
             (ok sighting))
           (not-found))))
 
@@ -556,11 +556,11 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-ttp :admin}
         :login login
-        (ok (flows/create-flow realize-ttp
-                               #(create-ttp @ttp-store %)
-                               :ttp
-                               login
-                               ttp)))
+        (ok (flows/create-flow :realize-fn realize-ttp
+                               :store-fn #(create-ttp @ttp-store %)
+                               :object-type :ttp
+                               :login login
+                               :object ttp)))
       (PUT "/:id" []
         :return StoredTTP
         :body [ttp NewTTP {:description "an updated TTP"}]
@@ -569,13 +569,13 @@
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:create-ttp :admin}
         :login login
-        (ok (flows/update-flow #(read-ttp @ttp-store %)
-                               realize-ttp
-                               #(update-ttp @ttp-store (:id %) %)
-                               :ttp
-                               id
-                               login
-                               ttp)))
+        (ok (flows/update-flow :get-fn #(read-ttp @ttp-store %)
+                               :realize-fn realize-ttp
+                               :update-fn #(update-ttp @ttp-store (:id %) %)
+                               :object-type :ttp
+                               :id id
+                               :login login
+                               :object ttp)))
       (GET "/:id" []
         :return (s/maybe StoredTTP)
         :summary "Gets a TTP by ID"
@@ -600,10 +600,10 @@
         :summary "Deletes a TTP"
         :header-params [api_key :- (s/maybe s/Str)]
         :capabilities #{:delete-ttp :admin}
-        (if (flows/delete-flow #(read-ttp @ttp-store %)
-                               #(delete-ttp @ttp-store %)
-                               :ttp
-                               id)
+        (if (flows/delete-flow :get-fn #(read-ttp @ttp-store %)
+                               :delete-fn #(delete-ttp @ttp-store %)
+                               :object-type :ttp
+                               :id id)
           (no-content)
           (not-found))))
 
@@ -616,11 +616,11 @@
         :summary "Adds a new Sighting"
         :capabilities #{:create-sighting :admin}
         :login login
-        (ok (flows/create-flow realize-sighting
-                               #(create-sighting @sighting-store %)
-                               :sighting
-                               login
-                               sighting)))
+        (ok (flows/create-flow :realize-fn realize-sighting
+                               :store-fn #(create-sighting @sighting-store %)
+                               :object-type :sighting
+                               :login login
+                               :object sighting)))
       (PUT "/:id" []
         :return StoredSighting
         :body [sighting NewSighting {:description "An updated Sighting"}]
@@ -629,13 +629,13 @@
         :path-params [id :- s/Str]
         :capabilities #{:create-sighting :admin}
         :login login
-        (ok (flows/update-flow #(read-sighting @sighting-store %)
-                               realize-sighting
-                               #(update-sighting @sighting-store (:id %) %)
-                               :sighting
-                               id
-                               login
-                               sighting)))
+        (ok (flows/update-flow :get-fn #(read-sighting @sighting-store %)
+                               :realize-fn realize-sighting
+                               :update-fn #(update-sighting @sighting-store (:id %) %)
+                               :object-type :sighting
+                               :id id
+                               :login login
+                               :object sighting)))
       (GET "/:id" []
         :return (s/maybe StoredSighting)
         :summary "Gets a Sighting by ID"

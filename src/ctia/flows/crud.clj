@@ -19,11 +19,7 @@
     - `:after-create` hooks can't modify the object returned but
       a hook modifying an object will provide the modified object
       to the next `:after-create` hook and so on."
-  [realize-fn
-   store-fn
-   object-type
-   login
-   object]
+  [& {:keys [realize-fn store-fn object-type login object]}]
   (let [id (make-id object-type object)
         realized (realize-fn object id login)
         pre-hooked (apply-hooks object-type realized nil :before-create)
@@ -40,13 +36,13 @@
     - `:after-update` hooks can't modify the object returned but
       a hook modifying an object will provide the modified object
       to the next `:after-update` hook and so on."
-  [get-fn
-   realize-fn
-   update-fn
-   object-type
-   id
-   login
-   object]
+  [& {:keys [get-fn
+             realize-fn
+             update-fn
+             object-type
+             id
+             login
+             object]}]
   (let [old-object (get-fn id)
         realized (realize-fn object id login old-object)
         pre-hooked (apply-hooks object-type realized old-object :before-update)
@@ -64,10 +60,10 @@
     - `:after-delete` hooks can't modify the object returned
       but a hook modifying an object will provide the modified object
       to the next `:after-delete` hooks and so on."
-  [get-fn
-   delete-fn
-   object-type
-   id]
+  [& {:keys [get-fn
+             delete-fn
+             object-type
+             id]}]
   (let [object (get-fn id)
         pre-hooked (apply-hooks object-type object object :before-delete)
         existed? (delete-fn id)]
