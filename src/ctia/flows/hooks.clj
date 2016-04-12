@@ -25,40 +25,40 @@
 
 (defn find-hooks
   "Should return a list of `Hook` in the correct order"
-  [hook-name]
+  [hook-type]
   :todo)
 
 (defn add-hook!
-  "Add a `Hook` for the hook `hook-name`"
-  [hook-name hook]
-  (swap! hooks update-in [hook-name] conj hook))
+  "Add a `Hook` for the hook `hook-type`"
+  [hook-type hook]
+  (swap! hooks update-in [hook-type] conj hook))
 
 (defn add-hooks!
-  "Add a list of `Hook` for the hook `hook-name`"
-  [hook-name hook-list]
-  (swap! hooks update-in [hook-name] concat hook-list))
+  "Add a list of `Hook` for the hook `hook-type`"
+  [hook-type hook-list]
+  (swap! hooks update-in [hook-type] concat hook-list))
 
 (defn init!
   "Initialize hooks"
   []
-  (doseq [hook-name (keys @hooks)]
-    (let [hook-list (find-hooks hook-name)]
-      (add-hooks! hook-name hook-list))))
+  (doseq [hook-type (keys @hooks)]
+    (let [hook-list (find-hooks hook-type)]
+      (add-hooks! hook-type hook-list))))
 
 (defn init-hooks!
   "Should search Jar, Namespaces and init Objects"
   []
-  (doseq [hook-name (keys @hooks)]
-    (doseq [hook (get @hooks hook-name)]
+  (doseq [hook-type (keys @hooks)]
+    (doseq [hook (get @hooks hook-type)]
       (init hook)
-      (add-hook! hook-name hook)))
+      (add-hook! hook-type hook)))
   @hooks)
 
 (defn destroy-hooks
   "Should call all destructor for each hook in reverse order."
   []
-  (doseq [hook-name (keys @hooks)]
-    (doseq [hook (reverse (get @hooks hook-name))]
+  (doseq [hook-type (keys @hooks)]
+    (doseq [hook (reverse (get @hooks hook-type))]
       (destroy hook))))
 
 (defn bind-realized
@@ -69,7 +69,7 @@
     -> RealizedObject
     -> RealizedObject
 
-  If The hook return nil, doens't modify the realized object returned."
+  If the hook returns nil, it doens't modify the realized object returned."
   [realized-object hook prev-object type-name]
   (let [result (handle hook type-name realized-object prev-object)]
     (if (nil? result)
@@ -83,7 +83,7 @@
             (bind-realized acc f prev-object type-name)) realized-object hook-list))
 
 (defn apply-hooks
-  "Apply all hooks for some hook-name"
-  [type-name realized-object prev-object hook-name]
-  (apply-hook-list type-name realized-object prev-object (get @hooks hook-name)))
+  "Apply all hooks for some hook-type"
+  [type-name realized-object prev-object hook-type]
+  (apply-hook-list type-name realized-object prev-object (get @hooks hook-type)))
 
