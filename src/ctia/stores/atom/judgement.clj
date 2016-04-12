@@ -11,8 +11,7 @@
 (def handle-create-judgement (mc/create-handler-from-realized StoredJudgement))
 (def handle-read-judgement (mc/read-handler StoredJudgement))
 (def handle-delete-judgement (mc/delete-handler StoredJudgement))
-
-(mc/def-list-handler handle-list-judgements StoredJudgement)
+(def handle-list-judgements (mc/list-handler StoredJudgement))
 
 (defn judgement-expired? [judgement now]
   (if-let [expires (get-in judgement [:valid_time :end_time])]

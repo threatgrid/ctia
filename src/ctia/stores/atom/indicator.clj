@@ -8,8 +8,7 @@
 (def handle-read-indicator (mc/read-handler StoredIndicator))
 (def handle-update-indicator (mc/update-handler-from-realized StoredIndicator))
 (def handle-delete-indicator (mc/delete-handler StoredIndicator))
-
-(mc/def-list-handler handle-list-indicators StoredIndicator)
+(def handle-list-indicators (mc/list-handler StoredIndicator))
 
 (s/defn handle-list-indicators-by-judgements :- (s/maybe [StoredIndicator])
   [indicator-state :- (s/atom {s/Str StoredIndicator})

@@ -42,7 +42,7 @@
       false)))
 
 (defn list-handler [Model]
-  (s/fn :- (s/maybe Model)
+  (s/fn :- (s/maybe [Model])
     [state :- (s/atom {s/Str Model})
      filter-map :- {s/Any s/Any}]
     (into []
@@ -54,15 +54,3 @@
                             filter-map))
                   (vals (deref state))))))
 
-(defmacro def-list-handler [name Model]
-  `(s/defn ~name :- (s/maybe [~Model])
-     [state# :- (s/atom {s/Str ~Model})
-      filter-map# :- {s/Any s/Any}]
-     (into []
-           (filter (fn [model#]
-                     (every? (fn [[k# v#]]
-                               (if (sequential? k#)
-                                 (= v# (get-in model# k# ::not-found))
-                                 (= v# (get model# k# ::not-found))))
-                             filter-map#))
-                   (vals (deref state#))))))

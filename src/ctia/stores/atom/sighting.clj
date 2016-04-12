@@ -10,8 +10,7 @@
 (def handle-read-sighting (mc/read-handler StoredSighting))
 (def handle-update-sighting (mc/update-handler-from-realized StoredSighting))
 (def handle-delete-sighting (mc/delete-handler StoredSighting))
-
-(mc/def-list-handler handle-list-sightings StoredSighting)
+(def handle-list-sightings (mc/list-handler StoredSighting))
 
 (s/defn handle-list-sightings-by-indicators :- (s/maybe [StoredSighting])
   [sightings-state :- (s/atom {s/Str StoredSighting})

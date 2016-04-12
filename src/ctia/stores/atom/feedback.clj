@@ -4,5 +4,4 @@
             [schema.core :as s]))
 
 (def handle-create-feedback (mc/create-handler-from-realized StoredFeedback))
-
-(mc/def-list-handler handle-list-feedback StoredFeedback)
+(def handle-list-feedback  (mc/list-handler StoredFeedback))
