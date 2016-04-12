@@ -9,7 +9,7 @@
             [ctia.stores.atom.store :as as]))
 
 (defn init-auth-service! []
-  (let [auth-service-type (get-in @p/properties [:auth :service :type])]
+  (let [auth-service-type (get-in @p/properties [:ctia :auth :type])]
     (case auth-service-type
       :allow-all (reset! auth/auth-service (allow-all/->AuthService))
       :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service
@@ -55,7 +55,7 @@
       (reset! store (impl-fn store-state)))))
 
 (defn init-store-service! []
-  (let [store-service-default (or (get-in @p/properties [:store :service :default]) :memory)]
+  (let [store-service-default (get-in @p/properties [:ctia :store :type])]
     (case store-service-default
       :es (init-es-store!)
       :memory (init-mem-store!)
