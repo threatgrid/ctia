@@ -27,11 +27,8 @@
    {(s/optional-key :type) Type}))
 
 (s/defschema StoredSighting
-  (st/merge Sighting
-            {:type Type
-             :owner s/Str
-             :created c/Time
-             :modified c/Time}))
+  "An sighting as stored in the data store"
+  (c/stored-schema "sighting" Sighting))
 
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting

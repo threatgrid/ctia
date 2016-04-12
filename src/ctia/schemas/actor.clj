@@ -41,15 +41,7 @@
 
 (s/defschema StoredActor
   "An actor as stored in the data store"
-  (c/stored-schema Type Actor))
+  (c/stored-schema "actor" Actor))
 
-(s/defn realize-actor :- StoredActor
-  ([new-actor :- NewActor
-    id :- s/Str
-    login :- s/Str]
-   (realize-actor new-actor id login nil))
-  ([new-actor :- NewActor
-    id :- s/Str
-    login :- s/Str
-    prev-actor :- (s/maybe StoredActor)]
-   (c/realize-object new-actor id login "actor" prev-actor)))
+(def realize-actor
+  (c/default-realize-fn "actor" NewActor StoredActor))

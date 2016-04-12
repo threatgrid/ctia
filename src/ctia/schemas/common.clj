@@ -187,31 +187,33 @@
 (defn stored-schema
   "Given a schema X generate a StoredX schema"
   [type-name a-schema]
-  (st/merge a-schema {:type type-name
-                      :owner s/Str
-                      :created c/Time
-                      :modified c/Time}))
+  (st/merge a-schema
+            {:type (s/eq type-name)
+             :owner s/Str
+             :created c/Time
+             :modified c/Time}))
 
-(s/defn realize-object
-  ([new-object :- s/Any
-    id :- s/Str
-    login :- s/Str
-    type-name :- s/Str]
-   (realize-object new-object id login type-name nil))
-  ([new-object :- s/Any
-    id :- s/Str
-    login :- s/Str
-    type-name :- s/Str
-    prev-object :- (s/maybe s/Any)]
-   (let [now (time/now)]
-     (assoc new-object
-            :id id
-            :type type-name
-            :owner login
-            :created (or (:created prev-object) now)
-            :modified now
-            :valid_time (or (:valid_time prev-object)
-                            {:end_time (or (get-in new-object [:valid_time :end_time])
-                                           time/default-expire-date)
-                             :start_time (or (get-in new-object [:valid_time :start_time])
-                                             now)})))))
+(defn default-realize-fn [type-name Model StoredModel]
+  (s/fn default-realize :- StoredModel
+    ([new-object :- Model
+      id :- s/Str
+      login :- s/Str]
+     (default-realize new-object id login nil))
+    ([new-object :- Model
+      id :- s/Str
+      login :- s/Str
+      prev-object :- (s/maybe StoredModel)]
+     (let [now (time/now)]
+       (assoc new-object
+              :id id
+              :type type-name
+              :owner login
+              :created (or (:created prev-object) now)
+              :modified now
+              :valid_time (or (:valid_time prev-object)
+                              {:end_time (or (get-in new-object [:valid_time :end_time])
+                                             time/default-expire-date)
+                               :start_time (or (get-in new-object [:valid_time :start_time])
+                                               now)}))))))
+
+
