@@ -28,7 +28,7 @@
     }))
 
 (s/defschema Type
-  (s/eq "actor"))
+  (s/enum "actor"))
 
 (s/defschema NewActor
   "Schema for submitting new Actors"

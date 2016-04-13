@@ -18,7 +18,7 @@
    (s/optional-key :indicator) rel/RelatedIndicator})
 
 (s/defschema Type
-  (s/eq "sighting"))
+  (s/enum "sighting"))
 
 (s/defschema NewSighting
   (st/merge

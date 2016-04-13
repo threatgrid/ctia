@@ -44,7 +44,7 @@
     }))
 
 (s/defschema Type
-  (s/eq "campaign"))
+  (s/enum "campaign"))
 
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"

@@ -15,7 +15,7 @@
    :reason s/Str})
 
 (s/defschema Type
-  (s/eq "feedback"))
+  (s/enum "feedback"))
 
 (s/defschema NewFeedback
   "Schema for submitting new Feedback"
