@@ -79,11 +79,13 @@
   ;; This starts the server on a random port, once for each
   ;; (test), which _might_ briefly use up a lot of ports
   (with-properties ["ctia.http.port" (available-port)]
-    (main/start-ctia :join? false
-                     :silent? true)
-    (test)
-    ;; explicitly stop the http-server
-    (http-server/stop!)))
+    (try
+      (main/start-ctia :join? false
+                       :silent? true)
+      (test)
+      (finally
+        ;; explicitly stop the http-server
+        (http-server/stop!)))))
 
 (defn fixture-schema-validation [f]
   (schema/with-fn-validation
