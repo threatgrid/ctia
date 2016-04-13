@@ -42,8 +42,8 @@
                                   db-helpers/fixture-db-recreate-tables])
 
       :es-store     (join-fixtures [index-helpers/fixture-properties:es-store
-                                    helpers/fixture-ctia
-                                    index-helpers/fixture-clean-store-index])}
+                                    index-helpers/fixture-recreate-store-indexes
+                                    helpers/fixture-ctia])}
 
 
      ~@body))

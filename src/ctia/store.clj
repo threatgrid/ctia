@@ -108,3 +108,17 @@
 
 ;; internal
 (defonce identity-store (atom nil))
+
+(def stores
+  {:judgement judgement-store
+   :indicator indicator-store
+   :feedback feedback-store
+   :ttp ttp-store
+   :campaign campaign-store
+   :actor actor-store
+   :coa coa-store
+   :exploit-target exploit-target-store
+   :sighting sighting-store
+   :incident incident-store
+   :relation relation-store
+   :identity identity-store})
