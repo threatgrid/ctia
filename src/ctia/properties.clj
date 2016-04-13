@@ -27,12 +27,13 @@
    set.  This is also used for selecting system properties to merge
    with the properties file."
   {(s/required-key "ctia.auth.type") s/Keyword
+   (s/optional-key "ctia.auth.threatgrid.cache") s/Bool
+   (s/optional-key "ctia.auth.threatgrid.whoami-url") s/Str
    (s/required-key "ctia.http.port") s/Int
    (s/required-key "ctia.http.min-threads") s/Int
    (s/required-key "ctia.http.max-threads") s/Int
    (s/optional-key "ctia.http.dev-reload") s/Bool
    (s/required-key "ctia.nrepl.enabled") s/Bool
-   (s/optional-key "auth.service.threatgrid.url") s/Str
    (s/optional-key "ctia.nrepl.port") s/Int
    (s/optional-key "ctia.store.type") s/Keyword
    (s/optional-key "ctia.store.sql.db.classname") s/Str

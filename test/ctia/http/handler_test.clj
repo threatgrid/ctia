@@ -27,21 +27,22 @@
     :list-sightings-by-observable
     :get-verdict})
 
-(use-fixtures :once (join-fixtures [helpers/fixture-properties
-                                    db-helpers/fixture-init-db
+(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+                                    helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each (join-fixtures [helpers/fixture-http-server
-                                    helpers/fixture-schema-validation
-                                    whoami-helpers/fixture-reset-state]))
+(use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (defmacro deftest-for-each-store [test-name & body]
   `(helpers/deftest-for-each-fixture ~test-name
-     {:atom-store helpers/fixture-atom-store
-      :sql-store    (join-fixtures [db-helpers/fixture-sql-store
-                                    db-helpers/fixture-clean-db])
+     {:atom-store (join-fixtures [helpers/fixture-properties:atom-store
+                                  helpers/fixture-ctia])
+      :sql-store  (join-fixtures [db-helpers/fixture-properties:sql-store
+                                  helpers/fixture-ctia
+                                  db-helpers/fixture-db-recreate-tables])
 
-      :es-store     (join-fixtures [(index-helpers/fixture-es-store)
+      :es-store     (join-fixtures [index-helpers/fixture-properties:es-store
+                                    helpers/fixture-ctia
                                     index-helpers/fixture-clean-store-index])}
 
 
