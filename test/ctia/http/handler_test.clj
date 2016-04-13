@@ -42,9 +42,9 @@
                                   helpers/fixture-ctia
                                   db-helpers/fixture-db-recreate-tables])
 
-      :es-store     (join-fixtures [es-helpers/fixture-properties:es-store
-                                    helpers/fixture-ctia
-                                    es-helpers/fixture-recreate-store-indexes])}
+      :es-store   (join-fixtures [es-helpers/fixture-properties:es-store
+                                  helpers/fixture-ctia
+                                  es-helpers/fixture-recreate-store-indexes])}
      ~@body))
 
 (deftest-for-each-store test-version-routes
