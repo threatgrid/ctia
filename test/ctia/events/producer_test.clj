@@ -2,7 +2,7 @@
   (:require [ctia.events.producer :refer :all]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.index :as index-helpers]
+            [ctia.test-helpers.es :as es-helpers]
             [clojure.test :as t]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
@@ -10,7 +10,8 @@
 
 (defmacro deftest-for-each-producer [test-name & body]
   `(helpers/deftest-for-each-fixture ~test-name
-     {:es-producer (join-fixtures [index-helpers/fixture-properties:es-producer])}
+     {:es-producer (join-fixtures [es-helpers/fixture-properties:es-producer
+                                   es-helpers/fixture-recreate-producer-indexes])}
      ~@body))
 
 (deftest-for-each-producer test-producer-event-create
