@@ -13,14 +13,18 @@
         handler (if dev-reload
                   (wrap-reload handler/app)
                   handler/app)]
-    (reset! server (jetty/run-jetty handler
-                                    {:port port
-                                     :min-threads min-threads
-                                     :max-threads max-threads
-                                     :join? join?}))))
+    (reset! server (let [server (jetty/run-jetty handler
+                                                 {:port port
+                                                  :min-threads min-threads
+                                                  :max-threads max-threads
+                                                  :join? join?})]
+                     (doto server
+                       (.setStopAtShutdown true)
+                       (.setStopTimeout (* 1000 60)))))))
 
 (defn stop! []
   (swap! server
-         (fn [^Server s]
-           (when s (.stop s))
+         (fn [^Server server]
+           (when server
+               (.stop server))
            nil)))
