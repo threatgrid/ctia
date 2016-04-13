@@ -96,7 +96,7 @@
                           (keys property-env-map)))))
 
 (defn transform
-  "Convert a flat map of property->value into a nest map with keyword
+  "Convert a flat map of property->value into a nested map with keyword
    keys, splitting on '.'"
   [properties]
   (reduce (fn [accum [k v]]
