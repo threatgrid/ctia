@@ -59,7 +59,10 @@
   (c/coercer! PropertiesSchema
               c/string-coercion-matcher))
 
-(defn- read-property-file []
+(defn read-property-files
+  "Read all the property files (that exist) and merge the properties
+   into a single map"
+  []
   (->> files
        (keep (fn [file]
                (when-let [rdr (some-> file io/resource io/reader)]
@@ -69,7 +72,33 @@
        concat
        (into {})))
 
-(defn- transform [properties]
+(defn prop->env
+  "Convert a property name into an environment variable name"
+  [prop]
+  (-> prop
+      str/upper-case
+      (str/replace #"[-.]" "_")))
+
+(def property-env-map
+  "Map of property name to environment variable name"
+  (into {}
+        (map (fn [prop]
+               [(prop->env prop) prop])
+             configurable-properties)))
+
+(defn read-env-variables
+  "Get a map of properties from environment variables"
+  []
+  (into {}
+        (map (fn [[env val]]
+               [(get property-env-map env) val])
+             (select-keys (System/getenv)
+                          (keys property-env-map)))))
+
+(defn transform
+  "Convert a flat map of property->value into a nest map with keyword
+   keys, splitting on '.'"
+  [properties]
   (reduce (fn [accum [k v]]
             (let [parts (->> (str/split k #"\.")
                              (map keyword))]
@@ -86,9 +115,10 @@
    validate it, transform it into a nested map with keyword keys, and
    then store it in memory."
   []
-  (->> (merge (read-property-file)
+  (->> (merge (read-property-files)
               (select-keys (System/getProperties)
-                           configurable-properties))
+                           configurable-properties)
+              (read-env-variables))
        coerce-properties
        transform
        (reset! properties)))
