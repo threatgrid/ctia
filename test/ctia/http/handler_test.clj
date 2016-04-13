@@ -37,6 +37,7 @@
   `(helpers/deftest-for-each-fixture ~test-name
      {:atom-store (join-fixtures [helpers/fixture-properties:atom-store
                                   helpers/fixture-ctia])
+
       :sql-store  (join-fixtures [db-helpers/fixture-properties:sql-store
                                   helpers/fixture-ctia
                                   db-helpers/fixture-db-recreate-tables])

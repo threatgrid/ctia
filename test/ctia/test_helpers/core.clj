@@ -74,15 +74,14 @@
   (with-open [sock (ServerSocket. 0)]
     (.getLocalPort sock)))
 
-(defn fixture-ctia [f]
-  ;; Start CTIA Loads properties and starts HTTP server Sets the HTTP
-  ;; port number
-  ;; Note: this opens starts the server on a different port, once
-  ;; for each test(f), which _might_ briefly use up a lot of ports
+(defn fixture-ctia [test]
+  ;; Start CTIA
+  ;; This starts the server on a random port, once for each
+  ;; (test), which _might_ briefly use up a lot of ports
   (with-properties ["ctia.http.port" (available-port)]
     (main/start-ctia :join? false
                      :silent? true)
-    (f)
+    (test)
     ;; explicitly stop the http-server
     (http-server/stop!)))
 

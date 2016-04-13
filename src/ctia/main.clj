@@ -29,7 +29,6 @@
 
 (defn -main
   "Application entry point"
-  [& [http-join-arg silent-arg :as args]]
-  (start-ctia
-   :join? (not= "false" http-join-arg)
-   :silent? (= "true" silent-arg)))
+  [& args]
+  (start-ctia :join? true
+              :silent? false))
