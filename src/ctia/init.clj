@@ -1,17 +1,21 @@
 (ns ctia.init
-  (:require [ctia.auth :as auth]
+  (:require [cider.nrepl :refer [cider-nrepl-handler]]
+            [clojure.tools.nrepl.server :as nrepl-server]
+            [ctia.auth :as auth]
             [ctia.auth.allow-all :as allow-all]
             [ctia.auth.threatgrid :as threatgrid]
+            [ctia.events.producer :as producer]
+            [ctia.events.producers.es.producer :as es-producer]
+            [ctia.http.server :as http-server]
+            [ctia.lib.es.index :as es-index]
             [ctia.properties :as p]
             [ctia.store :as store]
-            [ctia.events.producer :as producer]
-            [ctia.stores.es.store :as es-store]
-            [ctia.events.producers.es.producer :as es-producer]
-            [ctia.lib.es.index :as es-index]
             [ctia.stores.atom.store :as as]
+            [ctia.stores.es.store :as es-store]
             [ctia.stores.sql.store :as ss]
             [ctia.stores.sql.db :as sql-db]
-            [ctia.stores.sql.judgement :as sql-judgement]))
+            [ctia.stores.sql.judgement :as sql-judgement]
+            [ring.adapter.jetty :as jetty]))
 
 (defn init-auth-service! []
   (let [auth-service-type (get-in @p/properties [:ctia :auth :type])]
@@ -94,8 +98,26 @@
                       {:message "Unknown service"
                        :requested-service producer-service-default})))))
 
-(defn init! []
+(defn start-ctia!
+  "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
+  [& {:keys [join? silent?]}]
+
+  ;; Configure everything
   (p/init!)
   (init-auth-service!)
   (init-store-service!)
-  (init-producer-service!))
+  (init-producer-service!)
+
+  ;; Start nREPL server
+  (let [{nrepl-port :port
+         nrepl-enabled? :enabled} (get-in @p/properties [:ctia :nrepl])]
+    (when (and nrepl-enabled? nrepl-port)
+      (when-not silent?
+        (println (str "Starting nREPL server on port " nrepl-port)))
+      (nrepl-server/start-server :port nrepl-port
+                                 :handler cider-nrepl-handler)))
+  ;; Start HTTP server
+  (let [http-port (get-in @p/properties [:ctia :http :port])]
+    (when-not silent?
+      (println (str "Starting HTTP server on port " http-port)))
+    (http-server/start! :join? join?)))

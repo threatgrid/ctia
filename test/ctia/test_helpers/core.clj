@@ -3,7 +3,7 @@
   (:require [ctia.auth :as auth]
             [ctia.auth.allow-all :as aa]
             [ctia.http.server :as http-server]
-            [ctia.main :as main]
+            [ctia.init :as init]
             [ctia.properties :as props]
             [ctia.store :as store]
             [ctia.stores.atom.store :as as]
@@ -80,7 +80,7 @@
   ;; (test), which _might_ briefly use up a lot of ports
   (with-properties ["ctia.http.port" (available-port)]
     (try
-      (main/start-ctia :join? false
+      (init/start-ctia! :join? false
                        :silent? true)
       (test)
       (finally

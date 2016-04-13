@@ -34,6 +34,7 @@
                  [hiccup "1.0.5"]]
 
   :resource-paths ["resources" "doc"]
+  :aot [ctia.main]
   :main ctia.main
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
