@@ -25,8 +25,8 @@
 
 (def ^{:private true} mapping "judgement")
 
-(def coerce-stored-judgement
-  (c/coercer! (s/maybe StoredJudgement)
+(def coerce-stored-judgement-list
+  (c/coercer! [(s/maybe StoredJudgement)]
               sc/json-schema-coercion-matcher))
 
 (def handle-create-judgement (crud/handle-create :judgement StoredJudgement))
@@ -55,11 +55,10 @@
   [state observable]
   (let [sort {:priority "desc"
               :disposition "asc"
-              "valid_time.start_time"
-              {:order "asc"
-               :mode "min"
-               :nested_filter
-               {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}
+              "valid_time.start_time" {:order "asc"
+                                       :mode "min"
+                                       :nested_filter
+                                       {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}
         query
         (active-judgements-by-observable-query observable)]
 
@@ -69,7 +68,7 @@
                           query
                           sort)
 
-         (map coerce-stored-judgement))))
+         coerce-stored-judgement-list)))
 
 (s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]

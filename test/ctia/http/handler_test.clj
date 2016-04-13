@@ -3,7 +3,7 @@
   (:require [ctia.http.handler :as handler]
             [ctia.test-helpers.core :refer [delete get post put] :as helpers]
             [ctia.test-helpers.db :as db-helpers]
-            [ctia.test-helpers.index :as index-helpers]
+            [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [ctia.schemas.common :as c]))
@@ -41,11 +41,9 @@
                                   helpers/fixture-ctia
                                   db-helpers/fixture-db-recreate-tables])
 
-      :es-store     (join-fixtures [index-helpers/fixture-properties:es-store
+      :es-store     (join-fixtures [es-helpers/fixture-properties:es-store
                                     helpers/fixture-ctia
-                                    index-helpers/fixture-clean-store-index])}
-
-
+                                    es-helpers/fixture-recreate-store-indexes])}
      ~@body))
 
 (deftest-for-each-store test-version-routes
