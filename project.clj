@@ -53,5 +53,4 @@
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]]
                    :resource-paths ["model"
-                                    "test/resources"]}
-             :ci {:jvm-opts ["-XX:MaxPermSize=256m"]}})
+                                    "test/resources"]}})

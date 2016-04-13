@@ -25,6 +25,8 @@
 (defn stop! []
   (swap! server
          (fn [^Server server]
-           (when server
-               (.stop server))
+           (when
+               (doto server
+                 (.stop)
+                 (.join)))
            nil)))
