@@ -11,10 +11,16 @@
 (defmacro deftest-for-each-producer [test-name & body]
   `(helpers/deftest-for-each-fixture ~test-name
      {:es-producer (join-fixtures [es-helpers/fixture-properties:es-producer
+                                   helpers/fixture-ctia
                                    es-helpers/fixture-recreate-producer-indexes])}
      ~@body))
 
+(defn check-produce-response [produced]
+  (map #(is (string? %)) produced))
+
+
 (deftest-for-each-producer test-producer-event-create
+
   (testing "Produce CreatedModel Event"
     (let [event {:owner "test-owner"
                  :timestamp (java.util.Date.)
@@ -27,8 +33,7 @@
 
           produced (produce event)]
 
-      (is string? produced))))
-
+      (check-produce-response produced))))
 
 (deftest-for-each-producer test-producer-event-update
   (testing "Produce UpdatedModel Event"
@@ -45,7 +50,7 @@
 
           produced (produce event)]
 
-      (is string? produced))))
+      (check-produce-response produced))))
 
 (deftest-for-each-producer test-producer-event-delete
   (testing "Produce DeletedModel Event"
@@ -60,7 +65,7 @@
 
           produced (produce event)]
 
-      (is string? produced))))
+      (check-produce-response produced))))
 
 (deftest-for-each-producer test-producer-event-verdict-change
   (testing "Produce VerdictChange Event"
@@ -80,4 +85,4 @@
 
           produced (produce event)]
 
-      (is string? (produce event)))))
+      (check-produce-response produced))))
