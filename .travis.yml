@@ -21,4 +21,4 @@ services:
 # notifications:
 #   hipchat: [api token]@[room id or name]
 env:
-    - CTIA_STORE_ES_URI=http://127.0.0.1:9200 CTIA_STORE_ES_HOST=127.0.0.1 CTIA_STORE_ES_INDEXNAME=elasticsearch CTIA_PRODUCER_ES_URI=http://127.0.0.1:9200 CTIA_PRODUCER_ES_INDEXNAME=elasticsearch
+    - CTIA_STORE_ES_URI=http://127.0.0.1:9200 CTIA_STORE_ES_HOST=127.0.0.1 CTIA_STORE_ES_INDEXNAME=elasticsearch CTIA_PRODUCER_ES_URI=http://127.0.0.1:9200 CTIA_PRODUCER_ES_INDEXNAME=elasticsearch JVM_ARGS="-XX:MaxPermSize=256m"
