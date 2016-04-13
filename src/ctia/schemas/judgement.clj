@@ -37,7 +37,7 @@
    (s/optional-key :indicators) rel/RelatedIndicators})
 
 (s/defschema Type
-  (s/eq "judgement"))
+  (s/enum "judgement"))
 
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."

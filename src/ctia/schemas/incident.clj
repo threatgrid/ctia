@@ -173,7 +173,7 @@
     }))
 
 (s/defschema Type
-  (s/eq "incident"))
+  (s/enum "incident"))
 
 (s/defschema NewIncident
   (st/merge
