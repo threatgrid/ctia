@@ -1,12 +1,10 @@
-(ns ctia.import.threatgrid
+(ns ctia.import.threatgrid.judgements
   (:gen-class)
   (:import [javax.xml.bind DatatypeConverter])
   (:require [cheshire.core :as json]
-            [clojure.tools.cli :refer [parse-opts]]
             [clj-time.core :as t]
             [clj-time.format :as f]
-            [clj-http.client :as http]
-            [clojure.edn :as edn]))
+            [clj-http.client :as http]))
 
 (defn feed-judgements
   "Extract Judgement objects from a list of TG feed entries"
