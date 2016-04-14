@@ -34,6 +34,7 @@
                  [hiccup "1.0.5"]]
 
   :resource-paths ["resources" "doc"]
+  :aot [ctia.main]
   :main ctia.main
   :uberjar-name "server.jar"
   :min-lein-version "2.4.0"
@@ -53,4 +54,5 @@
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]]
                    :resource-paths ["model"
-                                    "test/resources"]}})
+                                    "test/resources"]}
+             :ci {:jvm-opts ["-XX:MaxPermSize=256m"]}})

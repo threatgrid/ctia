@@ -1,6 +1,6 @@
 language: clojure
 lein: lein2
-script: lein2 do clean, javac, test :all
+script: lein2 with-profile dev,ci do clean, javac, test :all
 
 # Cache our Maven deps to be kind to clojars
 cache:
@@ -14,10 +14,11 @@ jdk:
 #     only:
 #         - master
 before_script:
-    - cp test/resources/ctia-test.properties.ci resources/ctia-default.properties
     # Wait ES
     - until curl http://localhost:9200/; do sleep 1; done
 services:
     - elasticsearch
 # notifications:
 #   hipchat: [api token]@[room id or name]
+env:
+    - CTIA_STORE_ES_URI=http://127.0.0.1:9200 CTIA_STORE_ES_HOST=127.0.0.1 CTIA_STORE_ES_INDEXNAME=elasticsearch CTIA_PRODUCER_ES_URI=http://127.0.0.1:9200 CTIA_PRODUCER_ES_INDEXNAME=elasticsearch

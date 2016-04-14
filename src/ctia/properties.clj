@@ -4,12 +4,12 @@
             alternative properties file on the classpath, or by
             setting system properties."}
     ctia.properties
-    (:require [clojure.java.io :as io]
-              [clojure.string :as str]
-              [ctia.lib.map :as map]
-              [schema.coerce :as c]
-              [schema.core :as s])
-    (:import java.util.Properties))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [ctia.lib.map :as map]
+            [schema.coerce :as c]
+            [schema.core :as s])
+  (:import java.util.Properties))
 
 (def files
   "Property file names, they will be merged, with last one winning"
@@ -27,12 +27,13 @@
    set.  This is also used for selecting system properties to merge
    with the properties file."
   {(s/required-key "ctia.auth.type") s/Keyword
+   (s/optional-key "ctia.auth.threatgrid.cache") s/Bool
+   (s/optional-key "ctia.auth.threatgrid.whoami-url") s/Str
    (s/required-key "ctia.http.port") s/Int
    (s/required-key "ctia.http.min-threads") s/Int
    (s/required-key "ctia.http.max-threads") s/Int
    (s/optional-key "ctia.http.dev-reload") s/Bool
    (s/required-key "ctia.nrepl.enabled") s/Bool
-   (s/optional-key "auth.service.threatgrid.url") s/Str
    (s/optional-key "ctia.nrepl.port") s/Int
    (s/optional-key "ctia.store.type") s/Keyword
    (s/optional-key "ctia.store.sql.db.classname") s/Str
@@ -44,6 +45,7 @@
    (s/optional-key "ctia.store.es.port") s/Int
    (s/optional-key "ctia.store.es.clustername") s/Str
    (s/optional-key "ctia.store.es.indexname") s/Str
+   (s/optional-key "ctia.producer.type") s/Keyword
    (s/optional-key "ctia.producer.es.uri") s/Str
    (s/optional-key "ctia.producer.es.host") s/Str
    (s/optional-key "ctia.producer.es.port") s/Int

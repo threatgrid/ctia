@@ -9,18 +9,22 @@
 
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
-  (let [{:keys [dev-reload min-threads max-threads port]} (get-in @properties [:ctia :http])
-        handler (if dev-reload
-                  (wrap-reload handler/app)
-                  handler/app)]
-    (reset! server (jetty/run-jetty handler
-                                    {:port port
-                                     :min-threads min-threads
-                                     :max-threads max-threads
-                                     :join? join?}))))
+  (let [{:keys [dev-reload min-threads max-threads port]}
+        (get-in @properties [:ctia :http])]
+    (reset! server (let [server (jetty/run-jetty (if dev-reload
+                                                   (wrap-reload #'handler/app)
+                                                   #'handler/app)
+                                                 {:port port
+                                                  :min-threads min-threads
+                                                  :max-threads max-threads
+                                                  :join? join?})]
+                     (doto server
+                       (.setStopAtShutdown true)
+                       (.setStopTimeout (* 1000 10)))))))
 
 (defn stop! []
   (swap! server
-         (fn [^Server s]
-           (when s (.stop s))
+         (fn [^Server server]
+           (when server
+               (.stop server))
            nil)))

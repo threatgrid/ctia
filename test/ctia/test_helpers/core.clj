@@ -3,6 +3,7 @@
   (:require [ctia.auth :as auth]
             [ctia.auth.allow-all :as aa]
             [ctia.http.server :as http-server]
+            [ctia.init :as init]
             [ctia.properties :as props]
             [ctia.store :as store]
             [ctia.stores.atom.store :as as]
@@ -12,7 +13,8 @@
             [clojure.data :as cd]
             [clojure.edn :as edn]
             [clojure.test :as ct]
-            [schema.core :as schema]))
+            [schema.core :as schema])
+  (:import java.net.ServerSocket))
 
 (defmethod ct/assert-expr 'deep= [msg form]
   (let [a (second form)
@@ -27,11 +29,63 @@
          (ct/do-report {:type :pass, :message ~msg,
                         :expected '~form, :actual nil})))))
 
-(defn fixture-properties [f]
-  (with-redefs [props/files ["ctia-test.properties"]]
-    (props/init!))
+(defn valid-property? [prop]
+  (some #{prop} props/configurable-properties))
+
+(defn set-property [prop val]
+  (assert (valid-property? prop) "Tried to set unknown property")
+  (System/setProperty prop (str val)))
+
+(defn clear-property [prop]
+  (assert (valid-property? prop) "Tried to clear unknown property")
+  (System/clearProperty prop))
+
+(defn with-properties- [properties-map f]
+  (doseq [[property value] properties-map]
+    (set-property property (str value)))
+  (f)
+  (doseq [property (keys properties-map)]
+    (clear-property property)))
+
+(defmacro with-properties [properties-vec & sexprs]
+  `(with-properties- ~(apply hash-map properties-vec)
+     (fn [] ~@sexprs)))
+
+(defn fixture-properties:clean [f]
+  ;; Remove any set system properties, presumably from a previous test
+  ;; run
+  (for [configurable-property props/configurable-properties]
+    (clear-property configurable-property))
+  ;; Override any properties that are in the default properties file
+  ;; yet are unsafe/undesirable for tests
+  (set-property "ctia.http.dev-reload" false)
+  (set-property "ctia.http.min-threads" 9)
+  (set-property "ctia.http.max-threads" 10)
+  (set-property "ctia.nrepl.enabled" false)
+  ;; Run tests
   (f))
 
+(defn fixture-properties:atom-store [f]
+  ;; Set properties to enable the atom store
+  (with-properties ["ctia.store.type" "memory"]
+    (f)))
+
+(defn available-port []
+  (with-open [sock (ServerSocket. 0)]
+    (.getLocalPort sock)))
+
+(defn fixture-ctia [test]
+  ;; Start CTIA
+  ;; This starts the server on a random port, once for each
+  ;; (test), which _might_ briefly use up a lot of ports
+  (with-properties ["ctia.http.port" (available-port)]
+    (try
+      (init/start-ctia! :join? false
+                       :silent? true)
+      (test)
+      (finally
+        ;; explicitly stop the http-server
+        (http-server/stop!)))))
 
 (defn fixture-schema-validation [f]
   (schema/with-fn-validation
@@ -42,47 +96,6 @@
     (reset! auth/auth-service (aa/->AuthService))
     (f)
     (reset! auth/auth-service orig-auth-srvc)))
-
-(defn init-atom [f]
-  (fn []
-    (f (atom {}))))
-
-(def atom-stores
-  {store/actor-store          (init-atom as/->ActorStore)
-   store/judgement-store      (init-atom as/->JudgementStore)
-   store/feedback-store       (init-atom as/->FeedbackStore)
-   store/campaign-store       (init-atom as/->CampaignStore)
-   store/coa-store            (init-atom as/->COAStore)
-   store/exploit-target-store (init-atom as/->ExploitTargetStore)
-   store/incident-store       (init-atom as/->IncidentStore)
-   store/indicator-store      (init-atom as/->IndicatorStore)
-   store/sighting-store       (init-atom as/->SightingStore)
-   store/ttp-store            (init-atom as/->TTPStore)
-   store/identity-store       (init-atom as/->IdentityStore)})
-
-(defn fixture-store [store-map]
-  (fn [f]
-    (doseq [[store impl-fn] store-map]
-      (reset! store (impl-fn)))
-    (f)
-    (doseq  [store (keys store-map)]
-      (reset! store nil))))
-
-(defn fixture-producers [producers]
-  (fn [f]
-    (dorun
-     (map (fn [impl-fn]
-            (swap! producer/event-producers conj (impl-fn))) producers))
-    (f)
-    (reset! producer/event-producers [])))
-
-
-(def fixture-atom-store (fixture-store atom-stores))
-
-(defn fixture-http-server [f]
-  (http-server/start! :join? false)
-  (f)
-  (http-server/stop!))
 
 (defn set-capabilities! [login role caps]
   (store/create-identity @store/identity-store
