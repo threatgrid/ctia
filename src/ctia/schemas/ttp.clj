@@ -125,31 +125,8 @@
    {(s/optional-key :valid_time) c/ValidTime}))
 
 (s/defschema StoredTTP
-  "A TTP as stored in the data store"
-  (st/merge TTP
-            {:type (s/eq "ttp")
-             :owner s/Str
-             :created c/Time
-             :modified c/Time}))
+  "An ttp as stored in the data store"
+  (c/stored-schema "ttp" TTP))
 
-(s/defn realize-ttp :- StoredTTP
-  ([new-ttp :- NewTTP
-    id :- s/Str
-    login :- s/Str]
-   (realize-ttp new-ttp id login nil))
-  ([new-ttp :- NewTTP
-    id :- s/Str
-    login :- s/Str
-    prev-ttp :- (s/maybe StoredTTP)]
-   (let [now (time/now)]
-     (assoc new-ttp
-            :id id
-            :type "ttp"
-            :owner login
-            :created (or (:created prev-ttp) now)
-            :modified now
-            :valid_time (or (:valid_time prev-ttp)
-                            {:start_time (or (get-in new-ttp [:valid_time :start_time])
-                                             now)
-                             :end_time (or (get-in new-ttp [:valid_time :end_time])
-                                           time/default-expire-date)})))))
+(def realize-ttp
+  (c/default-realize-fn "ttp" NewTTP StoredTTP))

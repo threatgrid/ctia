@@ -28,7 +28,7 @@
     }))
 
 (s/defschema Type
-  (s/eq "actor"))
+  (s/enum "actor"))
 
 (s/defschema NewActor
   "Schema for submitting new Actors"
@@ -41,30 +41,7 @@
 
 (s/defschema StoredActor
   "An actor as stored in the data store"
-  (st/merge Actor
-            {:type Type
-             :owner s/Str
-             :created c/Time
-             :modified c/Time}))
+  (c/stored-schema "actor" Actor))
 
-(s/defn realize-actor :- StoredActor
-  ([new-actor :- NewActor
-    id :- s/Str
-    login :- s/Str]
-   (realize-actor new-actor id login nil))
-  ([new-actor :- NewActor
-    id :- s/Str
-    login :- s/Str
-    prev-actor :- (s/maybe StoredActor)]
-   (let [now (time/now)]
-     (assoc new-actor
-            :id id
-            :type "actor"
-            :owner login
-            :created (or (:created prev-actor) now)
-            :modified now
-            :valid_time (or (:valid_time prev-actor)
-                            {:end_time (or (get-in new-actor [:valid_time :end_time])
-                                           time/default-expire-date)
-                             :start_time (or (get-in new-actor [:valid_time :start_time])
-                                             now)})))))
+(def realize-actor
+  (c/default-realize-fn "actor" NewActor StoredActor))

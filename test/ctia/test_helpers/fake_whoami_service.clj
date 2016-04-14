@@ -2,16 +2,16 @@
   (:require [cheshire.core :as json]
             [ctia.auth :as auth]
             [ctia.auth.threatgrid :as threatgrid]
+            [ctia.test-helpers.core :as helpers-core]
             [schema.core :as s]
             [ctia.auth :as ctia-auth]
             [ring.adapter.jetty :as jetty]
             [ring.middleware.params :as params])
-  (:import java.net.ServerSocket
-           org.eclipse.jetty.server.Server))
+  (:import org.eclipse.jetty.server.Server))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; Protocols
+;; Protocol
 ;;
 
 (defprotocol IFakeWhoAmIServer
@@ -73,9 +73,6 @@
                            "title" title}})})))))
 
 (defrecord FakeWhoAmIService [whoami-fn server requests url port token->response]
-  threatgrid/IWhoAmI
-  (whoami [_ token]
-    (whoami-fn token))
   IFakeWhoAmIServer
   (start-server [this]
     (reset! server (jetty/run-jetty (-> (make-handler this)
@@ -114,6 +111,8 @@
       :port port
       :token->response (atom {})})))
 
+(defonce fake-whoami-service (atom nil))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Fixtures & Test Helpers
@@ -144,30 +143,30 @@
    (set-whoami-response token (->whoami-response login role)))
   ([token :- s/Str
     response :- WhoAmIResponse]
-   (register-token-response (:whoami-service @auth/auth-service)
+   (register-token-response @fake-whoami-service
                             token
                             response)))
 
-(defn available-port []
-  (with-open [sock (ServerSocket. 0)]
-    (.getLocalPort sock)))
-
-(defn fixture-server [test]
-  (try
-    (let [orig-auth-srvc @auth/auth-service]
-      (try
-        (reset! auth/auth-service (threatgrid/make-auth-service
-                                   (make-fake-whoami-service (available-port))
-                                   threatgrid/lookup-stored-identity))
-        (start-server (:whoami-service @auth/auth-service))
-        (test)
-        (finally
-          (stop-server (:whoami-service @auth/auth-service))
-          (reset! auth/auth-service orig-auth-srvc))))))
+(defn fixture-server
+  "Start and stop a fake whoami service. Sets the auth property with the URL to
+   the service, so the CTIA instance/HTTP server should be started after this."
+  [test]
+  (let [port (helpers-core/available-port)]
+    (reset! fake-whoami-service (make-fake-whoami-service port))
+    (try
+      (start-server @fake-whoami-service)
+      (helpers-core/with-properties
+        ["ctia.auth.threatgrid.whoami-url" (str "http://localhost:" port "/")
+         "ctia.auth.threatgrid.cache" false
+         "ctia.auth.type" "threatgrid"]
+        (test))
+      (finally
+        (stop-server @fake-whoami-service)))
+    (reset! fake-whoami-service nil)))
 
 (defn fixture-reset-state
-  "Meant to be triggered inside of fixture-server, eg fixture :once
+  "May be used inside of fixture-server, eg fixture :once
    fixture-server and fixture :each fixture-reset-state."
   [test]
-  (clear-all (:whoami-service @auth/auth-service))
+  (clear-all @fake-whoami-service)
   (test))

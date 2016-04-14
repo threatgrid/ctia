@@ -76,7 +76,7 @@ your own `resources/ctia.properties` file with the following values:
 ```
 ctia.store.default=es
 ctia.store.es.uri=http://192.168.99.100:9200
-ctia.producer.es.uri=http://92.168.99.100:9200
+ctia.producer.es.uri=http://192.168.99.100:9200
 ```
 
 It can be very useful to use _Kitematic_ to monitor and interact with

@@ -50,7 +50,7 @@
     }))
 
 (s/defschema Type
-  (s/eq "COA"))
+  (s/enum "COA"))
 
 (s/defschema NewCOA
   "Schema for submitting new COAs"
@@ -62,31 +62,8 @@
     (s/optional-key :type) Type}))
 
 (s/defschema StoredCOA
-  "A COA as stored in the data store"
-  (st/merge COA
-            {:type Type
-             :owner s/Str
-             :created c/Time
-             :modified c/Time}))
+  "An coa as stored in the data store"
+  (c/stored-schema "COA" COA))
 
-(s/defn realize-coa :- StoredCOA
-  ([new-coa :- NewCOA
-    id :- s/Str
-    login :- s/Str]
-   (realize-coa new-coa id login nil))
-  ([new-coa :- NewCOA
-    id :- s/Str
-    login :- s/Str
-    prev-coa :- (s/maybe StoredCOA)]
-   (let [now (time/now)]
-     (st/assoc new-coa
-               :id id
-               :type "COA"
-               :owner login
-               :created (or (:created prev-coa) now)
-               :modified now
-               :valid_time (or (:valid_time prev-coa)
-                               {:end_time (or (get-in new-coa [:valid_time :end_time])
-                                              time/default-expire-date)
-                                :start_time (or (get-in new-coa [:valid_time :start_time])
-                                                now)})))))
+(def realize-coa
+  (c/default-realize-fn "COA" NewCOA StoredCOA))

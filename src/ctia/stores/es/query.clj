@@ -48,7 +48,7 @@
    {:range
     {"valid_time.end_time" {"gt" "now/d"}}}])
 
-(defn unexpired-judgements-by-observable-query
+(defn active-judgements-by-observable-query
   "a filtered query to get judgements for the specified
   observable, where valid time is in now range"
 

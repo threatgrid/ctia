@@ -1,50 +1,9 @@
 (ns ctia.stores.es.coa
-  (:import java.util.UUID)
-  (:require
-   [schema.core :as s]
-   [ctia.schemas.coa :refer [COA
-                             NewCOA
-                             realize-coa]]
-   [ctia.stores.es.document :refer [create-doc
-                                    update-doc
-                                    get-doc
-                                    delete-doc
-                                    search-docs]]))
+  (:require [ctia.stores.es.crud :as crud]
+            [ctia.schemas.coa :refer [StoredCOA]]))
 
-(def ^{:private true} mapping "coa")
-
-(defn- make-id [schema j]
-  (str "coa" "-" (UUID/randomUUID)))
-
-(defn handle-create-coa [state login new-coa]
-  (let [id (make-id COA new-coa)
-        realized (realize-coa new-coa id login)]
-    (create-doc (:conn state)
-                (:index state)
-                mapping
-                realized)))
-
-(defn handle-update-coa [state login id new-coa]
-  (update-doc (:conn state)
-              (:index state)
-              mapping
-              id
-              new-coa))
-
-(defn handle-read-coa [state id]
-  (get-doc (:conn state)
-           (:index state)
-           mapping
-           id))
-
-(defn handle-delete-coa [state id]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              id))
-
-(defn handle-list-coas [state filter-map]
-  (search-docs (:conn state)
-               (:index state)
-               mapping
-               filter-map))
+(def handle-create-coa (crud/handle-create :coa StoredCOA))
+(def handle-read-coa (crud/handle-read :coa StoredCOA))
+(def handle-update-coa (crud/handle-update :coa StoredCOA))
+(def handle-delete-coa (crud/handle-delete :coa StoredCOA))
+(def handle-list-coas (crud/handle-find :coa StoredCOA))

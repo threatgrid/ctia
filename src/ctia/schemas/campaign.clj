@@ -44,7 +44,7 @@
     }))
 
 (s/defschema Type
-  (s/eq "campaign"))
+  (s/enum "campaign"))
 
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"
@@ -55,32 +55,10 @@
    {(s/optional-key :valid_time) c/ValidTime
     (s/optional-key :type) Type}))
 
-(s/defschema StoredCampaign
-  "A schema as stored in the data store"
-  (st/merge Campaign
-            {:type Type
-             :owner s/Str
-             :created c/Time
-             :modified c/Time}))
 
-(s/defn realize-campaign :- StoredCampaign
-  ([new-campaign :- NewCampaign
-    id :- s/Str
-    login :- s/Str]
-   (realize-campaign new-campaign id login nil))
-  ([new-campaign :- NewCampaign
-    id :- s/Str
-    login :- s/Str
-    prev-campaign :- (s/maybe StoredCampaign)]
-   (let [now (time/now)]
-     (assoc new-campaign
-            :id id
-            :type "campaign"
-            :owner login
-            :created (or (:created prev-campaign) now)
-            :modified now
-            :valid_time (or (:valid_time prev-campaign)
-                            {:end_time (or (get-in new-campaign [:valid_time :end_time])
-                                           time/default-expire-date)
-                             :start_time (or (get-in new-campaign [:valid_time :start_time])
-                                             now)})))))
+(s/defschema StoredCampaign
+  "An campaign as stored in the data store"
+  (c/stored-schema "campaign" Campaign))
+
+(def realize-campaign
+  (c/default-realize-fn "campaign" NewCampaign StoredCampaign))
