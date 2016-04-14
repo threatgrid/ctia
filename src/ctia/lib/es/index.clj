@@ -1,5 +1,6 @@
 (ns ctia.lib.es.index
   (:require
+   [clojure.core.memoize :as memo]
    [schema.core :as s]
    [clj-time.core :as t]
    [clojurewerkz.elastisch.native :as n]
@@ -14,6 +15,9 @@
   (s/either
    clojurewerkz.elastisch.rest.Connection
    org.elasticsearch.client.transport.TransportClient))
+
+(def alias-create-cache-ttl-ms
+  (* 1000 60 5))
 
 (s/defschema ESConnState
   {:index s/Str
@@ -90,11 +94,61 @@
     ((index-create-fn conn) conn index-name :mappings mappings)))
 
 (defn create-alias!
-  "create an index alias"
-  [conn index alias routing filter]
-  ((update-alias-fn conn)
-   conn
-   {:add {:index index
-          :alias alias
-          :routing routing
-          :filter filter}}))
+  "create an index alias simple or filtered"
+  ([conn index alias]
+   ((update-alias-fn conn)
+    conn
+    {:add {:index index
+           :alias alias}}))
+  ([conn index alias routing filter]
+   ((update-alias-fn conn)
+    conn
+    {:add {:index index
+           :alias alias
+           :routing routing
+           :filter filter}})))
+
+(s/defn create-aliased-index!
+  "create an index with an alias for a slice"
+  [state :- ESConnState
+   index-name :- s/Str]
+
+  (create!
+   (:conn state)
+   index-name
+   (:mapping state))
+
+  (create-alias!
+   (:conn state)
+   index-name
+   (:index state)))
+
+(s/defn create-filtered-alias!
+  "create a filtered index alias"
+  [state :- ESConnState
+   name :- s/Str
+   routing :- s/Str
+   filter :- {s/Any s/Any}]
+
+  (create!
+   (:conn state)
+   (:index state)
+   (:mapping state))
+
+  (create-alias!
+   (:conn state)
+   (:index state)
+   name
+   routing
+   filter))
+
+(def cached-create-filtered-alias!
+  (memo/ttl create-filtered-alias!
+            :ttl/threshold
+            alias-create-cache-ttl-ms))
+
+(def cached-create-aliased-index!
+  (memo/ttl create-aliased-index!
+            :ttl/threshold
+            alias-create-cache-ttl-ms))
+

@@ -27,9 +27,10 @@
   (clean-index! @store-conn-state-fixture)
   (f))
 
-(defn fixture-clean-producer-index [f]
-  (clean-index! @producer-conn-state-fixture)
-  (f))
+(defn fixture-purge-producer-indexes [f]
+  (f)
+  (es-index/delete! (:conn @producer-conn-state-fixture)
+                    (str (:index @producer-conn-state-fixture "*"))))
 
 (defn init-store-state [f]
   "spawn a store state

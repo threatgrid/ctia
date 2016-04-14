@@ -49,7 +49,10 @@
    (s/optional-key "ctia.producer.es.port") s/Int
    (s/optional-key "ctia.producer.es.clustername") s/Str
    (s/optional-key "ctia.producer.es.indexname") s/Str
-   (s/optional-key "ctia.producer.es.slice") s/Keyword})
+   (s/optional-key "ctia.producer.es.slicing.strategy")
+   (s/enum :filtered-alias :aliased-index)
+   (s/optional-key "ctia.producer.es.slicing.granularity")
+   (s/enum :minute :hour :day :week :month :year)})
 
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."
