@@ -1,3 +1,7 @@
+.DS_Store
+.lein-repl-history
 .lein-failures
 .nrepl-port
+.*.swp
 /target/
+resources/ctia.properties

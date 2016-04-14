@@ -1,11 +1,13 @@
-# Cisco Intel API
+[![Build Status](https://travis-ci.org/threatgrid/ctia.svg?branch=master)](https://travis-ci.org/threatgrid/ctia)
+[![Stories in Ready](https://badge.waffle.io/threatgrid/ctia.png?label=ready&title=Ready)](https://waffle.io/threatgrid/ctia)
+# Cisco Threat Intel API
 
-THIS IS NOT OPERATIONAL
+A Pragmattic, Operationalized Threat Intel Service and Data Model
 
-This is currently a API sketch, with a data model (schema) partially
-defined.  You can run it but most of the API calls will not function.
+For full documentation see [doc/index.md](doc/index.md)
 
-Documentation for the API is available once you have it running, at:
+Interactive, browser based documentation for the API is available once
+you have it running, at:
 
     http://localhost:3000/index.html
 
@@ -34,6 +36,8 @@ If you like, you can cider-connect to the NREPL listener that it
 starts by default.  Be sure NOT to run the service this way in
 production, unless you ensure access to the NREPL port is restricted.
 
+This will start up with non-persistent in-memory storage only.
+
 ### Packaging and running as standalone jar
 
 This is the proper way to run this in production.
@@ -47,9 +51,51 @@ java -jar target/server.jar
 
 `lein ring uberwar`
 
+## Development
+
+We provide a default `docker-compose-dev.yml` which will bring up the
+dependencies you need in containers.
+
+The easiest way to get running it to install
+[Docker Toolbox](https://www.docker.com/products/docker-toolbox) which
+includes all the dependencies you need to run Docker containers.
+
+On Mac OS X, start a terminal using "Docker QuickStart Terminal" application.
+
+You can then bring up a development environemnt:
+```
+docker-compose -f docker-compose-dev.yml build
+docker-compose -f docker-compose-dev.yml up
+```
+
+You will then need to tell your CTIA where to find it's dependencies.
+The services will be listening on your docker-machine's IP, which you
+can get with the command, `docker-machine ip`, and then you define
+your own `resources/ctia.properties` file with the following values:
+
+```
+ctia.store.default=es
+ctia.store.es.uri=http://192.168.99.100:9200
+ctia.producer.es.uri=http://192.168.99.100:9200
+```
+
+It can be very useful to use _Kitematic_ to monitor and interact with
+your containers.  You can also use _VirtualBox_ to modify the
+resources available to the VM that is running all of your containers.
+
+If you ever need to reset your entire dev environemnt, you can run
+tell `docker-compose` to rebuild all the containers from scratch:
+
+```
+docker-compose -f docker-compose-dev.yml up --force-recreate
+```
+
+
 ## License
 
-Copyright ©  2015 Cisco
+Copyright © 2015-2016 Cisco Systems
+
+Eclipse Public License v1.0
 
 
 ## Implementation Notes
@@ -65,74 +111,6 @@ metadata in our API definition (see handler.clj).
 
 ## Data Model
 
-The data model of CIA is closely based on
+The data model of CTIA is closely based on
 [STIX](http://stixproject.github.io/data-model/), with a few
 simplifications.  See [data structures](doc/data_structures.md) for details.
-
-# Design
-
-Support multiple CIAs references each other, so the IDs needs to be
-URIs realy, or UUIDs with a namespace that can be turned into a
-hostname easily.
-
-## Personas
-
-### Security Device
-
-### Security Operator
-
-### Incident Responder
-
-### Threat Analyst
-
-## Use Cases
-
-### As a security device, I would like ask if an IP or Domain is malicious
-
-    curl http://ciahost/cia/ip/192.168.1.1/verdict
-
-or
-
-    curl http://ciahost/cia/domain/badhost.com/verdict
-
-### As a security device, I would like to provide context for why an IP is malicious
-
-    curl http://ciahost/cia/ip/192.168.1.1/judgements
-
-### As an incident responder, I would like to know what malware is asociated with an IP
-
-For each jugement object returned by:
-
-    curl http://ciahost/cia/ip/192.168.1.1/judgements
-
-Extract the IDs from the `indicators` field
-
-Call curl http://ciahost/cia/indicators/ID
-
-### As a security operator, I would like to import a threat feed
-
-For each entry in the feed, based on the source of the feed, and it's
-content, choose a "origin" value such as "Bob's Threat Intel" and a
-reason such as "Known RAT IP"
-
-    curl -XPOST -d'{"disposition": 2, "observable": {...}' http://ciahost/cia/judgements
-
-### As a security operator, I would like to import an indicator
-
-    curl -XPOST -d'{"title":   }' http://ciahost/cia/indicators
-
-Extract the indicator ID from the created Indicator, and then import
-your observables with that indicator id.  Set the origin and reason as
-you would when creating a Judgement without an indicator.
-
-    curl -XPOST -d'{"disposition": 2, "indicator": ID, "observable": {...}' http://ciahost/cia/judgements
-
-### As a security operator, I would like to whitelist my internal IPs
-
-### As a security operator, I would like to record that an indicator was wrong
-
-### As a security device, I would like to pull down a set of verdicts as a feed
- - all new verdicts for a given observable type in this hour, or day?
- - all verdicts currently active for a given observable type?
- - limit to N items
- - needs to be paginated

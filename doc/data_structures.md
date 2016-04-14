@@ -1,6 +1,9 @@
 # Data Structures
 
-The data model of CIA is closely based on
+[Data Model Graph](model.png)
+[Data Model Graph as `.dot` ](model.dot)
+
+The data model of CTIA is closely based on
 [STIX](http://stixproject.github.io/data-model/) with a few
 simplifications:
 
@@ -18,7 +21,7 @@ simplifications:
   of interest.
 
   * We flatten some structured data to make it easier to deal with as
-  JSON and simpler, since we are dealing with specific cases in CIA.
+  JSON and simpler, since we are dealing with specific cases in CTIA.
   We will use default vocabularies whenever they are available.
 
   * We assume specific string representations for descriptions and
@@ -45,32 +48,33 @@ simplifications:
 <a name="actor"/>
 ## Actor
 
-| Key                                 | Value                                          | Mandatory? |
+| Key                                        | Value                                          | Mandatory? |
 | --- | ----- | ---------- |
-| id                                  | [ID](#id)                                      | &#10003;   |
-| title                               | string                                         | &#10003;   |
-| description                         | (string, ...)                                  | &#10003;   |
-| short_description                   | (string, ...)                                  | &#10003;   |
-| timestamp                           | [Time](#time)                                  | &#10003;   |
-| source                              | [Source](#source)                              |            |
-| identity                            | [Identity](#identity)                          |            |
-| type                                | [ThreatActorType](#threat_actor_type)          | &#10003;   |
-| motivation                          | [Motivation](#motivation)                      |            |
-| sophistication                      | [Sophistication](#sophistication)              |            |
-| Intended\_effect                    | [IntendedEffect](#intended_effect)             |            |
-| planning\_and\_operational\_support | string                                         |            |
-| observed_TTPs                       | ([RelatedTTP](#related_ttp), ...)              |            |
-| associated_campaigns                | ([RelatedCampaign](#associated_campaign), ...) |            |
-| associated_actors                   | ([RelatedActor](#related_actor), ...)          |            |
-| confidence                          | [HighMedLow](#high_med_low)                    |            |
-| expires                             | [Time](#time)                                  | &#10003;   |
+| id                                         | [ID](#id)                                      | &#10003;   |
+| title                                      | string                                         | &#10003;   |
+| description                                | (string, ...)                                  | &#10003;   |
+| short_description                          | (string, ...)                                  | &#10003;   |
+| timestamp                                  | [Time](#time)                                  | &#10003;   |
+| source                                     | [Source](#source)                              |            |
+| identity                                   | [Identity](#identity)                          |            |
+| actor\_type                                | [ThreatActorType](#threat_actor_type)          | &#10003;   |
+| motivation                                 | [Motivation](#motivation)                      |            |
+| sophistication                             | [Sophistication](#sophistication)              |            |
+| Intended\_effect                           | [IntendedEffect](#intended_effect)             |            |
+| planning\_and\_operational\_support        | string                                         |            |
+| observed_TTPs                              | ([RelatedTTP](#related_ttp), ...)              |            |
+| associated_campaigns                       | ([RelatedCampaign](#associated_campaign), ...) |            |
+| associated_actors                          | ([RelatedActor](#related_actor), ...)          |            |
+| confidence                                 | [HighMedLow](#high_med_low)                    |            |
+| expires                                    | [Time](#time)                                  | &#10003;   |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "actor"       | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 ### References
 
@@ -79,34 +83,35 @@ STIX [ThreatActorType](http://stixproject.github.io/data-model/1.2/ta/ThreatActo
 <a name="campaign"/>
 ## Campaign
 
-| Key                  | Value                                         | Mandatory? |
+| Key                           | Value                                         | Mandatory? |
 | --- | --- | --- |
-| id                   | [ID](#id)                                     | &#10003;   |
-| title                | string                                        | &#10003;   |
-| description          | (string, ...)                                 | &#10003;   |
-| short_description    | (string, ...)                                 | &#10003;   |
-| timestamp            | [Time](#time)                                 | &#10003;   |
-| version              | string                                        |            |
-| names                | string                                        |            |
-| intended_effect      | [IntendedEffect](#intended_effect)            |            |
-| status               | [CampaignStatus](#campaign_status)            |            |
-| related_TTPs         | ([RelatedTTP](#related_ttp), ...)             |            |
-| related_incidents    | ([RelatedIncident](#related_incident), ...)   |            |
-| attribution          | ([RelatedActor](#related_actor), ...)         |            |
-| associated_campaigns | ([RelatedCampaign](#realted_campaign), ...)   |            |
-| confidence           | [HighMedLow](#high_med_low)                   |            |
-| activity             | [Activity](#activity)                         |            |
-| source               | [Source](#source)                             |            |
-| type                 | string                                        | &#10003;   |
-| expires              | [Time](#time)                                 | &#10003;   |
-| indicators           | ([RelatedIndicator](#related_indicator), ...) | &#10003;   |
+| id                            | [ID](#id)                                     | &#10003;   |
+| title                         | string                                        | &#10003;   |
+| description                   | (string, ...)                                 | &#10003;   |
+| short_description             | (string, ...)                                 | &#10003;   |
+| timestamp                     | [Time](#time)                                 | &#10003;   |
+| version                       | string                                        |            |
+| names                         | string                                        |            |
+| intended_effect               | [IntendedEffect](#intended_effect)            |            |
+| status                        | [CampaignStatus](#campaign_status)            |            |
+| related_TTPs                  | ([RelatedTTP](#related_ttp), ...)             |            |
+| related_incidents             | ([RelatedIncident](#related_incident), ...)   |            |
+| attribution                   | ([RelatedActor](#related_actor), ...)         |            |
+| associated_campaigns          | ([RelatedCampaign](#realted_campaign), ...)   |            |
+| confidence                    | [HighMedLow](#high_med_low)                   |            |
+| activity                      | [Activity](#activity)                         |            |
+| source                        | [Source](#source)                             |            |
+| campaign_type                 | string                                        | &#10003;   |
+| expires                       | [Time](#time)                                 | &#10003;   |
+| indicators                    | ([RelatedIndicator](#related_indicator), ...) | &#10003;   |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "campaign"    | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 ### References
 
@@ -115,28 +120,29 @@ STIX [CampaignType](http://stixproject.github.io/data-model/1.2/campaign/Campaig
 <a name="coa"/>
 ## Course of Action (COA)
 
-| Key                | Value                             | Mandatory? |
+| Key                    | Value                             | Mandatory? |
 | --- | --- | --- |
-| id                 | [ID](#id)                         | &#10003;   |
-| title              | string                            | &#10003;   |
-| description        | (string, ...)                     | &#10003;   |
-| short\_description | (string, ...)                     | &#10003;   |
-| timestamp          | [Time](#time)                     |            |
-| stage              | [COAStage](#coa_stage)            |            |
-| type               | [COAType](#coa_type)              |            |
-| objective          | (string, ...)                     |            |
-| impact             | string                            |            |
-| cost               | [HighMedLow](#high_med_low)       |            |
-| efficacy           | [HighMedLow](#high_med_low)       |            |
-| source             | [Source](#source)                 |            |
-| related_COAs       | ([RelatedCOA](#related_coa), ...) |            |
+| id                     | [ID](#id)                         | &#10003;   |
+| title                  | string                            | &#10003;   |
+| description            | (string, ...)                     | &#10003;   |
+| short\_description     | (string, ...)                     | &#10003;   |
+| timestamp              | [Time](#time)                     |            |
+| stage                  | [COAStage](#coa_stage)            |            |
+| coa_type               | [COAType](#coa_type)              |            |
+| objective              | (string, ...)                     |            |
+| impact                 | string                            |            |
+| cost                   | [HighMedLow](#high_med_low)       |            |
+| efficacy               | [HighMedLow](#high_med_low)       |            |
+| source                 | [Source](#source)                 |            |
+| related_COAs           | ([RelatedCOA](#related_coa), ...) |            |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "campaign"    | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 ### References
 
@@ -162,10 +168,11 @@ STIX [CourseOfActionType](http://stixproject.github.io/data-model/1.2/coa/Course
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "COA"         | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 <a name="configuration"/>
 ### Configuration
@@ -222,10 +229,11 @@ A positive, neutral or negative feedback on a Judgement
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "feedback"    | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 <a name="incident"/>
 ## Incident
@@ -264,10 +272,11 @@ Stored instances will also receive the following fields, but MAY not be shared:
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "incident"    | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 <a name="history"/>
 ### History
@@ -420,7 +429,7 @@ JSON Example:
 | alternate\_ids | (string, ...) | | |
 | version | number | | |
 | negate | boolean | | |
-| type | ([IndicatorType](#indicator_type), ...) | | The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior |
+| indicator_type | ([IndicatorType](#indicator_type), ...) | | The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior |
 | valid\_time\_position | [ValidTime](#valid\_time) | | |
 | observable | [Observable](#observable) | | |
 | composite\_indicator\_expression | [CompositeIndicatorExpression](#composite\_indicator\_expression) | | |
@@ -440,10 +449,11 @@ JSON Example:
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "indicator"   | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 <a name="specification"/>
 ### Specification
@@ -526,10 +536,10 @@ STIX [IndicatorType](http://stixproject.github.io/data-model/1.2/indicator/Indic
 ## Judgement
 
 A statement about the intent of an Observable.  Since a core goal of
-the CIA is to provide a simple verdict service, these judgements are
+the CTIA is to provide a simple verdict service, these judgements are
 the basis for the returned verdicts.  These are also the primary means
-by which users of the CIA go from observables on their system, to the
-indicators and threat intelligence data in CIA.
+by which users of the CTIA go from observables on their system, to the
+indicators and threat intelligence data in CTIA.
 
 | Key               | Value                                         | Mandatory? | default       | description                                                        |
 | --- | --- | --- | --- | --- |
@@ -550,10 +560,11 @@ indicators and threat intelligence data in CIA.
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "judgement"   | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 ### Judgement Example
 
@@ -563,37 +574,38 @@ Here is a quick example using curl:
 curl -X POST --header "Content-Type: application/json" \
 --header "Accept: application/json" \
 -d '{"observable":{"type":"ip", "value":"127.0.0.1"},
-     "disposition":2, "source":"internet chat forum"}' "http://localhost:3000/cia/judgements"
+     "disposition":2, "source":"internet chat forum"}' "http://localhost:3000/ctia/judgements"
 ```
 
 <a name="ttp"/>
 ## Tools, Techniques, & Procedures (TTP)
 
-| Key                | Value                                                  | Mandatory? |
+| Key                    | Value                                                  | Mandatory? |
 | --- | --- | --- |
-| id                 | [ID](#id)                                              | &#10003;   |
-| title              | string                                                 | &#10003;   |
-| description        | (string, ...)                                          | &#10003;   |
-| short_description  | (string, ...)                                          | &#10003;   |
-| timestamp          | [Time](#time)                                          | &#10003;   |
-| version            | string                                                 |            |
-| intended_effect    | [IntendedEffect](#intended_effect)                     |            |
-| behavior           | [Behavior](#behavior)                                  |            |
-| resources          | [Resource](#resource)                                  |            |
-| victim\_targeting  | [VictimTargeting](#victim_targeting)                   |            |
-| exploit\_targeting | ([RelatedExploitTarget](#related_exploit_target), ...) |            |
-| related\_TTPs      | ([RelatedTTP](#related\_ttp), ...)                     |            |
-| source             | [Source](#source)                                      |            |
-| type               | string                                                 | &#10003;   |
-| expires            | [Time](#time)                                          | &#10003;   |
-| indicators         | ([IndicatorReference](#indicator_reference), ...)      | &#10003;   |
+| id                     | [ID](#id)                                              | &#10003;   |
+| title                  | string                                                 | &#10003;   |
+| description            | (string, ...)                                          | &#10003;   |
+| short_description      | (string, ...)                                          | &#10003;   |
+| timestamp              | [Time](#time)                                          | &#10003;   |
+| version                | string                                                 |            |
+| intended_effect        | [IntendedEffect](#intended_effect)                     |            |
+| behavior               | [Behavior](#behavior)                                  |            |
+| resources              | [Resource](#resource)                                  |            |
+| victim\_targeting      | [VictimTargeting](#victim_targeting)                   |            |
+| exploit\_targeting     | ([RelatedExploitTarget](#related_exploit_target), ...) |            |
+| related\_TTPs          | ([RelatedTTP](#related\_ttp), ...)                     |            |
+| source                 | [Source](#source)                                      |            |
+| ttp_type               | string                                                 | &#10003;   |
+| expires                | [Time](#time)                                          | &#10003;   |
+| indicators             | ([IndicatorReference](#indicator_reference), ...)      | &#10003;   |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "ttp"         | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 <a name="victim_targeting"/>
 ### VictimTargeting
@@ -675,10 +687,11 @@ to human words.
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
-| Key     | Value         | Description                              |
+| Key     | Value         | Description                               |
 | --- | --- | --- |
-| created | [Time](#time) | Timestamp when object was created in CIA |
-| owner   | string        | String identifying the creating user     |
+| type    | "verdict"     | Model type                                |
+| created | [Time](#time) | Timestamp when object was created in CTIA |
+| owner   | string        | String identifying the creating user      |
 
 ### Example Verdict
 
@@ -701,7 +714,7 @@ strings of the form: type-<128bitUUID>, for example
 `judgment-de305d54-75b4-431b-adb2-eb6b9e546014` for a
 [Judgement](#judgement).
 
-The CIA _ID_ field compares to the STIX _id_ field.  The optional STIX
+The CTIA _ID_ field compares to the STIX _id_ field.  The optional STIX
 _idref_ field is not used.
 
 <a name="uri"/>
@@ -712,7 +725,7 @@ string
 <a name="time"/>
 ### Time
 
-Time is stored internally as a Joda DateTime object, serialized as a
+Time is stored internally as a java.util.Date object, serialized as a
 string the field should follow the rules of the ISO8601 standard.
 
 <a name="time_structure"/>
@@ -791,7 +804,7 @@ string the field should follow the rules of the ISO8601 standard.
 
 An observable is a simple, atomic value that denotes an entity which
 as an identity that is stable enough to be attributed an intent or
-nature.  These do not exist as objects within the CIA storage model,
+nature.  These do not exist as objects within the CTIA storage model,
 you never create an observable.
 
 | Key   | Value                              | Mandatory? |
@@ -843,27 +856,6 @@ There are two types of relationship structures:
 2. Related object structures, which contain references along with
    meta data about the relationship.
 
-### References short-cut
-
-All _RelatedFoo_ style structures may be replaced with a list of
-references, when adding meta data is not desired.  For example, both
-of the following JSON structures are valid [RelatedCampaigns](#related_campaigns).
-
-#### RelatedCampaigns full form
-
-```json
-{"related_campaigns": [{"campaign": "campaign-sample-1",
-                        "confidence": "High"},
-                       {"campaign": "campaign-sample-2",
-                        "confidence": "Low"}]}
-```
-
-#### RelatedCampaigns short-cut form
-
-```json
-{"related_campaigns": ["campaign-sample-1", "campaign-sample-2"]
-```
-
 <a name="reference"/>
 <a name="actor_reference"/>
 <a name="campaign_reference"/>
@@ -884,9 +876,9 @@ references in this document (in the form of _FooReference_) indicate
 the type of object that is being pointed to.
 
 A reference may be an [ID](#id) when the object is available on the
-same CIA instance.  When the reference points to a remote CIA
+same CTIA instance.  When the reference points to a remote CIA
 instance, the reference must be full URL, such as
-`https://cia.someplace.else.org/judgement/de305d54-75b4-431b-adb2-eb6b9e546014`
+`https://ctia.someplace.else.org/judgement/de305d54-75b4-431b-adb2-eb6b9e546014`
 and that object should be retrievable at that URI.
 
 <a name="related_indicator"/>
@@ -894,6 +886,7 @@ and that object should be retrievable at that URI.
 
 | Key          | Value                                      | Mandatory? |
 | --- | --- | --- |
+| type         | "indicator"                                | &#10003;   |
 | confidence   | [HighMedLow](#high_med_low)                |            |
 | source       | [Source](#source)                          |            |
 | relationship | string                                     |            |
@@ -904,6 +897,7 @@ and that object should be retrievable at that URI.
 
 | Key          | Value                              | Mandatory? |
 | --- | --- | --- |
+| type         | "actor"                            | &#10003;   |
 | confidence   | [HighMedLow](#high\_med\_low)      |            |
 | source       | [Source](#source)                  |            |
 | relationship | string                             |            |
@@ -914,6 +908,7 @@ and that object should be retrievable at that URI.
 
 | Key          | Value                                    | Mandatory? |
 | --- | --- | --- |
+| type         | "campaign"                               | &#10003;   |
 | confidence   | [HighMedLow](#high_med_low)              |            |
 | source       | [Source](#source)                        |            |
 | relationship | string                                   |            |
@@ -924,6 +919,7 @@ and that object should be retrievable at that URI.
 
 | Key          | Value                          | Mandatory? |
 | --- | --- | --- |
+| type         | "COA"                          | &#10003;   |
 | confidence   | [HighMedLow](#high\_med\_low)  |            |
 | source       | [Source](#source)              |            |
 | relationship | string                         |            |
@@ -943,6 +939,7 @@ and that object should be retrievable at that URI.
 
 | Key             | Value                                                 | Mandatory? |
 | --- | --- | --- |
+| type            | "exploit-target"                                      | &#10003;   |
 | confidence      | [HighMedLow](#high_med_low)                           |            |
 | source          | [Source](#source)                                     |            |
 | relationship    | string                                                |            |
@@ -953,6 +950,7 @@ and that object should be retrievable at that URI.
 
 | Key          | Value                                    | Mandatory? |
 | --- | --- | --- |
+| type         | "incident"                               | &#10003;   |
 | confidence   | [HighMedLow](#high_med_low)              |            |
 | source       | [Source](#source)                        |            |
 | relationship | string                                   |            |
@@ -971,6 +969,7 @@ and that object should be retrievable at that URI.
 
 | Key          | Value                          | Mandatory? |
 | --- | --- | --- |
+| type         | "ttp"                          | &#10003;   |
 | confidence   | [HighMedLow](#high_med_low)    |            |
 | source       | [Source](#source)              |            |
 | relationship | string                         |            |
