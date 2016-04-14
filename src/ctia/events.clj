@@ -3,8 +3,8 @@
             [ctia.lib.time :as time]
             [ctia.schemas.common :as c]
             [ctia.schemas.verdict :as v]
-            [clojure.core.async :as a]
-            [schema.core :as s])
+            [clojure.core.async :as a :refer [go-loop <! chan tap]]
+            [schema.core :as s :refer [=>]])
   (:import [clojure.core.async Mult]
            [clojure.core.async.impl.protocols Channel]
            [clojure.core.async.impl.buffers FixedBuffer]
@@ -23,6 +23,10 @@
    :chan Channel
    :mult Mult
    :recent Channel})
+
+(s/defschema Event
+  "A structure that contains event info"
+  {s/Any s/Any})
 
 (s/defn new-event-channel :- EventChannel []
   (let [b (a/buffer *event-buffer-size*)
@@ -63,10 +67,10 @@
 
 (s/defn send-event
   "Send an event to a channel. Use the central channel by default"
-  ([event]
+  ([event :- Event]
    (send-event @central-channel event))
   ([{ch :chan} :- EventChannel
-    {:keys [owner timestamp http-params] :as event}]
+    {:keys [owner timestamp http-params] :as event} :- Event]
    (assert owner "Events cannot be registered without user info")
    (let [event (if timestamp event (assoc event :timestamp (time/now)))]
      (a/>!! ch event))))
@@ -152,3 +156,39 @@
    Defaults to attempting to get *event-buffer-size* events."
   ([] (recent-events *event-buffer-size*))
   ([n :- Long] (take n (drain (:recent @central-channel)))))
+
+
+(s/defn register-listener :- Channel
+  "Creates a GO loop to direct events to a function.
+   Takes an optional predicate to filter which events are sent to the function.
+   Can also take a specified event channel, rather than the central one.
+
+   ec - An event channel, created with new-event-channel.
+   f - user provided function that will be called when an event arrives on the event channel.
+   pred - a predicate to test events. The user function will only be run if this predicate passes.
+   shutdown-fn - an optional function to run at system shutdown time. May be nil."
+  ([f :- (=> s/Any Event)]
+   (register-listener @central-channel f (constantly true) nil))
+  ([f :- (=> s/Any Event)
+    pred :- (=> s/Bool Event)]
+   (register-listener @central-channel f pred nil))
+  ([{m :mult :as ec} :- EventChannel
+    f :- (=> s/Any Event)
+    pred :- (=> s/Bool Event)]
+   (register-listener @central-channel f pred nil))
+  ([{m :mult :as ec} :- EventChannel
+     f :- (=> s/Any Event)
+    pred :- (=> s/Bool Event)
+    shutdown-fn :- (s/maybe (=> s/Any))]
+   (let [events (chan)]
+     (tap m events)
+     (let [ch (go-loop []
+                (when-let [event (<! events)]
+                  (when (pred event)
+                    (f event))
+                  (recur)))]
+       (.addShutdownHook (Runtime/getRuntime)
+                         (Thread. #(do (a/close! ch)
+                                       (when (fn? shutdown-fn)
+                                         (shutdown-fn)))))
+       ch))))

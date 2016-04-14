@@ -13,6 +13,7 @@
                  [org.clojure/core.memoize "0.5.8"]
                  [org.clojure/tools.logging "0.3.1"]
                  [leiningen-core "2.6.1"] ;; For accessing project configuration
+                 [com.taoensso/carmine "2.12.2"]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]

@@ -44,6 +44,9 @@
                       "ctia.store.sql.db.subprotocol" s/Str
                       "ctia.store.sql.db.subname" s/Str
                       "ctia.store.sql.db.delimiters" s/Str
+                      "ctia.store.redis.uri" s/Str
+                      "ctia.store.redis.host" s/Str
+                      "ctia.store.redis.port" s/Int
                       "ctia.store.es.uri" s/Str
                       "ctia.store.es.host" s/Str
                       "ctia.store.es.port" s/Int

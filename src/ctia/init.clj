@@ -17,6 +17,8 @@
             [ctia.stores.sql.judgement :as sql-judgement]
             [ctia.flows.autoload :refer [autoload-hooks!]]
             [ctia.flows.hooks :as h]
+            [ctia.publish :as pub]
+            [ctia.events :as e]
             [ring.adapter.jetty :as jetty]))
 
 (defn init-auth-service! []
@@ -111,6 +113,8 @@
 
   ;; Configure everything
   (p/init!)
+  (e/init!)
+  (pub/init!)
   (init-auth-service!)
   (init-store-service!)
   (init-producer-service!)
