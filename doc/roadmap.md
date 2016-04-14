@@ -25,6 +25,9 @@ all user facing surfaces.
 ### Incident Response
 
   * [ ] 2.1 As an incident responder, I would like to know what malware is asociated with an IP
+  * [ ] 2.2 As an incident responder, I would like to know what campaigns are asociated with an IP
+  * [ ] 2.3 As an incident responder, I would like to know what suggest COAs are asociated with an IP
+  * [ ] 2.4 As an incident responder, I would like to record and incident and it's sightings
 
 ### Security Operator
 

@@ -60,6 +60,9 @@ Extract the IDs from the `suggested_COA.COA__id' fields and
 
     curl http://ciahost/cia/coa/ID
 
+### 2.4 As an incident responder, I would like to record and incident and it's sightings
+
+
 ## Security Operator
 
 ### 3.1 As a security operator, I would like to import a threat feed
