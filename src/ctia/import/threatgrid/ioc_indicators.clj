@@ -3,6 +3,7 @@
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
             [clj-time.format :as f]
+            [clojure.pprint :refer [pprint]]
             [ctia.domain.conversion :refer [->confidence]]
             [ctia.schemas.indicator :as si]
             [schema.core :as s]))
@@ -20,11 +21,12 @@
    (s/required-key "severity") s/Int
    (s/required-key "description") (s/maybe s/Str)})
 
-(defn ioc-indicator->cia-indicator [validate-ioc-fn validate-cia-fn]
+(defn ioc-indicator->ctia-indicator [validate-ioc-fn validate-ctia-fn]
   (fn [{:strs [name title description confidence variables created-at tags category]
         :as ioc-indicator}]
     (validate-ioc-fn ioc-indicator)
-    (validate-cia-fn (-> {:title name
+    (validate-ctia-fn (-> {:title name
+                          :type "indicator"
                           :short_description title
                           :description (str description)
                           :confidence (->confidence confidence)
@@ -37,7 +39,7 @@
                                                       (f/parse (:basic-date f/formatters)
                                                                created-at)))))))
 
-(defn ioc-indicators->cia-indicators
+(defn ioc-indicators->ctia-indicators
   [ioc-indicators & {:keys [validate?]
                      :or {validate? false}}]
   (let [validate-ioc (if validate?
@@ -46,52 +48,43 @@
         validate-ind (if validate?
                        (partial s/validate si/NewIndicator)
                        identity)
-        transform (ioc-indicator->cia-indicator validate-ioc validate-ind)]
+        transform (ioc-indicator->ctia-indicator validate-ioc validate-ind)]
     (for [ioc-indicator ioc-indicators]
       (transform ioc-indicator))))
 
 (defn load-indicators-from-ioc-file
-  [{:keys [dry-run? cia-url api-key]} file]
-  (let [ioc-indicators (-> (slurp file) json/parse-string)]
-    (if dry-run?
-      (doall (ioc-indicators->cia-indicators ioc-indicators :validate? true))
-      (doall
-       (for [indicator (ioc-indicators->cia-indicators ioc-indicators)]
-         (http/post (str cia-url "/cia/indicator")
-                    (-> {:content-type :json
-                         :accept :json
-                         :throw-exceptions false
-                         :socket-timeout 30000
-                         :conn-timeout 30000
-                         :body (json/generate-string indicator)}
-                        (cond-> api-key (assoc :headers {"api_key" api-key})))))))))
+  [ioc-indicators & {:keys [dry-run? ctia-url api-key]}]
+  (doall
+   (if dry-run?
+     (ioc-indicators->ctia-indicators ioc-indicators :validate? true)
+     (for [indicator (ioc-indicators->ctia-indicators ioc-indicators)]
+       (http/post (str ctia-url "/ctia/indicator")
+                  (-> {:content-type :json
+                       :accept :json
+                       :throw-exceptions true
+                       :socket-timeout 30000
+                       :conn-timeout 30000
+                       :body (json/generate-string indicator)}
+                      (cond-> api-key (assoc :headers {"api_key" api-key}))))))))
 
-(comment
-  (first
-   (loop [[indicator & rest-indicators] (->> (slurp "/Users/stevsloa/Downloads/ioc-definitions-2.json")
-                                             json/parse-string)
-          validation-failures []]
-     (cond
-       (nil? indicator)
-       validation-failures
+(defn -main [& [file-path url api-key :as _args_]]
+  (assert (not-empty file-path), "File path must be set")
+  (assert (not-empty url), "URL must be set")
 
-       (try (ioc-indicator->cia-indicator indicator)
-            true
-            (catch Throwable _ false))
-       (recur rest-indicators validation-failures)
-
-       :else
-       (recur rest-indicators (conj validation-failures indicator)))))
-
-  (def results
-    (doall
-     (load-indicators-from-ioc-file
-      "/Users/stevsloa/Downloads/ioc-definitions-2.json"
-      "http://128.107.19.200:3000")))
-
-  (->> results
-       (map :body)
-       (map json/parse-string)
-       (map #(hash-map (get % "title") (get % "id")))
-       pr-str
-       (spit "/Users/stevsloa/Desktop/ioc_indicator_names.edn")))
+  (let [ioc-indicators (-> (slurp file-path) json/parse-string)]
+    (println "Checking Indicators...")
+    (load-indicators-from-ioc-file ioc-indicators
+                                   :dry-run true
+                                   :ctia-url url
+                                   :api-key (not-empty api-key))
+    (println "Loading Indicators...")
+    (let [results
+          (load-indicators-from-ioc-file ioc-indicators
+                                         :dry-run false
+                                         :ctia-url url
+                                         :api-key (not-empty api-key))]
+      (->> results
+           (map :body)
+           (map json/parse-string)
+           (map #(hash-map (get % "title") (get % "id")))
+           pprint))))
