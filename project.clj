@@ -12,6 +12,7 @@
                  [org.slf4j/slf4j-log4j12 "1.7.21"]
                  [org.clojure/core.memoize "0.5.8"]
                  [org.clojure/tools.logging "0.3.1"]
+                 [leiningen-core "2.6.1"] ;; For accessing project configuration
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]
@@ -53,6 +54,21 @@
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]]
+                   :plugins [[lein-ring "0.9.6"]]
                    :resource-paths ["model"
                                     "test/resources"]}
-             :ci {:jvm-opts ["-XX:MaxPermSize=256m"]}})
+             :ci {:jvm-opts ["-XX:MaxPermSize=256m"]}
+             :test {:dependencies [[cheshire "5.5.0"]
+                                  [com.h2database/h2 "1.4.191"]
+                                  [org.clojure/test.check "0.9.0"]]
+                   :hooks-classes {:before-create [ctia.hook.AutoLoadedJar1
+                                                   hook-example.core/HookExample1
+                                                   ctia.hook.AutoLoadedJar2
+                                                   hook-example.core/HookExample2]}
+                   :java-source-paths ["hooks/ctia", "test/java"]
+                   :plugins [[lein-ring "0.9.6"]]
+                   :resource-paths ["model"
+                                    "test/resources"
+                                    "test/resources/hooks/JarHook.jar"
+                                    "test/resources/hooks/AutoloadHook.jar"
+                                    "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}})

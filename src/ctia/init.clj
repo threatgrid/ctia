@@ -15,6 +15,8 @@
             [ctia.stores.sql.store :as ss]
             [ctia.stores.sql.db :as sql-db]
             [ctia.stores.sql.judgement :as sql-judgement]
+            [ctia.flows.autoload :refer [autoload-hooks!]]
+            [ctia.flows.hooks :as h]
             [ring.adapter.jetty :as jetty]))
 
 (defn init-auth-service! []
@@ -89,6 +91,13 @@
       (throw (ex-info "Store service not configured"
                       {:message "Unknown service"
                        :requested-service store-service-default})))))
+(defn init-hooks!
+  "Load all the hooks, init them and assure to
+  call `destroy` on all hooks when shutting down."
+  []
+  (autoload-hooks!)
+  (h/init-hooks!)
+  (h/add-destroy-hooks-hook-at-shutdown))
 
 (defn init-producer-service! []
   (let [producer-service-default (get-in @p/properties [:ctia :producer :type])]
@@ -107,6 +116,7 @@
   (init-auth-service!)
   (init-store-service!)
   (init-producer-service!)
+  (init-hooks!)
 
   ;; Start nREPL server
   (let [{nrepl-port :port
