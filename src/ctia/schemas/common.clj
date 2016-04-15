@@ -55,7 +55,7 @@
 
 (s/defschema GenericStixIdentifiers
   "These fields are common in STIX data models"
-  (merge
+  (st/merge
    MinimalStixIdentifiers
    {:title s/Str
     :description s/Str
@@ -63,25 +63,21 @@
 
 (s/defschema Tool
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
-  {:description s/Str
-   (s/optional-key :type)
-   (describe [v/AttackToolType] "type of the tool leveraged")
-   (s/optional-key :references)
-   (describe [s/Str] "references to instances or additional information for this tool")
-   (s/optional-key :vendor)
-   (describe s/Str "information identifying the vendor organization for this tool")
-   (s/optional-key :version)
-   (describe s/Str "version descriptor of this tool")
-   (s/optional-key :service_pack)
-   (describe s/Str "service pack descriptor for this tool")
-   ;; Not provided: tool_specific_data
-   ;; Not provided: tool_hashes
-   ;; Not provided: tool_configuration
-   ;; Not provided: execution_environment
-   ;; Not provided: errors
-   ;; Not provided: metadata
-   ;; Not provided: compensation_model
-   })
+  (st/merge {:description s/Str}
+         (st/optional-keys
+          {:type (describe [v/AttackToolType] "type of the tool leveraged")
+           :references (describe [s/Str] "references to instances or additional information for this tool")
+           :vendor (describe s/Str "information identifying the vendor organization for this tool")
+           :version (describe s/Str "version descriptor of this tool")
+           :service_pack (describe s/Str "service pack descriptor for this tool")
+           ;; Not provided: tool_specific_data
+           ;; Not provided: tool_hashes
+           ;; Not provided: tool_configuration
+           ;; Not provided: execution_environment
+           ;; Not provided: errors
+           ;; Not provided: metadata
+           ;; Not provided: compensation_model
+           })))
 
 (s/defschema ScopeWrapper
   "For merging into other structures; Commonly repeated structure"
@@ -89,30 +85,25 @@
 
 (s/defschema Contributor
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ContributorType/"
-  {(s/optional-key :role)
-   (describe s/Str "role played by this contributor")
-   (s/optional-key :name)
-   (describe s/Str "name of this contributor")
-   (s/optional-key :email)
-   (describe s/Str "email of this contributor")
-   (s/optional-key :phone)
-   (describe s/Str "telephone number of this contributor")
-   (s/optional-key :organization)
-   (describe s/Str "organization name of this contributor")
-   (s/optional-key :date)
-   (describe Time "description (bounding) of the timing of this contributor's involvement")
-   (s/optional-key :contribution_location)
-   (describe s/Str "information describing the location at which the contributory activity occured")})
+  (st/optional-keys
+   {:role (describe s/Str "role played by this contributor")
+    :name (describe s/Str "name of this contributor")
+    :email (describe s/Str "email of this contributor")
+    :phone (describe s/Str "telephone number of this contributor")
+    :organization (describe s/Str "organization name of this contributor")
+    :date (describe Time "description (bounding) of the timing of this contributor's involvement")
+    :contribution_location (describe s/Str "information describing the location at which the contributory activity occured")}))
 
 (s/defschema RelatedIdentity
   "See http://stixproject.github.io/data-model/1.2/stixCommon/RelatedIdentityType/"
-  {(s/optional-key :confidence)
-   (describe v/HighMedLow "specifies the level of confidence in the assertion of the relationship between the two components")
-   (s/optional-key :information_source)
-   (describe s/Str "specifies the source of the information about the relationship between the two components")
-   (s/optional-key :relationship) s/Str ;; empty vocab
-   :identity (describe Reference "A reference to or representation of the related Identity") ;; Points to Identity
-   })
+  (st/merge {:identity (describe Reference "A reference to or representation of the related Identity")} ;; Points to Identity
+            (st/optional-keys
+             {:confidence (describe v/HighMedLow
+                                    "specifies the level of confidence in the assertion of the relationship between the two components")
+              :information_source (describe s/Str
+                                            "specifies the source of the information about the relationship between the two components")
+              :relationship s/Str ;; empty vocab
+              })))
 
 (s/defschema Identity
   "See http://stixproject.github.io/data-model/1.2/stixCommon/IdentityType/"

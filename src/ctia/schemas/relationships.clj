@@ -18,9 +18,10 @@
 
 (defn enriched-ref [reference-map]
   (st/merge
-   {(s/optional-key :confidence) v/HighMedLow
-    (s/optional-key :source) s/Str
-    (s/optional-key :relationship) s/Str}
+   (st/optional-keys
+    {:confidence v/HighMedLow
+     :source s/Str
+     :relationship s/Str})
    reference-map))
 
 (s/defschema RelatedIndicator

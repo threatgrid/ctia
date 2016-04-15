@@ -50,67 +50,36 @@
 
 (s/defschema Resource
   "See http://stixproject.github.io/data-model/1.2/ttp/ResourceType/"
-  {(s/optional-key :tools)
-   (describe [c/Tool] "one or more Tools leveraged by this TTP")
-
-   (s/optional-key :infrastructure)
-   (describe Infrastructure "infrastructure observed to have been utilized for cyber attack")
-
-   (s/optional-key :providers)
-   [c/Identity]})
+  (st/optional-keys
+   {:tools (describe [c/Tool] "one or more Tools leveraged by this TTP")
+    :infrastructure (describe Infrastructure "infrastructure observed to have been utilized for cyber attack")
+    :providers [c/Identity]}))
 
 (s/defschema VictimTargeting
   "See http://stixproject.github.io/data-model/1.2/ttp/VictimTargetingType/"
-  {(s/optional-key :identity)
-   (describe c/Identity "infrastructure observed to have been utilized for cyber attack")
-
-   (s/optional-key :targeted_systems)
-   (describe [v/SystemType] "type of system that is targeted")
-
-   (s/optional-key :targeted_information)
-   (describe [v/InformationType] "a type of information that is targeted")
-
-   (s/optional-key :targeted_observables)
-   (describe [c/Observable] "targeted observables")}) ;; Was targeted_technical_details
+  (st/optional-keys
+   {:identity (describe c/Identity "infrastructure observed to have been utilized for cyber attack")
+    :targeted_systems (describe [v/SystemType] "type of system that is targeted")
+    :targeted_information (describe [v/InformationType] "a type of information that is targeted")
+    :targeted_observables (describe [c/Observable] "targeted observables")})) ;; Was targeted_technical_details
 
 (s/defschema TTP
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
   (merge
    c/GenericStixIdentifiers
-   {:valid_time
-    (describe c/ValidTime "a timestamp for the definition of a specific version of a TTP item")
-
-    (s/optional-key :version)
-    (describe s/Str "the relevant schema version for this content")
-
-    (s/optional-key :intended_effect)
-    (describe v/IntendedEffect "the suspected intended effect for this TTP")
-
-    (s/optional-key :behavior)
-    (describe Behavior "describes the attack patterns, malware, or exploits that the attacker leverages to execute this TTP")
-
-    (s/optional-key :resources)
-    (describe Resource "infrastructure or tools that the adversary uses to execute this TTP")
-
-    (s/optional-key :victim_targeting)
-    (describe VictimTargeting "characterizes the people, organizations, information or access being targeted")
-
-    (s/optional-key :exploit_targets)
-    (describe rel/RelatedExploitTargets "potential vulnerability, weakness or configuration targets for exploitation by this TTP")
-
-    (s/optional-key :related_TTPs)
-    (describe rel/RelatedTTPs "specifies other TTPs asserted to be related to this cyber threat TTP")
-
-    (s/optional-key :source)
-    (describe s/Str "source of this cyber threat TTP")
-
-    ;; Extension fields:
-    :ttp_type
-    (describe s/Str "type of this TTP")
-
-    :indicators
-    (describe [rel/IndicatorReference] "related indicators")
-
+   {:valid_time (describe c/ValidTime "a timestamp for the definition of a specific version of a TTP item")}
+   (st/optional-keys
+    {:version (describe s/Str "the relevant schema version for this content")
+     :intended_effect (describe v/IntendedEffect "the suspected intended effect for this TTP")
+     :behavior (describe Behavior "describes the attack patterns, malware, or exploits that the attacker leverages to execute this TTP")
+     :resources (describe Resource "infrastructure or tools that the adversary uses to execute this TTP")
+     :victim_targeting (describe VictimTargeting "characterizes the people, organizations, information or access being targeted")
+     :exploit_targets (describe rel/RelatedExploitTargets "potential vulnerability, weakness or configuration targets for exploitation by this TTP")
+     :related_TTPs (describe rel/RelatedTTPs "specifies other TTPs asserted to be related to this cyber threat TTP")
+     :source (describe s/Str "source of this cyber threat TTP")})
+   {;; Extension fields:
+    :ttp_type (describe s/Str "type of this TTP")
+    :indicators (describe [rel/IndicatorReference] "related indicators")
     ;; Not provided: kill_chain_phases
     ;; Not provided: kill_chains
     ;; Not provided: handling

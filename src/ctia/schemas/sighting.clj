@@ -8,14 +8,16 @@
 
 (s/defschema Sighting
   "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
-  {:id c/ID
-   :timestamp c/Time
-   :description s/Str
-   (s/optional-key :source) s/Str
-   (s/optional-key :reference) c/URI
-   (s/optional-key :confidence) v/HighMedLow
-   (s/optional-key :related_judgements) rel/RelatedJudgements
-   (s/optional-key :indicator) rel/RelatedIndicator})
+  (st/merge
+   {:id c/ID
+    :timestamp c/Time
+    :description s/Str}
+   (st/optional-keys
+    {:source s/Str
+     :reference c/URI
+     :confidence v/HighMedLow
+     :related_judgements rel/RelatedJudgements
+     :indicator rel/RelatedIndicator})))
 
 (s/defschema Type
   (s/enum "sighting"))
