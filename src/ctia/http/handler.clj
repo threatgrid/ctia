@@ -15,7 +15,8 @@
             [ctia.http.routes.ttp :refer [ttp-routes]]
             [ctia.http.routes.sighting :refer [sighting-routes]]
             [ctia.http.routes.event :refer [event-routes]]
-            [ctia.http.routes.observable :refer [observable-routes]]))
+            [ctia.http.routes.observable :refer [observable-routes]]
+            [ctia.http.routes.verdict :refer [verdict-routes]]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -78,7 +79,8 @@
     ttp-routes
     sighting-routes
     event-routes
-    observable-routes))
+    observable-routes
+    verdict-routes))
 
 (def app
   (-> api-handler

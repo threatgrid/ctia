@@ -28,7 +28,6 @@
   (s/enum "asc" "desc"))
 
 (defroutes observable-routes
-
   (GET "/:observable_type/:observable_value/judgements" []
     :tags ["Judgement"]
     :query-params [{offset :-  Long 0}
@@ -92,17 +91,4 @@
                :value observable_value}
               (list-judgements-by-observable @judgement-store)
               (list-indicators-by-judgements @indicator-store)
-              (list-sightings-by-indicators @sighting-store))))
-
-  (GET "/:observable_type/:observable_value/verdict" []
-    :tags ["Verdict"]
-    :path-params [observable_type :- ObservableType
-                  observable_value :- s/Str]
-    :return (s/maybe Verdict)
-    :summary "Returns the current Verdict associated with the specified observable."
-    :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:get-verdict :admin}
-    (if-let [d (calculate-verdict @judgement-store {:type observable_type
-                                                    :value observable_value})]
-      (ok d)
-      (not-found))))
+              (list-sightings-by-indicators @sighting-store)))))
