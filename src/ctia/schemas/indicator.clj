@@ -41,7 +41,7 @@
 (s/defschema CompositeIndicatorExpression
   "See http://stixproject.github.io/data-model/1.2/indicator/CompositeIndicatorExpressionType/"
   {:operator (s/enum "and" "or" "not")
-   :indicators [rel/IndicatorReference]})
+   :indicator_ids [rel/IndicatorReference]})
 
 (s/defschema Indicator
   "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"

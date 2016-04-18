@@ -651,7 +651,10 @@
                                 :related_COAs [{:confidence "High"
                                                 :source "source"
                                                 :relationship "relationship"
-                                                :COA_id "coa-123"}]}
+                                                :COA_id "coa-123"}]
+                                :composite_indicator_expression
+                                {:operator "and"
+                                 :indicator_ids ["test1" "test2" "test3"]}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           indicator (:parsed-body response)]
 
@@ -672,7 +675,10 @@
                             :source "source"
                             :relationship "relationship"
                             :COA_id "coa-123"}]
-            :owner "foouser"}
+            :owner "foouser"
+            :composite_indicator_expression
+            {:operator "and"
+             :indicator_ids ["test1" "test2" "test3"]}}
            (dissoc indicator
                    :id
                    :created
@@ -699,7 +705,10 @@
                                 :source "source"
                                 :relationship "relationship"
                                 :COA_id "coa-123"}]
-                :owner "foouser"}
+                :owner "foouser"
+                :composite_indicator_expression
+                {:operator "and"
+                 :indicator_ids ["test1" "test2" "test3"]}}
                (dissoc indicator
                        :id
                        :created
@@ -728,7 +737,10 @@
                                  :source "source"
                                  :relationship "relationship"
                                  :COA_id "coa-123"}]
-                 :owner "foouser"}]
+                 :owner "foouser"
+                 :composite_indicator_expression
+                 {:operator "and"
+                  :indicator_ids ["test1" "test2" "test3"]}}]
                (map #(dissoc % :id :created :modified) indicators)))))
 
       (testing "PUT /ctia/indicator/:id"
@@ -748,7 +760,10 @@
                           :related_COAs [{:confidence "High"
                                           :source "source"
                                           :relationship "relationship"
-                                          :COA_id "coa-123"}]}
+                                          :COA_id "coa-123"}]
+                          :composite_indicator_expression
+                          {:operator "and"
+                           :indicator_ids ["test1" "test2" "test3"]}}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
@@ -769,7 +784,10 @@
                                 :source "source"
                                 :relationship "relationship"
                                 :COA_id "coa-123"}]
-                :owner "foouser"}
+                :owner "foouser"
+                :composite_indicator_expression
+                {:operator "and"
+                 :indicator_ids ["test1" "test2" "test3"]}}
                (dissoc updated-indicator
                        :modified)))))
 
@@ -827,6 +845,9 @@
                                     :relationship "relationship"
                                     :COA_id "coa-123"}]
                     :sightings [{:sighting_id (:id sighting)}]
+                    :composite_indicator_expression
+                    {:operator "and"
+                     :indicator_ids ["test1" "test2" "test3"]}
                     :owner "foouser"}
                    (dissoc indicator
                            :modified)))))))
