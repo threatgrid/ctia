@@ -50,7 +50,7 @@
     }))
 
 (s/defschema Type
-  (s/eq "COA"))
+  (s/enum "COA"))
 
 (s/defschema NewCOA
   "Schema for submitting new COAs"

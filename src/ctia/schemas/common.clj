@@ -188,7 +188,7 @@
   "Given a schema X generate a StoredX schema"
   [type-name a-schema]
   (st/merge a-schema
-            {:type (s/eq type-name)
+            {:type (s/enum type-name)
              :owner s/Str
              :created c/Time
              :modified c/Time}))

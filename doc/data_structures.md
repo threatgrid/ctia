@@ -876,7 +876,7 @@ references in this document (in the form of _FooReference_) indicate
 the type of object that is being pointed to.
 
 A reference may be an [ID](#id) when the object is available on the
-same CTIA instance.  When the reference points to a remote CIA
+same CTIA instance.  When the reference points to a remote CTIA
 instance, the reference must be full URL, such as
 `https://ctia.someplace.else.org/judgement/de305d54-75b4-431b-adb2-eb6b9e546014`
 and that object should be retrievable at that URI.

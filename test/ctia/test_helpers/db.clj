@@ -3,7 +3,7 @@
             [ctia.stores.sql.db :as sql-db]
             [ctia.stores.sql.judgement :as sql-judgement]
             [ctia.stores.sql.store :as sql-store]
-            [ctia.test-helpers.core :as h]
+            [ctia.test-helpers.core :as helpers-core]
             [clojure.java.io :as io]
             [korma.core :as k]))
 
@@ -42,20 +42,21 @@
    (fn [table]
      (format "DROP TABLE IF EXISTS \"%s\";" table))))
 
-(defn fixture-init-db [test]
-  (sql-db/init!)
+(defn fixture-properties:sql-store [test]
+  (helpers-core/with-properties
+    ["ctia.store.sql.db.classname"   "org.h2.Driver"
+     "ctia.store.sql.db.subprotocol" "h2"
+     "ctia.store.sql.db.subname"     "/tmp/ctia-h2-db;DATABASE_TO_UPPER=false"
+     "ctia.store.sql.db.delimiters"  ""
+     "ctia.store.type"               "sql"]
+    (test)))
+
+(defn fixture-db-recreate-tables [test]
   (drop-tables @sql-db/db)
   (create-tables @sql-db/db)
-  (sql-judgement/init!)
   (test)
   (drop-tables @sql-db/db))
 
 (defn fixture-clean-db [f]
   (truncate-tables @sql-db/db)
   (f))
-
-(def sql-stores
-  {store/judgement-store sql-store/->JudgementStore})
-
-(def fixture-sql-store (h/fixture-store (merge h/atom-stores
-                                               sql-stores)))
