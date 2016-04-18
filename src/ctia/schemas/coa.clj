@@ -12,14 +12,28 @@
    c/GenericStixIdentifiers
    {:valid_time c/ValidTime}
    (st/optional-keys
-    {:stage (describe v/COAStage "specifies what stage in the cyber threat management lifecycle this Course Of Action is relevant to")
+    {:stage (describe
+             v/COAStage
+             (str "specifies what stage in the cyber threat management lifecycle"
+                  " this Course Of Action is relevant to"))
      :coa_type (describe v/COAType "type of this CourseOfAction")
-     :objective (describe [s/Str] "characterizes the objective of this Course Of Action") ;; Squashed / simplified
-     :impact (describe s/Str "characterizes the estimated impact of applying this Course Of Action")
-     :cost (describe v/HighMedLow "characterizes the estimated cost for applying this Course Of Action")
-     :efficacy (describe v/HighMedLow "effectiveness of this Course Of Action in achieving its targeted Objective")
+
+     :objective (describe ;; Squashed / simplified
+                 [s/Str]
+                 "characterizes the objective of this Course Of Action")
+     :impact (describe s/Str
+                       (str "characterizes the estimated impact of applying"
+                            " this Course Of Action"))
+     :cost (describe v/HighMedLow (str "characterizes the estimated cost"
+                                       " for applying this Course Of Action"))
+     :efficacy (describe v/HighMedLow
+                         (str "effectiveness of this Course Of Action"
+                              " in achieving its targeted Objective"))
      :source (describe s/Str "Source of this Course Of Action")
-     :related_COAs (describe rel/RelatedCOAs "identifies or characterizes relationships to one or more related courses of action")
+     :related_COAs (describe
+                    rel/RelatedCOAs
+                    (str "identifies or characterizes relationships to"
+                         " one or more related courses of action"))
      ;; Not provided: handling
      ;; Not provided: parameter_observables ;; Technical params using the CybOX language
      ;; Not provided: structured_COA ;; actionable structured representation for automation
