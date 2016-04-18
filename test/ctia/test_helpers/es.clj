@@ -27,13 +27,21 @@
   (test))
 
 
+(defn purge-producer-indexes []
+  (dorun (map (fn [producer]
+                (let [state (:state producer)
+                      conn (:conn state)
+                      index (:index state)
+                      wildcard (str index "*")]
+                  (when conn
+                    ((es-index/index-delete-fn conn) conn wildcard))))
+              @event-producers)))
+
 (defn fixture-purge-producer-indexes [test]
   "walk through all producers and delete their index"
+  (purge-producer-indexes)
   (test)
-  (map #(es-index/delete! (:conn %)
-                          (str (:index %) "*"))
-       @event-producers))
-
+  (purge-producer-indexes))
 
 (defn fixture-properties:es-store [test]
   ;; Note: These properties may be overwritten by ENV variables

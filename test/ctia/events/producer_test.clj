@@ -16,7 +16,7 @@
      ~@body))
 
 (defn check-produce-response [produced]
-  (map #(is (string? %)) produced))
+  (doall (map #(is (string? %)) produced)))
 
 (deftest-for-each-producer test-producer-event-create
 
