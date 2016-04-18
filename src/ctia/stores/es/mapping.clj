@@ -322,7 +322,7 @@
      :composite_indicator_expression {:type "nested"
                                       :properties
                                       {:operator string
-                                       :indicators string}}
+                                       :indicator_ids string}}
      :indicated_TTP {:type "nested"}
      :likely_impact string
      :suggested_COAs related-coas
