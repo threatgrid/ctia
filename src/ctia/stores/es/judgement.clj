@@ -16,12 +16,12 @@
    [ctia.stores.es.query :refer
     [active-judgements-by-observable-query]]
 
-   [ctia.stores.es.document :refer [create-doc
-                                    update-doc
-                                    get-doc
-                                    delete-doc
-                                    search-docs
-                                    raw-search-docs]]))
+   [ctia.lib.es.document :refer [create-doc
+                                 update-doc
+                                 get-doc
+                                 delete-doc
+                                 search-docs
+                                 raw-search-docs]]))
 
 (def ^{:private true} mapping "judgement")
 

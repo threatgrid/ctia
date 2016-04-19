@@ -1,17 +1,9 @@
 (ns ctia.stores.es.store
   (:require
-   [ctia.store :refer [IActorStore
-                      IJudgementStore
-                      IIndicatorStore
-                      IExploitTargetStore
-                      IFeedbackStore
-                      ITTPStore
-                      ICampaignStore
-                      ICOAStore
-                      ISightingStore
-                      IIncidentStore
-                      IIdentityStore]]
-
+   [schema.core :as s]
+   [ctia.properties :refer [properties]]
+   [ctia.stores.es.mapping :refer [store-mappings]]
+   [ctia.lib.es.index :refer [ESConnState connect]]
    [ctia.stores.es.judgement :as ju]
    [ctia.stores.es.feedback  :as fe]
    [ctia.stores.es.indicator :as in]
@@ -22,7 +14,32 @@
    [ctia.stores.es.incident :as inc]
    [ctia.stores.es.exploit-target :as et]
    [ctia.stores.es.sighting :as sig]
-   [ctia.stores.es.identity :as id]))
+   [ctia.stores.es.identity :as id]
+   [ctia.store :refer [IActorStore
+                       IJudgementStore
+                       IIndicatorStore
+                       IExploitTargetStore
+                       IFeedbackStore
+                       ITTPStore
+                       ICampaignStore
+                       ICOAStore
+                       ISightingStore
+                       IIncidentStore
+                       IIdentityStore]]))
+
+
+(defn read-store-index-spec []
+  "read es store index config properties, returns an option map"
+  (get-in @properties [:ctia :store :es]))
+
+(s/defn init-store-conn :- ESConnState []
+  "initiate an ES store connection returns a map containing transport,
+   mapping, and the configured index name"
+  (let [props (read-store-index-spec)]
+    {:index (:indexname props)
+     :props props
+     :mapping store-mappings
+     :conn (connect props)}))
 
 (defrecord JudgementStore [state]
   IJudgementStore

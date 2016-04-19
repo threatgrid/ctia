@@ -6,10 +6,7 @@
    [clojurewerkz.elastisch.native :as n]
    [clojurewerkz.elastisch.rest :as h]
    [clojurewerkz.elastisch.native.index :as native-index]
-   [clojurewerkz.elastisch.rest.index :as rest-index]
-   [ctia.stores.es.mapping :refer [store-mappings]]
-   [ctia.events.producers.es.mapping :refer [producer-mappings]]
-   [ctia.properties :refer [properties]]))
+   [clojurewerkz.elastisch.rest.index :as rest-index]))
 
 (s/defschema ESConn
   (s/either
@@ -48,38 +45,12 @@
     native-index/update-aliases
     rest-index/update-aliases))
 
-(defn read-store-index-spec []
-  "read es store index config properties, returns an option map"
-  (get-in @properties [:ctia :store :es]))
-
-(defn read-producer-index-spec []
-  "read es producer index config properties, returns an option map"
-  (get-in @properties [:ctia :producer :es]))
-
 (defn connect [props]
   "instantiate an ES conn from props"
   (if (:uri props)
     (h/connect (:uri props))
     (n/connect [[(:host props) (Integer. (:port props))]]
                {"cluster.name" (:clustername props)})))
-
-(s/defn init-store-conn :- ESConnState []
-  "initiate an ES store connection returns a map containing transport,
-   mapping, and the configured index name"
-  (let [props (read-store-index-spec)]
-    {:index (:indexname props)
-     :props props
-     :mapping store-mappings
-     :conn (connect props)}))
-
-(s/defn init-producer-conn :- ESConnState []
-  "initiate an ES producer connection returns a map containing transport,
-   mapping and the configured index name"
-  (let [props (read-producer-index-spec)]
-    {:index (:indexname props)
-     :props props
-     :mapping producer-mappings
-     :conn (connect props)}))
 
 (defn delete!
   "delete an index, abort if non existant"
@@ -142,12 +113,12 @@
    routing
    filter))
 
-(def cached-create-filtered-alias!
+(def memo-create-filtered-alias!
   (memo/ttl create-filtered-alias!
             :ttl/threshold
             alias-create-cache-ttl-ms))
 
-(def cached-create-aliased-index!
+(def memo-create-aliased-index!
   (memo/ttl create-aliased-index!
             :ttl/threshold
             alias-create-cache-ttl-ms))

@@ -1,13 +1,27 @@
 (ns ctia.events.producers.es.producer
   (:require
    [schema.core :as s]
-   [clojurewerkz.elastisch.native.document :as native-document]
-   [clojurewerkz.elastisch.rest.document :as rest-document]
-   [ctia.lib.es.index :refer [ESConnState]]
+   [ctia.properties :refer [properties]]
+   [ctia.lib.es.index :refer [ESConnState connect]]
+   [ctia.lib.es.document :refer [create-doc-fn]]
+   [ctia.events.producers.es.mapping :refer [producer-mappings]]
    [ctia.lib.es.slice :refer [create-slice!
                               get-slice-props]]
    [ctia.events.schemas :refer [Event]]
    [ctia.events.producer :refer [IEventProducer]]))
+
+(defn read-producer-index-spec []
+  "read es producer index config properties, returns an option map"
+  (get-in @properties [:ctia :producer :es]))
+
+(s/defn init-producer-conn :- ESConnState []
+  "initiate an ES producer connection returns a map containing transport,
+   mapping and the configured index name"
+  (let [props (read-producer-index-spec)]
+    {:index (:indexname props)
+     :props props
+     :mapping producer-mappings
+     :conn (connect props)}))
 
 (defn field-vec->field-map [[field action change]]
   {:field field
@@ -19,11 +33,6 @@
    vector of the event to a map"
   (if-let [fields (:fields e)]
     (assoc e :fields (map field-vec->field-map fields)) e))
-
-(defn create-doc-fn [conn]
-  (if (:uri conn)
-    rest-document/create
-    native-document/create))
 
 (defn index-produce
   "produce an event to an aliased index"

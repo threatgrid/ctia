@@ -57,7 +57,7 @@
     (reset! store (impl-fn))))
 
 (defn init-es-store! []
-  (let [store-state (es-index/init-store-conn)
+  (let [store-state (es-store/init-store-conn)
         store-impls {store/actor-store es-store/->ActorStore
                      store/judgement-store es-store/->JudgementStore
                      store/feedback-store es-store/->FeedbackStore
@@ -78,7 +78,7 @@
       (reset! store (impl-fn store-state)))))
 
 (defn init-es-producer! []
-  (let [producer-state (es-index/init-producer-conn)]
+  (let [producer-state (es-producer/init-producer-conn)]
     (reset! producer/event-producers
             [(es-producer/->EventProducer producer-state)])))
 

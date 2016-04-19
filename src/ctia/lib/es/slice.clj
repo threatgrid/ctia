@@ -4,8 +4,8 @@
                                    format-index-time
                                    round-date]]
             [ctia.lib.es.index :refer [ESConnState
-                                       cached-create-aliased-index!
-                                       cached-create-filtered-alias!]]))
+                                       memo-create-aliased-index!
+                                       memo-create-filtered-alias!]]))
 
 (s/defschema SliceProperties
   {:name s/Str
@@ -54,12 +54,12 @@
 (defn create-slice! [state slice-props]
   (case (:strategy slice-props)
     :aliased-index
-    (cached-create-aliased-index!
+    (memo-create-aliased-index!
      state
      (:name slice-props))
 
     :filtered-alias
-    (cached-create-filtered-alias!
+    (memo-create-filtered-alias!
      state
      (:name slice-props)
      (:name slice-props)
