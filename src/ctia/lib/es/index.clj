@@ -1,17 +1,15 @@
 (ns ctia.lib.es.index
-  (:require
-   [clojure.core.memoize :as memo]
-   [schema.core :as s]
-   [clj-time.core :as t]
-   [clojurewerkz.elastisch.native :as n]
-   [clojurewerkz.elastisch.rest :as h]
-   [clojurewerkz.elastisch.native.index :as native-index]
-   [clojurewerkz.elastisch.rest.index :as rest-index]))
+  (:require [clojure.core.memoize :as memo]
+            [schema.core :as s]
+            [clj-time.core :as t]
+            [clojurewerkz.elastisch.native :as n]
+            [clojurewerkz.elastisch.rest :as h]
+            [clojurewerkz.elastisch.native.index :as native-index]
+            [clojurewerkz.elastisch.rest.index :as rest-index]))
 
 (s/defschema ESConn
-  (s/either
-   clojurewerkz.elastisch.rest.Connection
-   org.elasticsearch.client.transport.TransportClient))
+  (s/either clojurewerkz.elastisch.rest.Connection
+            org.elasticsearch.client.transport.TransportClient))
 
 (def alias-create-cache-ttl-ms
   (* 1000 60 5))

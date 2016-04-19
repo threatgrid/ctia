@@ -7,7 +7,6 @@
             [ctia.test-helpers.core :as h]
             [ctia.properties :as properties]))
 
-
 (defn recreate-state-index [state]
   (when (:conn state)
     (es-index/delete! (:conn state)
@@ -50,7 +49,6 @@
                       "ctia.store.es.clustername" "elasticsearch"
                       "ctia.store.es.indexname" "test_ctia"]
     (test)))
-
 
 (defn fixture-properties:es-producer [test]
   ;; Note: These properties may be overwritten by ENV variables
