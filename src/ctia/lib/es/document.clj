@@ -1,6 +1,5 @@
 (ns ctia.lib.es.document
   (:require
-   [clojure.string :as str]
    [ctia.lib.es.query :refer [filter-map->terms-query]]
    [clojurewerkz.elastisch.native.document :as native-document]
    [clojurewerkz.elastisch.rest.document :as rest-document]
