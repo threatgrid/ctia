@@ -10,9 +10,19 @@
 
 (defmacro deftest-for-each-producer [test-name & body]
   `(helpers/deftest-for-each-fixture ~test-name
-     {:es-producer (join-fixtures [es-helpers/fixture-properties:es-producer
-                                   helpers/fixture-ctia
-                                   es-helpers/fixture-purge-producer-indexes])}
+     {:es-producer
+      (join-fixtures [es-helpers/fixture-properties:es-producer
+                      helpers/fixture-ctia
+                      es-helpers/fixture-purge-producer-indexes])
+      :es-producer-aliased-index
+      (join-fixtures [es-helpers/fixture-properties:es-producer:aliased-index
+                      helpers/fixture-ctia
+                      es-helpers/fixture-purge-producer-indexes])
+
+      :es-producer-filtered-alias
+      (join-fixtures [es-helpers/fixture-properties:es-producer:filtered-alias
+                      helpers/fixture-ctia
+                      es-helpers/fixture-purge-producer-indexes])}
      ~@body))
 
 (defn check-produce-response [produced]

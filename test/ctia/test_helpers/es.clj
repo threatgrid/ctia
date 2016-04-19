@@ -55,3 +55,19 @@
   (h/with-properties ["ctia.producer.es.uri" "http://192.168.99.100:9200"
                       "ctia.producer.es.indexname" "test_ctia_events"]
     (test)))
+
+(defn fixture-properties:es-producer:aliased-index [test]
+  ;; Note: These properties may be overwritten by ENV variables
+  (h/with-properties ["ctia.producer.es.uri" "http://192.168.99.100:9200"
+                      "ctia.producer.es.indexname" "test_ctia_events"
+                      "ctia.producer.es.slicing.strategy" "aliased-index"
+                      "ctia.producer.es.slicing.granularity" "week"]
+    (test)))
+
+(defn fixture-properties:es-producer:filtered-alias [test]
+  ;; Note: These properties may be overwritten by ENV variables
+  (h/with-properties ["ctia.producer.es.uri" "http://192.168.99.100:9200"
+                      "ctia.producer.es.indexname" "test_ctia_events"
+                      "ctia.producer.es.slicing.strategy" "filtered-alias"
+                      "ctia.producer.es.slicing.granularity" "hour"]
+    (test)))
