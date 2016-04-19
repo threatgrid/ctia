@@ -5,16 +5,11 @@
    [ctia.stores.es.crud :as crud]
    [ctia.schemas.common :refer [Observable]]
    [ctia.schemas.indicator :refer [Indicator
-                                  NewIndicator
-                                  StoredIndicator
-                                  realize-indicator]]
+                                   NewIndicator
+                                   StoredIndicator
+                                   realize-indicator]]
    [ctia.stores.es.query :refer [indicators-by-judgements-query]]
-   [ctia.stores.es.document :refer [create-doc
-                                   update-doc
-                                   get-doc
-                                   delete-doc
-                                   search-docs
-                                   raw-search-docs]]))
+   [ctia.lib.es.document :refer [search-docs]]))
 
 (def handle-create-indicator (crud/handle-create :indicator StoredIndicator))
 (def handle-read-indicator (crud/handle-read :indicator StoredIndicator))

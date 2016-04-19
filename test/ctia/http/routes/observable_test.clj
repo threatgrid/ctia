@@ -1,4 +1,4 @@
-(ns ctia.http.routes.judgement-test
+(ns ctia.http.routes.observable-test
   (:refer-clojure :exclude [get])
   (:require
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]

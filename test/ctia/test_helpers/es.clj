@@ -7,7 +7,6 @@
             [ctia.test-helpers.core :as h]
             [ctia.properties :as properties]))
 
-
 (defn recreate-state-index [state]
   (when (:conn state)
     (es-index/delete! (:conn state)
@@ -26,25 +25,49 @@
         store/stores))
   (test))
 
-(defn fixture-recreate-producer-indexes [test]
-  "walk through all the producers delete and recreate each producer index"
-  (dorun
-   (map #(recreate-state-index (:state %)) @event-producers))
-  (test))
 
+(defn purge-producer-indexes []
+  (dorun (map (fn [producer]
+                (let [state (:state producer)
+                      conn (:conn state)
+                      index (:index state)
+                      wildcard (str index "*")]
+                  (when conn
+                    ((es-index/index-delete-fn conn) conn wildcard))))
+              @event-producers)))
+
+(defn fixture-purge-producer-indexes [test]
+  "walk through all producers and delete their index"
+  (purge-producer-indexes)
+  (test)
+  (purge-producer-indexes))
 
 (defn fixture-properties:es-store [test]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.store.type" "es"
                       "ctia.store.es.uri" "http://192.168.99.100:9200"
-                      "ctia.store.es.port" 9300
                       "ctia.store.es.clustername" "elasticsearch"
                       "ctia.store.es.indexname" "test_ctia"]
     (test)))
-
 
 (defn fixture-properties:es-producer [test]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.producer.es.uri" "http://192.168.99.100:9200"
                       "ctia.producer.es.indexname" "test_ctia_events"]
+    (test)))
+
+(defn fixture-properties:es-producer:aliased-index [test]
+  ;; Note: These properties may be overwritten by ENV variables
+  (h/with-properties ["ctia.producer.es.uri" "http://192.168.99.100:9200"
+                      "ctia.producer.es.indexname" "test_ctia_events"
+                      "ctia.producer.es.slicing.strategy" "aliased-index"
+                      "ctia.producer.es.slicing.granularity" "week"]
+    (test)))
+
+(defn fixture-properties:es-producer:filtered-alias [test]
+  ;; Note: These properties may be overwritten by ENV variables
+  (h/with-properties ["ctia.producer.es.uri" "http://192.168.99.100:9200"
+                      "ctia.producer.es.indexname" "test_ctia_events"
+                      "ctia.producer.es.slicing.strategy" "filtered-alias"
+                      "ctia.producer.es.slicing.granularity" "hour"]
     (test)))

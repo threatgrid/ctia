@@ -15,8 +15,7 @@
 (def files
   "Property file names, they will be merged, with last one winning"
   ["ctia-default.properties"
-   "ctia.properties"
-   ])
+   "ctia.properties"])
 
 (defonce properties
   (atom {}))
@@ -55,8 +54,9 @@
                       "ctia.producer.es.host" s/Str
                       "ctia.producer.es.port" s/Int
                       "ctia.producer.es.clustername" s/Str
-                      "ctia.producer.es.indexname" s/Str})))
-
+                      "ctia.producer.es.indexname" s/Str
+                      "ctia.producer.es.slicing.strategy" (s/enum :filtered-alias :aliased-index)
+                      "ctia.producer.es.slicing.granularity" (s/enum :minute :hour :day :week :month :year)})))
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."
   (map #(or (:k %) %) (keys PropertiesSchema)))
