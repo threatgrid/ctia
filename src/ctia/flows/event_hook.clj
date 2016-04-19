@@ -1,5 +1,5 @@
 (ns ctia.flows.event-hook
-  (:require [ctia.flows.hooks :refer [Hook]]
+  (:require [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.events.schemas :as vs]
             [ctia.events.producer :as p]
             [ctia.lib.time :as t]
