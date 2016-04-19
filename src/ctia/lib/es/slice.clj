@@ -7,18 +7,26 @@
                                        memo-create-aliased-index!
                                        memo-create-filtered-alias!]]))
 
+(s/defschema DateRangeFilter
+  "a Date range filter for a filtered alias"
+  {:range
+   {:timestamp {:gte s/Str
+                :lt s/Str}}})
+
 (s/defschema SliceProperties
+  "Slice configuration properties"
   {:name s/Str
    :granularity s/Keyword
    :strategy s/Keyword
-   (s/optional-key :filter) {s/Any s/Any}})
+   (s/optional-key :filter) DateRangeFilter})
 
-(s/defn slice-time :- java.util.Date
-  [event-time :- java.util.Date
-   granularity :- s/Keyword]
-  (round-date event-time granularity))
+(s/defn slice-name :- s/Str
+  "make a slice name from an index name and a timestamp"
+  [index :- s/Str
+   ts :- s/Str]
+  (str index "_" ts))
 
-(s/defn slice-time-filter :- {s/Any s/Any}
+(s/defn slice-time-filter :- DateRangeFilter
   "make the filter part of an index slice"
   [time :- java.util.Date
    granularity :- s/Keyword]
@@ -30,11 +38,11 @@
                    :day    "||+1d"
                    :week   "||+1w"
                    :month  "||+1M"
-                   :year   "||+1Y")]
+                   :year   "||+1Y")
+        range {:gte dt
+               :lt (str dt modifier)}]
 
-    {:range
-     {:timestamp {:gte dt
-                  :lt (str dt modifier)}}}))
+    {:range {:timestamp range}}))
 
 (s/defn get-slice-props :- SliceProperties
   "make slice properties from a date an index name and config"
@@ -43,15 +51,19 @@
 
   (let [slice-config (get-in state [:props :slicing])
         granularity (:granularity slice-config)
-        rounded-time (slice-time t granularity)
+        rounded-time (round-date t granularity)
         ts (format-index-time rounded-time)
         f  (slice-time-filter rounded-time granularity)]
 
     (merge slice-config
            {:filter f
-            :name (str (:index state) "_" ts)})))
+            :name (slice-name (:index state) ts)})))
 
-(defn create-slice! [state slice-props]
+(s/defn ensure-slice-created! :- s/Bool
+  "Create the required slice if undexisting"
+  [state :- ESConnState
+   slice-props :- SliceProperties]
+
   (case (:strategy slice-props)
     :aliased-index
     (memo-create-aliased-index!

@@ -64,17 +64,19 @@
 (defn create-alias!
   "create an index alias simple or filtered"
   ([conn index alias]
-   ((update-alias-fn conn)
-    conn
-    {:add {:index index
-           :alias alias}}))
+   (:acknowledged
+    ((update-alias-fn conn)
+     conn
+     {:add {:index index
+            :alias alias}})))
   ([conn index alias routing filter]
-   ((update-alias-fn conn)
-    conn
-    {:add {:index index
-           :alias alias
-           :routing routing
-           :filter filter}})))
+   (:acknowledged
+    ((update-alias-fn conn)
+     conn
+     {:add {:index index
+            :alias alias
+            :routing routing
+            :filter filter}}))))
 
 (s/defn create-aliased-index!
   "create an index with an alias for a slice"
