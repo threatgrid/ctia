@@ -7,12 +7,7 @@
                                   StoredSighting
                                   realize-sighting]]
    [ctia.schemas.indicator :refer [Indicator]]
-   [ctia.lib.es.document :refer [create-doc
-                                 update-doc
-                                 get-doc
-                                 delete-doc
-                                 search-docs
-                                 raw-search-docs]]))
+   [ctia.lib.es.document :refer [search-docs]]))
 
 
 (def handle-create-sighting (crud/handle-create :sighting StoredSighting))
@@ -28,8 +23,8 @@
   (let [sighting-ids (->> indicators
                           (mapcat :sightings)
                           (map :sighting_id))]
-    (raw-search-docs  (:conn state)
-                      (:index state)
-                      mapping
-                      {:terms {:id sighting-ids}}
-                      {:created "desc"})))
+    (search-docs (:conn state)
+                 (:index state)
+                 mapping
+                 {:type "sighting"
+                  :id sighting-ids})))
