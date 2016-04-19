@@ -1,58 +1,22 @@
 (ns ctia.lib.es.slice
   (:require [schema.core :as s]
-            [clj-time.core :as t]
-            [clj-time.format :as tf]
-            [clj-time.coerce :as coerce]
+            [ctia.lib.time :refer [format-date-time
+                                   format-index-time
+                                   round-date]]
             [ctia.lib.es.index :refer [ESConnState
                                        cached-create-aliased-index!
                                        cached-create-filtered-alias!]]))
 
-(def index-name-tf "YYYY.MM.dd.HH.mm")
-(def index-time-formatter (tf/formatter index-name-tf))
-(def date-range-formatter (tf/formatters :date-time))
-
-(s/defschema SliceProps
+(s/defschema SliceProperties
   {:name s/Str
    :granularity s/Keyword
    :strategy s/Keyword
    (s/optional-key :filter) {s/Any s/Any}})
 
-(s/defn format-index-time :- s/Str
-  [t :- java.util.Date]
-
-  (->> t
-       (coerce/from-date)
-       (tf/unparse index-time-formatter)))
-
-(s/defn format-date-time :- s/Str
-  [t :- java.util.Date]
-
-  (->> t
-       (coerce/from-date)
-       (tf/unparse date-range-formatter)))
-
 (s/defn slice-time :- java.util.Date
   [event-time :- java.util.Date
    granularity :- s/Keyword]
-
-  (let [parsed (coerce/from-date event-time)
-        year (t/year parsed)
-        month (t/month parsed)
-        day (t/day parsed)
-        hour (t/hour parsed)
-        minute (t/minute parsed)]
-
-    (-> (condp = granularity
-          :week (-> (t/date-time year month day)
-                    (.dayOfWeek)
-                    (.withMinimumValue))
-          :minute (t/date-time year month day hour minute)
-          :hour   (t/date-time year month day hour)
-          :day    (t/date-time year month day)
-          :month  (t/date-time year month)
-          :year   (t/date-time year))
-
-        (coerce/to-date))))
+  (round-date event-time granularity))
 
 (s/defn slice-time-filter :- {s/Any s/Any}
   "make the filter part of an index slice"
@@ -60,7 +24,7 @@
    granularity :- s/Keyword]
 
   (let [dt (format-date-time time)
-        modifier (condp = granularity
+        modifier (case granularity
                    :minute "||+1m"
                    :hour   "||+1H"
                    :day    "||+1d"
@@ -72,9 +36,8 @@
      {:timestamp {:gte dt
                   :lt (str dt modifier)}}}))
 
-(s/defn get-slice-props :- SliceProps
-  "make slice properties from
-   a date an index name and config"
+(s/defn get-slice-props :- SliceProperties
+  "make slice properties from a date an index name and config"
   [t :- java.util.Date
    state :- ESConnState]
 
@@ -89,7 +52,7 @@
             :name (str (:index state) "_" ts)})))
 
 (defn create-slice! [state slice-props]
-  (condp = (:strategy slice-props)
+  (case (:strategy slice-props)
     :aliased-index
     (cached-create-aliased-index!
      state
