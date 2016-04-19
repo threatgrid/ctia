@@ -11,8 +11,7 @@
   (s/either clojurewerkz.elastisch.rest.Connection
             org.elasticsearch.client.transport.TransportClient))
 
-(def alias-create-cache-ttl-ms
-  (* 1000 60 5))
+(def alias-create-fifo-threshold 5)
 
 (s/defschema ESConnState
   {:index s/Str
@@ -112,12 +111,12 @@
    filter))
 
 (def memo-create-filtered-alias!
-  (memo/ttl create-filtered-alias!
-            :ttl/threshold
-            alias-create-cache-ttl-ms))
+  (memo/fifo create-filtered-alias!
+             :fifo/threshold
+             alias-create-fifo-threshold))
 
 (def memo-create-aliased-index!
-  (memo/ttl create-aliased-index!
-            :ttl/threshold
-            alias-create-cache-ttl-ms))
+  (memo/fifo create-aliased-index!
+             :fifo/threshold
+             alias-create-fifo-threshold))
 
