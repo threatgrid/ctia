@@ -22,19 +22,21 @@
   operations.  It could also be clean and be from a known benign, or
   trusted source.  It could also be common, something so widespread
   that it's not likely to be malicious."
-  {:id c/ID
-   :observable c/Observable
-   :disposition c/DispositionNumber
-   :disposition_name c/DispositionName
-   :source s/Str
-   :priority Priority
-   :confidence v/HighMedLow
-   :severity Severity
-   :valid_time c/ValidTime
-   (s/optional-key :reason) s/Str
-   (s/optional-key :source_uri) c/URI
-   (s/optional-key :reason_uri) c/URI
-   (s/optional-key :indicators) rel/RelatedIndicators})
+  (st/merge
+   {:id c/ID
+    :observable c/Observable
+    :disposition c/DispositionNumber
+    :disposition_name c/DispositionName
+    :source s/Str
+    :priority Priority
+    :confidence v/HighMedLow
+    :severity Severity
+    :valid_time c/ValidTime}
+   (st/optional-keys
+    {:reason s/Str
+     :source_uri c/URI
+     :reason_uri c/URI
+     :indicators rel/RelatedIndicators})))
 
 (s/defschema Type
   (s/enum "judgement"))
@@ -47,10 +49,11 @@
               :disposition
               :disposition_name
               :valid_time)
-   {(s/optional-key :disposition) c/DispositionNumber
-    (s/optional-key :disposition_name) c/DispositionName
-    (s/optional-key :valid_time) c/ValidTime
-    (s/optional-key :type) Type}))
+   (st/optional-keys
+    {:disposition c/DispositionNumber
+     :disposition_name c/DispositionName
+     :valid_time c/ValidTime
+     :type Type})))
 
 (s/defschema StoredJudgement
   "A judgement as stored in the data store"

@@ -8,14 +8,14 @@
             [clojure.string :as str]
             [ctia.lib.map :as map]
             [schema.coerce :as c]
-            [schema.core :as s])
+            [schema.core :as s]
+            [schema-tools.core :as st])
   (:import java.util.Properties))
 
 (def files
   "Property file names, they will be merged, with last one winning"
   ["ctia-default.properties"
-   "ctia.properties"
-   ])
+   "ctia.properties"])
 
 (defonce properties
   (atom {}))
@@ -26,34 +26,37 @@
    properties must be present.  Only the following properties may be
    set.  This is also used for selecting system properties to merge
    with the properties file."
-  {(s/required-key "ctia.auth.type") s/Keyword
-   (s/optional-key "ctia.auth.threatgrid.cache") s/Bool
-   (s/optional-key "ctia.auth.threatgrid.whoami-url") s/Str
-   (s/required-key "ctia.http.port") s/Int
-   (s/required-key "ctia.http.min-threads") s/Int
-   (s/required-key "ctia.http.max-threads") s/Int
-   (s/optional-key "ctia.http.dev-reload") s/Bool
-   (s/required-key "ctia.nrepl.enabled") s/Bool
-   (s/optional-key "ctia.nrepl.port") s/Int
-   (s/optional-key "ctia.store.type") s/Keyword
-   (s/optional-key "ctia.store.sql.db.classname") s/Str
-   (s/optional-key "ctia.store.sql.db.subprotocol") s/Str
-   (s/optional-key "ctia.store.sql.db.subname") s/Str
-   (s/optional-key "ctia.store.sql.db.delimiters") s/Str
-   (s/optional-key "ctia.store.es.uri") s/Str
-   (s/optional-key "ctia.store.es.host") s/Str
-   (s/optional-key "ctia.store.es.port") s/Int
-   (s/optional-key "ctia.store.es.clustername") s/Str
-   (s/optional-key "ctia.store.es.indexname") s/Str
-   (s/optional-key "ctia.producer.type") s/Keyword
-   (s/optional-key "ctia.producer.es.uri") s/Str
-   (s/optional-key "ctia.producer.es.host") s/Str
-   (s/optional-key "ctia.producer.es.port") s/Int
-   (s/optional-key "ctia.producer.es.clustername") s/Str
-   (s/optional-key "ctia.producer.es.indexname") s/Str
-   (s/optional-key "ctia.producer.es.slicing.strategy") (s/enum :filtered-alias :aliased-index)
-   (s/optional-key "ctia.producer.es.slicing.granularity") (s/enum :minute :hour :day :week :month :year)})
+  (st/merge
+   (st/required-keys {"ctia.auth.type" s/Keyword})
+   (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
+                      "ctia.auth.threatgrid.whoami-url" s/Str})
 
+   (st/required-keys {"ctia.http.port" s/Int
+                      "ctia.http.min-threads" s/Int
+                      "ctia.http.max-threads" s/Int})
+   (st/optional-keys {"ctia.http.dev-reload" s/Bool})
+
+   (st/required-keys {"ctia.nrepl.enabled" s/Bool})
+   (st/optional-keys {"ctia.nrepl.port" s/Int})
+
+   (st/optional-keys {"ctia.store.type" s/Keyword
+                      "ctia.store.sql.db.classname" s/Str
+                      "ctia.store.sql.db.subprotocol" s/Str
+                      "ctia.store.sql.db.subname" s/Str
+                      "ctia.store.sql.db.delimiters" s/Str
+                      "ctia.store.es.uri" s/Str
+                      "ctia.store.es.host" s/Str
+                      "ctia.store.es.port" s/Int
+                      "ctia.store.es.clustername" s/Str
+                      "ctia.store.es.indexname" s/Str
+                      "ctia.producer.type" s/Keyword
+                      "ctia.producer.es.uri" s/Str
+                      "ctia.producer.es.host" s/Str
+                      "ctia.producer.es.port" s/Int
+                      "ctia.producer.es.clustername" s/Str
+                      "ctia.producer.es.indexname" s/Str
+                      "ctia.producer.es.slicing.strategy" (s/enum :filtered-alias :aliased-index)
+                      "ctia.producer.es.slicing.granularity" (s/enum :minute :hour :day :week :month :year)})))
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."
   (map #(or (:k %) %) (keys PropertiesSchema)))
