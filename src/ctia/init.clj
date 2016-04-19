@@ -103,9 +103,7 @@
   (let [producer-service-default (get-in @p/properties [:ctia :producer :type])]
     (case producer-service-default
       :es (init-es-producer!)
-      (throw (ex-info "Producer service not configured"
-                      {:message "Unknown service"
-                       :requested-service producer-service-default})))))
+      nil nil)))
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
