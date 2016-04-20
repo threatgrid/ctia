@@ -12,20 +12,16 @@
     (h/reset-hooks!)
     (auto/autoload-hooks! [:test])
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name       "foo"
+    (t/is (= (h/apply-hooks :type-name "foo"
                             :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :before-create
-                            :read-only?      false)
+                            :hook-type :before-create)
              (into obj
                    {"autoloaded1 - initialized" "passed-from-autoloaded-jar1"
                     "autoloaded2 - initialized" "passed-from-autoloaded-jar2"
                     "HookExample1" "Passed inHookExample1"
                     "HookExample2" "Passed inHookExample2"})))
-    (t/is (= (h/apply-hooks :type-name       "foo"
+    (t/is (= (h/apply-hooks :type-name "foo"
                             :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :after-create
-                            :read-only?      false)
+                            :hook-type :after-create)
              obj))
     (h/reset-hooks!)))

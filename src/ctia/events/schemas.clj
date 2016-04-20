@@ -24,7 +24,7 @@
 (s/defschema UpdateTriple
   [(s/one s/Keyword "field")
    (s/one s/Str "action")
-   (s/one {s/Str s/Str} "metadata")])
+   (s/one {s/Any s/Any} "metadata")])
 
 (s/defschema UpdateEvent
   (st/merge

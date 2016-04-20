@@ -26,17 +26,13 @@
     (h/reset-hooks!)
     (test-adding-dummy-hooks)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name       "foo"
-                            :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :before-create
-                            :read-only?      false)
+    (t/is (= (h/apply-hooks :type-name  "foo"
+                            :realized-object  obj
+                            :hook-type  :before-create)
              (into obj {:dummy "hook1 - hook2 - hook3"})))
-    (t/is (= (h/apply-hooks :type-name       "foo"
-                            :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :after-create
-                            :read-only?      false)
+    (t/is (= (h/apply-hooks :type-name  "foo"
+                            :realized-object  obj
+                            :hook-type  :after-create)
              obj))
     (h/reset-hooks!)))
 
@@ -45,17 +41,15 @@
     (h/reset-hooks!)
     (test-adding-dummy-hooks)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name       "foo"
-                            :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :before-create
-                            :read-only?      true)
+    (t/is (= (h/apply-hooks :type-name   "foo"
+                            :realized-object   obj
+                            :hook-type   :before-create
+                            :read-only?  true)
              obj))
-    (t/is (= (h/apply-hooks :type-name       "foo"
-                            :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :after-create
-                            :read-only?      true)
+    (t/is (= (h/apply-hooks :type-name   "foo"
+                            :realized-object   obj
+                            :hook-type   :after-create
+                            :read-only?  true)
              obj))
     (h/reset-hooks!)))
 
@@ -76,17 +70,13 @@
   (do
     (h/reset-hooks!)
     (test-adding-nil-hooks)
-    (t/is (= (h/apply-hooks :type-name       "foo"
+    (t/is (= (h/apply-hooks :type-name "foo"
                             :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :before-create
-                            :read-only?      false)
+                            :hook-type :before-create)
              obj))
-    (t/is (= (h/apply-hooks :type-name       "foo"
+    (t/is (= (h/apply-hooks :type-name "foo"
                             :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :after-create
-                            :read-only?      false)
+                            :hook-type :after-create)
              obj))))
 
 ;; -----------------------------------------------------------------------------
@@ -109,17 +99,15 @@
     (do
       (h/reset-hooks!)
       (test-adding-memory-hooks)
-      (t/is (= (h/apply-hooks :type-name       "foo"
-                              :realized-object obj
-                              :prev-object     memory
-                              :hook-type       :before-create
-                              :read-only?      false)
+      (t/is (= (h/apply-hooks :type-name   "foo"
+                              :realized-object   obj
+                              :prev-object memory
+                              :hook-type   :before-create)
                (into obj {:previous {:y "y"}})))
-      (t/is (= (h/apply-hooks :type-name       "foo"
-                              :realized-object obj
-                              :prev-object     memory
-                              :hook-type       :after-create
-                              :read-only?      false)
+      (t/is (= (h/apply-hooks :type-name   "foo"
+                              :realized-object   obj
+                              :prev-object memory
+                              :hook-type   :after-create)
                obj))
       (h/reset-hooks!))))
 
@@ -141,19 +129,15 @@
     (h/reset-hooks!)
     (test-adding-dummy-hooks-from-java)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name       "foo"
+    (t/is (= (h/apply-hooks :type-name "foo"
                             :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :before-create
-                            :read-only?      false)
+                            :hook-type :before-create)
              (into obj {"hookJ1 - initialized" "passed"
                         "hookJ2 - initialized" "passed"
                         "hookJ3 - initialized" "passed"})))
-    (t/is (= (h/apply-hooks :type-name       "foo"
+    (t/is (= (h/apply-hooks :type-name "foo"
                             :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :after-create
-                            :read-only?      false)
+                            :hook-type :after-create)
              obj))
     (h/reset-hooks!)))
 
@@ -176,18 +160,14 @@
     (h/reset-hooks!)
     (test-adding-dummy-hooks-from-jar)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name       "foo"
+    (t/is (= (h/apply-hooks :type-name "foo"
                             :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :before-create
-                            :read-only?      false)
+                            :hook-type :before-create)
              (into obj {"hookJar1 - initialized" "passed-from-jar"
                         "hookJar2 - initialized" "passed-from-jar"
                         "hookJar3 - initialized" "passed-from-jar"})))
-    (t/is (= (h/apply-hooks :type-name       "foo"
+    (t/is (= (h/apply-hooks :type-name "foo"
                             :realized-object obj
-                            :prev-object     nil
-                            :hook-type       :after-create
-                            :read-only?      false)
+                            :hook-type :after-create)
              obj))
     (h/reset-hooks!)))

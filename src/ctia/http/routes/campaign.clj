@@ -16,7 +16,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-campaign :admin}
       :login login
-      (ok (flows/create-flow :realize-fn realize-campaign
+      (ok (flows/create-flow :model StoredCampaign
+                             :realize-fn realize-campaign
                              :store-fn #(create-campaign @campaign-store %)
                              :object-type :campaign
                              :login login
@@ -29,7 +30,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-campaign :admin}
       :login login
-      (ok (flows/update-flow :get-fn #(read-campaign @campaign-store %)
+      (ok (flows/update-flow :model StoredCampaign
+                             :get-fn #(read-campaign @campaign-store %)
                              :realize-fn realize-campaign
                              :update-fn #(update-campaign @campaign-store (:id %) %)
                              :object-type :campaign
@@ -51,7 +53,8 @@
       :summary "Deletes a Campaign"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-campaign :admin}
-      (if (flows/delete-flow :get-fn #(read-campaign @campaign-store %)
+      (if (flows/delete-flow :model StoredCampaign
+                             :get-fn #(read-campaign @campaign-store %)
                              :delete-fn #(delete-campaign @campaign-store %)
                              :object-type :campaign
                              :id id)

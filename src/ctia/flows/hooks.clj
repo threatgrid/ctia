@@ -3,16 +3,27 @@
   (:require [ctia.flows.hook-protocol :refer [Hook init destroy handle]]))
 
 (def empty-hooks
-  {:before-create {:doc "`before-create` hooks are triggered on create routes before the object is saved in the DB."
+  {:before-create {:doc (str "`before-create` hooks are triggered on"
+                             " create routes before the object is saved in the DB.")
                    :list []}
+   :before-create-ro {:doc (str "`before-create-ro` hooks are read-only"
+                                " hooks triggered just before creation buf after"
+                                " `before-create` hooks.")
+                      :list []}
    :after-create {:doc "`after-create` hooks are called after an object was created."
                   :list []}
-   :before-update {:doc "`before-update` hooks are triggered on update before the object is saved in the DB."
-                   :list []}
+   :before-update-ro {:doc (str "`before-update-ro` hooks are read-only"
+                                " hooks triggered just before creation buf after"
+                                " `before-update` hooks.")
+                      :list []}
    :after-update {:doc "`after-update` hooks are called after an object was updated."
                   :list []}
    :before-delete {:doc "`before-delete` hooks are called before an object deletion"
                    :list []}
+   :before-delete-ro {:doc (str "`before-delete-ro` hooks are read-only"
+                                " hooks triggered just before creation buf after"
+                                " `before-delete` hooks.")
+                      :list []}
    :after-delete {:doc "`after-delete` hooks are called after an object is deleted"
                   :list []}})
 

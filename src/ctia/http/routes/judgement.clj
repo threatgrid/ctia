@@ -24,7 +24,8 @@
       :summary "Adds a new Judgement"
       :capabilities #{:create-judgement :admin}
       :login login
-      (ok (flows/create-flow :realize-fn realize-judgement
+      (ok (flows/create-flow :model StoredJudgement
+                             :realize-fn realize-judgement
                              :store-fn #(create-judgement @judgement-store %)
                              :object-type :judgement
                              :login login
@@ -38,7 +39,8 @@
       :summary "Adds a Feedback to a Judgement"
       :capabilities #{:create-feedback :admin}
       :login login
-      (ok (flows/create-flow :realize-fn #(realize-feedback %1 %2 %3 judgement-id)
+      (ok (flows/create-flow :model StoredFeedback
+                             :realize-fn #(realize-feedback %1 %2 %3 judgement-id)
                              :store-fn #(create-feedback @feedback-store %)
                              :object-type :feedback
                              :login login
@@ -80,7 +82,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Deletes a Judgement"
       :capabilities #{:delete-judgement :admin}
-      (if (flows/delete-flow :get-fn #(read-judgement @judgement-store %)
+      (if (flows/delete-flow :model StoredJudgement
+                             :get-fn #(read-judgement @judgement-store %)
                              :delete-fn #(delete-judgement @judgement-store %)
                              :object-type :judgement
                              :id id)

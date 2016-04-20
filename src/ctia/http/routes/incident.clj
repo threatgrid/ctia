@@ -19,7 +19,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-incident :admin}
       :login login
-      (ok (flows/create-flow :realize-fn realize-incident
+      (ok (flows/create-flow :model StoredIncident
+                             :realize-fn realize-incident
                              :store-fn #(create-incident @incident-store %)
                              :object-type :incident
                              :login login
@@ -32,7 +33,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-incident :admin}
       :login login
-      (ok (flows/update-flow :get-fn #(read-incident @incident-store %)
+      (ok (flows/update-flow :model StoredIncident
+                             :get-fn #(read-incident @incident-store %)
                              :realize-fn realize-incident
                              :update-fn #(update-incident @incident-store (:id %) %)
                              :object-type :incident
@@ -54,7 +56,8 @@
       :summary "Deletes an Incident"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-incident :admin}
-      (if (flows/delete-flow :get-fn #(read-incident @incident-store %)
+      (if (flows/delete-flow :model StoredIncident
+                             :get-fn #(read-incident @incident-store %)
                              :delete-fn #(delete-incident @incident-store %)
                              :object-type :incident
                              :id id)
