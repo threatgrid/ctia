@@ -26,7 +26,13 @@ or
 
 ### 1.4 As a security device, I would like to record a sighting of an indicator
 
-curl -XPOST -d'{:observable {...}...}' http://ctiahost/ctia/indicator/ID/sighting
+You must first know the indicator ID.  Here is an example looking it up by title.
+
+	curl http://ctiahost/ctia/indicator/title/document-direct-ip-traffic
+
+Post the sighting with the indicator ID.
+
+	curl -XPOST -d'{"observable_relation":{"source":{"type":"sha256","value":"abc"},"relation":"Sent_To","relation":{"type":"ip","value":"10.0.0.1"},...}' http://ctiahost/ctia/indicator/ID/sighting
 
 ## Incident Responder
 
@@ -36,7 +42,7 @@ For each jugement object returned by:
 
     curl http://ctiahost/ctia/ip/192.168.1.1/indicators
 
-Extract the IDs from the `indicated__TTP.ttp__id' fields and
+Extract the IDs from the 'indicated_TTP.ttp_id' fields and
 
     curl http://ctiahost/ctia/ttp/ID
 
@@ -46,21 +52,33 @@ For each jugement object returned by:
 
     curl http://ctiahost/ctia/ip/192.168.1.1/indicators
 
-Extract the IDs from the `related_campaigns.campaign__id' fields and
+Extract the IDs from the 'related_campaigns.campaign_id' fields and
 
     curl http://ctiahost/ctia/campaigns/ID
 
-### 2.3 As an incident responder, I would like to know what suggest COAs are asociated with an IP
+### 2.3 As an incident responder, I would like to know what suggested COAs are asociated with an IP
 
-For each jugement object returned by:
+For each indicator object returned by:
 
     curl http://ctiahost/ctia/ip/192.168.1.1/indicators
-
-Extract the IDs from the `suggested_COA.COA__id' fields and
+    
+Extract the IDs from the 'suggested_COA.COA__id' fields and
 
     curl http://ctiahost/ctia/coa/ID
 
 ### 2.4 As an incident responder, I would like to record an incident and it's sightings
+
+Determine the ID of the incident's indicator(s).
+
+	curl http://ctiahost/ctia/indicator/title/document-direct-ip-traffic
+
+Import the incident, providing the indicator ID.
+
+	curl -XPOST -d'{"valid_time":{...}, "confidence":"High", "description":"an indicent","suggest_COA":{...},"related_indicators":[{"indicator_id":"indicator-123"}]}'
+	
+Also import each sighting
+
+	curl -XPOST -d'{}'
 
 
 ## Security Operator
@@ -84,6 +102,10 @@ you would when creating a Judgement without an indicator.
     curl -XPOST -d'{"disposition": 2, "indicator": ID, "observable": {...}' http://ctiahost/ctia/judgements
 
 ### 3.3 As a security operator, I would like to whitelist my internal IPs
+
+Create judgments for the IPs with clean dispositions
+
+    curl -XPOST
 
 ### 3.4 As a security operator, I would like to record that an indicator was wrong
 
@@ -147,6 +169,4 @@ Interfaces that Java, or other JVM languages, can implement.
 
 ### 6.1 As an Threat Analyst I want to add observables that may not be as malicious.
 
-An analyst may be gathering information around an actor or campaign and would like to add the observations as a judgement in order to populate an indicator or incident. This is 'interesting' or 'informational' but not necessarily suspicious. For example: An actor may use a specific public ip lookup site to check location, etc... This domain seen in conjunction with host indicators may indicate compromise. It may also simply be information added to TTPs or a Campaign. 
-
-
+An analyst may be gathering information around an actor or campaign and would like to add the observations as a judgement in order to populate an indicator or incident. This is 'interesting' or 'informational' but not necessarily suspicious. For example: An actor may use a specific public ip lookup site to check location, etc... This domain seen in conjunction with host indicators may indicate compromise. It may also simply be information added to TTPs or a Campaign.
