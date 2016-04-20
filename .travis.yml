@@ -20,10 +20,10 @@ before_install:
 before_script:
     # Wait ES
     - until curl http://localhost:9200/; do sleep 1; done
-
-#services:
-#    - elasticsearch
+services:
+    - elasticsearch
+    - redis
 # notifications:
 #   hipchat: [api token]@[room id or name]
 env:
-    - CTIA_STORE_ES_URI=http://127.0.0.1:9200 CTIA_STORE_ES_HOST=127.0.0.1 CTIA_STORE_ES_INDEXNAME=elasticsearch CTIA_PRODUCER_ES_URI=http://127.0.0.1:9200 CTIA_PRODUCER_ES_INDEXNAME=elasticsearch
+    - CTIA_STORE_ES_URI=http://127.0.0.1:9200 CTIA_STORE_ES_HOST=127.0.0.1 CTIA_STORE_ES_INDEXNAME=elasticsearch CTIA_PRODUCER_ES_URI=http://127.0.0.1:9200 CTIA_PRODUCER_ES_INDEXNAME=elasticsearch CTIA_STORE_REDIS_ENABLED=true CTIA_STORE_REDIS_URL=redis://127.0.0.1:6379

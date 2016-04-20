@@ -9,6 +9,7 @@
 (use-fixtures :once st/validate-schemas)
 
 (deftest test-setup
+  (e/shutdown!)
   (e/init!)
   (let [{b :chan-buf c :chan m :mult :as ev} @e/central-channel]
     (log-channel ev)
@@ -16,6 +17,7 @@
     (Thread/sleep 100))) ;; wait until the go loop is done
   
 (deftest test-logged
+  (e/shutdown!)
   (e/init!)
   (let [{b :chan-buf c :chan m :mult :as ev} @e/central-channel
         sb (StringBuilder.)

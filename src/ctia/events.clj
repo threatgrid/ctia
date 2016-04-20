@@ -3,7 +3,7 @@
             [ctia.lib.time :as time]
             [ctia.schemas.common :as c]
             [ctia.schemas.verdict :as v]
-            [clojure.core.async :as a :refer [go-loop <! chan tap]]
+            [clojure.core.async :as a :refer [go-loop alt! chan tap]]
             [schema.core :as s :refer [=>]])
   (:import [clojure.core.async Mult]
            [clojure.core.async.impl.protocols Channel]
@@ -39,10 +39,16 @@
      :mult p
      :recent r}))
 
-(defn init! []
-  (reset! central-channel (new-event-channel)))
+(s/defn close!
+  "Closes a channel that may have already been reset to nil."
+  [c :- (s/maybe Channel)]
+  (when c (a/close! c)))
 
-(s/defn shutdown-channel :- Long
+(defn init! []
+  (when (nil? @central-channel)
+    (reset! central-channel (new-event-channel))))
+
+(s/defn shutdown-channel :- s/Num
   "Shuts down a provided event channel."
   [max-wait-ms :- Long
    {:keys [:chan-buf :chan :mult]} :- EventChannel]
@@ -55,7 +61,7 @@
           (recur timeout)
           (count chan-buf))))))
 
-(s/defn shutdown! :- Long
+(s/defn shutdown! :- s/Num
   "Close the event channel, waiting up to max-wait-ms for the buffer
    to flush.  Returns the number of items in the buffer after
    shutdown (zero on a successful flush).
@@ -63,7 +69,11 @@
   ([]
    (shutdown! shutdown-max-wait-ms))
   ([max-wait-ms :- Long]
-   (shutdown-channel max-wait-ms @central-channel)))
+   (try
+     (if @central-channel
+       (shutdown-channel max-wait-ms @central-channel)
+       0)
+     (finally (reset! central-channel nil)))))
 
 (s/defn send-event
   "Send an event to a channel. Use the central channel by default"
@@ -182,13 +192,17 @@
     shutdown-fn :- (s/maybe (=> s/Any))]
    (let [events (chan)]
      (tap m events)
-     (let [ch (go-loop []
-                (when-let [event (<! events)]
-                  (when (pred event)
-                    (f event))
-                  (recur)))]
+     (let [end-chan (chan)
+           ch (go-loop []
+                (if-let [event (alt! [events end-chan] ([v] v))]
+                  (do
+                    (when (pred event)
+                      (f event))
+                    (recur))
+                  (a/close! events)))]
        (.addShutdownHook (Runtime/getRuntime)
-                         (Thread. #(do (a/close! ch)
+                         (Thread. #(do (a/close! end-chan)
+                                       (a/close! ch)
                                        (when (fn? shutdown-fn)
                                          (shutdown-fn)))))
-       ch))))
+       end-chan))))

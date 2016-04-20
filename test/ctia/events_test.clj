@@ -1,10 +1,16 @@
 (ns ctia.events-test
-  (:require [ctia.events :as c :refer :all]
+  (:require [ctia.events :as c :refer :all :exclude [init!]]
             [clojure.test :as t :refer :all]
             [clojure.core.async :refer [poll! chan tap <!!]]
             [schema.test :as st]))
 
 (use-fixtures :once st/validate-schemas)
+
+(defn init!
+  "Initialize, possibly cleaning up from previous tests"
+  []
+  (c/shutdown!)
+  (c/init!))
 
 (deftest test-send-event
   "Tests the basic action of sending an event"
