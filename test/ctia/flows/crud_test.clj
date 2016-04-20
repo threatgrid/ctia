@@ -67,3 +67,18 @@
                                   :id "model-id"
                                   :owner "login"
                                   :old {:old "object"}}}))))))
+
+
+(t/deftest test-delete-flow-without-hook
+  (do
+    (h/reset-hooks!)
+    (let [stored-object (into object {:id "model-id"
+                                      :owner "nobody"})
+          _ (reset! store stored-object)
+          resp (crud/delete-flow :model Model
+                                 :get-fn (fn [_] @store)
+                                 :delete-fn (fn [_] (reset! store {}) true)
+                                 :object-type :model
+                                 :id (:id stored-object))]
+      (t/is (= {} @store))
+      (t/is (= true resp)))))
