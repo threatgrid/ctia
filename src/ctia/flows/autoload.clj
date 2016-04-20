@@ -1,9 +1,9 @@
 (ns ctia.flows.autoload
   (:require
    [leiningen.core.project :as p]
+   [schema.core :as s]
    [ctia.flows.hooks :as h]
-   [ctia.flows.hook-protocol :refer [Hook]]
-   ))
+   [ctia.flows.hook-protocol :refer [Hook]]))
 
 (defrecord ProxyJ [o]
   Hook
@@ -12,9 +12,10 @@
     (h/from-java-handle o type-name stored-object prev-object))
   (destroy [_] (doto (.destroy o))))
 
-(defn add-record
+(s/defn add-record :- (s/eq nil)
   "Given a `record` symbol it load it "
-  [hook-cls hook-type]
+  [hook-cls :- s/Symbol
+   hook-type :- s/Keyword]
   (let [hook-obj (do (eval `(do
                               (require '[~(symbol
                                            (first (clojure.string/split (str hook-cls) #"/")))])
@@ -24,24 +25,28 @@
       (binding [*out* *err*]
         (println hook-cls " doesn't satisfies `ctia.flows.hooks/Hook` protcol!")))))
 
-(defn add-java-class [hook-cls hook-type]
+(s/defn add-java-class :- (s/eq nil)
+  "Add a java class as Hook"
+  [hook-cls :- s/Symbol
+   hook-type :- s/Keyword]
   (let [hook-obj (eval `(new ~hook-cls))]
-    (cond
-      (instance? ctia.Hook hook-obj) (h/add-hook! hook-type (ProxyJ. hook-obj))
-      :else (binding [*out* *err*]
-              (println hook-cls "isn't an instance of `ctia.Hook`!")))))
+    (if (instance? ctia.Hook hook-obj)
+      (h/add-hook! hook-type (ProxyJ. hook-obj))
+      (binding [*out* *err*]
+        (println hook-cls "isn't an instance of `ctia.Hook`!")))))
 
-(defn load-hooks! [hooks]
+(s/defn load-hooks! :- (s/eq nil)
+  [hooks :- [{s/Keyword s/Symbol}]]
   (doseq [[hook-type hook-classes] hooks]
     (doseq [hook-cls hook-classes]
       (if (.contains (str hook-cls) "/")
         (add-record hook-cls hook-type)
         (add-java-class hook-cls hook-type)))))
 
-(defn autoload-hooks!
+(s/defn autoload-hooks! :- (s/eq nil)
   "Should retrieve a list of Hook classes from `project.cljs`.
   All these classes must implement the `Hook` java interface."
   ([] (load-hooks! (:hooks-classes (p/read))))
-  ([profiles] (load-hooks! (:hooks-classes (try (p/read "project.clj" profiles)
+  ([profiles :- [s/Keyword]] (load-hooks! (:hooks-classes (try (p/read "project.clj" profiles)
                                                 (finally
                                                   nil))))))
