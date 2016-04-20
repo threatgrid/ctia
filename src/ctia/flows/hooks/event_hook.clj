@@ -1,4 +1,4 @@
-(ns ctia.flows.event-hook
+(ns ctia.flows.hooks.event-hook
   (:require
    [ctia.events.obj-to-event :refer [to-create-event
                                      to-update-event

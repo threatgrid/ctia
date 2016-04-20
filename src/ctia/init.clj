@@ -18,6 +18,7 @@
             [ctia.flows.autoload :refer [autoload-hooks!]]
             [ctia.flows.hooks :as h]
             [ctia.events :as e]
+            [ctia.flows.hooks.event-hook :as event-hook]
             [ring.adapter.jetty :as jetty]))
 
 (defn init-auth-service! []
@@ -97,6 +98,9 @@
   "Load all the hooks, init them and assure to
   call `destroy` on all hooks when shutting down."
   []
+  (h/add-hook! :before-create-ro event-hook/EventHook)
+  (h/add-hook! :before-update-ro event-hook/EventHook)
+  (h/add-hook! :before-delete-ro event-hook/EventHook)
   ;; this is breaking everything
   ;;(autoload-hooks!)
   (h/init-hooks!)
