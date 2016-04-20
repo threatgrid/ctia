@@ -1,5 +1,6 @@
 (ns ctia.events.obj-to-event-test
-  (:require [ctia.events.obj-to-event :as evt]
+  (:require [clojure.data :refer [diff]]
+            [ctia.events.obj-to-event :as evt]
             [ctia.events.schemas :refer [CreateEvent
                                          UpdateEvent
                                          DeleteEvent]]
@@ -25,3 +26,15 @@
   (doseq [actor (generators/sample 100 StoredActor)]
     (let [event (evt/to-delete-event StoredActor actor)]
       (t/is (s/validate DeleteEvent event)))))
+
+(t/deftest test-triplet-generation
+  (t/is
+   #{[:to-remove "deleted" {}]
+     [:to-change "modified" {0 1}]
+     [:to-add "added" {}]}
+   (set (evt/diff-to-list-of-triplet (diff {:to-remove 0
+                                            :to-stay 0
+                                            :to-change 0}
+                                           {:to-stay 0
+                                            :to-change 1
+                                            :to-add 0})))))
