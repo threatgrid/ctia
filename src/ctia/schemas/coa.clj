@@ -10,6 +10,7 @@
 (s/defschema COA
   (merge
    c/GenericStixIdentifiers
+   c/CommonFields
    {:valid_time c/ValidTime}
    (st/optional-keys
     {:stage (describe

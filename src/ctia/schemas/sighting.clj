@@ -9,6 +9,7 @@
 (s/defschema Sighting
   "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
   (st/merge
+   c/CommonFields
    {:id c/ID
     :timestamp c/Time
     :description s/Str}

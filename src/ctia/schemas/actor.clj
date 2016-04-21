@@ -10,6 +10,7 @@
   "http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/"
   (st/merge
    c/GenericStixIdentifiers
+   c/CommonFields
    {:valid_time c/ValidTime
     :actor_type v/ThreatActorType}
    (st/optional-keys

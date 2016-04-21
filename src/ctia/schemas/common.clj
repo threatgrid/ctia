@@ -61,6 +61,10 @@
     :description s/Str
     (s/optional-key :short_description) s/Str}))
 
+(s/defschema CommonFields
+  "These fields are common to all (most) resources"
+  {(s/optional-key :feedbacks) (describe [URI] "A list of feedback URI")})
+
 (s/defschema Tool
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
   (st/merge {:description s/Str}

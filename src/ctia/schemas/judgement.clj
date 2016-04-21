@@ -23,6 +23,7 @@
   trusted source.  It could also be common, something so widespread
   that it's not likely to be malicious."
   (st/merge
+   c/CommonFields
    {:id c/ID
     :observable c/Observable
     :disposition c/DispositionNumber
