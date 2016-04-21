@@ -9,8 +9,10 @@
 
 
 (s/defn to-create-event :- vs/CreateEvent
-  [model :-  {s/Any s/Any}
-   object :- {s/Any s/Any}]
+  "Create a CreateEvent from a StoredX object
+   the first argument `model` should generally be a schema of the form StoredX
+   the second argument `object` should match the `model` schema."
+  [model object]
   {:owner (:owner object)
    :model model
    :timestamp (t/now)
@@ -34,10 +36,11 @@
 
 
 (s/defn to-update-event :- vs/UpdateEvent
-  "transform an object (generally a `StoredObject`) to an `UpdateEvent`"
-  [model :- {s/Any s/Any}
-   object :- {s/Any s/Any}
-   prev-object :- {s/Any s/Any}]
+  "transform an object (generally a `StoredObject`) to an `UpdateEvent`
+   the first argument `model` should generally be a schema of the form StoredX
+   the second and third arguments `object` and `prev-object`
+   should match the `model` schema."
+  [model object prev-object]
   {:owner (:owner object)
    :model model
    :timestamp (t/now)
@@ -51,9 +54,10 @@
    })
 
 (s/defn to-delete-event :- vs/DeleteEvent
-  "transform an object (generally a `StoredObject`) to its corresponding `Event`"
-  [model :- {s/Any s/Any}
-   object :- {s/Any s/Any}]
+  "transform an object (generally a `StoredObject`) to its corresponding `Event`
+   the first argument `model` should generally be a schema of the form StoredX
+   the second argument `object` should match the `model` schema."
+  [model object]
   {:owner (:owner object)
    :model model
    :timestamp (t/now)
