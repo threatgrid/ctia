@@ -168,66 +168,6 @@
                (dissoc updated-indicator
                        :modified)))))
 
-      (testing "POST /ctia/indicator/:id/sighting"
-        (let [{status :status
-               sighting :parsed-body}
-              (post (str "ctia/indicator/" (:id indicator) "/sighting")
-                    :body {:timestamp "2016-05-11T00:40:48.212-00:00"
-                           :source "source"
-                           :reference "http://example.com/123"
-                           :confidence "High"
-                           :description "description"
-                           :related_judgements [{:judgement_id "judgement-123"}
-                                                {:judgement_id "judgement-234"}]}
-                    :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 200 status))
-          (is (deep=
-               {:type "sighting"
-                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
-                :source "source"
-                :reference "http://example.com/123"
-                :confidence "High"
-                :description "description"
-                :related_judgements [{:judgement_id "judgement-123"}
-                                     {:judgement_id "judgement-234"}]
-                :indicator {:indicator_id (:id indicator)}
-                :owner "foouser"}
-               (dissoc sighting
-                       :id
-                       :created
-                       :modified)))
-
-          (testing "GET /ctia/indicator/:id"
-            (let [{status :status
-                   indicator :parsed-body}
-                  (get (str "ctia/indicator/" (:id indicator))
-                       :headers {"api_key" "45c1f5e3f05d0"})]
-              (is (= 200 status))
-              (is (deep=
-                   {:id (:id indicator)
-                    :type "indicator"
-                    :created (:created indicator)
-                    :title "updated indicator"
-                    :description "updated description"
-                    :producer "producer"
-                    :indicator_type ["IP Watchlist"]
-                    :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
-                                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                    :related_campaigns [{:confidence "Low"
-                                         :source "source"
-                                         :relationship "relationship"
-                                         :campaign_id "campaign-123"}]
-                    :composite_indicator_expression {:operator "and"
-                                                     :indicator_ids ["test1" "test2"]}
-                    :related_COAs [{:confidence "High"
-                                    :source "source"
-                                    :relationship "relationship"
-                                    :COA_id "coa-123"}]
-                    :sightings [{:sighting_id (:id sighting)}]
-                    :owner "foouser"}
-                   (dissoc indicator
-                           :modified)))))))
-
       (testing "DELETE /ctia/indicator/:id"
         (let [response (delete (str "ctia/indicator/" (:id indicator))
                                :headers {"api_key" "45c1f5e3f05d0"})]

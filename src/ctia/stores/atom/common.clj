@@ -42,15 +42,28 @@
       false)))
 
 (defn list-handler [Model]
+  "Mostly work like MongoDB find():
+
+    - `{:a value}` will match all objects such that the
+      `:a` field is equal to `value`
+    - `{[:a :b] value}` will match all objects such that
+      `(= value (get-in object [:a :b]))`
+    - `{:a #{v1 v2 v3}}` will match all objects such that
+      `:a` field is either equal to `v1`, `v2` or `v3`.
+    - `{[:a :b] #{v1 v2 v3}}` will match all objects such that
+      `(get-in object [:a :b])` is equal to `v1`, `v2` or `v3`"
   (s/fn :- (s/maybe [Model])
     [state :- (s/atom {s/Str Model})
      filter-map :- {s/Any s/Any}]
     (into []
           (filter (fn [model]
                     (every? (fn [[k v]]
-                              (if (sequential? k)
-                                (= v (get-in model k ::not-found))
-                                (= v (get model k ::not-found))))
+                              (let [found-v (if (sequential? k)
+                                              (get-in model k ::not-found)
+                                              (get model k ::not-found))]
+                                (if (set? v)
+                                  (contains? v found-v)
+                                  (= v found-v))))
                             filter-map))
                   (vals (deref state))))))
 

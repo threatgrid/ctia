@@ -16,12 +16,7 @@
   [sightings-state :- (s/atom {s/Str StoredSighting})
    indicators :- (s/maybe [StoredIndicator])]
   ;; Find sightings using the :sightings relationship on indicators
-  (let [sightings-map @sightings-state]
-    (->> indicators
-         (map :sightings)
-         flatten
-         (map :sighting_id)
-         (remove nil?)
-         (map (fn [s-id]
-                (get sightings-map s-id)))
-         (remove nil?))))
+  (let [sightings-map @sightings-state
+        indicators-set (set (map :id indicators))]
+    (handle-list-sightings sightings-state
+                           {[:indicator :indicator_id] indicators-set})))

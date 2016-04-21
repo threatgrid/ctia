@@ -20,11 +20,9 @@
 
 (defn handle-list-sightings-by-indicators
   [state indicators]
-  (let [sighting-ids (->> indicators
-                          (mapcat :sightings)
-                          (map :sighting_id))]
+  (let [indicator-ids (mapv :id indicators)]
     (search-docs (:conn state)
                  (:index state)
                  mapping
                  {:type "sighting"
-                  :id sighting-ids})))
+                  [:indicator :indicator_id] indicator-ids})))
