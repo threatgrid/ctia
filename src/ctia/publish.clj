@@ -15,8 +15,7 @@
 (defn init!
   "Initializes publishing. Right now, this means Redis."
   []
-  (when (and (redis/enabled?)
-             (redis/set-listener-fn! async-listener))
+  (when (redis/set-listener-fn! async-listener)
     (e/register-listener redis/publish-fn)))
 
 (s/defn event-subscribe :- (s/maybe Channel)

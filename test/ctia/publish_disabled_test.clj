@@ -8,8 +8,6 @@
 (use-fixtures :each test-helpers/fixture-ctia)
 
 (deftest ^:integration test-events-with-redis-disabled
-  (e/init!)
-  (pub/init!)
   (testing "check that an uninitialized redis does not attempt callbacks"
     (let [results (atom [])
           sub (pub/event-subscribe #(swap! results conj %))]

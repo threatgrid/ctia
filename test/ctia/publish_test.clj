@@ -10,10 +10,7 @@
 (use-fixtures :each test-helpers/fixture-ctia)
 
 (deftest ^:integration test-events
-  (e/init!)
-  (pub/init!)
   (testing "Checking that Redis can be enabled at runtime"
-    (pub/init!)
     (let [results (atom [])
           sub (pub/event-subscribe #(swap! results conj %))]
       (e/send-create-event "tester" {} "TestModelType" {:data 1})

@@ -28,8 +28,7 @@
   "Build the server config"
   []
   (let [[host port] (host-port @p/properties)]
-    (when (false? (and host port))
-      (log/warn "Redis has been de-configured"))
+    (assert (and host port) "Redis has been de-configured")
     {:pool {}
      :spec {:host (or host default-host)
             :port (or default-port)
