@@ -3,7 +3,7 @@ services:
   ctia:
     image: ctia:latest
     volumes:
-      - ./ctia/config/ctia-default.properties:/usr/src/app/resources/ctia-default.properties
+      - ./ctia/config/ctia.properties:/usr/src/app/resources/ctia.properties
     build:
       context: ../../
       dockerfile: Dockerfile
