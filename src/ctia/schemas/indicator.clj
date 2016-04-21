@@ -47,6 +47,7 @@
   "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
   (st/merge
    c/GenericStixIdentifiers
+   c/CommonFields
    {:valid_time c/ValidTime}
    (st/optional-keys
     {:alternate_ids (describe [s/Str] "alternative identifier (or alias)")

@@ -11,7 +11,9 @@ the active verdict.  If there is more than one Judgement with that
 priority, then Clean disposition has priority over all others, then
 Malicious disposition, and so on down to Unknown.
 "
-  {:type (s/enum "verdict")
-   :disposition c/DispositionNumber
-   (s/optional-key :judgement_id) rel/JudgementReference
-   (s/optional-key :disposition_name) c/DispositionName})
+  (st/merge
+   c/CommonFields
+   {:type (s/enum "verdict")
+    :disposition c/DispositionNumber
+    (s/optional-key :judgement_id) rel/JudgementReference
+    (s/optional-key :disposition_name) c/DispositionName}))

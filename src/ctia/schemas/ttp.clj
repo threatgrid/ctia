@@ -75,6 +75,7 @@
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
   (merge
    c/GenericStixIdentifiers
+   c/CommonFields
    {:valid_time (describe
                  c/ValidTime
                  "a timestamp for the definition of a specific version of a TTP item")}

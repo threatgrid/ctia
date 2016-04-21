@@ -11,6 +11,7 @@
   "See http://stixproject.github.io/data-model/1.2/campaign/CampaignType/"
   (st/merge
    c/GenericStixIdentifiers
+   c/CommonFields
    {:valid_time (describe
                  c/ValidTime
                  "timestamp for the definition of a specific version of a Campaign")
