@@ -23,7 +23,7 @@ before_script:
     - until redis-cli ping; do sleep 1; done
 services:
     - elasticsearch
-    - redis
+    - redis-server
 # notifications:
 #   hipchat: [api token]@[room id or name]
 env:
