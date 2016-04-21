@@ -20,6 +20,7 @@ before_install:
 before_script:
     # Wait ES
     - until curl http://localhost:9200/; do sleep 1; done
+    - until redis-cli ping; do sleep 1; done
 services:
     - elasticsearch
     - redis
