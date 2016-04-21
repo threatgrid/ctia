@@ -16,6 +16,7 @@
             [ctia.http.routes.sighting :refer [sighting-routes]]
             [ctia.http.routes.event :refer [event-routes]]
             [ctia.http.routes.observable :refer [observable-routes]]
+            [ctia.http.routes.properties :refer [properties-routes]]
             [ctia.http.routes.verdict :refer [verdict-routes]]))
 
 (def api-description
@@ -80,6 +81,7 @@
     sighting-routes
     event-routes
     observable-routes
+    properties-routes
     verdict-routes))
 
 (def app
