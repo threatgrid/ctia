@@ -3,5 +3,8 @@
 .lein-failures
 .nrepl-port
 .*.swp
+*.class
 /target/
 resources/ctia.properties
+test/java/build/
+.#*

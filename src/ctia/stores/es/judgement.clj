@@ -16,12 +16,10 @@
    [ctia.stores.es.query :refer
     [active-judgements-by-observable-query]]
 
-   [ctia.stores.es.document :refer [create-doc
-                                    update-doc
-                                    get-doc
-                                    delete-doc
-                                    search-docs
-                                    raw-search-docs]]))
+   [ctia.lib.es.document :refer [update-doc
+                                 delete-doc
+                                 search-docs
+                                 raw-search-docs]]))
 
 (def ^{:private true} mapping "judgement")
 
@@ -53,14 +51,13 @@
 
 (defn list-active-judgements-by-observable
   [state observable]
-  (let [sort {:priority "desc"
+  (let [query (active-judgements-by-observable-query observable)
+        sort {:priority "desc"
               :disposition "asc"
               "valid_time.start_time" {:order "asc"
                                        :mode "min"
                                        :nested_filter
-                                       {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}
-        query
-        (active-judgements-by-observable-query observable)]
+                                       {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}]
 
     (->> (raw-search-docs (:conn state)
                           (:index state)

@@ -3,11 +3,11 @@
             [schema.core :as s]
             [schema.coerce :as c]
             [ring.swagger.coerce :as sc]
-            [ctia.stores.es.document :refer [create-doc
-                                             update-doc
-                                             get-doc
-                                             delete-doc
-                                             search-docs]]))
+            [ctia.lib.es.document :refer [create-doc
+                                          update-doc
+                                          get-doc
+                                          delete-doc
+                                          search-docs]]))
 
 (defn- coerce-to-fn
   [Model]

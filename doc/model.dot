@@ -1,4 +1,4 @@
-digraph cia {
+digraph ctia {
         rankdir=BT;
         actor -> ttp [ label = "observed_TTPs" ];
         actor -> campaign [ label = "associated_campaigns" ];

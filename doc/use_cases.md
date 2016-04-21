@@ -8,15 +8,15 @@ to execute them for users.
 
 ### 1.1 As a security device, I would like ask if an IP or Domain is malicious
 
-    curl http://ciahost/cia/ip/192.168.1.1/verdict
+    curl http://ctiahost/ctia/ip/192.168.1.1/verdict
 
 or
 
-    curl http://ciahost/cia/domain/badhost.com/verdict
+    curl http://ctiahost/ctia/domain/badhost.com/verdict
 
 ### 1.2 As a security device, I would like to provide context for why an IP is malicious
 
-    curl http://ciahost/cia/ip/192.168.1.1/judgements
+    curl http://ctiahost/ctia/ip/192.168.1.1/judgements
 
 ### 1.3 As a security device, I would like to pull down a set of verdicts as a feed
  - all new verdicts for a given observable type in this hour, or day?
@@ -26,7 +26,7 @@ or
 
 ### 1.4 As a security device, I would like to record a sighting of an indicator
 
-curl -XPOST -d'{:observable {...}...}' http://ciahost/cia/indicator/ID/sighting
+curl -XPOST -d'{:observable {...}...}' http://ctiahost/ctia/indicator/ID/sighting
 
 ## Incident Responder
 
@@ -34,33 +34,33 @@ curl -XPOST -d'{:observable {...}...}' http://ciahost/cia/indicator/ID/sighting
 
 For each jugement object returned by:
 
-    curl http://ciahost/cia/ip/192.168.1.1/indicators
+    curl http://ctiahost/ctia/ip/192.168.1.1/indicators
 
 Extract the IDs from the `indicated__TTP.ttp__id' fields and
 
-    curl http://ciahost/cia/ttp/ID
+    curl http://ctiahost/ctia/ttp/ID
 
 ### 2.2 As an incident responder, I would like to know what campaigns are asociated with an IP
 
 For each jugement object returned by:
 
-    curl http://ciahost/cia/ip/192.168.1.1/indicators
+    curl http://ctiahost/ctia/ip/192.168.1.1/indicators
 
 Extract the IDs from the `related_campaigns.campaign__id' fields and
 
-    curl http://ciahost/cia/campaigns/ID
+    curl http://ctiahost/ctia/campaigns/ID
 
 ### 2.3 As an incident responder, I would like to know what suggest COAs are asociated with an IP
 
 For each jugement object returned by:
 
-    curl http://ciahost/cia/ip/192.168.1.1/indicators
+    curl http://ctiahost/ctia/ip/192.168.1.1/indicators
 
 Extract the IDs from the `suggested_COA.COA__id' fields and
 
-    curl http://ciahost/cia/coa/ID
+    curl http://ctiahost/ctia/coa/ID
 
-### 2.4 As an incident responder, I would like to record and incident and it's sightings
+### 2.4 As an incident responder, I would like to record an incident and it's sightings
 
 
 ## Security Operator
@@ -71,17 +71,17 @@ For each entry in the feed, based on the source of the feed, and it's
 content, choose a "origin" value such as "Bob's Threat Intel" and a
 reason such as "Known RAT IP"
 
-    curl -XPOST -d'{"disposition": 2, "observable": {...}' http://ciahost/cia/judgements
+    curl -XPOST -d'{"disposition": 2, "observable": {...}' http://ctiahost/ctia/judgements
 
 ### 3.2 As a security operator, I would like to import an indicator
 
-    curl -XPOST -d'{"title":   }' http://ciahost/cia/indicators
+    curl -XPOST -d'{"title":   }' http://ctiahost/ctia/indicators
 
 Extract the indicator ID from the created Indicator, and then import
 your observables with that indicator id.  Set the origin and reason as
 you would when creating a Judgement without an indicator.
 
-    curl -XPOST -d'{"disposition": 2, "indicator": ID, "observable": {...}' http://ciahost/cia/judgements
+    curl -XPOST -d'{"disposition": 2, "indicator": ID, "observable": {...}' http://ctiahost/ctia/judgements
 
 ### 3.3 As a security operator, I would like to whitelist my internal IPs
 
@@ -143,6 +143,10 @@ Interfaces that Java, or other JVM languages, can implement.
 
 ### 5.8 as an integrator, I would like to define my own event consumers
 
+## Threat Intel Analyst (Hunter)
 
+### 6.1 As an Threat Analyst I want to add observables that may not be as malicious.
+
+An analyst may be gathering information around an actor or campaign and would like to add the observations as a judgement in order to populate an indicator or incident. This is 'interesting' or 'informational' but not necessarily suspicious. For example: An actor may use a specific public ip lookup site to check location, etc... This domain seen in conjunction with host indicators may indicate compromise. It may also simply be information added to TTPs or a Campaign. 
 
 

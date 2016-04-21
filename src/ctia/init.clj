@@ -15,6 +15,8 @@
             [ctia.stores.sql.store :as ss]
             [ctia.stores.sql.db :as sql-db]
             [ctia.stores.sql.judgement :as sql-judgement]
+            [ctia.flows.autoload :refer [autoload-hooks!]]
+            [ctia.flows.hooks :as h]
             [ring.adapter.jetty :as jetty]))
 
 (defn init-auth-service! []
@@ -55,7 +57,7 @@
     (reset! store (impl-fn))))
 
 (defn init-es-store! []
-  (let [store-state (es-index/init-store-conn)
+  (let [store-state (es-store/init-store-conn)
         store-impls {store/actor-store es-store/->ActorStore
                      store/judgement-store es-store/->JudgementStore
                      store/feedback-store es-store/->FeedbackStore
@@ -76,7 +78,7 @@
       (reset! store (impl-fn store-state)))))
 
 (defn init-es-producer! []
-  (let [producer-state (es-index/init-producer-conn)]
+  (let [producer-state (es-producer/init-producer-conn)]
     (reset! producer/event-producers
             [(es-producer/->EventProducer producer-state)])))
 
@@ -89,14 +91,19 @@
       (throw (ex-info "Store service not configured"
                       {:message "Unknown service"
                        :requested-service store-service-default})))))
+(defn init-hooks!
+  "Load all the hooks, init them and assure to
+  call `destroy` on all hooks when shutting down."
+  []
+  (autoload-hooks!)
+  (h/init-hooks!)
+  (h/add-destroy-hooks-hook-at-shutdown))
 
 (defn init-producer-service! []
   (let [producer-service-default (get-in @p/properties [:ctia :producer :type])]
     (case producer-service-default
       :es (init-es-producer!)
-      (throw (ex-info "Producer service not configured"
-                      {:message "Unknown service"
-                       :requested-service producer-service-default})))))
+      nil nil)))
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
@@ -107,6 +114,7 @@
   (init-auth-service!)
   (init-store-service!)
   (init-producer-service!)
+  (init-hooks!)
 
   ;; Start nREPL server
   (let [{nrepl-port :port

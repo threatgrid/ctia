@@ -8,24 +8,24 @@
 
 (s/defschema Actor
   "http://stixproject.github.io/data-model/1.2/ta/ThreatActorType/"
-  (merge
+  (st/merge
    c/GenericStixIdentifiers
    {:valid_time c/ValidTime
-    :actor_type v/ThreatActorType
-    (s/optional-key :source) s/Str
-    (s/optional-key :identity) c/Identity
-    (s/optional-key :motivation) v/Motivation
-    (s/optional-key :sophistication) v/Sophistication
-    (s/optional-key :intended_effect) v/IntendedEffect
-    (s/optional-key :planning_and_operational_support) s/Str ; Empty vocab
-    (s/optional-key :observed_TTPs) rel/RelatedTTPs
-    (s/optional-key :associated_campaigns) rel/RelatedCampaigns
-    (s/optional-key :associated_actors) rel/RelatedActors
-    (s/optional-key :confidence) v/HighMedLow
-
-    ;; Not provided: handling
-    ;; Not provided: related_packages (deprecated)
-    }))
+    :actor_type v/ThreatActorType}
+   (st/optional-keys
+    {:source s/Str
+     :identity c/Identity
+     :motivation v/Motivation
+     :sophistication v/Sophistication
+     :intended_effect v/IntendedEffect
+     :planning_and_operational_support s/Str ; Empty vocab
+     :observed_TTPs rel/RelatedTTPs
+     :associated_campaigns rel/RelatedCampaigns
+     :associated_actors rel/RelatedActors
+     :confidence v/HighMedLow
+     ;; Not provided: handling
+     ;; Not provided: related_packages (deprecated)
+     })))
 
 (s/defschema Type
   (s/enum "actor"))

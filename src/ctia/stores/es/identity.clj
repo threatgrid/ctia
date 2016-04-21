@@ -3,10 +3,9 @@
   (:require
    [schema.core :as s]
    [ctia.schemas.identity :refer [Identity]]
-   [ctia.stores.es.document :refer [create-doc
-                                   get-doc
-                                   delete-doc
-                                   search-docs]]))
+   [ctia.lib.es.document :refer [create-doc
+                                 get-doc
+                                 delete-doc]]))
 
 (def ^{:private true} mapping "identity")
 

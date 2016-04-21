@@ -1,0 +1,71 @@
+version: "2"
+services:
+  ctia:
+    image: ctia:latest
+    volumes:
+      - ./ctia/config/ctia-default.properties:/usr/src/app/resources/ctia-default.properties
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - kibana
+      - elasticsearch
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  elasticsearch:
+    image: elasticsearch:2.3
+    command: elasticsearch -Des.network.host=0.0.0.0
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+  logstash:
+    image: logstash:latest
+    command: logstash -f /etc/logstash/conf.d/logstash.conf
+    volumes:
+      - ./logstash/config:/etc/logstash/conf.d
+    ports:
+      - "5000:5000"
+      - "5000:5000/udp"
+    environment:
+      # prevents logstash output from being routed to logstash.
+      LOGSPOUT: ignore
+    links:
+      - elasticsearch
+  logspout:
+    image: gliderlabs/logspout:latest
+    environment:
+      DEBUG: 'true'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: syslog://logstash:5000
+    links:
+      - logstash
+  kibana:
+    build: kibana/
+    volumes:
+      - ./kibana/config/:/opt/kibana/config/
+    ports:
+      - "5601:5601"
+    # environment:
+    #  - ELASTICSEARCH_URL=http://elasticsearch:9200
+    links:
+      - elasticsearch
+  nginx:
+    restart: always
+    image: nginx:alpine
+    volumes:
+         - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
+         - /etc/nginx/.htpasswd:/etc/nginx/.htpasswd
+    ports:
+      - "80:80"
+    links:
+      - ctia
+      - elasticsearch
+      - kibana
+      - redis

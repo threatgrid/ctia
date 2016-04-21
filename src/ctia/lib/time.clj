@@ -1,10 +1,11 @@
 (ns ^{:doc "Work with java.util.Date objects"}
     ctia.lib.time
-    (:require [clj-time.core :as time]
-              [clj-time.format :as time-format])
-    (:import [java.sql Time Timestamp]
-             [java.util Date]
-             [org.joda.time DateTime DateTimeZone]))
+  (:require [clj-time.core :as time]
+            [clj-time.format :as time-format]
+            [clj-time.coerce :as time-coerce])
+  (:import [java.sql Time Timestamp]
+           [java.util Date]
+           [org.joda.time DateTime DateTimeZone]))
 
 (defn- datetime-from-long [^Long millis]
   (DateTime. millis ^DateTimeZone (DateTimeZone/UTC)))
@@ -56,3 +57,33 @@
 
 (defn plus-n-weeks [n]
   (time/plus (time/weeks n)))
+
+(defn format-date-time [d]
+  (->> d
+       (time-coerce/from-date)
+       (time-format/unparse (time-format/formatters :date-time))))
+
+(defn format-index-time [d]
+  (->> d
+       (time-coerce/from-date)
+       (time-format/unparse (time-format/formatter "YYYY.MM.dd.HH.mm"))))
+
+(defn round-date [d granularity]
+  (let [parsed (time-coerce/from-date d)
+        year (time/year parsed)
+        month (time/month parsed)
+        day (time/day parsed)
+        hour (time/hour parsed)
+        minute (time/minute parsed)]
+
+    (-> (case granularity
+          :week (-> (time/date-time year month day)
+                    (.dayOfWeek)
+                    (.withMinimumValue))
+          :minute (time/date-time year month day hour minute)
+          :hour   (time/date-time year month day hour)
+          :day    (time/date-time year month day)
+          :month  (time/date-time year month)
+          :year   (time/date-time year))
+
+        (time-coerce/to-date))))
