@@ -89,7 +89,7 @@
                            :license {:name "All Rights Reserved",
                                      :url ""}
                            :contact {:name "Cisco Security Business Group -- Advanced Threat "
-                                     :url "http://intel.threatgrid.cisco.com/support"
+                                     :url "http://github.com/threatgrid/ctia"
                                      :email "cisco-intel-api-support@cisco.com"}
                            :description api-description}
                     :tags [{:name "threat", :description "Threat Intelligence"}]}}}
