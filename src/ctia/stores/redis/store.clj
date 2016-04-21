@@ -31,7 +31,9 @@
     (when (false? (and host port))
       (log/warn "Redis has been de-configured"))
     {:pool {}
-     :spec {:host (or host default-host) :port (or default-port)}}))
+     :spec {:host (or host default-host)
+            :port (or default-port)
+            :timeout-ms 30000}}))
 
 (defn enabled?
   "Returns true when Redis is currently configured"
