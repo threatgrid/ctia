@@ -91,9 +91,10 @@
   "Load all the hooks, init them and assure to
   call `destroy` on all hooks when shutting down."
   []
-  (h/add-hook! :before-create-ro event-hook/ESEventProducerHook)
-  (h/add-hook! :before-update-ro event-hook/ESEventProducerHook)
-  (h/add-hook! :before-delete-ro event-hook/ESEventProducerHook)
+  (doseq [hook-type [:before-create-ro
+                     :before-update-ro
+                     :before-delete-ro]]
+    #(h/add-hook! % event-hook/ESEventProducerHook))
   (autoload-hooks!)
   ;; this is breaking everything
   ;;(autoload-hooks!)
