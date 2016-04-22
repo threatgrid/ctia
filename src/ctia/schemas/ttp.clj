@@ -117,7 +117,8 @@
    (st/dissoc TTP
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime}))
+   {(s/optional-key :valid_time) c/ValidTime
+    (s/optional-key :type) (s/enum "ttp")}))
 
 (s/defschema StoredTTP
   "An ttp as stored in the data store"

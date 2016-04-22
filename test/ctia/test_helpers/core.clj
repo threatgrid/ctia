@@ -7,7 +7,7 @@
             [ctia.properties :as props]
             [ctia.store :as store]
             [ctia.stores.atom.store :as as]
-            [ctia.events.producer :as producer]
+            [ctia.events :as e]
             [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.data :as cd]
@@ -85,7 +85,8 @@
       (test)
       (finally
         ;; explicitly stop the http-server
-        (http-server/stop!)))))
+        (http-server/stop!)
+        (e/shutdown!)))))
 
 (defn fixture-schema-validation [f]
   (schema/with-fn-validation

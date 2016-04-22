@@ -2,10 +2,12 @@
   (:refer-clojure :exclude [get])
   (:require
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+   [schema-generators.generators :as g]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]))
+   [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.schemas.incident :refer [NewIncident StoredIncident]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -129,3 +131,23 @@
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))
 
+(deftest-for-each-store test-incident-routes-generative
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+
+  (let [new-incidents (g/sample 20 NewIncident)]
+    (testing "POST /ctia/incident GET /ctia/incident"
+
+      (let [responses (map #(post "ctia/incident"
+                                  :body %
+                                  :headers {"api_key" "45c1f5e3f05d0"}) new-incidents)]
+        (doall (map #(is (= 200 (:status %))) responses))
+        (is (deep=
+             (set new-incidents)
+             (->> responses
+                  (map :parsed-body)
+                  (map #(get (str "ctia/incident/" (:id %))
+                             :headers {"api_key" "45c1f5e3f05d0"}))
+                  (map :parsed-body)
+                  (map #(dissoc % :id :created :modified :owner))
+                  set)))))))

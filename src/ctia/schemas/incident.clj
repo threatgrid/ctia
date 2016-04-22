@@ -118,7 +118,7 @@
 (s/defschema LossEstimation
   "See http://stixproject.github.io/data-model/1.2/incident/LossEstimationType/"
   (st/optional-keys
-   {:amount (describe s/Num "the estimated financial loss for the Incident")
+   {:amount (describe Long "the estimated financial loss for the Incident")
     :iso_currency_code (describe s/Str "ISO 4217 currency code if other than USD")}))
 
 (s/defschema TotalLossEstimation
