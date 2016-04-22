@@ -36,9 +36,9 @@
                  :id "test-id"
                  :http-params {}
                  :type "CreatedModel"
-                 :model {:a 1
-                         :b 2
-                         :c 3}}
+                 :object {:a 1
+                          :b 2
+                          :c 3}}
 
           produced (produce event)]
 
@@ -51,9 +51,9 @@
                  :id "test-id"
                  :http-params {}
                  :type "UpdatedModel"
-                 :model {:a 1
-                         :b 2
-                         :c 3}
+                 :object {:a 1
+                          :b 2
+                          :c 3}
                  :fields [[:f1 "delete" {"x" "y"}]
                           [:f2 "assert" {"x" "y"}]]}
 
@@ -68,9 +68,9 @@
                  :id "test-id"
                  :http-params {}
                  :type "DeletedModel"
-                 :model {:a 1
-                         :b 2
-                         :c 3}}
+                 :object {:a 1
+                          :b 2
+                          :c 3}}
 
           produced (produce event)]
 
@@ -84,9 +84,9 @@
                  :http-params {}
                  :type "VerdictChange"
                  :judgement_id "test-judgement-id"
-                 :model {:a 1
-                         :b 2
-                         :c 3}
+                 :object {:a 1
+                          :b 2
+                          :c 3}
                  :verdict {:type "verdict"
                            :disposition 2
                            :judgement_id "test-judgement-id"

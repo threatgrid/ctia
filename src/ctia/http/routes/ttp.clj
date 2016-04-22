@@ -19,8 +19,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-ttp :admin}
       :login login
-      (ok (flows/create-flow :model StoredTTP
-                             :realize-fn realize-ttp
+      (ok (flows/create-flow :realize-fn realize-ttp
                              :store-fn #(create-ttp @ttp-store %)
                              :object-type :ttp
                              :login login
@@ -33,8 +32,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-ttp :admin}
       :login login
-      (ok (flows/update-flow :model StoredTTP
-                             :get-fn #(read-ttp @ttp-store %)
+      (ok (flows/update-flow :get-fn #(read-ttp @ttp-store %)
                              :realize-fn realize-ttp
                              :update-fn #(update-ttp @ttp-store (:id %) %)
                              :object-type :ttp
@@ -65,8 +63,7 @@
       :summary "Deletes a TTP"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-ttp :admin}
-      (if (flows/delete-flow :model StoredTTP
-                             :get-fn #(read-ttp @ttp-store %)
+      (if (flows/delete-flow :get-fn #(read-ttp @ttp-store %)
                              :delete-fn #(delete-ttp @ttp-store %)
                              :object-type :ttp
                              :id id)

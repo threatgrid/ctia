@@ -4,17 +4,14 @@
             [ctia.lib.time :as t]
             [ctia.schemas.actor :refer [StoredActor]]
             [ctia.schemas.campaign :refer [StoredCampaign]]
-
             [ctia.events.schemas :as vs]))
 
 
 (s/defn to-create-event :- vs/CreateEvent
-  "Create a CreateEvent from a StoredX object
-   the first argument `model` should generally be a schema of the form StoredX
-   the second argument `object` should match the `model` schema."
-  [model object]
+  "Create a CreateEvent from a StoredX object"
+  [object]
   {:owner (:owner object)
-   :model model
+   :object object
    :timestamp (t/now)
    :id (:id object)
    :type vs/CreateEventType})
@@ -36,13 +33,13 @@
 
 
 (s/defn to-update-event :- vs/UpdateEvent
-  "transform an object (generally a `StoredObject`) to an `UpdateEvent`
-   the first argument `model` should generally be a schema of the form StoredX
-   the second and third arguments `object` and `prev-object`
-   should match the `model` schema."
-  [model object prev-object]
+  "transform an object (generally a `StoredObject`) to an `UpdateEvent`.
+   The two arguments `object` and `prev-object` should have the same schema.
+   The fields should contains enough information to retrieve all informations.
+   But the complete object is given for simplicity."
+  [object prev-object]
   {:owner (:owner object)
-   :model model
+   :object object
    :timestamp (t/now)
    :id (:id object)
    :type vs/UpdateEventType
@@ -54,12 +51,10 @@
    })
 
 (s/defn to-delete-event :- vs/DeleteEvent
-  "transform an object (generally a `StoredObject`) to its corresponding `Event`
-   the first argument `model` should generally be a schema of the form StoredX
-   the second argument `object` should match the `model` schema."
-  [model object]
+  "transform an object (generally a `StoredObject`) to its corresponding `Event`"
+  [object]
   {:owner (:owner object)
-   :model model
+   :object object
    :timestamp (t/now)
    :id (:id object)
    :type vs/DeleteEventType})

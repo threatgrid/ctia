@@ -20,16 +20,15 @@
   To be noted:
     - `:before-create` hooks can modify the object stored.
     - `:after-create` hooks are read only"
-  [& {:keys [model realize-fn store-fn object-type login object]}]
+  [& {:keys [realize-fn store-fn object-type login object]}]
   (let [id (make-id object-type object)
         realized (realize-fn object id login)
         pre-hooked (apply-hooks :type-name       object-type
                                 :realized-object realized
                                 :hook-type       :before-create)
-        event (try (to-create-event model pre-hooked)
+        event (try (to-create-event pre-hooked)
                    (catch Exception e
-                     (do (clojure.pprint/pprint model)
-                         (clojure.pprint/pprint object)
+                     (do (clojure.pprint/pprint object)
                          (prn e))))
         _ (apply-hooks :type-name       object-type
                        :realized-object event
@@ -49,8 +48,7 @@
   To be noted:
     - `:before-update` hooks can modify the object stored.
     - `:after-update` hooks are read only"
-  [& {:keys [model
-             get-fn
+  [& {:keys [get-fn
              realize-fn
              update-fn
              object-type
@@ -63,10 +61,9 @@
                                 :realized-object realized
                                 :prev-object     old-object
                                 :hook-type       :before-update)
-        event (try (to-update-event model pre-hooked old-object)
+        event (try (to-update-event pre-hooked old-object)
                    (catch Exception e
-                     (do (clojure.pprint/pprint model)
-                         (clojure.pprint/pprint object)
+                     (do (clojure.pprint/pprint object)
                          (prn e))))
         _ (apply-hooks :type-name       object-type
                        :realized-object event
@@ -89,8 +86,7 @@
     - the flow get the object from the store to be used by hooks.
     - `:before-delete` hooks can modify the object stored.
     - `:after-delete` hooks are read only"
-  [& {:keys [model
-             get-fn
+  [& {:keys [get-fn
              delete-fn
              object-type
              id]}]
@@ -100,10 +96,9 @@
                                 :prev-object     object
                                 :hook-type       :before-delete
                                 :read-only?      false)
-        event (try (to-delete-event model pre-hooked)
+        event (try (to-delete-event pre-hooked)
                    (catch Exception e
-                     (do (clojure.pprint/pprint model)
-                         (clojure.pprint/pprint object)
+                     (do (clojure.pprint/pprint object)
                          (prn e))))
         _ (apply-hooks :type-name       object-type
                        :realized-object event

@@ -18,8 +18,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-coa :admin}
       :login login
-      (ok (flows/create-flow :model StoredCOA
-                             :realize-fn realize-coa
+      (ok (flows/create-flow :realize-fn realize-coa
                              :store-fn #(create-coa @coa-store %)
                              :object-type :coa
                              :login login
@@ -32,8 +31,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-coa :admin}
       :login login
-      (ok (flows/update-flow :model StoredCOA
-                             :get-fn #(read-coa @coa-store %)
+      (ok (flows/update-flow :get-fn #(read-coa @coa-store %)
                              :realize-fn realize-coa
                              :update-fn #(update-coa @coa-store (:id %) %)
                              :object-type :coa
@@ -55,8 +53,7 @@
       :summary "Deletes a COA"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-coa :admin}
-      (if (flows/delete-flow :model StoredCOA
-                             :get-fn #(read-coa @coa-store %)
+      (if (flows/delete-flow :get-fn #(read-coa @coa-store %)
                              :delete-fn #(delete-coa @coa-store %)
                              :object-type :coa
                              :id id)

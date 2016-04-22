@@ -53,8 +53,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-indicator :admin}
       :login login
-      (ok (flows/create-flow :model StoredIndicator
-                             :realize-fn realize-indicator
+      (ok (flows/create-flow :realize-fn realize-indicator
                              :store-fn #(create-indicator @indicator-store %)
                              :object-type :indicator
                              :login login
@@ -67,8 +66,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:create-indicator :admin}
       :login login
-      (ok (flows/update-flow :model StoredIndicator
-                             :get-fn #(read-indicator @indicator-store %)
+      (ok (flows/update-flow :get-fn #(read-indicator @indicator-store %)
                              :realize-fn realize-indicator
                              :update-fn #(update-indicator @indicator-store (:id %) %)
                              :object-type :indicator
@@ -111,16 +109,14 @@
       :capabilities #{:create-sighting :admin}
       :login login
       (if-let [indicator (read-indicator @indicator-store id)]
-        (let [sighting (flows/create-flow :model StoredSighting
-                                          :realize-fn realize-sighting
+        (let [sighting (flows/create-flow :realize-fn realize-sighting
                                           :store-fn #(create-sighting @sighting-store %)
                                           :object-type :sighting
                                           :login login
                                           :object (assoc sighting
                                                          :indicator
                                                          {:indicator_id id}))]
-          (flows/update-flow :model StoredSighting
-                             :get-fn #(read-indicator @indicator-store %)
+          (flows/update-flow :get-fn #(read-indicator @indicator-store %)
                              :realize-fn realize-indicator
                              :update-fn #(update-indicator @indicator-store (:id %) %)
                              :object-type :indicator

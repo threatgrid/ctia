@@ -19,8 +19,7 @@
       :summary "Adds a new Sighting"
       :capabilities #{:create-sighting :admin}
       :login login
-      (ok (flows/create-flow :model StoredSighting
-                             :realize-fn realize-sighting
+      (ok (flows/create-flow :realize-fn realize-sighting
                              :store-fn #(create-sighting @sighting-store %)
                              :object-type :sighting
                              :login login
@@ -33,8 +32,7 @@
       :path-params [id :- s/Str]
       :capabilities #{:create-sighting :admin}
       :login login
-      (ok (flows/update-flow :model StoredSighting
-                             :get-fn #(read-sighting @sighting-store %)
+      (ok (flows/update-flow :get-fn #(read-sighting @sighting-store %)
                              :realize-fn realize-sighting
                              :update-fn #(update-sighting @sighting-store (:id %) %)
                              :object-type :sighting

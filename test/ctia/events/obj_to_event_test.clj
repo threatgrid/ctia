@@ -14,17 +14,17 @@
 
 (t/deftest test-to-create-event
   (doseq [actor (generators/sample 100 StoredActor)]
-    (let [event (evt/to-create-event StoredActor actor)]
+    (let [event (evt/to-create-event actor)]
       (t/is (s/validate CreateEvent event)))))
 
 (t/deftest test-to-update-event
   (doseq [actor (generators/sample 100 StoredActor)]
-    (let [event (evt/to-update-event StoredActor actor actor)]
+    (let [event (evt/to-update-event actor actor)]
       (t/is (s/validate UpdateEvent event)))))
 
 (t/deftest test-to-delete-event
   (doseq [actor (generators/sample 100 StoredActor)]
-    (let [event (evt/to-delete-event StoredActor actor)]
+    (let [event (evt/to-delete-event actor)]
       (t/is (s/validate DeleteEvent event)))))
 
 (t/deftest test-triplet-generation

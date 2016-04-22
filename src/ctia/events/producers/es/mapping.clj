@@ -17,7 +17,7 @@
     :properties
     {:owner string
      :timestamp ts
-     :model {:type "object"}
+     :object {:type "object"}
      :id string
      :http-params {:type "object"}
      :type string
