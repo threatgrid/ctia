@@ -318,7 +318,7 @@
     :properties
     {:id string
      :type string
-     :short_description string
+     :short_description all_text
      :valid_time valid-time
      :title all_string
      :description all_text
