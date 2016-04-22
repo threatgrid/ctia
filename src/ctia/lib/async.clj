@@ -65,7 +65,7 @@
    pred - a predicate to test events. The user function will only be run if this predicate passes.
    shutdown-fn - an optional function to run at system shutdown time. May be nil."
   [{m :mult :as ec} :- EventChannel
-   f :- (=> s/Any Event)
+   listener-fn :- (=> s/Any Event)
    pred :- (=> s/Bool Event)
    shutdown-fn :- (s/maybe (=> s/Any))]
   (let [events (chan)]
@@ -75,7 +75,7 @@
         (if-let [event (alt! [events end-chan] ([v] v))]
           (do
             (when (pred event)
-              (f event))
+              (listener-fn event))
             (recur))
           (do
             (close! end-chan)
@@ -85,3 +85,10 @@
                                       (when (fn? shutdown-fn)
                                         (shutdown-fn)))))
       end-chan)))
+
+(s/defn drain :- [s/Any]
+  "Extract elements from a channel into a lazy-seq.
+   Reading the seq reads from the channel."
+  [c :- Channel]
+  (if-let [x (a/poll! c)]
+    (cons x (lazy-seq (drain c)))))

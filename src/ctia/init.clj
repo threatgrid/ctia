@@ -17,7 +17,6 @@
             [ctia.stores.sql.judgement :as sql-judgement]
             [ctia.flows.autoload :refer [autoload-hooks!]]
             [ctia.flows.hooks :as h]
-            [ctia.publish :as pub]
             [ctia.events :as e]
             [ring.adapter.jetty :as jetty]))
 

@@ -12,3 +12,5 @@
     (sub/init!)
     (la/register-listener e redis/publish-fn (constantly true) nil)))
 
+(defn shutdown! []
+  (sub/shutdown!))

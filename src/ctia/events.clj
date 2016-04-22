@@ -17,10 +17,9 @@
 (def ModelEvent (assoc es/ModelEventBase s/Any s/Any))
 
 (defn init! []
-  (when (nil? @central-channel)
-    (let [c (la/new-event-channel)]
-      (reset! central-channel c)
-      (publish/init! c))))
+  (let [c (la/new-event-channel)]
+    (reset! central-channel c)
+    (publish/init! c)))
 
 (s/defn shutdown! :- s/Num
   "Close the event channel, waiting up to max-wait-ms for the buffer
@@ -115,18 +114,12 @@
                       :judgement_id id
                       :verdict verdict})))
 
-(s/defn ^:private drain :- [ModelEvent]
-  "Extract elements from a channel into a lazy-seq.
-   Reading the seq reads from the channel."
-  [c :- Channel]
-  (if-let [x (a/poll! c)]
-    (cons x (lazy-seq (drain c)))))
 
 (s/defn recent-events :- [ModelEvent]
   "Returns up to the requested number of the  most recent events.
    Defaults to attempting to get *event-buffer-size* events."
   ([] (recent-events la/*event-buffer-size*))
-  ([n :- Long] (take n (drain (:recent @central-channel)))))
+  ([n :- Long] (take n (la/drain (:recent @central-channel)))))
 
 (s/defn register-listener :- Channel
   "Convenience wrapper for registering a listener on the central event channel."
