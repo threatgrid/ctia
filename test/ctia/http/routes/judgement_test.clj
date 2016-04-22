@@ -2,10 +2,12 @@
   (:refer-clojure :exclude [get])
   (:require
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+   [schema-generators.generators :as g]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]))
+   [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.schemas.judgement :refer [NewJudgement StoredJudgement]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -327,3 +329,26 @@
                         :confidence "Low"
                         :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
            (:parsed-body response))))))
+
+(deftest-for-each-store test-judgement-routes-generative
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+
+  (let [new-judgements (g/sample 20 NewJudgement)
+        ;;hardcode dispositon
+        fixed-judgements (map #(merge % {:disposition 5
+                                         :disposition_name "Unknown"}) new-judgements)]
+    (testing "POST /ctia/judgement GET /ctia/judgement"
+      (let [responses (map #(post "ctia/judgement"
+                                  :body %
+                                  :headers {"api_key" "45c1f5e3f05d0"}) fixed-judgements)]
+        (doall (map #(is (= 200 (:status %))) responses))
+        (is (deep=
+             (set fixed-judgements)
+             (->> responses
+                  (map :parsed-body)
+                  (map #(get (str "ctia/judgement/" (:id %))
+                             :headers {"api_key" "45c1f5e3f05d0"}))
+                  (map :parsed-body)
+                  (map #(dissoc % :id :created :modified :owner))
+                  set)))))))

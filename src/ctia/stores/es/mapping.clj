@@ -33,6 +33,7 @@
 (def malware-instance
   {:properties
    {:description text
+    :type string
     :malware_type string}})
 
 (def observable
@@ -69,7 +70,8 @@
 
 (def related-identities
   {:properties (assoc related
-                      :identity_id all_string)})
+                      :identity all_string
+                      :information_source string)})
 
 (def related-actors
   {:properties (assoc related
@@ -91,7 +93,7 @@
   {:properties
    {:tools tool
     :infrastructure infrastructure
-    :providers identity}})
+    :providers tg-identity}})
 
 (def activity
   {:properties
@@ -111,7 +113,7 @@
 (def related-coas
   {:properties
    (assoc related
-          :coa_id all_string)})
+          :COA_id all_string)})
 
 (def related-campaigns
   {:properties
@@ -135,7 +137,8 @@
 
 (def specifications
   {:properties
-   {:judgements string
+   {:type string
+    :judgements string
     :required_judgements related-judgements
     :query string
     :variables string
@@ -226,7 +229,7 @@
   {:properties
    {:time ts
     :contributors contributor
-    :coa_id all_string}})
+    :COA all_string}})
 
 (def history
   {:properties
@@ -270,7 +273,7 @@
 
 (def judgement-mapping
   {"judgement"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id string
@@ -293,7 +296,7 @@
 
 (def feedback-mapping
   {"feedback"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id string
@@ -308,22 +311,27 @@
 
 (def indicator-mapping
   {"indicator"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id string
      :type string
+     :short_description string
+     :valid_time valid-time
      :title all_string
      :description all_text
      :alternate_ids all_string
      :version string
      :negate {:type "boolean"}
      :indicator_type string
+     :tags string
+     :observable observable
+     :judgements related-judgements
      :composite_indicator_expression {:type "nested"
                                       :properties
                                       {:operator string
                                        :indicator_ids string}}
-     :indicated_TTP {:type "nested"}
+     :indicated_TTP related-ttps
      :likely_impact string
      :suggested_COAs related-coas
      :confidence string
@@ -341,12 +349,13 @@
 
 (def ttp-mapping
   {"ttp"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
      :title all_text
      :description all_text
+     :short_description all_text
      :type string
      :valid_time valid-time
      :version string
@@ -366,12 +375,13 @@
 
 (def actor-mapping
   {"actor"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
      :title all_text
      :description all_text
+     :short_description all_text
      :type string
      :valid_time valid-time
      :actor_type string
@@ -381,7 +391,7 @@
      :sophistication string
      :intended_effect string
      :planning_and_operational_support string
-     :observed-ttps related-ttps
+     :observed_TTPs related-ttps
      :associated_campaigns related-campaigns
      :associated_actors related-actors
      :confidence string
@@ -390,14 +400,16 @@
      :modified ts}}})
 
 (def campaign-mapping
-  {"campagin"
-   {:dynamic false
+  {"campaign"
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
      :type string
      :title all_text
      :description all_text
+     :version string
+     :short_description all_text
      :valid_time valid-time
      :names all_string
      :intended_effect string
@@ -417,13 +429,14 @@
 
 (def coa-mapping
   {"coa"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
      :type string
      :title all_text
      :description all_text
+     :short_description all_text
      :valid_time valid-time
      :stage string
      :coa_type string
@@ -439,13 +452,14 @@
 
 (def incident-mapping
   {"incident"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
      :type string
      :title all_text
      :description all_text
+     :short_description all_text
      :valid_time valid-time
      :confidence string
      :status string
@@ -461,8 +475,8 @@
      :source string
      :security_compromise string
      :discovery_method string
-     :coa_requested coa-requested
-     :coa_taken coa-requested
+     :COA_requested coa-requested
+     :COA_taken coa-requested
      :contact string
      :history history
      :related_indicators related-indicators
@@ -473,17 +487,18 @@
      :intended_effect string
      :owner string
      :created ts
-     :modifed ts}}})
+     :modified ts}}})
 
 (def exploit-target-mapping
   {"exploit-target"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
      :type string
      :title all_text
      :description all_text
+     :short_description all_text
      :valid_time valid-time
      :version string
      :vulnerability vulnerability
@@ -498,7 +513,7 @@
 
 (def identity-mapping
   {"identity"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id string
@@ -508,7 +523,7 @@
 
 (def sighting-mapping
   {"sighting"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
@@ -520,6 +535,7 @@
      :confidence string
      :related_judgements related-judgements
      :related_observables observable
+     :indicator related-indicators
      :owner string
      :created ts
      :modified ts}}})
@@ -528,6 +544,7 @@
   (merge {}
          judgement-mapping
          indicator-mapping
+         ttp-mapping
          feedback-mapping
          actor-mapping
          campaign-mapping
