@@ -33,7 +33,7 @@ based, highly performant binary protocol for Verdict lookups.
 
 ### Run the application locally
 
-`lein ring server`
+`lein run`
 
 If you like, you can cider-connect to the NREPL listener that it
 starts by default.  Be sure NOT to run the service this way in
@@ -50,10 +50,6 @@ lein do clean, ring uberjar
 java -jar target/server.jar
 ```
 
-### Packaging as war
-
-`lein ring uberwar`
-
 ## Development
 
 We provide a default `docker-compose-dev.yml` which will bring up the
@@ -67,8 +63,9 @@ On Mac OS X, start a terminal using "Docker QuickStart Terminal" application.
 
 You can then bring up a development environemnt:
 ```
-docker-compose -f docker-compose-dev.yml build
-docker-compose -f docker-compose-dev.yml up
+cd containers/dev
+docker-compose -f docker-compose.yml build
+docker-compose -f docker-compose.yml up
 ```
 
 You will then need to tell your CTIA where to find it's dependencies.
@@ -77,7 +74,7 @@ can get with the command, `docker-machine ip`, and then you define
 your own `resources/ctia.properties` file with the following values:
 
 ```
-ctia.store.default=es
+ctia.store.type=es
 ctia.store.es.uri=http://192.168.99.100:9200
 ctia.producer.es.uri=http://192.168.99.100:9200
 ```
@@ -90,7 +87,8 @@ If you ever need to reset your entire dev environemnt, you can run
 tell `docker-compose` to rebuild all the containers from scratch:
 
 ```
-docker-compose -f docker-compose-dev.yml up --force-recreate
+cd containers/dev
+docker-compose -f docker-compose.yml up --force-recreate
 ```
 
 
