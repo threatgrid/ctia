@@ -37,7 +37,7 @@
   [(enriched-ref {:campaign_id CampaignReference})])
 
 (s/defschema RelatedCOAs
-  [(enriched-ref {:COA_id COAReference})])
+  [(enriched-ref {:coa_id COAReference})])
 
 (s/defschema RelatedExploitTargets
   [(enriched-ref {:exploit_target_id ExploitTargetReference})])

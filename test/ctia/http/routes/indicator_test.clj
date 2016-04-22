@@ -34,7 +34,7 @@
                                 :related_COAs [{:confidence "High"
                                                 :source "source"
                                                 :relationship "relationship"
-                                                :COA_id "coa-123"}]}
+                                                :coa_id "coa-123"}]}
                          :headers {"api_key" "45c1f5e3f05d0"})
           indicator (:parsed-body response)]
 
@@ -56,7 +56,7 @@
             :related_COAs [{:confidence "High"
                             :source "source"
                             :relationship "relationship"
-                            :COA_id "coa-123"}]
+                            :coa_id "coa-123"}]
             :owner "foouser"}
            (dissoc indicator
                    :id
@@ -85,7 +85,7 @@
                 :related_COAs [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :COA_id "coa-123"}]
+                                :coa_id "coa-123"}]
                 :owner "foouser"}
                (dissoc indicator
                        :id
@@ -116,7 +116,7 @@
                  :related_COAs [{:confidence "High"
                                  :source "source"
                                  :relationship "relationship"
-                                 :COA_id "coa-123"}]
+                                 :coa_id "coa-123"}]
                  :owner "foouser"}]
                (map #(dissoc % :id :created :modified) indicators)))))
 
@@ -139,7 +139,7 @@
                           :related_COAs [{:confidence "High"
                                           :source "source"
                                           :relationship "relationship"
-                                          :COA_id "coa-123"}]}
+                                          :coa_id "coa-123"}]}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
@@ -161,7 +161,7 @@
                 :related_COAs [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :COA_id "coa-123"}]
+                                :coa_id "coa-123"}]
                 :owner "foouser"}
                (dissoc updated-indicator
                        :modified)))))
@@ -220,7 +220,7 @@
                     :related_COAs [{:confidence "High"
                                     :source "source"
                                     :relationship "relationship"
-                                    :COA_id "coa-123"}]
+                                    :coa_id "coa-123"}]
                     :sightings [{:sighting_id (:id sighting)}]
                     :owner "foouser"}
                    (dissoc indicator

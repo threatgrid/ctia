@@ -270,7 +270,7 @@
 
 (def judgement-mapping
   {"judgement"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id string
@@ -293,7 +293,7 @@
 
 (def feedback-mapping
   {"feedback"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id string
@@ -308,11 +308,12 @@
 
 (def indicator-mapping
   {"indicator"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id string
      :type string
+     :valid_time valid-time
      :title all_string
      :description all_text
      :alternate_ids all_string
@@ -341,7 +342,7 @@
 
 (def ttp-mapping
   {"ttp"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
@@ -366,7 +367,7 @@
 
 (def actor-mapping
   {"actor"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
@@ -381,7 +382,7 @@
      :sophistication string
      :intended_effect string
      :planning_and_operational_support string
-     :observed-ttps related-ttps
+     :observed_TTPs related-ttps
      :associated_campaigns related-campaigns
      :associated_actors related-actors
      :confidence string
@@ -390,8 +391,8 @@
      :modified ts}}})
 
 (def campaign-mapping
-  {"campagin"
-   {:dynamic false
+  {"campaign"
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
@@ -417,7 +418,7 @@
 
 (def coa-mapping
   {"coa"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
@@ -439,7 +440,7 @@
 
 (def incident-mapping
   {"incident"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
@@ -473,11 +474,11 @@
      :intended_effect string
      :owner string
      :created ts
-     :modifed ts}}})
+     :modified ts}}})
 
 (def exploit-target-mapping
   {"exploit-target"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
@@ -498,7 +499,7 @@
 
 (def identity-mapping
   {"identity"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id string
@@ -508,7 +509,7 @@
 
 (def sighting-mapping
   {"sighting"
-   {:dynamic false
+   {:dynamic "strict"
     :include_in_all false
     :properties
     {:id all_string
@@ -520,6 +521,7 @@
      :confidence string
      :related_judgements related-judgements
      :related_observables observable
+     :indicator related-indicators
      :owner string
      :created ts
      :modified ts}}})
