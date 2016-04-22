@@ -111,7 +111,7 @@
 (def related-coas
   {:properties
    (assoc related
-          :coa_id all_string)})
+          :COA_id all_string)})
 
 (def related-campaigns
   {:properties
