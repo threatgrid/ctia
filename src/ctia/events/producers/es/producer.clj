@@ -15,10 +15,10 @@
   "read es producer index config properties, returns an option map"
   (get-in @properties [:ctia :producer :es]))
 
-(s/defn init-producer-conn :- ESConnState []
+(s/defn init-producer-conn :- (s/maybe ESConnState) []
   "initiate an ES producer connection returns a map containing transport,
    mapping and the configured index name"
-  (let [props (read-producer-index-spec)]
+  (when-let [props (read-producer-index-spec)]
     {:index (:indexname props)
      :props props
      :mapping producer-mappings

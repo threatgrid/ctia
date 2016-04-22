@@ -12,7 +12,8 @@
   (handle [_ _ object _]
     (comment println "Event Sent to ES:"
              (with-out-str (clojure.pprint/pprint object)))
-    (try (esp/handle-produce-event @conn (assoc object :model {})) ;; discard schemas from the event
+    (try (when (some? @conn)
+           (esp/handle-produce-event @conn (assoc object :model {}))) ;; discard schemas from the event
          (catch Exception e
            (clojure.pprint/pprint e)))))
 
