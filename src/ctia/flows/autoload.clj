@@ -40,4 +40,6 @@
   "Should retrieve a list of Hook classes from `project.cljs`.
   All these classes must implement the `Hook` java interface."
   ([] (load-hooks! (:hooks-classes (p/read))))
-  ([profiles] (load-hooks! (:hooks-classes (p/read "project.clj" profiles)))))
+  ([profiles] (load-hooks! (:hooks-classes (try (p/read "project.clj" profiles)
+                                                (finally
+                                                  nil))))))

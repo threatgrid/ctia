@@ -4,6 +4,8 @@
 ;; It aschews nested objects since they are performance risks, and
 ;; restricts the _all to a minimal set.
 
+;; not that fields with the same name, nee to have the same mapping,
+;; even in different entities.  That means
 
 (def ts {:type "date" :format "date_time"})
 
@@ -27,12 +29,12 @@
 
 (def attack-pattern
   {:properties
-   {:description text
+   {:description all_text
     :capec_id string}})
 
 (def malware-instance
   {:properties
-   {:description text
+   {:description all_text
     :type string
     :malware_type string}})
 
@@ -56,7 +58,7 @@
 
 (def tool
   {:properties
-   {:description text
+   {:description all_text
     :type string
     :references string
     :vendor string
@@ -65,7 +67,7 @@
 
 (def infrastructure
   {:properties
-   {:description text
+   {:description all_text
     :type string}})
 
 (def related-identities
@@ -79,7 +81,7 @@
 
 (def tg-identity
   {:properties
-   {:description text
+   {:description all_text
     :related_identities related-identities}})
 
 (def victim-targeting
@@ -98,7 +100,7 @@
 (def activity
   {:properties
    {:date_time ts
-    :description text}})
+    :description all_text}})
 
 (def related-indicators
   {:properties
@@ -175,7 +177,7 @@
 (def affected-asset
   {:properties
    {:type string
-    :description text
+    :description all_text
     :ownership_class string
     :management_class string
     :location_class string
@@ -238,11 +240,11 @@
 
 (def vulnerability
   {:properties
-   {:title string
-    :description text
+   {:title all_string
+    :description all_text
     :is_known {:type "boolean"}
     :is_public_acknowledged {:type "boolean"}
-    :short_description text
+    :short_description all_text
     :cve_id string
     :osvdb_id string
     :source string
@@ -253,13 +255,13 @@
 
 (def weakness
   {:properties
-   {:description text
+   {:description all_text
     :cwe_id string}})
 
 (def configuration
   {:properties
-   {:description text
-    :short_description text
+   {:description all_text
+    :short_description all_text
     :cce_id string}})
 
 (def sighting
@@ -286,7 +288,7 @@
      :confidence string
      :severity {:type "integer"}
      :valid_time valid-time
-     :reason text
+     :reason all_text
      :source_uri string
      :reason_uri string
      :indicators related-indicators
@@ -304,7 +306,7 @@
      :judgement string
      :source string
      :feedback {:type "integer"}
-     :reason string
+     :reason all_text
      :owner string
      :created ts
      :modified ts}}})
@@ -316,7 +318,7 @@
     :properties
     {:id string
      :type string
-     :short_description string
+     :short_description all_text
      :valid_time valid-time
      :title all_string
      :description all_text
@@ -353,7 +355,7 @@
     :include_in_all false
     :properties
     {:id all_string
-     :title all_text
+     :title all_string
      :description all_text
      :short_description all_text
      :type string
@@ -368,7 +370,7 @@
      :source string
      :ttp_type string
      :expires ts
-     :indicators all_string
+     :indicators related-indicators
      :owner string
      :created ts
      :modified ts}}})
@@ -379,7 +381,7 @@
     :include_in_all false
     :properties
     {:id all_string
-     :title all_text
+     :title all_string
      :description all_text
      :short_description all_text
      :type string
@@ -406,7 +408,7 @@
     :properties
     {:id all_string
      :type string
-     :title all_text
+     :title all_string
      :description all_text
      :version string
      :short_description all_text
@@ -434,7 +436,7 @@
     :properties
     {:id all_string
      :type string
-     :title all_text
+     :title all_string
      :description all_text
      :short_description all_text
      :valid_time valid-time
@@ -457,7 +459,7 @@
     :properties
     {:id all_string
      :type string
-     :title all_text
+     :title all_string
      :description all_text
      :short_description all_text
      :valid_time valid-time
@@ -496,7 +498,7 @@
     :properties
     {:id all_string
      :type string
-     :title all_text
+     :title all_string
      :description all_text
      :short_description all_text
      :valid_time valid-time

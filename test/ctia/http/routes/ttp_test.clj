@@ -24,7 +24,8 @@
                          :body {:title "ttp"
                                 :description "description"
                                 :ttp_type "foo"
-                                :indicators ["indicator-1" "indicator-2"]
+                                :indicators [{:indicator_id "indicator-1"}
+                                             {:indicator_id "indicator-2"}]
                                 :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                                   {:exploit_target_id "exploit-target-234"}]
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
@@ -37,7 +38,8 @@
             :title "ttp"
             :description "description"
             :ttp_type "foo"
-            :indicators ["indicator-1" "indicator-2"]
+            :indicators [{:indicator_id "indicator-1"}
+                         {:indicator_id "indicator-2"}]
             :exploit_targets [{:exploit_target_id "exploit-target-123"}
                               {:exploit_target_id "exploit-target-234"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -58,7 +60,8 @@
                 :title "ttp"
                 :description "description"
                 :ttp_type "foo"
-                :indicators ["indicator-1" "indicator-2"]
+                :indicators [{:indicator_id "indicator-1"}
+                             {:indicator_id "indicator-2"}]
                 :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                   {:exploit_target_id "exploit-target-234"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -76,7 +79,9 @@
                    :body {:title "updated ttp"
                           :description "updated description"
                           :ttp_type "bar"
-                          :indicators ["indicator-1" "indicator-2"]
+                          :indicators [{:indicator_id "indicator-1"}
+                                       {:indicator_id "indicator-2"}]
+                          
                           :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                             {:exploit_target_id "exploit-target-234"}]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
@@ -90,7 +95,9 @@
                 :title "updated ttp"
                 :description "updated description"
                 :ttp_type "bar"
-                :indicators ["indicator-1" "indicator-2"]
+                :indicators [{:indicator_id "indicator-1"}
+                             {:indicator_id "indicator-2"}]
+                
                 :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                   {:exploit_target_id "exploit-target-234"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"

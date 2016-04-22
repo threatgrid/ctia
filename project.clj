@@ -3,6 +3,11 @@
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo}
+
+  :jvm-opts [ "-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
+             "-Djava.awt.headless=true"
+             "-XX:MaxPermSize=256m" ;; recommended permgen size
+             "-server"]
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
                  [metosin/schema-tools "0.7.0"]
@@ -38,7 +43,9 @@
   :resource-paths ["resources" "doc"]
   :aot [ctia.main]
   :main ctia.main
-  :uberjar-name "server.jar"
+  :classpath ".:resources"
+  :uberjar-name "ctia.jar"
+  :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.4.0"
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store

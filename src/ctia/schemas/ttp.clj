@@ -105,7 +105,7 @@
      :source (describe s/Str "source of this cyber threat TTP")})
    {;; Extension fields:
     :ttp_type (describe s/Str "type of this TTP")
-    :indicators (describe [rel/IndicatorReference] "related indicators")
+    :indicators (describe rel/RelatedIndicators "related indicators")
     ;; Not provided: kill_chain_phases
     ;; Not provided: kill_chains
     ;; Not provided: handling

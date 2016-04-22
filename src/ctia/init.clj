@@ -89,6 +89,7 @@
     (case store-service-default
       :es (init-es-store!)
       :memory (init-mem-store!)
+      ;; SQL store is not a complete store
       :sql (init-sql-store!)
       (throw (ex-info "Store service not configured"
                       {:message "Unknown service"
@@ -97,7 +98,8 @@
   "Load all the hooks, init them and assure to
   call `destroy` on all hooks when shutting down."
   []
-  (autoload-hooks!)
+  ;; this is breaking everything
+  ;;(autoload-hooks!)
   (h/init-hooks!)
   (h/add-destroy-hooks-hook-at-shutdown))
 
