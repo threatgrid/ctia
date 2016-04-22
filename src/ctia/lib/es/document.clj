@@ -6,6 +6,8 @@
    [clojurewerkz.elastisch.native.response :as native-response]
    [clojurewerkz.elastisch.rest.response :as rest-response]))
 
+(def default-limit 1000)
+
 (defn native-conn? [conn]
   (not (:uri conn)))
 
@@ -93,20 +95,21 @@
         index-name
         mapping
         :query query
-        :sort sort)
+        :sort sort
+        :size default-limit)
        ((hits-from-fn conn))
        (map :_source)))
 
 (defn search-docs
   "search for documents on es, return only the docs"
   [conn index-name mapping filter-map]
-
   (let [filters (filter-map->terms-query filter-map)
         res ((search-doc-fn conn)
              conn
              index-name
              mapping
-             :query filters)]
+             :query filters
+             :size default-limit)]
     (->> res
          ((hits-from-fn conn))
          (map :_source))))
