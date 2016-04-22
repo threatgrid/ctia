@@ -114,7 +114,6 @@
   ;; Configure everything
   (p/init!)
   (e/init!)
-  (pub/init!)
   (init-auth-service!)
   (init-store-service!)
   (init-producer-service!)

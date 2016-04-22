@@ -2,11 +2,12 @@
   "Central setup for redis."
   (:require [taoensso.carmine :as c]
             [ctia.properties :as p]
-            [ctia.events :as e]
+            [ctia.lib.async :as la]
             [clojure.tools.logging :as log]
             [clojure.core.memoize :as memo]
             [schema.core :as s :refer [=>]])
-  (:import [java.net URI]))
+  (:import [java.net URI]
+           [java.io IOException]))
 
 (def default-port "The default port to use for Redis when not configured" 6379)
 
@@ -48,7 +49,7 @@
 
 (s/defn publish-fn
   "Callback function that publishes events to Redis."
-  [event :- e/Event]
+  [event :- la/Event]
   (when (enabled?)
     (wcar (c/publish event-channel-name event))))
 
@@ -59,21 +60,22 @@
    Returns true when a listener was actually closed."
   []
   (when @pubsub-listener
-    (c/with-open-listener @pubsub-listener
-      (c/unsubscribe))
-    (c/close-listener @pubsub-listener)
+    (try
+      (c/with-open-listener @pubsub-listener
+        (c/unsubscribe))
+      (c/close-listener @pubsub-listener)
+      (catch IOException e
+        (log/error "Error closing subscription channel: " (.getMessage e))))
+    (reset! pubsub-listener nil)
     true))
 
 (defn set-listener-fn!
   "Sets the function to be called when events are published into Redis.
-   Closes and replaces the previous listening function, if there was one.
-   Returns true when a *new* listener has been created. When an old listener
-   is kept, then falsey will be returned."
+   This is initialized once, and is never changed until shutdown."
   [listener-fn]
-  (when (enabled?)
-    (let [did-close (close!)]
-      (reset! pubsub-listener
-              (c/with-new-pubsub-listener (:spec (server-connection))
-                {event-channel-name listener-fn}
-                (c/subscribe event-channel-name)))
-      (not did-close))))
+  (when (and (enabled?) (nil? @pubsub-listener))
+    (reset! pubsub-listener
+            (c/with-new-pubsub-listener (:spec (server-connection))
+              {event-channel-name listener-fn}
+              (c/subscribe event-channel-name)))))
+

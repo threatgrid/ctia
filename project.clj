@@ -43,6 +43,7 @@
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
+                   :disabled :disabled
                    :es-producer #(or (:es-producer %)
                                      (:es-producer-filtered-alias %)
                                      (:es-producer-aliased-index %))
@@ -52,12 +53,14 @@
                                       (:es-producer-filtered-alias %)
                                       (:es-producer-aliased-index %)
                                       (:integration %)
-                                      (:regression %)))
+                                      (:regression %)
+                                      (:disabled %)))
                    :integration #(or (:es-store %)
-                                     (:integation %)
+                                     (:integration %)
                                      (:es-producer %)
                                      (:es-producer-filtered-alias %)
-                                     (:es-producer-aliased-index %))}
+                                     (:es-producer-aliased-index %))
+                   :all #(not (:disabled %))}
 
   :java-source-paths ["hooks/ctia"]
   :javac-options  ["-proc:none"] ;; remove a warning
