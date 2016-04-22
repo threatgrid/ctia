@@ -95,7 +95,6 @@
                      :before-update-ro
                      :before-delete-ro]]
     #(h/add-hook! % event-hook/ESEventProducerHook))
-  (autoload-hooks!)
   ;; this is breaking everything
   ;;(autoload-hooks!)
   (h/init-hooks!)
