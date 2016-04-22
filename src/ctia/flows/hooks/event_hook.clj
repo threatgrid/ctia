@@ -1,16 +1,20 @@
 (ns ctia.flows.hooks.event-hook
   (:require
-   [ctia.events.obj-to-event :refer [to-create-event
-                                     to-update-event
-                                     to-delete-event]]
    [ctia.flows.hook-protocol :refer [Hook]]
-            [ctia.events.producer :as p]))
+   [ctia.events.producers.es.producer :as esp]))
 
-(defrecord EventHookRecord []
+(defrecord ESEventProducerRecord [conn]
   Hook
-  (init [_] :nothing)
+  (init [_] (do
+              (reset! conn (esp/init-producer-conn))
+              (comment println "ESEventProducerRecord Initialized: " (pr-str @conn))))
   (destroy [_] :nothing)
   (handle [_ _ object _]
-    (p/produce object)))
+    (comment println "Event Sent to ES:"
+             (with-out-str (clojure.pprint/pprint object)))
+    (try (esp/handle-produce-event @conn (assoc object :model {})) ;; discard schemas from the event
+         (catch Exception e
+           (clojure.pprint/pprint e)))))
 
-(def EventHook (EventHookRecord.))
+(def ESEventProducerHook
+  (ESEventProducerRecord. (atom {})))

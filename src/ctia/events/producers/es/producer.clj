@@ -28,7 +28,7 @@
   "a map converted from an Update Triple for ES Compat"
   {:field s/Keyword
    :action s/Str
-   :change {s/Str s/Str}})
+   :change {s/Any s/Any}})
 
 (s/defn update-triple->map :- UpdateMap
   [[field action change] :- UpdateTriple]
@@ -98,8 +98,3 @@
       (ensure-slice-created! state slice-props)
       (produce state slice-props event))
     (produce state event)))
-
-(defrecord EventProducer [state]
-  IEventProducer
-  (produce-event [_ event]
-    (handle-produce-event state event)))

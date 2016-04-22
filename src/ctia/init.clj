@@ -4,8 +4,6 @@
             [ctia.auth :as auth]
             [ctia.auth.allow-all :as allow-all]
             [ctia.auth.threatgrid :as threatgrid]
-            [ctia.events.producer :as producer]
-            [ctia.events.producers.es.producer :as es-producer]
             [ctia.http.server :as http-server]
             [ctia.lib.es.index :as es-index]
             [ctia.properties :as p]
@@ -79,11 +77,6 @@
     (doseq [[store impl-fn] store-impls]
       (reset! store (impl-fn store-state)))))
 
-(defn init-es-producer! []
-  (let [producer-state (es-producer/init-producer-conn)]
-    (reset! producer/event-producers
-            [(es-producer/->EventProducer producer-state)])))
-
 (defn init-store-service! []
   (let [store-service-default (get-in @p/properties [:ctia :store :type])]
     (case store-service-default
@@ -98,19 +91,14 @@
   "Load all the hooks, init them and assure to
   call `destroy` on all hooks when shutting down."
   []
-  (h/add-hook! :before-create-ro event-hook/EventHook)
-  (h/add-hook! :before-update-ro event-hook/EventHook)
-  (h/add-hook! :before-delete-ro event-hook/EventHook)
+  (h/add-hook! :before-create-ro event-hook/ESEventProducerHook)
+  (h/add-hook! :before-update-ro event-hook/ESEventProducerHook)
+  (h/add-hook! :before-delete-ro event-hook/ESEventProducerHook)
+  (autoload-hooks!)
   ;; this is breaking everything
   ;;(autoload-hooks!)
   (h/init-hooks!)
   (h/add-destroy-hooks-hook-at-shutdown))
-
-(defn init-producer-service! []
-  (let [producer-service-default (get-in @p/properties [:ctia :producer :type])]
-    (case producer-service-default
-      :es (init-es-producer!)
-      nil nil)))
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
@@ -121,7 +109,6 @@
   (e/init!)
   (init-auth-service!)
   (init-store-service!)
-  (init-producer-service!)
   (init-hooks!)
 
   ;; Start nREPL server
