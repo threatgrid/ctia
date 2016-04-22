@@ -6,6 +6,9 @@ A Pragmattic, Operationalized Threat Intel Service and Data Model
 
 For full documentation see [doc/index.md](doc/index.md)
 
+We also think the [Use Cases](doc/use_cases.md) document is a good
+starting point.
+
 Interactive, browser based documentation for the API is available once
 you have it running, at:
 

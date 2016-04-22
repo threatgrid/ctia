@@ -235,7 +235,7 @@
 
 (def vulnerability
   {:properties
-   {:title string
+   {:title all_string
     :description text
     :is_known {:type "boolean"}
     :is_public_acknowledged {:type "boolean"}
@@ -390,7 +390,7 @@
      :modified ts}}})
 
 (def campaign-mapping
-  {"campagin"
+  {"campaign"
    {:dynamic false
     :include_in_all false
     :properties

@@ -37,7 +37,9 @@
   :resource-paths ["resources" "doc"]
   :aot [ctia.main]
   :main ctia.main
-  :uberjar-name "server.jar"
+  :classpath ".:resources"
+  :uberjar-name "ctia.jar"
+  :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.4.0"
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
