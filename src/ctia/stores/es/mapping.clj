@@ -33,6 +33,7 @@
 (def malware-instance
   {:properties
    {:description text
+    :type string
     :malware_type string}})
 
 (def observable
@@ -69,7 +70,8 @@
 
 (def related-identities
   {:properties (assoc related
-                      :identity_id all_string)})
+                      :identity all_string
+                      :information_source string)})
 
 (def related-actors
   {:properties (assoc related
@@ -91,7 +93,7 @@
   {:properties
    {:tools tool
     :infrastructure infrastructure
-    :providers identity}})
+    :providers tg-identity}})
 
 (def activity
   {:properties
@@ -135,7 +137,8 @@
 
 (def specifications
   {:properties
-   {:judgements string
+   {:type string
+    :judgements string
     :required_judgements related-judgements
     :query string
     :variables string
@@ -226,7 +229,7 @@
   {:properties
    {:time ts
     :contributors contributor
-    :coa_id all_string}})
+    :COA all_string}})
 
 (def history
   {:properties
@@ -313,6 +316,7 @@
     :properties
     {:id string
      :type string
+     :short_description string
      :valid_time valid-time
      :title all_string
      :description all_text
@@ -320,11 +324,14 @@
      :version string
      :negate {:type "boolean"}
      :indicator_type string
+     :tags string
+     :observable observable
+     :judgements related-judgements
      :composite_indicator_expression {:type "nested"
                                       :properties
                                       {:operator string
                                        :indicator_ids string}}
-     :indicated_TTP {:type "nested"}
+     :indicated_TTP related-ttps
      :likely_impact string
      :suggested_COAs related-coas
      :confidence string
@@ -348,6 +355,7 @@
     {:id all_string
      :title all_text
      :description all_text
+     :short_description all_text
      :type string
      :valid_time valid-time
      :version string
@@ -373,6 +381,7 @@
     {:id all_string
      :title all_text
      :description all_text
+     :short_description all_text
      :type string
      :valid_time valid-time
      :actor_type string
@@ -399,6 +408,8 @@
      :type string
      :title all_text
      :description all_text
+     :version string
+     :short_description all_text
      :valid_time valid-time
      :names all_string
      :intended_effect string
@@ -425,6 +436,7 @@
      :type string
      :title all_text
      :description all_text
+     :short_description all_text
      :valid_time valid-time
      :stage string
      :coa_type string
@@ -447,6 +459,7 @@
      :type string
      :title all_text
      :description all_text
+     :short_description all_text
      :valid_time valid-time
      :confidence string
      :status string
@@ -462,8 +475,8 @@
      :source string
      :security_compromise string
      :discovery_method string
-     :coa_requested coa-requested
-     :coa_taken coa-requested
+     :COA_requested coa-requested
+     :COA_taken coa-requested
      :contact string
      :history history
      :related_indicators related-indicators
@@ -485,6 +498,7 @@
      :type string
      :title all_text
      :description all_text
+     :short_description all_text
      :valid_time valid-time
      :version string
      :vulnerability vulnerability
@@ -530,6 +544,7 @@
   (merge {}
          judgement-mapping
          indicator-mapping
+         ttp-mapping
          feedback-mapping
          actor-mapping
          campaign-mapping

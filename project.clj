@@ -62,7 +62,9 @@
   :javac-options  ["-proc:none"] ;; remove a warning
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [com.h2database/h2 "1.4.191"]
-                                  [org.clojure/test.check "0.9.0"]]
+                                  [org.clojure/test.check "0.9.0"]
+                                  [prismatic/schema-generators "0.1.0"]]
+
                    :plugins [[lein-ring "0.9.6"]]
                    :resource-paths ["model"
                                     "test/resources"]}
