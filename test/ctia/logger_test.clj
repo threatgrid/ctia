@@ -6,17 +6,21 @@
             [clojure.tools.logging :as log]
             [clojure.string :as str]))
 
+(defn setup [f]
+  (e/init!)
+  (f)
+  (e/shutdown!))
+
 (use-fixtures :once st/validate-schemas)
+(use-fixtures :each setup)
 
 (deftest test-setup
-  (e/init!)
   (let [{b :chan-buf c :chan m :mult :as ev} @e/central-channel]
     (log-channel ev)
     (e/send-create-event "tester" {} "TestModelType" {:data 1})
     (Thread/sleep 100))) ;; wait until the go loop is done
   
 (deftest test-logged
-  (e/init!)
   (let [{b :chan-buf c :chan m :mult :as ev} @e/central-channel
         sb (StringBuilder.)
         patched-log (fn [logger level throwable message]

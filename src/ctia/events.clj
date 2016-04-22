@@ -1,57 +1,28 @@
 (ns ctia.events
-  (:require [ctia.events.schemas :as es]
+  (:require [ctia.publish :as publish]
+            [ctia.events.schemas :as es]
             [ctia.lib.time :as time]
+            [ctia.lib.async :as la]
             [ctia.schemas.common :as c]
             [ctia.schemas.verdict :as v]
-            [clojure.core.async :as a]
-            [schema.core :as s])
-  (:import [clojure.core.async Mult]
-           [clojure.core.async.impl.protocols Channel]
-           [clojure.core.async.impl.buffers FixedBuffer]
+            [clojure.core.async :as a :refer [go-loop alt! chan tap]]
+            [schema.core :as s :refer [=>]])
+  (:import [clojure.core.async.impl.protocols Channel]
            [java.util Map]))
 
 (def shutdown-max-wait-ms (* 1000 60 60))
-(def ^:dynamic *event-buffer-size* 1000)
 
 (defonce central-channel (atom nil))
 
 (def ModelEvent (assoc es/ModelEventBase s/Any s/Any))
 
-(s/defschema EventChannel
-  "This structure holds a channel, its associated buffer, and a multichan"
-  {:chan-buf FixedBuffer
-   :chan Channel
-   :mult Mult
-   :recent Channel})
-
-(s/defn new-event-channel :- EventChannel []
-  (let [b (a/buffer *event-buffer-size*)
-        c (a/chan b)
-        p (a/mult c)
-        r (a/chan (a/sliding-buffer *event-buffer-size*))]
-    (a/tap p r)
-    {:chan-buf b
-     :chan c
-     :mult p
-     :recent r}))
-
 (defn init! []
-  (reset! central-channel (new-event-channel)))
+  (when (nil? @central-channel)
+    (let [c (la/new-event-channel)]
+      (reset! central-channel c)
+      (publish/init! c))))
 
-(s/defn shutdown-channel :- Long
-  "Shuts down a provided event channel."
-  [max-wait-ms :- Long
-   {:keys [:chan-buf :chan :mult]} :- EventChannel]
-  (let [ch (a/chan (a/dropping-buffer 1))]
-    (a/tap mult ch)
-    (a/close! chan)
-    (loop [timeout (a/timeout max-wait-ms)]
-      (let [[val _] (a/alts!! [ch timeout] :priority true)]
-        (if (some? val)
-          (recur timeout)
-          (count chan-buf))))))
-
-(s/defn shutdown! :- Long
+(s/defn shutdown! :- s/Num
   "Close the event channel, waiting up to max-wait-ms for the buffer
    to flush.  Returns the number of items in the buffer after
    shutdown (zero on a successful flush).
@@ -59,14 +30,18 @@
   ([]
    (shutdown! shutdown-max-wait-ms))
   ([max-wait-ms :- Long]
-   (shutdown-channel max-wait-ms @central-channel)))
+   (try
+     (if @central-channel
+       (la/shutdown-channel max-wait-ms @central-channel)
+       0)
+     (finally (reset! central-channel nil)))))
 
 (s/defn send-event
   "Send an event to a channel. Use the central channel by default"
-  ([event]
+  ([event :- la/Event]
    (send-event @central-channel event))
-  ([{ch :chan} :- EventChannel
-    {:keys [owner timestamp http-params] :as event}]
+  ([{ch :chan :as echan} :- la/EventChannel
+    {:keys [owner timestamp http-params] :as event} :- la/Event]
    (assert owner "Events cannot be registered without user info")
    (let [event (if timestamp event (assoc event :timestamp (time/now)))]
      (a/>!! ch event))))
@@ -78,7 +53,7 @@
     model-type :- s/Str
     new-model :- {s/Any s/Any}]
    (send-create-event @central-channel owner http-params model-type new-model))
-  ([echan :- EventChannel
+  ([echan :- la/EventChannel
     owner :- s/Str
     http-params :- c/HttpParams
     model-type :- s/Str
@@ -97,7 +72,7 @@
     http-params :- c/HttpParams
     triples :- [es/UpdateTriple]]
    (send-updated-model @central-channel owner http-params triples))
-  ([echan :- EventChannel
+  ([echan :- la/EventChannel
     owner :- s/Str
     http-params :- c/HttpParams
     triples :- [es/UpdateTriple]]
@@ -113,7 +88,7 @@
     http-params :- c/HttpParams
     id :- s/Str]
    (send-deleted-model @central-channel owner http-params id))
-  ([echan :- EventChannel
+  ([echan :- la/EventChannel
     owner :- s/Str
     http-params :- c/HttpParams
     id :- s/Str]
@@ -129,7 +104,7 @@
     id :- s/Str
     verdict :- v/Verdict]
    (send-verdict-change @central-channel owner http-params id verdict))
-  ([echan :- EventChannel
+  ([echan :- la/EventChannel
     owner :- s/Str
     http-params :- c/HttpParams
     id :- s/Str
@@ -150,5 +125,17 @@
 (s/defn recent-events :- [ModelEvent]
   "Returns up to the requested number of the  most recent events.
    Defaults to attempting to get *event-buffer-size* events."
-  ([] (recent-events *event-buffer-size*))
+  ([] (recent-events la/*event-buffer-size*))
   ([n :- Long] (take n (drain (:recent @central-channel)))))
+
+(s/defn register-listener :- Channel
+  "Convenience wrapper for registering a listener on the central event channel."
+  ([f :- (=> s/Any la/Event)]
+   (la/register-listener @central-channel f (constantly true) nil))
+  ([f :- (=> s/Any la/Event)
+    pred :- (=> s/Bool la/Event)]
+   (la/register-listener @central-channel f pred nil))
+  ([{m :mult :as ec} :- la/EventChannel
+    f :- (=> s/Any la/Event)
+    pred :- (=> s/Bool la/Event)]
+   (la/register-listener @central-channel f pred nil)))

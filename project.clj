@@ -13,6 +13,7 @@
                  [org.clojure/core.memoize "0.5.8"]
                  [org.clojure/tools.logging "0.3.1"]
                  [leiningen-core "2.6.1"] ;; For accessing project configuration
+                 [com.taoensso/carmine "2.12.2"]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]
@@ -42,6 +43,7 @@
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
+                   :disabled :disabled
                    :es-producer #(or (:es-producer %)
                                      (:es-producer-filtered-alias %)
                                      (:es-producer-aliased-index %))
@@ -51,12 +53,14 @@
                                       (:es-producer-filtered-alias %)
                                       (:es-producer-aliased-index %)
                                       (:integration %)
-                                      (:regression %)))
+                                      (:regression %)
+                                      (:disabled %)))
                    :integration #(or (:es-store %)
-                                     (:integation %)
+                                     (:integration %)
                                      (:es-producer %)
                                      (:es-producer-filtered-alias %)
-                                     (:es-producer-aliased-index %))}
+                                     (:es-producer-aliased-index %))
+                   :all #(not (:disabled %))}
 
   :java-source-paths ["hooks/ctia"]
   :javac-options  ["-proc:none"] ;; remove a warning
