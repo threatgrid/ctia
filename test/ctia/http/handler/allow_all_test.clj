@@ -5,10 +5,10 @@
             [ctia.test-helpers.core :as helpers :refer [post get]]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]))
 
-(use-fixtures :once helpers/fixture-properties:clean)
+(use-fixtures :once helpers/fixture-schema-validation)
 
-(use-fixtures :each (join-fixtures [helpers/fixture-ctia
-                                    helpers/fixture-schema-validation
+(use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
+                                    helpers/fixture-ctia
                                     helpers/fixture-allow-all-auth]))
 
 (deftest allow-all-auth-judgement-routes-test

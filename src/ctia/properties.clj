@@ -31,7 +31,8 @@
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
                       "ctia.auth.threatgrid.whoami-url" s/Str})
 
-   (st/required-keys {"ctia.http.port" s/Int
+   (st/required-keys {"ctia.http.enabled" s/Bool
+                      "ctia.http.port" s/Int
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
    (st/optional-keys {"ctia.http.dev-reload" s/Bool})
@@ -61,6 +62,7 @@
                       "ctia.producer.es.indexname" s/Str
                       "ctia.producer.es.slicing.strategy" (s/enum :filtered-alias :aliased-index)
                       "ctia.producer.es.slicing.granularity" (s/enum :minute :hour :day :week :month :year)})))
+
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."
   (map #(or (:k %) %) (keys PropertiesSchema)))

@@ -7,6 +7,7 @@
             [ctia.properties :as props]
             [ctia.store :as store]
             [ctia.stores.atom.store :as as]
+            [ctia.stores.redis.store :as rs]
             [ctia.events :as e]
             [cheshire.core :as json]
             [clj-http.client :as http]
@@ -70,6 +71,15 @@
   (with-properties ["ctia.store.type" "memory"]
     (f)))
 
+(defn fixture-properties:redis-store [f]
+  ;; May be overridden with ENV variables
+  (with-properties ["ctia.store.redis.enabled" true]
+    (f)))
+
+(defn fixture-properties:http-disabled [f]
+  (with-properties ["ctia.http.enabled" false]
+    (f)))
+
 (defn available-port []
   (with-open [sock (ServerSocket. 0)]
     (.getLocalPort sock)))
@@ -86,7 +96,12 @@
       (finally
         ;; explicitly stop the http-server
         (http-server/stop!)
-        (e/shutdown!)))))
+        (e/shutdown!)
+        (rs/shutdown!)))))
+
+(def fixture-ctia-fast
+  (ct/join-fixtures [fixture-properties:http-disabled
+                     fixture-ctia]))
 
 (defn fixture-schema-validation [f]
   (schema/with-fn-validation
