@@ -15,10 +15,10 @@
   "read es producer index config properties, returns an option map"
   (get-in @properties [:ctia :producer :es]))
 
-(s/defn init-producer-conn :- ESConnState []
+(s/defn init-producer-conn :- (s/maybe ESConnState) []
   "initiate an ES producer connection returns a map containing transport,
    mapping and the configured index name"
-  (let [props (read-producer-index-spec)]
+  (when-let [props (read-producer-index-spec)]
     {:index (:indexname props)
      :props props
      :mapping producer-mappings
@@ -28,7 +28,7 @@
   "a map converted from an Update Triple for ES Compat"
   {:field s/Keyword
    :action s/Str
-   :change {s/Str s/Str}})
+   :change {s/Any s/Any}})
 
 (s/defn update-triple->map :- UpdateMap
   [[field action change] :- UpdateTriple]
@@ -98,8 +98,3 @@
       (ensure-slice-created! state slice-props)
       (produce state slice-props event))
     (produce state event)))
-
-(defrecord EventProducer [state]
-  IEventProducer
-  (produce-event [_ event]
-    (handle-produce-event state event)))

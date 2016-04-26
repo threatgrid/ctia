@@ -1,9 +1,9 @@
 (ns hook-example.core
   "An example on how to implement hooks for CTIA"
-  (require [ctia.flows.hooks :as h]))
+  (require [ctia.flows.hook-protocol :refer [Hook]]))
 
 (defrecord HookExample [n]
-  h/Hook
+  Hook
   (init [_] :default)
   (destroy [_] :default)
   (handle [_ type-name stored-object prev-object]

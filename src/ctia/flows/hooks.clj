@@ -1,33 +1,36 @@
 (ns ctia.flows.hooks
-  "Handle hooks (Cf. #159).")
+  "Handle hooks ([Cf. #159](https://github.com/threatgrid/ctia/issues/159))."
+  (:require [ctia.flows.hook-protocol :refer [Hook init destroy handle]]))
 
-(def default-hooks
-  {:before-create {:doc "`before-create` hooks are triggered on create routes before the object is saved in the DB."
+(def empty-hooks
+  {:before-create {:doc (str "`before-create` hooks are triggered on"
+                             " create routes before the object is saved in the DB.")
                    :list []}
+   :before-create-ro {:doc (str "`before-create-ro` hooks are read-only"
+                                " hooks triggered just before creation buf after"
+                                " `before-create` hooks.")
+                      :list []}
    :after-create {:doc "`after-create` hooks are called after an object was created."
                   :list []}
-   :before-update {:doc "`before-update` hooks are triggered on update before the object is saved in the DB."
-                   :list []}
+   :before-update-ro {:doc (str "`before-update-ro` hooks are read-only"
+                                " hooks triggered just before creation buf after"
+                                " `before-update` hooks.")
+                      :list []}
    :after-update {:doc "`after-update` hooks are called after an object was updated."
                   :list []}
    :before-delete {:doc "`before-delete` hooks are called before an object deletion"
                    :list []}
+   :before-delete-ro {:doc (str "`before-delete-ro` hooks are read-only"
+                                " hooks triggered just before creation buf after"
+                                " `before-delete` hooks.")
+                      :list []}
    :after-delete {:doc "`after-delete` hooks are called after an object is deleted"
                   :list []}})
 
-(def hooks (atom default-hooks))
+(def hooks (atom empty-hooks))
 
 (defn reset-hooks! []
-  (reset! hooks default-hooks))
-
-(defprotocol Hook
-  "A hook is mainly a function"
-  (init [this])
-  (handle [this
-           type-name
-           stored-object
-           prev-object])
-  (destroy [this]))
+  (reset! hooks empty-hooks))
 
 (defn add-hook!
   "Add a `Hook` for the hook `hook-type`"
@@ -39,20 +42,12 @@
   [hook-type hook-list]
   (swap! hooks update-in [hook-type :list] concat hook-list))
 
-(defn init!
-  "Initialize hooks"
-  []
-  (doseq [hook-type (keys @hooks)]
-    (let [hook-list (get @hooks (:list hook-type))]
-      (add-hooks! hook-type hook-list))))
-
 (defn init-hooks!
-  "Should search Jar, Namespaces and init Objects"
+  "Initialize all hooks"
   []
   (doseq [hook-type (keys @hooks)]
     (doseq [hook (get-in @hooks [hook-type :list])]
-      (init hook)
-      (add-hook! hook-type hook)))
+      (init hook)))
   @hooks)
 
 (defn destroy-hooks
@@ -87,20 +82,29 @@
 
 (defn apply-hook-list
   "Apply all hooks to some realized object of some type"
-  [type-name realized-object prev-object hook-list]
-  (reduce (fn [acc hook]
-            (bind-realized acc hook prev-object type-name))
-          realized-object
-          hook-list))
+  [type-name realized-object prev-object hook-list read-only?]
+  (if read-only?
+    (do (doseq [hook hook-list]
+          (handle hook type-name realized-object prev-object))
+        realized-object)
+    (reduce (fn [acc hook]
+              (bind-realized acc hook prev-object type-name))
+            realized-object
+            hook-list)))
 
 (defn apply-hooks
   "Apply all hooks for some hook-type"
-  [type-name realized-object prev-object hook-type]
+  [& {:keys [type-name
+             realized-object
+             prev-object
+             hook-type
+             read-only?]
+      :as args}]
   (apply-hook-list type-name
                    realized-object
                    prev-object
-                   (get-in @hooks [hook-type :list])))
-
+                   (get-in @hooks [hook-type :list])
+                   read-only?))
 
 (defn from-java-handle
   "Helper to import Java obeying `Hook` java interface."

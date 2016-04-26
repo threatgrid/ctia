@@ -30,9 +30,9 @@
                                      (swap! results conj ev)
                                      (.countDown finish-signal)))]
       (e/send-create-event "tester" {} "TestModelType" {:data 1})
-      (e/send-event {:owner "tester" :http-params {} :model {:data 2}})
-      (e/send-event {:owner "tester" :http-params {} :model {:data 3}})
+      (e/send-event {:owner "tester" :http-params {} :entity {:data 2}})
+      (e/send-event {:owner "tester" :http-params {} :entity {:data 3}})
       (is (.await finish-signal 10 TimeUnit/SECONDS)
           "Unexpected timeout waiting for subscriptions")
-      (is (= [1 2 3] (map (comp :data :model) @results)))
+      (is (= [1 2 3] (map (comp :data :entity) @results)))
       (la/close! sub))))
