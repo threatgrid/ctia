@@ -63,7 +63,7 @@
                       :http-params http-params
                       :model-type model-type
                       :id (or (:id new-model) (gensym "event"))
-                      :object new-model})))
+                      :entity new-model})))
 
 (s/defn send-updated-model
   "Builds an updated model event and sends it to the provided channel. Use the central channel by default."

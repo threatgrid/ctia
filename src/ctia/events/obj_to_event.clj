@@ -11,7 +11,7 @@
   "Create a CreateEvent from a StoredX object"
   [object]
   {:owner (:owner object)
-   :object object
+   :entity object
    :timestamp (t/now)
    :id (:id object)
    :type vs/CreateEventType})
@@ -39,7 +39,7 @@
    But the complete object is given for simplicity."
   [object prev-object]
   {:owner (:owner object)
-   :object object
+   :entity object
    :timestamp (t/now)
    :id (:id object)
    :type vs/UpdateEventType
@@ -54,7 +54,7 @@
   "transform an object (generally a `StoredObject`) to its corresponding `Event`"
   [object]
   {:owner (:owner object)
-   :object object
+   :entity object
    :timestamp (t/now)
    :id (:id object)
    :type vs/DeleteEventType})

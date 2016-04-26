@@ -36,7 +36,7 @@
                  :id "test-id"
                  :http-params {}
                  :type "CreatedModel"
-                 :object {:a 1
+                 :entity {:a 1
                           :b 2
                           :c 3}}
 
@@ -51,7 +51,7 @@
                  :id "test-id"
                  :http-params {}
                  :type "UpdatedModel"
-                 :object {:a 1
+                 :entity {:a 1
                           :b 2
                           :c 3}
                  :fields [[:f1 "delete" {"x" "y"}]
@@ -68,7 +68,7 @@
                  :id "test-id"
                  :http-params {}
                  :type "DeletedModel"
-                 :object {:a 1
+                 :entity {:a 1
                           :b 2
                           :c 3}}
 
@@ -84,7 +84,7 @@
                  :http-params {}
                  :type "VerdictChange"
                  :judgement_id "test-judgement-id"
-                 :object {:a 1
+                 :entity {:a 1
                           :b 2
                           :c 3}
                  :verdict {:type "verdict"
