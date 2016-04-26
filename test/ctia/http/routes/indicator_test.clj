@@ -199,22 +199,22 @@
                   set)))))))
 
 (def api-key "45c1f5e3f05d0")
-(defn redprintln [s]
+(defn redprintln [& s]
   (print "\u001b[31m")
-  (println s)
+  (apply println s)
   (print "\u001b[0m"))
 
 (deftest-for-each-store test-sightings-from-indicator
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
-  (let [new-indicators (g/sample 1 NewIndicator)
+  (let [new-indicators (g/sample 20 NewIndicator)
         ;; BEWARE ES AS A MAXIMUM TO 10 !!!!!!
         nb-sightings 20]
     (if (> nb-sightings ctia.lib.es.document/default-limit)
-      (redprintln (str "BEWARE! ES Couldn't handle more than 10 element by search by default."
-                       " It is set to " ctia.lib.es.document/default-limit " in `lib.es.document.clj`"
-                       " You might want to change either `nb-sightings` in this test"
-                       " or change `ctia.lib.es.document/default-limit`")))
+      (redprintln "BEWARE! ES Couldn't handle more than 10 element by search by default."
+                  "It is set to " ctia.lib.es.document/default-limit " in `lib.es.document.clj`"
+                  "You might want to change either `nb-sightings` in this test"
+                  "or change `ctia.lib.es.document/default-limit`"))
     (testing (str "POST /ctia/indicator"
                   " POST /ctia/sighting"
                   " GET /ctia/indicator/:id/sighting")
@@ -229,8 +229,8 @@
               ;; Generate and Create Sightings linked to the indicator
               indicator-id (get-in response [:parsed-body :id])
               new-sightings (->> (g/sample nb-sightings NewSighting)
-                                 (map #(into % {:indicator
-                                                {:indicator_id indicator-id}})))
+                                 (map #(into %
+                                             {:indicators [{:indicator_id indicator-id}]})))
               s-responses (map #(post "ctia/sighting"
                                       :body %
                                       :headers {"api_key" api-key})

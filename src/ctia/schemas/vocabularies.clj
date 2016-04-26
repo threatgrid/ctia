@@ -1,7 +1,7 @@
 (ns ctia.schemas.vocabularies
   (:require [schema.core :as s]))
 
-(def AttackerInfrastructure
+(s/defschema AttackerInfrastructure
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/AttackerInfrastructureTypeVocab-1.0/"
   (s/enum "Anonymization"
           "Anonymization - Proxy"
@@ -28,7 +28,7 @@
           "Hosting - Legitimate Hosting"
           "Electronic Payment Methods"))
 
-(def AttackToolType
+(s/defschema AttackToolType
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/AttackerToolTypeVocab-1.0/"
   (s/enum "Malware"
           "Penetration Testing"
@@ -38,17 +38,17 @@
           "Application Scanner"
           "Password Cracking"))
 
-(def CampaignStatus
+(s/defschema CampaignStatus
   (s/enum "Ongoing"
           "Historic"
           "Future"))
 
-(def COAStage
+(s/defschema COAStage
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/COAStageVocab-1.0/"
   (s/enum "Remedy"
           "Response"))
 
-(def COAType
+(s/defschema COAType
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/CourseOfActionTypeVocab-1.0/"
   (s/enum "Perimeter Blocking"
           "Internal Blocking"
@@ -67,7 +67,7 @@
           "Policy Actions"
           "Other"))
 
-(def DiscoveryMethod
+(s/defschema DiscoveryMethod
   (s/enum "Agent Disclosure"
           "External - Fraud Detection"
           "Monitoring Service"
@@ -87,7 +87,7 @@
           "User"
           "Unknown"))
 
-(def Effect
+(s/defschema Effect
   (s/enum "Brand or Image Degradation"
           "Loss of Competitive Advantage"
           "Loss of Competitive Advantage - Economic"
@@ -103,7 +103,7 @@
           "Unintended Access"
           "User Data Loss"))
 
-(def HighMedLow
+(s/defschema HighMedLow
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/HighMediumLowVocab-1.0/"
   (s/enum "Low"
           "Medium"
@@ -111,7 +111,7 @@
           "None"
           "Unknown"))
 
-(def ImpactQualification
+(s/defschema ImpactQualification
   (s/enum "Insignificant"
           "Distracting"
           "Painful"
@@ -119,14 +119,14 @@
           "Catastrophic"
           "Unknown"))
 
-(def ImpactRating
+(s/defschema ImpactRating
   (s/enum "None"
           "Minor"
           "Moderate"
           "Major"
           "Unknown"))
 
-(def IncidentCategory
+(s/defschema IncidentCategory
   (s/enum "Exercise/Network Defense Testing"
           "Unauthorized Access"
           "Denial of Service"
@@ -135,7 +135,7 @@
           "Scans/Probes/Attempted Access"
           "Investigation"))
 
-(def IndicatorType
+(s/defschema IndicatorType
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/IndicatorTypeVocab-1.1/"
   (s/enum "Malicious E-mail"
           "IP Watchlist"
@@ -152,7 +152,7 @@
           "IMEI Watchlist"
           "IMSI Watchlist"))
 
-(def InformationType
+(s/defschema InformationType
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/InformationTypeVocab-1.0/"
   (s/enum "Information Assets"
           "Information Assets - Corporate Employee Information"
@@ -164,7 +164,7 @@
           "Information Assets - User Credentials"
           "Authentication Cookies"))
 
-(def IntendedEffect
+(s/defschema IntendedEffect
   (s/enum "Advantage"
           "Advantage - Economic"
           "Advantage - Military"
@@ -190,14 +190,14 @@
           "Traffic Diversion"
           "Unauthorized Access"))
 
-(def LocationClass
+(s/defschema LocationClass
   (s/enum "Internally-Located"
           "Externally-Located"
           "Co-Located"
           "Mobile"
           "Unknown"))
 
-(def LossDuration
+(s/defschema LossDuration
   (s/enum "Permanent"
           "Weeks"
           "Days"
@@ -206,14 +206,14 @@
           "Seconds"
           "Unknown"))
 
-(def LossProperty
+(s/defschema LossProperty
   (s/enum "Confidentiality"
           "Integrity"
           "Availability"
           "Accountability"
           "Non-Repudiation"))
 
-(def MalwareType
+(s/defschema MalwareType
   (s/enum "Automated Transfer Scripts"
           "Adware"
           "Dialer"
@@ -233,13 +233,13 @@
           "Rogue Antivirus"
           "Rootkit"))
 
-(def ManagementClass
+(s/defschema ManagementClass
   (s/enum "Internally-Managed"
           "Externally-Management" ;; SIC
           "CO-Managment"
           "Unkown"))
 
-(def Motivation
+(s/defschema Motivation
   (s/enum "Ideological"
           "Ideological - Anti-Corruption"
           "Ideological - Anti-Establishment"
@@ -255,7 +255,7 @@
           "Opportunistic"
           "Political"))
 
-(def ObservableType
+(s/defschema ObservableType
   "Observable type names"
   (s/enum "ip"
           "ipv6"
@@ -267,32 +267,32 @@
           "sha1"
           "url"))
 
-(def OwnershipClass
+(s/defschema OwnershipClass
   (s/enum "Internally-Owned"
           "Employee-Owned"
           "Partner-Owned"
           "Customer-Owned"
           "Unknown"))
 
-(def Scope
+(s/defschema Scope
   "Not a defined vocab, this enum is commonly repeated"
   (s/enum "inclusive"
           "exclusive"))
 
-(def SecurityCompromise
+(s/defschema SecurityCompromise
   (s/enum "Yes"
           "Suspected"
           "No"
           "Unknown"))
 
-(def Sophistication
+(s/defschema Sophistication
   (s/enum "Innovator"
           "Expert"
           "Practitioner"
           "Novice"
           "Aspirant"))
 
-(def Status
+(s/defschema Status
   (s/enum "New"
           "Open"
           "Stalled"
@@ -303,7 +303,7 @@
           "Rejected"
           "Deleted"))
 
-(def SystemType
+(s/defschema SystemType
   "See http://stixproject.github.io/data-model/1.2/stixVocabs/SystemTypeVocab-1.0/"
   (s/enum "Enterprise Systems"
           "Enterprise Systems - Application Layer"
@@ -333,7 +333,7 @@
           "Users - Workstation"
           "Users - Removable Media"))
 
-(def ThreatActorType
+(s/defschema ThreatActorType
   (s/enum "Cyber Espionage Operations"
           "Hacker"
           "Hacker - White hat"
@@ -351,3 +351,60 @@
           "eCrime Actor - Underground Call Service"
           "Insider Threat"
           "Disgruntled Customer / User"))
+
+(s/defschema Sensor
+  "The openC2 Actuator name that best fits a device
+   see <http://openc2.org/docs/OpenC2%20%20Language%20Descrip%20Doc%20Draft%20%28Rev%200%206f%29%2003012016.pdf>
+   Section Actuator Vocabulary, page 24.
+
+   *Clojure note*:
+     We use keywords instead of string as there is
+     no special char that would break keywords notation
+     and keywords are generally lighter to use."
+  (s/enum
+   :endpoint
+   :endpoint.digital-telephone-handset
+   :endpoint.laptop
+   :endpoint.pos-terminal
+   :endpoint.printer
+   :endpoint.sensor
+   :endpoint.server
+   :endpoint.smart-meter
+   :endpoint.smart-phone
+   :endpoint.tablet
+   :endpoint.workstation
+   :network
+   :network.bridge
+   :network.firewall
+   :network.gateway
+   :network.guard
+   :network.hips
+   :network.hub
+   :network.ids
+   :network.ips
+   :network.modem
+   :network.nic
+   :network.proxy
+   :network.router
+   :network.security_manager
+   :network.sense_making
+   :network.sensor
+   :network.switch
+   :network.vpn
+   :network.wap
+   :process
+   :process.aaa-server
+   :process.anti-virus-scanner
+   :process.connection-scanner
+   :process.directory-service
+   :process.dns-server
+   :process.email-service
+   :process.file-scanner
+   :process.location-service
+   :process.network-scanner
+   :process.remediation-service
+   :process.reputation-service
+   :process.sandbox
+   :process.virtualization-service
+   :process.virtualization-service
+   :process.vulnerability-scanner))

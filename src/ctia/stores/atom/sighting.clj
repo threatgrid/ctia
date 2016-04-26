@@ -17,6 +17,6 @@
    indicators :- (s/maybe [StoredIndicator])]
   ;; Find sightings using the :sightings relationship on indicators
   (let [sightings-map @sightings-state
-        indicators-set (set (map :id indicators))]
+        indicators-set (set (map #({:indicator_id (:id %)}) indicators))]
     (handle-list-sightings sightings-state
-                           {[:indicator :indicator_id] indicators-set})))
+                           {:indicators indicators-set})))
