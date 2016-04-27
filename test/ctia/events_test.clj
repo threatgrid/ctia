@@ -21,8 +21,8 @@
     (is (thrown? AssertionError
                  (send-event ec {:http-params {}})))
     (send-event ec {:owner "tester" :http-params {} :data 3})
-    (is (= 1 (-> (<!! output) :model :data)))
-    (is (= 2 (-> (<!! output) :model :data)))
+    (is (= 1 (-> (<!! output) :entity :data)))
+    (is (= 2 (-> (<!! output) :entity :data)))
     (is (= 3 (-> (<!! output) :data)))))
 
 (deftest test-central-events
@@ -33,8 +33,8 @@
     (send-create-event "tester" {} "TestModelType" {:data 1})
     (send-create-event "tester" {} "TestModelType" {:data 2})
     (send-event {:owner "tester" :http-params {} :data 3})
-    (is (= 1 (-> (<!! output) :model :data)))
-    (is (= 2 (-> (<!! output) :model :data)))
+    (is (= 1 (-> (<!! output) :entity :data)))
+    (is (= 2 (-> (<!! output) :entity :data)))
     (is (= 3 (-> (<!! output) :data)))
     (is (nil? (poll! output)))))
 
@@ -74,10 +74,10 @@
     (send-create-event "tester" {} "TestModelType" {:id "2"})
     (send-create-event "tester" {} "TestModelType" {:id "3"})
     (Thread/sleep 100)
-    (is (= ["1" "2" "3"] (map (comp :id :model) (recent-events))))
+    (is (= ["1" "2" "3"] (map (comp :id :entity) (recent-events))))
     (send-create-event "tester" {} "TestModelType" {:id "4"})
     (send-create-event "tester" {} "TestModelType" {:id "5"})
     (send-create-event "tester" {} "TestModelType" {:id "6"})
     (send-create-event "tester" {} "TestModelType" {:id "7"})
     (Thread/sleep 100)
-    (is (= ["5" "6" "7"] (map (comp :id :model) (recent-events))))))
+    (is (= ["5" "6" "7"] (map (comp :id :entity) (recent-events))))))
