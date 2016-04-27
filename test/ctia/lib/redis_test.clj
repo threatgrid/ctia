@@ -11,12 +11,11 @@
 
 (use-fixtures :each (join-fixtures
                      [test-helpers/fixture-properties:clean
-                      test-helpers/fixture-properties:redis-store
                       test-helpers/fixture-ctia-fast]))
 
 (deftest ^:integration test-redis-pubsub-works
   (testing "That we can connect to redis and do pub/sub"
-    (let [host-port (pget/redis-host-port* @properties)
+    (let [host-port (pget/redis-host-port @properties)
           server-connection (lr/server-connection
                              host-port)
           event-channel-name (str (UUID/randomUUID))

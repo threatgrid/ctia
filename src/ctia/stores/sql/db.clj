@@ -8,3 +8,9 @@
   (->> (kdb/create-db (get-in @properties [:ctia :store :sql :db]))
        (reset! db)
        kdb/default-connection))
+
+(defn uninitialized? []
+  (nil? @db))
+
+(defn shutdown! []
+  (reset! db nil))
