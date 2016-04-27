@@ -1,6 +1,5 @@
 (ns ctia.events
-  (:require [ctia.publish :as publish]
-            [ctia.events.schemas :as es]
+  (:require [ctia.events.schemas :as es]
             [ctia.lib.time :as time]
             [ctia.lib.async :as la]
             [ctia.schemas.common :as c]
@@ -18,8 +17,7 @@
 
 (defn init! []
   (let [c (la/new-event-channel)]
-    (reset! central-channel c)
-    (publish/init! c)))
+    (reset! central-channel c)))
 
 (s/defn shutdown! :- s/Num
   "Close the event channel, waiting up to max-wait-ms for the buffer

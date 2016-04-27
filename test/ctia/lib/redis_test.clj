@@ -15,7 +15,7 @@
 
 (deftest ^:integration test-redis-pubsub-works
   (testing "That we can connect to redis and do pub/sub"
-    (let [host-port (pget/redis-host-port* @properties)
+    (let [host-port (pget/redis-host-port @properties)
           server-connection (lr/server-connection
                              host-port)
           event-channel-name (str (UUID/randomUUID))
@@ -35,4 +35,5 @@
                ["message"   event-channel-name {:message 1}]
                ["message"   event-channel-name {:message 2}]
                ["message"   event-channel-name {:message 3}]}
-             (set @results))))))
+             (set @results)))
+      (lr/close-listener listener))))

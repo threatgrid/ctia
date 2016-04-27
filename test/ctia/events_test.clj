@@ -1,5 +1,5 @@
 (ns ctia.events-test
-  (:require [ctia.events :as c :refer :all]
+  (:require [ctia.events :as events :refer :all]
             [ctia.stores.redis.store :as redis-store]
             [ctia.lib.async :as la]
             [ctia.test-helpers.core :as helpers]
@@ -69,9 +69,8 @@
 (deftest test-recents
   "Tests that the sliding window works, and is repeatable"
   (binding [la/*event-buffer-size* 3]
-    (c/shutdown!)
-    (redis-store/shutdown!)
-    (c/init!)
+    (events/shutdown!)
+    (events/init!)
     (send-create-event "tester" {} "TestModelType" {:id "1"})
     (send-create-event "tester" {} "TestModelType" {:id "2"})
     (send-create-event "tester" {} "TestModelType" {:id "3"})

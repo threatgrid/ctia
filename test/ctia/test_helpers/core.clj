@@ -6,7 +6,6 @@
             [ctia.init :as init]
             [ctia.properties :as props]
             [ctia.store :as store]
-            [ctia.stores.redis.store :as rs]
             [ctia.events :as e]
             [cheshire.core :as json]
             [clj-http.client :as http]
@@ -63,7 +62,8 @@
   (with-properties ["ctia.http.dev-reload" false
                     "ctia.http.min-threads" 9
                     "ctia.http.max-threads" 10
-                    "ctia.nrepl.enabled" false]
+                    "ctia.nrepl.enabled" false
+                    "ctia.store.redis.channel-name" "events-test"]
     ;; run tests
     (f)))
 
@@ -87,6 +87,10 @@
                     "ctia.store.ttp" "memory"]
     (f)))
 
+(defn fixture-properties:redis-store [f]
+  (with-properties ["ctia.store.redis.enabled" true]
+    (f)))
+
 (defn available-port []
   (with-open [sock (ServerSocket. 0)]
     (.getLocalPort sock)))
@@ -107,8 +111,9 @@
        (finally
          ;; explicitly stop the http-server
          (http-server/stop!)
-         (e/shutdown!)
-         (rs/shutdown!))))))
+         (when (some? @store/events-store)
+           (store/unsubscribe-to-events @store/events-store))
+         (e/shutdown!))))))
 
 (defn fixture-ctia-fast [test]
   (fixture-ctia test false))

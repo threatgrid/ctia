@@ -66,6 +66,9 @@
    {:memory as/->COAStore
     :es es-store/->COAStore}
 
+   :events
+   {:redis redis-store/create-events-store}
+
    :exploit-target
    {:memory as/->ExploitTargetStore
     :es es-store/->ExploitTargetStore}

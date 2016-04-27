@@ -43,6 +43,7 @@
                       "ctia.store.feedback" s/Keyword
                       "ctia.store.campaign" s/Keyword
                       "ctia.store.coa" s/Keyword
+                      "ctia.store.events" s/Keyword
                       "ctia.store.exploit-target" s/Keyword
                       "ctia.store.identity" s/Keyword
                       "ctia.store.incident" s/Keyword
@@ -57,15 +58,18 @@
                       "ctia.store.sql.db.subprotocol" s/Str
                       "ctia.store.sql.db.subname" s/Str
                       "ctia.store.sql.db.delimiters" s/Str
+
                       "ctia.store.es.uri" s/Str
                       "ctia.store.es.host" s/Str
                       "ctia.store.es.port" s/Int
                       "ctia.store.es.clustername" s/Str
                       "ctia.store.es.indexname" s/Str
+
                       "ctia.store.redis.enabled" s/Bool
                       "ctia.store.redis.uri" s/Str
                       "ctia.store.redis.host" s/Str
                       "ctia.store.redis.port" s/Int
+                      "ctia.store.redis.channel-name" s/Str
 
                       "ctia.producer.type" s/Keyword
                       "ctia.producer.es.uri" s/Str
