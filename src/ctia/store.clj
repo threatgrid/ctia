@@ -120,5 +120,5 @@
    :exploit-target exploit-target-store
    :sighting sighting-store
    :incident incident-store
-   :relation relation-store
+   ;;:relation relation-store
    :identity identity-store})

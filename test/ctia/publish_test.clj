@@ -12,9 +12,10 @@
             [clojure.core.async :as a])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
-(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    test-helpers/fixture-properties:redis-store
-                                    test-helpers/fixture-ctia-fast]))
+(use-fixtures :each
+  (join-fixtures [test-helpers/fixture-properties:clean
+                  (test-helpers/fixture-property "ctia.store.redis.enabled" true)
+                  test-helpers/fixture-ctia-fast]))
 
 (deftest ^:integration test-publish-connection
   (testing "Checking that Redis can be connected to"

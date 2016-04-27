@@ -1,5 +1,6 @@
 (ns ctia.events-test
   (:require [ctia.events :as c :refer :all]
+            [ctia.stores.redis.store :as redis-store]
             [ctia.lib.async :as la]
             [ctia.test-helpers.core :as helpers]
             [clojure.test :as t :refer :all]
@@ -69,6 +70,7 @@
   "Tests that the sliding window works, and is repeatable"
   (binding [la/*event-buffer-size* 3]
     (c/shutdown!)
+    (redis-store/shutdown!)
     (c/init!)
     (send-create-event "tester" {} "TestModelType" {:id "1"})
     (send-create-event "tester" {} "TestModelType" {:id "2"})
