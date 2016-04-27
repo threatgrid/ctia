@@ -7,8 +7,10 @@
             [ctia.test-helpers.core :as test-helpers]
             [clojure.core.async :as a]))
 
-(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    test-helpers/fixture-ctia-fast]))
+(use-fixtures :each
+  (join-fixtures [test-helpers/fixture-properties:clean
+                  (test-helpers/fixture-property "ctia.store.redis.enabled" false)
+                  test-helpers/fixture-ctia-fast]))
 
 (deftest ^:integration test-events-with-redis-disabled
   (testing "error thrown when subscribing to disabled redis"

@@ -37,23 +37,36 @@
                       "ctia.http.max-threads" s/Int})
    (st/optional-keys {"ctia.http.dev-reload" s/Bool})
 
-   (st/required-keys {"ctia.nrepl.enabled" s/Bool})
-   (st/optional-keys {"ctia.nrepl.port" s/Int})
+   (st/required-keys {"ctia.nrepl.enabled" s/Bool
 
-   (st/optional-keys {"ctia.store.type" s/Keyword
+                      "ctia.store.actor" s/Keyword
+                      "ctia.store.feedback" s/Keyword
+                      "ctia.store.campaign" s/Keyword
+                      "ctia.store.coa" s/Keyword
+                      "ctia.store.exploit-target" s/Keyword
+                      "ctia.store.identity" s/Keyword
+                      "ctia.store.incident" s/Keyword
+                      "ctia.store.indicator" s/Keyword
+                      "ctia.store.judgement" s/Keyword
+                      "ctia.store.sighting" s/Keyword
+                      "ctia.store.ttp" s/Keyword})
+
+   (st/optional-keys {"ctia.nrepl.port" s/Int
+
                       "ctia.store.sql.db.classname" s/Str
                       "ctia.store.sql.db.subprotocol" s/Str
                       "ctia.store.sql.db.subname" s/Str
                       "ctia.store.sql.db.delimiters" s/Str
-                      "ctia.store.redis.enabled" s/Bool
-                      "ctia.store.redis.uri" s/Str
-                      "ctia.store.redis.host" s/Str
-                      "ctia.store.redis.port" s/Int
                       "ctia.store.es.uri" s/Str
                       "ctia.store.es.host" s/Str
                       "ctia.store.es.port" s/Int
                       "ctia.store.es.clustername" s/Str
                       "ctia.store.es.indexname" s/Str
+                      "ctia.store.redis.enabled" s/Bool
+                      "ctia.store.redis.uri" s/Str
+                      "ctia.store.redis.host" s/Str
+                      "ctia.store.redis.port" s/Int
+
                       "ctia.producer.type" s/Keyword
                       "ctia.producer.es.uri" s/Str
                       "ctia.producer.es.host" s/Str

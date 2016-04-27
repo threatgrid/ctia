@@ -11,7 +11,6 @@
 
 (use-fixtures :each (join-fixtures
                      [test-helpers/fixture-properties:clean
-                      test-helpers/fixture-properties:redis-store
                       test-helpers/fixture-ctia-fast]))
 
 (deftest ^:integration test-redis-pubsub-works

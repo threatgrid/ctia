@@ -46,9 +46,9 @@
   []
   (when @pubsub-listener
     (try
-      (lr/unsubscribe @pubsub-listener)
       (lr/close-listener @pubsub-listener)
       (catch IOException e
-        (log/error "Error closing subscription channel: " (.getMessage e))))
+        (log/error "Error closing subscription channel: " (.getMessage e))
+        (throw e)))
     (reset! pubsub-listener nil)
     true))

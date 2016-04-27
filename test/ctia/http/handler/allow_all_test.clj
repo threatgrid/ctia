@@ -8,6 +8,7 @@
 (use-fixtures :once helpers/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
+                                    helpers/fixture-properties:atom-store
                                     helpers/fixture-ctia
                                     helpers/fixture-allow-all-auth]))
 
