@@ -4,7 +4,8 @@
              :refer [NewSighting StoredSighting realize-sighting]]
             [ctia.store :refer [ISightingStore]]
             [ctia.stores.atom.common :as mc]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [ctia.schemas.common :as c]))
 
 (def handle-create-sighting (mc/create-handler-from-realized StoredSighting))
 (def handle-read-sighting (mc/read-handler StoredSighting))
@@ -15,8 +16,12 @@
 (s/defn handle-list-sightings-by-indicators :- (s/maybe [StoredSighting])
   [sightings-state :- (s/atom {s/Str StoredSighting})
    indicators :- (s/maybe [StoredIndicator])]
-  ;; Find sightings using the :sightings relationship on indicators
-  (let [sightings-map @sightings-state
-        indicators-set (set (map #({:indicator_id (:id %)}) indicators))]
+  (let [indicators-set (set (map (fn [ind] {:indicator_id (:id ind)})
+                                 indicators))]
     (handle-list-sightings sightings-state
                            {:indicators indicators-set})))
+
+(s/defn handle-list-sightings-by-observables :- (s/maybe [StoredSighting])
+  [sightings-state :- (s/atom {s/Str StoredSighting})
+   observables :- (s/maybe [c/Observable])]
+  (handle-list-sightings sightings-state {:observables (set observables)}))

@@ -16,111 +16,50 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+(def api-key "45c1f5e3f05d0")
+
+(defn new-from-stored [m]
+  (dissoc m :id :created :modified :owner))
+
 (deftest-for-each-store test-sighting-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (doseq [new-sighting (g/sample 1 NewSighting)]
+    (testing "POST /ctia/sighting"
+      (let [{status :status
+             sighting :parsed-body
+             :as response}
+            (post "ctia/sighting"
+                  :body new-sighting
+                  :headers {"api_key" api-key})]
+        (is (= 200 status))
+        (is (= new-sighting (new-from-stored sighting)))
 
-  (testing "POST /ctia/sighting"
-    (let [{status :status
-           sighting :parsed-body}
-          (post "ctia/sighting"
-                :body {:timestamp "2016-05-11T00:40:48.212-00:00"
-                       :source "source"
-                       :reference "http://example.com/123"
-                       :confidence "High"
-                       :description "description"
-                       :related_judgements [{:judgement_id "judgement-123"}
-                                            {:judgement_id "judgement-234"}]}
-                :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 200 status))
-      (is (deep=
-           {:type "sighting"
-            :timestamp #inst "2016-05-11T00:40:48.212-00:00"
-            :source "source"
-            :reference "http://example.com/123"
-            :confidence "High"
-            :description "description"
-            :related_judgements [{:judgement_id "judgement-123"}
-                                 {:judgement_id "judgement-234"}]
-            :owner "foouser"}
-           (dissoc sighting
-                   :id
-                   :created
-                   :modified)))
+        (testing "GET /ctia/sighting/:id"
+          (let [{status :status
+                 sighting :parsed-body}
+                (get (str "ctia/sighting/" (:id sighting))
+                     :headers {"api_key" api-key})]
+            (is (= 200 status))
+            (is (= new-sighting (new-from-stored sighting)))))
 
-      (testing "GET /ctia/sighting/:id"
-        (let [{status :status
-               sighting :parsed-body}
-              (get (str "ctia/sighting/" (:id sighting))
-                   :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 200 status))
-          (is (deep=
-               {:type "sighting"
-                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
-                :source "source"
-                :reference "http://example.com/123"
-                :confidence "High"
-                :description "description"
-                :related_judgements [{:judgement_id "judgement-123"}
-                                     {:judgement_id "judgement-234"}]
-                :owner "foouser"}
-               (dissoc sighting
-                       :id
-                       :created
-                       :modified)))))
+        (let [another-new-sighting (first (g/sample 1 NewSighting))]
+          (testing "PUT /ctia/sighting/:id"
+            (let [{status :status
+                   updated-sighting :parsed-body}
+                  (put (str "ctia/sighting/" (:id sighting))
+                       :body another-new-sighting
+                       :headers {"api_key" api-key})]
+              (is (= 200 status))
+              (is (deep=
+                   another-new-sighting
+                   (new-from-stored updated-sighting))))))
 
-      (testing "PUT /ctia/sighting/:id"
-        (let [{status :status
-               updated-sighting :parsed-body}
-              (put (str "ctia/sighting/" (:id sighting))
-                   :body {:timestamp "2016-05-11T00:40:48.212-00:00"
-                          :source "updated source"
-                          :reference "http://example.com/123"
-                          :confidence "Medium"
-                          :description "updated description"
-                          :related_judgements [{:judgement_id "judgement-123"}
-                                               {:judgement_id "judgement-234"}]}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 200 status))
-          (is (deep=
-               {:type "sighting"
-                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
-                :source "updated source"
-                :reference "http://example.com/123"
-                :confidence "Medium"
-                :description "updated description"
-                :related_judgements [{:judgement_id "judgement-123"}
-                                     {:judgement_id "judgement-234"}]
-                :owner "foouser"}
-               (dissoc updated-sighting
-                       :id
-                       :created
-                       :modified)))))
+        (testing "DELETE /ctia/sighting/:id"
+          (let [{status :status} (delete (str "ctia/sighting/" (:id sighting))
+                                         :headers {"api_key" api-key})]
+            (is (= 204 status))
+            (let [{status :status} (get (str "ctia/sighting/" (:id sighting))
+                                        :headers {"api_key" api-key})]
+              (is (= 404 status)))))))))
 
-      (testing "DELETE /ctia/sighting/:id"
-        (let [{status :status} (delete (str "ctia/sighting/" (:id sighting))
-                                       :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 204 status))
-          (let [{status :status} (get (str "ctia/sighting/" (:id sighting))
-                                      :headers {"api_key" "45c1f5e3f05d0"})]
-            (is (= 404 status))))))))
-
-(deftest-for-each-store test-sighting-routes-generative
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-
-  (let [new-sightings (g/sample 20 NewSighting)]
-    (testing "POST /ctia/sighting GET /ctia/sighting"
-      (let [responses (map #(post "ctia/sighting"
-                                  :body %
-                                  :headers {"api_key" "45c1f5e3f05d0"}) new-sightings)]
-        (doall (map #(is (= 200 (:status %))) responses))
-        (is (deep=
-             (set new-sightings)
-             (->> responses
-                  (map :parsed-body)
-                  (map #(get (str "ctia/sighting/" (:id %))
-                             :headers {"api_key" "45c1f5e3f05d0"}))
-                  (map :parsed-body)
-                  (map #(dissoc % :id :created :modified :owner))
-                  set)))))))

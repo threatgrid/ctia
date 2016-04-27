@@ -137,7 +137,9 @@
   (list-sightings [_ filter-map]
     (sighting/handle-list-sightings state filter-map))
   (list-sightings-by-indicators [_ indicators]
-    (sighting/handle-list-sightings-by-indicators state indicators)))
+    (sighting/handle-list-sightings-by-indicators state indicators))
+  (list-sightings-by-observables [_ observables]
+    (sighting/handle-list-sightings-by-observables state observables)))
 
 (defrecord TTPStore [state]
   ITTPStore

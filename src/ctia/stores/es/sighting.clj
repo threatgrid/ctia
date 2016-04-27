@@ -20,7 +20,11 @@
 
 (defn handle-list-sightings-by-indicators
   [state indicators]
-  
   (let [indicator-ids (mapv :id indicators)]
     (handle-list-sightings state {:type "sighting"
-                                  [:indicator :indicator_id] indicator-ids})))
+                                  [:indicators :indicator_id] indicator-ids})))
+
+(defn handle-list-sightings-by-observables
+  [state observables]
+  (handle-list-sightings state {:type "sighting"
+                                :observables observables}))

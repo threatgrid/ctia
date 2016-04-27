@@ -1,6 +1,14 @@
 (ns ctia.http.routes.observable-test
   (:refer-clojure :exclude [get])
   (:require
+   [ring.util.codec :refer [url-encode]]
+   [schema-generators.generators :as g]
+   [clojure.test.check.generators :as gen]
+   [ctia.schemas.common  :refer [Observable]]
+   [ctia.schemas.sighting  :refer [NewSighting]]
+   [ctia.schemas.indicator  :refer [NewIndicator]]
+   [ctia.schemas.judgement  :refer [NewJudgement]]
+
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -13,268 +21,98 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+(def api-key "45c1f5e3f05d0")
+(defn redprintln [& s]
+  (print "\u001b[31m")
+  (apply println s)
+  (print "\u001b[0m"))
+(defn test-post
+  "Helper which test a post request occurs with success and return the right object"
+  [path new-entity]
+  (testing (str "POST " path)
+    (let [resp (post path :body new-entity :headers {"api_key" api-key})]
+      (when (get-in resp [:parsed-body :message])
+        (redprintln (get-in resp [:parsed-body :message])))
+      (when (get-in resp [:parsed-body :errors])
+        (redprintln (get-in resp [:parsed-body :errors])))
+      (is (= 200 (:status resp)))
+      (when (= 200 (:status resp))
+        (is (= (dissoc new-entity :relations)
+               (dissoc (:parsed-body resp) :id :created :modified :owner :relations)))
+        (:parsed-body resp)))))
+
+(defn test-delete
+  "Helper which test a delete request occurs with success"
+  [path]
+  (testing (str "DELETE " path)
+    (let [resp (delete path :headers {"api_key" api-key})]
+      (is (= 204 (:status resp)))
+      (= 204 (:status resp)))))
+
+(defn test-get-list
+  "Helper which test a get request occurs with success and return the right object"
+  [path expected-entity]
+  (testing (str "GET " path)
+    (let [resp (get path :headers {"api_key" api-key})]
+      (when (get-in resp [:parsed-body :message])
+        (redprintln (get-in resp [:parsed-body :message])))
+      (when (get-in resp [:parsed-body :errors])
+        (redprintln (get-in resp [:parsed-body :errors])))
+      (is (= 200 (:status resp)))
+      (when (= 200 (:status resp))
+        (is (= (set expected-entity)
+               (set (:parsed-body resp))))
+        (:parsed-body resp)))))
+
 (deftest-for-each-store test-get-things-by-observable-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-
-  (let [{{judgement-1-id :id} :parsed-body
-         judgement-1-status :status}
-        (post "ctia/judgement"
-              :body {:observable {:value "1.2.3.4"
-                                  :type "ip"}
-                     :disposition 2
-                     :source "judgement 1"
-                     :priority 100
-                     :severity 100
-                     :confidence "Low"
-                     :indicators []
-                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {indicator-1-status :status
-         {indicator-1-id :id} :parsed-body}
-        (post "ctia/indicator"
-              :body {:title "indicator"
-                     :description "indicator 1"
-                     :producer "producer"
-                     :indicator_type ["C2" "IP Watchlist"]
-                     :valid_time {:end_time "2016-02-12T00:00:00.000-00:00"}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {sighting-1-status :status
-         {sighting-1-id :id} :parsed-body}
-        (post "ctia/sighting"
-              :body {:timestamp "2016-02-01T00:00:00.000-00:00"
-                     :source "foo"
-                     :confidence "Medium"
-                     :description "sighting 1"
-                     :indicator {:indicator_id indicator-1-id}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {sighting-2-status :status
-         {sighting-2-id :id} :parsed-body}
-        (post "ctia/sighting"
-              :body {:timestamp "2016-02-01T12:00:00.000-00:00"
-                     :source "bar"
-                     :confidence "High"
-                     :description "sighting 2"
-                     :indicator {:indicator_id indicator-1-id}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {judgement-1-update-status :status}
-        (post (str "ctia/judgement/" judgement-1-id "/indicator")
-              :body {:indicator_id indicator-1-id}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {{judgement-2-id :id} :parsed-body
-         judgement-2-status :status}
-        (post "ctia/judgement"
-              :body {:observable {:value "10.0.0.1"
-                                  :type "ip"}
-                     :disposition 2
-                     :source "judgement 2"
-                     :priority 100
-                     :severity 100
-                     :confidence "High"
-                     :indicators []
-                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {indicator-2-status :status
-         {indicator-2-id :id} :parsed-body}
-        (post "ctia/indicator"
-              :body {:title "indicator"
-                     :description "indicator 2"
-                     :producer "producer"
-                     :indicator_type ["C2" "IP Watchlist"]
-                     :valid_time {:start_time "2016-01-12T00:00:00.000-00:00"
-                                  :end_time "2016-02-12T00:00:00.000-00:00"}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {sighting-3-status :status
-         {sighting-3-id :id} :parsed-body}
-        (post "ctia/sighting"
-              :body {:timestamp "2016-02-04T12:00:00.000-00:00"
-                     :source "spam"
-                     :confidence "None"
-                     :description "sighting 3"
-                     :indicator {:indicator_id indicator-2-id}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-
-
-        {judgement-2-update-status :status}
-        (post (str "ctia/judgement/" judgement-2-id "/indicator")
-              :body {:indicator_id indicator-2-id}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {{judgement-3-id :id} :parsed-body
-         judgement-3-status :status}
-        (post "ctia/judgement"
-              :body {:observable {:value "10.0.0.1"
-                                  :type "ip"}
-                     :disposition 2
-                     :source "judgement 3"
-                     :priority 100
-                     :severity 100
-                     :confidence "Low"
-                     :indicators []
-                     :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {indicator-3-status :status
-         {indicator-3-id :id} :parsed-body}
-        (post "ctia/indicator"
-              :body {:title "indicator"
-                     :description "indicator 3"
-                     :producer "producer"
-                     :indicator_type ["C2" "IP Watchlist"]
-                     :valid_time {:start_time "2016-01-11T00:00:00.000-00:00"
-                                  :end_time "2016-02-11T00:00:00.000-00:00"}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {sighting-4-status :status
-         {sighting-4-id :id} :parsed-body}
-        (post "ctia/sighting"
-              :body {:timestamp "2016-02-05T01:00:00.000-00:00"
-                     :source "foo"
-                     :confidence "High"
-                     :description "sighting 4"
-                     :indicator {:indicator_id indicator-3-id}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {sighting-5-status :status
-         {sighting-5-id :id} :parsed-body}
-        (post "ctia/sighting"
-              :body {:timestamp "2016-02-05T02:00:00.000-00:00"
-                     :source "bar"
-                     :confidence "Low"
-                     :description "sighting 5"
-                     :indicator {:indicator_id indicator-3-id}}
-              :headers {"api_key" "45c1f5e3f05d0"})
-
-        {judgement-3-update-status :status}
-        (post (str "ctia/judgement/" judgement-3-id "/indicator")
-              :body {:indicator_id indicator-3-id}
-              :headers {"api_key" "45c1f5e3f05d0"})]
-
-    (testing "With successful test setup"
-      (is (= 200 judgement-1-status))
-      (is (= 200 indicator-1-status))
-      (is (= 200 sighting-1-status))
-      (is (= 200 sighting-2-status))
-      (is (= 200 judgement-1-update-status))
-      (is (= 200 judgement-2-status))
-      (is (= 200 indicator-2-status))
-      (is (= 200 sighting-3-status))
-      (is (= 200 judgement-2-update-status))
-      (is (= 200 judgement-3-status))
-      (is (= 200 indicator-3-status))
-      (is (= 200 sighting-4-status))
-      (is (= 200 sighting-5-status))
-      (is (= 200 judgement-3-update-status)))
-
-    (testing "GET /ctia/:observable_type/:observable_value/judgements"
-      (let [{status :status
-             judgements :parsed-body}
-            (get "ctia/ip/10.0.0.1/judgements"
-                 :headers {"api_key" "45c1f5e3f05d0"})]
-        (is (= 200 status))
-        (is (deep=
-             #{{:id judgement-2-id
-                :type "judgement"
-                :observable {:value "10.0.0.1"
-                             :type "ip"}
-                :disposition 2
-                :disposition_name "Malicious"
-                :source "judgement 2"
-                :priority 100
-                :severity 100
-                :confidence "High"
-                :indicators [{:indicator_id indicator-2-id}]
-                :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :owner "foouser"}
-               {:id judgement-3-id
-                :type "judgement"
-                :observable {:value "10.0.0.1"
-                             :type "ip"}
-                :disposition 2
-                :disposition_name "Malicious"
-                :source "judgement 3"
-                :priority 100
-                :severity 100
-                :confidence "Low"
-                :indicators [{:indicator_id indicator-3-id}]
-                :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :owner "foouser"}}
-             (->> judgements
-                  (map #(dissoc % :created))
-                  set)))))
-
-    (testing "GET /ctia/:observable_type/:observable_value/indicators"
-      (let [response (get "ctia/ip/10.0.0.1/indicators"
-                          :headers {"api_key" "45c1f5e3f05d0"})
-            indicators (:parsed-body response)]
-        (is (= 200 (:status response)))
-
-        (is (deep=
-             #{{:id indicator-2-id
-                :type "indicator"
-                :title "indicator"
-                :description "indicator 2"
-                :producer "producer"
-                :indicator_type ["C2" "IP Watchlist"]
-                :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
-                             :end_time #inst "2016-02-12T00:00:00.000-00:00"}
-                :owner "foouser"}
-               {:id indicator-3-id
-                :type "indicator"
-                :title "indicator"
-                :description "indicator 3"
-                :producer "producer"
-                :indicator_type ["C2" "IP Watchlist"]
-                :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
-                             :end_time #inst "2016-02-11T00:00:00.000-00:00"}
-                :owner "foouser"}}
-             (->> indicators
-                  (map #(dissoc % :created :modified))
-                  set)))))
-
-
-
-    (testing "GET /ctia/:observable_type/:observable_value/sightings"		
-      (let [{status :status		
-             sightings :parsed-body		
-             :as response}		
-            (get "ctia/ip/10.0.0.1/sightings"		
-                 :headers {"api_key" "45c1f5e3f05d0"})]		
-        (is (= 200 status))		
-        (let [res (->> sightings
-                       (map #(dissoc % :created :modified :indicator))
-                       set)]
-          (is (deep=		
-               #{{:id sighting-3-id		
-                  :type "sighting"		
-                  :timestamp #inst "2016-02-04T12:00:00.000-00:00"		
-                  :source "spam"		
-                  :confidence "None"		
-                  :description "sighting 3"		
-                  :owner "foouser"}		
-                 {:id sighting-4-id		
-                  :type "sighting"		
-                  :timestamp #inst "2016-02-05T01:00:00.000-00:00"		
-                  :source "foo"		
-                  :confidence "High"		
-                  :description "sighting 4"		
-                  :owner "foouser"}		
-                 {:id sighting-5-id		
-                  :type "sighting"		
-                  :timestamp #inst "2016-02-05T02:00:00.000-00:00"		
-                  :source "bar"		
-                  :confidence "Low"		
-                  :description "sighting 5"		
-                  :owner "foouser"}}		
-               res)))))))
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (let [nb-judgements 5
+        nb-indicators 5
+        nb-sightings 5
+        nb-observables 5]
+    (doseq [observable (cons {:value "1.2.3.4" :type "ip"}
+                             (take nb-observables
+                                   (remove #(empty? (:value %))
+                                           (g/sample (* 2 nb-observables)
+                                                     Observable))))
+            new-judgement (->> (g/sample nb-judgements NewJudgement)
+                               ;; HARDCODED VALUES
+                               (map #(merge % {:disposition 5
+                                               :disposition_name "Unknown"
+                                               ;; TODO: empty value isn't supported
+                                               :observable observable})))]
+      (let [judgement (test-post "ctia/judgement" new-judgement)]
+        (when judgement
+          (let [new-indicators (->> (g/sample nb-indicators NewIndicator)
+                                    (map #(merge % {:judgements
+                                                    [{:judgement_id (:id judgement)}]})))
+                indicators     (remove nil?
+                                       (map #(test-post "ctia/indicator" %)
+                                            new-indicators))]
+            (when (= (count indicators) nb-indicators)
+              (let [add-sightings-fn #(assoc %
+                                             :indicators
+                                             (map (fn [i] {:indicator_id (:id i)})
+                                                  indicators)
+                                             :observables [observable])
+                    new-sightings  (->> (g/sample nb-sightings NewSighting)
+                                        (map add-sightings-fn))
+                    sightings      (doall (map #(test-post "ctia/sighting" %)
+                                               new-sightings))
+                    route-pref (str "ctia/"
+                                    (url-encode (get-in judgement
+                                                        [:observable :type]))
+                                    "/"
+                                    (url-encode (get-in judgement
+                                                        [:observable :value])))]
+                (test-get-list (str route-pref "/judgements") [judgement])
+                ;; TODO: fix it
+                ;; (test-get (str route-pref "/indicators") indicators)
+                (test-get-list (str route-pref "/sightings") sightings)
+                (doseq [sighting sightings]
+                  (test-delete (str "ctia/sighting/" (:id sighting)))))))
+          (test-delete (str "ctia/judgement/" (:id judgement))))
+        ;; Just to prevent getting out without any `is`.
+        (is (= 1 1))))))
 

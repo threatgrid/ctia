@@ -194,4 +194,6 @@
   (list-sightings [_ filter-map]
     (sig/handle-list-sightings state filter-map))
   (list-sightings-by-indicators [_ indicators]
-    (sig/handle-list-sightings-by-indicators state indicators)))
+    (sig/handle-list-sightings-by-indicators state indicators))
+  (list-sightings-by-observables [_ observables]
+    (sig/handle-list-sightings-by-observables state observables)))
