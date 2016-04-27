@@ -31,9 +31,7 @@
                                   subscriptions :subscriptions}]
   (doseq [control-chan (vals subscriptions)]
     (a/close! control-chan))
-  (doto listener
-    lr/unsubscribe
-    lr/close-listener)
+  (lr/close-listener listener)
   (a/close! chan))
 
 (defrecord EventsStore [redis-channel-name

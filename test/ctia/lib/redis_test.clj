@@ -35,4 +35,5 @@
                ["message"   event-channel-name {:message 1}]
                ["message"   event-channel-name {:message 2}]
                ["message"   event-channel-name {:message 3}]}
-             (set @results))))))
+             (set @results)))
+      (lr/close-listener listener))))
