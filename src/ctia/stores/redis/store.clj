@@ -80,7 +80,7 @@
   (assert (some? events/central-channel)
           "Events central channel was not set")
   (let [host-port (pget/redis-host-port @properties)
-        channel-name (get-in @properties [:ctia :store :redis :channel-nae])
+        channel-name (get-in @properties [:ctia :store :redis :channel-name])
         events-store (map->EventsStore
                       {:redis-channel-name channel-name
                        :subscription-state (atom nil)
