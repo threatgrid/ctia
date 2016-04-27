@@ -44,7 +44,17 @@
 
 (defn fixture-properties:es-store [test]
   ;; Note: These properties may be overwritten by ENV variables
-  (h/with-properties ["ctia.store.type" "es"
+  (h/with-properties ["ctia.store.actor" "es"
+                      "ctia.store.feedback" "es"
+                      "ctia.store.campaign" "es"
+                      "ctia.store.coa" "es"
+                      "ctia.store.exploit-target" "es"
+                      "ctia.store.identity" "es"
+                      "ctia.store.incident" "es"
+                      "ctia.store.indicator" "es"
+                      "ctia.store.judgement" "es"
+                      "ctia.store.sighting" "es"
+                      "ctia.store.ttp" "es"
                       "ctia.store.es.uri" "http://192.168.99.100:9200"
                       "ctia.store.es.clustername" "elasticsearch"
                       "ctia.store.es.indexname" "test_ctia"]

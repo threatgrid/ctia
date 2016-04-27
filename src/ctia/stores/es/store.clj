@@ -3,7 +3,7 @@
    [schema.core :as s]
    [ctia.properties :refer [properties]]
    [ctia.stores.es.mapping :refer [store-mappings]]
-   [ctia.lib.es.index :refer [ESConnState connect]]
+   [ctia.lib.es.index :refer [ESConnState connect] :as es-index]
    [ctia.stores.es.judgement :as ju]
    [ctia.stores.es.feedback  :as fe]
    [ctia.stores.es.indicator :as in]
@@ -27,6 +27,7 @@
                        IIncidentStore
                        IIdentityStore]]))
 
+(defonce es-state (atom nil))
 
 (defn read-store-index-spec []
   "read es store index config properties, returns an option map"
@@ -40,6 +41,18 @@
      :props props
      :mapping store-mappings
      :conn (connect props)}))
+
+(defn init! []
+  (let [state (reset! es-state (init-store-conn))]
+    (es-index/create! (:conn state)
+                      (:index state)
+                      (:mapping state))))
+
+(defn uninitialized? []
+  (nil? @es-state))
+
+(defn shutdown! []
+  (reset! es-state nil))
 
 (defrecord JudgementStore [state]
   IJudgementStore
