@@ -6,8 +6,7 @@
             [ctia.properties :refer [properties]]
             [ctia.properties.getters :as pget]
             [ctia.test-helpers.core :as test-helpers])
-  (:import [java.util.concurrent CountDownLatch TimeUnit]
-           java.util.UUID))
+  (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
 (use-fixtures :each (join-fixtures
                      [test-helpers/fixture-properties:clean
@@ -15,20 +14,20 @@
 
 (deftest ^:integration test-redis-pubsub-works
   (testing "That we can connect to redis and do pub/sub"
-    (let [host-port (pget/redis-host-port @properties)
-          server-connection (lr/server-connection
-                             host-port)
-          event-channel-name (str (UUID/randomUUID))
+    (let [{:keys [timeout-ms] :as redis-config} (get-in @properties [:ctia :hook :redis])
+          [host port] (pget/parse-host-port redis-config)
+          server-connection (lr/server-connection host port timeout-ms)
+          event-channel-name (str (gensym "events"))
           results (atom [])
           finish-signal (CountDownLatch. 4)
-          listener (lr/subscribe host-port
+          listener (lr/subscribe server-connection
                                  event-channel-name
                                  (fn redis-test-listener-fn [i]
                                    (swap! results conj i)
                                    (.countDown finish-signal)))]
-      (a/thread (lr/publish host-port event-channel-name {:message 1}))
-      (a/thread (lr/publish host-port event-channel-name {:message 2}))
-      (a/thread (lr/publish host-port event-channel-name {:message 3}))
+      (a/thread (lr/publish server-connection event-channel-name {:message 1}))
+      (a/thread (lr/publish server-connection event-channel-name {:message 2}))
+      (a/thread (lr/publish server-connection event-channel-name {:message 3}))
       (is (.await finish-signal 10 TimeUnit/SECONDS)
           "Timeout waiting for redis to publish")
       (is (= #{["subscribe" event-channel-name 1]

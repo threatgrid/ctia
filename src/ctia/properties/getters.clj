@@ -9,12 +9,12 @@
   "The default address to connect to Redis at"
   "127.0.0.1")
 
+(defn parse-host-port [{:keys [host port uri] :as _redis-config_}]
+  (if-let [redis-url (and uri (URI. uri))]
+    [(.getHost redis-url) (.getPort redis-url)]
+    [(or host default-redis-host)
+     (or port default-redis-port)]))
+
 (defn redis-host-port
-  "Reads a host/port pair from a properties map"
   [props]
-  (let [redis (get-in props [:ctia :store :redis])
-        redis-url (if-let [u (:uri redis)] (URI. u))]
-    (if redis-url
-      [(.getHost redis-url) (.getPort redis-url)]
-      [(get redis :host default-redis-host)
-       (get redis :port default-redis-port)])))
+  (parse-host-port (get-in props [:ctia :hook :redis])))

@@ -1,6 +1,5 @@
 (ns ctia.events-test
   (:require [ctia.events :as events :refer :all]
-            [ctia.stores.redis.store :as redis-store]
             [ctia.lib.async :as la]
             [ctia.test-helpers.core :as helpers]
             [clojure.test :as t :refer :all]

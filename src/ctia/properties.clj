@@ -43,14 +43,15 @@
                       "ctia.store.feedback" s/Keyword
                       "ctia.store.campaign" s/Keyword
                       "ctia.store.coa" s/Keyword
-                      "ctia.store.events" s/Keyword
                       "ctia.store.exploit-target" s/Keyword
                       "ctia.store.identity" s/Keyword
                       "ctia.store.incident" s/Keyword
                       "ctia.store.indicator" s/Keyword
                       "ctia.store.judgement" s/Keyword
                       "ctia.store.sighting" s/Keyword
-                      "ctia.store.ttp" s/Keyword})
+                      "ctia.store.ttp" s/Keyword
+
+                      "ctia.hook.redis.enabled" s/Bool})
 
    (st/optional-keys {"ctia.nrepl.port" s/Int
 
@@ -65,11 +66,11 @@
                       "ctia.store.es.clustername" s/Str
                       "ctia.store.es.indexname" s/Str
 
-                      "ctia.store.redis.enabled" s/Bool
-                      "ctia.store.redis.uri" s/Str
-                      "ctia.store.redis.host" s/Str
-                      "ctia.store.redis.port" s/Int
-                      "ctia.store.redis.channel-name" s/Str
+                      "ctia.hook.redis.uri" s/Str
+                      "ctia.hook.redis.host" s/Str
+                      "ctia.hook.redis.port" s/Int
+                      "ctia.hook.redis.channel-name" s/Str
+                      "ctia.hook.redis.timeout-ms" s/Int
 
                       "ctia.producer.type" s/Keyword
                       "ctia.producer.es.uri" s/Str

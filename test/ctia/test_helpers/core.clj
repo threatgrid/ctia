@@ -32,13 +32,13 @@
   (some #{prop} props/configurable-properties))
 
 (defn set-property [prop val]
-  (assert (valid-property? prop) "Tried to set unknown property")
+  (assert (valid-property? prop) (str "Tried to set unknown property '" prop "'"))
   (System/setProperty prop (if (keyword? val)
                              (name val)
                              (str val))))
 
 (defn clear-property [prop]
-  (assert (valid-property? prop) "Tried to clear unknown property")
+  (assert (valid-property? prop) (str "Tried to clear unknown property '" prop "'"))
   (System/clearProperty prop))
 
 (defn with-properties- [properties-map f]
@@ -63,7 +63,7 @@
                     "ctia.http.min-threads" 9
                     "ctia.http.max-threads" 10
                     "ctia.nrepl.enabled" false
-                    "ctia.store.redis.channel-name" "events-test"]
+                    "ctia.hook.redis.channel-name" "events-test"]
     ;; run tests
     (f)))
 
@@ -88,7 +88,7 @@
     (f)))
 
 (defn fixture-properties:redis-store [f]
-  (with-properties ["ctia.store.redis.enabled" true]
+  (with-properties ["ctia.hook.redis.enabled" true]
     (f)))
 
 (defn available-port []
@@ -111,8 +111,6 @@
        (finally
          ;; explicitly stop the http-server
          (http-server/stop!)
-         (when (some? @store/events-store)
-           (store/unsubscribe-to-events @store/events-store))
          (e/shutdown!))))))
 
 (defn fixture-ctia-fast [test]

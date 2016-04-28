@@ -42,7 +42,7 @@
 (defn add-hooks!
   "Add a list of `Hook` for the hook `hook-type`"
   [hook-type hook-list]
-  (swap! hooks update hook-type concat hook-list))
+  (swap! hooks update hook-type into hook-list))
 
 (defn init-hooks!
   "Initialize all hooks"

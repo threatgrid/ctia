@@ -5,12 +5,12 @@
 
 (defn server-connection
   "Build the server config"
-  [[host port]]
+  [host port timeout-ms]
   (assert (and host port) "Redis has been de-configured")
   {:pool {}
    :spec {:host host
           :port port
-          :timeout-ms 30000}})
+          :timeout-ms timeout-ms}})
 
 ;; Pub/Sub
 
@@ -18,13 +18,23 @@
   (c/with-open-listener pubsub-listener
     (c/unsubscribe)))
 
-(defn subscribe [host-port event-channel-name listener-fn]
-  (c/with-new-pubsub-listener (:spec (server-connection host-port))
+(defn subscribe [{spec :spec} event-channel-name listener-fn]
+  (c/with-new-pubsub-listener spec
     {event-channel-name listener-fn}
     (c/subscribe event-channel-name)))
 
-(defn publish [host-port event-chanel-name event]
-  (c/wcar (server-connection host-port)
+(defn subscribe-to [conn event-channel-name listener-fn pred]
+  (subscribe conn
+             event-channel-name
+             (fn [[command _ payload]]
+               (when (pred command)
+                 (listener-fn payload)))))
+
+(defn subscribe-to-messages [conn event-channel-name listener-fn]
+  (subscribe-to conn event-channel-name listener-fn (partial = "message")))
+
+(defn publish [conn event-chanel-name event]
+  (c/wcar conn
     (c/publish event-chanel-name event)))
 
 (defn close-listener [pubsub-listener]

@@ -85,11 +85,6 @@
   (create-identity [this new-identity])
   (delete-identity [this org-id role]))
 
-(defprotocol IEventsStore
-  (publish-event [this event])
-  (subscribe-to-events [this listener-fn])
-  (unsubscribe-to-events [this] [this subscription-key]))
-
 ;; core model
 (defonce judgement-store (atom nil))
 (defonce indicator-store (atom nil))
@@ -113,7 +108,6 @@
 
 ;; internal
 (defonce identity-store (atom nil))
-(defonce events-store (atom nil))
 
 (def stores
   {:judgement judgement-store
@@ -123,7 +117,6 @@
    :campaign campaign-store
    :actor actor-store
    :coa coa-store
-   :events events-store
    :exploit-target exploit-target-store
    :sighting sighting-store
    :incident incident-store
