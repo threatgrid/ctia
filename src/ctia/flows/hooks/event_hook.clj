@@ -1,21 +1,22 @@
 (ns ctia.flows.hooks.event-hook
   (:require
-   [ctia.flows.hook-protocol :refer [Hook]]
-   [ctia.events.producers.es.producer :as esp]))
+    [clojure.tools.logging :as log]
+    [ctia.flows.hook-protocol :refer [Hook]]
+    [ctia.events.producers.es.producer :as esp]))
 
 (defrecord ESEventProducerRecord [conn]
   Hook
-  (init [_] (do
-              (reset! conn (esp/init-producer-conn))
-              (comment println "ESEventProducerRecord Initialized: " (pr-str @conn))))
-  (destroy [_] :nothing)
+  (init [_]
+    (reset! conn (esp/init-producer-conn)))
+  (destroy [_]
+    (reset! conn nil))
   (handle [_ _ object _]
-    (comment println "Event Sent to ES:"
-             (with-out-str (clojure.pprint/pprint object)))
-    (try (when (some? @conn)
-           (esp/handle-produce-event @conn object))
-         (catch Exception e
-           (clojure.pprint/pprint e)))))
+    (try
+      (when (some? @conn)
+        (esp/handle-produce-event @conn object))
+      (catch Exception e
+        ;; Should we really be swallowing exceptions?
+        (log/error "Exception while producing event" e)))))
 
-(def ESEventProducerHook
-  (ESEventProducerRecord. (atom {})))
+(def es-event-producer-hook
+  (->ESEventProducerRecord (atom {})))

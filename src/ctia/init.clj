@@ -128,7 +128,7 @@
   (doseq [hook-type [:before-create-ro
                      :before-update-ro
                      :before-delete-ro]]
-    #(h/add-hook! % event-hook/ESEventProducerHook))
+    #(h/add-hook! % event-hook/es-event-producer-hook))
   ;; this is breaking everything
   ;;(autoload-hooks!)
   (h/init-hooks!)
