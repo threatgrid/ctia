@@ -16,11 +16,11 @@
       :summary "Adds a new Actor"
       :capabilities #{:create-actor :admin}
       :login login
-      (ok (flows/create-flow :realize-fn realize-actor
+      (ok (flows/create-flow :entity-type :actor
+                             :realize-fn realize-actor
                              :store-fn #(create-actor @actor-store %)
-                             :object-type :actor
                              :login login
-                             :object actor)))
+                             :entity actor)))
     (PUT "/:id" []
       :return StoredActor
       :body [actor NewActor {:description "an updated Actor"}]
@@ -29,13 +29,13 @@
       :path-params [id :- s/Str]
       :capabilities #{:create-actor :admin}
       :login login
-      (ok (flows/update-flow :get-fn #(read-actor @actor-store %)
+      (ok (flows/update-flow :entity-type :actor
+                             :get-fn #(read-actor @actor-store %)
                              :realize-fn realize-actor
                              :update-fn #(update-actor @actor-store (:id %) %)
-                             :object-type :actor
                              :id id
                              :login login
-                             :object actor)))
+                             :entity actor)))
     (GET "/:id" []
       :return (s/maybe StoredActor)
       :summary "Gets an Actor by ID"
@@ -51,9 +51,11 @@
       :summary "Deletes an Actor"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-actor :admin}
-      (if (flows/delete-flow :get-fn #(read-actor @actor-store %)
+      :login login
+      (if (flows/delete-flow :entity-type :actor
+                             :get-fn #(read-actor @actor-store %)
                              :delete-fn #(delete-actor @actor-store %)
-                             :object-type :actor
-                             :id id)
+                             :id id
+                             :login login)
         (no-content)
         (not-found)))))

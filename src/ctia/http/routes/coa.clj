@@ -20,9 +20,9 @@
       :login login
       (ok (flows/create-flow :realize-fn realize-coa
                              :store-fn #(create-coa @coa-store %)
-                             :object-type :coa
+                             :entity-type :coa
                              :login login
-                             :object coa)))
+                             :entity coa)))
     (PUT "/:id" []
       :return StoredCOA
       :body [coa NewCOA {:description "an updated COA"}]
@@ -34,10 +34,10 @@
       (ok (flows/update-flow :get-fn #(read-coa @coa-store %)
                              :realize-fn realize-coa
                              :update-fn #(update-coa @coa-store (:id %) %)
-                             :object-type :coa
+                             :entity-type :coa
                              :id id
                              :login login
-                             :object coa)))
+                             :entity coa)))
     (GET "/:id" []
       :return (s/maybe StoredCOA)
       :summary "Gets a COA by ID"
@@ -53,9 +53,11 @@
       :summary "Deletes a COA"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-coa :admin}
+      :login login
       (if (flows/delete-flow :get-fn #(read-coa @coa-store %)
                              :delete-fn #(delete-coa @coa-store %)
-                             :object-type :coa
-                             :id id)
+                             :entity-type :coa
+                             :id id
+                             :login login)
         (no-content)
         (not-found)))))

@@ -8,18 +8,13 @@
    [ctia.lib.es.slice :refer [SliceProperties
                               ensure-slice-created!
                               get-slice-props]]
-   [ctia.events.schemas :refer [Event UpdateTriple]]
-   [ctia.events.producer :refer [IEventProducer]]))
-
-(defn read-producer-index-spec []
-  "read es producer index config properties, returns an option map"
-  (get-in @properties [:ctia :producer :es]))
+   [ctia.events.schemas :refer [Event UpdateTriple]]))
 
 (s/defn init-producer-conn :- (s/maybe ESConnState) []
   "initiate an ES producer connection returns a map containing transport,
    mapping and the configured index name"
-  (when-let [props (read-producer-index-spec)]
-    {:index (:indexname props)
+  (when-let [{:keys [indexname] :as props} (get-in @properties [:ctia :hook :es])]
+    {:index indexname
      :props props
      :mapping producer-mappings
      :conn (connect props)}))

@@ -1,7 +1,11 @@
 (ns ctia.flows.hooks-test
   (:require [ctia.flows.hooks :as h]
             [ctia.flows.hook-protocol :refer [Hook]]
+            [ctia.test-helpers.core :as helpers]
             [clojure.test :as t]))
+
+(t/use-fixtures :once (t/join-fixtures [helpers/fixture-properties:clean
+                                        helpers/fixture-ctia-fast]))
 
 (def obj {:x "x" :y 0 :z {:foo "bar"}})
 
@@ -10,10 +14,10 @@
 (defrecord Dummy [name]
   Hook
   (init [this] :noop)
-  (handle [_ type-name stored-object prev-object]
-    (update-in stored-object [:dummy] #(if (nil? %)
-                                         name
-                                         (str % " - " name))))
+  (handle [_ stored-object prev-object]
+    (update stored-object :dummy #(if (nil? %)
+                                    name
+                                    (str % " - " name))))
   (destroy [this] :noop))
 
 (defn test-adding-dummy-hooks []
@@ -26,12 +30,10 @@
     (h/reset-hooks!)
     (test-adding-dummy-hooks)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name  "foo"
-                            :realized-object  obj
+    (t/is (= (h/apply-hooks :entity obj
                             :hook-type  :before-create)
              (into obj {:dummy "hook1 - hook2 - hook3"})))
-    (t/is (= (h/apply-hooks :type-name  "foo"
-                            :realized-object  obj
+    (t/is (= (h/apply-hooks :entity  obj
                             :hook-type  :after-create)
              obj))
     (h/reset-hooks!)))
@@ -41,13 +43,11 @@
     (h/reset-hooks!)
     (test-adding-dummy-hooks)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name   "foo"
-                            :realized-object   obj
+    (t/is (= (h/apply-hooks :entity   obj
                             :hook-type   :before-create
                             :read-only?  true)
              obj))
-    (t/is (= (h/apply-hooks :type-name   "foo"
-                            :realized-object   obj
+    (t/is (= (h/apply-hooks :entity obj
                             :hook-type   :after-create
                             :read-only?  true)
              obj))
@@ -58,7 +58,7 @@
 (defrecord Nil [name]
   Hook
   (init [this] :noop)
-  (handle [_ type-name stored-object prev-object] nil)
+  (handle [_ stored-object prev-object] nil)
   (destroy [this] :noop))
 
 (defn test-adding-nil-hooks []
@@ -70,12 +70,10 @@
   (do
     (h/reset-hooks!)
     (test-adding-nil-hooks)
-    (t/is (= (h/apply-hooks :type-name "foo"
-                            :realized-object obj
+    (t/is (= (h/apply-hooks :entity obj
                             :hook-type :before-create)
              obj))
-    (t/is (= (h/apply-hooks :type-name "foo"
-                            :realized-object obj
+    (t/is (= (h/apply-hooks :entity obj
                             :hook-type :after-create)
              obj))))
 
@@ -84,7 +82,7 @@
 (defrecord Memory [name]
   Hook
   (init [this] :noop)
-  (handle [_ type-name stored-object prev-object]
+  (handle [_ stored-object prev-object]
     (into stored-object {:previous prev-object}))
   (destroy [this] :noop))
 
@@ -99,14 +97,12 @@
     (do
       (h/reset-hooks!)
       (test-adding-memory-hooks)
-      (t/is (= (h/apply-hooks :type-name   "foo"
-                              :realized-object   obj
-                              :prev-object memory
+      (t/is (= (h/apply-hooks :entity   obj
+                              :prev-entity memory
                               :hook-type   :before-create)
                (into obj {:previous {:y "y"}})))
-      (t/is (= (h/apply-hooks :type-name   "foo"
-                              :realized-object   obj
-                              :prev-object memory
+      (t/is (= (h/apply-hooks :entity obj
+                              :prev-entity memory
                               :hook-type   :after-create)
                obj))
       (h/reset-hooks!))))
@@ -115,8 +111,8 @@
 (defrecord DummyJ [o]
   Hook
   (init [this] (doto (.init o)))
-  (handle [_ type-name stored-object prev-object]
-    (h/from-java-handle o type-name stored-object prev-object))
+  (handle [_ stored-object prev-object]
+    (h/from-java-handle o stored-object prev-object))
   (destroy [this] (doto (.destroy o))))
 
 (defn test-adding-dummy-hooks-from-java []
@@ -129,14 +125,12 @@
     (h/reset-hooks!)
     (test-adding-dummy-hooks-from-java)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name "foo"
-                            :realized-object obj
+    (t/is (= (h/apply-hooks :entity obj
                             :hook-type :before-create)
              (into obj {"hookJ1 - initialized" "passed"
                         "hookJ2 - initialized" "passed"
                         "hookJ3 - initialized" "passed"})))
-    (t/is (= (h/apply-hooks :type-name "foo"
-                            :realized-object obj
+    (t/is (= (h/apply-hooks :entity obj
                             :hook-type :after-create)
              obj))
     (h/reset-hooks!)))
@@ -146,8 +140,8 @@
 (defrecord DummyJ [o]
   Hook
   (init [this] (doto (.init o)))
-  (handle [_ type-name stored-object prev-object]
-    (h/from-java-handle o type-name stored-object prev-object))
+  (handle [_ stored-object prev-object]
+    (h/from-java-handle o stored-object prev-object))
   (destroy [this] (doto (.destroy o))))
 
 (defn test-adding-dummy-hooks-from-jar []
@@ -160,14 +154,12 @@
     (h/reset-hooks!)
     (test-adding-dummy-hooks-from-jar)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :type-name "foo"
-                            :realized-object obj
+    (t/is (= (h/apply-hooks :entity obj
                             :hook-type :before-create)
              (into obj {"hookJar1 - initialized" "passed-from-jar"
                         "hookJar2 - initialized" "passed-from-jar"
                         "hookJar3 - initialized" "passed-from-jar"})))
-    (t/is (= (h/apply-hooks :type-name "foo"
-                            :realized-object obj
+    (t/is (= (h/apply-hooks :entity obj
                             :hook-type :after-create)
              obj))
     (h/reset-hooks!)))

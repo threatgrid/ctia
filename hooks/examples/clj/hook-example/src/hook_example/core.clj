@@ -2,12 +2,12 @@
   "An example on how to implement hooks for CTIA"
   (require [ctia.flows.hook-protocol :refer [Hook]]))
 
-(defrecord HookExample [n]
+(defrecord HookExample [name]
   Hook
   (init [_] :default)
   (destroy [_] :default)
-  (handle [_ type-name stored-object prev-object]
-    (into stored-object {n (str  "Passed in" n)})))
+  (handle [_ stored-object prev-object]
+    (merge stored-object {name (str  "Passed in " name)})))
 
-(def HookExample1 (HookExample. "HookExample1"))
-(def HookExample2 (HookExample. "HookExample2"))
+(def hook-example-1 (HookExample. "HookExample1"))
+(def hook-example-2 (HookExample. "HookExample2"))

@@ -9,11 +9,11 @@
 (use-fixtures :once test-helpers/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    test-helpers/fixture-properties:redis-store
+                                    test-helpers/fixture-properties:redis-hook
                                     test-helpers/fixture-ctia
                                     test-helpers/fixture-allow-all-auth]))
 
-(deftest ^:disabled test-events-pubsub
+(deftest ^:integration test-events-pubsub
   (testing "Events are published to redis"
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
@@ -24,7 +24,8 @@
                                              (fn test-events-pubsub-fn [ev]
                                                (swap! results conj ev)
                                                (.countDown finish-signal)))]
-      (let [{judgement-1-id :id
+      (let [{{judgement-1-id :id} :parsed-body
+             judgement-1-status :status
              :as judgement-1}
             (post "ctia/judgement"
                   :body {:observable {:value "1.2.3.4"
@@ -36,7 +37,8 @@
                          :confidence "Low"
                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
-            {judgement-2-id :id
+            {{judgement-2-id :id} :parsed-body
+             judgement-2-status :status
              :as judgement-2}
             (post "ctia/judgement"
                   :body {:observable {:value "1.2.3.4"
@@ -48,7 +50,8 @@
                          :confidence "Low"
                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
-            {judgement-3-id :id
+            {{judgement-3-id :id} :parsed-body
+             judgement-3-status :status
              :as judgement-3}
             (post "ctia/judgement"
                   :body {:observable {:value "1.2.3.4"
@@ -59,6 +62,10 @@
                          :severity 100
                          :confidence "Low"
                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
+
+        (is (= 200 judgement-1-status))
+        (is (= 200 judgement-2-status))
+        (is (= 200 judgement-3-status))
 
         (is (.await finish-signal 10 TimeUnit/SECONDS)
             "Unexpected timeout waiting for subscriptions")
@@ -76,7 +83,8 @@
                           :severity 100,
                           :confidence "Low",
                           :owner "Unknown"}
-                 :id judgement-1-id}
+                 :id judgement-1-id
+                 :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212-00:00",
@@ -91,7 +99,8 @@
                           :severity 100,
                           :confidence "Low",
                           :owner "Unknown"}
-                 :id judgement-2-id}
+                 :id judgement-2-id
+                 :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212-00:00",
@@ -106,7 +115,8 @@
                           :severity 100,
                           :confidence "Low",
                           :owner "Unknown"}
-                 :id judgement-3-id}]
+                 :id judgement-3-id
+                 :type "CreatedModel"}]
                (->> @results
                     (map #(dissoc % :timestamp :http-params))
                     (map #(update % :entity dissoc :created))))))

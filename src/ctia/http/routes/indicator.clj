@@ -55,9 +55,9 @@
       :login login
       (ok (flows/create-flow :realize-fn realize-indicator
                              :store-fn #(create-indicator @indicator-store %)
-                             :object-type :indicator
+                             :entity-type :indicator
                              :login login
-                             :object indicator)))
+                             :entity indicator)))
     (PUT "/:id" []
       :return StoredIndicator
       :body [indicator NewIndicator {:description "an updated Indicator"}]
@@ -69,10 +69,10 @@
       (ok (flows/update-flow :get-fn #(read-indicator @indicator-store %)
                              :realize-fn realize-indicator
                              :update-fn #(update-indicator @indicator-store (:id %) %)
-                             :object-type :indicator
+                             :entity-type :indicator
                              :id id
                              :login login
-                             :object indicator)))
+                             :entity indicator)))
     (GET "/:id" []
       :return (s/maybe StoredIndicator)
       :summary "Gets an Indicator by ID"
@@ -111,18 +111,18 @@
       (if-let [indicator (read-indicator @indicator-store id)]
         (let [sighting (flows/create-flow :realize-fn realize-sighting
                                           :store-fn #(create-sighting @sighting-store %)
-                                          :object-type :sighting
+                                          :entity-type :sighting
                                           :login login
-                                          :object (assoc sighting
+                                          :entity (assoc sighting
                                                          :indicator
                                                          {:indicator_id id}))]
           (flows/update-flow :get-fn #(read-indicator @indicator-store %)
                              :realize-fn realize-indicator
                              :update-fn #(update-indicator @indicator-store (:id %) %)
-                             :object-type :indicator
+                             :entity-type :indicator
                              :id id
                              :login login
-                             :object (-> (generalize-indicator indicator)
+                             :entity (-> (generalize-indicator indicator)
                                          (update :sightings
                                                  conj {:sighting_id (:id sighting)})))
           (ok sighting))

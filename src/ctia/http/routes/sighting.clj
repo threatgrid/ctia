@@ -21,9 +21,9 @@
       :login login
       (ok (flows/create-flow :realize-fn realize-sighting
                              :store-fn #(create-sighting @sighting-store %)
-                             :object-type :sighting
+                             :entity-type :sighting
                              :login login
-                             :object sighting)))
+                             :entity sighting)))
     (PUT "/:id" []
       :return StoredSighting
       :body [sighting NewSighting {:description "An updated Sighting"}]
@@ -35,10 +35,10 @@
       (ok (flows/update-flow :get-fn #(read-sighting @sighting-store %)
                              :realize-fn realize-sighting
                              :update-fn #(update-sighting @sighting-store (:id %) %)
-                             :object-type :sighting
+                             :entity-type :sighting
                              :id id
                              :login login
-                             :object sighting)))
+                             :entity sighting)))
     (GET "/:id" []
       :return (s/maybe StoredSighting)
       :summary "Gets a Sighting by ID"

@@ -51,6 +51,7 @@
                       "ctia.store.sighting" s/Keyword
                       "ctia.store.ttp" s/Keyword
 
+                      "ctia.hook.es.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool})
 
    (st/optional-keys {"ctia.nrepl.port" s/Int
@@ -72,14 +73,13 @@
                       "ctia.hook.redis.channel-name" s/Str
                       "ctia.hook.redis.timeout-ms" s/Int
 
-                      "ctia.producer.type" s/Keyword
-                      "ctia.producer.es.uri" s/Str
-                      "ctia.producer.es.host" s/Str
-                      "ctia.producer.es.port" s/Int
-                      "ctia.producer.es.clustername" s/Str
-                      "ctia.producer.es.indexname" s/Str
-                      "ctia.producer.es.slicing.strategy" (s/enum :filtered-alias :aliased-index)
-                      "ctia.producer.es.slicing.granularity" (s/enum :minute :hour :day :week :month :year)})))
+                      "ctia.hook.es.uri" s/Str
+                      "ctia.hook.es.host" s/Str
+                      "ctia.hook.es.port" s/Int
+                      "ctia.hook.es.clustername" s/Str
+                      "ctia.hook.es.indexname" s/Str
+                      "ctia.hook.es.slicing.strategy" (s/enum :filtered-alias :aliased-index)
+                      "ctia.hook.es.slicing.granularity" (s/enum :minute :hour :day :week :month :year)})))
 
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."

@@ -22,7 +22,6 @@
   ;;      prev-object :- (s/maybe X)]
   ;; or using Haskell notation: `handle :- a -> Keyword -> b -> Maybe b -> IO b`
   (handle [this
-           type-name
            object
            prev-object])
   ;; `destroy` Should be function which could have stateful effect.

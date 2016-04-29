@@ -2,11 +2,12 @@
   (:refer-clojure :exclude [get])
   (:require [ctia.auth :as auth]
             [ctia.auth.allow-all :as aa]
+            [ctia.events :as events]
+            [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
             [ctia.init :as init]
             [ctia.properties :as props]
             [ctia.store :as store]
-            [ctia.events :as e]
             [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.data :as cd]
@@ -87,7 +88,7 @@
                     "ctia.store.ttp" "memory"]
     (f)))
 
-(defn fixture-properties:redis-store [f]
+(defn fixture-properties:redis-hook [f]
   (with-properties ["ctia.hook.redis.enabled" true]
     (f)))
 
@@ -111,7 +112,8 @@
        (finally
          ;; explicitly stop the http-server
          (http-server/stop!)
-         (e/shutdown!))))))
+         (hooks/shutdown!)
+         (events/shutdown!))))))
 
 (defn fixture-ctia-fast [test]
   (fixture-ctia test false))

@@ -28,6 +28,6 @@ env:
       - CTIA_STORE_ES_URI=http://127.0.0.1:9200
       - CTIA_STORE_ES_HOST=127.0.0.1
       - CTIA_STORE_ES_INDEXNAME=elasticsearch
-      - CTIA_PRODUCER_ES_URI=http://127.0.0.1:9200
-      - CTIA_PRODUCER_ES_INDEXNAME=elasticsearch
-      - CTIA_STORE_REDIS_URI=redis://127.0.0.1:6379
+      - CTIA_HOOK_ES_URI=http://127.0.0.1:9200
+      - CTIA_HOOK_ES_INDEXNAME=elasticsearch
+      - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
