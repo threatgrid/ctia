@@ -24,7 +24,7 @@
                                              (fn test-events-pubsub-fn [ev]
                                                (swap! results conj ev)
                                                (.countDown finish-signal)))]
-      (let [{judgment-1-id :id
+      (let [{judgement-1-id :id
              :as judgement-1}
             (post "ctia/judgement"
                   :body {:observable {:value "1.2.3.4"
@@ -58,56 +58,56 @@
                          :priority 100
                          :severity 100
                          :confidence "Low"
-                         :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})])
+                         :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
 
-      (is (.await finish-signal 10 TimeUnit/SECONDS)
-          "Unexpected timeout waiting for subscriptions")
-      (is (= [{:owner "Unknown"
-               :entity {:valid_time
-                        {:start_time #inst "2016-02-11T00:40:48.212-00:00",
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"},
-                        :observable {:value "1.2.3.4", :type "ip"},
-                        :type "judgement",
-                        :source "source",
-                        :disposition 1,
-                        :disposition_name "Clean",
-                        :priority 100,
-                        :id judgement-1-id
-                        :severity 100,
-                        :confidence "Low",
-                        :owner "Unknown"}
-               :id judgement-1-id}
-              {:owner "Unknown"
-               :entity {:valid_time
-                        {:start_time #inst "2016-02-11T00:40:48.212-00:00",
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"},
-                        :observable {:value "1.2.3.4", :type "ip"},
-                        :type "judgement",
-                        :source "source",
-                        :disposition 2,
-                        :disposition_name "Malicious",
-                        :priority 100,
-                        :id judgement-2-id
-                        :severity 100,
-                        :confidence "Low",
-                        :owner "Unknown"}
-               :id judgement-2-id}
-              {:owner "Unknown"
-               :entity {:valid_time
-                        {:start_time #inst "2016-02-11T00:40:48.212-00:00",
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"},
-                        :observable {:value "1.2.3.4", :type "ip"},
-                        :type "judgement",
-                        :source "source",
-                        :disposition 3,
-                        :disposition_name "Suspicious",
-                        :priority 100,
-                        :id judgement-3-id
-                        :severity 100,
-                        :confidence "Low",
-                        :owner "Unknown"}
-               :id judgement-3-id}]
-             (->> @results
-                  (map #(dissoc % :timestamp :http-params))
-                  (map #(update % :entity dissoc :created)))))
+        (is (.await finish-signal 10 TimeUnit/SECONDS)
+            "Unexpected timeout waiting for subscriptions")
+        (is (= [{:owner "Unknown"
+                 :entity {:valid_time
+                          {:start_time #inst "2016-02-11T00:40:48.212-00:00",
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"},
+                          :observable {:value "1.2.3.4", :type "ip"},
+                          :type "judgement",
+                          :source "source",
+                          :disposition 1,
+                          :disposition_name "Clean",
+                          :priority 100,
+                          :id judgement-1-id
+                          :severity 100,
+                          :confidence "Low",
+                          :owner "Unknown"}
+                 :id judgement-1-id}
+                {:owner "Unknown"
+                 :entity {:valid_time
+                          {:start_time #inst "2016-02-11T00:40:48.212-00:00",
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"},
+                          :observable {:value "1.2.3.4", :type "ip"},
+                          :type "judgement",
+                          :source "source",
+                          :disposition 2,
+                          :disposition_name "Malicious",
+                          :priority 100,
+                          :id judgement-2-id
+                          :severity 100,
+                          :confidence "Low",
+                          :owner "Unknown"}
+                 :id judgement-2-id}
+                {:owner "Unknown"
+                 :entity {:valid_time
+                          {:start_time #inst "2016-02-11T00:40:48.212-00:00",
+                           :end_time #inst "2525-01-01T00:00:00.000-00:00"},
+                          :observable {:value "1.2.3.4", :type "ip"},
+                          :type "judgement",
+                          :source "source",
+                          :disposition 3,
+                          :disposition_name "Suspicious",
+                          :priority 100,
+                          :id judgement-3-id
+                          :severity 100,
+                          :confidence "Low",
+                          :owner "Unknown"}
+                 :id judgement-3-id}]
+               (->> @results
+                    (map #(dissoc % :timestamp :http-params))
+                    (map #(update % :entity dissoc :created))))))
       (lr/close-listener listener))))
