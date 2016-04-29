@@ -5,7 +5,7 @@
             [ring.swagger.schema :refer [describe]]))
 
 (s/defschema PagingParams
-  {(s/optional-key :sort_by) (describe (s/enum :timestamp) "Sort results on a field")
+  {(s/optional-key :sort_by) (describe (s/enum :id) "Sort results on a field")
    (s/optional-key :sort_order) (describe (s/enum :asc :desc) "Sort direction")
    (s/optional-key :offset) (describe Long "Pagination Offset")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
