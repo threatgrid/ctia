@@ -1,5 +1,6 @@
 (ns ctia.stores.atom.common
-  (:require [ctia.schemas.common :as c]
+  (:require [ctia.lib.pagination :as pagination]
+            [ctia.schemas.common :as c]
             [schema.core :as s])
   (:import java.util.UUID))
 
@@ -41,16 +42,40 @@
           true)
       false)))
 
+(defn- filter-state [state filter-map]
+  (into
+   []
+   (filter (fn [model]
+             (every? (fn [[k v]]
+                       (if (sequential? k)
+                         (= v (get-in model k ::not-found))
+                         (= v (get model k ::not-found))))
+                     filter-map))
+           (vals (deref state)))))
+
+(defn paginate
+  [data {:keys [sort_by sort_order offset limit]
+         :or {sort_by :id
+              sort_order :asc
+              offset 0
+              limit pagination/default-limit}}]
+  (as-> data $
+    (sort-by sort_by $)
+    (if (= :desc sort_order)
+      (reverse $) $)
+    (drop offset $)
+    (take limit $)))
+
 (defn list-handler [Model]
   (s/fn :- (s/maybe [Model])
-    [state :- (s/atom {s/Str Model})
-     filter-map :- {s/Any s/Any}]
-    (into []
-          (filter (fn [model]
-                    (every? (fn [[k v]]
-                              (if (sequential? k)
-                                (= v (get-in model k ::not-found))
-                                (= v (get model k ::not-found))))
-                            filter-map))
-                  (vals (deref state))))))
+    ([state :- (s/atom {s/Str Model})
+      filter-map :- {s/Any s/Any}
+      params]
+
+     (let [res (filter-state state filter-map)]
+       (-> res
+           (paginate params)
+           (pagination/response (:offset params)
+                                (:limit params)
+                                (count res)))))))
 

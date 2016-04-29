@@ -4,9 +4,7 @@
             [ring.util.http-response :refer :all]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.schemas.coa :refer [NewCOA
-                                      StoredCOA
-                                      realize-coa]]))
+            [ctia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]))
 
 (defroutes coa-routes
   (context "/coa" []

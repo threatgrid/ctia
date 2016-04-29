@@ -12,7 +12,8 @@
 
 (s/defn handle-list-indicators-by-judgements :- (s/maybe [StoredIndicator])
   [indicator-state :- (s/atom {s/Str StoredIndicator})
-   judgements :- [StoredJudgement]]
+   judgements :- [StoredJudgement]
+   params]
   (let [indicator-ids (some->> (map :indicators judgements)
                                (mapcat #(map :indicator_id %))
                                set)]

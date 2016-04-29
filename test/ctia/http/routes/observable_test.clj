@@ -2,10 +2,12 @@
   (:refer-clojure :exclude [get])
   (:require
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+   [schema-generators.generators :as g]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]))
+   [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.schemas.judgement :refer [NewJudgement]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -277,4 +279,3 @@
              (->> sightings
                   (map #(dissoc % :created :modified))
                   set)))))))
-

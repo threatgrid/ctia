@@ -19,7 +19,7 @@
 (def ^{:private true} mapping "sighting")
 
 (defn handle-list-sightings-by-indicators
-  [state indicators]
+  [state indicators params]
   (let [sighting-ids (->> indicators
                           (mapcat :sightings)
                           (map :sighting_id))]
@@ -27,4 +27,5 @@
                  (:index state)
                  mapping
                  {:type "sighting"
-                  :id sighting-ids})))
+                  :id sighting-ids}
+                 params)))

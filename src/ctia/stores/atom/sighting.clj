@@ -14,14 +14,18 @@
 
 (s/defn handle-list-sightings-by-indicators :- (s/maybe [StoredSighting])
   [sightings-state :- (s/atom {s/Str StoredSighting})
-   indicators :- (s/maybe [StoredIndicator])]
+   indicators :- (s/maybe [StoredIndicator])
+   params]
   ;; Find sightings using the :sightings relationship on indicators
-  (let [sightings-map @sightings-state]
-    (->> indicators
-         (map :sightings)
-         flatten
-         (map :sighting_id)
-         (remove nil?)
-         (map (fn [s-id]
-                (get sightings-map s-id)))
-         (remove nil?))))
+  (let [sightings-map @sightings-state
+        sightings-list (->> indicators
+                            (map :sightings)
+                            flatten
+                            (map :sighting_id)
+                            (remove nil?)
+                            (map (fn [s-id]
+                                   (get sightings-map s-id)))
+                            (remove nil?))]
+    (if params
+      (mc/paginate sightings-list params)
+      sightings-list)))

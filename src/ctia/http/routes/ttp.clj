@@ -4,12 +4,9 @@
             [ring.util.http-response :refer :all]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.schemas.ttp :refer [NewTTP
-                                      StoredTTP
-                                      realize-ttp]]))
+            [ctia.schemas.ttp :refer [NewTTP StoredTTP realize-ttp]]))
 
 (defroutes ttp-routes
-
   (context "/ttp" []
     :tags ["TTP"]
     (POST "/" []
@@ -44,15 +41,6 @@
       :summary "Gets a TTP by ID"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:read-ttp :admin}
-      ;;:description "This is a little description"
-      ;; :query-params [{offset :-  Long 0}
-      ;;                {limit :-  Long 0}
-      ;;                {after :-  Time nil}
-      ;;                {before :-  Time nil}
-      ;;                {sort_by :- IndicatorSort "timestamp"}
-      ;;                {sort_order :- SortOrder "desc"}
-      ;;                {source :- s/Str nil}
-      ;;                {observable :- ObservableType nil}]
       :path-params [id :- s/Str]
       (if-let [d (read-ttp @ttp-store id)]
         (ok d)

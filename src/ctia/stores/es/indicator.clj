@@ -21,7 +21,7 @@
 
 
 (defn handle-list-indicators-by-judgements
-  [state judgements]
+  [state judgements params]
   (let [ids (some->> judgements
                      (map :indicators)
                      (mapcat #(map :indicator_id %))
@@ -31,4 +31,5 @@
                    (:index state)
                    mapping
                    {:type "indicator"
-                    :id (vec ids)}))))
+                    :id (vec ids)}
+                   params))))

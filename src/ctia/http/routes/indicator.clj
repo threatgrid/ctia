@@ -97,7 +97,7 @@
       :path-params [title :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:list-indicators-by-title :admin}
-      (if-let [d (list-indicators @indicator-store {:title title})]
+      (if-let [d (list-indicators @indicator-store {:title title} nil)]
         (ok d)
         (not-found)))
     (POST "/:id/sighting" []

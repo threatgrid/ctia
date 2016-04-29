@@ -8,7 +8,6 @@
                                           get-doc
                                           delete-doc
                                           search-docs]]))
-
 (defn- coerce-to-fn
   [Model]
   (c/coercer! Model sc/json-schema-coercion-matcher))
@@ -71,9 +70,13 @@
   (let [coerce! (coerce-to-fn [Model])]
     (s/fn :- [Model]
       [state :- ESConnState
-       filter-map :- {s/Any s/Any}]
-      (-> (search-docs (:conn state)
-                       (:index state)
-                       (name mapping)
-                       filter-map)
-          coerce!))))
+       filter-map :- {s/Any s/Any}
+       params]
+
+      (let [res (search-docs (:conn state)
+                             (:index state)
+                             (name mapping)
+                             filter-map
+                             params)
+            paging (meta res)]
+        (with-meta (coerce! res) paging)))))

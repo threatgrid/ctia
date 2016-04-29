@@ -1,20 +1,22 @@
 (ns ctia.http.routes.judgement
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [compojure.api.sweet :refer :all]
             [ctia.flows.crud :as flows]
+            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+            [ctia.schemas
+             [feedback :refer [NewFeedback realize-feedback StoredFeedback]]
+             [judgement :refer [NewJudgement realize-judgement StoredJudgement]]
+             [relationships :as rel]]
             [ctia.store :refer :all]
-            [ctia.schemas.relationships :as rel]
-            [ctia.schemas.judgement :refer [NewJudgement
-                                            StoredJudgement
-                                            realize-judgement]]
+            [ring.util.http-response :refer :all]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
-            [ctia.schemas.feedback :refer [NewFeedback
-                                           StoredFeedback
-                                           realize-feedback]]))
+(s/defschema FeedbacksByJudgementQueryParams
+  (st/merge
+   PagingParams
+   {(s/optional-key :sort_by) (s/enum :id :feedback :reason)}))
 
 (defroutes judgement-routes
-
   (context "/judgement" []
     :tags ["Judgement"]
     (POST "/" []
@@ -46,12 +48,13 @@
     (GET "/:judgement-id/feedback" []
       :tags ["Feedback"]
       :return (s/maybe [StoredFeedback])
+      :query [params FeedbacksByJudgementQueryParams]
       :path-params [judgement-id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:read-feedback :admin}
       :summary "Gets all Feedback for this Judgement."
-      (if-let [d (list-feedback @feedback-store {:judgement judgement-id})]
-        (ok d)
+      (if-let [d (list-feedback @feedback-store {:judgement judgement-id} params)]
+        (paginated-ok d)
         (not-found)))
     (POST "/:judgement-id/indicator" []
       :return (s/maybe rel/RelatedIndicator)
