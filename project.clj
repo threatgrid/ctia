@@ -78,9 +78,9 @@
                                    [com.h2database/h2 "1.4.191"]
                                    [org.clojure/test.check "0.9.0"]]
                     :hooks-classes {:before-create [ctia.hook.AutoLoadedJar1
-                                                    hook-example.core/HookExample1
+                                                    hook-example.core/hook-example-1
                                                     ctia.hook.AutoLoadedJar2
-                                                    hook-example.core/HookExample2]}
+                                                    hook-example.core/hook-example-2]}
                     :java-source-paths ["hooks/ctia" "test/java"]
                     :plugins [[lein-ring "0.9.6"]]
                     :resource-paths ["model"

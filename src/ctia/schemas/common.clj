@@ -1,10 +1,8 @@
 (ns ctia.schemas.common
   (:require [ctia.lib.time :as time]
-            [ctia.schemas.common :as c]
             [ctia.schemas.vocabularies :as v]
             [ring.util.http-response :as http-response]
             [ring.swagger.schema :refer [describe]]
-            [ctia.flows.hooks :refer [apply-hooks]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
@@ -181,8 +179,8 @@
   (st/merge a-schema
             {:type (s/enum type-name)
              :owner s/Str
-             :created c/Time
-             :modified c/Time}))
+             :created Time
+             :modified Time}))
 
 (defn default-realize-fn [type-name Model StoredModel]
   (s/fn default-realize :- StoredModel
@@ -206,5 +204,3 @@
                                              time/default-expire-date)
                                :start_time (or (get-in new-object [:valid_time :start_time])
                                                now)}))))))
-
-

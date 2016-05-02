@@ -5,12 +5,15 @@
                                          UpdateEvent
                                          DeleteEvent]]
             [ctia.schemas.actor :refer [StoredActor]]
+            [ctia.test-helpers.core :as helpers]
             [schema.core :as s]
             [clojure.test.check.properties :as properties]
             [clojure.test.check.generators :as check-generators]
             [clojure.test.check.clojure-test :as check-clojure-test]
             [schema.experimental.generators :as generators]
             [clojure.test :as t]))
+
+(t/use-fixtures :once helpers/fixture-schema-validation)
 
 (t/deftest test-to-create-event
   (doseq [actor (generators/sample 100 StoredActor)]

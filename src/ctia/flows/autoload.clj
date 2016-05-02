@@ -8,8 +8,8 @@
 (defrecord ProxyJ [o]
   Hook
   (init [_] (doto (.init o)))
-  (handle [_ type-name stored-object prev-object]
-    (h/from-java-handle o type-name stored-object prev-object))
+  (handle [_ stored-object prev-object]
+    (h/from-java-handle o stored-object prev-object))
   (destroy [_] (doto (.destroy o))))
 
 (s/defn add-record :- (s/eq nil)
@@ -46,7 +46,11 @@
 (s/defn autoload-hooks! :- (s/eq nil)
   "Should retrieve a list of Hook classes from `project.cljs`.
   All these classes must implement the `Hook` java interface."
-  ([] (load-hooks! (:hooks-classes (p/read))))
-  ([profiles :- [s/Keyword]] (load-hooks! (:hooks-classes (try (p/read "project.clj" profiles)
-                                                (finally
-                                                  nil))))))
+  ([]
+   (load-hooks!
+    (:hooks-classes (p/read))))
+  ([profiles :- [s/Keyword]]
+   (load-hooks!
+    (:hooks-classes (try (p/read "project.clj" profiles)
+                         (finally
+                           nil))))))

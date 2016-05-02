@@ -2,12 +2,12 @@
   (:refer-clojure :exclude [get])
   (:require [ctia.auth :as auth]
             [ctia.auth.allow-all :as aa]
+            [ctia.events :as events]
+            [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
             [ctia.init :as init]
             [ctia.properties :as props]
             [ctia.store :as store]
-            [ctia.stores.redis.store :as rs]
-            [ctia.events :as e]
             [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.data :as cd]
@@ -33,13 +33,13 @@
   (some #{prop} props/configurable-properties))
 
 (defn set-property [prop val]
-  (assert (valid-property? prop) "Tried to set unknown property")
+  (assert (valid-property? prop) (str "Tried to set unknown property '" prop "'"))
   (System/setProperty prop (if (keyword? val)
                              (name val)
                              (str val))))
 
 (defn clear-property [prop]
-  (assert (valid-property? prop) "Tried to clear unknown property")
+  (assert (valid-property? prop) (str "Tried to clear unknown property '" prop "'"))
   (System/clearProperty prop))
 
 (defn with-properties- [properties-map f]
@@ -63,7 +63,8 @@
   (with-properties ["ctia.http.dev-reload" false
                     "ctia.http.min-threads" 9
                     "ctia.http.max-threads" 10
-                    "ctia.nrepl.enabled" false]
+                    "ctia.nrepl.enabled" false
+                    "ctia.hook.redis.channel-name" "events-test"]
     ;; run tests
     (f)))
 
@@ -87,6 +88,10 @@
                     "ctia.store.ttp" "memory"]
     (f)))
 
+(defn fixture-properties:redis-hook [f]
+  (with-properties ["ctia.hook.redis.enabled" true]
+    (f)))
+
 (defn available-port []
   (with-open [sock (ServerSocket. 0)]
     (.getLocalPort sock)))
@@ -107,8 +112,8 @@
        (finally
          ;; explicitly stop the http-server
          (http-server/stop!)
-         (e/shutdown!)
-         (rs/shutdown!))))))
+         (hooks/shutdown!)
+         (events/shutdown!))))))
 
 (defn fixture-ctia-fast [test]
   (fixture-ctia test false))

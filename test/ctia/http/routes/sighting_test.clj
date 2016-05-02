@@ -22,8 +22,7 @@
 
   (testing "POST /ctia/sighting"
     (let [{status :status
-           sighting :parsed-body
-           :as response}
+           sighting :parsed-body}
           (post "ctia/sighting"
                 :body {:timestamp "2016-05-11T00:40:48.212-00:00"
                        :source "source"
