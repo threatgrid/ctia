@@ -65,6 +65,8 @@
         (:parsed-body resp)))))
 
 (deftest-for-each-store test-get-things-by-observable-routes
+  "Generate observables.
+  Then for each observable, generate judgements, indicators and sightings."
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
   (let [nb-judgements 5
@@ -91,11 +93,13 @@
                                        (map #(test-post "ctia/indicator" %)
                                             new-indicators))]
             (when (= (count indicators) nb-indicators)
-              (let [add-sightings-fn #(assoc %
-                                             :indicators
-                                             (map (fn [i] {:indicator_id (:id i)})
-                                                  indicators)
-                                             :observables [observable])
+              (let [add-sightings-fn #(-> %
+                                          (assoc :indicators
+                                                 (map (fn [i] {:indicator_id (:id i)})
+                                                      indicators)
+                                                 :observables [observable])
+                                          ;; generated relations cause too much troubles
+                                          (dissoc :relations))
                     new-sightings  (->> (g/sample nb-sightings NewSighting)
                                         (map add-sightings-fn))
                     sightings      (doall (map #(test-post "ctia/sighting" %)
@@ -108,7 +112,7 @@
                                                         [:observable :value])))]
                 (test-get-list (str route-pref "/judgements") [judgement])
                 ;; TODO: fix it
-                ;; (test-get (str route-pref "/indicators") indicators)
+                ;; (test-get-list (str route-pref "/indicators") indicators)
                 (test-get-list (str route-pref "/sightings") sightings)
                 (doseq [sighting sightings]
                   (test-delete (str "ctia/sighting/" (:id sighting)))))))
@@ -116,3 +120,26 @@
         ;; Just to prevent getting out without any `is`.
         (is (= 1 1))))))
 
+
+(deftest-for-each-store test-get-sightings-by-observable-tricky
+  "Then for each observable, generate judgements, indicators and sightings."
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (let [nb-sightings 1
+        observable {:value "1.2.3.4" :type "ip"}
+        tricky-observables [{:type "url" :value "1.2.3.4"}
+                            {:type "ip" :value "4.5.6.7"}]
+        new-sightings-ip-1234 (->> (g/sample nb-sightings NewSighting)
+                                   (map #(assoc % :observables [observable]))
+                                   (map #(dissoc % :relations)))
+        new-sightings-no-ip-1234 (->> (g/sample nb-sightings NewSighting)
+                                      (map #(assoc % :observables tricky-observables))
+                                      (map #(dissoc % :relations)))
+        sightings-ip-1234 (doall (map #(test-post "ctia/sighting" %) new-sightings-ip-1234))
+        sightings-no-ip-1234 (doall (map #(test-post "ctia/sighting" %) new-sightings-no-ip-1234))
+        route-ip-1234 (str "ctia/"
+                           (url-encode (:type observable))
+                           "/"
+                           (url-encode (:value observable))
+                           "/sightings")]
+    (test-get-list route-ip-1234 sightings-ip-1234)))

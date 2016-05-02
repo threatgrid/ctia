@@ -87,7 +87,8 @@
     conn
     index-name
     mapping
-    id)))
+    id
+    :refresh true)))
 
 (defn raw-search-docs [conn index-name mapping query sort]
   (->> ((search-doc-fn conn)
