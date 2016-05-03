@@ -72,53 +72,49 @@
   (let [nb-judgements 5
         nb-indicators 5
         nb-sightings 5
-        nb-observables 5]
-    (doseq [observable (cons {:value "1.2.3.4" :type "ip"}
-                             (take nb-observables
-                                   (remove #(empty? (:value %))
-                                           (g/sample (* 2 nb-observables)
-                                                     Observable))))
-            new-judgement (->> (g/sample nb-judgements NewJudgement)
-                               ;; HARDCODED VALUES
-                               (map #(merge % {:disposition 5
-                                               :disposition_name "Unknown"
-                                               ;; TODO: empty value isn't supported
-                                               :observable observable})))]
-      (let [judgement (test-post "ctia/judgement" new-judgement)]
-        (when judgement
-          (let [new-indicators (->> (g/sample nb-indicators NewIndicator)
-                                    (map #(merge % {:judgements
-                                                    [{:judgement_id (:id judgement)}]})))
-                indicators     (remove nil?
-                                       (map #(test-post "ctia/indicator" %)
-                                            new-indicators))]
-            (when (= (count indicators) nb-indicators)
-              (let [add-sightings-fn #(-> %
-                                          (assoc :indicators
-                                                 (map (fn [i] {:indicator_id (:id i)})
-                                                      indicators)
-                                                 :observables [observable])
-                                          ;; generated relations cause too much troubles
-                                          (dissoc :relations))
-                    new-sightings  (->> (g/sample nb-sightings NewSighting)
-                                        (map add-sightings-fn))
-                    sightings      (doall (map #(test-post "ctia/sighting" %)
-                                               new-sightings))
-                    route-pref (str "ctia/"
-                                    (url-encode (get-in judgement
-                                                        [:observable :type]))
-                                    "/"
-                                    (url-encode (get-in judgement
-                                                        [:observable :value])))]
-                (test-get-list (str route-pref "/judgements") [judgement])
-                ;; TODO: fix it
-                ;; (test-get-list (str route-pref "/indicators") indicators)
-                (test-get-list (str route-pref "/sightings") sightings)
-                (doseq [sighting sightings]
-                  (test-delete (str "ctia/sighting/" (:id sighting)))))))
-          (test-delete (str "ctia/judgement/" (:id judgement))))
-        ;; Just to prevent getting out without any `is`.
-        (is (= 1 1))))))
+        nb-observables 5
+        new-indicators (g/sample nb-indicators NewIndicator)
+        indicators     (remove nil?
+                                (map #(test-post "ctia/indicator" %)
+                                     new-indicators))]
+    (when (= (count indicators) nb-indicators)
+      (doseq [observable (cons {:value "1.2.3.4" :type "ip"}
+                               (take nb-observables
+                                     (remove #(empty? (:value %))
+                                             (g/sample (* 2 nb-observables)
+                                                       Observable))))
+              new-judgement (->> (g/sample nb-judgements NewJudgement)
+                                 ;; HARDCODED VALUES
+                                 (map #(merge % {:disposition 5
+                                                 :disposition_name "Unknown"
+                                                 :indicators (map (fn [ind]
+                                                                    {:indicator_id (:id ind)})
+                                                                  indicators)
+                                                 ;; TODO: empty value isn't supported
+                                                 :observable observable})))]
+        (let [judgement (test-post "ctia/judgement" new-judgement)]
+          (when judgement
+            (let [add-sightings-fn #(-> %
+                                        (assoc ;; :indicators
+                                         ;; (map (fn [i] {:indicator_id (:id i)})
+                                         ;;      indicators)
+                                         :observables [observable])
+                                        ;; generated relations cause too much troubles
+                                        (dissoc :relations))
+                  new-sightings  (->> (g/sample nb-sightings NewSighting)
+                                      (map add-sightings-fn))
+                  sightings      (doall (map #(test-post "ctia/sighting" %)
+                                             new-sightings))
+                  route-pref (str "ctia/" (url-encode (:type observable))
+                                  "/" (url-encode (:value observable)))]
+              (test-get-list (str route-pref "/judgements") [judgement])
+              (test-get-list (str route-pref "/indicators") indicators)
+              (test-get-list (str route-pref "/sightings") sightings)
+              (doseq [sighting sightings]
+                (test-delete (str "ctia/sighting/" (:id sighting)))))
+            (test-delete (str "ctia/judgement/" (:id judgement))))
+          ;; Just to prevent getting out without any `is`.
+          (is (= 1 1)))))))
 
 
 (deftest-for-each-store test-get-sightings-by-observable-tricky

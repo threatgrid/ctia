@@ -45,10 +45,9 @@
     :summary "Returns all the Judgements associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities #{:list-judgements-by-observable :admin}
-    (ok
-     (list-judgements-by-observable @judgement-store
-                                    {:type observable_type
-                                     :value observable_value})))
+    (ok (list-judgements-by-observable @judgement-store
+                                       {:type observable_type
+                                        :value observable_value})))
 
   (GET "/:observable_type/:observable_value/indicators" []
     :tags ["Indicator"]
@@ -65,14 +64,10 @@
     :summary "Returns all the Indicators associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities #{:list-indicators-by-observable :admin}
-    (ok
-     (try
-       (some->> {:type observable_type
-                 :value observable_value}
-                (list-judgements-by-observable @judgement-store)
-                (list-indicators-by-judgements @indicator-store))
-       (catch Exception e
-         (clojure.pprint/pprint e)))))
+    (ok (some->> {:type observable_type
+                  :value observable_value}
+                 (list-judgements-by-observable @judgement-store)
+                 (list-indicators-by-judgements @indicator-store))))
 
   (GET "/:observable_type/:observable_value/sightings" []
     :tags ["Sighting"]
@@ -89,10 +84,6 @@
     :capabilities #{:list-sightings-by-observable :admin}
     :return (s/maybe [StoredSighting])
     :summary "Returns all the Sightings associated with the specified observable."
-    (ok
-     (try
-       (list-sightings-by-observables @sighting-store
-                                      [{:type observable_type
-                                        :value observable_value}])
-       (catch Exception e
-         (clojure.pprint/pprint e))))))
+    (ok (list-sightings-by-observables @sighting-store
+                                       [{:type observable_type
+                                         :value observable_value}]))))
