@@ -100,6 +100,7 @@
                :as response}
               (get "ctia/indicator/title/indicator-title"
                    :headers {"api_key" "45c1f5e3f05d0"})]
+
           (is (= 200 status))
           (is (deep=
                [{:type "indicator"

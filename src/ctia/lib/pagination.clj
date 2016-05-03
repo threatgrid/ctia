@@ -1,6 +1,12 @@
-(ns ctia.lib.pagination)
+(ns ctia.lib.pagination
+  (:require [schema.core :as s]))
 
 (def default-limit 100)
+
+(defn list-response-schema [Model]
+  "generate a list response schema for a model"
+  {:data [Model]
+   :paging {s/Any s/Any}})
 
 (defn response
   "Make a paginated response adding summary info as metas"
@@ -16,8 +22,8 @@
                                        previous-offset 0)}}
         next {:next {:limit limit
                      :offset next-offset}}]
-    (with-meta results
-      (merge
-       {:total-hits hits}
-       (when previous? previous)
-       (when next? next)))))
+    {:data results
+     :paging (merge
+              {:total-hits hits}
+              (when previous? previous)
+              (when next? next))}))

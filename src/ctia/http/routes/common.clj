@@ -1,5 +1,6 @@
 (ns ctia.http.routes.common
-  (:require [clj-http.headers :refer [canonicalize]]
+  (:require [clojure.string :as str]
+            [clj-http.headers :refer [canonicalize]]
             [ring.util.http-status :refer [ok]]
             [schema.core :as s]
             [ring.swagger.schema :refer [describe]]))
@@ -10,9 +11,9 @@
    (s/optional-key :offset) (describe Long "Pagination Offset")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
-(defn map->header-value [m]
-  (clojure.string/join "&" (map (fn [[k v]]
-                                  (str (name k) "=" v)) m)))
+(defn map->paging-header-value [m]
+  (str/join "&" (map (fn [[k v]]
+                       (str (name k) "=" v)) m)))
 
 (defn map->paging-headers
   "transform a map to a headers map
@@ -26,13 +27,16 @@
                                canonicalize)
 
                           (if (map? v)
-                            (map->header-value v)
+                            (map->paging-header-value v)
                             (str v))}) headers)))
 
 (defn paginated-ok
   "returns a 200 with the supplied response
    and its metas as headers"
-  [response]
+  [{:keys [data paging]
+    :or {data []
+         paging {}}}]
+
   {:status ok
-   :body response
-   :headers (map->paging-headers (meta response))})
+   :body data
+   :headers (map->paging-headers paging)})

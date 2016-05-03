@@ -1,6 +1,8 @@
 (ns ctia.stores.atom.indicator
-  (:require [ctia.schemas.indicator :refer [StoredIndicator]]
-            [ctia.schemas.judgement :refer [StoredJudgement]]
+  (:require [ctia.schemas
+             [indicator :refer [StoredIndicator]]
+             [judgement :refer [StoredJudgement]]]
+            [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
@@ -10,13 +12,12 @@
 (def handle-delete-indicator (mc/delete-handler StoredIndicator))
 (def handle-list-indicators (mc/list-handler StoredIndicator))
 
-(s/defn handle-list-indicators-by-judgements :- (s/maybe [StoredIndicator])
+(s/defn handle-list-indicators-by-judgements :- (list-response-schema StoredIndicator)
   [indicator-state :- (s/atom {s/Str StoredIndicator})
    judgements :- [StoredJudgement]
    params]
   (let [indicator-ids (some->> (map :indicators judgements)
                                (mapcat #(map :indicator_id %))
                                set)]
-    (filter (fn [indicator]
-              (clojure.set/subset? #{(:id indicator)} indicator-ids))
-            (vals @indicator-state))))
+
+    (handle-list-indicators indicator-state {:id indicator-ids} params)))

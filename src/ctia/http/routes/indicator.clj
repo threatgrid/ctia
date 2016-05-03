@@ -1,20 +1,22 @@
 (ns ctia.http.routes.indicator
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [compojure.api.sweet :refer :all]
             [ctia.flows.crud :as flows]
+            [ctia.http.routes.common :refer [paginated-ok]]
+            [ctia.schemas
+             [campaign :refer [StoredCampaign]]
+             [coa :refer [StoredCOA]]
+             [indicator :refer [generalize-indicator
+                                NewIndicator
+                                realize-indicator
+                                StoredIndicator]]
+             [judgement :refer [StoredJudgement]]
+             [sighting :refer [NewSighting
+                               realize-sighting
+                               StoredSighting]]
+             [ttp :refer [StoredTTP]]]
             [ctia.store :refer :all]
-            [ctia.schemas.judgement :refer [StoredJudgement]]
-            [ctia.schemas.campaign :refer [StoredCampaign]]
-            [ctia.schemas.coa :refer [StoredCOA]]
-            [ctia.schemas.ttp :refer [StoredTTP]]
-            [ctia.schemas.indicator :refer [NewIndicator
-                                            StoredIndicator
-                                            realize-indicator
-                                            generalize-indicator]]
-            [ctia.schemas.sighting :refer [NewSighting
-                                           StoredSighting
-                                           realize-sighting]]))
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (defroutes indicator-routes
   (context "/indicator" []
@@ -98,7 +100,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:list-indicators-by-title :admin}
       (if-let [d (list-indicators @indicator-store {:title title} nil)]
-        (ok d)
+        (paginated-ok d)
         (not-found)))
     (POST "/:id/sighting" []
       :return StoredSighting

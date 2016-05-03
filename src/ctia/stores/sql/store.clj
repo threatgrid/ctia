@@ -7,7 +7,9 @@
   (create-judgement [_ new-judgement]
     (first (judgement/insert-judgements new-judgement)))
   (read-judgement [_ id]
-    (first (judgement/select-judgements {:id id} nil)))
+    (-> (judgement/select-judgements {:id id} nil)
+        :data
+        first))
   (delete-judgement [_ id]
     (judgement/delete-judgement id))
   (list-judgements [_ filter-map params]

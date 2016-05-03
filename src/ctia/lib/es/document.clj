@@ -122,7 +122,7 @@
                      ((hits-from-fn conn))
                      (map :_source))]
 
-    (pagination/response results
+    (pagination/response (or results [])
                          (:from es-params)
                          (:size es-params)
                          hits)))

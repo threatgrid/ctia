@@ -218,7 +218,6 @@
                           :headers {"api_key" "45c1f5e3f05d0"})
             indicators (:parsed-body response)]
         (is (= 200 (:status response)))
-
         (is (deep=
              #{{:id indicator-2-id
                 :type "indicator"

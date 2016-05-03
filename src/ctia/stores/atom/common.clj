@@ -1,12 +1,10 @@
 (ns ctia.stores.atom.common
-  (:require [ctia.lib.pagination :as pagination]
-            [ctia.schemas.common :as c]
-            [schema.core :as s])
-  (:import java.util.UUID))
-
-(defn random-id [prefix]
-  (fn [_new-entity_]
-    (str prefix "-" (UUID/randomUUID))))
+  (:require [ctia.schemas.common :as c]
+            [schema.core :as s]
+            [clojure.set :as set]
+            [ctia.lib.pagination :refer [default-limit
+                                         list-response-schema
+                                         response]]))
 
 (defn read-handler [Model]
   (s/fn :- (s/maybe Model)
@@ -32,7 +30,6 @@
      updated-model :- Model]
     (get (swap! state assoc id updated-model) id)))
 
-
 (defn delete-handler [Model]
   (s/fn :- s/Bool
     [state :- (s/atom {s/Str Model})
@@ -42,23 +39,33 @@
           true)
       false)))
 
+;;borrowed from yann's upcoming PR ;-)
+(defn- match? [v1 v2]
+  (cond
+    (or (and (coll? v1) (empty? v1)) (and (coll? v2) (empty? v2))) false
+    (and (coll? v1) (set? v2)) (not (empty? (set/intersection (set v1) v2)))
+    (and (set? v2)) (contains? v2 v1)
+    (and (coll? v1)) (contains? (set v1) v2)
+    :else (= v1 v2)))
+
 (defn- filter-state [state filter-map]
-  (into
-   []
-   (filter (fn [model]
-             (every? (fn [[k v]]
-                       (if (sequential? k)
-                         (= v (get-in model k ::not-found))
-                         (= v (get model k ::not-found))))
-                     filter-map))
-           (vals (deref state)))))
+  (when-not (empty? filter-map)
+    (into []
+          (filter (fn [model]
+                    (every? (fn [[k v]]
+                              (let [found-v (if (sequential? k)
+                                              (get-in model k ::not-found)
+                                              (get model k ::not-found))]
+                                (match? found-v v)))
+                            filter-map))
+                  (vals (deref state))))))
 
 (defn paginate
   [data {:keys [sort_by sort_order offset limit]
          :or {sort_by :id
               sort_order :asc
               offset 0
-              limit pagination/default-limit}}]
+              limit default-limit}}]
   (as-> data $
     (sort-by sort_by $)
     (if (= :desc sort_order)
@@ -67,7 +74,7 @@
     (take limit $)))
 
 (defn list-handler [Model]
-  (s/fn :- (s/maybe [Model])
+  (s/fn :- (list-response-schema Model)
     ([state :- (s/atom {s/Str Model})
       filter-map :- {s/Any s/Any}
       params]
@@ -75,7 +82,7 @@
      (let [res (filter-state state filter-map)]
        (-> res
            (paginate params)
-           (pagination/response (:offset params)
-                                (:limit params)
-                                (count res)))))))
+           (response (:offset params)
+                     (:limit params)
+                     (count res)))))))
 

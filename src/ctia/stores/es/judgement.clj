@@ -58,13 +58,13 @@
                                                 :nested_filter
                                                 {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}}]
 
-    (->> (search-docs (:conn state)
-                      (:index state)
-                      mapping
-                      nil
-                      params)
-
-         coerce-stored-judgement-list)))
+    (some->> (search-docs (:conn state)
+                          (:index state)
+                          mapping
+                          nil
+                          params)
+             :data
+             coerce-stored-judgement-list)))
 
 (s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]
@@ -75,8 +75,7 @@
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [state observable]
-  (let [judgement-verdict
-        (first (list-active-judgements-by-observable state observable))]
 
-    (when-let [jv judgement-verdict]
-      (make-verdict jv))))
+  (some-> (list-active-judgements-by-observable state observable)
+          first
+          make-verdict))

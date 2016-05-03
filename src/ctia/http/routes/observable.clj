@@ -62,6 +62,7 @@
      (as-> {:type observable_type
             :value observable_value} $
        (list-judgements-by-observable @judgement-store $ nil)
+       (:data $ [])
        (list-indicators-by-judgements @indicator-store $ params))))
 
   (GET "/:observable_type/:observable_value/sightings" []
@@ -78,5 +79,7 @@
      (as-> {:type observable_type
             :value observable_value} $
        (list-judgements-by-observable @judgement-store $ nil)
+       (:data $ [])
        (list-indicators-by-judgements @indicator-store $ nil)
+       (:data $ [])
        (list-sightings-by-indicators @sighting-store $ params)))))
