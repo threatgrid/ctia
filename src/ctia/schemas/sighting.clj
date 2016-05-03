@@ -8,6 +8,9 @@
 
 (s/defschema Sighting
   "See http://stixproject.github.io/data-model/1.2/indicator/SightingType/"
+  ;; Using s/pred break generative testing
+  ;; So for now we check the predicate at creation with
+  ;; `check-new-sighting`.
   ;; -- (s/pred
   ;; --  ;; We need either an observable or an indicator,
   ;; --  ;; as a Sighting is useless without one of them.
@@ -44,8 +47,7 @@
 
 (s/defschema NewSighting
   (st/merge
-   (st/dissoc Sighting
-              :id)
+   (st/dissoc Sighting :id)
    {(s/optional-key :type) Type}))
 
 (s/defschema StoredSighting
@@ -68,3 +70,10 @@
             :owner login
             :created (or (:created prev-sighting) now)
             :modified now))))
+
+(s/defn check-new-sighting :- s/Bool
+  "We need either an observable or an indicator,
+   as a Sighting is useless without one of them."
+  [sighting :- NewSighting]
+  (not (and (empty? (:observables sighting))
+            (empty? (:indicators sighting)))))
