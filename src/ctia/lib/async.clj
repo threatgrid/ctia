@@ -8,11 +8,11 @@
            [clojure.core.async.impl.buffers FixedBuffer]
            [clojure.core.async Mult]))
 
-(def ^:dynamic *event-buffer-size* 1000)
+(def ^:dynamic *channel-buffer-size* 1000)
 
-(s/defschema Event {s/Any s/Any})
+(s/defschema AnyMap {s/Any s/Any})
 
-(s/defschema EventChannel
+(s/defschema ChannelData
   "This structure holds a channel, its associated buffer, and a multichan"
   {:chan-buf FixedBuffer
    :chan Channel
@@ -20,11 +20,11 @@
    :recent Channel})
 
 
-(s/defn new-event-channel :- EventChannel []
-  (let [b (a/buffer *event-buffer-size*)
+(s/defn new-channel :- ChannelData []
+  (let [b (a/buffer *channel-buffer-size*)
         c (a/chan b)
         p (a/mult c)
-        r (a/chan (a/sliding-buffer *event-buffer-size*))]
+        r (a/chan (a/sliding-buffer *channel-buffer-size*))]
     (a/tap p r)
     (.addShutdownHook (Runtime/getRuntime)
                       (Thread. #(do (a/close! c)
@@ -42,9 +42,9 @@
 
 
 (s/defn shutdown-channel :- s/Num
-  "Shuts down a provided event channel."
+  "Shuts down a channel provided in a ChannelData map."
   [max-wait-ms :- Long
-   {:keys [chan-buf chan mult]} :- EventChannel]
+   {:keys [chan-buf chan mult]} :- ChannelData]
   (let [ch (a/chan (a/dropping-buffer 1))]
     (a/tap mult ch)
     (a/close! chan)
@@ -57,54 +57,53 @@
 (defmacro ^:private listen
   "Helper for register-listener below that handles the mode
    selection (real/green thread)"
-  [& {:keys [mode pred listener-fn events end-chan]}]
+  [& {:keys [mode pred listener-fn data-chan end-chan]}]
   (let [loop-fn (case mode :blocking 'thread :compute 'go-loop)
         alt-fn (case mode :blocking 'alt!! :compute 'alt!)]
     `(~loop-fn []
-      (if-let [event# (~alt-fn [~events ~end-chan] ([v#] v#))]
+      (if-let [data# (~alt-fn [~data-chan ~end-chan] ([v#] v#))]
         (do
-          (when (~pred event#)
-            (~listener-fn event#))
+          (when (~pred data#)
+            (~listener-fn data#))
           (recur))
         (do (close! ~end-chan)
-            (close! ~events))))))
+            (close! ~data-chan))))))
 
 (s/defn register-listener :- Channel
-  "Creates a GO loop to direct events to a function.
-   Takes an optional predicate to filter which events are sent to the function.
-   Can also take a specified event channel, rather than the central one.
+  "Creates a GO loop to handle data taken from a channel with a given function.
+   Takes an optional predicate to filter what data is sent to the function.
 
-   ec - An event channel, created with new-event-channel.
+   cd - A ChannelData map
    f - user provided function that will be called when an event arrives on the event channel.
    pred - a predicate to test events. The user function will only be run if this predicate passes.
    shutdown-fn - an optional function to run at system shutdown time. May be nil.
    mode - can be :compute (for a green thread) or :blocking (for a real thread)"
-  ([ec :- EventChannel
-    listener-fn :- (=> s/Any Event)
-    pred :- (=> s/Bool Event)
+  ([cd :- ChannelData
+    listener-fn :- (=> s/Any AnyMap)
+    pred :- (=> s/Bool AnyMap)
     shutdown-fn :- (s/maybe (=> s/Any))]
-   (register-listener ec listener-fn pred shutdown-fn :compute))
-  ([{m :mult :as ec} :- EventChannel
-    listener-fn :- (=> s/Any Event)
-    pred :- (=> s/Bool Event)
+   (register-listener cd listener-fn pred shutdown-fn :compute))
+  ([{m :mult} :- ChannelData
+    listener-fn :- (=> s/Any AnyMap)
+    pred :- (=> s/Bool AnyMap)
     shutdown-fn :- (s/maybe (=> s/Any))
     mode :- (s/enum :compute :blocking)]
-   (let [events (chan)
+   (let [data-chan (chan)
          end-chan (chan)]
-     (tap m events)
+     (tap m data-chan)
      (case mode
        :blocking
        (listen :mode :blocking
                :pred pred
                :listener-fn listener-fn
-               :events events
+               :data-chan data-chan
                :end-chan end-chan)
 
        :compute
        (listen :mode :compute
                :pred pred
                :listener-fn listener-fn
-               :events events
+               :data-chan data-chan
                :end-chan end-chan))
      (.addShutdownHook (Runtime/getRuntime)
                        (Thread. #(do (a/close! end-chan)
