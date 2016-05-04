@@ -7,6 +7,7 @@
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.test-helpers.pagination :refer [pagination-test]]
    [ctia.schemas.judgement :refer [NewJudgement StoredJudgement]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
@@ -334,9 +335,11 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  (let [new-judgements (g/sample 20 NewJudgement)
-        ;;hardcode dispositon
-        fixed-judgements (map #(merge % {:disposition 5
+  (let [new-judgements (g/sample 30 NewJudgement)
+        ;;hardcode dispositon & observable
+        fixed-judgements (map #(merge % {:observable {:type "ip"
+                                                      :value "1.2.3.4"}
+                                         :disposition 5
                                          :disposition_name "Unknown"}) new-judgements)]
     (testing "POST /ctia/judgement GET /ctia/judgement"
       (let [responses (map #(post "ctia/judgement"
@@ -351,4 +354,10 @@
                              :headers {"api_key" "45c1f5e3f05d0"}))
                   (map :parsed-body)
                   (map #(dissoc % :id :created :modified :owner))
-                  set)))))))
+                  set)))))
+
+    (pagination-test
+     "ctia/ip/1.2.3.4/judgements"
+     {"api_key" "45c1f5e3f05d0"}
+     [:priority :severity])))
+
