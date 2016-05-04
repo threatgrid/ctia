@@ -6,7 +6,8 @@
     [ctia.lib.redis :as lr]
     [ctia.events.producers.es.producer :as esp]
     [ctia.properties :refer [properties]]
-    [ctia.properties.getters :as pg]))
+    [ctia.properties.getters :as pg]
+    [schema.core :as s]))
 
 (defrecord ESEventProducer [conn]
   Hook
@@ -55,7 +56,8 @@
     (events/send-event event)
     event))
 
-(defn register-hooks [hooks-m]
+(s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
+  [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
   (let [{{redis-enabled? :enabled} :redis
          {es-enabled? :enabled} :es}
         (get-in @properties [:ctia :hook])]

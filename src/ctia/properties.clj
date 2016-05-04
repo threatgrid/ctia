@@ -79,7 +79,15 @@
                       "ctia.hook.es.clustername" s/Str
                       "ctia.hook.es.indexname" s/Str
                       "ctia.hook.es.slicing.strategy" (s/enum :filtered-alias :aliased-index)
-                      "ctia.hook.es.slicing.granularity" (s/enum :minute :hour :day :week :month :year)})))
+                      "ctia.hook.es.slicing.granularity" (s/enum :minute :hour :day :week :month :year)
+
+                      "ctia.hooks.before-create" s/Str
+                      "ctia.hooks.after-create" s/Str
+                      "ctia.hooks.before-update" s/Str
+                      "ctia.hooks.after-update" s/Str
+                      "ctia.hooks.before-delete" s/Str
+                      "ctia.hooks.after-delete" s/Str
+                      "ctia.hooks.event" s/Str})))
 
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."
