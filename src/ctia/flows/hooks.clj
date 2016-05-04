@@ -1,6 +1,7 @@
 (ns ctia.flows.hooks
   "Handle hooks ([Cf. #159](https://github.com/threatgrid/ctia/issues/159))."
-  (:require [ctia.flows.hooks.event-hooks :as event-hooks]
+  (:require [ctia.flows.autoload :as auto-hooks]
+            [ctia.flows.hooks.event-hooks :as event-hooks]
             [ctia.flows.hook-protocol
              :refer [Hook] :as prot]))
 
@@ -29,7 +30,8 @@
 (defn reset-hooks! []
   (reset! hooks
           (-> empty-hooks
-              event-hooks/register-hooks)))
+              event-hooks/register-hooks
+              auto-hooks/register-hooks)))
 
 (defn add-hook!
   "Add a `Hook` for the hook `hook-type`"
@@ -87,17 +89,6 @@
   (apply-hooks :hook-type :event
                :entity event
                :read-only? true))
-
-
-(defn from-java-handle
-  "Helper to import Java obeying `Hook` java interface."
-  [hook stored-entity prev-entity]
-  (into {}
-        (.handle hook
-                 (when (some? stored-entity)
-                   (java.util.HashMap. stored-entity))
-                 (when (some? prev-entity)
-                   (java.util.HashMap. prev-entity)))))
 
 (defn init! []
   (reset-hooks!)

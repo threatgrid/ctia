@@ -12,6 +12,7 @@
             [clj-http.client :as http]
             [clojure.data :as cd]
             [clojure.edn :as edn]
+            [clojure.string :as str]
             [clojure.test :as ct]
             [schema.core :as schema])
   (:import java.net.ServerSocket))
@@ -90,6 +91,14 @@
 
 (defn fixture-properties:redis-hook [f]
   (with-properties ["ctia.hook.redis.enabled" true]
+    (f)))
+
+(defn fixture-properties:hook-classes [f]
+  (with-properties ["ctia.hooks.before-create"
+                    (str/join "," ["ctia.hook.AutoLoadedJar1"
+                                   "hook-example.core/hook-example-1"
+                                   "ctia.hook.AutoLoadedJar2"
+                                   "hook-example.core/hook-example-2"])]
     (f)))
 
 (defn available-port []
