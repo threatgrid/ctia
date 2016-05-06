@@ -72,9 +72,8 @@
       (some-> (:judgement store/stores)
               deref
               (store/calculate-verdict event)
-              )
-      (when-let [judgement-store (:judgement store/stores)]
-        (store/calculate-verdict @judgement-store event)))  ;; TODO: send this to the verdict store
+              ;; TODO: store in verdict store. Issue #277
+              ))
     event))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
