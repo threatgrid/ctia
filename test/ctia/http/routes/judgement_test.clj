@@ -358,6 +358,5 @@
 
     (pagination-test
      "ctia/ip/1.2.3.4/judgements"
-     {"api_key" "45c1f5e3f05d0"}
-     [:priority :severity])))
+     {"api_key" "45c1f5e3f05d0"} [:id :disposition :priority :severity :confidence])))
 

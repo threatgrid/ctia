@@ -7,6 +7,7 @@
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.test-helpers.pagination :refer [pagination-test]]
    [ctia.schemas.judgement :refer [NewJudgement]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
@@ -277,4 +278,17 @@
                 :owner "foouser"}}
              (->> sightings
                   (map #(dissoc % :created :modified))
-                  set)))))))
+                  set)))))
+
+    (pagination-test
+     "/ctia/ip/10.0.0.1/judgements"
+     {"api_key" "45c1f5e3f05d0"}
+     [:id :disposition :priority :severity :confidence])
+
+    (pagination-test
+     "/ctia/ip/10.0.0.1/indicators"
+     {"api_key" "45c1f5e3f05d0"} [:id :title])
+
+    (pagination-test
+     "/ctia/ip/10.0.0.1/sightings"
+     {"api_key" "45c1f5e3f05d0"} [:id :timestamp :confidence])))
