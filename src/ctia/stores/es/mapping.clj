@@ -280,6 +280,7 @@
     :properties
     {:id string
      :type string
+     :tlp string
      :observable observable
      :disposition {:type "long"}
      :disposition_name string
@@ -303,6 +304,7 @@
     :properties
     {:id string
      :type string
+     :tlp string
      :judgement string
      :source string
      :feedback {:type "integer"}
@@ -318,6 +320,7 @@
     :properties
     {:id string
      :type string
+     :tlp string
      :short_description all_text
      :valid_time valid-time
      :title all_string
@@ -359,6 +362,8 @@
      :description all_text
      :short_description all_text
      :type string
+     :tlp string
+     :ttp string
      :valid_time valid-time
      :version string
      :intended_effect string
@@ -382,6 +387,7 @@
     :properties
     {:id all_string
      :title all_string
+     :tlp string
      :description all_text
      :short_description all_text
      :type string
@@ -408,6 +414,7 @@
     :properties
     {:id all_string
      :type string
+     :tlp string
      :title all_string
      :description all_text
      :version string
@@ -436,6 +443,7 @@
     :properties
     {:id all_string
      :type string
+     :tlp string
      :title all_string
      :description all_text
      :short_description all_text
@@ -459,6 +467,7 @@
     :properties
     {:id all_string
      :type string
+     :tlp string
      :title all_string
      :description all_text
      :short_description all_text
@@ -498,6 +507,7 @@
     :properties
     {:id all_string
      :type string
+     :tlp string
      :title all_string
      :description all_text
      :short_description all_text

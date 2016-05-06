@@ -1,10 +1,12 @@
 (ns ctia.schemas.common
   (:require [ctia.lib.time :as time]
-            [ctia.schemas.vocabularies :as v]
-            [ring.util.http-response :as http-response]
+            [ctia.schemas
+             [common :as c]
+             [vocabularies :as v]]
             [ring.swagger.schema :refer [describe]]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+            [ring.util.http-response :as http-response]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (def Reference
   "An entity ID, or a URI referring to a remote one."
@@ -22,16 +24,19 @@
   "Schema definition for all date or timestamp values in GUNDAM."
   s/Inst)
 
-(s/defschema TLPValue
-  "TLP Stand for Traffic Light Protocol (https://www.us-cert.gov/tlp).
-  Precise how this resource is intended to be shared, replicated, copied..."
-  (s/enum :red :yellow :green :white))
-
 (s/defschema VersionInfo
   {:base URI
    :version s/Str
    :beta s/Bool
    :supported_features [s/Str]})
+
+(s/defschema TLP
+  "TLP Stand for Traffic Light Protocol (https://www.us-cert.gov/tlp).
+  Precise how this resource is intended to be shared, replicated, copied..."
+  (describe (s/enum "red" "yellow" "green" "white")
+            "Document Marking Traffic Light Protocol format"))
+
+(def default-tlp "green")
 
 (def CTIAFeature
   (s/enum "Judgements"
@@ -67,20 +72,20 @@
 (s/defschema Tool
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
   (st/merge {:description s/Str}
-         (st/optional-keys
-          {:type (describe [v/AttackToolType] "type of the tool leveraged")
-           :references (describe [s/Str] "references to instances or additional information for this tool")
-           :vendor (describe s/Str "information identifying the vendor organization for this tool")
-           :version (describe s/Str "version descriptor of this tool")
-           :service_pack (describe s/Str "service pack descriptor for this tool")
-           ;; Not provided: tool_specific_data
-           ;; Not provided: tool_hashes
-           ;; Not provided: tool_configuration
-           ;; Not provided: execution_environment
-           ;; Not provided: errors
-           ;; Not provided: metadata
-           ;; Not provided: compensation_model
-           })))
+            (st/optional-keys
+             {:type (describe [v/AttackToolType] "type of the tool leveraged")
+              :references (describe [s/Str] "references to instances or additional information for this tool")
+              :vendor (describe s/Str "information identifying the vendor organization for this tool")
+              :version (describe s/Str "version descriptor of this tool")
+              :service_pack (describe s/Str "service pack descriptor for this tool")
+              ;; Not provided: tool_specific_data
+              ;; Not provided: tool_hashes
+              ;; Not provided: tool_configuration
+              ;; Not provided: execution_environment
+              ;; Not provided: errors
+              ;; Not provided: metadata
+              ;; Not provided: compensation_model
+              })))
 
 (s/defschema ScopeWrapper
   "For merging into other structures; Commonly repeated structure"
@@ -361,6 +366,7 @@
               :owner login
               :created (or (:created prev-object) now)
               :modified now
+              :tlp (:tlp new-object (:tlp prev-object default-tlp))
               :valid_time (or (:valid_time prev-object)
                               {:end_time (or (get-in new-object [:valid_time :end_time])
                                              time/default-expire-date)

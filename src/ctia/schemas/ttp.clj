@@ -75,7 +75,8 @@
   "See http://stixproject.github.io/data-model/1.2/ttp/TTPType/"
   (merge
    c/GenericStixIdentifiers
-   {:valid_time (describe
+   {:tlp c/TLP
+    :valid_time (describe
                  c/ValidTime
                  "a timestamp for the definition of a specific version of a TTP item")}
    (st/optional-keys
@@ -117,8 +118,10 @@
    (st/dissoc TTP
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime
-    (s/optional-key :type) (s/enum "ttp")}))
+   (st/optional-keys
+    {:valid_time c/ValidTime
+     :type (s/enum "ttp")
+     :tlp c/TLP})))
 
 (s/defschema StoredTTP
   "An ttp as stored in the data store"

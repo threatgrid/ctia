@@ -33,8 +33,8 @@
         nb-observables 5
         new-indicators (g/sample nb-indicators NewIndicator)
         indicators     (remove nil?
-                                (map #(test-post "ctia/indicator" %)
-                                     new-indicators))]
+                               (map #(test-post "ctia/indicator" %)
+                                    new-indicators))]
     (when (= (count indicators) nb-indicators)
       (doseq [observable (cons {:value "1.2.3.4" :type "ip"}
                                (take nb-observables

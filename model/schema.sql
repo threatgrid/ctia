@@ -3,6 +3,7 @@ CREATE TABLE judgement
   id varchar PRIMARY KEY,
   disposition integer NOT NULL,
   source varchar NOT NULL,
+  tlp varchar NOT NULL,
   priority int NOT NULL,
   confidence varchar NOT NULL,
   severity int NOT NULL,

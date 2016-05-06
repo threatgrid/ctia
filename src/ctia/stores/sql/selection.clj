@@ -7,6 +7,7 @@
    #(select-keys %
                  [:id
                   :type
+                  :tlp
                   :observable
                   :disposition
                   :disposition_name

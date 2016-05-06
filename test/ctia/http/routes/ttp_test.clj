@@ -36,6 +36,7 @@
       (is (deep=
            {:type "ttp"
             :title "ttp"
+            :tlp "green"
             :description "description"
             :ttp_type "foo"
             :indicators [{:indicator_id "indicator-1"}
@@ -58,6 +59,7 @@
           (is (deep=
                {:type "ttp"
                 :title "ttp"
+                :tlp "green"
                 :description "description"
                 :ttp_type "foo"
                 :indicators [{:indicator_id "indicator-1"}
@@ -81,7 +83,7 @@
                           :ttp_type "bar"
                           :indicators [{:indicator_id "indicator-1"}
                                        {:indicator_id "indicator-2"}]
-                          
+
                           :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                             {:exploit_target_id "exploit-target-234"}]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
@@ -93,11 +95,12 @@
                 :type "ttp"
                 :created (:created ttp)
                 :title "updated ttp"
+                :tlp "green"
                 :description "updated description"
                 :ttp_type "bar"
                 :indicators [{:indicator_id "indicator-1"}
                              {:indicator_id "indicator-2"}]
-                
+
                 :exploit_targets [{:exploit_target_id "exploit-target-123"}
                                   {:exploit_target_id "exploit-target-234"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"

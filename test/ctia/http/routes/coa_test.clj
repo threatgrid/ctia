@@ -33,6 +33,7 @@
            {:type "COA"
             :title "coa"
             :description "description"
+            :tlp "green"
             :coa_type "Eradication"
             :objective ["foo" "bar"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -52,6 +53,7 @@
                {:type "COA"
                 :title "coa"
                 :description "description"
+                :tlp "green"
                 :coa_type "Eradication"
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -68,6 +70,7 @@
               (put (str "ctia/coa/" (:id coa))
                    :body {:title "updated coa"
                           :description "updated description"
+                          :tlp "white"
                           :coa_type "Hardening"
                           :objective ["foo" "bar"]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
@@ -79,6 +82,7 @@
                 :created (:created coa)
                 :title "updated coa"
                 :description "updated description"
+                :tlp "white"
                 :coa_type "Hardening"
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
