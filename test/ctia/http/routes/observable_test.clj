@@ -11,6 +11,7 @@
 
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
+   [ctia.test-helpers.http :refer [api-key test-post test-get-list test-delete]]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]))
@@ -21,50 +22,7 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(def api-key "45c1f5e3f05d0")
-(defn redprintln [& s]
-  (print "\u001b[31m")
-  (apply println s)
-  (print "\u001b[0m"))
-(defn test-post
-  "Helper which test a post request occurs with success and return the right object"
-  [path new-entity]
-  (testing (str "POST " path)
-    (let [resp (post path :body new-entity :headers {"api_key" api-key})]
-      (when (get-in resp [:parsed-body :message])
-        (redprintln (get-in resp [:parsed-body :message])))
-      (when (get-in resp [:parsed-body :errors])
-        (redprintln (get-in resp [:parsed-body :errors])))
-      (is (= 200 (:status resp)))
-      (when (= 200 (:status resp))
-        (is (= (dissoc new-entity :relations)
-               (dissoc (:parsed-body resp) :id :created :modified :owner :relations)))
-        (:parsed-body resp)))))
-
-(defn test-delete
-  "Helper which test a delete request occurs with success"
-  [path]
-  (testing (str "DELETE " path)
-    (let [resp (delete path :headers {"api_key" api-key})]
-      (is (= 204 (:status resp)))
-      (= 204 (:status resp)))))
-
-(defn test-get-list
-  "Helper which test a get request occurs with success and return the right object"
-  [path expected-entity]
-  (testing (str "GET " path)
-    (let [resp (get path :headers {"api_key" api-key})]
-      (when (get-in resp [:parsed-body :message])
-        (redprintln (get-in resp [:parsed-body :message])))
-      (when (get-in resp [:parsed-body :errors])
-        (redprintln (get-in resp [:parsed-body :errors])))
-      (is (= 200 (:status resp)))
-      (when (= 200 (:status resp))
-        (is (= (set expected-entity)
-               (set (:parsed-body resp))))
-        (:parsed-body resp)))))
-
-(deftest-for-each-store test-get-things-by-observable-routes
+(deftest-for-each-store ^:slow test-get-things-by-observable-routes
   "Generate observables.
   Then for each observable, generate judgements, indicators and sightings."
   (helpers/set-capabilities! "foouser" "user" all-capabilities)

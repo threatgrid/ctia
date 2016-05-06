@@ -1,6 +1,7 @@
 (ns ctia.http.routes.indicator-test
   (:refer-clojure :exclude [get])
   (:require
+   [clojure.tools.logging :as log]
    [ring.util.codec :refer [url-encode]]
    [clojure.test :refer [deftest is are testing use-fixtures join-fixtures]]
    [schema-generators.generators :as g]
@@ -8,6 +9,7 @@
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.test-helpers.http :refer [api-key test-post]]
    [ctia.schemas.indicator :refer [NewIndicator StoredIndicator]]
    [ctia.schemas.sighting :refer [NewSighting]]))
 
@@ -199,22 +201,6 @@
                   (map #(dissoc % :id :created :modified :owner))
                   set)))))))
 
-(def api-key "45c1f5e3f05d0")
-(defn redprintln [& s]
-  (print "\u001b[31m")
-  (apply println s)
-  (print "\u001b[0m"))
-(defn test-post [path new-entity]
-  (let [resp (post path :body new-entity :headers {"api_key" api-key})]
-    (when (get-in resp [:parsed-body :message])
-      (redprintln (get-in resp [:parsed-body :message])))
-    (when (get-in resp [:parsed-body :errors])
-      (redprintln (get-in resp [:parsed-body :errors])))
-    (is (= 200 (:status resp)))
-    (when (= 200 (:status resp))
-      (is (= new-entity (dissoc (:parsed-body resp) :id :created :modified :owner)))
-      (:parsed-body resp))))
-
 (deftest-for-each-store test-sightings-from-indicator
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
@@ -222,7 +208,7 @@
         ;; BEWARE ES AS A MAXIMUM TO 10 !!!!!!
         nb-sightings 10]
     (if (> nb-sightings ctia.lib.es.document/default-limit)
-      (redprintln
+      (log/error
        "BEWARE! ES Couldn't handle more than 10 element by search by default."
        "It is set to " ctia.lib.es.document/default-limit " in `lib.es.document.clj`"
        "You might want to change either `nb-sightings` in this test"

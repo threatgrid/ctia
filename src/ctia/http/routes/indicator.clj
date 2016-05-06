@@ -92,12 +92,6 @@
       :summary "Gets all Sightings associated with the Indicator"
       (if-let [indicator (read-indicator @indicator-store id)]
         (if-let [sightings (list-sightings-by-indicators @sighting-store [indicator])]
-          ;; (do
-          ;;   (println (str \u001b "[33m" (with-out-str (clojure.pprint/pprint indicator)) \u001b "[0m"))
-          ;;   (println (str \u001b "[34m" (with-out-str (clojure.pprint/pprint sightings)) \u001b "[0m"))
-          ;;   (try (s/validate [StoredSighting] sightings)
-          ;;        (catch Exception e
-          ;;          (println (str \u001b "[31m" (pr-str e) \u001b "[0m")))))
           (ok sightings)
           (not-found))
         (not-found)))
