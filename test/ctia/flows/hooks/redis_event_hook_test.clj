@@ -9,6 +9,7 @@
 (use-fixtures :once test-helpers/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
+                                    test-helpers/fixture-properties:atom-store
                                     test-helpers/fixture-properties:redis-hook
                                     test-helpers/fixture-ctia
                                     test-helpers/fixture-allow-all-auth]))
