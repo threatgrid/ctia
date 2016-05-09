@@ -50,6 +50,7 @@
             :title "indicator-title"
             :description "description"
             :producer "producer"
+            :tlp "green"
             :indicator_type ["C2" "IP Watchlist"]
             :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -79,6 +80,7 @@
                 :title "indicator-title"
                 :description "description"
                 :producer "producer"
+                :tlp "green"
                 :indicator_type ["C2" "IP Watchlist"]
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -110,6 +112,7 @@
                  :title "indicator-title"
                  :description "description"
                  :producer "producer"
+                 :tlp "green"
                  :indicator_type ["C2" "IP Watchlist"]
                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -133,6 +136,7 @@
                    :body {:title "updated indicator"
                           :description "updated description"
                           :producer "producer"
+                          :tlp "yellow"
                           :indicator_type ["IP Watchlist"]
                           :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}
@@ -155,6 +159,7 @@
                 :title "updated indicator"
                 :description "updated description"
                 :producer "producer"
+                :tlp "yellow"
                 :indicator_type ["IP Watchlist"]
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}

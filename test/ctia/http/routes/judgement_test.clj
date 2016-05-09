@@ -48,6 +48,7 @@
             :severity 100
             :confidence "Low"
             :source "test"
+            :tlp "green"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :indicators [{:confidence "High"
@@ -74,6 +75,7 @@
                 :severity 100
                 :confidence "Low"
                 :source "test"
+                :tlp "green"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -102,6 +104,7 @@
                 :severity 100
                 :confidence "Low"
                 :source "test"
+                :tlp "green"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -169,7 +172,8 @@
                 :judgement (:id judgement),
                 :feedback -1,
                 :reason "false positive"
-                :owner "foouser"}
+                :owner "foouser"
+                :tlp "green"}
                (dissoc feedback
                        :id
                        :created))))
@@ -202,12 +206,14 @@
                     :judgement (:id judgement),
                     :feedback -1,
                     :reason "false positive"
-                    :owner "foouser"}
+                    :owner "foouser"
+                    :tlp "green"}
                    {:type "feedback"
                     :judgement (:id judgement),
                     :feedback 1,
                     :reason "true positive"
-                    :owner "foouser"}}
+                    :owner "foouser"
+                    :tlp "green"}}
                  (set (map #(dissoc % :id :created)
                            feedbacks))))))))))
 
@@ -238,6 +244,7 @@
             :priority 100
             :severity 100
             :confidence "Low"
+            :tlp "green"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -268,6 +275,7 @@
             :priority 100
             :severity 100
             :confidence "Low"
+            :tlp "green"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -297,6 +305,7 @@
             :priority 100
             :severity 100
             :confidence "Low"
+            :tlp "green"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}

@@ -1,9 +1,10 @@
 (ns ctia.schemas.feedback
   (:require [ctia.lib.time :as time]
-            [ctia.schemas.common :as c]
-            [ctia.schemas.relationships :as rel]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+            [ctia.schemas
+             [common :as c]
+             [relationships :as rel]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (s/defschema Feedback
   "Feedback on a Judgement or Verdict.  Is it wrong?  If so why?  Was
@@ -12,7 +13,8 @@
    :judgement rel/JudgementReference
    (s/optional-key :source) s/Str
    :feedback (s/enum -1 0 1)
-   :reason s/Str})
+   :reason s/Str
+   :tlp c/TLP})
 
 (s/defschema Type
   (s/enum "feedback"))
@@ -23,7 +25,9 @@
    (st/dissoc Feedback
               :id
               :judgement)
-   {(s/optional-key :type) Type}))
+   (st/optional-keys
+    {:type Type
+     :tlp c/TLP})))
 
 (s/defschema StoredFeedback
   "A feedback record at rest in the storage service"
@@ -42,4 +46,5 @@
          :type "feedback"
          :created (time/now)
          :owner login
+         :tlp (:tlp new-feedback c/default-tlp)
          :judgement judgement-id))

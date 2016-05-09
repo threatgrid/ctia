@@ -10,7 +10,8 @@
 (s/defschema COA
   (merge
    c/GenericStixIdentifiers
-   {:valid_time c/ValidTime}
+   {:valid_time c/ValidTime
+    :tlp c/TLP}
    (st/optional-keys
     {:stage (describe
              v/COAStage
@@ -45,7 +46,8 @@
    (st/dissoc COA :id :valid_time)
    (st/optional-keys
     {:valid_time c/ValidTime
-     :type (s/enum "COA")})))
+     :type (s/enum "COA")
+     :tlp c/TLP})))
 
 (s/defschema StoredCOA
   "An coa as stored in the data store"

@@ -40,6 +40,7 @@
            {:type "incident"
             :title "incident"
             :description "description"
+            :tlp "green"
             :confidence "High"
             :categories ["Denial of Service"
                          "Improper Usage"]
@@ -67,6 +68,7 @@
                {:type "incident"
                 :title "incident"
                 :description "description"
+                :tlp "green"
                 :confidence "High"
                 :categories ["Denial of Service"
                              "Improper Usage"]
@@ -90,6 +92,7 @@
               (put (str "ctia/incident/" (:id incident))
                    :body {:title "updated incident"
                           :description "updated description"
+                          :tlp "green"
                           :confidence "Low"
                           :categories ["Denial of Service"
                                        "Improper Usage"]
@@ -108,6 +111,7 @@
                 :created (:created incident)
                 :title "updated incident"
                 :description "updated description"
+                :tlp "green"
                 :confidence "Low"
                 :categories ["Denial of Service"
                              "Improper Usage"]
