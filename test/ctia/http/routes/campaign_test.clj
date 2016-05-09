@@ -7,8 +7,7 @@
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]
-   ))
+   [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -24,6 +23,7 @@
     (let [response (post "ctia/campaign"
                          :body {:title "campaign"
                                 :description "description"
+                                :tlp "red"
                                 :campaign_type "anything goes here"
                                 :intended_effect ["Theft"]
                                 :indicators [{:indicator_id "indicator-foo"}
@@ -49,6 +49,7 @@
            {:type "campaign"
             :title "campaign"
             :description "description"
+            :tlp "red"
             :campaign_type "anything goes here"
             :intended_effect ["Theft"]
             :indicators [{:indicator_id "indicator-foo"}
@@ -82,6 +83,7 @@
                {:type "campaign"
                 :title "campaign"
                 :description "description"
+                :tlp "red"
                 :campaign_type "anything goes here"
                 :intended_effect ["Theft"]
                 :indicators [{:indicator_id "indicator-foo"}
@@ -110,6 +112,7 @@
         (let [response (put (str "ctia/campaign/" (:id campaign))
                             :body {:title "modified campaign"
                                    :description "different description"
+                                   :tlp "yellow"
                                    :campaign_type "anything goes here"
                                    :intended_effect ["Brand Damage"]
                                    :indicators [{:indicator_id "indicator-foo"}
@@ -137,6 +140,7 @@
                 :created (:created campaign)
                 :title "modified campaign"
                 :description "different description"
+                :tlp "yellow"
                 :campaign_type "anything goes here"
                 :intended_effect ["Brand Damage"]
                 :indicators [{:indicator_id "indicator-foo"}

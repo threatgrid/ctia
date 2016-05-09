@@ -2,6 +2,7 @@
   (:require
    [schema.core :as s]
    [ctia.stores.es.crud :as crud]
+   [ctia.stores.es.query :refer [sightings-by-observables-query]]
    [ctia.schemas.sighting :refer [Sighting
                                   NewSighting
                                   StoredSighting
@@ -20,12 +21,16 @@
 
 (defn handle-list-sightings-by-indicators
   [state indicators params]
-  (let [sighting-ids (->> indicators
-                          (mapcat :sightings)
-                          (map :sighting_id))]
-    (search-docs (:conn state)
-                 (:index state)
-                 mapping
-                 {:type "sighting"
-                  :id sighting-ids}
-                 params)))
+  (let [indicator-ids (mapv :id indicators)]
+    (handle-list-sightings state {:type "sighting"
+                                  [:indicators :indicator_id]
+                                  indicator-ids} params)))
+
+(defn handle-list-sightings-by-observables
+  [{:keys [conn index]}  observables params]
+
+  (search-docs conn
+               index
+               mapping
+               nil
+               (assoc params :query (sightings-by-observables-query observables))))

@@ -31,7 +31,8 @@
     :priority Priority
     :confidence v/HighMedLow
     :severity Severity
-    :valid_time c/ValidTime}
+    :valid_time c/ValidTime
+    :tlp c/TLP}
    (st/optional-keys
     {:reason s/Str
      :source_uri c/URI
@@ -53,7 +54,8 @@
     {:disposition c/DispositionNumber
      :disposition_name c/DispositionName
      :valid_time c/ValidTime
-     :type Type})))
+     :type Type
+     :tlp c/TLP})))
 
 (s/defschema StoredJudgement
   "A judgement as stored in the data store"
@@ -76,6 +78,7 @@
            :disposition_name disposition_name
            :owner login
            :created now
+           :tlp (:tlp new-judgement c/default-tlp)
            :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
                                       time/default-expire-date)
                         :start_time (or (get-in new-judgement [:valid_time :start_time])

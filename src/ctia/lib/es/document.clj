@@ -7,6 +7,8 @@
    [clojurewerkz.elastisch.native.response :as native-response]
    [clojurewerkz.elastisch.rest.response :as rest-response]))
 
+(def default-limit 1000)
+
 (defn native-conn? [conn]
   (not (:uri conn)))
 
@@ -86,7 +88,8 @@
     conn
     index-name
     mapping
-    id)))
+    id
+    :refresh true)))
 
 (defn params->pagination
   [{:keys [sort_by sort_order offset limit]

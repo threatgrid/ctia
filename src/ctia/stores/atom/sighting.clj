@@ -1,11 +1,12 @@
 (ns ctia.stores.atom.sighting
-  (:require
-   [ctia.schemas
-    [indicator :refer [StoredIndicator]]
-    [sighting :refer [StoredSighting]]]
-   [ctia.stores.atom.common :as mc]
-   [ctia.lib.pagination :refer [list-response-schema]]
-   [schema.core :as s]))
+(:require [ctia.schemas.indicator :refer [StoredIndicator]]
+            [ctia.schemas.sighting
+             :refer [NewSighting StoredSighting realize-sighting]]
+            [ctia.store :refer [ISightingStore]]
+            [ctia.stores.atom.common :as mc]
+            [ctia.lib.pagination :refer [list-response-schema]]
+            [schema.core :as s]
+            [ctia.schemas.common :as c]))
 
 (def handle-create-sighting (mc/create-handler-from-realized StoredSighting))
 (def handle-read-sighting (mc/read-handler StoredSighting))
@@ -17,11 +18,15 @@
   [sightings-state :- (s/atom {s/Str StoredSighting})
    indicators :- (s/maybe [StoredIndicator])
    params]
-  ;; Find sightings using the :sightings relationship on indicators
-  (let [sighting-ids (->> indicators
-                          (map :sightings)
-                          flatten
-                          (map :sighting_id)
-                          set)]
 
-    (handle-list-sightings sightings-state {:id sighting-ids} params)))
+  (let [indicators-set (set (map (fn [ind] {:indicator_id (:id ind)})
+                                 indicators))]
+    (handle-list-sightings sightings-state
+                           {:indicators indicators-set} params)))
+
+(s/defn handle-list-sightings-by-observables :- (list-response-schema StoredSighting)
+  [sightings-state :- (s/atom {s/Str StoredSighting})
+   observables :- (s/maybe [c/Observable])
+   params]
+  (handle-list-sightings sightings-state
+                         {:observables (set observables)} params))

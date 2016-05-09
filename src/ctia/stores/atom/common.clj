@@ -1,10 +1,15 @@
 (ns ctia.stores.atom.common
+  (:import java.util.UUID)
   (:require [ctia.schemas.common :as c]
             [schema.core :as s]
             [clojure.set :as set]
             [ctia.lib.pagination :refer [default-limit
                                          list-response-schema
                                          response]]))
+
+(defn random-id [prefix]
+  (fn [_new-entity_]
+    (str prefix "-" (UUID/randomUUID))))
 
 (defn read-handler [Model]
   (s/fn :- (s/maybe Model)
@@ -39,7 +44,6 @@
           true)
       false)))
 
-;;borrowed from yann's upcoming PR ;-)
 (defn- match? [v1 v2]
   (cond
     (or (and (coll? v1) (empty? v1)) (and (coll? v2) (empty? v2))) false
@@ -49,6 +53,29 @@
     :else (= v1 v2)))
 
 (defn- filter-state [state filter-map]
+  "Mostly work like MongoDB find():
+
+    - `{:a value}` will match all objects such that the
+      `:a` field is equal to `value`
+    - `{[:a :b] value}` will match all objects such that
+      `(= value (get-in object [:a :b]))`
+    - `{:a #{v1 v2 v3}}` will match all objects such that
+      `:a` field is either equal to `v1`, `v2` or `v3`.
+    - `{[:a :b] #{v1 v2 v3}}` will match all objects such that
+      `(get-in object [:a :b])` is equal to `v1`, `v2` or `v3`
+
+    - if in the model `:a` links to a sequential value then:
+        - `{:a value}` will match all objects s.t. `(contains? (:a object) value)`
+           For example: if the object is `{:a [:foo :bar :baz]}`
+           and we search for `{:a :foo}`, it will match.
+        - `{:a #{v1 v2 v3}}` will match if the intersection is not empty
+           For example: if object is `{:a [:foo :bar :baz]}`
+           and we search for `{:a #{:quux :foo}}` it will match
+           as both the search set and the collection `(:a object)`
+           contains `:foo`
+        - Of course it still works as expected if the key is a list:
+          `{[:a :b] #{v1 v2 v3}}`. "
+
   (when-not (empty? filter-map)
     (into []
           (filter (fn [model]

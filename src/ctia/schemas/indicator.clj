@@ -1,11 +1,11 @@
 (ns ctia.schemas.indicator
-  (:require [ctia.lib.time :as time]
-            [ctia.schemas.common :as c]
-            [ctia.schemas.relationships :as rel]
-            [ctia.schemas.vocabularies :as v]
-            [schema.core :as s]
+  (:require [ctia.schemas
+             [common :as c]
+             [relationships :as rel]
+             [vocabularies :as v]]
             [ring.swagger.schema :refer [describe]]
-            [schema-tools.core :as st]))
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (s/defschema JudgementSpecification
   "An indicator based on a list of judgements.  If any of the
@@ -47,7 +47,8 @@
   "See http://stixproject.github.io/data-model/1.2/indicator/IndicatorType/"
   (st/merge
    c/GenericStixIdentifiers
-   {:valid_time c/ValidTime}
+   {:valid_time c/ValidTime
+    :tlp c/TLP}
    (st/optional-keys
     {:alternate_ids (describe [s/Str] "alternative identifier (or alias)")
      :version (describe s/Str "schema version for this content")
@@ -70,7 +71,6 @@
      :confidence (describe
                   v/HighMedLow
                   "level of confidence held in the accuracy of this Indicator")
-     :sightings (describe rel/RelatedSightings "a set of sighting reports")
      :related_indicators (describe
                           rel/RelatedIndicators
                           (str "relationship between the enclosing indicator and"
@@ -109,8 +109,10 @@
    (st/dissoc Indicator
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime
-    (s/optional-key :type) Type}))
+   (st/optional-keys
+    {:valid_time c/ValidTime
+     :type Type
+     :tlp c/TLP})))
 
 (s/defschema StoredIndicator
   "An indicator as stored in the data store"

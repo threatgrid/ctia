@@ -23,6 +23,7 @@
      :associated_campaigns rel/RelatedCampaigns
      :associated_actors rel/RelatedActors
      :confidence v/HighMedLow
+     :tlp c/TLP
      ;; Not provided: handling
      ;; Not provided: related_packages (deprecated)
      })))
@@ -35,9 +36,12 @@
   (st/merge
    (st/dissoc Actor
               :id
-              :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime
-    (s/optional-key :type) Type}))
+              :valid_time
+              :tlp)
+   (st/optional-keys
+    {:valid_time c/ValidTime
+     :type Type
+     :tlp c/TLP})))
 
 (s/defschema StoredActor
   "An actor as stored in the data store"

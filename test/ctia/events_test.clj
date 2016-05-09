@@ -1,6 +1,6 @@
 (ns ctia.events-test
-  (:require [ctia.events :as c :refer :all]
-            [ctia.stores.redis.store :as redis-store]
+  (:require [ctia.events :as e]
+            [ctia.events.obj-to-event :as o2e]
             [ctia.lib.async :as la]
             [ctia.test-helpers.core :as helpers]
             [clojure.test :as t :refer :all]
@@ -14,72 +14,88 @@
 
 (deftest test-send-event
   "Tests the basic action of sending an event"
-  (let [{b :chan-buf c :chan m :mult :as ec} (la/new-event-channel)
+  (let [{b :chan-buf c :chan m :mult :as ec} (la/new-channel)
         output (chan)]
     (tap m output)
-    (send-create-event ec "tester" {} "TestModelType" {:data 1})
-    (send-create-event ec "tester" {} "TestModelType" {:data 2})
-    (is (thrown? AssertionError
-                 (send-event ec {:http-params {}})))
-    (send-event ec {:owner "tester" :http-params {} :data 3})
+    (e/send-event ec (o2e/to-create-event
+                      {:owner "tester"
+                       :id "test-1"
+                       :type :test
+                       :data 1}))
+    (e/send-event ec (o2e/to-create-event
+                      {:owner "tester"
+                       :id "test-2"
+                       :type :test
+                       :data 2}))
+    (e/send-event ec (o2e/to-create-event
+                      {:owner "tester"
+                       :id "test-3"
+                       :type :test
+                       :data 3}))
     (is (= 1 (-> (<!! output) :entity :data)))
     (is (= 2 (-> (<!! output) :entity :data)))
-    (is (= 3 (-> (<!! output) :data)))))
+    (is (= 3 (-> (<!! output) :entity :data)))))
 
 (deftest test-central-events
   "Tests the basic action of sending an event to the central channel"
-  (let [{b :chan-buf c :chan m :mult} @central-channel
+  (let [{b :chan-buf c :chan m :mult} @e/central-channel
         output (chan)]
     (tap m output)
-    (send-create-event "tester" {} "TestModelType" {:data 1})
-    (send-create-event "tester" {} "TestModelType" {:data 2})
-    (send-event {:owner "tester" :http-params {} :data 3})
+    (e/send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-1"
+                    :type :test
+                    :data 1}))
+    (e/send-event (o2e/to-create-event
+                   {:owner "teseter"
+                    :id "test-2"
+                    :type :test
+                    :data 2}))
     (is (= 1 (-> (<!! output) :entity :data)))
     (is (= 2 (-> (<!! output) :entity :data)))
-    (is (= 3 (-> (<!! output) :data)))
     (is (nil? (poll! output)))))
-
-(deftest test-updated-model
-  "Tests the update-model function"
-  (let [{b :chan-buf c :chan m :mult} @central-channel
-        output (chan)]
-    (tap m output)
-    (send-updated-model "tester" {"User-Agent" "clojure"} [[:f1 "delete" {"x" "y"}][:f2 "assert" {"x" "y"}]])
-    (is (= :f1 (-> (<!! output) :fields ffirst)))))
-
-(deftest test-deleted-model
-  "Tests the deleted-model function"
-  (let [{b :chan-buf c :chan m :mult} @central-channel
-        output (chan)]
-    (tap m output)
-    (send-deleted-model "tester" {"User-Agent" "clojure"} "42")
-    (is (= "42" (-> (<!! output) :id)))))
-
-(deftest test-verdict-change
-  "Tests the verdict change function"
-  (let [{b :chan-buf c :chan m :mult} @central-channel
-        output (chan)]
-    (tap m output)
-    (send-verdict-change "tester" {"User-Agent" "clojure"} "7" {:type "verdict"
-                                                                :disposition 2})
-    (let [v (<!! output)]
-      (is (= "7" (-> v :judgement_id)))
-      (is (= 2 (-> v :verdict :disposition))))))
 
 (deftest test-recents
   "Tests that the sliding window works, and is repeatable"
-  (binding [la/*event-buffer-size* 3]
-    (c/shutdown!)
-    (redis-store/shutdown!)
-    (c/init!)
-    (send-create-event "tester" {} "TestModelType" {:id "1"})
-    (send-create-event "tester" {} "TestModelType" {:id "2"})
-    (send-create-event "tester" {} "TestModelType" {:id "3"})
+  (binding [la/*channel-buffer-size* 3]
+    (e/shutdown!)
+    (e/init!)
+    (e/send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-1"
+                    :type :test
+                    :data 1}))
+    (e/send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-2"
+                    :type :test
+                    :data 2}))
+    (e/send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-2"
+                    :type :test
+                    :data 3}))
     (Thread/sleep 100)
-    (is (= ["1" "2" "3"] (map (comp :id :entity) (recent-events))))
-    (send-create-event "tester" {} "TestModelType" {:id "4"})
-    (send-create-event "tester" {} "TestModelType" {:id "5"})
-    (send-create-event "tester" {} "TestModelType" {:id "6"})
-    (send-create-event "tester" {} "TestModelType" {:id "7"})
+    (is (= [1 2 3] (map (comp :data :entity) (e/recent-events))))
+    (e/send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-4"
+                    :type :test
+                    :data 4}))
+    (e/send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-5"
+                    :type :test
+                    :data 5}))
+    (e/send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-6"
+                    :type :test
+                    :data 6}))
+    (e/send-event (o2e/to-create-event
+                   {:owner "tester"
+                    :id "test-7"
+                    :type :test
+                    :data 7}))
     (Thread/sleep 100)
-    (is (= ["5" "6" "7"] (map (comp :id :entity) (recent-events))))))
+    (is (= [5 6 7] (map (comp :data :entity) (e/recent-events))))))

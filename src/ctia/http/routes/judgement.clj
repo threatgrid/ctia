@@ -28,9 +28,9 @@
       :login login
       (ok (flows/create-flow :realize-fn realize-judgement
                              :store-fn #(create-judgement @judgement-store %)
-                             :object-type :judgement
+                             :entity-type :judgement
                              :login login
-                             :object judgement)))
+                             :entity judgement)))
     (POST "/:judgement-id/feedback" []
       :tags ["Feedback"]
       :return StoredFeedback
@@ -42,9 +42,9 @@
       :login login
       (ok (flows/create-flow :realize-fn #(realize-feedback %1 %2 %3 judgement-id)
                              :store-fn #(create-feedback @feedback-store %)
-                             :object-type :feedback
+                             :entity-type :feedback
                              :login login
-                             :object feedback)))
+                             :entity feedback)))
     (GET "/:judgement-id/feedback" []
       :tags ["Feedback"]
       :return (s/maybe [StoredFeedback])
@@ -83,9 +83,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Deletes a Judgement"
       :capabilities #{:delete-judgement :admin}
+      :login login
       (if (flows/delete-flow :get-fn #(read-judgement @judgement-store %)
                              :delete-fn #(delete-judgement @judgement-store %)
-                             :object-type :judgement
-                             :id id)
+                             :entity-type :judgement
+                             :id id
+                             :login login)
         (no-content)
         (not-found)))))

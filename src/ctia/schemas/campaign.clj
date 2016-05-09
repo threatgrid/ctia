@@ -1,11 +1,11 @@
 (ns ctia.schemas.campaign
-  (:require [ctia.lib.time :as time]
-            [ctia.schemas.common :as c]
-            [ctia.schemas.relationships :as rel]
-            [ctia.schemas.vocabularies :as v]
-            [schema.core :as s]
+  (:require [ctia.schemas
+             [common :as c]
+             [relationships :as rel]
+             [vocabularies :as v]]
             [ring.swagger.schema :refer [describe]]
-            [schema-tools.core :as st]))
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (s/defschema Campaign
   "See http://stixproject.github.io/data-model/1.2/campaign/CampaignType/"
@@ -16,7 +16,8 @@
                  "timestamp for the definition of a specific version of a Campaign")
     ;; Extension fields:
     :campaign_type  s/Str
-    :indicators rel/RelatedIndicators}
+    :indicators rel/RelatedIndicators
+    :tlp c/TLP}
    (st/optional-keys
     {:version (describe s/Str "schema version for this content")
      :names (describe [s/Str] "Names used to identify this Campaign")
@@ -60,8 +61,10 @@
    (st/dissoc Campaign
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime
-    (s/optional-key :type) Type}))
+   (st/optional-keys
+    {:valid_time c/ValidTime
+     :type Type
+     :tlp c/TLP})))
 
 
 (s/defschema StoredCampaign

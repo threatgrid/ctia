@@ -2,13 +2,18 @@
   (:refer-clojure :exclude [get])
   (:require
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+   [clojure.test.check.clojure-test :refer [defspec]]
+   [clojure.test.check.generators :as gen]
+   [clojure.test.check.properties :as prop]
    [schema-generators.generators :as g]
+   [schema-tools.core :as st]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
    [ctia.schemas.sighting  :refer [NewSighting
-                                   StoredSighting]]))
+                                   StoredSighting
+                                   check-new-sighting]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -16,112 +21,103 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+(def api-key "45c1f5e3f05d0")
+
+(defn new-from-stored [m]
+  (dissoc m :id :created :modified :owner))
+
 (deftest-for-each-store test-sighting-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (doseq [new-sighting (g/sample 1 (st/dissoc NewSighting :relations))]
+    (testing "POST /ctia/sighting"
+      (let [{status :status
+             sighting :parsed-body
+             :as response}
+            (post "ctia/sighting"
+                  :body new-sighting
+                  :headers {"api_key" api-key})]
+        (is (= 200 status))
+        (is (= new-sighting (new-from-stored sighting)))
 
-  (testing "POST /ctia/sighting"
-    (let [{status :status
-           sighting :parsed-body
-           :as response}
-          (post "ctia/sighting"
-                :body {:timestamp "2016-05-11T00:40:48.212-00:00"
-                       :source "source"
-                       :reference "http://example.com/123"
-                       :confidence "High"
-                       :description "description"
-                       :related_judgements [{:judgement_id "judgement-123"}
-                                            {:judgement_id "judgement-234"}]}
-                :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 200 status))
-      (is (deep=
-           {:type "sighting"
-            :timestamp #inst "2016-05-11T00:40:48.212-00:00"
-            :source "source"
-            :reference "http://example.com/123"
-            :confidence "High"
-            :description "description"
-            :related_judgements [{:judgement_id "judgement-123"}
-                                 {:judgement_id "judgement-234"}]
-            :owner "foouser"}
-           (dissoc sighting
-                   :id
-                   :created
-                   :modified)))
+        (testing "GET /ctia/sighting/:id"
+          (let [{status :status
+                 sighting :parsed-body}
+                (get (str "ctia/sighting/" (:id sighting))
+                     :headers {"api_key" api-key})]
+            (is (= 200 status))
+            (is (= new-sighting (new-from-stored sighting)))))
 
-      (testing "GET /ctia/sighting/:id"
-        (let [{status :status
-               sighting :parsed-body}
-              (get (str "ctia/sighting/" (:id sighting))
-                   :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 200 status))
-          (is (deep=
-               {:type "sighting"
-                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
-                :source "source"
-                :reference "http://example.com/123"
-                :confidence "High"
-                :description "description"
-                :related_judgements [{:judgement_id "judgement-123"}
-                                     {:judgement_id "judgement-234"}]
-                :owner "foouser"}
-               (dissoc sighting
-                       :id
-                       :created
-                       :modified)))))
+        (let [another-new-sighting (first (g/sample 1 (st/dissoc NewSighting :relations)))]
+          (testing "PUT /ctia/sighting/:id"
+            (let [{status :status
+                   updated-sighting :parsed-body}
+                  (put (str "ctia/sighting/" (:id sighting))
+                       :body another-new-sighting
+                       :headers {"api_key" api-key})]
+              (is (= 200 status))
+              (is (deep=
+                   another-new-sighting
+                   (new-from-stored updated-sighting))))))
 
-      (testing "PUT /ctia/sighting/:id"
-        (let [{status :status
-               updated-sighting :parsed-body}
-              (put (str "ctia/sighting/" (:id sighting))
-                   :body {:timestamp "2016-05-11T00:40:48.212-00:00"
-                          :source "updated source"
-                          :reference "http://example.com/123"
-                          :confidence "Medium"
-                          :description "updated description"
-                          :related_judgements [{:judgement_id "judgement-123"}
-                                               {:judgement_id "judgement-234"}]}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 200 status))
-          (is (deep=
-               {:type "sighting"
-                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
-                :source "updated source"
-                :reference "http://example.com/123"
-                :confidence "Medium"
-                :description "updated description"
-                :related_judgements [{:judgement_id "judgement-123"}
-                                     {:judgement_id "judgement-234"}]
-                :owner "foouser"}
-               (dissoc updated-sighting
-                       :id
-                       :created
-                       :modified)))))
+        (testing "DELETE /ctia/sighting/:id"
+          (let [{status :status} (delete (str "ctia/sighting/" (:id sighting))
+                                         :headers {"api_key" api-key})]
+            (is (= 204 status))
+            (let [{status :status} (get (str "ctia/sighting/" (:id sighting))
+                                        :headers {"api_key" api-key})]
+              (is (= 404 status)))))))))
 
-      (testing "DELETE /ctia/sighting/:id"
-        (let [{status :status} (delete (str "ctia/sighting/" (:id sighting))
-                                       :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 204 status))
-          (let [{status :status} (get (str "ctia/sighting/" (:id sighting))
-                                      :headers {"api_key" "45c1f5e3f05d0"})]
-            (is (= 404 status))))))))
+;; Should use fixtures, need refactoring
+;;
+;; (defspec sighting-without-any-observable-or-indicator-is-rejected
+;;   20
+;;   (prop/for-all [new-sighting (gen/fmap
+;;                                #(assoc % :observables [] :indicators [])
+;;                                (g/generator NewSighting))]
+;;     (= 422
+;;        (:status (post "ctia/sighting"
+;;                       :body new-sighting
+;;                       :headers {"api_key" api-key})))))
 
-(deftest-for-each-store test-sighting-routes-generative
+(deftest-for-each-store ^:slow sighting-creation-without-any-observable-or-indicator-is-rejected
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (testing "Creation of sighting without obserable or indicator are rejected"
+    (reduce (fn [_ new-sighting]
+              (let [resp (post "ctia/sighting"
+                               :body new-sighting
+                               :headers {"api_key" api-key})
+                    res (= 422 (:status resp))]
+                (if res
+                  (is (= 422 (:status resp)))
+                  (reduced
+                   (is (= 422 (:status resp)))))))
+            (->> (g/sample 20 (st/dissoc NewSighting
+                                         :relations))
+                 (map #(assoc % :observables [] :indicators []))))))
 
-  (let [new-sightings (g/sample 20 NewSighting)]
-    (testing "POST /ctia/sighting GET /ctia/sighting"
-      (let [responses (map #(post "ctia/sighting"
-                                  :body %
-                                  :headers {"api_key" "45c1f5e3f05d0"}) new-sightings)]
-        (doall (map #(is (= 200 (:status %))) responses))
-        (is (deep=
-             (set new-sightings)
-             (->> responses
-                  (map :parsed-body)
-                  (map #(get (str "ctia/sighting/" (:id %))
-                             :headers {"api_key" "45c1f5e3f05d0"}))
-                  (map :parsed-body)
-                  (map #(dissoc % :id :created :modified :owner))
-                  set)))))))
+(deftest-for-each-store ^:slow sighting-update-without-any-observable-or-indicator-is-rejected
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (testing "Update of sighting without obserable or indicator are rejected"
+    (reduce (fn [_ new-sighting]
+              (let [created-resp (post "ctia/sighting"
+                                       :body new-sighting
+                                       :headers {"api_key" api-key})
+                    sig-id (get-in created-resp [:parsed-body :id])
+                    resp (put (str "ctia/sighting/" sig-id)
+                              :body (assoc (g/generate (st/dissoc NewSighting
+                                                                  :relations))
+                                           :observables []
+                                           :indicators [])
+                              :headers {"api_key" api-key})
+                    res (= 422 (:status resp))]
+                (when (= 200 (:status created-resp))
+                  (if res
+                    (is (= 422 (:status resp)))
+                    (reduced
+                     (is (= 422 (:status resp))))))))
+            (filter check-new-sighting
+                    (g/sample 25 (st/dissoc NewSighting
+                                            :relations))))))

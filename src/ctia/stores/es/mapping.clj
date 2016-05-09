@@ -280,6 +280,7 @@
     :properties
     {:id string
      :type string
+     :tlp string
      :observable observable
      :disposition {:type "long"}
      :disposition_name string
@@ -303,6 +304,7 @@
     :properties
     {:id string
      :type string
+     :tlp string
      :judgement string
      :source string
      :feedback {:type "integer"}
@@ -318,6 +320,7 @@
     :properties
     {:id string
      :type string
+     :tlp string
      :short_description all_text
      :valid_time valid-time
      :title all_string
@@ -359,6 +362,8 @@
      :description all_text
      :short_description all_text
      :type string
+     :tlp string
+     :ttp string
      :valid_time valid-time
      :version string
      :intended_effect string
@@ -382,6 +387,7 @@
     :properties
     {:id all_string
      :title all_string
+     :tlp string
      :description all_text
      :short_description all_text
      :type string
@@ -408,6 +414,7 @@
     :properties
     {:id all_string
      :type string
+     :tlp string
      :title all_string
      :description all_text
      :version string
@@ -436,6 +443,7 @@
     :properties
     {:id all_string
      :type string
+     :tlp string
      :title all_string
      :description all_text
      :short_description all_text
@@ -459,6 +467,7 @@
     :properties
     {:id all_string
      :type string
+     :tlp string
      :title all_string
      :description all_text
      :short_description all_text
@@ -498,6 +507,7 @@
     :properties
     {:id all_string
      :type string
+     :tlp string
      :title all_string
      :description all_text
      :short_description all_text
@@ -523,21 +533,38 @@
      :capabilities string
      :login string}}})
 
+(def observed-relation
+  {:dynamic "strict"
+   :properties
+   {:id string
+    :timestamp ts
+    :origin string
+    :origin_uri string
+    :relation string
+    :relation_info {:type "object"
+                    :include_in_all false
+                    :dynamic true}
+    :source observable
+    :related observable}})
+
 (def sighting-mapping
   {"sighting"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :type string
-     :description all_text
+    {:type string
+     :id all_string
      :timestamp ts
+     :description all_text
+     :tlp string
      :source string
+     :source_uri string
+     :source_device string
      :reference string
      :confidence string
-     :related_judgements related-judgements
-     :related_observables observable
-     :indicator related-indicators
+     :observables (assoc observable :type "nested")
+     :indicators related-indicators
+     :relations observed-relation
      :owner string
      :created ts
      :modified ts}}})

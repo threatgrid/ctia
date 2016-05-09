@@ -11,14 +11,11 @@
             [ctia.store :as store]
             [ctia.stores.atom.store :as as]
             [ctia.stores.es.store :as es-store]
-            [ctia.stores.redis.store :as redis-store]
             [ctia.stores.sql.store :as ss]
             [ctia.stores.sql.db :as sql-store]
             [ctia.stores.sql.judgement :as sql-judgement]
-            [ctia.flows.autoload :refer [autoload-hooks!]]
             [ctia.flows.hooks :as h]
             [ctia.events :as e]
-            [ctia.flows.hooks.event-hook :as event-hook]
             [ring.adapter.jetty :as jetty]))
 
 (defn init-auth-service! []
@@ -118,19 +115,6 @@
         (reset! store-atom nil)
         (reset! store-atom (builder factory))))))
 
-(defn init-hooks!
-  "Load all the hooks, init them and assure to
-  call `destroy` on all hooks when shutting down."
-  []
-  (doseq [hook-type [:before-create-ro
-                     :before-update-ro
-                     :before-delete-ro]]
-    #(h/add-hook! % event-hook/ESEventProducerHook))
-  ;; this is breaking everything
-  ;;(autoload-hooks!)
-  (h/init-hooks!)
-  (h/add-destroy-hooks-hook-at-shutdown))
-
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
   [& {:keys [join? silent?]}]
@@ -140,7 +124,7 @@
   (e/init!)
   (init-auth-service!)
   (init-store-service!)
-  (init-hooks!)
+  (h/init!)
 
   ;; Start nREPL server
   (let [{nrepl-port :port

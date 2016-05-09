@@ -7,7 +7,7 @@
 
 (s/defn log-channel :- Channel
   "Logging an event channel indefinitely. Returns the channel for a go loop that never ends."
-  [{m :mult :as ev} :- la/EventChannel]
+  [{m :mult :as ev} :- la/ChannelData]
   (let [events (chan)]
     (tap m events)
     (let [ch (go-loop []
