@@ -14,7 +14,7 @@
 
 (deftest test-send-event
   "Tests the basic action of sending an event"
-  (let [{b :chan-buf c :chan m :mult :as ec} (la/new-event-channel)
+  (let [{b :chan-buf c :chan m :mult :as ec} (la/new-channel)
         output (chan)]
     (tap m output)
     (e/send-event ec (o2e/to-create-event
@@ -57,7 +57,7 @@
 
 (deftest test-recents
   "Tests that the sliding window works, and is repeatable"
-  (binding [la/*event-buffer-size* 3]
+  (binding [la/*channel-buffer-size* 3]
     (e/shutdown!)
     (e/init!)
     (e/send-event (o2e/to-create-event

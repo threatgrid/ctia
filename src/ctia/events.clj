@@ -18,7 +18,7 @@
                           {s/Any s/Any}))
 
 (defn init! []
-  (let [c (la/new-event-channel)]
+  (let [c (la/new-channel)]
     (reset! central-channel c)))
 
 (s/defn shutdown! :- s/Num
@@ -39,7 +39,7 @@
   "Send an event to a channel. Use the central channel by default"
   ([event :- es/Event]
    (send-event @central-channel event))
-  ([{ch :chan :as echan} :- la/EventChannel
+  ([{ch :chan :as echan} :- la/ChannelData
     {:keys [owner timestamp http-params] :as event} :- es/Event]
    (assert owner "Events cannot be registered without user info")
    (let [event (if timestamp event (assoc event :timestamp (time/now)))]
@@ -48,7 +48,7 @@
 (s/defn recent-events :- [ModelEvent]
   "Returns up to the requested number of the  most recent events.
    Defaults to attempting to get *event-buffer-size* events."
-  ([] (recent-events la/*event-buffer-size*))
+  ([] (recent-events la/*channel-buffer-size*))
   ([n :- Long] (take n (la/drain (:recent @central-channel)))))
 
 (s/defn register-listener :- Channel
@@ -58,7 +58,7 @@
   ([f :- (=> s/Any es/Event)
     pred :- (=> s/Bool es/Event)]
    (la/register-listener @central-channel f pred nil))
-  ([{m :mult :as ec} :- la/EventChannel
+  ([{m :mult :as ec} :- la/ChannelData
     f :- (=> s/Any es/Event)
     pred :- (=> s/Bool es/Event)]
    (la/register-listener @central-channel f pred nil)))
