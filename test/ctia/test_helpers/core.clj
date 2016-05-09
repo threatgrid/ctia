@@ -65,6 +65,8 @@
                     "ctia.http.min-threads" 9
                     "ctia.http.max-threads" 10
                     "ctia.nrepl.enabled" false
+                    "ctia.hook.es.enabled" false
+                    "ctia.hook.redis.enabled" false
                     "ctia.hook.redis.channel-name" "events-test"]
     ;; run tests
     (f)))
