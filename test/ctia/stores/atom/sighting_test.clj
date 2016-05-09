@@ -22,10 +22,12 @@
                      (reduce into {})
                      atom)]
       (testing "Empty search"
-        (is (empty? (sut/handle-list-sightings-by-indicators store []))))
+        (is (empty? (:data  (sut/handle-list-sightings-by-indicators store [] {})))))
       (testing "basic search"
         (is (= (set (vals @store))
-               (set (sut/handle-list-sightings-by-indicators store [indicator]))))))))
+               (-> (sut/handle-list-sightings-by-indicators store [indicator] {})
+                   :data
+                   set)))))))
 
 (deftest handle-list-sightings-by-observables-atom-test
   (doseq [observable (g/sample 20 Observable)]
@@ -33,13 +35,15 @@
           sightings (->> (g/sample 20 StoredSighting)
                          (map #(update-in % [:id] str "sig-"))
                          (map (fn [x] (into x {:observables (cons observable
-                                                                  random-observables)}))))
+                                                                 random-observables)}))))
           store (->> sightings
                      (map (fn [x] {(:id x) x}))
                      (reduce into {})
                      atom)]
       (testing "Empty search"
-        (is (empty? (sut/handle-list-sightings-by-observables store []))))
+        (is (empty? (:data (sut/handle-list-sightings-by-observables store [] {})))))
       (testing "Basic search"
         (is (= (set (vals @store))
-               (set (sut/handle-list-sightings-by-observables store [observable]))))))))
+               (-> (sut/handle-list-sightings-by-observables store [observable] {})
+                   :data
+                   set)))))))
