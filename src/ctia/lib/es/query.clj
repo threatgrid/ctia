@@ -19,7 +19,7 @@
   [filter-map]
 
   (let [terms (map (fn [[k v]]
-                     (if (vector? k)
+                     (if (sequential? k)
                        [k v]
                        [[k] v])) filter-map)]
     {:filtered

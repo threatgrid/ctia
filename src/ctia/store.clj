@@ -64,7 +64,8 @@
   (update-sighting [this id sighting])
   (delete-sighting [this id])
   (list-sightings [this filtermap])
-  (list-sightings-by-indicators [this indicators]))
+  (list-sightings-by-indicators [this indicators])
+  (list-sightings-by-observables [this observable]))
 
 (defprotocol IIncidentStore
   (read-incident [this id])

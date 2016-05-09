@@ -70,7 +70,6 @@
      :confidence (describe
                   v/HighMedLow
                   "level of confidence held in the accuracy of this Indicator")
-     :sightings (describe rel/RelatedSightings "a set of sighting reports")
      :related_indicators (describe
                           rel/RelatedIndicators
                           (str "relationship between the enclosing indicator and"

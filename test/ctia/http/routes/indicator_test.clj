@@ -1,13 +1,17 @@
 (ns ctia.http.routes.indicator-test
   (:refer-clojure :exclude [get])
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+   [clojure.tools.logging :as log]
+   [ring.util.codec :refer [url-encode]]
+   [clojure.test :refer [deftest is are testing use-fixtures join-fixtures]]
    [schema-generators.generators :as g]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.schemas.indicator :refer [NewIndicator StoredIndicator]]))
+   [ctia.test-helpers.http :refer [api-key test-post]]
+   [ctia.schemas.indicator :refer [NewIndicator StoredIndicator]]
+   [ctia.schemas.sighting :refer [NewSighting]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -168,66 +172,6 @@
                (dissoc updated-indicator
                        :modified)))))
 
-      (testing "POST /ctia/indicator/:id/sighting"
-        (let [{status :status
-               sighting :parsed-body}
-              (post (str "ctia/indicator/" (:id indicator) "/sighting")
-                    :body {:timestamp "2016-05-11T00:40:48.212-00:00"
-                           :source "source"
-                           :reference "http://example.com/123"
-                           :confidence "High"
-                           :description "description"
-                           :related_judgements [{:judgement_id "judgement-123"}
-                                                {:judgement_id "judgement-234"}]}
-                    :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 200 status))
-          (is (deep=
-               {:type "sighting"
-                :timestamp #inst "2016-05-11T00:40:48.212-00:00"
-                :source "source"
-                :reference "http://example.com/123"
-                :confidence "High"
-                :description "description"
-                :related_judgements [{:judgement_id "judgement-123"}
-                                     {:judgement_id "judgement-234"}]
-                :indicator {:indicator_id (:id indicator)}
-                :owner "foouser"}
-               (dissoc sighting
-                       :id
-                       :created
-                       :modified)))
-
-          (testing "GET /ctia/indicator/:id"
-            (let [{status :status
-                   indicator :parsed-body}
-                  (get (str "ctia/indicator/" (:id indicator))
-                       :headers {"api_key" "45c1f5e3f05d0"})]
-              (is (= 200 status))
-              (is (deep=
-                   {:id (:id indicator)
-                    :type "indicator"
-                    :created (:created indicator)
-                    :title "updated indicator"
-                    :description "updated description"
-                    :producer "producer"
-                    :indicator_type ["IP Watchlist"]
-                    :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
-                                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                    :related_campaigns [{:confidence "Low"
-                                         :source "source"
-                                         :relationship "relationship"
-                                         :campaign_id "campaign-123"}]
-                    :composite_indicator_expression {:operator "and"
-                                                     :indicator_ids ["test1" "test2"]}
-                    :related_COAs [{:confidence "High"
-                                    :source "source"
-                                    :relationship "relationship"
-                                    :COA_id "coa-123"}]
-                    :sightings [{:sighting_id (:id sighting)}]
-                    :owner "foouser"}
-                   (dissoc indicator
-                           :modified)))))))
-
       (testing "DELETE /ctia/indicator/:id"
         (let [response (delete (str "ctia/indicator/" (:id indicator))
                                :headers {"api_key" "45c1f5e3f05d0"})]
@@ -256,3 +200,35 @@
                   (map :parsed-body)
                   (map #(dissoc % :id :created :modified :owner))
                   set)))))))
+
+(deftest-for-each-store test-sightings-from-indicator
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (let [new-indicators (g/sample 10 NewIndicator)
+        ;; BEWARE ES AS A MAXIMUM TO 10 !!!!!!
+        nb-sightings 10]
+    (if (> nb-sightings ctia.lib.es.document/default-limit)
+      (log/error
+       "BEWARE! ES Couldn't handle more than 10 element by search by default."
+       "It is set to " ctia.lib.es.document/default-limit " in `lib.es.document.clj`"
+       "You might want to change either `nb-sightings` in this test"
+       "or change `ctia.lib.es.document/default-limit`"))
+
+    (doseq [new-indicator new-indicators]
+      (testing "POST /ctia/indicator"
+        (when-let [indicator (test-post "ctia/indicator" new-indicator)]
+          (testing "POST /ctia/sighting"
+            (let [new-sightings (->> (g/sample nb-sightings NewSighting)
+                                     (map #(dissoc % :relations)) ;; s/Any generator are tricky
+                                     (map #(into % {:indicators
+                                                    [{:indicator_id (:id indicator)}]})))
+                  sightings (doall (map #(test-post "ctia/sighting" %)
+                                        new-sightings))
+                  sighting-ids (map :id sightings)]
+              (when-not (empty? (remove nil? sightings))
+                (testing "GET /ctia/indicator/:id/sightings"
+                  (let [search-resp (get (str "ctia/indicator/" (url-encode (:id indicator)) "/sightings")
+                                         :headers {"api_key" api-key})]
+                    (is (= 200 (:status search-resp)))
+                    (is (= (set sighting-ids)
+                           (set (map :id (:parsed-body search-resp)))))))))))))))

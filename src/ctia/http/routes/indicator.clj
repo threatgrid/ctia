@@ -24,11 +24,6 @@
       :path-params [id :- Long]
       :summary "Gets all Judgements associated with the Indicator"
       (not-found))
-    (GET "/:id/sightings" []
-      :return [StoredSighting]
-      :path-params [id :- Long]
-      :summary "Gets all Sightings associated with the Indicator"
-      (not-found))
     (GET "/:id/campaigns" []
       :return [StoredCampaign]
       :path-params [id :- Long]
@@ -91,6 +86,15 @@
       (if-let [d (read-indicator @indicator-store id)]
         (ok d)
         (not-found)))
+    (GET "/:id/sightings" []
+      :return [StoredSighting]
+      :path-params [id :- s/Str]
+      :summary "Gets all Sightings associated with the Indicator"
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [sightings (list-sightings-by-indicators @sighting-store [indicator])]
+          (ok sightings)
+          (not-found))
+        (not-found)))
     (GET "/title/:title" []
       :return (s/maybe [StoredIndicator])
       :summary "Gets an Indicator by title"
@@ -99,31 +103,4 @@
       :capabilities #{:list-indicators-by-title :admin}
       (if-let [d (list-indicators @indicator-store {:title title})]
         (ok d)
-        (not-found)))
-    (POST "/:id/sighting" []
-      :return StoredSighting
-      :path-params [id :- s/Str]
-      :body [sighting NewSighting {:description "a new Sighting"}]
-      :summary "Adds a new Sighting for the given Indicator"
-      :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-sighting :admin}
-      :login login
-      (if-let [indicator (read-indicator @indicator-store id)]
-        (let [sighting (flows/create-flow :realize-fn realize-sighting
-                                          :store-fn #(create-sighting @sighting-store %)
-                                          :entity-type :sighting
-                                          :login login
-                                          :entity (assoc sighting
-                                                         :indicator
-                                                         {:indicator_id id}))]
-          (flows/update-flow :get-fn #(read-indicator @indicator-store %)
-                             :realize-fn realize-indicator
-                             :update-fn #(update-indicator @indicator-store (:id %) %)
-                             :entity-type :indicator
-                             :id id
-                             :login login
-                             :entity (-> (generalize-indicator indicator)
-                                         (update :sightings
-                                                 conj {:sighting_id (:id sighting)})))
-          (ok sighting))
         (not-found)))))

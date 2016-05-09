@@ -9,7 +9,7 @@
                                           delete-doc
                                           search-docs]]))
 
-(defn- coerce-to-fn
+(defn coerce-to-fn
   [Model]
   (c/coercer! Model sc/json-schema-coercion-matcher))
 
