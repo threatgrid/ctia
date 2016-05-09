@@ -7,8 +7,7 @@
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]
-   ))
+   [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean

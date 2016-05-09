@@ -55,6 +55,7 @@ simplifications:
 | description                                | (string, ...)                                  | &#10003;   |
 | short_description                          | (string, ...)                                  | &#10003;   |
 | timestamp                                  | [Time](#time)                                  | &#10003;   |
+| tlp                                        | [TLP](#tlp)                                    |            |
 | source                                     | [Source](#source)                              |            |
 | identity                                   | [Identity](#identity)                          |            |
 | actor\_type                                | [ThreatActorType](#threat_actor_type)          | &#10003;   |
@@ -90,6 +91,7 @@ STIX [ThreatActorType](http://stixproject.github.io/data-model/1.2/ta/ThreatActo
 | description                   | (string, ...)                                 | &#10003;   |
 | short_description             | (string, ...)                                 | &#10003;   |
 | timestamp                     | [Time](#time)                                 | &#10003;   |
+| tlp                           | [TLP](#tlp)                                   |            |
 | version                       | string                                        |            |
 | names                         | string                                        |            |
 | intended_effect               | [IntendedEffect](#intended_effect)            |            |
@@ -127,6 +129,7 @@ STIX [CampaignType](http://stixproject.github.io/data-model/1.2/campaign/Campaig
 | description            | (string, ...)                     | &#10003;   |
 | short\_description     | (string, ...)                     | &#10003;   |
 | timestamp              | [Time](#time)                     |            |
+| tlp                    | [TLP](#tlp)                       |            |
 | stage                  | [COAStage](#coa_stage)            |            |
 | coa_type               | [COAType](#coa_type)              |            |
 | objective              | (string, ...)                     |            |
@@ -159,6 +162,7 @@ STIX [CourseOfActionType](http://stixproject.github.io/data-model/1.2/coa/Course
 | short_description        | (string, ...)                                          | &#10003;   |
 | timestamp                | string                                                 | &#10003;   |
 | version                  | string                                                 |            |
+| tlp                      | [TLP](#tlp)                                            |            |
 | vulnerability            | [Vulnerability](#vulnerability)                        |            |
 | weakness                 | [Weakness](#weakness)                                  |            |
 | configuration            | [Configuration](#configuration)                        |            |
@@ -224,6 +228,7 @@ A positive, neutral or negative feedback on a Judgement
 | timestamp | [Time](#time)                              | &#10003;   |
 | judgement | [JudgementReference](#judgement_reference) | &#10003;   |
 | source    | string                                     |            |
+| tlp       | [TLP](#tlp)                                |            |
 | feedback  | -1 &#124; 0 &#124; 1                       | &#10003;   |
 | reason    | string                                     | &#10003;   |
 
@@ -246,6 +251,7 @@ Stored instances will also receive the following fields, but MAY not be shared:
 | short\_description   | (string, ...)                                  | &#10003;   |
 | timestamp            | [Time](#time)                                  | &#10003;   |
 | confidence           | [HighMedLow](#high\_med_low)                   | &#10003;   |
+| tlp                  | [TLP](#tlp)                                    |            |
 | status               | [Status](#status)                              |            |
 | version              | string                                         |            |
 | incident\_time       | [IncidentTime](#incident\_time)                |            |
@@ -427,6 +433,7 @@ JSON Example:
 | description | (string, ...) | &#10003; | A longer, in-depth description of the indicator |
 | short\_description | (string, ...) | &#10003; | A short sentence or two describing the indicator |
 | alternate\_ids | (string, ...) | | |
+| tlp | [TLP](#tlp) | |
 | version | number | | |
 | negate | boolean | | |
 | indicator_type | ([IndicatorType](#indicator_type), ...) | | The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior |
@@ -473,6 +480,7 @@ One of the following structures:
 | --- | --- | --- |
 | timestamp           | [Time](#time)                    |            |
 | source              | [Source](#source)                |            |
+| tlp                 | [TLP](#tlp)                      |            |
 | reference           | [URI](#uri)                      |            |
 | confidence          | [HighMedLow](#high_med_low)      |            |
 | description         | (string, ...)                    |            |
@@ -551,6 +559,7 @@ indicators and threat intelligence data in CTIA.
 | confidence        | [HighMedLow](#high_med_low)                   | &#10003;   | 100           |                                                                    |
 | severity          | integer                                       | &#10003;   | 100           |                                                                    |
 | timestamp         | [Time](#time)                                 | &#10003;   | POST time     |                                                                    |
+| tlp               | [TLP](#tlp)                                   |            |               |                                                                    |
 | reason            | string                                        |            |               | short description of why the judgement was made                    |
 | disposition\_name | [DispositionName](#disposition\_name)         |            |               |                                                                    |
 | expires           | [Time](#time)                                 |            | Jan 1 2535    |                                                                    |
@@ -587,6 +596,7 @@ curl -X POST --header "Content-Type: application/json" \
 | description            | (string, ...)                                          | &#10003;   |
 | short_description      | (string, ...)                                          | &#10003;   |
 | timestamp              | [Time](#time)                                          | &#10003;   |
+| tlp                                        | [TLP](#tlp)                                    |            |
 | version                | string                                                 |            |
 | intended_effect        | [IntendedEffect](#intended_effect)                     |            |
 | behavior               | [Behavior](#behavior)                                  |            |
@@ -721,6 +731,11 @@ _idref_ field is not used.
 ### URI
 
 string
+
+<a name="tlp"/>
+### TLP
+
+Document marking as a string using [Traffic Light Protocol](https://www.us-cert.gov/tlp) convention
 
 <a name="time"/>
 ### Time
