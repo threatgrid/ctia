@@ -52,7 +52,7 @@
     (and (coll? v1)) (contains? (set v1) v2)
     :else (= v1 v2)))
 
-(defn- filter-state [state filter-map]
+(defn filter-state [Model]
   "Mostly work like MongoDB find():
 
     - `{:a value}` will match all objects such that the
@@ -74,18 +74,22 @@
            as both the search set and the collection `(:a object)`
            contains `:foo`
         - Of course it still works as expected if the key is a list:
-          `{[:a :b] #{v1 v2 v3}}`. "
+          `{[:a :b] #{v1 v2 v3}}`."
 
-  (when-not (empty? filter-map)
-    (into []
-          (filter (fn [model]
-                    (every? (fn [[k v]]
-                              (let [found-v (if (sequential? k)
-                                              (get-in model k ::not-found)
-                                              (get model k ::not-found))]
-                                (match? found-v v)))
-                            filter-map))
-                  (vals (deref state))))))
+  (s/fn :- [Model]
+    [state :- (s/atom {s/Str Model})
+     filter-map :- {s/Any s/Any}]
+
+    (when-not (empty? filter-map)
+      (into []
+            (filter (fn [model]
+                      (every? (fn [[k v]]
+                                (let [found-v (if (sequential? k)
+                                                (get-in model k ::not-found)
+                                                (get model k ::not-found))]
+                                  (match? found-v v)))
+                              filter-map))
+                    (vals (deref state)))))))
 
 (defn paginate
   [data {:keys [sort_by sort_order offset limit]
@@ -106,7 +110,7 @@
       filter-map :- {s/Any s/Any}
       params]
 
-     (let [res (filter-state state filter-map)]
+     (let [res ((filter-state Model) state filter-map)]
        (-> res
            (paginate params)
            (response (:offset params)

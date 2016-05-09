@@ -53,7 +53,7 @@
                :id3 id3
                :id4 id4
                :id5 id5}))
-(def lst-fn (sut/list-handler TestSchema))
+(def lst-fn (sut/filter-state TestSchema))
 
 
 (t/deftest empty-search
