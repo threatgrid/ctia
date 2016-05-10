@@ -1,89 +1,76 @@
 (ns ctia.http.routes.observable
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
-            [ctia.store :refer :all]
-            [ctia.schemas.vocabularies :refer [ObservableType]]
-            [ctia.schemas.indicator :refer [StoredIndicator]]
-            [ctia.schemas.sighting :refer [StoredSighting]]
-            [ctia.schemas.judgement :refer [StoredJudgement]]
-            [ctia.schemas.verdict :refer [Verdict]]
-            [ctia.schemas.common :refer [DispositionName
-                                         DispositionNumber
-                                         Time]]))
+  (:require
+   [compojure.api.sweet :refer :all]
+   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.schemas
+    [indicator :refer [StoredIndicator]]
+    [judgement :refer [StoredJudgement]]
+    [sighting :refer [StoredSighting]]
+    [vocabularies :refer [ObservableType]]]
+   [ctia.store :refer :all]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
-(def JudgementSort
-  "A sort ordering"
-  (s/enum "disposition" "timestamp" "priority" "severity" "confidence"))
+(s/defschema JudgementsByObservableQueryParams
+  (st/merge
+   PagingParams
+   {(s/optional-key :sort_by) (s/enum
+                               :id
+                               :disposition
+                               :priority
+                               :severity
+                               :confidence)}))
 
-(def IndicatorSort
-  "A sort ordering"
-  (s/enum "title" "timestamp"))
+(s/defschema IndicatorsByObservableQueryParams
+  (st/merge
+   PagingParams
+   {(s/optional-key :sort_by) (s/enum :id :title)}))
 
-(def RelationSort
-  "A sort ordering"
-  (s/enum "relation" "related" "related_type" "timestamp"))
+(s/defschema SightingsByObservableQueryParams
+  (st/merge
+   PagingParams
+   {(s/optional-key :sort_by) (s/enum :id :timestamp :confidence)}))
 
-(def SortOrder
-  (s/enum "asc" "desc"))
 
 (defroutes observable-routes
   (GET "/:observable_type/:observable_value/judgements" []
     :tags ["Judgement"]
-    :query-params [{offset :-  Long 0}
-                   {limit :-  Long 0}
-                   {after :-  Time nil}
-                   {before :-  Time nil}
-                   {sort_by :- JudgementSort "timestamp"}
-                   {sort_order :- SortOrder "desc"}
-                   {source :- s/Str nil}
-                   {disposition :- DispositionNumber nil}
-                   {disposition_name :- DispositionName nil}]
+    :query [params JudgementsByObservableQueryParams]
     :path-params [observable_type :- ObservableType
                   observable_value :- s/Str]
     :return (s/maybe [StoredJudgement])
     :summary "Returns all the Judgements associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities #{:list-judgements-by-observable :admin}
-    (ok (list-judgements-by-observable @judgement-store
-                                       {:type observable_type
-                                        :value observable_value})))
+    (paginated-ok (list-judgements-by-observable @judgement-store
+                                                 {:type observable_type
+                                                  :value observable_value} params)))
 
   (GET "/:observable_type/:observable_value/indicators" []
     :tags ["Indicator"]
-    :query-params [{offset :-  Long 0}
-                   {limit :-  Long 0}
-                   {after :-  Time nil}
-                   {before :-  Time nil}
-                   {sort_by :- JudgementSort "timestamp"}
-                   {sort_order :- SortOrder "desc"}
-                   {source :- s/Str nil}]
+    :query [params IndicatorsByObservableQueryParams]
     :path-params [observable_type :- ObservableType
                   observable_value :- s/Str]
     :return (s/maybe [StoredIndicator])
     :summary "Returns all the Indicators associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities #{:list-indicators-by-observable :admin}
-    (ok (some->> {:type observable_type
-                  :value observable_value}
-                 (list-judgements-by-observable @judgement-store)
-                 (list-indicators-by-judgements @indicator-store))))
+    (paginated-ok
+     (as-> {:type observable_type
+            :value observable_value} $
+       (list-judgements-by-observable @judgement-store $ nil)
+       (:data $ [])
+       (list-indicators-by-judgements @indicator-store $ params))))
 
   (GET "/:observable_type/:observable_value/sightings" []
     :tags ["Sighting"]
-    :query-params [{offset :-  Long 0}
-                   {limit :-  Long 0}
-                   {after :-  Time nil}
-                   {before :-  Time nil}
-                   {sort_by :- JudgementSort "timestamp"}
-                   {sort_order :- SortOrder "desc"}
-                   {source :- s/Str nil}]
+    :query [params SightingsByObservableQueryParams]
     :path-params [observable_type :- ObservableType
                   observable_value :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities #{:list-sightings-by-observable :admin}
     :return (s/maybe [StoredSighting])
     :summary "Returns all the Sightings associated with the specified observable."
-    (ok (list-sightings-by-observables @sighting-store
-                                       [{:type observable_type
-                                         :value observable_value}]))))
+    (paginated-ok (list-sightings-by-observables @sighting-store
+                                                 [{:type observable_type
+                                                   :value observable_value}] params))))

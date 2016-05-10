@@ -1,8 +1,11 @@
 (ns ctia.stores.atom.common
+  (:import java.util.UUID)
   (:require [ctia.schemas.common :as c]
             [schema.core :as s]
-            [clojure.set :as set])
-  (:import java.util.UUID))
+            [clojure.set :as set]
+            [ctia.lib.pagination :refer [default-limit
+                                         list-response-schema
+                                         response]]))
 
 (defn random-id [prefix]
   (fn [_new-entity_]
@@ -32,7 +35,6 @@
      updated-model :- Model]
     (get (swap! state assoc id updated-model) id)))
 
-
 (defn delete-handler [Model]
   (s/fn :- s/Bool
     [state :- (s/atom {s/Str Model})
@@ -50,7 +52,7 @@
     (and (coll? v1)) (contains? (set v1) v2)
     :else (= v1 v2)))
 
-(defn list-handler [Model]
+(defn filter-state [Model]
   "Mostly work like MongoDB find():
 
     - `{:a value}` will match all objects such that the
@@ -72,10 +74,12 @@
            as both the search set and the collection `(:a object)`
            contains `:foo`
         - Of course it still works as expected if the key is a list:
-          `{[:a :b] #{v1 v2 v3}}`. "
-  (s/fn :- (s/maybe [Model])
+          `{[:a :b] #{v1 v2 v3}}`."
+
+  (s/fn :- [Model]
     [state :- (s/atom {s/Str Model})
      filter-map :- {s/Any s/Any}]
+
     (when-not (empty? filter-map)
       (into []
             (filter (fn [model]
@@ -86,4 +90,30 @@
                                   (match? found-v v)))
                               filter-map))
                     (vals (deref state)))))))
+
+(defn paginate
+  [data {:keys [sort_by sort_order offset limit]
+         :or {sort_by :id
+              sort_order :asc
+              offset 0
+              limit default-limit}}]
+  (as-> data $
+    (sort-by sort_by $)
+    (if (= :desc sort_order)
+      (reverse $) $)
+    (drop offset $)
+    (take limit $)))
+
+(defn list-handler [Model]
+  (s/fn :- (list-response-schema Model)
+    ([state :- (s/atom {s/Str Model})
+      filter-map :- {s/Any s/Any}
+      params]
+
+     (let [res ((filter-state Model) state filter-map)]
+       (-> res
+           (paginate params)
+           (response (:offset params)
+                     (:limit params)
+                     (count res)))))))
 

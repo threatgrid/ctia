@@ -1,16 +1,14 @@
 (ns ctia.http.routes.sighting
-  (:require [schema.core :as s]
+  (:require [ctia.flows.crud :as flows]
             [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
-            [ctia.flows.crud :as flows]
+            [ctia.schemas.sighting
+             :refer
+             [NewSighting realize-sighting StoredSighting check-new-sighting]]
             [ctia.store :refer :all]
-            [ctia.schemas.sighting :refer [NewSighting
-                                           StoredSighting
-                                           realize-sighting
-                                           check-new-sighting]]))
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (defroutes sighting-routes
-
   (context "/sighting" []
     :tags ["Sighting"]
     (POST "/" []

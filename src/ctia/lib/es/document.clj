@@ -1,5 +1,6 @@
 (ns ctia.lib.es.document
   (:require
+   [ctia.lib.pagination :as pagination]
    [ctia.lib.es.query :refer [filter-map->terms-query]]
    [clojurewerkz.elastisch.native.document :as native-document]
    [clojurewerkz.elastisch.rest.document :as rest-document]
@@ -90,27 +91,41 @@
     id
     :refresh true)))
 
-(defn raw-search-docs [conn index-name mapping query sort]
-  (->> ((search-doc-fn conn)
-        conn
-        index-name
-        mapping
-        :query query
-        :sort sort
-        :size default-limit)
-       ((hits-from-fn conn))
-       (map :_source)))
+(defn params->pagination
+  [{:keys [sort_by sort_order offset limit]
+    :or {sort_by :id
+         sort_order :asc
+         offset 0
+         limit pagination/default-limit}}]
+  (merge
+   {}
+   (when sort_by
+     {:sort [{sort_by sort_order}]})
+   (when limit
+     {:size limit})
+   (when offset
+     {:from offset})))
 
 (defn search-docs
-  "search for documents on es, return only the docs"
-  [conn index-name mapping filter-map]
+  "search for documents on es"
+  [conn index-name mapping filter-map params]
+
   (let [filters (filter-map->terms-query filter-map)
-        res ((search-doc-fn conn)
-             conn
-             index-name
-             mapping
-             :query filters
-             :size default-limit)]
-    (->> res
-         ((hits-from-fn conn))
-         (map :_source))))
+        es-params (merge (params->pagination params)
+                         (when filter-map
+                           {:query (filter-map->terms-query filter-map)})
+                         (select-keys params [:query :sort]))
+        res (->> ((search-doc-fn conn)
+                  conn
+                  index-name
+                  mapping
+                  es-params))
+        hits (get-in res [:hits :total] 0)
+        results (->> res
+                     ((hits-from-fn conn))
+                     (map :_source))]
+
+    (pagination/response (or results [])
+                         (:from es-params)
+                         (:size es-params)
+                         hits)))

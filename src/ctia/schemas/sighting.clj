@@ -53,7 +53,7 @@
      :tlp c/TLP})))
 
 (s/defschema StoredSighting
-  "An sighting as stored in the data store"
+  "A sighting as stored in the data store"
   (c/stored-schema "sighting" Sighting))
 
 (s/defn realize-sighting :- StoredSighting

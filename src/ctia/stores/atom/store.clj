@@ -23,7 +23,7 @@
     (actor/handle-update-actor state id actor))
   (delete-actor [_ id]
     (actor/handle-delete-actor state id))
-  (list-actors [_ filter-map]))
+  (list-actors [_ filter-map params]))
 
 (defrecord CampaignStore [state]
   ICampaignStore
@@ -35,7 +35,7 @@
     (campaign/handle-update-campaign state id new-campaign))
   (delete-campaign [_ id]
     (campaign/handle-delete-campaign state id))
-  (list-campaigns [_ filter-map]))
+  (list-campaigns [_ filter-map params]))
 
 (defrecord COAStore [state]
   ICOAStore
@@ -47,7 +47,7 @@
     (coa/handle-update-coa state id new-coa))
   (delete-coa [_ id]
     (coa/handle-delete-coa state id))
-  (list-coas [_ filter-map]))
+  (list-coas [_ filter-map params]))
 
 (defrecord ExploitTargetStore [state]
   IExploitTargetStore
@@ -59,14 +59,14 @@
     (expl-tar/handle-update-exploit-target state id new-exploit-target))
   (delete-exploit-target [_ id]
     (expl-tar/handle-delete-exploit-target state id))
-  (list-exploit-targets [_ filter-map]))
+  (list-exploit-targets [_ filter-map params]))
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
   (create-feedback [_ new-feedback]
     (feedback/handle-create-feedback state new-feedback))
-  (list-feedback [_ filter-map]
-    (feedback/handle-list-feedback state filter-map)))
+  (list-feedback [_ filter-map params]
+    (feedback/handle-list-feedback state filter-map params)))
 
 (defrecord IdentityStore [state]
   IIdentityStore
@@ -87,7 +87,7 @@
     (incident/handle-update-incident state id incident))
   (delete-incident [_ id]
     (incident/handle-delete-incident state id))
-  (list-incidents [_ filter-map]))
+  (list-incidents [_ filter-map params]))
 
 (defrecord IndicatorStore [state]
   IIndicatorStore
@@ -99,10 +99,10 @@
     (indicator/handle-read-indicator state id))
   (delete-indicator [_ id]
     (indicator/handle-delete-indicator state id))
-  (list-indicators [_ filter-map]
-    (indicator/handle-list-indicators state filter-map))
-  (list-indicators-by-judgements [_ judgements]
-    (indicator/handle-list-indicators-by-judgements state judgements)))
+  (list-indicators [_ filter-map params]
+    (indicator/handle-list-indicators state filter-map params))
+  (list-indicators-by-judgements [_ judgements params]
+    (indicator/handle-list-indicators-by-judgements state judgements params)))
 
 (defrecord JudgementStore [state]
   IJudgementStore
@@ -112,17 +112,17 @@
     (judgement/handle-read-judgement state id))
   (delete-judgement [_ id]
     (judgement/handle-delete-judgement state id))
-  (list-judgements [_ filter-map]
-    (judgement/handle-list-judgements state filter-map))
+  (list-judgements [_ filter-map params]
+    (judgement/handle-list-judgements state filter-map params))
   (calculate-verdict [_ observable]
     (judgement/handle-calculate-verdict state observable))
-  (list-judgements-by-observable [this observable]
+  (list-judgements-by-observable [this observable params]
     (list-judgements this {[:observable :type]  (:type observable)
-                           [:observable :value] (:value observable)}))
+                           [:observable :value] (:value observable)} params))
   (add-indicator-to-judgement [_ judgement-id indicator-rel]
     (judgement/handle-add-indicator-to-judgement state
-                                                  judgement-id
-                                                  indicator-rel)))
+                                                 judgement-id
+                                                 indicator-rel)))
 
 (defrecord SightingStore [state]
   ISightingStore
@@ -134,12 +134,12 @@
     (sighting/handle-update-sighting state id sighting))
   (delete-sighting [_ id]
     (sighting/handle-delete-sighting state id))
-  (list-sightings [_ filter-map]
-    (sighting/handle-list-sightings state filter-map))
-  (list-sightings-by-indicators [_ indicators]
-    (sighting/handle-list-sightings-by-indicators state indicators))
-  (list-sightings-by-observables [_ observables]
-    (sighting/handle-list-sightings-by-observables state observables)))
+  (list-sightings [_ filter-map params]
+    (sighting/handle-list-sightings state filter-map params))
+  (list-sightings-by-indicators [_ indicators params]
+    (sighting/handle-list-sightings-by-indicators state indicators params))
+  (list-sightings-by-observables [_ observables params]
+    (sighting/handle-list-sightings-by-observables state observables params)))
 
 (defrecord TTPStore [state]
   ITTPStore
@@ -151,4 +151,4 @@
     (ttp/handle-update-ttp state id new-ttp))
   (delete-ttp [_ id]
     (ttp/handle-delete-ttp state id))
-  (list-ttps [_ filter-map]))
+  (list-ttps [_ filter-map params]))

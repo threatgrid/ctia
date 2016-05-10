@@ -1,5 +1,6 @@
 (ns ctia.stores.sql.judgement
-  (:require [ctia.lib.specter.paths :as path]
+  (:require [ctia.lib.pagination :as pagination]
+            [ctia.lib.specter.paths :as path]
             [ctia.lib.time :as time]
             [ctia.schemas.judgement :as judgement-schema]
             [ctia.stores.sql.common :as c]
@@ -12,7 +13,6 @@
   (:import java.util.UUID))
 
 (defonce judgement (atom nil))
-
 (defonce judgement-indicator (atom nil))
 
 (defn init! []
@@ -61,17 +61,45 @@
      (c/insert @judgement-indicator (judgements->db-indicators judgements)))
     new-judgements))
 
-(defn select-judgements [filter-map]
-  (let [judgements
-        (->> (k/select @judgement
-                       (k/where (transform/filter-map->where-map filter-map)))
-             (group-by :id)
-             (sp/transform path/all-last
-                           (comp transform/to-schema-observable
-                              transform/to-schema-valid-time
-                              transform/sqltimes-to-dates
-                              transform/drop-nils
-                              first)))
+(defn sort-select
+  [sort_by sort_order judgements]
+
+  (let [sorted (sort-by sort_by judgements)]
+    (if (= :desc sort_order)
+      (reverse sorted)
+      sorted)))
+
+(defn count-judgements [judgement-query]
+  (let [hits-res (-> judgement-query
+                     (k/aggregate (count :*) :hits)
+                     (k/select))]
+
+    (or (-> hits-res first :hits) 0)))
+
+(defn select-judgements
+  [filter-map {:keys [sort_by sort_order offset limit]
+               :or {sort_by :id
+                    sort_order :asc
+                    offset 0
+                    limit pagination/default-limit}}]
+
+  (let [judgement-query (-> (k/select* @judgement)
+                            (k/where (transform/filter-map->where-map filter-map)))
+
+        judgement-records (-> judgement-query
+                              (k/group :id sort_by)
+                              (k/order sort_by sort_order)
+                              (k/limit limit)
+                              (k/offset offset)
+                              (k/select))
+        judgements (->> judgement-records
+                        (group-by :id)
+                        (sp/transform path/all-last
+                                      (comp transform/to-schema-observable
+                                         transform/to-schema-valid-time
+                                         transform/sqltimes-to-dates
+                                         transform/drop-nils
+                                         first)))
 
         judgement-indicators
         (if-let [ids (keys judgements)]
@@ -79,11 +107,20 @@
                          (k/where {:judgement_id [in ids]}))
                (group-by :judgement_id)
                (sp/transform path/all-last-all
-                             db-indicator->schema-indicator)))]
+                             db-indicator->schema-indicator)))
 
-    (for [[id judgement] judgements]
-      (merge judgement {:type "judgement"
-                        :indicators (get judgement-indicators id)}))))
+        judgements-with-inds (for [[id judgement] judgements]
+                               (merge judgement {:type "judgement"
+                                                 :indicators (get judgement-indicators id)}))
+        sorted-judgements (sort-select
+                           sort_by
+                           sort_order
+                           judgements-with-inds)]
+
+    (pagination/response sorted-judgements
+                         offset
+                         limit
+                         (count-judgements judgement-query))))
 
 (defn delete-judgement [id]
   (kdb/transaction
@@ -93,7 +130,7 @@
                     (k/where {:id id}))
           (k/delete @judgement-indicator
                     (k/where {:judgement_id id})))]
-     (> num-rows-deleted 0))))
+     (pos? num-rows-deleted))))
 
 (defn calculate-verdict [{:keys [type value] :as _observable_}]
   (some-> (k/select @judgement

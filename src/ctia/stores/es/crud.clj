@@ -3,6 +3,7 @@
             [schema.core :as s]
             [schema.coerce :as c]
             [ring.swagger.coerce :as sc]
+            [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.lib.es.document :refer [create-doc
                                           update-doc
                                           get-doc
@@ -60,20 +61,25 @@
   (s/fn :- s/Bool
     [state :- ESConnState
      id :- s/Str]
-    (-> (delete-doc (:conn state)
-                    (:index state)
-                    (name mapping)
-                    id))))
+
+    (delete-doc (:conn state)
+                (:index state)
+                (name mapping)
+                id)))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [mapping Model]
-  (let [coerce! (coerce-to-fn [Model])]
-    (s/fn :- [Model]
+  (let [response-schema (list-response-schema Model)
+        coerce! (coerce-to-fn response-schema)]
+    (s/fn :- response-schema
       [state :- ESConnState
-       filter-map :- {s/Any s/Any}]
-      (-> (search-docs (:conn state)
-                       (:index state)
-                       (name mapping)
-                       filter-map)
-          coerce!))))
+       filter-map :- {s/Any s/Any}
+       params]
+
+      (coerce!
+       (search-docs (:conn state)
+                    (:index state)
+                    (name mapping)
+                    filter-map
+                    params)))))
