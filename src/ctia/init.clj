@@ -15,6 +15,7 @@
             [ctia.stores.sql.db :as sql-store]
             [ctia.stores.sql.judgement :as sql-judgement]
             [ctia.flows.hooks :as h]
+            [ctia.logging :as log]
             [ctia.events :as e]
             [ring.adapter.jetty :as jetty]))
 
@@ -122,6 +123,7 @@
   ;; Configure everything
   (p/init!)
   (e/init!)
+  (log/init!)
   (init-auth-service!)
   (init-store-service!)
   (h/init!)
