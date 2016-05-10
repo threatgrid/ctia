@@ -3,6 +3,11 @@
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo}
+
+  :jvm-opts [ "-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
+             "-Djava.awt.headless=true"
+             "-XX:MaxPermSize=256m" ;; recommended permgen size
+             "-server"]
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
                  [metosin/schema-tools "0.7.0"]
@@ -38,7 +43,9 @@
   :resource-paths ["resources" "doc"]
   :aot [ctia.main]
   :main ctia.main
-  :uberjar-name "server.jar"
+  :classpath ".:resources"
+  :uberjar-name "ctia.jar"
+  :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.4.0"
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
@@ -48,13 +55,7 @@
                                      (:es-producer-filtered-alias %)
                                      (:es-producer-aliased-index %))
 
-                   :default #(not (or (:es-store %)
-                                      (:es-producer %)
-                                      (:es-producer-filtered-alias %)
-                                      (:es-producer-aliased-index %)
-                                      (:integration %)
-                                      (:regression %)
-                                      (:disabled %)))
+                   :default #(not (:disabled %))
                    :integration #(or (:es-store %)
                                      (:integration %)
                                      (:es-producer %)
@@ -76,10 +77,6 @@
              :test {:dependencies [[cheshire "5.5.0"]
                                    [com.h2database/h2 "1.4.191"]
                                    [org.clojure/test.check "0.9.0"]]
-                    :hooks-classes {:before-create [ctia.hook.AutoLoadedJar1
-                                                    hook-example.core/HookExample1
-                                                    ctia.hook.AutoLoadedJar2
-                                                    hook-example.core/HookExample2]}
                     :java-source-paths ["hooks/ctia" "test/java"]
                     :plugins [[lein-ring "0.9.6"]]
                     :resource-paths ["model"

@@ -14,8 +14,7 @@ This demo integrates:
 
 ## Setting up HTTP Basic Auth
 
-    $ sudo apt-get install apache2-utils -y
-    $ sudo htpasswd -c /etc/nginx/.htpasswd exampleuser
+    $ htpasswd -c ./nginx/config/authdb exampleuser
 
 ## Building and Starting the Containers
 

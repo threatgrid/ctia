@@ -1,9 +1,6 @@
 FROM clojure:alpine
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
-COPY project.clj /usr/src/app/
-RUN lein deps
-COPY . /usr/src/app
-RUN lein uberjar
-CMD ["java", "-jar", "target/server.jar"]
-EXPOSE 3000
+COPY target/ctia.jar /usr/src/app/
+CMD ["java", "-Xmx4g", "-Djava.awt.headless=true", "-server", "-cp", "ctia.jar:resources:.", "clojure.main", "-m", "ctia.main"]
+EXPOSE 3000 3001

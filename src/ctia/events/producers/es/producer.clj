@@ -8,18 +8,13 @@
    [ctia.lib.es.slice :refer [SliceProperties
                               ensure-slice-created!
                               get-slice-props]]
-   [ctia.events.schemas :refer [Event UpdateTriple]]
-   [ctia.events.producer :refer [IEventProducer]]))
+   [ctia.events.schemas :refer [Event UpdateTriple]]))
 
-(defn read-producer-index-spec []
-  "read es producer index config properties, returns an option map"
-  (get-in @properties [:ctia :producer :es]))
-
-(s/defn init-producer-conn :- ESConnState []
+(s/defn init-producer-conn :- (s/maybe ESConnState) []
   "initiate an ES producer connection returns a map containing transport,
    mapping and the configured index name"
-  (let [props (read-producer-index-spec)]
-    {:index (:indexname props)
+  (when-let [{:keys [indexname] :as props} (get-in @properties [:ctia :hook :es])]
+    {:index indexname
      :props props
      :mapping producer-mappings
      :conn (connect props)}))
@@ -28,7 +23,7 @@
   "a map converted from an Update Triple for ES Compat"
   {:field s/Keyword
    :action s/Str
-   :change {s/Str s/Str}})
+   :change {s/Any s/Any}})
 
 (s/defn update-triple->map :- UpdateMap
   [[field action change] :- UpdateTriple]
@@ -98,8 +93,3 @@
       (ensure-slice-created! state slice-props)
       (produce state slice-props event))
     (produce state event)))
-
-(defrecord EventProducer [state]
-  IEventProducer
-  (produce-event [_ event]
-    (handle-produce-event state event)))

@@ -18,9 +18,9 @@
       :login login
       (ok (flows/create-flow :realize-fn realize-campaign
                              :store-fn #(create-campaign @campaign-store %)
-                             :object-type :campaign
+                             :entity-type :campaign
                              :login login
-                             :object campaign)))
+                             :entity campaign)))
     (PUT "/:id" []
       :return StoredCampaign
       :body [campaign NewCampaign {:description "an updated campaign"}]
@@ -32,10 +32,10 @@
       (ok (flows/update-flow :get-fn #(read-campaign @campaign-store %)
                              :realize-fn realize-campaign
                              :update-fn #(update-campaign @campaign-store (:id %) %)
-                             :object-type :campaign
+                             :entity-type :campaign
                              :id id
                              :login login
-                             :object campaign)))
+                             :entity campaign)))
     (GET "/:id" []
       :return (s/maybe StoredCampaign)
       :summary "Gets a Campaign by ID"
@@ -51,9 +51,11 @@
       :summary "Deletes a Campaign"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-campaign :admin}
+      :login login
       (if (flows/delete-flow :get-fn #(read-campaign @campaign-store %)
                              :delete-fn #(delete-campaign @campaign-store %)
-                             :object-type :campaign
-                             :id id)
+                             :entity-type :campaign
+                             :id id
+                             :login login)
         (no-content)
         (not-found)))))

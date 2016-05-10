@@ -1,21 +1,15 @@
 (ns ctia.logger-test
-  (:require [ctia.logging :as clog]
-            [ctia.events :as e]
-            [ctia.lib.async :as la]
+  (:require [ctia.events :as e]
+            [ctia.events.obj-to-event :as o2e]
+            [ctia.test-helpers.core :as test-helpers]
             [clojure.test :as t :refer :all]
             [schema.test :as st]
             [clojure.tools.logging :as log]
             [clojure.string :as str]))
 
-(defn setup [f]
-  (e/init!)
-  (let [log-task (clog/init!)]
-    (f)
-    (la/close! log-task))
-  (e/shutdown!))
-
 (use-fixtures :once st/validate-schemas)
-(use-fixtures :each setup)
+(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
+                                    test-helpers/fixture-ctia-fast]))
 
 (deftest test-logged
   (let [sb (StringBuilder.)
@@ -23,11 +17,19 @@
                       (.append sb message)
                       (.append sb "\n"))]
     (with-redefs [log/log* patched-log]
-      (e/send-create-event "tester" {} "TestModelType" {:data 1})
-      (e/send-event {:owner "tester" :http-params {} :data 2})
+      (e/send-event (o2e/to-create-event
+                     {:owner "tester"
+                      :id "test-1"
+                      :type :test
+                      :data 1}))
+      (e/send-event (o2e/to-create-event
+                     {:owner "tester"
+                      :id "test-2"
+                      :type :test
+                      :data 2}))
       (Thread/sleep 100)   ;; wait until the go loop is done
       (let [scrubbed (-> (str sb)
                       (str/replace #"#inst \"[^\"]*\"" "#inst \"\"")
                       (str/replace #":id event[^,]*" ":id event"))
-          expected "event: {:type CreatedModel, :owner tester, :timestamp #inst \"\", :http-params {}, :model-type TestModelType, :id event, :model {:data 1}}\nevent: {:owner tester, :http-params {}, :data 2, :timestamp #inst \"\"}\n"]
+            expected "event: {:owner tester, :entity {:owner tester, :id test-1, :type :test, :data 1}, :timestamp #inst \"\", :id test-1, :type CreatedModel}\nevent: {:owner tester, :entity {:owner tester, :id test-2, :type :test, :data 2}, :timestamp #inst \"\", :id test-2, :type CreatedModel}\n"]
       (is (= expected scrubbed))))))

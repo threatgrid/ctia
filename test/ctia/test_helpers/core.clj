@@ -2,16 +2,17 @@
   (:refer-clojure :exclude [get])
   (:require [ctia.auth :as auth]
             [ctia.auth.allow-all :as aa]
+            [ctia.events :as events]
+            [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
             [ctia.init :as init]
             [ctia.properties :as props]
             [ctia.store :as store]
-            [ctia.stores.atom.store :as as]
-            [ctia.events :as e]
             [cheshire.core :as json]
             [clj-http.client :as http]
             [clojure.data :as cd]
             [clojure.edn :as edn]
+            [clojure.string :as str]
             [clojure.test :as ct]
             [schema.core :as schema])
   (:import java.net.ServerSocket))
@@ -33,16 +34,18 @@
   (some #{prop} props/configurable-properties))
 
 (defn set-property [prop val]
-  (assert (valid-property? prop) "Tried to set unknown property")
-  (System/setProperty prop (str val)))
+  (assert (valid-property? prop) (str "Tried to set unknown property '" prop "'"))
+  (System/setProperty prop (if (keyword? val)
+                             (name val)
+                             (str val))))
 
 (defn clear-property [prop]
-  (assert (valid-property? prop) "Tried to clear unknown property")
+  (assert (valid-property? prop) (str "Tried to clear unknown property '" prop "'"))
   (System/clearProperty prop))
 
 (defn with-properties- [properties-map f]
   (doseq [[property value] properties-map]
-    (set-property property (str value)))
+    (set-property property value))
   (f)
   (doseq [property (keys properties-map)]
     (clear-property property)))
@@ -58,35 +61,71 @@
     (clear-property configurable-property))
   ;; Override any properties that are in the default properties file
   ;; yet are unsafe/undesirable for tests
-  (set-property "ctia.http.dev-reload" false)
-  (set-property "ctia.http.min-threads" 9)
-  (set-property "ctia.http.max-threads" 10)
-  (set-property "ctia.nrepl.enabled" false)
-  ;; Run tests
-  (f))
+  (with-properties ["ctia.http.dev-reload" false
+                    "ctia.http.min-threads" 9
+                    "ctia.http.max-threads" 10
+                    "ctia.nrepl.enabled" false
+                    "ctia.hook.redis.channel-name" "events-test"]
+    ;; run tests
+    (f)))
+
+(defn fixture-property [prop val]
+  (fn [test]
+    (set-property prop val)
+    (test)))
 
 (defn fixture-properties:atom-store [f]
   ;; Set properties to enable the atom store
-  (with-properties ["ctia.store.type" "memory"]
+  (with-properties ["ctia.store.actor" "memory"
+                    "ctia.store.feedback" "memory"
+                    "ctia.store.campaign" "memory"
+                    "ctia.store.coa" "memory"
+                    "ctia.store.exploit-target" "memory"
+                    "ctia.store.identity" "memory"
+                    "ctia.store.incident" "memory"
+                    "ctia.store.indicator" "memory"
+                    "ctia.store.judgement" "memory"
+                    "ctia.store.sighting" "memory"
+                    "ctia.store.ttp" "memory"]
+    (f)))
+
+(defn fixture-properties:redis-hook [f]
+  (with-properties ["ctia.hook.redis.enabled" true]
+    (f)))
+
+(defn fixture-properties:hook-classes [f]
+  (with-properties ["ctia.hooks.before-create"
+                    (str/join "," ["ctia.hook.AutoLoadedJar1"
+                                   "hook-example.core/hook-example-1"
+                                   "ctia.hook.AutoLoadedJar2"
+                                   "hook-example.core/hook-example-2"])]
     (f)))
 
 (defn available-port []
   (with-open [sock (ServerSocket. 0)]
     (.getLocalPort sock)))
 
-(defn fixture-ctia [test]
-  ;; Start CTIA
-  ;; This starts the server on a random port, once for each
-  ;; (test), which _might_ briefly use up a lot of ports
-  (with-properties ["ctia.http.port" (available-port)]
-    (try
-      (init/start-ctia! :join? false
-                       :silent? true)
-      (test)
-      (finally
-        ;; explicitly stop the http-server
-        (http-server/stop!)
-        (e/shutdown!)))))
+(defn fixture-ctia
+  ([test] (fixture-ctia test true))
+  ([test enable-http?]
+   ;; Start CTIA
+   ;; This starts the server on a random port (if enabled)
+   (with-properties ["ctia.http.enabled" enable-http?
+                     "ctia.http.port" (if enable-http?
+                                        (available-port)
+                                        3000)]
+     (try
+       (init/start-ctia! :join? false
+                         :silent? true)
+       (test)
+       (finally
+         ;; explicitly stop the http-server
+         (http-server/stop!)
+         (hooks/shutdown!)
+         (events/shutdown!))))))
+
+(defn fixture-ctia-fast [test]
+  (fixture-ctia test false))
 
 (defn fixture-schema-validation [f]
   (schema/with-fn-validation

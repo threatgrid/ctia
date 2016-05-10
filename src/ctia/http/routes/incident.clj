@@ -21,9 +21,9 @@
       :login login
       (ok (flows/create-flow :realize-fn realize-incident
                              :store-fn #(create-incident @incident-store %)
-                             :object-type :incident
+                             :entity-type :incident
                              :login login
-                             :object incident)))
+                             :entity incident)))
     (PUT "/:id" []
       :return StoredIncident
       :body [incident NewIncident {:description "an updated incident"}]
@@ -35,10 +35,10 @@
       (ok (flows/update-flow :get-fn #(read-incident @incident-store %)
                              :realize-fn realize-incident
                              :update-fn #(update-incident @incident-store (:id %) %)
-                             :object-type :incident
+                             :entity-type :incident
                              :id id
                              :login login
-                             :object incident)))
+                             :entity incident)))
     (GET "/:id" []
       :return (s/maybe StoredIncident)
       :summary "Gets an Incident by ID"
@@ -54,9 +54,11 @@
       :summary "Deletes an Incident"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-incident :admin}
+      :login login
       (if (flows/delete-flow :get-fn #(read-incident @incident-store %)
                              :delete-fn #(delete-incident @incident-store %)
-                             :object-type :incident
-                             :id id)
+                             :entity-type :incident
+                             :id id
+                             :login login)
         (no-content)
         (not-found)))))

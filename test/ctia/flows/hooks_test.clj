@@ -1,16 +1,25 @@
 (ns ctia.flows.hooks-test
-  (:require [ctia.flows.hooks :as h]
+  (:require [ctia.flows.from-java :as fj]
+            [ctia.flows.hooks :as h]
+            [ctia.flows.hook-protocol :refer [Hook]]
+            [ctia.test-helpers.core :as helpers]
             [clojure.test :as t]))
+
+(t/use-fixtures :once (t/join-fixtures [helpers/fixture-schema-validation
+                                        helpers/fixture-properties:clean
+                                        helpers/fixture-ctia-fast]))
 
 (def obj {:x "x" :y 0 :z {:foo "bar"}})
 
 ;; -----------------------------------------------------------------------------
 ;; Dummy Hook
 (defrecord Dummy [name]
-  h/Hook
+  Hook
   (init [this] :noop)
-  (handle [_ type-name stored-object prev-object]
-    (into stored-object {(keyword name) "passed"}))
+  (handle [_ stored-object prev-object]
+    (update stored-object :dummy #(if (nil? %)
+                                    name
+                                    (str % " - " name))))
   (destroy [this] :noop))
 
 (defn test-adding-dummy-hooks []
@@ -19,24 +28,37 @@
   (h/add-hook! :before-create (Dummy. "hook3")))
 
 (t/deftest check-dummy-hook-order
-  (do
-    (h/reset-hooks!)
-    (test-adding-dummy-hooks)
-    (h/init-hooks!)
-    (t/is (= (h/apply-hooks "foo" obj nil :before-create)
-             (into obj {:hook1 "passed"
-                        :hook2 "passed"
-                        :hook3 "passed"})))
-    (t/is (= (h/apply-hooks "foo" obj nil :after-create)
-             obj))
-    (h/reset-hooks!)))
+  (h/shutdown!)
+  (h/reset-hooks!)
+  (test-adding-dummy-hooks)
+  (h/init-hooks!)
+  (t/is (= (h/apply-hooks :entity obj
+                          :hook-type  :before-create)
+           (into obj {:dummy "hook1 - hook2 - hook3"})))
+  (t/is (= (h/apply-hooks :entity  obj
+                          :hook-type  :after-create)
+           obj)))
+
+(t/deftest check-dummy-hook-read-only
+  (h/shutdown!)
+  (h/reset-hooks!)
+  (test-adding-dummy-hooks)
+  (h/init-hooks!)
+  (t/is (= (h/apply-hooks :entity   obj
+                          :hook-type   :before-create
+                          :read-only?  true)
+           obj))
+  (t/is (= (h/apply-hooks :entity obj
+                          :hook-type   :after-create
+                          :read-only?  true)
+           obj)))
 
 ;; -----------------------------------------------------------------------------
 ;; nil hook testing
 (defrecord Nil [name]
-  h/Hook
+  Hook
   (init [this] :noop)
-  (handle [_ type-name stored-object prev-object] nil)
+  (handle [_ stored-object prev-object] nil)
   (destroy [this] :noop))
 
 (defn test-adding-nil-hooks []
@@ -45,20 +67,23 @@
   (h/add-hook! :before-create (Nil. "nil3")))
 
 (t/deftest check-nil-hook
-  (do
-    (h/reset-hooks!)
-    (test-adding-nil-hooks)
-    (t/is (= (h/apply-hooks "foo" obj nil :before-create)
-             obj))
-    (t/is (= (h/apply-hooks "foo" obj nil :after-create)
-             obj))))
+  (h/shutdown!)
+  (h/reset-hooks!)
+  (test-adding-nil-hooks)
+  (h/init-hooks!)
+  (t/is (= (h/apply-hooks :entity obj
+                          :hook-type :before-create)
+           obj))
+  (t/is (= (h/apply-hooks :entity obj
+                          :hook-type :after-create)
+           obj)))
 
 ;; -----------------------------------------------------------------------------
 ;; Memory Hook
 (defrecord Memory [name]
-  h/Hook
+  Hook
   (init [this] :noop)
-  (handle [_ type-name stored-object prev-object]
+  (handle [_ stored-object prev-object]
     (into stored-object {:previous prev-object}))
   (destroy [this] :noop))
 
@@ -70,21 +95,27 @@
 
 (t/deftest check-memory-hook
   (let [memory {:y "y"}]
-    (do
-      (h/reset-hooks!)
-      (test-adding-memory-hooks)
-      (t/is (= (h/apply-hooks "foo" obj memory :before-create)
-               (into obj {:previous {:y "y"}})))
-      (t/is (= (h/apply-hooks "foo" obj memory :after-create)
-               obj))
-      (h/reset-hooks!))))
+    (h/shutdown!)
+    (h/reset-hooks!)
+    (test-adding-memory-hooks)
+    (h/init-hooks!)
+    (t/is (= (h/apply-hooks :entity   obj
+                            :prev-entity memory
+                            :hook-type   :before-create)
+             (into obj {:previous {:y "y"}})))
+    (t/is (= (h/apply-hooks :entity obj
+                            :prev-entity memory
+                            :hook-type   :after-create)
+             obj))))
 
+;; -----------------------------------------------------------------------------
 ;; Dummy Hook from Java
+
 (defrecord DummyJ [o]
-  h/Hook
+  Hook
   (init [this] (doto (.init o)))
-  (handle [_ type-name stored-object prev-object]
-    (h/from-java-handle o type-name stored-object prev-object))
+  (handle [_ stored-object prev-object]
+    (fj/from-java-handle o stored-object prev-object))
   (destroy [this] (doto (.destroy o))))
 
 (defn test-adding-dummy-hooks-from-java []
@@ -92,26 +123,28 @@
   (h/add-hook! :before-create (DummyJ. (new ctia.hook.Dummy "hookJ2")))
   (h/add-hook! :before-create (DummyJ. (new ctia.hook.Dummy "hookJ3"))))
 
-(t/deftest check-dummy-hook-order-from-java
-  (do
-    (h/reset-hooks!)
-    (test-adding-dummy-hooks-from-java)
-    (h/init-hooks!)
-    (t/is (= (h/apply-hooks "foo" obj nil :before-create)
-             (into obj {"hookJ1 - initialized" "passed"
-                        "hookJ2 - initialized" "passed"
-                        "hookJ3 - initialized" "passed"})))
-    (t/is (= (h/apply-hooks "foo" obj nil :after-create)
-             obj))
-    (h/reset-hooks!)))
+(t/deftest check-dummy-hook-from-java
+  (h/shutdown!)
+  (h/reset-hooks!)
+  (test-adding-dummy-hooks-from-java)
+  (h/init-hooks!)
+  (t/is (= (h/apply-hooks :entity obj
+                          :hook-type :before-create)
+           (into obj {"hookJ1 - initialized" "passed"
+                      "hookJ2 - initialized" "passed"
+                      "hookJ3 - initialized" "passed"})))
+  (t/is (= (h/apply-hooks :entity obj
+                          :hook-type :after-create)
+           obj))
+  (h/reset-hooks!))
 
 
 ;; Dummy Hook from Jar file
 (defrecord DummyJ [o]
-  h/Hook
+  Hook
   (init [this] (doto (.init o)))
-  (handle [_ type-name stored-object prev-object]
-    (h/from-java-handle o type-name stored-object prev-object))
+  (handle [_ stored-object prev-object]
+    (fj/from-java-handle o stored-object prev-object))
   (destroy [this] (doto (.destroy o))))
 
 (defn test-adding-dummy-hooks-from-jar []
@@ -119,15 +152,16 @@
   (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar2")))
   (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar3"))))
 
-(t/deftest check-dummy-hook-order-from-jar
-  (do
-    (h/reset-hooks!)
-    (test-adding-dummy-hooks-from-jar)
-    (h/init-hooks!)
-    (t/is (= (h/apply-hooks "foo" obj nil :before-create)
-             (into obj {"hookJar1 - initialized" "passed-from-jar"
-                        "hookJar2 - initialized" "passed-from-jar"
-                        "hookJar3 - initialized" "passed-from-jar"})))
-    (t/is (= (h/apply-hooks "foo" obj nil :after-create)
-             obj))
-    (h/reset-hooks!)))
+(t/deftest check-dummy-hook-from-jar
+  (h/shutdown!)
+  (h/reset-hooks!)
+  (test-adding-dummy-hooks-from-jar)
+  (h/init-hooks!)
+  (t/is (= (h/apply-hooks :entity obj
+                          :hook-type :before-create)
+           (into obj {"hookJar1 - initialized" "passed-from-jar"
+                      "hookJar2 - initialized" "passed-from-jar"
+                      "hookJar3 - initialized" "passed-from-jar"})))
+  (t/is (= (h/apply-hooks :entity obj
+                          :hook-type :after-create)
+           obj)))

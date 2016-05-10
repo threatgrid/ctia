@@ -9,6 +9,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+      - "3001:3001"
     depends_on:
       - redis
       - kibana
@@ -21,6 +22,8 @@ services:
   elasticsearch:
     image: elasticsearch:2.3
     command: elasticsearch -Des.network.host=0.0.0.0
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -61,7 +64,7 @@ services:
     image: nginx:alpine
     volumes:
          - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf
-         - /etc/nginx/.htpasswd:/etc/nginx/.htpasswd
+         - ./nginx/config/authdb:/etc/nginx/authdb
     ports:
       - "80:80"
     links:

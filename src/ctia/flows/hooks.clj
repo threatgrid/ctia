@@ -1,66 +1,62 @@
 (ns ctia.flows.hooks
-  "Handle hooks (Cf. #159).")
+  "Handle hooks ([Cf. #159](https://github.com/threatgrid/ctia/issues/159))."
+  (:require [ctia.flows.autoload :as auto-hooks]
+            [ctia.flows.hooks.event-hooks :as event-hooks]
+            [ctia.flows.hook-protocol
+             :refer [Hook] :as prot]))
 
-(def default-hooks
-  {:before-create {:doc "`before-create` hooks are triggered on create routes before the object is saved in the DB."
-                   :list []}
-   :after-create {:doc "`after-create` hooks are called after an object was created."
-                  :list []}
-   :before-update {:doc "`before-update` hooks are triggered on update before the object is saved in the DB."
-                   :list []}
-   :after-update {:doc "`after-update` hooks are called after an object was updated."
-                  :list []}
-   :before-delete {:doc "`before-delete` hooks are called before an object deletion"
-                   :list []}
-   :after-delete {:doc "`after-delete` hooks are called after an object is deleted"
-                  :list []}})
+(defn- doc-list [& s]
+  (with-meta [] {:doc (apply str s)}))
 
-(def hooks (atom default-hooks))
+(def empty-hooks
+  {:before-create (doc-list "`before-create` hooks are triggered on"
+                            " create routes before the entity is saved in the DB.")
+
+   :after-create (doc-list "`after-create` hooks are called after an entity was created.")
+
+   :before-update (doc-list "`before-update` hooks are triggered on"
+                            " update routes before the entity is saved in the DB.")
+
+   :after-update (doc-list "`after-update` hooks are called after an entity was updated.")
+
+   :before-delete (doc-list "`before-delete` hooks are called before an entity is deleted.")
+
+   :after-delete (doc-list "`after-delete` hooks are called after an entity is deleted.")
+
+   :event (doc-list "`event` hooks are called with an event during any CRUD activity.")})
+
+(defonce hooks (atom empty-hooks))
 
 (defn reset-hooks! []
-  (reset! hooks default-hooks))
-
-(defprotocol Hook
-  "A hook is mainly a function"
-  (init [this])
-  (handle [this
-           type-name
-           stored-object
-           prev-object])
-  (destroy [this]))
+  (reset! hooks
+          (-> empty-hooks
+              event-hooks/register-hooks
+              auto-hooks/register-hooks)))
 
 (defn add-hook!
   "Add a `Hook` for the hook `hook-type`"
   [hook-type hook]
-  (swap! hooks update-in [hook-type :list] conj hook))
+  (swap! hooks update hook-type conj hook))
 
 (defn add-hooks!
   "Add a list of `Hook` for the hook `hook-type`"
   [hook-type hook-list]
-  (swap! hooks update-in [hook-type :list] concat hook-list))
-
-(defn init!
-  "Initialize hooks"
-  []
-  (doseq [hook-type (keys @hooks)]
-    (let [hook-list (get @hooks (:list hook-type))]
-      (add-hooks! hook-type hook-list))))
+  (swap! hooks update hook-type into hook-list))
 
 (defn init-hooks!
-  "Should search Jar, Namespaces and init Objects"
+  "Initialize all hooks"
   []
-  (doseq [hook-type (keys @hooks)]
-    (doseq [hook (get-in @hooks [hook-type :list])]
-      (init hook)
-      (add-hook! hook-type hook)))
+  (doseq [hook-list (vals @hooks)
+          hook hook-list]
+    (prot/init hook))
   @hooks)
 
-(defn destroy-hooks
+(defn destroy-hooks!
   "Should call all destructor for each hook in reverse order."
   []
-  (doseq [hook-type (keys @hooks)]
-    (doseq [hook (reverse (get-in @hooks [hook-type :list]))]
-      (destroy hook))))
+  (doseq [hook-list (vals @hooks)
+          hook (reverse hook-list)]
+    (prot/destroy hook)))
 
 (defn add-destroy-hooks-hook-at-shutdown
   "Calling this function will ensure that all hooks will be
@@ -68,48 +64,36 @@
   []
   (.addShutdownHook
    (Runtime/getRuntime)
-   (Thread. destroy-hooks)))
-
-(defn bind-realized
-  "bind high level type would be:
-
-    RealizedObject
-    -> (Type -> RealizedObject -> RealizedObject -> Maybe RealizedObject)
-    -> RealizedObject
-    -> RealizedObject
-
-  If the hook returns nil, it doens't modify the realized object returned."
-  [realized-object hook prev-object type-name]
-  (let [result (handle hook type-name realized-object prev-object)]
-    (if (nil? result)
-      realized-object
-      result)))
-
-(defn apply-hook-list
-  "Apply all hooks to some realized object of some type"
-  [type-name realized-object prev-object hook-list]
-  (reduce (fn [acc hook]
-            (bind-realized acc hook prev-object type-name))
-          realized-object
-          hook-list))
+   (Thread. destroy-hooks!)))
 
 (defn apply-hooks
-  "Apply all hooks for some hook-type"
-  [type-name realized-object prev-object hook-type]
-  (apply-hook-list type-name
-                   realized-object
-                   prev-object
-                   (get-in @hooks [hook-type :list])))
+  "Apply the registered hooks for a given hook-type to the passed in data.
+   Data may be an entity (or an event) and a previous entity.  Accepts
+  read-only?, in which case the result of the hooks do not change the result.
+  In any hook returns nil, the result is ignored and the input entity is kept."
+  [& {:keys [hook-type
+             entity
+             prev-entity
+             read-only?]}]
+  (loop [[hook & more-hooks :as hooks] (get @hooks hook-type)
+         result entity]
+    (if (empty? hooks)
+      result
+      (let [handle-result (prot/handle hook result prev-entity)]
+        (if (or read-only?
+                (nil? handle-result))
+          (recur more-hooks result)
+          (recur more-hooks handle-result))))))
 
+(defn apply-event-hooks [event]
+  (apply-hooks :hook-type :event
+               :entity event
+               :read-only? true))
 
-(defn from-java-handle
-  "Helper to import Java obeying `Hook` java interface."
-  [o type-name stored-object prev-object]
-  (into {}
-        (.handle o
-                 type-name
-                 (when (some? stored-object)
-                   (java.util.HashMap. stored-object))
-                 (when (some? prev-object)
-                   (java.util.HashMap. prev-object)))))
+(defn init! []
+  (reset-hooks!)
+  (init-hooks!)
+  (add-destroy-hooks-hook-at-shutdown))
 
+(defn shutdown! []
+  (destroy-hooks!))
