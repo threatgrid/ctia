@@ -1,23 +1,19 @@
 (ns ctia.http.routes.observable-test
   (:refer-clojure :exclude [get])
-  (:require
-   [ring.util.codec :refer [url-encode]]
-   [schema-generators.generators :as g]
-   [clojure.test.check.generators :as gen]
-   [ctia.schemas.common  :refer [Observable]]
-   [ctia.schemas.sighting  :refer [NewSighting]]
-   [ctia.schemas.indicator  :refer [NewIndicator]]
-   [ctia.schemas.judgement  :refer [NewJudgement]]
-
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [schema-generators.generators :as g]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.http :refer [api-key test-post test-get-list test-delete]]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.test-helpers.pagination :refer [pagination-test]]
-   [ctia.schemas.judgement :refer [NewJudgement]]))
+  (:require [clojure.test :refer [is join-fixtures use-fixtures]]
+            [ctia.schemas
+             [common :refer [Observable]]
+             [indicator :refer [NewIndicator]]
+             [judgement :refer [NewJudgement]]
+             [sighting :refer [NewSighting]]]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers]
+             [fake-whoami-service :as whoami-helpers]
+             [http :refer [api-key test-delete test-get-list test-post]]
+             [store :refer [deftest-for-each-store]]]
+            [ring.util.codec :refer [url-encode]]
+            [schema-generators.generators :as g]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -53,6 +49,7 @@
                                                                   indicators)
                                                  ;; TODO: empty value isn't supported
                                                  :observable observable})))]
+
         (let [judgement (test-post "ctia/judgement" new-judgement)]
           (when judgement
             (let [add-sightings-fn #(-> %
@@ -71,6 +68,7 @@
               (test-get-list (str route-pref "/judgements") [judgement])
               (test-get-list (str route-pref "/indicators") indicators)
               (test-get-list (str route-pref "/sightings") sightings)
+
               (doseq [sighting sightings]
                 (test-delete (str "ctia/sighting/" (:id sighting)))))
             (test-delete (str "ctia/judgement/" (:id judgement))))
@@ -78,7 +76,8 @@
           (is (= 1 1)))))))
 
 (deftest-for-each-store test-get-sightings-by-observable-tricky
-  "Then for each observable, generate judgements, indicators and sightings."
+  "This test is intended for ES generate fixtures
+   that may confuse search with improper mapping"
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
   (let [nb-sightings 1

@@ -17,7 +17,6 @@
    {(s/optional-key :sort_by) (s/enum
                                :id
                                :disposition
-                               :timestamp
                                :priority
                                :severity
                                :confidence)}))

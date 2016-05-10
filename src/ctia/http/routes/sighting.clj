@@ -9,7 +9,6 @@
             [schema.core :as s]))
 
 (defroutes sighting-routes
-
   (context "/sighting" []
     :tags ["Sighting"]
     (POST "/" []
