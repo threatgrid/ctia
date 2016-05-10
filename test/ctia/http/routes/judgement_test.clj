@@ -7,6 +7,7 @@
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.test-helpers.pagination :refer [pagination-test]]
    [ctia.schemas.judgement :refer [NewJudgement StoredJudgement]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
@@ -48,6 +49,7 @@
             :severity 100
             :confidence "Low"
             :source "test"
+            :tlp "green"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :indicators [{:confidence "High"
@@ -74,6 +76,7 @@
                 :severity 100
                 :confidence "Low"
                 :source "test"
+                :tlp "green"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -102,6 +105,7 @@
                 :severity 100
                 :confidence "Low"
                 :source "test"
+                :tlp "green"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -169,7 +173,8 @@
                 :judgement (:id judgement),
                 :feedback -1,
                 :reason "false positive"
-                :owner "foouser"}
+                :owner "foouser"
+                :tlp "green"}
                (dissoc feedback
                        :id
                        :created))))
@@ -202,12 +207,14 @@
                     :judgement (:id judgement),
                     :feedback -1,
                     :reason "false positive"
-                    :owner "foouser"}
+                    :owner "foouser"
+                    :tlp "green"}
                    {:type "feedback"
                     :judgement (:id judgement),
                     :feedback 1,
                     :reason "true positive"
-                    :owner "foouser"}}
+                    :owner "foouser"
+                    :tlp "green"}}
                  (set (map #(dissoc % :id :created)
                            feedbacks))))))))))
 
@@ -238,6 +245,7 @@
             :priority 100
             :severity 100
             :confidence "Low"
+            :tlp "green"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -268,6 +276,7 @@
             :priority 100
             :severity 100
             :confidence "Low"
+            :tlp "green"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -297,6 +306,7 @@
             :priority 100
             :severity 100
             :confidence "Low"
+            :tlp "green"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -334,9 +344,11 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  (let [new-judgements (g/sample 20 NewJudgement)
-        ;;hardcode dispositon
-        fixed-judgements (map #(merge % {:disposition 5
+  (let [new-judgements (g/sample 30 NewJudgement)
+        ;;hardcode dispositon & observable
+        fixed-judgements (map #(merge % {:observable {:type "ip"
+                                                      :value "1.2.3.4"}
+                                         :disposition 5
                                          :disposition_name "Unknown"}) new-judgements)]
     (testing "POST /ctia/judgement GET /ctia/judgement"
       (let [responses (map #(post "ctia/judgement"
@@ -351,4 +363,9 @@
                              :headers {"api_key" "45c1f5e3f05d0"}))
                   (map :parsed-body)
                   (map #(dissoc % :id :created :modified :owner))
-                  set)))))))
+                  set)))))
+
+    (pagination-test
+     "ctia/ip/1.2.3.4/judgements"
+     {"api_key" "45c1f5e3f05d0"} [:id :disposition :priority :severity :confidence])))
+

@@ -192,7 +192,8 @@
                  "timestamp for the definition of a specific version of an Incident")
     :confidence (describe
                  v/HighMedLow
-                 "level of confidence held in the characterization of this Incident")}
+                 "level of confidence held in the characterization of this Incident")
+    :tlp c/TLP}
    (st/optional-keys
     {:status (describe v/Status "current status of the incident")
      :version (describe s/Str "schema version for this content")
@@ -279,8 +280,10 @@
    (st/dissoc Incident
               :id
               :valid_time)
-   {(s/optional-key :valid_time) c/ValidTime
-    (s/optional-key :type) Type}))
+   (st/optional-keys
+    {:valid_time c/ValidTime
+     :type Type
+     :tlp c/TLP})))
 
 
 (s/defschema StoredIncident

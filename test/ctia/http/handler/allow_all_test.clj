@@ -35,6 +35,7 @@
             :disposition 2
             :disposition_name "Malicious"
             :source "test"
+            :tlp "green"
             :priority 100
             :severity 100
             :confidence "Low"
@@ -57,6 +58,7 @@
                 :disposition 2
                 :disposition_name "Malicious"
                 :source "test"
+                :tlp "green"
                 :priority 100
                 :severity 100
                 :confidence "Low"

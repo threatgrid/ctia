@@ -37,3 +37,18 @@
 
     (q/filtered :query observable-filter
                 :filter time-filter)))
+
+
+(defn sightings-by-observables-query
+  "nested filter to get all indicators
+   matching a set of judgement ids"
+  [observables]
+
+  (q/nested
+   :path "observables"
+   :query (q/bool {:should
+                   (map (fn [{:keys [type value]}]
+                          (q/bool
+                           {:must
+                            [{:term {"observables.type" type}}
+                             {:term {"observables.value" value}}]})) observables)})))
