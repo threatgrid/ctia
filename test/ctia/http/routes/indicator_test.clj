@@ -4,6 +4,7 @@
             [clojure.tools.logging :as log]
             [ctia.schemas
              [campaign :refer [NewCampaign]]
+             [coa :refer [NewCOA]]
              [indicator :refer [NewIndicator]]
              [sighting :refer [NewSighting]]]
             [ctia.test-helpers
@@ -270,3 +271,30 @@
                               (url-encode (:id indicator))
                               "/campaigns")
                          campaigns))))))
+
+(deftest-for-each-store test-coas-from-indicator
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (let [new-indicators (g/sample 10 NewIndicator)
+        nb-coas 10]
+    (if (> nb-coas ctia.lib.es.document/default-limit)
+      (log/error
+       "BEWARE! ES Couldn't handle more than 10 element by search by default."
+       "It is set to " ctia.lib.es.document/default-limit " in `lib.es.document.clj`"
+       "You might want to change either `nb-coas` in this test"
+       "or change `ctia.lib.es.document/default-limit`"))
+    (let [new-coas (g/sample nb-coas NewCOA)
+          coas (remove nil? (map #(test-post "ctia/coa" %)
+                                      new-coas))
+          coa-ids (map :id coas)]
+      (is (not (empty? coas)))
+      (when-not (empty? coas)
+        (let [related-coa-bloc {:related_COAs
+                                     (map (fn [c] {:COA_id c}) coa-ids)}
+              new-indicator (c/complete related-coa-bloc
+                                        NewIndicator)
+              indicator (test-post "ctia/indicator" new-indicator)]
+          (test-get-list (str "ctia/indicator/"
+                              (url-encode (:id indicator))
+                              "/coas")
+                         coas))))))

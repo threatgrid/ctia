@@ -146,7 +146,9 @@
   (delete-coa [_ id]
     (coa/handle-delete-coa state id))
   (list-coas [_ filter-map params]
-    (coa/handle-list-coas state filter-map params)))
+    (coa/handle-list-coas state filter-map params))
+  (list-coas-by-indicators [_ indicators params]
+    (coa/handle-list-coas-by-indicators state indicators params)))
 
 (defrecord IncidentStore [state]
   IIncidentStore

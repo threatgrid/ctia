@@ -49,11 +49,15 @@
           (not-found))
         (not-found)))
     (GET "/:id/coas" []
-      :tags ["COA"]
       :return [StoredCOA]
-      :path-params [id :- Long]
+      :path-params [id :- s/Str]
+      :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all COAs associated with the Indicator"
-      (not-found))
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [coas (list-coas-by-indicators @coa-store [indicator] params)]
+          (paginated-ok coas)
+          (not-found))
+        (not-found)))
     (GET "/:id/ttps" []
       :tags ["TTP"]
       :return [StoredTTP]

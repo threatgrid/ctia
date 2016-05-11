@@ -55,7 +55,8 @@
   (create-coa [this new-coa])
   (update-coa [this id coa])
   (delete-coa [this id])
-  (list-coas [this filtermap params]))
+  (list-coas [this filtermap params])
+  (list-coas-by-indicators [this indicators params]))
 
 (defprotocol ISightingStore
   (read-sighting [this id])
