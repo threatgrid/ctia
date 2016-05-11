@@ -47,7 +47,8 @@
   (create-campaign [this new-campaign])
   (update-campaign [this id campaign])
   (delete-campaign [this id])
-  (list-campaigns [this filtermap params]))
+  (list-campaigns [this filtermap params])
+  (list-campaigns-by-indicators [this indicators params]))
 
 (defprotocol ICOAStore
   (read-coa [this id])

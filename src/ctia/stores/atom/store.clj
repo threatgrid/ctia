@@ -35,7 +35,8 @@
     (campaign/handle-update-campaign state id new-campaign))
   (delete-campaign [_ id]
     (campaign/handle-delete-campaign state id))
-  (list-campaigns [_ filter-map params]))
+  (list-campaigns-by-indicators [_ indicators params]
+    (campaign/handle-list-campaigns-by-indicators state indicators params)))
 
 (defrecord COAStore [state]
   ICOAStore

@@ -7,3 +7,12 @@
 (def handle-update-campaign (crud/handle-update :campaign StoredCampaign))
 (def handle-delete-campaign (crud/handle-delete :campaign StoredCampaign))
 (def handle-list-campaigns (crud/handle-find :campaign StoredCampaign))
+
+(defn handle-list-campaigns-by-indicators
+  [state indicators params]
+  (let [campaign-ids (some->> (map :related_campaigns indicators)
+                              (mapcat #(map :campaign_id %))
+                              vec)]
+    (handle-list-campaigns state
+                           {:id campaign-ids}
+                           params)))

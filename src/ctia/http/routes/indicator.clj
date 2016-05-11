@@ -40,9 +40,14 @@
       (not-found))
     (GET "/:id/campaigns" []
       :return [StoredCampaign]
-      :path-params [id :- Long]
+      :path-params [id :- s/Str]
+      :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all Campaigns associated with the Indicator"
-      (not-found))
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [campaigns (list-campaigns-by-indicators @campaign-store [indicator] params)]
+          (paginated-ok campaigns)
+          (not-found))
+        (not-found)))
     (GET "/:id/coas" []
       :tags ["COA"]
       :return [StoredCOA]

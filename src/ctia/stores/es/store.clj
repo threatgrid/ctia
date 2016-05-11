@@ -131,7 +131,9 @@
   (delete-campaign [_ id]
     (ca/handle-delete-campaign state id))
   (list-campaigns [_ filter-map params]
-    (ca/handle-list-campaigns state filter-map params)))
+    (ca/handle-list-campaigns state filter-map params))
+  (list-campaigns-by-indicators [_ indicators params]
+    (ca/handle-list-campaigns-by-indicators state indicators params)))
 
 (defrecord COAStore [state]
   ICOAStore
