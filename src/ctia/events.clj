@@ -3,7 +3,6 @@
             [ctia.lib.time :as time]
             [ctia.lib.async :as la]
             [ctia.schemas.common :as c]
-            [ctia.schemas.verdict :as v]
             [clojure.core.async :as a :refer [go-loop alt! chan tap]]
             [schema.core :as s :refer [=>]]
             [schema-tools.core :as st])

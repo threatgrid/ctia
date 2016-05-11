@@ -56,8 +56,6 @@
      :indicator_type (describe [v/IndicatorType]
                                "Specifies the type or types for this Indicator")
      :tags (describe [s/Str] "Descriptors for this indicator")
-     :observable (describe c/Observable
-                           "a relevant cyber observable for this Indicator")
      :judgements (describe rel/RelatedJudgements
                            "related Judgements for this Indicator")
      :composite_indicator_expression CompositeIndicatorExpression
