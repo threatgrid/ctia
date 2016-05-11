@@ -7,6 +7,7 @@
     [ctia.events.producers.es.producer :as esp]
     [ctia.properties :refer [properties]]
     [ctia.properties.getters :as pg]
+    [ctia.store :as store]
     [schema.core :as s]))
 
 (defrecord ESEventProducer [conn]
@@ -56,6 +57,25 @@
     (events/send-event event)
     event))
 
+(defn- judgement?
+  [{t :type :as event}]
+  (= "judgement" t))
+
+(defrecord VerdictGenerator []
+  Hook
+  (init [_]
+    :nothing)
+  (destroy [_]
+    :nothing)
+  (handle [_ event _]
+    (when (judgement? event)
+      (some-> (:judgement store/stores)
+              deref
+              (store/calculate-verdict event)
+              ;; TODO: store in verdict store. Issue #277
+              ))
+    event))
+
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
   (let [{{redis-enabled? :enabled} :redis
@@ -64,4 +84,5 @@
     (cond-> hooks-m
       redis-enabled? (update :event #(conj % (redis-event-publisher)))
       es-enabled?    (update :event #(conj % (es-event-producer)))
-      :always        (update :event #(conj % (->ChannelEventPublisher))))))
+      :always        (update :event #(conj % (->ChannelEventPublisher)))
+      :always        (update :event #(conj % (->VerdictGenerator))))))
