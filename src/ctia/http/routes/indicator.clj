@@ -35,9 +35,14 @@
     :tags ["Indicator"]
     (GET "/:id/judgements" []
       :return [StoredJudgement]
-      :path-params [id :- Long]
+      :path-params [id :- s/Str]
+      :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all Judgements associated with the Indicator"
-      (not-found))
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [judgements (list-judgements-by-indicators @judgement-store [indicator] params)]
+          (paginated-ok judgements)
+          (not-found))
+        (not-found)))
     (GET "/:id/campaigns" []
       :return [StoredCampaign]
       :path-params [id :- s/Str]

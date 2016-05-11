@@ -66,6 +66,8 @@
     (ju/handle-delete-judgement state id))
   (list-judgements [_ filter-map params]
     (ju/handle-list-judgements state filter-map params))
+  (list-judgements-by-indicators [this indicators params]
+    (ju/handle-list-judgements-by-indicators state indicators params))
   (list-judgements-by-observable [this observable params]
     (ju/handle-list-judgements state {[:observable :type]  (:type observable)
                                       [:observable :value] (:value observable)} params))

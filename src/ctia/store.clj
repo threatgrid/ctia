@@ -14,6 +14,7 @@
   (list-judgements [this filter-map params])
   (calculate-verdict [this observable])
   (list-judgements-by-observable [this observable params])
+  (list-judgements-by-indicators [this indicators params])
   (add-indicator-to-judgement [this judgement-id indicator-relationship]))
 
 (defprotocol IIndicatorStore

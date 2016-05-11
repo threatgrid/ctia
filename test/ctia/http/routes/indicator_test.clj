@@ -5,9 +5,10 @@
             [ctia.schemas
              [campaign :refer [NewCampaign]]
              [coa :refer [NewCOA]]
-             [ttp :refer [NewTTP]]
              [indicator :refer [NewIndicator]]
-             [sighting :refer [NewSighting]]]
+             [judgement :refer [NewJudgement]]
+             [sighting :refer [NewSighting]]
+             [ttp :refer [NewTTP]]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
@@ -326,3 +327,32 @@
                               (url-encode (:id indicator))
                               "/ttps")
                          ttps))))))
+
+(deftest-for-each-store test-judgements-from-indicator
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (let [new-indicators (g/sample 10 NewIndicator)
+        nb-judgements 10]
+    (if (> nb-judgements ctia.lib.es.document/default-limit)
+      (log/error
+       "BEWARE! ES Couldn't handle more than 10 element by search by default."
+       "It is set to " ctia.lib.es.document/default-limit " in `lib.es.document.clj`"
+       "You might want to change either `nb-judgements` in this test"
+       "or change `ctia.lib.es.document/default-limit`"))
+    (let [new-judgements (map #(merge % {:disposition 5
+                                         :disposition_name "Unknown"})
+                              (g/sample nb-judgements NewJudgement))
+          judgements (remove nil? (map #(test-post "ctia/judgement" %)
+                                      new-judgements))
+          judgement-ids (map :id judgements)]
+      (is (not (empty? judgements)))
+      (when-not (empty? judgements)
+        (let [related-judgement-bloc {:judgements
+                                     (map (fn [c] {:judgement_id c}) judgement-ids)}
+              new-indicator (c/complete related-judgement-bloc
+                                        NewIndicator)
+              indicator (test-post "ctia/indicator" new-indicator)]
+          (test-get-list (str "ctia/indicator/"
+                              (url-encode (:id indicator))
+                              "/judgements")
+                         judgements))))))

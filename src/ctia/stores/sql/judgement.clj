@@ -76,17 +76,14 @@
 
     (or (-> hits-res first :hits) 0)))
 
-(defn select-judgements
-  [filter-map {:keys [sort_by sort_order offset limit]
-               :or {sort_by :id
-                    sort_order :asc
-                    offset 0
-                    limit pagination/default-limit}}]
+(defn select-judgements-raw
+  [judgement-query {:keys [sort_by sort_order offset limit]
+                    :or {sort_by :id
+                         sort_order :asc
+                         offset 0
+                         limit pagination/default-limit}}]
 
-  (let [judgement-query (-> (k/select* @judgement)
-                            (k/where (transform/filter-map->where-map filter-map)))
-
-        judgement-records (-> judgement-query
+  (let [judgement-records (-> judgement-query
                               (k/group :id sort_by)
                               (k/order sort_by sort_order)
                               (k/limit limit)
@@ -122,6 +119,12 @@
                          limit
                          (count-judgements judgement-query))))
 
+(defn select-judgements
+  [filter-map params]
+  (select-judgements-raw (-> (k/select* @judgement)
+                             (k/where (transform/filter-map->where-map filter-map)))
+                         params))
+
 (defn delete-judgement [id]
   (kdb/transaction
    (let [num-rows-deleted
@@ -151,3 +154,12 @@
     (c/insert @judgement-indicator
               [(schema-indicator->db-indicator judgement-id indicator-rel)])
     indicator-rel))
+
+(defn handle-list-judgements-by-indicators
+  [indicators params]
+  (let [judgement-ids (some->> (map :judgements indicators)
+                               (mapcat #(map :judgement_id %))
+                               vec)]
+    (select-judgements-raw (-> (k/select* @judgement)
+                               (k/where {:id [in judgement-ids]}))
+                           params)))
