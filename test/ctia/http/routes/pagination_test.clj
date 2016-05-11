@@ -29,7 +29,7 @@
   (testing "with pagination test setup"
     (let [observable {:type "ip" :value "1.2.3.4"}
           indicators (->> (g/sample 5 NewIndicator)
-                          (map #(assoc % :observable observable :title "test")))
+                          (map #(assoc % :title "test")))
           created-indicators (map #(test-post "ctia/indicator" %) indicators)
           indicator-rels (map (fn [{:keys [id]}] {:indicator_id id}) created-indicators)
           judgements (->> (g/sample 5 NewJudgement)
