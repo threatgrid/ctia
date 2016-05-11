@@ -59,11 +59,15 @@
           (not-found))
         (not-found)))
     (GET "/:id/ttps" []
-      :tags ["TTP"]
       :return [StoredTTP]
-      :path-params [id :- Long]
+      :path-params [id :- s/Str]
+      :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all TTPs associated with the Indicator"
-      (not-found))
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [ttps (list-ttps-by-indicators @ttp-store [indicator] params)]
+          (paginated-ok ttps)
+          (not-found))
+        (not-found)))
     (POST "/" []
       :return StoredIndicator
       :body [indicator NewIndicator {:description "a new Indicator"}]

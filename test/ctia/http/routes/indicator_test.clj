@@ -5,6 +5,7 @@
             [ctia.schemas
              [campaign :refer [NewCampaign]]
              [coa :refer [NewCOA]]
+             [ttp :refer [NewTTP]]
              [indicator :refer [NewIndicator]]
              [sighting :refer [NewSighting]]]
             [ctia.test-helpers
@@ -298,3 +299,30 @@
                               (url-encode (:id indicator))
                               "/coas")
                          coas))))))
+
+(deftest-for-each-store test-ttps-from-indicator
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (let [new-indicators (g/sample 10 NewIndicator)
+        nb-ttps 10]
+    (if (> nb-ttps ctia.lib.es.document/default-limit)
+      (log/error
+       "BEWARE! ES Couldn't handle more than 10 element by search by default."
+       "It is set to " ctia.lib.es.document/default-limit " in `lib.es.document.clj`"
+       "You might want to change either `nb-ttps` in this test"
+       "or change `ctia.lib.es.document/default-limit`"))
+    (let [new-ttps (g/sample nb-ttps NewTTP)
+          ttps (remove nil? (map #(test-post "ctia/ttp" %)
+                                 new-ttps))
+          ttp-ids (map :id ttps)]
+      (is (not (empty? ttps)))
+      (when-not (empty? ttps)
+        (let [related-ttp-bloc {:indicated_TTP
+                                (map (fn [c] {:ttp_id c}) ttp-ids)}
+              new-indicator (c/complete related-ttp-bloc
+                                        NewIndicator)
+              indicator (test-post "ctia/indicator" new-indicator)]
+          (test-get-list (str "ctia/indicator/"
+                              (url-encode (:id indicator))
+                              "/ttps")
+                         ttps))))))

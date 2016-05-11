@@ -105,7 +105,9 @@
   (delete-ttp [_ id]
     (ttp/handle-delete-ttp state id))
   (list-ttps [_ filter-map params]
-    (ttp/handle-list-ttps state filter-map params)))
+    (ttp/handle-list-ttps state filter-map params))
+  (list-ttps-by-indicators [_ indicators params]
+    (ttp/handle-list-ttps-by-indicators state indicators params)))
 
 (defrecord ActorStore [state]
   IActorStore

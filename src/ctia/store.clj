@@ -40,7 +40,8 @@
   (create-ttp [this new-ttp])
   (update-ttp [this id ttp])
   (delete-ttp [this id])
-  (list-ttps [this filtermap params]))
+  (list-ttps [this filtermap params])
+  (list-ttps-by-indicators [this indicators params]))
 
 (defprotocol ICampaignStore
   (read-campaign [this id])
