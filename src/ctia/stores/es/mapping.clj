@@ -564,6 +564,7 @@
      :confidence string
      :observables (assoc observable :type "nested")
      :indicators related-indicators
+     :incidents related-incidents
      :relations observed-relation
      :owner string
      :created ts
