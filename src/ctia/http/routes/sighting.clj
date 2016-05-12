@@ -14,7 +14,7 @@
     (POST "/" []
       :return StoredSighting
       :body [sighting NewSighting {:description "A new Sighting"}]
-      :header-params [api_key :- s/Str]
+      :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Sighting"
       :capabilities #{:create-sighting :admin}
       :login login
@@ -28,7 +28,7 @@
     (PUT "/:id" []
       :return StoredSighting
       :body [sighting NewSighting {:description "An updated Sighting"}]
-      :header-params [api_key :- s/Str]
+      :header-params [api_key :- (s/maybe s/Str)]
       :summary "Updates a Sighting"
       :path-params [id :- s/Str]
       :capabilities #{:create-sighting :admin}
@@ -46,7 +46,7 @@
       :return (s/maybe StoredSighting)
       :summary "Gets a Sighting by ID"
       :path-params [id :- s/Str]
-      :header-params [api_key :- s/Str]
+      :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:read-sighting :admin}
       (if-let [d (read-sighting @sighting-store id)]
         (ok d)
@@ -54,7 +54,7 @@
     (DELETE "/:id" []
       :path-params [id :- s/Str]
       :summary "Deletes a Sighting"
-      :header-params [api_key :- s/Str]
+      :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:delete-sighting :admin}
       (if (delete-sighting @sighting-store id)
         (no-content)

@@ -10,7 +10,9 @@
              "-server"]
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
-                 [metosin/schema-tools "0.7.0"]
+                 [prismatic/schema "1.0.5"]
+                 [metosin/schema-tools "0.7.0"
+                  :exclusions [prismatic/schema]]
                  [com.rpl/specter "0.9.2"]
                  [org.clojure/core.async "0.2.374"]
                  [clj-http "2.0.1"]
@@ -26,6 +28,7 @@
                  [javax.servlet/servlet-api "2.5"]
                  [ring-middleware-format "0.7.0"]
                  [ring/ring-devel "1.4.0"]
+                 [ring/ring-codec "1.0.0"]
 
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.12"]
@@ -51,16 +54,15 @@
                    :sql-store :sql-store
                    :es-store :es-store
                    :disabled :disabled
-                   :es-producer #(or (:es-producer %)
-                                     (:es-producer-filtered-alias %)
-                                     (:es-producer-aliased-index %))
-
-                   :default #(not (:disabled %))
-                   :integration #(or (:es-store %)
-                                     (:integration %)
-                                     (:es-producer %)
-                                     (:es-producer-filtered-alias %)
-                                     (:es-producer-aliased-index %))
+                   :es-producer #{:es-producer
+                                   :es-producer-filtered-alias
+                                   :es-producer-aliased-index}
+                   :default #(not= :disabled %)
+                   :integration #{:es-store
+                                   :integration
+                                   :es-producer
+                                   :es-producer-filtered-alias
+                                   :es-producer-aliased-index}
                    :all #(not (:disabled %))}
 
   :java-source-paths ["hooks/ctia"]
@@ -68,17 +70,19 @@
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]
-                                  [prismatic/schema-generators "0.1.0"]]
-
-                   :plugins [[lein-ring "0.9.6"]]
+                                  [com.gfredericks/test.chuck "0.2.6"]
+                                  [prismatic/schema-generators "0.1.0"
+                                   :exclusions [prismatic/schema]]]
                    :resource-paths ["model"
                                     "test/resources"]}
-             :ci {:jvm-opts ["-XX:MaxPermSize=256m"]}
+
              :test {:dependencies [[cheshire "5.5.0"]
                                    [com.h2database/h2 "1.4.191"]
-                                   [org.clojure/test.check "0.9.0"]]
-                    :java-source-paths ["hooks/ctia" "test/java"]
-                    :plugins [[lein-ring "0.9.6"]]
+                                   [org.clojure/test.check "0.9.0"]
+                                   [com.gfredericks/test.chuck "0.2.6"]
+                                   [prismatic/schema-generators "0.1.0"]]
+                    :java-source-paths ["hooks/ctia"
+                                        "test/java"]
                     :resource-paths ["model"
                                      "test/resources"
                                      "test/resources/hooks/JarHook.jar"

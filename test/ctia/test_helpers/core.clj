@@ -1,11 +1,16 @@
 (ns ctia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [ctia.auth :as auth]
+  (:require [com.rpl.specter :refer [transform]]
+            [ctia.auth :as auth]
             [ctia.auth.allow-all :as aa]
             [ctia.events :as events]
             [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
             [ctia.init :as init]
+            [ctia.lib.map :as map]
+            [ctia.lib.specter.paths :as path]
+            [ctia.lib.time :as time]
+            [ctia.lib.url :as url]
             [ctia.properties :as props]
             [ctia.store :as store]
             [cheshire.core :as json]
@@ -112,19 +117,21 @@
   ([test enable-http?]
    ;; Start CTIA
    ;; This starts the server on a random port (if enabled)
-   (with-properties ["ctia.http.enabled" enable-http?
-                     "ctia.http.port" (if enable-http?
-                                        (available-port)
-                                        3000)]
-     (try
-       (init/start-ctia! :join? false
-                         :silent? true)
-       (test)
-       (finally
-         ;; explicitly stop the http-server
-         (http-server/stop!)
-         (hooks/shutdown!)
-         (events/shutdown!))))))
+   (let [http-port (if enable-http?
+                     (available-port)
+                     3000)]
+     (with-properties ["ctia.http.enabled" enable-http?
+                       "ctia.http.port" http-port
+                       "ctia.http.show.port" http-port]
+       (try
+         (init/start-ctia! :join? false
+                           :silent? true)
+         (test)
+         (finally
+           ;; explicitly stop the http-server
+           (http-server/stop!)
+           (hooks/shutdown!)
+           (events/shutdown!)))))))
 
 (defn fixture-ctia-fast [test]
   (fixture-ctia test false))
@@ -133,6 +140,7 @@
   (schema/with-fn-validation
     (f)))
 
+;; TODO - Convert this to a properties fixture
 (defn fixture-allow-all-auth [f]
   (let [orig-auth-srvc @auth/auth-service]
     (reset! auth/auth-service (aa/->AuthService))
@@ -149,7 +157,10 @@
   ([path]
    (url path (get-in @props/properties [:ctia :http :port])))
   ([path port]
-   (format "http://localhost:%d/%s" port path)))
+   (let [url (format "http://localhost:%d/%s" port path)]
+     (assert (url/encoded? url)
+             (format "URL '%s' is not encoded" url))
+     url)))
 
 ;; Replace this with clojure.string/includes? once we are at Clojure 1.8
 (defn includes?
@@ -240,6 +251,29 @@
                   (-> options
                       (cond-> body (assoc :body (encode-body body content-type)))))]
     (assoc response :parsed-body (parse-body response))))
+
+(defn common= [& ms]
+  (let [key-paths (apply map/keys-in-all ms)
+        common (fn [m]
+                 (reduce (fn [accum key-path]
+                           (assoc-in accum key-path (get-in m key-path)))
+                         {}
+                         key-paths))]
+    (assert (seq key-paths), "No common paths between maps")
+    (apply = (map common ms))))
+
+(defn normalize [entity]
+  (->> entity
+       (transform path/walk-dates
+                  time/format-date-time)))
+
+(defn encode [s]
+  {:pre [(string? s) (seq s)]}
+  (url/encode s))
+
+(defn decode [s]
+  {:pre [(string? s) (seq s)]}
+  (url/decode s))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
   `(do

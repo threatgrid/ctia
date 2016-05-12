@@ -55,8 +55,20 @@
 
 (def from-sql-time coerce-to-date)
 
-(defn plus-n-weeks [n]
-  (time/plus (time/weeks n)))
+(defn plus-n [p t n]
+  (coerce-to-date
+   (time/plus (coerce-to-datetime t)
+              ((case p
+                 :years time/years
+                 :months time/months
+                 :weeks time/weeks
+                 :days time/days
+                 :hours time/hours
+                 :minutes time/minutes
+                 :seconds time/seconds)
+               n))))
+
+(def plus-n-weeks (partial plus-n :weeks))
 
 (defn format-date-time [d]
   (->> d
