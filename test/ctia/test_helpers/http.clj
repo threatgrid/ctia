@@ -21,7 +21,7 @@
       (log/error (get-in resp [:parsed-body :errors])))
     (is (= 200 (:status resp)))
     (when (= 200 (:status resp))
-      (is (= new-entity (dissoc (:parsed-body resp) :id :created :modified :owner)))
+      (is (= new-entity (dissoc (:parsed-body resp) :id :created :modified :owner :entity_id)))
       (:parsed-body resp))))
 
 (defn test-get
