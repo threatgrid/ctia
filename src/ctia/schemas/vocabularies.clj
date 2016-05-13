@@ -265,7 +265,14 @@
           "sha256"
           "md5"
           "sha1"
-          "url"))
+          "url"
+          ;; PKI Certificate serial numbers for revoked
+          ;; code signing or server certificates
+          "pki-serial"
+          "email"
+          "imei"
+          "imsi"
+          "amp-device"))
 
 (s/defschema OwnershipClass
   (s/enum "Internally-Owned"
@@ -355,56 +362,50 @@
 (s/defschema Sensor
   "The openC2 Actuator name that best fits a device
    see <http://openc2.org/docs/OpenC2%20%20Language%20Descrip%20Doc%20Draft%20%28Rev%200%206f%29%2003012016.pdf>
-   Section Actuator Vocabulary, page 24.
-
-   *Clojure note*:
-     We use keywords instead of string as there is
-     no special char that would break keywords notation
-     and keywords are generally lighter to use."
-  (s/enum
-   :endpoint
-   :endpoint.digital-telephone-handset
-   :endpoint.laptop
-   :endpoint.pos-terminal
-   :endpoint.printer
-   :endpoint.sensor
-   :endpoint.server
-   :endpoint.smart-meter
-   :endpoint.smart-phone
-   :endpoint.tablet
-   :endpoint.workstation
-   :network
-   :network.bridge
-   :network.firewall
-   :network.gateway
-   :network.guard
-   :network.hips
-   :network.hub
-   :network.ids
-   :network.ips
-   :network.modem
-   :network.nic
-   :network.proxy
-   :network.router
-   :network.security_manager
-   :network.sense_making
-   :network.sensor
-   :network.switch
-   :network.vpn
-   :network.wap
-   :process
-   :process.aaa-server
-   :process.anti-virus-scanner
-   :process.connection-scanner
-   :process.directory-service
-   :process.dns-server
-   :process.email-service
-   :process.file-scanner
-   :process.location-service
-   :process.network-scanner
-   :process.remediation-service
-   :process.reputation-service
-   :process.sandbox
-   :process.virtualization-service
-   :process.virtualization-service
-   :process.vulnerability-scanner))
+   Section Actuator Vocabulary, page 24."
+  (s/enum "endpoint"
+          "endpoint.digital-telephone-handset"
+          "endpoint.laptop"
+          "endpoint.pos-terminal"
+          "endpoint.printer"
+          "endpoint.sensor"
+          "endpoint.server"
+          "endpoint.smart-meter"
+          "endpoint.smart-phone"
+          "endpoint.tablet"
+          "endpoint.workstation"
+          "network"
+          "network.bridge"
+          "network.firewall"
+          "network.gateway"
+          "network.guard"
+          "network.hips"
+          "network.hub"
+          "network.ids"
+          "network.ips"
+          "network.modem"
+          "network.nic"
+          "network.proxy"
+          "network.router"
+          "network.security_manager"
+          "network.sense_making"
+          "network.sensor"
+          "network.switch"
+          "network.vpn"
+          "network.wap"
+          "process"
+          "process.aaa-server"
+          "process.anti-virus-scanner"
+          "process.connection-scanner"
+          "process.directory-service"
+          "process.dns-server"
+          "process.email-service"
+          "process.file-scanner"
+          "process.location-service"
+          "process.network-scanner"
+          "process.remediation-service"
+          "process.reputation-service"
+          "process.sandbox"
+          "process.virtualization-service"
+          "process.virtualization-service"
+          "process.vulnerability-scanner"))

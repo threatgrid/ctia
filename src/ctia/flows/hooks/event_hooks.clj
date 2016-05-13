@@ -7,6 +7,7 @@
     [ctia.events.producers.es.producer :as esp]
     [ctia.properties :refer [properties]]
     [ctia.properties.getters :as pg]
+    [ctia.store :as store]
     [schema.core :as s]))
 
 (defrecord ESEventProducer [conn]
@@ -15,7 +16,7 @@
     (reset! conn (esp/init-producer-conn)))
   (destroy [_]
     (reset! conn nil))
-  (handle [_  event _]
+  (handle [_ event _]
     (try
       (when (some? @conn)
         (esp/handle-produce-event @conn event))
@@ -33,15 +34,18 @@
     :nothing)
   (destroy [_]
     :nothing)
-  (handle [_  event _]
+  (handle [_ event _]
     (lr/publish conn
                 publish-channel-name
                 event)
     event))
 
 (defn redis-event-publisher []
-  (let [{:keys [channel-name timeout-ms] :as redis-config} (get-in @properties [:ctia :hook :redis])
-        [host port] (pg/parse-host-port redis-config)]
+  (let [{:keys [channel-name timeout-ms] :as redis-config}
+        (get-in @properties [:ctia :hook :redis])
+
+        [host port]
+        (pg/parse-host-port redis-config)]
     (->RedisEventPublisher (lr/server-connection host port timeout-ms)
                            channel-name)))
 
@@ -56,6 +60,25 @@
     (events/send-event event)
     event))
 
+(defn- judgement?
+  [{t :type :as event}]
+  (= "judgement" t))
+
+(defrecord VerdictGenerator []
+  Hook
+  (init [_]
+    :nothing)
+  (destroy [_]
+    :nothing)
+  (handle [_ event _]
+    (when (judgement? event)
+      (some-> (:judgement store/stores)
+              deref
+              (store/calculate-verdict event)
+              ;; TODO: store in verdict store. Issue #277
+              ))
+    event))
+
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
   (let [{{redis-enabled? :enabled} :redis
@@ -64,4 +87,5 @@
     (cond-> hooks-m
       redis-enabled? (update :event #(conj % (redis-event-publisher)))
       es-enabled?    (update :event #(conj % (es-event-producer)))
-      :always        (update :event #(conj % (->ChannelEventPublisher))))))
+      :always        (update :event #(conj % (->ChannelEventPublisher)))
+      :always        (update :event #(conj % (->VerdictGenerator))))))

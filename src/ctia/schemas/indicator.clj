@@ -56,8 +56,6 @@
      :indicator_type (describe [v/IndicatorType]
                                "Specifies the type or types for this Indicator")
      :tags (describe [s/Str] "Descriptors for this indicator")
-     :observable (describe c/Observable
-                           "a relevant cyber observable for this Indicator")
      :judgements (describe rel/RelatedJudgements
                            "related Judgements for this Indicator")
      :composite_indicator_expression CompositeIndicatorExpression
@@ -106,11 +104,10 @@
 
 (s/defschema NewIndicator
   (st/merge
-   (st/dissoc Indicator
-              :id
-              :valid_time)
+   Indicator
    (st/optional-keys
-    {:valid_time c/ValidTime
+    {:id c/ID
+     :valid_time c/ValidTime
      :type Type
      :tlp c/TLP})))
 

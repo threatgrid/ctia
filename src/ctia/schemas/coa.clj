@@ -43,9 +43,10 @@
 (s/defschema NewCOA
   "Schema for submitting new COAs"
   (st/merge
-   (st/dissoc COA :id :valid_time)
+   COA
    (st/optional-keys
-    {:valid_time c/ValidTime
+    {:id c/ID
+     :valid_time c/ValidTime
      :type (s/enum "COA")
      :tlp c/TLP})))
 

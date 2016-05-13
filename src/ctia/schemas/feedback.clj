@@ -24,10 +24,10 @@
   (st/merge
    (st/dissoc Feedback
               :id
-              :entity_id
-              :judgement)
+              :entity_id)
    (st/optional-keys
-    {:type Type
+    {:id c/ID
+     :type Type
      :tlp c/TLP})))
 
 (s/defschema StoredFeedback

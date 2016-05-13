@@ -34,12 +34,10 @@
 (s/defschema NewActor
   "Schema for submitting new Actors"
   (st/merge
-   (st/dissoc Actor
-              :id
-              :valid_time
-              :tlp)
+   Actor
    (st/optional-keys
-    {:valid_time c/ValidTime
+    {:id c/ID
+     :valid_time c/ValidTime
      :type Type
      :tlp c/TLP})))
 
