@@ -47,9 +47,10 @@
 
 (s/defschema NewSighting
   (st/merge
-   (st/dissoc Sighting :id)
+   Sighting
    (st/optional-keys
-    {:type Type
+    {:id c/ID
+     :type Type
      :tlp c/TLP})))
 
 (s/defschema StoredSighting

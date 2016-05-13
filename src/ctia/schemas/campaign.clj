@@ -58,11 +58,10 @@
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"
   (st/merge
-   (st/dissoc Campaign
-              :id
-              :valid_time)
+   Campaign
    (st/optional-keys
-    {:valid_time c/ValidTime
+    {:id c/ID
+     :valid_time c/ValidTime
      :type Type
      :tlp c/TLP})))
 

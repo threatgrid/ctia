@@ -16,7 +16,7 @@
     (reset! conn (esp/init-producer-conn)))
   (destroy [_]
     (reset! conn nil))
-  (handle [_  event _]
+  (handle [_ event _]
     (try
       (when (some? @conn)
         (esp/handle-produce-event @conn event))
@@ -34,15 +34,18 @@
     :nothing)
   (destroy [_]
     :nothing)
-  (handle [_  event _]
+  (handle [_ event _]
     (lr/publish conn
                 publish-channel-name
                 event)
     event))
 
 (defn redis-event-publisher []
-  (let [{:keys [channel-name timeout-ms] :as redis-config} (get-in @properties [:ctia :hook :redis])
-        [host port] (pg/parse-host-port redis-config)]
+  (let [{:keys [channel-name timeout-ms] :as redis-config}
+        (get-in @properties [:ctia :hook :redis])
+
+        [host port]
+        (pg/parse-host-port redis-config)]
     (->RedisEventPublisher (lr/server-connection host port timeout-ms)
                            channel-name)))
 

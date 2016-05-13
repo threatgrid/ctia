@@ -89,7 +89,8 @@
                                  :query-params {:sort_by (name field)
                                                 :sort_order "asc"})
                             :parsed-body
-                            (map field))))) sort-fields))))
+                            (map field)))))
+                sort-fields))))
 
 (defn edge-cases-test [route headers]
   "miscellaneous test which may expose small caveats"

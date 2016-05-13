@@ -104,11 +104,10 @@
 
 (s/defschema NewIndicator
   (st/merge
-   (st/dissoc Indicator
-              :id
-              :valid_time)
+   Indicator
    (st/optional-keys
-    {:valid_time c/ValidTime
+    {:id c/ID
+     :valid_time c/ValidTime
      :type Type
      :tlp c/TLP})))
 

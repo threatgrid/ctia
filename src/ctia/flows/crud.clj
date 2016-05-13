@@ -1,13 +1,20 @@
 (ns ctia.flows.crud
-  "This namespace handle all necessary flows for creating, updating and deleting objects.
-
-  (Cf. #159)."
+  "This namespace handle all necessary flows for creating, updating and deleting entities."
   (:import java.util.UUID)
   (:require [clojure.tools.logging :as log]
+            [ctia.domain.id :as id]
             [ctia.flows.hooks :as h]
             [ctia.events.obj-to-event :refer [to-create-event
                                               to-update-event
                                               to-delete-event]]))
+
+(defn find-id
+  "Lookup an ID in a given entity.  Parse it, because it might be a
+   URL, and return the short form ID.  Returns nil if the ID could not
+   be found."
+  [{id :id}]
+  (when (seq id)
+    (id/str->short-id id)))
 
 (defn make-id
   [entity-type]
@@ -22,7 +29,8 @@
              realize-fn
              store-fn
              create-event-fn]}]
-  (let [id (or (:id prev-entity)
+  (let [id (or (find-id prev-entity)
+               (find-id entity)
                (make-id entity-type))
         realized (h/apply-hooks :entity (case flow-type
                                           :create (realize-fn entity id login)

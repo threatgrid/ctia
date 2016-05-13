@@ -45,13 +45,10 @@
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
   (st/merge
-   (st/dissoc Judgement
-              :id
-              :disposition
-              :disposition_name
-              :valid_time)
+   Judgement
    (st/optional-keys
-    {:disposition c/DispositionNumber
+    {:id c/ID
+     :disposition c/DispositionNumber
      :disposition_name c/DispositionName
      :valid_time c/ValidTime
      :type Type

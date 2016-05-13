@@ -1,9 +1,10 @@
 (ns ctia.test-helpers.http
   (:refer-clojure :exclude [get])
   (:require [clojure.tools.logging :as log]
-            [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-            [clojure.test :refer [is testing]]
-            ))
+            [ctia.test-helpers.core
+             :refer [delete get post put]
+             :as helpers]
+            [clojure.test :refer [is testing]]))
 
 (def api-key "45c1f5e3f05d0")
 
@@ -14,15 +15,38 @@
   correpond the the one sent.
   In the end the test-post returns only the entity (parsed body)."
   [path new-entity]
-  (let [resp (post path :body new-entity :headers {"api_key" api-key})]
-    (when (get-in resp [:parsed-body :message])
-      (log/error (get-in resp [:parsed-body :message])))
-    (when (get-in resp [:parsed-body :errors])
-      (log/error (get-in resp [:parsed-body :errors])))
-    (is (= 200 (:status resp)))
-    (when (= 200 (:status resp))
-      (is (= new-entity (dissoc (:parsed-body resp) :id :created :modified :owner)))
-      (:parsed-body resp))))
+  (let [{status :status
+         {:keys [message errors]
+          :as result} :parsed-body}
+        (post path :body new-entity
+              :headers {"api_key" api-key})]
+    (when message
+      (log/error message))
+    (when errors
+      (log/error errors))
+    (is (= 200 status))
+    (when (= 200 status)
+      (is (= new-entity
+             result))
+      result)))
+
+(defn assert-post
+  "Like test-post, but instead of using (is (= ...)), it only asserts
+   that the status is 200.  Useful when the post is for test setup and
+   the path is not the subject under test."
+  [path new-entity]
+  (let [{status :status
+         result :parsed-body
+         :as response}
+        (post path
+              :body new-entity
+              :headers {"api_key" api-key})]
+    (when (not= 200 status)
+      (throw (ex-info (str "Expected status to be 200 but was %s" status)
+                      {:path path
+                       :new-entity new-entity
+                       :response response})))
+    result))
 
 (defn test-get
   "Helper which test a get request occurs with success and return the right object

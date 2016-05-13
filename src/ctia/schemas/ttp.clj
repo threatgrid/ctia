@@ -115,11 +115,10 @@
 
 (s/defschema NewTTP
   (st/merge
-   (st/dissoc TTP
-              :id
-              :valid_time)
+   TTP
    (st/optional-keys
-    {:valid_time c/ValidTime
+    {:id c/ID
+     :valid_time c/ValidTime
      :type (s/enum "ttp")
      :tlp c/TLP})))
 

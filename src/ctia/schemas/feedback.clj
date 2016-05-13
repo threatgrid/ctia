@@ -23,10 +23,10 @@
   "Schema for submitting new Feedback"
   (st/merge
    (st/dissoc Feedback
-              :id
               :judgement)
    (st/optional-keys
-    {:type Type
+    {:id c/ID
+     :type Type
      :tlp c/TLP})))
 
 (s/defschema StoredFeedback

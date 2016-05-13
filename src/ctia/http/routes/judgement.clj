@@ -1,20 +1,26 @@
 (ns ctia.http.routes.judgement
   (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.id :as id]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+            [ctia.properties :refer [properties]]
             [ctia.schemas
              [feedback :refer [NewFeedback realize-feedback StoredFeedback]]
              [judgement :refer [NewJudgement realize-judgement StoredJudgement]]
              [relationships :as rel]]
             [ctia.store :refer :all]
             [ring.util.http-response :refer :all]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (s/defschema FeedbacksByJudgementQueryParams
   (st/merge
    PagingParams
    {(s/optional-key :sort_by) (s/enum :id :feedback :reason)}))
+
+(def ->id
+  (id/long-id-factory :judgement
+                      #(get-in @properties [:ctia :http :show])))
 
 (defroutes judgement-routes
   (context "/judgement" []
@@ -40,7 +46,7 @@
       :summary "Adds a Feedback to a Judgement"
       :capabilities #{:create-feedback :admin}
       :login login
-      (ok (flows/create-flow :realize-fn #(realize-feedback %1 %2 %3 judgement-id)
+      (ok (flows/create-flow :realize-fn #(realize-feedback %1 %2 %3 (->id judgement-id))
                              :store-fn #(create-feedback @feedback-store %)
                              :entity-type :feedback
                              :login login
@@ -53,7 +59,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:read-feedback :admin}
       :summary "Gets all Feedback for this Judgement."
-      (if-let [d (list-feedback @feedback-store {:judgement judgement-id} params)]
+      (if-let [d (list-feedback @feedback-store {:judgement (->id judgement-id)} params)]
         (paginated-ok d)
         (not-found)))
     (POST "/:judgement-id/indicator" []
