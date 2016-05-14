@@ -50,6 +50,7 @@
                       "ctia.store.judgement" s/Keyword
                       "ctia.store.sighting" s/Keyword
                       "ctia.store.ttp" s/Keyword
+                      "ctia.store.verdict" s/Keyword
 
                       "ctia.hook.es.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool})

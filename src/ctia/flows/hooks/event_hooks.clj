@@ -7,7 +7,8 @@
     [ctia.events.producers.es.producer :as esp]
     [ctia.properties :refer [properties]]
     [ctia.properties.getters :as pg]
-    [ctia.store :as store]
+    [ctia.store :as store :refer [judgement-store verdict-store]]
+    [ctia.schemas.verdict :as vs]
     [schema.core :as s]))
 
 (defrecord ESEventProducer [conn]
@@ -68,13 +69,15 @@
   (destroy [_]
     :nothing)
   (handle [_ event _]
-    (when (judgement? event)
-      (some-> (:judgement store/stores)
-              deref
-              (store/calculate-verdict event)
-              ;; TODO: store in verdict store. Issue #277
-              ))
-    event))
+    (if (and (judgement? event) @verdict-store)
+      (let [owner (:owner event)
+            new-verdict (some-> judgement-store
+                                deref
+                                (store/calculate-verdict event)
+                                (vs/realize-verdict owner))]
+        (store/create-verdict @verdict-store new-verdict)
+        new-verdict)
+      event)))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]

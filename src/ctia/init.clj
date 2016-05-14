@@ -90,6 +90,9 @@
     :sql #(do (sql-judgement/init!)
               (ss/->JudgementStore))}
 
+   :verdict
+   {:memory as/->VerdictStore}
+
    :sighting
    {:memory as/->SightingStore
     :es es-store/->SightingStore}

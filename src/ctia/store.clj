@@ -16,6 +16,11 @@
   (list-judgements-by-observable [this observable params])
   (add-indicator-to-judgement [this judgement-id indicator-relationship]))
 
+(defprotocol IVerdictStore
+  (create-verdict [this new-verdict])
+  (read-verdict [this id])
+  (delete-verdict [this id]))
+
 (defprotocol IIndicatorStore
   (create-indicator [this new-indicator])
   (update-indicator [this id indicator])
@@ -88,6 +93,7 @@
 (defonce judgement-store (atom nil))
 (defonce indicator-store (atom nil))
 (defonce feedback-store (atom nil))
+(defonce verdict-store (atom nil))
 
 ;; threats
 (defonce ttp-store (atom nil))
@@ -110,6 +116,7 @@
 
 (def stores
   {:judgement judgement-store
+   :verdict verdict-store
    :indicator indicator-store
    :feedback feedback-store
    :ttp ttp-store

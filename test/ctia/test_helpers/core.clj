@@ -88,7 +88,8 @@
                     "ctia.store.indicator" "memory"
                     "ctia.store.judgement" "memory"
                     "ctia.store.sighting" "memory"
-                    "ctia.store.ttp" "memory"]
+                    "ctia.store.ttp" "memory"
+                    "ctia.store.verdict" "memory"]
     (f)))
 
 (defn fixture-properties:redis-hook [f]
