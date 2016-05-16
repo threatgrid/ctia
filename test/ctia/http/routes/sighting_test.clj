@@ -1,19 +1,18 @@
 (ns ctia.http.routes.sighting-test
   (:refer-clojure :exclude [get])
-  (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]))
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [delete get post put]]
+             [fake-whoami-service :as whoami-helpers]
+             [http :refer [api-key]]
+             [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
-
-(def api-key "45c1f5e3f05d0")
 
 (deftest-for-each-store test-sighting-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)

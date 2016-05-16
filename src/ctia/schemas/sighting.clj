@@ -40,7 +40,8 @@
      ;; provide any context we can about where the observable came from.
      ;; `ObservedRelation` should be the current ctia.relations
      ;; namespace, moved into the ctia.schema.common namespace
-     :relations [c/ObservedRelation]})))
+     :relations [c/ObservedRelation]
+     :incidents [rel/RelatedIncidents]})))
 
 (s/defschema Type
   (s/enum "sighting"))
