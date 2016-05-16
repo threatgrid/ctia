@@ -3,7 +3,7 @@
             [ctia.lib.time :as time]
             [ctia.schemas
              [common :as schemas-common]
-             [sighting :refer [NewSighting Sighting]]]
+             [sighting :refer [NewSighting StoredSighting]]]
             [ctia.test-helpers.generators.common
              :refer [complete leaf-generators maybe]
              :as common]
@@ -13,7 +13,7 @@
   (gen/fmap
    (fn [id]
      (complete
-      Sighting
+      StoredSighting
       {:id id}))
    (gen-id/gen-short-id-of-type :sighting)))
 
