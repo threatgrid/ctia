@@ -2,7 +2,6 @@
   (:refer-clojure :exclude [get])
   (:require
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [schema-generators.generators :as g]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
@@ -98,24 +97,3 @@
           (let [response (get (str "/ctia/coa/" (:id coa))
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))
-
-(deftest-for-each-store test-coa-routes-generative
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-
-  (let [new-coas (g/sample 20 NewCOA)]
-    (testing "POST /ctia/coa GET /ctia/coa"
-
-      (let [responses (map #(post "ctia/coa"
-                                  :body %
-                                  :headers {"api_key" "45c1f5e3f05d0"}) new-coas)]
-        (doall (map #(is (= 200 (:status %))) responses))
-        (is (deep=
-             (set new-coas)
-             (->> responses
-                  (map :parsed-body)
-                  (map #(get (str "ctia/coa/" (:id %))
-                             :headers {"api_key" "45c1f5e3f05d0"}))
-                  (map :parsed-body)
-                  (map #(dissoc % :id :created :modified :owner))
-                  set)))))))

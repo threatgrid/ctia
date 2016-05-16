@@ -35,7 +35,12 @@
                       "ctia.http.port" s/Int
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
-   (st/optional-keys {"ctia.http.dev-reload" s/Bool})
+
+   (st/optional-keys {"ctia.http.dev-reload" s/Bool
+                      "ctia.http.show.protocol" s/Str
+                      "ctia.http.show.hostname" s/Str
+                      "ctia.http.show.path-prefix" s/Str
+                      "ctia.http.show.port" s/Int})
 
    (st/required-keys {"ctia.nrepl.enabled" s/Bool
 

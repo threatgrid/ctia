@@ -277,11 +277,10 @@
 
 (s/defschema NewIncident
   (st/merge
-   (st/dissoc Incident
-              :id
-              :valid_time)
+   Incident
    (st/optional-keys
-    {:valid_time c/ValidTime
+    {:id c/ID
+     :valid_time c/ValidTime
      :type Type
      :tlp c/TLP})))
 

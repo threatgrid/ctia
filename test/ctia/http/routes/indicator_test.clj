@@ -4,12 +4,10 @@
    [clojure.tools.logging :as log]
    [ring.util.codec :refer [url-encode]]
    [clojure.test :refer [deftest is are testing use-fixtures join-fixtures]]
-   [schema-generators.generators :as g]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
    [ctia.test-helpers.store :refer [deftest-for-each-store]]
    [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.test-helpers.http :refer [api-key test-post]]
    [ctia.schemas.indicator :refer [NewIndicator StoredIndicator]]
    [ctia.schemas.sighting :refer [NewSighting]]))
 
@@ -183,58 +181,3 @@
                                :headers {"api_key" "45c1f5e3f05d0"})]
           ;; Deleting indicators is not allowed
           (is (= 404 (:status response))))))))
-
-(deftest-for-each-store test-indicator-routes-generative
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-
-  (let [new-indicators (g/sample 20 NewIndicator)]
-    (testing "POST /ctia/indicator GET /ctia/indicator"
-
-      (let [responses (map #(post "ctia/indicator"
-                                  :body %
-                                  :headers {"api_key" "45c1f5e3f05d0"}) new-indicators)]
-
-
-        (doall (map #(is (= 200 (:status %))) responses))
-        (is (deep=
-             (set new-indicators)
-             (->> responses
-                  (map :parsed-body)
-                  (map #(get (str "ctia/indicator/" (:id %))
-                             :headers {"api_key" "45c1f5e3f05d0"}))
-                  (map :parsed-body)
-                  (map #(dissoc % :id :created :modified :owner))
-                  set)))))))
-
-(deftest-for-each-store test-sightings-from-indicator
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response api-key "foouser" "user")
-  (let [new-indicators (g/sample 10 NewIndicator)
-        ;; BEWARE ES AS A MAXIMUM TO 10 !!!!!!
-        nb-sightings 10]
-    (if (> nb-sightings ctia.lib.es.document/default-limit)
-      (log/error
-       "BEWARE! ES Couldn't handle more than 10 element by search by default."
-       "It is set to " ctia.lib.es.document/default-limit " in `lib.es.document.clj`"
-       "You might want to change either `nb-sightings` in this test"
-       "or change `ctia.lib.es.document/default-limit`"))
-
-    (doseq [new-indicator new-indicators]
-      (testing "POST /ctia/indicator"
-        (when-let [indicator (test-post "ctia/indicator" new-indicator)]
-          (testing "POST /ctia/sighting"
-            (let [new-sightings (->> (g/sample nb-sightings NewSighting)
-                                     (map #(dissoc % :relations)) ;; s/Any generator are tricky
-                                     (map #(into % {:indicators
-                                                    [{:indicator_id (:id indicator)}]})))
-                  sightings (doall (map #(test-post "ctia/sighting" %)
-                                        new-sightings))
-                  sighting-ids (map :id sightings)]
-              (when-not (empty? (remove nil? sightings))
-                (testing "GET /ctia/indicator/:id/sightings"
-                  (let [search-resp (get (str "ctia/indicator/" (url-encode (:id indicator)) "/sightings")
-                                         :headers {"api_key" api-key})]
-                    (is (= 200 (:status search-resp)))
-                    (is (= (set sighting-ids)
-                           (set (map :id (:parsed-body search-resp)))))))))))))))

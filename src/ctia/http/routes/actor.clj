@@ -12,7 +12,7 @@
     (POST "/" []
       :return StoredActor
       :body [actor NewActor {:description "a new Actor"}]
-      :header-params [api_key :- s/Str]
+      :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Actor"
       :capabilities #{:create-actor :admin}
       :login login

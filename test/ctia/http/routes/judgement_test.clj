@@ -1,14 +1,15 @@
 (ns ctia.http.routes.judgement-test
   (:refer-clojure :exclude [get])
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [schema-generators.generators :as g]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.test-helpers.pagination :refer [pagination-test]]
-   [ctia.schemas.judgement :refer [NewJudgement StoredJudgement]]))
+    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+    [ctia.domain.id :as id]
+    [ctia.properties :refer [properties]]
+    [ctia.schemas.common :as scheams-common]
+    [ctia.test-helpers.auth :refer [all-capabilities]]
+    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
+    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+    [ctia.test-helpers.pagination :refer [pagination-test]]
+    [ctia.test-helpers.store :refer [deftest-for-each-store]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -23,22 +24,26 @@
   (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
 
   (testing "POST /ctia/judgement"
-    (let [response (post "ctia/judgement"
-                         :body {:observable {:value "1.2.3.4"
-                                             :type "ip"}
-                                :disposition 2
-                                :source "test"
-                                :priority 100
-                                :severity 100
-                                :confidence "Low"
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                                :indicators [{:confidence "High"
-                                              :source "source"
-                                              :relationship "relationship"
-                                              :indicator_id "indicator-123"}]}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          judgement (:parsed-body response)]
-      (is (= 200 (:status response)))
+    (let [{judgement :parsed-body
+           status :status}
+          (post "ctia/judgement"
+                :body {:observable {:value "1.2.3.4"
+                                    :type "ip"}
+                       :disposition 2
+                       :source "test"
+                       :priority 100
+                       :severity 100
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                       :indicators [{:confidence "High"
+                                     :source "source"
+                                     :relationship "relationship"
+                                     :indicator_id "indicator-123"}]}
+                :headers {"api_key" "45c1f5e3f05d0"})
+          judgement-id (id/short-id->id :judgement
+                                        (:id judgement)
+                                        (get-in @properties [:ctia :http :show]))]
+      (is (= 200 status))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
@@ -170,7 +175,7 @@
           (is (= 200 (:status response)))
           (is (deep=
                {:type "feedback"
-                :judgement (:id judgement),
+                :judgement (id/long-id judgement-id)
                 :feedback -1,
                 :reason "false positive"
                 :owner "foouser"
@@ -204,13 +209,13 @@
             (is (= 200 (:status response)))
             (is (deep=
                  #{{:type "feedback"
-                    :judgement (:id judgement),
+                    :judgement (id/long-id judgement-id)
                     :feedback -1,
                     :reason "false positive"
                     :owner "foouser"
                     :tlp "green"}
                    {:type "feedback"
-                    :judgement (:id judgement),
+                    :judgement (id/long-id judgement-id)
                     :feedback 1,
                     :reason "true positive"
                     :owner "foouser"
@@ -340,32 +345,27 @@
                         :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
            (:parsed-body response))))))
 
-(deftest-for-each-store test-judgement-routes-generative
+(deftest-for-each-store test-list-judgements-by-observable-pagination
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  (let [new-judgements (g/sample 30 NewJudgement)
-        ;;hardcode dispositon & observable
-        fixed-judgements (map #(merge % {:observable {:type "ip"
-                                                      :value "1.2.3.4"}
-                                         :disposition 5
-                                         :disposition_name "Unknown"}) new-judgements)]
-    (testing "POST /ctia/judgement GET /ctia/judgement"
-      (let [responses (map #(post "ctia/judgement"
-                                  :body %
-                                  :headers {"api_key" "45c1f5e3f05d0"}) fixed-judgements)]
-        (doall (map #(is (= 200 (:status %))) responses))
-        (is (deep=
-             (set fixed-judgements)
-             (->> responses
-                  (map :parsed-body)
-                  (map #(get (str "ctia/judgement/" (:id %))
-                             :headers {"api_key" "45c1f5e3f05d0"}))
-                  (map :parsed-body)
-                  (map #(dissoc % :id :created :modified :owner))
-                  set)))))
+  (dotimes [n 30]
+    (let [{status :status}
+          (post "ctia/judgement"
+                :body {:observable {:value "1.2.3.4"
+                                    :type "ip"}
+                       :disposition 5
+                       :disposition_name "Unknown"
+                       :source (str "dotimes " n)
+                       :priority 100
+                       :severity 100
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (assert (= 200 status)
+              (format "Expected status to be 200 but was %s on loop %s" status n))))
 
-    (pagination-test
-     "ctia/ip/1.2.3.4/judgements"
-     {"api_key" "45c1f5e3f05d0"} [:id :disposition :priority :severity :confidence])))
-
+  (pagination-test
+   "ctia/ip/1.2.3.4/judgements"
+   {"api_key" "45c1f5e3f05d0"}
+   [:id :disposition :priority :severity :confidence]))
