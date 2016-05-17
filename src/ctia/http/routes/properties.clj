@@ -5,6 +5,6 @@
 
 (defroutes properties-routes
   (context "/properties" []
-           :tags ["properties"]
-           (GET "/" []
-                (ok @properties))))
+    :tags ["Properties"]
+    (GET "/" []
+      (ok @properties))))

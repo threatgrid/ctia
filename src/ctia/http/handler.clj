@@ -72,11 +72,12 @@
                            {:name "COA" :description "COA operations"}
                            {:name "Events" :description "Events operations"}
                            {:name "ExploitTarget" :description "ExploitTarget operations"}
+                           {:name "Feedback" :description "Feedback operations"}
                            {:name "Incident" :description "Incident operations"}
                            {:name "Indicator", :description "Indicator operations"}
                            {:name "Judgement", :description "Judgement operations"}
                            {:name "Properties", :description "Properties operations"}
-                           {:name "Sightings", :description "Sighting operations"}
+                           {:name "Sighting", :description "Sighting operations"}
                            {:name "TTP", :description "TTP operations"}
                            {:name "Verdict", :description "Verdict operations"}
                            {:name "Version", :description "Version operations"}]}}}

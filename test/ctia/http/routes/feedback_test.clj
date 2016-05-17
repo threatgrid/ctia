@@ -1,14 +1,12 @@
 (ns ctia.http.routes.feedback-test
   (:refer-clojure :exclude [get])
-  (:import java.util.UUID)
-  (:require [clojure.test :refer [join-fixtures testing use-fixtures]]
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.id :as id]
             [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers]
+             [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
-             [http :refer [test-post assert-post test-get-list]]
              [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
@@ -17,16 +15,6 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(def entities ["actor"
-               "campaign"
-               "coa"
-               "exploit-target"
-               "incident"
-               "sighting"
-               "ttp"
-               "judgement"
-               "indicator"])
-
 (deftest-for-each-store test-feedback-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (helpers/set-capabilities! "baruser" "user" #{})
@@ -34,16 +22,63 @@
   (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
 
 
-  (doseq [entity entities]
+  (testing "POST /ctia/feedback"
+    (let [{feedback :parsed-body
+           status :status}
+          (post "ctia/feedback"
+                :body {:feedback -1,
+                       :entity_id "judgement-123"
+                       :type "feedback"
+                       :reason "false positive"
+                       :tlp "green"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 200 status))
+      (is (deep=
+           {:feedback -1,
+            :entity_id "judgement-123"
+            :type "feedback"
+            :reason "false positive"
+            :tlp "green"}
+           (dissoc feedback :id :created :owner)))
 
-    (testing (str "Feedback POST and GET on " entity)
-      (let [short-id (str entity "-" (UUID/randomUUID))
-            new-feedbacks (->> {:feedback -1,
-                                :reason "false positive"
-                                :tlp "green"}
-                               (repeat 5))
+      (testing "GET /ctia/feedback/:id"
+        (let [response (get (str "ctia/feedback/" (:id feedback))
+                            :headers {"api_key" "45c1f5e3f05d0"})
+              feedback (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               {:feedback -1,
+                :entity_id "judgement-123"
+                :reason "false positive"
+                :type "feedback"
+                :tlp "green"}
+               (dissoc feedback :id :created :owner)))))
 
-            uri (str "/ctia/" entity "/" short-id "/feedback")
-            feedbacks (doall (map #(assert-post uri %) new-feedbacks))]
+      (testing "GET /ctia/feedback?entity_id="
+        (let [response (get (str "ctia/feedback")
+                            :query-params {:entity_id "judgement-123"}
+                            :headers {"api_key" "45c1f5e3f05d0"})
+              feedbacks (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:feedback -1,
+                 :entity_id "judgement-123"
+                 :type "feedback"
+                 :reason "false positive"
+                 :tlp "green"}]
+               (map #(dissoc % :id :created :owner) feedbacks)))))
 
-        (test-get-list uri feedbacks)))))
+      (testing "DELETE /ctia/feedback/:id"
+        (let [temp-feedback (-> (post "ctia/feedback"
+                                      :body {:feedback -1,
+                                             :entity_id "judgement-42"
+                                             :reason "false positive"
+                                             :tlp "green"}
+                                      :headers {"api_key" "45c1f5e3f05d0"})
+                                :parsed-body)
+              response (delete (str "ctia/feedback/" (:id temp-feedback))
+                               :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 204 (:status response)))
+          (let [response (get (str "ctia/feedback/" (:id temp-feedback))
+                              :headers {"api_key" "45c1f5e3f05d0"})]
+            (is (= 404 (:status response)))))))))
