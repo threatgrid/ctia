@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.generators.schemas
   (:require [clojure.test.check.generators :as gen]
             [ctia.schemas
+             [common :refer [Observable]]
              [feedback :refer [Feedback]]
              [identity :refer [Identity]]
              [verdict :refer [Verdict]]]
@@ -27,6 +28,17 @@
    (gen/tuple ng/gen-new-indicator-with-id
               (gen/vector sg/gen-new-sighting 1 10))))
 
+(def gen-indicator-with-sightings
+  (gen/fmap
+   (fn [[indicator sightings]]
+     [indicator
+      (map (fn [sighting]
+             (assoc sighting :indicators
+                    [{:indicator_id (:id indicator)}]))
+           sightings)])
+   (gen/tuple ng/gen-indicator
+              (gen/vector sg/gen-sighting 1 10))))
+
 (def kw->generator
   {:actor          ag/gen-actor
    :new-actor      ag/gen-new-actor
@@ -44,6 +56,7 @@
    :new-indicator  ng/gen-new-indicator
    :judgement      jg/gen-judgement
    :new-judgement  jg/gen-new-judgement
+   :observable     (generate-entity Observable)
    :sighting       sg/gen-sighting
    :new-sighting   sg/gen-new-sighting
    :ttp            tg/gen-ttp

@@ -2,7 +2,7 @@
   (:require [clojure.test.check.generators :as gen]
             [ctia.lib.time :as time]
             [ctia.schemas
-             [coa :refer [COA NewCOA]]
+             [coa :refer [NewCOA StoredCOA]]
              [common :as schemas-common]]
             [ctia.test-helpers.generators.common
              :refer [complete leaf-generators maybe]
@@ -13,7 +13,7 @@
   (gen/fmap
    (fn [id]
      (complete
-      COA
+      StoredCOA
       {:id id}))
    (gen-id/gen-short-id-of-type :coa)))
 

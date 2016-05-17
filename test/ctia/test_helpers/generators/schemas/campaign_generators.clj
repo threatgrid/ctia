@@ -2,7 +2,7 @@
   (:require [clojure.test.check.generators :as gen]
             [ctia.lib.time :as time]
             [ctia.schemas
-             [campaign :refer [Campaign NewCampaign]]
+             [campaign :refer [NewCampaign StoredCampaign]]
              [common :as schemas-common]]
             [ctia.test-helpers.generators.common
              :refer [complete leaf-generators maybe]
@@ -13,7 +13,7 @@
   (gen/fmap
    (fn [id]
      (complete
-      Campaign
+      StoredCampaign
       {:id id}))
    (gen-id/gen-short-id-of-type :campaign)))
 
