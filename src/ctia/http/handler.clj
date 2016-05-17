@@ -1,23 +1,26 @@
 (ns ctia.http.handler
-  (:require [compojure.api.sweet :refer [defapi context]]
-            [ring.middleware.format :refer [wrap-restful-format]]
-            [ring.middleware.params :as params]
+  (:require [compojure.api.sweet :refer [context defapi]]
             [ctia.http.middleware.auth :as auth]
-            [ctia.http.routes.documentation :refer [documentation-routes]]
-            [ctia.http.routes.version :refer [version-routes]]
-            [ctia.http.routes.actor :refer [actor-routes]]
-            [ctia.http.routes.campaign :refer [campaign-routes]]
-            [ctia.http.routes.exploit-target :refer [exploit-target-routes]]
-            [ctia.http.routes.coa :refer [coa-routes]]
-            [ctia.http.routes.incident :refer [incident-routes]]
-            [ctia.http.routes.judgement :refer [judgement-routes]]
-            [ctia.http.routes.indicator :refer [indicator-routes]]
-            [ctia.http.routes.ttp :refer [ttp-routes]]
-            [ctia.http.routes.sighting :refer [sighting-routes]]
-            [ctia.http.routes.event :refer [event-routes]]
-            [ctia.http.routes.observable :refer [observable-routes]]
-            [ctia.http.routes.properties :refer [properties-routes]]
-            [ctia.http.routes.verdict :refer [verdict-routes]]))
+            [ctia.http.routes
+             [actor :refer [actor-routes]]
+             [campaign :refer [campaign-routes]]
+             [coa :refer [coa-routes]]
+             [documentation :refer [documentation-routes]]
+             [event :refer [event-routes]]
+             [exploit-target :refer [exploit-target-routes]]
+             [feedback :refer [feedback-routes]]
+             [incident :refer [incident-routes]]
+             [indicator :refer [indicator-routes]]
+             [judgement :refer [judgement-routes]]
+             [observable :refer [observable-routes]]
+             [properties :refer [properties-routes]]
+             [sighting :refer [sighting-routes]]
+             [ttp :refer [ttp-routes]]
+             [verdict :refer [verdict-routes]]
+             [version :refer [version-routes]]]
+            [ring.middleware
+             [format :refer [wrap-restful-format]]
+             [params :as params]]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -64,7 +67,20 @@
                                      :url "http://github.com/threatgrid/ctia"
                                      :email "cisco-intel-api-support@cisco.com"}
                            :description api-description}
-                    :tags [{:name "threat", :description "Threat Intelligence"}]}}}
+                    :tags [{:name "Actor" :description "Actor operations"}
+                           {:name "Campaign" :description "Campaign operations"}
+                           {:name "COA" :description "COA operations"}
+                           {:name "Events" :description "Events operations"}
+                           {:name "ExploitTarget" :description "ExploitTarget operations"}
+                           {:name "Feedback" :description "Feedback operations"}
+                           {:name "Incident" :description "Incident operations"}
+                           {:name "Indicator", :description "Indicator operations"}
+                           {:name "Judgement", :description "Judgement operations"}
+                           {:name "Properties", :description "Properties operations"}
+                           {:name "Sighting", :description "Sighting operations"}
+                           {:name "TTP", :description "TTP operations"}
+                           {:name "Verdict", :description "Verdict operations"}
+                           {:name "Version", :description "Version operations"}]}}}
 
   documentation-routes
 
@@ -82,7 +98,8 @@
     event-routes
     observable-routes
     properties-routes
-    verdict-routes))
+    verdict-routes
+    feedback-routes))
 
 (def app
   (-> api-handler

@@ -7,10 +7,10 @@
             [schema.core :as s]))
 
 (s/defschema Feedback
-  "Feedback on a Judgement or Verdict.  Is it wrong?  If so why?  Was
+  "Feedback on any entity.  Is it wrong?  If so why?  Was
   it right-on, and worthy of confirmation?"
   {:id c/ID
-   :judgement rel/JudgementReference
+   :entity_id c/Reference
    (s/optional-key :source) s/Str
    :feedback (s/enum -1 0 1)
    :reason s/Str
@@ -22,8 +22,7 @@
 (s/defschema NewFeedback
   "Schema for submitting new Feedback"
   (st/merge
-   (st/dissoc Feedback
-              :judgement)
+   Feedback
    (st/optional-keys
     {:id c/ID
      :type Type
@@ -39,12 +38,11 @@
 (s/defn realize-feedback :- StoredFeedback
   [new-feedback :- NewFeedback
    id :- s/Str
-   login :- s/Str
-   judgement-id :- s/Str]
+   login :- s/Str]
+
   (assoc new-feedback
          :id id
          :type "feedback"
          :created (time/now)
          :owner login
-         :tlp (:tlp new-feedback c/default-tlp)
-         :judgement judgement-id))
+         :tlp (:tlp new-feedback c/default-tlp)))

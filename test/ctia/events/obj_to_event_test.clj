@@ -1,43 +1,39 @@
 (ns ctia.events.obj-to-event-test
   (:require [clojure.data :refer [diff]]
+            [clojure.test.check.clojure-test :refer [defspec]]
+            [clojure.test.check.properties :refer [for-all]]
             [ctia.events.obj-to-event :as evt]
             [ctia.events.schemas :refer [CreateEvent
                                          UpdateEvent
                                          DeleteEvent]]
-            [ctia.schemas.actor :refer [StoredActor]]
             [ctia.test-helpers.core :as helpers]
-            [schema.core :as s]
-            [clojure.test.check.properties :as properties]
-            [clojure.test.check.generators :as check-generators]
-            [clojure.test.check.clojure-test :as check-clojure-test]
-            [schema.experimental.generators :as generators]
-            [clojure.test :as t]))
+            [ctia.test-helpers.generators.schemas :as gen]
+            [clojure.test :refer [deftest is use-fixtures]]
+            [schema.core :as s]))
 
-(t/use-fixtures :once helpers/fixture-schema-validation)
+(use-fixtures :once helpers/fixture-schema-validation)
 
-(t/deftest test-to-create-event
-  (doseq [actor (generators/sample 100 StoredActor)]
-    (let [event (evt/to-create-event actor)]
-      (t/is (s/validate CreateEvent event)))))
+(defspec spec-to-create-event
+  (for-all [actor (gen/gen-entity :actor)]
+           (s/validate CreateEvent (evt/to-create-event actor))))
 
-(t/deftest test-to-update-event
-  (doseq [actor (generators/sample 100 StoredActor)]
-    (let [event (evt/to-update-event actor actor)]
-      (t/is (s/validate UpdateEvent event)))))
+(defspec spec-to-update-event
+  (for-all [actor (gen/gen-entity :actor)]
+           (s/validate UpdateEvent (evt/to-update-event actor actor))))
 
-(t/deftest test-to-delete-event
-  (doseq [actor (generators/sample 100 StoredActor)]
-    (let [event (evt/to-delete-event actor)]
-      (t/is (s/validate DeleteEvent event)))))
+(defspec spec-to-delete-event
+  (for-all [actor (gen/gen-entity :actor)]
+           (s/validate DeleteEvent (evt/to-delete-event actor))))
 
-(t/deftest test-triplet-generation
-  (t/is
-   #{[:to-remove "deleted" {}]
-     [:to-change "modified" {0 1}]
-     [:to-add "added" {}]}
-   (set (evt/diff-to-list-of-triplet (diff {:to-remove 0
-                                            :to-stay 0
-                                            :to-change 0}
-                                           {:to-stay 0
-                                            :to-change 1
-                                            :to-add 0})))))
+(deftest test-triplet-generation
+  (is
+   (=
+    #{[:to-remove "deleted" {}]
+      [:to-change "modified" {0 1}]
+      [:to-add "added" {}]}
+    (set (evt/diff-to-list-of-triplet (diff {:to-remove 0
+                                             :to-stay 0
+                                             :to-change 0}
+                                            {:to-stay 0
+                                             :to-change 1
+                                             :to-add 0}))))))

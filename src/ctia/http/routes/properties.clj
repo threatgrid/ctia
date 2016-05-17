@@ -6,7 +6,7 @@
 
 (defroutes properties-routes
   (context "/properties" []
-           :tags ["properties"]
+           :tags ["Properties"]
            :summary "The currently running properties"
            :capabilities :admin
            :header-params [api_key :- (s/maybe s/Str)]

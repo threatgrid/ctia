@@ -76,6 +76,10 @@
   IFeedbackStore
   (create-feedback [_ new-feedback]
     (fe/handle-create-feedback state new-feedback))
+  (read-feedback [_ id]
+    (fe/handle-read-feedback state id))
+  (delete-feedback [_ id]
+    (fe/handle-delete-feedback state id))
   (list-feedback [_ filter-map params]
     (fe/handle-list-feedback state filter-map params)))
 
