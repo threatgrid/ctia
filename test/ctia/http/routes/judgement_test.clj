@@ -1,15 +1,15 @@
 (ns ctia.http.routes.judgement-test
   (:refer-clojure :exclude [get])
   (:require
-    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-    [ctia.domain.id :as id]
-    [ctia.properties :refer [properties]]
-    [ctia.schemas.common :as scheams-common]
-    [ctia.test-helpers.auth :refer [all-capabilities]]
-    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-    [ctia.test-helpers.pagination :refer [pagination-test]]
-    [ctia.test-helpers.store :refer [deftest-for-each-store]]))
+   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+   [ctia.domain.id :as id]
+   [ctia.properties :refer [properties]]
+   [ctia.schemas.common :as scheams-common]
+   [ctia.test-helpers.auth :refer [all-capabilities]]
+   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
+   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+   [ctia.test-helpers.pagination :refer [pagination-test]]
+   [ctia.test-helpers.store :refer [deftest-for-each-store]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -164,64 +164,7 @@
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/judgement/" (:id temp-judgement))
                               :headers {"api_key" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response))))))
-
-      (testing "POST /ctia/judgement/:id/feedback"
-        (let [response (post (str "ctia/judgement/" (:id judgement) "/feedback")
-                             :body {:feedback -1
-                                    :reason "false positive"}
-                             :headers {"api_key" "45c1f5e3f05d0"})
-              feedback (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               {:type "feedback"
-                :judgement (id/long-id judgement-id)
-                :feedback -1,
-                :reason "false positive"
-                :owner "foouser"
-                :tlp "green"}
-               (dissoc feedback
-                       :id
-                       :created))))
-
-        (testing "GET /ctia/judgement/:id/feedback"
-          ;; create some more feedbacks
-          (let [response (post "ctia/judgement"
-                               :body {:indicators ["indicator-222"]
-                                      :observable {:value "4.5.6.7"
-                                                   :type "ip"}
-                                      :disposition 1
-                                      :source "test"}
-                               :headers {"api_key" "45c1f5e3f05d0"})
-                another-judgement (:parsed-body response)]
-            (post (str "ctia/judgement/" (:id another-judgement) "/feedback")
-                  :body {:feedback 0
-                         :reason "yolo"}
-                  :headers {"api_key" "45c1f5e3f05d0"}))
-          (post (str "ctia/judgement/" (:id judgement) "/feedback")
-                :body {:feedback 1
-                       :reason "true positive"}
-                :headers {"api_key" "45c1f5e3f05d0"})
-
-          (let [response (get (str "ctia/judgement/" (:id judgement) "/feedback")
-                              :headers {"api_key" "45c1f5e3f05d0"})
-                feedbacks (:parsed-body response)]
-            (is (= 200 (:status response)))
-            (is (deep=
-                 #{{:type "feedback"
-                    :judgement (id/long-id judgement-id)
-                    :feedback -1,
-                    :reason "false positive"
-                    :owner "foouser"
-                    :tlp "green"}
-                   {:type "feedback"
-                    :judgement (id/long-id judgement-id)
-                    :feedback 1,
-                    :reason "true positive"
-                    :owner "foouser"
-                    :tlp "green"}}
-                 (set (map #(dissoc % :id :created)
-                           feedbacks))))))))))
+            (is (= 404 (:status response)))))))))
 
 (deftest-for-each-store test-judgement-routes-for-dispositon-determination
   (helpers/set-capabilities! "foouser" "user" all-capabilities)

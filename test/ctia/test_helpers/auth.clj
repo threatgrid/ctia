@@ -8,7 +8,7 @@
     :create-incident :read-incident :delete-incident
     :create-judgement :read-judgement :delete-judgement
     :create-judgement-indicator
-    :create-feedback :read-feedback
+    :create-feedback :read-feedback :list-feedback :delete-feedback
     :create-sighting :read-sighting :delete-sighting
     :create-indicator :read-indicator
     :list-indicators-by-title

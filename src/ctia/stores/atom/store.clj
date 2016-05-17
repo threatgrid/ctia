@@ -65,8 +65,12 @@
   IFeedbackStore
   (create-feedback [_ new-feedback]
     (feedback/handle-create-feedback state new-feedback))
+  (read-feedback [_ id]
+    (feedback/handle-read-feedback state id))
   (list-feedback [_ filter-map params]
-    (feedback/handle-list-feedback state filter-map params)))
+    (feedback/handle-list-feedback state filter-map params))
+  (delete-feedback [_ id]
+    (feedback/handle-delete-feedback state id)))
 
 (defrecord IdentityStore [state]
   IIdentityStore

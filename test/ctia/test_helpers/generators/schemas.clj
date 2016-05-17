@@ -11,6 +11,7 @@
              [campaign-generators :as cg]
              [coa-generators :as og]
              [exploit-target-generators :as eg]
+             [feedback-generators :as fg]
              [incident-generators :as ig]
              [indicator-generators :as ng]
              [judgement-generators :as jg]
@@ -48,7 +49,8 @@
    :new-coa        og/gen-new-coa
    :exploit-target eg/gen-exploit-target
    :new-exploit-target eg/gen-new-exploit-target
-   :feedback       (generate-entity Feedback)
+   :new-feedback   fg/gen-new-feedback
+   :feedback       fg/gen-feedback
    :identity       (generate-entity Identity)
    :incident       ig/gen-incident
    :new-incident   ig/gen-new-incident

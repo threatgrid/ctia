@@ -32,7 +32,9 @@
   (list-exploit-targets [this filtermap params]))
 
 (defprotocol IFeedbackStore
+  (read-feedback [this id])
   (create-feedback [this new-feedback])
+  (delete-feedback [this id])
   (list-feedback [this filtermap params]))
 
 (defprotocol ITTPStore

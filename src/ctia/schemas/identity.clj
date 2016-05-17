@@ -32,7 +32,8 @@
    ;; feedback
    :create-feedback
    :read-feedback
-
+   :delete-feedback
+   :list-feedback
 
    ;; threats
    :create-ttp
