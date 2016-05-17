@@ -33,14 +33,14 @@
         (update-in [:capabilities] capabilities->capabilities-set)
         (dissoc :id))))
 
-(s/defn handle-read-identity :- Identity
+(s/defn handle-read-identity :- (s/maybe Identity)
   [state :- s/Any login :- s/Str]
-  (-> (get-doc (:conn state)
-               (:index state)
-               mapping
-               login)
-      (update-in [:capabilities] capabilities->capabilities-set)
-      (dissoc :id)))
+  (some-> (get-doc (:conn state)
+                   (:index state)
+                   mapping
+                   login)
+          (update-in [:capabilities] capabilities->capabilities-set)
+          (dissoc :id)))
 
 (defn handle-delete-identity [state login]
   (delete-doc (:conn state)

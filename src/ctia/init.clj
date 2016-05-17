@@ -137,7 +137,9 @@
       (nrepl-server/start-server :port nrepl-port
                                  :handler cider-nrepl-handler)))
   ;; Start HTTP server
-  (let [http-port (get-in @p/properties [:ctia :http :port])]
-    (when-not silent?
-      (println (str "Starting HTTP server on port " http-port)))
-    (http-server/start! :join? join?)))
+  (let [{http-port :port
+         enabled? :enabled} (get-in @p/properties [:ctia :http])]
+    (when enabled?
+      (when-not silent?
+        (println (str "Starting HTTP server on port " http-port)))
+      (http-server/start! :join? join?))))
