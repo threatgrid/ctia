@@ -1,4 +1,4 @@
-(ns ctia.import.threatgrid.judgements
+(ns ctia.import.threatgrid.feed.judgements
   (:gen-class)
   (:import [javax.xml.bind DatatypeConverter])
   (:require [cheshire.core :as json]
@@ -40,21 +40,21 @@
         }))
    feed-entries))
 
-(defn load-judgements-from-feed-file [file ctia-url observable-type observable-field & {:as options}]
-  (let [entries (json/parse-string (slurp file) true)
-        judgements (apply feed-judgements entries
-                          observable-type observable-field options)
-        target-url (str ctia-url "/ctia/judgement")]
-    (map (fn [judgement]
-           (let [options {:content-type :edn
-                          :accept :edn
-                          :throw-exceptions false
-                          :socket-timeout 2000
-                          :conn-timeout 2000
-                          :body (pr-str judgement)}
-                 response (http/post target-url options)]
-             response))
-         judgements)))
+(defn entries->judgements
+  [entries observable-type observable-field & {:as options}]
+  (apply feed-judgements entries
+         observable-type observable-field options))
 
-(comment
-  (load-judgements-from-feed-file "test/data/rat-dns.json" "http://localhost:4000/" "domain" :domain))
+(defn feed->judgements
+  [feed]
+  (let [{:keys [entries]
+         {observable-type :type
+          observable-field :field} :observable} feed]
+    (entries->judgements entries observable-type observable-field)))
+
+(defn feed-file->judgements
+  [file observable-type observable-field & {:as options}]
+  (let [entries (json/parse-string (slurp file) true)]
+    (entries->judgements entries observable-type observable-field options)))
+
+;; see feed.clj for usage example
