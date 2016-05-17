@@ -48,6 +48,23 @@
                        :response response})))
     result))
 
+(defn test-put
+  "Like a simplified PUT request but with testing points.
+  It uses the standard `api-key`.
+  It verify that the PUT was successful and that the returned entity
+  correpond the the one sent.
+  In the end the test-post returns only the entity (parsed body)."
+  [path new-entity]
+  (let [resp (put path :body new-entity :headers {"api_key" api-key})]
+    (when (get-in resp [:parsed-body :message])
+      (log/error (get-in resp [:parsed-body :message])))
+    (when (get-in resp [:parsed-body :errors])
+      (log/error (get-in resp [:parsed-body :errors])))
+    (is (= 200 (:status resp)))
+    (when (= 200 (:status resp))
+      (is (= new-entity (dissoc (:parsed-body resp) :id :created :modified :owner)))
+      (:parsed-body resp))))
+
 (defn test-get
   "Helper which test a get request occurs with success and return the right object
   Returns the result of the GET call."
