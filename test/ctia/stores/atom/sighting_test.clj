@@ -1,49 +1,52 @@
 (ns ctia.stores.atom.sighting-test
-  (:require [ctia.stores.atom.sighting :as sut]
-            [clojure.test :refer [is deftest testing] :as t]
-            [clojure.test.check :as tc]
-            [clojure.test.check.properties :as prop]
-            [schema-generators.generators :as g]
-            [ctia.schemas.common :refer [Observable]]
-            [ctia.schemas.indicator :refer [StoredIndicator]]
-            [ctia.schemas.sighting :refer [StoredSighting]]))
+  (:require [clojure.test :refer [is deftest testing] :as t]
+            [clojure.test.check.clojure-test :refer [defspec]]
+            [clojure.test.check.generators :as tcg]
+            [clojure.test.check.properties :refer [for-all]]
+            [ctia.stores.atom.sighting :as sut]
+            [ctia.test-helpers.generators.schemas :as gen]
+            [ctia.test-helpers.generators.schemas.sighting-generators :as sg]))
 
-(deftest handle-list-sightings-by-indicators-test
-  (doseq [indicator (->> (g/sample 20 StoredIndicator)
-                         (map #(update-in % [:id] str "ind-")))]
-    (let [sightings (->> (g/sample 20 StoredSighting)
-                         (map #(update-in % [:id] str "sig-"))
-                         (map (fn [x]
-                                (into x
-                                      {:indicators
-                                       [{:indicator_id (:id indicator)}]}))))
-          store (->> sightings
-                     (map (fn [x] {(:id x) x}))
-                     (reduce into {})
-                     atom)]
-      (testing "Empty search"
-        (is (empty? (:data  (sut/handle-list-sightings-by-indicators store [] {})))))
-      (testing "basic search"
-        (is (= (set (vals @store))
-               (-> (sut/handle-list-sightings-by-indicators store [indicator] {})
-                   :data
-                   set)))))))
+(defspec spec-handle-list-sightings-by-indicators
+  (for-all [[indicator sightings] gen/gen-indicator-with-sightings]
+           (let [store (->> sightings
+                            (map (fn [x] [(:id x) x]))
+                            (into {})
+                            atom)]
+             (and
+              ;; Empty search
+              (empty? (:data (sut/handle-list-sightings-by-indicators store [] {})))
+              ;; Basic search
+              (= (set (vals @store))
+                 (-> (sut/handle-list-sightings-by-indicators store [indicator] {})
+                     :data
+                     set))))))
 
-(deftest handle-list-sightings-by-observables-atom-test
-  (doseq [observable (g/sample 20 Observable)]
-    (let [random-observables (remove #(= observable %) (g/sample 20 Observable))
-          sightings (->> (g/sample 20 StoredSighting)
-                         (map #(update-in % [:id] str "sig-"))
-                         (map (fn [x] (into x {:observables (cons observable
-                                                                 random-observables)}))))
-          store (->> sightings
-                     (map (fn [x] {(:id x) x}))
-                     (reduce into {})
-                     atom)]
-      (testing "Empty search"
-        (is (empty? (:data (sut/handle-list-sightings-by-observables store [] {})))))
-      (testing "Basic search"
-        (is (= (set (vals @store))
-               (-> (sut/handle-list-sightings-by-observables store [observable] {})
-                   :data
-                   set)))))))
+(def gen-observable-and-sightings
+  (tcg/let [observable (gen/gen-entity :observable)
+            different-observables (tcg/vector
+                                   (tcg/such-that
+                                    (partial not= observable)
+                                    (gen/gen-entity :observable))
+                                   1 20)
+            sightings (tcg/vector
+                       (sg/gen-sighting-with-observables
+                        (cons observable different-observables))
+                       1 20)]
+    [observable
+     sightings]))
+
+(defspec spec-handle-list-sightings-by-observables-atom
+  (for-all [[observable sightings] gen-observable-and-sightings]
+           (let [store (->> sightings
+                            (map (fn [x] [(:id x) x]))
+                            (into {})
+                            atom)]
+             (and
+              ;; Empty search
+              (empty? (:data (sut/handle-list-sightings-by-observables store [] {})))
+              ;; Basic search
+              (= (set (vals @store))
+                 (-> (sut/handle-list-sightings-by-observables store [observable] {})
+                     :data
+                     set))))))

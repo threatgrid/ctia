@@ -3,7 +3,7 @@
             [ctia.lib.time :as time]
             [ctia.schemas
              [common :as schemas-common]
-             [ttp :refer [NewTTP TTP]]]
+             [ttp :refer [NewTTP StoredTTP]]]
             [ctia.test-helpers.generators.common
              :refer [complete leaf-generators maybe]
              :as common]
@@ -13,7 +13,7 @@
   (gen/fmap
    (fn [id]
      (complete
-      TTP
+      StoredTTP
       {:id id}))
    (gen-id/gen-short-id-of-type :ttp)))
 

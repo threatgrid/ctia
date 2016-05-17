@@ -3,7 +3,7 @@
             [ctia.lib.time :as time]
             [ctia.schemas
              [common :as schemas-common]
-             [judgement :refer [Judgement NewJudgement]]]
+             [judgement :refer [NewJudgement StoredJudgement]]]
             [ctia.test-helpers.generators.common
              :refer [complete leaf-generators maybe]
              :as common]
@@ -13,7 +13,7 @@
   (gen/fmap
    (fn [[id disp]]
      (complete
-      Judgement
+      StoredJudgement
       {:id id
        :disposition disp
        :disposition_name (get schemas-common/disposition-map disp)}))

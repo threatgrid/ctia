@@ -3,7 +3,7 @@
             [ctia.lib.time :as time]
             [ctia.schemas
              [common :as schemas-common]
-             [indicator :refer [Indicator NewIndicator]]]
+             [indicator :refer [NewIndicator StoredIndicator]]]
             [ctia.test-helpers.generators.common
              :refer [complete leaf-generators maybe]
              :as common]
@@ -13,7 +13,7 @@
   (gen/fmap
    (fn [id]
      (complete
-      Indicator
+      StoredIndicator
       {:id id}))
    (gen-id/gen-short-id-of-type :indicator)))
 
