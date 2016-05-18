@@ -66,6 +66,8 @@
     (ju/handle-delete-judgement state id))
   (list-judgements [_ filter-map params]
     (ju/handle-list-judgements state filter-map params))
+  (list-judgements-by-indicators [this indicators params]
+    (ju/handle-list-judgements-by-indicators state indicators params))
   (list-judgements-by-observable [this observable params]
     (ju/handle-list-judgements state {[:observable :type]  (:type observable)
                                       [:observable :value] (:value observable)} params))
@@ -109,7 +111,9 @@
   (delete-ttp [_ id]
     (ttp/handle-delete-ttp state id))
   (list-ttps [_ filter-map params]
-    (ttp/handle-list-ttps state filter-map params)))
+    (ttp/handle-list-ttps state filter-map params))
+  (list-ttps-by-indicators [_ indicators params]
+    (ttp/handle-list-ttps-by-indicators state indicators params)))
 
 (defrecord ActorStore [state]
   IActorStore
@@ -135,7 +139,9 @@
   (delete-campaign [_ id]
     (ca/handle-delete-campaign state id))
   (list-campaigns [_ filter-map params]
-    (ca/handle-list-campaigns state filter-map params)))
+    (ca/handle-list-campaigns state filter-map params))
+  (list-campaigns-by-indicators [_ indicators params]
+    (ca/handle-list-campaigns-by-indicators state indicators params)))
 
 (defrecord COAStore [state]
   ICOAStore
@@ -148,7 +154,9 @@
   (delete-coa [_ id]
     (coa/handle-delete-coa state id))
   (list-coas [_ filter-map params]
-    (coa/handle-list-coas state filter-map params)))
+    (coa/handle-list-coas state filter-map params))
+  (list-coas-by-indicators [_ indicators params]
+    (coa/handle-list-coas-by-indicators state indicators params)))
 
 (defrecord IncidentStore [state]
   IIncidentStore

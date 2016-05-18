@@ -79,3 +79,12 @@
   (some-> (list-active-judgements-by-observable state observable)
           first
           make-verdict))
+
+(defn handle-list-judgements-by-indicators
+  [state indicators params]
+  (let [judgement-ids (some->> (map :judgements indicators)
+                              (mapcat #(map :judgement_id %))
+                              vec)]
+    (handle-list-judgements state
+                           {:id judgement-ids}
+                           params)))

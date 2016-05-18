@@ -35,7 +35,8 @@
     (campaign/handle-update-campaign state id new-campaign))
   (delete-campaign [_ id]
     (campaign/handle-delete-campaign state id))
-  (list-campaigns [_ filter-map params]))
+  (list-campaigns-by-indicators [_ indicators params]
+    (campaign/handle-list-campaigns-by-indicators state indicators params)))
 
 (defrecord COAStore [state]
   ICOAStore
@@ -47,7 +48,10 @@
     (coa/handle-update-coa state id new-coa))
   (delete-coa [_ id]
     (coa/handle-delete-coa state id))
-  (list-coas [_ filter-map params]))
+  (list-coas [_ filter-map params]
+    (coa/handle-list-coas state filter-map params))
+  (list-coas-by-indicators [_ indicators params]
+    (coa/handle-list-coas-by-indicators state indicators params)))
 
 (defrecord ExploitTargetStore [state]
   IExploitTargetStore
@@ -123,6 +127,8 @@
   (list-judgements-by-observable [this observable params]
     (list-judgements this {[:observable :type]  (:type observable)
                            [:observable :value] (:value observable)} params))
+  (list-judgements-by-indicators [_ indicators params]
+    (judgement/handle-list-judgements-by-indicators state indicators params))
   (add-indicator-to-judgement [_ judgement-id indicator-rel]
     (judgement/handle-add-indicator-to-judgement state
                                                  judgement-id
@@ -155,4 +161,7 @@
     (ttp/handle-update-ttp state id new-ttp))
   (delete-ttp [_ id]
     (ttp/handle-delete-ttp state id))
-  (list-ttps [_ filter-map params]))
+  (list-ttps [_ filter-map params]
+    (ttp/handle-list-ttps state filter-map params))
+  (list-ttps-by-indicators [_ indicators params]
+    (ttp/handle-list-ttps-by-indicators state indicators params)))

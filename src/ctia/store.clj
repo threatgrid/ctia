@@ -14,6 +14,7 @@
   (list-judgements [this filter-map params])
   (calculate-verdict [this observable])
   (list-judgements-by-observable [this observable params])
+  (list-judgements-by-indicators [this indicators params])
   (add-indicator-to-judgement [this judgement-id indicator-relationship]))
 
 (defprotocol IIndicatorStore
@@ -42,21 +43,24 @@
   (create-ttp [this new-ttp])
   (update-ttp [this id ttp])
   (delete-ttp [this id])
-  (list-ttps [this filtermap params]))
+  (list-ttps [this filtermap params])
+  (list-ttps-by-indicators [this indicators params]))
 
 (defprotocol ICampaignStore
   (read-campaign [this id])
   (create-campaign [this new-campaign])
   (update-campaign [this id campaign])
   (delete-campaign [this id])
-  (list-campaigns [this filtermap params]))
+  (list-campaigns [this filtermap params])
+  (list-campaigns-by-indicators [this indicators params]))
 
 (defprotocol ICOAStore
   (read-coa [this id])
   (create-coa [this new-coa])
   (update-coa [this id coa])
   (delete-coa [this id])
-  (list-coas [this filtermap params]))
+  (list-coas [this filtermap params])
+  (list-coas-by-indicators [this indicators params]))
 
 (defprotocol ISightingStore
   (read-sighting [this id])

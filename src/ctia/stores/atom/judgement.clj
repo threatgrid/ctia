@@ -1,10 +1,13 @@
 (ns ctia.stores.atom.judgement
-  (:require [ctia.lib.time :as time]
-            [ctia.schemas.common :as c]
-            [ctia.schemas.judgement
-             :refer [NewJudgement StoredJudgement realize-judgement]]
-            [ctia.schemas.relationships :as rel]
-            [ctia.schemas.verdict :refer [Verdict]]
+  (:require [ctia.lib
+             [pagination :refer [list-response-schema]]
+             [time :as time]]
+            [ctia.schemas
+             [common :as c]
+             [judgement :refer [StoredJudgement]]
+             [indicator :refer [StoredIndicator]]
+             [relationships :as rel]
+             [verdict :refer [Verdict]]]
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 
@@ -72,3 +75,12 @@
   (when (contains? @state judgement-id)
     (swap! state update-in [judgement-id :indicators] conj indicator-rel)
     indicator-rel))
+
+(s/defn handle-list-judgements-by-indicators :- (list-response-schema StoredJudgement)
+  [judgement-state :- (s/atom {s/Str StoredJudgement})
+   indicators :- [StoredIndicator]
+   params]
+  (let [judgement-ids (some->> (map :judgements indicators)
+                               (mapcat #(map :judgement_id %))
+                               set)]
+    (handle-list-judgements judgement-state {:id judgement-ids} params)))

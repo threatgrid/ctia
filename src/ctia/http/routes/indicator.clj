@@ -35,26 +35,44 @@
     :tags ["Indicator"]
     (GET "/:id/judgements" []
       :return [StoredJudgement]
-      :path-params [id :- Long]
+      :path-params [id :- s/Str]
+      :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all Judgements associated with the Indicator"
-      (not-found))
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [judgements (list-judgements-by-indicators @judgement-store [indicator] params)]
+          (paginated-ok judgements)
+          (not-found))
+        (not-found)))
     (GET "/:id/campaigns" []
       :return [StoredCampaign]
-      :path-params [id :- Long]
+      :path-params [id :- s/Str]
+      :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all Campaigns associated with the Indicator"
-      (not-found))
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [campaigns (list-campaigns-by-indicators @campaign-store [indicator] params)]
+          (paginated-ok campaigns)
+          (not-found))
+        (not-found)))
     (GET "/:id/coas" []
-      :tags ["COA"]
       :return [StoredCOA]
-      :path-params [id :- Long]
+      :path-params [id :- s/Str]
+      :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all COAs associated with the Indicator"
-      (not-found))
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [coas (list-coas-by-indicators @coa-store [indicator] params)]
+          (paginated-ok coas)
+          (not-found))
+        (not-found)))
     (GET "/:id/ttps" []
-      :tags ["TTP"]
       :return [StoredTTP]
-      :path-params [id :- Long]
+      :path-params [id :- s/Str]
+      :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all TTPs associated with the Indicator"
-      (not-found))
+      (if-let [indicator (read-indicator @indicator-store id)]
+        (if-let [ttps (list-ttps-by-indicators @ttp-store [indicator] params)]
+          (paginated-ok ttps)
+          (not-found))
+        (not-found)))
     (POST "/" []
       :return StoredIndicator
       :body [indicator NewIndicator {:description "a new Indicator"}]

@@ -19,6 +19,8 @@
   (list-judgements-by-observable [this observable params]
     (list-judgements this {[:observable :type]  (:type observable)
                            [:observable :value] (:value observable)} params))
+  (list-judgements-by-indicators [this indicators params]
+    (judgement/handle-list-judgements-by-indicators indicators params))
   (add-indicator-to-judgement [_ judgement-id indicator-rel]
     (if (judgement/create-judgement-indicator judgement-id indicator-rel)
       indicator-rel)))
