@@ -23,6 +23,9 @@
 (defspec spec-exploit-target-routes-es-store
   specs/spec-exploit-target-routes)
 
+(defspec spec-feedback-routes-es-store
+  specs/spec-feedback-routes)
+
 (defspec spec-incident-routes-es-store
   specs/spec-incident-routes)
 

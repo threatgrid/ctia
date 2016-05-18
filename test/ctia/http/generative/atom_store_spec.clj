@@ -22,6 +22,9 @@
 (defspec spec-exploit-target-routes-atom-store
   specs/spec-exploit-target-routes)
 
+(defspec spec-feedback-routes-es-store
+  specs/spec-feedback-routes)
+
 (defspec spec-incident-routes-atom-store
   specs/spec-incident-routes)
 

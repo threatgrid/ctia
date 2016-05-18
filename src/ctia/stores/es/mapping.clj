@@ -305,7 +305,7 @@
     {:id string
      :type string
      :tlp string
-     :judgement string
+     :entity_id string
      :source string
      :feedback {:type "integer"}
      :reason all_text
@@ -564,6 +564,7 @@
      :confidence string
      :observables (assoc observable :type "nested")
      :indicators related-indicators
+     :incidents related-incidents
      :relations observed-relation
      :owner string
      :created ts
