@@ -37,49 +37,50 @@
 (def-property spec-coa-routes 'coa)
 (def-property spec-exploit-target-routes 'exploit-target)
 
-(def spec-indicator-routes
-  (for-all [[new-indicator new-sightings] gen/gen-new-indicator-with-new-sightings]
-    (let [{post-status :status
-           {id :id, :as post-indicator} :parsed-body}
-          (post "ctia/indicator"
-                :body new-indicator)
+(def-property spec-indicator-routes 'indicator)
+#_(def spec-indicator-routes
+    (for-all [[new-indicator new-sightings] gen/gen-new-indicator-with-new-sightings]
+             (let [{post-status :status
+                    {id :id, :as post-indicator} :parsed-body}
+                   (post "ctia/indicator"
+                         :body new-indicator)
 
-          {get-indicator-status :status
-           get-indicator :parsed-body}
-          (get (str "ctia/indicator/" (encode id)))
+                   {get-indicator-status :status
+                    get-indicator :parsed-body}
+                   (get (str "ctia/indicator/" (encode id)))
 
-          stored-sighting-responses
-          (map #(post "ctia/sighting"
-                      :body %)
-               new-sightings)
+                   stored-sighting-responses
+                   (map #(post "ctia/sighting"
+                               :body %)
+                        new-sightings)
 
-          stored-sighting-ids
-          (->> stored-sighting-responses
-               (map (comp :id :parsed-body))
-               set)
+                   stored-sighting-ids
+                   (->> stored-sighting-responses
+                        (map (comp :id :parsed-body))
+                        set)
 
-          {search-result-status :status
-           search-results :parsed-body
-           :as search-response}
-          (get (str "ctia/indicator/" (encode id) "/sightings"))
+                   {search-result-status :status
+                    search-results :parsed-body
+                    :as search-response}
+                   (get (str "ctia/indicator/" (encode id) "/sightings"))
 
-          search-result-ids
-          (->> search-results
-               (map :id)
-               set)]
+                   search-result-ids
+                   (->> search-results
+                        (map :id)
+                        set)]
 
-      (assert-successful post-status)
-      (doseq [{status :status} stored-sighting-responses]
-        (assert-successful status))
-      (assert-successful get-indicator-status)
-      (assert-successful search-result-status)
+               (assert-successful post-status)
+               (doseq [{status :status} stored-sighting-responses]
+                 (assert-successful status))
+               (assert-successful get-indicator-status)
+               (assert-successful search-result-status)
 
-      (and
-       (= stored-sighting-ids
-          search-result-ids)
-       (common= new-indicator
-                (normalize post-indicator)
-                (normalize get-indicator))))))
+               (and
+                (= stored-sighting-ids
+                   search-result-ids)
+                (common= new-indicator
+                         (normalize post-indicator)
+                         (normalize get-indicator))))))
 
 (def-property spec-feedback-routes 'feedback)
 (def-property spec-incident-routes 'incident)

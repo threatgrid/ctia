@@ -7,20 +7,26 @@
 
 (defonce server (atom nil))
 
+(defn- new-jetty-instance [{:keys [dev-reload max-threads min-threads port]
+                            :as _http-config_}]
+  (doto
+      (jetty/run-jetty (if dev-reload
+                         (wrap-reload #'handler/app)
+                         #'handler/app)
+                       {:port port
+                        :min-threads min-threads
+                        :max-threads max-threads
+                        :join? false})
+      (.setStopAtShutdown true)
+      (.setStopTimeout (* 1000 10))))
+
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
-  (let [{:keys [dev-reload min-threads max-threads port]}
-        (get-in @properties [:ctia :http])]
-    (reset! server (let [server (jetty/run-jetty (if dev-reload
-                                                   (wrap-reload #'handler/app)
-                                                   #'handler/app)
-                                                 {:port port
-                                                  :min-threads min-threads
-                                                  :max-threads max-threads
-                                                  :join? join?})]
-                     (doto server
-                       (.setStopAtShutdown true)
-                       (.setStopTimeout (* 1000 10)))))))
+  (let [server-instance (new-jetty-instance (get-in @properties [:ctia :http]))]
+    (reset! server server-instance)
+    (if join?
+      (.join server-instance)
+      server-instance)))
 
 (defn stop! []
   (swap! server
