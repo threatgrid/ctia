@@ -5,13 +5,16 @@
             [clojure.string :as st]
             [ctia.schemas.common :refer [VersionInfo]]
             [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]))
+            [ring.util.http-response :refer :all]
+            [clojure.string :as st]))
 
-(defn current-build []
-  (if-let [built-version (io/resource "ctia-version.txt")]
-    built-version
-    (str (:out (shell/sh "git" "log" "-n" "1" "--pretty=format:%H "))
-         (:out (shell/sh "git" "symbolic-ref" "--short" "HEAD")))))
+(def version-file "ctia-version.txt")
+
+(def current-version
+  (memoize #(if-let [built-version (io/resource version-file)]
+              built-version
+              (str (:out (shell/sh "git" "log" "-n" "1" "--pretty=format:%H "))
+                   (:out (shell/sh "git" "symbolic-ref" "--short" "HEAD"))))))
 
 (defroutes version-routes
   (context "/version" []
@@ -22,6 +25,5 @@
       (ok {:base "/ctia"
            :version "0.1"
            :beta true
-           :build (-> (current-build)
-                      (st/replace #"\n" ""))
+           :build (st/replace (current-version) #"\n" "")
            :supported_features []}))))
