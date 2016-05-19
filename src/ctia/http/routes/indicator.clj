@@ -1,5 +1,7 @@
 (ns ctia.http.routes.indicator
   (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.id :as id]
+            [ctia.properties :refer [properties]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :refer [PagingParams paginated-ok]]
             [ctia.schemas
@@ -25,36 +27,25 @@
    PagingParams
    {(s/optional-key :sort_by) (s/enum :id :title)}))
 
+(s/defschema IndicatorsListQueryParams
+  (st/merge
+   PagingParams
+   {(s/optional-key :sort_by) (s/enum :id :title)}))
+
 (s/defschema SightingsByIndicatorQueryParams
   (st/merge
    PagingParams
    {(s/optional-key :sort_by) (s/enum :id :timestamp :description :source :confidence)}))
 
+(defn ->long-id [id-type short-id]
+  (id/long-id
+   (id/short-id->id id-type
+                    short-id
+                    #(get-in @properties [:ctia :http :show]))))
+
 (defroutes indicator-routes
   (context "/indicator" []
     :tags ["Indicator"]
-    (GET "/:id/judgements" []
-      :return [StoredJudgement]
-      :path-params [id :- Long]
-      :summary "Gets all Judgements associated with the Indicator"
-      (not-found))
-    (GET "/:id/campaigns" []
-      :return [StoredCampaign]
-      :path-params [id :- Long]
-      :summary "Gets all Campaigns associated with the Indicator"
-      (not-found))
-    (GET "/:id/coas" []
-      :tags ["COA"]
-      :return [StoredCOA]
-      :path-params [id :- Long]
-      :summary "Gets all COAs associated with the Indicator"
-      (not-found))
-    (GET "/:id/ttps" []
-      :tags ["TTP"]
-      :return [StoredTTP]
-      :path-params [id :- Long]
-      :summary "Gets all TTPs associated with the Indicator"
-      (not-found))
     (POST "/" []
       :return StoredIndicator
       :body [indicator NewIndicator {:description "a new Indicator"}]
@@ -88,15 +79,6 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:read-indicator :admin}
-      ;; :description "This is a little decription"
-      ;; :query-params [{offset :-  Long {:summary "asdads" :default 0}}
-      ;;                {limit :-  Long 0}
-      ;;                {after :-  Time nil}
-      ;;                {before :-  Time nil}
-      ;;                {sort_by :- IndicatorSort "timestamp"}
-      ;;                {sort_order :- SortOrder "desc"}
-      ;;                {source :- s/Str nil}
-      ;;                {observable :- ObservableType nil}]
       (if-let [d (read-indicator @indicator-store id)]
         (ok d)
         (not-found)))
@@ -117,6 +99,65 @@
       :path-params [title :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities #{:list-indicators-by-title :admin}
-
       (paginated-ok
-       (list-indicators @indicator-store {:title title} params)))))
+       (list-indicators @indicator-store {:title title} params))))
+  (GET "/judgement/:id/indicators" []
+    :tags ["Indicator"]
+    :return (s/maybe [StoredIndicator])
+    :summary "Gets all indicators referencing some judgement"
+    :query [params IndicatorsListQueryParams]
+    :path-params [id :- s/Str]
+    :header-params [api_key :- (s/maybe s/Str)]
+    :capabilities #{:list-indicators-by-title :admin}
+    (paginated-ok
+     (list-indicators @indicator-store
+                      {:judgements #{{:judgement_id (->long-id :judgement id)}}}
+                      params)))
+  (GET "/campaign/:id/indicators" []
+    :tags ["Indicator"]
+    :return (s/maybe [StoredIndicator])
+    :summary "Gets all indicators related to a campaign"
+    :query [params IndicatorsListQueryParams]
+    :path-params [id :- s/Str]
+    :header-params [api_key :- (s/maybe s/Str)]
+    :capabilities #{:list-indicators-by-title :admin}
+    (paginated-ok
+     (list-indicators @indicator-store
+                      {:related_campaigns #{{:campaign_id (->long-id :campaign id)}}}
+                      params)))
+  (GET "/coa/:id/indicators" []
+    :tags ["Indicator"]
+    :return (s/maybe [StoredIndicator])
+    :summary "Gets all indicators related to a coa"
+    :query [params IndicatorsListQueryParams]
+    :path-params [id :- s/Str]
+    :header-params [api_key :- (s/maybe s/Str)]
+    :capabilities #{:list-indicators-by-title :admin}
+    (paginated-ok
+     (list-indicators @indicator-store
+                      {:related_COAs #{{:COA_id (->long-id :coa id)}}}
+                      params)))
+  (GET "/ttp/:id/indicators" []
+    :tags ["Indicator"]
+    :return (s/maybe [StoredIndicator])
+    :summary "Gets all indicators indicating a TTP"
+    :query [params IndicatorsListQueryParams]
+    :path-params [id :- s/Str]
+    :header-params [api_key :- (s/maybe s/Str)]
+    :capabilities #{:list-indicators-by-title :admin}
+    (paginated-ok
+     (list-indicators @indicator-store
+                      {:indicated_TTP #{{:ttp_id (->long-id :ttp id)}}}
+                      params)))
+  (GET "/indicator/:id/indicators" []
+    :tags ["Indicator"]
+    :return (s/maybe [StoredIndicator])
+    :summary "Gets all indicators related to another indicator"
+    :query [params IndicatorsListQueryParams]
+    :path-params [id :- s/Str]
+    :header-params [api_key :- (s/maybe s/Str)]
+    :capabilities #{:list-indicators-by-title :admin}
+    (paginated-ok
+     (list-indicators @indicator-store
+                      {:related_indicators #{{:indicator_id (->long-id :indicator id)}}}
+                      params))))
