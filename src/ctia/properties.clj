@@ -71,6 +71,7 @@
                       "ctia.store.es.port" s/Int
                       "ctia.store.es.clustername" s/Str
                       "ctia.store.es.indexname" s/Str
+                      "ctia.store.es.refresh" s/Bool
 
                       "ctia.hook.redis.uri" s/Str
                       "ctia.hook.redis.host" s/Str

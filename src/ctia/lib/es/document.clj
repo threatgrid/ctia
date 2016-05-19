@@ -54,19 +54,19 @@
 
 (defn create-doc
   "create a document on es return the created document"
-  [conn index-name mapping doc]
+  [conn index-name mapping doc refresh?]
   ((create-doc-fn conn)
    conn
    index-name
    mapping
    doc
    :id (:id doc)
-   :refresh true)
+   :refresh refresh?)
   doc)
 
 (defn update-doc
   "update a document on es return the updated document"
-  [conn index-name mapping id doc]
+  [conn index-name mapping id doc refresh?]
 
   (let [res ((update-doc-fn conn)
              conn
@@ -74,14 +74,14 @@
              mapping
              id
              doc
-             {:refresh true
+             {:refresh refresh?
               :fields "_source"})]
     (or (get-in res [:get-result :source])
         (get-in res [:get :_source]))))
 
 (defn delete-doc
   "delete a document on es and return nil if ok"
-  [conn index-name mapping id]
+  [conn index-name mapping id refresh?]
 
   (:found
    ((delete-doc-fn conn)
@@ -89,7 +89,7 @@
     index-name
     mapping
     id
-    :refresh true)))
+    :refresh refresh?)))
 
 (defn params->pagination
   [{:keys [sort_by sort_order offset limit]

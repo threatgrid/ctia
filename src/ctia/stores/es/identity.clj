@@ -28,7 +28,8 @@
         res (create-doc (:conn state)
                         (:index state)
                         mapping
-                        transformed)]
+                        transformed
+                        (get-in state [:props :refresh] false))]
     (-> res
         (update-in [:capabilities] capabilities->capabilities-set)
         (dissoc :id))))
