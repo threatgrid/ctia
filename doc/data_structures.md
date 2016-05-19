@@ -1,7 +1,7 @@
 # Data Structures
 
-[Data Model Graph](model.png)
-[Data Model Graph as `.dot` ](model.dot)
+[Data Model Graph](img/model.png)
+[Data Model Graph as `.dot` ](graph/model.dot)
 
 The data model of CTIA is closely based on
 [STIX](http://stixproject.github.io/data-model/) with a few
@@ -42,6 +42,7 @@ simplifications:
 - [Tools, Techniques, & Procedures](#ttp)
 - [Verdict](#verdict)
 - [Shared Structures](#shared_structures)
+- [Sighting](#sighting)
 - [Relationship Structures](#relationship_structures)
 - [Vocabularies](#vocabularies)
 
@@ -478,13 +479,18 @@ One of the following structures:
 
 | Key                 | Value                            | Mandatory? |
 | --- | --- | --- |
-| timestamp           | [Time](#time)                    |            |
+| description         | (string, ...)                    | &#10003;   |
+| timestamp           | [Time](#time)                    | &#10003;   |
+| tlp                 | [TLP](#tlp)                      | &#10003;   |
 | source              | [Source](#source)                |            |
-| tlp                 | [TLP](#tlp)                      |            |
+| source_uri          | [URI](#uri)                      |            |
+| source_device       | [Sensor](#sensor)                |            |
 | reference           | [URI](#uri)                      |            |
 | confidence          | [HighMedLow](#high_med_low)      |            |
-| description         | (string, ...)                    |            |
-| related_observables | ([Observable](#observable), ...) |            |
+| observables         | ([Observable](#observable), ...) |            |
+| indicators          | ([RelatedIndicator](#related_indicator), ...) |            |
+| relations           | ([ObservedRelation](#observed_relation), ...) |            |
+| incidents           | ([RelatedIncident](#related_incident), ...) |            |
 
 <a name="open_ioc_specification"/>
 ### OpenIOCSpecification
@@ -990,6 +996,22 @@ and that object should be retrievable at that URI.
 | relationship | string                         |            |
 | TTP          | [TTPReference](#ttp_reference) | &#10003;   |
 
+<a name="observed_relation"/>
+### ObservedRelation
+
+| Key           | Value                          | Mandatory? |
+| --- | --- | --- |
+| id            | number                         | &#10003;   |
+| timestamp     | [Time](#time)                  | &#10003;   |
+| origin        | string                         | &#10003;   |
+| origin_uri    | string                         |            |
+| relation      | [RelationType](#relation_type) | &#10003;   |
+| relation_info | hash-map                       |            |
+| source        | [Observable](#observable)      | &#10003;   |
+| related       | [Observable](#observable)      | &#10003;   |
+
+
+
 <a name="vocabularies"/>
 ## Vocabularies
 
@@ -1304,6 +1326,146 @@ one of the possible values for a given field.
 - Customer-Owned
 - Unknown
 
+<a name="relation_type"/>
+### RelationType
+
+- Created
+- Created_By
+- Deleted
+- Deleted_By
+- Modified_Properties_Of
+- Properties_Modified_By
+- Read_From
+- Read_From_By
+- Wrote_To
+- Written_To_By
+- Downloaded_From
+- Downloaded_To
+- Downloaded
+- Downloaded_By
+- Uploaded
+- Uploaded_By
+- Uploaded_To
+- Received_Via_Upload
+- Uploaded_From
+- Sent_Via_Upload
+- Suspended
+- Suspended_By
+- Paused
+- Paused_By
+- Resumed
+- Resumed_By
+- Opened
+- Opened_By
+- Closed
+- Closed_By
+- Copied_From
+- Copied_To
+- Copied
+- Copied_By
+- Moved_From
+- Moved_To
+- Moved
+- Moved_By
+- Searched_For
+- Searched_For_By
+- Allocated
+- Allocated_By
+- Initialized_To
+- Initialized_By
+- Sent
+- Sent_By
+- Sent_To
+- Received_From
+- Received
+- Received_By
+- Mapped_Into
+- Mapped_By
+- Properties_Queried
+- Properties_Queried_By
+- Values_Enumerated
+- Values_Enumerated_By
+- Bound
+- Bound_By
+- Freed
+- Freed_By
+- Killed
+- Killed_By
+- Encrypted
+- Encrypted_By
+- Encrypted_To
+- Encrypted_From
+- Decrypted
+- Decrypted_By
+- Packed
+- Packed_By
+- Unpacked
+- Unpacked_By
+- Packed_From
+- Packed_Into
+- Encoded
+- Encoded_By
+- Decoded
+- Decoded_By
+- Compressed_From
+- Compressed_Into
+- Compressed
+- Compressed_By
+- Decompressed
+- Decompressed_By
+- Joined
+- Joined_By
+- Merged
+- Merged_By
+- Locked
+- Locked_By
+- Unlocked
+- Unlocked_By
+- Hooked
+- Hooked_By
+- Unhooked
+- Unhooked_By
+- Monitored
+- Monitored_By
+- Listened_On
+- Listened_On_By
+- Renamed_From
+- Renamed_To
+- Renamed
+- Renamed_By
+- Injected_Into
+- Injected_As
+- Injected
+- Injected_By
+- Deleted_From
+- Previously_Contained
+- Loaded_Into
+- Loaded_From
+- Set_To
+- Set_From
+- Resolved_To
+- Related_To
+- Dropped
+- Dropped_By
+- Contains
+- Contained_Within
+- Extracted_From
+- Installed
+- Installed_By
+- Connected_To
+- Connected_From
+- Sub-domain_Of
+- Supra-domain_Of
+- Root_Domain_Of
+- FQDN_Of
+- Parent_Of
+- Child_Of
+- Characterizes
+- Characterized_By
+- Used
+- Used_By
+- Redirects_To
+
 <a name="scope"/>
 ### Scope
 
@@ -1317,6 +1479,56 @@ one of the possible values for a given field.
 - Suspected
 - No
 - Unknown
+
+<a name="sensor"/>
+### Sensor
+
+- endpoint
+- endpoint.digital-telephone-handset
+- endpoint.laptop
+- endpoint.pos-terminal
+- endpoint.printer
+- endpoint.sensor
+- endpoint.server
+- endpoint.smart-meter
+- endpoint.smart-phone
+- endpoint.tablet
+- endpoint.workstation
+- network
+- network.bridge
+- network.firewall
+- network.gateway
+- network.guard
+- network.hips
+- network.hub
+- network.ids
+- network.ips
+- network.modem
+- network.nic
+- network.proxy
+- network.router
+- network.security_manager
+- network.sense_making
+- network.sensor
+- network.switch
+- network.vpn
+- network.wap
+- process
+- process.aaa-server
+- process.anti-virus-scanner
+- process.connection-scanner
+- process.directory-service
+- process.dns-server
+- process.email-service
+- process.file-scanner
+- process.location-service
+- process.network-scanner
+- process.remediation-service
+- process.reputation-service
+- process.sandbox
+- process.virtualization-service
+- process.virtualization-service
+- process.vulnerability-scanner
 
 <a name="sophistication"/>
 ### Sophistication
