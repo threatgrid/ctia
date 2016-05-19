@@ -27,6 +27,7 @@
 (s/defschema VersionInfo
   {:base URI
    :version s/Str
+   :build s/Str
    :beta s/Bool
    :supported_features [s/Str]})
 
