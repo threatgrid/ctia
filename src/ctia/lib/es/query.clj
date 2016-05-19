@@ -14,14 +14,35 @@
                        (if (vector? v) v [v])))
             filters)))
 
+(defn- relationship?
+  "Check if some value correspond to a relationship query."
+  [v]
+  (and (set? v)
+       (every? map? v)
+       (every? #(= 1 (count (keys %))) v)))
+
+(defn- terms-from-relationship
+  "If we have a relationship kind of search
+
+  {:related_COAs #{{:COA_id \"coa-1\"} {:COA_id \"coa-2\"}}}
+
+  that will returns
+
+  [[:related_COAs :COA_id] [\"coa-1\" \"coa-2\"]]
+  "
+  [t-key v]
+  (let [common-key (first (keys (first v)))]
+    [(concat t-key [common-key]) (mapv #(get % common-key) v)]))
+
 (defn filter-map->terms-query
   "transforms a filter map to en ES terms query"
   [filter-map]
-
   (let [terms (map (fn [[k v]]
-                     (if (sequential? k)
-                       [k v]
-                       [[k] v])) filter-map)]
+                     (let [t-key (if (sequential? k) k [k])]
+                       (if (relationship? v)
+                         (terms-from-relationship t-key v)
+                         [t-key v])))
+                   filter-map)]
     {:filtered
      {:query {:match_all {}}
       :filter (q/bool {:must (nested-terms terms)})}}))
