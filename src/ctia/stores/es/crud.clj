@@ -24,7 +24,8 @@
       (-> (create-doc (:conn state)
                       (:index state)
                       (name mapping)
-                      realized)
+                      realized
+                      (get-in state [:props :refresh] false))
           coerce!))))
 
 (defn handle-update
@@ -39,7 +40,8 @@
                       (:index state)
                       (name mapping)
                       id
-                      realized)
+                      realized
+                      (get-in state [:props :refresh] false))
           coerce!))))
 
 (defn handle-read
@@ -65,7 +67,8 @@
     (delete-doc (:conn state)
                 (:index state)
                 (name mapping)
-                id)))
+                id
+                (get-in state [:props :refresh] false))))
 
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"

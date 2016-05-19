@@ -49,6 +49,7 @@
                       "ctia.store.judgement" "es"
                       "ctia.store.sighting" "es"
                       "ctia.store.ttp" "es"
+                      "ctia.store.es.refresh" true
                       "ctia.store.es.uri" "http://192.168.99.100:9200"
                       "ctia.store.es.clustername" "elasticsearch"
                       "ctia.store.es.indexname" "test_ctia"]
