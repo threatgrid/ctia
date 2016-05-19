@@ -42,6 +42,11 @@
     native-index/update-aliases
     rest-index/update-aliases))
 
+(defn refresh-fn [conn]
+  (if (native-conn? conn)
+    native-index/refresh
+    rest-index/refresh))
+
 (defn connect [props]
   "instantiate an ES conn from props"
   (if (:uri props)

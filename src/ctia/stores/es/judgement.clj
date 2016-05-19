@@ -44,7 +44,8 @@
                 (:index state)
                 mapping
                 judgement-id
-                updated)
+                updated
+                (get-in state [:props :refresh] false))
     indicator-rel))
 
 

@@ -51,15 +51,16 @@
 (defrecord ThreatgridAuthService [whoami-fn lookup-stored-identity-fn]
   auth/IAuth
   (identity-for-token [_ token]
-    (let [{{:strs [role login]} "data"} (if token (whoami-fn token))]
-      (if (and role login)
-        (map->Identity (or (lookup-stored-identity-fn login)
-                           {:login login
-                            :role role
-                            :capabilities (->> (str/lower-case role)
-                                               keyword
-                                               (get auth/default-capabilities))}))
-        auth/denied-identity-singleton)))
+    (or
+     (when-let [{{:strs [role login]} "data"} (when token (whoami-fn token))]
+       (when (and role login)
+         (map->Identity (or (lookup-stored-identity-fn login)
+                            {:login login
+                             :role role
+                             :capabilities (->> (str/lower-case role)
+                                                keyword
+                                                (get auth/default-capabilities))}))))
+     auth/denied-identity-singleton))
   (require-login? [_]
     true))
 
