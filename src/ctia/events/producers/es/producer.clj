@@ -1,14 +1,12 @@
 (ns ctia.events.producers.es.producer
-  (:require
-   [schema.core :as s]
-   [ctia.properties :refer [properties]]
-   [ctia.lib.es.index :refer [ESConnState connect]]
-   [ctia.lib.es.document :refer [create-doc-fn]]
-   [ctia.events.producers.es.mapping :refer [producer-mappings]]
-   [ctia.lib.es.slice :refer [SliceProperties
-                              ensure-slice-created!
-                              get-slice-props]]
-   [ctia.events.schemas :refer [Event UpdateTriple]]))
+  (:require [ctia.events.producers.es.mapping :refer [producer-mappings]]
+            [ctia.events.schemas :refer [Event UpdateTriple]]
+            [ctia.lib.es
+             [document :refer [create-doc-fn]]
+             [index :refer [connect ESConnState]]
+             [slice :refer [ensure-slice-created! get-slice-props SliceProperties]]]
+            [ctia.properties :refer [properties]]
+            [schema.core :as s]))
 
 (s/defn init-producer-conn :- (s/maybe ESConnState) []
   "initiate an ES producer connection returns a map containing transport,

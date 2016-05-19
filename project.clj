@@ -54,15 +54,11 @@
                    :sql-store :sql-store
                    :es-store :es-store
                    :disabled :disabled
-                   :es-producer #{:es-producer
-                                   :es-producer-filtered-alias
-                                   :es-producer-aliased-index}
                    :default #(not= :disabled %)
-                   :integration #{:es-store
-                                   :integration
-                                   :es-producer
-                                   :es-producer-filtered-alias
-                                   :es-producer-aliased-index}
+                   :integration #(or (:es-store %)
+                                     (:integration %)
+                                     (:es-filtered-alias %)
+                                     (:es-aliased-index %))
                    :all #(not (:disabled %))}
 
   :java-source-paths ["hooks/ctia"]
