@@ -10,21 +10,21 @@
 
 (use-fixtures :once test-helpers/fixture-schema-validation)
 
-(deftest-for-each-fixture test-events-es
+(deftest-for-each-fixture test-event-producer
 
-  {:filtered-alias (join-fixtures [test-helpers/fixture-properties:clean
-                                   test-helpers/fixture-properties:atom-store
-                                   test-helpers/fixture-properties:es-hook-filtered-alias
-                                   test-helpers/fixture-ctia
-                                   test-helpers/fixture-allow-all-auth
-                                   es-helpers/fixture-purge-producer-indexes])
+  {:es-filtered-alias (join-fixtures [test-helpers/fixture-properties:clean
+                                      test-helpers/fixture-properties:atom-store
+                                      test-helpers/fixture-properties:es-hook-filtered-alias
+                                      test-helpers/fixture-ctia
+                                      test-helpers/fixture-allow-all-auth
+                                      es-helpers/fixture-purge-producer-indexes])
 
-   :aliased-index (join-fixtures [test-helpers/fixture-properties:clean
-                                  test-helpers/fixture-properties:atom-store
-                                  test-helpers/fixture-properties:es-hook-aliased-index
-                                  test-helpers/fixture-ctia
-                                  test-helpers/fixture-allow-all-auth
-                                  es-helpers/fixture-purge-producer-indexes])}
+   :es-aliased-index (join-fixtures [test-helpers/fixture-properties:clean
+                                     test-helpers/fixture-properties:atom-store
+                                     test-helpers/fixture-properties:es-hook-aliased-index
+                                     test-helpers/fixture-ctia
+                                     test-helpers/fixture-allow-all-auth
+                                     es-helpers/fixture-purge-producer-indexes])}
 
   (testing "Events are published to es"
     (let [{{judgement-1-id :id} :parsed-body
