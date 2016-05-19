@@ -55,18 +55,26 @@
                    :es-store :es-store
                    :disabled :disabled
                    :es-producer #{:es-producer
-                                   :es-producer-filtered-alias
-                                   :es-producer-aliased-index}
+                                  :es-producer-filtered-alias
+                                  :es-producer-aliased-index}
                    :default #(not= :disabled %)
                    :integration #{:es-store
-                                   :integration
-                                   :es-producer
-                                   :es-producer-filtered-alias
-                                   :es-producer-aliased-index}
+                                  :integration
+                                  :es-producer
+                                  :es-producer-filtered-alias
+                                  :es-producer-aliased-index}
                    :all #(not (:disabled %))}
 
   :java-source-paths ["hooks/ctia"]
   :javac-options  ["-proc:none"] ;; remove a warning
+  :filespecs [{:type :fn
+               :fn (fn [p]
+                     {:type :bytes :path "ctia-version.txt"
+                      :bytes (str (:out (clojure.java.shell/sh
+                                         "git" "log" "-n" "1" "--pretty=format:%H "))
+                                  (:out (clojure.java.shell/sh
+                                         "git" "symbolic-ref" "--short" "HEAD")))})}]
+
   :profiles {:dev {:dependencies [[cheshire "5.5.0"]
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]
