@@ -41,7 +41,7 @@
   (id/long-id
    (id/short-id->id id-type
                     short-id
-                    #(get-in @properties [:ctia :http :show]))))
+                    (get-in @properties [:ctia :http :show]))))
 
 (defroutes indicator-routes
   (context "/indicator" []
@@ -89,9 +89,9 @@
       :summary "Gets all Sightings associated with the Indicator"
       :capabilities #{:read-indicator :list-sightings}
       (if-let [indicator (read-indicator @indicator-store id)]
-        (if-let [sightings (list-sightings-by-indicators @sighting-store [indicator] params)]
-          (paginated-ok sightings)
-          (not-found))
+        (paginated-ok (list-sightings @sighting-store
+                                      {:indicators #{{:indicator_id (->long-id :indicator id)}}}
+                                      params))
         (not-found)))
     (GET "/title/:title" []
       :return (s/maybe [StoredIndicator])

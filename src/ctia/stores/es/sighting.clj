@@ -19,13 +19,6 @@
 
 (def ^{:private true} mapping "sighting")
 
-(defn handle-list-sightings-by-indicators
-  [state indicators params]
-  (let [indicator-ids (mapv :id indicators)]
-    (handle-list-sightings state {:type "sighting"
-                                  [:indicators :indicator_id]
-                                  indicator-ids} params)))
-
 (defn handle-list-sightings-by-observables
   [{:keys [conn index]}  observables params]
 

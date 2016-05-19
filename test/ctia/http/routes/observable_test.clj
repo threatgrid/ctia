@@ -1,12 +1,12 @@
 (ns ctia.http.routes.observable-test
   (:refer-clojure :exclude [get])
-  (:require
-    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-    [ctia.lib.url :as url]
-    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-    [ctia.test-helpers.store :refer [deftest-for-each-store]]
-    [ctia.test-helpers.auth :refer [all-capabilities]]))
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.http.routes.indicator :refer [->long-id]]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [get post]]
+             [fake-whoami-service :as whoami-helpers]
+             [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -43,6 +43,7 @@
                      :valid_time {:end_time "2016-02-12T00:00:00.000-00:00"}
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
+        long-indicator-1-id (->long-id :indicator indicator-1-id)
 
         {sighting-1-status :status
          {sighting-1-id :id} :parsed-body}
@@ -51,7 +52,7 @@
                      :source "foo"
                      :confidence "Medium"
                      :description "sighting 1"
-                     :indicators [{:indicator_id indicator-1-id}]
+                     :indicators [{:indicator_id long-indicator-1-id}]
                      :observables [{:value "1.2.3.4"
                                      :type "ip"}]
                      :tlp "red"}
@@ -64,7 +65,7 @@
                      :source "bar"
                      :confidence "High"
                      :description "sighting 2"
-                     :indicators [{:indicator_id indicator-1-id}]
+                     :indicators [{:indicator_id long-indicator-1-id}]
                      :observables [{:value "1.2.3.4"
                                      :type "ip"}]
                      :tlp "red"}
@@ -101,6 +102,7 @@
                                   :end_time "2016-02-12T00:00:00.000-00:00"}
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
+        long-indicator-2-id (->long-id :indicator indicator-2-id)
 
         {sighting-3-status :status
          {sighting-3-id :id} :parsed-body}
@@ -109,7 +111,7 @@
                      :source "spam"
                      :confidence "None"
                      :description "sighting 3"
-                     :indicators [{:indicator_id indicator-2-id}]
+                     :indicators [{:indicator_id long-indicator-2-id}]
                      :observables [{:value "10.0.0.1"
                                      :type "ip"}]
                      :tlp "red"}
@@ -117,7 +119,7 @@
 
         {judgement-2-update-status :status}
         (post (str "ctia/judgement/" judgement-2-id "/indicator")
-              :body {:indicator_id indicator-2-id}
+              :body {:indicator_id long-indicator-2-id}
               :headers {"api_key" "45c1f5e3f05d0"})
 
         {{judgement-3-id :id} :parsed-body
@@ -146,6 +148,7 @@
                                   :end_time "2016-02-11T00:00:00.000-00:00"}
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
+        long-indicator-3-id (->long-id :indicator indicator-3-id)
 
         {sighting-4-status :status
          {sighting-4-id :id} :parsed-body}
@@ -154,7 +157,7 @@
                      :source "foo"
                      :confidence "High"
                      :description "sighting 4"
-                     :indicators [{:indicator_id indicator-3-id}]
+                     :indicators [{:indicator_id long-indicator-3-id}]
                      :observables [{:value "10.0.0.1"
                                      :type "ip"}]
                      :tlp "red"}
@@ -167,7 +170,7 @@
                      :source "bar"
                      :confidence "Low"
                      :description "sighting 5"
-                     :indicators [{:indicator_id indicator-3-id}]
+                     :indicators [{:indicator_id long-indicator-3-id}]
                      :observables [{:value "10.0.0.1"
                                      :type "ip"}]
                      :tlp "red"}
@@ -175,7 +178,7 @@
 
         {judgement-3-update-status :status}
         (post (str "ctia/judgement/" judgement-3-id "/indicator")
-              :body {:indicator_id indicator-3-id}
+              :body {:indicator_id long-indicator-3-id}
               :headers {"api_key" "45c1f5e3f05d0"})]
 
     (testing "With successful test setup"
@@ -211,7 +214,7 @@
                 :priority 100
                 :severity 100
                 :confidence "High"
-                :indicators [{:indicator_id indicator-2-id}]
+                :indicators [{:indicator_id long-indicator-2-id}]
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :tlp "red"
@@ -226,7 +229,7 @@
                 :priority 100
                 :severity 100
                 :confidence "Low"
-                :indicators [{:indicator_id indicator-3-id}]
+                :indicators [{:indicator_id long-indicator-3-id}]
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :tlp "red"
@@ -241,30 +244,8 @@
             indicators (:parsed-body response)]
         (is (= 200 (:status response)))
 
-        (is (deep=
-             #{{:id indicator-2-id
-                :type "indicator"
-                :title "indicator"
-                :description "indicator 2"
-                :producer "producer"
-                :indicator_type ["C2" "IP Watchlist"]
-                :valid_time {:start_time #inst "2016-01-12T00:00:00.000-00:00"
-                             :end_time #inst "2016-02-12T00:00:00.000-00:00"}
-                :owner "foouser"
-                :tlp "red"}
-               {:id indicator-3-id
-                :type "indicator"
-                :title "indicator"
-                :description "indicator 3"
-                :producer "producer"
-                :indicator_type ["C2" "IP Watchlist"]
-                :valid_time {:start_time #inst "2016-01-11T00:00:00.000-00:00"
-                             :end_time #inst "2016-02-11T00:00:00.000-00:00"}
-                :owner "foouser"
-                :tlp "red"}}
-             (->> indicators
-                  (map #(dissoc % :created :modified))
-                  set)))))
+        (is (= #{long-indicator-2-id long-indicator-3-id}
+               (set indicators)))))
 
     (testing "GET /ctia/:observable_type/:observable_value/sightings"
       (let [{status :status
@@ -280,7 +261,7 @@
                 :source "spam"
                 :confidence "None"
                 :description "sighting 3"
-                :indicators [{:indicator_id indicator-2-id}]
+                :indicators [{:indicator_id long-indicator-2-id}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :owner "foouser"
@@ -291,7 +272,7 @@
                 :source "foo"
                 :confidence "High"
                 :description "sighting 4"
-                :indicators [{:indicator_id indicator-3-id}]
+                :indicators [{:indicator_id long-indicator-3-id}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :owner "foouser"
@@ -302,7 +283,7 @@
                 :source "bar"
                 :confidence "Low"
                 :description "sighting 5"
-                :indicators [{:indicator_id indicator-3-id}]
+                :indicators [{:indicator_id long-indicator-3-id}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :owner "foouser"

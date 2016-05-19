@@ -72,10 +72,15 @@
   (with-properties ["ctia.http.dev-reload" false
                     "ctia.http.min-threads" 9
                     "ctia.http.max-threads" 10
+                    "ctia.http.show.protocol"    "http"
+                    "ctia.http.show.hostname"    "localhost"
+                    "ctia.http.show.port"        "57254"
+                    "ctia.http.show.path-prefix" ""
                     "ctia.nrepl.enabled" false
                     "ctia.hook.es.enabled" false
                     "ctia.hook.redis.enabled" false
-                    "ctia.hook.redis.channel-name" "events-test"]
+                    "ctia.hook.redis.channel-name" "events-test"
+                    ]
     ;; run tests
     (f)))
 
