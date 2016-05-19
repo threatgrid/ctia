@@ -1,24 +1,27 @@
 (ns ctia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [com.rpl.specter :refer [transform]]
-            [ctia.auth :as auth]
+  (:require [cheshire.core :as json]
+            [clj-http.client :as http]
+            [clojure
+             [data :as cd]
+             [edn :as edn]
+             [string :as str]
+             [test :as ct]]
+            [com.rpl.specter :refer [transform]]
+            [ctia
+             [auth :as auth]
+             [events :as events]
+             [init :as init]
+             [properties :as props]
+             [store :as store]]
             [ctia.auth.allow-all :as aa]
-            [ctia.events :as events]
             [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
-            [ctia.init :as init]
-            [ctia.lib.map :as map]
+            [ctia.lib
+             [map :as map]
+             [time :as time]
+             [url :as url]]
             [ctia.lib.specter.paths :as path]
-            [ctia.lib.time :as time]
-            [ctia.lib.url :as url]
-            [ctia.properties :as props]
-            [ctia.store :as store]
-            [cheshire.core :as json]
-            [clj-http.client :as http]
-            [clojure.data :as cd]
-            [clojure.edn :as edn]
-            [clojure.string :as str]
-            [clojure.test :as ct]
             [schema.core :as schema])
   (:import java.net.ServerSocket))
 
@@ -98,6 +101,16 @@
 
 (defn fixture-properties:redis-hook [f]
   (with-properties ["ctia.hook.redis.enabled" true]
+    (f)))
+
+(defn fixture-properties:es-hook-aliased-index [f]
+  (with-properties ["ctia.hook.es.enabled" true
+                    "ctia.hook.es.slicing.strategy" :aliased-index]
+    (f)))
+
+(defn fixture-properties:es-hook-filtered-alias [f]
+  (with-properties ["ctia.hook.es.enabled" true
+                    "ctia.hook.es.slicing.strategy" :filtered-alias]
     (f)))
 
 (defn fixture-properties:hook-classes [f]
