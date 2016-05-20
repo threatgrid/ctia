@@ -14,7 +14,7 @@
       :body [ttp NewTTP {:description "a new TTP"}]
       :summary "Adds a new TTP"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-ttp :admin}
+      :capabilities :create-ttp
       :login login
       (ok (flows/create-flow :realize-fn realize-ttp
                              :store-fn #(create-ttp @ttp-store %)
@@ -27,7 +27,7 @@
       :summary "Updates a TTP"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-ttp :admin}
+      :capabilities :create-ttp
       :login login
       (ok (flows/update-flow :get-fn #(read-ttp @ttp-store %)
                              :realize-fn realize-ttp
@@ -40,7 +40,7 @@
       :return (s/maybe StoredTTP)
       :summary "Gets a TTP by ID"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:read-ttp :admin}
+      :capabilities :read-ttp
       :path-params [id :- s/Str]
       (if-let [d (read-ttp @ttp-store id)]
         (ok d)
@@ -50,7 +50,7 @@
       :path-params [id :- s/Str]
       :summary "Deletes a TTP"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:delete-ttp :admin}
+      :capabilities :delete-ttp
       :login login
       (if (flows/delete-flow :get-fn #(read-ttp @ttp-store %)
                              :delete-fn #(delete-ttp @ttp-store %)

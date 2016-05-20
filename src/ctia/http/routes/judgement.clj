@@ -30,7 +30,7 @@
       :body [judgement NewJudgement {:description "a new Judgement"}]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Judgement"
-      :capabilities #{:create-judgement :admin}
+      :capabilities :create-judgement
       :login login
       (ok (flows/create-flow :realize-fn realize-judgement
                              :store-fn #(create-judgement @judgement-store %)
@@ -43,7 +43,7 @@
       :body [indicator-relationship rel/RelatedIndicator]
       :header-params [api_key :- s/Str]
       :summary "Adds an Indicator to a Judgement"
-      :capabilities #{:create-judgement-indicator}
+      :capabilities :create-judgement
       (if-let [d (add-indicator-to-judgement @judgement-store
                                              judgement-id
                                              indicator-relationship)]
@@ -54,7 +54,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Gets a Judgement by ID"
-      :capabilities #{:read-judgement :admin}
+      :capabilities :read-judgement
       (if-let [d (read-judgement @judgement-store id)]
         (ok d)
         (not-found)))
@@ -63,7 +63,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Deletes a Judgement"
-      :capabilities #{:delete-judgement :admin}
+      :capabilities :delete-judgement
       :login login
       (if (flows/delete-flow :get-fn #(read-judgement @judgement-store %)
                              :delete-fn #(delete-judgement @judgement-store %)

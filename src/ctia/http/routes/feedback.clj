@@ -24,7 +24,7 @@
       :body [feedback NewFeedback {:description "a new Feedback on an entity"}]
       :summary "Adds a new Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-feedback :admin}
+      :capabilities :create-feedback
       :login login
       (ok (flows/create-flow :realize-fn realize-feedback
                              :store-fn #(create-feedback @feedback-store %)
@@ -36,7 +36,7 @@
       :query [params FeedbackQueryParams]
       :summary "Search Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:list-feedback :admin}
+      :capabilities :read-feedback
 
       (paginated-ok
        (list-feedback @feedback-store
@@ -47,7 +47,7 @@
       :summary "Gets a Feedback by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:read-feedback :admin}
+      :capabilities :read-feedback
       (if-let [d (read-feedback @feedback-store id)]
         (ok d)
         (not-found)))
@@ -56,7 +56,7 @@
       :path-params [id :- s/Str]
       :summary "Deletes a feedback"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:delete-feedback :admin}
+      :capabilities :delete-feedback
       :login login
       (if (flows/delete-flow :get-fn #(read-feedback @feedback-store %)
                              :delete-fn #(delete-feedback @feedback-store %)

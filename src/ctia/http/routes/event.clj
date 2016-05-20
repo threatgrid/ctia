@@ -11,5 +11,5 @@
     (GET "/log" []
       :return [ModelEventBase]
       :summary "Recent Event log"
-      :capabilities #{:admin}
+      :capabilities :developer
       (ok (recent-events)))))

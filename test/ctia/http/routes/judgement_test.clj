@@ -142,7 +142,7 @@
                      :headers {"api_key" "2222222222222"})]
             (is (= 401 status))
             (is (= {:message "Missing capability",
-                    :capabilities #{:admin :read-judgement},
+                    :capabilities :read-judgement,
                     :owner "baruser"}
                    body)))))
 

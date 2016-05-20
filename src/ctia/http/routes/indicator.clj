@@ -51,7 +51,7 @@
       :body [indicator NewIndicator {:description "a new Indicator"}]
       :summary "Adds a new Indicator"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-indicator :admin}
+      :capabilities :create-indicator
       :login login
       (ok (flows/create-flow :realize-fn realize-indicator
                              :store-fn #(create-indicator @indicator-store %)
@@ -64,7 +64,7 @@
       :summary "Updates an Indicator"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-indicator :admin}
+      :capabilities :create-indicator
       :login login
       (ok (flows/update-flow :get-fn #(read-indicator @indicator-store %)
                              :realize-fn realize-indicator
@@ -78,7 +78,7 @@
       :summary "Gets an Indicator by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:read-indicator :admin}
+      :capabilities :read-indicator
       (if-let [d (read-indicator @indicator-store id)]
         (ok d)
         (not-found)))
@@ -87,6 +87,7 @@
       :path-params [id :- s/Str]
       :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all Sightings associated with the Indicator"
+      :capabilities #{:read-indicator :list-sightings}
       (if-let [indicator (read-indicator @indicator-store id)]
         (if-let [sightings (list-sightings-by-indicators @sighting-store [indicator] params)]
           (paginated-ok sightings)
@@ -98,7 +99,7 @@
       :query [params IndicatorsByTitleQueryParams]
       :path-params [title :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:list-indicators-by-title :admin}
+      :capabilities :read-indicator
       (paginated-ok
        (list-indicators @indicator-store {:title title} params))))
   (GET "/judgement/:id/indicators" []
@@ -108,7 +109,7 @@
     :query [params IndicatorsListQueryParams]
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:list-indicators-by-title :admin}
+    :capabilities :list-indicators
     (paginated-ok
      (list-indicators @indicator-store
                       {:judgements #{{:judgement_id (->long-id :judgement id)}}}
@@ -120,7 +121,7 @@
     :query [params IndicatorsListQueryParams]
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:list-indicators-by-title :admin}
+    :capabilities :list-indicators
     (paginated-ok
      (list-indicators @indicator-store
                       {:related_campaigns #{{:campaign_id (->long-id :campaign id)}}}
@@ -132,7 +133,7 @@
     :query [params IndicatorsListQueryParams]
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:list-indicators-by-title :admin}
+    :capabilities :list-indicators
     (paginated-ok
      (list-indicators @indicator-store
                       {:related_COAs #{{:COA_id (->long-id :coa id)}}}
@@ -144,7 +145,7 @@
     :query [params IndicatorsListQueryParams]
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:list-indicators-by-title :admin}
+    :capabilities :list-indicators
     (paginated-ok
      (list-indicators @indicator-store
                       {:indicated_TTP #{{:ttp_id (->long-id :ttp id)}}}
@@ -156,7 +157,7 @@
     :query [params IndicatorsListQueryParams]
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:list-indicators-by-title :admin}
+    :capabilities :list-indicators
     (paginated-ok
      (list-indicators @indicator-store
                       {:related_indicators #{{:indicator_id (->long-id :indicator id)}}}

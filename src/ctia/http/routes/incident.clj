@@ -17,7 +17,7 @@
       :body [incident NewIncident {:description "a new incident"}]
       :summary "Adds a new Incident"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-incident :admin}
+      :capabilities :create-incident
       :login login
       (ok (flows/create-flow :realize-fn realize-incident
                              :store-fn #(create-incident @incident-store %)
@@ -30,7 +30,7 @@
       :summary "Updates an Incident"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-incident :admin}
+      :capabilities :create-incident
       :login login
       (ok (flows/update-flow :get-fn #(read-incident @incident-store %)
                              :realize-fn realize-incident
@@ -53,7 +53,7 @@
       :path-params [id :- s/Str]
       :summary "Deletes an Incident"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:delete-incident :admin}
+      :capabilities :delete-incident
       :login login
       (if (flows/delete-flow :get-fn #(read-incident @incident-store %)
                              :delete-fn #(delete-incident @incident-store %)
