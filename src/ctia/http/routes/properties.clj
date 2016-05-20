@@ -8,7 +8,7 @@
   (context "/properties" []
            :tags ["Properties"]
            :summary "The currently running properties"
-           :capabilities :admin
+           :capabilities :developer
            :header-params [api_key :- (s/maybe s/Str)]
            (GET "/" []
                 (ok @properties))))

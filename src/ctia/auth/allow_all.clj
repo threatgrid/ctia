@@ -1,7 +1,8 @@
 (ns ctia.auth.allow-all
   (:require [ctia.auth
              :refer [IIdentity IAuth]
-             :as auth]))
+             :as auth]
+            [ctia.lib.set :refer [as-set]]))
 
 (defrecord Identity []
   IIdentity
@@ -10,8 +11,8 @@
   (login [_]
     auth/not-logged-in-owner)
   (allowed-capabilities [_]
-    (get auth/default-capabilities :admin))
-  (allowed-capability? [_ _]
+    auth/all-capabilities)
+  (capable? [_ _]
     true))
 
 (def identity-singleton

@@ -16,7 +16,7 @@
       :body [sighting NewSighting {:description "A new Sighting"}]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Sighting"
-      :capabilities #{:create-sighting :admin}
+      :capabilities :create-sighting
       :login login
       (if (check-new-sighting sighting)
         (ok (flows/create-flow :realize-fn realize-sighting
@@ -31,7 +31,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Updates a Sighting"
       :path-params [id :- s/Str]
-      :capabilities #{:create-sighting :admin}
+      :capabilities :create-sighting
       :login login
       (if (check-new-sighting sighting)
         (ok (flows/update-flow :get-fn #(read-sighting @sighting-store %)
@@ -47,7 +47,7 @@
       :summary "Gets a Sighting by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:read-sighting :admin}
+      :capabilities :read-sighting
       (if-let [d (read-sighting @sighting-store id)]
         (ok d)
         (not-found)))
@@ -55,7 +55,7 @@
       :path-params [id :- s/Str]
       :summary "Deletes a Sighting"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:delete-sighting :admin}
+      :capabilities :delete-sighting
       (if (delete-sighting @sighting-store id)
         (no-content)
         (not-found)))))

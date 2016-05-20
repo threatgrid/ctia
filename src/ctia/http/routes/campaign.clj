@@ -14,7 +14,7 @@
       :body [campaign NewCampaign {:description "a new campaign"}]
       :summary "Adds a new Campaign"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-campaign :admin}
+      :capabilities :create-campaign
       :login login
       (ok (flows/create-flow :realize-fn realize-campaign
                              :store-fn #(create-campaign @campaign-store %)
@@ -27,7 +27,7 @@
       :summary "Updates a Campaign"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-campaign :admin}
+      :capabilities :create-campaign
       :login login
       (ok (flows/update-flow :get-fn #(read-campaign @campaign-store %)
                              :realize-fn realize-campaign
@@ -41,7 +41,7 @@
       :summary "Gets a Campaign by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:read-campaign :admin}
+      :capabilities :read-campaign
       (if-let [d (read-campaign @campaign-store id)]
         (ok d)
         (not-found)))
@@ -50,7 +50,7 @@
       :path-params [id :- s/Str]
       :summary "Deletes a Campaign"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:delete-campaign :admin}
+      :capabilities :delete-campaign
       :login login
       (if (flows/delete-flow :get-fn #(read-campaign @campaign-store %)
                              :delete-fn #(delete-campaign @campaign-store %)
