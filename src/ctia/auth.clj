@@ -2,7 +2,6 @@
 
 (defprotocol IIdentity
   (authenticated? [this])
-  (admin? [this])
   (login [this])
   (allowed-capabilities [this])
   (capable? [this capabilities]))
@@ -71,12 +70,12 @@
 
     ;; Other
     :developer
+    :specify-id
     })
 
 (def default-capabilities
   {:user
-   #{;; Actor
-     :read-actor
+   #{:read-actor
      :read-campaign
      :read-coa
      :read-exploit-target
@@ -98,8 +97,6 @@
 (defrecord DeniedIdentity []
   IIdentity
   (authenticated? [_]
-    false)
-  (admin? [_]
     false)
   (login [_]
     not-logged-in-owner)

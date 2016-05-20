@@ -15,11 +15,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Actor"
       :capabilities :create-actor
-      :login login
+      :identity identity
       (ok (flows/create-flow :entity-type :actor
                              :realize-fn realize-actor
                              :store-fn #(create-actor @actor-store %)
-                             :login login
+                             :identity identity
                              :entity actor)))
     (PUT "/:id" []
       :return StoredActor
@@ -28,13 +28,13 @@
       :summary "Updates an Actor"
       :path-params [id :- s/Str]
       :capabilities :create-actor
-      :login login
+      :identity identity
       (ok (flows/update-flow :entity-type :actor
                              :get-fn #(read-actor @actor-store %)
                              :realize-fn realize-actor
                              :update-fn #(update-actor @actor-store (:id %) %)
-                             :id id
-                             :login login
+                             :entity-id id
+                             :identity identity
                              :entity actor)))
     (GET "/:id" []
       :return (s/maybe StoredActor)
@@ -51,11 +51,11 @@
       :summary "Deletes an Actor"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-actor
-      :login login
+      :identity identity
       (if (flows/delete-flow :entity-type :actor
                              :get-fn #(read-actor @actor-store %)
                              :delete-fn #(delete-actor @actor-store %)
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))

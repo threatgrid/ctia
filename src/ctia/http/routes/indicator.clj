@@ -52,11 +52,11 @@
       :summary "Adds a new Indicator"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-indicator
-      :login login
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-indicator
                              :store-fn #(create-indicator @indicator-store %)
                              :entity-type :indicator
-                             :login login
+                             :identity identity
                              :entity indicator)))
     (PUT "/:id" []
       :return StoredIndicator
@@ -65,13 +65,13 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-indicator
-      :login login
+      :identity identity
       (ok (flows/update-flow :get-fn #(read-indicator @indicator-store %)
                              :realize-fn realize-indicator
                              :update-fn #(update-indicator @indicator-store (:id %) %)
                              :entity-type :indicator
-                             :id id
-                             :login login
+                             :entity-id id
+                             :identity identity
                              :entity indicator)))
     (GET "/:id" []
       :return (s/maybe StoredIndicator)

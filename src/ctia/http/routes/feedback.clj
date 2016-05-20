@@ -25,11 +25,11 @@
       :summary "Adds a new Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-feedback
-      :login login
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-feedback
                              :store-fn #(create-feedback @feedback-store %)
                              :entity-type :feedback
-                             :login login
+                             :identity identity
                              :entity feedback)))
     (GET "/" []
       :return [StoredFeedback]
@@ -57,11 +57,11 @@
       :summary "Deletes a feedback"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-feedback
-      :login login
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-feedback @feedback-store %)
                              :delete-fn #(delete-feedback @feedback-store %)
                              :entity-type :feedback
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))
