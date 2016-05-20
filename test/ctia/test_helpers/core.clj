@@ -281,11 +281,21 @@
                   time/format-date-time)))
 
 (defn encode [s]
-  {:pre [(string? s) (seq s)]}
+  (assert (string? s)
+          (format "Assert Failed: %s of type %s must be a string"
+                  s (type s)))
+  (assert (seq s)
+          (format "Assert Failed: %s of type %s must be a seq"
+                  s (type s)))
   (url/encode s))
 
 (defn decode [s]
-  {:pre [(string? s) (seq s)]}
+  (assert (string? s)
+          (format "Assert Failed: %s of type %s must be a string"
+                  s (type s)))
+  (assert (seq s)
+          (format "Assert Failed: %s of type %s must be a seq"
+                  s (type s)))
   (url/decode s))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
