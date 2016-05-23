@@ -2,7 +2,8 @@
     ctia.lib.time
   (:require [clj-time.core :as time]
             [clj-time.format :as time-format]
-            [clj-time.coerce :as time-coerce])
+            [clj-time.coerce :as time-coerce]
+            [clj-time.periodic :refer [periodic-seq] :as periodic])
   (:import [java.sql Time Timestamp]
            [java.util Date]
            [org.joda.time DateTime DateTimeZone]))
@@ -99,3 +100,8 @@
           :year   (time/date-time year))
 
         (time-coerce/to-date))))
+
+(defn date-range [start end step]
+  (let [inf-range (periodic-seq start step)
+        below-end? (fn [t] (time/within? (time/interval start end) t))]
+    (take-while below-end? inf-range)))
