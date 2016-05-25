@@ -86,17 +86,7 @@
 
 (defn fixture-properties:atom-store [f]
   ;; Set properties to enable the atom store
-  (with-properties ["ctia.store.actor" "memory"
-                    "ctia.store.feedback" "memory"
-                    "ctia.store.campaign" "memory"
-                    "ctia.store.coa" "memory"
-                    "ctia.store.exploit-target" "memory"
-                    "ctia.store.identity" "memory"
-                    "ctia.store.incident" "memory"
-                    "ctia.store.indicator" "memory"
-                    "ctia.store.judgement" "memory"
-                    "ctia.store.sighting" "memory"
-                    "ctia.store.ttp" "memory"]
+  (with-properties ["ctia.store.default.type" "atom"]
     (f)))
 
 (defn fixture-properties:redis-hook [f]

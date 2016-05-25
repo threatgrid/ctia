@@ -10,6 +10,7 @@
 (use-fixtures :once st/validate-schemas)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
+                                    helpers/fixture-properties:atom-store
                                     helpers/fixture-ctia-fast]))
 
 (deftest test-send-event

@@ -9,6 +9,7 @@
 
 (use-fixtures :once st/validate-schemas)
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
+                                    test-helpers/fixture-properties:atom-store
                                     test-helpers/fixture-ctia-fast]))
 
 (deftest test-logged

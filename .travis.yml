@@ -25,9 +25,8 @@ services:
 #   hipchat: [api token]@[room id or name]
 env:
     global:
-      - CTIA_STORE_ES_URI=http://127.0.0.1:9200
-      - CTIA_STORE_ES_HOST=127.0.0.1
-      - CTIA_STORE_ES_INDEXNAME=elasticsearch
+      - CTIA_STORE_DEFAULT_URI=http://127.0.0.1:9200
+      - CTIA_STORE_DEFAULT_INDEXNAME=elasticsearch
       - CTIA_HOOK_ES_URI=http://127.0.0.1:9200
       - CTIA_HOOK_ES_INDEXNAME=elasticsearch
       - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
