@@ -79,6 +79,7 @@
                                 (store/calculate-verdict event)
                                 (vs/realize-verdict owner))]
         (store/create-verdict @verdict-store new-verdict)
+        (println "Created a verdict: " new-verdict)
         new-verdict)
       event)))
 
