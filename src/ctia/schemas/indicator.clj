@@ -86,6 +86,7 @@
                        (str "Test Mechanisms effective at identifying the cyber"
                             " Observables specified in this"
                             " cyber threat Indicator")) ;; simplified
+     :source (describe s/Str "source of this Indicator")
      })
    ;; Extension fields:
    {:producer s/Str ;; TODO - Document what is supposed to be in this field!
