@@ -350,7 +350,8 @@
      :specifications specifications
      :owner string
      :created ts
-     :modified ts}}})
+     :modified ts
+     :source string}}})
 
 (def ttp-mapping
   {"ttp"

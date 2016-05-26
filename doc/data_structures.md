@@ -450,6 +450,7 @@ JSON Example:
 | test_mechanisms | (string, ...) | | One or more products or tools that can use the data in this indicator to perform a test for it's presence on a host or network | |
 | producer | string | &#10003; | An identifier of the system or person that produced this indicator | |
 | specifications | ([Specification](#specification), ...) | | Test Mechanism effective at identifying th ecyber Observables specified in this cyber thread Indicator |
+| source         | string                                 | | |
 
 Stored instances will also receive the following fields, but MAY not be shared:
 
