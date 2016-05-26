@@ -18,9 +18,9 @@
 (def all_text {:type "string" :copy_to "_all"})
 
 (def related
-  {:confidence {:type "string"}
-   :source {:type "string"}
-   :relationship {:type "string"}})
+  {:confidence string
+   :source string
+   :relationship string})
 
 (def valid-time
   {:properties
