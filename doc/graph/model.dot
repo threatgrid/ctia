@@ -29,4 +29,6 @@ digraph ctia {
         ttp -> ttp [ label = "related_TTPs" ];
         ttp -> indicator [ label = "indicators" ];
         verdict -> judgement [ label = "judgement" ];
+        sighting -> indicator [ label = "indicators" ]
+        sighting -> incident [ label = "incidents" ]
 }
