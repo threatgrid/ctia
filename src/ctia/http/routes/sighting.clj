@@ -17,12 +17,12 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Sighting"
       :capabilities :create-sighting
-      :login login
+      :identity identity
       (if (check-new-sighting sighting)
         (ok (flows/create-flow :realize-fn realize-sighting
                                :store-fn #(create-sighting @sighting-store %)
                                :entity-type :sighting
-                               :login login
+                               :identity identity
                                :entity sighting))
         (unprocessable-entity)))
     (PUT "/:id" []
@@ -32,14 +32,14 @@
       :summary "Updates a Sighting"
       :path-params [id :- s/Str]
       :capabilities :create-sighting
-      :login login
+      :identity identity
       (if (check-new-sighting sighting)
         (ok (flows/update-flow :get-fn #(read-sighting @sighting-store %)
                                :realize-fn realize-sighting
                                :update-fn #(update-sighting @sighting-store (:id %) %)
                                :entity-type :sighting
-                               :id id
-                               :login login
+                               :entity-id id
+                               :identity identity
                                :entity sighting))
         (unprocessable-entity)))
     (GET "/:id" []
@@ -56,6 +56,7 @@
       :summary "Deletes a Sighting"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-sighting
+      ;; TODO - Shouldn't this use the delete-flow?
       (if (delete-sighting @sighting-store id)
         (no-content)
         (not-found)))))

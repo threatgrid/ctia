@@ -15,11 +15,11 @@
       :summary "Adds a new Campaign"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
-      :login login
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-campaign
                              :store-fn #(create-campaign @campaign-store %)
                              :entity-type :campaign
-                             :login login
+                             :identity identity
                              :entity campaign)))
     (PUT "/:id" []
       :return StoredCampaign
@@ -28,13 +28,13 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
-      :login login
+      :identity identity
       (ok (flows/update-flow :get-fn #(read-campaign @campaign-store %)
                              :realize-fn realize-campaign
                              :update-fn #(update-campaign @campaign-store (:id %) %)
                              :entity-type :campaign
-                             :id id
-                             :login login
+                             :entity-id id
+                             :identity identity
                              :entity campaign)))
     (GET "/:id" []
       :return (s/maybe StoredCampaign)
@@ -51,11 +51,11 @@
       :summary "Deletes a Campaign"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-campaign
-      :login login
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-campaign @campaign-store %)
                              :delete-fn #(delete-campaign @campaign-store %)
                              :entity-type :campaign
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))

@@ -31,11 +31,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Judgement"
       :capabilities :create-judgement
-      :login login
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-judgement
                              :store-fn #(create-judgement @judgement-store %)
                              :entity-type :judgement
-                             :login login
+                             :identity identity
                              :entity judgement)))
     (POST "/:judgement-id/indicator" []
       :return (s/maybe rel/RelatedIndicator)
@@ -64,11 +64,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Deletes a Judgement"
       :capabilities :delete-judgement
-      :login login
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-judgement @judgement-store %)
                              :delete-fn #(delete-judgement @judgement-store %)
                              :entity-type :judgement
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))
