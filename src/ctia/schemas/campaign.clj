@@ -19,8 +19,7 @@
     :indicators rel/RelatedIndicators
     :tlp c/TLP}
    (st/optional-keys
-    {:version (describe s/Str "schema version for this content")
-     :names (describe [s/Str] "Names used to identify this Campaign")
+    {:names (describe [s/Str] "Names used to identify this Campaign")
      :intended_effect (describe
                        [v/IntendedEffect]
                        (str "characterizes the intended effect of"
@@ -58,7 +57,7 @@
 (s/defschema NewCampaign
   "Schema for submitting new Campaigns"
   (st/merge
-   Campaign
+   (st/dissoc Campaign :version)
    (st/optional-keys
     {:id c/ID
      :valid_time c/ValidTime

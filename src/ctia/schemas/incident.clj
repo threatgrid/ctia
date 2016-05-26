@@ -196,7 +196,6 @@
     :tlp c/TLP}
    (st/optional-keys
     {:status (describe v/Status "current status of the incident")
-     :version (describe s/Str "schema version for this content")
      :incident_time (describe
                      IncidentTime
                      "relevant time values associated with this Incident") ;; Was "time"; renamed for clarity
@@ -277,7 +276,7 @@
 
 (s/defschema NewIncident
   (st/merge
-   Incident
+   (st/dissoc Incident :version)
    (st/optional-keys
     {:id c/ID
      :valid_time c/ValidTime

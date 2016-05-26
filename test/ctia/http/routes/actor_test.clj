@@ -1,11 +1,12 @@
 (ns ctia.http.routes.actor-test
   (:refer-clojure :exclude [get])
-  (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]))
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.schemas.common :as c]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [delete get post put]]
+             [fake-whoami-service :as whoami-helpers]
+             [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -51,6 +52,7 @@
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :owner "foouser"
+            :version c/ctia-schema-version
             :tlp "green"}
            (dissoc actor
                    :id
@@ -78,6 +80,7 @@
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"
+                :version c/ctia-schema-version
                 :tlp "green"}
                (dissoc actor
                        :id
@@ -119,6 +122,7 @@
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"
+                :version c/ctia-schema-version
                 :tlp "green"}
                (dissoc updated-actor
                        :modified)))))

@@ -58,6 +58,7 @@ simplifications:
 | valid\_time                                | [ValidTime](#valid\_time)                      | &#10003;   |
 | actor\_type                                | [ThreatActorType](#threat_actor_type)          | &#10003;   |
 | tlp                                        | [TLP](#tlp)                                    | &#10003;   |
+| version                                    | string                                         | &#10003;   |
 | source                                     | [Source](#source)                              |            |
 | identity                                   | [Identity](#identity)                          |            |
 | motivation                                 | [Motivation](#motivation)                      |            |
@@ -94,7 +95,7 @@ STIX [ThreatActorType](http://stixproject.github.io/data-model/1.2/ta/ThreatActo
 | campaign_type                 | string                                        | &#10003;   |
 | indicators                    | ([RelatedIndicator](#related_indicator), ...) | &#10003;   |
 | tlp                           | [TLP](#tlp)                                   |            |
-| version                       | string                                        |            |
+| version                       | string                                        | &#10003;   |
 | names                         | string                                        |            |
 | intended_effect               | [IntendedEffect](#intended_effect)            |            |
 | status                        | [CampaignStatus](#campaign_status)            |            |
@@ -129,6 +130,7 @@ STIX [CampaignType](http://stixproject.github.io/data-model/1.2/campaign/Campaig
 | short\_description     | (string, ...)                     |            |
 | valid\_time            | [ValidTime](#valid\_time)         | &#10003;   |
 | tlp                    | [TLP](#tlp)                       |            |
+| version                | string                            | &#10003;   |
 | stage                  | [COAStage](#coa_stage)            |            |
 | coa_type               | [COAType](#coa_type)              |            |
 | objective              | (string, ...)                     |            |
@@ -161,7 +163,7 @@ STIX [CourseOfActionType](http://stixproject.github.io/data-model/1.2/coa/Course
 | short_description        | (string, ...)                                          |            |
 | valid\_time              | [ValidTime](#valid\_time)                              | &#10003;   |
 | tlp                      | [TLP](#tlp)                                            |            |
-| version                  | string                                                 |            |
+| version                  | string                                                 | &#10003;   |
 | vulnerability            | [Vulnerability](#vulnerability)                        |            |
 | weakness                 | [Weakness](#weakness)                                  |            |
 | configuration            | [Configuration](#configuration)                        |            |
@@ -225,6 +227,7 @@ A positive, neutral or negative feedback on a Judgement
 | --- | --- | --- |
 | id         | [ID](#id)                                  |            |
 | tlp        | [TLP](#tlp)                                |            |
+| version    | string                                     | &#10003;   |
 | entity\_id | [Reference](#reference)                    | &#10003;   |
 | source     | string                                     |            |
 | feedback   | -1 &#124; 0 &#124; 1                       | &#10003;   |
@@ -250,8 +253,8 @@ Stored instances will also receive the following fields, but MAY not be shared:
 | valid\_time          | [ValidTime](#valid\_time)                      | &#10003;   |
 | confidence           | [HighMedLow](#high\_med_low)                   | &#10003;   |
 | tlp                  | [TLP](#tlp)                                    |            |
+| version              | string                                         | &#10003;   |
 | status               | [Status](#status)                              |            |
-| version              | string                                         |            |
 | incident\_time       | [IncidentTime](#incident\_time)                |            |
 | categories           | ([IncidentCategory](#incident\_category), ...) |            |
 | reporter             | string                                         |            |
@@ -431,9 +434,9 @@ JSON Example:
 | description | (string, ...) | &#10003; | A longer, in-depth description of the indicator |
 | short\_description | (string, ...) | | A short sentence or two describing the indicator |
 | valid\_time\_position | [ValidTime](#valid\_time) | &#10003; | |
-| tlp | [TLP](#tlp) | |
+| tlp | [TLP](#tlp) | &#10003; |
+| version | string | &#10003; |
 | alternate\_ids | (string, ...) | | |
-| version | string | | |
 | negate | boolean | | |
 | indicator\_type | ([IndicatorType](#indicator\_type), ...) | | The indicator type, such as URL Watchlist, or Malware Artifact, or Malware Behavior |
 | tags | string | | Descriptors for this indicator |
@@ -479,6 +482,7 @@ One of the following structures:
 | description         | (string, ...)                    | &#10003;   |
 | timestamp           | [Time](#time)                    | &#10003;   |
 | tlp                 | [TLP](#tlp)                      | &#10003;   |
+| version             | string                           | &#10003;   |
 | source              | [Source](#source)                |            |
 | source_uri          | [URI](#uri)                      |            |
 | source_device       | [Sensor](#sensor)                |            |
@@ -562,7 +566,8 @@ indicators and threat intelligence data in CTIA.
 | confidence        | [HighMedLow](#high_med_low)                   | &#10003;   | 100           |                                                                    |
 | severity          | integer                                       | &#10003;   | 100           |                                                                    |
 | timestamp         | [Time](#time)                                 | &#10003;   | POST time     |                                                                    |
-| tlp               | [TLP](#tlp)                                   |            |               |                                                                    |
+| tlp               | [TLP](#tlp)                                   | &#10003;   |               |                                                                    |
+| version           | string                                        | &#10003;   |               |                                                                    |
 | reason            | string                                        |            |               | short description of why the judgement was made                    |
 | disposition\_name | [DispositionName](#disposition\_name)         |            |               |                                                                    |
 | expires           | [Time](#time)                                 |            | Jan 1 2535    |                                                                    |
@@ -599,8 +604,8 @@ curl -X POST --header "Content-Type: application/json" \
 | description            | (string, ...)                                          | &#10003;   |
 | short_description      | (string, ...)                                          |            |
 | tlp                    | [TLP](#tlp)                                            |            |
+| version                | string                                                 | &#10003;   |
 | valid\_time            | [ValidTime](#valid\_time)                              |            |
-| version                | string                                                 |            |
 | intended\_effect       | [IntendedEffect](#intended_effect)                     |            |
 | behavior               | [Behavior](#behavior)                                  |            |
 | resources              | [Resource](#resource)                                  |            |

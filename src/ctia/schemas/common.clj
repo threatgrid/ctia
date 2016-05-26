@@ -1,12 +1,12 @@
 (ns ctia.schemas.common
   (:require [ctia.lib.time :as time]
-            [ctia.schemas
-             [common :as c]
-             [vocabularies :as v]]
+            [ctia.schemas.vocabularies :as v]
             [ring.swagger.schema :refer [describe]]
             [ring.util.http-response :as http-response]
             [schema-tools.core :as st]
             [schema.core :as s]))
+
+(def ctia-schema-version "0.1ß")
 
 (def Reference
   "An entity ID, or a URI referring to a remote one."
@@ -39,7 +39,7 @@
 
 (def default-tlp "green")
 
-(def CTIAFeature
+(s/defschema CTIAFeature
   (s/enum "Judgements"
           "Verdicts"
           "Threats"
@@ -49,7 +49,7 @@
           "COAs"
           "ExploitTargets"))
 
-(def SpecificationType
+(s/defschema SpecificationType
   "Types of Indicator we support Currently only Judgement indicators,
   which contain a list of Judgements associated with this indicator."
   (s/enum "Judgement"
@@ -68,7 +68,8 @@
    MinimalStixIdentifiers
    {:title s/Str
     :description s/Str
-    (s/optional-key :short_description) s/Str}))
+    (s/optional-key :short_description) s/Str
+    :version (describe s/Str "schema version for this document")}))
 
 (s/defschema Tool
   "See http://stixproject.github.io/data-model/1.2/cyboxCommon/ToolInformationType/"
@@ -365,6 +366,7 @@
               :id id
               :type type-name
               :owner login
+              :version ctia-schema-version
               :created (or (:created prev-object) now)
               :modified now
               :tlp (:tlp new-object (:tlp prev-object default-tlp))
