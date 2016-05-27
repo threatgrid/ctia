@@ -14,16 +14,6 @@
 (def handle-delete-sighting (mc/delete-handler StoredSighting))
 (def handle-list-sightings (mc/list-handler StoredSighting))
 
-(s/defn handle-list-sightings-by-indicators :- (list-response-schema StoredSighting)
-  [sightings-state :- (s/atom {s/Str StoredSighting})
-   indicators :- (s/maybe [StoredIndicator])
-   params]
-
-  (let [indicators-set (set (map (fn [ind] {:indicator_id (:id ind)})
-                                 indicators))]
-    (handle-list-sightings sightings-state
-                           {:indicators indicators-set} params)))
-
 (s/defn handle-list-sightings-by-observables :- (list-response-schema StoredSighting)
   [sightings-state :- (s/atom {s/Str StoredSighting})
    observables :- (s/maybe [c/Observable])

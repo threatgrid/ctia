@@ -1,10 +1,15 @@
 (ns ctia.stores.atom.indicator
-  (:require [ctia.schemas
+  (:require [ctia.domain.id :as id]
+            [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.properties :refer [properties]]
+            [ctia.schemas
              [indicator :refer [StoredIndicator]]
              [judgement :refer [StoredJudgement]]]
-            [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
+
+(defn long-id->short-id [long-id]
+  (id/short-id (id/long-id->id long-id)))
 
 (def handle-create-indicator (mc/create-handler-from-realized StoredIndicator))
 (def handle-read-indicator (mc/read-handler StoredIndicator))
@@ -18,6 +23,6 @@
    params]
   (let [indicator-ids (some->> (map :indicators judgements)
                                (mapcat #(map :indicator_id %))
+                               (map #(long-id->short-id %))
                                set)]
-
     (handle-list-indicators indicator-state {:id indicator-ids} params)))
