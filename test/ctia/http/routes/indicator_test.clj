@@ -1,17 +1,15 @@
 (ns ctia.http.routes.indicator-test
   (:refer-clojure :exclude [get])
-  (:require
-   [clojure.tools.logging :as log]
-   [ring.util.codec :refer [url-encode]]
-   [clojure.test :refer [deftest is are testing use-fixtures join-fixtures]]
-   [ctia.test-helpers.http :refer [api-key test-get-list assert-post]]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.schemas.indicator :refer [NewIndicator StoredIndicator]]
-   [ctia.schemas.sighting :refer [NewSighting]]
-   [ctia.http.routes.indicator :refer [->long-id]]))
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.http.routes.indicator :refer [->long-id]]
+            [ctia.schemas.common :as c]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [delete get post put]]
+             [fake-whoami-service :as whoami-helpers]
+             [http :refer [api-key assert-post test-get-list]]
+             [store :refer [deftest-for-each-store]]]
+            [ring.util.codec :refer [url-encode]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -51,6 +49,7 @@
             :description "description"
             :producer "producer"
             :tlp "green"
+            :version c/ctia-schema-version
             :indicator_type ["C2" "IP Watchlist"]
             :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -81,6 +80,7 @@
                 :description "description"
                 :producer "producer"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :indicator_type ["C2" "IP Watchlist"]
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -114,6 +114,7 @@
                  :description "description"
                  :producer "producer"
                  :tlp "green"
+                 :version c/ctia-schema-version
                  :indicator_type ["C2" "IP Watchlist"]
                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -161,6 +162,7 @@
                 :description "updated description"
                 :producer "producer"
                 :tlp "yellow"
+                :version c/ctia-schema-version
                 :indicator_type ["IP Watchlist"]
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}

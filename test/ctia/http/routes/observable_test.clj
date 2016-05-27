@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.http.routes.indicator :refer [->long-id]]
+            [ctia.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]
@@ -54,7 +55,7 @@
                      :description "sighting 1"
                      :indicators [{:indicator_id long-indicator-1-id}]
                      :observables [{:value "1.2.3.4"
-                                     :type "ip"}]
+                                    :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
@@ -67,7 +68,7 @@
                      :description "sighting 2"
                      :indicators [{:indicator_id long-indicator-1-id}]
                      :observables [{:value "1.2.3.4"
-                                     :type "ip"}]
+                                    :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
@@ -113,7 +114,7 @@
                      :description "sighting 3"
                      :indicators [{:indicator_id long-indicator-2-id}]
                      :observables [{:value "10.0.0.1"
-                                     :type "ip"}]
+                                    :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
@@ -159,7 +160,7 @@
                      :description "sighting 4"
                      :indicators [{:indicator_id long-indicator-3-id}]
                      :observables [{:value "10.0.0.1"
-                                     :type "ip"}]
+                                    :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
@@ -172,7 +173,7 @@
                      :description "sighting 5"
                      :indicators [{:indicator_id long-indicator-3-id}]
                      :observables [{:value "10.0.0.1"
-                                     :type "ip"}]
+                                    :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
@@ -218,6 +219,7 @@
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :tlp "red"
+                :version c/ctia-schema-version
                 :owner "foouser"}
                {:id judgement-3-id
                 :type "judgement"
@@ -233,6 +235,7 @@
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :tlp "red"
+                :version c/ctia-schema-version
                 :owner "foouser"}}
              (->> judgements
                   (map #(dissoc % :created))
@@ -265,6 +268,7 @@
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :owner "foouser"
+                :version c/ctia-schema-version
                 :tlp "red"}
                {:id sighting-4-id
                 :type "sighting"
@@ -276,6 +280,7 @@
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :owner "foouser"
+                :version c/ctia-schema-version
                 :tlp "red"}
                {:id sighting-5-id
                 :type "sighting"
@@ -287,6 +292,7 @@
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :owner "foouser"
+                :version c/ctia-schema-version
                 :tlp "red"}}
              (->> sightings
                   (map #(dissoc % :created :modified))

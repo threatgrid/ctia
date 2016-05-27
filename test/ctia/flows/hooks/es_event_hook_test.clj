@@ -1,11 +1,12 @@
 (ns ctia.flows.hooks.es-event-hook-test
-  (:require [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.events.producers.es.producer :refer [init-producer-conn]]
             [ctia.lib.es
              [document :as document]
              [index :as index]]
+            [ctia.schemas.common :as c]
             [ctia.test-helpers
-             [core :as test-helpers :refer [post deftest-for-each-fixture]]
+             [core :as test-helpers :refer [deftest-for-each-fixture post]]
              [es :as es-helpers]]))
 
 (use-fixtures :once test-helpers/fixture-schema-validation)
@@ -85,6 +86,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
+                          :version c/ctia-schema-version
                           :disposition 1
                           :disposition_name "Clean"
                           :priority 100
@@ -102,6 +104,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
+                          :version c/ctia-schema-version
                           :disposition 2
                           :disposition_name "Malicious"
                           :priority 100
@@ -119,6 +122,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
+                          :version c/ctia-schema-version
                           :disposition 3
                           :disposition_name "Suspicious"
                           :priority 100

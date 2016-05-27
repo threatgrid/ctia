@@ -32,7 +32,8 @@
     :confidence v/HighMedLow
     :severity Severity
     :valid_time c/ValidTime
-    :tlp c/TLP}
+    :tlp c/TLP
+    :version s/Str}
    (st/optional-keys
     {:reason s/Str
      :source_uri c/URI
@@ -45,7 +46,7 @@
 (s/defschema NewJudgement
   "Schema for submitting new Judgements."
   (st/merge
-   Judgement
+   (st/dissoc Judgement :version)
    (st/optional-keys
     {:id c/ID
      :disposition c/DispositionNumber
@@ -76,6 +77,7 @@
            :owner login
            :created now
            :tlp (:tlp new-judgement c/default-tlp)
+           :version c/ctia-schema-version
            :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
                                       time/default-expire-date)
                         :start_time (or (get-in new-judgement [:valid_time :start_time])

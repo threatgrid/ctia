@@ -1,6 +1,7 @@
 (ns ctia.http.routes.incident-test
   (:refer-clojure :exclude [get])
   (:require
+   [ctia.schemas.common :as c]
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -40,6 +41,7 @@
             :title "incident"
             :description "description"
             :tlp "green"
+            :version c/ctia-schema-version
             :confidence "High"
             :categories ["Denial of Service"
                          "Improper Usage"]
@@ -68,6 +70,7 @@
                 :title "incident"
                 :description "description"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :confidence "High"
                 :categories ["Denial of Service"
                              "Improper Usage"]
@@ -111,6 +114,7 @@
                 :title "updated incident"
                 :description "updated description"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :confidence "Low"
                 :categories ["Denial of Service"
                              "Improper Usage"]

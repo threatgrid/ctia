@@ -43,7 +43,7 @@
 (s/defschema NewCOA
   "Schema for submitting new COAs"
   (st/merge
-   COA
+   (st/dissoc COA :version)
    (st/optional-keys
     {:id c/ID
      :valid_time c/ValidTime

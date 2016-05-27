@@ -34,7 +34,7 @@
 (s/defschema NewActor
   "Schema for submitting new Actors"
   (st/merge
-   Actor
+   (st/dissoc Actor :version)
    (st/optional-keys
     {:id c/ID
      :valid_time c/ValidTime

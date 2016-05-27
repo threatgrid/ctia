@@ -51,7 +51,6 @@
     :tlp c/TLP}
    (st/optional-keys
     {:alternate_ids (describe [s/Str] "alternative identifier (or alias)")
-     :version (describe s/Str "schema version for this content")
      :negate (describe s/Bool "specifies the absence of the pattern")
      :indicator_type (describe [v/IndicatorType]
                                "Specifies the type or types for this Indicator")
@@ -105,7 +104,7 @@
 
 (s/defschema NewIndicator
   (st/merge
-   Indicator
+   (st/dissoc Indicator :version)
    (st/optional-keys
     {:id c/ID
      :valid_time c/ValidTime

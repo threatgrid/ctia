@@ -14,7 +14,8 @@
    (s/optional-key :source) s/Str
    :feedback (s/enum -1 0 1)
    :reason s/Str
-   :tlp c/TLP})
+   :tlp c/TLP
+   :version s/Str})
 
 (s/defschema Type
   (s/enum "feedback"))
@@ -22,7 +23,7 @@
 (s/defschema NewFeedback
   "Schema for submitting new Feedback"
   (st/merge
-   Feedback
+   (st/dissoc Feedback :version)
    (st/optional-keys
     {:id c/ID
      :type Type
@@ -39,10 +40,10 @@
   [new-feedback :- NewFeedback
    id :- s/Str
    login :- s/Str]
-
   (assoc new-feedback
          :id id
          :type "feedback"
          :created (time/now)
          :owner login
-         :tlp (:tlp new-feedback c/default-tlp)))
+         :tlp (:tlp new-feedback c/default-tlp)
+         :version c/ctia-schema-version))

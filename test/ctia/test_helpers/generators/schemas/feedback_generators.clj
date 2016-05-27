@@ -21,7 +21,7 @@
   (gen/fmap
    (fn [[id entity-id]]
      (complete
-      Feedback
+      NewFeedback
       (cond-> {}
         id (assoc :id id)
         entity-id (assoc :entity_id entity-id))))

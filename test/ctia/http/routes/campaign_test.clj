@@ -1,12 +1,12 @@
 (ns ctia.http.routes.campaign-test
   (:refer-clojure :exclude [get])
-  (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.schemas.campaign :refer [NewCampaign StoredCampaign]]))
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.schemas.common :as c]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [delete get post put]]
+             [fake-whoami-service :as whoami-helpers]
+             [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -49,6 +49,7 @@
             :title "campaign"
             :description "description"
             :tlp "red"
+            :version c/ctia-schema-version
             :campaign_type "anything goes here"
             :intended_effect ["Theft"]
             :indicators [{:indicator_id "indicator-foo"}
@@ -83,6 +84,7 @@
                 :title "campaign"
                 :description "description"
                 :tlp "red"
+                :version c/ctia-schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Theft"]
                 :indicators [{:indicator_id "indicator-foo"}
@@ -140,6 +142,7 @@
                 :title "modified campaign"
                 :description "different description"
                 :tlp "yellow"
+                :version c/ctia-schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Brand Damage"]
                 :indicators [{:indicator_id "indicator-foo"}

@@ -80,8 +80,7 @@
                  c/ValidTime
                  "a timestamp for the definition of a specific version of a TTP item")}
    (st/optional-keys
-    {:version (describe s/Str "the relevant schema version for this content")
-     :intended_effect (describe
+    {:intended_effect (describe
                        v/IntendedEffect
                        "the suspected intended effect for this TTP")
      :behavior (describe
@@ -115,7 +114,7 @@
 
 (s/defschema NewTTP
   (st/merge
-   TTP
+   (st/dissoc TTP :version)
    (st/optional-keys
     {:id c/ID
      :valid_time c/ValidTime

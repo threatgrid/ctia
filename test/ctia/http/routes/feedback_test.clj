@@ -3,6 +3,7 @@
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.id :as id]
             [ctia.properties :refer [properties]]
+            [ctia.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post]]
@@ -21,7 +22,6 @@
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
   (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
 
-
   (testing "POST /ctia/feedback"
     (let [{feedback :parsed-body
            status :status}
@@ -38,6 +38,7 @@
             :entity_id "judgement-123"
             :type "feedback"
             :reason "false positive"
+            :version c/ctia-schema-version
             :tlp "green"}
            (dissoc feedback :id :created :owner)))
 
@@ -51,6 +52,7 @@
                 :entity_id "judgement-123"
                 :reason "false positive"
                 :type "feedback"
+                :version c/ctia-schema-version
                 :tlp "green"}
                (dissoc feedback :id :created :owner)))))
 
@@ -65,6 +67,7 @@
                  :entity_id "judgement-123"
                  :type "feedback"
                  :reason "false positive"
+                 :version c/ctia-schema-version
                  :tlp "green"}]
                (map #(dissoc % :id :created :owner) feedbacks)))))
 
