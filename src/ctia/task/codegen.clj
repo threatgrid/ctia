@@ -32,8 +32,14 @@
                      :title artifact-id
                      :titleLower artifact-id
                      :package artifact-id}
-   :java {}
-   :ruby {}})
+   :ruby {:gemName artifact-id
+          :gemVersion artifact-version
+          :gemHomepage "http://github.com/threatgrid/ctia"
+          :gemSummary description
+          :gemDescription description
+          :gemAuthor "Cisco Security Business Group -- Advanced Threat"
+          :gemAuthorEmail "cisco-intel-api-support@cisco.com"}
+   :java {}})
 
 (defn spec-uri
   "compose the full path of the swagger spec to generate from"
@@ -93,7 +99,7 @@
 (defn -main [output-dir]
   "invoke with lein run -m ctia.task.codegen <output-dir>"
   (setup)
-  (doseq [[lang props] (select-keys langs [:clojure])]
+  (doseq [[lang props] langs]
     (generate-language lang props output-dir))
 
   (println "done")
