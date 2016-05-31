@@ -1,5 +1,5 @@
 (ns ctia.import.threatgrid.feed.indicators
-  (:require [ctia.schemas.indicator :as si]
+  (:require [ctim.schemas.indicator :as si]
             [schema.core :as s]
             [clj-http.client :as http]
             [cheshire.core :as cjson]

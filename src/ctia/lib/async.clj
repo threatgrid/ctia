@@ -1,7 +1,5 @@
 (ns ctia.lib.async
   (:require [ctia.lib.time :as time]
-            [ctia.schemas.common :as c]
-            [ctia.schemas.verdict :as v]
             [clojure.core.async :as a :refer [go-loop alt! alt!! chan tap thread]]
             [schema.core :as s :refer [=>]])
   (:import [clojure.core.async.impl.protocols Channel]

@@ -1,7 +1,7 @@
 (ns ctia.http.routes.campaign-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
-            [ctia.schemas.common :as c]
+            [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]

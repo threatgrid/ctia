@@ -1,10 +1,11 @@
 (ns ctia.http.routes.actor
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-actor]]
             [ctia.flows.crud :as flows]
-            [ctia.schemas.actor :refer [NewActor StoredActor realize-actor]]
-            [ctia.store :refer :all]))
+            [ctia.store :refer :all]
+            [ctim.schemas.actor :refer [NewActor StoredActor]]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (defroutes actor-routes
   (context "/actor" []

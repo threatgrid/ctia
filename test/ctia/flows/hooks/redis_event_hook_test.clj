@@ -3,7 +3,7 @@
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
             [ctia.properties.getters :as pg]
-            [ctia.schemas.common :as c]
+            [ctim.schemas.common :as c]
             [ctia.test-helpers.core :as test-helpers :refer [post]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 

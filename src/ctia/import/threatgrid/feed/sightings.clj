@@ -1,6 +1,6 @@
 (ns ctia.import.threatgrid.feed.sightings
   (:require [ctia.import.threatgrid.feed.indicators :as fi]
-            [ctia.schemas.sighting :as ss]
+            [ctim.schemas.sighting :as ss]
             [ctia.lib.time :as time]
             [schema.core :as s]
             [clj-http.client :as http]

@@ -1,10 +1,11 @@
 (ns ctia.http.routes.campaign
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-campaign]]
             [ctia.flows.crud :as flows]
-            [ctia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
-            [ctia.store :refer :all]))
+            [ctim.schemas.campaign :refer [NewCampaign StoredCampaign]]
+            [ctia.store :refer :all]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (defroutes campaign-routes
   (context "/campaign" []

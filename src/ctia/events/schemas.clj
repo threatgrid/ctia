@@ -1,6 +1,6 @@
 (ns ctia.events.schemas
-  (:require [ctia.schemas.common :as c]
-            [ctia.schemas.verdict :as v]
+  (:require [ctim.schemas.common :as c]
+            [ctim.schemas.verdict :as v]
             [schema.core :as s]
             [schema-tools.core :as st]))
 

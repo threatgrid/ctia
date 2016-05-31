@@ -1,17 +1,19 @@
 (ns ctia.http.routes.judgement
-  (:require [compojure.api.sweet :refer :all]
-            [ctia.domain.id :as id]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-            [ctia.properties :refer [properties]]
-            [ctia.schemas
-             [feedback :refer [NewFeedback realize-feedback StoredFeedback]]
-             [judgement :refer [NewJudgement realize-judgement StoredJudgement]]
-             [relationships :as rel]]
-            [ctia.store :refer :all]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+  (:require
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
+    [ctia.domain.id :as id]
+    [ctia.flows.crud :as flows]
+    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+    [ctia.properties :refer [properties]]
+    [ctia.store :refer :all]
+    [ctim.schemas
+     [feedback :refer [NewFeedback StoredFeedback]]
+     [judgement :refer [NewJudgement StoredJudgement]]
+     [relationships :as rel]]
+    [ring.util.http-response :refer :all]
+    [schema.core :as s]
+    [schema-tools.core :as st]))
 
 (s/defschema FeedbacksByJudgementQueryParams
   (st/merge

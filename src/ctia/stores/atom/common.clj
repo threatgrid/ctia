@@ -1,6 +1,6 @@
 (ns ctia.stores.atom.common
   (:import java.util.UUID)
-  (:require [ctia.schemas.common :as c]
+  (:require [ctim.schemas.common :as c]
             [schema.core :as s]
             [clojure.set :as set]
             [ctia.lib.pagination :refer [default-limit
@@ -106,4 +106,3 @@
            (response (:offset params)
                      (:limit params)
                      (count res)))))))
-

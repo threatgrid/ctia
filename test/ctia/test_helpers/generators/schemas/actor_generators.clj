@@ -1,7 +1,7 @@
 (ns ctia.test-helpers.generators.schemas.actor-generators
   (:require [clojure.test.check.generators :as gen]
             [ctia.lib.time :as time]
-            [ctia.schemas
+            [ctim.schemas
              [actor :refer [NewActor StoredActor]]
              [common :as schemas-common]]
             [ctia.test-helpers.generators.common

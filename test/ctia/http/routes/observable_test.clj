@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.http.routes.indicator :refer [->long-id]]
-            [ctia.schemas.common :as c]
+            [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]

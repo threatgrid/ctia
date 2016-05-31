@@ -1,7 +1,7 @@
 (ns ctia.http.routes.version-test
   (:refer-clojure :exclude [get])
   (:require
-   [ctia.schemas.common :as c]
+   [ctim.schemas.common :as c]
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -26,4 +26,3 @@
     (let [response (get "ctia/version")]
       (is (= 200 (:status response)))
       (is (= c/ctia-schema-version (get-in response [:parsed-body :version]))))))
-

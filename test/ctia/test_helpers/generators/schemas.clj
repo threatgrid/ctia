@@ -2,7 +2,7 @@
   (:require [clojure.test.check.generators :as gen]
             [ctia.domain.id :as id]
             [ctia.properties :refer [properties]]
-            [ctia.schemas
+            [ctim.schemas
              [common :refer [Observable]]
              [identity :refer [Identity]]
              [verdict :refer [Verdict]]]
