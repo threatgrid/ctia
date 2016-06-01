@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [get])
   (:require
    [ctia.lib.url :refer [encode]]
-   [ctia.http.routes.bulk :refer [singular gen-bulk-from-fn]]
+   [ctia.lib.keyword :refer [singular]]
+   [ctia.http.routes.bulk :refer [gen-bulk-from-fn]]
    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
@@ -16,18 +17,6 @@
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
-
-(deftest testing-singular
-  (is (= :actor (singular :actors)))
-  (is (= :campaign (singular :campaigns)))
-  (is (= :coa (singular :coas)))
-  (is (= :exploit-target (singular :exploit-targets)))
-  (is (= :feedback (singular :feedbacks)))
-  (is (= :incident (singular :incidents)))
-  (is (= :indicator (singular :indicators)))
-  (is (= :judgement (singular :judgements)))
-  (is (= :sighting (singular :sightings)))
-  (is (= :ttp (singular :ttps))))
 
 
 (defn mk-new-actor [n]
