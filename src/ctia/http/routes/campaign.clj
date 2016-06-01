@@ -17,7 +17,8 @@
       :capabilities :create-campaign
       :login login
       (ok (flows/create-flow :realize-fn realize-campaign
-                             :store-fn #(create-campaign @campaign-store %)
+                             :store-fn #(write-store :campaign
+                                                     (fn [s] (create-campaign s %)))
                              :entity-type :campaign
                              :login login
                              :entity campaign)))
@@ -29,9 +30,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
       :login login
-      (ok (flows/update-flow :get-fn #(read-campaign @campaign-store %)
+      (ok (flows/update-flow :get-fn #(read-store :campaign
+                                                  (fn [s] (read-campaign s %)))
                              :realize-fn realize-campaign
-                             :update-fn #(update-campaign @campaign-store (:id %) %)
+                             :update-fn #(write-store :campaign
+                                                      (fn [s] (update-campaign s (:id %) %)))
                              :entity-type :campaign
                              :id id
                              :login login
@@ -42,7 +45,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-campaign
-      (if-let [d (read-campaign @campaign-store id)]
+      (if-let [d (read-store :campaign (fn [s] (read-campaign s id)))]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -52,8 +55,10 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-campaign
       :login login
-      (if (flows/delete-flow :get-fn #(read-campaign @campaign-store %)
-                             :delete-fn #(delete-campaign @campaign-store %)
+      (if (flows/delete-flow :get-fn #(read-store :campaign
+                                                  (fn [s] (read-campaign s %)))
+                             :delete-fn #(write-store :campaign
+                                                      (fn [s] (delete-campaign s %)))
                              :entity-type :campaign
                              :id id
                              :login login)

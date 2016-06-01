@@ -96,20 +96,31 @@
 
 (defn init-store-service! []
   (store-factory-cleaner)
-  (doseq [[store-name store-atom] store/stores]
-    (let [store-properties (merge (get-in @p/properties [:ctia :store :default])
-                                  (get-in @p/properties [:ctia :store store-name]))
-          store-type (:type store-properties)
-          builder (get-in store-factories [:builder store-type] (fn default-builder [f p] (f)))
-          factory (get-in store-factories
-                          [store-name store-type]
-                          #(throw (ex-info (format "Could not configure %s store"
-                                                   store-type)
-                                           {:store-name store-name
-                                            :store-type store-type})))]
-      (if (= store-type :none)
-        (reset! store-atom nil)
-        (reset! store-atom (builder factory store-properties))))))
+
+  (doseq [[entity-key impls] @store/stores]
+    (swap! store/stores assoc entity-key []))
+
+  (doseq [[store-key store-list] @store/stores]
+    (let [store-impls (or (-> (get-in @p/properties [:ctia :store store-key])
+                              (clojure.string/split #",")) [])
+          store-impl-keys (map keyword store-impls)
+          store-properties
+          (reduce merge {}
+                  (map (fn [impl] {impl {:properties (merge (get-in @p/properties [:ctia :store impl :default] {})
+                                                           (get-in @p/properties [:ctia :store impl store-key] {}))
+
+                                        :builder (get-in store-factories [:builder impl]
+                                                         (fn default-builder [f p] (f)))
+
+                                        :factory (get-in store-factories [store-key impl]
+                                                         #(throw (ex-info (format "Could not configure %s store" impl)
+                                                                          {:store-key store-key
+                                                                           :store-type (keyword %)})))}}) store-impl-keys))]
+      (doseq [[store-impl store-params] store-properties]
+        (when-not (= store-impl :none)
+          (swap! store/stores update store-key #(conj % ((:builder store-params)
+                                                         (:factory store-params)
+                                                         (:properties store-params)))))))))
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"

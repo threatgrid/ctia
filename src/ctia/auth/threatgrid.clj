@@ -39,7 +39,7 @@
             json/parse-string)))))
 
 (defn lookup-stored-identity [login]
-  (store/read-identity @store/identity-store login))
+  (store/read-store :identity (fn [s] (store/read-identity s login))))
 
 (defrecord ThreatgridAuthService [whoami-fn lookup-stored-identity-fn]
   auth/IAuth

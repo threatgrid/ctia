@@ -33,7 +33,8 @@
       :capabilities :create-judgement
       :login login
       (ok (flows/create-flow :realize-fn realize-judgement
-                             :store-fn #(create-judgement @judgement-store %)
+                             :store-fn #(read-store :judgement
+                                                    (fn [s] (create-judgement s %)))
                              :entity-type :judgement
                              :login login
                              :entity judgement)))
@@ -44,9 +45,9 @@
       :header-params [api_key :- s/Str]
       :summary "Adds an Indicator to a Judgement"
       :capabilities :create-judgement
-      (if-let [d (add-indicator-to-judgement @judgement-store
-                                             judgement-id
-                                             indicator-relationship)]
+      (if-let [d (write-store :judgement (fn [store] (add-indicator-to-judgement store
+                                                                                judgement-id
+                                                                                indicator-relationship)))]
         (ok d)
         (not-found)))
     (GET "/:id" []
@@ -55,7 +56,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Gets a Judgement by ID"
       :capabilities :read-judgement
-      (if-let [d (read-judgement @judgement-store id)]
+      (if-let [d (read-store :judgement (fn [s] (read-judgement s id)))]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -65,8 +66,10 @@
       :summary "Deletes a Judgement"
       :capabilities :delete-judgement
       :login login
-      (if (flows/delete-flow :get-fn #(read-judgement @judgement-store %)
-                             :delete-fn #(delete-judgement @judgement-store %)
+      (if (flows/delete-flow :get-fn #(read-store :judgement
+                                                  (fn [s] (read-judgement s %)))
+                             :delete-fn #(write-store :judgement
+                                                      (fn [s] (delete-judgement s %)))
                              :entity-type :judgement
                              :id id
                              :login login)

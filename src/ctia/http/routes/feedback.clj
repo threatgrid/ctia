@@ -27,7 +27,8 @@
       :capabilities :create-feedback
       :login login
       (ok (flows/create-flow :realize-fn realize-feedback
-                             :store-fn #(create-feedback @feedback-store %)
+                             :store-fn #(write-store :feedback
+                                                     (fn [s] (create-feedback s %)))
                              :entity-type :feedback
                              :login login
                              :entity feedback)))
@@ -39,16 +40,18 @@
       :capabilities :read-feedback
 
       (paginated-ok
-       (list-feedback @feedback-store
-                      (select-keys params [:entity_id])
-                      (dissoc params :entity_id))))
+       (read-store :feedback
+                   (fn [store] (list-feedback store
+                                             (select-keys params [:entity_id])
+                                             (dissoc params :entity_id))))))
     (GET "/:id" []
       :return (s/maybe StoredFeedback)
       :summary "Gets a Feedback by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
-      (if-let [d (read-feedback @feedback-store id)]
+      (if-let [d (read-store :feedback
+                             (fn [s] (read-feedback s id)))]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -58,8 +61,10 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-feedback
       :login login
-      (if (flows/delete-flow :get-fn #(read-feedback @feedback-store %)
-                             :delete-fn #(delete-feedback @feedback-store %)
+      (if (flows/delete-flow :get-fn #(read-store :feedback
+                                                  (fn [s] (read-feedback s %)))
+                             :delete-fn #(write-store :feedback
+                                                      (fn [s] (delete-feedback s %)))
                              :entity-type :feedback
                              :id id
                              :login login)

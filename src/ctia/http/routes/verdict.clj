@@ -15,7 +15,9 @@
     :summary "Returns the current Verdict associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :read-verdict
-    (if-let [d (calculate-verdict @judgement-store {:type observable_type
-                                                    :value observable_value})]
+    (if-let [d (read-store :judgement
+                           (fn [store]
+                             (calculate-verdict store {:type observable_type
+                                                       :value observable_value})))]
       (ok d)
       (not-found))))

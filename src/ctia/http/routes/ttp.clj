@@ -17,7 +17,8 @@
       :capabilities :create-ttp
       :login login
       (ok (flows/create-flow :realize-fn realize-ttp
-                             :store-fn #(create-ttp @ttp-store %)
+                             :store-fn #(read-store :ttp
+                                                    (fn [s] (create-ttp s %)))
                              :entity-type :ttp
                              :login login
                              :entity ttp)))
@@ -29,9 +30,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-ttp
       :login login
-      (ok (flows/update-flow :get-fn #(read-ttp @ttp-store %)
+      (ok (flows/update-flow :get-fn #(read-store :ttp
+                                                  (fn [s] (read-ttp s %)))
                              :realize-fn realize-ttp
-                             :update-fn #(update-ttp @ttp-store (:id %) %)
+                             :update-fn #(write-store :ttp
+                                                      (fn [s] (update-ttp s (:id %) %)))
                              :entity-type :ttp
                              :id id
                              :login login
@@ -42,7 +45,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-ttp
       :path-params [id :- s/Str]
-      (if-let [d (read-ttp @ttp-store id)]
+      (if-let [d (read-store :ttp
+                             (fn [s] (read-ttp s id)))]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -52,8 +56,9 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-ttp
       :login login
-      (if (flows/delete-flow :get-fn #(read-ttp @ttp-store %)
-                             :delete-fn #(delete-ttp @ttp-store %)
+      (if (flows/delete-flow :get-fn #(read-store :ttp
+                                                  (fn [s] (read-ttp s %)))
+                             :delete-fn #(write-store :ttp (fn [s] (delete-ttp s %)))
                              :entity-type :ttp
                              :id id
                              :login login)
