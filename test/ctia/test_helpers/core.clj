@@ -72,10 +72,15 @@
   (with-properties ["ctia.http.dev-reload" false
                     "ctia.http.min-threads" 9
                     "ctia.http.max-threads" 10
+                    "ctia.http.show.protocol"    "http"
+                    "ctia.http.show.hostname"    "localhost"
+                    "ctia.http.show.port"        "57254"
+                    "ctia.http.show.path-prefix" ""
                     "ctia.nrepl.enabled" false
                     "ctia.hook.es.enabled" false
                     "ctia.hook.redis.enabled" false
-                    "ctia.hook.redis.channel-name" "events-test"]
+                    "ctia.hook.redis.channel-name" "events-test"
+                    ]
     ;; run tests
     (f)))
 
@@ -280,11 +285,21 @@
                   time/format-date-time)))
 
 (defn encode [s]
-  {:pre [(string? s) (seq s)]}
+  (assert (string? s)
+          (format "Assert Failed: %s of type %s must be a string"
+                  s (type s)))
+  (assert (seq s)
+          (format "Assert Failed: %s of type %s must be a seq"
+                  s (type s)))
   (url/encode s))
 
 (defn decode [s]
-  {:pre [(string? s) (seq s)]}
+  (assert (string? s)
+          (format "Assert Failed: %s of type %s must be a string"
+                  s (type s)))
+  (assert (seq s)
+          (format "Assert Failed: %s of type %s must be a seq"
+                  s (type s)))
   (url/decode s))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]

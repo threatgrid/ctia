@@ -1,10 +1,11 @@
 (ns ctia.http.routes.actor
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-actor]]
             [ctia.flows.crud :as flows]
-            [ctia.schemas.actor :refer [NewActor StoredActor realize-actor]]
-            [ctia.store :refer :all]))
+            [ctia.store :refer :all]
+            [ctim.schemas.actor :refer [NewActor StoredActor]]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (defroutes actor-routes
   (context "/actor" []
@@ -15,11 +16,12 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Actor"
       :capabilities :create-actor
-      :login login
+      :identity identity
       (ok (flows/create-flow :entity-type :actor
                              :realize-fn realize-actor
                              :store-fn #(write-store :actor (fn [s] (create-actor s %)))
-                             :login login
+                             :entity-type :actor
+                             :identity identity
                              :entity actor)))
     (PUT "/:id" []
       :return StoredActor
@@ -28,13 +30,13 @@
       :summary "Updates an Actor"
       :path-params [id :- s/Str]
       :capabilities :create-actor
-      :login login
-      (ok (flows/update-flow :entity-type :actor
-                             :get-fn #(read-store :actor (fn [s] (read-actor s %)))
+      :identity identity
+      (ok (flows/update-flow :get-fn #(read-store :actor (fn [s] (read-actor s %)))
                              :realize-fn realize-actor
                              :update-fn #(write-store :actor (fn [s] (update-actor s (:id %) %)))
-                             :id id
-                             :login login
+                             :entity-type :actor
+                             :entity-id id
+                             :identity identity
                              :entity actor)))
     (GET "/:id" []
       :return (s/maybe StoredActor)
@@ -51,11 +53,11 @@
       :summary "Deletes an Actor"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-actor
-      :login login
-      (if (flows/delete-flow :entity-type :actor
-                             :get-fn #(read-store :actor (fn [s] (read-actor s %)))
+      :identity identity
+      (if (flows/delete-flow :get-fn #(read-store :actor (fn [s] (read-actor s %)))
                              :delete-fn #(write-store :actor (fn [s] (delete-actor s %)))
-                             :id id
-                             :login login)
+                             :entity-type :actor
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))

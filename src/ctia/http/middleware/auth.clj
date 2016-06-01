@@ -41,3 +41,7 @@
 (defmethod meta/restructure-param :login [_ bind-to acc]
   (update acc :lets into
           [bind-to `(:login ~'+compojure-api-request+)]))
+
+(defmethod meta/restructure-param :identity [_ bind-to acc]
+  (update acc :lets into
+          [bind-to `(:identity ~'+compojure-api-request+)]))

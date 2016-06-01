@@ -1,12 +1,12 @@
 (ns ctia.http.routes.sighting
-  (:require [ctia.flows.crud :as flows]
-            [compojure.api.sweet :refer :all]
-            [ctia.schemas.sighting
-             :refer
-             [NewSighting realize-sighting StoredSighting check-new-sighting]]
-            [ctia.store :refer :all]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+  (:require
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities :refer [realize-sighting check-new-sighting]]
+    [ctia.flows.crud :as flows]
+    [ctia.store :refer :all]
+    [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
+    [ring.util.http-response :refer :all]
+    [schema.core :as s]))
 
 (defroutes sighting-routes
   (context "/sighting" []
@@ -17,13 +17,13 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Sighting"
       :capabilities :create-sighting
-      :login login
+      :identity identity
       (if (check-new-sighting sighting)
         (ok (flows/create-flow :realize-fn realize-sighting
                                :store-fn #(write-store :sighting
                                                        (fn [s] (create-sighting s %)))
                                :entity-type :sighting
-                               :login login
+                               :identity identity
                                :entity sighting))
         (unprocessable-entity)))
     (PUT "/:id" []
@@ -33,15 +33,15 @@
       :summary "Updates a Sighting"
       :path-params [id :- s/Str]
       :capabilities :create-sighting
-      :login login
+      :identity identity
       (if (check-new-sighting sighting)
         (ok (flows/update-flow :get-fn #(read-store :sighting (fn [s] (read-sighting s %)))
                                :realize-fn realize-sighting
                                :update-fn #(write-store :sighting
                                                         (fn [s] (update-sighting s (:id %) %)))
                                :entity-type :sighting
-                               :id id
-                               :login login
+                               :entity-id id
+                               :identity identity
                                :entity sighting))
         (unprocessable-entity)))
     (GET "/:id" []

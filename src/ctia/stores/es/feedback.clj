@@ -1,6 +1,6 @@
 (ns ctia.stores.es.feedback
   (:require [ctia.stores.es.crud :as crud]
-            [ctia.schemas.feedback :refer [StoredFeedback]]))
+            [ctim.schemas.feedback :refer [StoredFeedback]]))
 
 (def handle-create-feedback (crud/handle-create :feedback StoredFeedback))
 (def handle-read-feedback (crud/handle-read :feedback StoredFeedback))

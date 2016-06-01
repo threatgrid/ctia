@@ -71,7 +71,7 @@
                 relationship (assoc :relationship relationship)))))
 
 (defn schema-relationship->db-relationship
-  "Make an fn that takes one CTIA.schema style relationship and
+  "Make an fn that takes one ctim.schema style relationship and
   converts it to a structure that can be inserted into the DB.  Takes
   a relationship description map.  The fn takes an entity ID and
   relationship structure (which doesn't have the entity ID)."

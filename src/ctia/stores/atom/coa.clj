@@ -1,5 +1,5 @@
 (ns ctia.stores.atom.coa
-  (:require [ctia.schemas.coa :refer [StoredCOA]]
+  (:require [ctim.schemas.coa :refer [StoredCOA]]
             [ctia.stores.atom.common :as mc]))
 
 (def handle-create-coa (mc/create-handler-from-realized StoredCOA))

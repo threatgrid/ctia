@@ -96,7 +96,6 @@
 
 (defn init-store-service! []
   (store-factory-cleaner)
-
   (doseq [[entity-key impls] @store/stores]
     (swap! store/stores assoc entity-key []))
 
@@ -121,7 +120,6 @@
           (swap! store/stores update store-key #(conj % ((:builder store-params)
                                                          (:factory store-params)
                                                          (:properties store-params)))))))))
-
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
   [& {:keys [join? silent?]}]

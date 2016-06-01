@@ -3,7 +3,8 @@
   (:require [ctia.auth :as auth]
             [ctia.http.handler :as handler]
             [ctia.test-helpers.core :as helpers :refer [post get]]
-            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]))
+            [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+            [ctim.schemas.common :as c]))
 
 (use-fixtures :once helpers/fixture-schema-validation)
 
@@ -36,6 +37,7 @@
             :disposition_name "Malicious"
             :source "test"
             :tlp "green"
+            :version c/ctia-schema-version
             :priority 100
             :severity 100
             :confidence "Low"
@@ -59,6 +61,7 @@
                 :disposition_name "Malicious"
                 :source "test"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :priority 100
                 :severity 100
                 :confidence "Low"

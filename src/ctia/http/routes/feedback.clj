@@ -1,11 +1,11 @@
 (ns ctia.http.routes.feedback
-  (:require [compojure.api.sweet :refer :all]
+  (:require
+    [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-feedback]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-            [ctia.schemas.feedback
-             :refer
-             [NewFeedback realize-feedback StoredFeedback]]
             [ctia.store :refer :all]
+            [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
             [ring.util.http-response :refer :all]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -25,12 +25,12 @@
       :summary "Adds a new Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-feedback
-      :login login
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-feedback
                              :store-fn #(write-store :feedback
                                                      (fn [s] (create-feedback s %)))
                              :entity-type :feedback
-                             :login login
+                             :identity identity
                              :entity feedback)))
     (GET "/" []
       :return [StoredFeedback]
@@ -60,13 +60,13 @@
       :summary "Deletes a feedback"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-feedback
-      :login login
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-store :feedback
                                                   (fn [s] (read-feedback s %)))
                              :delete-fn #(write-store :feedback
                                                       (fn [s] (delete-feedback s %)))
                              :entity-type :feedback
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))

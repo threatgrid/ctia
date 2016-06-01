@@ -1,10 +1,11 @@
 (ns ctia.http.routes.campaign
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-campaign]]
             [ctia.flows.crud :as flows]
-            [ctia.schemas.campaign :refer [NewCampaign StoredCampaign realize-campaign]]
-            [ctia.store :refer :all]))
+            [ctim.schemas.campaign :refer [NewCampaign StoredCampaign]]
+            [ctia.store :refer :all]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (defroutes campaign-routes
   (context "/campaign" []
@@ -15,12 +16,12 @@
       :summary "Adds a new Campaign"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
-      :login login
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-campaign
                              :store-fn #(write-store :campaign
                                                      (fn [s] (create-campaign s %)))
                              :entity-type :campaign
-                             :login login
+                             :identity identity
                              :entity campaign)))
     (PUT "/:id" []
       :return StoredCampaign
@@ -29,15 +30,15 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
-      :login login
+      :identity identity
       (ok (flows/update-flow :get-fn #(read-store :campaign
                                                   (fn [s] (read-campaign s %)))
                              :realize-fn realize-campaign
                              :update-fn #(write-store :campaign
                                                       (fn [s] (update-campaign s (:id %) %)))
                              :entity-type :campaign
-                             :id id
-                             :login login
+                             :entity-id id
+                             :identity identity
                              :entity campaign)))
     (GET "/:id" []
       :return (s/maybe StoredCampaign)
@@ -54,13 +55,13 @@
       :summary "Deletes a Campaign"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-campaign
-      :login login
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-store :campaign
                                                   (fn [s] (read-campaign s %)))
                              :delete-fn #(write-store :campaign
                                                       (fn [s] (delete-campaign s %)))
                              :entity-type :campaign
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))
