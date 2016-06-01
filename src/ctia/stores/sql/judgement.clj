@@ -1,6 +1,5 @@
 (ns ctia.stores.sql.judgement
-  (:require ;;[ctia.domain.entities :refer [realize-judgement]]
-            [ctia.lib.pagination :as pagination]
+  (:require [ctia.lib.pagination :as pagination]
             [ctia.lib.specter.paths :as path]
             [ctia.lib.time :as time]
             [ctia.stores.sql.common :as c]
@@ -23,12 +22,6 @@
           (-> (k/create-entity "judgement-indicator")
               (k/table :judgement_indicator)
               (k/database @db))))
-
-;; (defn realize-judgements [login new-judgements]
-;;   (for [new-judgement new-judgements]
-;;     (realize-judgement new-judgement
-;;                        (str "judgement-" (UUID/randomUUID))
-;;                        login)))
 
 (def judgement-indicator-relationship-map
   {:entity-relationship-key :indicators
