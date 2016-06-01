@@ -3,8 +3,9 @@
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [ctia.store :refer :all]
-            [ctia.schemas.vocabularies :refer [ObservableType]]
-            [ctia.schemas.verdict :refer [Verdict]]))
+            [ctim.schemas
+             [vocabularies :refer [ObservableType]]
+             [verdict :refer [Verdict]]]))
 
 (defroutes verdict-routes
   (GET "/:observable_type/:observable_value/verdict" []

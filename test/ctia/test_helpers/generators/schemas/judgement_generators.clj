@@ -1,7 +1,7 @@
 (ns ctia.test-helpers.generators.schemas.judgement-generators
   (:require [clojure.test.check.generators :as gen]
             [ctia.lib.time :as time]
-            [ctia.schemas
+            [ctim.schemas
              [common :as schemas-common]
              [judgement :refer [NewJudgement StoredJudgement]]]
             [ctia.test-helpers.generators.common

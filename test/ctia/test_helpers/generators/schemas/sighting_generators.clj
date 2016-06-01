@@ -1,7 +1,7 @@
 (ns ctia.test-helpers.generators.schemas.sighting-generators
   (:require [clojure.test.check.generators :as gen]
             [ctia.lib.time :as time]
-            [ctia.schemas
+            [ctim.schemas
              [common :as schemas-common]
              [sighting :refer [NewSighting StoredSighting]]]
             [ctia.test-helpers.generators.common

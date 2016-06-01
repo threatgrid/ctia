@@ -7,21 +7,6 @@
             [ctia.test-helpers.generators.schemas :as gen]
             [ctia.test-helpers.generators.schemas.sighting-generators :as sg]))
 
-(defspec spec-handle-list-sightings-by-indicators
-  (for-all [[indicator sightings] gen/gen-indicator-with-sightings]
-           (let [store (->> sightings
-                            (map (fn [x] [(:id x) x]))
-                            (into {})
-                            atom)]
-             (and
-              ;; Empty search
-              (empty? (:data (sut/handle-list-sightings-by-indicators store [] {})))
-              ;; Basic search
-              (= (set (vals @store))
-                 (-> (sut/handle-list-sightings-by-indicators store [indicator] {})
-                     :data
-                     set))))))
-
 (def gen-observable-and-sightings
   (tcg/let [observable (gen/gen-entity :observable)
             different-observables (tcg/vector

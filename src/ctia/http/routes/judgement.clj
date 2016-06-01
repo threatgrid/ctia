@@ -1,17 +1,19 @@
 (ns ctia.http.routes.judgement
-  (:require [compojure.api.sweet :refer :all]
-            [ctia.domain.id :as id]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-            [ctia.properties :refer [properties]]
-            [ctia.schemas
-             [feedback :refer [NewFeedback realize-feedback StoredFeedback]]
-             [judgement :refer [NewJudgement realize-judgement StoredJudgement]]
-             [relationships :as rel]]
-            [ctia.store :refer :all]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+  (:require
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
+    [ctia.domain.id :as id]
+    [ctia.flows.crud :as flows]
+    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+    [ctia.properties :refer [properties]]
+    [ctia.store :refer :all]
+    [ctim.schemas
+     [feedback :refer [NewFeedback StoredFeedback]]
+     [judgement :refer [NewJudgement StoredJudgement]]
+     [relationships :as rel]]
+    [ring.util.http-response :refer :all]
+    [schema.core :as s]
+    [schema-tools.core :as st]))
 
 (s/defschema FeedbacksByJudgementQueryParams
   (st/merge
@@ -31,11 +33,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Judgement"
       :capabilities :create-judgement
-      :login login
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-judgement
                              :store-fn #(create-judgement @judgement-store %)
                              :entity-type :judgement
-                             :login login
+                             :identity identity
                              :entity judgement)))
     (POST "/:judgement-id/indicator" []
       :return (s/maybe rel/RelatedIndicator)
@@ -64,11 +66,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Deletes a Judgement"
       :capabilities :delete-judgement
-      :login login
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-judgement @judgement-store %)
                              :delete-fn #(delete-judgement @judgement-store %)
                              :entity-type :judgement
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))

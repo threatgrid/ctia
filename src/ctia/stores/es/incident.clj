@@ -1,6 +1,6 @@
 (ns ctia.stores.es.incident
   (:require [ctia.stores.es.crud :as crud]
-            [ctia.schemas.incident :refer [StoredIncident]]))
+            [ctim.schemas.incident :refer [StoredIncident]]))
 
 (def handle-create-incident (crud/handle-create :incident StoredIncident))
 (def handle-read-incident (crud/handle-read :incident StoredIncident))

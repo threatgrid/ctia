@@ -1,12 +1,15 @@
 (ns ctia.http.routes.pagination-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [join-fixtures testing use-fixtures]]
+            [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [core :as helpers]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [assert-post]]
-             [pagination :refer [pagination-test]]
+             [pagination :refer [pagination-test
+                                 pagination-test-no-sort]]
              [store :refer [deftest-for-each-store]]]
+            [ctia.http.routes.indicator :refer [->long-id]]
             [ctia.test-helpers.generators.schemas :as gs]
             [ring.util.codec :refer [url-encode]]
             [ctia.lib.url :as url]))
@@ -22,7 +25,8 @@
           indicators (->> (gs/sample-by-kw 5 :new-indicator)
                           (map #(assoc % :title "test")))
           created-indicators (map #(assert-post "ctia/indicator" %) indicators)
-          indicator-rels (map (fn [{:keys [id]}] {:indicator_id id}) created-indicators)
+          indicator-rels (map (fn [{:keys [id]}] {:indicator_id (->long-id :indicator id)})
+                              created-indicators)
           judgements (->> (gs/sample-by-kw 5 :new-judgement)
                           (map #(assoc %
                                        :observable observable
@@ -40,9 +44,9 @@
         (assert-post "ctia/judgement" judgement))
 
       (testing "test paginated lists responses"
-        (pagination-test (str route-pref "/indicators")
-                         {"api_key" "45c1f5e3f05d0"}
-                         [:id :title])
+        (pagination-test-no-sort (str route-pref "/indicators")
+                                 {"api_key" "45c1f5e3f05d0"}
+                                 [])
         (pagination-test (str "/ctia/indicator/title/"
                               (-> indicators first :title))
                          {"api_key" "45c1f5e3f05d0"}

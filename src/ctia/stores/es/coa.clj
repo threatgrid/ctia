@@ -1,6 +1,6 @@
 (ns ctia.stores.es.coa
   (:require [ctia.stores.es.crud :as crud]
-            [ctia.schemas.coa :refer [StoredCOA]]))
+            [ctim.schemas.coa :refer [StoredCOA]]))
 
 (def handle-create-coa (crud/handle-create :coa StoredCOA))
 (def handle-read-coa (crud/handle-read :coa StoredCOA))

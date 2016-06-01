@@ -1,10 +1,11 @@
 (ns ctia.http.routes.coa
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-coa]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]))
+            [ctim.schemas.coa :refer [NewCOA StoredCOA]]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (defroutes coa-routes
   (context "/coa" []
@@ -15,11 +16,11 @@
       :summary "Adds a new COA"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-coa
-      :login login
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-coa
                              :store-fn #(create-coa @coa-store %)
                              :entity-type :coa
-                             :login login
+                             :identity identity
                              :entity coa)))
     (PUT "/:id" []
       :return StoredCOA
@@ -28,13 +29,13 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-coa
-      :login login
+      :identity identity
       (ok (flows/update-flow :get-fn #(read-coa @coa-store %)
                              :realize-fn realize-coa
                              :update-fn #(update-coa @coa-store (:id %) %)
                              :entity-type :coa
-                             :id id
-                             :login login
+                             :entity-id id
+                             :identity identity
                              :entity coa)))
     (GET "/:id" []
       :return (s/maybe StoredCOA)
@@ -51,11 +52,11 @@
       :summary "Deletes a COA"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-coa
-      :login login
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-coa @coa-store %)
                              :delete-fn #(delete-coa @coa-store %)
                              :entity-type :coa
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))
