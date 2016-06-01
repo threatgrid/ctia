@@ -23,20 +23,20 @@
   (atom {}))
 
 (defn default-store-properties [store]
-  {(str "ctia.store." store ".type") (s/enum :atom :es :sql)})
+  {(str "ctia.store." store) s/Str})
 
 (defn sql-store-impl-properties [store]
-  {(str "ctia.store." store ".classname") s/Str
-   (str "ctia.store." store ".subprotocol") s/Str
-   (str "ctia.store." store ".subname") s/Str
-   (str "ctia.store." store ".delimiters") s/Str})
+  {(str "ctia.store.sql." store ".classname") s/Str
+   (str "ctia.store.sql." store ".subprotocol") s/Str
+   (str "ctia.store.sql." store ".subname") s/Str
+   (str "ctia.store.sql." store ".delimiters") s/Str})
 
 (defn es-store-impl-properties [store]
-  {(str "ctia.store." store ".uri") s/Str
-   (str "ctia.store." store ".port") s/Int
-   (str "ctia.store." store ".clustername") s/Str
-   (str "ctia.store." store ".indexname") s/Str
-   (str "ctia.store." store ".refresh") s/Bool})
+  {(str "ctia.store.es." store ".uri") s/Str
+   (str "ctia.store.es." store ".port") s/Int
+   (str "ctia.store.es." store ".clustername") s/Str
+   (str "ctia.store.es." store ".indexname") s/Str
+   (str "ctia.store.es." store ".refresh") s/Bool})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"

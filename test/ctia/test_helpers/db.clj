@@ -44,12 +44,21 @@
 
 (defn fixture-properties:sql-store [test]
   (helpers-core/with-properties
-    ["ctia.store.default.type"           "atom"
-     "ctia.store.judgement.type"         "sql"
-     "ctia.store.judgement.classname"    "org.h2.Driver"
-     "ctia.store.judgement.subprotocol"  "h2"
-     "ctia.store.judgement.subname"      "/tmp/ctia-h2-db;DATABASE_TO_UPPER=false"
-     "ctia.store.judgement.delimiters"   ""]
+    ["ctia.store.actor" "atom"
+     "ctia.store.campaign" "atom"
+     "ctia.store.coa" "atom"
+     "ctia.store.exploit-target" "atom"
+     "ctia.store.feedback" "atom"
+     "ctia.store.identity" "atom"
+     "ctia.store.incident" "atom"
+     "ctia.store.indicator" "atom"
+     "ctia.store.judgement" "sql"
+     "ctia.store.sighting" "atom"
+     "ctia.store.ttp" "atom"
+     "ctia.store.sql.judgement.classname"    "org.h2.Driver"
+     "ctia.store.sql.judgement.subprotocol"  "h2"
+     "ctia.store.sql.judgement.subname"      "/tmp/ctia-h2-db;DATABASE_TO_UPPER=false"
+     "ctia.store.sql.judgement.delimiters"   ""]
     (test)))
 
 (defn fixture-db-recreate-tables [test]

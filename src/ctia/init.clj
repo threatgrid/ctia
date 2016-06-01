@@ -97,9 +97,9 @@
 (defn init-store-service! []
   (store-factory-cleaner)
   (doseq [[store-name store-atom] store/stores]
-    (let [store-properties (merge (get-in @p/properties [:ctia :store :default])
-                                  (get-in @p/properties [:ctia :store store-name]))
-          store-type (:type store-properties)
+    (let [store-type (keyword (get-in @p/properties [:ctia :store store-name] "none"))
+          store-properties (merge (get-in @p/properties [:ctia :store store-type :default] {})
+                                  (get-in @p/properties [:ctia :store store-type store-name] {}))
           builder (get-in store-factories [:builder store-type] (fn default-builder [f p] (f)))
           factory (get-in store-factories
                           [store-name store-type]
