@@ -4,7 +4,7 @@
             [ctia.lib.es
              [document :as document]
              [index :as index]]
-            [ctia.schemas.common :as c]
+            [ctim.schemas.common :as c]
             [ctia.test-helpers
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
              [es :as es-helpers]]))

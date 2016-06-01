@@ -1,11 +1,11 @@
 (ns ctia.http.routes.feedback
-  (:require [compojure.api.sweet :refer :all]
+  (:require
+    [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-feedback]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-            [ctia.schemas.feedback
-             :refer
-             [NewFeedback realize-feedback StoredFeedback]]
             [ctia.store :refer :all]
+            [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
             [ring.util.http-response :refer :all]
             [schema-tools.core :as st]
             [schema.core :as s]))

@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.lib.pagination :as pag]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-   [ctia.schemas
+   [ctim.schemas
     [common :as c]
     [judgement :refer [StoredJudgement]]
     [sighting :refer [StoredSighting]]

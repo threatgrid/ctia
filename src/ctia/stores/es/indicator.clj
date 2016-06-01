@@ -1,7 +1,7 @@
 (ns ctia.stores.es.indicator
   (:require [ctia.domain.id :as id]
             [ctia.lib.es.document :refer [search-docs]]
-            [ctia.schemas.indicator :refer [StoredIndicator]]
+            [ctim.schemas.indicator :refer [StoredIndicator]]
             [ctia.stores.es.crud :as crud]))
 
 (def handle-create-indicator (crud/handle-create :indicator StoredIndicator))

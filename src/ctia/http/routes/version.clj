@@ -3,7 +3,7 @@
              [io :as io]
              [shell :as shell]]
             [clojure.string :as st]
-            [ctia.schemas.common :refer [VersionInfo ctia-schema-version]]
+            [ctim.schemas.common :refer [VersionInfo ctia-schema-version]]
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [clojure.string :as st]))

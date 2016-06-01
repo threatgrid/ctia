@@ -5,7 +5,7 @@
             [clj-time.format :as f]
             [clojure.pprint :refer [pprint]]
             [ctia.domain.conversion :refer [->confidence]]
-            [ctia.schemas.indicator :as si]
+            [ctim.schemas.indicator :as si]
             [schema.core :as s]))
 
 (s/defschema IoCIndicator

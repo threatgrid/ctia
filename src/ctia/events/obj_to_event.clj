@@ -2,8 +2,8 @@
   (:require [clojure.data :refer [diff]]
             [schema.core :as s]
             [ctia.lib.time :as t]
-            [ctia.schemas.actor :refer [StoredActor]]
-            [ctia.schemas.campaign :refer [StoredCampaign]]
+            [ctim.schemas.actor :refer [StoredActor]]
+            [ctim.schemas.campaign :refer [StoredCampaign]]
             [ctia.events.schemas :as vs]))
 
 
@@ -28,7 +28,7 @@
             [k "deleted" {}]))
         (keys diff-before))
    (map (fn [k] [k "added" {}])
-        (remove #(contains? diff-before %) 
+        (remove #(contains? diff-before %)
                 (keys diff-after)))))
 
 

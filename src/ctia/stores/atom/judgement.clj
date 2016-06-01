@@ -1,10 +1,10 @@
 (ns ctia.stores.atom.judgement
   (:require [ctia.lib.time :as time]
-            [ctia.schemas.common :as c]
-            [ctia.schemas.judgement
-             :refer [NewJudgement StoredJudgement realize-judgement]]
-            [ctia.schemas.relationships :as rel]
-            [ctia.schemas.verdict :refer [Verdict]]
+            [ctim.schemas
+             [common :as c]
+             [judgement :refer [NewJudgement StoredJudgement]]
+             [relationships :as rel]
+             [verdict :refer [Verdict]]]
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 

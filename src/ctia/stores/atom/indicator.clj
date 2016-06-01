@@ -2,7 +2,7 @@
   (:require [ctia.domain.id :as id]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.properties :refer [properties]]
-            [ctia.schemas
+            [ctim.schemas
              [indicator :refer [StoredIndicator]]
              [judgement :refer [StoredJudgement]]]
             [ctia.stores.atom.common :as mc]

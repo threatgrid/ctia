@@ -4,7 +4,7 @@
             [ctia.http.handler :as handler]
             [ctia.test-helpers.core :as helpers :refer [post get]]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-            [ctia.schemas.common :as c]))
+            [ctim.schemas.common :as c]))
 
 (use-fixtures :once helpers/fixture-schema-validation)
 

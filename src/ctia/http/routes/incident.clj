@@ -1,12 +1,12 @@
 (ns ctia.http.routes.incident
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
-            [ctia.flows.crud :as flows]
-            [ctia.store :refer :all]
-            [ctia.schemas.incident :refer [NewIncident
-                                           StoredIncident
-                                           realize-incident]]))
+  (:require
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities :refer [realize-incident]]
+    [ctia.flows.crud :as flows]
+    [ctia.store :refer :all]
+    [ctim.schemas.incident :refer [NewIncident StoredIncident]]
+    [ring.util.http-response :refer :all]
+    [schema.core :as s]))
 
 (defroutes incident-routes
 

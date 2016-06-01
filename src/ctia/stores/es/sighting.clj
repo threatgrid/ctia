@@ -3,11 +3,10 @@
    [schema.core :as s]
    [ctia.stores.es.crud :as crud]
    [ctia.stores.es.query :refer [sightings-by-observables-query]]
-   [ctia.schemas.sighting :refer [Sighting
+   [ctim.schemas.sighting :refer [Sighting
                                   NewSighting
-                                  StoredSighting
-                                  realize-sighting]]
-   [ctia.schemas.indicator :refer [Indicator]]
+                                  StoredSighting]]
+   [ctim.schemas.indicator :refer [Indicator]]
    [ctia.lib.es.document :refer [search-docs]]))
 
 

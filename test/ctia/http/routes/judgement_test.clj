@@ -3,7 +3,7 @@
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.id :as id]
             [ctia.properties :refer [properties]]
-            [ctia.schemas.common :as c]
+            [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post]]
