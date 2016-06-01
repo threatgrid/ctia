@@ -9,7 +9,9 @@
             [ctia.lib.map :as map]
             [schema.coerce :as c]
             [schema.core :as s]
-            [schema-tools.core :as st])
+            [schema-tools.core :as st]
+            [ctia.store :refer [stores]]
+            [ctia.store :as store])
   (:import java.util.Properties))
 
 (def files
@@ -20,13 +22,40 @@
 (defonce properties
   (atom {}))
 
+(defn default-store-properties [store]
+  {(str "ctia.store." store) s/Str})
+
+(defn sql-store-impl-properties [store]
+  {(str "ctia.store.sql." store ".classname") s/Str
+   (str "ctia.store.sql." store ".subprotocol") s/Str
+   (str "ctia.store.sql." store ".subname") s/Str
+   (str "ctia.store.sql." store ".delimiters") s/Str})
+
+(defn es-store-impl-properties [store]
+  {(str "ctia.store.es." store ".uri") s/Str
+   (str "ctia.store.es." store ".port") s/Int
+   (str "ctia.store.es." store ".clustername") s/Str
+   (str "ctia.store.es." store ".indexname") s/Str
+   (str "ctia.store.es." store ".refresh") s/Bool})
+
+(s/defschema StorePropertiesSchema
+  "All entity store properties for every implementation"
+  (let [configurable-stores (map name (keys store/stores))
+        store-names (conj configurable-stores "default")]
+    (st/optional-keys
+     (reduce merge {}
+             (map (fn [s] (merge (default-store-properties s)
+                                (es-store-impl-properties s)
+                                (sql-store-impl-properties s))) store-names)))))
+
 (s/defschema PropertiesSchema
-  "This is the schema used for value type coercion.  It is also used
-   for validating the properties that are read in so that required
+  "This is the schema used for value type coercion.
+  It is also used for validating the properties that are read in so that required
    properties must be present.  Only the following properties may be
    set.  This is also used for selecting system properties to merge
    with the properties file."
   (st/merge
+   StorePropertiesSchema
    (st/required-keys {"ctia.auth.type" s/Keyword})
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
                       "ctia.auth.threatgrid.whoami-url" s/Str})
@@ -43,36 +72,10 @@
                       "ctia.http.show.port" s/Int})
 
    (st/required-keys {"ctia.nrepl.enabled" s/Bool
-
-                      "ctia.store.actor" s/Keyword
-                      "ctia.store.feedback" s/Keyword
-                      "ctia.store.campaign" s/Keyword
-                      "ctia.store.coa" s/Keyword
-                      "ctia.store.exploit-target" s/Keyword
-                      "ctia.store.identity" s/Keyword
-                      "ctia.store.incident" s/Keyword
-                      "ctia.store.indicator" s/Keyword
-                      "ctia.store.judgement" s/Keyword
-                      "ctia.store.sighting" s/Keyword
-                      "ctia.store.ttp" s/Keyword
-
                       "ctia.hook.es.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool})
 
    (st/optional-keys {"ctia.nrepl.port" s/Int
-
-                      "ctia.store.sql.db.classname" s/Str
-                      "ctia.store.sql.db.subprotocol" s/Str
-                      "ctia.store.sql.db.subname" s/Str
-                      "ctia.store.sql.db.delimiters" s/Str
-
-                      "ctia.store.es.uri" s/Str
-                      "ctia.store.es.host" s/Str
-                      "ctia.store.es.port" s/Int
-                      "ctia.store.es.clustername" s/Str
-                      "ctia.store.es.indexname" s/Str
-                      "ctia.store.es.refresh" s/Bool
-
                       "ctia.hook.redis.uri" s/Str
                       "ctia.hook.redis.host" s/Str
                       "ctia.hook.redis.port" s/Int

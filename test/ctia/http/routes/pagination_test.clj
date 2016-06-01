@@ -16,7 +16,6 @@
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
-                                    helpers/fixture-ctia
                                     helpers/fixture-allow-all-auth]))
 
 (deftest-for-each-store ^:slow test-pagination-lists

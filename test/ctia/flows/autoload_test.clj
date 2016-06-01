@@ -7,6 +7,7 @@
 (use-fixtures :once helpers/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
+                                    helpers/fixture-properties:atom-store
                                     helpers/fixture-properties:hook-classes
                                     helpers/fixture-ctia-fast]))
 
