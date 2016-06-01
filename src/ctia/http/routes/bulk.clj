@@ -1,25 +1,18 @@
 (ns ctia.http.routes.bulk
   (:require [compojure.api.sweet :refer :all]
-            [clojure.string :as str]
-            [ctia.flows.crud :as flows]
+            [clojure.tools.logging :as log]
             [ctia.domain.entities :as ent]
-            [ctia.schemas
-             [bulk :refer [BulkRefs NewBulk StoredBulk]]]
-            [ctim.schemas.common :as c]
+            [ctia.flows.crud :as flows]
+            [ctia.lib.keyword :refer [singular]]
+            [ctia.schemas.bulk :refer [BulkRefs NewBulk StoredBulk]]
             [ctia.store :refer :all]
+            [ctim.schemas.common :as c]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [clojure.tools.logging :as log]))
+            [schema.core :as s]))
 
-(defn singular [k]
-  "remove the last s of a keyword see test for an example."
-  (-> k
-      name
-      (str/replace #"s$" "")
-      keyword))
-
-(defn realize [k]
+(defn realize
   "return the realize function provided an entity key name"
+  [k]
   (condp = k
     :actor          ent/realize-actor
     :campaign       ent/realize-campaign
@@ -32,8 +25,9 @@
     :sighting       ent/realize-sighting
     :ttp            ent/realize-ttp))
 
-(defn create-fn [k]
+(defn create-fn
   "return the create function provided an entity key name"
+  [k]
   (condp = k
     :actor          #(create-actor @actor-store %)
     :campaign       #(create-campaign @campaign-store %)
@@ -46,8 +40,9 @@
     :sighting       #(create-sighting @sighting-store %)
     :ttp            #(create-ttp @ttp-store %)))
 
-(defn read-fn [k]
+(defn read-fn
   "return the create function provided an entity key name"
+  [k]
   (condp = k
     :actor          #(read-actor @actor-store %)
     :campaign       #(read-campaign @campaign-store %)
@@ -148,7 +143,7 @@
                       :read-judgement
                       :read-sighting
                       :read-ttp}
-      (let [bulk (into {} (filter (comp not empty? second)
+      (let [bulk (into {} (remove (comp empty? second)
                                   {:actors          actors
                                    :campaigns       campaigns
                                    :coas            coas
