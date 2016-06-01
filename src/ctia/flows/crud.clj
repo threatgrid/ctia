@@ -56,10 +56,10 @@
                                    :login login
                                    :entity realized
                                    :prev-entity prev-entity}))))
-        _ (h/apply-event-hooks event)
         result (if (= :delete flow-type)
                  (store-fn entity-id)
                  (store-fn realized))]
+    (h/apply-event-hooks event)
     (h/apply-hooks :entity realized
                    :prev-entity prev-entity
                    :hook-type (case flow-type
