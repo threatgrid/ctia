@@ -8,12 +8,12 @@
 
 (defn recreate-state-index [state]
   (when (:conn state)
-    (es-index/delete! (:conn state)
-                      (:index state))
+    (do (es-index/delete! (:conn state)
+                          (:index state))
 
-    (es-index/create! (:conn state)
-                      (:index state)
-                      (:mapping state))))
+        (es-index/create! (:conn state)
+                          (:index state)
+                          (:mapping state)))))
 
 (defn fixture-recreate-store-indexes [test]
   "walk through all the es stores delete and recreate each store index"

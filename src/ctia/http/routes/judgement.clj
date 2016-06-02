@@ -35,8 +35,8 @@
       :capabilities :create-judgement
       :identity identity
       (ok (flows/create-flow :realize-fn realize-judgement
-                             :store-fn #(read-store :judgement
-                                                    (fn [s] (create-judgement s %)))
+                             :store-fn #(write-store :judgement
+                                                     (fn [s] (create-judgement s %)))
                              :entity-type :judgement
                              :identity identity
                              :entity judgement)))

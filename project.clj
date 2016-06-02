@@ -56,9 +56,11 @@
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
+                   :multi-store :multi-store
                    :disabled :disabled
                    :default #(not= :disabled %)
                    :integration #(or (:es-store %)
+                                     (:multi-store %)
                                      (:integration %)
                                      (:es-filtered-alias %)
                                      (:es-aliased-index %))

@@ -54,13 +54,14 @@
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities #{:list-judgements :list-indicators}
     (paginated-ok
-     (let [res (->> (read-store
-                     :judgement (fn [store]
-                                  (list-judgements-by-observable store
-                                                                 {:type observable_type
-                                                                  :value observable_value}
-                                                                 nil)))
-                    :data
+     (let [query-res (:data (read-store
+                             :judgement
+                             (fn [store]
+                               (list-judgements-by-observable store
+                                                              {:type observable_type
+                                                               :value observable_value}
+                                                              nil))))
+           res (->> query-res
                     (mapcat :indicators)
                     (map :indicator_id)
                     distinct

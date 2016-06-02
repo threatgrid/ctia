@@ -99,7 +99,7 @@
                        :identity []}))
 
 (defn write-store [e write-fn]
-  (first (doall (pmap write-fn (e @stores)))))
+  (first (doall (map write-fn (e @stores)))))
 
 (defn read-store [e read-fn]
   (read-fn (rand-nth (e @stores))))

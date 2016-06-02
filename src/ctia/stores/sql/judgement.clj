@@ -103,14 +103,16 @@
                              db-indicator->schema-indicator)))
 
         judgements-with-inds (for [[id judgement] judgements]
-                               (merge judgement {:type "judgement"
-                                                 :indicators (get judgement-indicators id)}))
+                               (merge judgement
+                                      (if-let [inds (get judgement-indicators id)]
+                                        {:indicators inds}
+                                        {})))
         sorted-judgements (sort-select
                            sort_by
                            sort_order
                            judgements-with-inds)]
 
-    (pagination/response sorted-judgements
+    (pagination/response (map #(assoc % :type "judgement") sorted-judgements)
                          offset
                          limit
                          (count-judgements judgement-query))))

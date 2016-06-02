@@ -20,8 +20,8 @@
       :capabilities :create-incident
       :identity identity
       (ok (flows/create-flow :realize-fn realize-incident
-                             :store-fn #(read-store :incident
-                                                    (fn [s] (create-incident s %)))
+                             :store-fn #(write-store :incident
+                                                     (fn [s] (create-incident s %)))
                              :entity-type :incident
                              :identity identity
                              :entity incident)))

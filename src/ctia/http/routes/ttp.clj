@@ -19,8 +19,8 @@
       :capabilities :create-ttp
       :identity identity
       (ok (flows/create-flow :realize-fn realize-ttp
-                             :store-fn #(read-store :ttp
-                                                    (fn [s] (create-ttp s %)))
+                             :store-fn #(write-store :ttp
+                                                     (fn [s] (create-ttp s %)))
                              :entity-type :ttp
                              :identity identity
                              :entity ttp)))
