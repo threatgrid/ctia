@@ -34,31 +34,31 @@
 
 (defn create-fn [k]
   "return the create function provided an entity key name"
-  (condp = k
-    :actor          #(create-actor @actor-store %)
-    :campaign       #(create-campaign @campaign-store %)
-    :coa            #(create-coa @coa-store %)
-    :exploit-target #(create-exploit-target @exploit-target-store %)
-    :feedback       #(create-feedback @feedback-store %)
-    :incident       #(create-incident @incident-store %)
-    :indicator      #(create-indicator @indicator-store %)
-    :judgement      #(create-judgement @judgement-store %)
-    :sighting       #(create-sighting @sighting-store %)
-    :ttp            #(create-ttp @ttp-store %)))
+  #(write-store k (case k
+                    :actor          (fn [s] (create-actor s %))
+                    :campaign       (fn [s] (create-campaign s %))
+                    :coa            (fn [s] (create-coa s %))
+                    :exploit-target (fn [s] (create-exploit-target s %))
+                    :feedback       (fn [s] (create-feedback s %))
+                    :incident       (fn [s] (create-incident s %))
+                    :indicator      (fn [s] (create-indicator s %))
+                    :judgement      (fn [s] (create-judgement s %))
+                    :sighting       (fn [s] (create-sighting s %))
+                    :ttp            (fn [s] (create-ttp s %)))))
 
 (defn read-fn [k]
   "return the create function provided an entity key name"
-  (condp = k
-    :actor          #(read-actor @actor-store %)
-    :campaign       #(read-campaign @campaign-store %)
-    :coa            #(read-coa @coa-store %)
-    :exploit-target #(read-exploit-target @exploit-target-store %)
-    :feedback       #(read-feedback @feedback-store %)
-    :incident       #(read-incident @incident-store %)
-    :indicator      #(read-indicator @indicator-store %)
-    :judgement      #(read-judgement @judgement-store %)
-    :sighting       #(read-sighting @sighting-store %)
-    :ttp            #(read-ttp @ttp-store %)))
+  #(read-store k (case k
+                   :actor          (fn [s] (read-actor s %))
+                   :campaign       (fn [s] (read-campaign s %))
+                   :coa            (fn [s] (read-coa s %))
+                   :exploit-target (fn [s] (read-exploit-target s %))
+                   :feedback       (fn [s] (read-feedback s %))
+                   :incident       (fn [s] (read-incident s %))
+                   :indicator      (fn [s] (read-indicator s %))
+                   :judgement      (fn [s] (read-judgement s %))
+                   :sighting       (fn [s] (read-sighting s %))
+                   :ttp            (fn [s] (read-ttp s %)))))
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
