@@ -32,11 +32,7 @@
 
 (def gen-type (gen-str-3+ gen-char-alpha-lower))
 
-(def gen-user-defined-short-id
-  (gen/such-that (comp seq str/trim)
-                 gen/string-ascii))
-
-(def gen-uuid-short-id
+(def gen-short-id
   (gen/fmap (fn [[type uuid]]
               (str type "-" uuid))
             (gen/tuple
@@ -46,9 +42,7 @@
 (defn gen-short-id-of-type [type]
   (gen/fmap (fn [short-id-suffix]
               (str (name type) "-" short-id-suffix))
-            (gen/one-of
-             [gen-user-defined-short-id
-              gen/uuid])))
+            gen/uuid))
 
 (def gen-url-id-with-parts
   (gen/fmap (fn [[proto host port path [type short-id]]]
@@ -67,18 +61,14 @@
                     type
                     "/"
                     (url/encode short-id))])
-            (letfn [(prefix [[type id-part]]
-                      [type (str type "-" id-part)])]
-              (gen/tuple gen-proto
-                         gen-host
-                         gen-port
-                         gen-path
-                         (gen/one-of
-                          [(gen/tuple gen-type
-                                      gen-user-defined-short-id)
-                           (gen/fmap prefix
-                                     (gen/tuple gen-type
-                                                gen/uuid))])))))
+            (gen/tuple gen-proto
+                       gen-host
+                       gen-port
+                       gen-path
+                       (gen/fmap (fn [[type uuid]]
+                                   [type (str type "-" uuid)])
+                                 (gen/tuple gen-type
+                                            gen/uuid)))))
 
 (def gen-long-id-with-parts gen-url-id-with-parts) ;; deprecated
 
