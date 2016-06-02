@@ -62,7 +62,7 @@
     event))
 
 (defn- judgement?
-  [{t :type :as event}]
+  [{{t :type} :entity :as event}]
   (= "judgement" t))
 
 (defrecord VerdictGenerator []
@@ -73,14 +73,19 @@
     :nothing)
   (handle [_ event _]
     (if (and (judgement? event) @verdict-store)
-      (let [owner (:owner event)
-            new-verdict (some-> judgement-store
-                                deref
-                                (store/calculate-verdict event)
-                                (vs/realize-verdict owner))]
-        (store/create-verdict @verdict-store new-verdict)
-        (println "Created a verdict: " new-verdict)
-        new-verdict)
+      (try
+        (let [{{observable :observable :as entity} :entity owner :owner} event
+              _ (println "entity: " entity "\nobservable: " observable)
+              _ (println "owner: " owner)
+              new-verdict (some-> judgement-store
+                                  deref
+                                  (store/calculate-verdict observable)
+                                  (vs/realize-verdict owner))]
+          (store/create-verdict @verdict-store new-verdict)
+          (println "Created a verdict: " new-verdict)
+          new-verdict)
+        (catch Exception e
+          (.printStackTrace e)))
       event)))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}

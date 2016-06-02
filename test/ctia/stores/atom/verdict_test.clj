@@ -17,7 +17,7 @@
 
 (use-fixtures :each (join-fixtures [whoami-helpers/fixture-reset-state
                                     test-helpers/fixture-properties:atom-store
-                                    test-helpers/fixture-ctia-fast]))
+                                    test-helpers/fixture-ctia]))
 
 (defn- test-equiv
   [a b]

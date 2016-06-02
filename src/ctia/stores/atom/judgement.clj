@@ -44,7 +44,7 @@
    :disposition_name (get c/disposition-map (:disposition judgement))})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
-  [state :- (s/atom {s/Str StoredJudgement})
+  [state :- (s/atom {(s/optional-key s/Str) StoredJudgement})
    observable :- c/Observable]
   (if-let [judgement
            (let [now (time/now)]

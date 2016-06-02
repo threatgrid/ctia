@@ -120,6 +120,11 @@
   (list-judgements [_ filter-map params]
     (judgement/handle-list-judgements state filter-map params))
   (calculate-verdict [_ observable]
+    (println "************")
+    (println "state: " state)
+    (println "observable: " observable)
+    (println "************")
+    #_(swap! state assoc "id00001" {:type "type" :owner "owner" :created (java.util.Date.) :id "id" :observable {:type "url" :value "foo"} {}})
     (judgement/handle-calculate-verdict state observable))
   (list-judgements-by-observable [this observable params]
     (list-judgements this {[:observable :type]  (:type observable)
