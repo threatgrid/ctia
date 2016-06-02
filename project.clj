@@ -18,6 +18,7 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [leiningen-core "2.6.1"] ;; For accessing project configuration
                  [com.taoensso/carmine "2.12.2"]
+                 [org.clojure/tools.cli "0.3.5"]
 
                  ;; Schemas
                  [prismatic/schema "1.0.5"]
