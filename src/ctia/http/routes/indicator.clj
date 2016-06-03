@@ -34,11 +34,8 @@
    PagingParams
    {(s/optional-key :sort_by) (s/enum :id :timestamp :description :source :confidence)}))
 
-(defn ->long-id [id-type short-id]
-  (id/long-id
-   (id/short-id->id id-type
-                    short-id
-                    (get-in @properties [:ctia :http :show]))))
+(def ->long-id (id/factory:short-id+type->long-id
+                #(get-in @properties [:ctia :http :show])))
 
 (defroutes indicator-routes
   (context "/indicator" []

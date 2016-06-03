@@ -15,6 +15,41 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+(deftest-for-each-store test-sighting-route-with-invalid-ID-post
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (testing "POST /ctia/sighting with invalid ID"
+    (let [{status :status}
+          (post "ctia/sighting"
+                :body {:id "sighting-12345"
+                       :timestamp "2016-02-11T00:40:48.212-00:00"
+                       :description "a sighting"
+                       :tlp "yellow"
+                       :source "source"
+                       :source_device "endpoint.sensor"
+                       :confidence "High"
+                       :indicators [{:indicator_id "indicator-22334455"}]}
+                :headers {"api_key" api-key})]
+      (is (= 400 status)))))
+
+(deftest-for-each-store test-sighting-route-posting-id-without-capability
+  (helpers/set-capabilities! "foouser" "user" #{:create-sighting})
+  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (testing "POST /ctia/sighting with valid ID, but not capability"
+    (let [{status :status
+           :as response}
+          (post "ctia/sighting"
+                :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                       :timestamp "2016-02-11T00:40:48.212-00:00"
+                       :description "a sighting"
+                       :tlp "yellow"
+                       :source "source"
+                       :source_device "endpoint.sensor"
+                       :confidence "High"
+                       :indicators [{:indicator_id "indicator-22334455"}]}
+                :headers {"api_key" api-key})]
+      (is (= 400 status)))))
+
 (deftest-for-each-store test-sighting-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
@@ -23,7 +58,7 @@
            sighting :parsed-body
            :as response}
           (post "ctia/sighting"
-                :body {:id "sighting-12345"
+                :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :description "a sighting"
                        :tlp "yellow"
@@ -40,7 +75,7 @@
               (get (str "ctia/sighting/" (:id sighting))
                    :headers {"api_key" api-key})]
           (is (= 200 status))
-          (is (= {:id "sighting-12345"
+          (is (= {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :description "a sighting"
                   :tlp "yellow"
@@ -55,7 +90,7 @@
         (let [{status :status
                updated-sighting :parsed-body}
               (put (str "ctia/sighting/" (:id sighting))
-                   :body {:id "sighting-12345"
+                   :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                           :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                           :description "updated sighting"
                           :tlp "green"
@@ -66,7 +101,7 @@
                    :headers {"api_key" api-key})]
           (is (= 200 status))
           (is (deep=
-               {:id "sighting-12345"
+               {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                 :description "updated sighting"
                 :tlp "green"
@@ -91,7 +126,7 @@
   (testing "Creation of sighting without observable or indicator are rejected"
     (let [{status :status}
           (post "ctia/sighting"
-                :body {:id "sighting-12345"
+                :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :description "a sighting"
                        :tlp "yellow"
@@ -107,7 +142,7 @@
   (testing "Update of sighting without obserable or indicator are rejected"
     (let [{post-status :status}
           (post "ctia/sighting"
-                :body {:id "sighting-12345"
+                :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :description "a sighting"
                        :tlp "yellow"
@@ -118,7 +153,7 @@
                 :headers {"api_key" api-key})
           {put-status :status}
           (put "ctia/sighting/sighting-12345"
-               :body {:id "sighting-12345"
+               :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                       :timestamp "2016-02-11T00:40:48.212-00:00"
                       :description "updated sighting"
                       :tlp "yellow"

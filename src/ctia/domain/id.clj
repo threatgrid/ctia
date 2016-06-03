@@ -3,7 +3,7 @@
   (:import java.lang.String))
 
 (def short-id-re
-  (re-pattern (str "(" url/url-chars-re ")")))
+  #"([a-z][-a-z]+-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})")
 
 (def url-re
   #"(https?):\/\/([-\da-zA-Z][-\da-zA-Z.]*)(:(\d+))?((\/[-\w.]+)*)\/ctia\/([a-z]+)\/")
@@ -36,6 +36,9 @@
 (def short-id?
   "Make an educated guess if this is a short-form ID"
   (complement long-id?))
+
+(defn valid-short-id? [short-id]
+  (boolean (re-matches short-id-re short-id)))
 
 (defprotocol ID
   (localize [this url-params]
@@ -70,13 +73,14 @@
 
 (defn short-id->id
   [type short-id {:keys [hostname path-prefix port protocol]}]
-  (map->CtiaId
-   {:hostname hostname
-    :short-id short-id
-    :path-prefix (not-empty path-prefix)
-    :port port
-    :protocol protocol
-    :type (name type)}))
+  (if (valid-short-id? short-id)
+    (map->CtiaId
+     {:hostname hostname
+      :short-id short-id
+      :path-prefix (not-empty path-prefix)
+      :port port
+      :protocol protocol
+      :type (name type)})))
 
 (defn ->id
   "Given a string ID, build an ID instance with provided URL
@@ -98,10 +102,21 @@
     (last (re-matches long-id-re s))
     s))
 
-(defn long-id-factory
+(defn factory:short-id->long-id
   "Build a fn that takes a short-id and returns a long-id"
   [type url-params-fn]
   (fn [short-id]
+    (long-id
+     (short-id->id type
+                   short-id
+                   (url-params-fn)))))
+
+(def ^:deprecated long-id-factory factory:short-id->long-id)
+
+(defn factory:short-id+type->long-id
+  "Build a fn that takes an id-type and a short-id and returns a long-id"
+  [url-params-fn]
+  (fn [type short-id]
     (long-id
      (short-id->id type
                    short-id

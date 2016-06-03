@@ -16,11 +16,11 @@
                 :protocol protocol
                 :type type})
               (id/short-id->id type
-                                   short-id
-                                   {:protocol protocol
-                                    :hostname hostname
-                                    :path-prefix path-prefix
-                                    :port port}))))
+                               short-id
+                               {:protocol protocol
+                                :hostname hostname
+                                :path-prefix path-prefix
+                                :port port}))))
 
 (defspec spec-new-id-from-url-id
   (for-all [[{:keys [short-id type]} long-id]
@@ -52,22 +52,22 @@
           {:protocol "http"
            :hostname "ctia.com"
            :path-prefix "/bar"})))
-  (is (= "http://ctia.example.com:3000/bar/ctia/sighting/some-bad-thing-happened"
-         (id/long-id
-          (id/long-id->id
-           "https://foo.net/foo/ctia/sighting/some-bad-thing-happened")
-          {:protocol "http"
-           :hostname "ctia.example.com"
-           :path-prefix "/bar"
-           :port 3000})))
-  (is (= "https://ctia.example.com/bar/ctia/sighting/some%20bad%20thing%20happened"
-         (id/long-id
-          (id/short-id->id
-           "sighting"
-           "some bad thing happened"
-           {:protocol "https"
-            :hostname "ctia.example.com"
-            :path-prefix "/bar"}))))
+  (is (nil?
+       (id/long-id->id
+        "https://foo.net/foo/ctia/sighting/some-bad-thing-happened")))
+  (is (nil?
+       (id/short-id->id
+        "sighting"
+        "some bad thing happened"
+        {:protocol "https"
+         :hostname "ctia.example.com"
+         :path-prefix "/bar"})))
   (is (nil?
        (id/long-id->id
         "http://www.example.com/not-a-ctia/path/at_all.html"))))
+
+(deftest test-valid-short-id?
+  (is (true?  (id/valid-short-id? "foo-7d24c22a-96e3-40fb-81d3-eae158f0770c")))
+  (is (true?  (id/valid-short-id? "bar-9baa492f-8ac8-463c-b193-f2d3cc429e3d")))
+  (is (false? (id/valid-short-id? "9baa492f-8ac8-463c-b193-f2d3cc429e3d")))
+  (is (false? (id/valid-short-id? "foo-123-7d24c22a-96e3-40fb-81d3-eae158f0770c"))))
