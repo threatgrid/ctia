@@ -13,7 +13,7 @@
    :conn-timeout 10000})
 
 (defn stored-ctia-indicator [title ctia-uri]
-  (let [target-url (str ctia-uri "/ctia/indicator/title/" title)
+  (let [target-url (str ctia-uri "/ctia/indicator/title/tg-feed-" title)
         result (http/get target-url (http-options))]
     (cond
       (= 200 (:status result)) (-> result
@@ -38,7 +38,9 @@
         result (-> response
                    :body
                    edn/read-string)]
-    (println "Created" (:id result))
+    (if (= (:status response) 200)
+      (println "Created" (:id result))
+      (println response))
     result))
 
 (defn init-ctia-indicator
