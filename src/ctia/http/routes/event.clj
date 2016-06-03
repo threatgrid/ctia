@@ -2,8 +2,8 @@
   (:require [schema.core :as s]
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
-            [ctia.events.schemas :refer [ModelEventBase]]
-            [ctia.events :refer [recent-events]]))
+            [ctia.events :refer [recent-events]]
+            [ctim.events.schemas :refer [ModelEventBase]]))
 
 (defroutes event-routes
   (context "/events" []

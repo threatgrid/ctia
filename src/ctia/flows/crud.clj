@@ -5,7 +5,7 @@
             [ctia.auth :as auth]
             [ctia.domain.id :as id]
             [ctia.flows.hooks :as h]
-            [ctia.events.obj-to-event :refer [to-create-event
+            [ctim.events.obj-to-event :refer [to-create-event
                                               to-update-event
                                               to-delete-event]]
             [ring.util.http-response :as http-response]))
