@@ -3,7 +3,8 @@
   (:require [ctia.init :refer [start-ctia!]]
             [clojure.java.io :as io]
             [clojure.java.shell :as shell]
-            [ctia.properties :refer [properties]]))
+            [ctia.properties :refer [properties]]
+            [clojure.string :as str]))
 
 ;; swagger codegen package
 (def codegen-version "2.1.6")
@@ -29,9 +30,12 @@
    :python {:packageName artifact-id
             :packageVersion artifact-version}
    :haskell-servant {:apiVersion artifact-version
-                     :title artifact-id
-                     :titleLower artifact-id
-                     :package artifact-id}
+                     :title "CTIA Client"
+                     :titleLower "ctia client"
+                     :package "CTIAClient"
+                     :baseNamespace "CTIAClient"
+                     :modelpackage "CTIAClient"
+                     :artifact-id "CTIAClient"}
    :ruby {:gemName artifact-id
           :gemVersion artifact-version
           :gemHomepage "http://github.com/threatgrid/ctia"
@@ -64,15 +68,15 @@
   "base command for all languages"
   [lang output-dir]
   ["java"
-   "-jar"
-   local-jar-uri
+   "-jar" local-jar-uri
    "generate"
    "-i" (spec-uri)
    "-l" (name lang)
    "--group-id" "cisco"
    "-o" (str (or output-dir "/tmp/ctia-client") "/" (name lang))
-   "--api-package" artifact-id
-   "--artifact-id" artifact-id
+   "--api-package" (get-in langs [lang :baseNamespace] artifact-id)
+   "--model-package" (get-in langs [lang :modelpackage] "model")
+   "--artifact-id" (get-in langs [lang :artifact-id] artifact-id)
    "--artifact-version" artifact-version])
 
 
