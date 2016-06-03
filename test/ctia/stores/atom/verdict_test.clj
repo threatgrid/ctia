@@ -1,14 +1,15 @@
 (ns ctia.stores.atom.verdict-test
   (:require [ctia.stores.atom.store :as as]
             [ctia.store :as store :refer [verdict-store judgement-store]]
+            [ctia.domain.entities :as entities :refer [realize-verdict realize-judgement]]
             [clojure.test :refer :all]
+            [clojure.edn :as edn]
             [schema.test :as st]
             [schema-generators.generators :as g]
             [ctia.test-helpers.core :as test-helpers :refer [post]]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctia.schemas.verdict :refer [Verdict StoredVerdict realize-verdict]]
-            [ctia.schemas.judgement :refer [realize-judgement]])
+            [ctim.schemas.verdict :refer [Verdict StoredVerdict]])
   (:import [java.util Date]))
 
 (use-fixtures :once (join-fixtures [st/validate-schemas
@@ -63,9 +64,17 @@
                    :severity 100
                    :valid_time {:start_time "1971-01-01T00:00:00.000-00:00"}
                    :tlp "yellow"}
-        _ (println "Creating judgement")
-        response (post "ctia/judgement"
-                       :body judgement
-                       :headers {"api_key" "45c1f5e3f05d0"})]
-    (println "Response: " response)
-    (println "VERDICTS: " @verdict-store)))
+        {body :body :as response} (post "ctia/judgement"
+                                        :body judgement
+                                        :headers {"api_key" "45c1f5e3f05d0"})
+        {j-id :id :as new-judgement} (edn/read-string body)
+        verdict-id (str "verdict-" (subs j-id 10))
+        verdict (store/read-verdict @verdict-store verdict-id)
+        verdict' (dissoc verdict :created)]
+    (is (= {:type "verdict"
+            :disposition 3
+            :judgement_id j-id
+            :disposition_name "Suspicious"
+            :id verdict-id
+            :owner "foouser"}
+           verdict'))))

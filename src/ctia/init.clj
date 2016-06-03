@@ -87,7 +87,7 @@
               (ss/->JudgementStore))}
 
    :verdict
-   {:memory as/->VerdictStore}
+   {:atom as/->VerdictStore}
 
    :sighting
    {:atom as/->SightingStore

@@ -4,11 +4,13 @@
     [ctia.events :as events]
     [ctia.flows.hook-protocol :refer [Hook]]
     [ctia.lib.redis :as lr]
+    [ctia.domain.entities :as entities]
     [ctia.events.producers.es.producer :as esp]
     [ctia.properties :refer [properties]]
     [ctia.properties.getters :as pg]
     [ctia.store :as store :refer [judgement-store verdict-store]]
-    [ctia.schemas.verdict :as vs]
+    [ctim.schemas.judgement :as js]
+    [ctim.schemas.verdict :as vs]
     [schema.core :as s]))
 
 (defrecord ESEventProducer [conn]
@@ -65,6 +67,24 @@
   [{{t :type} :entity :as event}]
   (= "judgement" t))
 
+(def judgement-prefix "judgement-")
+
+(defn starts-with?
+  "Added to clojure.string in Clojure 1.8"
+  [^String s ^String ss]
+  (.startsWith s ss))
+
+(s/defn realize-verdict :- vs/StoredVerdict
+  "Realizes a verdict, using the associated judgement ID, if available,
+   to build the verdict ID"
+  [verdict :- vs/Verdict
+   {id :id :as judgement} :- js/StoredJudgement
+   owner :- s/Str]
+  (letfn [(verdict-id [i] (str "verdict-" (subs i (count judgement-prefix))))]
+    (if (starts-with? id judgement-prefix)
+      (entities/realize-verdict verdict (verdict-id id) owner)
+      (entities/realize-verdict verdict owner))))
+
 (defrecord VerdictGenerator []
   Hook
   (init [_]
@@ -74,16 +94,14 @@
   (handle [_ event _]
     (if (and (judgement? event) @verdict-store)
       (try
-        (let [{{observable :observable :as entity} :entity owner :owner} event
-              _ (println "entity: " entity "\nobservable: " observable)
-              _ (println "owner: " owner)
-              new-verdict (some-> judgement-store
-                                  deref
-                                  (store/calculate-verdict observable)
-                                  (vs/realize-verdict owner))]
-          (store/create-verdict @verdict-store new-verdict)
-          (println "Created a verdict: " new-verdict)
-          new-verdict)
+        (let [{{observable :observable :as judgement} :entity owner :owner} event]
+          (when-let [new-verdict (some-> judgement-store
+                                         deref
+                                         (store/calculate-verdict observable)
+                                         (realize-verdict judgement owner))]
+            (store/create-verdict @verdict-store new-verdict)
+            new-verdict)
+          event)
         (catch Exception e
           (.printStackTrace e)))
       event)))
