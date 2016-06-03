@@ -1,12 +1,12 @@
 (ns ctia.http.routes.incident
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
-            [ctia.flows.crud :as flows]
-            [ctia.store :refer :all]
-            [ctia.schemas.incident :refer [NewIncident
-                                           StoredIncident
-                                           realize-incident]]))
+  (:require
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities :refer [realize-incident]]
+    [ctia.flows.crud :as flows]
+    [ctia.store :refer :all]
+    [ctim.schemas.incident :refer [NewIncident StoredIncident]]
+    [ring.util.http-response :refer :all]
+    [schema.core :as s]))
 
 (defroutes incident-routes
 
@@ -17,12 +17,12 @@
       :body [incident NewIncident {:description "a new incident"}]
       :summary "Adds a new Incident"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-incident :admin}
-      :login login
+      :capabilities :create-incident
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-incident
                              :store-fn #(create-incident @incident-store %)
                              :entity-type :incident
-                             :login login
+                             :identity identity
                              :entity incident)))
     (PUT "/:id" []
       :return StoredIncident
@@ -30,14 +30,14 @@
       :summary "Updates an Incident"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-incident :admin}
-      :login login
+      :capabilities :create-incident
+      :identity identity
       (ok (flows/update-flow :get-fn #(read-incident @incident-store %)
                              :realize-fn realize-incident
                              :update-fn #(update-incident @incident-store (:id %) %)
                              :entity-type :incident
-                             :id id
-                             :login login
+                             :entity-id id
+                             :identity identity
                              :entity incident)))
     (GET "/:id" []
       :return (s/maybe StoredIncident)
@@ -53,12 +53,12 @@
       :path-params [id :- s/Str]
       :summary "Deletes an Incident"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:delete-incident :admin}
-      :login login
+      :capabilities :delete-incident
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-incident @incident-store %)
                              :delete-fn #(delete-incident @incident-store %)
                              :entity-type :incident
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))

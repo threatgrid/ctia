@@ -1,12 +1,12 @@
 (ns ctia.http.routes.ttp-test
   (:refer-clojure :exclude [get])
-  (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.schemas.ttp :refer [NewTTP StoredTTP]]))
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctim.schemas.common :as c]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [delete get post put]]
+             [fake-whoami-service :as whoami-helpers]
+             [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -36,6 +36,7 @@
            {:type "ttp"
             :title "ttp"
             :tlp "green"
+            :version c/ctia-schema-version
             :description "description"
             :ttp_type "foo"
             :indicators [{:indicator_id "indicator-1"}
@@ -59,6 +60,7 @@
                {:type "ttp"
                 :title "ttp"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :description "description"
                 :ttp_type "foo"
                 :indicators [{:indicator_id "indicator-1"}
@@ -95,6 +97,7 @@
                 :created (:created ttp)
                 :title "updated ttp"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :description "updated description"
                 :ttp_type "bar"
                 :indicators [{:indicator_id "indicator-1"}

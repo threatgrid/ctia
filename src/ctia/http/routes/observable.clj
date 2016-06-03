@@ -1,9 +1,10 @@
 (ns ctia.http.routes.observable
   (:require
    [compojure.api.sweet :refer :all]
+   [ctia.lib.pagination :as pag]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-   [ctia.schemas
-    [indicator :refer [StoredIndicator]]
+   [ctim.schemas
+    [common :as c]
     [judgement :refer [StoredJudgement]]
     [sighting :refer [StoredSighting]]
     [vocabularies :refer [ObservableType]]]
@@ -21,16 +22,13 @@
                                :severity
                                :confidence)}))
 
-(s/defschema IndicatorsByObservableQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by) (s/enum :id :title)}))
+(s/defschema IndicatorRefsByObservableQueryParams
+  (st/dissoc PagingParams :sort_by :sort_order))
 
 (s/defschema SightingsByObservableQueryParams
   (st/merge
    PagingParams
    {(s/optional-key :sort_by) (s/enum :id :timestamp :confidence)}))
-
 
 (defroutes observable-routes
   (GET "/:observable_type/:observable_value/judgements" []
@@ -41,26 +39,35 @@
     :return (s/maybe [StoredJudgement])
     :summary "Returns all the Judgements associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:list-judgements-by-observable :admin}
+    :capabilities :list-judgements
     (paginated-ok (list-judgements-by-observable @judgement-store
                                                  {:type observable_type
                                                   :value observable_value} params)))
 
   (GET "/:observable_type/:observable_value/indicators" []
     :tags ["Indicator"]
-    :query [params IndicatorsByObservableQueryParams]
+    :query [params IndicatorRefsByObservableQueryParams]
     :path-params [observable_type :- ObservableType
                   observable_value :- s/Str]
-    :return (s/maybe [StoredIndicator])
-    :summary "Returns all the Indicators associated with the specified observable."
+    :return (s/maybe [c/Reference])
+    :summary "Returns all the Indicator References associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:list-indicators-by-observable :admin}
+    :capabilities #{:list-judgements :list-indicators}
     (paginated-ok
-     (as-> {:type observable_type
-            :value observable_value} $
-       (list-judgements-by-observable @judgement-store $ nil)
-       (:data $ [])
-       (list-indicators-by-judgements @indicator-store $ params))))
+     (let [res (->> (list-judgements-by-observable @judgement-store
+                                                   {:type observable_type
+                                                    :value observable_value}
+                                                   nil)
+                    :data
+                    (mapcat :indicators)
+                    (map :indicator_id)
+                    distinct
+                    sort)]
+       (-> res
+           (pag/paginate params)
+           (pag/response (:offset params)
+                         (:limit params)
+                         (count res))))))
 
   (GET "/:observable_type/:observable_value/sightings" []
     :tags ["Sighting"]
@@ -68,7 +75,7 @@
     :path-params [observable_type :- ObservableType
                   observable_value :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities #{:list-sightings-by-observable :admin}
+    :capabilities :list-sightings
     :return (s/maybe [StoredSighting])
     :summary "Returns all the Sightings associated with the specified observable."
     (paginated-ok (list-sightings-by-observables @sighting-store

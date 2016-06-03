@@ -7,6 +7,7 @@
 
 (t/use-fixtures :once (t/join-fixtures [helpers/fixture-schema-validation
                                         helpers/fixture-properties:clean
+                                        helpers/fixture-properties:atom-store
                                         helpers/fixture-ctia-fast]))
 
 (def obj {:x "x" :y 0 :z {:foo "bar"}})

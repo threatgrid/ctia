@@ -4,8 +4,8 @@
 
 (defonce db (atom nil))
 
-(defn init! []
-  (->> (kdb/create-db (get-in @properties [:ctia :store :sql :db]))
+(defn init! [props]
+  (->> (kdb/create-db props)
        (reset! db)
        kdb/default-connection))
 

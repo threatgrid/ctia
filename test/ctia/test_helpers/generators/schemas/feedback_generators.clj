@@ -1,7 +1,7 @@
 (ns ctia.test-helpers.generators.schemas.feedback-generators
   (:require [clojure.test.check.generators :as gen]
             [ctia.lib.time :as time]
-            [ctia.schemas
+            [ctim.schemas
              [feedback :refer [NewFeedback Feedback]]
              [common :as schemas-common]]
             [ctia.test-helpers.generators.common
@@ -21,7 +21,7 @@
   (gen/fmap
    (fn [[id entity-id]]
      (complete
-      Feedback
+      NewFeedback
       (cond-> {}
         id (assoc :id id)
         entity-id (assoc :entity_id entity-id))))

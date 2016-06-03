@@ -1,6 +1,7 @@
 (ns ctia.auth.threatgrid
   (:require [cheshire.core :as json]
             [ctia.auth :as auth]
+            [ctia.lib.set :refer [as-set]]
             [ctia.properties :refer [properties]]
             [ctia.schemas.identity :as id]
             [ctia.store :as store]
@@ -15,11 +16,6 @@
 (defn- memo [f]
   (memo/ttl f :ttl/threshold cache-ttl-ms))
 
-(defn- as-set [x]
-  (cond (set? x) x
-        (keyword? x) #{x}
-        (sequential? x) (set x)))
-
 (defrecord Identity [role login capabilities]
   auth/IIdentity
   (authenticated? [_]
@@ -28,12 +24,9 @@
     login)
   (allowed-capabilities [_]
     capabilities)
-  (allowed-capability? [this desired-capability]
-    (some?
-     (first
-      (set/intersection
-       (as-set desired-capability)
-       (auth/allowed-capabilities this))))))
+  (capable? [this required-capabilities]
+    (set/subset? (as-set required-capabilities)
+                 (auth/allowed-capabilities this))))
 
 (defn make-whoami-fn [whoami-url]
   (fn [token]

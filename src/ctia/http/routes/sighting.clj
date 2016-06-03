@@ -1,12 +1,12 @@
 (ns ctia.http.routes.sighting
-  (:require [ctia.flows.crud :as flows]
-            [compojure.api.sweet :refer :all]
-            [ctia.schemas.sighting
-             :refer
-             [NewSighting realize-sighting StoredSighting check-new-sighting]]
-            [ctia.store :refer :all]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+  (:require
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities :refer [realize-sighting check-new-sighting]]
+    [ctia.flows.crud :as flows]
+    [ctia.store :refer :all]
+    [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
+    [ring.util.http-response :refer :all]
+    [schema.core :as s]))
 
 (defroutes sighting-routes
   (context "/sighting" []
@@ -16,13 +16,13 @@
       :body [sighting NewSighting {:description "A new Sighting"}]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Adds a new Sighting"
-      :capabilities #{:create-sighting :admin}
-      :login login
+      :capabilities :create-sighting
+      :identity identity
       (if (check-new-sighting sighting)
         (ok (flows/create-flow :realize-fn realize-sighting
                                :store-fn #(create-sighting @sighting-store %)
                                :entity-type :sighting
-                               :login login
+                               :identity identity
                                :entity sighting))
         (unprocessable-entity)))
     (PUT "/:id" []
@@ -31,15 +31,15 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Updates a Sighting"
       :path-params [id :- s/Str]
-      :capabilities #{:create-sighting :admin}
-      :login login
+      :capabilities :create-sighting
+      :identity identity
       (if (check-new-sighting sighting)
         (ok (flows/update-flow :get-fn #(read-sighting @sighting-store %)
                                :realize-fn realize-sighting
                                :update-fn #(update-sighting @sighting-store (:id %) %)
                                :entity-type :sighting
-                               :id id
-                               :login login
+                               :entity-id id
+                               :identity identity
                                :entity sighting))
         (unprocessable-entity)))
     (GET "/:id" []
@@ -47,7 +47,7 @@
       :summary "Gets a Sighting by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:read-sighting :admin}
+      :capabilities :read-sighting
       (if-let [d (read-sighting @sighting-store id)]
         (ok d)
         (not-found)))
@@ -55,7 +55,8 @@
       :path-params [id :- s/Str]
       :summary "Deletes a Sighting"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:delete-sighting :admin}
+      :capabilities :delete-sighting
+      ;; TODO - Shouldn't this use the delete-flow?
       (if (delete-sighting @sighting-store id)
         (no-content)
         (not-found)))))

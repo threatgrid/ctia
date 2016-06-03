@@ -18,9 +18,9 @@
 (def all_text {:type "string" :copy_to "_all"})
 
 (def related
-  {:confidence {:type "string"}
-   :source {:type "string"}
-   :relationship {:type "string"}})
+  {:confidence string
+   :source string
+   :relationship string})
 
 (def valid-time
   {:properties
@@ -281,6 +281,7 @@
     {:id string
      :type string
      :tlp string
+     :version string
      :observable observable
      :disposition {:type "long"}
      :disposition_name string
@@ -305,6 +306,7 @@
     {:id string
      :type string
      :tlp string
+     :version string
      :entity_id string
      :source string
      :feedback {:type "integer"}
@@ -321,12 +323,12 @@
     {:id string
      :type string
      :tlp string
+     :version string
      :short_description all_text
      :valid_time valid-time
      :title all_string
      :description all_text
      :alternate_ids all_string
-     :version string
      :negate {:type "boolean"}
      :indicator_type string
      :tags string
@@ -350,7 +352,8 @@
      :specifications specifications
      :owner string
      :created ts
-     :modified ts}}})
+     :modified ts
+     :source string}}})
 
 (def ttp-mapping
   {"ttp"
@@ -363,9 +366,9 @@
      :short_description all_text
      :type string
      :tlp string
+     :version string
      :ttp string
      :valid_time valid-time
-     :version string
      :intended_effect string
      :behavior behavior
      :resources resource
@@ -388,6 +391,7 @@
     {:id all_string
      :title all_string
      :tlp string
+     :version string
      :description all_text
      :short_description all_text
      :type string
@@ -415,9 +419,9 @@
     {:id all_string
      :type string
      :tlp string
+     :version string
      :title all_string
      :description all_text
-     :version string
      :short_description all_text
      :valid_time valid-time
      :names all_string
@@ -444,6 +448,7 @@
     {:id all_string
      :type string
      :tlp string
+     :version string
      :title all_string
      :description all_text
      :short_description all_text
@@ -468,13 +473,13 @@
     {:id all_string
      :type string
      :tlp string
+     :version string
      :title all_string
      :description all_text
      :short_description all_text
      :valid_time valid-time
      :confidence string
      :status string
-     :version string
      :incident_time incident-time
      :categories string
      :reporter string
@@ -508,11 +513,11 @@
     {:id all_string
      :type string
      :tlp string
+     :version string
      :title all_string
      :description all_text
      :short_description all_text
      :valid_time valid-time
-     :version string
      :vulnerability vulnerability
      :weakness weakness
      :configuration configuration
@@ -557,6 +562,7 @@
      :timestamp ts
      :description all_text
      :tlp string
+     :version string
      :source string
      :source_uri string
      :source_device string

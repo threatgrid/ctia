@@ -155,8 +155,6 @@
     (sighting/handle-delete-sighting state id))
   (list-sightings [_ filter-map params]
     (sighting/handle-list-sightings state filter-map params))
-  (list-sightings-by-indicators [_ indicators params]
-    (sighting/handle-list-sightings-by-indicators state indicators params))
   (list-sightings-by-observables [_ observables params]
     (sighting/handle-list-sightings-by-observables state observables params)))
 

@@ -1,15 +1,8 @@
 (ns ctia.stores.es.indicator
-  (:import java.util.UUID)
-  (:require
-   [schema.core :as s]
-   [ctia.stores.es.crud :as crud]
-   [ctia.schemas.common :refer [Observable]]
-   [ctia.schemas.indicator :refer [Indicator
-                                   NewIndicator
-                                   StoredIndicator
-                                   realize-indicator]]
-   [ctia.stores.es.query :refer [indicators-by-judgements-query]]
-   [ctia.lib.es.document :refer [search-docs]]))
+  (:require [ctia.domain.id :as id]
+            [ctia.lib.es.document :refer [search-docs]]
+            [ctim.schemas.indicator :refer [StoredIndicator]]
+            [ctia.stores.es.crud :as crud]))
 
 (def handle-create-indicator (crud/handle-create :indicator StoredIndicator))
 (def handle-read-indicator (crud/handle-read :indicator StoredIndicator))
@@ -19,12 +12,12 @@
 
 (def ^{:private true} mapping "indicator")
 
-
 (defn handle-list-indicators-by-judgements
   [state judgements params]
   (let [ids (some->> judgements
                      (map :indicators)
                      (mapcat #(map :indicator_id %))
+                     (map #(id/str->short-id %))
                      set)]
     (when ids
       (search-docs (:conn state)

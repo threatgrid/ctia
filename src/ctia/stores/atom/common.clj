@@ -1,10 +1,11 @@
 (ns ctia.stores.atom.common
   (:import java.util.UUID)
-  (:require [ctia.schemas.common :as c]
+  (:require [ctim.schemas.common :as c]
             [schema.core :as s]
             [clojure.set :as set]
             [ctia.lib.pagination :refer [default-limit
                                          list-response-schema
+                                         paginate
                                          response]]))
 
 (defn random-id [prefix]
@@ -91,18 +92,7 @@
                               filter-map))
                     (vals (deref state)))))))
 
-(defn paginate
-  [data {:keys [sort_by sort_order offset limit]
-         :or {sort_by :id
-              sort_order :asc
-              offset 0
-              limit default-limit}}]
-  (as-> data $
-    (sort-by sort_by $)
-    (if (= :desc sort_order)
-      (reverse $) $)
-    (drop offset $)
-    (take limit $)))
+
 
 (defn list-handler [Model]
   (s/fn :- (list-response-schema Model)
@@ -116,4 +106,3 @@
            (response (:offset params)
                      (:limit params)
                      (count res)))))))
-

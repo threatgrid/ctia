@@ -14,16 +14,16 @@
                   :login (auth/login id))
            (assoc-in [:headers "api_key"] api_key))))))
 
-(defn require-capability! [granting-capabilities id]
-  (if (and granting-capabilities
+(defn require-capability! [required-capability id]
+  (if (and required-capability
            (auth/require-login? @auth/auth-service))
     (cond
       (not (auth/authenticated? id))
       (http-response/forbidden! {:message "Only authenticated users allowed"})
 
-      (not (auth/allowed-capability? id granting-capabilities))
+      (not (auth/capable? id required-capability))
       (http-response/unauthorized! {:message "Missing capability"
-                                    :capabilities granting-capabilities
+                                    :capabilities required-capability
                                     :owner (auth/login id)}))))
 
 
@@ -41,3 +41,7 @@
 (defmethod meta/restructure-param :login [_ bind-to acc]
   (update acc :lets into
           [bind-to `(:login ~'+compojure-api-request+)]))
+
+(defmethod meta/restructure-param :identity [_ bind-to acc]
+  (update acc :lets into
+          [bind-to `(:identity ~'+compojure-api-request+)]))

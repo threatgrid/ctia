@@ -1,11 +1,11 @@
 (ns ctia.http.routes.feedback
-  (:require [compojure.api.sweet :refer :all]
+  (:require
+    [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-feedback]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-            [ctia.schemas.feedback
-             :refer
-             [NewFeedback realize-feedback StoredFeedback]]
             [ctia.store :refer :all]
+            [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
             [ring.util.http-response :refer :all]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -24,19 +24,19 @@
       :body [feedback NewFeedback {:description "a new Feedback on an entity"}]
       :summary "Adds a new Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:create-feedback :admin}
-      :login login
+      :capabilities :create-feedback
+      :identity identity
       (ok (flows/create-flow :realize-fn realize-feedback
                              :store-fn #(create-feedback @feedback-store %)
                              :entity-type :feedback
-                             :login login
+                             :identity identity
                              :entity feedback)))
     (GET "/" []
       :return [StoredFeedback]
       :query [params FeedbackQueryParams]
       :summary "Search Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:list-feedback :admin}
+      :capabilities :read-feedback
 
       (paginated-ok
        (list-feedback @feedback-store
@@ -47,7 +47,7 @@
       :summary "Gets a Feedback by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:read-feedback :admin}
+      :capabilities :read-feedback
       (if-let [d (read-feedback @feedback-store id)]
         (ok d)
         (not-found)))
@@ -56,12 +56,12 @@
       :path-params [id :- s/Str]
       :summary "Deletes a feedback"
       :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:delete-feedback :admin}
-      :login login
+      :capabilities :delete-feedback
+      :identity identity
       (if (flows/delete-flow :get-fn #(read-feedback @feedback-store %)
                              :delete-fn #(delete-feedback @feedback-store %)
                              :entity-type :feedback
-                             :id id
-                             :login login)
+                             :entity-id id
+                             :identity identity)
         (no-content)
         (not-found)))))

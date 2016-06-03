@@ -1,7 +1,7 @@
 (ns ctia.test-helpers.generators.schemas.coa-generators
   (:require [clojure.test.check.generators :as gen]
             [ctia.lib.time :as time]
-            [ctia.schemas
+            [ctim.schemas
              [coa :refer [NewCOA StoredCOA]]
              [common :as schemas-common]]
             [ctia.test-helpers.generators.common

@@ -1,15 +1,15 @@
 (ns ctia.http.routes.judgement-test
   (:refer-clojure :exclude [get])
-  (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [ctia.domain.id :as id]
-   [ctia.properties :refer [properties]]
-   [ctia.schemas.common :as scheams-common]
-   [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.pagination :refer [pagination-test]]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]))
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.id :as id]
+            [ctia.properties :refer [properties]]
+            [ctim.schemas.common :as c]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [delete get post]]
+             [fake-whoami-service :as whoami-helpers]
+             [pagination :refer [pagination-test]]
+             [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -55,6 +55,7 @@
             :confidence "Low"
             :source "test"
             :tlp "green"
+            :version c/ctia-schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :indicators [{:confidence "High"
@@ -82,6 +83,7 @@
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -111,6 +113,7 @@
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -142,7 +145,7 @@
                      :headers {"api_key" "2222222222222"})]
             (is (= 401 status))
             (is (= {:message "Missing capability",
-                    :capabilities #{:admin :read-judgement},
+                    :capabilities :read-judgement,
                     :owner "baruser"}
                    body)))))
 
@@ -194,6 +197,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
+            :version c/ctia-schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -225,6 +229,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
+            :version c/ctia-schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -255,6 +260,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
+            :version c/ctia-schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}

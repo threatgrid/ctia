@@ -2,6 +2,7 @@
   "This namespace handle all necessary flows for creating, updating and deleting entities."
   (:import java.util.UUID)
   (:require [clojure.tools.logging :as log]
+            [ctia.auth :as auth]
             [ctia.domain.id :as id]
             [ctia.flows.hooks :as h]
             [ctia.events.obj-to-event :refer [to-create-event
@@ -25,16 +26,18 @@
              entity-type
              entity
              prev-entity
-             login
+             identity
              realize-fn
              store-fn
              create-event-fn]}]
-  (let [id (or (find-id prev-entity)
-               (find-id entity)
-               (make-id entity-type))
+  (let [login (auth/login identity)
+        entity-id (or (find-id prev-entity)
+                      (when (auth/capable? identity :specify-id)
+                        (find-id entity))
+                      (make-id entity-type))
         realized (h/apply-hooks :entity (case flow-type
-                                          :create (realize-fn entity id login)
-                                          :update (realize-fn entity id login prev-entity)
+                                          :create (realize-fn entity entity-id login)
+                                          :update (realize-fn entity entity-id login prev-entity)
                                           :delete entity)
                                 :prev-entity prev-entity
                                 :hook-type (case flow-type
@@ -53,10 +56,10 @@
                                    :login login
                                    :entity realized
                                    :prev-entity prev-entity}))))
-        _ (h/apply-event-hooks event)
         result (if (= :delete flow-type)
-                 (store-fn id)
+                 (store-fn entity-id)
                  (store-fn realized))]
+    (h/apply-event-hooks event)
     (h/apply-hooks :entity realized
                    :prev-entity prev-entity
                    :hook-type (case flow-type
@@ -76,12 +79,12 @@
   [& {:keys [entity-type
              realize-fn
              store-fn
-             login
+             identity
              entity]}]
   (handle-flow :flow-type :create
                :entity-type entity-type
                :entity entity
-               :login login
+               :identity identity
                :realize-fn realize-fn
                :store-fn store-fn
                :create-event-fn to-create-event))
@@ -97,15 +100,15 @@
              get-fn
              realize-fn
              update-fn
-             id
-             login
+             entity-id
+             identity
              entity]}]
-  (let [prev-entity (get-fn id)]
+  (let [prev-entity (get-fn entity-id)]
     (handle-flow :flow-type :update
                  :entity-type entity-type
                  :entity entity
                  :prev-entity prev-entity
-                 :login login
+                 :identity identity
                  :realize-fn realize-fn
                  :store-fn update-fn
                  :create-event-fn to-update-event)))
@@ -121,13 +124,13 @@
   [& {:keys [entity-type
              get-fn
              delete-fn
-             id
-             login]}]
-  (let [entity (get-fn id)]
+             entity-id
+             identity]}]
+  (let [entity (get-fn entity-id)]
     (handle-flow :flow-type :delete
                  :entity-type entity-type
                  :entity entity
                  :prev-entity entity
-                 :login login
+                 :identity identity
                  :store-fn delete-fn
                  :create-event-fn to-delete-event)))

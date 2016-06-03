@@ -3,6 +3,7 @@
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
             [ctia.properties.getters :as pg]
+            [ctim.schemas.common :as c]
             [ctia.test-helpers.core :as test-helpers :refer [post]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
@@ -81,6 +82,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
+                          :version c/ctia-schema-version
                           :disposition 1
                           :disposition_name "Clean"
                           :priority 100
@@ -98,6 +100,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
+                          :version c/ctia-schema-version
                           :disposition 2
                           :disposition_name "Malicious"
                           :priority 100
@@ -115,6 +118,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
+                          :version c/ctia-schema-version
                           :disposition 3
                           :disposition_name "Suspicious"
                           :priority 100

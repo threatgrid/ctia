@@ -1,23 +1,23 @@
 (ns ctia.init
   (:require [cider.nrepl :refer [cider-nrepl-handler]]
-            [clojure.core.memoize :as memo]
             [clojure.tools.nrepl.server :as nrepl-server]
-            [ctia.auth :as auth]
-            [ctia.auth.allow-all :as allow-all]
-            [ctia.auth.threatgrid :as threatgrid]
+            [ctia
+             [auth :as auth]
+             [events :as e]
+             [logging :as log]
+             [properties :as p]
+             [store :as store]]
+            [ctia.auth
+             [allow-all :as allow-all]
+             [threatgrid :as threatgrid]]
+            [ctia.flows.hooks :as h]
             [ctia.http.server :as http-server]
-            [ctia.lib.es.index :as es-index]
-            [ctia.properties :as p]
-            [ctia.store :as store]
             [ctia.stores.atom.store :as as]
             [ctia.stores.es.store :as es-store]
-            [ctia.stores.sql.store :as ss]
-            [ctia.stores.sql.db :as sql-store]
-            [ctia.stores.sql.judgement :as sql-judgement]
-            [ctia.flows.hooks :as h]
-            [ctia.logging :as log]
-            [ctia.events :as e]
-            [ring.adapter.jetty :as jetty]))
+            [ctia.stores.sql
+             [db :as sql-store]
+             [judgement :as sql-judgement]
+             [store :as ss]]))
 
 (defn init-auth-service! []
   (let [auth-service-type (get-in @p/properties [:ctia :auth :type])]
@@ -32,7 +32,6 @@
   "The cleaner is called before the stores are instantiated, to reset any state.
    It is unaware of any selected store type, so it should handle all types."
   []
-  (es-store/shutdown!)
   (sql-store/shutdown!))
 
 (def store-factories
@@ -41,51 +40,48 @@
    ;; result.  This is where you can do idempotent store setup.
    ;; Specifying a :builder is optional.
    :builder
-   {:memory (fn memory-builder [factory]
-              (factory (atom {})))
-    :es (fn es-builder [factory]
-          (when (es-store/uninitialized?)
-            (es-store/init!))
-          (factory @es-store/es-state))
-    :sql (fn sql-builder [factory]
-           (when (sql-store/uninitialized?)
-             (sql-store/init!))
+   {:atom (fn atom-builder [factory props]
+            (factory (atom {})))
+    :es (fn es-builder [factory props]
+          (factory (es-store/init! props)))
+    :sql (fn sql-builder [factory props]
+           (sql-store/init! props)
            (factory))}
 
    :actor
-   {:memory as/->ActorStore
+   {:atom as/->ActorStore
     :es es-store/->ActorStore}
 
    :campaign
-   {:memory as/->CampaignStore
+   {:atom as/->CampaignStore
     :es es-store/->CampaignStore}
 
    :coa
-   {:memory as/->COAStore
+   {:atom as/->COAStore
     :es es-store/->COAStore}
 
    :exploit-target
-   {:memory as/->ExploitTargetStore
+   {:atom as/->ExploitTargetStore
     :es es-store/->ExploitTargetStore}
 
    :feedback
-   {:memory as/->FeedbackStore
+   {:atom as/->FeedbackStore
     :es es-store/->FeedbackStore}
 
    :identity
-   {:memory as/->IdentityStore
+   {:atom as/->IdentityStore
     :es es-store/->IdentityStore}
 
    :incident
-   {:memory as/->IncidentStore
+   {:atom as/->IncidentStore
     :es es-store/->IncidentStore}
 
    :indicator
-   {:memory as/->IndicatorStore
+   {:atom as/->IndicatorStore
     :es es-store/->IndicatorStore}
 
    :judgement
-   {:memory as/->JudgementStore
+   {:atom as/->JudgementStore
     :es es-store/->JudgementStore
     :sql #(do (sql-judgement/init!)
               (ss/->JudgementStore))}
@@ -94,30 +90,29 @@
    {:memory as/->VerdictStore}
 
    :sighting
-   {:memory as/->SightingStore
+   {:atom as/->SightingStore
     :es es-store/->SightingStore}
 
    :ttp
-   {:memory as/->TTPStore
+   {:atom as/->TTPStore
     :es es-store/->TTPStore}})
 
 (defn init-store-service! []
   (store-factory-cleaner)
-  (doseq [[store-type store-atom] store/stores]
-    (let [selected-store (get-in @p/properties
-                                 [:ctia :store store-type])
-          builder (get-in store-factories
-                          [:builder selected-store]
-                          (fn default-builder [f] (f)))
+  (doseq [[store-name store-atom] store/stores]
+    (let [store-type (keyword (get-in @p/properties [:ctia :store store-name] "none"))
+          store-properties (merge (get-in @p/properties [:ctia :store store-type :default] {})
+                                  (get-in @p/properties [:ctia :store store-type store-name] {}))
+          builder (get-in store-factories [:builder store-type] (fn default-builder [f p] (f)))
           factory (get-in store-factories
-                          [store-type selected-store]
+                          [store-name store-type]
                           #(throw (ex-info (format "Could not configure %s store"
                                                    store-type)
-                                           {:store-type store-type
-                                            :selected-store selected-store})))]
-      (if (= selected-store :none)
+                                           {:store-name store-name
+                                            :store-type store-type})))]
+      (if (= store-type :none)
         (reset! store-atom nil)
-        (reset! store-atom (builder factory))))))
+        (reset! store-atom (builder factory store-properties))))))
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
