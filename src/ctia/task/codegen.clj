@@ -38,9 +38,7 @@
           :gemSummary description
           :gemDescription description
           :gemAuthor "Cisco Security Business Group -- Advanced Threat"
-          :gemAuthorEmail "cisco-intel-api-support@cisco.com"}
-   :java {:useRxJava true
-          :fullJavaUtil true}})
+          :gemAuthorEmail "cisco-intel-api-support@cisco.com"}})
 
 (defn spec-uri
   "compose the full path of the swagger spec to generate from"
