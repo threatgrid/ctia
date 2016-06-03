@@ -3,6 +3,7 @@
             [ctia.http.middleware.auth :as auth]
             [ctia.http.routes
              [actor :refer [actor-routes]]
+             [bulk :refer [bulk-routes]]
              [campaign :refer [campaign-routes]]
              [coa :refer [coa-routes]]
              [documentation :refer [documentation-routes]]
@@ -89,6 +90,7 @@
   (context "/ctia" []
     version-routes
     actor-routes
+    bulk-routes
     campaign-routes
     exploit-target-routes
     coa-routes

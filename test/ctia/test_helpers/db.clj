@@ -44,21 +44,21 @@
 
 (defn fixture-properties:sql-store [test]
   (helpers-core/with-properties
-    ["ctia.store.sql.db.classname"   "org.h2.Driver"
-     "ctia.store.sql.db.subprotocol" "h2"
-     "ctia.store.sql.db.subname"     "/tmp/ctia-h2-db;DATABASE_TO_UPPER=false"
-     "ctia.store.sql.db.delimiters"  ""
-     "ctia.store.actor"              "memory"
-     "ctia.store.feedback"           "memory"
-     "ctia.store.campaign"           "memory"
-     "ctia.store.coa"                "memory"
-     "ctia.store.exploit-target"     "memory"
-     "ctia.store.identity"           "memory"
-     "ctia.store.incident"           "memory"
-     "ctia.store.indicator"          "memory"
-     "ctia.store.judgement"          "sql"
-     "ctia.store.sighting"           "memory"
-     "ctia.store.ttp"                "memory"]
+    ["ctia.store.actor" "atom"
+     "ctia.store.campaign" "atom"
+     "ctia.store.coa" "atom"
+     "ctia.store.exploit-target" "atom"
+     "ctia.store.feedback" "atom"
+     "ctia.store.identity" "atom"
+     "ctia.store.incident" "atom"
+     "ctia.store.indicator" "atom"
+     "ctia.store.judgement" "sql"
+     "ctia.store.sighting" "atom"
+     "ctia.store.ttp" "atom"
+     "ctia.store.sql.judgement.classname"    "org.h2.Driver"
+     "ctia.store.sql.judgement.subprotocol"  "h2"
+     "ctia.store.sql.judgement.subname"      "/tmp/ctia-h2-db;DATABASE_TO_UPPER=false"
+     "ctia.store.sql.judgement.delimiters"   ""]
     (test)))
 
 (defn fixture-db-recreate-tables [test]

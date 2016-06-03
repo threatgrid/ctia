@@ -1,12 +1,14 @@
 (ns ctia.http.routes.incident-test
   (:refer-clojure :exclude [get])
   (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]
-   [ctia.schemas.incident :refer [NewIncident StoredIncident]]))
+    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+    [ctia.test-helpers.core :refer [delete get post put] :as helpers]
+    [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+    [ctia.test-helpers.store :refer [deftest-for-each-store]]
+    [ctia.test-helpers.auth :refer [all-capabilities]]
+    [ctim.schemas
+     [common :as c]
+     [incident :refer [NewIncident StoredIncident]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -40,6 +42,7 @@
             :title "incident"
             :description "description"
             :tlp "green"
+            :version c/ctia-schema-version
             :confidence "High"
             :categories ["Denial of Service"
                          "Improper Usage"]
@@ -68,6 +71,7 @@
                 :title "incident"
                 :description "description"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :confidence "High"
                 :categories ["Denial of Service"
                              "Improper Usage"]
@@ -111,6 +115,7 @@
                 :title "updated incident"
                 :description "updated description"
                 :tlp "green"
+                :version c/ctia-schema-version
                 :confidence "Low"
                 :categories ["Denial of Service"
                              "Improper Usage"]

@@ -1,7 +1,7 @@
 (ns ctia.test-helpers.generators.schemas.campaign-generators
   (:require [clojure.test.check.generators :as gen]
             [ctia.lib.time :as time]
-            [ctia.schemas
+            [ctim.schemas
              [campaign :refer [NewCampaign StoredCampaign]]
              [common :as schemas-common]]
             [ctia.test-helpers.generators.common

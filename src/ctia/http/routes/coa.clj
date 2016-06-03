@@ -1,10 +1,11 @@
 (ns ctia.http.routes.coa
-  (:require [schema.core :as s]
-            [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-coa]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.schemas.coa :refer [NewCOA StoredCOA realize-coa]]))
+            [ctim.schemas.coa :refer [NewCOA StoredCOA]]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
 
 (defroutes coa-routes
   (context "/coa" []

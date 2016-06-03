@@ -1,58 +1,48 @@
 (ns ctia.stores.es.store
-  (:require
-   [schema.core :as s]
-   [ctia.properties :refer [properties]]
-   [ctia.stores.es.mapping :refer [store-mappings]]
-   [ctia.lib.es.index :refer [ESConnState connect] :as es-index]
-   [ctia.stores.es.judgement :as ju]
-   [ctia.stores.es.feedback  :as fe]
-   [ctia.stores.es.indicator :as in]
-   [ctia.stores.es.ttp :as ttp]
-   [ctia.stores.es.actor :as ac]
-   [ctia.stores.es.campaign :as ca]
-   [ctia.stores.es.coa :as coa]
-   [ctia.stores.es.incident :as inc]
-   [ctia.stores.es.exploit-target :as et]
-   [ctia.stores.es.sighting :as sig]
-   [ctia.stores.es.identity :as id]
-   [ctia.store :refer [IActorStore
-                       IJudgementStore
-                       IIndicatorStore
-                       IExploitTargetStore
-                       IFeedbackStore
-                       ITTPStore
-                       ICampaignStore
-                       ICOAStore
-                       ISightingStore
-                       IIncidentStore
-                       IIdentityStore]]))
+  (:require [ctia.lib.es.index :as es-index :refer [connect ESConnState]]
+            [schema.core :as s]
+            [ctia.stores.es
+             [actor :as ac]
+             [campaign :as ca]
+             [coa :as coa]
+             [exploit-target :as et]
+             [feedback :as fe]
+             [identity :as id]
+             [incident :as inc]
+             [indicator :as in]
+             [judgement :as ju]
+             [mapping :refer [store-mappings]]
+             [sighting :as sig]
+             [ttp :as ttp]]
+            [ctia.store :refer [IActorStore
+                                ICampaignStore
+                                ICOAStore
+                                IExploitTargetStore
+                                IFeedbackStore
+                                IIdentityStore
+                                IIncidentStore
+                                IIndicatorStore
+                                IJudgementStore
+                                ISightingStore
+                                ITTPStore]]))
 
-(defonce es-state (atom nil))
-
-(defn read-store-index-spec []
-  "read es store index config properties, returns an option map"
-  (get-in @properties [:ctia :store :es]))
-
-(s/defn init-store-conn :- ESConnState []
+(s/defn init-store-conn :- ESConnState
   "initiate an ES store connection returns a map containing transport,
    mapping, and the configured index name"
-  (let [props (read-store-index-spec)]
-    {:index (:indexname props)
-     :props props
-     :mapping store-mappings
-     :conn (connect props)}))
+  [{:keys [indexname] :as props}]
 
-(defn init! []
-  (let [state (reset! es-state (init-store-conn))]
-    (es-index/create! (:conn state)
-                      (:index state)
-                      (:mapping state))))
+  {:index indexname
+   :props props
+   :mapping store-mappings
+   :conn (connect props)})
 
-(defn uninitialized? []
-  (nil? @es-state))
-
-(defn shutdown! []
-  (reset! es-state nil))
+(s/defn init! :- ESConnState
+  "initiate an ES Store connection,
+  create the index if needed, returns the es conn state"
+  [props]
+  (let [{:keys [conn index mapping] :as conn-state} (init-store-conn props)]
+    (es-index/create! conn index mapping)
+    conn-state))
 
 (defrecord JudgementStore [state]
   IJudgementStore
@@ -197,7 +187,5 @@
     (sig/handle-delete-sighting state id))
   (list-sightings [_ filter-map params]
     (sig/handle-list-sightings state filter-map params))
-  (list-sightings-by-indicators [_ indicators params]
-    (sig/handle-list-sightings-by-indicators state indicators params))
   (list-sightings-by-observables [_ observables params]
     (sig/handle-list-sightings-by-observables state observables params)))

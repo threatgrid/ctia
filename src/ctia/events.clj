@@ -2,7 +2,7 @@
   (:require [ctia.events.schemas :as es]
             [ctia.lib.time :as time]
             [ctia.lib.async :as la]
-            [ctia.schemas.common :as c]
+            [ctim.schemas.common :as c]
             [clojure.core.async :as a :refer [go-loop alt! chan tap]]
             [schema.core :as s :refer [=>]]
             [schema-tools.core :as st])

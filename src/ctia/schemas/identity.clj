@@ -1,6 +1,6 @@
 (ns ctia.schemas.identity
   (:require [ctia.auth :refer [all-capabilities]]
-            [ctia.schemas.common :as c]
+            [ctim.schemas.common :as c]
             [schema.core :as s]
             [schema-tools.core :as st]))
 

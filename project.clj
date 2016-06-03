@@ -10,9 +10,6 @@
              "-server"]
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
-                 [prismatic/schema "1.0.5"]
-                 [metosin/schema-tools "0.7.0"
-                  :exclusions [prismatic/schema]]
                  [com.rpl/specter "0.9.2"]
                  [org.clojure/core.async "0.2.374"]
                  [clj-http "2.0.1"]
@@ -21,6 +18,13 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [leiningen-core "2.6.1"] ;; For accessing project configuration
                  [com.taoensso/carmine "2.12.2"]
+                 [org.clojure/tools.cli "0.3.5"]
+
+                 ;; Schemas
+                 [prismatic/schema "1.0.5"]
+                 [metosin/schema-tools "0.7.0"
+                  :exclusions [prismatic/schema]]
+                 [threatgrid/ctim "0.1.0-SNAPSHOT"]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]

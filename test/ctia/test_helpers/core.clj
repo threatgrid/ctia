@@ -72,10 +72,15 @@
   (with-properties ["ctia.http.dev-reload" false
                     "ctia.http.min-threads" 9
                     "ctia.http.max-threads" 10
+                    "ctia.http.show.protocol"    "http"
+                    "ctia.http.show.hostname"    "localhost"
+                    "ctia.http.show.port"        "57254"
+                    "ctia.http.show.path-prefix" ""
                     "ctia.nrepl.enabled" false
                     "ctia.hook.es.enabled" false
                     "ctia.hook.redis.enabled" false
-                    "ctia.hook.redis.channel-name" "events-test"]
+                    "ctia.hook.redis.channel-name" "events-test"
+                    ]
     ;; run tests
     (f)))
 
@@ -86,17 +91,17 @@
 
 (defn fixture-properties:atom-store [f]
   ;; Set properties to enable the atom store
-  (with-properties ["ctia.store.actor" "memory"
-                    "ctia.store.feedback" "memory"
-                    "ctia.store.campaign" "memory"
-                    "ctia.store.coa" "memory"
-                    "ctia.store.exploit-target" "memory"
-                    "ctia.store.identity" "memory"
-                    "ctia.store.incident" "memory"
-                    "ctia.store.indicator" "memory"
-                    "ctia.store.judgement" "memory"
-                    "ctia.store.sighting" "memory"
-                    "ctia.store.ttp" "memory"]
+  (with-properties ["ctia.store.actor" "atom"
+                    "ctia.store.campaign" "atom"
+                    "ctia.store.coa" "atom"
+                    "ctia.store.exploit-target" "atom"
+                    "ctia.store.feedback" "atom"
+                    "ctia.store.identity" "atom"
+                    "ctia.store.incident" "atom"
+                    "ctia.store.indicator" "atom"
+                    "ctia.store.judgement" "atom"
+                    "ctia.store.sighting" "atom"
+                    "ctia.store.ttp" "atom"]
     (f)))
 
 (defn fixture-properties:redis-hook [f]

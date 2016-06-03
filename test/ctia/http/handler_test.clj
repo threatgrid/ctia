@@ -6,7 +6,7 @@
             [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-            [ctia.schemas.common :as c]
+            [ctim.schemas.common :as c]
             [ctia.test-helpers.auth :refer [all-capabilities]]
             [ctia.test-helpers.store :refer [deftest-for-each-store]]))
 
