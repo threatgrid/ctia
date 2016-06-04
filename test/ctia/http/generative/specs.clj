@@ -1,6 +1,7 @@
 (ns ctia.http.generative.specs
   (:refer-clojure :exclude [get])
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.generators :as tcg]
             [ctia.test-helpers.core
@@ -75,8 +76,12 @@
       (assert-successful search-result-status)
 
       (and
-       (= stored-sighting-ids
-          search-result-ids)
+       ;; Sometimes the indicator ID is reused multiple times during a
+       ;; test run (with no store cleanup in between).  Use subset? to
+       ;; make sure that extra results don't fail the test.  (See
+       ;; issue #328).
+       (set/subset? stored-sighting-ids
+                    search-result-ids)
        (common= new-indicator
                 (normalize post-indicator)
                 (normalize get-indicator))))))
