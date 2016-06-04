@@ -7,7 +7,7 @@
                                          UpdateEvent
                                          DeleteEvent]]
             [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.generators.schemas :as gen]
+            [ctim.generators.schemas :as gen]
             [clojure.test :refer [deftest is use-fixtures]]
             [schema.core :as s]))
 

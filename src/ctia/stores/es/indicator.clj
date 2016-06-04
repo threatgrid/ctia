@@ -1,6 +1,6 @@
 (ns ctia.stores.es.indicator
-  (:require [ctia.domain.id :as id]
-            [ctia.lib.es.document :refer [search-docs]]
+  (:require [ctia.lib.es.document :refer [search-docs]]
+            [ctim.domain.id :as id]
             [ctim.schemas.indicator :refer [StoredIndicator]]
             [ctia.stores.es.crud :as crud]))
 
