@@ -4,7 +4,6 @@
             [ctia.properties :refer [properties]]
             [ctim.schemas
              [common :refer [Observable]]
-             [identity :refer [Identity]]
              [verdict :refer [Verdict]]]
             [ctia.test-helpers.generators.common :refer [generate-entity]]
             [ctia.test-helpers.generators.schemas
@@ -57,7 +56,6 @@
    :new-exploit-target eg/gen-new-exploit-target
    :new-feedback   fg/gen-new-feedback
    :feedback       fg/gen-feedback
-   :identity       (generate-entity Identity)
    :incident       ig/gen-incident
    :new-incident   ig/gen-new-incident
    :indicator      ng/gen-indicator
