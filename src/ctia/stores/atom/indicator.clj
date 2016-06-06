@@ -1,7 +1,7 @@
 (ns ctia.stores.atom.indicator
-  (:require [ctia.domain.id :as id]
-            [ctia.lib.pagination :refer [list-response-schema]]
+  (:require [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.properties :refer [properties]]
+            [ctim.domain.id :as id]
             [ctim.schemas
              [indicator :refer [StoredIndicator]]
              [judgement :refer [StoredJudgement]]]

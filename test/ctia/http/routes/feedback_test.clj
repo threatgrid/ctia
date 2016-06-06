@@ -1,8 +1,8 @@
 (ns ctia.http.routes.feedback-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
-            [ctia.domain.id :as id]
             [ctia.properties :refer [properties]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]

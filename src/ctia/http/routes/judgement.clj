@@ -2,11 +2,11 @@
   (:require
     [compojure.api.sweet :refer :all]
     [ctia.domain.entities :refer [realize-feedback realize-judgement]]
-    [ctia.domain.id :as id]
     [ctia.flows.crud :as flows]
     [ctia.http.routes.common :refer [paginated-ok PagingParams]]
     [ctia.properties :refer [properties]]
     [ctia.store :refer :all]
+    [ctim.domain.id :as id]
     [ctim.schemas
      [feedback :refer [NewFeedback StoredFeedback]]
      [judgement :refer [NewJudgement StoredJudgement]]

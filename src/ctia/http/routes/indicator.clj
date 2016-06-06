@@ -2,11 +2,11 @@
   (:require
     [compojure.api.sweet :refer :all]
     [ctia.domain.entities :refer [realize-indicator realize-sighting]]
-    [ctia.domain.id :as id]
     [ctia.properties :refer [properties]]
     [ctia.flows.crud :as flows]
     [ctia.http.routes.common :refer [PagingParams paginated-ok]]
     [ctia.store :refer :all]
+    [ctim.domain.id :as id]
     [ctim.schemas
      [campaign :refer [StoredCampaign]]
      [coa :refer [StoredCOA]]

@@ -4,15 +4,19 @@
             [clojure.string :as str]
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.generators :as tcg]
+            [ctia.properties :refer [properties]]
             [ctia.test-helpers.core
              :refer [common= post get encode normalize]]
-            [ctia.test-helpers.generators.schemas :as gen]
-            [ctia.test-helpers.generators.schemas.sighting-generators :as gs]))
+            [ctim.generators.schemas :as gen]
+            [ctim.generators.schemas.sighting-generators :as gs]))
 
 (defn assert-successful
   [status]
   (assert (= 200 status)
           (format "Status %s was not 200" status)))
+
+(defn get-http-params []
+  (get-in @properties [:ctia :http :show]))
 
 (defmacro def-property [name model-type]
   `(def ~name
@@ -39,7 +43,8 @@
 (def-property spec-exploit-target-routes 'exploit-target)
 
 (def spec-indicator-routes
-  (for-all [[new-indicator new-sightings] gen/gen-new-indicator-with-new-sightings]
+  (for-all [[new-indicator new-sightings]
+            (gen/gen-new-indicator-with-new-sightings get-http-params)]
     (let [{post-status :status
            {id :id, :as post-indicator} :parsed-body}
           (post "ctia/indicator"
