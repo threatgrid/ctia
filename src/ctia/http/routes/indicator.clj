@@ -2,11 +2,11 @@
   (:require
     [compojure.api.sweet :refer :all]
     [ctia.domain.entities :refer [realize-indicator realize-sighting]]
-    [ctia.domain.id :as id]
     [ctia.properties :refer [properties]]
     [ctia.flows.crud :as flows]
     [ctia.http.routes.common :refer [PagingParams paginated-ok]]
     [ctia.store :refer :all]
+    [ctim.domain.id :as id]
     [ctim.schemas
      [campaign :refer [StoredCampaign]]
      [coa :refer [StoredCOA]]
@@ -34,11 +34,8 @@
    PagingParams
    {(s/optional-key :sort_by) (s/enum :id :timestamp :description :source :confidence)}))
 
-(defn ->long-id [id-type short-id]
-  (id/long-id
-   (id/short-id->id id-type
-                    short-id
-                    (get-in @properties [:ctia :http :show]))))
+(def ->long-id (id/factory:short-id+type->long-id
+                #(get-in @properties [:ctia :http :show])))
 
 (defroutes indicator-routes
   (context "/indicator" []

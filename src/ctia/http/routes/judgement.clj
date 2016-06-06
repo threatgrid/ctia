@@ -2,11 +2,11 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
-   [ctia.domain.id :as id]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
    [ctia.properties :refer [properties]]
    [ctia.store :refer :all]
+   [ctim.domain.id :as domain-id]
    [ctim.schemas
     [feedback :refer [NewFeedback StoredFeedback]]
     [judgement :refer [NewJudgement StoredJudgement]]
@@ -21,8 +21,8 @@
    {(s/optional-key :sort_by) (s/enum :id :feedback :reason)}))
 
 (def ->id
-  (id/long-id-factory :judgement
-                      #(get-in @properties [:ctia :http :show])))
+  (domain-id/long-id-factory :judgement
+                             #(get-in @properties [:ctia :http :show])))
 
 (defroutes judgement-routes
   (context "/judgement" []

@@ -4,8 +4,8 @@
             [clojure.test.check.generators :as tcg]
             [clojure.test.check.properties :refer [for-all]]
             [ctia.stores.atom.sighting :as sut]
-            [ctia.test-helpers.generators.schemas :as gen]
-            [ctia.test-helpers.generators.schemas.sighting-generators :as sg]))
+            [ctim.generators.schemas :as gen]
+            [ctim.generators.schemas.sighting-generators :as sg]))
 
 (def gen-observable-and-sightings
   (tcg/let [observable (gen/gen-entity :observable)
