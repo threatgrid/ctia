@@ -27,8 +27,7 @@
       :capabilities :create-feedback
       :identity identity
       (ok (flows/create-flow :realize-fn realize-feedback
-                             :store-fn #(write-store :feedback
-                                                     (fn [s] (create-feedback s %)))
+                             :store-fn #(write-store :feedback create-feedback %)
                              :entity-type :feedback
                              :identity identity
                              :entity feedback)))
@@ -41,17 +40,16 @@
 
       (paginated-ok
        (read-store :feedback
-                   (fn [store] (list-feedback store
-                                             (select-keys params [:entity_id])
-                                             (dissoc params :entity_id))))))
+                   list-feedback
+                   (select-keys params [:entity_id])
+                   (dissoc params :entity_id))))
     (GET "/:id" []
       :return (s/maybe StoredFeedback)
       :summary "Gets a Feedback by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
-      (if-let [d (read-store :feedback
-                             (fn [s] (read-feedback s id)))]
+      (if-let [d (read-store :feedback read-feedback id)]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -61,10 +59,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-feedback
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :feedback
-                                                  (fn [s] (read-feedback s %)))
-                             :delete-fn #(write-store :feedback
-                                                      (fn [s] (delete-feedback s %)))
+      (if (flows/delete-flow :get-fn #(read-store :feedback read-feedback %)
+                             :delete-fn #(write-store :feedback delete-feedback %)
                              :entity-type :feedback
                              :entity-id id
                              :identity identity)

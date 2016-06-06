@@ -98,8 +98,10 @@
                        ;;:relation relation-store
                        :identity []}))
 
-(defn write-store [e write-fn]
-  (first (doall (map write-fn (e @stores)))))
+(defn write-store [store write-fn & args]
+  (first (doall (map #(apply write-fn % args) (store @stores)))))
 
-(defn read-store [e read-fn]
-  (read-fn (rand-nth (e @stores))))
+(defn read-store [store read-fn & args]
+  (apply read-fn (rand-nth (store @stores)) args))
+
+

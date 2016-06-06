@@ -18,8 +18,7 @@
       :capabilities :create-campaign
       :identity identity
       (ok (flows/create-flow :realize-fn realize-campaign
-                             :store-fn #(write-store :campaign
-                                                     (fn [s] (create-campaign s %)))
+                             :store-fn #(write-store :campaign create-campaign %)
                              :entity-type :campaign
                              :identity identity
                              :entity campaign)))
@@ -31,11 +30,9 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-store :campaign
-                                                  (fn [s] (read-campaign s %)))
+      (ok (flows/update-flow :get-fn #(read-store :campaign read-campaign %)
                              :realize-fn realize-campaign
-                             :update-fn #(write-store :campaign
-                                                      (fn [s] (update-campaign s (:id %) %)))
+                             :update-fn #(write-store :campaign update-campaign (:id %) %)
                              :entity-type :campaign
                              :entity-id id
                              :identity identity
@@ -46,7 +43,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-campaign
-      (if-let [d (read-store :campaign (fn [s] (read-campaign s id)))]
+      (if-let [d (read-store :campaign read-campaign id)]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -56,10 +53,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-campaign
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :campaign
-                                                  (fn [s] (read-campaign s %)))
-                             :delete-fn #(write-store :campaign
-                                                      (fn [s] (delete-campaign s %)))
+      (if (flows/delete-flow :get-fn #(read-store :campaign read-campaign %)
+                             :delete-fn #(write-store :campaign delete-campaign %)
                              :entity-type :campaign
                              :entity-id id
                              :identity identity)

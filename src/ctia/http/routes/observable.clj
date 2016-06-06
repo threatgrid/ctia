@@ -40,9 +40,8 @@
     :summary "Returns all the Judgements associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-judgements
-    (paginated-ok (read-store :judgement
-                              (fn [s] (list-judgements-by-observable s {:type observable_type
-                                                                       :value observable_value} params)))))
+    (paginated-ok (read-store :judgement list-judgements-by-observable {:type observable_type
+                                                                        :value observable_value} params)))
 
   (GET "/:observable_type/:observable_value/indicators" []
     :tags ["Indicator"]
@@ -56,11 +55,8 @@
     (paginated-ok
      (let [query-res (:data (read-store
                              :judgement
-                             (fn [store]
-                               (list-judgements-by-observable store
-                                                              {:type observable_type
-                                                               :value observable_value}
-                                                              nil))))
+                             list-judgements-by-observable {:type observable_type
+                                                            :value observable_value} nil))
            res (->> query-res
                     (mapcat :indicators)
                     (map :indicator_id)
@@ -82,6 +78,5 @@
     :return (s/maybe [StoredSighting])
     :summary "Returns all the Sightings associated with the specified observable."
     (paginated-ok
-     (read-store :sighting
-                 (fn [s] (list-sightings-by-observables s [{:type observable_type
-                                                           :value observable_value}] params))))))
+     (read-store :sighting list-sightings-by-observables [{:type observable_type
+                                                           :value observable_value}] params))))

@@ -29,31 +29,31 @@
   "return the create function provided an entity key name"
   [k]
   #(write-store k (case k
-                    :actor          (fn [s] (create-actor s %))
-                    :campaign       (fn [s] (create-campaign s %))
-                    :coa            (fn [s] (create-coa s %))
-                    :exploit-target (fn [s] (create-exploit-target s %))
-                    :feedback       (fn [s] (create-feedback s %))
-                    :incident       (fn [s] (create-incident s %))
-                    :indicator      (fn [s] (create-indicator s %))
-                    :judgement      (fn [s] (create-judgement s %))
-                    :sighting       (fn [s] (create-sighting s %))
-                    :ttp            (fn [s] (create-ttp s %)))))
+                    :actor          create-actor
+                    :campaign       create-campaign
+                    :coa            create-coa
+                    :exploit-target create-exploit-target
+                    :feedback       create-feedback
+                    :incident       create-incident
+                    :indicator      create-indicator
+                    :judgement      create-judgement
+                    :sighting       create-sighting
+                    :ttp            create-ttp) %))
 
 (defn read-fn
   "return the create function provided an entity key name"
   [k]
   #(read-store k (case k
-                   :actor          (fn [s] (read-actor s %))
-                   :campaign       (fn [s] (read-campaign s %))
-                   :coa            (fn [s] (read-coa s %))
-                   :exploit-target (fn [s] (read-exploit-target s %))
-                   :feedback       (fn [s] (read-feedback s %))
-                   :incident       (fn [s] (read-incident s %))
-                   :indicator      (fn [s] (read-indicator s %))
-                   :judgement      (fn [s] (read-judgement s %))
-                   :sighting       (fn [s] (read-sighting s %))
-                   :ttp            (fn [s] (read-ttp s %)))))
+                   :actor          read-actor
+                   :campaign       read-campaign
+                   :coa            read-coa
+                   :exploit-target read-exploit-target
+                   :feedback       read-feedback
+                   :incident       read-incident
+                   :indicator      read-indicator
+                   :judgement      read-judgement
+                   :sighting       read-sighting
+                   :ttp            read-ttp) %))
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"

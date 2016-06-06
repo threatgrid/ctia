@@ -20,8 +20,7 @@
       :identity identity
       (if (check-new-sighting sighting)
         (ok (flows/create-flow :realize-fn realize-sighting
-                               :store-fn #(write-store :sighting
-                                                       (fn [s] (create-sighting s %)))
+                               :store-fn #(write-store :sighting create-sighting %)
                                :entity-type :sighting
                                :identity identity
                                :entity sighting))
@@ -35,10 +34,9 @@
       :capabilities :create-sighting
       :identity identity
       (if (check-new-sighting sighting)
-        (ok (flows/update-flow :get-fn #(read-store :sighting (fn [s] (read-sighting s %)))
+        (ok (flows/update-flow :get-fn #(read-store :sighting read-sighting %)
                                :realize-fn realize-sighting
-                               :update-fn #(write-store :sighting
-                                                        (fn [s] (update-sighting s (:id %) %)))
+                               :update-fn #(write-store :sighting update-sighting (:id %) %)
                                :entity-type :sighting
                                :entity-id id
                                :identity identity
@@ -50,7 +48,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-sighting
-      (if-let [d (read-store :sighting (fn [s] (read-sighting s id)))]
+      (if-let [d (read-store :sighting read-sighting id)]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -58,6 +56,6 @@
       :summary "Deletes a Sighting"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-sighting
-      (if (write-store :sighting (fn [s] (delete-sighting s id)))
+      (if (write-store :sighting delete-sighting id)
         (no-content)
         (not-found)))))

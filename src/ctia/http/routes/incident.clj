@@ -20,8 +20,7 @@
       :capabilities :create-incident
       :identity identity
       (ok (flows/create-flow :realize-fn realize-incident
-                             :store-fn #(write-store :incident
-                                                     (fn [s] (create-incident s %)))
+                             :store-fn #(write-store :incident create-incident %)
                              :entity-type :incident
                              :identity identity
                              :entity incident)))
@@ -33,11 +32,9 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-incident
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-store :incident
-                                                  (fn [s] (read-incident s %)))
+      (ok (flows/update-flow :get-fn #(read-store :incident read-incident %)
                              :realize-fn realize-incident
-                             :update-fn #(write-store :incident
-                                                      (fn [s] (update-incident s (:id %) %)))
+                             :update-fn #(write-store :incident update-incident (:id %) %)
                              :entity-type :incident
                              :entity-id id
                              :identity identity
@@ -48,7 +45,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-incident
-      (if-let [d (read-store :incident (fn [s] (read-incident s id)))]
+      (if-let [d (read-store :incident read-incident id)]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -58,10 +55,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-incident
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :incident
-                                                  (fn [s] (read-incident s %)))
-                             :delete-fn #(write-store :incident
-                                                      (fn [s] (delete-incident s %)))
+      (if (flows/delete-flow :get-fn #(read-store :incident read-incident %)
+                             :delete-fn #(write-store :incident delete-incident %)
                              :entity-type :incident
                              :entity-id id
                              :identity identity)

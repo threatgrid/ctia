@@ -190,9 +190,9 @@
     (reset! auth/auth-service orig-auth-srvc)))
 
 (defn set-capabilities! [login role caps]
-  (store/write-store :identity (fn [s] (store/create-identity s {:login login
-                                                                :role role
-                                                                :capabilities caps}))))
+  (store/write-store :identity store/create-identity {:login login
+                                                      :role role
+                                                      :capabilities caps}))
 
 (defn url
   ([path]

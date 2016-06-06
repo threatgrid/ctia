@@ -1,15 +1,15 @@
 (ns ctia.auth.threatgrid
   (:require [cheshire.core :as json]
-            [ctia.auth :as auth]
-            [ctia.lib.set :refer [as-set]]
-            [ctia.properties :refer [properties]]
-            [ctia.schemas.identity :as id]
-            [ctia.store :as store]
             [clj-http.client :as http]
+            [clojure
+             [set :as set]
+             [string :as str]]
             [clojure.core.memoize :as memo]
-            [clojure.set :as set]
-            [clojure.string :as str]
-            [schema.core :as s]))
+            [ctia
+             [auth :as auth]
+             [properties :refer [properties]]
+             [store :as store]]
+            [ctia.lib.set :refer [as-set]]))
 
 (def cache-ttl-ms (* 1000 60 5))
 
@@ -39,7 +39,7 @@
             json/parse-string)))))
 
 (defn lookup-stored-identity [login]
-  (store/read-store :identity (fn [s] (store/read-identity s login))))
+  (store/read-store :identity store/read-identity login))
 
 (defrecord ThreatgridAuthService [whoami-fn lookup-stored-identity-fn]
   auth/IAuth

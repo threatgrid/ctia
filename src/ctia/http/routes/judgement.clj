@@ -1,19 +1,19 @@
 (ns ctia.http.routes.judgement
   (:require
-    [compojure.api.sweet :refer :all]
-    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
-    [ctia.domain.id :as id]
-    [ctia.flows.crud :as flows]
-    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-    [ctia.properties :refer [properties]]
-    [ctia.store :refer :all]
-    [ctim.schemas
-     [feedback :refer [NewFeedback StoredFeedback]]
-     [judgement :refer [NewJudgement StoredJudgement]]
-     [relationships :as rel]]
-    [ring.util.http-response :refer :all]
-    [schema.core :as s]
-    [schema-tools.core :as st]))
+   [compojure.api.sweet :refer :all]
+   [ctia.domain.entities :refer [realize-feedback realize-judgement]]
+   [ctia.domain.id :as id]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.properties :refer [properties]]
+   [ctia.store :refer :all]
+   [ctim.schemas
+    [feedback :refer [NewFeedback StoredFeedback]]
+    [judgement :refer [NewJudgement StoredJudgement]]
+    [relationships :as rel]]
+   [ring.util.http-response :refer :all]
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (s/defschema FeedbacksByJudgementQueryParams
   (st/merge
@@ -35,8 +35,7 @@
       :capabilities :create-judgement
       :identity identity
       (ok (flows/create-flow :realize-fn realize-judgement
-                             :store-fn #(write-store :judgement
-                                                     (fn [s] (create-judgement s %)))
+                             :store-fn #(write-store :judgement create-judgement %)
                              :entity-type :judgement
                              :identity identity
                              :entity judgement)))
@@ -47,9 +46,10 @@
       :header-params [api_key :- s/Str]
       :summary "Adds an Indicator to a Judgement"
       :capabilities :create-judgement
-      (if-let [d (write-store :judgement (fn [store] (add-indicator-to-judgement store
-                                                                                judgement-id
-                                                                                indicator-relationship)))]
+      (if-let [d (write-store :judgement
+                              add-indicator-to-judgement
+                              judgement-id
+                              indicator-relationship)]
         (ok d)
         (not-found)))
     (GET "/:id" []
@@ -58,7 +58,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Gets a Judgement by ID"
       :capabilities :read-judgement
-      (if-let [d (read-store :judgement (fn [s] (read-judgement s id)))]
+      (if-let [d (read-store :judgement read-judgement id)]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -68,10 +68,8 @@
       :summary "Deletes a Judgement"
       :capabilities :delete-judgement
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :judgement
-                                                  (fn [s] (read-judgement s %)))
-                             :delete-fn #(write-store :judgement
-                                                      (fn [s] (delete-judgement s %)))
+      (if (flows/delete-flow :get-fn #(read-store :judgement read-judgement %)
+                             :delete-fn #(write-store :judgement delete-judgement %)
                              :entity-type :judgement
                              :entity-id id
                              :identity identity)
