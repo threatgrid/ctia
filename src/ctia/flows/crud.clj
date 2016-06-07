@@ -4,7 +4,7 @@
   (:require [clojure.tools.logging :as log]
             [ctia.auth :as auth]
             [ctia.flows.hooks :as h]
-            [ctia.events.obj-to-event :refer [to-create-event
+            [ctim.events.obj-to-event :refer [to-create-event
                                               to-update-event
                                               to-delete-event]]
             [ctim.domain.id :as id]

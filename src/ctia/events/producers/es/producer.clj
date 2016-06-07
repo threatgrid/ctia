@@ -1,11 +1,11 @@
 (ns ctia.events.producers.es.producer
   (:require [ctia.events.producers.es.mapping :refer [producer-mappings]]
-            [ctia.events.schemas :refer [Event UpdateTriple]]
             [ctia.lib.es
              [document :refer [create-doc-fn]]
              [index :refer [connect ESConnState]]
              [slice :refer [ensure-slice-created! get-slice-props SliceProperties]]]
             [ctia.properties :refer [properties]]
+            [ctim.events.schemas :refer [Event UpdateTriple]]
             [schema.core :as s]))
 
 (s/defn init-producer-conn :- (s/maybe ESConnState) []

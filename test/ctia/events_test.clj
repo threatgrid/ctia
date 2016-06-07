@@ -1,8 +1,8 @@
 (ns ctia.events-test
   (:require [ctia.events :as e]
-            [ctia.events.obj-to-event :as o2e]
             [ctia.lib.async :as la]
             [ctia.test-helpers.core :as helpers]
+            [ctim.events.obj-to-event :as o2e]
             [clojure.test :as t :refer :all]
             [clojure.core.async :refer [poll! chan tap <!!]]
             [schema.test :as st]))

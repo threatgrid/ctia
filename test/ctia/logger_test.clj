@@ -1,7 +1,7 @@
 (ns ctia.logger-test
   (:require [ctia.events :as e]
-            [ctia.events.obj-to-event :as o2e]
             [ctia.test-helpers.core :as test-helpers]
+            [ctim.events.obj-to-event :as o2e]
             [clojure.test :as t :refer :all]
             [schema.test :as st]
             [clojure.tools.logging :as log]
