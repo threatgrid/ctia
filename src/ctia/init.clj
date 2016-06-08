@@ -100,9 +100,8 @@
     (swap! store/stores assoc entity-key []))
 
   (doseq [[store-key store-list] @store/stores]
-    (let [store-impls (or (-> (get-in @p/properties [:ctia :store store-key])
-                              (clojure.string/split #",")) [])
-          store-impl-keys (map keyword store-impls)
+    (let [store-impls (or (some-> (get-in @p/properties [:ctia :store store-key])
+                                  (clojure.string/split #",")) [])
           store-properties (map (fn [impl]
                                   {:properties (merge (get-in @p/properties [:ctia :store impl :default] {})
                                                       (get-in @p/properties [:ctia :store impl store-key] {}))
@@ -113,7 +112,7 @@
                                    :factory (get-in store-factories [store-key impl]
                                                     #(throw (ex-info (format "Could not configure %s store" impl)
                                                                      {:store-key store-key
-                                                                      :store-type (keyword %)})))}) store-impl-keys)
+                                                                      :store-type (keyword %)})))}) (map keyword store-impls))
 
           store-instances (doall (map (fn [{:keys [builder factory properties]}]
                                         (builder factory properties)) store-properties))]
