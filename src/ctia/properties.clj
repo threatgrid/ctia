@@ -75,7 +75,8 @@
                       "ctia.hook.es.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool})
 
-   (st/optional-keys {"ctia.nrepl.port" s/Int
+   (st/optional-keys {"ctia.events.log" s/Bool
+                      "ctia.nrepl.port" s/Int
                       "ctia.hook.redis.uri" s/Str
                       "ctia.hook.redis.host" s/Str
                       "ctia.hook.redis.port" s/Int

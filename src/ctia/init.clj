@@ -1,15 +1,17 @@
 (ns ctia.init
   (:require [cider.nrepl :refer [cider-nrepl-handler]]
             [clojure.tools.nrepl.server :as nrepl-server]
+            [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
              [events :as e]
-             [logging :as log]
+             [logging :as event-logging]
              [properties :as p]
              [store :as store]]
             [ctia.auth
              [allow-all :as allow-all]
              [threatgrid :as threatgrid]]
+            [ctia.version :as version]
             [ctia.flows.hooks :as h]
             [ctia.http.server :as http-server]
             [ctia.stores.atom.store :as as]
@@ -119,16 +121,36 @@
 
       (swap! store/stores assoc store-key store-instances))))
 
+(defn print-properties []
+  (log/info (with-out-str
+              (do (newline)
+                  (clojure.pprint/pprint @p/properties)))))
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
   [& {:keys [join? silent?]}]
 
   ;; Configure everything
+  (when-not silent?
+    (log/info "starting CTIA version: "
+              (version/current-version)))
+
+  ;; properties init
   (p/init!)
+
+  (when-not silent?
+    (print-properties))
+
+  ;; events init
   (e/init!)
-  (log/init!)
+
+  ;; register event file logging only when enabled
+  (when (get-in @p/properties [:ctia :events :log])
+    (event-logging/init!))
+
   (init-auth-service!)
   (init-store-service!)
+
+  ;; hooks init
   (h/init!)
 
   ;; Start nREPL server
@@ -136,7 +158,7 @@
          nrepl-enabled? :enabled} (get-in @p/properties [:ctia :nrepl])]
     (when (and nrepl-enabled? nrepl-port)
       (when-not silent?
-        (println (str "Starting nREPL server on port " nrepl-port)))
+        (log/info (str "Starting nREPL server on port " nrepl-port)))
       (nrepl-server/start-server :port nrepl-port
                                  :handler cider-nrepl-handler)))
   ;; Start HTTP server
@@ -144,5 +166,5 @@
          enabled? :enabled} (get-in @p/properties [:ctia :http])]
     (when enabled?
       (when-not silent?
-        (println (str "Starting HTTP server on port " http-port)))
+        (log/info (str "Starting HTTP server on port " http-port)))
       (http-server/start! :join? join?))))
