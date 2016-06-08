@@ -170,8 +170,7 @@
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
        (try
-         (init/start-ctia! :join? false
-                           :silent? true)
+         (init/start-ctia! :join? false)
          (test)
          (finally
            ;; explicitly stop the http-server

@@ -127,18 +127,15 @@
                   (clojure.pprint/pprint @p/properties)))))
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
-  [& {:keys [join? silent?]}]
+  [& {:keys [join?]}]
 
-  ;; Configure everything
-  (when-not silent?
-    (log/info "starting CTIA version: "
-              (version/current-version)))
+  (log/info "starting CTIA version: "
+            (version/current-version))
 
   ;; properties init
   (p/init!)
 
-  (when-not silent?
-    (print-properties))
+  (print-properties)
 
   ;; events init
   (e/init!)
@@ -157,14 +154,12 @@
   (let [{nrepl-port :port
          nrepl-enabled? :enabled} (get-in @p/properties [:ctia :nrepl])]
     (when (and nrepl-enabled? nrepl-port)
-      (when-not silent?
-        (log/info (str "Starting nREPL server on port " nrepl-port)))
+      (log/info (str "Starting nREPL server on port " nrepl-port))
       (nrepl-server/start-server :port nrepl-port
                                  :handler cider-nrepl-handler)))
   ;; Start HTTP server
   (let [{http-port :port
          enabled? :enabled} (get-in @p/properties [:ctia :http])]
     (when enabled?
-      (when-not silent?
-        (log/info (str "Starting HTTP server on port " http-port)))
+      (log/info (str "Starting HTTP server on port " http-port))
       (http-server/start! :join? join?))))

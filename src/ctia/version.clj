@@ -7,6 +7,6 @@
 
 (def current-version
   (memoize #(if-let [built-version (io/resource version-file)]
-              built-version
+              (slurp built-version)
               (str (:out (shell/sh "git" "log" "-n" "1" "--pretty=format:%H "))
                    (:out (shell/sh "git" "symbolic-ref" "--short" "HEAD"))))))
