@@ -18,7 +18,7 @@
       :capabilities :create-coa
       :identity identity
       (ok (flows/create-flow :realize-fn realize-coa
-                             :store-fn #(create-coa @coa-store %)
+                             :store-fn #(write-store :coa create-coa %)
                              :entity-type :coa
                              :identity identity
                              :entity coa)))
@@ -30,9 +30,9 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-coa
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-coa @coa-store %)
+      (ok (flows/update-flow :get-fn #(read-store :coa read-coa %)
                              :realize-fn realize-coa
-                             :update-fn #(update-coa @coa-store (:id %) %)
+                             :update-fn #(write-store :coa update-coa (:id %) %)
                              :entity-type :coa
                              :entity-id id
                              :identity identity
@@ -43,7 +43,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-coa
-      (if-let [d (read-coa @coa-store id)]
+      (if-let [d (read-store :coa (fn [s] (read-coa s id)))]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -53,8 +53,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-coa
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-coa @coa-store %)
-                             :delete-fn #(delete-coa @coa-store %)
+      (if (flows/delete-flow :get-fn #(read-store :coa read-coa %)
+                             :delete-fn #(write-store :coa delete-coa %)
                              :entity-type :coa
                              :entity-id id
                              :identity identity)

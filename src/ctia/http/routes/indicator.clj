@@ -48,7 +48,7 @@
       :capabilities :create-indicator
       :identity identity
       (ok (flows/create-flow :realize-fn realize-indicator
-                             :store-fn #(create-indicator @indicator-store %)
+                             :store-fn #(write-store :indicator create-indicator %)
                              :entity-type :indicator
                              :identity identity
                              :entity indicator)))
@@ -60,9 +60,9 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-indicator
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-indicator @indicator-store %)
+      (ok (flows/update-flow :get-fn #(read-store :indicator read-indicator %)
                              :realize-fn realize-indicator
-                             :update-fn #(update-indicator @indicator-store (:id %) %)
+                             :update-fn #(write-store :indicator update-indicator (:id %) %)
                              :entity-type :indicator
                              :entity-id id
                              :identity identity
@@ -73,7 +73,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-indicator
-      (if-let [d (read-indicator @indicator-store id)]
+      (if-let [d (read-store :indicator read-indicator id)]
         (ok d)
         (not-found)))
     (GET "/:id/sightings" []
@@ -82,10 +82,12 @@
       :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all Sightings associated with the Indicator"
       :capabilities #{:read-indicator :list-sightings}
-      (if-let [indicator (read-indicator @indicator-store id)]
-        (paginated-ok (list-sightings @sighting-store
-                                      {:indicators #{{:indicator_id (->long-id :indicator id)}}}
-                                      params))
+      (if-let [indicator (read-store :indicator read-indicator id)]
+        (paginated-ok
+         (read-store :sighting
+                     list-sightings
+                     {:indicators #{{:indicator_id (->long-id :indicator id)}}}
+                     params))
         (not-found)))
     (GET "/title/:title" []
       :return (s/maybe [StoredIndicator])
@@ -95,7 +97,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-indicator
       (paginated-ok
-       (list-indicators @indicator-store {:title title} params))))
+       (read-store :indicator list-indicators {:title title} params))))
   (GET "/judgement/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])
@@ -105,9 +107,10 @@
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
     (paginated-ok
-     (list-indicators @indicator-store
-                      {:judgements #{{:judgement_id (->long-id :judgement id)}}}
-                      params)))
+     (read-store :indicator
+                 list-indicators
+                 {:judgements #{{:judgement_id (->long-id :judgement id)}}}
+                 params)))
   (GET "/campaign/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])
@@ -117,9 +120,10 @@
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
     (paginated-ok
-     (list-indicators @indicator-store
-                      {:related_campaigns #{{:campaign_id (->long-id :campaign id)}}}
-                      params)))
+     (read-store :indicator
+                 list-indicators
+                 {:related_campaigns #{{:campaign_id (->long-id :campaign id)}}}
+                 params)))
   (GET "/coa/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])
@@ -129,9 +133,10 @@
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
     (paginated-ok
-     (list-indicators @indicator-store
-                      {:related_COAs #{{:COA_id (->long-id :coa id)}}}
-                      params)))
+     (read-store :indicator
+                 list-indicators
+                 {:related_COAs #{{:COA_id (->long-id :coa id)}}}
+                 params)))
   (GET "/ttp/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])
@@ -141,9 +146,10 @@
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
     (paginated-ok
-     (list-indicators @indicator-store
-                      {:indicated_TTP #{{:ttp_id (->long-id :ttp id)}}}
-                      params)))
+     (read-store :indicator
+                 list-indicators
+                 {:indicated_TTP #{{:ttp_id (->long-id :ttp id)}}}
+                 params)))
   (GET "/indicator/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])
@@ -153,6 +159,7 @@
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
     (paginated-ok
-     (list-indicators @indicator-store
-                      {:related_indicators #{{:indicator_id (->long-id :indicator id)}}}
-                      params))))
+     (read-store :indicator
+                 list-indicators
+                 {:related_indicators #{{:indicator_id (->long-id :indicator id)}}}
+                 params))))

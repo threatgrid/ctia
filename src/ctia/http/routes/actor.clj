@@ -19,7 +19,8 @@
       :identity identity
       (ok (flows/create-flow :entity-type :actor
                              :realize-fn realize-actor
-                             :store-fn #(create-actor @actor-store %)
+                             :store-fn #(write-store :actor create-actor %)
+                             :entity-type :actor
                              :identity identity
                              :entity actor)))
     (PUT "/:id" []
@@ -30,10 +31,10 @@
       :path-params [id :- s/Str]
       :capabilities :create-actor
       :identity identity
-      (ok (flows/update-flow :entity-type :actor
-                             :get-fn #(read-actor @actor-store %)
+      (ok (flows/update-flow :get-fn #(read-store :actor read-actor %)
                              :realize-fn realize-actor
-                             :update-fn #(update-actor @actor-store (:id %) %)
+                             :update-fn #(write-store :actor update-actor (:id %) %)
+                             :entity-type :actor
                              :entity-id id
                              :identity identity
                              :entity actor)))
@@ -43,7 +44,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-actor
-      (if-let [d (read-actor @actor-store id)]
+      (if-let [d (read-store :actor read-actor id)]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -53,9 +54,9 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-actor
       :identity identity
-      (if (flows/delete-flow :entity-type :actor
-                             :get-fn #(read-actor @actor-store %)
-                             :delete-fn #(delete-actor @actor-store %)
+      (if (flows/delete-flow :get-fn #(read-store :actor read-actor %)
+                             :delete-fn #(write-store :actor delete-actor %)
+                             :entity-type :actor
                              :entity-id id
                              :identity identity)
         (no-content)

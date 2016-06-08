@@ -28,32 +28,32 @@
 (defn create-fn
   "return the create function provided an entity key name"
   [k]
-  (condp = k
-    :actor          #(create-actor @actor-store %)
-    :campaign       #(create-campaign @campaign-store %)
-    :coa            #(create-coa @coa-store %)
-    :exploit-target #(create-exploit-target @exploit-target-store %)
-    :feedback       #(create-feedback @feedback-store %)
-    :incident       #(create-incident @incident-store %)
-    :indicator      #(create-indicator @indicator-store %)
-    :judgement      #(create-judgement @judgement-store %)
-    :sighting       #(create-sighting @sighting-store %)
-    :ttp            #(create-ttp @ttp-store %)))
+  #(write-store k (case k
+                    :actor          create-actor
+                    :campaign       create-campaign
+                    :coa            create-coa
+                    :exploit-target create-exploit-target
+                    :feedback       create-feedback
+                    :incident       create-incident
+                    :indicator      create-indicator
+                    :judgement      create-judgement
+                    :sighting       create-sighting
+                    :ttp            create-ttp) %))
 
 (defn read-fn
   "return the create function provided an entity key name"
   [k]
-  (condp = k
-    :actor          #(read-actor @actor-store %)
-    :campaign       #(read-campaign @campaign-store %)
-    :coa            #(read-coa @coa-store %)
-    :exploit-target #(read-exploit-target @exploit-target-store %)
-    :feedback       #(read-feedback @feedback-store %)
-    :incident       #(read-incident @incident-store %)
-    :indicator      #(read-indicator @indicator-store %)
-    :judgement      #(read-judgement @judgement-store %)
-    :sighting       #(read-sighting @sighting-store %)
-    :ttp            #(read-ttp @ttp-store %)))
+  #(read-store k (case k
+                   :actor          read-actor
+                   :campaign       read-campaign
+                   :coa            read-coa
+                   :exploit-target read-exploit-target
+                   :feedback       read-feedback
+                   :incident       read-incident
+                   :indicator      read-indicator
+                   :judgement      read-judgement
+                   :sighting       read-sighting
+                   :ttp            read-ttp) %))
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"

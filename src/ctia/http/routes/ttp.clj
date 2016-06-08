@@ -19,7 +19,7 @@
       :capabilities :create-ttp
       :identity identity
       (ok (flows/create-flow :realize-fn realize-ttp
-                             :store-fn #(create-ttp @ttp-store %)
+                             :store-fn #(write-store :ttp create-ttp %)
                              :entity-type :ttp
                              :identity identity
                              :entity ttp)))
@@ -31,9 +31,10 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-ttp
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-ttp @ttp-store %)
+      (ok (flows/update-flow :get-fn #(read-store :ttp
+                                                  (fn [s] (read-ttp s %)))
                              :realize-fn realize-ttp
-                             :update-fn #(update-ttp @ttp-store (:id %) %)
+                             :update-fn #(write-store :ttp update-ttp (:id %) %)
                              :entity-type :ttp
                              :entity-id id
                              :identity identity
@@ -44,7 +45,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-ttp
       :path-params [id :- s/Str]
-      (if-let [d (read-ttp @ttp-store id)]
+      (if-let [d (read-store :ttp
+                             (fn [s] (read-ttp s id)))]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -54,8 +56,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-ttp
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-ttp @ttp-store %)
-                             :delete-fn #(delete-ttp @ttp-store %)
+      (if (flows/delete-flow :get-fn #(read-store :ttp read-ttp %)
+                             :delete-fn #(write-store :ttp delete-ttp %)
                              :entity-type :ttp
                              :entity-id id
                              :identity identity)

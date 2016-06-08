@@ -20,7 +20,7 @@
       :identity identity
       (if (check-new-sighting sighting)
         (ok (flows/create-flow :realize-fn realize-sighting
-                               :store-fn #(create-sighting @sighting-store %)
+                               :store-fn #(write-store :sighting create-sighting %)
                                :entity-type :sighting
                                :identity identity
                                :entity sighting))
@@ -34,9 +34,9 @@
       :capabilities :create-sighting
       :identity identity
       (if (check-new-sighting sighting)
-        (ok (flows/update-flow :get-fn #(read-sighting @sighting-store %)
+        (ok (flows/update-flow :get-fn #(read-store :sighting read-sighting %)
                                :realize-fn realize-sighting
-                               :update-fn #(update-sighting @sighting-store (:id %) %)
+                               :update-fn #(write-store :sighting update-sighting (:id %) %)
                                :entity-type :sighting
                                :entity-id id
                                :identity identity
@@ -48,7 +48,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-sighting
-      (if-let [d (read-sighting @sighting-store id)]
+      (if-let [d (read-store :sighting read-sighting id)]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -56,7 +56,6 @@
       :summary "Deletes a Sighting"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-sighting
-      ;; TODO - Shouldn't this use the delete-flow?
-      (if (delete-sighting @sighting-store id)
+      (if (write-store :sighting delete-sighting id)
         (no-content)
         (not-found)))))

@@ -40,9 +40,8 @@
     :summary "Returns all the Judgements associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-judgements
-    (paginated-ok (list-judgements-by-observable @judgement-store
-                                                 {:type observable_type
-                                                  :value observable_value} params)))
+    (paginated-ok (read-store :judgement list-judgements-by-observable {:type observable_type
+                                                                        :value observable_value} params)))
 
   (GET "/:observable_type/:observable_value/indicators" []
     :tags ["Indicator"]
@@ -54,11 +53,11 @@
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities #{:list-judgements :list-indicators}
     (paginated-ok
-     (let [res (->> (list-judgements-by-observable @judgement-store
-                                                   {:type observable_type
-                                                    :value observable_value}
-                                                   nil)
-                    :data
+     (let [query-res (:data (read-store
+                             :judgement
+                             list-judgements-by-observable {:type observable_type
+                                                            :value observable_value} nil))
+           res (->> query-res
                     (mapcat :indicators)
                     (map :indicator_id)
                     distinct
@@ -78,6 +77,6 @@
     :capabilities :list-sightings
     :return (s/maybe [StoredSighting])
     :summary "Returns all the Sightings associated with the specified observable."
-    (paginated-ok (list-sightings-by-observables @sighting-store
-                                                 [{:type observable_type
-                                                   :value observable_value}] params))))
+    (paginated-ok
+     (read-store :sighting list-sightings-by-observables [{:type observable_type
+                                                           :value observable_value}] params))))
