@@ -86,7 +86,6 @@
                            {:name "Version", :description "Version operations"}]}}}
 
   documentation-routes
-
   (context "/ctia" []
     version-routes
     actor-routes

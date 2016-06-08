@@ -2,25 +2,24 @@
   "ES test helpers"
   (:require [ctia.events.producers.es.producer :as esp]
             [ctia.lib.es.index :as es-index]
-            [ctia.properties :as properties]
             [ctia.store :as store]
             [ctia.test-helpers.core :as h]))
 
-(defn recreate-state-index [state]
-  (when (:conn state)
-    (do (es-index/delete! (:conn state)
-                          (:index state))
+(defn recreate-state-index [{:keys [conn index mapping]}]
+  (when conn
+    (es-index/delete! conn
+                      index)
 
-        (es-index/create! (:conn state)
-                          (:index state)
-                          (:mapping state)))))
+    (es-index/create! conn
+                      index
+                      mapping)))
 
 (defn fixture-recreate-store-indexes [test]
   "walk through all the es stores delete and recreate each store index"
 
   (doseq [store-impls (vals @store/stores)]
-    (doseq [state store-impls]
-      (recreate-state-index (:state state))))
+    (doseq [{:keys [state]} store-impls]
+      (recreate-state-index state)))
   (test))
 
 (defn purge-producer-indexes []
