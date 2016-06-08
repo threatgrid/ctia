@@ -24,7 +24,7 @@
                  [prismatic/schema "1.0.5"]
                  [metosin/schema-tools "0.7.0"
                   :exclusions [prismatic/schema]]
-                 [threatgrid/ctim "0.1.0-SNAPSHOT"]
+                 [threatgrid/ctim "0.1.1"]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]

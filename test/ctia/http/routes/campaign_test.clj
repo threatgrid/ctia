@@ -1,6 +1,7 @@
 (ns ctia.http.routes.campaign-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -49,7 +50,7 @@
             :title "campaign"
             :description "description"
             :tlp "red"
-            :version c/ctia-schema-version
+            :version schema-version
             :campaign_type "anything goes here"
             :intended_effect ["Theft"]
             :indicators [{:indicator_id "indicator-foo"}
@@ -84,7 +85,7 @@
                 :title "campaign"
                 :description "description"
                 :tlp "red"
-                :version c/ctia-schema-version
+                :version schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Theft"]
                 :indicators [{:indicator_id "indicator-foo"}
@@ -142,7 +143,7 @@
                 :title "modified campaign"
                 :description "different description"
                 :tlp "yellow"
-                :version c/ctia-schema-version
+                :version schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Brand Damage"]
                 :indicators [{:indicator_id "indicator-foo"}

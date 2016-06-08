@@ -1,5 +1,6 @@
 (ns ctia.flows.hooks.redis-event-hook-test
   (:require [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
             [ctia.properties.getters :as pg]
@@ -82,7 +83,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
-                          :version c/ctia-schema-version
+                          :version schema-version
                           :disposition 1
                           :disposition_name "Clean"
                           :priority 100
@@ -100,7 +101,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
-                          :version c/ctia-schema-version
+                          :version schema-version
                           :disposition 2
                           :disposition_name "Malicious"
                           :priority 100
@@ -118,7 +119,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
-                          :version c/ctia-schema-version
+                          :version schema-version
                           :disposition 3
                           :disposition_name "Suspicious"
                           :priority 100

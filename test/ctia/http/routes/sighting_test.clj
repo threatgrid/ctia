@@ -1,6 +1,7 @@
 (ns ctia.http.routes.sighting-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -79,7 +80,7 @@
                   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                   :description "a sighting"
                   :tlp "yellow"
-                  :version c/ctia-schema-version
+                  :version schema-version
                   :source "source"
                   :source_device "endpoint.sensor"
                   :confidence "High"
@@ -105,7 +106,7 @@
                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                 :description "updated sighting"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :source "source"
                 :source_device "endpoint.sensor"
                 :confidence "High"

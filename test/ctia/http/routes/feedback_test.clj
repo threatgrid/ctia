@@ -1,6 +1,7 @@
 (ns ctia.http.routes.feedback-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [properties]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
@@ -38,7 +39,7 @@
             :entity_id "judgement-123"
             :type "feedback"
             :reason "false positive"
-            :version c/ctia-schema-version
+            :version schema-version
             :tlp "green"}
            (dissoc feedback :id :created :owner)))
 
@@ -52,7 +53,7 @@
                 :entity_id "judgement-123"
                 :reason "false positive"
                 :type "feedback"
-                :version c/ctia-schema-version
+                :version schema-version
                 :tlp "green"}
                (dissoc feedback :id :created :owner)))))
 
@@ -67,7 +68,7 @@
                  :entity_id "judgement-123"
                  :type "feedback"
                  :reason "false positive"
-                 :version c/ctia-schema-version
+                 :version schema-version
                  :tlp "green"}]
                (map #(dissoc % :id :created :owner) feedbacks)))))
 
