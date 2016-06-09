@@ -101,7 +101,7 @@
           (keys bulk)))
 
 (defn bulk-size [bulk]
-  (reduce + 0 (map count (vals bulk))))
+  (apply + (map count (vals bulk))))
 
 (defn get-bulk-max-size []
   (get-in @properties
@@ -128,7 +128,7 @@
                       :create-ttp}
       :identity login
       (if (> (bulk-size bulk) (get-bulk-max-size))
-        (forbidden (str "Bulk max nb of entities: " (get-bulk-max-size)))
+        (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
         (ok (gen-bulk-from-fn create-entities bulk login))))
     (GET "/" []
       :return (s/maybe StoredBulk)
@@ -166,5 +166,5 @@
                                    :sightings       sightings
                                    :ttps            ttps}))]
         (if (> (bulk-size bulk) (get-bulk-max-size))
-          (forbidden (str "Bulk max nb of entities: " (get-bulk-max-size)))
+          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
           (ok (gen-bulk-from-fn read-entities bulk)))))))

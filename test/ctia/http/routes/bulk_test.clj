@@ -4,14 +4,21 @@
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.auth :refer [all-capabilities]]
-            [ctia.http.routes.bulk :refer [bulk-size gen-bulk-from-fn]]
+            [ctia.http.routes.bulk :refer [bulk-size gen-bulk-from-fn get-bulk-max-size]]
             [ctia.lib.url :refer [encode]]
             [ctia.test-helpers
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]))
 
+
+(defn fixture-properties:small-max-bulk-size [test]
+  ;; Note: These properties may be overwritten by ENV variables
+  (helpers/with-properties ["ctia.http.bulk.max-size" 100]
+    (test)))
+
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+                                    fixture-properties:small-max-bulk-size
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
@@ -206,35 +213,36 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  (helpers/with-properties ["ctia.http.bulk.max-size" 50]
-    #(let [nb 5
-           new-ok-bulk {:actors (map mk-new-actor (range nb))
-                        :campaigns (map mk-new-campaign (range nb))
-                        :coas (map mk-new-coa (range nb))
-                        :exploit-targets (map mk-new-exploi-target (range nb))
-                        :feedbacks (map mk-new-feedback (range nb))
-                        :incidents (map mk-new-incident (range nb))
-                        :indicators (map mk-new-indicator (range nb))
-                        :judgements (map mk-new-judgement (range nb))
-                        :sightings (map mk-new-sighting (range nb))
-                        :ttps (map mk-new-ttp (range nb))}
-           new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 1)))
-                             :campaigns (map mk-new-campaign (range nb))
-                             :coas (map mk-new-coa (range nb))
-                             :exploit-targets (map mk-new-exploi-target (range nb))
-                             :feedbacks (map mk-new-feedback (range nb))
-                             :incidents (map mk-new-incident (range nb))
-                             :indicators (map mk-new-indicator (range nb))
-                             :judgements (map mk-new-judgement (range nb))
-                             :sightings (map mk-new-sighting (range nb))
-                             :ttps (map mk-new-ttp (range nb))}
-           {status-ok :status} (post "ctia/bulk"
-                                     :body new-ok-bulk
-                                     :headers {"api_key" "45c1f5e3f05d0"})
-           {status-too-big :status} (post "ctia/bulk"
-                                          :body new-too-big-bulk
-                                          :headers {"api_key" "45c1f5e3f05d0"})]
-       (testing "POST of right size bulk are accepted"
-         (is (= 200 status-ok)))
-       (testing "POST of too big bulks are rejected"
-         (is (= 403 status-too-big))))))
+  ;; Check changing the properties change the computed bulk max size
+  (is (= 100 (get-bulk-max-size)))
+  (let [nb 10
+        new-ok-bulk {:actors (map mk-new-actor (range nb))
+                     :campaigns (map mk-new-campaign (range nb))
+                     :coas (map mk-new-coa (range nb))
+                     :exploit-targets (map mk-new-exploi-target (range nb))
+                     :feedbacks (map mk-new-feedback (range nb))
+                     :incidents (map mk-new-incident (range nb))
+                     :indicators (map mk-new-indicator (range nb))
+                     :judgements (map mk-new-judgement (range nb))
+                     :sightings (map mk-new-sighting (range nb))
+                     :ttps (map mk-new-ttp (range nb))}
+        new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 1)))
+                          :campaigns (map mk-new-campaign (range nb))
+                          :coas (map mk-new-coa (range nb))
+                          :exploit-targets (map mk-new-exploi-target (range nb))
+                          :feedbacks (map mk-new-feedback (range nb))
+                          :incidents (map mk-new-incident (range nb))
+                          :indicators (map mk-new-indicator (range nb))
+                          :judgements (map mk-new-judgement (range nb))
+                          :sightings (map mk-new-sighting (range nb))
+                          :ttps (map mk-new-ttp (range nb))}
+        {status-ok :status} (post "ctia/bulk"
+                                  :body new-ok-bulk
+                                  :headers {"api_key" "45c1f5e3f05d0"})
+        {status-too-big :status} (post "ctia/bulk"
+                                       :body new-too-big-bulk
+                                       :headers {"api_key" "45c1f5e3f05d0"})]
+    (testing "POST of right size bulk are accepted"
+      (is (= 200 status-ok)))
+    (testing "POST of too big bulks are rejected"
+      (is (= 400 status-too-big)))))
