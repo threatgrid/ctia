@@ -121,7 +121,11 @@
 
       (swap! store/stores assoc store-key store-instances))))
 
-(defn print-properties []
+(defn log-properties []
+  (log/debug (with-out-str
+               (do (newline)
+                   (clojure.pprint/pprint (p/debug-properties-by-source)))))
+
   (log/info (with-out-str
               (do (newline)
                   (clojure.pprint/pprint @p/properties)))))
@@ -135,7 +139,7 @@
   ;; properties init
   (p/init!)
 
-  (print-properties)
+  (log-properties)
 
   ;; events init
   (e/init!)
