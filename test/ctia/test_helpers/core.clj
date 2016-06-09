@@ -79,9 +79,13 @@
                     "ctia.nrepl.enabled" false
                     "ctia.hook.es.enabled" false
                     "ctia.hook.redis.enabled" false
-                    "ctia.hook.redis.channel-name" "events-test"
-                    ]
+                    "ctia.hook.redis.channel-name" "events-test"]
     ;; run tests
+    (f)))
+
+(defn fixture-properties:events-logging [f]
+  ;; Set properties to enable events file logging
+  (with-properties ["ctia.events.log" "true"]
     (f)))
 
 (defn fixture-property [prop val]
@@ -166,8 +170,7 @@
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
        (try
-         (init/start-ctia! :join? false
-                           :silent? true)
+         (init/start-ctia! :join? false)
          (test)
          (finally
            ;; explicitly stop the http-server

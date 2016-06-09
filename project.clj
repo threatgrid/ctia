@@ -6,6 +6,7 @@
 
   :jvm-opts [ "-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
              "-Djava.awt.headless=true"
+             "-Dlog.console.threshold=INFO"
              "-XX:MaxPermSize=256m" ;; recommended permgen size
              "-server"]
   :dependencies [[org.clojure/clojure "1.7.0"]
@@ -86,7 +87,8 @@
                    :resource-paths ["model"
                                     "test/resources"]}
 
-             :test {:dependencies [[cheshire "5.5.0"]
+             :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
+                    :dependencies [[cheshire "5.5.0"]
                                    [com.h2database/h2 "1.4.191"]
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.6"]
