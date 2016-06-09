@@ -5,6 +5,7 @@
             [ctia.flows.crud :as flows]
             [ctia.lib.keyword :refer [singular]]
             [ctia.schemas.bulk :refer [BulkRefs NewBulk StoredBulk]]
+            [ctia.properties :refer [properties]]
             [ctia.store :refer :all]
             [ctim.schemas.common :as c]
             [ring.util.http-response :refer :all]
@@ -99,6 +100,14 @@
           {}
           (keys bulk)))
 
+(defn bulk-size [bulk]
+  (reduce + 0 (map count (vals bulk))))
+
+(defn get-bulk-max-size []
+  (get-in @properties
+          [:ctia :http :bulk :max-size]
+          2000))
+
 (defroutes bulk-routes
   (context "/bulk" []
     :tags ["Bulk"]
@@ -118,7 +127,9 @@
                       :create-sighting
                       :create-ttp}
       :identity login
-      (ok (gen-bulk-from-fn create-entities bulk login)))
+      (if (> (bulk-size bulk) (get-bulk-max-size))
+        (forbidden (str "Bulk max nb of entities: " (get-bulk-max-size)))
+        (ok (gen-bulk-from-fn create-entities bulk login))))
     (GET "/" []
       :return (s/maybe StoredBulk)
       :summary "Gets many entities at once"
@@ -154,4 +165,6 @@
                                    :judgements      judgements
                                    :sightings       sightings
                                    :ttps            ttps}))]
-        (ok (gen-bulk-from-fn read-entities bulk))))))
+        (if (> (bulk-size bulk) (get-bulk-max-size))
+          (forbidden (str "Bulk max nb of entities: " (get-bulk-max-size)))
+          (ok (gen-bulk-from-fn read-entities bulk)))))))
