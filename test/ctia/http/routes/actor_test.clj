@@ -1,6 +1,7 @@
 (ns ctia.http.routes.actor-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -52,7 +53,7 @@
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :owner "foouser"
-            :version c/ctia-schema-version
+            :version schema-version
             :tlp "green"}
            (dissoc actor
                    :id
@@ -80,7 +81,7 @@
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"
-                :version c/ctia-schema-version
+                :version schema-version
                 :tlp "green"}
                (dissoc actor
                        :id
@@ -122,7 +123,7 @@
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"
-                :version c/ctia-schema-version
+                :version schema-version
                 :tlp "green"}
                (dissoc updated-actor
                        :modified)))))

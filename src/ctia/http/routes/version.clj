@@ -3,7 +3,8 @@
              [io :as io]
              [shell :as shell]]
             [clojure.string :as st]
-            [ctim.schemas.common :refer [VersionInfo ctia-schema-version]]
+            [ctia.domain.entities :refer [schema-version]]
+            [ctim.schemas.common :refer [VersionInfo]]
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [clojure.string :as st]))
@@ -23,7 +24,7 @@
       :return VersionInfo
       :summary "API version details"
       (ok {:base "/ctia"
-           :version ctia-schema-version
+           :version schema-version
            :beta true
            :build (st/replace (current-version) #"\n" "")
            :supported_features []}))))

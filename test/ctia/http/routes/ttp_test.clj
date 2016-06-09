@@ -1,6 +1,7 @@
 (ns ctia.http.routes.ttp-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -36,7 +37,7 @@
            {:type "ttp"
             :title "ttp"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :description "description"
             :ttp_type "foo"
             :indicators [{:indicator_id "indicator-1"}
@@ -60,7 +61,7 @@
                {:type "ttp"
                 :title "ttp"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :description "description"
                 :ttp_type "foo"
                 :indicators [{:indicator_id "indicator-1"}
@@ -97,7 +98,7 @@
                 :created (:created ttp)
                 :title "updated ttp"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :description "updated description"
                 :ttp_type "bar"
                 :indicators [{:indicator_id "indicator-1"}

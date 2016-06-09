@@ -1,6 +1,7 @@
 (ns ctia.http.handler.allow-all-test
   (:refer-clojure :exclude [get])
   (:require [ctia.auth :as auth]
+            [ctia.domain.entities :refer [schema-version]]
             [ctia.http.handler :as handler]
             [ctia.test-helpers.core :as helpers :refer [post get]]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
@@ -37,7 +38,7 @@
             :disposition_name "Malicious"
             :source "test"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :priority 100
             :severity 100
             :confidence "Low"
@@ -61,7 +62,7 @@
                 :disposition_name "Malicious"
                 :source "test"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :priority 100
                 :severity 100
                 :confidence "Low"

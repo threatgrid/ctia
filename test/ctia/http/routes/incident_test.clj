@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require
     [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+    [ctia.domain.entities :refer [schema-version]]
     [ctia.test-helpers.core :refer [delete get post put] :as helpers]
     [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
     [ctia.test-helpers.store :refer [deftest-for-each-store]]
@@ -42,7 +43,7 @@
             :title "incident"
             :description "description"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :confidence "High"
             :categories ["Denial of Service"
                          "Improper Usage"]
@@ -71,7 +72,7 @@
                 :title "incident"
                 :description "description"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :confidence "High"
                 :categories ["Denial of Service"
                              "Improper Usage"]
@@ -115,7 +116,7 @@
                 :title "updated incident"
                 :description "updated description"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :confidence "Low"
                 :categories ["Denial of Service"
                              "Improper Usage"]

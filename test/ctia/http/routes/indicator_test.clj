@@ -1,6 +1,7 @@
 (ns ctia.http.routes.indicator-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
             [ctia.http.routes.indicator :refer [->long-id]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
@@ -49,7 +50,7 @@
             :description "description"
             :producer "producer"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :indicator_type ["C2" "IP Watchlist"]
             :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -80,7 +81,7 @@
                 :description "description"
                 :producer "producer"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :indicator_type ["C2" "IP Watchlist"]
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -114,7 +115,7 @@
                  :description "description"
                  :producer "producer"
                  :tlp "green"
-                 :version c/ctia-schema-version
+                 :version schema-version
                  :indicator_type ["C2" "IP Watchlist"]
                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
@@ -162,7 +163,7 @@
                 :description "updated description"
                 :producer "producer"
                 :tlp "yellow"
-                :version c/ctia-schema-version
+                :version schema-version
                 :indicator_type ["IP Watchlist"]
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
