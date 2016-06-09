@@ -6,9 +6,9 @@
             [clj-time.format :as f]
             [clj-http.client :as http]))
 
-(defn feed-judgements
+(defn transform
   "Extract Judgement objects from a list of TG feed entries"
-  [feed-entries observable-type observable-field & {:keys [confidence source
+  [feed-entries observable-type observable-field source & {:keys [confidence
                                                            priority
                                                            severity
                                                            days-valid
@@ -16,7 +16,6 @@
                                                     :or {confidence "High"
                                                          priority 90
                                                          severity 100
-                                                         source "threatgrid-feed"
                                                          days-valid 30
                                                          disposition 2}}]
   (map
@@ -40,21 +39,12 @@
         }))
    feed-entries))
 
-(defn entries->judgements
-  [entries observable-type observable-field & {:as options}]
-  (apply feed-judgements entries
-         observable-type observable-field options))
-
 (defn feed->judgements
-  [feed]
-  (let [{:keys [entries]
-         {observable-type :type
-          observable-field :field} :observable} feed]
-    (entries->judgements entries observable-type observable-field)))
-
-(defn feed-file->judgements
-  [file observable-type observable-field & {:as options}]
-  (let [entries (json/parse-string (slurp file) true)]
-    (entries->judgements entries observable-type observable-field options)))
-
-;; see feed.clj for usage example
+  [{:keys [entries title]
+    {observable-type :type
+     observable-field :field
+     :as observable} :observable :as feed}]
+  (transform entries
+             observable-type
+             observable-field
+             (str "Threat Grid " title " feed")))
