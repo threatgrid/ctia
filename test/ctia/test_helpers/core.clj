@@ -79,9 +79,13 @@
                     "ctia.nrepl.enabled" false
                     "ctia.hook.es.enabled" false
                     "ctia.hook.redis.enabled" false
-                    "ctia.hook.redis.channel-name" "events-test"
-                    ]
+                    "ctia.hook.redis.channel-name" "events-test"]
     ;; run tests
+    (f)))
+
+(defn fixture-properties:events-logging [f]
+  ;; Set properties to enable events file logging
+  (with-properties ["ctia.events.log" "true"]
     (f)))
 
 (defn fixture-property [prop val]
@@ -102,6 +106,30 @@
                     "ctia.store.judgement" "atom"
                     "ctia.store.sighting" "atom"
                     "ctia.store.ttp" "atom"]
+    (f)))
+
+
+(defn fixture-properties:multi-store [f]
+  ;; Set properties to enable all the stores
+  (with-properties ["ctia.store.es.default.refresh" true
+                    "ctia.store.es.default.uri" "http://192.168.99.100:9200"
+                    "ctia.store.es.default.indexname" "test_ctia"
+                    "ctia.store.sql.judgement.classname"    "org.h2.Driver"
+                    "ctia.store.sql.judgement.subprotocol"  "h2"
+                    "ctia.store.sql.judgement.subname"      "/tmp/ctia-h2-db;DATABASE_TO_UPPER=false"
+                    "ctia.store.sql.judgement.delimiters"   ""
+
+                    "ctia.store.actor" "atom,es"
+                    "ctia.store.campaign" "atom,es"
+                    "ctia.store.coa" "atom,es"
+                    "ctia.store.exploit-target" "atom,es"
+                    "ctia.store.feedback" "atom,es"
+                    "ctia.store.identity" "atom,es"
+                    "ctia.store.incident" "atom,es"
+                    "ctia.store.indicator" "atom,es"
+                    "ctia.store.judgement" "atom,es,sql"
+                    "ctia.store.sighting" "atom,es"
+                    "ctia.store.ttp" "atom,es"]
     (f)))
 
 (defn fixture-properties:redis-hook [f]
@@ -142,8 +170,7 @@
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
        (try
-         (init/start-ctia! :join? false
-                           :silent? true)
+         (init/start-ctia! :join? false)
          (test)
          (finally
            ;; explicitly stop the http-server
@@ -166,10 +193,9 @@
     (reset! auth/auth-service orig-auth-srvc)))
 
 (defn set-capabilities! [login role caps]
-  (store/create-identity @store/identity-store
-                         {:login login
-                          :role role
-                          :capabilities caps}))
+  (store/write-store :identity store/create-identity {:login login
+                                                      :role role
+                                                      :capabilities caps}))
 
 (defn url
   ([path]

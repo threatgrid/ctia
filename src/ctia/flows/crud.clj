@@ -3,13 +3,14 @@
   (:import java.util.UUID)
   (:require [clojure.tools.logging :as log]
             [ctia.auth :as auth]
-            [ctia.domain.id :as id]
             [ctia.flows.hooks :as h]
-            [ctia.events.obj-to-event :refer [to-create-event
+            [ctim.events.obj-to-event :refer [to-create-event
                                               to-update-event
-                                              to-delete-event]]))
+                                              to-delete-event]]
+            [ctim.domain.id :as id]
+            [ring.util.http-response :as http-response]))
 
-(defn find-id
+(defn- find-id
   "Lookup an ID in a given entity.  Parse it, because it might be a
    URL, and return the short form ID.  Returns nil if the ID could not
    be found."
@@ -17,9 +18,23 @@
   (when (seq id)
     (id/str->short-id id)))
 
-(defn make-id
+(defn- make-id
   [entity-type]
   (str (name entity-type) "-" (UUID/randomUUID)))
+
+(defn- find-entity-id [identity entity-type entity prev-entity]
+  (or (find-id prev-entity)
+      (when-let [entity-id (find-id entity)]
+        (when-not (auth/capable? identity :specify-id)
+          (throw (http-response/bad-request!
+                  {:error "Missing capability to specify entity ID"
+                   :entity entity})))
+        (if (id/valid-short-id? entity-id)
+          entity-id
+          (throw (http-response/bad-request!
+                  {:error (format "Invalid entity ID: %s" entity-id)
+                   :entity entity}))))
+      (make-id entity-type)))
 
 (defn- handle-flow
   [& {:keys [flow-type
@@ -31,10 +46,7 @@
              store-fn
              create-event-fn]}]
   (let [login (auth/login identity)
-        entity-id (or (find-id prev-entity)
-                      (when (auth/capable? identity :specify-id)
-                        (find-id entity))
-                      (make-id entity-type))
+        entity-id (find-entity-id identity entity-type entity prev-entity)
         realized (h/apply-hooks :entity (case flow-type
                                           :create (realize-fn entity entity-id login)
                                           :update (realize-fn entity entity-id login prev-entity)

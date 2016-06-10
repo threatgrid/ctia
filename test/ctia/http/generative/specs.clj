@@ -1,17 +1,22 @@
 (ns ctia.http.generative.specs
   (:refer-clojure :exclude [get])
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test.check.properties :refer [for-all]]
             [clojure.test.check.generators :as tcg]
+            [ctia.properties :refer [properties]]
             [ctia.test-helpers.core
              :refer [common= post get encode normalize]]
-            [ctia.test-helpers.generators.schemas :as gen]
-            [ctia.test-helpers.generators.schemas.sighting-generators :as gs]))
+            [ctim.generators.schemas :as gen]
+            [ctim.generators.schemas.sighting-generators :as gs]))
 
 (defn assert-successful
   [status]
   (assert (= 200 status)
           (format "Status %s was not 200" status)))
+
+(defn get-http-params []
+  (get-in @properties [:ctia :http :show]))
 
 (defmacro def-property [name model-type]
   `(def ~name
@@ -38,7 +43,8 @@
 (def-property spec-exploit-target-routes 'exploit-target)
 
 (def spec-indicator-routes
-  (for-all [[new-indicator new-sightings] gen/gen-new-indicator-with-new-sightings]
+  (for-all [[new-indicator new-sightings]
+            (gen/gen-new-indicator-with-new-sightings get-http-params)]
     (let [{post-status :status
            {id :id, :as post-indicator} :parsed-body}
           (post "ctia/indicator"
@@ -75,8 +81,12 @@
       (assert-successful search-result-status)
 
       (and
-       (= stored-sighting-ids
-          search-result-ids)
+       ;; Sometimes the indicator ID is reused multiple times during a
+       ;; test run (with no store cleanup in between).  Use subset? to
+       ;; make sure that extra results don't fail the test.  (See
+       ;; issue #328).
+       (set/subset? stored-sighting-ids
+                    search-result-ids)
        (common= new-indicator
                 (normalize post-indicator)
                 (normalize get-indicator))))))

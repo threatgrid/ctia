@@ -1,6 +1,7 @@
 (ns ctia.http.routes.coa-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -33,7 +34,7 @@
             :title "coa"
             :description "description"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :coa_type "Eradication"
             :objective ["foo" "bar"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -54,7 +55,7 @@
                 :title "coa"
                 :description "description"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :coa_type "Eradication"
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -84,7 +85,7 @@
                 :title "updated coa"
                 :description "updated description"
                 :tlp "white"
-                :version c/ctia-schema-version
+                :version schema-version
                 :coa_type "Hardening"
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"

@@ -6,6 +6,7 @@
 
   :jvm-opts [ "-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
              "-Djava.awt.headless=true"
+             "-Dlog.console.threshold=INFO"
              "-XX:MaxPermSize=256m" ;; recommended permgen size
              "-server"]
   :dependencies [[org.clojure/clojure "1.7.0"]
@@ -24,7 +25,7 @@
                  [prismatic/schema "1.0.5"]
                  [metosin/schema-tools "0.7.0"
                   :exclusions [prismatic/schema]]
-                 [threatgrid/ctim "0.1.0-SNAPSHOT"]
+                 [threatgrid/ctim "0.1.1"]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]
@@ -57,9 +58,11 @@
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
+                   :multi-store :multi-store
                    :disabled :disabled
                    :default #(not= :disabled %)
                    :integration #(or (:es-store %)
+                                     (:multi-store %)
                                      (:integration %)
                                      (:es-filtered-alias %)
                                      (:es-aliased-index %))
@@ -84,7 +87,8 @@
                    :resource-paths ["model"
                                     "test/resources"]}
 
-             :test {:dependencies [[cheshire "5.5.0"]
+             :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
+                    :dependencies [[cheshire "5.5.0"]
                                    [com.h2database/h2 "1.4.191"]
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.6"]

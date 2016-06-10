@@ -1,7 +1,7 @@
 (ns ctia.logger-test
   (:require [ctia.events :as e]
-            [ctia.events.obj-to-event :as o2e]
             [ctia.test-helpers.core :as test-helpers]
+            [ctim.events.obj-to-event :as o2e]
             [clojure.test :as t :refer :all]
             [schema.test :as st]
             [clojure.tools.logging :as log]
@@ -10,6 +10,7 @@
 (use-fixtures :once st/validate-schemas)
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
                                     test-helpers/fixture-properties:atom-store
+                                    test-helpers/fixture-properties:events-logging
                                     test-helpers/fixture-ctia-fast]))
 
 (deftest test-logged

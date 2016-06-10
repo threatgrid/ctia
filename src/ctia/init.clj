@@ -1,15 +1,17 @@
 (ns ctia.init
   (:require [cider.nrepl :refer [cider-nrepl-handler]]
             [clojure.tools.nrepl.server :as nrepl-server]
+            [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
              [events :as e]
-             [logging :as log]
+             [logging :as event-logging]
              [properties :as p]
              [store :as store]]
             [ctia.auth
              [allow-all :as allow-all]
              [threatgrid :as threatgrid]]
+            [ctia.version :as version]
             [ctia.flows.hooks :as h]
             [ctia.http.server :as http-server]
             [ctia.stores.atom.store :as as]
@@ -99,45 +101,72 @@
 
 (defn init-store-service! []
   (store-factory-cleaner)
-  (doseq [[store-name store-atom] store/stores]
-    (let [store-type (keyword (get-in @p/properties [:ctia :store store-name] "none"))
-          store-properties (merge (get-in @p/properties [:ctia :store store-type :default] {})
-                                  (get-in @p/properties [:ctia :store store-type store-name] {}))
-          builder (get-in store-factories [:builder store-type] (fn default-builder [f p] (f)))
-          factory (get-in store-factories
-                          [store-name store-type]
-                          #(throw (ex-info (format "Could not configure %s store"
-                                                   store-type)
-                                           {:store-name store-name
-                                            :store-type store-type})))]
-      (if (= store-type :none)
-        (reset! store-atom nil)
-        (reset! store-atom (builder factory store-properties))))))
+  (doseq [[entity-key impls] @store/stores]
+    (swap! store/stores assoc entity-key []))
 
+  (doseq [[store-key store-list] @store/stores]
+    (let [store-impls (or (some-> (get-in @p/properties [:ctia :store store-key])
+                                  (clojure.string/split #",")) [])
+          store-properties (map (fn [impl]
+                                  {:properties (merge (get-in @p/properties [:ctia :store impl :default] {})
+                                                      (get-in @p/properties [:ctia :store impl store-key] {}))
+
+                                   :builder (get-in store-factories [:builder impl]
+                                                    (fn default-builder [f p] (f)))
+
+                                   :factory (get-in store-factories [store-key impl]
+                                                    #(throw (ex-info (format "Could not configure %s store" impl)
+                                                                     {:store-key store-key
+                                                                      :store-type (keyword %)})))}) (map keyword store-impls))
+
+          store-instances (doall (map (fn [{:keys [builder factory properties]}]
+                                        (builder factory properties)) store-properties))]
+
+      (swap! store/stores assoc store-key store-instances))))
+
+(defn log-properties []
+  (log/debug (with-out-str
+               (do (newline)
+                   (clojure.pprint/pprint (p/debug-properties-by-source)))))
+
+  (log/info (with-out-str
+              (do (newline)
+                  (clojure.pprint/pprint @p/properties)))))
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
-  [& {:keys [join? silent?]}]
+  [& {:keys [join?]}]
 
-  ;; Configure everything
+  (log/info "starting CTIA version: "
+            (version/current-version))
+
+  ;; properties init
   (p/init!)
+
+  (log-properties)
+
+  ;; events init
   (e/init!)
-  (log/init!)
+
+  ;; register event file logging only when enabled
+  (when (get-in @p/properties [:ctia :events :log])
+    (event-logging/init!))
+
   (init-auth-service!)
   (init-store-service!)
+
+  ;; hooks init
   (h/init!)
 
   ;; Start nREPL server
   (let [{nrepl-port :port
          nrepl-enabled? :enabled} (get-in @p/properties [:ctia :nrepl])]
     (when (and nrepl-enabled? nrepl-port)
-      (when-not silent?
-        (println (str "Starting nREPL server on port " nrepl-port)))
+      (log/info (str "Starting nREPL server on port " nrepl-port))
       (nrepl-server/start-server :port nrepl-port
                                  :handler cider-nrepl-handler)))
   ;; Start HTTP server
   (let [{http-port :port
          enabled? :enabled} (get-in @p/properties [:ctia :http])]
     (when enabled?
-      (when-not silent?
-        (println (str "Starting HTTP server on port " http-port)))
+      (log/info (str "Starting HTTP server on port " http-port))
       (http-server/start! :join? join?))))

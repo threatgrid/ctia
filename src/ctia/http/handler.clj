@@ -60,14 +60,16 @@
 
 (defapi api-handler
   {:swagger {:ui "/"
+                                        ;:options {:ui {:jsonEditor true}}
              :spec "/swagger.json"
-             :data {:info {:title "Cisco Threat Intel API "
+             :data {:info {:title "CTIA"
                            :license {:name "All Rights Reserved",
                                      :url ""}
                            :contact {:name "Cisco Security Business Group -- Advanced Threat "
                                      :url "http://github.com/threatgrid/ctia"
                                      :email "cisco-intel-api-support@cisco.com"}
                            :description api-description}
+
                     :tags [{:name "Actor" :description "Actor operations"}
                            {:name "Campaign" :description "Campaign operations"}
                            {:name "COA" :description "COA operations"}
@@ -84,7 +86,6 @@
                            {:name "Version", :description "Version operations"}]}}}
 
   documentation-routes
-
   (context "/ctia" []
     version-routes
     actor-routes

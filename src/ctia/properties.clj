@@ -40,7 +40,7 @@
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
-  (let [configurable-stores (map name (keys store/stores))
+  (let [configurable-stores (map name (keys @store/stores))
         store-names (conj configurable-stores "default")]
     (st/optional-keys
      (reduce merge {}
@@ -69,13 +69,15 @@
                       "ctia.http.show.protocol" s/Str
                       "ctia.http.show.hostname" s/Str
                       "ctia.http.show.path-prefix" s/Str
-                      "ctia.http.show.port" s/Int})
+                      "ctia.http.show.port" s/Int
+                      "ctia.http.bulk.max-size" s/Int})
 
    (st/required-keys {"ctia.nrepl.enabled" s/Bool
                       "ctia.hook.es.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool})
 
-   (st/optional-keys {"ctia.nrepl.port" s/Int
+   (st/optional-keys {"ctia.events.log" s/Bool
+                      "ctia.nrepl.port" s/Int
                       "ctia.hook.redis.uri" s/Str
                       "ctia.hook.redis.host" s/Str
                       "ctia.hook.redis.port" s/Int
@@ -158,15 +160,24 @@
           {}
           properties))
 
+(defn properties-by-source []
+  {:property-files (read-property-files)
+   :system-properties (select-keys (System/getProperties)
+                                   configurable-properties)
+   :env-variables (read-env-variables)})
+
+(defn debug-properties-by-source []
+  (reduce into {}
+          (map (fn [[k v]]
+                 {k (transform v)}) (properties-by-source))))
+
 (defn init!
   "Read a properties file, merge it with system properties, coerce and
    validate it, transform it into a nested map with keyword keys, and
    then store it in memory."
   []
-  (->> (merge (read-property-files)
-              (select-keys (System/getProperties)
-                           configurable-properties)
-              (read-env-variables))
+  (->> (vals (properties-by-source))
+       (apply merge)
        coerce-properties
        transform
        (reset! properties)))

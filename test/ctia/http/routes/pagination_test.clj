@@ -10,7 +10,7 @@
                                  pagination-test-no-sort]]
              [store :refer [deftest-for-each-store]]]
             [ctia.http.routes.indicator :refer [->long-id]]
-            [ctia.test-helpers.generators.schemas :as gs]
+            [ctim.generators.schemas :as gs]
             [ring.util.codec :refer [url-encode]]
             [ctia.lib.url :as url]))
 

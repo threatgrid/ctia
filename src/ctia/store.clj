@@ -90,42 +90,23 @@
   (create-identity [this new-identity])
   (delete-identity [this org-id role]))
 
-;; core model
-(defonce judgement-store (atom nil))
-(defonce indicator-store (atom nil))
-(defonce feedback-store (atom nil))
-(defonce verdict-store (atom nil))
+(defonce stores (atom {:judgement []
+                       :indicator []
+                       :feedback []
+                       :ttp []
+                       :campaign []
+                       :actor []
+                       :coa []
+                       :exploit-target []
+                       :sighting []
+                       :incident []
+                       ;;:relation relation-store
+                       :identity []
+                       :verdict []}))
 
-;; threats
-(defonce ttp-store (atom nil))
-(defonce campaign-store (atom nil))
-(defonce actor-store (atom nil))
-(defonce coa-store (atom nil))
-(defonce exploit-target-store (atom nil))
+(defn write-store [store write-fn & args]
+  (first (doall (map #(apply write-fn % args) (store @stores)))))
 
-;; sightings
-(defonce sighting-store (atom nil))
+(defn read-store [store read-fn & args]
+  (apply read-fn (first (store @stores)) args))
 
-;; incidents
-(defonce incident-store (atom nil))
-
-;; relations
-(defonce relation-store (atom nil))
-
-;; internal
-(defonce identity-store (atom nil))
-
-(def stores
-  {:judgement judgement-store
-   :verdict verdict-store
-   :indicator indicator-store
-   :feedback feedback-store
-   :ttp ttp-store
-   :campaign campaign-store
-   :actor actor-store
-   :coa coa-store
-   :exploit-target exploit-target-store
-   :sighting sighting-store
-   :incident incident-store
-   ;;:relation relation-store
-   :identity identity-store})

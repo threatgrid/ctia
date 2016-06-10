@@ -1,7 +1,7 @@
 (ns ctia.events
-  (:require [ctia.events.schemas :as es]
-            [ctia.lib.time :as time]
+  (:require [ctia.lib.time :as time]
             [ctia.lib.async :as la]
+            [ctim.events.schemas :as es]
             [ctim.schemas.common :as c]
             [clojure.core.async :as a :refer [go-loop alt! chan tap]]
             [schema.core :as s :refer [=>]]

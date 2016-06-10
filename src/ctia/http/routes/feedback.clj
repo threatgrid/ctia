@@ -27,7 +27,7 @@
       :capabilities :create-feedback
       :identity identity
       (ok (flows/create-flow :realize-fn realize-feedback
-                             :store-fn #(create-feedback @feedback-store %)
+                             :store-fn #(write-store :feedback create-feedback %)
                              :entity-type :feedback
                              :identity identity
                              :entity feedback)))
@@ -39,16 +39,17 @@
       :capabilities :read-feedback
 
       (paginated-ok
-       (list-feedback @feedback-store
-                      (select-keys params [:entity_id])
-                      (dissoc params :entity_id))))
+       (read-store :feedback
+                   list-feedback
+                   (select-keys params [:entity_id])
+                   (dissoc params :entity_id))))
     (GET "/:id" []
       :return (s/maybe StoredFeedback)
       :summary "Gets a Feedback by ID"
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
-      (if-let [d (read-feedback @feedback-store id)]
+      (if-let [d (read-store :feedback read-feedback id)]
         (ok d)
         (not-found)))
     (DELETE "/:id" []
@@ -58,8 +59,8 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-feedback
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-feedback @feedback-store %)
-                             :delete-fn #(delete-feedback @feedback-store %)
+      (if (flows/delete-flow :get-fn #(read-store :feedback read-feedback %)
+                             :delete-fn #(write-store :feedback delete-feedback %)
                              :entity-type :feedback
                              :entity-id id
                              :identity identity)

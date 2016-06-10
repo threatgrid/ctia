@@ -9,4 +9,6 @@
 
 (deftest-for-each-store test-read-identity
   (testing "Reading not-found identity returns nil"
-    (is (nil? (store/read-identity @store/identity-store "foo")))))
+    (is (nil? (store/read-store :identity
+                                (fn [store]
+                                  (store/read-identity store "foo")))))))

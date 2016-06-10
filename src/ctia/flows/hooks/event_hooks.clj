@@ -8,7 +8,7 @@
     [ctia.events.producers.es.producer :as esp]
     [ctia.properties :refer [properties]]
     [ctia.properties.getters :as pg]
-    [ctia.store :as store :refer [judgement-store verdict-store]]
+    [ctia.store :as store]
     [ctim.schemas.judgement :as js]
     [ctim.schemas.verdict :as vs]
     [schema.core :as s]))
@@ -72,7 +72,7 @@
 (defn starts-with?
   "Added to clojure.string in Clojure 1.8"
   [^String s ^String ss]
-  (.startsWith s ss))
+  (and s (.startsWith s ss)))
 
 (s/defn realize-verdict :- vs/StoredVerdict
   "Realizes a verdict, using the associated judgement ID, if available,
@@ -92,19 +92,15 @@
   (destroy [_]
     :nothing)
   (handle [_ event _]
-    (if (and (judgement? event) @verdict-store)
-      (try
-        (let [{{observable :observable :as judgement} :entity owner :owner} event]
-          (when-let [new-verdict (some-> judgement-store
-                                         deref
-                                         (store/calculate-verdict observable)
-                                         (realize-verdict judgement owner))]
-            (store/create-verdict @verdict-store new-verdict)
-            new-verdict)
-          event)
-        (catch Exception e
-          (.printStackTrace e)))
-      event)))
+    (when (judgement? event)
+      (let [{{observable :observable :as judgement} :entity owner :owner} event]
+        (when-let [new-verdict (some->
+                                (store/read-store :judgement
+                                                  store/calculate-verdict
+                                                  observable)
+                                (realize-verdict judgement owner))]
+          (store/write-store :verdict store/create-verdict new-verdict))))
+    event))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]

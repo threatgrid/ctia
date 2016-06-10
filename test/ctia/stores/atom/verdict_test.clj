@@ -1,6 +1,6 @@
 (ns ctia.stores.atom.verdict-test
   (:require [ctia.stores.atom.store :as as]
-            [ctia.store :as store :refer [verdict-store judgement-store]]
+            [ctia.store :as store]
             [ctia.domain.entities :as entities :refer [realize-verdict realize-judgement]]
             [clojure.test :refer :all]
             [clojure.edn :as edn]
@@ -37,15 +37,15 @@
     (doseq [v verdicts]
       (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name])
             realized-verdict (realize-verdict verdict (:owner v))]
-        (store/create-verdict @verdict-store realized-verdict)))))
+        (store/write-store :verdict store/create-verdict realized-verdict)))))
 
 (deftest read-test
   (let [verdicts (g/sample 5 StoredVerdict)]
     (doseq [v verdicts]
       (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name])
             realized-verdict (realize-verdict verdict (:owner v))
-            {id :id} (store/create-verdict @verdict-store realized-verdict)
-            {created :created :as read-verdict} (store/read-verdict @verdict-store id)]
+            {id :id} (store/write-store :verdict store/create-verdict realized-verdict)
+            {created :created :as read-verdict} (store/read-store :verdict store/read-verdict id)]
         (test-equiv verdict read-verdict)
         (is (> one-second (time-since created)))))))
 
@@ -69,7 +69,7 @@
                                         :headers {"api_key" "45c1f5e3f05d0"})
         {j-id :id :as new-judgement} (edn/read-string body)
         verdict-id (str "verdict-" (subs j-id 10))
-        verdict (store/read-verdict @verdict-store verdict-id)
+        verdict (store/read-store :verdict store/read-verdict verdict-id)
         verdict' (dissoc verdict :created)]
     (is (= {:type "verdict"
             :disposition 3

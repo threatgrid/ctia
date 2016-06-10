@@ -18,6 +18,8 @@
     [schema.core :as s])
   (:import [java.util UUID]))
 
+(def schema-version c/ctim-schema-version)
+
 (defn default-realize-fn [type-name Model StoredModel]
   (s/fn default-realize :- StoredModel
     ([new-object :- Model
@@ -33,7 +35,7 @@
               :id id
               :type type-name
               :owner login
-              :version c/ctia-schema-version
+              :version schema-version
               :created (or (:created prev-object) now)
               :modified now
               :tlp (:tlp new-object (:tlp prev-object c/default-tlp))
@@ -65,7 +67,7 @@
          :created (time/now)
          :owner login
          :tlp (:tlp new-feedback c/default-tlp)
-         :version c/ctia-schema-version))
+         :version schema-version))
 
 (def realize-incident
   (default-realize-fn "incident" NewIncident StoredIncident))
@@ -94,7 +96,7 @@
          :owner login
          :created now
          :tlp (:tlp new-judgement c/default-tlp)
-         :version c/ctia-schema-version
+         :version schema-version
          :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
                                     time/default-expire-date)
                       :start_time (or (get-in new-judgement [:valid_time :start_time])
@@ -129,7 +131,7 @@
             :owner login
             :tlp (:tlp new-sighting
                        (:tlp prev-sighting c/default-tlp))
-            :version c/ctia-schema-version
+            :version schema-version
             :created (or (:created prev-sighting) now)
             :modified now))))
 

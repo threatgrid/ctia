@@ -1,8 +1,9 @@
 (ns ctia.http.routes.judgement-test
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
-            [ctia.domain.id :as id]
+            [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [properties]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -55,7 +56,7 @@
             :confidence "Low"
             :source "test"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :indicators [{:confidence "High"
@@ -83,7 +84,7 @@
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -113,7 +114,7 @@
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
-                :version c/ctia-schema-version
+                :version schema-version
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -197,7 +198,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -229,7 +230,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -260,7 +261,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
-            :version c/ctia-schema-version
+            :version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
