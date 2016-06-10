@@ -74,7 +74,7 @@
   [^String s ^String ss]
   (and s (.startsWith s ss)))
 
-(s/defn realize-verdict :- vs/StoredVerdict
+(s/defn realize-verdict-wrapper :- vs/StoredVerdict
   "Realizes a verdict, using the associated judgement ID, if available,
    to build the verdict ID"
   [verdict :- vs/Verdict
@@ -98,7 +98,7 @@
                                 (store/read-store :judgement
                                                   store/calculate-verdict
                                                   observable)
-                                (realize-verdict judgement owner))]
+                                (realize-verdict-wrapper judgement owner))]
           (store/write-store :verdict store/create-verdict new-verdict))))
     event))
 

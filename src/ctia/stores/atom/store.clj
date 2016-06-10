@@ -120,8 +120,7 @@
   (list-judgements [_ filter-map params]
     (judgement/handle-list-judgements state filter-map params))
   (calculate-verdict [_ observable]
-    (when (and state (seq @state))
-      (judgement/handle-calculate-verdict state observable)))
+    (judgement/handle-calculate-verdict state observable))
   (list-judgements-by-observable [this observable params]
     (list-judgements this {[:observable :type]  (:type observable)
                            [:observable :value] (:value observable)} params))
