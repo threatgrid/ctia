@@ -69,7 +69,8 @@
                       "ctia.http.show.protocol" s/Str
                       "ctia.http.show.hostname" s/Str
                       "ctia.http.show.path-prefix" s/Str
-                      "ctia.http.show.port" s/Int})
+                      "ctia.http.show.port" s/Int
+                      "ctia.http.bulk.max-size" s/Int})
 
    (st/required-keys {"ctia.nrepl.enabled" s/Bool
                       "ctia.hook.es.enabled" s/Bool
