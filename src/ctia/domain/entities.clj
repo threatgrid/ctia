@@ -12,9 +12,11 @@
      [indicator :refer [NewIndicator StoredIndicator]]
      [judgement :refer [NewJudgement StoredJudgement]]
      [sighting :refer [NewSighting StoredSighting]]
-     [ttp :refer [NewTTP StoredTTP]]]
+     [ttp :refer [NewTTP StoredTTP]]
+     [verdict :refer [Verdict StoredVerdict]]]
     [ring.util.http-response :as http-response]
-    [schema.core :as s]))
+    [schema.core :as s])
+  (:import [java.util UUID]))
 
 (def schema-version c/ctim-schema-version)
 
@@ -99,6 +101,19 @@
                                     time/default-expire-date)
                       :start_time (or (get-in new-judgement [:valid_time :start_time])
                                       now)})))
+
+(s/defn realize-verdict :- StoredVerdict
+  ([new-verdict :- Verdict
+    login :- s/Str]
+   (realize-verdict new-verdict (str "verdict-" (UUID/randomUUID)) login))
+  ([new-verdict :- Verdict
+    id :- s/Str
+    login :- s/Str]
+   (let [now (time/now)]
+     (assoc new-verdict
+            :id id
+            :owner login
+            :created now))))
 
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting
