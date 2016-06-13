@@ -1,18 +1,17 @@
 (ns ctia.http.routes.verdict-test
   (:refer-clojure :exclude [get])
-  (:require
-   [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-   [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-   [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-   [ctia.test-helpers.store :refer [deftest-for-each-store]]
-   [ctia.test-helpers.auth :refer [all-capabilities]]))
+  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [get post]]
+             [fake-whoami-service :as whoami-helpers]
+             [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
-
 
 (deftest-for-each-store test-observable-verdict-route
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
@@ -105,7 +104,7 @@
                   :disposition 2
                   :disposition_name "Malicious"
                   :judgement_id (:id judgement-1)}
-                 (dissoc verdict :id :observable :owner :created))))))))
+                 (dissoc verdict :id :observable :owner :created :version))))))))
 
 (deftest-for-each-store test-observable-verdict-route-2
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
@@ -156,5 +155,5 @@
                     :disposition 2
                     :disposition_name "Malicious"
                     :judgement_id (:id judgement)}
-                   (dissoc verdict :id :observable :owner :created)))))))))
+                   (dissoc verdict :id :observable :owner :created :version)))))))))
 

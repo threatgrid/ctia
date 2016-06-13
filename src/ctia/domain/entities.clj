@@ -113,6 +113,7 @@
      (assoc new-verdict
             :id id
             :owner login
+            :version schema-version
             :created now))))
 
 (s/defn realize-sighting :- StoredSighting

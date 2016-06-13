@@ -23,7 +23,7 @@
 (defn- test-equiv
   [a b]
   (let [a' (dissoc a :created :id)
-        b' (dissoc b :created :id :owner)]
+        b' (dissoc b :created :id :owner :version)]
     (is (= a' b'))))
 
 (def one-second 1000)
@@ -35,21 +35,19 @@
 (deftest store-test
   (let [verdicts (g/sample 5 StoredVerdict)]
     (doseq [v verdicts]
-      (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name])
+      (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name :observable])
             realized-verdict (realize-verdict verdict (:owner v))]
         (store/write-store :verdict store/create-verdict realized-verdict)))))
 
 (deftest read-test
   (let [verdicts (g/sample 5 StoredVerdict)]
     (doseq [v verdicts]
-      (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name])
+      (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name :observable])
             realized-verdict (realize-verdict verdict (:owner v))
             {id :id} (store/write-store :verdict store/create-verdict realized-verdict)
             {created :created :as read-verdict} (store/read-store :verdict store/read-verdict id)]
         (test-equiv verdict read-verdict)
         (is (> one-second (time-since created)))))))
-
-
 
 (deftest calculate-test
   (test-helpers/set-capabilities! "foouser" "user" all-capabilities)
@@ -70,11 +68,12 @@
         {j-id :id :as new-judgement} (edn/read-string body)
         verdict-id (str "verdict-" (subs j-id 10))
         verdict (store/read-store :verdict store/read-verdict verdict-id)
-        verdict' (dissoc verdict :created)]
+        verdict' (dissoc verdict :created :version)]
     (is (= {:type "verdict"
             :disposition 3
             :judgement_id j-id
             :disposition_name "Suspicious"
             :id verdict-id
+            :observable observable
             :owner "foouser"}
            verdict'))))
