@@ -83,7 +83,7 @@
 (def render-request-with-cache
   "request cache wrapper"
   (memo/ttl
-   #(render-request %)
+   render-request 
    :ttl/threshold cache-ttl-ms))
 
 (defroutes documentation-routes

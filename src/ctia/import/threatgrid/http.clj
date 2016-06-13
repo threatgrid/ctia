@@ -25,7 +25,7 @@
                                    (feed-file-names feed-names dates))]
       (Thread/sleep 1000) ;; a courtesy
       (let [body (:body (http/get (tg-uri feed-file-name) options))]
-        (if (not (body-empty? body))
+        (if-not (body-empty? body)
           (let [file-path (str feed-path "/" feed-file-name)]
             (println "Downloading" file-path)
             (with-open [wrtr (io/writer file-path)]
@@ -36,7 +36,7 @@
   [retries f & args]
   (let [res (try {:value (apply f args)}
                  (catch Exception e
-                   (if (= 0 retries)
+                   (if (zero? retries)
                      (throw e)
                      {:exception e})))]
     (if (:exception res)

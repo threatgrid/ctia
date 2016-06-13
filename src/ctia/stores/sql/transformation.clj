@@ -65,10 +65,10 @@
            other-id-key]}]
   (fn [{:keys [confidence source relationship]
         :as db-relationship}]
-    (-> {relationship-reference-key (get db-relationship other-id-key)}
-        (cond-> confidence   (assoc :confidence confidence)
-                source       (assoc :source source)
-                relationship (assoc :relationship relationship)))))
+    (cond-> {relationship-reference-key (get db-relationship other-id-key)}
+      confidence   (assoc :confidence confidence)
+      source       (assoc :source source)
+      relationship (assoc :relationship relationship))))
 
 (defn schema-relationship->db-relationship
   "Make an fn that takes one ctim.schema style relationship and
@@ -81,11 +81,11 @@
            other-id-key]}]
   (fn [entity-id
        {:keys [confidence source relationship] :as related-structure}]
-    (-> {other-id-key (get related-structure relationship-reference-key)
-         entity-id-key entity-id}
-        (cond-> confidence   (assoc :confidence confidence)
-                source       (assoc :source source)
-                relationship (assoc :relationship relationship)))))
+    (cond-> {other-id-key (get related-structure relationship-reference-key)
+             entity-id-key entity-id}
+      confidence   (assoc :confidence confidence)
+      source       (assoc :source source)
+      relationship (assoc :relationship relationship))))
 
 (defn entities->db-relationships
   ([relationship-description]

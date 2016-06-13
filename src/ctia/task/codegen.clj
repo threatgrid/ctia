@@ -61,8 +61,8 @@
   (println "starting CTIA...")
   (start-ctia! :join? false)
   (when-not (.exists (io/file local-jar-uri))
-    (do (println "downloading swagger-codegen" codegen-version "...")
-        (exec-command "curl" "-o" local-jar-uri jar-uri))))
+    (println "downloading swagger-codegen" codegen-version "...")
+    (exec-command "curl" "-o" local-jar-uri jar-uri)))
 
 (defn base-command
   "base command for all languages"

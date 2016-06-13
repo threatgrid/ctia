@@ -132,7 +132,7 @@
                     (k/fields :disposition [:id :judgement_id] :disposition_name)
                     (k/where {:observable_type type
                               :observable_value value})
-                    (k/where (or (= :valid_time_end_time nil)
+                    (k/where (or (nil? :valid_time_end_time)
                                  (> :valid_time_end_time (time/sql-now))))
                     (k/order :priority :DESC)
                     (k/order :disposition)

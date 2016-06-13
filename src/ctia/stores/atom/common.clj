@@ -82,15 +82,14 @@
      filter-map :- {s/Any s/Any}]
 
     (when-not (empty? filter-map)
-      (into []
-            (filter (fn [model]
-                      (every? (fn [[k v]]
-                                (let [found-v (if (sequential? k)
-                                                (get-in model k ::not-found)
-                                                (get model k ::not-found))]
-                                  (match? found-v v)))
-                              filter-map))
-                    (vals (deref state)))))))
+      (vec (filter (fn [model]
+                     (every? (fn [[k v]]
+                               (let [found-v (if (sequential? k)
+                                               (get-in model k ::not-found)
+                                               (get model k ::not-found))]
+                                 (match? found-v v)))
+                             filter-map))
+                   (vals (deref state)))))))
 
 
 
