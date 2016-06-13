@@ -4,10 +4,13 @@
     [ctia.events :as events]
     [ctia.flows.hook-protocol :refer [Hook]]
     [ctia.lib.redis :as lr]
+    [ctia.domain.entities :as entities]
     [ctia.events.producers.es.producer :as esp]
     [ctia.properties :refer [properties]]
     [ctia.properties.getters :as pg]
     [ctia.store :as store]
+    [ctim.schemas.judgement :as js]
+    [ctim.schemas.verdict :as vs]
     [schema.core :as s]))
 
 (defrecord ESEventProducer [conn]
@@ -61,8 +64,26 @@
     event))
 
 (defn- judgement?
-  [{t :type :as event}]
+  [{{t :type} :entity :as event}]
   (= "judgement" t))
+
+(def judgement-prefix "judgement-")
+
+(defn starts-with?
+  "Added to clojure.string in Clojure 1.8"
+  [^String s ^String ss]
+  (and s (.startsWith s ss)))
+
+(s/defn realize-verdict-wrapper :- vs/StoredVerdict
+  "Realizes a verdict, using the associated judgement ID, if available,
+   to build the verdict ID"
+  [verdict :- vs/Verdict
+   {id :id :as judgement} :- js/StoredJudgement
+   owner :- s/Str]
+  (letfn [(verdict-id [i] (str "verdict-" (subs i (count judgement-prefix))))]
+    (if (starts-with? id judgement-prefix)
+      (entities/realize-verdict verdict (verdict-id id) owner)
+      (entities/realize-verdict verdict owner))))
 
 (defrecord VerdictGenerator []
   Hook
@@ -72,11 +93,13 @@
     :nothing)
   (handle [_ event _]
     (when (judgement? event)
-      (some-> (:judgement store/stores)
-              deref
-              (store/calculate-verdict event)
-              ;; TODO: store in verdict store. Issue #277
-              ))
+      (let [{{observable :observable :as judgement} :entity owner :owner} event]
+        (when-let [new-verdict (some->
+                                (store/read-store :judgement
+                                                  store/calculate-verdict
+                                                  observable)
+                                (realize-verdict-wrapper judgement owner))]
+          (store/write-store :verdict store/create-verdict new-verdict))))
     event))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}

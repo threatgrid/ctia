@@ -92,8 +92,6 @@
                               filter-map))
                     (vals (deref state)))))))
 
-
-
 (defn list-handler [Model]
   (s/fn :- (list-response-schema Model)
     ([state :- (s/atom {s/Str Model})

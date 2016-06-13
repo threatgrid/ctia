@@ -16,6 +16,12 @@
   (list-judgements-by-observable [this observable params])
   (add-indicator-to-judgement [this judgement-id indicator-relationship]))
 
+(defprotocol IVerdictStore
+  (create-verdict [this new-verdict])
+  (read-verdict [this id])
+  (delete-verdict [this id])
+  (list-verdicts [this filter-map params]))
+
 (defprotocol IIndicatorStore
   (create-indicator [this new-indicator])
   (update-indicator [this id indicator])
@@ -96,12 +102,12 @@
                        :sighting []
                        :incident []
                        ;;:relation relation-store
-                       :identity []}))
+                       :identity []
+                       :verdict []}))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))
 
 (defn read-store [store read-fn & args]
   (apply read-fn (first (store @stores)) args))
-
 

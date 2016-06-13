@@ -88,6 +88,10 @@
     :sql #(do (sql-judgement/init!)
               (ss/->JudgementStore))}
 
+   :verdict
+   {:atom as/->VerdictStore
+    :es es-store/->VerdictStore}
+
    :sighting
    {:atom as/->SightingStore
     :es es-store/->SightingStore}

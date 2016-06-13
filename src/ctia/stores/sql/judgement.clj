@@ -1,5 +1,6 @@
 (ns ctia.stores.sql.judgement
-  (:require [ctia.lib.pagination :as pagination]
+  (:require [clojure.tools.logging :as log]
+            [ctia.lib.pagination :as pagination]
             [ctia.lib.specter.paths :as path]
             [ctia.lib.time :as time]
             [ctia.stores.sql.common :as c]
@@ -56,7 +57,6 @@
 
 (defn sort-select
   [sort_by sort_order judgements]
-
   (let [sorted (sort-by sort_by judgements)]
     (if (= :desc sort_order)
       (reverse sorted)
@@ -127,7 +127,7 @@
                     (k/where {:judgement_id id})))]
      (pos? num-rows-deleted))))
 
-(defn calculate-verdict [{:keys [type value] :as _observable_}]
+(defn calculate-verdict [{:keys [type value] :as observable}]
   (some-> (k/select @judgement
                     (k/fields :disposition [:id :judgement_id] :disposition_name)
                     (k/where {:observable_type type
@@ -139,7 +139,8 @@
                     (k/order :valid_time_start_time)
                     (k/limit 1))
           first
-          (merge {:type "verdict"})))
+          (merge {:type "verdict"
+                  :observable observable})))
 
 (defn create-judgement-indicator [judgement-id indicator-rel]
   (when (seq (k/select @judgement (k/where {:id judgement-id})))

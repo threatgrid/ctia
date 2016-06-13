@@ -11,7 +11,8 @@
              [indicator :as indicator]
              [judgement :as judgement]
              [sighting :as sighting]
-             [ttp :as ttp]]))
+             [ttp :as ttp]
+             [verdict :as verdict]]))
 
 (defrecord ActorStore [state]
   IActorStore
@@ -127,6 +128,17 @@
     (judgement/handle-add-indicator-to-judgement state
                                                  judgement-id
                                                  indicator-rel)))
+
+(defrecord VerdictStore [state]
+  IVerdictStore
+  (create-verdict [_ new-verdict]
+    (verdict/handle-create state new-verdict))
+  (read-verdict [_ id]
+    (verdict/handle-read state id))
+  (delete-verdict [_ id]
+    (verdict/handle-delete state id))
+  (list-verdicts [_ filter-map params]
+    (verdict/handle-list state filter-map params)))
 
 (defrecord SightingStore [state]
   ISightingStore

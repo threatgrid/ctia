@@ -72,6 +72,7 @@
   {:type "verdict"
    :disposition (:disposition judgement)
    :judgement_id (:id judgement)
+   :observable (:observable judgement)
    :disposition_name (get disposition-map (:disposition judgement))})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
