@@ -1,29 +1,29 @@
-(ns ctia.stores.atom.verdict-test
-  (:require [ctia.stores.atom.store :as as]
+(ns ctia.stores.verdict-test
+  (:require [clojure
+             [edn :as edn]
+             [test :refer :all]]
+            [ctia.domain.entities :as entities :refer [realize-verdict]]
             [ctia.store :as store]
-            [ctia.domain.entities :as entities :refer [realize-verdict realize-judgement]]
-            [clojure.test :refer :all]
-            [clojure.edn :as edn]
-            [schema.test :as st]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as test-helpers :refer [post]]
+             [fake-whoami-service :as whoami-helpers]
+             [store :refer [deftest-for-each-store]]]
+            [ctim.schemas.verdict :refer [StoredVerdict]]
             [schema-generators.generators :as g]
-            [ctia.test-helpers.core :as test-helpers :refer [post]]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-            [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctim.schemas.verdict :refer [Verdict StoredVerdict]])
-  (:import [java.util Date]))
+            [schema.test :as st])
+  (:import java.util.Date))
 
 (use-fixtures :once (join-fixtures [st/validate-schemas
                                     test-helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each (join-fixtures [whoami-helpers/fixture-reset-state
-                                    test-helpers/fixture-properties:atom-store
-                                    test-helpers/fixture-ctia]))
+(use-fixtures :each (join-fixtures [whoami-helpers/fixture-reset-state]))
 
 (defn- test-equiv
   [a b]
   (let [a' (dissoc a :created :id)
-        b' (dissoc b :created :id :owner)]
+        b' (dissoc b :created :id :owner :version)]
     (is (= a' b'))))
 
 (def one-second 1000)
@@ -32,26 +32,24 @@
   [^Date d]
   (- (.getTime (Date.)) (.getTime d)))
 
-(deftest store-test
+(deftest-for-each-store verdict-store-test
   (let [verdicts (g/sample 5 StoredVerdict)]
     (doseq [v verdicts]
-      (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name])
+      (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name :observable])
             realized-verdict (realize-verdict verdict (:owner v))]
         (store/write-store :verdict store/create-verdict realized-verdict)))))
 
-(deftest read-test
+(deftest-for-each-store verdict-read-test
   (let [verdicts (g/sample 5 StoredVerdict)]
     (doseq [v verdicts]
-      (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name])
+      (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name :observable])
             realized-verdict (realize-verdict verdict (:owner v))
             {id :id} (store/write-store :verdict store/create-verdict realized-verdict)
             {created :created :as read-verdict} (store/read-store :verdict store/read-verdict id)]
         (test-equiv verdict read-verdict)
         (is (> one-second (time-since created)))))))
 
-
-
-(deftest calculate-test
+(deftest-for-each-store verdict-calculate-test
   (test-helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
   (let [observable {:value "http://observation.org/"
@@ -70,11 +68,12 @@
         {j-id :id :as new-judgement} (edn/read-string body)
         verdict-id (str "verdict-" (subs j-id 10))
         verdict (store/read-store :verdict store/read-verdict verdict-id)
-        verdict' (dissoc verdict :created)]
+        verdict' (dissoc verdict :created :version)]
     (is (= {:type "verdict"
             :disposition 3
             :judgement_id j-id
             :disposition_name "Suspicious"
             :id verdict-id
+            :observable observable
             :owner "foouser"}
            verdict'))))

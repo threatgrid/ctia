@@ -104,6 +104,7 @@
                     "ctia.store.incident" "atom"
                     "ctia.store.indicator" "atom"
                     "ctia.store.judgement" "atom"
+                    "ctia.store.verdict" "atom"
                     "ctia.store.sighting" "atom"
                     "ctia.store.ttp" "atom"]
     (f)))
@@ -128,6 +129,7 @@
                     "ctia.store.incident" "atom,es"
                     "ctia.store.indicator" "atom,es"
                     "ctia.store.judgement" "atom,es,sql"
+                    "ctia.store.verdict"  "atom,es"
                     "ctia.store.sighting" "atom,es"
                     "ctia.store.ttp" "atom,es"]
     (f)))

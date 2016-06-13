@@ -48,6 +48,7 @@
                       "ctia.store.incident" "es"
                       "ctia.store.indicator" "es"
                       "ctia.store.judgement" "es"
+                      "ctia.store.verdict" "es"
                       "ctia.store.sighting" "es"
                       "ctia.store.ttp" "es"]
     (test)))

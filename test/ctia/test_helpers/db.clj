@@ -53,6 +53,7 @@
      "ctia.store.incident" "atom"
      "ctia.store.indicator" "atom"
      "ctia.store.judgement" "sql"
+     "ctia.store.verdict" "atom"
      "ctia.store.sighting" "atom"
      "ctia.store.ttp" "atom"
      "ctia.store.sql.judgement.classname"    "org.h2.Driver"
