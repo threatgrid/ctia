@@ -298,6 +298,21 @@
      :created ts
      :modified ts}}})
 
+(def verdict-mapping
+  {"verdict"
+   {:dynamic "strict"
+    :include_in_all false
+    :properties
+    {:id string
+     :type string
+     :version string
+     :judgement_id string
+     :observable observable
+     :disposition {:type "long"}
+     :disposition_name string
+     :owner string
+     :created ts}}})
+
 (def feedback-mapping
   {"feedback"
    {:dynamic "strict"
@@ -579,6 +594,7 @@
 (def store-mappings
   (merge {}
          judgement-mapping
+         verdict-mapping
          indicator-mapping
          ttp-mapping
          feedback-mapping

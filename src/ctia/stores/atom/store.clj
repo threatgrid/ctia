@@ -136,7 +136,9 @@
   (read-verdict [_ id]
     (verdict/handle-read state id))
   (delete-verdict [_ id]
-    (verdict/handle-delete state id)))
+    (verdict/handle-delete state id))
+  (list-verdicts [_ filter-map params]
+    (verdict/handle-list state filter-map params)))
 
 (defrecord SightingStore [state]
   ISightingStore

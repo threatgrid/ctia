@@ -11,6 +11,7 @@
              [incident :as inc]
              [indicator :as in]
              [judgement :as ju]
+             [verdict :as ve]
              [mapping :refer [store-mappings]]
              [sighting :as sig]
              [ttp :as ttp]]
@@ -23,6 +24,7 @@
                                 IIncidentStore
                                 IIndicatorStore
                                 IJudgementStore
+                                IVerdictStore
                                 ISightingStore
                                 ITTPStore]]))
 
@@ -61,6 +63,17 @@
                                       [:observable :value] (:value observable)} params))
   (calculate-verdict [_ observable]
     (ju/handle-calculate-verdict state observable)))
+
+(defrecord VerdictStore [state]
+  IVerdictStore
+  (create-verdict [_ new-verdict]
+    (ve/handle-create-verdict state new-verdict))
+  (read-verdict [_ id]
+    (ve/handle-read-verdict state id))
+  (delete-verdict [_ id]
+    (ve/handle-delete-verdict state id))
+  (list-verdicts [_ filter-map params]
+    (ve/handle-list-verdicts state filter-map params)))
 
 (defrecord FeedbackStore [state]
   IFeedbackStore

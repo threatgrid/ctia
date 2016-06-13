@@ -89,7 +89,8 @@
               (ss/->JudgementStore))}
 
    :verdict
-   {:atom as/->VerdictStore}
+   {:atom as/->VerdictStore
+    :es es-store/->VerdictStore}
 
    :sighting
    {:atom as/->SightingStore

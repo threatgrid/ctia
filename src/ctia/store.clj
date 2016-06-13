@@ -19,7 +19,8 @@
 (defprotocol IVerdictStore
   (create-verdict [this new-verdict])
   (read-verdict [this id])
-  (delete-verdict [this id]))
+  (delete-verdict [this id])
+  (list-verdicts [this filter-map params]))
 
 (defprotocol IIndicatorStore
   (create-indicator [this new-indicator])
