@@ -6,7 +6,7 @@
       "title": "CTIA Statistics",
       "hits": 0,
       "description": "",
-      "panelsJSON": "[{\"col\":5,\"id\":\"Indicators-confidence-breakdown-by-timestamp-per-week\",\"panelIndex\":8,\"row\":25,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Indicator-title-count\",\"panelIndex\":9,\"row\":25,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Overview\",\"panelIndex\":11,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Monthly-count\",\"panelIndex\":12,\"row\":1,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Top-20-domain-counts\",\"panelIndex\":13,\"row\":10,\"size_x\":6,\"size_y\":7,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Observable-type\",\"panelIndex\":14,\"row\":5,\"size_x\":4,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Top-10-domains-per-day\",\"panelIndex\":18,\"row\":10,\"size_x\":6,\"size_y\":7,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Priority-summary\",\"panelIndex\":19,\"row\":3,\"size_x\":3,\"size_y\":2,\"type\":\"visualization\"},{\"col\":10,\"id\":\"Severity-summary\",\"panelIndex\":20,\"row\":3,\"size_x\":3,\"size_y\":2,\"type\":\"visualization\"},{\"col\":9,\"id\":\"Source-per-week\",\"panelIndex\":21,\"row\":25,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Unique-count-of-domains-per-day\",\"panelIndex\":22,\"row\":17,\"size_x\":6,\"size_y\":8,\"type\":\"visualization\"},{\"id\":\"IP-values-for-domains-per-month\",\"type\":\"visualization\",\"panelIndex\":23,\"size_x\":6,\"size_y\":8,\"col\":1,\"row\":17},{\"id\":\"Sighting-count-per-hour\",\"type\":\"visualization\",\"panelIndex\":24,\"size_x\":8,\"size_y\":5,\"col\":5,\"row\":5}]",
+      "panelsJSON": "[{\"col\":5,\"id\":\"Indicators-confidence-breakdown-by-timestamp-per-week\",\"panelIndex\":8,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Indicator-title-count\",\"panelIndex\":9,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Overview\",\"panelIndex\":11,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Monthly-count\",\"panelIndex\":12,\"row\":1,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Observable-type\",\"panelIndex\":14,\"row\":5,\"size_x\":4,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Priority-summary\",\"panelIndex\":19,\"row\":3,\"size_x\":3,\"size_y\":2,\"type\":\"visualization\"},{\"col\":10,\"id\":\"Severity-summary\",\"panelIndex\":20,\"row\":3,\"size_x\":3,\"size_y\":2,\"type\":\"visualization\"},{\"col\":9,\"id\":\"Source-per-week\",\"panelIndex\":21,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"IP-values-for-domains-per-month\",\"panelIndex\":23,\"row\":23,\"size_x\":6,\"size_y\":8,\"type\":\"visualization\"},{\"col\":5,\"id\":\"Sighting-count-per-hour\",\"panelIndex\":24,\"row\":5,\"size_x\":8,\"size_y\":5,\"type\":\"visualization\"},{\"id\":\"Top-20-observable-counts\",\"type\":\"visualization\",\"panelIndex\":25,\"size_x\":6,\"size_y\":7,\"col\":1,\"row\":10},{\"id\":\"Top-10-observables-per-day\",\"type\":\"visualization\",\"panelIndex\":26,\"size_x\":6,\"size_y\":7,\"col\":7,\"row\":10},{\"id\":\"Unique-count-of-observables-per-day\",\"type\":\"visualization\",\"panelIndex\":27,\"size_x\":6,\"size_y\":8,\"col\":7,\"row\":23}]",
       "optionsJSON": "{\"darkTheme\":true}",
       "uiStateJSON": "{\"P-7\":{\"spy\":{\"mode\":{\"fill\":false,\"name\":null}}}}",
       "version": 1,
@@ -24,20 +24,6 @@
     "_source": {
       "title": "Indicators confidence breakdown by timestamp per week",
       "visState": "{\"title\":\"New Visualization\",\"type\":\"pie\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"isDonut\":false},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"indicators.confidence\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"w\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "Top-20-domain-counts",
-    "_type": "visualization",
-    "_source": {
-      "title": "Top 20 domain counts",
-      "visState": "{\"title\":\"Top 20 comain counts\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -80,20 +66,6 @@
     "_source": {
       "title": "Indicator title count",
       "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"type\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"title\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "Unique-count-of-domains-per-day",
-    "_type": "visualization",
-    "_source": {
-      "title": "Unique count of domains per day",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"relations.source.value\",\"customLabel\":\"Unique count of domains\"}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"relations.related.value\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"IP address\"}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -187,11 +159,53 @@
     }
   },
   {
-    "_id": "Top-10-domains-per-day",
+    "_id": "Top-20-observable-counts",
     "_type": "visualization",
     "_source": {
-      "title": "Top 10 domains per day",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"relations.source.value\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
+      "title": "Top 20 observable counts",
+      "visState": "{\"title\":\"Top 20 domain counts\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Top-10-observables-per-day",
+    "_type": "visualization",
+    "_source": {
+      "title": "Top 10 observables per day",
+      "visState": "{\"title\":\"Top 10 domains per day\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"relations.source.value\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "General-overview",
+    "_type": "visualization",
+    "_source": {
+      "title": "General overview",
+      "visState": "{\"title\":\"New Visualization\",\"type\":\"markdown\",\"params\":{\"markdown\":\"General overview\"},\"aggs\":[],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Unique-count-of-observables-per-day",
+    "_type": "visualization",
+    "_source": {
+      "title": "Unique count of observables per day",
+      "visState": "{\"title\":\"Unique count of domains per day\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"relations.source.value\",\"customLabel\":\"Unique count of domains\"}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"relations.related.value\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"IP address\"}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
