@@ -99,4 +99,10 @@
                                      "test/resources"
                                      "test/resources/hooks/JarHook.jar"
                                      "test/resources/hooks/AutoloadHook.jar"
-                                     "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}})
+                                     "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}
+             :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
+                                 [lein-bikeshed "0.3.0"]]}}
+  :plugins [[lein-shell "0.5.0"]]
+  :aliases {"kibit" ["with-profile" "prepush" "kibit"]
+            "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
+            "prepush" ["shell" "./pre-push-check.sh"]})
