@@ -583,7 +583,8 @@
      :source_device string
      :reference string
      :confidence string
-     :observables (assoc observable :type "nested")
+     :observables observable
+     :observables_hash string
      :indicators related-indicators
      :incidents related-incidents
      :relations observed-relation
