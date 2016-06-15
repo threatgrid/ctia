@@ -1,6 +1,7 @@
 (ns ctia.http.handler
   (:require [compojure.api.sweet :refer [context defapi]]
             [ctia.http.middleware.auth :as auth]
+            [ctia.http.exceptions :as ex]
             [ctia.http.routes
              [actor :refer [actor-routes]]
              [bulk :refer [bulk-routes]]
@@ -59,7 +60,12 @@
   <a href='/doc/data_structures.md'>Data structures documentation</a>")
 
 (defapi api-handler
-  {:swagger {:ui "/"
+  {:exceptions
+   {:handlers
+    {:compojure.api.exception/request-parsing ex/request-parsing-handler
+     :compojure.api.exception/request-validation ex/request-validation-handler
+     :compojure.api.exception/response-validation ex/response-validation-handler}}
+   :swagger {:ui "/"
                                         ;:options {:ui {:jsonEditor true}}
              :spec "/swagger.json"
              :data {:info {:title "CTIA"
