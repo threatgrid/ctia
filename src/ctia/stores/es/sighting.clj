@@ -1,5 +1,6 @@
 (ns ctia.stores.es.sighting
-  (:require [ctia.stores.es.crud :as crud]
+  (:require [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.stores.es.crud :as crud]
             [ctim.schemas
              [common :refer [Observable]]
              [sighting :refer [StoredSighting]]]
@@ -14,7 +15,7 @@
 
 (s/defn observable->observable-hash :- s/Str
   [{:keys [type value] :as obsrvable :- Observable}]
-  (str (name type) ":" value))
+  (str type ":" value))
 
 (s/defn stored-sighting->es-stored-sighting :- (s/maybe ESStoredSighting)
   "adds an observables hash to a sighting"
@@ -28,13 +29,15 @@
   [s :- (s/maybe ESStoredSighting)]
   (when s (dissoc s :observables_hash)))
 
-(s/defn handle-create-sighting [state realized] :- StoredSighting
+(s/defn handle-create-sighting :- StoredSighting
+  [state realized]
   (let [create-fn (crud/handle-create :sighting ESStoredSighting)
         transformed (stored-sighting->es-stored-sighting realized)]
     (-> (create-fn state transformed)
         es-stored-sighting->stored-sighting)))
 
-(s/defn handle-read-sighting [state id] :- StoredSighting
+(s/defn handle-read-sighting :- (s/maybe StoredSighting)
+  [state id]
   (let [read-fn (crud/handle-read :sighting ESStoredSighting)]
     (-> (read-fn state id)
         es-stored-sighting->stored-sighting)))
@@ -48,7 +51,8 @@
 
 (def handle-delete-sighting (crud/handle-delete :sighting StoredSighting))
 
-(defn es-paginated-list->paginated-list [paginated-list]
+(s/defn es-paginated-list->paginated-list :- (list-response-schema StoredSighting)
+  [paginated-list :- (list-response-schema ESStoredSighting)]
   (update-in paginated-list
              [:data]
              #(map es-stored-sighting->stored-sighting (es-coerce! %))))
