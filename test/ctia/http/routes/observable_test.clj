@@ -51,6 +51,7 @@
          {sighting-1-id :id} :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-01T00:00:00.000-00:00"
+                     :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "foo"
                      :confidence "Medium"
                      :description "sighting 1"
@@ -64,6 +65,7 @@
          {sighting-2-id :id} :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-01T12:00:00.000-00:00"
+                     :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "bar"
                      :confidence "High"
                      :description "sighting 2"
@@ -110,6 +112,7 @@
          {sighting-3-id :id} :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-04T12:00:00.000-00:00"
+                     :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "spam"
                      :confidence "None"
                      :description "sighting 3"
@@ -156,6 +159,7 @@
          {sighting-4-id :id} :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-05T01:00:00.000-00:00"
+                     :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "foo"
                      :confidence "High"
                      :description "sighting 4"
@@ -169,6 +173,7 @@
          {sighting-5-id :id} :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-05T02:00:00.000-00:00"
+                     :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "bar"
                      :confidence "Low"
                      :description "sighting 5"
@@ -220,8 +225,7 @@
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :tlp "red"
-                :version schema-version
-                :owner "foouser"}
+                :schema_version schema-version}
                {:id judgement-3-id
                 :type "judgement"
                 :observable {:value "10.0.0.1"
@@ -236,10 +240,10 @@
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :tlp "red"
-                :version schema-version
-                :owner "foouser"}}
+                :schema_version schema-version
+                }}
              (->> judgements
-                  (map #(dissoc % :created))
+                  (map #(dissoc % :created :owner))
                   set)))))
 
     (testing "GET /ctia/:observable_type/:observable_value/indicators"
@@ -257,44 +261,48 @@
              :as response}
             (get "ctia/ip/10.0.0.1/sightings"
                  :headers {"api_key" "45c1f5e3f05d0"})]
+        (is (empty? (:errors sightings)) "No errors")
         (is (= 200 status))
         (is (=
              #{{:id sighting-3-id
                 :type "sighting"
                 :timestamp #inst "2016-02-04T12:00:00.000-00:00"
+                :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
+                :count 1
                 :source "spam"
                 :confidence "None"
                 :description "sighting 3"
                 :indicators [{:indicator_id long-indicator-2-id}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
-                :owner "foouser"
-                :version schema-version
+                :schema_version schema-version
                 :tlp "red"}
                {:id sighting-4-id
                 :type "sighting"
                 :timestamp #inst "2016-02-05T01:00:00.000-00:00"
+                :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
+                :count 1
                 :source "foo"
                 :confidence "High"
                 :description "sighting 4"
                 :indicators [{:indicator_id long-indicator-3-id}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
-                :owner "foouser"
-                :version schema-version
+                :schema_version schema-version
                 :tlp "red"}
                {:id sighting-5-id
                 :type "sighting"
                 :timestamp #inst "2016-02-05T02:00:00.000-00:00"
+                :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
+                :count 1
                 :source "bar"
                 :confidence "Low"
                 :description "sighting 5"
                 :indicators [{:indicator_id long-indicator-3-id}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
-                :owner "foouser"
-                :version schema-version
+                :schema_version schema-version
                 :tlp "red"}}
              (->> sightings
-                  (map #(dissoc % :created :modified))
+                  (map #(dissoc % :created :modified :owner))
                   set)))))))

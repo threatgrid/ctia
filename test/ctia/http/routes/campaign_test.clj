@@ -50,7 +50,7 @@
             :title "campaign"
             :description "description"
             :tlp "red"
-            :version schema-version
+            :schema_version schema-version
             :campaign_type "anything goes here"
             :intended_effect ["Theft"]
             :indicators [{:indicator_id "indicator-foo"}
@@ -85,7 +85,7 @@
                 :title "campaign"
                 :description "description"
                 :tlp "red"
-                :version schema-version
+                :schema_version schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Theft"]
                 :indicators [{:indicator_id "indicator-foo"}
@@ -114,7 +114,7 @@
         (let [response (put (str "ctia/campaign/" (:id campaign))
                             :body {:title "modified campaign"
                                    :description "different description"
-                                   :tlp "yellow"
+                                   :tlp "amber"
                                    :campaign_type "anything goes here"
                                    :intended_effect ["Brand Damage"]
                                    :indicators [{:indicator_id "indicator-foo"}
@@ -142,8 +142,8 @@
                 :created (:created campaign)
                 :title "modified campaign"
                 :description "different description"
-                :tlp "yellow"
-                :version schema-version
+                :tlp "amber"
+                :schema_version schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Brand Damage"]
                 :indicators [{:indicator_id "indicator-foo"}

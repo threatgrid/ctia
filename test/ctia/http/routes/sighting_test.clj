@@ -24,10 +24,11 @@
           (post "ctia/sighting"
                 :body {:id "sighting-12345"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
+                       :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :description "a sighting"
-                       :tlp "yellow"
+                       :tlp "amber"
                        :source "source"
-                       :source_device "endpoint.sensor"
+                       :sensor "endpoint.sensor"
                        :confidence "High"
                        :indicators [{:indicator_id "indicator-22334455"}]}
                 :headers {"api_key" api-key})]
@@ -42,10 +43,11 @@
           (post "ctia/sighting"
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
+                       :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :description "a sighting"
-                       :tlp "yellow"
+                       :tlp "amber"
                        :source "source"
-                       :source_device "endpoint.sensor"
+                       :sensor "endpoint.sensor"
                        :confidence "High"
                        :indicators [{:indicator_id "indicator-22334455"}]}
                 :headers {"api_key" api-key})]
@@ -61,13 +63,15 @@
           (post "ctia/sighting"
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
+                       :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :description "a sighting"
-                       :tlp "yellow"
+                       :tlp "amber"
                        :source "source"
-                       :source_device "endpoint.sensor"
+                       :sensor "endpoint.sensor"
                        :confidence "High"
                        :indicators [{:indicator_id "indicator-22334455"}]}
                 :headers {"api_key" api-key})]
+      (is (empty? (:errors sighting)) "No errors when")
       (is (= 200 status))
 
       (testing "GET /ctia/sighting/:id"
@@ -75,41 +79,48 @@
                sighting :parsed-body}
               (get (str "ctia/sighting/" (:id sighting))
                    :headers {"api_key" api-key})]
+          (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
-          (is (= {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
-                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                  :description "a sighting"
-                  :tlp "yellow"
-                  :version schema-version
-                  :source "source"
-                  :source_device "endpoint.sensor"
-                  :confidence "High"
-                  :indicators [{:indicator_id "indicator-22334455"}]}
-                 (dissoc sighting :created :modified :owner :type)))))
-
+          (is (deep= {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                      :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                      :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
+                      :description "a sighting"
+                      :tlp "amber"
+                      :count 1
+                      :schema_version schema-version
+                      :source "source"
+                      :sensor "endpoint.sensor"
+                      :confidence "High"
+                      :indicators [{:indicator_id "indicator-22334455"}]}
+                     (dissoc sighting :created :modified :owner :type)))))
+      
       (testing "PUT /ctia/sighting/:id"
         (let [{status :status
                updated-sighting :parsed-body}
               (put (str "ctia/sighting/" (:id sighting))
                    :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
-                          :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                          :timestamp "2016-02-11T00:40:48.212-00:00"
+                          :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                           :description "updated sighting"
                           :tlp "green"
                           :source "source"
-                          :source_device "endpoint.sensor"
+                          :sensor "endpoint.sensor"
                           :confidence "High"
                           :indicators [{:indicator_id "indicator-22334455"}]}
                    :headers {"api_key" api-key})]
+          (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
           (is (deep=
                {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
                 :description "updated sighting"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :source "source"
-                :source_device "endpoint.sensor"
+                :sensor "endpoint.sensor"
                 :confidence "High"
+                :count 1
                 :indicators [{:indicator_id "indicator-22334455"}]}
                (dissoc updated-sighting :created :modified :owner :type)))))
 
@@ -129,10 +140,11 @@
           (post "ctia/sighting"
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
+                       :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :description "a sighting"
-                       :tlp "yellow"
+                       :tlp "amber"
                        :source "source"
-                       :source_device "endpoint.sensor"
+                       :sensor "endpoint.sensor"
                        :confidence "High"}
                 :headers {"api_key" api-key})]
       (= 422 status))))
@@ -145,10 +157,11 @@
           (post "ctia/sighting"
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
+                       :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :description "a sighting"
-                       :tlp "yellow"
+                       :tlp "amber"
                        :source "source"
-                       :source_device "endpoint.sensor"
+                       :sensor "endpoint.sensor"
                        :confidence "High"
                        :indicators [{:indicator_id "indicator-22334455"}]}
                 :headers {"api_key" api-key})
@@ -156,10 +169,11 @@
           (put "ctia/sighting/sighting-12345"
                :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                       :timestamp "2016-02-11T00:40:48.212-00:00"
+                      :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                       :description "updated sighting"
-                      :tlp "yellow"
+                      :tlp "amber"
                       :source "source"
-                      :source_device "endpoint.sensor"
+                      :sensor "endpoint.sensor"
                       :confidence "High"}
                :headers {"api_key" api-key})]
       (is (= 200 post-status))

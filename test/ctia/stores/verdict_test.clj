@@ -23,7 +23,7 @@
 (defn- test-equiv
   [a b]
   (let [a' (dissoc a :created :id)
-        b' (dissoc b :created :id :owner :version)]
+        b' (dissoc b :created :id :owner :schema_version)]
     (is (= a' b'))))
 
 (def one-second 1000)
@@ -36,14 +36,14 @@
   (let [verdicts (g/sample 5 StoredVerdict)]
     (doseq [v verdicts]
       (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name :observable])
-            realized-verdict (realize-verdict verdict (:owner v))]
+            realized-verdict (realize-verdict verdict "admin")]
         (store/write-store :verdict store/create-verdict realized-verdict)))))
 
 (deftest-for-each-store verdict-read-test
   (let [verdicts (g/sample 5 StoredVerdict)]
     (doseq [v verdicts]
       (let [verdict (select-keys v [:type :disposition :judgement_id :disposition_name :observable])
-            realized-verdict (realize-verdict verdict (:owner v))
+            realized-verdict (realize-verdict verdict "admin")
             {id :id} (store/write-store :verdict store/create-verdict realized-verdict)
             {created :created :as read-verdict} (store/read-store :verdict store/read-verdict id)]
         (test-equiv verdict read-verdict)
@@ -61,19 +61,18 @@
                    :confidence "Low"
                    :severity 100
                    :valid_time {:start_time "1971-01-01T00:00:00.000-00:00"}
-                   :tlp "yellow"}
+                   :tlp "amber"}
         {body :body :as response} (post "ctia/judgement"
                                         :body judgement
                                         :headers {"api_key" "45c1f5e3f05d0"})
         {j-id :id :as new-judgement} (edn/read-string body)
         verdict-id (str "verdict-" (subs j-id 10))
         verdict (store/read-store :verdict store/read-verdict verdict-id)
-        verdict' (dissoc verdict :created :version)]
+        verdict' (dissoc verdict :created :schema_version)]
     (is (= {:type "verdict"
             :disposition 3
             :judgement_id j-id
             :disposition_name "Suspicious"
             :id verdict-id
-            :observable observable
-            :owner "foouser"}
+            :observable observable}
            verdict'))))

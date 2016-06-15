@@ -1,6 +1,6 @@
 (ns ctia.main
   (:gen-class)
-  (:require [ctia.init :refer [start-ctia!]]))
+  (:require [ctia.init :refer [log-properties start-ctia!]]))
 
 (defn -main
   "Application entry point"

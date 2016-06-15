@@ -62,7 +62,7 @@
     :type string
     :references string
     :vendor string
-    :version string
+    :schema_version string
     :service_pack string}})
 
 (def infrastructure
@@ -281,7 +281,7 @@
     {:id string
      :type string
      :tlp string
-     :version string
+     :schema_version string
      :observable observable
      :disposition {:type "long"}
      :disposition_name string
@@ -305,7 +305,7 @@
     :properties
     {:id string
      :type string
-     :version string
+     :schema_version string
      :judgement_id string
      :observable observable
      :disposition {:type "long"}
@@ -321,7 +321,7 @@
     {:id string
      :type string
      :tlp string
-     :version string
+     :schema_version string
      :entity_id string
      :source string
      :feedback {:type "integer"}
@@ -338,7 +338,7 @@
     {:id string
      :type string
      :tlp string
-     :version string
+     :schema_version string
      :short_description all_text
      :valid_time valid-time
      :title all_string
@@ -381,7 +381,7 @@
      :short_description all_text
      :type string
      :tlp string
-     :version string
+     :schema_version string
      :ttp string
      :valid_time valid-time
      :intended_effect string
@@ -406,7 +406,7 @@
     {:id all_string
      :title all_string
      :tlp string
-     :version string
+     :schema_version string
      :description all_text
      :short_description all_text
      :type string
@@ -434,7 +434,7 @@
     {:id all_string
      :type string
      :tlp string
-     :version string
+     :schema_version string
      :title all_string
      :description all_text
      :short_description all_text
@@ -463,7 +463,7 @@
     {:id all_string
      :type string
      :tlp string
-     :version string
+     :schema_version string
      :title all_string
      :description all_text
      :short_description all_text
@@ -488,7 +488,7 @@
     {:id all_string
      :type string
      :tlp string
-     :version string
+     :schema_version string
      :title all_string
      :description all_text
      :short_description all_text
@@ -528,7 +528,7 @@
     {:id all_string
      :type string
      :tlp string
-     :version string
+     :schema_version string
      :title all_string
      :description all_text
      :short_description all_text
@@ -573,14 +573,17 @@
     :include_in_all false
     :properties
     {:type string
-     :id all_string
+     :id string
      :timestamp ts
      :description all_text
+     :short_description all_text
      :tlp string
-     :version string
+     :observed_time valid-time
+     :count {:type "long"}
+     :schema_version string
      :source string
      :source_uri string
-     :source_device string
+     :sensor string
      :reference string
      :confidence string
      :observables (assoc observable :type "nested")
