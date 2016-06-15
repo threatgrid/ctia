@@ -64,7 +64,8 @@
    {:handlers
     {:compojure.api.exception/request-parsing ex/request-parsing-handler
      :compojure.api.exception/request-validation ex/request-validation-handler
-     :compojure.api.exception/response-validation ex/response-validation-handler}}
+     :compojure.api.exception/response-validation ex/response-validation-handler
+     :compojure.api.exception/default ex/default-error-handler}}
    :swagger {:ui "/"
                                         ;:options {:ui {:jsonEditor true}}
              :spec "/swagger.json"
