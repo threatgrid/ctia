@@ -14,13 +14,22 @@
                       index
                       mapping)))
 
+(defn close-client [{:keys [conn]}]
+  "if the connection is native, close the client to avoid oom"
+  (when (instance? org.elasticsearch.client.transport.TransportClient conn)
+    (.close conn)))
+
 (defn fixture-recreate-store-indexes [test]
   "walk through all the es stores delete and recreate each store index"
 
   (doseq [store-impls (vals @store/stores)]
     (doseq [{:keys [state]} store-impls]
       (recreate-state-index state)))
-  (test))
+  (test)
+
+  (doseq [store-impls (vals @store/stores)]
+    (doseq [{:keys [state]} store-impls]
+      (close-client state))))
 
 (defn purge-producer-indexes []
   (let [{:keys [conn index]} (esp/init-producer-conn)]
@@ -36,7 +45,9 @@
 (defn fixture-properties:es-store [test]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.store.es.default.refresh" true
-                      "ctia.store.es.default.uri" "http://192.168.99.100:9200"
+                      "ctia.store.es.default.host" "192.168.99.100"
+                      "ctia.store.es.default.port" "9300"
+                      "ctia.store.es.default.clustername" "elasticsearch"
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.actor" "es"

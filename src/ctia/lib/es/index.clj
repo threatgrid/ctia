@@ -64,7 +64,7 @@
   "create an index, abort if already exists"
   [conn index-name mappings]
   (when-not ((index-exists?-fn conn) conn index-name)
-    ((index-create-fn conn) conn index-name :mappings mappings)))
+    ((index-create-fn conn) conn index-name {:mappings mappings})))
 
 (defn create-alias!
   "create an index alias simple or filtered"

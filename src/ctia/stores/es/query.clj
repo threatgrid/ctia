@@ -11,8 +11,8 @@
            {:must (q/terms :judgements.judgement_id
                            judgement-ids)})]
     (q/filtered
-     :query {:match_all {}}
-     :filter f)))
+     {:query {:match_all {}}
+      :filter f})))
 
 (def unexpired-time-range
   "ES filter that matches objects which
@@ -35,8 +35,8 @@
                  {:term {"observable.value" value}}]})
         time-filter (q/bool {:must unexpired-time-range})]
 
-    (q/filtered :query observable-filter
-                :filter time-filter)))
+    (q/filtered {:query observable-filter
+                 :filter time-filter})))
 
 
 (defn sightings-by-observables-query

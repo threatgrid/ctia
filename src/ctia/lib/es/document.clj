@@ -60,8 +60,8 @@
    index-name
    mapping
    doc
-   :id (:id doc)
-   :refresh refresh?)
+   {:id (:id doc)
+    :refresh refresh?})
   doc)
 
 (defn update-doc
@@ -89,7 +89,7 @@
     index-name
     mapping
     id
-    :refresh refresh?)))
+    {:refresh refresh?})))
 
 (defn params->pagination
   [{:keys [sort_by sort_order offset limit]
@@ -100,7 +100,7 @@
   (merge
    {}
    (when sort_by
-     {:sort [{sort_by sort_order}]})
+     {:sort {sort_by sort_order}})
    (when limit
      {:size limit})
    (when offset
@@ -115,6 +115,7 @@
                          (when filter-map
                            {:query (filter-map->terms-query filter-map)})
                          (select-keys params [:query :sort]))
+
         res (->> ((search-doc-fn conn)
                   conn
                   index-name

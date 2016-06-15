@@ -33,6 +33,7 @@
 
 (defn es-store-impl-properties [store]
   {(str "ctia.store.es." store ".uri") s/Str
+   (str "ctia.store.es." store ".host") s/Str
    (str "ctia.store.es." store ".port") s/Int
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str
