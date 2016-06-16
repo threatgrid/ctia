@@ -26,14 +26,14 @@
 (s/defn obs->hashes :- [s/Str]
   "transform a list of observables into hashes"
   [observables :- [Observable]]
-  (map #(observable->observable-hash %) observables))
+  (map observable->observable-hash observables))
 
 (s/defn stored-sighting->es-stored-sighting :- (s/maybe ESStoredSighting)
   "adds an observables hash to a sighting"
   [{:keys [observables] :as s :- (s/maybe StoredSighting)}]
   (when s
     (assoc s :observables_hash
-           (map #(observable->observable-hash %) observables))))
+           (map observable->observable-hash observables))))
 
 (s/defn es-stored-sighting->stored-sighting :- (s/maybe StoredSighting)
   "remove the computed observables hash from a sighting"
