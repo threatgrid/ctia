@@ -93,6 +93,7 @@
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.6"]
+                                  [perforate "0.3.4"]
                                   [prismatic/schema-generators "0.1.0"
                                    :exclusions [prismatic/schema]]]
                    :resource-paths ["model"
@@ -123,7 +124,8 @@
                                      "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}}
-  :plugins [[lein-shell "0.5.0"]]
+  :plugins [[lein-shell "0.5.0"]
+            [perforate "0.3.4"]]
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
             "prepush" ["shell" "scripts/pre-push-check.sh"]
