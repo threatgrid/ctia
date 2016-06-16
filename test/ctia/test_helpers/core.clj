@@ -113,7 +113,8 @@
 (defn fixture-properties:multi-store [f]
   ;; Set properties to enable all the stores
   (with-properties ["ctia.store.es.default.refresh" true
-                    "ctia.store.es.default.uri" "http://192.168.99.100:9200"
+                    "ctia.store.es.default.transport" "http"
+                    "ctia.store.es.default.port" "9200"
                     "ctia.store.es.default.indexname" "test_ctia"
                     "ctia.store.sql.judgement.classname"    "org.h2.Driver"
                     "ctia.store.sql.judgement.subprotocol"  "h2"

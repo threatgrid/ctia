@@ -47,12 +47,12 @@
     native-index/refresh
     rest-index/refresh))
 
-(defn connect [props]
+(defn connect [{:keys [transport host port clustername]}]
   "instantiate an ES conn from props"
-  (if (:uri props)
-    (h/connect (:uri props))
-    (n/connect [[(:host props) (Integer. (:port props))]]
-               {"cluster.name" (:clustername props)})))
+  (case transport
+    :native (n/connect [[host port]]
+                       {"cluster.name" clustername})
+    :http (h/connect  (str "http://" host ":" port))))
 
 (defn delete!
   "delete an index, abort if non existant"

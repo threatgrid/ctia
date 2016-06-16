@@ -58,10 +58,12 @@
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
+                   :es-store-native :es-store-native
                    :multi-store :multi-store
                    :disabled :disabled
                    :default #(not= :disabled %)
                    :integration #(or (:es-store %)
+                                     (:es-store-native %)
                                      (:multi-store %)
                                      (:integration %)
                                      (:es-filtered-alias %)
