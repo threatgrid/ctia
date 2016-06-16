@@ -37,4 +37,4 @@
   [^Exception e data request]
   (logging/log! :error e (ex-message e))
   (internal-server-error {:type "unknown-exception"
-                          :class (.getName (.getClass e))}))
+                          :class (.getName (class e))}))
