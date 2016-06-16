@@ -44,6 +44,10 @@
                  [korma "0.4.2"]
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
 
+                 ;; Metrics
+                 [metrics-clojure "2.7.0"]
+                 [metrics-clojure-ring "2.7.0"]
+                 
                  ;; Docs
                  [markdown-clj "0.9.86"]
                  [hiccup "1.0.5"]]

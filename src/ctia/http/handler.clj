@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer [context defapi]]
             [ctia.http.middleware.auth :as auth]
             [ctia.http.exceptions :as ex]
+            [ctia.http.middleware.metrics :as metrics]
             [ctia.http.routes
              [actor :refer [actor-routes]]
              [bulk :refer [bulk-routes]]
@@ -113,6 +114,7 @@
 
 (def app
   (-> api-handler
+      metrics/wrap-metrics
       auth/wrap-authentication
       params/wrap-params
       wrap-restful-format))
