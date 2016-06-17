@@ -15,21 +15,20 @@
                       mapping)))
 
 (defn close-client [{:keys [conn]}]
-  "if the connection is native, close the client to avoid oom"
+  "if the connection is native, close the client"
   (when (instance? org.elasticsearch.client.transport.TransportClient conn)
     (.close conn)))
 
 (defn fixture-recreate-store-indexes [test]
   "walk through all the es stores delete and recreate each store index"
 
-  (doseq [store-impls (vals @store/stores)]
-    (doseq [{:keys [state]} store-impls]
-      (recreate-state-index state)))
+  (doseq [store-impls (vals @store/stores)
+          {:keys [state]} store-impls]
+    (recreate-state-index state))
   (test)
-
-  (doseq [store-impls (vals @store/stores)]
-    (doseq [{:keys [state]} store-impls]
-      (close-client state))))
+  (doseq [store-impls (vals @store/stores)
+          {:keys [state]} store-impls]
+    (close-client state)))
 
 (defn purge-producer-indexes []
   (let [{:keys [conn index]} (esp/init-producer-conn)]

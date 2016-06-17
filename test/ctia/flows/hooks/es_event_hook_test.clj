@@ -76,8 +76,7 @@
       (is (= 200 judgement-3-status))
 
       (let [{:keys [index conn props]} (init-producer-conn)]
-
-        ((index/refresh-fn conn) conn)
+        ((index/refresh-fn conn) conn index)
 
         (is (= [{:owner "Unknown"
                  :entity {:valid_time

@@ -158,14 +158,18 @@
     (f)))
 
 (defn available-port []
-  (with-open [sock (ServerSocket. 0)]
-    (.getLocalPort sock)))
+  (loop [port 3000]
+    (if (try (with-open [sock (ServerSocket. port)]
+               (.getLocalPort sock))
+             (catch Exception e nil))
+      port
+      (recur (+ port 1)))))
 
 (defn fixture-ctia
   ([test] (fixture-ctia test true))
   ([test enable-http?]
    ;; Start CTIA
-   ;; This starts the server on a random port (if enabled)
+   ;; This starts the server on an available port (if enabled)
    (let [http-port (if enable-http?
                      (available-port)
                      3000)]
