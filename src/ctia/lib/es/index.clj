@@ -47,8 +47,10 @@
     native-index/refresh
     rest-index/refresh))
 
-(defn connect [{:keys [transport host port clustername]}]
+(defn connect
   "instantiate an ES conn from props"
+  [{:keys [transport host port clustername]
+    :or {transport :http}}]
   (case transport
     :native (n/connect [[host port]]
                        {"cluster.name" clustername})
@@ -85,37 +87,21 @@
 
 (s/defn create-aliased-index!
   "create an index with an alias for a slice"
-  [state :- ESConnState
+  [{:keys [conn index mapping] :as state :- ESConnState}
    index-name :- s/Str]
 
-  (create!
-   (:conn state)
-   index-name
-   (:mapping state))
-
-  (create-alias!
-   (:conn state)
-   index-name
-   (:index state)))
+  (create! conn index-name mapping)
+  (create-alias! conn index-name index))
 
 (s/defn create-filtered-alias!
   "create a filtered index alias"
-  [state :- ESConnState
+  [{:keys [conn index mapping] :as state :- ESConnState}
    name :- s/Str
    routing :- s/Str
    filter :- {s/Any s/Any}]
 
-  (create!
-   (:conn state)
-   (:index state)
-   (:mapping state))
-
-  (create-alias!
-   (:conn state)
-   (:index state)
-   name
-   routing
-   filter))
+  (create! conn index mapping)
+  (create-alias! conn index name routing filter))
 
 (def memo-create-filtered-alias!
   (memo/fifo create-filtered-alias!

@@ -46,7 +46,7 @@ This will start up with non-persistent in-memory storage only.
 This is the proper way to run this in production.
 
 ```
-lein do clean, ring uberjar
+lein do clean, uberjar
 java -jar target/server.jar
 ```
 
@@ -74,9 +74,11 @@ can get with the command, `docker-machine ip`, and then you define
 your own `resources/ctia.properties` file with the following values:
 
 ```
-ctia.store.type=es
-ctia.store.es.uri=http://192.168.99.100:9200
-ctia.producer.es.uri=http://192.168.99.100:9200
+ctia.store.es.default.host=192.168.99.100
+ctia.store.es.default.port=9200
+ctia.hook.es.host=192.168.99.100
+ctia.hook.es.port=9200
+ctia.hook.redis.uri=http://192.168.99.100:6379
 ```
 
 It can be very useful to use _Kitematic_ to monitor and interact with
@@ -84,7 +86,7 @@ your containers.  You can also use _VirtualBox_ to modify the
 resources available to the VM that is running all of your containers.
 
 If you ever need to reset your entire dev environemnt, you can run
-tell `docker-compose` to rebuild all the containers from scratch:
+`docker-compose` to rebuild all the containers from scratch:
 
 ```
 cd containers/dev
