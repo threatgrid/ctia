@@ -13,7 +13,6 @@ jdk:
 
 before_install:
     - sudo hostname "$(hostname | cut -c1-63)" && sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts # https://github.com/travis-ci/travis-ci/issues/5227
-    - sudo apt-get install -y redis-tools
     # install docker-compose
     - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
     - chmod +x docker-compose
@@ -22,9 +21,8 @@ before_install:
 before_script:
     - docker-compose -f containers/dev/docker-compose.yml up -d >/dev/null
 
-    # Wait ES and redis
+    # Wait ES
     - until curl http://127.0.0.1:9200/; do sleep 1; done
-    - until redis-cli ping; do sleep 1; done 
 
 services:
     - docker 
