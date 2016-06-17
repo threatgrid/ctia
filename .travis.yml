@@ -9,12 +9,14 @@ cache:
     - /var/lib/docker/graph
 jdk:
     # https://github.com/travis-ci/travis-ci/issues/5227
-    # - openjdk7
+    - openjdk7
     - oraclejdk7
     - oraclejdk8
 
 before_install:
     # install docker-compose
+    - sudo hostname "$(hostname | cut -c1-63)" && sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts # https://github.com/travis-ci/travis-ci/issues/5227
+
     - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
     - chmod +x docker-compose
     - sudo mv docker-compose /usr/local/bin
