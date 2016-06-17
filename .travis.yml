@@ -24,6 +24,7 @@ before_script:
 
     # Wait ES and redis
     - until curl http://127.0.0.1:9200/; do sleep 1; done
+    - until telnet 127.0.0.1 6379; do sleep 1; done 
 
 services:
     - docker 
