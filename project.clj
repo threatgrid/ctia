@@ -107,4 +107,5 @@
   :plugins [[lein-shell "0.5.0"]]
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
-            "prepush" ["shell" "./pre-push-check.sh"]})
+            "prepush" ["shell" "scripts/pre-push-check.sh"]
+            "init-properties" ["shell" "scripts/init-properties-for-docker.sh"]})

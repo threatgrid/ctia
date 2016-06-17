@@ -81,6 +81,12 @@ ctia.hook.es.port=9200
 ctia.hook.redis.uri=http://192.168.99.100:6379
 ```
 
+Or you could initialize your properties with:
+
+```
+lein init-properties
+```
+
 It can be very useful to use _Kitematic_ to monitor and interact with
 your containers.  You can also use _VirtualBox_ to modify the
 resources available to the VM that is running all of your containers.
