@@ -47,6 +47,7 @@
                  ;; Metrics
                  [metrics-clojure "2.7.0"]
                  [metrics-clojure-ring "2.7.0"]
+                 [clout "2.1.2"]
                  
                  ;; Docs
                  [markdown-clj "0.9.86"]

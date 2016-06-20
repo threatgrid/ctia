@@ -114,7 +114,7 @@
 
 (def app
   (-> api-handler
-      metrics/wrap-metrics
+      (metrics/wrap-metrics (compojure.api.routes/get-routes api-handler))
       auth/wrap-authentication
       params/wrap-params
       wrap-restful-format))
