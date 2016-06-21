@@ -5,7 +5,7 @@
   (:require
    [compojure.api.impl.logging :as logging]
    [compojure.api.exception :as ex]
-   [ring.util.http-status :refer [internal-server-error]])
+   [ring.util.http-response :refer [internal-server-error]])
   (import clojure.lang.ExceptionInfo))
 
 (defn ex-message [^Exception e]
