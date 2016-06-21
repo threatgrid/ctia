@@ -100,7 +100,15 @@
                       "ctia.hooks.after-update" s/Str
                       "ctia.hooks.before-delete" s/Str
                       "ctia.hooks.after-delete" s/Str
-                      "ctia.hooks.event" s/Str})))
+                      "ctia.hooks.event" s/Str
+
+                      "ctia.metrics.console.enabled" s/Bool
+                      "ctia.metrics.console.interval" s/Int
+                      "ctia.metrics.jmx.enabled" s/Bool
+                      "ctia.metrics.riemann.enabled" s/Bool
+                      "ctia.metrics.riemann.host" s/Str
+                      "ctia.metrics.riemann.port" s/Int
+                      "ctia.metrics.riemann.interval" s/Int})))
 
 (def configurable-properties
   "String keys from PropertiesSchema, used to select system properties."

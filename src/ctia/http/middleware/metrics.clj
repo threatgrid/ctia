@@ -5,6 +5,7 @@
             [metrics.timers :refer [timer time!]]
             [metrics.ring.expose :refer [expose-metrics-as-json]]
             [metrics.ring.instrument :refer [instrument]]
+            [slugger.core :refer [->slug]]
             [clout.core :as clout]))
 
 (defn match-route? [[compiled-path _ verb] request]
@@ -37,7 +38,7 @@
 
 (defn wrap-metrics [handler routes]
   (let [exposed-routes (map (fn [l] [(clout/route-compile (first l))
-                                     (first l)
+                                     (->slug (first l))
                                      (name (second l))])
                             routes)]
     (-> handler

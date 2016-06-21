@@ -2,6 +2,9 @@
   (:require [cider.nrepl :refer [cider-nrepl-handler]]
             [clojure.tools.nrepl.server :as nrepl-server]
             [clojure.tools.logging :as log]
+            [ctia.http.middleware.metrics.riemann :as riemann]
+            [ctia.http.middleware.metrics.jmx :as jmx]
+            [ctia.http.middleware.metrics.console :as console]
             [ctia
              [auth :as auth]
              [events :as e]
@@ -147,6 +150,11 @@
 
   ;; events init
   (e/init!)
+
+  ;; metrics reporters init
+  (riemann/init!)
+  (jmx/init!)
+  (console/init!)
 
   ;; register event file logging only when enabled
   (when (get-in @p/properties [:ctia :events :log])
