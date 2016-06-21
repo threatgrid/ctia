@@ -25,18 +25,16 @@
             [schema.core :as schema])
   (:import java.net.ServerSocket))
 
-(defmethod ct/assert-expr 'deep= [msg form]
-  (let [a (second form)
-        b (nth form 2)]
-    `(let [[only-a# only-b# _] (cd/diff ~a ~b)]
-       (if (or only-a# only-b#)
-         (let [only-msg# (str (when only-a# (str "Only in A: " only-a#))
-                              (when (and only-a# only-b#) ", ")
-                              (when only-b# (str "Only in B: " only-b#)))]
-           (ct/do-report {:type :fail, :message ~msg,
-                          :expected '~form, :actual only-msg#}))
-         (ct/do-report {:type :pass, :message ~msg,
-                        :expected '~form, :actual nil})))))
+(defmethod ct/assert-expr 'deep= [msg [_ a b :as form]]
+  `(let [[only-a# only-b# unused#] (cd/diff ~a ~b)]
+     (if (or only-a# only-b#)
+       (let [only-msg# (str (when only-a# (str "Only in A: " only-a#))
+                            (when (and only-a# only-b#) ", ")
+                            (when only-b# (str "Only in B: " only-b#)))]
+         (ct/do-report {:type :fail, :message ~msg,
+                        :expected '~form, :actual only-msg#}))
+       (ct/do-report {:type :pass, :message ~msg,
+                      :expected '~form, :actual nil}))))
 
 (defn valid-property? [prop]
   (some #{prop} props/configurable-properties))

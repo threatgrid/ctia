@@ -9,7 +9,7 @@
              "-Dlog.console.threshold=INFO"
              "-XX:MaxPermSize=256m" ;; recommended permgen size
              "-server"]
-  :dependencies [[org.clojure/clojure "1.7.0"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
                  [com.rpl/specter "0.9.2"]
                  [org.clojure/core.async "0.2.374"]
