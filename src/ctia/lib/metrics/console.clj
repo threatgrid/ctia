@@ -1,4 +1,4 @@
-(ns ctia.http.middleware.metrics.console
+(ns ctia.lib.metrics.console
   (:require [metrics.reporters.console :as console]
             [ctia.properties :refer [properties]]))
 

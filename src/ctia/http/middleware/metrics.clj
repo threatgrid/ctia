@@ -1,12 +1,21 @@
 (ns ctia.http.middleware.metrics
   "Middleware to control all metrics of the server"
-  (:require [metrics.core :refer [default-registry]]
+  (:require [ctia.properties :refer [properties]]
+            [clojure.tools.logging :as log]
+            [metrics.core :refer [default-registry]]
             [metrics.meters :refer [meter mark!]]
             [metrics.timers :refer [timer time!]]
             [metrics.ring.expose :refer [expose-metrics-as-json]]
             [metrics.ring.instrument :refer [instrument]]
+            [metrics.jvm.core :as jvm]
             [slugger.core :refer [->slug]]
             [clout.core :as clout]))
+
+(defn add-default-metrics
+  []
+  (jvm/register-memory-usage-gauge-set default-registry)
+  (jvm/register-garbage-collector-metric-set default-registry)
+  (jvm/register-thread-state-gauge-set default-registry))
 
 (defn match-route? [[compiled-path _ verb] request]
   (if (= (name (:request-method request)) verb)
@@ -41,7 +50,7 @@
                                      (->slug (first l))
                                      (name (second l))])
                             routes)]
+    (add-default-metrics)
     (-> handler
-        (expose-metrics-as-json "/stats") ;; WARNING PUBLIC
         (instrument)
         (gen-metrics-for exposed-routes))))

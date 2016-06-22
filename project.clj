@@ -46,13 +46,14 @@
 
                  ;; Metrics
                  [metrics-clojure "2.7.0"]
+                 [metrics-clojure-jvm "2.7.0"]
                  [metrics-clojure-ring "2.7.0"]
                  [metrics-clojure-riemann "2.7.0"]
                  [clout "2.1.2"]
                  [slugger "1.0.1"]
                  [riemann-clojure-client "0.4.2"]
                  [com.google.protobuf/protobuf-java "2.6.1"]
-                 
+
                  ;; Docs
                  [markdown-clj "0.9.86"]
                  [hiccup "1.0.5"]]
@@ -96,11 +97,7 @@
                                   [prismatic/schema-generators "0.1.0"
                                    :exclusions [prismatic/schema]]]
                    :resource-paths ["model"
-                                    "test/resources"]
-                   :jvm-opts ["-Dcom.sun.management.jmxremote"
-                              "-Dcom.sun.management.jmxremote.ssl=false"
-                              "-Dcom.sun.management.jmxremote.authenticate=false"
-                              "-Dcom.sun.management.jmxremote.port=5555"]}
+                                    "test/resources"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire "5.6.1"]
                                    [com.h2database/h2 "1.4.191"]

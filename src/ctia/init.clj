@@ -2,9 +2,10 @@
   (:require [cider.nrepl :refer [cider-nrepl-handler]]
             [clojure.tools.nrepl.server :as nrepl-server]
             [clojure.tools.logging :as log]
-            [ctia.http.middleware.metrics.riemann :as riemann]
-            [ctia.http.middleware.metrics.jmx :as jmx]
-            [ctia.http.middleware.metrics.console :as console]
+            [ctia.lib.metrics
+             [riemann :as riemann]
+             [jmx :as jmx]
+             [console :as console]]
             [ctia
              [auth :as auth]
              [events :as e]

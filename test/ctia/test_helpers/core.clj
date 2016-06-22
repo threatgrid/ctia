@@ -77,7 +77,10 @@
                     "ctia.nrepl.enabled" false
                     "ctia.hook.es.enabled" false
                     "ctia.hook.redis.enabled" false
-                    "ctia.hook.redis.channel-name" "events-test"]
+                    "ctia.hook.redis.channel-name" "events-test"
+                    "ctia.metrics.riemann.enabled" false
+                    "ctia.metrics.console.enabled" false
+                    "ctia.metrics.jmx.enabled" false]
     ;; run tests
     (f)))
 

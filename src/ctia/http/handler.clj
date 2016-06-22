@@ -15,6 +15,7 @@
              [incident :refer [incident-routes]]
              [indicator :refer [indicator-routes]]
              [judgement :refer [judgement-routes]]
+             [metrics :refer [metrics-routes]]
              [observable :refer [observable-routes]]
              [properties :refer [properties-routes]]
              [sighting :refer [sighting-routes]]
@@ -95,22 +96,23 @@
 
   documentation-routes
   (context "/ctia" []
-    version-routes
     actor-routes
     bulk-routes
     campaign-routes
-    exploit-target-routes
     coa-routes
-    incident-routes
-    judgement-routes
-    indicator-routes
-    ttp-routes
-    sighting-routes
     event-routes
+    exploit-target-routes
+    feedback-routes
+    incident-routes
+    indicator-routes
+    judgement-routes
+    metrics-routes
     observable-routes
     properties-routes
+    sighting-routes
+    ttp-routes
     verdict-routes
-    feedback-routes))
+    version-routes))
 
 (def app
   (-> api-handler

@@ -1,4 +1,4 @@
-(ns ctia.http.middleware.metrics.jmx
+(ns ctia.lib.metrics.jmx
   (:require [metrics.reporters.jmx :as jmx]
             [ctia.properties :refer [properties]]))
 
