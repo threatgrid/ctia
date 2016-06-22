@@ -31,7 +31,6 @@
                  [metosin/compojure-api "1.0.0"]
                  [ring/ring-jetty-adapter "1.4.0"]
                  [javax.servlet/servlet-api "2.5"]
-                 [ring-middleware-format "0.7.0"]
                  [ring/ring-devel "1.4.0"]
                  [ring/ring-codec "1.0.0"]
 
@@ -40,7 +39,8 @@
                  [cider/cider-nrepl "0.11.0"]
 
                  ;; Database
-                 [clojurewerkz/elastisch "2.2.1"]
+                 [clojurewerkz/elastisch "3.0.0-beta1"]
+
                  [korma "0.4.2"]
                  [org.clojure/java.jdbc "0.3.7"] ; specified by korma
 
@@ -58,10 +58,12 @@
   :test-selectors {:atom-store :atom-store
                    :sql-store :sql-store
                    :es-store :es-store
+                   :es-store-native :es-store-native
                    :multi-store :multi-store
                    :disabled :disabled
                    :default #(not= :disabled %)
                    :integration #(or (:es-store %)
+                                     (:es-store-native %)
                                      (:multi-store %)
                                      (:integration %)
                                      (:es-filtered-alias %)
@@ -78,7 +80,7 @@
                                   (:out (clojure.java.shell/sh
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
-  :profiles {:dev {:dependencies [[cheshire "5.5.0"]
+  :profiles {:dev {:dependencies [[cheshire "5.6.1"]
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.6"]
@@ -88,7 +90,7 @@
                                     "test/resources"]}
 
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
-                    :dependencies [[cheshire "5.5.0"]
+                    :dependencies [[cheshire "5.6.1"]
                                    [com.h2database/h2 "1.4.191"]
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.6"]
@@ -105,4 +107,5 @@
   :plugins [[lein-shell "0.5.0"]]
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
-            "prepush" ["shell" "./pre-push-check.sh"]})
+            "prepush" ["shell" "scripts/pre-push-check.sh"]
+            "init-properties" ["shell" "scripts/init-properties-for-docker.sh"]})

@@ -111,7 +111,8 @@
 (defn fixture-properties:multi-store [f]
   ;; Set properties to enable all the stores
   (with-properties ["ctia.store.es.default.refresh" true
-                    "ctia.store.es.default.uri" "http://192.168.99.100:9200"
+                    "ctia.store.es.default.transport" "http"
+                    "ctia.store.es.default.port" "9200"
                     "ctia.store.es.default.indexname" "test_ctia"
                     "ctia.store.sql.judgement.classname"    "org.h2.Driver"
                     "ctia.store.sql.judgement.subprotocol"  "h2"
@@ -155,14 +156,18 @@
     (f)))
 
 (defn available-port []
-  (with-open [sock (ServerSocket. 0)]
-    (.getLocalPort sock)))
+  (loop [port 3000]
+    (if (try (with-open [sock (ServerSocket. port)]
+               (.getLocalPort sock))
+             (catch Exception e nil))
+      port
+      (recur (+ port 1)))))
 
 (defn fixture-ctia
   ([test] (fixture-ctia test true))
   ([test enable-http?]
    ;; Start CTIA
-   ;; This starts the server on a random port (if enabled)
+   ;; This starts the server on an available port (if enabled)
    (let [http-port (if enable-http?
                      (available-port)
                      3000)]

@@ -14,13 +14,21 @@
                       index
                       mapping)))
 
+(defn close-client [{:keys [conn]}]
+  "if the connection is native, close the client"
+  (when (instance? org.elasticsearch.client.transport.TransportClient conn)
+    (.close conn)))
+
 (defn fixture-recreate-store-indexes [test]
   "walk through all the es stores delete and recreate each store index"
 
-  (doseq [store-impls (vals @store/stores)]
-    (doseq [{:keys [state]} store-impls]
-      (recreate-state-index state)))
-  (test))
+  (doseq [store-impls (vals @store/stores)
+          {:keys [state]} store-impls]
+    (recreate-state-index state))
+  (test)
+  (doseq [store-impls (vals @store/stores)
+          {:keys [state]} store-impls]
+    (close-client state)))
 
 (defn purge-producer-indexes []
   (let [{:keys [conn index]} (esp/init-producer-conn)]
@@ -35,8 +43,9 @@
 
 (defn fixture-properties:es-store [test]
   ;; Note: These properties may be overwritten by ENV variables
-  (h/with-properties ["ctia.store.es.default.refresh" true
-                      "ctia.store.es.default.uri" "http://192.168.99.100:9200"
+  (h/with-properties ["ctia.store.es.default.transport" "http"
+                      "ctia.store.es.default.refresh" true
+                      "ctia.store.es.default.port" "9200"
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.actor" "es"
@@ -53,17 +62,43 @@
                       "ctia.store.ttp" "es"]
     (test)))
 
+
+(defn fixture-properties:es-store-native [test]
+  ;; Note: These properties may be overwritten by ENV variables
+  (h/with-properties ["ctia.store.es.default.transport" "native"
+                      "ctia.store.es.default.refresh" true
+                      "ctia.store.es.default.port" "9300"
+                      "ctia.store.es.default.clustername" "elasticsearch"
+                      "ctia.store.es.default.indexname" "test_ctia"
+                      "ctia.store.es.actor.indexname" "ctia_actor"
+                      "ctia.store.actor" "es"
+                      "ctia.store.campaign" "es"
+                      "ctia.store.coa" "es"
+                      "ctia.store.exploit-target" "es"
+                      "ctia.store.feedback" "es"
+                      "ctia.store.identity" "es"
+                      "ctia.store.incident" "es"
+                      "ctia.store.indicator" "es"
+                      "ctia.store.judgement" "es"
+                      "ctia.store.verdict" "es"
+                      "ctia.store.sighting" "es"
+                      "ctia.store.ttp" "es"]
+    (test)))
+
+
 (defn fixture-properties:es-hook [test]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.uri" "http://192.168.99.100:9200"
+                      "ctia.hook.es.transport" "http"
+                      "ctia.hook.es.port" 9200
                       "ctia.hook.es.indexname" "test_ctia_events"]
     (test)))
 
 (defn fixture-properties:es-hook:aliased-index [test]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.uri" "http://192.168.99.100:9200"
+                      "ctia.hook.es.transport" "http"
+                      "ctia.hook.es.port" 9200
                       "ctia.hook.es.indexname" "test_ctia_events"
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
@@ -72,7 +107,8 @@
 (defn fixture-properties:es-hook:filtered-alias [test]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
-                      "ctia.hook.es.uri" "http://192.168.99.100:9200"
+                      "ctia.hook.es.transport" "http"
+                      "ctia.hook.es.port" 9200
                       "ctia.hook.es.indexname" "test_ctia_events"
                       "ctia.hook.es.slicing.strategy" "filtered-alias"
                       "ctia.hook.es.slicing.granularity" "hour"]

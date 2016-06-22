@@ -47,12 +47,14 @@
     native-index/refresh
     rest-index/refresh))
 
-(defn connect [props]
+(defn connect
   "instantiate an ES conn from props"
-  (if (:uri props)
-    (h/connect (:uri props))
-    (n/connect [[(:host props) (Integer. (:port props))]]
-               {"cluster.name" (:clustername props)})))
+  [{:keys [transport host port clustername]
+    :or {transport :http}}]
+  (case transport
+    :native (n/connect [[host port]]
+                       {"cluster.name" clustername})
+    :http (h/connect  (str "http://" host ":" port))))
 
 (defn delete!
   "delete an index, abort if non existant"
@@ -64,7 +66,7 @@
   "create an index, abort if already exists"
   [conn index-name mappings]
   (when-not ((index-exists?-fn conn) conn index-name)
-    ((index-create-fn conn) conn index-name :mappings mappings)))
+    ((index-create-fn conn) conn index-name {:mappings mappings})))
 
 (defn create-alias!
   "create an index alias simple or filtered"
@@ -85,37 +87,21 @@
 
 (s/defn create-aliased-index!
   "create an index with an alias for a slice"
-  [state :- ESConnState
+  [{:keys [conn index mapping] :as state :- ESConnState}
    index-name :- s/Str]
 
-  (create!
-   (:conn state)
-   index-name
-   (:mapping state))
-
-  (create-alias!
-   (:conn state)
-   index-name
-   (:index state)))
+  (create! conn index-name mapping)
+  (create-alias! conn index-name index))
 
 (s/defn create-filtered-alias!
   "create a filtered index alias"
-  [state :- ESConnState
+  [{:keys [conn index mapping] :as state :- ESConnState}
    name :- s/Str
    routing :- s/Str
    filter :- {s/Any s/Any}]
 
-  (create!
-   (:conn state)
-   (:index state)
-   (:mapping state))
-
-  (create-alias!
-   (:conn state)
-   (:index state)
-   name
-   routing
-   filter))
+  (create! conn index mapping)
+  (create-alias! conn index name routing filter))
 
 (def memo-create-filtered-alias!
   (memo/fifo create-filtered-alias!

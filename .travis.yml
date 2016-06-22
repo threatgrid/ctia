@@ -1,32 +1,43 @@
 language: clojure
-lein: lein2
-script: lein2 do clean, javac, test
+lein: lein
+script: lein do clean, javac, test :all
 
-# Cache our Maven deps to be kind to clojars
+# Cache our Maven deps to be kind to clojars, docker images
 cache:
     directories:
     - $HOME/.m2
 jdk:
+    # https://github.com/travis-ci/travis-ci/issues/5227
     - openjdk7
     - oraclejdk7
     - oraclejdk8
 
 before_install:
-    - curl -O https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.7.5.deb && sudo dpkg -i --force-confnew elasticsearch-1.7.5.deb && sudo service elasticsearch restart
+    #https://github.com/travis-ci/travis-ci/issues/5227
+    - echo "127.0.0.1 "`hostname` | sudo tee /etc/hosts
+    # install docker-compose
+    - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+    - chmod +x docker-compose
+    - sudo mv docker-compose /usr/local/bin
 
 before_script:
+    - docker-compose -f containers/dev/docker-compose.yml up -d >/dev/null
+
     # Wait ES
-    - until curl http://localhost:9200/; do sleep 1; done
-    - until redis-cli ping; do sleep 1; done
+    - until curl http://127.0.0.1:9200/; do sleep 1; done
+
 services:
-    - elasticsearch
-    - redis-server
+    - docker 
+
 # notifications:
 #   hipchat: [api token]@[room id or name]
 env:
     global:
-      - CTIA_STORE_ES_DEFAULT_URI=http://127.0.0.1:9200
+      - COMPOSE_VERSION: 1.4.2
+      - CTIA_STORE_ES_DEFAULT_HOST=127.0.0.1
       - CTIA_STORE_ES_DEFAULT_INDEXNAME=elasticsearch
-      - CTIA_HOOK_ES_URI=http://127.0.0.1:9200
+      - CTIA_STORE_ES_DEFAULT_CLUSTERNAME=elasticsearch
+      - CTIA_HOOK_ES_HOST=127.0.0.1
+      - CTIA_HOOK_ES_PORT=9200
       - CTIA_HOOK_ES_INDEXNAME=elasticsearch
       - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
