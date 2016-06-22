@@ -12,5 +12,6 @@
                                     db-helpers/fixture-db-recreate-tables
                                     helpers/fixture-allow-all-auth]))
 
-(defspec spec-judgement-routes-sql-store
-  specs/spec-judgement-routes)
+;; disabled until CTIM settles
+;; (defspec spec-judgement-routes-sql-store
+;;   specs/spec-judgement-routes)

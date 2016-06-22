@@ -56,7 +56,7 @@
             :confidence "Low"
             :source "test"
             :tlp "green"
-            :version schema-version
+            :schema_version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :indicators [{:confidence "High"
@@ -84,7 +84,7 @@
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -114,7 +114,7 @@
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -198,7 +198,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
-            :version schema-version
+            :schema_version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -230,7 +230,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
-            :version schema-version
+            :schema_version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}
@@ -261,7 +261,7 @@
             :severity 100
             :confidence "Low"
             :tlp "green"
-            :version schema-version
+            :schema_version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :owner "foouser"}

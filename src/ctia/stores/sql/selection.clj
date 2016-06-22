@@ -8,7 +8,7 @@
                  [:id
                   :type
                   :tlp
-                  :version
+                  :schema_version
                   :observable
                   :disposition
                   :disposition_name

@@ -34,7 +34,7 @@
             :title "coa"
             :description "description"
             :tlp "green"
-            :version schema-version
+            :schema_version schema-version
             :coa_type "Eradication"
             :objective ["foo" "bar"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -55,7 +55,7 @@
                 :title "coa"
                 :description "description"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :coa_type "Eradication"
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
@@ -85,7 +85,7 @@
                 :title "updated coa"
                 :description "updated description"
                 :tlp "white"
-                :version schema-version
+                :schema_version schema-version
                 :coa_type "Hardening"
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"

@@ -37,7 +37,7 @@
            {:type "ttp"
             :title "ttp"
             :tlp "green"
-            :version schema-version
+            :schema_version schema-version
             :description "description"
             :ttp_type "foo"
             :indicators [{:indicator_id "indicator-1"}
@@ -61,7 +61,7 @@
                {:type "ttp"
                 :title "ttp"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :description "description"
                 :ttp_type "foo"
                 :indicators [{:indicator_id "indicator-1"}
@@ -98,7 +98,7 @@
                 :created (:created ttp)
                 :title "updated ttp"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :description "updated description"
                 :ttp_type "bar"
                 :indicators [{:indicator_id "indicator-1"}

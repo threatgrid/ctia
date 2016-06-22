@@ -104,7 +104,7 @@
                   :disposition 2
                   :disposition_name "Malicious"
                   :judgement_id (:id judgement-1)}
-                 (dissoc verdict :id :observable :owner :created :version))))))))
+                 (dissoc verdict :id :observable :owner :created :schema_version))))))))
 
 (deftest-for-each-store test-observable-verdict-route-2
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
@@ -155,5 +155,5 @@
                     :disposition 2
                     :disposition_name "Malicious"
                     :judgement_id (:id judgement)}
-                   (dissoc verdict :id :observable :owner :created :version)))))))))
+                   (dissoc verdict :id :observable :owner :created :schema_version)))))))))
 

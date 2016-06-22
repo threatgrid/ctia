@@ -7,7 +7,7 @@
     [common :as c]
     [judgement :refer [StoredJudgement]]
     [sighting :refer [StoredSighting]]
-    [vocabularies :refer [ObservableType]]]
+    [vocabularies :refer [ObservableTypeIdentifier]]]
    [ctia.store :refer :all]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -34,7 +34,7 @@
   (GET "/:observable_type/:observable_value/judgements" []
     :tags ["Judgement"]
     :query [params JudgementsByObservableQueryParams]
-    :path-params [observable_type :- ObservableType
+    :path-params [observable_type :- ObservableTypeIdentifier
                   observable_value :- s/Str]
     :return (s/maybe [StoredJudgement])
     :summary "Returns all the Judgements associated with the specified observable."
@@ -46,7 +46,7 @@
   (GET "/:observable_type/:observable_value/indicators" []
     :tags ["Indicator"]
     :query [params IndicatorRefsByObservableQueryParams]
-    :path-params [observable_type :- ObservableType
+    :path-params [observable_type :- ObservableTypeIdentifier
                   observable_value :- s/Str]
     :return (s/maybe [c/Reference])
     :summary "Returns all the Indicator References associated with the specified observable."
@@ -71,7 +71,7 @@
   (GET "/:observable_type/:observable_value/sightings" []
     :tags ["Sighting"]
     :query [params SightingsByObservableQueryParams]
-    :path-params [observable_type :- ObservableType
+    :path-params [observable_type :- ObservableTypeIdentifier
                   observable_value :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-sightings

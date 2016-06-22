@@ -38,7 +38,7 @@
             :disposition_name "Malicious"
             :source "test"
             :tlp "green"
-            :version schema-version
+            :schema_version schema-version
             :priority 100
             :severity 100
             :confidence "Low"
@@ -62,7 +62,7 @@
                 :disposition_name "Malicious"
                 :source "test"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :priority 100
                 :severity 100
                 :confidence "Low"
