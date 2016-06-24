@@ -41,6 +41,10 @@ production, unless you ensure access to the NREPL port is restricted.
 
 This will start up with non-persistent in-memory storage only.
 
+**Remark**:
+if you use java 1.7, you might need to add `-XX:MaxPermSize=256m`
+to java options.
+
 ### Packaging and running as standalone jar
 
 This is the proper way to run this in production.

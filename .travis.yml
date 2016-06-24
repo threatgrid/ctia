@@ -33,6 +33,7 @@ services:
 #   hipchat: [api token]@[room id or name]
 env:
     global:
+      - JAVA_OPTS="-XX:MaxPermSize=256m"
       - COMPOSE_VERSION: 1.4.2
       - CTIA_STORE_ES_DEFAULT_HOST=127.0.0.1
       - CTIA_STORE_ES_DEFAULT_INDEXNAME=elasticsearch
