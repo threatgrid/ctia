@@ -113,8 +113,10 @@
 (defn mk-new-sighting [n]
   {:description (str "description: sighting-" n)
    :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+   :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
+   :count 1
    :source "source"
-   :source_device "endpoint.sensor"
+   :sensor "endpoint.sensor"
    :confidence "High"
    :indicators [{:indicator_id "indicator-22334455"}]})
 
@@ -191,7 +193,7 @@
           (doseq [k (keys new-bulk)]
             (testing (str "retrieved " (name k))
               (is (= (get-in new-bulk [k])
-                     (map #(dissoc % :created :id :type :modified :owner :tlp :version :disposition_name)
+                     (map #(dissoc % :created :id :type :modified :owner :tlp :schema_version :disposition_name)
                           (get-in (:parsed-body resp) [k])))))))))))
 
 (deftest get-bulk-max-size-test
@@ -236,13 +238,17 @@
                           :judgements (map mk-new-judgement (range nb))
                           :sightings (map mk-new-sighting (range nb))
                           :ttps (map mk-new-ttp (range nb))}
-        {status-ok :status} (post "ctia/bulk"
-                                  :body new-ok-bulk
-                                  :headers {"api_key" "45c1f5e3f05d0"})
-        {status-too-big :status} (post "ctia/bulk"
-                                       :body new-too-big-bulk
-                                       :headers {"api_key" "45c1f5e3f05d0"})]
+        {status-ok :status
+         response-ok :parsed-body} (post "ctia/bulk"
+                                         :body new-ok-bulk
+                                         :headers {"api_key" "45c1f5e3f05d0"})
+        {status-too-big :status
+         response-too-big :parsed-body} (post "ctia/bulk"
+                                             :body new-too-big-bulk
+                                             :headers {"api_key" "45c1f5e3f05d0"})]
     (testing "POST of right size bulk are accepted"
+      (is (empty? (:errors response-ok)) "No errors")
       (is (= 200 status-ok)))
     (testing "POST of too big bulks are rejected"
+      (is (empty? (:errors response-too-big)) "No errors")
       (is (= 400 status-too-big)))))

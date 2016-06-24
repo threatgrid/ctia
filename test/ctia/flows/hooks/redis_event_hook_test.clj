@@ -83,7 +83,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
-                          :version schema-version
+                          :schema_version schema-version
                           :disposition 1
                           :disposition_name "Clean"
                           :priority 100
@@ -101,7 +101,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
-                          :version schema-version
+                          :schema_version schema-version
                           :disposition 2
                           :disposition_name "Malicious"
                           :priority 100
@@ -119,7 +119,7 @@
                           :type "judgement"
                           :source "source"
                           :tlp "green"
-                          :version schema-version
+                          :schema_version schema-version
                           :disposition 3
                           :disposition_name "Suspicious"
                           :priority 100

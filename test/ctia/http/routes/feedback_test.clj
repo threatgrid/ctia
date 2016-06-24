@@ -39,7 +39,7 @@
             :entity_id "judgement-123"
             :type "feedback"
             :reason "false positive"
-            :version schema-version
+            :schema_version schema-version
             :tlp "green"}
            (dissoc feedback :id :created :owner)))
 
@@ -53,7 +53,7 @@
                 :entity_id "judgement-123"
                 :reason "false positive"
                 :type "feedback"
-                :version schema-version
+                :schema_version schema-version
                 :tlp "green"}
                (dissoc feedback :id :created :owner)))))
 
@@ -68,7 +68,7 @@
                  :entity_id "judgement-123"
                  :type "feedback"
                  :reason "false positive"
-                 :version schema-version
+                 :schema_version schema-version
                  :tlp "green"}]
                (map #(dissoc % :id :created :owner) feedbacks)))))
 
