@@ -43,7 +43,7 @@
             :title "incident"
             :description "description"
             :tlp "green"
-            :version schema-version
+            :schema_version schema-version
             :confidence "High"
             :categories ["Denial of Service"
                          "Improper Usage"]
@@ -72,7 +72,7 @@
                 :title "incident"
                 :description "description"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :confidence "High"
                 :categories ["Denial of Service"
                              "Improper Usage"]
@@ -116,7 +116,7 @@
                 :title "updated incident"
                 :description "updated description"
                 :tlp "green"
-                :version schema-version
+                :schema_version schema-version
                 :confidence "Low"
                 :categories ["Denial of Service"
                              "Improper Usage"]

@@ -35,7 +35,7 @@
               :id id
               :type type-name
               :owner login
-              :version schema-version
+              :schema_version schema-version
               :created (or (:created prev-object) now)
               :modified now
               :tlp (:tlp new-object (:tlp prev-object c/default-tlp))
@@ -67,7 +67,7 @@
          :created (time/now)
          :owner login
          :tlp (:tlp new-feedback c/default-tlp)
-         :version schema-version))
+         :schema_version schema-version))
 
 (def realize-incident
   (default-realize-fn "incident" NewIncident StoredIncident))
@@ -96,7 +96,7 @@
          :owner login
          :created now
          :tlp (:tlp new-judgement c/default-tlp)
-         :version schema-version
+         :schema_version schema-version
          :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
                                     time/default-expire-date)
                       :start_time (or (get-in new-judgement [:valid_time :start_time])
@@ -112,8 +112,7 @@
    (let [now (time/now)]
      (assoc new-verdict
             :id id
-            :owner login
-            :version schema-version
+            :schema_version schema-version
             :created now))))
 
 (s/defn realize-sighting :- StoredSighting
@@ -130,9 +129,13 @@
             :id id
             :type "sighting"
             :owner login
+            :count (:count new-sighting
+                           (:count prev-sighting 1))
+            :confidence (:confidence new-sighting
+                                     (:confidence prev-sighting "Unknown"))
             :tlp (:tlp new-sighting
                        (:tlp prev-sighting c/default-tlp))
-            :version schema-version
+            :schema_version schema-version
             :created (or (:created prev-sighting) now)
             :modified now))))
 

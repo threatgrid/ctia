@@ -11,9 +11,14 @@
             [ctim.generators.schemas.sighting-generators :as gs]))
 
 (defn assert-successful
-  [status]
-  (assert (= 200 status)
-          (format "Status %s was not 200" status)))
+  ([status]
+   (assert (= 200 status)
+           (format "Status %s was not 200" status)))
+  ([status body]
+   (assert (empty? (:errors body))
+           (format (str "Errors in the body: " (:errors body))))
+   (assert (= 200 status)
+           (format "Status %s was not 200" status))))
 
 (defn get-http-params []
   (get-in @properties [:ctia :http :show]))
@@ -30,12 +35,17 @@
               get-entity# :parsed-body}
              (get (str "ctia/" ~model-type "/" (encode id#)))]
 
-         (assert-successful post-status#)
-         (assert-successful get-status#)
-
-         (common= new-entity#
-                  (normalize post-entity#)
-                  (normalize get-entity#))))))
+         (assert-successful post-status# post-entity#)
+         (assert-successful get-status# get-entity#)
+         ;;(println "NEW" new-entity#)
+         ;;(println "POST:" post-entity#)
+         ;;(println "GET:" get-entity#)
+         (if-not (empty? (keys new-entity#))
+           (common= new-entity#
+                    (normalize post-entity#)
+                    (normalize get-entity#))
+           (common= (normalize post-entity#)
+                    (normalize get-entity#)))))))
 
 (def-property spec-actor-routes 'actor)
 (def-property spec-campaign-routes 'campaign)

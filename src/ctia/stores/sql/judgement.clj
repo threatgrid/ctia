@@ -66,7 +66,6 @@
   (let [hits-res (-> judgement-query
                      (k/aggregate (count :*) :hits)
                      (k/select))]
-
     (or (-> hits-res first :hits) 0)))
 
 (defn select-judgements

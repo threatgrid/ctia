@@ -130,7 +130,7 @@
                     "ctia.store.identity" "atom,es"
                     "ctia.store.incident" "atom,es"
                     "ctia.store.indicator" "atom,es"
-                    "ctia.store.judgement" "atom,es,sql"
+                    "ctia.store.judgement" "atom,es"
                     "ctia.store.verdict"  "atom,es"
                     "ctia.store.sighting" "atom,es"
                     "ctia.store.ttp" "atom,es"]

@@ -25,7 +25,7 @@
                  [prismatic/schema "1.0.5"]
                  [metosin/schema-tools "0.7.0"
                   :exclusions [prismatic/schema]]
-                 [threatgrid/ctim "0.1.3"]
+                 [threatgrid/ctim "0.1.4"]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]
@@ -53,7 +53,7 @@
                  [slugger "1.0.1"]
                  [riemann-clojure-client "0.4.2"]
                  [com.google.protobuf/protobuf-java "2.6.1"]
-
+g
                  ;; Docs
                  [markdown-clj "0.9.86"]
                  [hiccup "1.0.5"]]
