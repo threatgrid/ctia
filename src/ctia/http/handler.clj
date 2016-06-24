@@ -2,6 +2,7 @@
   (:require [compojure.api.sweet :refer [context defapi]]
             [ctia.http.middleware.auth :as auth]
             [ctia.http.exceptions :as ex]
+            [ctia.http.middleware.metrics :as metrics]
             [ctia.http.routes
              [actor :refer [actor-routes]]
              [bulk :refer [bulk-routes]]
@@ -14,6 +15,7 @@
              [incident :refer [incident-routes]]
              [indicator :refer [indicator-routes]]
              [judgement :refer [judgement-routes]]
+             [metrics :refer [metrics-routes]]
              [observable :refer [observable-routes]]
              [properties :refer [properties-routes]]
              [sighting :refer [sighting-routes]]
@@ -94,25 +96,27 @@
 
   documentation-routes
   (context "/ctia" []
-    version-routes
     actor-routes
     bulk-routes
     campaign-routes
-    exploit-target-routes
     coa-routes
-    incident-routes
-    judgement-routes
-    indicator-routes
-    ttp-routes
-    sighting-routes
     event-routes
+    exploit-target-routes
+    feedback-routes
+    incident-routes
+    indicator-routes
+    judgement-routes
+    metrics-routes
     observable-routes
     properties-routes
+    sighting-routes
+    ttp-routes
     verdict-routes
-    feedback-routes))
+    version-routes))
 
 (def app
   (-> api-handler
+      (metrics/wrap-metrics (compojure.api.routes/get-routes api-handler))
       auth/wrap-authentication
       params/wrap-params
       wrap-restful-format))
