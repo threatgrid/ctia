@@ -53,7 +53,7 @@
                  [slugger "1.0.1"]
                  [riemann-clojure-client "0.4.2"]
                  [com.google.protobuf/protobuf-java "2.6.1"]
-g
+
                  ;; Docs
                  [markdown-clj "0.9.86"]
                  [hiccup "1.0.5"]]
