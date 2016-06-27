@@ -28,7 +28,7 @@
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           coa (:parsed-body response)]
-      (is (= 200 (:status response)))
+      (is (= 201 (:status response)))
       (is (deep=
            {:type "COA"
             :title "coa"

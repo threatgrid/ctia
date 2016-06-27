@@ -129,7 +129,7 @@
       :identity login
       (if (> (bulk-size bulk) (get-bulk-max-size))
         (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-        (ok (gen-bulk-from-fn create-entities bulk login))))
+        (created (gen-bulk-from-fn create-entities bulk login))))
     (GET "/" []
       :return (s/maybe StoredBulk)
       :summary "Gets many entities at once"

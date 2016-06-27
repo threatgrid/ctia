@@ -72,7 +72,7 @@
                        :indicators [{:indicator_id "indicator-22334455"}]}
                 :headers {"api_key" api-key})]
       (is (empty? (:errors sighting)) "No errors when")
-      (is (= 200 status))
+      (is (= 201 status))
 
       (testing "GET /ctia/sighting/:id"
         (let [{status :status
@@ -176,5 +176,5 @@
                       :sensor "endpoint.sensor"
                       :confidence "High"}
                :headers {"api_key" api-key})]
-      (is (= 200 post-status))
+      (is (= 201 post-status))
       (is (= 422 put-status)))))

@@ -34,11 +34,11 @@
       :summary "Adds a new Judgement"
       :capabilities :create-judgement
       :identity identity
-      (ok (flows/create-flow :realize-fn realize-judgement
-                             :store-fn #(write-store :judgement create-judgement %)
-                             :entity-type :judgement
-                             :identity identity
-                             :entity judgement)))
+      (created (flows/create-flow :realize-fn realize-judgement
+                                  :store-fn #(write-store :judgement create-judgement %)
+                                  :entity-type :judgement
+                                  :identity identity
+                                  :entity judgement)))
     (POST "/:judgement-id/indicator" []
       :return (s/maybe rel/RelatedIndicator)
       :path-params [judgement-id :- s/Str]

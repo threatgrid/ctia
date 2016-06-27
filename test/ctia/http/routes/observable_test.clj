@@ -189,19 +189,19 @@
               :headers {"api_key" "45c1f5e3f05d0"})]
 
     (testing "With successful test setup"
-      (is (= 200 judgement-1-status))
-      (is (= 200 sighting-1-status))
-      (is (= 200 sighting-2-status))
-      (is (= 200 indicator-1-status))
+      (is (= 201 judgement-1-status))
+      (is (= 201 sighting-1-status))
+      (is (= 201 sighting-2-status))
+      (is (= 201 indicator-1-status))
       (is (= 200 judgement-1-update-status))
-      (is (= 200 judgement-2-status))
-      (is (= 200 sighting-3-status))
-      (is (= 200 indicator-2-status))
+      (is (= 201 judgement-2-status))
+      (is (= 201 sighting-3-status))
+      (is (= 201 indicator-2-status))
       (is (= 200 judgement-2-update-status))
-      (is (= 200 judgement-3-status))
-      (is (= 200 sighting-4-status))
-      (is (= 200 sighting-5-status))
-      (is (= 200 indicator-3-status))
+      (is (= 201 judgement-3-status))
+      (is (= 201 sighting-4-status))
+      (is (= 201 sighting-5-status))
+      (is (= 201 indicator-3-status))
       (is (= 200 judgement-3-update-status)))
 
     (testing "GET /ctia/:observable_type/:observable_value/judgements"

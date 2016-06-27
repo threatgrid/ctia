@@ -17,12 +17,12 @@
       :summary "Adds a new Actor"
       :capabilities :create-actor
       :identity identity
-      (ok (flows/create-flow :entity-type :actor
-                             :realize-fn realize-actor
-                             :store-fn #(write-store :actor create-actor %)
-                             :entity-type :actor
-                             :identity identity
-                             :entity actor)))
+      (created (flows/create-flow :entity-type :actor
+                                  :realize-fn realize-actor
+                                  :store-fn #(write-store :actor create-actor %)
+                                  :entity-type :actor
+                                  :identity identity
+                                  :entity actor)))
     (PUT "/:id" []
       :return StoredActor
       :body [actor NewActor {:description "an updated Actor"}]

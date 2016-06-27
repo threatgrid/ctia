@@ -47,11 +47,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-indicator
       :identity identity
-      (ok (flows/create-flow :realize-fn realize-indicator
-                             :store-fn #(write-store :indicator create-indicator %)
-                             :entity-type :indicator
-                             :identity identity
-                             :entity indicator)))
+      (created (flows/create-flow :realize-fn realize-indicator
+                                  :store-fn #(write-store :indicator create-indicator %)
+                                  :entity-type :indicator
+                                  :identity identity
+                                  :entity indicator)))
     (PUT "/:id" []
       :return StoredIndicator
       :body [indicator NewIndicator {:description "an updated Indicator"}]
