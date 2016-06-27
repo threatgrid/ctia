@@ -36,7 +36,7 @@
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 200 (:status response)))))
+      (is (= 201 (:status response)))))
 
   (testing "test setup: create a judgement (2)"
     ;; Lower priority
@@ -50,7 +50,7 @@
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 200 (:status response)))))
+      (is (= 201 (:status response)))))
 
   (testing "test setup: create a judgement (3)"
     ;; Wrong disposition
@@ -64,7 +64,7 @@
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 200 (:status response)))))
+      (is (= 201 (:status response)))))
 
   (testing "test setup: create a judgement (4)"
     ;; Loses a tie because of its timestamp being later
@@ -79,7 +79,7 @@
                                 :valid_time {:start_time "2016-02-12T00:01:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           judgement-1 (:parsed-body response)]
-      (is (= 200 (:status response)))))
+      (is (= 201 (:status response)))))
 
   (testing "with a highest-priority judgement"
     (let [response (post "ctia/judgement"
@@ -93,7 +93,7 @@
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           judgement-1 (:parsed-body response)]
-      (is (= 200 (:status response))) ;; success creating judgement
+      (is (= 201 (:status response))) ;; success creating judgement
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [response (get "ctia/ip/10.0.0.1/verdict"
@@ -127,7 +127,7 @@
                                              :end_time "2016-02-12T14:56:26.719-00:00"}
                                 :confidence "Medium"}
                          :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 200 (:status response)))))
+      (is (= 201 (:status response)))))
   (testing "with a verdict judgement"
     (let [response (post "ctia/judgement"
                          :body {:observable {:value "10.0.0.1",
@@ -143,7 +143,7 @@
                                 :confidence "Medium"}
                          :headers {"api_key" "45c1f5e3f05d0"})
           judgement (:parsed-body response)]
-      (is (= 200 (:status response)))
+      (is (= 201 (:status response)))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (with-redefs [ctia.lib.time/now (constantly (ctia.lib.time/timestamp "2016-02-12T15:42:58.232-00:00"))]

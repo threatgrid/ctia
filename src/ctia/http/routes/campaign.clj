@@ -17,11 +17,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
       :identity identity
-      (ok (flows/create-flow :realize-fn realize-campaign
-                             :store-fn #(write-store :campaign create-campaign %)
-                             :entity-type :campaign
-                             :identity identity
-                             :entity campaign)))
+      (created (flows/create-flow :realize-fn realize-campaign
+                                  :store-fn #(write-store :campaign create-campaign %)
+                                  :entity-type :campaign
+                                  :identity identity
+                                  :entity campaign)))
     (PUT "/:id" []
       :return StoredCampaign
       :body [campaign NewCampaign {:description "an updated campaign"}]

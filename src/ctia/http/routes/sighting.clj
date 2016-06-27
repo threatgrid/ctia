@@ -19,11 +19,11 @@
       :capabilities :create-sighting
       :identity identity
       (if (check-new-sighting sighting)
-        (ok (flows/create-flow :realize-fn realize-sighting
-                               :store-fn #(write-store :sighting create-sighting %)
-                               :entity-type :sighting
-                               :identity identity
-                               :entity sighting))
+        (created (flows/create-flow :realize-fn realize-sighting
+                                    :store-fn #(write-store :sighting create-sighting %)
+                                    :entity-type :sighting
+                                    :identity identity
+                                    :entity sighting))
         (unprocessable-entity)))
     (PUT "/:id" []
       :return StoredSighting

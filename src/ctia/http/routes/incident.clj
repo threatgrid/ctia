@@ -19,11 +19,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-incident
       :identity identity
-      (ok (flows/create-flow :realize-fn realize-incident
-                             :store-fn #(write-store :incident create-incident %)
-                             :entity-type :incident
-                             :identity identity
-                             :entity incident)))
+      (created (flows/create-flow :realize-fn realize-incident
+                                  :store-fn #(write-store :incident create-incident %)
+                                  :entity-type :incident
+                                  :identity identity
+                                  :entity incident)))
     (PUT "/:id" []
       :return StoredIncident
       :body [incident NewIncident {:description "an updated incident"}]

@@ -42,8 +42,7 @@
                                                 :COA_id "coa-123"}]}
                          :headers {"api_key" "45c1f5e3f05d0"})
           indicator (:parsed-body response)]
-
-      (is (= 200 (:status response)))
+      (is (= 201 (:status response)))
       (is (deep=
            {:type "indicator"
             :title "indicator-title"

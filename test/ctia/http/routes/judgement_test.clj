@@ -44,7 +44,7 @@
           judgement-id (id/short-id->id :judgement
                                         (:id judgement)
                                         (get-in @properties [:ctia :http :show]))]
-      (is (= 200 status))
+      (is (= 201 status))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
@@ -186,7 +186,7 @@
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           judgement (:parsed-body response)]
-      (is (= 200 (:status response)))
+      (is (= 201 (:status response)))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
@@ -218,7 +218,7 @@
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           judgement (:parsed-body response)]
-      (is (= 200 (:status response)))
+      (is (= 201 (:status response)))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
@@ -249,7 +249,7 @@
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           judgement (:parsed-body response)]
-      (is (= 200 (:status response)))
+      (is (= 201 (:status response)))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
@@ -312,7 +312,7 @@
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})]
-      (assert (= 200 status)
+      (assert (= 201 status)
               (format "Expected status to be 200 but was %s on loop %s" status n))))
 
   (pagination-test

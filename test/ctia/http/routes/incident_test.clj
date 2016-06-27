@@ -37,7 +37,7 @@
                                                     {:incident_id "indicent-789"}]}
                          :headers {"api_key" "45c1f5e3f05d0"})
           incident (:parsed-body response)]
-      (is (= 200 (:status response)))
+      (is (= 201 (:status response)))
       (is (deep=
            {:type "incident"
             :title "incident"

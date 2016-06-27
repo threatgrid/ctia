@@ -18,11 +18,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-ttp
       :identity identity
-      (ok (flows/create-flow :realize-fn realize-ttp
-                             :store-fn #(write-store :ttp create-ttp %)
-                             :entity-type :ttp
-                             :identity identity
-                             :entity ttp)))
+      (created (flows/create-flow :realize-fn realize-ttp
+                                  :store-fn #(write-store :ttp create-ttp %)
+                                  :entity-type :ttp
+                                  :identity identity
+                                  :entity ttp)))
     (PUT "/:id" []
       :return StoredTTP
       :body [ttp NewTTP {:description "an updated TTP"}]
