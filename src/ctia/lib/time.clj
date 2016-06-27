@@ -105,3 +105,13 @@
   (let [inf-range (periodic-seq start step)
         below-end? (fn [t] (time/within? (time/interval start end) t))]
     (take-while below-end? inf-range)))
+
+(defn date-str->valid-time
+  ([date-str offset]
+   (date-str->valid-time date-str offset :days))
+  ([date-str offset units]
+   "Create a ctim.schemas.common/ValidTime from a date str and an offset"
+   (let [formatter (time-format/formatters :date-time-no-ms)
+         start (time-format/parse date-str)]
+     {:start_time (time-coerce/to-date start)
+      :end_time (time-coerce/to-date (plus-n units start offset))})))
