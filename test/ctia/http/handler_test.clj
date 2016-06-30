@@ -2,7 +2,6 @@
   (:refer-clojure :exclude [get])
   (:require [ctia.http.handler :as handler]
             [ctia.test-helpers.core :refer [delete get post put] :as helpers]
-            [ctia.test-helpers.db :as db-helpers]
             [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]

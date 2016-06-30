@@ -19,11 +19,7 @@
             [ctia.flows.hooks :as h]
             [ctia.http.server :as http-server]
             [ctia.stores.atom.store :as as]
-            [ctia.stores.es.store :as es-store]
-            [ctia.stores.sql
-             [db :as sql-store]
-             [judgement :as sql-judgement]
-             [store :as ss]]))
+            [ctia.stores.es.store :as es-store]))
 
 (defn init-auth-service! []
   (let [auth-service-type (get-in @p/properties [:ctia :auth :type])]
@@ -38,7 +34,7 @@
   "The cleaner is called before the stores are instantiated, to reset any state.
    It is unaware of any selected store type, so it should handle all types."
   []
-  (sql-store/shutdown!))
+  )
 
 (def store-factories
   {;; A :builder is called on each store creation and is passed the
@@ -49,10 +45,7 @@
    {:atom (fn atom-builder [factory props]
             (factory (atom {})))
     :es (fn es-builder [factory props]
-          (factory (es-store/init! props)))
-    :sql (fn sql-builder [factory props]
-           (sql-store/init! props)
-           (factory))}
+          (factory (es-store/init! props)))}
 
    :actor
    {:atom as/->ActorStore
@@ -88,9 +81,7 @@
 
    :judgement
    {:atom as/->JudgementStore
-    :es es-store/->JudgementStore
-    :sql #(do (sql-judgement/init!)
-              (ss/->JudgementStore))}
+    :es es-store/->JudgementStore}
 
    :verdict
    {:atom as/->VerdictStore
