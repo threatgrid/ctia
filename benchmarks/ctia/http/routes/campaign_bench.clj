@@ -1,12 +1,11 @@
 (ns ctia.http.routes.campaign-bench
-  (:refer-clojure :exclude [get])
-  (:require [perforate.core :refer :all]
-            [ctia.init :refer [start-ctia!]]
-            [ctia.http.server :as http-server]
-            [ctia.flows.hooks :as hooks]
-            [ctia.events :as events]
-            [ctia.test-helpers.es :as esh]
-            [ctia.test-helpers.core :refer [get post put delete] :as helpers]))
+  (:require [ctia.test-helpers
+             [benchmark :refer [cleanup-ctia!
+                                setup-ctia-atom-store!
+                                setup-ctia-es-store!
+                                setup-ctia-es-store-native!]]
+             [core :as helpers :refer [delete post]]]
+            [perforate.core :refer :all]))
 
 (def small-campaign
   {:title "campaign"
@@ -50,36 +49,28 @@
    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                 :end_time "2016-07-11T00:40:48.212-00:00"}})
 
-;; -----------------------------------------------------------------------------
 (defgoal create-campaign "Create Campaign"
-  :setup (fn []
-           (let [http-port (helpers/available-port)]
-             (println "Default: Launch CTIA on port" http-port)
-             (helpers/fixture-properties:clean
-              (fn []
-                (helpers/with-properties ["ctia.http.enabled" true
-                                          "ctia.http.port" http-port
-                                          "ctia.http.show.port" http-port]
-                  (start-ctia! :join? false))))))
-  :cleanup (fn []
-             (http-server/stop!)
-             (hooks/shutdown!)
-             (events/shutdown!)))
+  :setup (fn [] [true])
+  :cleanup (fn [_]))
 
-(defn play-big []
+(defn play-big [port]
   (let [{:keys [status parsed_body]}
         (post "ctia/campaign"
+              :port port
               :body big-campaign
               :headers {"api_key" "45c1f5e3f05d0"})]
     (if (= 201 status)
       (delete (str "ctia/campaign" (:id parsed_body)))
       (prn "play-big: " status))))
 
-(defcase create-campaign :big-campaign-atom-store []
-  (helpers/fixture-properties:atom-store play-big))
+(defcase* create-campaign :big-campaign-atom-store
+  (fn [_] (let [port (setup-ctia-atom-store!)]
+           [#(play-big port) cleanup-ctia!])))
 
-(defcase create-campaign :big-campaign-es-store []
-  (esh/fixture-properties:es-store play-big))
+(defcase* create-campaign :big-campaign-es-store
+  (fn [_] (let [port (setup-ctia-es-store!)]
+           [#(play-big port) cleanup-ctia!])))
 
-(defcase create-campaign :big-campaign-es-store-native []
-  (esh/fixture-properties:es-store-native play-big))
+(defcase* create-campaign :big-campaign-es-store-native
+  (fn [_] (let [port (setup-ctia-es-store-native!)]
+           [#(play-big port) cleanup-ctia!])))
