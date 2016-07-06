@@ -81,6 +81,11 @@
        (time-coerce/from-date)
        (time-format/unparse (time-format/formatter "YYYY.MM.dd.HH.mm"))))
 
+(defn format-rfc822-time [d]
+  (->> d
+       (time-coerce/from-date)
+       (time-format/unparse (time-format/formatters :rfc822))))
+
 (defn round-date [d granularity]
   (let [parsed (time-coerce/from-date d)
         year (time/year parsed)

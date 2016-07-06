@@ -1,12 +1,14 @@
 (ns ctia.http.routes.ttp
   (:require
-    [compojure.api.sweet :refer :all]
-    [ctia.domain.entities :refer [realize-ttp]]
-    [ctia.flows.crud :as flows]
-    [ctia.store :refer :all]
-    [ctim.schemas.ttp :refer [NewTTP StoredTTP]]
-    [ring.util.http-response :refer :all]
-    [schema.core :as s]))
+   [compojure.api.sweet :refer :all]
+   [ctia.domain.entities :refer [realize-ttp]]
+   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+   [ring.middleware.not-modified :refer [wrap-not-modified]]
+   [ctia.flows.crud :as flows]
+   [ctia.store :refer :all]
+   [ctim.schemas.ttp :refer [NewTTP StoredTTP]]
+   [ring.util.http-response :refer :all]
+   [schema.core :as s]))
 
 (defroutes ttp-routes
   (context "/ttp" []
@@ -45,6 +47,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-ttp
       :path-params [id :- s/Str]
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :ttp
                              (fn [s] (read-ttp s id)))]
         (ok d)

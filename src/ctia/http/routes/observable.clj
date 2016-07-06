@@ -3,6 +3,8 @@
    [compojure.api.sweet :refer :all]
    [ctia.lib.pagination :as pag]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+   [ring.middleware.not-modified :refer [wrap-not-modified]]
    [ctim.schemas
     [common :as c]
     [judgement :refer [StoredJudgement]]
@@ -40,6 +42,7 @@
     :summary "Returns all the Judgements associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-judgements
+    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok (read-store :judgement list-judgements-by-observable {:type observable_type
                                                                         :value observable_value} params)))
 
@@ -52,6 +55,7 @@
     :summary "Returns all the Indicator References associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities #{:list-judgements :list-indicators}
+    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (let [query-res (:data (read-store
                              :judgement
@@ -77,6 +81,7 @@
     :capabilities :list-sightings
     :return (s/maybe [StoredSighting])
     :summary "Returns all the Sightings associated with the specified observable."
+    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :sighting list-sightings-by-observables [{:type observable_type
                                                            :value observable_value}] params))))

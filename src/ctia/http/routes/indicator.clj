@@ -1,22 +1,23 @@
 (ns ctia.http.routes.indicator
-  (:require
-    [compojure.api.sweet :refer :all]
-    [ctia.domain.entities :refer [realize-indicator realize-sighting]]
-    [ctia.properties :refer [properties]]
-    [ctia.flows.crud :as flows]
-    [ctia.http.routes.common :refer [PagingParams paginated-ok]]
-    [ctia.store :refer :all]
-    [ctim.domain.id :as id]
-    [ctim.schemas
-     [campaign :refer [StoredCampaign]]
-     [coa :refer [StoredCOA]]
-     [indicator :refer [NewIndicator StoredIndicator]]
-     [judgement :refer [StoredJudgement]]
-     [sighting :refer [NewSighting StoredSighting]]
-     [ttp :refer [StoredTTP]]]
-    [ring.util.http-response :refer :all]
-    [schema-tools.core :as st]
-    [schema.core :as s]))
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-indicator realize-sighting]]
+            [ctia.properties :refer [properties]]
+            [ctia.flows.crud :as flows]
+            [ctia.http.routes.common :refer [PagingParams paginated-ok]]
+            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+            [ctia.store :refer :all]
+            [ctim.domain.id :as id]
+            [ctim.schemas
+             [campaign :refer [StoredCampaign]]
+             [coa :refer [StoredCOA]]
+             [indicator :refer [NewIndicator StoredIndicator]]
+             [judgement :refer [StoredJudgement]]
+             [sighting :refer [NewSighting StoredSighting]]
+             [ttp :refer [StoredTTP]]]
+            [ring.util.http-response :refer :all]
+            [ring.middleware.not-modified :refer [wrap-not-modified]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 
 (s/defschema IndicatorsByTitleQueryParams
@@ -73,6 +74,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-indicator
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :indicator read-indicator id)]
         (ok d)
         (not-found)))
@@ -82,6 +84,7 @@
       :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all Sightings associated with the Indicator"
       :capabilities #{:read-indicator :list-sightings}
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [indicator (read-store :indicator read-indicator id)]
         (paginated-ok
          (read-store :sighting
@@ -96,8 +99,10 @@
       :path-params [title :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-indicator
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (paginated-ok
        (read-store :indicator list-indicators {:title title} params))))
+
   (GET "/judgement/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])
@@ -106,6 +111,7 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
+    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators
@@ -119,6 +125,7 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
+    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators
@@ -132,6 +139,7 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
+    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators
@@ -145,6 +153,7 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
+    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators
@@ -158,6 +167,7 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
+    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators

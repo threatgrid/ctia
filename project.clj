@@ -20,6 +20,7 @@
                  [leiningen-core "2.6.1"] ;; For accessing project configuration
                  [com.taoensso/carmine "2.12.2"]
                  [org.clojure/tools.cli "0.3.5"]
+                 [pandect "0.6.0"]
 
                  ;; Schemas
                  [prismatic/schema "1.0.5"]

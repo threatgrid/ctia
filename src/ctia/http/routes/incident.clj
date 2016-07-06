@@ -1,12 +1,13 @@
 (ns ctia.http.routes.incident
-  (:require
-    [compojure.api.sweet :refer :all]
-    [ctia.domain.entities :refer [realize-incident]]
-    [ctia.flows.crud :as flows]
-    [ctia.store :refer :all]
-    [ctim.schemas.incident :refer [NewIncident StoredIncident]]
-    [ring.util.http-response :refer :all]
-    [schema.core :as s]))
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-incident]]
+            [ctia.flows.crud :as flows]
+            [ctia.store :refer :all]
+            [ctim.schemas.incident :refer [NewIncident StoredIncident]]
+            [ring.util.http-response :refer :all]
+            [ring.middleware.not-modified :refer [wrap-not-modified]]
+            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+            [schema.core :as s]))
 
 (defroutes incident-routes
 
@@ -45,6 +46,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-incident
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :incident read-incident id)]
         (ok d)
         (not-found)))

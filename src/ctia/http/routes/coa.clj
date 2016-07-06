@@ -1,10 +1,12 @@
 (ns ctia.http.routes.coa
   (:require [compojure.api.sweet :refer :all]
             [ctia.domain.entities :refer [realize-coa]]
+            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
             [ctim.schemas.coa :refer [NewCOA StoredCOA]]
             [ring.util.http-response :refer :all]
+            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [schema.core :as s]))
 
 (defroutes coa-routes
@@ -43,6 +45,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-coa
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :coa (fn [s] (read-coa s id)))]
         (ok d)
         (not-found)))

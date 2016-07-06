@@ -1,12 +1,14 @@
 (ns ctia.http.routes.sighting
   (:require
-    [compojure.api.sweet :refer :all]
-    [ctia.domain.entities :refer [realize-sighting check-new-sighting]]
-    [ctia.flows.crud :as flows]
-    [ctia.store :refer :all]
-    [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
-    [ring.util.http-response :refer :all]
-    [schema.core :as s]))
+   [compojure.api.sweet :refer :all]
+   [ctia.domain.entities :refer [realize-sighting check-new-sighting]]
+   [ctia.flows.crud :as flows]
+   [ctia.store :refer :all]
+   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+   [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
+   [ring.middleware.not-modified :refer [wrap-not-modified]]
+   [ring.util.http-response :refer :all]
+   [schema.core :as s]))
 
 (defroutes sighting-routes
   (context "/sighting" []
@@ -48,6 +50,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-sighting
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :sighting read-sighting id)]
         (ok d)
         (not-found)))

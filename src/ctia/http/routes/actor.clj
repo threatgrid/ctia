@@ -4,6 +4,8 @@
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
             [ctim.schemas.actor :refer [NewActor StoredActor]]
+            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -44,6 +46,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-actor
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :actor read-actor id)]
         (ok d)
         (not-found)))

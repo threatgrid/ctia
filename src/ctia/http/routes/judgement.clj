@@ -4,6 +4,7 @@
    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
    [ctia.properties :refer [properties]]
    [ctia.store :refer :all]
    [ctim.domain.id :as domain-id]
@@ -11,6 +12,7 @@
     [feedback :refer [NewFeedback StoredFeedback]]
     [judgement :refer [NewJudgement StoredJudgement]]
     [relationships :as rel]]
+   [ring.middleware.not-modified :refer [wrap-not-modified]]
    [ring.util.http-response :refer :all]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -58,6 +60,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Gets a Judgement by ID"
       :capabilities :read-judgement
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :judgement read-judgement id)]
         (ok d)
         (not-found)))

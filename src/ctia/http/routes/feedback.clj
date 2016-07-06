@@ -1,14 +1,16 @@
 (ns ctia.http.routes.feedback
   (:require
-    [compojure.api.sweet :refer :all]
-            [ctia.domain.entities :refer [realize-feedback]]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-            [ctia.store :refer :all]
-            [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
-            [ring.util.http-response :refer :all]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+   [compojure.api.sweet :refer :all]
+   [ctia.domain.entities :refer [realize-feedback]]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+   [ctia.store :refer :all]
+   [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
+   [ring.middleware.not-modified :refer [wrap-not-modified]]
+   [ring.util.http-response :refer :all]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (s/defschema FeedbackQueryParams
   (st/merge
@@ -37,7 +39,7 @@
       :summary "Search Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
-
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (paginated-ok
        (read-store :feedback
                    list-feedback
@@ -49,6 +51,7 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :feedback read-feedback id)]
         (ok d)
         (not-found)))

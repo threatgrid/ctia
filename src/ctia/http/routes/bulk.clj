@@ -8,6 +8,8 @@
             [ctia.properties :refer [properties]]
             [ctia.store :refer :all]
             [ctim.schemas.common :as c]
+            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -133,6 +135,7 @@
     (GET "/" []
       :return (s/maybe StoredBulk)
       :summary "Gets many entities at once"
+      :middleware [wrap-not-modified wrap-cache-control-headers]
       :query-params [{actors          :- [c/Reference] []}
                      {campaigns       :- [c/Reference] []}
                      {coas            :- [c/Reference] []}
