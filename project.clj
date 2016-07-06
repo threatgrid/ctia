@@ -20,6 +20,7 @@
                  [com.taoensso/carmine "2.12.2"]
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
+                 [org.clojure/data.xml "0.0.8"]
 
                  ;; Schemas
                  [prismatic/schema "1.0.5"]

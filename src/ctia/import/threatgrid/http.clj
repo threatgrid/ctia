@@ -51,15 +51,15 @@
                                                    :default-per-route 16})]
     (doall
      (pmap (fn [entities]
-            (let [options {:connection-manager conn-mgr
-                           :content-type :edn
-                           :accept :edn
-                           :throw-exceptions false
-                           :body (pr-str {xtype entities})
-                           :query-params {"api_key" "importer"}}
-                  results (try
-                            (retry 5 http/post target-uri options)
-                            (catch java.net.SocketTimeoutException e
-                              (println "Socket timed out after 5 retries.")))]
-              (get-in results [:body :id])))
+             (let [options {:connection-manager conn-mgr
+                            :content-type :edn
+                            :accept :edn
+                            :throw-exceptions false
+                            :body (pr-str {xtype entities})
+                            :query-params {"api_key" "importer"}}
+                   results (try
+                             (retry 5 http/post target-uri options)
+                             (catch java.net.SocketTimeoutException e
+                               (println "Socket timed out after 5 retries.")))]
+               (read-string (:body results))))
            (partition-all 1000 expressions)))))
