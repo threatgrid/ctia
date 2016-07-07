@@ -24,8 +24,8 @@
       (log/error message))
     (when errors
       (log/error errors))
-    (is (= 200 status))
-    (when (= 200 status)
+    (is (= 201 status))
+    (when (= 201 status)
       (is (= new-entity
              result))
       result)))
@@ -41,8 +41,8 @@
         (post path
               :body new-entity
               :headers {"api_key" api-key})]
-    (when (not= 200 status)
-      (throw (ex-info (str "Expected status to be 200 but was " status
+    (when (not= 201 status)
+      (throw (ex-info (str "Expected status to be 201 but was " status
                            " for " path ":\n"
                            (with-out-str (clojure.pprint/pprint response)))
                       {:path path

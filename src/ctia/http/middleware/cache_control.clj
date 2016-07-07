@@ -1,8 +1,7 @@
 (ns ctia.http.middleware.cache-control
-  (:require [clojure.string :as str]
-            [pandect.algo.sha1 :refer [sha1]]
-            [ctia.lib.time :refer [format-rfc822-time]])
-  (:import (java.io File)))
+  (:require [ctia.lib.time :refer [format-rfc822-time]]
+            [pandect.algo.sha1 :refer [sha1]])
+  (:import java.io.File))
 
 (defn- read-request? [request]
   (#{:get :head} (:request-method request)))

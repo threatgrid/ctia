@@ -33,7 +33,7 @@
                        :reason "false positive"
                        :tlp "green"}
                 :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 200 status))
+      (is (= 201 status))
       (is (deep=
            {:feedback -1,
             :entity_id "judgement-123"
