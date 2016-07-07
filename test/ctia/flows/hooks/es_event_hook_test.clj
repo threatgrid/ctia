@@ -71,9 +71,9 @@
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
 
-      (is (= 200 judgement-1-status))
-      (is (= 200 judgement-2-status))
-      (is (= 200 judgement-3-status))
+      (is (= 201 judgement-1-status))
+      (is (= 201 judgement-2-status))
+      (is (= 201 judgement-3-status))
 
       (let [{:keys [index conn props]} (init-producer-conn)]
         ((index/refresh-fn conn) conn index)

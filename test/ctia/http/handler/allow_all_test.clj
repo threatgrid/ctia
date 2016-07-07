@@ -29,7 +29,7 @@
                        :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                     :end_time "2016-03-11T00:00:00.000-00:00"}
                        :indicators [{:indicator_id "indicator-123"}]})]
-      (is (= 200 status))
+      (is (= 201 status))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"

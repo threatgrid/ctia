@@ -26,7 +26,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-feedback
       :identity identity
-      (ok (flows/create-flow :realize-fn realize-feedback
+      (created (flows/create-flow :realize-fn realize-feedback
                              :store-fn #(write-store :feedback create-feedback %)
                              :entity-type :feedback
                              :identity identity

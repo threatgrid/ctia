@@ -10,6 +10,16 @@
             [ctim.generators.schemas :as gen]
             [ctim.generators.schemas.sighting-generators :as gs]))
 
+(defn assert-successfully-created
+  ([status]
+   (assert (= 201 status)
+           (format "status %s was not 201" status)))
+  ([status body]
+   (assert (empty? (:errors body))
+           (format (str "Errors in the body: " (:errors body))))
+   (assert (= 201 status)
+           (format "Status %s was not 201" status))))
+
 (defn assert-successful
   ([status]
    (assert (= 200 status)
@@ -35,11 +45,8 @@
               get-entity# :parsed-body}
              (get (str "ctia/" ~model-type "/" (encode id#)))]
 
-         (assert-successful post-status# post-entity#)
+         (assert-successfully-created post-status# post-entity#)
          (assert-successful get-status# get-entity#)
-         ;;(println "NEW" new-entity#)
-         ;;(println "POST:" post-entity#)
-         ;;(println "GET:" get-entity#)
          (if-not (empty? (keys new-entity#))
            (common= new-entity#
                     (normalize post-entity#)
@@ -84,9 +91,9 @@
                (map :id)
                set)]
 
-      (assert-successful post-status)
+      (assert-successfully-created post-status)
       (doseq [{status :status} stored-sighting-responses]
-        (assert-successful status))
+        (assert-successfully-created status))
       (assert-successful get-indicator-status)
       (assert-successful search-result-status)
 

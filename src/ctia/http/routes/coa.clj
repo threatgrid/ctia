@@ -17,11 +17,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-coa
       :identity identity
-      (ok (flows/create-flow :realize-fn realize-coa
-                             :store-fn #(write-store :coa create-coa %)
-                             :entity-type :coa
-                             :identity identity
-                             :entity coa)))
+      (created (flows/create-flow :realize-fn realize-coa
+                                  :store-fn #(write-store :coa create-coa %)
+                                  :entity-type :coa
+                                  :identity identity
+                                  :entity coa)))
     (PUT "/:id" []
       :return StoredCOA
       :body [coa NewCOA {:description "an updated COA"}]

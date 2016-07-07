@@ -7,7 +7,6 @@
   :jvm-opts [ "-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
              "-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
-             "-XX:MaxPermSize=256m" ;; recommended permgen size
              "-server"]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
@@ -94,10 +93,22 @@
                                   [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.6"]
+                                  [perforate "0.3.4"]
                                   [prismatic/schema-generators "0.1.0"
                                    :exclusions [prismatic/schema]]]
                    :resource-paths ["model"
                                     "test/resources"]}
+             :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
+                              "-Dcom.sun.management.jmxremote.port=9010"
+                              "-Dcom.sun.management.jmxremote.local.only=false"
+                              "-Dcom.sun.management.jmxremote.authenticate=false"
+                              "-Dcom.sun.management.jmxremote.ssl=false"]}
+             :bench {:dependencies [[cheshire "5.6.1"]
+                                    [perforate "0.3.4"]
+                                    [com.h2database/h2 "1.4.191"]
+                                    [org.clojure/test.check "0.9.0"]
+                                    [com.gfredericks/test.chuck "0.2.6"]
+                                    [prismatic/schema-generators "0.1.0"]]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire "5.6.1"]
                                    [com.h2database/h2 "1.4.191"]
@@ -113,8 +124,23 @@
                                      "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}}
-  :plugins [[lein-shell "0.5.0"]]
+  :perforate {:environments [{:name :actor
+                              :namespaces [ctia.http.routes.actor-bench]}
+                             {:name :campaign
+                              :namespaces [ctia.http.routes.campaign-bench]}]}
+  :plugins [[lein-shell "0.5.0"]
+            [perforate "0.3.4"]]
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
-            "prepush" ["shell" "scripts/pre-push-check.sh"]
-            "init-properties" ["shell" "scripts/init-properties-for-docker.sh"]})
+
+            "prepush" ^{:doc "Check code quality before pushing"}
+            ["shell" "scripts/pre-push-check.sh"]
+
+            "bench" ^{:doc (str "Launch benchmarks"
+                                "; use `lein bench actor` to only launch"
+                                " actor related benchmarks")}
+            ["with-profile" "test" "perforate"]
+
+            "init-properties" ^{:doc (str "create an initial `ctia.properties`"
+                                          " using docker machine ip")}
+            ["shell" "scripts/init-properties-for-docker.sh"]})
