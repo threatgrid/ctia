@@ -117,10 +117,6 @@
                     "ctia.store.es.default.transport" "http"
                     "ctia.store.es.default.port" "9200"
                     "ctia.store.es.default.indexname" "test_ctia"
-                    "ctia.store.sql.judgement.classname"    "org.h2.Driver"
-                    "ctia.store.sql.judgement.subprotocol"  "h2"
-                    "ctia.store.sql.judgement.subname"      "/tmp/ctia-h2-db;DATABASE_TO_UPPER=false"
-                    "ctia.store.sql.judgement.delimiters"   ""
 
                     "ctia.store.actor" "atom,es"
                     "ctia.store.campaign" "atom,es"

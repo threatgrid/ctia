@@ -25,12 +25,6 @@
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
 
-(defn sql-store-impl-properties [store]
-  {(str "ctia.store.sql." store ".classname") s/Str
-   (str "ctia.store.sql." store ".subprotocol") s/Str
-   (str "ctia.store.sql." store ".subname") s/Str
-   (str "ctia.store.sql." store ".delimiters") s/Str})
-
 (defn es-store-impl-properties [store]
   {(str "ctia.store.es." store ".transport") (s/enum :http :native)
    (str "ctia.store.es." store ".uri") s/Str
@@ -47,8 +41,7 @@
     (st/optional-keys
      (reduce merge {}
              (map (fn [s] (merge (default-store-properties s)
-                                (es-store-impl-properties s)
-                                (sql-store-impl-properties s))) store-names)))))
+                                (es-store-impl-properties s))) store-names)))))
 
 (s/defschema PropertiesSchema
   "This is the schema used for value type coercion.

@@ -40,9 +40,6 @@
                  ;; Database
                  [clojurewerkz/elastisch "3.0.0-beta1"]
 
-                 [korma "0.4.2"]
-                 [org.clojure/java.jdbc "0.3.7"] ; specified by korma
-
                  ;; Metrics
                  [metrics-clojure "2.7.0"]
                  [metrics-clojure-jvm "2.7.0"]
@@ -65,7 +62,6 @@
   :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.4.0"
   :test-selectors {:atom-store :atom-store
-                   :sql-store :sql-store
                    :es-store :es-store
                    :es-store-native :es-store-native
                    :multi-store :multi-store
@@ -90,14 +86,12 @@
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
   :profiles {:dev {:dependencies [[cheshire "5.6.1"]
-                                  [com.h2database/h2 "1.4.191"]
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.6"]
                                   [perforate "0.3.4"]
                                   [prismatic/schema-generators "0.1.0"
                                    :exclusions [prismatic/schema]]]
-                   :resource-paths ["model"
-                                    "test/resources"]}
+                   :resource-paths ["test/resources"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
@@ -105,20 +99,17 @@
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
              :bench {:dependencies [[cheshire "5.6.1"]
                                     [perforate "0.3.4"]
-                                    [com.h2database/h2 "1.4.191"]
                                     [org.clojure/test.check "0.9.0"]
                                     [com.gfredericks/test.chuck "0.2.6"]
                                     [prismatic/schema-generators "0.1.0"]]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire "5.6.1"]
-                                   [com.h2database/h2 "1.4.191"]
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.6"]
                                    [prismatic/schema-generators "0.1.0"]]
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
-                    :resource-paths ["model"
-                                     "test/resources"
+                    :resource-paths ["test/resources"
                                      "test/resources/hooks/JarHook.jar"
                                      "test/resources/hooks/AutoloadHook.jar"
                                      "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}
