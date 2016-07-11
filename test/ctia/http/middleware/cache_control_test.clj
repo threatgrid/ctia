@@ -1,14 +1,15 @@
 (ns ctia.http.middleware.cache-control-test
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+  (:require [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
-             [fake-whoami-service :as whoami-helpers]
-             [store :refer [deftest-for-each-store]]]))
+             [fake-whoami-service :as whoami-helpers]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
+                                    helpers/fixture-properties:atom-store
+                                    helpers/fixture-ctia
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
@@ -17,7 +18,7 @@
   (select-keys (get (str "ctia/actor/" id)
                     :headers (merge headers {"api_key" "45c1f5e3f05d0"})) [:status :headers :parsed-body]))
 
-(deftest-for-each-store test-cache-control-middleware
+(deftest test-cache-control-middleware
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
