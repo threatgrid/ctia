@@ -1,12 +1,12 @@
 (ns ctia.http.routes.ttp
   (:require
-    [compojure.api.sweet :refer :all]
-    [ctia.domain.entities :refer [realize-ttp]]
-    [ctia.flows.crud :as flows]
-    [ctia.store :refer :all]
-    [ctim.schemas.ttp :refer [NewTTP StoredTTP]]
-    [ring.util.http-response :refer :all]
-    [schema.core :as s]))
+   [compojure.api.sweet :refer :all]
+   [ctia.domain.entities :refer [realize-ttp]]
+   [ctia.flows.crud :as flows]
+   [ctia.store :refer :all]
+   [ctim.schemas.ttp :refer [NewTTP StoredTTP]]
+   [ring.util.http-response :refer :all]
+   [schema.core :as s]))
 
 (defroutes ttp-routes
   (context "/ttp" []

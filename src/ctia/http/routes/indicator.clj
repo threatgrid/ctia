@@ -1,22 +1,21 @@
 (ns ctia.http.routes.indicator
-  (:require
-    [compojure.api.sweet :refer :all]
-    [ctia.domain.entities :refer [realize-indicator realize-sighting]]
-    [ctia.properties :refer [properties]]
-    [ctia.flows.crud :as flows]
-    [ctia.http.routes.common :refer [PagingParams paginated-ok]]
-    [ctia.store :refer :all]
-    [ctim.domain.id :as id]
-    [ctim.schemas
-     [campaign :refer [StoredCampaign]]
-     [coa :refer [StoredCOA]]
-     [indicator :refer [NewIndicator StoredIndicator]]
-     [judgement :refer [StoredJudgement]]
-     [sighting :refer [NewSighting StoredSighting]]
-     [ttp :refer [StoredTTP]]]
-    [ring.util.http-response :refer :all]
-    [schema-tools.core :as st]
-    [schema.core :as s]))
+  (:require [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [realize-indicator realize-sighting]]
+            [ctia.properties :refer [properties]]
+            [ctia.flows.crud :as flows]
+            [ctia.http.routes.common :refer [PagingParams paginated-ok]]
+            [ctia.store :refer :all]
+            [ctim.domain.id :as id]
+            [ctim.schemas
+             [campaign :refer [StoredCampaign]]
+             [coa :refer [StoredCOA]]
+             [indicator :refer [NewIndicator StoredIndicator]]
+             [judgement :refer [StoredJudgement]]
+             [sighting :refer [NewSighting StoredSighting]]
+             [ttp :refer [StoredTTP]]]
+            [ring.util.http-response :refer :all]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 
 (s/defschema IndicatorsByTitleQueryParams
@@ -98,6 +97,7 @@
       :capabilities :read-indicator
       (paginated-ok
        (read-store :indicator list-indicators {:title title} params))))
+
   (GET "/judgement/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])

@@ -11,14 +11,14 @@
                             :as _http-config_}]
   (doto
       (jetty/run-jetty (if dev-reload
-                         (wrap-reload #'handler/app)
-                         #'handler/app)
+                         (wrap-reload #'handler/api-handler)
+                         #'handler/api-handler)
                        {:port port
                         :min-threads min-threads
                         :max-threads max-threads
                         :join? false})
-      (.setStopAtShutdown true)
-      (.setStopTimeout (* 1000 10))))
+    (.setStopAtShutdown true)
+    (.setStopTimeout (* 1000 10))))
 
 (defn start! [& {:keys [join?]
                  :or {join? true}}]

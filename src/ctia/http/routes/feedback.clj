@@ -1,14 +1,14 @@
 (ns ctia.http.routes.feedback
   (:require
-    [compojure.api.sweet :refer :all]
-            [ctia.domain.entities :refer [realize-feedback]]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-            [ctia.store :refer :all]
-            [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
-            [ring.util.http-response :refer :all]
-            [schema-tools.core :as st]
-            [schema.core :as s]))
+   [compojure.api.sweet :refer :all]
+   [ctia.domain.entities :refer [realize-feedback]]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.store :refer :all]
+   [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
+   [ring.util.http-response :refer :all]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (s/defschema FeedbackQueryParams
   (st/merge
@@ -27,17 +27,16 @@
       :capabilities :create-feedback
       :identity identity
       (created (flows/create-flow :realize-fn realize-feedback
-                             :store-fn #(write-store :feedback create-feedback %)
-                             :entity-type :feedback
-                             :identity identity
-                             :entity feedback)))
+                                  :store-fn #(write-store :feedback create-feedback %)
+                                  :entity-type :feedback
+                                  :identity identity
+                                  :entity feedback)))
     (GET "/" []
       :return [StoredFeedback]
       :query [params FeedbackQueryParams]
       :summary "Search Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
-
       (paginated-ok
        (read-store :feedback
                    list-feedback
