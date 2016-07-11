@@ -4,9 +4,7 @@
    [ctia.domain.entities :refer [realize-sighting check-new-sighting]]
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
-   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
    [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
-   [ring.middleware.not-modified :refer [wrap-not-modified]]
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
 

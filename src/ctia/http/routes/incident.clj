@@ -5,8 +5,6 @@
             [ctia.store :refer :all]
             [ctim.schemas.incident :refer [NewIncident StoredIncident]]
             [ring.util.http-response :refer :all]
-            [ring.middleware.not-modified :refer [wrap-not-modified]]
-            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
             [schema.core :as s]))
 
 (defroutes incident-routes

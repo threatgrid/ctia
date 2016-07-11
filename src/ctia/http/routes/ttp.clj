@@ -2,8 +2,6 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-ttp]]
-   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
-   [ring.middleware.not-modified :refer [wrap-not-modified]]
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
    [ctim.schemas.ttp :refer [NewTTP StoredTTP]]

@@ -2,8 +2,6 @@
   (:require [ctia.version :refer [current-version]]
             [clojure.string :as st]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
-            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ctim.schemas.common :refer [VersionInfo]]
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]

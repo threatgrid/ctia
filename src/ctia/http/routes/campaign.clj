@@ -4,8 +4,6 @@
             [ctia.flows.crud :as flows]
             [ctim.schemas.campaign :refer [NewCampaign StoredCampaign]]
             [ctia.store :refer :all]
-            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
-            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 

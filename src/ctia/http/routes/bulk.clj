@@ -8,8 +8,6 @@
             [ctia.properties :refer [properties]]
             [ctia.store :refer :all]
             [ctim.schemas.common :as c]
-            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
-            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 

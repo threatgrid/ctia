@@ -4,7 +4,6 @@
             [ctia.properties :refer [properties]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :refer [PagingParams paginated-ok]]
-            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
             [ctia.store :refer :all]
             [ctim.domain.id :as id]
             [ctim.schemas
@@ -15,7 +14,6 @@
              [sighting :refer [NewSighting StoredSighting]]
              [ttp :refer [StoredTTP]]]
             [ring.util.http-response :refer :all]
-            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 

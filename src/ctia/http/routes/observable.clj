@@ -3,8 +3,6 @@
    [compojure.api.sweet :refer :all]
    [ctia.lib.pagination :as pag]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
-   [ring.middleware.not-modified :refer [wrap-not-modified]]
    [ctim.schemas
     [common :as c]
     [judgement :refer [StoredJudgement]]

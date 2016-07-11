@@ -3,8 +3,6 @@
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [ctia.store :refer :all]
-            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
-            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ctim.schemas
              [vocabularies :refer [ObservableTypeIdentifier]]
              [verdict :refer [StoredVerdict]]]))

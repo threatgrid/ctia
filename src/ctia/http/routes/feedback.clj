@@ -4,10 +4,8 @@
    [ctia.domain.entities :refer [realize-feedback]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
    [ctia.store :refer :all]
    [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
-   [ring.middleware.not-modified :refer [wrap-not-modified]]
    [ring.util.http-response :refer :all]
    [schema-tools.core :as st]
    [schema.core :as s]))

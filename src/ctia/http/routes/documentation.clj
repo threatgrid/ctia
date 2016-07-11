@@ -1,8 +1,6 @@
 (ns ctia.http.routes.documentation
   (:require
    [compojure.api.sweet :refer :all]
-   [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
-   [ring.middleware.not-modified :refer [wrap-not-modified]]
    [ring.util.http-response :refer :all]
    [markdown.core :refer [md-to-html-string]]
    [hiccup.core :as h]
