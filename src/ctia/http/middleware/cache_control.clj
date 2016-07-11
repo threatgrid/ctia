@@ -15,14 +15,19 @@
     File (str (.lastModified body) "-" (.length body))
     (sha1 (.getBytes (pr-str body) "UTF-8"))))
 
-(defn update-headers [headers etag body]
-  (merge headers
-         {"ETag" etag}
-         (when-let [last-modified (or (:updated body)
-                                      (:created body))]
-           {"Last-Modified" (format-rfc822-time last-modified)})))
+(defn update-headers
+  [headers etag {:keys [created updated] :as body}]
+  (let [last-modified (or updated created)]
+    (cond-> headers
+      etag (assoc "ETag" etag)
+      last-modified (assoc "Last-Modified"
+                           (format-rfc822-time last-modified)))))
 
-(defn wrap-cache-control-headers [handler]
+(defn wrap-cache-control-headers
+  "only applies to GET requests
+  appends Last-Modified and Etag headers to body response"
+
+  [handler]
   (fn [req]
     (let [{body :body :as resp} (handler req)
           etag (calculate-etag body)]

@@ -50,7 +50,6 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-sighting
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :sighting read-sighting id)]
         (ok d)
         (not-found)))

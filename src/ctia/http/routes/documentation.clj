@@ -92,5 +92,4 @@
   (context "/doc" []
     (GET "/*.*" req
       :no-doc true
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (render-request-with-cache (:path-info req)))))

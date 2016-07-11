@@ -15,7 +15,6 @@
     (GET "/" []
       :return VersionInfo
       :summary "API version details"
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (ok {:base "/ctia"
            :version schema-version
            :beta true

@@ -46,7 +46,6 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-actor
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :actor read-actor id)]
         (ok d)
         (not-found)))

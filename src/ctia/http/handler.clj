@@ -1,5 +1,6 @@
 (ns ctia.http.handler
   (:require [compojure.api.sweet :refer [context defapi]]
+            [compojure.api.core :refer [middleware]]
             [ctia.http.middleware.auth :as auth]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware.metrics :as metrics]
@@ -24,7 +25,9 @@
              [version :refer [version-routes]]]
             [ring.middleware
              [format :refer [wrap-restful-format]]
-             [params :as params]]))
+             [params :as params]]
+            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
+            [ring.middleware.not-modified :refer [wrap-not-modified]]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -69,7 +72,6 @@
      :compojure.api.exception/response-validation ex/response-validation-handler
      :compojure.api.exception/default ex/default-error-handler}}
    :swagger {:ui "/"
-                                        ;:options {:ui {:jsonEditor true}}
              :spec "/swagger.json"
              :data {:info {:title "CTIA"
                            :license {:name "All Rights Reserved",
@@ -94,29 +96,28 @@
                            {:name "Verdict", :description "Verdict operations"}
                            {:name "Version", :description "Version operations"}]}}}
 
-  documentation-routes
-  (context "/ctia" []
-    actor-routes
-    bulk-routes
-    campaign-routes
-    coa-routes
-    event-routes
-    exploit-target-routes
-    feedback-routes
-    incident-routes
-    indicator-routes
-    judgement-routes
-    metrics-routes
-    observable-routes
-    properties-routes
-    sighting-routes
-    ttp-routes
-    verdict-routes
-    version-routes))
+  (middleware [auth/wrap-authentication
+               wrap-not-modified
+               wrap-cache-control-headers
+               ;; always last
+               metrics/wrap-metrics]
 
-(def app
-  (-> api-handler
-      (metrics/wrap-metrics (compojure.api.routes/get-routes api-handler))
-      auth/wrap-authentication
-      params/wrap-params
-      wrap-restful-format))
+              documentation-routes
+              (context "/ctia" []
+                actor-routes
+                bulk-routes
+                campaign-routes
+                coa-routes
+                event-routes
+                exploit-target-routes
+                feedback-routes
+                incident-routes
+                indicator-routes
+                judgement-routes
+                metrics-routes
+                observable-routes
+                properties-routes
+                sighting-routes
+                ttp-routes
+                verdict-routes
+                version-routes)))

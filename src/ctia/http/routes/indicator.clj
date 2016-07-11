@@ -74,7 +74,6 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-indicator
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :indicator read-indicator id)]
         (ok d)
         (not-found)))
@@ -84,7 +83,6 @@
       :query [params SightingsByIndicatorQueryParams]
       :summary "Gets all Sightings associated with the Indicator"
       :capabilities #{:read-indicator :list-sightings}
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [indicator (read-store :indicator read-indicator id)]
         (paginated-ok
          (read-store :sighting
@@ -99,7 +97,6 @@
       :path-params [title :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-indicator
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (paginated-ok
        (read-store :indicator list-indicators {:title title} params))))
 
@@ -111,7 +108,6 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
-    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators
@@ -125,7 +121,6 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
-    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators
@@ -139,7 +134,6 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
-    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators
@@ -153,7 +147,6 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
-    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators
@@ -167,7 +160,6 @@
     :path-params [id :- s/Str]
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-indicators
-    :middleware [wrap-not-modified wrap-cache-control-headers]
     (paginated-ok
      (read-store :indicator
                  list-indicators

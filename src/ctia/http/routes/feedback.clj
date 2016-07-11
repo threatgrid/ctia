@@ -29,17 +29,16 @@
       :capabilities :create-feedback
       :identity identity
       (created (flows/create-flow :realize-fn realize-feedback
-                             :store-fn #(write-store :feedback create-feedback %)
-                             :entity-type :feedback
-                             :identity identity
-                             :entity feedback)))
+                                  :store-fn #(write-store :feedback create-feedback %)
+                                  :entity-type :feedback
+                                  :identity identity
+                                  :entity feedback)))
     (GET "/" []
       :return [StoredFeedback]
       :query [params FeedbackQueryParams]
       :summary "Search Feedback"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (paginated-ok
        (read-store :feedback
                    list-feedback
@@ -51,7 +50,6 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :feedback read-feedback id)]
         (ok d)
         (not-found)))

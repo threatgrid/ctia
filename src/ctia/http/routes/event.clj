@@ -14,5 +14,4 @@
       :return [ModelEventBase]
       :summary "Recent Event log"
       :capabilities :developer
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (ok (recent-events)))))

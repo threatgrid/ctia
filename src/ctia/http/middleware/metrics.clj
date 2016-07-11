@@ -1,15 +1,13 @@
 (ns ctia.http.middleware.metrics
   "Middleware to control all metrics of the server"
-  (:require [ctia.properties :refer [properties]]
-            [clojure.tools.logging :as log]
-            [metrics.core :refer [default-registry]]
-            [metrics.meters :refer [meter mark!]]
-            [metrics.timers :refer [timer time!]]
-            [metrics.ring.expose :refer [expose-metrics-as-json]]
-            [metrics.ring.instrument :refer [instrument]]
+  (:require [clout.core :as clout]
+            [metrics
+             [core :refer [default-registry remove-metric]]
+             [meters :refer [mark! meter]]
+             [timers :refer [time! timer]]]
             [metrics.jvm.core :as jvm]
-            [slugger.core :refer [->slug]]
-            [clout.core :as clout]))
+            [metrics.ring.instrument :refer [instrument]]
+            [slugger.core :refer [->slug]]))
 
 (defn add-default-metrics
   []
@@ -45,10 +43,11 @@
         (mark! (get-in meters (drop 1 route)))
         (time! (get-in times (drop 1 route)) (handler request))))))
 
-(defn wrap-metrics [handler routes]
-  (let [exposed-routes (map (fn [l] [(clout/route-compile (first l))
-                                     (->slug (first l))
-                                     (name (second l))])
+(defn wrap-metrics [handler]
+  (let [routes (compojure.api.routes/get-routes handler)
+        exposed-routes (map (fn [l] [(clout/route-compile (first l))
+                                    (->slug (first l))
+                                    (name (second l))])
                             routes)]
     (add-default-metrics)
     (-> handler

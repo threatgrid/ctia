@@ -47,7 +47,6 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-ttp
       :path-params [id :- s/Str]
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :ttp
                              (fn [s] (read-ttp s id)))]
         (ok d)

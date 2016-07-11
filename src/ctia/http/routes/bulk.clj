@@ -135,7 +135,6 @@
     (GET "/" []
       :return (s/maybe StoredBulk)
       :summary "Gets many entities at once"
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       :query-params [{actors          :- [c/Reference] []}
                      {campaigns       :- [c/Reference] []}
                      {coas            :- [c/Reference] []}

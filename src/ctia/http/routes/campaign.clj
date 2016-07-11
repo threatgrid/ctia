@@ -45,7 +45,6 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-campaign
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :campaign read-campaign id)]
         (ok d)
         (not-found)))

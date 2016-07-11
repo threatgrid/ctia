@@ -17,7 +17,6 @@
     :return (s/maybe StoredVerdict)
     :summary "Returns the current Verdict associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
-    :middleware [wrap-not-modified wrap-cache-control-headers]
     :capabilities :read-verdict
     (if-let [d (-> (read-store :verdict list-verdicts
                                {[:observable :type] observable_type

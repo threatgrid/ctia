@@ -45,7 +45,6 @@
       :path-params [id :- s/Str]
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-coa
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :coa (fn [s] (read-coa s id)))]
         (ok d)
         (not-found)))

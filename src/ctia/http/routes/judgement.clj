@@ -60,7 +60,6 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Gets a Judgement by ID"
       :capabilities :read-judgement
-      :middleware [wrap-not-modified wrap-cache-control-headers]
       (if-let [d (read-store :judgement read-judgement id)]
         (ok d)
         (not-found)))
