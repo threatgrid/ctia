@@ -7,7 +7,6 @@
     [ctia.domain.entities :as entities]
     [ctia.events.producers.es.producer :as esp]
     [ctia.properties :refer [properties]]
-    [ctia.properties.getters :as pg]
     [ctia.store :as store]
     [ctim.schemas.judgement :as js]
     [ctim.schemas.verdict :as vs]
@@ -44,11 +43,8 @@
     event))
 
 (defn redis-event-publisher []
-  (let [{:keys [channel-name timeout-ms] :as redis-config}
-        (get-in @properties [:ctia :hook :redis])
-
-        [host port]
-        (pg/parse-host-port redis-config)]
+  (let [{:keys [channel-name timeout-ms host port] :as redis-config}
+        (get-in @properties [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection host port timeout-ms)
                            channel-name)))
 
