@@ -30,7 +30,7 @@
           coa (:parsed-body response)]
       (is (= 201 (:status response)))
       (is (deep=
-           {:type "COA"
+           {:type "coa"
             :title "coa"
             :description "description"
             :tlp "green"
@@ -51,7 +51,7 @@
               coa (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:type "COA"
+               {:type "coa"
                 :title "coa"
                 :description "description"
                 :tlp "green"
@@ -80,7 +80,7 @@
           (is (= 200 status))
           (is (deep=
                {:id (:id coa)
-                :type "COA"
+                :type "coa"
                 :created (:created coa)
                 :title "updated coa"
                 :description "updated description"

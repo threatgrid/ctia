@@ -7,12 +7,9 @@
 
 (defn recreate-state-index [{:keys [conn index mapping]}]
   (when conn
-    (es-index/delete! conn
-                      index)
+    (es-index/delete! conn index)
 
-    (es-index/create! conn
-                      index
-                      mapping)))
+    (es-index/create! conn index mapping)))
 
 (defn close-client [{:keys [conn]}]
   "if the connection is native, close the client"
@@ -21,7 +18,6 @@
 
 (defn fixture-recreate-store-indexes [test]
   "walk through all the es stores delete and recreate each store index"
-
   (doseq [store-impls (vals @store/stores)
           {:keys [state]} store-impls]
     (recreate-state-index state))
