@@ -1,9 +1,8 @@
 (ns ctia.test-helpers.benchmark
-  (:require [ctia
-             [events :as events]
-             [init :refer [start-ctia!]]]
+  (:require [ctia.init :refer [start-ctia!]]
             [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
+            [ctia.shutdown :as shutdown]
             [ctia.test-helpers
              [core :as helpers]
              [es :as esh]]))
@@ -30,6 +29,4 @@
   (setup-ctia! esh/fixture-properties:es-store-native))
 
 (defn cleanup-ctia! [_]
-  (http-server/stop!)
-  (hooks/shutdown!)
-  (events/shutdown!))
+  (shutdown/shutdown-ctia!))

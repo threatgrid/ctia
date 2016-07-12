@@ -3,7 +3,8 @@
   (:require [ctia.flows.autoload :as auto-hooks]
             [ctia.flows.hooks.event-hooks :as event-hooks]
             [ctia.flows.hook-protocol
-             :refer [Hook] :as prot]))
+             :refer [Hook] :as prot]
+            [ctia.shutdown :as shutdown]))
 
 (defn- doc-list [& s]
   (with-meta [] {:doc (apply str s)}))
@@ -58,14 +59,6 @@
           hook (reverse hook-list)]
     (prot/destroy hook)))
 
-(defn add-destroy-hooks-hook-at-shutdown
-  "Calling this function will ensure that all hooks will be
-  destroyed during the shutdown of the application."
-  []
-  (.addShutdownHook
-   (Runtime/getRuntime)
-   (Thread. destroy-hooks!)))
-
 (defn apply-hooks
   "Apply the registered hooks for a given hook-type to the passed in data.
    Data may be an entity (or an event) and a previous entity.  Accepts
@@ -90,10 +83,13 @@
                :entity event
                :read-only? true))
 
+(defn shutdown!
+  "Normally this should not be called directly since init! registers a
+  shutdown hook"
+  []
+  (destroy-hooks!))
+
 (defn init! []
   (reset-hooks!)
   (init-hooks!)
-  (add-destroy-hooks-hook-at-shutdown))
-
-(defn shutdown! []
-  (destroy-hooks!))
+  (shutdown/register-hook! :flows.hooks shutdown!))

@@ -18,6 +18,7 @@
             [ctia.version :as version]
             [ctia.flows.hooks :as h]
             [ctia.http.server :as http-server]
+            [ctia.shutdown :as shutdown]
             [ctia.stores.atom.store :as as]
             [ctia.stores.es.store :as es-store]))
 
@@ -134,6 +135,9 @@
 
   (log/info "starting CTIA version: "
             (version/current-version))
+
+  ;; shutdown hook
+  (shutdown/init!)
 
   ;; properties init
   (p/init!)
