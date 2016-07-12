@@ -4,7 +4,6 @@
              :refer [join-fixtures deftest is testing use-fixtures]]
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
-            [ctia.properties.getters :as pget]
             [ctia.test-helpers.core :as test-helpers])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
@@ -15,8 +14,7 @@
 
 (deftest ^:integration test-redis-pubsub-works
   (testing "That we can connect to redis and do pub/sub"
-    (let [{:keys [timeout-ms] :as redis-config} (get-in @properties [:ctia :hook :redis])
-          [host port] (pget/parse-host-port redis-config)
+    (let [{:keys [timeout-ms host port] :as redis-config} (get-in @properties [:ctia :hook :redis])
           server-connection (lr/server-connection host port timeout-ms)
           event-channel-name (str (gensym "events"))
           results (atom [])

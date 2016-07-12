@@ -3,7 +3,6 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
-            [ctia.properties.getters :as pg]
             [ctim.schemas.common :as c]
             [ctia.test-helpers.core :as test-helpers :refer [post]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
@@ -20,8 +19,7 @@
   (testing "Events are published to redis"
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
-          {:keys [timeout-ms channel-name] :as redis-config} (get-in @properties [:ctia :hook :redis])
-          [host port] (pg/parse-host-port redis-config)
+          {:keys [timeout-ms channel-name host port] :as redis-config} (get-in @properties [:ctia :hook :redis])
           listener (lr/subscribe-to-messages (lr/server-connection host port timeout-ms)
                                              channel-name
                                              (fn test-events-pubsub-fn [ev]
