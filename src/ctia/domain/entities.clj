@@ -52,7 +52,7 @@
   (default-realize-fn "campaign" NewCampaign StoredCampaign))
 
 (def realize-coa
-  (default-realize-fn "COA" NewCOA StoredCOA))
+  (default-realize-fn "coa" NewCOA StoredCOA))
 
 (def realize-exploit-target
   (default-realize-fn "exploit-target" NewExploitTarget StoredExploitTarget))

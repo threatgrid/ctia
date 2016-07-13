@@ -47,12 +47,17 @@
 
          (assert-successfully-created post-status# post-entity#)
          (assert-successful get-status# get-entity#)
+
+         ;; For Easy debug
+         ;;(clojure.pprint/pprint (clojure.data/diff new-entity# post-entity#))
+         ;;(clojure.pprint/pprint (clojure.data/diff get-entity# post-entity#))
+
          (if-not (empty? (keys new-entity#))
            (common= new-entity#
-                    (normalize post-entity#)
-                    (normalize get-entity#))
-           (common= (normalize post-entity#)
-                    (normalize get-entity#)))))))
+                    post-entity#
+                    get-entity#)
+           (common= post-entity#
+                    get-entity#))))))
 
 (def-property spec-actor-routes 'actor)
 (def-property spec-campaign-routes 'campaign)
@@ -105,8 +110,8 @@
        (set/subset? stored-sighting-ids
                     search-result-ids)
        (common= new-indicator
-                (normalize post-indicator)
-                (normalize get-indicator))))))
+                post-indicator
+                get-indicator)))))
 
 (def-property spec-feedback-routes 'feedback)
 (def-property spec-incident-routes 'incident)

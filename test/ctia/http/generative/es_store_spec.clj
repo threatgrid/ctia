@@ -9,6 +9,7 @@
                                     helpers/fixture-properties:clean
                                     es-helpers/fixture-properties:es-store
                                     helpers/fixture-ctia
+                                    es-helpers/fixture-recreate-store-indexes
                                     helpers/fixture-allow-all-auth]))
 
 (defspec spec-actor-routes-es-store

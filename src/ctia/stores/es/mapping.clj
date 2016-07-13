@@ -62,6 +62,7 @@
     :type string
     :references string
     :vendor string
+    :version string
     :schema_version string
     :service_pack string}})
 
@@ -279,19 +280,24 @@
     :include_in_all false
     :properties
     {:id string
+     :external_ids string
      :type string
      :tlp string
+     :uri string
+     :source_uri string
+     :revision {:type "long"}
+     :timestamp ts
      :schema_version string
+     :language string
      :observable observable
      :disposition {:type "long"}
      :disposition_name string
      :source string
-     :priority {:type "integer"}
+     :priority {:type "long"}
      :confidence string
-     :severity {:type "integer"}
+     :severity {:type "long"}
      :valid_time valid-time
      :reason all_text
-     :source_uri string
      :reason_uri string
      :indicators related-indicators
      :owner string
@@ -319,8 +325,14 @@
     :include_in_all false
     :properties
     {:id string
+     :external_ids string
+     :uri string
+     :source_uri string
+     :language string
+     :timestamp ts
      :type string
      :tlp string
+     :revision {:type "long"}
      :schema_version string
      :entity_id string
      :source string
@@ -336,16 +348,22 @@
     :include_in_all false
     :properties
     {:id string
+     :external_ids string
      :type string
+     :timestamp ts
      :tlp string
+     :source_uri string
      :schema_version string
+     :revision {:type "long"}
      :short_description all_text
      :valid_time valid-time
+     :uri string
      :title all_string
      :description all_text
      :alternate_ids all_string
      :negate {:type "boolean"}
      :indicator_type string
+     :language string
      :tags string
      :observable observable
      :judgements related-judgements
@@ -376,7 +394,13 @@
     :include_in_all false
     :properties
     {:id all_string
+     :external_ids string
      :title all_string
+     :uri string
+     :source_uri string
+     :language string
+     :revision {:type "long"}
+     :timestamp ts
      :description all_text
      :short_description all_text
      :type string
@@ -404,9 +428,15 @@
     :include_in_all false
     :properties
     {:id all_string
+     :external_ids string
      :title all_string
      :tlp string
      :schema_version string
+     :uri string
+     :source_uri string
+     :revision {:type "long"}
+     :timestamp ts
+     :language string
      :description all_text
      :short_description all_text
      :type string
@@ -432,8 +462,14 @@
     :include_in_all false
     :properties
     {:id all_string
+     :external_ids string
+     :uri string
+     :source_uri string
+     :language string
+     :timestamp ts
      :type string
      :tlp string
+     :revision {:type "long"}
      :schema_version string
      :title all_string
      :description all_text
@@ -461,9 +497,15 @@
     :include_in_all false
     :properties
     {:id all_string
+     :external_ids string
+     :uri string
+     :source_uri string
+     :language string
+     :timestamp ts
      :type string
      :tlp string
      :schema_version string
+     :revision {:type "long"}
      :title all_string
      :description all_text
      :short_description all_text
@@ -486,9 +528,15 @@
     :include_in_all false
     :properties
     {:id all_string
+     :external_ids string
      :type string
      :tlp string
+     :revision {:type "long"}
+     :uri string
+     :source_uri string
+     :timestamp ts
      :schema_version string
+     :language string
      :title all_string
      :description all_text
      :short_description all_text
@@ -526,8 +574,14 @@
     :include_in_all false
     :properties
     {:id all_string
+     :external_ids string
      :type string
      :tlp string
+     :uri string
+     :source_uri string
+     :language string
+     :timestamp ts
+     :revision {:type "long"}
      :schema_version string
      :title all_string
      :description all_text
@@ -574,7 +628,12 @@
     :properties
     {:type string
      :id string
+     :external_ids string
      :timestamp ts
+     :title string
+     :uri string
+     :revision {:type "long"}
+     :language string
      :description all_text
      :short_description all_text
      :tlp string
