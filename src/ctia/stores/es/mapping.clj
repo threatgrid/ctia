@@ -668,6 +668,3 @@
          exploit-target-mapping
          sighting-mapping
          identity-mapping))
-
-
-(keys  incident-mapping)
