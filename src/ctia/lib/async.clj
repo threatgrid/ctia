@@ -18,15 +18,14 @@
    :recent Channel})
 
 
-(s/defn new-channel :- ChannelData []
+(s/defn new-channel :- ChannelData
+  "Create new ChannelData instance."
+  []
   (let [b (a/buffer *channel-buffer-size*)
         c (a/chan b)
         p (a/mult c)
         r (a/chan (a/sliding-buffer *channel-buffer-size*))]
     (a/tap p r)
-    (.addShutdownHook (Runtime/getRuntime)
-                      (Thread. #(do (a/close! c)
-                                    (a/close! r))))
     {:chan-buf b
      :chan c
      :mult p
@@ -55,16 +54,16 @@
 (defmacro ^:private listen
   "Helper for register-listener below that handles the mode
    selection (real/green thread)"
-  [& {:keys [mode pred listener-fn data-chan end-chan]}]
+  [& {:keys [mode pred listener-fn data-chan control]}]
   (let [loop-fn (case mode :blocking 'thread :compute 'go-loop)
         alt-fn (case mode :blocking 'alt!! :compute 'alt!)]
     `(~loop-fn []
-      (if-let [data# (~alt-fn [~data-chan ~end-chan] ([v#] v#))]
+      (if-let [data# (~alt-fn [~data-chan ~control] ([v#] v#))]
         (do
           (when (~pred data#)
             (~listener-fn data#))
           (recur))
-        (do (close! ~end-chan)
+        (do (close! ~control) ;; In case the data-channel was unexpectedly closed
             (close! ~data-chan))))))
 
 (s/defn register-listener :- Channel
@@ -72,42 +71,35 @@
    Takes an optional predicate to filter what data is sent to the function.
 
    cd - A ChannelData map
-   f - user provided function that will be called when an event arrives on the event channel.
-   pred - a predicate to test events. The user function will only be run if this predicate passes.
-   shutdown-fn - an optional function to run at system shutdown time. May be nil.
-   mode - can be :compute (for a green thread) or :blocking (for a real thread)"
-  ([cd :- ChannelData
-    listener-fn :- (=> s/Any AnyMap)
-    pred :- (=> s/Bool AnyMap)
-    shutdown-fn :- (s/maybe (=> s/Any))]
-   (register-listener cd listener-fn pred shutdown-fn :compute))
-  ([{m :mult} :- ChannelData
-    listener-fn :- (=> s/Any AnyMap)
-    pred :- (=> s/Bool AnyMap)
-    shutdown-fn :- (s/maybe (=> s/Any))
-    mode :- (s/enum :compute :blocking)]
-   (let [data-chan (chan)
-         end-chan (chan)]
-     (tap m data-chan)
-     (case mode
-       :blocking
-       (listen :mode :blocking
-               :pred pred
-               :listener-fn listener-fn
-               :data-chan data-chan
-               :end-chan end-chan)
+   f - user provided function that will be called when an event arrives on the
+       event channel.
+   pred - a predicate to test events. The user function will only be run if this
+          predicate passes.
+   mode - can be :compute (for a green thread) or :blocking (for a real thread)
 
-       :compute
-       (listen :mode :compute
-               :pred pred
-               :listener-fn listener-fn
-               :data-chan data-chan
-               :end-chan end-chan))
-     (.addShutdownHook (Runtime/getRuntime)
-                       (Thread. #(do (a/close! end-chan)
-                                     (when (fn? shutdown-fn)
-                                       (shutdown-fn)))))
-     end-chan)))
+   Returns a control channel that should be closed to terminate the listener."
+  [{m :mult} :- ChannelData
+   listener-fn :- (=> s/Any AnyMap)
+   pred :- (=> s/Bool AnyMap)
+   mode :- (s/enum :compute :blocking)]
+  (let [data-chan (chan)
+        control (chan)]
+    (tap m data-chan)
+    (case mode
+      :blocking
+      (listen :mode :blocking
+              :pred pred
+              :listener-fn listener-fn
+              :data-chan data-chan
+              :control control)
+
+      :compute
+      (listen :mode :compute
+              :pred pred
+              :listener-fn listener-fn
+              :data-chan data-chan
+              :control control))
+    control))
 
 (s/defn drain :- [s/Any]
   "Extract elements from a channel into a lazy-seq.

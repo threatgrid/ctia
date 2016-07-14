@@ -10,7 +10,6 @@
             [com.rpl.specter :refer [transform]]
             [ctia
              [auth :as auth]
-             [events :as events]
              [init :as init]
              [properties :as props]
              [store :as store]]
@@ -22,6 +21,7 @@
              [time :as time]
              [url :as url]]
             [ctia.lib.specter.paths :as path]
+            [ctia.shutdown :as shutdown]
             [schema.core :as schema])
   (:import java.net.ServerSocket))
 
@@ -177,10 +177,7 @@
          (init/start-ctia! :join? false)
          (test)
          (finally
-           ;; explicitly stop the http-server
-           (http-server/stop!)
-           (hooks/shutdown!)
-           (events/shutdown!)))))))
+           (shutdown/shutdown-ctia!)))))))
 
 (defn fixture-ctia-fast [test]
   (fixture-ctia test false))

@@ -17,25 +17,28 @@
   "Tests the basic action of sending an event"
   (let [{b :chan-buf c :chan m :mult :as ec} (la/new-channel)
         output (chan)]
-    (tap m output)
-    (e/send-event ec (o2e/to-create-event
-                      {:owner "tester"
-                       :id "test-1"
-                       :type :test
-                       :data 1}))
-    (e/send-event ec (o2e/to-create-event
-                      {:owner "tester"
-                       :id "test-2"
-                       :type :test
-                       :data 2}))
-    (e/send-event ec (o2e/to-create-event
-                      {:owner "tester"
-                       :id "test-3"
-                       :type :test
-                       :data 3}))
-    (is (= 1 (-> (<!! output) :entity :data)))
-    (is (= 2 (-> (<!! output) :entity :data)))
-    (is (= 3 (-> (<!! output) :entity :data)))))
+    (try
+      (tap m output)
+      (e/send-event ec (o2e/to-create-event
+                        {:owner "tester"
+                         :id "test-1"
+                         :type :test
+                         :data 1}))
+      (e/send-event ec (o2e/to-create-event
+                        {:owner "tester"
+                         :id "test-2"
+                         :type :test
+                         :data 2}))
+      (e/send-event ec (o2e/to-create-event
+                        {:owner "tester"
+                         :id "test-3"
+                         :type :test
+                         :data 3}))
+      (is (= 1 (-> (<!! output) :entity :data)))
+      (is (= 2 (-> (<!! output) :entity :data)))
+      (is (= 3 (-> (<!! output) :entity :data)))
+      (finally
+        (la/shutdown-channel 100 ec)))))
 
 (deftest test-central-events
   "Tests the basic action of sending an event to the central channel"

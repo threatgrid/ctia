@@ -1,6 +1,7 @@
 (ns ctia.events
   (:require [ctia.lib.time :as time]
             [ctia.lib.async :as la]
+            [ctia.shutdown :as shutdown]
             [ctim.events.schemas :as es]
             [ctim.schemas.common :as c]
             [clojure.core.async :as a :refer [go-loop alt! chan tap]]
@@ -16,15 +17,11 @@
 (def ModelEvent (st/merge es/ModelEventBase
                           {s/Any s/Any}))
 
-(defn init! []
-  (let [c (la/new-channel)]
-    (reset! central-channel c)))
-
 (s/defn shutdown! :- s/Num
-  "Close the event channel, waiting up to max-wait-ms for the buffer
+  "Close the central-channel, waiting up to max-wait-ms for the buffer
    to flush.  Returns the number of items in the buffer after
-   shutdown (zero on a successful flush).
-   Closes the central channel by default."
+   shutdown (zero on a successful flush).  Normally this shouldn't be
+   called directly since init! registers a shutdown hook."
   ([]
    (shutdown! shutdown-max-wait-ms))
   ([max-wait-ms :- Long]
@@ -32,7 +29,13 @@
      (if @central-channel
        (la/shutdown-channel max-wait-ms @central-channel)
        0)
-     (finally (reset! central-channel nil)))))
+     (finally
+       (reset! central-channel nil)))))
+
+(defn init! []
+  (let [channel-data (la/new-channel)]
+    (shutdown/register-hook! :events shutdown!)
+    (reset! central-channel channel-data)))
 
 (s/defn send-event
   "Send an event to a channel. Use the central channel by default"
@@ -52,12 +55,10 @@
 
 (s/defn register-listener :- Channel
   "Convenience wrapper for registering a listener on the central event channel."
-  ([f :- (=> s/Any es/Event)]
-   (la/register-listener @central-channel f (constantly true) nil))
-  ([f :- (=> s/Any es/Event)
-    pred :- (=> s/Bool es/Event)]
-   (la/register-listener @central-channel f pred nil))
-  ([{m :mult :as ec} :- la/ChannelData
-    f :- (=> s/Any es/Event)
-    pred :- (=> s/Bool es/Event)]
-   (la/register-listener @central-channel f pred nil)))
+  ([listen-fn :- (=> s/Any es/Event)
+    mode :- (s/enum :compute :blocking)]
+   (register-listener listen-fn (constantly true) mode))
+  ([listen-fn :- (=> s/Any es/Event)
+    pred :- (=> s/Bool es/Event)
+    mode :- (s/enum :compute :blocking)]
+   (la/register-listener @central-channel listen-fn pred mode)))
