@@ -6,7 +6,8 @@
             [ctia.lib.pagination :refer [default-limit
                                          list-response-schema
                                          paginate
-                                         response]]))
+                                         response]]
+            [ctia.lib.schema :as ls]))
 
 (defn random-id [prefix]
   (fn [_new-entity_]
@@ -14,7 +15,7 @@
 
 (defn read-handler [Model]
   (s/fn :- (s/maybe Model)
-    [state :- (s/atom {s/Str Model})
+    [state :- (ls/atom {s/Str Model})
      id :- s/Str]
     (get (deref state) id)))
 
@@ -22,7 +23,7 @@
   "Create a new resource from a realized object"
   [Model]
   (s/fn :- Model
-    [state :- (s/atom {s/Str Model})
+    [state :- (ls/atom {s/Str Model})
      model :- Model]
     (let [id (:id model)]
       (get (swap! state assoc id model) id))))
@@ -31,14 +32,14 @@
   "Update a resource using an id and a realized object"
   [Model]
   (s/fn :- Model
-    [state :- (s/atom {s/Str Model})
+    [state :- (ls/atom {s/Str Model})
      id :- c/ID
      updated-model :- Model]
     (get (swap! state assoc id updated-model) id)))
 
 (defn delete-handler [Model]
   (s/fn :- s/Bool
-    [state :- (s/atom {s/Str Model})
+    [state :- (ls/atom {s/Str Model})
      id :- s/Str]
     (if (contains? (deref state) id)
       (do (swap! state dissoc id)
@@ -78,7 +79,7 @@
           `{[:a :b] #{v1 v2 v3}}`."
 
   (s/fn :- [Model]
-    [state :- (s/atom {s/Str Model})
+    [state :- (ls/atom {s/Str Model})
      filter-map :- {s/Any s/Any}]
 
     (when-not (empty? filter-map)
@@ -93,7 +94,7 @@
 
 (defn list-handler [Model]
   (s/fn :- (list-response-schema Model)
-    ([state :- (s/atom {s/Str Model})
+    ([state :- (ls/atom {s/Str Model})
       filter-map :- {s/Any s/Any}
       params]
 

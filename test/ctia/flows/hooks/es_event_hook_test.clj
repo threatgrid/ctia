@@ -7,6 +7,7 @@
              [index :as index]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [atom :as at-helpers]
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
              [es :as es-helpers]]))
 
@@ -15,14 +16,14 @@
 (deftest-for-each-fixture test-event-producer
 
   {:es-filtered-alias (join-fixtures [test-helpers/fixture-properties:clean
-                                      test-helpers/fixture-properties:atom-store
+                                      at-helpers/fixture-properties:atom-memory-store
                                       test-helpers/fixture-properties:es-hook-filtered-alias
                                       test-helpers/fixture-ctia
                                       test-helpers/fixture-allow-all-auth
                                       es-helpers/fixture-purge-producer-indexes])
 
    :es-aliased-index (join-fixtures [test-helpers/fixture-properties:clean
-                                     test-helpers/fixture-properties:atom-store
+                                     at-helpers/fixture-properties:atom-memory-store
                                      test-helpers/fixture-properties:es-hook-aliased-index
                                      test-helpers/fixture-ctia
                                      test-helpers/fixture-allow-all-auth

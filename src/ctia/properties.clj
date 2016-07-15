@@ -33,6 +33,10 @@
    (str "ctia.store.es." store ".indexname") s/Str
    (str "ctia.store.es." store ".refresh") s/Bool})
 
+(defn atom-store-impl-properties [store]
+  {(str "ctia.store.atom." store ".mode") (s/enum :durable :memory)
+   (str "ctia.store.atom." store ".path") s/Str})
+
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
   (let [configurable-stores (map name (keys @store/stores))
@@ -40,7 +44,9 @@
     (st/optional-keys
      (reduce merge {}
              (map (fn [s] (merge (default-store-properties s)
-                                (es-store-impl-properties s))) store-names)))))
+                                 (es-store-impl-properties s)
+                                 (atom-store-impl-properties s)))
+                  store-names)))))
 
 (s/defschema PropertiesSchema
   "This is the schema used for value type coercion.

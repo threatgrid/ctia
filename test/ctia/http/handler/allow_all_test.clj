@@ -3,14 +3,16 @@
   (:require [ctia.auth :as auth]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.http.handler :as handler]
-            [ctia.test-helpers.core :as helpers :refer [post get]]
+            [ctia.test-helpers
+             [atom :as at-helpers]
+             [core :as helpers :refer [post get]]]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [ctim.schemas.common :as c]))
 
 (use-fixtures :once helpers/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
-                                    helpers/fixture-properties:atom-store
+                                    at-helpers/fixture-properties:atom-memory-store
                                     helpers/fixture-ctia
                                     helpers/fixture-allow-all-auth]))
 

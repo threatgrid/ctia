@@ -2,12 +2,14 @@
   (:require [ctia.flows.from-java :as fj]
             [ctia.flows.hooks :as h]
             [ctia.flows.hook-protocol :refer [Hook]]
-            [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers
+             [atom :as at-helpers]
+             [core :as helpers]]
             [clojure.test :as t]))
 
 (t/use-fixtures :once (t/join-fixtures [helpers/fixture-schema-validation
                                         helpers/fixture-properties:clean
-                                        helpers/fixture-properties:atom-store
+                                        at-helpers/fixture-properties:atom-memory-store
                                         helpers/fixture-ctia-fast]))
 
 (def obj {:x "x" :y 0 :z {:foo "bar"}})
