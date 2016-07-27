@@ -21,7 +21,7 @@ ctia.store.es.default.host=$ip
 ctia.store.es.default.port=9200
 ctia.hook.es.host=$ip
 ctia.hook.es.port=9200
-ctia.hook.redis.uri=http://${ip}:6379
+ctia.hook.redis.host=$ip
 EOF
 
 echo "$resourcefile initialized"
