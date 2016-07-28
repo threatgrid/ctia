@@ -24,6 +24,7 @@
 
 
       :multi-store (join-fixtures [helpers/fixture-properties:multi-store
+                                   at-helpers/fixture-properties:atom-memory-store
                                    helpers/fixture-ctia
                                    es-helpers/fixture-recreate-store-indexes])}
      ~@body))
