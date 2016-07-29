@@ -40,6 +40,7 @@
 
                  ;; Database
                  [clojurewerkz/elastisch "3.0.0-beta1"]
+                 [durable-atom "0.0.3"]
 
                  ;; Metrics
                  [metrics-clojure "2.7.0"]

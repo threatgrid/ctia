@@ -2,13 +2,14 @@
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
+             [atom :as at-helpers]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]]))
 
 (use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
                                     helpers/fixture-properties:clean
-                                    helpers/fixture-properties:atom-store
+                                    at-helpers/fixture-properties:atom-memory-store
                                     helpers/fixture-ctia
                                     whoami-helpers/fixture-server]))
 

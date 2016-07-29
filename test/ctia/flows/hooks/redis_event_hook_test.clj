@@ -4,13 +4,15 @@
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
             [ctim.schemas.common :as c]
-            [ctia.test-helpers.core :as test-helpers :refer [post]])
+            [ctia.test-helpers
+             [atom :as at-helpers]
+             [core :as test-helpers :refer [post]]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
 (use-fixtures :once test-helpers/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    test-helpers/fixture-properties:atom-store
+                                    at-helpers/fixture-properties:atom-memory-store
                                     test-helpers/fixture-properties:redis-hook
                                     test-helpers/fixture-ctia
                                     test-helpers/fixture-allow-all-auth]))

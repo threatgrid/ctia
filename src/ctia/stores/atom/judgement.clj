@@ -1,5 +1,6 @@
 (ns ctia.stores.atom.judgement
-  (:require [ctia.lib.time :as time]
+  (:require [ctia.lib.schema :as ls]
+            [ctia.lib.time :as time]
             [ctim.schemas
              [common :as c]
              [judgement :refer [NewJudgement StoredJudgement]]
@@ -45,7 +46,7 @@
    :disposition_name (get c/disposition-map (:disposition judgement))})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
-  [state :- (s/atom {s/Str StoredJudgement})
+  [state :- (ls/atom {s/Str StoredJudgement})
    observable :- c/Observable]
   (if-let [judgement
            (let [now (time/now)]
@@ -66,7 +67,7 @@
     (make-verdict judgement)))
 
 (s/defn handle-add-indicator-to-judgement :- (s/maybe rel/RelatedIndicator)
-  [state :- (s/atom {s/Str StoredJudgement})
+  [state :- (ls/atom {s/Str StoredJudgement})
    judgement-id :- s/Str
    indicator-rel :- rel/RelatedIndicator]
   ;; Possible concurrency issue, maybe state should be a ref?

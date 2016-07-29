@@ -12,7 +12,14 @@
              [judgement :as judgement]
              [sighting :as sighting]
              [ttp :as ttp]
-             [verdict :as verdict]]))
+             [verdict :as verdict]]
+            [durable-atom.core :refer [durable-atom]]))
+
+(defn init! [{:keys [path mode] :as _props_}]
+  (if (= mode :durable)
+    (doto (durable-atom path)
+      (swap! #(or % {})))
+    (atom {})))
 
 (defrecord ActorStore [state]
   IActorStore

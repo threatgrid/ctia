@@ -4,12 +4,14 @@
              :refer [join-fixtures deftest is testing use-fixtures]]
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
-            [ctia.test-helpers.core :as test-helpers])
+            [ctia.test-helpers
+             [atom :as at-helpers]
+             [core :as test-helpers]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
 (use-fixtures :each (join-fixtures
                      [test-helpers/fixture-properties:clean
-                      test-helpers/fixture-properties:atom-store
+                      at-helpers/fixture-properties:atom-memory-store
                       test-helpers/fixture-ctia-fast]))
 
 (deftest ^:integration test-redis-pubsub-works

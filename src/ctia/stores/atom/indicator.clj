@@ -1,5 +1,6 @@
 (ns ctia.stores.atom.indicator
   (:require [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.lib.schema :as ls]
             [ctia.properties :refer [properties]]
             [ctim.domain.id :as id]
             [ctim.schemas
@@ -15,7 +16,7 @@
 (def handle-list-indicators (mc/list-handler StoredIndicator))
 
 (s/defn handle-list-indicators-by-judgements :- (list-response-schema StoredIndicator)
-  [indicator-state :- (s/atom {s/Str StoredIndicator})
+  [indicator-state :- (ls/atom {s/Str StoredIndicator})
    judgements :- [StoredJudgement]
    params]
   (let [indicator-ids (some->> (map :indicators judgements)
