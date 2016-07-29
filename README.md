@@ -82,7 +82,7 @@ ctia.store.es.default.host=192.168.99.100
 ctia.store.es.default.port=9200
 ctia.hook.es.host=192.168.99.100
 ctia.hook.es.port=9200
-ctia.hook.redis.uri=http://192.168.99.100:6379
+ctia.hook.redis.host=192.168.99.100
 ```
 
 Or you could initialize your properties with:
