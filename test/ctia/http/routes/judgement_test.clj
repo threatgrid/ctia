@@ -30,6 +30,8 @@
           (post "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
+                       :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                                      "http://ex.tld/ctia/judgement/judgement-456"]
                        :disposition 2
                        :source "test"
                        :priority 100
@@ -43,12 +45,15 @@
                 :headers {"api_key" "45c1f5e3f05d0"})
           judgement-id (id/short-id->id :judgement
                                         (:id judgement)
-                                        (get-in @properties [:ctia :http :show]))]
+                                        (get-in @properties [:ctia :http :show]))
+          judgement-external-ids (:external_ids judgement)]
       (is (= 201 status))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
                          :type "ip"}
+            :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                           "http://ex.tld/ctia/judgement/judgement-456"]
             :disposition 2
             :disposition_name "Malicious"
             :priority 100
@@ -77,6 +82,8 @@
                {:type "judgement"
                 :observable {:value "1.2.3.4"
                              :type "ip"}
+                :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                               "http://ex.tld/ctia/judgement/judgement-456"]
                 :disposition 2
                 :disposition_name "Malicious"
                 :priority 100
@@ -96,6 +103,35 @@
                        :id
                        :created)))))
 
+      (testing "GET /ctia/judgement/external_id"
+        (let [response (get "ctia/judgement/external_id"
+                            :headers {"api_key" "45c1f5e3f05d0"}
+                            :query-params {"external_id" (rand-nth judgement-external-ids)})
+              judgements (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:type "judgement"
+                 :observable {:value "1.2.3.4"
+                              :type "ip"}
+                 :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                                "http://ex.tld/ctia/judgement/judgement-456"]
+                 :disposition 2
+                 :disposition_name "Malicious"
+                 :priority 100
+                 :severity 100
+                 :confidence "Low"
+                 :source "test"
+                 :tlp "green"
+                 :schema_version schema-version
+                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                 :indicators [{:confidence "High"
+                               :source "source"
+                               :relationship "relationship"
+                               :indicator_id "indicator-123"}]
+                 :owner "foouser"}]
+               (map #(dissoc % :id :created) judgements)))))
+
       (testing "GET /ctia/judgement/:id with query-param api_key"
         (let [{status :status
                judgement :parsed-body
@@ -107,6 +143,8 @@
                {:type "judgement"
                 :observable {:value "1.2.3.4"
                              :type "ip"}
+                :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                               "http://ex.tld/ctia/judgement/judgement-456"]
                 :disposition 2
                 :disposition_name "Malicious"
                 :priority 100
@@ -147,6 +185,17 @@
             (is (= 401 status))
             (is (= {:message "Missing capability",
                     :capabilities :read-judgement,
+                    :owner "baruser"}
+                   body))))
+
+        (testing "doesn't have list by external id capability"
+          (let [{body :parsed-body status :status}
+                (get  "ctia/judgement/external_id"
+                      :headers {"api_key" "2222222222222"}
+                      :query-params {:external_id "http://ex.tld/ctia/judgement/judgement-123"})]
+            (is (= 401 status))
+            (is (= {:message "Missing capability",
+                    :capabilities :list-judgements-by-external-id,
                     :owner "baruser"}
                    body)))))
 

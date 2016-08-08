@@ -29,14 +29,19 @@
           (post "ctia/feedback"
                 :body {:feedback -1,
                        :entity_id "judgement-123"
+                       :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
+                                      "http://ex.tld/ctia/feedback/feedback-456"]
                        :type "feedback"
                        :reason "false positive"
                        :tlp "green"}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"api_key" "45c1f5e3f05d0"})
+          feedback-external-ids (:external_ids feedback)]
       (is (= 201 status))
       (is (deep=
            {:feedback -1,
             :entity_id "judgement-123"
+            :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
+                           "http://ex.tld/ctia/feedback/feedback-456"]
             :type "feedback"
             :reason "false positive"
             :schema_version schema-version
@@ -51,6 +56,8 @@
           (is (deep=
                {:feedback -1,
                 :entity_id "judgement-123"
+                :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
+                               "http://ex.tld/ctia/feedback/feedback-456"]
                 :reason "false positive"
                 :type "feedback"
                 :schema_version schema-version
@@ -66,11 +73,30 @@
           (is (deep=
                [{:feedback -1,
                  :entity_id "judgement-123"
+                 :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
+                                "http://ex.tld/ctia/feedback/feedback-456"]
                  :type "feedback"
                  :reason "false positive"
                  :schema_version schema-version
                  :tlp "green"}]
                (map #(dissoc % :id :created :owner) feedbacks)))))
+
+      (testing "GET /ctia/feedback/external_id"
+        (let [response (get "ctia/feedback/external_id"
+                            :headers {"api_key" "45c1f5e3f05d0"}
+                            :query-params {"external_id" (rand-nth feedback-external-ids)})
+              feedback (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:feedback -1,
+                 :entity_id "judgement-123"
+                 :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
+                                "http://ex.tld/ctia/feedback/feedback-456"]
+                 :type "feedback"
+                 :reason "false positive"
+                 :schema_version schema-version
+                 :tlp "green"}]
+               (map #(dissoc % :id :created :owner) feedback)))))
 
       (testing "DELETE /ctia/feedback/:id"
         (let [temp-feedback (-> (post "ctia/feedback"

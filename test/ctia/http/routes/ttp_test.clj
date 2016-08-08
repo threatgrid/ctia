@@ -21,7 +21,9 @@
 
   (testing "POST /ctia/ttp"
     (let [response (post "ctia/ttp"
-                         :body {:title "ttp"
+                         :body {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                                               "http://ex.tld/ctia/ttp/ttp-345"]
+                                :title "ttp"
                                 :description "description"
                                 :ttp_type "foo"
                                 :indicators [{:indicator_id "indicator-1"}
@@ -31,10 +33,13 @@
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                              :end_time "2016-07-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
-          ttp (:parsed-body response)]
+          ttp (:parsed-body response)
+          ttp-external-ids (:external_ids ttp)]
       (is (= 201 (:status response)))
       (is (deep=
-           {:type "ttp"
+           {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                           "http://ex.tld/ctia/ttp/ttp-345"]
+            :type "ttp"
             :title "ttp"
             :tlp "green"
             :schema_version schema-version
@@ -52,13 +57,39 @@
                    :created
                    :modified)))
 
+      (testing "GET /ctia/ttp/external_id"
+        (let [response (get "ctia/ttp/external_id"
+                            :headers {"api_key" "45c1f5e3f05d0"}
+                            :query-params {"external_id" (rand-nth ttp-external-ids)})
+              ttps (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                                "http://ex.tld/ctia/ttp/ttp-345"]
+                 :type "ttp"
+                 :title "ttp"
+                 :tlp "green"
+                 :schema_version schema-version
+                 :description "description"
+                 :ttp_type "foo"
+                 :indicators [{:indicator_id "indicator-1"}
+                              {:indicator_id "indicator-2"}]
+                 :exploit_targets [{:exploit_target_id "exploit-target-123"}
+                                   {:exploit_target_id "exploit-target-234"}]
+                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                 :owner "foouser"}]
+               (map #(dissoc % :id :created :modified) ttps)))))
+
       (testing "GET /ctia/ttp/:id"
         (let [response (get (str "ctia/ttp/" (:id ttp))
                             :headers {"api_key" "45c1f5e3f05d0"})
               ttp (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:type "ttp"
+               {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                               "http://ex.tld/ctia/ttp/ttp-345"]
+                :type "ttp"
                 :title "ttp"
                 :tlp "green"
                 :schema_version schema-version
@@ -80,7 +111,9 @@
         (let [{status :status
                updated-ttp :parsed-body}
               (put (str "ctia/ttp/" (:id ttp))
-                   :body {:title "updated ttp"
+                   :body {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                                         "http://ex.tld/ctia/ttp/ttp-345"]
+                          :title "updated ttp"
                           :description "updated description"
                           :ttp_type "bar"
                           :indicators [{:indicator_id "indicator-1"}
@@ -94,6 +127,8 @@
           (is (= 200 status))
           (is (deep=
                {:id (:id ttp)
+                :external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                               "http://ex.tld/ctia/ttp/ttp-345"]
                 :type "ttp"
                 :created (:created ttp)
                 :title "updated ttp"

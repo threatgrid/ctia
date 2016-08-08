@@ -4,8 +4,15 @@
             [ctia.flows.crud :as flows]
             [ctim.schemas.campaign :refer [NewCampaign StoredCampaign]]
             [ctia.store :refer :all]
+            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
+
+(s/defschema CampaignByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   {:external_id s/Str}))
 
 (defroutes campaign-routes
   (context "/campaign" []
@@ -37,6 +44,16 @@
                              :entity-id id
                              :identity identity
                              :entity campaign)))
+    (GET "/external_id" []
+      :return [(s/maybe StoredCampaign)]
+      :query [q CampaignByExternalIdQueryParams]
+      :header-params [api_key :- (s/maybe s/Str)]
+      :summary "List campaigns by external id"
+      :capabilities :list-campaigns-by-external-id
+      (paginated-ok
+       (read-store :campaign list-campaigns
+                   {:external_ids (:external_id q)} q)))
+
     (GET "/:id" []
       :return (s/maybe StoredCampaign)
       :summary "Gets a Campaign by ID"

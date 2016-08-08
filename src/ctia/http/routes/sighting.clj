@@ -5,8 +5,15 @@
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
    [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
+   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
    [ring.util.http-response :refer :all]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
+
+(s/defschema SightingByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   {:external_id s/Str}))
 
 (defroutes sighting-routes
   (context "/sighting" []
@@ -42,6 +49,17 @@
                                :identity identity
                                :entity sighting))
         (unprocessable-entity)))
+
+    (GET "/external_id" []
+      :return [(s/maybe StoredSighting)]
+      :query [q SightingByExternalIdQueryParams]
+      :header-params [api_key :- (s/maybe s/Str)]
+      :summary "List sightings by external id"
+      :capabilities :list-sightings-by-external-id
+      (paginated-ok
+       (read-store :sighting list-sightings
+                   {:external_ids (:external_id q)} q)))
+
     (GET "/:id" []
       :return (s/maybe StoredSighting)
       :summary "Gets a Sighting by ID"
@@ -51,6 +69,7 @@
       (if-let [d (read-store :sighting read-sighting id)]
         (ok d)
         (not-found)))
+
     (DELETE "/:id" []
       :path-params [id :- s/Str]
       :summary "Deletes a Sighting"

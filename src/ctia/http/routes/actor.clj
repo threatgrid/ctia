@@ -3,9 +3,16 @@
             [ctia.domain.entities :refer [realize-actor]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
+            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
             [ctim.schemas.actor :refer [NewActor StoredActor]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
+
+(s/defschema ActorByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   {:external_id s/Str}))
 
 (defroutes actor-routes
   (context "/actor" []
@@ -38,6 +45,17 @@
                              :entity-id id
                              :identity identity
                              :entity actor)))
+
+    (GET "/external_id" []
+      :return [(s/maybe StoredActor)]
+      :query [q ActorByExternalIdQueryParams]
+      :header-params [api_key :- (s/maybe s/Str)]
+      :summary "List actors by external id"
+      :capabilities :list-actors-by-external-id
+      (paginated-ok
+       (read-store :actor list-actors
+                   {:external_ids (:external_id q)} q)))
+
     (GET "/:id" []
       :return (s/maybe StoredActor)
       :summary "Gets an Actor by ID"

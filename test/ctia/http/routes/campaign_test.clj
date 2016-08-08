@@ -21,7 +21,9 @@
 
   (testing "POST /ctia/campaign"
     (let [response (post "ctia/campaign"
-                         :body {:title "campaign"
+                         :body {:external_ids ["http://ex.tld/ctia/campaign/campaign-123"
+                                               "http://ex.tld/ctia/campaign/campaign-456"]
+                                :title "campaign"
                                 :description "description"
                                 :tlp "red"
                                 :campaign_type "anything goes here"
@@ -43,10 +45,13 @@
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                              :end_time "2016-07-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
-          campaign (:parsed-body response)]
+          campaign (:parsed-body response)
+          campaign-external-ids (:external_ids campaign)]
       (is (= 201 (:status response)))
       (is (deep=
            {:type "campaign"
+            :external_ids ["http://ex.tld/ctia/campaign/campaign-123"
+                           "http://ex.tld/ctia/campaign/campaign-456"]
             :title "campaign"
             :description "description"
             :tlp "red"
@@ -75,6 +80,41 @@
                    :created
                    :modified)))
 
+      (testing "GET /ctia/campaign/external_id"
+        (let [response (get "ctia/campaign/external_id"
+                            :headers {"api_key" "45c1f5e3f05d0"}
+                            :query-params {"external_id" (rand-nth campaign-external-ids)})
+              campaigns (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:type "campaign"
+                 :external_ids ["http://ex.tld/ctia/campaign/campaign-123"
+                                "http://ex.tld/ctia/campaign/campaign-456"]
+                 :title "campaign"
+                 :description "description"
+                 :tlp "red"
+                 :schema_version schema-version
+                 :campaign_type "anything goes here"
+                 :intended_effect ["Theft"]
+                 :indicators [{:indicator_id "indicator-foo"}
+                              {:indicator_id "indicator-bar"}]
+                 :attribution [{:confidence "High"
+                                :source "source"
+                                :relationship "relationship"
+                                :actor_id "actor-123"}]
+                 :related_incidents [{:confidence "High"
+                                      :source "source"
+                                      :relationship "relationship"
+                                      :incident_id "incident-222"}]
+                 :related_TTPs [{:confidence "High"
+                                 :source "source"
+                                 :relationship "relationship"
+                                 :ttp_id "ttp-999"}]
+                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                 :owner "foouser"}]
+               (map #(dissoc % :id :created :modified) campaigns)))))
+
       (testing "GET /ctia/campaign/:id"
         (let [response (get (str "ctia/campaign/" (:id campaign))
                             :headers {"api_key" "45c1f5e3f05d0"})
@@ -82,6 +122,8 @@
           (is (= 200 (:status response)))
           (is (deep=
                {:type "campaign"
+                :external_ids ["http://ex.tld/ctia/campaign/campaign-123"
+                               "http://ex.tld/ctia/campaign/campaign-456"]
                 :title "campaign"
                 :description "description"
                 :tlp "red"
@@ -113,6 +155,8 @@
       (testing "PUT /ctia/campaign/:id"
         (let [response (put (str "ctia/campaign/" (:id campaign))
                             :body {:title "modified campaign"
+                                   :external_ids ["http://ex.tld/ctia/campaign/campaign-123"
+                                                  "http://ex.tld/ctia/campaign/campaign-456"]
                                    :description "different description"
                                    :tlp "amber"
                                    :campaign_type "anything goes here"
@@ -138,6 +182,8 @@
           (is (= 200 (:status response)))
           (is (deep=
                {:id (:id campaign)
+                :external_ids ["http://ex.tld/ctia/campaign/campaign-123"
+                               "http://ex.tld/ctia/campaign/campaign-456"]
                 :type "campaign"
                 :created (:created campaign)
                 :title "modified campaign"

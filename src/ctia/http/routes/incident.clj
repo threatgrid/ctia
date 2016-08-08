@@ -4,8 +4,15 @@
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
             [ctim.schemas.incident :refer [NewIncident StoredIncident]]
+            [ctia.http.routes.common :refer [PagingParams paginated-ok]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
+
+(s/defschema IncidentByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   {:external_id s/Str}))
 
 (defroutes incident-routes
 
@@ -38,6 +45,17 @@
                              :entity-id id
                              :identity identity
                              :entity incident)))
+
+    (GET "/external_id" []
+      :return [(s/maybe StoredIncident)]
+      :query [q IncidentByExternalIdQueryParams]
+      :header-params [api_key :- (s/maybe s/Str)]
+      :summary "List Incidents by external id"
+      :capabilities :list-incidents-by-external-id
+      (paginated-ok
+       (read-store :incident list-incidents
+                   {:external_ids (:external_id q)} q)))
+
     (GET "/:id" []
       :return (s/maybe StoredIncident)
       :summary "Gets an Incident by ID"
