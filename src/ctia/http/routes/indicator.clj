@@ -78,7 +78,7 @@
       :query [q IndicatorsByExternalIdQueryParams]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "List Indicators by external id"
-      :capabilities :list-indicators-by-external-id
+      :capabilities #{:read-indicator :external-id}
       (paginated-ok
        (read-store :indicator list-indicators
                    {:external_ids (:external_id q)} q)))

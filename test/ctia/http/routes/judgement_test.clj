@@ -195,7 +195,7 @@
                       :query-params {:external_id "http://ex.tld/ctia/judgement/judgement-123"})]
             (is (= 401 status))
             (is (= {:message "Missing capability",
-                    :capabilities :list-judgements-by-external-id,
+                    :capabilities #{:read-judgement :external-id},
                     :owner "baruser"}
                    body)))))
 

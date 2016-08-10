@@ -49,7 +49,7 @@
       :query [q CampaignByExternalIdQueryParams]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "List campaigns by external id"
-      :capabilities :list-campaigns-by-external-id
+      :capabilities #{:read-campaign :external-id}
       (paginated-ok
        (read-store :campaign list-campaigns
                    {:external_ids (:external_id q)} q)))

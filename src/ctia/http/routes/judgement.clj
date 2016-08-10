@@ -68,7 +68,7 @@
 
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "Get Judgements by external ids"
-      :capabilities :list-judgements-by-external-id
+      :capabilities #{:read-judgement :external-id}
       (paginated-ok
        (read-store :judgement list-judgements
                    {:external_ids (:external_id q)} q)))

@@ -55,7 +55,7 @@
       :query [q SightingByExternalIdQueryParams]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "List sightings by external id"
-      :capabilities :list-sightings-by-external-id
+      :capabilities #{:read-sighting :external-id}
       (paginated-ok
        (read-store :sighting list-sightings
                    {:external_ids (:external_id q)} q)))

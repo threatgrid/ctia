@@ -52,7 +52,7 @@
       :query [q TTPByExternalIdQueryParams]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "List TTPs by external id"
-      :capabilities :list-ttps-by-external-id
+      :capabilities #{:read-ttp :external-id}
       (paginated-ok
        (read-store :ttp list-ttps
                    {:external_ids (:external_id q)} q)))

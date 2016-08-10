@@ -54,7 +54,7 @@
 
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "List feedback by external id"
-      :capabilities :list-feedback-by-external-id
+      :capabilities #{:read-feedback :external-id}
       (paginated-ok
        (read-store :feedback list-feedback
                    {:external_ids (:external_id q)} q)))

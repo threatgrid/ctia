@@ -50,7 +50,7 @@
       :query [q COAByExternalIdQueryParams]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "List COAs by external id"
-      :capabilities :list-coas-by-external-id
+      :capabilities #{:read-coa :external-id}
       (paginated-ok
        (read-store :coa list-coas
                    {:external_ids (:external_id q)} q)))

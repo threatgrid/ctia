@@ -51,7 +51,7 @@
       :query [q IncidentByExternalIdQueryParams]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "List Incidents by external id"
-      :capabilities :list-incidents-by-external-id
+      :capabilities #{:read-incident :external-id}
       (paginated-ok
        (read-store :incident list-incidents
                    {:external_ids (:external_id q)} q)))

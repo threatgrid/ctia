@@ -51,7 +51,7 @@
       :query [q ActorByExternalIdQueryParams]
       :header-params [api_key :- (s/maybe s/Str)]
       :summary "List actors by external id"
-      :capabilities :list-actors-by-external-id
+      :capabilities #{:read-actor :external-id}
       (paginated-ok
        (read-store :actor list-actors
                    {:external_ids (:external_id q)} q)))
