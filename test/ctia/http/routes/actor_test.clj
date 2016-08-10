@@ -21,7 +21,9 @@
 
   (testing "POST /ctia/actor"
     (let [response (post "ctia/actor"
-                         :body {:title "actor"
+                         :body {:external_ids ["http://ex.tld/ctia/actor/actor-123"
+                                               "http://ex.tld/ctia/actor/actor-456"]
+                                :title "actor"
                                 :description "description"
                                 :actor_type "Hacker"
                                 :source "a source"
@@ -35,10 +37,13 @@
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                              :end_time "2016-07-11T00:40:48.212-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
-          actor (:parsed-body response)]
+          actor (:parsed-body response)
+          actor-external-ids (:external_ids actor)]
       (is (= 201 (:status response)))
       (is (deep=
-           {:type "actor"
+           {:external_ids ["http://ex.tld/ctia/actor/actor-123"
+                           "http://ex.tld/ctia/actor/actor-456"]
+            :type "actor"
             :description "description",
             :actor_type "Hacker",
             :title "actor",
@@ -66,7 +71,9 @@
               actor (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:type "actor"
+               {:external_ids ["http://ex.tld/ctia/actor/actor-123"
+                               "http://ex.tld/ctia/actor/actor-456"]
+                :type "actor"
                 :description "description",
                 :actor_type "Hacker",
                 :title "actor",
@@ -88,9 +95,39 @@
                        :created
                        :modified)))))
 
+      (testing "GET /ctia/actor/external_id"
+        (let [response (get "ctia/actor/external_id"
+                            :headers {"api_key" "45c1f5e3f05d0"}
+                            :query-params {"external_id" (rand-nth actor-external-ids)})
+              actors (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:external_ids ["http://ex.tld/ctia/actor/actor-123"
+                                "http://ex.tld/ctia/actor/actor-456"]
+                 :type "actor"
+                 :description "description",
+                 :actor_type "Hacker",
+                 :title "actor",
+                 :confidence "High",
+                 :source "a source"
+                 :associated_actors [{:actor_id "actor-123"}
+                                     {:actor_id "actor-456"}]
+                 :associated_campaigns [{:campaign_id "campaign-444"}
+                                        {:campaign_id "campaign-555"}]
+                 :observed_TTPs [{:ttp_id "ttp-333"}
+                                 {:ttp_id "ttp-999"}]
+                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                 :owner "foouser"
+                 :schema_version schema-version
+                 :tlp "green"}]
+               (map #(dissoc % :id :created :modified) actors)))))
+
       (testing "PUT /ctia/actor/:id"
         (let [response (put (str "ctia/actor/" (:id actor))
-                            :body {:title "modified actor"
+                            :body {:external_ids ["http://ex.tld/ctia/actor/actor-123"
+                                                  "http://ex.tld/ctia/actor/actor-456"]
+                                   :title "modified actor"
                                    :description "updated description"
                                    :actor_type "Hacktivist"
                                    :type "actor"
@@ -108,6 +145,8 @@
           (is (= 200 (:status response)))
           (is (deep=
                {:id (:id actor)
+                :external_ids ["http://ex.tld/ctia/actor/actor-123"
+                               "http://ex.tld/ctia/actor/actor-456"]
                 :type "actor"
                 :created (:created actor)
                 :title "modified actor"

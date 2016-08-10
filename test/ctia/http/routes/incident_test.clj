@@ -23,7 +23,9 @@
 
   (testing "POST /ctia/incident"
     (let [response (post "ctia/incident"
-                         :body {:title "incident"
+                         :body {:external_ids ["http://ex.tld/ctia/incident/incident-123"
+                                               "http://ex.tld/ctia/incident/incident-456"]
+                                :title "incident"
                                 :description "description"
                                 :confidence "High"
                                 :categories ["Denial of Service"
@@ -36,10 +38,13 @@
                                 :related_incidents [{:incident_id "incident-123"}
                                                     {:incident_id "indicent-789"}]}
                          :headers {"api_key" "45c1f5e3f05d0"})
-          incident (:parsed-body response)]
+          incident (:parsed-body response)
+          incident-external-ids (:external_ids incident)]
       (is (= 201 (:status response)))
       (is (deep=
-           {:type "incident"
+           {:external_ids ["http://ex.tld/ctia/incident/incident-123"
+                           "http://ex.tld/ctia/incident/incident-456"]
+            :type "incident"
             :title "incident"
             :description "description"
             :tlp "green"
@@ -62,13 +67,44 @@
                    :created
                    :modified)))
 
+      (testing "GET /ctia/incident/external_id"
+        (let [response (get "ctia/incident/external_id"
+                            :headers {"api_key" "45c1f5e3f05d0"}
+                            :query-params {"external_id" (rand-nth incident-external-ids)})
+              incidents (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:external_ids ["http://ex.tld/ctia/incident/incident-123"
+                                "http://ex.tld/ctia/incident/incident-456"]
+                 :type "incident"
+                 :title "incident"
+                 :description "description"
+                 :tlp "green"
+                 :schema_version schema-version
+                 :confidence "High"
+                 :categories ["Denial of Service"
+                              "Improper Usage"]
+                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                 :related_indicators [{:confidence "High"
+                                       :source "source"
+                                       :relationship "relationship"
+                                       :indicator_id "indicator-123"}]
+
+                 :related_incidents [{:incident_id "incident-123"}
+                                     {:incident_id "indicent-789"}]
+                 :owner "foouser"}]
+               (map #(dissoc % :id :created :modified) incidents)))))
+
       (testing "GET /ctia/incident/:id"
         (let [response (get (str "ctia/incident/" (:id incident))
                             :headers {"api_key" "45c1f5e3f05d0"})
               incident (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:type "incident"
+               {:external_ids ["http://ex.tld/ctia/incident/incident-123"
+                               "http://ex.tld/ctia/incident/incident-456"]
+                :type "incident"
                 :title "incident"
                 :description "description"
                 :tlp "green"
@@ -94,7 +130,9 @@
         (let [{status :status
                updated-incident :parsed-body}
               (put (str "ctia/incident/" (:id incident))
-                   :body {:title "updated incident"
+                   :body {:external_ids ["http://ex.tld/ctia/incident/incident-123"
+                                         "http://ex.tld/ctia/incident/incident-456"]
+                          :title "updated incident"
                           :description "updated description"
                           :tlp "green"
                           :confidence "Low"
@@ -110,7 +148,9 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               {:type "incident"
+               {:external_ids ["http://ex.tld/ctia/incident/incident-123"
+                               "http://ex.tld/ctia/incident/incident-456"]
+                :type "incident"
                 :id (:id incident)
                 :created (:created incident)
                 :title "updated incident"

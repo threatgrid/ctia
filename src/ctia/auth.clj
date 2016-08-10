@@ -71,7 +71,7 @@
     ;; Other
     :developer
     :specify-id
-    })
+    :external-id})
 
 (def default-capabilities
   {:user

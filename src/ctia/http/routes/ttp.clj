@@ -5,8 +5,15 @@
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
    [ctim.schemas.ttp :refer [NewTTP StoredTTP]]
+   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
    [ring.util.http-response :refer :all]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
+
+(s/defschema TTPByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   {:external_id s/Str}))
 
 (defroutes ttp-routes
   (context "/ttp" []
@@ -39,6 +46,17 @@
                              :entity-id id
                              :identity identity
                              :entity ttp)))
+
+    (GET "/external_id" []
+      :return [(s/maybe StoredTTP)]
+      :query [q TTPByExternalIdQueryParams]
+      :header-params [api_key :- (s/maybe s/Str)]
+      :summary "List TTPs by external id"
+      :capabilities #{:read-ttp :external-id}
+      (paginated-ok
+       (read-store :ttp list-ttps
+                   {:external_ids (:external_id q)} q)))
+
     (GET "/:id" []
       :return (s/maybe StoredTTP)
       :summary "Gets a TTP by ID"

@@ -28,6 +28,12 @@
    PagingParams
    {(s/optional-key :sort_by) (s/enum :id :title)}))
 
+(s/defschema IndicatorsByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   {:external_id s/Str
+    (s/optional-key :sort_by) (s/enum :id :title)}))
+
 (s/defschema SightingsByIndicatorQueryParams
   (st/merge
    PagingParams
@@ -66,6 +72,17 @@
                              :entity-id id
                              :identity identity
                              :entity indicator)))
+
+    (GET "/external_id" []
+      :return [(s/maybe StoredIndicator)]
+      :query [q IndicatorsByExternalIdQueryParams]
+      :header-params [api_key :- (s/maybe s/Str)]
+      :summary "List Indicators by external id"
+      :capabilities #{:read-indicator :external-id}
+      (paginated-ok
+       (read-store :indicator list-indicators
+                   {:external_ids (:external_id q)} q)))
+
     (GET "/:id" []
       :return (s/maybe StoredIndicator)
       :summary "Gets an Indicator by ID"

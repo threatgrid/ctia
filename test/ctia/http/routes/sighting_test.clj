@@ -23,6 +23,8 @@
     (let [{status :status}
           (post "ctia/sighting"
                 :body {:id "sighting-12345"
+                       :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                                      "http://ex.tld/ctia/sighting/sighting-345"]
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :description "a sighting"
@@ -42,6 +44,8 @@
            :as response}
           (post "ctia/sighting"
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                       :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                                      "http://ex.tld/ctia/sighting/sighting-345"]
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :description "a sighting"
@@ -62,6 +66,8 @@
            :as response}
           (post "ctia/sighting"
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                       :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                                      "http://ex.tld/ctia/sighting/sighting-345"]
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :description "a sighting"
@@ -70,9 +76,34 @@
                        :sensor "endpoint.sensor"
                        :confidence "High"
                        :indicators [{:indicator_id "indicator-22334455"}]}
-                :headers {"api_key" api-key})]
+                :headers {"api_key" api-key})
+          sighting-external-ids (:external_ids sighting)]
       (is (empty? (:errors sighting)) "No errors when")
       (is (= 201 status))
+
+
+      (testing "GET /ctia/sighting/external_id"
+        (let [response (get "ctia/sighting/external_id"
+                            :headers {"api_key" "45c1f5e3f05d0"}
+                            :query-params {"external_id" (rand-nth sighting-external-ids)})
+              sightings (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                                "http://ex.tld/ctia/sighting/sighting-345"]
+                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                 :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
+                 :description "a sighting"
+                 :tlp "amber"
+                 :count 1
+                 :schema_version schema-version
+                 :source "source"
+                 :sensor "endpoint.sensor"
+                 :type "sighting"
+                 :owner "foouser"
+                 :confidence "High"
+                 :indicators [{:indicator_id "indicator-22334455"}]}]
+               (map #(dissoc % :id :created :modified) sightings)))))
 
       (testing "GET /ctia/sighting/:id"
         (let [{status :status
@@ -82,6 +113,8 @@
           (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
           (is (deep= {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                      :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                                     "http://ex.tld/ctia/sighting/sighting-345"]
                       :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                       :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
                       :description "a sighting"
@@ -93,12 +126,14 @@
                       :confidence "High"
                       :indicators [{:indicator_id "indicator-22334455"}]}
                      (dissoc sighting :created :modified :owner :type)))))
-      
+
       (testing "PUT /ctia/sighting/:id"
         (let [{status :status
                updated-sighting :parsed-body}
               (put (str "ctia/sighting/" (:id sighting))
                    :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                          :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                                         "http://ex.tld/ctia/sighting/sighting-345"]
                           :timestamp "2016-02-11T00:40:48.212-00:00"
                           :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                           :description "updated sighting"
@@ -112,6 +147,8 @@
           (is (= 200 status))
           (is (deep=
                {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                               "http://ex.tld/ctia/sighting/sighting-345"]
                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                 :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
                 :description "updated sighting"

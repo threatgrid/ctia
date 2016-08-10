@@ -20,6 +20,15 @@
    PagingParams
    {(s/optional-key :sort_by) (s/enum :id :feedback :reason)}))
 
+(s/defschema JudgementsQueryParams
+  (st/merge
+   PagingParams
+   {(s/optional-key :sort_by) (s/enum :id)}))
+
+(s/defschema JudgementsByExternalIdQueryParams
+  (st/merge JudgementsQueryParams
+            {:external_id s/Str}))
+
 (def ->id
   (domain-id/long-id-factory :judgement
                              #(get-in @properties [:ctia :http :show])))
@@ -52,6 +61,18 @@
                               indicator-relationship)]
         (ok d)
         (not-found)))
+
+    (GET "/external_id" []
+      :return [(s/maybe StoredJudgement)]
+      :query [q JudgementsByExternalIdQueryParams]
+
+      :header-params [api_key :- (s/maybe s/Str)]
+      :summary "Get Judgements by external ids"
+      :capabilities #{:read-judgement :external-id}
+      (paginated-ok
+       (read-store :judgement list-judgements
+                   {:external_ids (:external_id q)} q)))
+
     (GET "/:id" []
       :return (s/maybe StoredJudgement)
       :path-params [id :- s/Str]
@@ -61,6 +82,7 @@
       (if-let [d (read-store :judgement read-judgement id)]
         (ok d)
         (not-found)))
+
     (DELETE "/:id" []
       :no-doc true
       :path-params [id :- s/Str]

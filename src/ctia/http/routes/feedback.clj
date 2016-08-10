@@ -16,6 +16,10 @@
    {:entity_id s/Str
     (s/optional-key :sort_by) (s/enum :id :feedback :reason)}))
 
+(s/defschema FeedbackByExternalIdQueryParams
+  (st/merge (st/dissoc FeedbackQueryParams :entity_id)
+            {:external_id s/Str}))
+
 (defroutes feedback-routes
   (context "/feedback" []
     :tags ["Feedback"]
@@ -31,6 +35,7 @@
                                   :entity-type :feedback
                                   :identity identity
                                   :entity feedback)))
+
     (GET "/" []
       :return [StoredFeedback]
       :query [params FeedbackQueryParams]
@@ -42,6 +47,18 @@
                    list-feedback
                    (select-keys params [:entity_id])
                    (dissoc params :entity_id))))
+
+    (GET "/external_id" []
+      :return [(s/maybe StoredFeedback)]
+      :query [q FeedbackByExternalIdQueryParams]
+
+      :header-params [api_key :- (s/maybe s/Str)]
+      :summary "List feedback by external id"
+      :capabilities #{:read-feedback :external-id}
+      (paginated-ok
+       (read-store :feedback list-feedback
+                   {:external_ids (:external_id q)} q)))
+
     (GET "/:id" []
       :return (s/maybe StoredFeedback)
       :summary "Gets a Feedback by ID"
@@ -51,6 +68,7 @@
       (if-let [d (read-store :feedback read-feedback id)]
         (ok d)
         (not-found)))
+
     (DELETE "/:id" []
       :no-doc true
       :path-params [id :- s/Str]

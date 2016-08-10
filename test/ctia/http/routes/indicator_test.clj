@@ -24,7 +24,9 @@
 
   (testing "POST /ctia/indicator"
     (let [response (post "ctia/indicator"
-                         :body {:title "indicator-title"
+                         :body {:external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                                               "http://ex.tld/ctia/indicator/indicator-345"]
+                                :title "indicator-title"
                                 :description "description"
                                 :producer "producer"
                                 :indicator_type ["C2" "IP Watchlist"]
@@ -41,10 +43,13 @@
                                                 :relationship "relationship"
                                                 :COA_id "coa-123"}]}
                          :headers {"api_key" "45c1f5e3f05d0"})
-          indicator (:parsed-body response)]
+          indicator (:parsed-body response)
+          indicator-external-ids (:external_ids indicator)]
       (is (= 201 (:status response)))
       (is (deep=
            {:type "indicator"
+            :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                           "http://ex.tld/ctia/indicator/indicator-345"]
             :title "indicator-title"
             :description "description"
             :producer "producer"
@@ -69,6 +74,38 @@
                    :created
                    :modified)))
 
+      (testing "GET /ctia/indicator/external_id"
+        (let [response (get "ctia/indicator/external_id"
+                            :headers {"api_key" "45c1f5e3f05d0"}
+                            :query-params {"external_id" (rand-nth indicator-external-ids)})
+              indicators (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [{:type "indicator"
+                 :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                                "http://ex.tld/ctia/indicator/indicator-345"]
+                 :title "indicator-title"
+                 :description "description"
+                 :producer "producer"
+                 :tlp "green"
+                 :schema_version schema-version
+                 :indicator_type ["C2" "IP Watchlist"]
+                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
+                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                 :related_campaigns [{:confidence "High"
+                                      :source "source"
+                                      :relationship "relationship"
+                                      :campaign_id "campaign-123"}]
+                 :composite_indicator_expression {:operator "and"
+                                                  :indicator_ids ["test1" "test2"]}
+                 :related_COAs [{:confidence "High"
+                                 :source "source"
+                                 :relationship "relationship"
+                                 :COA_id "coa-123"}]
+                 :owner "foouser"}]
+               (map #(dissoc % :id :created :modified) indicators)))))
+
+
       (testing "GET /ctia/indicator/:id"
         (let [response (get (str "ctia/indicator/" (:id indicator))
                             :headers {"api_key" "45c1f5e3f05d0"})
@@ -76,6 +113,8 @@
           (is (= 200 (:status response)))
           (is (deep=
                {:type "indicator"
+                :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                               "http://ex.tld/ctia/indicator/indicator-345"]
                 :title "indicator-title"
                 :description "description"
                 :producer "producer"
@@ -110,6 +149,8 @@
           (is (= 200 status))
           (is (deep=
                [{:type "indicator"
+                 :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                                "http://ex.tld/ctia/indicator/indicator-345"]
                  :title "indicator-title"
                  :description "description"
                  :producer "producer"
@@ -135,7 +176,9 @@
         (let [{status :status
                updated-indicator :parsed-body}
               (put (str "ctia/indicator/" (:id indicator))
-                   :body {:title "updated indicator"
+                   :body {:external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                                         "http://ex.tld/ctia/indicator/indicator-345"]
+                          :title "updated indicator"
                           :description "updated description"
                           :producer "producer"
                           :tlp "amber"
@@ -156,6 +199,8 @@
           (is (= 200 status))
           (is (deep=
                {:id (:id indicator)
+                :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                               "http://ex.tld/ctia/indicator/indicator-345"]
                 :type "indicator"
                 :created (:created indicator)
                 :title "updated indicator"
