@@ -1,5 +1,5 @@
 (ns ctia.lib.async
-  (:require [ctia.lib.time :as time]
+  (:require [clj-momo.lib.time :as time]
             [clojure.core.async :as a :refer [go-loop alt! alt!! chan tap thread]]
             [schema.core :as s :refer [=>]])
   (:import [clojure.core.async.impl.protocols Channel]

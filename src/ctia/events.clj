@@ -1,5 +1,5 @@
 (ns ctia.events
-  (:require [ctia.lib.time :as time]
+  (:require [clj-momo.lib.time :as time]
             [ctia.lib.async :as la]
             [ctia.shutdown :as shutdown]
             [ctim.events.schemas :as es]

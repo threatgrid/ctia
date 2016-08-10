@@ -1,11 +1,11 @@
 (ns ctia.lib.es.slice
-  (:require [schema.core :as s]
-            [ctia.lib.time :refer [format-date-time
+  (:require [clj-momo.lib.time :refer [format-date-time
                                    format-index-time
                                    round-date]]
             [ctia.lib.es.index :refer [ESConnState
                                        memo-create-aliased-index!
-                                       memo-create-filtered-alias!]]))
+                                       memo-create-filtered-alias!]]
+            [schema.core :as s]))
 
 (s/defschema DateRangeFilter
   "a Date range filter for a filtered alias"

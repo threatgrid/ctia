@@ -1,11 +1,13 @@
 (ns ctia.flows.autoload-test
-  (:require [ctia.flows.autoload :as auto]
+  (:require [clj-momo.test-helpers
+             [core :as mth]]
+            [ctia.flows.autoload :as auto]
             [ctia.flows.hooks :as h]
             [ctia.test-helpers.atom :as at-helpers]
             [ctia.test-helpers.core :as helpers]
             [clojure.test :refer [deftest is join-fixtures use-fixtures]]))
 
-(use-fixtures :once helpers/fixture-schema-validation)
+(use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
                                     at-helpers/fixture-properties:atom-memory-store

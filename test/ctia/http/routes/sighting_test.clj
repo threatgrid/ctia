@@ -1,6 +1,7 @@
 (ns ctia.http.routes.sighting-test
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
@@ -10,7 +11,7 @@
              [http :refer [api-key]]
              [store :refer [deftest-for-each-store]]]))
 
-(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
@@ -93,7 +94,7 @@
                       :confidence "High"
                       :indicators [{:indicator_id "indicator-22334455"}]}
                      (dissoc sighting :created :modified :owner :type)))))
-      
+
       (testing "PUT /ctia/sighting/:id"
         (let [{status :status
                updated-sighting :parsed-body}

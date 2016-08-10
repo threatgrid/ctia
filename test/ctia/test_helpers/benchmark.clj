@@ -1,5 +1,6 @@
 (ns ctia.test-helpers.benchmark
-  (:require [ctia.init :refer [start-ctia!]]
+  (:require [clj-momo.lib.net :as net]
+            [ctia.init :refer [start-ctia!]]
             [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
             [ctia.shutdown :as shutdown]
@@ -9,7 +10,7 @@
              [es :as esh]]))
 
 (defn setup-ctia! [fixture]
-  (let [http-port (helpers/available-port)]
+  (let [http-port (net/available-port)]
     (println "Default: Launch CTIA on port" http-port)
     (fixture (fn [] (helpers/fixture-properties:clean
                     #(helpers/with-properties ["ctia.store.es.default.refresh" false

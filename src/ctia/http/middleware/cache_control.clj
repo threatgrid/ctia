@@ -1,5 +1,5 @@
 (ns ctia.http.middleware.cache-control
-  (:require [ctia.lib.time :refer [format-rfc822-time]]
+  (:require [clj-momo.lib.time :refer [format-rfc822-time]]
             [pandect.algo.sha1 :refer [sha1]])
   (:import java.io.File))
 

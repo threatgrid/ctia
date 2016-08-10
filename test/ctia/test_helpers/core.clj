@@ -1,86 +1,54 @@
 (ns ctia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [cheshire.core :as json]
-            [clj-http.client :as http]
-            [clojure
-             [data :as cd]
-             [edn :as edn]
-             [string :as str]
-             [test :as ct]]
-            [com.rpl.specter :refer [transform]]
+  (:require [clj-momo.lib
+             [net :as net]
+             [time :as time]]
+            [clj-momo.test-helpers
+             [core :as mth]
+             [http :as mthh]]
+            [clojure.string :as str]
             [ctia
              [auth :as auth]
              [init :as init]
-             [properties :as props]
+             [properties :refer [properties PropertiesSchema]]
              [store :as store]]
             [ctia.auth.allow-all :as aa]
             [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
-            [ctia.lib
-             [map :as map]
-             [time :as time]
-             [url :as url]]
-            [ctia.lib.specter.paths :as path]
             [ctia.shutdown :as shutdown]
             [schema.core :as schema])
   (:import java.net.ServerSocket))
 
-(defmethod ct/assert-expr 'deep= [msg [_ a b :as form]]
-  `(let [[only-a# only-b# unused#] (cd/diff ~a ~b)]
-     (if (or only-a# only-b#)
-       (let [only-msg# (str (when only-a# (str "Only in A: " only-a#))
-                            (when (and only-a# only-b#) ", ")
-                            (when only-b# (str "Only in B: " only-b#)))]
-         (ct/do-report {:type :fail, :message ~msg,
-                        :expected '~form, :actual only-msg#}))
-       (ct/do-report {:type :pass, :message ~msg,
-                      :expected '~form, :actual nil}))))
+(def fixture-property
+  (mth/build-fixture-property-fn PropertiesSchema))
 
-(defn valid-property? [prop]
-  (some #{prop} props/configurable-properties))
-
-(defn set-property [prop val]
-  (assert (valid-property? prop) (str "Tried to set unknown property '" prop "'"))
-  (System/setProperty prop (if (keyword? val)
-                             (name val)
-                             (str val))))
-
-(defn clear-property [prop]
-  (assert (valid-property? prop) (str "Tried to clear unknown property '" prop "'"))
-  (System/clearProperty prop))
-
-(defn with-properties- [properties-map f]
-  (doseq [[property value] properties-map]
-    (set-property property value))
-  (f)
-  (doseq [property (keys properties-map)]
-    (clear-property property)))
+(def with-properties-vec
+  (mth/build-with-properties-vec-fn PropertiesSchema))
 
 (defmacro with-properties [properties-vec & sexprs]
-  `(with-properties- ~(apply hash-map properties-vec)
+  `(with-properties-vec ~properties-vec
      (fn [] ~@sexprs)))
 
 (defn fixture-properties:clean [f]
   ;; Remove any set system properties, presumably from a previous test
   ;; run
-  (for [configurable-property props/configurable-properties]
-    (clear-property configurable-property))
+  (mth/clear-properties PropertiesSchema)
   ;; Override any properties that are in the default properties file
   ;; yet are unsafe/undesirable for tests
-  (with-properties ["ctia.http.dev-reload" false
-                    "ctia.http.min-threads" 9
-                    "ctia.http.max-threads" 10
-                    "ctia.http.show.protocol"    "http"
-                    "ctia.http.show.hostname"    "localhost"
-                    "ctia.http.show.port"        "57254"
-                    "ctia.http.show.path-prefix" ""
-                    "ctia.nrepl.enabled" false
-                    "ctia.hook.es.enabled" false
-                    "ctia.hook.redis.enabled" false
+  (with-properties ["ctia.http.dev-reload"         false
+                    "ctia.http.min-threads"        9
+                    "ctia.http.max-threads"        10
+                    "ctia.http.show.protocol"      "http"
+                    "ctia.http.show.hostname"      "localhost"
+                    "ctia.http.show.port"          "57254"
+                    "ctia.http.show.path-prefix"   ""
+                    "ctia.nrepl.enabled"           false
+                    "ctia.hook.es.enabled"         false
+                    "ctia.hook.redis.enabled"      false
                     "ctia.hook.redis.channel-name" "events-test"
                     "ctia.metrics.riemann.enabled" false
                     "ctia.metrics.console.enabled" false
-                    "ctia.metrics.jmx.enabled" false]
+                    "ctia.metrics.jmx.enabled"     false]
     ;; run tests
     (f)))
 
@@ -88,13 +56,6 @@
   ;; Set properties to enable events file logging
   (with-properties ["ctia.events.log" "true"]
     (f)))
-
-(defn fixture-property [prop val]
-  (fn [test]
-    (set-property prop val)
-    (test)))
-
-
 
 (defn fixture-properties:multi-store [f]
   ;; Set properties to enable all the stores
@@ -139,21 +100,13 @@
                                    "hook-example.core/hook-example-2"])]
     (f)))
 
-(defn available-port []
-  (loop [port 3000]
-    (if (try (with-open [sock (ServerSocket. port)]
-               (.getLocalPort sock))
-             (catch Exception e nil))
-      port
-      (recur (+ port 1)))))
-
 (defn fixture-ctia
   ([test] (fixture-ctia test true))
   ([test enable-http?]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
    (let [http-port (if enable-http?
-                     (available-port)
+                     (net/available-port)
                      3000)]
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
@@ -167,10 +120,6 @@
 (defn fixture-ctia-fast [test]
   (fixture-ctia test false))
 
-(defn fixture-schema-validation [f]
-  (schema/with-fn-validation
-    (f)))
-
 ;; TODO - Convert this to a properties fixture
 (defn fixture-allow-all-auth [f]
   (let [orig-auth-srvc @auth/auth-service]
@@ -183,141 +132,24 @@
                                                       :role role
                                                       :capabilities caps}))
 
-(defn url
-  ([path]
-   (url path (get-in @props/properties [:ctia :http :port])))
-  ([path port]
-   (let [url (format "http://localhost:%d/%s" port path)]
-     (assert (url/encoded? url)
-             (format "URL '%s' is not encoded" url))
-     url)))
-
-;; Replace this with clojure.string/includes? once we are at Clojure 1.8
-(defn includes?
-  [^CharSequence s ^CharSequence substr]
-  (.contains (.toString s) substr))
-
-(defn content-type? [expected-str]
-  (fn [test-str]
-    (if (some? test-str)
-      (includes? (name test-str) expected-str)
-      false)))
-
-(def json? (content-type? "json"))
-
-(def edn? (content-type? "edn"))
-
-(defn parse-body
-  ([http-response]
-   (parse-body http-response nil))
-  ([{{content-type "Content-Type"} :headers
-     body :body}
-    default]
-   (try
-     (cond
-       (edn? content-type) (edn/read-string body)
-       (json? content-type) (json/parse-string body)
-       :else default)
-     (catch Exception e
-       (binding [*out* *err*]
-         (println "------- BODY ----------")
-         (clojure.pprint/pprint body)
-         (println "------- EXCEPTION ----------")
-         (clojure.pprint/pprint e))))))
-
-(defn encode-body
-  [body content-type]
-  (cond
-    (edn? content-type) (pr-str body)
-    (json? content-type) (json/generate-string body)
-    :else body))
-
-(defn get [path & {:as options}]
-  (let [options
-        (merge {:accept :edn
-                :throw-exceptions false
-                :socket-timeout 10000
-                :conn-timeout 10000}
-               options)
-
-        response
-        (http/get (url path)
-                  options)]
-    (assoc response :parsed-body (parse-body response))))
-
-(defn post [path & {:as options}]
-  (let [{:keys [body content-type]
-         :as options}
-        (merge {:content-type :edn
-                :accept :edn
-                :throw-exceptions false
-                :socket-timeout 10000
-                :conn-timeout 10000}
-               options)
-
-        response
-        (http/post (url path)
-                   (-> options
-                       (cond-> body (assoc :body (encode-body body content-type)))))]
-    (assoc response :parsed-body (parse-body response))))
-
-(defn delete [path & {:as options}]
-  (http/delete (url path)
-               (merge {:throw-exceptions false}
-                      options)))
-
-(defn put [path & {:as options}]
-  (let [{:keys [body content-type]
-         :as options}
-        (merge {:content-type :edn
-                :accept :edn
-                :throw-exceptions false
-                :socket-timeout 10000
-                :conn-timeout 10000}
-               options)
-
-        response
-        (http/put (url path)
-                  (-> options
-                      (cond-> body (assoc :body (encode-body body content-type)))))]
-    (assoc response :parsed-body (parse-body response))))
-
-(defn common= [& ms]
-  (let [key-paths (apply map/keys-in-all ms)
-        common (fn [m]
-                 (reduce (fn [accum key-path]
-                           (assoc-in accum key-path (get-in m key-path)))
-                         {}
-                         key-paths))]
-    (assert (seq key-paths), "No common paths between maps")
-    (apply = (map common ms))))
-
-(defn normalize [entity]
-  (->> entity
-       (transform path/walk-dates
-                  time/format-date-time)))
-
-(defn encode [s]
-  (assert (string? s)
-          (format "Assert Failed: %s of type %s must be a string"
-                  s (type s)))
-  (assert (seq s)
-          (format "Assert Failed: %s of type %s must be a seq"
-                  s (type s)))
-  (url/encode s))
-
-(defn decode [s]
-  (assert (string? s)
-          (format "Assert Failed: %s of type %s must be a string"
-                  s (type s)))
-  (assert (seq s)
-          (format "Assert Failed: %s of type %s must be a seq"
-                  s (type s)))
-  (url/decode s))
-
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
   `(do
      ~@(for [[name-key fixture-fn] fixture-map]
          `(clojure.test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
                                    {(keyword name-key) true})
             (~fixture-fn (fn [] ~@body))))))
+
+(defn get-http-port []
+  (get-in @properties [:ctia :http :port]))
+
+(def get
+  (mthh/with-port-fn get-http-port mthh/get))
+
+(def post
+  (mthh/with-port-fn get-http-port mthh/post))
+
+(def delete
+  (mthh/with-port-fn get-http-port mthh/delete))
+
+(def put
+  (mthh/with-port-fn get-http-port mthh/put))

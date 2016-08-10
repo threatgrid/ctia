@@ -1,12 +1,17 @@
 (ns ctia.http.generative.specs
   (:refer-clojure :exclude [get])
-  (:require [clojure.set :as set]
-            [clojure.string :as str]
-            [clojure.test.check.properties :refer [for-all]]
-            [clojure.test.check.generators :as tcg]
+  (:require [clj-momo.test-helpers
+             [core :refer [common= normalize]]
+             [http :refer [encode]]]
+            [clojure
+             [set :as set]
+             [string :as str]]
+            [clojure.test.check
+             [properties :refer [for-all]]
+             [generators :as tcg]]
             [ctia.properties :refer [properties]]
             [ctia.test-helpers.core
-             :refer [common= post get encode normalize]]
+             :refer [post get]]
             [ctim.generators.schemas :as gen]
             [ctim.generators.schemas.sighting-generators :as gs]))
 

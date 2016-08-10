@@ -1,6 +1,7 @@
 (ns ctia.auth.threatgrid
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
+            [clj-momo.lib.set :refer [as-set]]
             [clojure
              [set :as set]
              [string :as str]]
@@ -8,8 +9,7 @@
             [ctia
              [auth :as auth]
              [properties :refer [properties]]
-             [store :as store]]
-            [ctia.lib.set :refer [as-set]]))
+             [store :as store]]))
 
 (def cache-ttl-ms (* 1000 60 5))
 

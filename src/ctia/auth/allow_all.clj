@@ -1,8 +1,8 @@
 (ns ctia.auth.allow-all
-  (:require [ctia.auth
+  (:require [clj-momo.lib.set :refer [as-set]]
+            [ctia.auth
              :refer [IIdentity IAuth]
-             :as auth]
-            [ctia.lib.set :refer [as-set]]))
+             :as auth]))
 
 (defrecord Identity []
   IIdentity

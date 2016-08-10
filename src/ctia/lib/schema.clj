@@ -1,4 +1,5 @@
 (ns ctia.lib.schema
+  (:refer-clojure :exclude [atom])
   (:require [schema.core :as s]
             [schema.spec.collection :as collection]
             [schema.spec.core :as spec :include-macros true]))
@@ -16,9 +17,9 @@
   (spec [this]
     (collection/collection-spec
      (spec/simple-precondition this atom?)
-     atom
+     clojure.core/atom
      [(collection/one-element true schema (fn [item-fn coll] (item-fn @coll) nil))]
-     (fn [_ xs _] (atom (first xs)))))
+     (fn [_ xs _] (clojure.core/atom (first xs)))))
   (explain [this] (list 'atom (s/explain schema))))
 
 (defn atom

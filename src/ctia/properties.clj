@@ -4,10 +4,10 @@
             alternative properties file on the classpath, or by
             setting system properties."}
     ctia.properties
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [ctia.lib.map :as map]
-            [schema.coerce :as c]
+  (:require [clj-momo.properties :as mp]
+            [clj-momo.lib
+             [map :as map]
+             [schema :as mls]]
             [schema.core :as s]
             [schema-tools.core :as st]
             [ctia.store :refer [stores]]
@@ -108,83 +108,8 @@
                       "ctia.metrics.riemann.interval" s/Int})))
 
 (def configurable-properties
-  "String keys from PropertiesSchema, used to select system properties."
-  (map #(or (:k %) %) (keys PropertiesSchema)))
+  (mls/keys PropertiesSchema))
 
-(def coerce-properties
-  "Fn used to coerce property values using PropertiesSchema"
-  (c/coercer! PropertiesSchema
-              c/string-coercion-matcher))
-
-(defn read-property-files
-  "Read all the property files (that exist) and merge the properties
-   into a single map"
-  []
-  (->> files
-       (keep (fn [file]
-               (when-let [rdr (some-> file io/resource io/reader)]
-                 (with-open [rdr rdr]
-                   (doto (Properties.)
-                     (.load rdr))))))
-       concat
-       (into {})))
-
-(defn prop->env
-  "Convert a property name into an environment variable name"
-  [prop]
-  (-> prop
-      str/upper-case
-      (str/replace #"[-.]" "_")))
-
-(def property-env-map
-  "Map of property name to environment variable name"
-  (into {}
-        (map (fn [prop]
-               [(prop->env prop) prop])
-             configurable-properties)))
-
-(defn read-env-variables
-  "Get a map of properties from environment variables"
-  []
-  (into {}
-        (map (fn [[env val]]
-               [(get property-env-map env) val])
-             (select-keys (System/getenv)
-                          (keys property-env-map)))))
-
-(defn transform
-  "Convert a flat map of property->value into a nested map with keyword
-   keys, splitting on '.'"
-  [properties]
-  (reduce (fn [accum [k v]]
-            (let [parts (->> (str/split k #"\.")
-                             (map keyword))]
-              (cond
-                (empty? parts) accum
-                (= 1 (count parts)) (assoc accum (first parts) v)
-                :else (map/rmerge accum
-                                  (assoc-in {} parts v)))))
-          {}
-          properties))
-
-(defn properties-by-source []
-  {:property-files (read-property-files)
-   :system-properties (select-keys (System/getProperties)
-                                   configurable-properties)
-   :env-variables (read-env-variables)})
-
-(defn debug-properties-by-source []
-  (reduce into {}
-          (map (fn [[k v]]
-                 {k (transform v)}) (properties-by-source))))
-
-(defn init!
-  "Read a properties file, merge it with system properties, coerce and
-   validate it, transform it into a nested map with keyword keys, and
-   then store it in memory."
-  []
-  (->> (vals (properties-by-source))
-       (apply merge)
-       coerce-properties
-       transform
-       (reset! properties)))
+(def init! (mp/build-init-fn files
+                             PropertiesSchema
+                             properties))

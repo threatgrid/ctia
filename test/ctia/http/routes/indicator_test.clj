@@ -1,6 +1,7 @@
 (ns ctia.http.routes.indicator-test
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.http.routes.indicator :refer [->long-id]]
             [ctim.schemas.common :as c]
@@ -12,7 +13,7 @@
              [store :refer [deftest-for-each-store]]]
             [ring.util.codec :refer [url-encode]]))
 
-(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 

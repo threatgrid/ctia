@@ -1,6 +1,8 @@
 (ns ctia.http.routes.pagination-test
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [join-fixtures testing use-fixtures]]
+  (:require [clj-momo.lib.url :as url]
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [join-fixtures testing use-fixtures]]
             [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [core :as helpers]
@@ -11,10 +13,9 @@
              [store :refer [deftest-for-each-store]]]
             [ctia.http.routes.indicator :refer [->long-id]]
             [ctim.generators.schemas :as gs]
-            [ring.util.codec :refer [url-encode]]
-            [ctia.lib.url :as url]))
+            [ring.util.codec :refer [url-encode]]))
 
-(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     helpers/fixture-allow-all-auth]))
 
