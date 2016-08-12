@@ -1,6 +1,7 @@
 (ns ctia.http.handler.allow-all-test
   (:refer-clojure :exclude [get])
-  (:require [ctia.auth :as auth]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.auth :as auth]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.http.handler :as handler]
             [ctia.test-helpers
@@ -9,7 +10,7 @@
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
             [ctim.schemas.common :as c]))
 
-(use-fixtures :once helpers/fixture-schema-validation)
+(use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
                                     at-helpers/fixture-properties:atom-memory-store

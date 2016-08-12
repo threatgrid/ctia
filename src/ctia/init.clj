@@ -1,5 +1,6 @@
 (ns ctia.init
   (:require [cider.nrepl :refer [cider-nrepl-handler]]
+            [clj-momo.properties :as mp]
             [clojure.tools.nrepl.server :as nrepl-server]
             [clojure.tools.logging :as log]
             [ctia.lib.metrics
@@ -30,12 +31,6 @@
       (throw (ex-info "Auth service not configured"
                       {:message "Unknown service"
                        :requested-service auth-service-type})))))
-
-(defn store-factory-cleaner
-  "The cleaner is called before the stores are instantiated, to reset any state.
-   It is unaware of any selected store type, so it should handle all types."
-  []
-  )
 
 (def store-factories
   { ;; A :builder is called on each store creation and is passed the
@@ -97,7 +92,6 @@
     :es es-store/->TTPStore}})
 
 (defn init-store-service! []
-  (store-factory-cleaner)
   (doseq [[entity-key impls] @store/stores]
     (swap! store/stores assoc entity-key []))
 
@@ -124,7 +118,9 @@
 (defn log-properties []
   (log/debug (with-out-str
                (do (newline)
-                   (clojure.pprint/pprint (p/debug-properties-by-source)))))
+                   (clojure.pprint/pprint
+                    (mp/debug-properties-by-source p/PropertiesSchema
+                                                   p/files)))))
 
   (log/info (with-out-str
               (do (newline)

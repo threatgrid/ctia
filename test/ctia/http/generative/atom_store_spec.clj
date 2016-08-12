@@ -1,12 +1,13 @@
 (ns ctia.http.generative.atom-store-spec
-  (:require [ctia.http.generative.specs :as specs]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.http.generative.specs :as specs]
             [clojure.test :refer [use-fixtures join-fixtures]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [ctia.test-helpers
              [atom :as at-helpers]
              [core :as helpers]]))
 
-(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     at-helpers/fixture-properties:atom-memory-store
                                     helpers/fixture-ctia

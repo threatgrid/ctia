@@ -1,6 +1,6 @@
 (ns ctia.domain.entities
   (:require
-    [ctia.lib.time :as time]
+    [clj-momo.lib.time :as time]
     [ctim.schemas
      [actor :refer [NewActor StoredActor]]
      [campaign :refer [NewCampaign StoredCampaign]]

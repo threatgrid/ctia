@@ -1,5 +1,6 @@
 (ns ctia.flows.hooks.redis-event-hook-test
-  (:require [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
@@ -9,7 +10,7 @@
              [core :as test-helpers :refer [post]]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
-(use-fixtures :once test-helpers/fixture-schema-validation)
+(use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
                                     at-helpers/fixture-properties:atom-memory-store

@@ -1,6 +1,6 @@
 (ns ctia.stores.atom.judgement
-  (:require [ctia.lib.schema :as ls]
-            [ctia.lib.time :as time]
+  (:require [clj-momo.lib.time :as time]
+            [ctia.lib.schema :as ls]
             [ctim.schemas
              [common :as c]
              [judgement :refer [NewJudgement StoredJudgement]]

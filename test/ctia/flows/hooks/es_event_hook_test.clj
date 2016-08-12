@@ -1,5 +1,6 @@
 (ns ctia.flows.hooks.es-event-hook-test
-  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.events.producers.es.producer :refer [init-producer-conn]]
             [ctia.lib.es
@@ -11,7 +12,7 @@
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
              [es :as es-helpers]]))
 
-(use-fixtures :once test-helpers/fixture-schema-validation)
+(use-fixtures :once mth/fixture-schema-validation)
 
 (deftest-for-each-fixture test-event-producer
 

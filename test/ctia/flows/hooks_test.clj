@@ -1,5 +1,6 @@
 (ns ctia.flows.hooks-test
-  (:require [ctia.flows.from-java :as fj]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.flows.from-java :as fj]
             [ctia.flows.hooks :as h]
             [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.test-helpers
@@ -7,7 +8,7 @@
              [core :as helpers]]
             [clojure.test :as t]))
 
-(t/use-fixtures :once (t/join-fixtures [helpers/fixture-schema-validation
+(t/use-fixtures :once (t/join-fixtures [mth/fixture-schema-validation
                                         helpers/fixture-properties:clean
                                         at-helpers/fixture-properties:atom-memory-store
                                         helpers/fixture-ctia-fast]))

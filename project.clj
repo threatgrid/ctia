@@ -10,7 +10,6 @@
              "-server"]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [clj-time "0.9.0"] ; required due to bug in lein-ring
-                 [com.rpl/specter "0.9.2"]
                  [org.clojure/core.async "0.2.374"]
                  [clj-http "2.0.1"]
                  [org.slf4j/slf4j-log4j12 "1.7.21"]
@@ -20,6 +19,7 @@
                  [com.taoensso/carmine "2.12.2"]
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
+                 [threatgrid/clj-momo "0.2.0"]
 
                  ;; Schemas
                  [prismatic/schema "1.0.5"]

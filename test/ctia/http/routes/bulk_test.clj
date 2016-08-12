@@ -1,11 +1,13 @@
 (ns ctia.http.routes.bulk-test
   (:refer-clojure :exclude [get])
-  (:require [clojure
+  (:require [clj-momo.test-helpers
+             [core :as mth]
+             [http :refer [encode]]]
+            [clojure
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.auth :refer [all-capabilities]]
             [ctia.http.routes.bulk :refer [bulk-size gen-bulk-from-fn get-bulk-max-size]]
-            [ctia.lib.url :refer [encode]]
             [ctia.test-helpers
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
@@ -17,9 +19,9 @@
   (helpers/with-properties ["ctia.http.bulk.max-size" 100]
     (test)))
 
-(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
-                                    fixture-properties:small-max-bulk-size
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
+                                    fixture-properties:small-max-bulk-size
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)

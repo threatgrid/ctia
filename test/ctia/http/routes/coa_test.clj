@@ -1,6 +1,7 @@
 (ns ctia.http.routes.coa-test
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
@@ -9,7 +10,7 @@
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]))
 
-(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 

@@ -1,11 +1,12 @@
 (ns ctia.http.generative.es-store-spec
-  (:require [ctia.http.generative.specs :as specs]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.http.generative.specs :as specs]
             [clojure.test :refer [use-fixtures join-fixtures]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.es :as es-helpers]))
 
-(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     es-helpers/fixture-properties:es-store
                                     helpers/fixture-ctia

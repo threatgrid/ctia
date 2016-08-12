@@ -1,5 +1,6 @@
 (ns ctia.test-helpers.fake-whoami-service
   (:require [cheshire.core :as json]
+            [clj-momo.lib.net :as net]
             [ctia.auth :as auth]
             [ctia.auth.threatgrid :as threatgrid]
             [ctia.test-helpers.core :as helpers-core]
@@ -151,7 +152,7 @@
   "Start and stop a fake whoami service. Sets the auth property with the URL to
    the service, so the CTIA instance/HTTP server should be started after this."
   [test]
-  (let [port (helpers-core/available-port)]
+  (let [port (net/available-port)]
     (reset! fake-whoami-service (make-fake-whoami-service port))
     (try
       (start-server @fake-whoami-service)

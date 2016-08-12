@@ -1,13 +1,15 @@
 (ns ctia.http.routes.verdict-test
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
+  (:require [clj-momo.lib.time :as time]
+            [clj-momo.test-helpers.core :as mht]
+            [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]))
 
-(use-fixtures :once (join-fixtures [helpers/fixture-schema-validation
+(use-fixtures :once (join-fixtures [mht/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
@@ -146,7 +148,7 @@
       (is (= 201 (:status response)))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
-        (with-redefs [ctia.lib.time/now (constantly (ctia.lib.time/timestamp "2016-02-12T15:42:58.232-00:00"))]
+        (with-redefs [time/now (constantly (time/timestamp "2016-02-12T15:42:58.232-00:00"))]
           (let [response (get "ctia/ip/10.0.0.1/verdict"
                               :headers {"api_key" "45c1f5e3f05d0"})
                 verdict (:parsed-body response)]
@@ -156,4 +158,3 @@
                     :disposition_name "Malicious"
                     :judgement_id (:id judgement)}
                    (dissoc verdict :id :observable :owner :created :schema_version)))))))))
-
