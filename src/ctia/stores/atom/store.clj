@@ -12,7 +12,8 @@
              [judgement :as judgement]
              [sighting :as sighting]
              [ttp :as ttp]
-             [verdict :as verdict]]
+             [verdict :as verdict]
+             [package :as package]]
             [durable-atom.core :refer [durable-atom]]))
 
 (defn init! [{:keys [path mode] :as _props_}]
@@ -179,3 +180,12 @@
     (ttp/handle-delete-ttp state id))
   (list-ttps [_ filter-map params]
     (ttp/handle-list-ttps state filter-map params)))
+
+(defrecord PackageStore [state]
+  IPackageStore
+  (read-package [_ id]
+    (package/handle-read-package state id))
+  (create-package [_ new-package]
+    (package/handle-create-package state new-package))
+  (delete-package [_ id]
+    (package/handle-delete-package state id)))

@@ -89,7 +89,11 @@
 
    :ttp
    {:atom as-store/->TTPStore
-    :es es-store/->TTPStore}})
+    :es es-store/->TTPStore}
+
+   :package
+   {:atom as-store/->PackageStore
+    :es es-store/->PackageStore}})
 
 (defn init-store-service! []
   (doseq [[entity-key impls] @store/stores]

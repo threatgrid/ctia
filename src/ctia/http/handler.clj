@@ -22,6 +22,7 @@
              [sighting :refer [sighting-routes]]
              [ttp :refer [ttp-routes]]
              [verdict :refer [verdict-routes]]
+             [package :refer [package-routes]]
              [version :refer [version-routes]]]
             [ring.middleware
              [format :refer [wrap-restful-format]]
@@ -120,4 +121,5 @@
                 sighting-routes
                 ttp-routes
                 verdict-routes
+                ;;                package-routes
                 version-routes)))

@@ -79,6 +79,13 @@
   (delete-incident [this id])
   (list-incidents [this filtermap params]))
 
+(defprotocol IPackageStore
+  (read-package [this id])
+  (create-package [this new-incident])
+  (update-package [this id incident])
+  (delete-package [this id])
+  (list-packages [this filtermap params]))
+
 (defprotocol IRelationStore
   (read-relation [this id])
   (create-relation [this new-relation])
@@ -103,7 +110,8 @@
                        :incident []
                        ;;:relation relation-store
                        :identity []
-                       :verdict []}))
+                       :verdict []
+                       :package []}))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))

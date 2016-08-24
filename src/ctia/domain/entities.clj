@@ -1,21 +1,22 @@
 (ns ctia.domain.entities
   (:require
-    [clj-momo.lib.time :as time]
-    [ctim.schemas
-     [actor :refer [NewActor StoredActor]]
-     [campaign :refer [NewCampaign StoredCampaign]]
-     [common :as c]
-     [coa :refer [NewCOA StoredCOA]]
-     [exploit-target :refer [NewExploitTarget StoredExploitTarget]]
-     [feedback :refer [NewFeedback StoredFeedback]]
-     [incident :refer [NewIncident StoredIncident]]
-     [indicator :refer [NewIndicator StoredIndicator]]
-     [judgement :refer [NewJudgement StoredJudgement]]
-     [sighting :refer [NewSighting StoredSighting]]
-     [ttp :refer [NewTTP StoredTTP]]
-     [verdict :refer [Verdict StoredVerdict]]]
-    [ring.util.http-response :as http-response]
-    [schema.core :as s])
+   [clj-momo.lib.time :as time]
+   [ctim.schemas
+    [actor :refer [NewActor StoredActor]]
+    [campaign :refer [NewCampaign StoredCampaign]]
+    [common :as c]
+    [coa :refer [NewCOA StoredCOA]]
+    [exploit-target :refer [NewExploitTarget StoredExploitTarget]]
+    [feedback :refer [NewFeedback StoredFeedback]]
+    [incident :refer [NewIncident StoredIncident]]
+    [indicator :refer [NewIndicator StoredIndicator]]
+    [judgement :refer [NewJudgement StoredJudgement]]
+    [sighting :refer [NewSighting StoredSighting]]
+    [ttp :refer [NewTTP StoredTTP]]
+    [verdict :refer [Verdict StoredVerdict]]
+    [package :refer [NewPackage StoredPackage]]]
+   [ring.util.http-response :as http-response]
+   [schema.core :as s])
   (:import [java.util UUID]))
 
 (def schema-version c/ctim-schema-version)
@@ -87,20 +88,20 @@
                          (http-response/bad-request!
                           {:error "Mismatching :dispostion and dispositon_name for judgement"
                            :judgement new-judgement}))))
-    disposition_name (get c/disposition-map disposition)]
-  (assoc new-judgement
-         :id id
-         :type "judgement"
-         :disposition disposition
-         :disposition_name disposition_name
-         :owner login
-         :created now
-         :tlp (:tlp new-judgement c/default-tlp)
-         :schema_version schema-version
-         :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
-                                    time/default-expire-date)
-                      :start_time (or (get-in new-judgement [:valid_time :start_time])
-                                      now)})))
+        disposition_name (get c/disposition-map disposition)]
+    (assoc new-judgement
+           :id id
+           :type "judgement"
+           :disposition disposition
+           :disposition_name disposition_name
+           :owner login
+           :created now
+           :tlp (:tlp new-judgement c/default-tlp)
+           :schema_version schema-version
+           :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
+                                      time/default-expire-date)
+                        :start_time (or (get-in new-judgement [:valid_time :start_time])
+                                        now)})))
 
 (s/defn realize-verdict :- StoredVerdict
   ([new-verdict :- Verdict
@@ -138,6 +139,23 @@
             :schema_version schema-version
             :created (or (:created prev-sighting) now)
             :modified now))))
+
+(s/defn realize-package :- StoredPackage
+  [new-package :- NewPackage
+   id :- s/Str
+   login :- s/Str]
+  (let [now (time/now)]
+    (assoc new-package
+           :id id
+           :type "package"
+           :owner login
+           :created now
+           :tlp (:tlp new-package c/default-tlp)
+           :schema_version schema-version
+           :valid_time {:end_time (or (get-in new-package [:valid_time :end_time])
+                                      time/default-expire-date)
+                        :start_time (or (get-in new-package [:valid_time :start_time])
+                                        now)})))
 
 (s/defn check-new-sighting :- s/Bool
   "We need either an observable or an indicator,

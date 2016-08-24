@@ -14,7 +14,8 @@
              [verdict :as ve]
              [mapping :refer [store-mappings]]
              [sighting :as sig]
-             [ttp :as ttp]]
+             [ttp :as ttp]
+             [package :as pa]]
             [ctia.store :refer [IActorStore
                                 ICampaignStore
                                 ICOAStore
@@ -26,7 +27,8 @@
                                 IJudgementStore
                                 IVerdictStore
                                 ISightingStore
-                                ITTPStore]]))
+                                ITTPStore
+                                IPackageStore]]))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection returns a map containing transport,
@@ -202,3 +204,12 @@
     (sig/handle-list-sightings state filter-map params))
   (list-sightings-by-observables [_ observables params]
     (sig/handle-list-sightings-by-observables state observables params)))
+
+(defrecord PackageStore [state]
+  IPackageStore
+  (read-package [_ id]
+    (pa/handle-read-package state id))
+  (create-package [_ new-package]
+    (pa/handle-create-package state new-package))
+  (delete-package [_ id]
+    (pa/handle-delete-package state id)))

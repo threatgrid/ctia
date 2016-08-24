@@ -654,6 +654,40 @@
      :created ts
      :modified ts}}})
 
+
+(def package-mapping
+  {"package"
+   {:dynamic "strict"
+    :include_in_all false
+    :properties
+    {:id all_string
+     :external_ids string
+     :title all_string
+     :tlp string
+     :schema_version string
+     :uri string
+     :source_uri string
+     :revision {:type "long"}
+     :timestamp ts
+     :language string
+     :description all_text
+     :short_description all_text
+     :type string
+     :valid_time valid-time
+     :actor_type string
+     :source string
+     :identity tg-identity
+     :motivation string
+     :sophistication string
+     :intended_effect string
+     :planning_and_operational_support string
+     :observed_TTPs related-ttps
+     :associated_campaigns related-campaigns
+     :associated_actors related-actors
+     :confidence string
+     :owner string
+     :created ts
+     :modified ts}}})
 (def store-mappings
   (merge {}
          judgement-mapping
@@ -667,4 +701,5 @@
          incident-mapping
          exploit-target-mapping
          sighting-mapping
-         identity-mapping))
+         identity-mapping
+         package-mapping))
