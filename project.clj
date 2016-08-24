@@ -19,13 +19,14 @@
                  [com.taoensso/carmine "2.12.2"]
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
-                 [threatgrid/clj-momo "0.2.0"]
+                 [threatgrid/clj-momo "0.2.1"]
 
                  ;; Schemas
                  [prismatic/schema "1.0.5"]
                  [metosin/schema-tools "0.7.0"
                   :exclusions [prismatic/schema]]
-                 [threatgrid/ctim "0.1.6"]
+                 [threatgrid/ctim "0.1.6"
+                  :exclusions [threatgrid/clj-momo]]
 
                  ;; Web server
                  [metosin/compojure-api "1.0.0"]
