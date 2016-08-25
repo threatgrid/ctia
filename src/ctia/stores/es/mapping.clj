@@ -654,7 +654,6 @@
      :created ts
      :modified ts}}})
 
-
 (def package-mapping
   {"package"
    {:dynamic "strict"
@@ -674,20 +673,32 @@
      :short_description all_text
      :type string
      :valid_time valid-time
-     :actor_type string
      :source string
-     :identity tg-identity
-     :motivation string
-     :sophistication string
-     :intended_effect string
-     :planning_and_operational_support string
-     :observed_TTPs related-ttps
-     :associated_campaigns related-campaigns
-     :associated_actors related-actors
-     :confidence string
      :owner string
      :created ts
-     :modified ts}}})
+     :modified ts
+
+     :actors {:type "object" :enabled false}
+     :campaigns {:type "object" :enabled false}
+     :coas {:type "object" :enabled false}
+     :exploit-targets {:type "object" :enabled false}
+     :feedbacks {:type "object" :enabled false}
+     :incidents {:type "object" :enabled false}
+     :judgements {:type "object" :enabled false}
+     :sightings {:type "object" :enabled false}
+     :ttps {:type "object" :enabled false}
+     :verdicts {:type "object" :enabled false}
+
+     :actors_refs string
+     :campaign_refs string
+     :coa_refs string
+     :exploit-target_refs string
+     :feedback_refs string
+     :incident_refs string
+     :judgement_refs string
+     :sighting_refs string
+     :ttp_refs string
+     :verdict_refs string}}})
 (def store-mappings
   (merge {}
          judgement-mapping

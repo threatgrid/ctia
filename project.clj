@@ -22,13 +22,13 @@
                  [threatgrid/clj-momo "0.2.0"]
 
                  ;; Schemas
-                 [prismatic/schema "1.0.5"]
-                 [metosin/schema-tools "0.7.0"
+                 [prismatic/schema "1.1.2"]
+                 [metosin/schema-tools "0.9.0"
                   :exclusions [prismatic/schema]]
                  [threatgrid/ctim "0.1.6-SNAPSHOT"]
 
                  ;; Web server
-                 [metosin/compojure-api "1.0.0"]
+                 [metosin/compojure-api "1.1.6"]
                  [ring/ring-jetty-adapter "1.4.0"]
                  [javax.servlet/servlet-api "2.5"]
                  [ring/ring-devel "1.4.0"]

@@ -121,5 +121,5 @@
                 sighting-routes
                 ttp-routes
                 verdict-routes
-                ;;                package-routes
+                package-routes
                 version-routes)))
