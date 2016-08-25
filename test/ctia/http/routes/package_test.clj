@@ -72,10 +72,12 @@
           indicators (repeat 10 indicator)
           judgements (repeat 10 judgement)
           ttps (repeat 10 ttp)
-          new-package {:valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                    :end_time "2016-07-11T00:40:48.212-00:00"}
+          new-package {:valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                                    :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                        :ttps ttps
                        :source "iroh"
+                       :schema_version schema-version
+                       :type "package"
                        :judgements judgements
                        :indicators indicators
                        :actor_refs actor-refs
@@ -84,8 +86,6 @@
           response (post "ctia/package"
                          :body new-package
                          :headers {"api_key" "45c1f5e3f05d0"})
-
-          _ (clojure.pprint/pprint response)
           package (:parsed-body response)]
 
       (is (= 201 (:status response)))
@@ -94,7 +94,9 @@
            (dissoc package
                    :id
                    :created
-                   :modified)))
+                   :modified
+                   :tlp
+                   :owner)))
 
       (testing "GET /ctia/package/:id"
         (let [response (get (str "ctia/package/" (:id package))
@@ -106,7 +108,9 @@
                (dissoc package
                        :id
                        :created
-                       :modified)))))
+                       :modified
+                       :tlp
+                       :owner)))))
 
       (testing "DELETE /ctia/package/:id"
         (let [response (delete (str "ctia/package/" (:id package))

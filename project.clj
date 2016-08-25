@@ -23,7 +23,7 @@
 
                  ;; Schemas
                  [prismatic/schema "1.0.5"]
-                 [metosin/schema-tools "0.7.0"
+                 [metosin/schema-tools "0.9.0"
                   :exclusions [prismatic/schema]]
                  [threatgrid/ctim "0.1.6-SNAPSHOT"]
 
