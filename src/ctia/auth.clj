@@ -68,6 +68,11 @@
     ;; Verdict
     :read-verdict
 
+    ;; Package
+    :create-package
+    :read-package
+    :delete-package
+
     ;; Other
     :developer
     :specify-id

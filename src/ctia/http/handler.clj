@@ -95,6 +95,7 @@
                            {:name "Sighting", :description "Sighting operations"}
                            {:name "TTP", :description "TTP operations"}
                            {:name "Verdict", :description "Verdict operations"}
+                           {:name "Package", :description "Package operations"}
                            {:name "Version", :description "Version operations"}]}}}
 
   (middleware [auth/wrap-authentication

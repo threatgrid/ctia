@@ -1,5 +1,5 @@
 (ns ctia.test-helpers.http
-  (:require [clj-momo.test-helpers.http :as mthh]
+  (:require [clj-momo.test-helpers.http-assert-1 :as mthh]
             [ctia.test-helpers.core :as th]))
 
 (def api-key "45c1f5e3f05d0")

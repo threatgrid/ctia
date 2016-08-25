@@ -415,6 +415,7 @@
      :exploit_targets related-exploit-targets
      :related_TTPs related-ttps
      :source string
+     :kill_chains string
      :ttp_type string
      :expires ts
      :indicators related-indicators

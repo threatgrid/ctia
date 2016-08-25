@@ -19,7 +19,7 @@
                  [com.taoensso/carmine "2.12.2"]
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
-                 [threatgrid/clj-momo "0.2.0"]
+                 [threatgrid/clj-momo "0.2.1"]
 
                  ;; Schemas
                  [prismatic/schema "1.0.5"]
