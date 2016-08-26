@@ -7,7 +7,7 @@
             [ctim.generators.schemas :as gen]
             [ctim.generators.schemas.sighting-generators :as sg]))
 
-(def num-tests 40)
+(def num-tests 30)
 
 (def gen-observable-and-sightings
   (tcg/let [observable (gen/gen-entity :observable)
