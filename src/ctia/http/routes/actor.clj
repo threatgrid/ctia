@@ -1,13 +1,14 @@
 (ns ctia.http.routes.actor
-  (:require [compojure.api.sweet :refer :all]
-            [ctia.domain.entities :refer [realize-actor]]
-            [ctia.flows.crud :as flows]
-            [ctia.store :refer :all]
-            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-            [ctim.schemas.actor :refer [NewActor StoredActor]]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+  (:require
+   [compojure.api.sweet :refer :all]
+   [ctia.domain.entities :refer [realize-actor]]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
+   [ctia.store :refer :all]
+   [ctim.schemas.actor :refer [NewActor StoredActor]]
+   [ring.util.http-response :refer [no-content not-found ok]]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (s/defschema ActorByExternalIdQueryParams
   (st/merge

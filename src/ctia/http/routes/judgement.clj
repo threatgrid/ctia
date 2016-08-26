@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.properties :refer [properties]]
    [ctia.store :refer :all]
    [ctim.domain.id :as domain-id]
@@ -11,7 +11,7 @@
     [feedback :refer [NewFeedback StoredFeedback]]
     [judgement :refer [NewJudgement StoredJudgement]]
     [relationships :as rel]]
-   [ring.util.http-response :refer :all]
+   [ring.util.http-response :refer [ok no-content not-found]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 

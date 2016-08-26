@@ -5,8 +5,8 @@
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
    [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
-   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-   [ring.util.http-response :refer :all]
+   [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
+   [ring.util.http-response :refer [ok no-content not-found unprocessable-entity]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
