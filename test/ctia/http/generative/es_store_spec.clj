@@ -42,3 +42,6 @@
 
 (defspec spec-ttp-routes-es-store
   specs/spec-ttp-routes)
+
+(defspec spec-package-routes-es-store
+  specs/spec-ttp-routes)

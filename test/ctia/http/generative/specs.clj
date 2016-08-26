@@ -123,3 +123,4 @@
 (def-property spec-judgement-routes 'judgement)
 (def-property sepc-sighting-routes 'sighting)
 (def-property spec-ttp-routes 'ttp)
+(def-property spec-package-routes 'package)

@@ -42,3 +42,6 @@
 
 (defspec spec-ttp-routes-atom-store
   specs/spec-ttp-routes)
+
+(defspec spec-package-routes-atom-store
+  specs/spec-package-routes)
