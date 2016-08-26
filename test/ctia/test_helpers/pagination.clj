@@ -83,13 +83,15 @@
                        (->> (get route :headers headers)
                             :parsed-body
                             (sort-by field)
-                            (map field))
+                            (map field)
+                            (remove nil?))
                        (->> (get route
                                  :headers headers
                                  :query-params {:sort_by (name field)
                                                 :sort_order "asc"})
                             :parsed-body
-                            (map field)))))
+                            (map field)
+                            (remove nil?)))))
                 sort-fields))))
 
 (defn edge-cases-test [route headers]
