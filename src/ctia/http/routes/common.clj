@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clj-http.headers :refer [canonicalize]]
             [ring.util.http-status :refer [ok]]
+            [ring.util.http-response :as http-res]
             [schema.core :as s]
             [ring.swagger.schema :refer [describe]]))
 
@@ -40,3 +41,8 @@
   {:status ok
    :body data
    :headers (map->paging-headers paging)})
+
+(defn created [{:keys [id] :as resource}]
+  "set a created response, using the id as the location header,
+   and the full resource as body"
+  (http-res/created id resource))
