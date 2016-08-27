@@ -42,7 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.1.6-1"]
+                 [threatgrid/ctim "0.1.6-2"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
@@ -128,7 +128,7 @@
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.6"]
                                   [perforate "0.3.4"]
-                                  [prismatic/schema-generators "0.1.0"
+                                  [polygloton/schema-generators "0.1.0-1"
                                    :exclusions [prismatic/schema]]]
                    :resource-paths ["test/resources"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
@@ -140,12 +140,12 @@
                                     [perforate "0.3.4"]
                                     [org.clojure/test.check "0.9.0"]
                                     [com.gfredericks/test.chuck "0.2.6"]
-                                    [prismatic/schema-generators "0.1.0"]]}
+                                    [polygloton/schema-generators "0.1.0-1"]]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.6"]
-                                   [prismatic/schema-generators "0.1.0"]]
+                                   [polygloton/schema-generators "0.1.0-1"]]
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
                     :resource-paths ["test/resources"
