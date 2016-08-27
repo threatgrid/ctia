@@ -7,6 +7,8 @@
             [ctim.generators.schemas :as gen]
             [ctim.generators.schemas.sighting-generators :as sg]))
 
+(def num-tests 30)
+
 (def gen-observable-and-sightings
   (tcg/let [observable (gen/gen-entity :observable)
             different-observables (tcg/vector
@@ -21,17 +23,17 @@
     [observable
      sightings]))
 
-(defspec spec-handle-list-sightings-by-observables-atom
+(defspec spec-handle-list-sightings-by-observables-atom num-tests
   (for-all [[observable sightings] gen-observable-and-sightings]
-           (let [store (->> sightings
-                            (map (fn [x] [(:id x) x]))
-                            (into {})
-                            atom)]
-             (and
-              ;; Empty search
-              (empty? (:data (sut/handle-list-sightings-by-observables store [] {})))
-              ;; Basic search
-              (= (set (vals @store))
-                 (-> (sut/handle-list-sightings-by-observables store [observable] {})
-                     :data
-                     set))))))
+    (let [store (->> sightings
+                     (map (fn [x] [(:id x) x]))
+                     (into {})
+                     atom)]
+      (and
+       ;; Empty search
+       (empty? (:data (sut/handle-list-sightings-by-observables store [] {})))
+       ;; Basic search
+       (= (set (vals @store))
+          (-> (sut/handle-list-sightings-by-observables store [observable] {})
+              :data
+              set))))))

@@ -13,32 +13,34 @@
                                     es-helpers/fixture-recreate-store-indexes
                                     helpers/fixture-allow-all-auth]))
 
-(defspec spec-actor-routes-es-store
+(def num-tests 40)
+
+(defspec spec-actor-routes-es-store num-tests
   specs/spec-actor-routes)
 
-(defspec spec-campaign-routes-es-store
+(defspec spec-campaign-routes-es-store num-tests
   specs/spec-campaign-routes)
 
-(defspec spec-coa-routes-es-store
+(defspec spec-coa-routes-es-store num-tests
   specs/spec-coa-routes)
 
-(defspec spec-exploit-target-routes-es-store
+(defspec spec-exploit-target-routes-es-store num-tests
   specs/spec-exploit-target-routes)
 
-(defspec spec-feedback-routes-es-store
+(defspec spec-feedback-routes-es-store num-tests
   specs/spec-feedback-routes)
 
-(defspec spec-incident-routes-es-store
+(defspec spec-incident-routes-es-store num-tests
   specs/spec-incident-routes)
 
-(defspec spec-indicator-routes-es-store
+(defspec spec-indicator-routes-es-store num-tests
   specs/spec-indicator-routes)
 
-(defspec spec-judgement-routes-es-store
+(defspec spec-judgement-routes-es-store num-tests
   specs/spec-judgement-routes)
 
-(defspec spec-sighting-routes-es-store
+(defspec spec-sighting-routes-es-store num-tests
   specs/spec-ttp-routes)
 
-(defspec spec-ttp-routes-es-store
+(defspec spec-ttp-routes-es-store num-tests
   specs/spec-ttp-routes)
