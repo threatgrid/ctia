@@ -3,6 +3,7 @@
             [clojure.tools.logging :as log]
             [ctia.domain.entities :as ent]
             [ctia.flows.crud :as flows]
+            [ctia.http.routes.common :as common]
             [ctia.lib.keyword :refer [singular]]
             [ctia.schemas.bulk :refer [BulkRefs NewBulk StoredBulk]]
             [ctia.properties :refer [properties]]
@@ -129,7 +130,7 @@
       :identity login
       (if (> (bulk-size bulk) (get-bulk-max-size))
         (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-        (created (gen-bulk-from-fn create-entities bulk login))))
+        (common/created (gen-bulk-from-fn create-entities bulk login))))
     (GET "/" []
       :return (s/maybe StoredBulk)
       :summary "Gets many entities at once"
