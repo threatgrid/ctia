@@ -1,39 +1,64 @@
+(def cheshire-version "5.6.3")
+(def compojure-api-version "1.1.7")
+(def schema-tools-version "0.9.0")
+(def schema-version "1.1.3")
+
+;; On avoiding dependency overrides:
+;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
+;;   conflicts.  Do not change this in master.
+;; - We have multiple deps that share child deps, particularly schema libs
+;;   and we want to keep them in sync.
+;; - If you can't update all deps to resolve conflicts, then use :exclusions,
+;;   but try to minimize exclusions, as it may hide bugs
+;; - If you use an exclusion, consider commenting where the conflict came from
+;; - Open a github issue if you are stuck
+;; - Common problem deps, as well as deps that are repeated in different
+;;   profiles, should be def'ed above (in alphabetical order you barbarian!)
+;; - If you update a dep that has :exclusions, check if each exclusions is still
+;;   valid, and update the exclusions/comments accordingly
+;; - Maybe you can just delete the dep! (doesn't hurt to check)
+
 (defproject ctia "0.1.0-SNAPSHOT"
   :description "Cisco Threat Intelligence API"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo}
 
-  :jvm-opts [ "-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
+  :jvm-opts ["-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
              "-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
+  :pedantic? :abort
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [clj-time "0.9.0"] ; required due to bug in lein-ring
+                 [clj-time "0.12.0"]
                  [org.clojure/core.async "0.2.374"]
-                 [clj-http "2.0.1"]
                  [org.slf4j/slf4j-log4j12 "1.7.21"]
                  [org.clojure/core.memoize "0.5.8"]
                  [org.clojure/tools.logging "0.3.1"]
-                 [leiningen-core "2.6.1"] ;; For accessing project configuration
-                 [com.taoensso/carmine "2.12.2"]
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
                  [threatgrid/clj-momo "0.2.1"]
 
                  ;; Schemas
-                 [prismatic/schema "1.0.5"]
-                 [metosin/schema-tools "0.7.0"
-                  :exclusions [prismatic/schema]]
-                 [threatgrid/ctim "0.1.6"
-                  :exclusions [threatgrid/clj-momo]]
+                 [prismatic/schema ~schema-version]
+                 [metosin/schema-tools ~schema-tools-version]
+                 [threatgrid/ctim "0.1.6-2"]
 
                  ;; Web server
-                 [metosin/compojure-api "1.0.0"]
-                 [ring/ring-jetty-adapter "1.4.0"]
+                 [metosin/compojure-api ~compojure-api-version
+                  ;; Exclusions:
+                  ;; - compojure-api 1.1.7 is not using the latest snakeyaml
+                  ;;  - As of 2016-08-25, the latest version is 1.17, elastich
+                  ;;    3.0.0-beta1 wants 1.15, while compojure-api wants 1.13
+                  :exclusions [org.yaml/snakeyaml]]
+                 [ring/ring-jetty-adapter "1.5.0"]
                  [javax.servlet/servlet-api "2.5"]
                  [ring/ring-devel "1.4.0"]
-                 [ring/ring-codec "1.0.0"]
+                 [ring/ring-codec "1.0.1"
+                  ;; Exclusions:
+                  ;; - ring-codec 1.0.1 is not using the latest commons-codec
+                  ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)
+                  :exclusions [commons-codec]]
 
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.12"]
@@ -42,6 +67,15 @@
                  ;; Database
                  [clojurewerkz/elastisch "3.0.0-beta1"]
                  [durable-atom "0.0.3"]
+
+                 ;; clients
+                 [clj-http "2.2.0"
+                  ;; Exclusions:
+                  ;; - clj-http "2.2.0" (and even the 3.x series) is not using
+                  ;;   the latest commons-io
+                  ;;   - As of 2016-08-25, the latest version is 0.5 (using 0.4)
+                  :exclusions [commons-io]]
+                 [com.taoensso/carmine "2.12.2"]
 
                  ;; Metrics
                  [metrics-clojure "2.7.0"]
@@ -56,6 +90,8 @@
                  ;; Docs
                  [markdown-clj "0.9.86"]
                  [hiccup "1.0.5"]]
+  :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
+               com.andrewmcveigh/cljs-time]
 
   :resource-paths ["resources" "doc"]
   :aot [ctia.main]
@@ -88,11 +124,11 @@
                                   (:out (clojure.java.shell/sh
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
-  :profiles {:dev {:dependencies [[cheshire "5.6.1"]
+  :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.6"]
                                   [perforate "0.3.4"]
-                                  [prismatic/schema-generators "0.1.0"
+                                  [polygloton/schema-generators "0.1.0-1"
                                    :exclusions [prismatic/schema]]]
                    :resource-paths ["test/resources"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
@@ -100,16 +136,16 @@
                               "-Dcom.sun.management.jmxremote.local.only=false"
                               "-Dcom.sun.management.jmxremote.authenticate=false"
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
-             :bench {:dependencies [[cheshire "5.6.1"]
+             :bench {:dependencies [[cheshire ~cheshire-version]
                                     [perforate "0.3.4"]
                                     [org.clojure/test.check "0.9.0"]
                                     [com.gfredericks/test.chuck "0.2.6"]
-                                    [prismatic/schema-generators "0.1.0"]]}
+                                    [polygloton/schema-generators "0.1.0-1"]]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
-                    :dependencies [[cheshire "5.6.1"]
+                    :dependencies [[cheshire ~cheshire-version]
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.6"]
-                                   [prismatic/schema-generators "0.1.0"]]
+                                   [polygloton/schema-generators "0.1.0-1"]]
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
                     :resource-paths ["test/resources"
