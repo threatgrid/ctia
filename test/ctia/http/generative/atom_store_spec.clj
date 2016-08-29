@@ -13,34 +13,32 @@
                                     helpers/fixture-ctia
                                     helpers/fixture-allow-all-auth]))
 
-(def num-tests 40)
-
-(defspec spec-actor-routes-atom-store num-tests
+(defspec spec-actor-routes-atom-store
   specs/spec-actor-routes)
 
-(defspec spec-campaign-routes-atom-store num-tests
+(defspec spec-campaign-routes-atom-store
   specs/spec-campaign-routes)
 
-(defspec spec-coa-routes-atom-store num-tests
+(defspec spec-coa-routes-atom-store
   specs/spec-coa-routes)
 
-(defspec spec-exploit-target-routes-atom-store num-tests
+(defspec spec-exploit-target-routes-atom-store
   specs/spec-exploit-target-routes)
 
-(defspec spec-feedback-routes-es-store num-tests
+(defspec spec-feedback-routes-es-store
   specs/spec-feedback-routes)
 
-(defspec spec-incident-routes-atom-store num-tests
+(defspec spec-incident-routes-atom-store
   specs/spec-incident-routes)
 
-(defspec spec-indicator-routes-atom-store num-tests
+(defspec spec-indicator-routes-atom-store
   specs/spec-indicator-routes)
 
-(defspec spec-judgement-routes-atom-store num-tests
+(defspec spec-judgement-routes-atom-store
   specs/spec-judgement-routes)
 
-(defspec spec-sighting-routes-atom-store num-tests
+(defspec spec-sighting-routes-atom-store
   specs/spec-ttp-routes)
 
-(defspec spec-ttp-routes-atom-store num-tests
+(defspec spec-ttp-routes-atom-store
   specs/spec-ttp-routes)

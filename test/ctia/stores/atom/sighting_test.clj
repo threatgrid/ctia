@@ -7,8 +7,6 @@
             [ctim.generators.schemas :as gen]
             [ctim.generators.schemas.sighting-generators :as sg]))
 
-(def num-tests 30)
-
 (def gen-observable-and-sightings
   (tcg/let [observable (gen/gen-entity :observable)
             different-observables (tcg/vector
@@ -23,7 +21,7 @@
     [observable
      sightings]))
 
-(defspec spec-handle-list-sightings-by-observables-atom num-tests
+(defspec spec-handle-list-sightings-by-observables-atom
   (for-all [[observable sightings] gen-observable-and-sightings]
     (let [store (->> sightings
                      (map (fn [x] [(:id x) x]))
