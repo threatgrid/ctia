@@ -42,7 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.1.6-2"]
+                 [threatgrid/ctim "0.1.7"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
