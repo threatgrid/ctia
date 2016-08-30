@@ -68,10 +68,10 @@
     ;; Verdict
     :read-verdict
 
-    ;; Package
-    :create-package
-    :read-package
-    :delete-package
+    ;; Bundle
+    :create-bundle
+    :read-bundle
+    :delete-bundle
 
     ;; Other
     :developer

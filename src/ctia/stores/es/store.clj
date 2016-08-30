@@ -15,7 +15,7 @@
              [mapping :refer [store-mappings]]
              [sighting :as sig]
              [ttp :as ttp]
-             [package :as pa]]
+             [bundle :as bu]]
             [ctia.store :refer [IActorStore
                                 ICampaignStore
                                 ICOAStore
@@ -28,7 +28,7 @@
                                 IVerdictStore
                                 ISightingStore
                                 ITTPStore
-                                IPackageStore]]))
+                                IBundleStore]]))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection returns a map containing transport,
@@ -205,11 +205,11 @@
   (list-sightings-by-observables [_ observables params]
     (sig/handle-list-sightings-by-observables state observables params)))
 
-(defrecord PackageStore [state]
-  IPackageStore
-  (read-package [_ id]
-    (pa/handle-read-package state id))
-  (create-package [_ new-package]
-    (pa/handle-create-package state new-package))
-  (delete-package [_ id]
-    (pa/handle-delete-package state id)))
+(defrecord BundleStore [state]
+  IBundleStore
+  (read-bundle [_ id]
+    (bu/handle-read-bundle state id))
+  (create-bundle [_ new-bundle]
+    (bu/handle-create-bundle state new-bundle))
+  (delete-bundle [_ id]
+    (bu/handle-delete-bundle state id)))

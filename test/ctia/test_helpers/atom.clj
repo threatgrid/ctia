@@ -28,8 +28,8 @@
                     "ctia.store.atom.sighting.mode" "memory"
                     "ctia.store.ttp" "atom"
                     "ctia.store.atom.ttp.mode" "memory"
-                    "ctia.store.package" "atom"
-                    "ctia.store.atom.package.mode" "memory"]
+                    "ctia.store.bundle" "atom"
+                    "ctia.store.atom.bundle.mode" "memory"]
     (f)))
 
 (defn fixture-properties:atom-durable-store [f]
@@ -70,9 +70,9 @@
                     "ctia.store.ttp" "atom"
                     "ctia.store.atom.ttp.mode" "durable"
                     "ctia.store.atom.ttp.path" "data/test/ttp.edn"
-                    "ctia.store.package" "atom"
-                    "ctia.store.atom.package.mode" "durable"
-                    "ctia.store.atom.package.path" "data/test/package.edn"]
+                    "ctia.store.bundle" "atom"
+                    "ctia.store.atom.bundle.mode" "durable"
+                    "ctia.store.atom.bundle.path" "data/test/package.edn"]
     (f)))
 
 (defn reset-atom-stores! []

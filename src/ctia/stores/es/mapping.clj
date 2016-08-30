@@ -655,8 +655,8 @@
      :created ts
      :modified ts}}})
 
-(def package-mapping
-  {"package"
+(def bundle-mapping
+  {"bundle"
    {:dynamic "strict"
     :include_in_all false
     :properties
@@ -685,17 +685,19 @@
      :exploit-targets {:type "object" :enabled false}
      :feedbacks {:type "object" :enabled false}
      :incidents {:type "object" :enabled false}
+     :indicators {:type "object" :enabled false}
      :judgements {:type "object" :enabled false}
      :sightings {:type "object" :enabled false}
      :ttps {:type "object" :enabled false}
      :verdicts {:type "object" :enabled false}
 
-     :actors_refs string
+     :actor_refs string
      :campaign_refs string
      :coa_refs string
      :exploit-target_refs string
      :feedback_refs string
      :incident_refs string
+     :indicator_refs string
      :judgement_refs string
      :sighting_refs string
      :ttp_refs string
@@ -714,4 +716,4 @@
          exploit-target-mapping
          sighting-mapping
          identity-mapping
-         package-mapping))
+         bundle-mapping))

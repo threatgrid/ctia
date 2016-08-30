@@ -50,12 +50,15 @@
               get-entity# :parsed-body}
              (get (str "ctia/" ~model-type "/" (encode id#)))]
 
-         (assert-successfully-created post-status# post-entity#)
-         (assert-successful get-status# get-entity#)
-
          ;; For Easy debug
+
+         ;;(clojure.pprint/pprint new-entity#)
          ;;(clojure.pprint/pprint (clojure.data/diff new-entity# post-entity#))
          ;;(clojure.pprint/pprint (clojure.data/diff get-entity# post-entity#))
+
+
+         (assert-successfully-created post-status# post-entity#)
+         (assert-successful get-status# get-entity#)
 
          (if-not (empty? (keys new-entity#))
            (common= new-entity#
@@ -121,6 +124,6 @@
 (def-property spec-feedback-routes 'feedback)
 (def-property spec-incident-routes 'incident)
 (def-property spec-judgement-routes 'judgement)
-(def-property sepc-sighting-routes 'sighting)
+(def-property spec-sighting-routes 'sighting)
 (def-property spec-ttp-routes 'ttp)
-(def-property spec-package-routes 'package)
+(def-property spec-bundle-routes 'bundle)

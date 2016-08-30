@@ -14,7 +14,7 @@
     [sighting :refer [NewSighting StoredSighting]]
     [ttp :refer [NewTTP StoredTTP]]
     [verdict :refer [Verdict StoredVerdict]]
-    [package :refer [NewPackage StoredPackage]]]
+    [bundle :refer [NewBundle StoredBundle]]]
    [ring.util.http-response :as http-response]
    [schema.core :as s])
   (:import [java.util UUID]))
@@ -140,21 +140,21 @@
             :created (or (:created prev-sighting) now)
             :modified now))))
 
-(s/defn realize-package :- StoredPackage
-  [new-package :- NewPackage
+(s/defn realize-bundle :- StoredBundle
+  [new-bundle :- NewBundle
    id :- s/Str
    login :- s/Str]
   (let [now (time/now)]
-    (assoc new-package
+    (assoc new-bundle
            :id id
-           :type "package"
+           :type "bundle"
            :owner login
            :created now
-           :tlp (:tlp new-package c/default-tlp)
+           :tlp (:tlp new-bundle c/default-tlp)
            :schema_version schema-version
-           :valid_time {:end_time (or (get-in new-package [:valid_time :end_time])
+           :valid_time {:end_time (or (get-in new-bundle [:valid_time :end_time])
                                       time/default-expire-date)
-                        :start_time (or (get-in new-package [:valid_time :start_time])
+                        :start_time (or (get-in new-bundle [:valid_time :start_time])
                                         now)})))
 
 (s/defn check-new-sighting :- s/Bool

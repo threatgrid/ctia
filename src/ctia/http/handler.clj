@@ -22,7 +22,7 @@
              [sighting :refer [sighting-routes]]
              [ttp :refer [ttp-routes]]
              [verdict :refer [verdict-routes]]
-             [package :refer [package-routes]]
+             [bundle :refer [bundle-routes]]
              [version :refer [version-routes]]]
             [ring.middleware
              [format :refer [wrap-restful-format]]
@@ -95,7 +95,7 @@
                            {:name "Sighting", :description "Sighting operations"}
                            {:name "TTP", :description "TTP operations"}
                            {:name "Verdict", :description "Verdict operations"}
-                           {:name "Package", :description "Package operations"}
+                           {:name "Bundle", :description "Bundle operations"}
                            {:name "Version", :description "Version operations"}]}}}
 
   (middleware [auth/wrap-authentication
@@ -122,5 +122,5 @@
                 sighting-routes
                 ttp-routes
                 verdict-routes
-                package-routes
+                bundle-routes
                 version-routes)))

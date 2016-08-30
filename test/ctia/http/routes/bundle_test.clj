@@ -1,4 +1,4 @@
-(ns ctia.http.routes.package-test
+(ns ctia.http.routes.bundle-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
@@ -16,11 +16,11 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(deftest-for-each-store test-package-routes
+(deftest-for-each-store test-bundle-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  (testing "POST /ctia/package"
+  (testing "POST /ctia/bundle"
     (let [indicator {:id "https://tenzin/indicator/indicator-srizbi-domain-list"
                      :created #inst "2017-05-11T00:40:48.212-00:00"
                      :type "indicator"
@@ -72,50 +72,50 @@
           indicators (repeat 10 indicator)
           judgements (repeat 10 judgement)
           ttps (repeat 10 ttp)
-          new-package {:valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                                    :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                       :ttps ttps
-                       :source "iroh"
-                       :schema_version schema-version
-                       :type "package"
-                       :judgements judgements
-                       :indicators indicators
-                       :actor_refs actor-refs
-                       :verdict_refs verdict-refs}
+          new-bundle {:valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                                   :end_time #inst "2016-07-11T00:40:48.212-00:00"}
+                      :ttps ttps
+                      :source "iroh"
+                      :schema_version schema-version
+                      :type "bundle"
+                      :judgements judgements
+                      :indicators indicators
+                      :actor_refs actor-refs
+                      :verdict_refs verdict-refs}
 
-          response (post "ctia/package"
-                         :body new-package
+          response (post "ctia/bundle"
+                         :body new-bundle
                          :headers {"api_key" "45c1f5e3f05d0"})
-          package (:parsed-body response)]
+          bundle (:parsed-body response)]
 
       (is (= 201 (:status response)))
       (is (deep=
-           new-package
-           (dissoc package
+           new-bundle
+           (dissoc bundle
                    :id
                    :created
                    :modified
                    :tlp
                    :owner)))
 
-      (testing "GET /ctia/package/:id"
-        (let [response (get (str "ctia/package/" (:id package))
+      (testing "GET /ctia/bundle/:id"
+        (let [response (get (str "ctia/bundle/" (:id bundle))
                             :headers {"api_key" "45c1f5e3f05d0"})
-              package (:parsed-body response)]
+              bundle (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               new-package
-               (dissoc package
+               new-bundle
+               (dissoc bundle
                        :id
                        :created
                        :modified
                        :tlp
                        :owner)))))
 
-      (testing "DELETE /ctia/package/:id"
-        (let [response (delete (str "ctia/package/" (:id package))
+      (testing "DELETE /ctia/bundle/:id"
+        (let [response (delete (str "ctia/bundle/" (:id bundle))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
-          (let [response (get (str "ctia/package/" (:id package))
+          (let [response (get (str "ctia/bundle/" (:id bundle))
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))
