@@ -3,9 +3,9 @@
             [ctia.domain.entities :refer [realize-coa]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+            [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
             [ctim.schemas.coa :refer [NewCOA StoredCOA]]
-            [ring.util.http-response :refer :all]
+            [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 

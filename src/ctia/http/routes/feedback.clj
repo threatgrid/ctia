@@ -3,10 +3,10 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-feedback]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
    [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
-   [ring.util.http-response :refer :all]
+   [ring.util.http-response :refer [ok no-content not-found]]
    [schema-tools.core :as st]
    [schema.core :as s]))
 

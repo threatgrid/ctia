@@ -4,8 +4,8 @@
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
             [ctim.schemas.incident :refer [NewIncident StoredIncident]]
-            [ctia.http.routes.common :refer [PagingParams paginated-ok]]
-            [ring.util.http-response :refer :all]
+            [ctia.http.routes.common :refer [created PagingParams paginated-ok]]
+            [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
