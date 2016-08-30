@@ -29,14 +29,17 @@
 
 (def attack-pattern
   {:properties
-   {:description all_text
+   {:title string
+    :description all_text
+    :short_description string
     :capec_id string}})
 
 (def malware-instance
   {:properties
-   {:description all_text
-    :type string
-    :malware_type string}})
+   {:title string
+    :description all_text
+    :short_description string
+    :type string}})
 
 (def observable
   {:type "object"
@@ -68,7 +71,9 @@
 
 (def infrastructure
   {:properties
-   {:description all_text
+   {:title string
+    :description all_text
+    :short_description string
     :type string}})
 
 (def related-identities
@@ -96,7 +101,7 @@
   {:properties
    {:tools tool
     :infrastructure infrastructure
-    :providers tg-identity}})
+    :personas tg-identity}})
 
 (def activity
   {:properties
@@ -273,6 +278,49 @@
     :confidence string
     :description all_text
     :related_judgements related-judgements}})
+
+(def action-type
+  {:properties
+   {:type string}})
+
+(def target-type
+  {:properties
+   {:type string
+    :specifiers string}})
+
+(def actuator-type
+  {:properties
+   {:type string
+    :specifiers string}})
+
+(def additional-properties
+  {:properties
+   {:context string}})
+
+(def modifier-type
+  {:properties
+   {:delay ts
+    :duration ts
+    :frequency string
+    :id string
+    :time valid-time
+    :response string
+    :source string
+    :destination string
+    :method string
+    :search string
+    :location string
+    :option string
+    :additional_properties additional-properties}})
+
+(def open-c2-coa
+  {:properties
+   {:type string
+    :id string
+    :action action-type
+    :target target-type
+    :actuator actuator-type
+    :modifiers modifier-type}})
 
 (def judgement-mapping
   {"judgement"
@@ -521,7 +569,9 @@
      :related_COAs related-coas
      :owner string
      :created ts
-     :modified ts}}})
+     :modified ts
+     :structured_coa_type string
+     :open_c2_coa open-c2-coa}}})
 
 (def incident-mapping
   {"incident"

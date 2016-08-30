@@ -28,7 +28,17 @@
                                 :description "description"
                                 :coa_type "Eradication"
                                 :objective ["foo" "bar"]
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                                :structured_coa_type "openc2"
+                                :open_c2_coa {:type "structured_coa"
+                                              :id "openc2_coa_1"
+                                              :action {:type "deny"}
+                                              :target {:type "cybox:Network_Connection"
+                                                       :specifiers "10.10.1.0"}
+                                              :actuator {:type "network"
+                                                         :specifiers ["router"]}
+                                              :modifiers {:method ["acl"]
+                                                          :location "perimeter"}}}
                          :headers {"api_key" "45c1f5e3f05d0"})
           coa (:parsed-body response)
           coa-external-ids (:external_ids coa)]
@@ -45,6 +55,16 @@
             :objective ["foo" "bar"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+            :structured_coa_type "openc2"
+            :open_c2_coa {:type "structured_coa"
+                          :id "openc2_coa_1"
+                          :action {:type "deny"}
+                          :target {:type "cybox:Network_Connection"
+                                   :specifiers "10.10.1.0"}
+                          :actuator {:type "network"
+                                     :specifiers ["router"]}
+                          :modifiers {:method ["acl"]
+                                      :location "perimeter"}}
             :owner "foouser"}
            (dissoc coa
                    :id
@@ -69,6 +89,16 @@
                  :objective ["foo" "bar"]
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                 :structured_coa_type "openc2"
+                 :open_c2_coa {:type "structured_coa"
+                               :id "openc2_coa_1"
+                               :action {:type "deny"}
+                               :target {:type "cybox:Network_Connection"
+                                        :specifiers "10.10.1.0"}
+                               :actuator {:type "network"
+                                          :specifiers ["router"]}
+                               :modifiers {:method ["acl"]
+                                           :location "perimeter"}}
                  :owner "foouser"}]
                (map #(dissoc % :id :created :modified) coas)))))
 
@@ -89,6 +119,16 @@
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                :structured_coa_type "openc2"
+                :open_c2_coa {:type "structured_coa"
+                              :id "openc2_coa_1"
+                              :action {:type "deny"}
+                              :target {:type "cybox:Network_Connection"
+                                       :specifiers "10.10.1.0"}
+                              :actuator {:type "network"
+                                         :specifiers ["router"]}
+                              :modifiers {:method ["acl"]
+                                          :location "perimeter"}}
                 :owner "foouser"}
                (dissoc coa
                        :id
@@ -106,7 +146,17 @@
                           :tlp "white"
                           :coa_type "Hardening"
                           :objective ["foo" "bar"]
-                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                          :structured_coa_type "openc2"
+                          :open_c2_coa {:type "structured_coa"
+                                        :id "openc2_coa_1"
+                                        :action {:type "allow"}
+                                        :target {:type "cybox:Network_Connection"
+                                                 :specifiers "10.10.1.0"}
+                                        :actuator {:type "network"
+                                                   :specifiers ["router"]}
+                                        :modifiers {:method ["acl"]
+                                                    :location "perimeter"}}}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
@@ -123,6 +173,16 @@
                 :objective ["foo" "bar"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
+                :structured_coa_type "openc2"
+                :open_c2_coa {:type "structured_coa"
+                              :id "openc2_coa_1"
+                              :action {:type "allow"}
+                              :target {:type "cybox:Network_Connection"
+                                       :specifiers "10.10.1.0"}
+                              :actuator {:type "network"
+                                         :specifiers ["router"]}
+                              :modifiers {:method ["acl"]
+                                          :location "perimeter"}}
                 :owner "foouser"}
                (dissoc updated-coa
                        :modified)))))
