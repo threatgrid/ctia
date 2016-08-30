@@ -29,14 +29,17 @@
 
 (def attack-pattern
   {:properties
-   {:description all_text
+   {:title string
+    :description all_text
+    :short_description string
     :capec_id string}})
 
 (def malware-instance
   {:properties
-   {:description all_text
-    :type string
-    :malware_type string}})
+   {:title string
+    :description all_text
+    :short_description string
+    :type string}})
 
 (def observable
   {:type "object"
@@ -68,7 +71,9 @@
 
 (def infrastructure
   {:properties
-   {:description all_text
+   {:title string
+    :description all_text
+    :short_description string
     :type string}})
 
 (def related-identities
@@ -96,7 +101,7 @@
   {:properties
    {:tools tool
     :infrastructure infrastructure
-    :providers tg-identity}})
+    :personas tg-identity}})
 
 (def activity
   {:properties
