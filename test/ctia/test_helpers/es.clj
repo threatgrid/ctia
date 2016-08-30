@@ -55,7 +55,8 @@
                       "ctia.store.judgement" "es"
                       "ctia.store.verdict" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.ttp" "es"]
+                      "ctia.store.ttp" "es"
+                      "ctia.store.bundle" "es"]
     (test)))
 
 
@@ -78,7 +79,8 @@
                       "ctia.store.judgement" "es"
                       "ctia.store.verdict" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.ttp" "es"]
+                      "ctia.store.ttp" "es"
+                      "ctia.store.bundle" "es"]
     (test)))
 
 

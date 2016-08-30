@@ -68,6 +68,11 @@
     ;; Verdict
     :read-verdict
 
+    ;; Bundle
+    :create-bundle
+    :read-bundle
+    :delete-bundle
+
     ;; Other
     :developer
     :specify-id
