@@ -84,6 +84,20 @@ Also import each sighting
 
 	curl -XPOST -d'{"description":"...","timestamp":"...","indicator":{"indicator_id":"indicator-123"}}' http://ctiahost/ctia/sighting
 
+### 2.5 As an incident responder, I would like to prioritize an incident
+
+Determine the phase of the kill chain the incident's indicator(s) belong to.  
+The later the phase of the kill chain the more critical the incident is and needs to be addressed on priority
+
+Examples: 
+An email-id known to be sending spam emails could be mapped under "Reconaissance"
+User visiting a URL known to be serving malicious advertisements could be mapped under "Delivery"
+A registery deleted known to done by malware file could be mapped under "Exploit"
+A suspicious file visiting an unknown IP address could be mapped under "Command and Control" 
+A dropbox link known to be used for uploading exfiltrated files could be "Action on Objectives"
+
+TBA
+
 
 ## Security Operator
 
