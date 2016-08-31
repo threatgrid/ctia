@@ -9,4 +9,5 @@ resources/ctia.properties
 test/java/build/
 .#*
 resources/*.backup*
+resources/ctia.properties.*
 data/**/*.edn
