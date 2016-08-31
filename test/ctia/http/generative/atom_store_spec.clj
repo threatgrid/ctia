@@ -38,7 +38,10 @@
   specs/spec-judgement-routes)
 
 (defspec spec-sighting-routes-atom-store
-  specs/spec-ttp-routes)
+  specs/spec-sighting-routes)
 
 (defspec spec-ttp-routes-atom-store
   specs/spec-ttp-routes)
+
+(defspec spec-bundle-routes-atom-store
+  specs/spec-bundle-routes)

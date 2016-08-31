@@ -30,8 +30,8 @@
 (def attack-pattern
   {:properties
    {:title string
-    :description all_text
     :short_description string
+    :description all_text
     :capec_id string}})
 
 (def malware-instance
@@ -705,6 +705,53 @@
      :created ts
      :modified ts}}})
 
+(def bundle-mapping
+  {"bundle"
+   {:dynamic "strict"
+    :include_in_all false
+    :properties
+    {:id all_string
+     :external_ids string
+     :title all_string
+     :tlp string
+     :schema_version string
+     :uri string
+     :source_uri string
+     :revision {:type "long"}
+     :timestamp ts
+     :language string
+     :description all_text
+     :short_description all_text
+     :type string
+     :valid_time valid-time
+     :source string
+     :owner string
+     :created ts
+     :modified ts
+
+     :actors {:type "object" :enabled false}
+     :campaigns {:type "object" :enabled false}
+     :coas {:type "object" :enabled false}
+     :exploit-targets {:type "object" :enabled false}
+     :feedbacks {:type "object" :enabled false}
+     :incidents {:type "object" :enabled false}
+     :indicators {:type "object" :enabled false}
+     :judgements {:type "object" :enabled false}
+     :sightings {:type "object" :enabled false}
+     :ttps {:type "object" :enabled false}
+     :verdicts {:type "object" :enabled false}
+
+     :actor_refs string
+     :campaign_refs string
+     :coa_refs string
+     :exploit-target_refs string
+     :feedback_refs string
+     :incident_refs string
+     :indicator_refs string
+     :judgement_refs string
+     :sighting_refs string
+     :ttp_refs string
+     :verdict_refs string}}})
 (def store-mappings
   (merge {}
          judgement-mapping
@@ -718,4 +765,5 @@
          incident-mapping
          exploit-target-mapping
          sighting-mapping
-         identity-mapping))
+         identity-mapping
+         bundle-mapping))
