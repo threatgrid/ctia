@@ -43,5 +43,5 @@
 (defspec spec-ttp-routes-es-store
   specs/spec-ttp-routes)
 
-(defspec spec-bundle-routes-es-store 50
+(defspec spec-bundle-routes-es-store
   specs/spec-bundle-routes)
