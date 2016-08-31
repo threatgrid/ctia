@@ -43,5 +43,5 @@
 (defspec spec-ttp-routes-atom-store
   specs/spec-ttp-routes)
 
-(defspec spec-bundle-routes-atom-store 50
+(defspec spec-bundle-routes-atom-store
   specs/spec-bundle-routes)
