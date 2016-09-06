@@ -2,6 +2,7 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-ttp]]
+   [ctia.domain.entities.ttp :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
    [ctim.schemas.ttp :refer [NewTTP StoredTTP]]
@@ -25,11 +26,13 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-ttp
       :identity identity
-      (created (flows/create-flow :realize-fn realize-ttp
-                                  :store-fn #(write-store :ttp create-ttp %)
-                                  :entity-type :ttp
-                                  :identity identity
-                                  :entity ttp)))
+      (created
+       (with-long-id
+         (flows/create-flow :realize-fn realize-ttp
+                            :store-fn #(write-store :ttp create-ttp %)
+                            :entity-type :ttp
+                            :identity identity
+                            :entity ttp))))
     (PUT "/:id" []
       :return StoredTTP
       :body [ttp NewTTP {:description "an updated TTP"}]
@@ -38,14 +41,16 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-ttp
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-store :ttp
-                                                  (fn [s] (read-ttp s %)))
-                             :realize-fn realize-ttp
-                             :update-fn #(write-store :ttp update-ttp (:id %) %)
-                             :entity-type :ttp
-                             :entity-id id
-                             :identity identity
-                             :entity ttp)))
+      (ok
+       (with-long-id
+         (flows/update-flow :get-fn #(read-store :ttp
+                                                 (fn [s] (read-ttp s %)))
+                            :realize-fn realize-ttp
+                            :update-fn #(write-store :ttp update-ttp (:id %) %)
+                            :entity-type :ttp
+                            :entity-id id
+                            :identity identity
+                            :entity ttp))))
 
     (GET "/external_id" []
       :return [(s/maybe StoredTTP)]
@@ -54,8 +59,9 @@
       :summary "List TTPs by external id"
       :capabilities #{:read-ttp :external-id}
       (paginated-ok
-       (read-store :ttp list-ttps
-                   {:external_ids (:external_id q)} q)))
+       (page-with-long-id
+        (read-store :ttp list-ttps
+                    {:external_ids (:external_id q)} q))))
 
     (GET "/:id" []
       :return (s/maybe StoredTTP)
@@ -65,7 +71,7 @@
       :path-params [id :- s/Str]
       (if-let [d (read-store :ttp
                              (fn [s] (read-ttp s id)))]
-        (ok d)
+        (ok (with-long-id d))
         (not-found)))
     (DELETE "/:id" []
       :no-doc true

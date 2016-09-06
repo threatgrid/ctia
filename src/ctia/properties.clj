@@ -113,3 +113,6 @@
 (def init! (mp/build-init-fn files
                              PropertiesSchema
                              properties))
+
+(defn get-http-show []
+  (get-in @properties [:ctia :http :show]))

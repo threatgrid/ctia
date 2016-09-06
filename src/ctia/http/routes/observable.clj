@@ -1,6 +1,9 @@
 (ns ctia.http.routes.observable
   (:require
-   [compojure.api.sweet :refer :all]
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities
+     [judgement :as judgement]
+     [sighting :as sighting]]
    [ctia.lib.pagination :as pag]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
    [ctim.schemas
@@ -40,8 +43,10 @@
     :summary "Returns all the Judgements associated with the specified observable."
     :header-params [api_key :- (s/maybe s/Str)]
     :capabilities :list-judgements
-    (paginated-ok (read-store :judgement list-judgements-by-observable {:type observable_type
-                                                                        :value observable_value} params)))
+    (paginated-ok
+     (judgement/page-with-long-id
+      (read-store :judgement list-judgements-by-observable {:type observable_type
+                                                            :value observable_value} params))))
 
   (GET "/:observable_type/:observable_value/indicators" []
     :tags ["Indicator"]
@@ -78,5 +83,6 @@
     :return (s/maybe [StoredSighting])
     :summary "Returns all the Sightings associated with the specified observable."
     (paginated-ok
-     (read-store :sighting list-sightings-by-observables [{:type observable_type
-                                                           :value observable_value}] params))))
+     (sighting/page-with-long-id
+      (read-store :sighting list-sightings-by-observables [{:type observable_type
+                                                            :value observable_value}] params)))))

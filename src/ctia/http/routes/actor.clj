@@ -2,6 +2,7 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-actor]]
+   [ctia.domain.entities.actor :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
@@ -25,12 +26,14 @@
       :summary "Adds a new Actor"
       :capabilities :create-actor
       :identity identity
-      (created (flows/create-flow :entity-type :actor
-                                  :realize-fn realize-actor
-                                  :store-fn #(write-store :actor create-actor %)
-                                  :entity-type :actor
-                                  :identity identity
-                                  :entity actor)))
+      (created
+       (with-long-id
+         (flows/create-flow :entity-type :actor
+                            :realize-fn realize-actor
+                            :store-fn #(write-store :actor create-actor %)
+                            :entity-type :actor
+                            :identity identity
+                            :entity actor))))
     (PUT "/:id" []
       :return StoredActor
       :body [actor NewActor {:description "an updated Actor"}]
@@ -39,13 +42,15 @@
       :path-params [id :- s/Str]
       :capabilities :create-actor
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-store :actor read-actor %)
-                             :realize-fn realize-actor
-                             :update-fn #(write-store :actor update-actor (:id %) %)
-                             :entity-type :actor
-                             :entity-id id
-                             :identity identity
-                             :entity actor)))
+      (ok
+       (with-long-id
+         (flows/update-flow :get-fn #(read-store :actor read-actor %)
+                            :realize-fn realize-actor
+                            :update-fn #(write-store :actor update-actor (:id %) %)
+                            :entity-type :actor
+                            :entity-id id
+                            :identity identity
+                            :entity actor))))
 
     (GET "/external_id" []
       :return [(s/maybe StoredActor)]
@@ -54,8 +59,9 @@
       :summary "List actors by external id"
       :capabilities #{:read-actor :external-id}
       (paginated-ok
-       (read-store :actor list-actors
-                   {:external_ids (:external_id q)} q)))
+       (page-with-long-id
+        (read-store :actor list-actors
+                    {:external_ids (:external_id q)} q))))
 
     (GET "/:id" []
       :return (s/maybe StoredActor)
@@ -64,8 +70,9 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-actor
       (if-let [d (read-store :actor read-actor id)]
-        (ok d)
+        (ok (with-long-id d))
         (not-found)))
+
     (DELETE "/:id" []
       :no-doc true
       :path-params [id :- s/Str]

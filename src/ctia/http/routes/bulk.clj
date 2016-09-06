@@ -2,6 +2,17 @@
   (:require [compojure.api.sweet :refer :all]
             [clojure.tools.logging :as log]
             [ctia.domain.entities :as ent]
+            [ctia.domain.entities
+             [actor :as act-ent]
+             [campaign :as cam-ent]
+             [coa :as coa-ent]
+             [exploit-target :as ept-ent]
+             [feedback :as fbk-ent]
+             [incident :as inc-ent]
+             [indicator :as ind-ent]
+             [judgement :as jud-ent]
+             [sighting :as sig-ent]
+             [ttp :as ttp-ent]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as common]
             [ctia.lib.keyword :refer [singular]]
@@ -13,9 +24,9 @@
             [schema.core :as s]))
 
 (defn realize
-  "return the realize function provided an entity key name"
+  "return the realize function provided an entity type key"
   [k]
-  (condp = k
+  (case k
     :actor          ent/realize-actor
     :campaign       ent/realize-campaign
     :coa            ent/realize-coa
@@ -28,7 +39,7 @@
     :ttp            ent/realize-ttp))
 
 (defn create-fn
-  "return the create function provided an entity key name"
+  "return the create function provided an entity type key"
   [k]
   #(write-store k (case k
                     :actor          create-actor
@@ -43,7 +54,7 @@
                     :ttp            create-ttp) %))
 
 (defn read-fn
-  "return the create function provided an entity key name"
+  "return the create function provided an entity type key"
   [k]
   #(read-store k (case k
                    :actor          read-actor
@@ -57,27 +68,47 @@
                    :sighting       read-sighting
                    :ttp            read-ttp) %))
 
+(defn with-long-id-fn
+  "return the with-long-id function provided an entity type key"
+  [k]
+  (case k
+    :actor          act-ent/with-long-id
+    :campaign       cam-ent/with-long-id
+    :coa            coa-ent/with-long-id
+    :exploit-target ept-ent/with-long-id
+    :feedback       fbk-ent/with-long-id
+    :incident       inc-ent/with-long-id
+    :indicator      ind-ent/with-long-id
+    :judgement      jud-ent/with-long-id
+    :sighting       sig-ent/with-long-id
+    :ttp            ttp-ent/with-long-id))
+
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
   [entities entity-type login]
-  (->> entities
-       (map #(try (flows/create-flow
-                   :entity-type entity-type
-                   :realize-fn (realize entity-type)
-                   :store-fn (create-fn entity-type)
-                   :identity login
-                   :entity %)
-                  (catch Exception e
-                    (do (log/error (pr-str e))
-                        nil))))
-       (map :id)))
+  (let [with-long-id (with-long-id-fn entity-type)]
+    (->> entities
+         (map #(try
+                 (with-long-id
+                   (flows/create-flow
+                    :entity-type entity-type
+                    :realize-fn (realize entity-type)
+                    :store-fn (create-fn entity-type)
+                    :identity login
+                    :entity %))
+                 (catch Exception e
+                   (do (log/error (pr-str e))
+                       nil))))
+         (map :id))))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type]
-  (let [read-entity (read-fn entity-type)]
+  (let [read-entity (read-fn entity-type)
+        with-long-id (with-long-id-fn entity-type)]
     (->> ids
-         (map (fn [id] (try (read-entity id)
+         (map (fn [id] (try (with-long-id
+                              (read-entity id))
                             (catch Exception e
                               (do (log/error (pr-str e))
                                   nil))))))))
@@ -105,9 +136,7 @@
   (apply + (map count (vals bulk))))
 
 (defn get-bulk-max-size []
-  (get-in @properties
-          [:ctia :http :bulk :max-size]
-          2000))
+  (get-in @properties [:ctia :http :bulk :max-size]))
 
 (defroutes bulk-routes
   (context "/bulk" []

@@ -3,7 +3,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-http-show]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
@@ -36,10 +36,13 @@
                        :reason "false positive"
                        :tlp "green"}
                 :headers {"api_key" "45c1f5e3f05d0"})
+
+          feedback-id (id/long-id->id (:id feedback))
           feedback-external-ids (:external_ids feedback)]
       (is (= 201 status))
       (is (deep=
-           {:feedback -1,
+           {:id (id/long-id feedback-id)
+            :feedback -1,
             :entity_id "judgement-123"
             :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
                            "http://ex.tld/ctia/feedback/feedback-456"]
@@ -47,15 +50,23 @@
             :reason "false positive"
             :schema_version schema-version
             :tlp "green"}
-           (dissoc feedback :id :created :owner)))
+           (dissoc feedback :created :owner)))
+
+      (testing "the feedback ID has correct fields"
+        (let [show-props (get-http-show)]
+          (is (= (:hostname    feedback-id)      (:hostname    show-props)))
+          (is (= (:protocol    feedback-id)      (:protocol    show-props)))
+          (is (= (:port        feedback-id)      (:port        show-props)))
+          (is (= (:path-prefix feedback-id) (seq (:path-prefix show-props))))))
 
       (testing "GET /ctia/feedback/:id"
-        (let [response (get (str "ctia/feedback/" (:id feedback))
+        (let [response (get (str "ctia/feedback/" (:short-id feedback-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
               feedback (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:feedback -1,
+               {:id (id/long-id feedback-id)
+                :feedback -1,
                 :entity_id "judgement-123"
                 :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
                                "http://ex.tld/ctia/feedback/feedback-456"]
@@ -63,7 +74,7 @@
                 :type "feedback"
                 :schema_version schema-version
                 :tlp "green"}
-               (dissoc feedback :id :created :owner)))))
+               (dissoc feedback :created :owner)))))
 
       (testing "GET /ctia/feedback?entity_id="
         (let [response (get (str "ctia/feedback")
@@ -72,7 +83,8 @@
               feedbacks (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:feedback -1,
+               [{:id (id/long-id feedback-id)
+                 :feedback -1,
                  :entity_id "judgement-123"
                  :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
                                 "http://ex.tld/ctia/feedback/feedback-456"]
@@ -80,7 +92,7 @@
                  :reason "false positive"
                  :schema_version schema-version
                  :tlp "green"}]
-               (map #(dissoc % :id :created :owner) feedbacks)))))
+               (map #(dissoc % :created :owner) feedbacks)))))
 
       (testing "GET /ctia/feedback/external_id"
         (let [response (get "ctia/feedback/external_id"
@@ -89,7 +101,8 @@
               feedback (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:feedback -1,
+               [{:id (id/long-id feedback-id)
+                 :feedback -1,
                  :entity_id "judgement-123"
                  :external_ids ["http://ex.tld/ctia/feedback/feedback-123"
                                 "http://ex.tld/ctia/feedback/feedback-456"]
@@ -97,7 +110,7 @@
                  :reason "false positive"
                  :schema_version schema-version
                  :tlp "green"}]
-               (map #(dissoc % :id :created :owner) feedback)))))
+               (map #(dissoc % :created :owner) feedback)))))
 
       (testing "DELETE /ctia/feedback/:id"
         (let [temp-feedback (-> (post "ctia/feedback"
@@ -107,9 +120,11 @@
                                              :tlp "green"}
                                       :headers {"api_key" "45c1f5e3f05d0"})
                                 :parsed-body)
-              response (delete (str "ctia/feedback/" (:id temp-feedback))
+
+              temp-feedback-id (id/long-id->id (:id temp-feedback))
+              response (delete (str "ctia/feedback/" (:short-id temp-feedback-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
-          (let [response (get (str "ctia/feedback/" (:id temp-feedback))
+          (let [response (get (str "ctia/feedback/" (:short-id temp-feedback-id))
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

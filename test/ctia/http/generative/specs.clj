@@ -9,9 +9,10 @@
             [clojure.test.check
              [properties :refer [for-all]]
              [generators :as tcg]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers.core
              :refer [post get]]
+            [ctim.domain.id :as id]
             [ctim.generators.schemas :as gen]
             [ctim.generators.schemas.sighting-generators :as gs]))
 
@@ -35,20 +36,24 @@
    (assert (= 200 status)
            (format "Status %s was not 200" status))))
 
-(defn get-http-params []
-  (get-in @properties [:ctia :http :show]))
-
 (defmacro def-property [name model-type]
   `(def ~name
      (for-all [new-entity# (gen/gen-entity (keyword (str "new-" ~model-type)))]
        (let [{post-status# :status
-              {id# :id, :as post-entity#} :parsed-body}
+              {id# :id
+               type# :type
+               :as post-entity#} :parsed-body}
              (post (str "ctia/" ~model-type)
                    :body new-entity#)
 
+             url-id#
+             (-> (id/->id type# id# (get-http-show))
+                 :short-id
+                 encode)
+
              {get-status# :status
               get-entity# :parsed-body}
-             (get (str "ctia/" ~model-type "/" (encode id#)))]
+             (get (str "ctia/" ~model-type "/" url-id#))]
 
          ;; For Easy debug
          ;;(clojure.pprint/pprint new-entity#)
@@ -62,9 +67,9 @@
          (if-not (empty? (keys new-entity#))
            (common= new-entity#
                     post-entity#
-                    get-entity#)
+                    (dissoc get-entity# :id))
            (common= post-entity#
-                    get-entity#))))))
+                    (dissoc get-entity# :id)))))))
 
 (def-property spec-actor-routes 'actor)
 (def-property spec-campaign-routes 'campaign)
@@ -73,15 +78,18 @@
 
 (def spec-indicator-routes
   (for-all [[new-indicator new-sightings]
-            (gen/gen-new-indicator-with-new-sightings get-http-params)]
+            (gen/gen-new-indicator-with-new-sightings get-http-show)]
     (let [{post-status :status
-           {id :id, :as post-indicator} :parsed-body}
+           post-indicator :parsed-body}
           (post "ctia/indicator"
                 :body new-indicator)
 
+          indicator-id (id/long-id->id (:id post-indicator))
+          id ((comp encode :short-id) indicator-id)
+
           {get-indicator-status :status
            get-indicator :parsed-body}
-          (get (str "ctia/indicator/" (encode id)))
+          (get (str "ctia/indicator/" id))
 
           stored-sighting-responses
           (map #(post "ctia/sighting"
@@ -96,7 +104,7 @@
           {search-result-status :status
            search-results :parsed-body
            :as search-response}
-          (get (str "ctia/indicator/" (encode id) "/sightings"))
+          (get (str "ctia/indicator/" id "/sightings"))
 
           search-result-ids
           (->> search-results
@@ -118,7 +126,7 @@
                     search-result-ids)
        (common= new-indicator
                 post-indicator
-                get-indicator)))))
+                (dissoc get-indicator :id))))))
 
 (def-property spec-feedback-routes 'feedback)
 (def-property spec-incident-routes 'incident)

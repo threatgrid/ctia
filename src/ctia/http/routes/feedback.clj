@@ -2,6 +2,7 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-feedback]]
+   [ctia.domain.entities.feedback :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
@@ -30,11 +31,13 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-feedback
       :identity identity
-      (created (flows/create-flow :realize-fn realize-feedback
-                                  :store-fn #(write-store :feedback create-feedback %)
-                                  :entity-type :feedback
-                                  :identity identity
-                                  :entity feedback)))
+      (created
+       (with-long-id
+         (flows/create-flow :realize-fn realize-feedback
+                            :store-fn #(write-store :feedback create-feedback %)
+                            :entity-type :feedback
+                            :identity identity
+                            :entity feedback))))
 
     (GET "/" []
       :return [StoredFeedback]
@@ -43,10 +46,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
       (paginated-ok
-       (read-store :feedback
-                   list-feedback
-                   (select-keys params [:entity_id])
-                   (dissoc params :entity_id))))
+       (page-with-long-id
+        (read-store :feedback
+                    list-feedback
+                    (select-keys params [:entity_id])
+                    (dissoc params :entity_id)))))
 
     (GET "/external_id" []
       :return [(s/maybe StoredFeedback)]
@@ -56,8 +60,9 @@
       :summary "List feedback by external id"
       :capabilities #{:read-feedback :external-id}
       (paginated-ok
-       (read-store :feedback list-feedback
-                   {:external_ids (:external_id q)} q)))
+       (page-with-long-id
+        (read-store :feedback list-feedback
+                    {:external_ids (:external_id q)} q))))
 
     (GET "/:id" []
       :return (s/maybe StoredFeedback)
@@ -66,7 +71,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-feedback
       (if-let [d (read-store :feedback read-feedback id)]
-        (ok d)
+        (ok (with-long-id d))
         (not-found)))
 
     (DELETE "/:id" []

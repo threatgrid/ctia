@@ -1,6 +1,7 @@
 (ns ctia.http.routes.incident
   (:require [compojure.api.sweet :refer :all]
             [ctia.domain.entities :refer [realize-incident]]
+            [ctia.domain.entities.incident :refer [with-long-id page-with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
             [ctim.schemas.incident :refer [NewIncident StoredIncident]]
@@ -25,11 +26,13 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-incident
       :identity identity
-      (created (flows/create-flow :realize-fn realize-incident
-                                  :store-fn #(write-store :incident create-incident %)
-                                  :entity-type :incident
-                                  :identity identity
-                                  :entity incident)))
+      (created
+       (with-long-id
+         (flows/create-flow :realize-fn realize-incident
+                            :store-fn #(write-store :incident create-incident %)
+                            :entity-type :incident
+                            :identity identity
+                            :entity incident))))
     (PUT "/:id" []
       :return StoredIncident
       :body [incident NewIncident {:description "an updated incident"}]
@@ -38,13 +41,14 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-incident
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-store :incident read-incident %)
-                             :realize-fn realize-incident
-                             :update-fn #(write-store :incident update-incident (:id %) %)
-                             :entity-type :incident
-                             :entity-id id
-                             :identity identity
-                             :entity incident)))
+      (ok (with-long-id
+            (flows/update-flow :get-fn #(read-store :incident read-incident %)
+                               :realize-fn realize-incident
+                               :update-fn #(write-store :incident update-incident (:id %) %)
+                               :entity-type :incident
+                               :entity-id id
+                               :identity identity
+                               :entity incident))))
 
     (GET "/external_id" []
       :return [(s/maybe StoredIncident)]
@@ -53,8 +57,9 @@
       :summary "List Incidents by external id"
       :capabilities #{:read-incident :external-id}
       (paginated-ok
-       (read-store :incident list-incidents
-                   {:external_ids (:external_id q)} q)))
+       (page-with-long-id
+        (read-store :incident list-incidents
+                    {:external_ids (:external_id q)} q))))
 
     (GET "/:id" []
       :return (s/maybe StoredIncident)
@@ -63,7 +68,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-incident
       (if-let [d (read-store :incident read-incident id)]
-        (ok d)
+        (ok (with-long-id d))
         (not-found)))
     (DELETE "/:id" []
       :no-doc true

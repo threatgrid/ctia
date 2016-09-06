@@ -4,7 +4,7 @@
              [core :as mth]]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-http-show]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
@@ -45,13 +45,12 @@
                                      :relationship "relationship"
                                      :indicator_id "indicator-123"}]}
                 :headers {"api_key" "45c1f5e3f05d0"})
-          judgement-id (id/short-id->id :judgement
-                                        (:id judgement)
-                                        (get-in @properties [:ctia :http :show]))
+          judgement-id (id/long-id->id (:id judgement))
           judgement-external-ids (:external_ids judgement)]
       (is (= 201 status))
       (is (deep=
-           {:type "judgement"
+           {:id (id/long-id judgement-id)
+            :type "judgement"
             :observable {:value "1.2.3.4"
                          :type "ip"}
             :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
@@ -71,17 +70,23 @@
                           :relationship "relationship"
                           :indicator_id "indicator-123"}]
             :owner "foouser"}
-           (dissoc judgement
-                   :id
-                   :created)))
+           (dissoc judgement :created)))
+
+      (testing "the judgement ID has correct fields"
+        (let [show-props (get-http-show)]
+          (is (= (:hostname    judgement-id)      (:hostname    show-props)))
+          (is (= (:protocol    judgement-id)      (:protocol    show-props)))
+          (is (= (:port        judgement-id)      (:port        show-props)))
+          (is (= (:path-prefix judgement-id) (seq (:path-prefix show-props))))))
 
       (testing "GET /ctia/judgement/:id"
-        (let [response (get (str "ctia/judgement/" (:id judgement))
+        (let [response (get (str "ctia/judgement/" (:short-id judgement-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
               judgement (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:type "judgement"
+               {:id (id/long-id judgement-id)
+                :type "judgement"
                 :observable {:value "1.2.3.4"
                              :type "ip"}
                 :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
@@ -102,9 +107,7 @@
                               :indicator_id "indicator-123"}]
                 :owner "foouser"}
                (dissoc judgement
-                       :id
                        :created)))))
-
       (testing "GET /ctia/judgement/external_id"
         (let [response (get "ctia/judgement/external_id"
                             :headers {"api_key" "45c1f5e3f05d0"}
@@ -112,7 +115,8 @@
               judgements (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:type "judgement"
+               [{:id (id/long-id judgement-id)
+                 :type "judgement"
                  :observable {:value "1.2.3.4"
                               :type "ip"}
                  :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
@@ -132,17 +136,18 @@
                                :relationship "relationship"
                                :indicator_id "indicator-123"}]
                  :owner "foouser"}]
-               (map #(dissoc % :id :created) judgements)))))
+               (map #(dissoc % :created) judgements)))))
 
       (testing "GET /ctia/judgement/:id with query-param api_key"
         (let [{status :status
                judgement :parsed-body
                :as response}
-              (get (str "ctia/judgement/" (:id judgement))
+              (get (str "ctia/judgement/" (:short-id judgement-id))
                    :query-params {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 (:status response)))
           (is (deep=
-               {:type "judgement"
+               {:id (id/long-id judgement-id)
+                :type "judgement"
                 :observable {:value "1.2.3.4"
                              :type "ip"}
                 :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
@@ -162,27 +167,25 @@
                               :relationship "relationship"
                               :indicator_id "indicator-123"}]
                 :owner "foouser"}
-               (dissoc judgement
-                       :id
-                       :created)))))
+               (dissoc judgement :created)))))
 
       (testing "GET /ctia/judgement/:id authentication failures"
         (testing "no api_key"
           (let [{body :parsed-body status :status}
-                (get (str "ctia/judgement/" (:id judgement)))]
+                (get (str "ctia/judgement/" (:short-id judgement-id)))]
             (is (= 403 status))
             (is (= {:message "Only authenticated users allowed"} body))))
 
         (testing "unknown api_key"
           (let [{body :parsed-body status :status}
-                (get (str "ctia/judgement/" (:id judgement))
+                (get (str "ctia/judgement/" (:short-id judgement-id))
                      :headers {"api_key" "1111111111111"})]
             (is (= 403 status))
             (is (= {:message "Only authenticated users allowed"} body))))
 
         (testing "doesn't have read capability"
           (let [{body :parsed-body status :status}
-                (get (str "ctia/judgement/" (:id judgement))
+                (get (str "ctia/judgement/" (:short-id judgement-id))
                      :headers {"api_key" "2222222222222"})]
             (is (= 401 status))
             (is (= {:message "Missing capability",
@@ -214,10 +217,11 @@
                                               :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                                        :headers {"api_key" "45c1f5e3f05d0"})
                                  :parsed-body)
-              response (delete (str "ctia/judgement/" (:id temp-judgement))
+              temp-judgement-id (id/long-id->id (:id temp-judgement))
+              response (delete (str "ctia/judgement/" (:short-id temp-judgement-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
-          (let [response (get (str "ctia/judgement/" (:id temp-judgement))
+          (let [response (get (str "ctia/judgement/" (:short-id temp-judgement-id))
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))
 
@@ -226,18 +230,19 @@
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST a judgement with dispositon (id)"
-    (let [response (post "ctia/judgement"
-                         :body {:observable {:value "1.2.3.4"
-                                             :type "ip"}
-                                :disposition 2
-                                :source "test"
-                                :priority 100
-                                :severity 100
-                                :confidence "Low"
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          judgement (:parsed-body response)]
-      (is (= 201 (:status response)))
+    (let [{status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "1.2.3.4"
+                                    :type "ip"}
+                       :disposition 2
+                       :source "test"
+                       :priority 100
+                       :severity 100
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
@@ -258,18 +263,19 @@
                    :created)))))
 
   (testing "POST a judgement with disposition_name"
-    (let [response (post "ctia/judgement"
-                         :body {:observable {:value "1.2.3.4"
-                                             :type "ip"}
-                                :disposition_name "Malicious"
-                                :source "test"
-                                :priority 100
-                                :severity 100
-                                :confidence "Low"
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          judgement (:parsed-body response)]
-      (is (= 201 (:status response)))
+    (let [{status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "1.2.3.4"
+                                    :type "ip"}
+                       :disposition_name "Malicious"
+                       :source "test"
+                       :priority 100
+                       :severity 100
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
@@ -290,17 +296,18 @@
                    :created)))))
 
   (testing "POST a judgement without disposition"
-    (let [response (post "ctia/judgement"
-                         :body {:observable {:value "1.2.3.4"
-                                             :type "ip"}
-                                :source "test"
-                                :priority 100
-                                :severity 100
-                                :confidence "Low"
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          judgement (:parsed-body response)]
-      (is (= 201 (:status response)))
+    (let [{status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "1.2.3.4"
+                                    :type "ip"}
+                       :source "test"
+                       :priority 100
+                       :severity 100
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
       (is (deep=
            {:type "judgement"
             :observable {:value "1.2.3.4"
@@ -321,18 +328,20 @@
                    :created)))))
 
   (testing "POST a judgement with mismatching disposition/disposition_name"
-    (let [response (post "ctia/judgement"
-                         :body {:observable {:value "1.2.3.4"
-                                             :type "ip"}
-                                :disposition 1
-                                :disposition_name "Unknown"
-                                :source "test"
-                                :priority 100
-                                :severity 100
-                                :confidence "Low"
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 400 (:status response)))
+    (let [{status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "1.2.3.4"
+                                    :type "ip"}
+                       :disposition 1
+                       :disposition_name "Unknown"
+                       :source "test"
+                       :priority 100
+                       :severity 100
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 400 status))
       (is (deep=
            {:error "Mismatching :dispostion and dispositon_name for judgement",
             :judgement {:observable {:value "1.2.3.4"
@@ -344,7 +353,7 @@
                         :severity 100
                         :confidence "Low"
                         :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
-           (:parsed-body response))))))
+           judgement)))))
 
 (deftest-for-each-store test-list-judgements-by-observable-pagination
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
