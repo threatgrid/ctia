@@ -3,13 +3,15 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
+            [ctia.properties :refer [get-http-show]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key]]
-             [store :refer [deftest-for-each-store]]]))
+             [store :refer [deftest-for-each-store]]]
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -63,8 +65,7 @@
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
   (testing "POST /ctia/sighting"
     (let [{status :status
-           sighting :parsed-body
-           :as response}
+           sighting :parsed-body}
           (post "ctia/sighting"
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
@@ -78,9 +79,37 @@
                        :confidence "High"
                        :indicators [{:indicator_id "indicator-22334455"}]}
                 :headers {"api_key" api-key})
+
+          sighting-id (id/long-id->id (:id sighting))
           sighting-external-ids (:external_ids sighting)]
       (is (empty? (:errors sighting)) "No errors when")
       (is (= 201 status))
+      (is (deep=
+           {:id (id/long-id sighting-id)
+            :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                           "http://ex.tld/ctia/sighting/sighting-345"]
+            :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+            :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
+            :description "a sighting"
+            :tlp "amber"
+            :source "source"
+            :sensor "endpoint.sensor"
+            :confidence "High"
+            :indicators [{:indicator_id "indicator-22334455"}]
+            :owner "foouser"
+            :type "sighting"
+            :schema_version schema-version
+            :count 1}
+           (dissoc sighting
+                   :created
+                   :modified)))
+
+      (testing "the sighting ID has correct fields"
+        (let [show-props (get-http-show)]
+          (is (= (:hostname    sighting-id)      (:hostname    show-props)))
+          (is (= (:protocol    sighting-id)      (:protocol    show-props)))
+          (is (= (:port        sighting-id)      (:port        show-props)))
+          (is (= (:path-prefix sighting-id) (seq (:path-prefix show-props))))))
 
 
       (testing "GET /ctia/sighting/external_id"
@@ -90,7 +119,8 @@
               sightings (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+               [{:id (id/long-id sighting-id)
+                 :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
                                 "http://ex.tld/ctia/sighting/sighting-345"]
                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                  :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
@@ -104,16 +134,16 @@
                  :owner "foouser"
                  :confidence "High"
                  :indicators [{:indicator_id "indicator-22334455"}]}]
-               (map #(dissoc % :id :created :modified) sightings)))))
+               (map #(dissoc % :created :modified) sightings)))))
 
       (testing "GET /ctia/sighting/:id"
         (let [{status :status
                sighting :parsed-body}
-              (get (str "ctia/sighting/" (:id sighting))
+              (get (str "ctia/sighting/" (:short-id sighting-id))
                    :headers {"api_key" api-key})]
           (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
-          (is (deep= {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+          (is (deep= {:id (id/long-id sighting-id)
                       :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
                                      "http://ex.tld/ctia/sighting/sighting-345"]
                       :timestamp #inst "2016-02-11T00:40:48.212-00:00"
@@ -125,13 +155,17 @@
                       :source "source"
                       :sensor "endpoint.sensor"
                       :confidence "High"
-                      :indicators [{:indicator_id "indicator-22334455"}]}
-                     (dissoc sighting :created :modified :owner :type)))))
+                      :indicators [{:indicator_id "indicator-22334455"}]
+                      :owner "foouser"
+                      :type "sighting"}
+                     (dissoc sighting
+                             :created
+                             :modified)))))
 
       (testing "PUT /ctia/sighting/:id"
         (let [{status :status
                updated-sighting :parsed-body}
-              (put (str "ctia/sighting/" (:id sighting))
+              (put (str "ctia/sighting/" (:short-id sighting-id))
                    :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                           :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
                                          "http://ex.tld/ctia/sighting/sighting-345"]
@@ -147,7 +181,7 @@
           (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
           (is (deep=
-               {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+               {:id (id/long-id sighting-id)
                 :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
                                "http://ex.tld/ctia/sighting/sighting-345"]
                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
@@ -159,14 +193,18 @@
                 :sensor "endpoint.sensor"
                 :confidence "High"
                 :count 1
-                :indicators [{:indicator_id "indicator-22334455"}]}
-               (dissoc updated-sighting :created :modified :owner :type)))))
+                :indicators [{:indicator_id "indicator-22334455"}]
+                :owner "foouser"
+                :type "sighting"}
+               (dissoc updated-sighting
+                       :created
+                       :modified)))))
 
       (testing "DELETE /ctia/sighting/:id"
-        (let [{status :status} (delete (str "ctia/sighting/" (:id sighting))
+        (let [{status :status} (delete (str "ctia/sighting/" (:short-id sighting-id))
                                        :headers {"api_key" api-key})]
           (is (= 204 status))
-          (let [{status :status} (get (str "ctia/sighting/" (:id sighting))
+          (let [{status :status} (get (str "ctia/sighting/" (:short-id sighting-id))
                                       :headers {"api_key" api-key})]
             (is (= 404 status))))))))
 

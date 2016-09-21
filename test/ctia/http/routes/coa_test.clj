@@ -3,6 +3,8 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
+            [ctia.properties :refer [get-http-show]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -21,30 +23,34 @@
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /ctia/coa"
-    (let [response (post "ctia/coa"
-                         :body {:external_ids ["http://ex.tld/ctia/coa/coa-123"
-                                               "http://ex.tld/ctia/coa/coa-456"]
-                                :title "coa"
-                                :description "description"
-                                :coa_type "Eradication"
-                                :objective ["foo" "bar"]
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                                :structured_coa_type "openc2"
-                                :open_c2_coa {:type "structured_coa"
-                                              :id "openc2_coa_1"
-                                              :action {:type "deny"}
-                                              :target {:type "cybox:Network_Connection"
-                                                       :specifiers "10.10.1.0"}
-                                              :actuator {:type "network"
-                                                         :specifiers ["router"]}
-                                              :modifiers {:method ["acl"]
-                                                          :location "perimeter"}}}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          coa (:parsed-body response)
+    (let [{status :status
+           coa :parsed-body}
+          (post "ctia/coa"
+                :body {:external_ids ["http://ex.tld/ctia/coa/coa-123"
+                                      "http://ex.tld/ctia/coa/coa-456"]
+                       :title "coa"
+                       :description "description"
+                       :coa_type "Eradication"
+                       :objective ["foo" "bar"]
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                       :structured_coa_type "openc2"
+                       :open_c2_coa {:type "structured_coa"
+                                     :id "openc2_coa_1"
+                                     :action {:type "deny"}
+                                     :target {:type "cybox:Network_Connection"
+                                              :specifiers "10.10.1.0"}
+                                     :actuator {:type "network"
+                                                :specifiers ["router"]}
+                                     :modifiers {:method ["acl"]
+                                                 :location "perimeter"}}}
+                :headers {"api_key" "45c1f5e3f05d0"})
+
+          coa-id (id/long-id->id (:id coa))
           coa-external-ids (:external_ids coa)]
-      (is (= 201 (:status response)))
+      (is (= 201 status))
       (is (deep=
-           {:external_ids ["http://ex.tld/ctia/coa/coa-123"
+           {:id (id/long-id coa-id)
+            :external_ids ["http://ex.tld/ctia/coa/coa-123"
                            "http://ex.tld/ctia/coa/coa-456"]
             :type "coa"
             :title "coa"
@@ -67,9 +73,15 @@
                                       :location "perimeter"}}
             :owner "foouser"}
            (dissoc coa
-                   :id
                    :created
                    :modified)))
+
+      (testing "the coa ID has correct fields"
+        (let [show-props (get-http-show)]
+          (is (= (:hostname    coa-id)      (:hostname    show-props)))
+          (is (= (:protocol    coa-id)      (:protocol    show-props)))
+          (is (= (:port        coa-id)      (:port        show-props)))
+          (is (= (:path-prefix coa-id) (seq (:path-prefix show-props))))))
 
       (testing "GET /ctia/coa/external_id"
         (let [response (get "ctia/coa/external_id"
@@ -78,7 +90,8 @@
               coas (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:external_ids ["http://ex.tld/ctia/coa/coa-123"
+               [{:id (id/long-id coa-id)
+                 :external_ids ["http://ex.tld/ctia/coa/coa-123"
                                 "http://ex.tld/ctia/coa/coa-456"]
                  :type "coa"
                  :title "coa"
@@ -100,15 +113,16 @@
                                :modifiers {:method ["acl"]
                                            :location "perimeter"}}
                  :owner "foouser"}]
-               (map #(dissoc % :id :created :modified) coas)))))
+               (map #(dissoc % :created :modified) coas)))))
 
       (testing "GET /ctia/coa/:id"
-        (let [response (get (str "ctia/coa/" (:id coa))
+        (let [response (get (str "ctia/coa/" (:short-id coa-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
               coa (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:external_ids ["http://ex.tld/ctia/coa/coa-123"
+               {:id (id/long-id coa-id)
+                :external_ids ["http://ex.tld/ctia/coa/coa-123"
                                "http://ex.tld/ctia/coa/coa-456"]
                 :type "coa"
                 :title "coa"
@@ -131,14 +145,13 @@
                                           :location "perimeter"}}
                 :owner "foouser"}
                (dissoc coa
-                       :id
                        :created
                        :modified)))))
 
       (testing "PUT /ctia/coa/:id"
         (let [{updated-coa :parsed-body
                status :status}
-              (put (str "ctia/coa/" (:id coa))
+              (put (str "ctia/coa/" (:short-id coa-id))
                    :body {:external_ids ["http://ex.tld/ctia/coa/coa-123"
                                          "http://ex.tld/ctia/coa/coa-456"]
                           :title "updated coa"
@@ -160,7 +173,7 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               {:id (:id coa)
+               {:id (id/long-id coa-id)
                 :external_ids ["http://ex.tld/ctia/coa/coa-123"
                                "http://ex.tld/ctia/coa/coa-456"]
                 :type "coa"
@@ -188,9 +201,9 @@
                        :modified)))))
 
       (testing "DELETE /ctia/coa/:id"
-        (let [response (delete (str "/ctia/coa/" (:id coa))
+        (let [response (delete (str "/ctia/coa/" (:short-id coa-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
-          (let [response (get (str "/ctia/coa/" (:id coa))
+          (let [response (get (str "/ctia/coa/" (:short-id coa-id))
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

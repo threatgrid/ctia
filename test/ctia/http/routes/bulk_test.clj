@@ -4,14 +4,17 @@
              [core :as mth]
              [http :refer [encode]]]
             [clojure
+             [core :as core]
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.auth :refer [all-capabilities]]
             [ctia.http.routes.bulk :refer [bulk-size gen-bulk-from-fn get-bulk-max-size]]
+            [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [deftest-for-each-store]]]))
+             [store :refer [deftest-for-each-store]]]
+            [ctim.domain.id :as id]))
 
 
 (defn fixture-properties:small-max-bulk-size [test]
@@ -158,8 +161,10 @@
             (map
              (fn [type]
                (str/join "&"
-                         (map (fn [id] (str (encode (name type)) "=" (encode id)))
-                              (get-in bulk-ids [type]))))
+                         (map (fn [id]
+                                (let [short-id (:short-id (id/long-id->id id))]
+                                  (str (encode (name type)) "=" (encode short-id))))
+                              (core/get bulk-ids type))))
              (keys bulk-ids))))
 
 (deftest-for-each-store test-bulk-routes
@@ -176,27 +181,38 @@
                     :indicators (map mk-new-indicator (range nb))
                     :judgements (map mk-new-judgement (range nb))
                     :sightings (map mk-new-sighting (range nb))
-                    :ttps (map mk-new-ttp (range nb))
-                    }
+                    :ttps (map mk-new-ttp (range nb))}
           response (post "ctia/bulk"
                          :body new-bulk
                          :headers {"api_key" "45c1f5e3f05d0"})
-          bulk-ids (:parsed-body response)]
+          bulk-ids (:parsed-body response)
+          show-props (get-http-show)]
       (is (= 201 (:status response)))
+
       (doseq [type (keys new-bulk)]
         (testing (str "number of created " (name type))
-          (is (= (count (get-in new-bulk [type]))
-                 (count (get-in bulk-ids [type]))))))
+          (is (= (count (core/get new-bulk type))
+                 (count (core/get bulk-ids type))))))
+
       (testing "GET /ctia/bulk"
-        (let [resp (get (str "ctia/bulk?"
-                             (make-get-query-str-from-bulkrefs bulk-ids))
-                        :headers {"api_key" "45c1f5e3f05d0"})]
-          (is (= 200 (:status resp)))
+        (let [{status :status
+               response :parsed-body}
+              (get (str "ctia/bulk?"
+                        (make-get-query-str-from-bulkrefs bulk-ids))
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+
           (doseq [k (keys new-bulk)]
             (testing (str "retrieved " (name k))
-              (is (= (get-in new-bulk [k])
+              (is (= (core/get new-bulk k)
                      (map #(dissoc % :created :id :type :modified :owner :tlp :schema_version :disposition_name)
-                          (get-in (:parsed-body resp) [k])))))))))))
+                          (core/get response k))))
+
+              (let [id (id/long-id->id (:id (first (core/get response k))))]
+                (is (= (:hostname id)         (:hostname show-props)))
+                (is (= (:protocol id)         (:protocol show-props)))
+                (is (= (:port id)             (:port show-props)))
+                (is (= (:path-prefix id) (seq (:path-prefix show-props))))))))))))
 
 (deftest get-bulk-max-size-test
   (let [nb 10

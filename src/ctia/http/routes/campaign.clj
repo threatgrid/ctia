@@ -2,6 +2,7 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-campaign]]
+   [ctia.domain.entities.campaign :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
@@ -25,11 +26,13 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
       :identity identity
-      (created (flows/create-flow :realize-fn realize-campaign
-                                  :store-fn #(write-store :campaign create-campaign %)
-                                  :entity-type :campaign
-                                  :identity identity
-                                  :entity campaign)))
+      (created
+       (with-long-id
+         (flows/create-flow :realize-fn realize-campaign
+                            :store-fn #(write-store :campaign create-campaign %)
+                            :entity-type :campaign
+                            :identity identity
+                            :entity campaign))))
     (PUT "/:id" []
       :return StoredCampaign
       :body [campaign NewCampaign {:description "an updated campaign"}]
@@ -38,13 +41,15 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-campaign
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-store :campaign read-campaign %)
-                             :realize-fn realize-campaign
-                             :update-fn #(write-store :campaign update-campaign (:id %) %)
-                             :entity-type :campaign
-                             :entity-id id
-                             :identity identity
-                             :entity campaign)))
+      (ok
+       (with-long-id
+         (flows/update-flow :get-fn #(read-store :campaign read-campaign %)
+                            :realize-fn realize-campaign
+                            :update-fn #(write-store :campaign update-campaign (:id %) %)
+                            :entity-type :campaign
+                            :entity-id id
+                            :identity identity
+                            :entity campaign))))
     (GET "/external_id" []
       :return [(s/maybe StoredCampaign)]
       :query [q CampaignByExternalIdQueryParams]
@@ -52,8 +57,9 @@
       :summary "List campaigns by external id"
       :capabilities #{:read-campaign :external-id}
       (paginated-ok
-       (read-store :campaign list-campaigns
-                   {:external_ids (:external_id q)} q)))
+       (page-with-long-id
+        (read-store :campaign list-campaigns
+                    {:external_ids (:external_id q)} q))))
 
     (GET "/:id" []
       :return (s/maybe StoredCampaign)
@@ -62,7 +68,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-campaign
       (if-let [d (read-store :campaign read-campaign id)]
-        (ok d)
+        (ok (with-long-id d))
         (not-found)))
     (DELETE "/:id" []
       :no-doc true

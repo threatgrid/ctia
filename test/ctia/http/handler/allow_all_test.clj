@@ -8,6 +8,7 @@
              [atom :as at-helpers]
              [core :as helpers :refer [post get]]]
             [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :as c]))
 
 (use-fixtures :once mth/fixture-schema-validation)
@@ -31,7 +32,10 @@
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                     :end_time "2016-03-11T00:00:00.000-00:00"}
-                       :indicators [{:indicator_id "indicator-123"}]})]
+                       :indicators [{:indicator_id "indicator-123"}]})
+
+          judgement-id
+          (id/long-id->id (:id judgement))]
       (is (= 201 status))
       (is (deep=
            {:type "judgement"
@@ -54,7 +58,7 @@
       (testing "GET /ctia/judgement"
         (let [{status :status
                get-judgement :parsed-body}
-              (get (str "ctia/judgement/" (:id judgement)))]
+              (get (str "ctia/judgement/" (:short-id judgement-id)))]
           (is (= 200 status))
           (is (deep=
                {:id (:id judgement)

@@ -1,6 +1,7 @@
 (ns ctia.http.routes.coa
   (:require [compojure.api.sweet :refer :all]
             [ctia.domain.entities :refer [realize-coa]]
+            [ctia.domain.entities.coa :refer [with-long-id page-with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
             [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
@@ -24,11 +25,13 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-coa
       :identity identity
-      (created (flows/create-flow :realize-fn realize-coa
-                                  :store-fn #(write-store :coa create-coa %)
-                                  :entity-type :coa
-                                  :identity identity
-                                  :entity coa)))
+      (created
+       (with-long-id
+         (flows/create-flow :realize-fn realize-coa
+                            :store-fn #(write-store :coa create-coa %)
+                            :entity-type :coa
+                            :identity identity
+                            :entity coa))))
     (PUT "/:id" []
       :return StoredCOA
       :body [coa NewCOA {:description "an updated COA"}]
@@ -37,13 +40,15 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :create-coa
       :identity identity
-      (ok (flows/update-flow :get-fn #(read-store :coa read-coa %)
-                             :realize-fn realize-coa
-                             :update-fn #(write-store :coa update-coa (:id %) %)
-                             :entity-type :coa
-                             :entity-id id
-                             :identity identity
-                             :entity coa)))
+      (ok
+       (with-long-id
+         (flows/update-flow :get-fn #(read-store :coa read-coa %)
+                            :realize-fn realize-coa
+                            :update-fn #(write-store :coa update-coa (:id %) %)
+                            :entity-type :coa
+                            :entity-id id
+                            :identity identity
+                            :entity coa))))
 
     (GET "/external_id" []
       :return [(s/maybe StoredCOA)]
@@ -52,8 +57,11 @@
       :summary "List COAs by external id"
       :capabilities #{:read-coa :external-id}
       (paginated-ok
-       (read-store :coa list-coas
-                   {:external_ids (:external_id q)} q)))
+       (page-with-long-id
+        (read-store :coa
+                    list-coas
+                    {:external_ids (:external_id q)}
+                    q))))
 
     (GET "/:id" []
       :return (s/maybe StoredCOA)
@@ -62,8 +70,9 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-coa
       (if-let [d (read-store :coa (fn [s] (read-coa s id)))]
-        (ok d)
+        (ok (with-long-id d))
         (not-found)))
+
     (DELETE "/:id" []
       :no-doc true
       :path-params [id :- s/Str]

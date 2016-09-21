@@ -7,7 +7,8 @@
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [deftest-for-each-store]]]))
+             [store :refer [deftest-for-each-store]]]
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mht/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -84,29 +85,36 @@
       (is (= 201 (:status response)))))
 
   (testing "with a highest-priority judgement"
-    (let [response (post "ctia/judgement"
-                         :body {:observable {:value "10.0.0.1"
-                                             :type "ip"}
-                                :disposition 2
-                                :source "test"
-                                :priority 99
-                                :severity 100
-                                :confidence "Low"
-                                :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          judgement-1 (:parsed-body response)]
-      (is (= 201 (:status response))) ;; success creating judgement
+    (let [{status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "10.0.0.1"
+                                    :type "ip"}
+                       :disposition 2
+                       :source "test"
+                       :priority 99
+                       :severity 100
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})
+
+          judgment-id
+          (id/long-id->id (:id judgement))]
+      (is (= 201 status)) ;; success creating judgement
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
-        (let [response (get "ctia/ip/10.0.0.1/verdict"
-                            :headers {"api_key" "45c1f5e3f05d0"})
-              verdict (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (= {:type "verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get "ctia/ip/10.0.0.1/verdict"
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+          (is (= {:id (str "verdict-" (-> (:short-id judgment-id) (subs 10)))
+                  :type "verdict"
                   :disposition 2
                   :disposition_name "Malicious"
-                  :judgement_id (:id judgement-1)}
-                 (dissoc verdict :id :observable :owner :created :schema_version))))))))
+                  :judgement_id (:id judgement)
+                  :observable {:value "10.0.0.1", :type "ip"}}
+                 (dissoc verdict :owner :created :schema_version))))))))
 
 (deftest-for-each-store test-observable-verdict-route-2
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
@@ -115,46 +123,55 @@
   ;; This test case catches a bug that was in the atom store
   ;; It tests the code path where priority is equal but dispositions differ
   (testing "test setup: create a judgement (1)"
-    (let [response (post "ctia/judgement"
-                         :body {:observable {:value "string",
-                                             :type "device"},
-                                :reason_uri "string",
-                                :source "string",
-                                :disposition 1,
-                                :reason "string",
-                                :source_uri "string",
-                                :priority 99,
-                                :severity 50,
-                                :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
-                                             :end_time "2016-02-12T14:56:26.719-00:00"}
-                                :confidence "Medium"}
-                         :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 201 (:status response)))))
+    (let [{status :status}
+          (post "ctia/judgement"
+                :body {:observable {:value "string",
+                                    :type "device"},
+                       :reason_uri "string",
+                       :source "string",
+                       :disposition 1,
+                       :reason "string",
+                       :source_uri "string",
+                       :priority 99,
+                       :severity 50,
+                       :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
+                                    :end_time "2016-02-12T14:56:26.719-00:00"}
+                       :confidence "Medium"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))))
+
   (testing "with a verdict judgement"
-    (let [response (post "ctia/judgement"
-                         :body {:observable {:value "10.0.0.1",
-                                             :type "ip"},
-                                :reason_uri "string",
-                                :source "string",
-                                :disposition 2,
-                                :reason "string",
-                                :source_uri "string",
-                                :priority 99,
-                                :severity 50,
-                                :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"}
-                                :confidence "Medium"}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          judgement (:parsed-body response)]
-      (is (= 201 (:status response)))
+    (let [{status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "10.0.0.1",
+                                    :type "ip"},
+                       :reason_uri "string",
+                       :source "string",
+                       :disposition 2,
+                       :reason "string",
+                       :source_uri "string",
+                       :priority 99,
+                       :severity 50,
+                       :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"}
+                       :confidence "Medium"}
+                :headers {"api_key" "45c1f5e3f05d0"})
+
+          judgement-id
+          (id/long-id->id (:id judgement))]
+      (is (= 201 status))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (with-redefs [time/now (constantly (time/timestamp "2016-02-12T15:42:58.232-00:00"))]
-          (let [response (get "ctia/ip/10.0.0.1/verdict"
-                              :headers {"api_key" "45c1f5e3f05d0"})
-                verdict (:parsed-body response)]
-            (is (= 200 (:status response)))
-            (is (= {:type "verdict"
+          (let [{status :status
+                 verdict :parsed-body}
+                (get "ctia/ip/10.0.0.1/verdict"
+                     :headers {"api_key" "45c1f5e3f05d0"})]
+            (is (= 200 status))
+            (is (= {:id (str "verdict-" (-> (:short-id judgement-id) (subs 10)))
+                    :observable {:value "10.0.0.1",:type "ip"}
+                    :type "verdict"
                     :disposition 2
                     :disposition_name "Malicious"
                     :judgement_id (:id judgement)}
-                   (dissoc verdict :id :observable :owner :created :schema_version)))))))))
+                   (dissoc verdict :owner :created :schema_version)))))))))

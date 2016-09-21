@@ -2,6 +2,7 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-sighting check-new-sighting]]
+   [ctia.domain.entities.sighting :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
    [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
@@ -26,11 +27,13 @@
       :capabilities :create-sighting
       :identity identity
       (if (check-new-sighting sighting)
-        (created (flows/create-flow :realize-fn realize-sighting
-                                    :store-fn #(write-store :sighting create-sighting %)
-                                    :entity-type :sighting
-                                    :identity identity
-                                    :entity sighting))
+        (created
+         (with-long-id
+           (flows/create-flow :realize-fn realize-sighting
+                              :store-fn #(write-store :sighting create-sighting %)
+                              :entity-type :sighting
+                              :identity identity
+                              :entity sighting)))
         (unprocessable-entity)))
     (PUT "/:id" []
       :return StoredSighting
@@ -41,13 +44,15 @@
       :capabilities :create-sighting
       :identity identity
       (if (check-new-sighting sighting)
-        (ok (flows/update-flow :get-fn #(read-store :sighting read-sighting %)
-                               :realize-fn realize-sighting
-                               :update-fn #(write-store :sighting update-sighting (:id %) %)
-                               :entity-type :sighting
-                               :entity-id id
-                               :identity identity
-                               :entity sighting))
+        (ok
+         (with-long-id
+           (flows/update-flow :get-fn #(read-store :sighting read-sighting %)
+                              :realize-fn realize-sighting
+                              :update-fn #(write-store :sighting update-sighting (:id %) %)
+                              :entity-type :sighting
+                              :entity-id id
+                              :identity identity
+                              :entity sighting)))
         (unprocessable-entity)))
 
     (GET "/external_id" []
@@ -57,8 +62,9 @@
       :summary "List sightings by external id"
       :capabilities #{:read-sighting :external-id}
       (paginated-ok
-       (read-store :sighting list-sightings
-                   {:external_ids (:external_id q)} q)))
+       (page-with-long-id
+        (read-store :sighting list-sightings
+                    {:external_ids (:external_id q)} q))))
 
     (GET "/:id" []
       :return (s/maybe StoredSighting)
@@ -67,7 +73,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :read-sighting
       (if-let [d (read-store :sighting read-sighting id)]
-        (ok d)
+        (ok (with-long-id d))
         (not-found)))
 
     (DELETE "/:id" []

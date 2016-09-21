@@ -3,7 +3,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.http.routes.indicator :refer [->long-id]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -21,7 +21,7 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  (let [{{judgement-1-id :id} :parsed-body
+  (let [{judgement-1 :parsed-body
          judgement-1-status :status}
         (post "ctia/judgement"
               :body {:observable {:value "1.2.3.4"
@@ -36,8 +36,11 @@
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
+        judgement-1-id
+        (id/long-id->id (:id judgement-1))
+
         {indicator-1-status :status
-         {indicator-1-id :id} :parsed-body}
+         indicator-1 :parsed-body}
         (post "ctia/indicator"
               :body {:title "indicator"
                      :description "indicator 1"
@@ -46,42 +49,49 @@
                      :valid_time {:end_time "2016-02-12T00:00:00.000-00:00"}
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
-        long-indicator-1-id (->long-id :indicator indicator-1-id)
+
+        indicator-1-id (id/long-id->id (:id indicator-1))
 
         {sighting-1-status :status
-         {sighting-1-id :id} :parsed-body}
+         sighting-1 :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-01T00:00:00.000-00:00"
                      :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "foo"
                      :confidence "Medium"
                      :description "sighting 1"
-                     :indicators [{:indicator_id long-indicator-1-id}]
+                     :indicators [{:indicator_id (id/long-id indicator-1-id)}]
                      :observables [{:value "1.2.3.4"
                                     :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
+        sighting-1-id
+        (id/long-id->id (:id sighting-1))
+
         {sighting-2-status :status
-         {sighting-2-id :id} :parsed-body}
+         sighting-2 :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-01T12:00:00.000-00:00"
                      :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "bar"
                      :confidence "High"
                      :description "sighting 2"
-                     :indicators [{:indicator_id long-indicator-1-id}]
+                     :indicators [{:indicator_id (id/long-id indicator-1-id)}]
                      :observables [{:value "1.2.3.4"
                                     :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
+        sighting-2-id
+        (id/long-id->id (:id sighting-2))
+
         {judgement-1-update-status :status}
-        (post (str "ctia/judgement/" judgement-1-id "/indicator")
-              :body {:indicator_id indicator-1-id}
+        (post (str "ctia/judgement/" (:short-id judgement-1-id) "/indicator")
+              :body {:indicator_id (id/long-id indicator-1-id)}
               :headers {"api_key" "45c1f5e3f05d0"})
 
-        {{judgement-2-id :id} :parsed-body
+        {judgement-2 :parsed-body
          judgement-2-status :status}
         (post "ctia/judgement"
               :body {:observable {:value "10.0.0.1"
@@ -96,8 +106,10 @@
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
+        judgement-2-id (id/long-id->id (:id judgement-2))
+
         {indicator-2-status :status
-         {indicator-2-id :id} :parsed-body}
+         indicator-2 :parsed-body}
         (post "ctia/indicator"
               :body {:title "indicator"
                      :description "indicator 2"
@@ -107,28 +119,32 @@
                                   :end_time "2016-02-12T00:00:00.000-00:00"}
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
-        long-indicator-2-id (->long-id :indicator indicator-2-id)
+
+        indicator-2-id (id/long-id->id (:id indicator-2))
 
         {sighting-3-status :status
-         {sighting-3-id :id} :parsed-body}
+         sighting-3 :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-04T12:00:00.000-00:00"
                      :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "spam"
                      :confidence "None"
                      :description "sighting 3"
-                     :indicators [{:indicator_id long-indicator-2-id}]
+                     :indicators [{:indicator_id (id/long-id indicator-2-id)}]
                      :observables [{:value "10.0.0.1"
                                     :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
+        sighting-3-id
+        (id/long-id->id (:id sighting-3))
+
         {judgement-2-update-status :status}
-        (post (str "ctia/judgement/" judgement-2-id "/indicator")
-              :body {:indicator_id long-indicator-2-id}
+        (post (str "ctia/judgement/" (:short-id judgement-2-id) "/indicator")
+              :body {:indicator_id (id/long-id indicator-2-id)}
               :headers {"api_key" "45c1f5e3f05d0"})
 
-        {{judgement-3-id :id} :parsed-body
+        {judgement-3 :parsed-body
          judgement-3-status :status}
         (post "ctia/judgement"
               :body {:observable {:value "10.0.0.1"
@@ -143,8 +159,10 @@
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
+        judgement-3-id (id/long-id->id (:id judgement-3))
+
         {indicator-3-status :status
-         {indicator-3-id :id} :parsed-body}
+         indicator-3 :parsed-body}
         (post "ctia/indicator"
               :body {:title "indicator"
                      :description "indicator 3"
@@ -154,39 +172,46 @@
                                   :end_time "2016-02-11T00:00:00.000-00:00"}
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
-        long-indicator-3-id (->long-id :indicator indicator-3-id)
+
+        indicator-3-id (id/long-id->id (:id indicator-3))
 
         {sighting-4-status :status
-         {sighting-4-id :id} :parsed-body}
+         sighting-4 :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-05T01:00:00.000-00:00"
                      :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "foo"
                      :confidence "High"
                      :description "sighting 4"
-                     :indicators [{:indicator_id long-indicator-3-id}]
+                     :indicators [{:indicator_id (id/long-id indicator-3-id)}]
                      :observables [{:value "10.0.0.1"
                                     :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
+        sighting-4-id
+        (id/long-id->id (:id sighting-4))
+
         {sighting-5-status :status
-         {sighting-5-id :id} :parsed-body}
+         sighting-5 :parsed-body}
         (post "ctia/sighting"
               :body {:timestamp "2016-02-05T02:00:00.000-00:00"
                      :observed_time {:start_time "2016-02-01T00:00:00.000-00:00"}
                      :source "bar"
                      :confidence "Low"
                      :description "sighting 5"
-                     :indicators [{:indicator_id long-indicator-3-id}]
+                     :indicators [{:indicator_id (id/long-id indicator-3-id)}]
                      :observables [{:value "10.0.0.1"
                                     :type "ip"}]
                      :tlp "red"}
               :headers {"api_key" "45c1f5e3f05d0"})
 
+        sighting-5-id
+        (id/long-id->id (:id sighting-5))
+
         {judgement-3-update-status :status}
-        (post (str "ctia/judgement/" judgement-3-id "/indicator")
-              :body {:indicator_id long-indicator-3-id}
+        (post (str "ctia/judgement/" (:short-id judgement-3-id) "/indicator")
+              :body {:indicator_id (id/long-id indicator-3-id)}
               :headers {"api_key" "45c1f5e3f05d0"})]
 
     (testing "With successful test setup"
@@ -212,7 +237,7 @@
                  :headers {"api_key" "45c1f5e3f05d0"})]
         (is (= 200 status))
         (is (deep=
-             #{{:id judgement-2-id
+             #{{:id (id/long-id judgement-2-id)
                 :type "judgement"
                 :observable {:value "10.0.0.1"
                              :type "ip"}
@@ -222,12 +247,12 @@
                 :priority 100
                 :severity 100
                 :confidence "High"
-                :indicators [{:indicator_id long-indicator-2-id}]
+                :indicators [{:indicator_id (id/long-id indicator-2-id)}]
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :tlp "red"
                 :schema_version schema-version}
-               {:id judgement-3-id
+               {:id (id/long-id judgement-3-id)
                 :type "judgement"
                 :observable {:value "10.0.0.1"
                              :type "ip"}
@@ -237,12 +262,11 @@
                 :priority 100
                 :severity 100
                 :confidence "Low"
-                :indicators [{:indicator_id long-indicator-3-id}]
+                :indicators [{:indicator_id (id/long-id indicator-3-id)}]
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :tlp "red"
-                :schema_version schema-version
-                }}
+                :schema_version schema-version}}
              (->> judgements
                   (map #(dissoc % :created :owner))
                   set)))))
@@ -253,7 +277,7 @@
             indicators (:parsed-body response)]
         (is (= 200 (:status response)))
 
-        (is (= #{long-indicator-2-id long-indicator-3-id}
+        (is (= #{(id/long-id indicator-2-id) (id/long-id indicator-3-id)}
                (set indicators)))))
 
     (testing "GET /ctia/:observable_type/:observable_value/sightings"
@@ -265,7 +289,7 @@
         (is (empty? (:errors sightings)) "No errors")
         (is (= 200 status))
         (is (=
-             #{{:id sighting-3-id
+             #{{:id (id/long-id sighting-3-id)
                 :type "sighting"
                 :timestamp #inst "2016-02-04T12:00:00.000-00:00"
                 :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
@@ -273,12 +297,12 @@
                 :source "spam"
                 :confidence "None"
                 :description "sighting 3"
-                :indicators [{:indicator_id long-indicator-2-id}]
+                :indicators [{:indicator_id (id/long-id indicator-2-id)}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :schema_version schema-version
                 :tlp "red"}
-               {:id sighting-4-id
+               {:id (id/long-id sighting-4-id)
                 :type "sighting"
                 :timestamp #inst "2016-02-05T01:00:00.000-00:00"
                 :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
@@ -286,12 +310,12 @@
                 :source "foo"
                 :confidence "High"
                 :description "sighting 4"
-                :indicators [{:indicator_id long-indicator-3-id}]
+                :indicators [{:indicator_id (id/long-id indicator-3-id)}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :schema_version schema-version
                 :tlp "red"}
-               {:id sighting-5-id
+               {:id (id/long-id sighting-5-id)
                 :type "sighting"
                 :timestamp #inst "2016-02-05T02:00:00.000-00:00"
                 :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
@@ -299,7 +323,7 @@
                 :source "bar"
                 :confidence "Low"
                 :description "sighting 5"
-                :indicators [{:indicator_id long-indicator-3-id}]
+                :indicators [{:indicator_id (id/long-id indicator-3-id)}]
                 :observables [{:value "10.0.0.1"
                                :type "ip"}]
                 :schema_version schema-version

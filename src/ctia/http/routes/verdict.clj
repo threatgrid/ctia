@@ -2,6 +2,7 @@
   (:require [schema.core :as s]
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
+            [ctia.domain.entities.verdict :refer [with-long-id]]
             [ctia.store :refer :all]
             [ctim.schemas
              [vocabularies :refer [ObservableTypeIdentifier]]
@@ -24,5 +25,5 @@
                    :data
                    first)]
 
-      (ok d)
+      (ok (with-long-id d))
       (not-found))))

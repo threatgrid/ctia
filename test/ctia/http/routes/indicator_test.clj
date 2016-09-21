@@ -3,7 +3,8 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.http.routes.indicator :refer [->long-id]]
+            [ctia.properties :refer [get-http-show]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -24,31 +25,35 @@
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /ctia/indicator"
-    (let [response (post "ctia/indicator"
-                         :body {:external_ids ["http://ex.tld/ctia/indicator/indicator-123"
-                                               "http://ex.tld/ctia/indicator/indicator-345"]
-                                :title "indicator-title"
-                                :description "description"
-                                :producer "producer"
-                                :indicator_type ["C2" "IP Watchlist"]
-                                :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
-                                             :end_time "2016-07-11T00:40:48.212-00:00"}
-                                :related_campaigns [{:confidence "High"
-                                                     :source "source"
-                                                     :relationship "relationship"
-                                                     :campaign_id "campaign-123"}]
-                                :composite_indicator_expression {:operator "and"
-                                                                 :indicator_ids ["test1" "test2"]}
-                                :related_COAs [{:confidence "High"
-                                                :source "source"
-                                                :relationship "relationship"
-                                                :COA_id "coa-123"}]}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          indicator (:parsed-body response)
+    (let [{status :status
+           indicator :parsed-body}
+          (post "ctia/indicator"
+                :body {:external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                                      "http://ex.tld/ctia/indicator/indicator-345"]
+                       :title "indicator-title"
+                       :description "description"
+                       :producer "producer"
+                       :indicator_type ["C2" "IP Watchlist"]
+                       :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
+                                    :end_time "2016-07-11T00:40:48.212-00:00"}
+                       :related_campaigns [{:confidence "High"
+                                            :source "source"
+                                            :relationship "relationship"
+                                            :campaign_id "campaign-123"}]
+                       :composite_indicator_expression {:operator "and"
+                                                        :indicator_ids ["test1" "test2"]}
+                       :related_COAs [{:confidence "High"
+                                       :source "source"
+                                       :relationship "relationship"
+                                       :COA_id "coa-123"}]}
+                :headers {"api_key" "45c1f5e3f05d0"})
+
+          indicator-id (id/long-id->id (:id indicator))
           indicator-external-ids (:external_ids indicator)]
-      (is (= 201 (:status response)))
+      (is (= 201 status))
       (is (deep=
-           {:type "indicator"
+           {:id (id/long-id indicator-id)
+            :type "indicator"
             :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
                            "http://ex.tld/ctia/indicator/indicator-345"]
             :title "indicator-title"
@@ -71,9 +76,15 @@
                             :COA_id "coa-123"}]
             :owner "foouser"}
            (dissoc indicator
-                   :id
                    :created
                    :modified)))
+
+      (testing "the indicator ID has correct fields"
+        (let [show-props (get-http-show)]
+          (is (= (:hostname    indicator-id)      (:hostname    show-props)))
+          (is (= (:protocol    indicator-id)      (:protocol    show-props)))
+          (is (= (:port        indicator-id)      (:port        show-props)))
+          (is (= (:path-prefix indicator-id) (seq (:path-prefix show-props))))))
 
       (testing "GET /ctia/indicator/external_id"
         (let [response (get "ctia/indicator/external_id"
@@ -82,7 +93,8 @@
               indicators (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:type "indicator"
+               [{:id (id/long-id indicator-id)
+                 :type "indicator"
                  :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
                                 "http://ex.tld/ctia/indicator/indicator-345"]
                  :title "indicator-title"
@@ -104,16 +116,17 @@
                                  :relationship "relationship"
                                  :COA_id "coa-123"}]
                  :owner "foouser"}]
-               (map #(dissoc % :id :created :modified) indicators)))))
+               (map #(dissoc % :created :modified) indicators)))))
 
 
       (testing "GET /ctia/indicator/:id"
-        (let [response (get (str "ctia/indicator/" (:id indicator))
+        (let [response (get (str "ctia/indicator/" (:short-id indicator-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
               indicator (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:type "indicator"
+               {:id (id/long-id indicator-id)
+                :type "indicator"
                 :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
                                "http://ex.tld/ctia/indicator/indicator-345"]
                 :title "indicator-title"
@@ -136,7 +149,6 @@
                                 :COA_id "coa-123"}]
                 :owner "foouser"}
                (dissoc indicator
-                       :id
                        :created
                        :modified)))))
 
@@ -149,7 +161,8 @@
 
           (is (= 200 status))
           (is (deep=
-               [{:type "indicator"
+               [{:id (id/long-id indicator-id)
+                 :type "indicator"
                  :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
                                 "http://ex.tld/ctia/indicator/indicator-345"]
                  :title "indicator-title"
@@ -171,12 +184,12 @@
                                  :relationship "relationship"
                                  :COA_id "coa-123"}]
                  :owner "foouser"}]
-               (map #(dissoc % :id :created :modified) indicators)))))
+               (map #(dissoc % :created :modified) indicators)))))
 
       (testing "PUT /ctia/indicator/:id"
         (let [{status :status
                updated-indicator :parsed-body}
-              (put (str "ctia/indicator/" (:id indicator))
+              (put (str "ctia/indicator/" (:short-id indicator-id))
                    :body {:external_ids ["http://ex.tld/ctia/indicator/indicator-123"
                                          "http://ex.tld/ctia/indicator/indicator-345"]
                           :title "updated indicator"
@@ -199,7 +212,7 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               {:id (:id indicator)
+               {:id (id/long-id indicator-id)
                 :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
                                "http://ex.tld/ctia/indicator/indicator-345"]
                 :type "indicator"
@@ -227,7 +240,7 @@
                        :modified)))))
 
       (testing "DELETE /ctia/indicator/:id"
-        (let [response (delete (str "ctia/indicator/" (:id indicator))
+        (let [response (delete (str "ctia/indicator/" (:short-id indicator-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           ;; Deleting indicators is not allowed
           (is (= 404 (:status response))))))))
@@ -246,6 +259,8 @@
                                   :end_time "2017-05-19T10:40:48.212-00:00"}}
           coa-1 (assert-post "ctia/coa" new-coa-1)
           coa-2 (assert-post "ctia/coa" new-coa-2)
+          coa-1-id (id/long-id->id (:id coa-1))
+          coa-2-id (id/long-id->id (:id coa-2))
 
           new-indicator-1 {:title "indicator-1"
                            :description "indicator-1"
@@ -253,22 +268,22 @@
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_COAs [{:COA_id (->long-id :coa (:id coa-1))}
-                                          {:COA_id (->long-id :coa (:id coa-2))}]}
+                           :related_COAs [{:COA_id (id/long-id coa-1-id)}
+                                          {:COA_id (id/long-id coa-2-id)}]}
           new-indicator-2 {:title "indicator-2"
                            :description "indicator-2"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_COAs [{:COA_id (->long-id :coa (:id coa-1))}]}
+                           :related_COAs [{:COA_id (id/long-id coa-1-id)}]}
           new-indicator-3 {:title "indicator-3"
                            :description "indicator-3"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_COAs [{:COA_id (->long-id :coa (:id coa-2))}]}
+                           :related_COAs [{:COA_id (id/long-id coa-2-id)}]}
           new-indicator-4 {:title "indicator-4"
                            :description "indicator-4"
                            :producer "producer"
@@ -281,9 +296,9 @@
           indicator-2 (assert-post "ctia/indicator" new-indicator-2)
           indicator-3 (assert-post "ctia/indicator" new-indicator-3)
           indicator-4 (assert-post "ctia/indicator" new-indicator-4)]
-      (test-get-list (str "ctia/coa/" (url-encode (:id coa-1)) "/indicators")
+      (test-get-list (str "ctia/coa/" (url-encode (:short-id coa-1-id)) "/indicators")
                      [indicator-1 indicator-2])
-      (test-get-list (str "ctia/coa/" (url-encode (:id coa-2)) "/indicators")
+      (test-get-list (str "ctia/coa/" (url-encode (:short-id coa-2-id)) "/indicators")
                      [indicator-1 indicator-3]))))
 
 (deftest-for-each-store test-indicator-list-by-campaign-routes
@@ -304,6 +319,8 @@
                                        :end_time "2017-05-19T10:40:48.212-00:00"}}
           campaign-1 (assert-post "ctia/campaign" new-campaign-1)
           campaign-2 (assert-post "ctia/campaign" new-campaign-2)
+          campaign-1-id (id/long-id->id (:id campaign-1))
+          campaign-2-id (id/long-id->id (:id campaign-2))
 
           new-indicator-1 {:title "indicator-1"
                            :description "indicator-1"
@@ -311,22 +328,22 @@
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_campaigns [{:campaign_id (->long-id :campaign (:id campaign-1))}
-                                               {:campaign_id (->long-id :campaign (:id campaign-2))}]}
+                           :related_campaigns [{:campaign_id (id/long-id campaign-1-id)}
+                                               {:campaign_id (id/long-id campaign-2-id)}]}
           new-indicator-2 {:title "indicator-2"
                            :description "indicator-2"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_campaigns [{:campaign_id (->long-id :campaign (:id campaign-1))}]}
+                           :related_campaigns [{:campaign_id (id/long-id campaign-1-id)}]}
           new-indicator-3 {:title "indicator-3"
                            :description "indicator-3"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_campaigns [{:campaign_id (->long-id :campaign (:id campaign-2))}]}
+                           :related_campaigns [{:campaign_id (id/long-id campaign-2-id)}]}
           new-indicator-4 {:title "indicator-4"
                            :description "indicator-4"
                            :producer "producer"
@@ -339,9 +356,9 @@
           indicator-2 (assert-post "ctia/indicator" new-indicator-2)
           indicator-3 (assert-post "ctia/indicator" new-indicator-3)
           indicator-4 (assert-post "ctia/indicator" new-indicator-4)]
-      (test-get-list (str "ctia/campaign/" (url-encode (:id campaign-1)) "/indicators")
+      (test-get-list (str "ctia/campaign/" (url-encode (:short-id campaign-1-id)) "/indicators")
                      [indicator-1 indicator-2])
-      (test-get-list (str "ctia/campaign/" (url-encode (:id campaign-2)) "/indicators")
+      (test-get-list (str "ctia/campaign/" (url-encode (:short-id campaign-2-id)) "/indicators")
                      [indicator-1 indicator-3]))))
 
 (deftest-for-each-store test-indicator-list-by-judgement-routes
@@ -365,28 +382,31 @@
           judgement-1 (assert-post "ctia/judgement" new-judgement-1)
           judgement-2 (assert-post "ctia/judgement" new-judgement-2)
 
+          judgement-1-id (id/long-id->id (:id judgement-1))
+          judgement-2-id (id/long-id->id (:id judgement-2))
+
           new-indicator-1 {:title "indicator-1"
                            :description "indicator-1"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :judgements [{:judgement_id (->long-id :judgement (:id judgement-1))}
-                                        {:judgement_id (->long-id :judgement (:id judgement-2))}]}
+                           :judgements [{:judgement_id (id/long-id judgement-1-id)}
+                                        {:judgement_id (id/long-id judgement-2-id)}]}
           new-indicator-2 {:title "indicator-2"
                            :description "indicator-2"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :judgements [{:judgement_id (->long-id :judgement (:id judgement-1))}]}
+                           :judgements [{:judgement_id (id/long-id judgement-1-id)}]}
           new-indicator-3 {:title "indicator-3"
                            :description "indicator-3"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :judgements [{:judgement_id (->long-id :judgement (:id judgement-2))}]}
+                           :judgements [{:judgement_id (id/long-id judgement-2-id)}]}
           new-indicator-4 {:title "indicator-4"
                            :description "indicator-4"
                            :producer "producer"
@@ -399,9 +419,9 @@
           indicator-2 (assert-post "ctia/indicator" new-indicator-2)
           indicator-3 (assert-post "ctia/indicator" new-indicator-3)
           indicator-4 (assert-post "ctia/indicator" new-indicator-4)]
-      (test-get-list (str "ctia/judgement/" (url-encode (:id judgement-1)) "/indicators")
+      (test-get-list (str "ctia/judgement/" (url-encode (:short-id judgement-1-id)) "/indicators")
                      [indicator-1 indicator-2])
-      (test-get-list (str "ctia/judgement/" (url-encode (:id judgement-2)) "/indicators")
+      (test-get-list (str "ctia/judgement/" (url-encode (:short-id judgement-2-id)) "/indicators")
                      [indicator-1 indicator-3]))))
 
 (deftest-for-each-store test-indicator-list-by-ttp-routes
@@ -422,6 +442,8 @@
                                   :end_time "2017-05-19T10:40:48.212-00:00"}}
           ttp-1 (assert-post "ctia/ttp" new-ttp-1)
           ttp-2 (assert-post "ctia/ttp" new-ttp-2)
+          ttp-1-id (id/long-id->id (:id ttp-1))
+          ttp-2-id (id/long-id->id (:id ttp-2))
 
           new-indicator-1 {:title "indicator-1"
                            :description "indicator-1"
@@ -429,22 +451,22 @@
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :indicated_TTP [{:ttp_id (->long-id :ttp (:id ttp-1))}
-                                           {:ttp_id (->long-id :ttp (:id ttp-2))}]}
+                           :indicated_TTP [{:ttp_id (id/long-id ttp-1-id)}
+                                           {:ttp_id (id/long-id ttp-2-id)}]}
           new-indicator-2 {:title "indicator-2"
                            :description "indicator-2"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :indicated_TTP [{:ttp_id (->long-id :ttp (:id ttp-1))}]}
+                           :indicated_TTP [{:ttp_id (id/long-id ttp-1-id)}]}
           new-indicator-3 {:title "indicator-3"
                            :description "indicator-3"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :indicated_TTP [{:ttp_id (->long-id :ttp (:id ttp-2))}]}
+                           :indicated_TTP [{:ttp_id (id/long-id ttp-2-id)}]}
           new-indicator-4 {:title "indicator-4"
                            :description "indicator-4"
                            :producer "producer"
@@ -457,9 +479,9 @@
           indicator-2 (assert-post "ctia/indicator" new-indicator-2)
           indicator-3 (assert-post "ctia/indicator" new-indicator-3)
           indicator-4 (assert-post "ctia/indicator" new-indicator-4)]
-      (test-get-list (str "ctia/ttp/" (url-encode (:id ttp-1)) "/indicators")
+      (test-get-list (str "ctia/ttp/" (url-encode (:short-id ttp-1-id)) "/indicators")
                      [indicator-1 indicator-2])
-      (test-get-list (str "ctia/ttp/" (url-encode (:id ttp-2)) "/indicators")
+      (test-get-list (str "ctia/ttp/" (url-encode (:short-id ttp-2-id)) "/indicators")
                      [indicator-1 indicator-3]))))
 
 (deftest-for-each-store test-indicator-list-by-indicator-routes
@@ -480,6 +502,8 @@
                                           :end_time "2017-05-19T10:40:48.212-00:00"}}
           r-indicator-1 (assert-post "ctia/indicator" new-r-indicator-1)
           r-indicator-2 (assert-post "ctia/indicator" new-r-indicator-2)
+          r-indicator-1-id (id/long-id->id (:id r-indicator-1))
+          r-indicator-2-id (id/long-id->id (:id r-indicator-2))
 
           new-indicator-1 {:title "indicator-1"
                            :description "indicator-1"
@@ -487,22 +511,22 @@
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_indicators [{:indicator_id (->long-id :indicator (:id r-indicator-1))}
-                                                {:indicator_id (->long-id :indicator (:id r-indicator-2))}]}
+                           :related_indicators [{:indicator_id (id/long-id r-indicator-1-id)}
+                                                {:indicator_id (id/long-id r-indicator-2-id)}]}
           new-indicator-2 {:title "indicator-2"
                            :description "indicator-2"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_indicators [{:indicator_id (->long-id :indicator (:id r-indicator-1))}]}
+                           :related_indicators [{:indicator_id (id/long-id r-indicator-1-id)}]}
           new-indicator-3 {:title "indicator-3"
                            :description "indicator-3"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :related_indicators [{:indicator_id (->long-id :indicator (:id r-indicator-2))}]}
+                           :related_indicators [{:indicator_id (id/long-id r-indicator-2-id)}]}
           new-indicator-4 {:title "indicator-4"
                            :description "indicator-4"
                            :producer "producer"
@@ -515,7 +539,7 @@
           indicator-2 (assert-post "ctia/indicator" new-indicator-2)
           indicator-3 (assert-post "ctia/indicator" new-indicator-3)
           indicator-4 (assert-post "ctia/indicator" new-indicator-4)]
-      (test-get-list (str "ctia/indicator/" (url-encode (:id r-indicator-1)) "/indicators")
+      (test-get-list (str "ctia/indicator/" (url-encode (:short-id r-indicator-1-id)) "/indicators")
                      [indicator-1 indicator-2])
-      (test-get-list (str "ctia/indicator/" (url-encode (:id r-indicator-2)) "/indicators")
+      (test-get-list (str "ctia/indicator/" (url-encode (:short-id r-indicator-2-id)) "/indicators")
                      [indicator-1 indicator-3]))))

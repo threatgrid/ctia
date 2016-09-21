@@ -4,6 +4,7 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.redis :as lr]
             [ctia.properties :refer [properties]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [atom :as at-helpers]
@@ -28,7 +29,7 @@
                                              (fn test-events-pubsub-fn [ev]
                                                (swap! results conj ev)
                                                (.countDown finish-signal)))]
-      (let [{{judgement-1-id :id} :parsed-body
+      (let [{{judgement-1-long-id :id} :parsed-body
              judgement-1-status :status
              :as judgement-1}
             (post "ctia/judgement"
@@ -42,7 +43,10 @@
                          :confidence "Low"
                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
-            {{judgement-2-id :id} :parsed-body
+            judgement-1-id
+            (id/long-id->id judgement-1-long-id)
+
+            {{judgement-2-long-id :id} :parsed-body
              judgement-2-status :status
              :as judgement-2}
             (post "ctia/judgement"
@@ -56,7 +60,10 @@
                          :confidence "Low"
                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
-            {{judgement-3-id :id} :parsed-body
+            judgement-2-id
+            (id/long-id->id judgement-2-long-id)
+
+            {{judgement-3-long-id :id} :parsed-body
              judgement-3-status :status
              :as judgement-3}
             (post "ctia/judgement"
@@ -68,7 +75,10 @@
                          :priority 100
                          :severity 100
                          :confidence "Low"
-                         :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})]
+                         :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
+
+            judgement-3-id
+            (id/long-id->id judgement-3-long-id)]
 
         (is (= 201 judgement-1-status))
         (is (= 201 judgement-2-status))
@@ -88,11 +98,11 @@
                           :disposition 1
                           :disposition_name "Clean"
                           :priority 100
-                          :id judgement-1-id
+                          :id (:short-id judgement-1-id)
                           :severity 100
                           :confidence "Low"
                           :owner "Unknown"}
-                 :id judgement-1-id
+                 :id (:short-id judgement-1-id)
                  :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
@@ -106,11 +116,11 @@
                           :disposition 2
                           :disposition_name "Malicious"
                           :priority 100
-                          :id judgement-2-id
+                          :id (:short-id judgement-2-id)
                           :severity 100
                           :confidence "Low"
                           :owner "Unknown"}
-                 :id judgement-2-id
+                 :id (:short-id judgement-2-id)
                  :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
@@ -124,11 +134,11 @@
                           :disposition 3
                           :disposition_name "Suspicious"
                           :priority 100
-                          :id judgement-3-id
+                          :id (:short-id judgement-3-id)
                           :severity 100
                           :confidence "Low"
                           :owner "Unknown"}
-                 :id judgement-3-id
+                 :id (:short-id judgement-3-id)
                  :type "CreatedModel"}]
                (->> @results
                     (map #(dissoc % :timestamp :http-params))

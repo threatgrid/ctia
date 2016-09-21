@@ -115,5 +115,4 @@
   (first (doall (map #(apply write-fn % args) (store @stores)))))
 
 (defn read-store [store read-fn & args]
-  (apply read-fn (first (store @stores)) args))
-
+  (apply read-fn (first (get @stores store)) args))

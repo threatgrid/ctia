@@ -11,7 +11,7 @@
              [pagination :refer [pagination-test
                                  pagination-test-no-sort]]
              [store :refer [deftest-for-each-store]]]
-            [ctia.http.routes.indicator :refer [->long-id]]
+            [ctim.domain.id :as id]
             [ctim.generators.schemas :as gs]
             [ring.util.codec :refer [url-encode]]))
 
@@ -26,7 +26,7 @@
           indicators (->> (gs/sample-by-kw 5 :new-indicator)
                           (map #(assoc % :title "test")))
           created-indicators (map #(assert-post "ctia/indicator" %) indicators)
-          indicator-rels (map (fn [{:keys [id]}] {:indicator_id (->long-id :indicator id)})
+          indicator-rels (map (fn [{:keys [id]}] {:indicator_id id})
                               created-indicators)
           judgements (->> (gs/sample-by-kw 5 :new-judgement)
                           (map #(assoc %
@@ -53,7 +53,12 @@
                          {"api_key" "45c1f5e3f05d0"}
                          [:id :title])
         (pagination-test (str "/ctia/indicator/"
-                              (-> created-indicators first :id url/encode)
+                              (-> created-indicators
+                                  first
+                                  :id
+                                  id/long-id->id
+                                  :short-id
+                                  url/encode)
                               "/sightings")
                          {"api_key" "45c1f5e3f05d0"}
                          [:id :timestamp :confidence])

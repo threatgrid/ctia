@@ -3,6 +3,8 @@
   (:require [clj-momo.test-helpers.core :as mht]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
+            [ctia.properties :refer [get-http-show]]
+            [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -21,24 +23,28 @@
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /ctia/ttp"
-    (let [response (post "ctia/ttp"
-                         :body {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
-                                               "http://ex.tld/ctia/ttp/ttp-345"]
-                                :title "ttp"
-                                :description "description"
-                                :ttp_type "foo"
-                                :indicators [{:indicator_id "indicator-1"}
-                                             {:indicator_id "indicator-2"}]
-                                :exploit_targets [{:exploit_target_id "exploit-target-123"}
-                                                  {:exploit_target_id "exploit-target-234"}]
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                             :end_time "2016-07-11T00:40:48.212-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})
-          ttp (:parsed-body response)
+    (let [{status :status
+           ttp :parsed-body}
+          (post "ctia/ttp"
+                :body {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                                      "http://ex.tld/ctia/ttp/ttp-345"]
+                       :title "ttp"
+                       :description "description"
+                       :ttp_type "foo"
+                       :indicators [{:indicator_id "indicator-1"}
+                                    {:indicator_id "indicator-2"}]
+                       :exploit_targets [{:exploit_target_id "exploit-target-123"}
+                                         {:exploit_target_id "exploit-target-234"}]
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                    :end_time "2016-07-11T00:40:48.212-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})
+
+          ttp-id (id/long-id->id (:id ttp))
           ttp-external-ids (:external_ids ttp)]
-      (is (= 201 (:status response)))
+      (is (= 201 status))
       (is (deep=
-           {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+           {:id (id/long-id ttp-id)
+            :external_ids ["http://ex.tld/ctia/ttp/ttp-123"
                            "http://ex.tld/ctia/ttp/ttp-345"]
             :type "ttp"
             :title "ttp"
@@ -54,9 +60,15 @@
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :owner "foouser"}
            (dissoc ttp
-                   :id
                    :created
                    :modified)))
+
+      (testing "the ttp ID has correct fields"
+        (let [show-props (get-http-show)]
+          (is (= (:hostname    ttp-id)      (:hostname    show-props)))
+          (is (= (:protocol    ttp-id)      (:protocol    show-props)))
+          (is (= (:port        ttp-id)      (:port        show-props)))
+          (is (= (:path-prefix ttp-id) (seq (:path-prefix show-props))))))
 
       (testing "GET /ctia/ttp/external_id"
         (let [response (get "ctia/ttp/external_id"
@@ -65,7 +77,8 @@
               ttps (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+               [{:id (id/long-id ttp-id)
+                 :external_ids ["http://ex.tld/ctia/ttp/ttp-123"
                                 "http://ex.tld/ctia/ttp/ttp-345"]
                  :type "ttp"
                  :title "ttp"
@@ -80,15 +93,16 @@
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                  :owner "foouser"}]
-               (map #(dissoc % :id :created :modified) ttps)))))
+               (map #(dissoc % :created :modified) ttps)))))
 
       (testing "GET /ctia/ttp/:id"
-        (let [response (get (str "ctia/ttp/" (:id ttp))
+        (let [response (get (str "ctia/ttp/" (:short-id ttp-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
               ttp (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+               {:id (id/long-id ttp-id)
+                :external_ids ["http://ex.tld/ctia/ttp/ttp-123"
                                "http://ex.tld/ctia/ttp/ttp-345"]
                 :type "ttp"
                 :title "ttp"
@@ -104,14 +118,13 @@
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
                (dissoc ttp
-                       :id
                        :created
                        :modified)))))
 
       (testing "PUT /ctia/ttp/:id"
         (let [{status :status
                updated-ttp :parsed-body}
-              (put (str "ctia/ttp/" (:id ttp))
+              (put (str "ctia/ttp/" (:short-id ttp-id))
                    :body {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
                                          "http://ex.tld/ctia/ttp/ttp-345"]
                           :title "updated ttp"
@@ -127,7 +140,7 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
-               {:id (:id ttp)
+               {:id (id/long-id ttp-id)
                 :external_ids ["http://ex.tld/ctia/ttp/ttp-123"
                                "http://ex.tld/ctia/ttp/ttp-345"]
                 :type "ttp"
@@ -149,9 +162,9 @@
                        :modified)))))
 
       (testing "DELETE /ctia/ttp/:id"
-        (let [response (delete (str "ctia/ttp/" (:id ttp))
+        (let [response (delete (str "ctia/ttp/" (:short-id ttp-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
-          (let [response (get (str "ctia/ttp/" (:id ttp))
+          (let [response (get (str "ctia/ttp/" (:short-id ttp-id))
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

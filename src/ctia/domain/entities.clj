@@ -1,22 +1,24 @@
 (ns ctia.domain.entities
   (:require
-   [clj-momo.lib.time :as time]
-   [ctim.schemas
-    [actor :refer [NewActor StoredActor]]
-    [campaign :refer [NewCampaign StoredCampaign]]
-    [common :as c]
-    [coa :refer [NewCOA StoredCOA]]
-    [exploit-target :refer [NewExploitTarget StoredExploitTarget]]
-    [feedback :refer [NewFeedback StoredFeedback]]
-    [incident :refer [NewIncident StoredIncident]]
-    [indicator :refer [NewIndicator StoredIndicator]]
-    [judgement :refer [NewJudgement StoredJudgement]]
-    [sighting :refer [NewSighting StoredSighting]]
-    [ttp :refer [NewTTP StoredTTP]]
-    [verdict :refer [Verdict StoredVerdict]]
-    [bundle :refer [NewBundle StoredBundle]]]
-   [ring.util.http-response :as http-response]
-   [schema.core :as s])
+    [clj-momo.lib.time :as time]
+    [ctia.properties :refer [get-http-show]]
+    [ctim.domain.id :as id]
+    [ctim.schemas
+     [actor :refer [NewActor StoredActor]]
+     [campaign :refer [NewCampaign StoredCampaign]]
+     [common :as c]
+     [coa :refer [NewCOA StoredCOA]]
+     [exploit-target :refer [NewExploitTarget StoredExploitTarget]]
+     [feedback :refer [NewFeedback StoredFeedback]]
+     [incident :refer [NewIncident StoredIncident]]
+     [indicator :refer [NewIndicator StoredIndicator]]
+     [judgement :refer [NewJudgement StoredJudgement]]
+     [sighting :refer [NewSighting StoredSighting]]
+     [ttp :refer [NewTTP StoredTTP]]
+     [verdict :refer [Verdict StoredVerdict]]
+     [bundle :refer [NewBundle StoredBundle]]]
+    [ring.util.http-response :as http-response]
+    [schema.core :as s])
   (:import [java.util UUID]))
 
 (def schema-version c/ctim-schema-version)
@@ -166,3 +168,5 @@
 
 (def realize-ttp
   (default-realize-fn "ttp" NewTTP StoredTTP))
+
+(def ->long-id (id/factory:short-id+type->long-id get-http-show))

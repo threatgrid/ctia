@@ -2,11 +2,13 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
+   [ctia.domain.entities.judgement :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
-   [ctia.properties :refer [properties]]
+   [ctia.http.routes.common
+    :refer [created paginated-ok PagingParams]]
+   [ctia.properties :refer [get-http-show]]
    [ctia.store :refer :all]
-   [ctim.domain.id :as domain-id]
+   [ctim.domain.id :as id]
    [ctim.schemas
     [feedback :refer [NewFeedback StoredFeedback]]
     [judgement :refer [NewJudgement StoredJudgement]]
@@ -29,10 +31,6 @@
   (st/merge JudgementsQueryParams
             {:external_id s/Str}))
 
-(def ->id
-  (domain-id/long-id-factory :judgement
-                             #(get-in @properties [:ctia :http :show])))
-
 (defroutes judgement-routes
   (context "/judgement" []
     :tags ["Judgement"]
@@ -43,11 +41,13 @@
       :summary "Adds a new Judgement"
       :capabilities :create-judgement
       :identity identity
-      (created (flows/create-flow :realize-fn realize-judgement
-                                  :store-fn #(write-store :judgement create-judgement %)
-                                  :entity-type :judgement
-                                  :identity identity
-                                  :entity judgement)))
+      (created
+       (with-long-id
+         (flows/create-flow :realize-fn realize-judgement
+                            :store-fn #(write-store :judgement create-judgement %)
+                            :entity-type :judgement
+                            :identity identity
+                            :entity judgement))))
     (POST "/:judgement-id/indicator" []
       :return (s/maybe rel/RelatedIndicator)
       :path-params [judgement-id :- s/Str]
@@ -70,8 +70,11 @@
       :summary "Get Judgements by external ids"
       :capabilities #{:read-judgement :external-id}
       (paginated-ok
-       (read-store :judgement list-judgements
-                   {:external_ids (:external_id q)} q)))
+       (page-with-long-id
+         (read-store :judgement
+                     list-judgements
+                     {:external_ids (:external_id q)}
+                     q))))
 
     (GET "/:id" []
       :return (s/maybe StoredJudgement)
@@ -80,7 +83,7 @@
       :summary "Gets a Judgement by ID"
       :capabilities :read-judgement
       (if-let [d (read-store :judgement read-judgement id)]
-        (ok d)
+        (ok (with-long-id d))
         (not-found)))
 
     (DELETE "/:id" []
