@@ -14,7 +14,10 @@
              :refer [post get]]
             [ctim.domain.id :as id]
             [ctim.generators.schemas :as gen]
-            [ctim.generators.schemas.sighting-generators :as gs]))
+            [ctim.generators.schemas.sighting-generators :as gs]
+            [schema.coerce :as c]
+            [ring.swagger.coerce :as sc]
+            [ctim.schemas.bundle :refer [StoredBundle]]))
 
 (defn assert-successfully-created
   ([status]
@@ -128,9 +131,39 @@
                 post-indicator
                 (dissoc get-indicator :id))))))
 
+
+(def spec-bundle-routes
+  (let [bundle-coercer (c/coercer! StoredBundle sc/json-schema-coercion-matcher)]
+    (for-all [new-bundle (gen/gen-entity :new-bundle)]
+      (let [{post-status :status
+             {id :id type :type :as post-entity} :parsed-body}
+            (post "/ctia/bundle" :body new-bundle)
+
+            url-id (-> (id/->id type id (get-http-show))
+                       :short-id
+                       encode)
+
+            {get-status :status
+             get-entity :parsed-body}
+            (get (str "ctia/bundle/" url-id))]
+
+        ;; For Easy debug
+        ;;(clojure.pprint/pprint new-entity#)
+        ;;(clojure.pprint/pprint (clojure.data/diff new-entity# post-entity#))
+        ;;(clojure.pprint/pprint (clojure.data/diff get-entity# post-entity#))
+
+        (assert-successfully-created post-status post-entity)
+        (assert-successful get-status get-entity)
+
+        (if-not (empty? (keys new-bundle))
+          (common= new-bundle
+                   (bundle-coercer post-entity)
+                   (dissoc (bundle-coercer get-entity) :id))
+          (common= (bundle-coercer post-entity)
+                   (dissoc (bundle-coercer get-entity) :id)))))))
+
 (def-property spec-feedback-routes 'feedback)
 (def-property spec-incident-routes 'incident)
 (def-property spec-judgement-routes 'judgement)
 (def-property spec-sighting-routes 'sighting)
 (def-property spec-ttp-routes 'ttp)
-(def-property spec-bundle-routes 'bundle)
