@@ -181,4 +181,11 @@ Interfaces that Java, or other JVM languages, can implement.
 
 ### 6.1 As an Threat Analyst I want to add observables that may not be as malicious.
 
-An analyst may be gathering information around an actor or campaign and would like to add the observations as a judgement in order to populate an indicator or incident. This is 'interesting' or 'informational' but not necessarily suspicious. For example: An actor may use a specific public ip lookup site to check location, etc... This domain seen in conjunction with host indicators may indicate compromise. It may also simply be information added to TTPs or a Campaign.
+An analyst may be gathering information around an actor or campaign
+and would like to add the observations as a judgement in order to
+populate an indicator or incident. This is 'interesting' or
+'informational' but not necessarily suspicious. For example: An actor
+may use a specific public ip lookup site to check location,
+etc... This domain seen in conjunction with host indicators may
+indicate compromise. It may also simply be information added to TTPs
+or a Campaign.

@@ -26,12 +26,36 @@ This is not a full STIX/TAXII service.  Its intent is to help
 Analysts know what is important, and for detection and prevention
 tools to know what to look for.
 
-In addition to the RESTful HTTP API, we also want to support a ZeroMQ
-based, highly performant binary protocol for Verdict lookups.
+In addition to the RESTful HTTP API, it also has an Event Bus.
+
+The data model is define in the [CTIM](/threatgrid/ctim) project,
+although it's quite easy to see the API and the models it handles
+using the built-in [Swagger UI](http://localhost:3000/index.html) once
+you have it running.
+
+CTIA is implemented in [Clojure](http://clojure.org), and if you need
+a crash course in running clojure projects, check out
+[Clojure for the Brave and True](http://www.braveclojure.com/getting-started/).
 
 ## Usage
 
+### Data Stores and External Dependencies
+
+CTIA uses Leiningen as it's "build" tool, you can install it by
+following the instructions here: http://leiningen.org/#install
+
+By default, CTIA uses Elasticsearch as it's data store.  Assuming you
+have Elasticsearch running on 127.0.0.1:9200 you can simply start
+CTIA.
+
+You can jump to the [Develoer](#Developer) section to see instructions
+on how to run elasticsearch and other optional supporting tools using
+Docker.  CTIA can use redis to store some of it's objects (Verdicts)
+and also can send streams of events to Redis and Elasticsearch.
+
 ### Run the application locally
+
+Running from a cloned repository:
 
 `lein run`
 
@@ -39,20 +63,16 @@ If you like, you can cider-connect to the NREPL listener that it
 starts by default.  Be sure NOT to run the service this way in
 production, unless you ensure access to the NREPL port is restricted.
 
-This will start up with non-persistent in-memory storage only.
-
-**Remark**:
-if you use java 1.7, you might need to add `-XX:MaxPermSize=256m`
-to java options.
-
 ### Packaging and running as standalone jar
 
 This is the proper way to run this in production.
 
 ```
 lein do clean, uberjar
-java -jar target/server.jar
+java -Xmx4g -Djava.awt.headless=true -XX:MaxPermSize=256m -Dlog.console.threshold=INFO -jar target/ctia.jar
 ```
+
+Obviously, one may tweak the java arguments as needed.
 
 ## Development
 
@@ -103,24 +123,19 @@ cd containers/dev
 docker-compose -f docker-compose.yml up --force-recreate
 ```
 
+Now, in another terminal, you can run CTIA.
+
+
+### Testing and CI
+
+All PRs must pass `lein test` with no fails.  All new code should have
+tests accompanying it.
 
 ## License
 
 Copyright © 2015-2016 Cisco Systems
 
 Eclipse Public License v1.0
-
-
-## Implementation Notes
-
-The intent is for this service to be embedded in other JVM
-applications.  It currently provides no authentication, or access
-control.
-
-We would like to generate client libaries from the swagger, and
-provide officially supported versions of them for users.  To do this
-we need to ensure we use the most appropriate types, and swagger
-metadata in our API definition (see handler.clj).
 
 ## Data Model
 
