@@ -26,6 +26,7 @@
 
   :jvm-opts ["-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
              "-Djava.awt.headless=true"
+             "-XX:MaxPermSize=256m"
              "-Dlog.console.threshold=INFO"
              "-server"]
   :pedantic? :abort
