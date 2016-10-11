@@ -79,20 +79,23 @@ Obviously, one may tweak the java arguments as needed.
 We provide a default `docker-compose-dev.yml` which will bring up the
 dependencies you need in containers.
 
-The easiest way to get running it to install
-[Docker Toolbox](https://www.docker.com/products/docker-toolbox) which
+
+The easiest way to get running is to use `docker`.
+
+On Mac OS X, you should use
+[Docker for Mac](https://docs.docker.com/docker-for-mac/) which
 includes all the dependencies you need to run Docker containers.
 
-On Mac OS X, start a terminal using "Docker QuickStart Terminal" application.
-
 You can then bring up a development environemnt:
+
 ```
 cd containers/dev
 docker-compose -f docker-compose.yml build
 docker-compose -f docker-compose.yml up
 ```
 
-You will then need to tell your CTIA where to find it's dependencies.
+If you can't use docker directly and are forced to use Docker Toolbox,
+you will then need to tell your CTIA where to find it's dependencies.
 The services will be listening on your docker-machine's IP, which you
 can get with the command, `docker-machine ip`, and then you define
 your own `resources/ctia.properties` file with the following values:
