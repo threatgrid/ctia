@@ -1,5 +1,5 @@
 (def cheshire-version "5.6.3")
-(def compojure-api-version "1.1.7")
+(def compojure-api-version "1.1.8")
 (def schema-tools-version "0.9.0")
 (def schema-version "1.1.3")
 
@@ -48,10 +48,11 @@
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
                   ;; Exclusions:
+                  ;; - ring-swagger as CTIM provides 0.22.9
                   ;; - compojure-api 1.1.7 is not using the latest snakeyaml
                   ;;  - As of 2016-08-25, the latest version is 1.17, elastich
                   ;;    3.0.0-beta1 wants 1.15, while compojure-api wants 1.13
-                  :exclusions [org.yaml/snakeyaml]]
+                  :exclusions [org.yaml/snakeyaml metosin/ring-swagger]]
                  [ring/ring-jetty-adapter "1.5.0"]
                  [javax.servlet/servlet-api "2.5"]
                  [ring/ring-devel "1.4.0"]
