@@ -13,7 +13,8 @@
              [sighting :as sighting]
              [ttp :as ttp]
              [verdict :as verdict]
-             [bundle :as bundle]]
+             [bundle :as bundle]
+             [data-table :as data-table]]
             [durable-atom.core :refer [durable-atom]]))
 
 (defn init! [{:keys [path mode] :as _props_}]
@@ -189,3 +190,12 @@
     (bundle/handle-create-bundle state new-bundle))
   (delete-bundle [_ id]
     (bundle/handle-delete-bundle state id)))
+
+(defrecord DataTableStore [state]
+  IDataTableStore
+  (read-data-table [_ id]
+    (data-table/handle-read-data-table state id))
+  (create-data-table [_ new-data-table]
+    (data-table/handle-create-data-table state new-data-table))
+  (delete-data-table [_ id]
+    (data-table/handle-delete-data-table state id)))

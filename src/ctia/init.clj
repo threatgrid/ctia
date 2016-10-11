@@ -59,6 +59,10 @@
    {:atom as-store/->ExploitTargetStore
     :es es-store/->ExploitTargetStore}
 
+   :data-table
+   {:atom as-store/->DataTableStore
+    :es es-store/->DataTableStore}
+
    :feedback
    {:atom as-store/->FeedbackStore
     :es es-store/->FeedbackStore}
