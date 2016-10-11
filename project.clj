@@ -29,7 +29,6 @@
              "-XX:MaxPermSize=256m"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :pedantic? :abort
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [clj-time "0.12.0"]
                  [org.clojure/core.async "0.2.374"]
@@ -39,7 +38,7 @@
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
                  [threatgrid/clj-momo "0.2.1"]
-
+                 
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
@@ -129,9 +128,11 @@
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.6"]
-                                  [perforate "0.3.4"]
+                                  ;;[perforate "0.3.4"]
                                   [prismatic/schema-generators "0.1.0"
                                    :exclusions [prismatic/schema]]]
+                   :pedantic? :warn
+
                    :resource-paths ["test/resources"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
@@ -148,6 +149,7 @@
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.6"]
                                    [prismatic/schema-generators "0.1.0"]]
+                    :pedantic? :abort
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
                     :resource-paths ["test/resources"
