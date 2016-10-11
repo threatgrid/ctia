@@ -1,6 +1,6 @@
 (ns ctia.stores.es.actor
   (:require [ctia.stores.es.crud :as crud]
-            [ctim.schemas.actor :refer [StoredActor]]))
+            [ctia.schemas.core :refer [StoredActor]]))
 
 (def handle-create-actor (crud/handle-create :actor StoredActor))
 (def handle-read-actor (crud/handle-read :actor StoredActor))

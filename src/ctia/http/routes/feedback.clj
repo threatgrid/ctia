@@ -6,7 +6,7 @@
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
-   [ctim.schemas.feedback :refer [NewFeedback StoredFeedback]]
+   [ctia.schemas.core :refer [NewFeedback StoredFeedback]]
    [ring.util.http-response :refer [ok no-content not-found]]
    [schema-tools.core :as st]
    [schema.core :as s]))

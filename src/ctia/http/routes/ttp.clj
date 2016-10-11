@@ -5,7 +5,7 @@
    [ctia.domain.entities.ttp :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
-   [ctim.schemas.ttp :refer [NewTTP StoredTTP]]
+   [ctia.schemas.core :refer [NewTTP StoredTTP]]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ring.util.http-response :refer [ok no-content not-found]]
    [schema.core :as s]

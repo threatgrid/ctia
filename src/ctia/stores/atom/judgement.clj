@@ -1,13 +1,14 @@
 (ns ctia.stores.atom.judgement
   (:require [clj-momo.lib.time :as time]
             [ctia.lib.schema :as ls]
-            [ctim.schemas
-             [common :as c]
-             [judgement :refer [NewJudgement StoredJudgement]]
-             [relationships :as rel]
-             [verdict :refer [Verdict]]]
+            [ctim.schemas.common :refer [disposition-map]]
             [ctia.stores.atom.common :as mc]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [ctia.schemas.core :refer [Observable
+                                       NewJudgement
+                                       StoredJudgement
+                                       Verdict
+                                       RelatedIndicator]]))
 
 (def handle-create-judgement (mc/create-handler-from-realized StoredJudgement))
 (def handle-read-judgement (mc/read-handler StoredJudgement))
@@ -30,7 +31,7 @@
       (not= (:priority judgement-1) (:priority judgement-2))
       (last (sort-by :priority judgements))
 
-      :else (loop [[d-num & rest-d-nums] (sort (keys c/disposition-map))]
+      :else (loop [[d-num & rest-d-nums] (sort (keys disposition-map))]
               (cond
                 (nil? d-num) nil
                 (= d-num (:disposition judgement-1)) judgement-1
@@ -43,11 +44,11 @@
    :disposition (:disposition judgement)
    :judgement_id (:id judgement)
    :observable (:observable judgement)
-   :disposition_name (get c/disposition-map (:disposition judgement))})
+   :disposition_name (get disposition-map (:disposition judgement))})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [state :- (ls/atom {s/Str StoredJudgement})
-   observable :- c/Observable]
+   observable :- Observable]
   (if-let [judgement
            (let [now (time/now)]
              (loop [[judgement & more-judgements] (vals @state)
@@ -66,10 +67,10 @@
                  (recur more-judgements (higest-priority judgement result)))))]
     (make-verdict judgement)))
 
-(s/defn handle-add-indicator-to-judgement :- (s/maybe rel/RelatedIndicator)
+(s/defn handle-add-indicator-to-judgement :- (s/maybe RelatedIndicator)
   [state :- (ls/atom {s/Str StoredJudgement})
    judgement-id :- s/Str
-   indicator-rel :- rel/RelatedIndicator]
+   indicator-rel :- RelatedIndicator]
   ;; Possible concurrency issue, maybe state should be a ref?
   (when (contains? @state judgement-id)
     (swap! state update-in [judgement-id :indicators] conj indicator-rel)

@@ -9,16 +9,17 @@
             [ctia.http.routes.common
              :refer [created PagingParams paginated-ok]]
             [ctia.store :refer :all]
-            [ctim.schemas
-             [campaign :refer [StoredCampaign]]
-             [coa :refer [StoredCOA]]
-             [indicator :refer [NewIndicator StoredIndicator]]
-             [judgement :refer [StoredJudgement]]
-             [sighting :refer [NewSighting StoredSighting]]
-             [ttp :refer [StoredTTP]]]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
-            [schema-tools.core :as st]))
+            [schema-tools.core :as st]
+            [ctia.schemas.core :refer [StoredCampaign
+                                       StoredCOA
+                                       NewIndicator
+                                       StoredIndicator
+                                       StoredJudgement
+                                       NewSighting
+                                       StoredSighting
+                                       StoredTTP]]))
 
 (s/defschema IndicatorsByTitleQueryParams
   (st/merge

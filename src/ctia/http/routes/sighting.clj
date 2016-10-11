@@ -5,7 +5,7 @@
    [ctia.domain.entities.sighting :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
-   [ctim.schemas.sighting :refer [NewSighting StoredSighting]]
+   [ctia.schemas.core :refer [NewSighting StoredSighting]]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ring.util.http-response :refer [ok no-content not-found unprocessable-entity]]
    [schema.core :as s]

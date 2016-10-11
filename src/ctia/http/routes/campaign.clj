@@ -6,7 +6,7 @@
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
-   [ctim.schemas.campaign :refer [NewCampaign StoredCampaign]]
+   [ctia.schemas.core :refer [NewCampaign StoredCampaign]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))

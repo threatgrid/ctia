@@ -1,13 +1,13 @@
 (ns ctia.stores.atom.sighting
   (:require [ctia.lib.schema :as ls]
-            [ctim.schemas
-             [common :as c]
-             [indicator :refer [StoredIndicator]]
-             [sighting :refer [NewSighting StoredSighting]]]
             [ctia.store :refer [ISightingStore]]
             [ctia.stores.atom.common :as mc]
             [ctia.lib.pagination :refer [list-response-schema]]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [ctia.schemas.core :refer [StoredIndicator
+                                       NewSighting
+                                       StoredSighting
+                                       Observable]]))
 
 (def handle-create-sighting (mc/create-handler-from-realized StoredSighting))
 (def handle-read-sighting (mc/read-handler StoredSighting))
@@ -17,7 +17,7 @@
 
 (s/defn handle-list-sightings-by-observables :- (list-response-schema StoredSighting)
   [sightings-state :- (ls/atom {s/Str StoredSighting})
-   observables :- (s/maybe [c/Observable])
+   observables :- (s/maybe [Observable])
    params]
   (handle-list-sightings sightings-state
                          {:observables (set observables)} params))

@@ -1,5 +1,5 @@
 (ns ctia.stores.atom.ttp
-  (:require [ctim.schemas.ttp :refer [StoredTTP]]
+  (:require [ctia.schemas.core :refer [StoredTTP]]
             [ctia.stores.atom.common :as mc]))
 
 (def handle-create-ttp (mc/create-handler-from-realized StoredTTP))

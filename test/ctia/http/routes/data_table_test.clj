@@ -82,7 +82,7 @@
           (is (= (:path-prefix data-table-id) (seq (:path-prefix show-props))))))
 
       (testing "GET /ctia/data-table/:id"
-        (let [response (get (str "ctia/data-table/" (:short-id actor-id))
+        (let [response (get (str "ctia/data-table/" (:short-id data-table-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
               data-table (:parsed-body response)]
           (is (= 200 (:status response)))

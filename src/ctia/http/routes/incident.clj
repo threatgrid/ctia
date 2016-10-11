@@ -4,7 +4,7 @@
             [ctia.domain.entities.incident :refer [with-long-id page-with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctim.schemas.incident :refer [NewIncident StoredIncident]]
+            [ctia.schemas.core :refer [NewIncident StoredIncident]]
             [ctia.http.routes.common :refer [created PagingParams paginated-ok]]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
