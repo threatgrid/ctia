@@ -1,5 +1,5 @@
 (def cheshire-version "5.6.3")
-(def compojure-api-version "1.1.7")
+(def compojure-api-version "1.1.8")
 (def schema-tools-version "0.9.0")
 (def schema-version "1.1.3")
 
