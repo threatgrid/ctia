@@ -70,14 +70,14 @@
           ttps (repeat 10 ttp)
           new-bundle {:valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                    :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                      :ttps ttps
                       :source "iroh"
                       :schema_version schema-version
                       :type "bundle"
-                      :judgements judgements
-                      :indicators indicators
-                      :actor_refs actor-refs
-                      :verdict_refs verdict-refs}
+                      :judgements (set judgements)
+                      :indicators (set indicators)
+                      :ttps (set ttps)
+                      :actor_refs (set actor-refs)
+                      :verdict_refs (set verdict-refs)}
 
           response (post "ctia/bundle"
                          :body new-bundle

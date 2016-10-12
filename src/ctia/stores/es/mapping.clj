@@ -740,6 +740,7 @@
      :sightings {:type "object" :enabled false}
      :ttps {:type "object" :enabled false}
      :verdicts {:type "object" :enabled false}
+     :others {:type "object" :enabled false}
 
      :actor_refs string
      :campaign_refs string
@@ -751,7 +752,9 @@
      :judgement_refs string
      :sighting_refs string
      :ttp_refs string
-     :verdict_refs string}}})
+     :verdict_refs string
+     :other_refs string}}})
+
 (def store-mappings
   (merge {}
          judgement-mapping
