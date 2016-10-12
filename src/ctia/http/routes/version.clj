@@ -2,7 +2,7 @@
   (:require [ctia.version :refer [current-version]]
             [clojure.string :as st]
             [ctia.domain.entities :refer [schema-version]]
-            [ctim.schemas.common :refer [VersionInfo]]
+            [ctia.schemas.core :refer [VersionInfo]]
             [compojure.api.sweet :refer :all]
             [ring.util.http-response :refer :all]
             [clojure.string :as st]))

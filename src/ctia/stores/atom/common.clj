@@ -1,6 +1,6 @@
 (ns ctia.stores.atom.common
   (:import java.util.UUID)
-  (:require [ctim.schemas.common :as c]
+  (:require [ctia.schemas.core :refer [ID]]
             [schema.core :as s]
             [clojure.set :as set]
             [ctia.lib.pagination :refer [default-limit
@@ -16,7 +16,7 @@
 (defn read-handler [Model]
   (s/fn :- (s/maybe Model)
     [state :- (ls/atom {s/Str Model})
-     id :- s/Str]
+     id :- ID]
     (get (deref state) id)))
 
 (defn create-handler-from-realized
@@ -33,14 +33,14 @@
   [Model]
   (s/fn :- Model
     [state :- (ls/atom {s/Str Model})
-     id :- c/ID
+     id :- ID
      updated-model :- Model]
     (get (swap! state assoc id updated-model) id)))
 
 (defn delete-handler [Model]
   (s/fn :- s/Bool
     [state :- (ls/atom {s/Str Model})
-     id :- s/Str]
+     id :- ID]
     (if (contains? (deref state) id)
       (do (swap! state dissoc id)
           true)

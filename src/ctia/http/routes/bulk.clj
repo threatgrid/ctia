@@ -19,7 +19,7 @@
             [ctia.schemas.bulk :refer [BulkRefs NewBulk StoredBulk]]
             [ctia.properties :refer [properties]]
             [ctia.store :refer :all]
-            [ctim.schemas.common :as c]
+            [ctia.schemas.core :refer [Reference]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -140,61 +140,61 @@
 
 (defroutes bulk-routes
   (context "/bulk" []
-    :tags ["Bulk"]
-    (POST "/" []
-      :return BulkRefs
-      :body [bulk NewBulk {:description "a new Bulk object"}]
-      :header-params [api_key :- (s/maybe s/Str)]
-      :summary "Adds a lot of new entities in only one HTTP call"
-      :capabilities #{:create-actor
-                      :create-campaign
-                      :create-coa
-                      :create-exploit-target
-                      :create-feedback
-                      :create-incident
-                      :create-indicator
-                      :create-judgement
-                      :create-sighting
-                      :create-ttp}
-      :identity login
-      (if (> (bulk-size bulk) (get-bulk-max-size))
-        (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-        (common/created (gen-bulk-from-fn create-entities bulk login))))
-    (GET "/" []
-      :return (s/maybe StoredBulk)
-      :summary "Gets many entities at once"
-      :query-params [{actors          :- [c/Reference] []}
-                     {campaigns       :- [c/Reference] []}
-                     {coas            :- [c/Reference] []}
-                     {exploit-targets :- [c/Reference] []}
-                     {feedbacks       :- [c/Reference] []}
-                     {incidents       :- [c/Reference] []}
-                     {indicators      :- [c/Reference] []}
-                     {judgements      :- [c/Reference] []}
-                     {sightings       :- [c/Reference] []}
-                     {ttps            :- [c/Reference] []}]
-      :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities #{:read-actor
-                      :read-campaign
-                      :read-coa
-                      :read-exploit-target
-                      :read-feedback
-                      :read-incident
-                      :read-indicator
-                      :read-judgement
-                      :read-sighting
-                      :read-ttp}
-      (let [bulk (into {} (remove (comp empty? second)
-                                  {:actors          actors
-                                   :campaigns       campaigns
-                                   :coas            coas
-                                   :exploit-targets exploit-targets
-                                   :feedbacks       feedbacks
-                                   :incidents       incidents
-                                   :indicators      indicators
-                                   :judgements      judgements
-                                   :sightings       sightings
-                                   :ttps            ttps}))]
-        (if (> (bulk-size bulk) (get-bulk-max-size))
-          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-          (ok (gen-bulk-from-fn read-entities bulk)))))))
+           :tags ["Bulk"]
+           (POST "/" []
+                 :return BulkRefs
+                 :body [bulk NewBulk {:description "a new Bulk object"}]
+                 :header-params [api_key :- (s/maybe s/Str)]
+                 :summary "Adds a lot of new entities in only one HTTP call"
+                 :capabilities #{:create-actor
+                                 :create-campaign
+                                 :create-coa
+                                 :create-exploit-target
+                                 :create-feedback
+                                 :create-incident
+                                 :create-indicator
+                                 :create-judgement
+                                 :create-sighting
+                                 :create-ttp}
+                 :identity login
+                 (if (> (bulk-size bulk) (get-bulk-max-size))
+                   (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+                   (common/created (gen-bulk-from-fn create-entities bulk login))))
+           (GET "/" []
+                :return (s/maybe StoredBulk)
+                :summary "Gets many entities at once"
+                :query-params [{actors          :- [Reference] []}
+                               {campaigns       :- [Reference] []}
+                               {coas            :- [Reference] []}
+                               {exploit-targets :- [Reference] []}
+                               {feedbacks       :- [Reference] []}
+                               {incidents       :- [Reference] []}
+                               {indicators      :- [Reference] []}
+                               {judgements      :- [Reference] []}
+                               {sightings       :- [Reference] []}
+                               {ttps            :- [Reference] []}]
+                :header-params [api_key :- (s/maybe s/Str)]
+                :capabilities #{:read-actor
+                                :read-campaign
+                                :read-coa
+                                :read-exploit-target
+                                :read-feedback
+                                :read-incident
+                                :read-indicator
+                                :read-judgement
+                                :read-sighting
+                                :read-ttp}
+                (let [bulk (into {} (remove (comp empty? second)
+                                            {:actors          actors
+                                             :campaigns       campaigns
+                                             :coas            coas
+                                             :exploit-targets exploit-targets
+                                             :feedbacks       feedbacks
+                                             :incidents       incidents
+                                             :indicators      indicators
+                                             :judgements      judgements
+                                             :sightings       sightings
+                                             :ttps            ttps}))]
+                  (if (> (bulk-size bulk) (get-bulk-max-size))
+                    (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+                    (ok (gen-bulk-from-fn read-entities bulk)))))))

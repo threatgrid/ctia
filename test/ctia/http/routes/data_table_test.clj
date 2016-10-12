@@ -26,49 +26,34 @@
     (let [{status :status
            data-table :parsed-body}
           (post "ctia/data-table"
-                :body {:external_ids ["http://ex.tld/ctia/data-table/actor-123"
-                                      "http://ex.tld/ctia/data-table/actor-456"]
-                       :title "data-table"
-                       :description "description"
-                       :data-table_type "Hacker"
-                       :source "a source"
-                       :confidence "High"
-                       :associated_data-tables [{:actor_id "actor-123"}
-                                                {:data-table_id "actor-456"}]
-                       :associated_campaigns [{:campaign_id "campaign-444"}
-                                              {:campaign_id "campaign-555"}]
-                       :observed_TTPs [{:ttp_id "ttp-333"}
-                                       {:ttp_id "ttp-999"}]
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                    :end_time "2016-07-11T00:40:48.212-00:00"}}
+                :body {:type "data-table"
+                       :row_count 1
+                       :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
+                                      "http://ex.tld/ctia/data-table/data-table-456"]
+                       :schema_version c/ctim-schema-version
+                       :columns [{:name "Column1"
+                                  :type "string"}
+                                 {:name "Column2"
+                                  :type "string"}]
+                       :rows [["foo"] ["bar"]]}
                 :headers {"api_key" "45c1f5e3f05d0"})
 
           data-table-id
           (id/long-id->id (:id data-table))
-
           data-table-external-ids
           (:external_ids data-table)]
       (is (= 201 status))
       (is (deep=
-           {:external_ids ["http://ex.tld/ctia/data-table/actor-123"
-                           "http://ex.tld/ctia/data-table/actor-456"]
-            :type "data-table"
-            :description "description",
-            :data-table_type "Hacker",
-            :title "data-table",
-            :confidence "High",
-            :source "a source"
-            :associated_data-tables [{:actor_id "actor-123"}
-                                     {:data-table_id "actor-456"}]
-            :associated_campaigns [{:campaign_id "campaign-444"}
-                                   {:campaign_id "campaign-555"}]
-            :observed_TTPs [{:ttp_id "ttp-333"}
-                            {:ttp_id "ttp-999"}]
-            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-            :owner "foouser"
-            :schema_version schema-version
-            :tlp "green"}
+           {:type "data-table"
+            :row_count 1
+            :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
+                           "http://ex.tld/ctia/data-table/data-table-456"]
+            :schema_version c/ctim-schema-version
+            :columns [{:name "Column1"
+                       :type "string"}
+                      {:name "Column2"
+                       :type "string"}]
+            :rows [["foo"] ["bar"]]}
            (dissoc data-table
                    :id
                    :created
@@ -88,25 +73,16 @@
           (is (= 200 (:status response)))
           (is (deep=
                {:id (id/long-id data-table-id)
-                :external_ids ["http://ex.tld/ctia/data-table/actor-123"
-                               "http://ex.tld/ctia/data-table/actor-456"]
                 :type "data-table"
-                :description "description",
-                :data-table_type "Hacker",
-                :title "data-table",
-                :confidence "High",
-                :source "a source"
-                :associated_data-tables [{:actor_id "actor-123"}
-                                         {:data-table_id "actor-456"}]
-                :associated_campaigns [{:campaign_id "campaign-444"}
-                                       {:campaign_id "campaign-555"}]
-                :observed_TTPs [{:ttp_id "ttp-333"}
-                                {:ttp_id "ttp-999"}]
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "foouser"
-                :schema_version schema-version
-                :tlp "green"}
+                :row_count 1
+                :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
+                               "http://ex.tld/ctia/data-table/data-table-456"]
+                :schema_version c/ctim-schema-version
+                :columns [{:name "Column1"
+                           :type "string"}
+                          {:name "Column2"
+                           :type "string"}]
+                :rows [["foo"] ["bar"]]}
                (dissoc data-table
                        :created
                        :modified)))))
@@ -119,75 +95,22 @@
           (is (= 200 (:status response)))
           (is (deep=
                [{:id (id/long-id data-table-id)
-                 :external_ids ["http://ex.tld/ctia/data-table/actor-123"
-                                "http://ex.tld/ctia/data-table/actor-456"]
                  :type "data-table"
-                 :description "description",
-                 :data-table_type "Hacker",
-                 :title "data-table",
-                 :confidence "High",
-                 :source "a source"
-                 :associated_data-tables [{:actor_id "actor-123"}
-                                          {:data-table_id "actor-456"}]
-                 :associated_campaigns [{:campaign_id "campaign-444"}
-                                        {:campaign_id "campaign-555"}]
-                 :observed_TTPs [{:ttp_id "ttp-333"}
-                                 {:ttp_id "ttp-999"}]
-                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                 :owner "foouser"
-                 :schema_version schema-version
-                 :tlp "green"}]
+                 :row_count 1
+                 :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
+                                "http://ex.tld/ctia/data-table/data-table-456"]
+                 :schema_version c/ctim-schema-version
+                 :columns [{:name "Column1"
+                            :type "string"}
+                           {:name "Column2"
+                            :type "string"}]
+                 :rows [["foo"] ["bar"]]}]
                (map #(dissoc % :created :modified) data-tables)))))
 
-      (testing "PUT /ctia/data-table/:id"
-        (let [response (put (str "ctia/data-table/" (:short-id actor-id))
-                            :body {:external_ids ["http://ex.tld/ctia/data-table/actor-123"
-                                                  "http://ex.tld/ctia/data-table/actor-456"]
-                                   :title "modified data-table"
-                                   :description "updated description"
-                                   :data-table_type "Hacktivist"
-                                   :type "data-table"
-                                   :source "a source"
-                                   :confidence "High"
-                                   :associated_data-tables [{:actor_id "actor-789"}]
-                                   :associated_campaigns [{:campaign_id "campaign-444"}
-                                                          {:campaign_id "campaign-555"}]
-                                   :observed_TTPs [{:ttp_id "ttp-333"}
-                                                   {:ttp_id "ttp-999"}]
-                                   :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                                :end_time "2016-07-11T00:40:48.212-00:00"}}
-                            :headers {"api_key" "45c1f5e3f05d0"})
-              updated-data-table (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               {:id (id/long-id data-table-id)
-                :external_ids ["http://ex.tld/ctia/data-table/actor-123"
-                               "http://ex.tld/ctia/data-table/actor-456"]
-                :type "data-table"
-                :created (:created data-table)
-                :title "modified data-table"
-                :description "updated description"
-                :data-table_type "Hacktivist"
-                :source "a source"
-                :confidence "High"
-                :associated_data-tables [{:actor_id "actor-789"}]
-                :associated_campaigns [{:campaign_id "campaign-444"}
-                                       {:campaign_id "campaign-555"}]
-                :observed_TTPs [{:ttp_id "ttp-333"}
-                                {:ttp_id  "ttp-999"}]
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "foouser"
-                :schema_version schema-version
-                :tlp "green"}
-               (dissoc updated-data-table
-                       :modified)))))
-
       (testing "DELETE /ctia/data-table/:id"
-        (let [response (delete (str "ctia/data-table/" (:short-id actor-id))
+        (let [response (delete (str "ctia/data-table/" (:short-id data-table-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
-          (let [response (get (str "ctia/data-table/" (:short-id actor-id))
+          (let [response (get (str "ctia/data-table/" (:short-id data-table-id))
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

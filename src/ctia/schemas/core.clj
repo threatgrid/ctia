@@ -1,22 +1,23 @@
 (ns ctia.schemas.core
-  (:require
-   [flanders.schema :as fs]
-   [ctim.schemas.actor :as as]
-   [ctim.schemas.campaign :as cs]
-   [ctim.schemas.coa :as coas]
-   [ctim.schemas.data-table :as ds]
-   [ctim.schemas.exploit-target :as es]
-   [ctim.schemas.sighting :as ss]
-   [ctim.schemas.judgement :as js]
-   [ctim.schemas.verdict :as vs]
-   [ctim.schemas.feedback :as feedbacks]
-   [ctim.schemas.incident :as is]
-   [ctim.schemas.indicator :as ins]
-   [ctim.schemas.ttp :as ttps]
-   [ctim.schemas.relationships :as rels]
-   [ctim.schemas.common :as cos]
-   [ctim.schemas.vocabularies :as vocs]
-   [ctim.schemas.bundle :as bs]))
+  (:require [ctim.schemas
+             [actor :as as]
+             [bundle :as bs]
+             [campaign :as cs]
+             [coa :as coas]
+             [common :as cos]
+             [data-table :as ds]
+             [exploit-target :as es]
+             [feedback :as feedbacks]
+             [incident :as is]
+             [indicator :as ins]
+             [judgement :as js]
+             [relationships :as rels]
+             [sighting :as ss]
+             [ttp :as ttps]
+             [verdict :as vs]
+             [vocabularies :as vocs]]
+            [flanders.schema :as fs]
+            [schema.core :as s]))
 
 ;; actor
 (def NewActor (fs/->schema-tree as/NewActor))
@@ -75,6 +76,10 @@
 
 ;; common
 (def Observable (fs/->schema-tree cos/Observable))
+(def Reference (fs/->schema-tree cos/Reference))
+(def ID (fs/->schema-tree cos/ID))
+(def VersionInfo cos/VersionInfo)
 
 ;; vocabularies
-(def ObservableTypeIdentifier (fs/->schema-tree vocs/ObservableTypeIdentifier))
+(def ObservableTypeIdentifier
+  (fs/->schema-tree vocs/ObservableTypeIdentifier))

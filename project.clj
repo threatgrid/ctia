@@ -29,6 +29,7 @@
              "-XX:MaxPermSize=256m"
              "-Dlog.console.threshold=INFO"
              "-server"]
+  :pedantic? :warn
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [clj-time "0.12.0"]
                  [org.clojure/core.async "0.2.374"]
@@ -38,7 +39,7 @@
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
                  [threatgrid/clj-momo "0.2.1"]
-                 
+
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]

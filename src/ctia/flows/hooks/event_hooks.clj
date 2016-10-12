@@ -1,16 +1,17 @@
 (ns ctia.flows.hooks.event-hooks
   (:require
-    [clojure.tools.logging :as log]
-    [ctia.events :as events]
-    [ctia.flows.hook-protocol :refer [Hook]]
-    [ctia.lib.redis :as lr]
-    [ctia.domain.entities :as entities]
-    [ctia.events.producers.es.producer :as esp]
-    [ctia.properties :refer [properties]]
-    [ctia.store :as store]
-    [ctim.schemas.judgement :as js]
-    [ctim.schemas.verdict :as vs]
-    [schema.core :as s]))
+   [clojure.tools.logging :as log]
+   [ctia.events :as events]
+   [ctia.flows.hook-protocol :refer [Hook]]
+   [ctia.lib.redis :as lr]
+   [ctia.domain.entities :as entities]
+   [ctia.events.producers.es.producer :as esp]
+   [ctia.properties :refer [properties]]
+   [ctia.store :as store]
+   [schema.core :as s]
+   [ctia.schemas.core :refer [Verdict
+                              StoredVerdict
+                              StoredJudgement]]))
 
 (defrecord ESEventProducer [conn]
   Hook
@@ -70,11 +71,11 @@
   [^String s ^String ss]
   (and s (.startsWith s ss)))
 
-(s/defn realize-verdict-wrapper :- vs/StoredVerdict
+(s/defn realize-verdict-wrapper :- StoredVerdict
   "Realizes a verdict, using the associated judgement ID, if available,
    to build the verdict ID"
-  [verdict :- vs/Verdict
-   {id :id :as judgement} :- js/StoredJudgement
+  [verdict :- Verdict
+   {id :id :as judgement} :- StoredJudgement
    owner :- s/Str]
   (letfn [(verdict-id [i] (str "verdict-" (subs i (count judgement-prefix))))]
     (if (starts-with? id judgement-prefix)
