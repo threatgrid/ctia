@@ -1,5 +1,5 @@
 (ns ctia.stores.atom.data-table
-  (:require [ctim.schemas.data-table :refer [StoredDataTable]]
+  (:require [ctia.schemas.core :refer [StoredDataTable]]
             [ctia.stores.atom.common :as mc]))
 
 (def handle-create-data-table (mc/create-handler-from-realized StoredDataTable))

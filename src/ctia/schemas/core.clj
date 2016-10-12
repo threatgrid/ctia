@@ -78,7 +78,14 @@
 (def Observable (fs/->schema-tree cos/Observable))
 (def Reference (fs/->schema-tree cos/Reference))
 (def ID (fs/->schema-tree cos/ID))
-(def VersionInfo cos/VersionInfo)
+
+(s/defschema VersionInfo
+  "Version information for a specific instance of CTIA"
+  {:base s/Str
+   :version s/Str
+   :build s/Str
+   :beta s/Bool
+   :supported_features [s/Str]})
 
 ;; vocabularies
 (def ObservableTypeIdentifier
