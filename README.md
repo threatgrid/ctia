@@ -48,7 +48,7 @@ By default, CTIA uses Elasticsearch as it's data store.  Assuming you
 have Elasticsearch running on 127.0.0.1:9200 you can simply start
 CTIA.
 
-You can jump to the [Develoer](#Developer) section to see instructions
+You can jump to the [Developer](#Developer) section to see instructions
 on how to run elasticsearch and other optional supporting tools using
 Docker.  CTIA can use redis to store some of it's objects (Verdicts)
 and also can send streams of events to Redis and Elasticsearch.
