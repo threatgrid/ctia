@@ -99,7 +99,8 @@
 (defprotocol IDataTableStore
   (read-data-table [this login])
   (create-data-table [this new-data-table])
-  (delete-data-table [this role]))
+  (delete-data-table [this role])
+  (list-data-tables [this filtermap params]))
 
 (defonce stores (atom {:judgement []
                        :indicator []
@@ -108,6 +109,7 @@
                        :campaign []
                        :actor []
                        :coa []
+                       :data-table []
                        :exploit-target []
                        :sighting []
                        :incident []
@@ -115,7 +117,6 @@
                        :identity []
                        :verdict []
                        :bundle []
-                       :data-table []
                        }))
 
 (defn write-store [store write-fn & args]

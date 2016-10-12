@@ -5,6 +5,7 @@
              [actor :as ac]
              [campaign :as ca]
              [coa :as coa]
+             [data-table :as dt]
              [exploit-target :as et]
              [feedback :as fe]
              [identity :as id]
@@ -19,6 +20,7 @@
             [ctia.store :refer [IActorStore
                                 ICampaignStore
                                 ICOAStore
+                                IDataTableStore
                                 IExploitTargetStore
                                 IFeedbackStore
                                 IIdentityStore
@@ -154,6 +156,17 @@
     (coa/handle-delete-coa state id))
   (list-coas [_ filter-map params]
     (coa/handle-list-coas state filter-map params)))
+
+(defrecord DataTableStore [state]
+  IDataTableStore
+  (read-data-table [_ id]
+    (dt/handle-read-data-table state id))
+  (create-data-table [_ new-data-table]
+    (dt/handle-create-data-table state new-data-table))
+  (delete-data-table [_ id]
+    (dt/handle-delete-data-table state id))
+  (list-data-tables [_ filter-map params]
+    (dt/handle-list-data-tables state filter-map params)))
 
 (defrecord IncidentStore [state]
   IIncidentStore

@@ -62,6 +62,17 @@
   (list-coas [_ filter-map params]
     (coa/handle-list-coas state filter-map params)))
 
+(defrecord DataTableStore [state]
+  IDataTableStore
+  (read-data-table [_ id]
+    (data-table/handle-read-data-table state id))
+  (create-data-table [_ new-data-table]
+    (data-table/handle-create-data-table state new-data-table))
+  (delete-data-table [_ id]
+    (data-table/handle-delete-data-table state id))
+  (list-data-tables [_ filter-map params]
+    (data-table/handle-list-data-tables state filter-map params)))
+
 (defrecord ExploitTargetStore [state]
   IExploitTargetStore
   (read-exploit-target [_ id]
@@ -190,12 +201,3 @@
     (bundle/handle-create-bundle state new-bundle))
   (delete-bundle [_ id]
     (bundle/handle-delete-bundle state id)))
-
-(defrecord DataTableStore [state]
-  IDataTableStore
-  (read-data-table [_ id]
-    (data-table/handle-read-data-table state id))
-  (create-data-table [_ new-data-table]
-    (data-table/handle-create-data-table state new-data-table))
-  (delete-data-table [_ id]
-    (data-table/handle-delete-data-table state id)))

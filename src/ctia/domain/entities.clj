@@ -17,6 +17,8 @@
             StoredCampaign
             NewCOA
             StoredCOA
+            NewDataTable
+            StoredDataTable
             NewExploitTarget
             StoredExploitTarget
             NewFeedback
@@ -72,6 +74,9 @@
 
 (def realize-coa
   (default-realize-fn "coa" NewCOA StoredCOA))
+
+(def realize-data-table
+  (default-realize-fn "data-table" NewDataTable StoredDataTable))
 
 (def realize-exploit-target
   (default-realize-fn "exploit-target" NewExploitTarget StoredExploitTarget))

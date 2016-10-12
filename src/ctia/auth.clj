@@ -28,6 +28,11 @@
     :read-coa
     :delete-coa
 
+    ;; Data-Table
+    :create-data-table
+    :read-data-table
+    :delete-data-table
+
     ;; Exploit-Target
     :create-exploit-target
     :read-exploit-target

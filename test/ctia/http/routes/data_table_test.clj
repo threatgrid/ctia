@@ -24,6 +24,7 @@
 
   (testing "POST /ctia/data-table"
     (let [{status :status
+           d :body
            data-table :parsed-body}
           (post "ctia/data-table"
                 :body {:type "data-table"
@@ -31,29 +32,35 @@
                        :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
                                       "http://ex.tld/ctia/data-table/data-table-456"]
                        :schema_version c/ctim-schema-version
+                       :tlp "green"
                        :columns [{:name "Column1"
                                   :type "string"}
                                  {:name "Column2"
                                   :type "string"}]
-                       :rows [["foo"] ["bar"]]}
+                       :rows [["foo"] ["bar"]]
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                    :end_time "2016-07-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})
 
-          data-table-id
-          (id/long-id->id (:id data-table))
-          data-table-external-ids
-          (:external_ids data-table)]
+          data-table-id (id/long-id->id (:id data-table))
+          data-table-external-ids (:external_ids data-table)]
+
       (is (= 201 status))
       (is (deep=
            {:type "data-table"
             :row_count 1
             :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
                            "http://ex.tld/ctia/data-table/data-table-456"]
+            :owner "foouser"
             :schema_version c/ctim-schema-version
+            :tlp "green"
             :columns [{:name "Column1"
                        :type "string"}
                       {:name "Column2"
                        :type "string"}]
-            :rows [["foo"] ["bar"]]}
+            :rows [["foo"] ["bar"]]
+            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                         :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
            (dissoc data-table
                    :id
                    :created
@@ -77,12 +84,16 @@
                 :row_count 1
                 :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
                                "http://ex.tld/ctia/data-table/data-table-456"]
+                :owner "foouser"
                 :schema_version c/ctim-schema-version
+                :tlp "green"
                 :columns [{:name "Column1"
                            :type "string"}
                           {:name "Column2"
                            :type "string"}]
-                :rows [["foo"] ["bar"]]}
+                :rows [["foo"] ["bar"]]
+                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
                (dissoc data-table
                        :created
                        :modified)))))
@@ -99,12 +110,16 @@
                  :row_count 1
                  :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
                                 "http://ex.tld/ctia/data-table/data-table-456"]
+                 :owner "foouser"
                  :schema_version c/ctim-schema-version
+                 :tlp "green"
                  :columns [{:name "Column1"
                             :type "string"}
                            {:name "Column2"
                             :type "string"}]
-                 :rows [["foo"] ["bar"]]}]
+                 :rows [["foo"] ["bar"]]
+                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}}]
                (map #(dissoc % :created :modified) data-tables)))))
 
       (testing "DELETE /ctia/data-table/:id"
