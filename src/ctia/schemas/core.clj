@@ -65,10 +65,13 @@
 (def StoredIncident (fs/->schema-tree is/StoredIncident))
 
 ;; indicator
-(def NewIndicator (fs/->schema-tree
-                   (fs/replace-either-with-any ins/NewIndicator)))
-(def StoredIndicator (fs/->schema-tree
-                      (fs/replace-either-with-any ins/StoredIndicator)))
+(def NewIndicator (-> ins/NewIndicator
+                      fs/replace-either-with-any
+                      fs/->schema-tree))
+
+(def StoredIndicator (-> ins/StoredIndicator
+                         fs/replace-either-with-any
+                         fs/->schema-tree))
 
 ;; ttp
 (def NewTTP (fs/->schema-tree ttps/NewTTP))

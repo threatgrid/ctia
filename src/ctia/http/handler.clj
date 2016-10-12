@@ -125,5 +125,5 @@
                        sighting-routes
                        ttp-routes
                        verdict-routes
-                                        ;bundle-routes
+                       bundle-routes
                        version-routes)))
