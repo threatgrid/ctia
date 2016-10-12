@@ -18,7 +18,7 @@
 
 (defroutes data-table-routes
   (context "/data-table" []
-           :tags ["Data Table"]
+           :tags ["DataTable"]
            (POST "/" []
                  :return StoredDataTable
                  :body [data-table NewDataTable {:description "a new Data Table"}]
@@ -58,7 +58,7 @@
            (DELETE "/:id" []
                    :no-doc true
                    :path-params [id :- s/Str]
-                   :summary "Deletes an Data Table"
+                   :summary "Deletes a Data Table"
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-data-table
                    :identity identity

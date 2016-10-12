@@ -32,8 +32,13 @@
 (def StoredCOA (fs/->schema-tree coas/StoredCOA))
 
 ;; data-table
-(def NewDataTable (fs/->schema-tree ds/NewDataTable))
-(def StoredDataTable (fs/->schema-tree ds/StoredDataTable))
+(def NewDataTable (-> ds/NewDataTable
+                      fs/replace-either-with-any
+                      fs/->schema-tree))
+
+(def StoredDataTable (-> ds/StoredDataTable
+                         fs/replace-either-with-any
+                         fs/->schema-tree))
 
 ;; exploit-target
 (def NewExploitTarget (fs/->schema-tree es/NewExploitTarget))
@@ -60,16 +65,23 @@
 (def StoredIncident (fs/->schema-tree is/StoredIncident))
 
 ;; indicator
-(def NewIndicator (fs/->schema-tree ins/NewIndicator))
-(def StoredIndicator (fs/->schema-tree ins/StoredIndicator))
+(def NewIndicator (fs/->schema-tree
+                   (fs/replace-either-with-any ins/NewIndicator)))
+(def StoredIndicator (fs/->schema-tree
+                      (fs/replace-either-with-any ins/StoredIndicator)))
 
 ;; ttp
 (def NewTTP (fs/->schema-tree ttps/NewTTP))
 (def StoredTTP (fs/->schema-tree ttps/StoredTTP))
 
 ;; bundle
-(def NewBundle (fs/->schema-tree bs/NewBundle))
-(def StoredBundle (fs/->schema-tree bs/StoredBundle))
+(def NewBundle (-> bs/NewBundle
+                   fs/replace-either-with-any
+                   fs/->schema-tree))
+
+(def StoredBundle (-> bs/StoredBundle
+                      fs/replace-either-with-any
+                      fs/->schema-tree))
 
 ;; relationships
 (def RelatedIndicator (fs/->schema-tree rels/RelatedIndicator))
