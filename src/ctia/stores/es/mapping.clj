@@ -728,6 +728,7 @@
      :owner string
      :created ts
      :modified ts
+     :row_count {:type "long"}
      :columns {:type "object" :enabled false}
      :rows {:type "object" :enabled false}}}})
 
@@ -792,6 +793,7 @@
          actor-mapping
          campaign-mapping
          coa-mapping
+         data-table-mapping
          incident-mapping
          exploit-target-mapping
          sighting-mapping

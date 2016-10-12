@@ -22,6 +22,9 @@
 (defspec spec-coa-routes-atom-store
   specs/spec-coa-routes)
 
+(defspec spec-data-table-routes-atom-store
+  specs/spec-data-table-routes)
+
 (defspec spec-exploit-target-routes-atom-store
   specs/spec-exploit-target-routes)
 

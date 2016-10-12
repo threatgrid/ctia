@@ -22,6 +22,9 @@
 (defspec spec-coa-routes-es-store
   specs/spec-coa-routes)
 
+(defspec spec-data-table-routes-es-store
+  specs/spec-data-table-routes)
+
 (defspec spec-exploit-target-routes-es-store
   specs/spec-exploit-target-routes)
 
