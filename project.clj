@@ -98,7 +98,11 @@
 
                  ;; Docs
                  [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+
+
+                 ;; Hooksx
+                 [redismq "0.1.0-SNAPSHOT"]]
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
                com.andrewmcveigh/cljs-time]
 
