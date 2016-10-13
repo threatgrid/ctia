@@ -13,7 +13,8 @@
              [sighting :as sighting]
              [ttp :as ttp]
              [verdict :as verdict]
-             [bundle :as bundle]]
+             [bundle :as bundle]
+             [data-table :as data-table]]
             [durable-atom.core :refer [durable-atom]]))
 
 (defn init! [{:keys [path mode] :as _props_}]
@@ -60,6 +61,17 @@
     (coa/handle-delete-coa state id))
   (list-coas [_ filter-map params]
     (coa/handle-list-coas state filter-map params)))
+
+(defrecord DataTableStore [state]
+  IDataTableStore
+  (read-data-table [_ id]
+    (data-table/handle-read-data-table state id))
+  (create-data-table [_ new-data-table]
+    (data-table/handle-create-data-table state new-data-table))
+  (delete-data-table [_ id]
+    (data-table/handle-delete-data-table state id))
+  (list-data-tables [_ filter-map params]
+    (data-table/handle-list-data-tables state filter-map params)))
 
 (defrecord ExploitTargetStore [state]
   IExploitTargetStore

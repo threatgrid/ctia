@@ -55,6 +55,10 @@
    {:atom as-store/->COAStore
     :es es-store/->COAStore}
 
+   :data-table
+   {:atom as-store/->DataTableStore
+    :es es-store/->DataTableStore}
+
    :exploit-target
    {:atom as-store/->ExploitTargetStore
     :es es-store/->ExploitTargetStore}

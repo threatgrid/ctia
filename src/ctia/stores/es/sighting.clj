@@ -1,9 +1,7 @@
 (ns ctia.stores.es.sighting
   (:require [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.stores.es.crud :as crud]
-            [ctim.schemas
-             [common :refer [Observable]]
-             [sighting :refer [StoredSighting]]]
+            [ctia.schemas.core :refer [Observable StoredSighting]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 

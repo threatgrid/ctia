@@ -4,9 +4,8 @@
             [ring.util.http-response :refer :all]
             [ctia.domain.entities.verdict :refer [with-long-id]]
             [ctia.store :refer :all]
-            [ctim.schemas
-             [vocabularies :refer [ObservableTypeIdentifier]]
-             [verdict :refer [StoredVerdict]]]))
+            [ctia.schemas.core :refer [ObservableTypeIdentifier
+                                       StoredVerdict]]))
 
 (defroutes verdict-routes
   (GET "/:observable_type/:observable_value/verdict" []

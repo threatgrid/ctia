@@ -1,5 +1,5 @@
 (ns ctia.stores.atom.campaign
-  (:require [ctim.schemas.campaign :refer [StoredCampaign]]
+  (:require [ctia.schemas.core :refer [StoredCampaign]]
             [ctia.stores.atom.common :as mc]))
 
 (def handle-create-campaign (mc/create-handler-from-realized StoredCampaign))

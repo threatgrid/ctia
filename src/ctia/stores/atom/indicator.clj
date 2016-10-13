@@ -3,9 +3,7 @@
             [ctia.lib.schema :as ls]
             [ctia.properties :refer [properties]]
             [ctim.domain.id :as id]
-            [ctim.schemas
-             [indicator :refer [StoredIndicator]]
-             [judgement :refer [StoredJudgement]]]
+            [ctia.schemas.core :refer [StoredIndicator StoredJudgement]]
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 

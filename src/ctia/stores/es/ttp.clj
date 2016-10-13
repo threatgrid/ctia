@@ -1,6 +1,6 @@
 (ns ctia.stores.es.ttp
   (:require [ctia.stores.es.crud :as crud]
-            [ctim.schemas.ttp :refer [StoredTTP]]))
+            [ctia.schemas.core :refer [StoredTTP]]))
 
 (def handle-create-ttp (crud/handle-create :ttp StoredTTP))
 (def handle-read-ttp (crud/handle-read :ttp StoredTTP))

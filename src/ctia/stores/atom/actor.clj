@@ -1,5 +1,5 @@
 (ns ctia.stores.atom.actor
-  (:require [ctim.schemas.actor :refer [StoredActor]]
+  (:require [ctia.schemas.core :refer [StoredActor]]
             [ctia.stores.atom.common :as mc]))
 
 (def handle-create-actor (mc/create-handler-from-realized StoredActor))

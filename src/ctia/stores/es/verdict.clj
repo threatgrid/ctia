@@ -1,6 +1,6 @@
 (ns ctia.stores.es.verdict
   (:require [ctia.stores.es.crud :as crud]
-            [ctim.schemas.verdict :refer [StoredVerdict]]))
+            [ctia.schemas.core :refer [StoredVerdict]]))
 
 (def handle-create-verdict (crud/handle-create :verdict StoredVerdict))
 (def handle-read-verdict (crud/handle-read :verdict StoredVerdict))

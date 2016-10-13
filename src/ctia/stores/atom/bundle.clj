@@ -1,5 +1,5 @@
 (ns ctia.stores.atom.bundle
-  (:require [ctim.schemas.bundle :refer [StoredBundle]]
+  (:require [ctia.schemas.core :refer [StoredBundle]]
             [ctia.stores.atom.common :as mc]))
 
 (def handle-create-bundle (mc/create-handler-from-realized StoredBundle))

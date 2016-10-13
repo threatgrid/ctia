@@ -1,6 +1,6 @@
 (ns ctia.stores.es.campaign
   (:require [ctia.stores.es.crud :as crud]
-            [ctim.schemas.campaign :refer [StoredCampaign]]))
+            [ctia.schemas.core :refer [StoredCampaign]]))
 
 (def handle-create-campaign (crud/handle-create :campaign StoredCampaign))
 (def handle-read-campaign (crud/handle-read :campaign StoredCampaign))

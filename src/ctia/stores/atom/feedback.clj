@@ -1,5 +1,5 @@
 (ns ctia.stores.atom.feedback
-  (:require [ctim.schemas.feedback :refer [StoredFeedback]]
+  (:require [ctia.schemas.core :refer [StoredFeedback]]
             [ctia.stores.atom.common :as mc]
             [schema.core :as s]))
 

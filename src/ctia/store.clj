@@ -96,6 +96,12 @@
   (create-identity [this new-identity])
   (delete-identity [this org-id role]))
 
+(defprotocol IDataTableStore
+  (read-data-table [this login])
+  (create-data-table [this new-data-table])
+  (delete-data-table [this role])
+  (list-data-tables [this filtermap params]))
+
 (defonce stores (atom {:judgement []
                        :indicator []
                        :feedback []
@@ -103,13 +109,15 @@
                        :campaign []
                        :actor []
                        :coa []
+                       :data-table []
                        :exploit-target []
                        :sighting []
                        :incident []
                        ;;:relation relation-store
                        :identity []
                        :verdict []
-                       :bundle []}))
+                       :bundle []
+                       }))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))

@@ -1,5 +1,5 @@
 (ns ctia.stores.atom.incident
-  (:require [ctim.schemas.incident :refer [StoredIncident]]
+  (:require [ctia.schemas.core :refer [StoredIncident]]
             [ctia.stores.atom.common :as mc]))
 
 (def handle-create-incident (mc/create-handler-from-realized StoredIncident))

@@ -1,27 +1,45 @@
 (ns ctia.domain.entities
   (:require
-    [clj-momo.lib.time :as time]
-    [ctia.properties :refer [get-http-show]]
-    [ctim.domain.id :as id]
-    [ctim.schemas
-     [actor :refer [NewActor StoredActor]]
-     [campaign :refer [NewCampaign StoredCampaign]]
-     [common :as c]
-     [coa :refer [NewCOA StoredCOA]]
-     [exploit-target :refer [NewExploitTarget StoredExploitTarget]]
-     [feedback :refer [NewFeedback StoredFeedback]]
-     [incident :refer [NewIncident StoredIncident]]
-     [indicator :refer [NewIndicator StoredIndicator]]
-     [judgement :refer [NewJudgement StoredJudgement]]
-     [sighting :refer [NewSighting StoredSighting]]
-     [ttp :refer [NewTTP StoredTTP]]
-     [verdict :refer [Verdict StoredVerdict]]
-     [bundle :refer [NewBundle StoredBundle]]]
-    [ring.util.http-response :as http-response]
-    [schema.core :as s])
+   [clj-momo.lib.time :as time]
+   [ctia.properties :refer [get-http-show]]
+   [ctim.domain.id :as id]
+   [ring.util.http-response :as http-response]
+   [schema.core :as s]
+   [ctim.schemas.common
+    :refer [ctim-schema-version
+            default-tlp
+            determine-disposition-id
+            disposition-map]]
+   [ctia.schemas.core
+    :refer [NewActor
+            StoredActor
+            NewCampaign
+            StoredCampaign
+            NewCOA
+            StoredCOA
+            NewDataTable
+            StoredDataTable
+            NewExploitTarget
+            StoredExploitTarget
+            NewFeedback
+            StoredFeedback
+            NewIncident
+            StoredIncident
+            NewIndicator
+            StoredIndicator
+            NewJudgement
+            StoredJudgement
+            NewSighting
+            StoredSighting
+            NewTTP
+            StoredTTP
+            Verdict
+            StoredVerdict
+            NewBundle
+            StoredBundle]])
   (:import [java.util UUID]))
 
-(def schema-version c/ctim-schema-version)
+(def schema-version ctim-schema-version)
 
 (defn default-realize-fn [type-name Model StoredModel]
   (s/fn default-realize :- StoredModel
@@ -41,7 +59,7 @@
               :schema_version schema-version
               :created (or (:created prev-object) now)
               :modified now
-              :tlp (:tlp new-object (:tlp prev-object c/default-tlp))
+              :tlp (:tlp new-object (:tlp prev-object default-tlp))
               :valid_time (or (:valid_time prev-object)
                               {:end_time (or (get-in new-object [:valid_time :end_time])
                                              time/default-expire-date)
@@ -57,6 +75,9 @@
 (def realize-coa
   (default-realize-fn "coa" NewCOA StoredCOA))
 
+(def realize-data-table
+  (default-realize-fn "data-table" NewDataTable StoredDataTable))
+
 (def realize-exploit-target
   (default-realize-fn "exploit-target" NewExploitTarget StoredExploitTarget))
 
@@ -69,7 +90,7 @@
          :type "feedback"
          :created (time/now)
          :owner login
-         :tlp (:tlp new-feedback c/default-tlp)
+         :tlp (:tlp new-feedback default-tlp)
          :schema_version schema-version))
 
 (def realize-incident
@@ -84,13 +105,13 @@
    login :- s/Str]
   (let [now (time/now)
         disposition (try
-                      (c/determine-disposition-id new-judgement)
+                      (determine-disposition-id new-judgement)
                       (catch clojure.lang.ExceptionInfo _
                         (throw
                          (http-response/bad-request!
                           {:error "Mismatching :dispostion and dispositon_name for judgement"
                            :judgement new-judgement}))))
-        disposition_name (get c/disposition-map disposition)]
+        disposition_name (get disposition-map disposition)]
     (assoc new-judgement
            :id id
            :type "judgement"
@@ -98,7 +119,7 @@
            :disposition_name disposition_name
            :owner login
            :created now
-           :tlp (:tlp new-judgement c/default-tlp)
+           :tlp (:tlp new-judgement default-tlp)
            :schema_version schema-version
            :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
                                       time/default-expire-date)
@@ -137,7 +158,7 @@
             :confidence (:confidence new-sighting
                                      (:confidence prev-sighting "Unknown"))
             :tlp (:tlp new-sighting
-                       (:tlp prev-sighting c/default-tlp))
+                       (:tlp prev-sighting default-tlp))
             :schema_version schema-version
             :created (or (:created prev-sighting) now)
             :modified now))))
@@ -152,7 +173,7 @@
            :type "bundle"
            :owner login
            :created now
-           :tlp (:tlp new-bundle c/default-tlp)
+           :tlp (:tlp new-bundle default-tlp)
            :schema_version schema-version
            :valid_time {:end_time (or (get-in new-bundle [:valid_time :end_time])
                                       time/default-expire-date)

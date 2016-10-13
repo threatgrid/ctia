@@ -9,6 +9,7 @@
              [bulk :refer [bulk-routes]]
              [campaign :refer [campaign-routes]]
              [coa :refer [coa-routes]]
+             [data-table :refer [data-table-routes]]
              [documentation :refer [documentation-routes]]
              [event :refer [event-routes]]
              [exploit-target :refer [exploit-target-routes]]
@@ -85,6 +86,7 @@
                     :tags [{:name "Actor" :description "Actor operations"}
                            {:name "Campaign" :description "Campaign operations"}
                            {:name "COA" :description "COA operations"}
+                           {:name "DataTable" :description "DataTable operations"}
                            {:name "Events" :description "Events operations"}
                            {:name "ExploitTarget" :description "ExploitTarget operations"}
                            {:name "Feedback" :description "Feedback operations"}
@@ -106,21 +108,22 @@
 
               documentation-routes
               (context "/ctia" []
-                actor-routes
-                bulk-routes
-                campaign-routes
-                coa-routes
-                event-routes
-                exploit-target-routes
-                feedback-routes
-                incident-routes
-                indicator-routes
-                judgement-routes
-                metrics-routes
-                observable-routes
-                properties-routes
-                sighting-routes
-                ttp-routes
-                verdict-routes
-                bundle-routes
-                version-routes)))
+                       actor-routes
+                       bulk-routes
+                       campaign-routes
+                       coa-routes
+                       data-table-routes
+                       event-routes
+                       exploit-target-routes
+                       feedback-routes
+                       incident-routes
+                       indicator-routes
+                       judgement-routes
+                       metrics-routes
+                       observable-routes
+                       properties-routes
+                       sighting-routes
+                       ttp-routes
+                       verdict-routes
+                       bundle-routes
+                       version-routes)))

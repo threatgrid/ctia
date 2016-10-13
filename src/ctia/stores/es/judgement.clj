@@ -7,12 +7,12 @@
    [ctia.stores.es.crud :as crud]
 
    [ring.swagger.coerce :as sc]
-   [ctim.schemas
-    [common :refer [disposition-map]]
-    [verdict :refer [Verdict]]
-    [judgement :refer [Judgement
-                       NewJudgement
-                       StoredJudgement]]]
+   [ctim.schemas.common :refer [disposition-map]]
+
+   [ctia.schemas.core :refer [Verdict
+                              StoredJudgement
+                              NewJudgement
+                              StoredJudgement]]
    [ctia.stores.es.query :refer
     [active-judgements-by-observable-query]]
 

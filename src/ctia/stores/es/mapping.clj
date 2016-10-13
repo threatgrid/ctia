@@ -143,7 +143,7 @@
   {:properties (assoc related
                       :sighting_id all_string)})
 
-(def specifications
+(def specification
   {:properties
    {:type string
     :judgements string
@@ -430,7 +430,7 @@
      :kill_chain_phases string
      :test_mechanisms string
      :producer string
-     :specifications specifications
+     :specification specification
      :owner string
      :created ts
      :modified ts
@@ -705,6 +705,34 @@
      :created ts
      :modified ts}}})
 
+(def data-table-mapping
+  {"data-table"
+   {:dynamic "strict"
+    :include_in_all false
+    :properties
+    {:id all_string
+     :external_ids string
+     :title all_string
+     :tlp string
+     :schema_version string
+     :uri string
+     :source_uri string
+     :revision {:type "long"}
+     :timestamp ts
+     :language string
+     :description all_text
+     :short_description all_text
+     :type string
+     :valid_time valid-time
+     :source string
+     :owner string
+     :created ts
+     :modified ts
+     :row_count {:type "long"}
+     :columns {:type "object" :enabled false}
+     :rows {:type "object" :enabled false}}}})
+
+
 (def bundle-mapping
   {"bundle"
    {:dynamic "strict"
@@ -733,6 +761,7 @@
      :campaigns {:type "object" :enabled false}
      :coas {:type "object" :enabled false}
      :exploit-targets {:type "object" :enabled false}
+     :data-tables {:type "object" :enabled false}
      :feedbacks {:type "object" :enabled false}
      :incidents {:type "object" :enabled false}
      :indicators {:type "object" :enabled false}
@@ -744,6 +773,7 @@
      :actor_refs string
      :campaign_refs string
      :coa_refs string
+     :data-table_refs string
      :exploit-target_refs string
      :feedback_refs string
      :incident_refs string
@@ -752,6 +782,7 @@
      :sighting_refs string
      :ttp_refs string
      :verdict_refs string}}})
+
 (def store-mappings
   (merge {}
          judgement-mapping
@@ -762,6 +793,7 @@
          actor-mapping
          campaign-mapping
          coa-mapping
+         data-table-mapping
          incident-mapping
          exploit-target-mapping
          sighting-mapping

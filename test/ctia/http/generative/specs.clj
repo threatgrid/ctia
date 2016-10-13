@@ -74,6 +74,7 @@
 (def-property spec-actor-routes 'actor)
 (def-property spec-campaign-routes 'campaign)
 (def-property spec-coa-routes 'coa)
+(def-property spec-data-table-routes 'data-table)
 (def-property spec-exploit-target-routes 'exploit-target)
 
 (def spec-indicator-routes

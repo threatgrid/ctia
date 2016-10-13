@@ -29,6 +29,7 @@
              "-XX:MaxPermSize=256m"
              "-Dlog.console.threshold=INFO"
              "-server"]
+  :pedantic? :warn
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [clj-time "0.12.0"]
                  [org.clojure/core.async "0.2.374"]
@@ -38,13 +39,20 @@
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
                  [threatgrid/clj-momo "0.2.1"]
-                 
+
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.1.9"]
+                 [threatgrid/ctim "0.2.0"
+                  ;; Exclusions:
+                  ;; - ring-swagger as 0.22.9 lacks s/Any support
+                  :exclusions [metosin/ring-swagger]]
 
                  ;; Web server
+                 ;; ring-swagger 0.22.10 provided by compojure-api
+                 ;; 1.1.8 fails to generate JSON schema for s/Any
+                 ;; overriding here
+                 [metosin/ring-swagger "0.22.11"]
                  [metosin/compojure-api ~compojure-api-version
                   ;; Exclusions:
                   ;; - ring-swagger as CTIM provides 0.22.9
