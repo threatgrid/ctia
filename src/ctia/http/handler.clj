@@ -17,6 +17,7 @@
              [incident :refer [incident-routes]]
              [indicator :refer [indicator-routes]]
              [judgement :refer [judgement-routes]]
+             [relationship :refer [relationship-routes]]
              [metrics :refer [metrics-routes]]
              [observable :refer [observable-routes]]
              [properties :refer [properties-routes]]
@@ -93,12 +94,15 @@
                            {:name "Incident" :description "Incident operations"}
                            {:name "Indicator", :description "Indicator operations"}
                            {:name "Judgement", :description "Judgement operations"}
+                           {:name "Relationship", :description "Relationship operations"}
                            {:name "Properties", :description "Properties operations"}
                            {:name "Sighting", :description "Sighting operations"}
                            {:name "TTP", :description "TTP operations"}
                            {:name "Verdict", :description "Verdict operations"}
                            {:name "Bundle", :description "Bundle operations"}
-                           {:name "Version", :description "Version operations"}]}}}
+                           {:name "Bulk", :description "Bulk operations"}
+                           {:name "Metrics", :description "Performance Statistics"}
+                           {:name "Version", :description "Version Information"}]}}}
 
   (middleware [auth/wrap-authentication
                wrap-not-modified
@@ -124,6 +128,7 @@
                        properties-routes
                        sighting-routes
                        ttp-routes
+                       relationship-routes
                        verdict-routes
                        bundle-routes
                        version-routes)))

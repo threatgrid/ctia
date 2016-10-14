@@ -132,6 +132,7 @@
 (def-property spec-feedback-routes 'feedback)
 (def-property spec-incident-routes 'incident)
 (def-property spec-judgement-routes 'judgement)
+(def-property spec-relationship-routes 'relationship)
 (def-property spec-sighting-routes 'sighting)
 (def-property spec-ttp-routes 'ttp)
 (def-property spec-bundle-routes 'bundle)

@@ -83,6 +83,10 @@
    {:atom as-store/->JudgementStore
     :es es-store/->JudgementStore}
 
+   :relationship
+   {:atom as-store/->RelationshipStore
+    :es es-store/->RelationshipStore}
+
    :verdict
    {:atom as-store/->VerdictStore
     :es es-store/->VerdictStore}

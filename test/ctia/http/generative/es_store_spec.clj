@@ -40,6 +40,9 @@
 (defspec spec-judgement-routes-es-store
   specs/spec-judgement-routes)
 
+(defspec spec-relationship-routes-es-store
+  specs/spec-judgement-routes)
+
 (defspec spec-sighting-routes-es-store
   specs/spec-sighting-routes)
 

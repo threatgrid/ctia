@@ -59,6 +59,12 @@
     :list-judgements
     :delete-judgement
 
+    ;; Relationship
+    :create-relationship
+    :read-relationship
+    :list-relationships
+    :delete-relationship
+
     ;; Sighting
     :create-sighting
     :read-sighting

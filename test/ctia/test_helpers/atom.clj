@@ -3,7 +3,7 @@
             [ctia.test-helpers.core :refer [with-properties]]))
 
 (defn fixture-properties:atom-memory-store [f]
-  ;; Set properties to enable the atom store
+  ;; Set all the stores as atom memory
   (with-properties ["ctia.store.actor" "atom"
                     "ctia.store.atom.actor.mode" "memory"
                     "ctia.store.campaign" "atom"
@@ -24,6 +24,8 @@
                     "ctia.store.atom.indicator.mode" "memory"
                     "ctia.store.judgement" "atom"
                     "ctia.store.atom.judgement.mode" "memory"
+                    "ctia.store.relationship" "atom"
+                    "ctia.store.atom.relationship.mode" "memory"
                     "ctia.store.verdict" "atom"
                     "ctia.store.atom.verdict.mode" "memory"
                     "ctia.store.sighting" "atom"
@@ -35,7 +37,7 @@
     (f)))
 
 (defn fixture-properties:atom-durable-store [f]
-  ;; Set properties to enable the atom store
+  ;; Set all the stores as atom durable
   (with-properties ["ctia.store.actor" "atom"
                     "ctia.store.atom.actor.mode" "durable"
                     "ctia.store.atom.actor.path" "data/test/actor.edn"
@@ -66,6 +68,9 @@
                     "ctia.store.judgement" "atom"
                     "ctia.store.atom.judgement.mode" "durable"
                     "ctia.store.atom.judgement.path" "data/test/judgement.edn"
+                    "ctia.store.relationship" "atom"
+                    "ctia.store.atom.relationship.mode" "durable"
+                    "ctia.store.atom.relationship.path" "data/test/relationship.edn"
                     "ctia.store.verdict" "atom"
                     "ctia.store.atom.verdict.mode" "durable"
                     "ctia.store.atom.verdict.path" "data/test/verdict.edn"

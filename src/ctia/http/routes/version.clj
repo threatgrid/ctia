@@ -9,12 +9,12 @@
 
 (defroutes version-routes
   (context "/version" []
-    :tags ["version"]
-    (GET "/" []
-      :return VersionInfo
-      :summary "API version details"
-      (ok {:base "/ctia"
-           :version schema-version
-           :beta true
-           :build (st/replace (current-version) #"\n" "")
-           :supported_features []}))))
+           :tags ["Version"]
+           (GET "/" []
+                :return VersionInfo
+                :summary "API version details"
+                (ok {:base "/ctia"
+                     :version schema-version
+                     :beta true
+                     :build (st/replace (current-version) #"\n" "")
+                     :supported_features []}))))

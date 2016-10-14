@@ -33,6 +33,8 @@
             StoredSighting
             NewTTP
             StoredTTP
+            NewRelationship
+            StoredRelationship
             Verdict
             StoredVerdict
             NewBundle
@@ -98,6 +100,19 @@
 
 (def realize-indicator
   (default-realize-fn "indicator" NewIndicator StoredIndicator))
+
+(s/defn realize-relationship :- StoredRelationship
+  [new-relationship :- NewRelationship
+   id :- s/Str
+   login :- s/Str]
+  (assoc new-relationship
+         :id id
+         :type "relationship"
+         :created (time/now)
+         :owner login
+         :tlp (:tlp new-relationship default-tlp)
+         :schema_version schema-version))
+
 
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
