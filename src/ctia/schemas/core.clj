@@ -11,7 +11,7 @@
              [incident :as is]
              [indicator :as ins]
              [judgement :as js]
-             [relationships :as rels]
+             [relationship :as rels]
              [sighting :as ss]
              [ttp :as ttps]
              [verdict :as vs]
@@ -73,6 +73,8 @@
                                fs/replace-either-with-any
                                fs/->schema-tree))
 
+
+
 ;; ttp
 (defschema NewTTP (fs/->schema-tree ttps/NewTTP))
 (defschema StoredTTP (fs/->schema-tree ttps/StoredTTP))
@@ -87,6 +89,9 @@
                             fs/->schema-tree))
 
 ;; relationships
+(defschema NewRelationship (fs/->schema-tree rels/NewRelationship))
+(defschema StoredRelationship (fs/->schema-tree rels/StoredRelationship))
+
 (defschema RelatedIndicator (fs/->schema-tree rels/RelatedIndicator))
 
 ;; common

@@ -84,12 +84,11 @@
   (create-bundle [this new-bundle])
   (delete-bundle [this id]))
 
-(defprotocol IRelationStore
-  (read-relation [this id])
-  (create-relation [this new-relation])
-  (update-relation [this relation])
-  (delete-relation [this id])
-  (list-relations [this filtermap params]))
+(defprotocol IRelationshipStore
+  (read-relationship [this id])
+  (create-relationship [this new-relation])
+  (delete-relationship [this id])
+  (list-relationships [this filtermap params]))
 
 (defprotocol IIdentityStore
   (read-identity [this login])
@@ -113,11 +112,10 @@
                        :exploit-target []
                        :sighting []
                        :incident []
-                       ;;:relation relation-store
+                       :relationship []
                        :identity []
                        :verdict []
-                       :bundle []
-                       }))
+                       :bundle []}))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))

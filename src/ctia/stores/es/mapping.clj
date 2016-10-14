@@ -783,9 +783,37 @@
      :ttp_refs string
      :verdict_refs string}}})
 
+(def relationship-mapping
+  {"relationship"
+   {:dynamic "strict"
+    :include_in_all false
+    :properties
+    {:id all_string
+     :external_ids string
+     :title all_string
+     :tlp string
+     :schema_version string
+     :uri string
+     :source_uri string
+     :revision {:type "long"}
+     :timestamp ts
+     :language string
+     :description all_text
+     :short_description all_text
+     :type string
+     :source string
+     :owner string
+     :created ts
+     :modified ts
+     :relationship_type string
+     :source_ref string
+     :target_ref string}}})
+
+
 (def store-mappings
   (merge {}
          judgement-mapping
+         relationship-mapping
          verdict-mapping
          indicator-mapping
          ttp-mapping

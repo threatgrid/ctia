@@ -1,21 +1,23 @@
 (ns ctia.stores.atom.store
-  (:require [ctia.store :refer :all]
-            [ctia.stores.atom
-             [actor :as actor]
-             [campaign :as campaign]
-             [coa :as coa]
-             [exploit-target :as expl-tar]
-             [feedback :as feedback]
-             [identity :as identity]
-             [incident :as incident]
-             [indicator :as indicator]
-             [judgement :as judgement]
-             [sighting :as sighting]
-             [ttp :as ttp]
-             [verdict :as verdict]
-             [bundle :as bundle]
-             [data-table :as data-table]]
-            [durable-atom.core :refer [durable-atom]]))
+  (:require
+   [durable-atom.core :refer [durable-atom]]
+   [ctia.store :refer :all]
+   [ctia.stores.atom
+    [actor :as actor]
+    [campaign :as campaign]
+    [coa :as coa]
+    [exploit-target :as expl-tar]
+    [feedback :as feedback]
+    [identity :as identity]
+    [incident :as incident]
+    [indicator :as indicator]
+    [judgement :as judgement]
+    [relationship :as relationship]
+    [sighting :as sighting]
+    [ttp :as ttp]
+    [verdict :as verdict]
+    [bundle :as bundle]
+    [data-table :as data-table]]))
 
 (defn init! [{:keys [path mode] :as _props_}]
   (if (= mode :durable)
@@ -153,6 +155,17 @@
     (judgement/handle-add-indicator-to-judgement state
                                                  judgement-id
                                                  indicator-rel)))
+
+(defrecord RelationshipStore [state]
+  IRelationshipStore
+  (create-relationship [_ new-relationship]
+    (relationship/handle-create-relationship state new-relationship))
+  (read-relationship [_ id]
+    (relationship/handle-read-relationship state id))
+  (delete-relationship [_ id]
+    (relationship/handle-delete-relationship state id))
+  (list-relationships [_ filter-map params]
+    (relationship/handle-list-relationships state filter-map params)))
 
 (defrecord VerdictStore [state]
   IVerdictStore

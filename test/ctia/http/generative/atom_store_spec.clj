@@ -40,6 +40,9 @@
 (defspec spec-judgement-routes-atom-store
   specs/spec-judgement-routes)
 
+(defspec spec-relationship-routes-atom-store
+  specs/spec-judgement-routes)
+
 (defspec spec-sighting-routes-atom-store
   specs/spec-sighting-routes)
 
