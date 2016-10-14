@@ -64,7 +64,7 @@
   priority, than Clean disposition has priority over all others, then
   Malicious disposition, and so on down to Unknown.
 
-  <a href='/doc/data_structures.md'>Data structures documentation</a>")
+  <a href='/doc/README.md'>CTIA Documentation</a>")
 
 (defapi api-handler
   {:exceptions
