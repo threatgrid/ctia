@@ -766,6 +766,7 @@
      :incidents {:type "object" :enabled false}
      :indicators {:type "object" :enabled false}
      :judgements {:type "object" :enabled false}
+     :relationships {:type "object" :enabled false}
      :sightings {:type "object" :enabled false}
      :ttps {:type "object" :enabled false}
      :verdicts {:type "object" :enabled false}
@@ -779,6 +780,7 @@
      :incident_refs string
      :indicator_refs string
      :judgement_refs string
+     :relationship_refs string
      :sighting_refs string
      :ttp_refs string
      :verdict_refs string}}})
