@@ -7,10 +7,12 @@
              [campaign :as cam-ent]
              [coa :as coa-ent]
              [exploit-target :as ept-ent]
+             [data-table :as dt-ent]
              [feedback :as fbk-ent]
              [incident :as inc-ent]
              [indicator :as ind-ent]
              [judgement :as jud-ent]
+             [relationship :as rel-ent]
              [sighting :as sig-ent]
              [ttp :as ttp-ent]]
             [ctia.flows.crud :as flows]
@@ -30,11 +32,13 @@
     :actor          ent/realize-actor
     :campaign       ent/realize-campaign
     :coa            ent/realize-coa
+    :data-table     ent/realize-data-table
     :exploit-target ent/realize-exploit-target
     :feedback       ent/realize-feedback
     :incident       ent/realize-incident
     :indicator      ent/realize-indicator
     :judgement      ent/realize-judgement
+    :relationship   ent/realize-relationship
     :sighting       ent/realize-sighting
     :ttp            ent/realize-ttp))
 
@@ -45,11 +49,13 @@
                     :actor          create-actor
                     :campaign       create-campaign
                     :coa            create-coa
+                    :data-table     create-data-table
                     :exploit-target create-exploit-target
                     :feedback       create-feedback
                     :incident       create-incident
                     :indicator      create-indicator
                     :judgement      create-judgement
+                    :relationship   create-relationship
                     :sighting       create-sighting
                     :ttp            create-ttp) %))
 
@@ -60,11 +66,13 @@
                    :actor          read-actor
                    :campaign       read-campaign
                    :coa            read-coa
+                   :data-table     read-data-table
                    :exploit-target read-exploit-target
                    :feedback       read-feedback
                    :incident       read-incident
                    :indicator      read-indicator
                    :judgement      read-judgement
+                   :relationship   read-relationship
                    :sighting       read-sighting
                    :ttp            read-ttp) %))
 
@@ -75,11 +83,13 @@
     :actor          act-ent/with-long-id
     :campaign       cam-ent/with-long-id
     :coa            coa-ent/with-long-id
+    :data-table     dt-ent/with-long-id
     :exploit-target ept-ent/with-long-id
     :feedback       fbk-ent/with-long-id
     :incident       inc-ent/with-long-id
     :indicator      ind-ent/with-long-id
     :judgement      jud-ent/with-long-id
+    :relationship   rel-ent/with-long-id
     :sighting       sig-ent/with-long-id
     :ttp            ttp-ent/with-long-id))
 
@@ -149,11 +159,13 @@
                  :capabilities #{:create-actor
                                  :create-campaign
                                  :create-coa
+                                 :create-data-table
                                  :create-exploit-target
                                  :create-feedback
                                  :create-incident
                                  :create-indicator
                                  :create-judgement
+                                 :create-relationship
                                  :create-sighting
                                  :create-ttp}
                  :identity login
@@ -166,33 +178,39 @@
                 :query-params [{actors          :- [Reference] []}
                                {campaigns       :- [Reference] []}
                                {coas            :- [Reference] []}
+                               {data-tables     :- [Reference] []}
                                {exploit-targets :- [Reference] []}
                                {feedbacks       :- [Reference] []}
                                {incidents       :- [Reference] []}
                                {indicators      :- [Reference] []}
                                {judgements      :- [Reference] []}
+                               {relationships   :- [Reference] []}
                                {sightings       :- [Reference] []}
                                {ttps            :- [Reference] []}]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities #{:read-actor
                                 :read-campaign
                                 :read-coa
+                                :read-data-table
                                 :read-exploit-target
                                 :read-feedback
                                 :read-incident
                                 :read-indicator
                                 :read-judgement
+                                :read-relationship
                                 :read-sighting
                                 :read-ttp}
                 (let [bulk (into {} (remove (comp empty? second)
                                             {:actors          actors
                                              :campaigns       campaigns
                                              :coas            coas
+                                             :data-tables     data-tables
                                              :exploit-targets exploit-targets
                                              :feedbacks       feedbacks
                                              :incidents       incidents
                                              :indicators      indicators
                                              :judgements      judgements
+                                             :relationships   relationships
                                              :sightings       sightings
                                              :ttps            ttps}))]
                   (if (> (bulk-size bulk) (get-bulk-max-size))

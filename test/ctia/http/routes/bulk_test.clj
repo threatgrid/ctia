@@ -72,9 +72,20 @@
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
 
-(defn mk-new-exploi-target [n]
-  {:title (str "exploi-target-" n)
-   :description (str "description: exploi-target-" n)
+(defn mk-new-data-table [n]
+  {:description (str "description: datatable-" n)
+   :row_count 1
+   :columns [{:name "Column1"
+              :type "string"}
+             {:name "Column2"
+              :type "string"}]
+   :rows [["foo"] ["bar"]]
+   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
+
+(defn mk-new-exploit-target [n]
+  {:title (str "exploit-target-" n)
+   :description (str "description: exploit-target-" n)
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
 
@@ -115,6 +126,21 @@
                  :relationship "relationship"
                  :indicator_id "indicator-123"}]})
 
+(defn mk-new-relationship [n]
+  {:title (str "title" n)
+   :description (str "description-" n)
+   :short_description "short desc"
+   :uri "http://example.com"
+   :revision 1
+   :external_ids ["foo" "bar"]
+   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+   :language "language"
+   :source "source"
+   :source_uri "http://example.com"
+   :relationship_type "targets"
+   :source_ref "http://example.com"
+   :target_ref "http://example.com"})
+
 (defn mk-new-sighting [n]
   {:description (str "description: sighting-" n)
    :timestamp #inst "2016-02-11T00:40:48.212-00:00"
@@ -151,8 +177,8 @@
              {:actors [:x :x :x :x :x :x]
               :campaigns [:x :x :x :x :x :x]})))))
 
-(def tst-bulk{:actors (map #(str "actor-" %) (range 6))
-              :campaigns (map #(str "campaign-" %) (range 6))})
+(def tst-bulk {:actors (map #(str "actor-" %) (range 6))
+               :campaigns (map #(str "campaign-" %) (range 6))})
 
 (defn make-get-query-str-from-bulkrefs
   "Given a BulkRefs returns the string of query-params"
@@ -171,15 +197,17 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
   (testing "POST /ctia/bulk"
-    (let [nb 10
+    (let [nb 8
           new-bulk {:actors (map mk-new-actor (range nb))
                     :campaigns (map mk-new-campaign (range nb))
                     :coas (map mk-new-coa (range nb))
-                    :exploit-targets (map mk-new-exploi-target (range nb))
+                    :data-tables (map mk-new-data-table (range nb))
+                    :exploit-targets (map mk-new-exploit-target (range nb))
                     :feedbacks (map mk-new-feedback (range nb))
                     :incidents (map mk-new-incident (range nb))
                     :indicators (map mk-new-indicator (range nb))
                     :judgements (map mk-new-judgement (range nb))
+                    :relationships (map mk-new-relationship (range nb))
                     :sightings (map mk-new-sighting (range nb))
                     :ttps (map mk-new-ttp (range nb))}
           response (post "ctia/bulk"
@@ -187,6 +215,7 @@
                          :headers {"api_key" "45c1f5e3f05d0"})
           bulk-ids (:parsed-body response)
           show-props (get-http-show)]
+
       (is (= 201 (:status response)))
 
       (doseq [type (keys new-bulk)]
@@ -219,15 +248,17 @@
         new-bulk {:actors (map mk-new-actor (range nb))
                   :campaigns (map mk-new-campaign (range nb))
                   :coas (map mk-new-coa (range nb))
-                  :exploit-targets (map mk-new-exploi-target (range nb))
+                  :data-tables (map mk-new-data-table (range nb))
+                  :exploit-targets (map mk-new-exploit-target (range nb))
                   :feedbacks (map mk-new-feedback (range nb))
                   :incidents (map mk-new-incident (range nb))
                   :indicators (map mk-new-indicator (range nb))
                   :judgements (map mk-new-judgement (range nb))
+                  :relationships (map mk-new-relationship (range nb))
                   :sightings (map mk-new-sighting (range nb))
                   :ttps (map mk-new-ttp (range nb))}]
     (is (= (bulk-size new-bulk)
-           (* nb 10)))))
+           (* nb 12)))))
 
 (deftest-for-each-store bulk-max-size-post-test
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
@@ -235,35 +266,40 @@
 
   ;; Check changing the properties change the computed bulk max size
   (is (= 100 (get-bulk-max-size)))
-  (let [nb 10
+  (let [nb 8
         new-ok-bulk {:actors (map mk-new-actor (range nb))
                      :campaigns (map mk-new-campaign (range nb))
                      :coas (map mk-new-coa (range nb))
-                     :exploit-targets (map mk-new-exploi-target (range nb))
+                     :data-tables (map mk-new-data-table (range nb))
+                     :exploit-targets (map mk-new-exploit-target (range nb))
                      :feedbacks (map mk-new-feedback (range nb))
                      :incidents (map mk-new-incident (range nb))
                      :indicators (map mk-new-indicator (range nb))
                      :judgements (map mk-new-judgement (range nb))
+                     :relationships (map mk-new-relationship (range nb))
                      :sightings (map mk-new-sighting (range nb))
                      :ttps (map mk-new-ttp (range nb))}
-        new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 1)))
+        new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 5)))
                           :campaigns (map mk-new-campaign (range nb))
                           :coas (map mk-new-coa (range nb))
-                          :exploit-targets (map mk-new-exploi-target (range nb))
+                          :data-tables (map mk-new-data-table (range nb))
+                          :exploit-targets (map mk-new-exploit-target (range nb))
                           :feedbacks (map mk-new-feedback (range nb))
                           :incidents (map mk-new-incident (range nb))
                           :indicators (map mk-new-indicator (range nb))
                           :judgements (map mk-new-judgement (range nb))
+                          :relationships (map mk-new-relationship (range nb))
                           :sightings (map mk-new-sighting (range nb))
                           :ttps (map mk-new-ttp (range nb))}
         {status-ok :status
+         response :body
          response-ok :parsed-body} (post "ctia/bulk"
                                          :body new-ok-bulk
                                          :headers {"api_key" "45c1f5e3f05d0"})
         {status-too-big :status
          response-too-big :parsed-body} (post "ctia/bulk"
-                                             :body new-too-big-bulk
-                                             :headers {"api_key" "45c1f5e3f05d0"})]
+                                              :body new-too-big-bulk
+                                              :headers {"api_key" "45c1f5e3f05d0"})]
     (testing "POST of right size bulk are accepted"
       (is (empty? (:errors response-ok)) "No errors")
       (is (= 201 status-ok)))

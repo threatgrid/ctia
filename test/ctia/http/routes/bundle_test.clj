@@ -63,11 +63,11 @@
                                   :value "FA0F..."}
                      :valid_time {:start_time #inst "2016-07-01"}}
 
-          actor-refs  (repeat 10 "http://tenzin/actor/actor-1234")
-          verdict-refs (repeat 10 "http://tenzin/verdict/verdict-1234")
-          indicators (repeat 10 indicator)
-          judgements (repeat 10 judgement)
-          ttps (repeat 10 ttp)
+          actor-refs  (set (repeat 10 "http://tenzin/actor/actor-1234"))
+          verdict-refs (set (repeat 10 "http://tenzin/verdict/verdict-1234"))
+          indicators (set (repeat 10 indicator))
+          judgements (set (repeat 10 judgement))
+          ttps (set (repeat 10 ttp))
           new-bundle {:valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                    :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                       :ttps ttps
