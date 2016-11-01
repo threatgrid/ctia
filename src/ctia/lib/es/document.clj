@@ -2,6 +2,8 @@
   (:require
    [ctia.lib.pagination :as pagination]
    [ctia.lib.es.query :refer [filter-map->terms-query]]
+   [clojurewerkz.elastisch.native.bulk :as native-bulk]
+   [clojurewerkz.elastisch.rest.bulk :as rest-bulk]
    [clojurewerkz.elastisch.native.document :as native-document]
    [clojurewerkz.elastisch.rest.document :as rest-document]
    [clojurewerkz.elastisch.native.response :as native-response]
@@ -21,6 +23,16 @@
   (if (native-conn? conn)
     native-document/create
     rest-document/create))
+
+(defn bulk-create-fn [conn]
+  (if (native-conn? conn)
+    native-bulk/bulk-create
+    rest-bulk/bulk-create))
+
+(defn bulk-fn [conn]
+  (if (native-conn? conn)
+    native-bulk/bulk
+    rest-bulk/bulk))
 
 (defn update-doc-fn [conn]
   (if (native-conn? conn)
@@ -63,6 +75,17 @@
    {:id (:id doc)
     :refresh refresh?})
   doc)
+
+(defn bulk-create-doc
+  "create multiple documents on ES and return the created documents"
+  [conn docs refresh?]
+  (let [bulk-create (bulk-create-fn conn)
+        bulk (bulk-fn conn)
+        create-operations (bulk-create docs)]
+    (bulk conn
+          create-operations
+          {:refresh refresh?}))
+  docs)
 
 (defn update-doc
   "update a document on es return the updated document"

@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
    [ctia.domain.entities.judgement :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
+   [ctia.flows.crud :as f]
    [ctia.http.routes.common
     :refer [created paginated-ok PagingParams]]
    [ctia.properties :refer [get-http-show]]
@@ -44,11 +44,12 @@
                  :identity identity
                  (created
                   (with-long-id
-                    (flows/create-flow :realize-fn realize-judgement
-                                       :store-fn #(write-store :judgement create-judgement %)
-                                       :entity-type :judgement
-                                       :identity identity
-                                       :entity judgement))))
+                    (f/pop-result
+                     (f/create-flow :realize-fn realize-judgement
+                                    :store-fn #(write-store :judgement create-judgement %)
+                                    :entity-type :judgement
+                                    :identity identity
+                                    :entity judgement)))))
            (POST "/:judgement-id/indicator" []
                  :return (s/maybe RelatedIndicator)
                  :path-params [judgement-id :- s/Str]
@@ -94,10 +95,11 @@
                    :summary "Deletes a Judgement"
                    :capabilities :delete-judgement
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :judgement read-judgement %)
-                                          :delete-fn #(write-store :judgement delete-judgement %)
-                                          :entity-type :judgement
-                                          :entity-id id
-                                          :identity identity)
+                   (if (f/pop-result
+                        (f/delete-flow :get-fn #(read-store :judgement read-judgement %)
+                                       :delete-fn #(write-store :judgement delete-judgement %)
+                                       :entity-type :judgement
+                                       :entity-id id
+                                       :identity identity))
                      (no-content)
                      (not-found)))))

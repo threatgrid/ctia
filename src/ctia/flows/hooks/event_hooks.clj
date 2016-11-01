@@ -4,14 +4,15 @@
    [ctia.events :as events]
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
-   [ctia.domain.entities :as entities]
    [ctia.events.producers.es.producer :as esp]
    [ctia.properties :refer [properties]]
-   [ctia.store :as store]
-   [schema.core :as s]
-   [ctia.schemas.core :refer [Verdict
-                              StoredVerdict
-                              StoredJudgement]]))
+   [schema.core :as s]))
+
+;; Note: event-hooks race with store-fns in the crud flow.  If you are
+;; reading from a store in an event-hook, the store might not have the
+;; updated entity yet.  If you need to read from the store, you should
+;; probably be using an :after-create style hook instead of an event
+;; hook.
 
 (defrecord ESEventProducer [conn]
   Hook
@@ -60,45 +61,6 @@
     (events/send-event event)
     event))
 
-(defn- judgement?
-  [{{t :type} :entity :as event}]
-  (= "judgement" t))
-
-(def judgement-prefix "judgement-")
-
-(defn starts-with?
-  "Added to clojure.string in Clojure 1.8"
-  [^String s ^String ss]
-  (and s (.startsWith s ss)))
-
-(s/defn realize-verdict-wrapper :- StoredVerdict
-  "Realizes a verdict, using the associated judgement ID, if available,
-   to build the verdict ID"
-  [verdict :- Verdict
-   {id :id :as judgement} :- StoredJudgement
-   owner :- s/Str]
-  (letfn [(verdict-id [i] (str "verdict-" (subs i (count judgement-prefix))))]
-    (if (starts-with? id judgement-prefix)
-      (entities/realize-verdict verdict (verdict-id id) owner)
-      (entities/realize-verdict verdict owner))))
-
-(defrecord VerdictGenerator []
-  Hook
-  (init [_]
-    :nothing)
-  (destroy [_]
-    :nothing)
-  (handle [_ event _]
-    (when (judgement? event)
-      (let [{{observable :observable :as judgement} :entity owner :owner} event]
-        (when-let [new-verdict (some->
-                                (store/read-store :judgement
-                                                  store/calculate-verdict
-                                                  observable)
-                                (realize-verdict-wrapper judgement owner))]
-          (store/write-store :verdict store/create-verdict new-verdict))))
-    event))
-
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
   (let [{{redis-enabled? :enabled} :redis
@@ -107,5 +69,4 @@
     (cond-> hooks-m
       redis-enabled? (update :event #(conj % (redis-event-publisher)))
       es-enabled?    (update :event #(conj % (es-event-producer)))
-      :always        (update :event #(conj % (->ChannelEventPublisher)))
-      :always        (update :event #(conj % (->VerdictGenerator))))))
+      :always        (update :event #(conj % (->ChannelEventPublisher))))))

@@ -11,7 +11,8 @@
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctia.store :as store]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean

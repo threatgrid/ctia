@@ -1,6 +1,6 @@
 (ns ctia.http.routes.bulk
-  (:require [compojure.api.sweet :refer :all]
-            [clojure.tools.logging :as log]
+  (:require [clojure.tools.logging :as log]
+            [compojure.api.sweet :refer :all]
             [ctia.domain.entities :as ent]
             [ctia.domain.entities
              [actor :as act-ent]
@@ -15,13 +15,14 @@
              [relationship :as rel-ent]
              [sighting :as sig-ent]
              [ttp :as ttp-ent]]
-            [ctia.flows.crud :as flows]
+            [ctia.flows.crud :as f]
+            [ctia.http.middleware.auth]
             [ctia.http.routes.common :as common]
             [ctia.lib.keyword :refer [singular]]
-            [ctia.schemas.bulk :refer [BulkRefs NewBulk StoredBulk]]
             [ctia.properties :refer [properties]]
-            [ctia.store :refer :all]
+            [ctia.schemas.bulk :refer [BulkRefs NewBulk StoredBulk]]
             [ctia.schemas.core :refer [Reference]]
+            [ctia.store :refer :all]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -95,21 +96,22 @@
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
-  [entities entity-type login]
-  (let [with-long-id (with-long-id-fn entity-type)]
-    (->> entities
-         (map #(try
-                 (with-long-id
-                   (flows/create-flow
-                    :entity-type entity-type
-                    :realize-fn (realize entity-type)
-                    :store-fn (create-fn entity-type)
-                    :identity login
-                    :entity %))
-                 (catch Exception e
-                   (do (log/error (pr-str e))
-                       nil))))
-         (map :id))))
+  [entities entity-type identity]
+  (let [with-long-id (with-long-id-fn entity-type)
+        flows (doall
+               (for [ent entities]
+                 (f/create-flow
+                  :entity-type entity-type
+                  :realize-fn (realize entity-type)
+                  :store-fn (create-fn entity-type)
+                  :identity identity
+                  :entity ent)))
+        results (doall
+                 (for [flow flows]
+                   (with-long-id
+                     (f/pop-result
+                      flow))))]
+    (map :id results)))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
@@ -123,14 +125,8 @@
                               (do (log/error (pr-str e))
                                   nil))))))))
 
-(defn gen-bulk-from-fn
-  "Kind of fmap but adapted for bulk
-
-  ~~~~.clojure
-  (gen-bulk-from-fn f {k [v1 ... vn]} args)
-  ===> {k (map #(apply f % (singular k) args) [v1 ... vn])}
-  ~~~~
-  "
+(defn- gen-bulk-from-fn
+  "Kind of fmap but adapted for bulk"
   [func bulk & args]
   (reduce (fn [acc entity-type]
             (assoc acc
@@ -170,7 +166,7 @@
                                  :create-ttp}
                  :identity login
                  (if (> (bulk-size bulk) (get-bulk-max-size))
-                   (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+                   (bad-request (str "Exceeded maximum number of entities: " (get-bulk-max-size)))
                    (common/created (gen-bulk-from-fn create-entities bulk login))))
            (GET "/" []
                 :return (s/maybe StoredBulk)

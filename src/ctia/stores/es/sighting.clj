@@ -1,7 +1,10 @@
 (ns ctia.stores.es.sighting
-  (:require [ctia.lib.pagination :refer [list-response-schema]]
+  (:require [clojure.core.async.impl.protocols :as ap]
+            [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.lib.es.index :refer [ESConnState]]
             [ctia.stores.es.crud :as crud]
-            [ctia.schemas.core :refer [Observable StoredSighting]]
+            [ctia.stores.store-pipe :as sp]
+            [ctia.schemas.core :refer [ID Observable StoredSighting]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -38,22 +41,38 @@
   [s :- (s/maybe ESStoredSighting)]
   (when s (dissoc s :observables_hash)))
 
-(s/defn handle-create-sighting :- StoredSighting
-  [state realized]
-  (->> (stored-sighting->es-stored-sighting realized)
-       (create-fn state)
-       es-stored-sighting->stored-sighting))
+(def coerce! (crud/coerce-to-fn ESStoredSighting))
+
+(s/defn handle-create-sighting :- (s/protocol ap/Channel)
+  [state :- ESConnState
+   entity-chan :- (s/protocol ap/Channel)]
+  (sp/apply-store-fn
+   {:store-fn (s/fn create-sighting-fn :- StoredSighting
+                [entity :- StoredSighting]
+                (-> (stored-sighting->es-stored-sighting entity)
+                    (crud/create-doc state :sighting)
+                    coerce!
+                    es-stored-sighting->stored-sighting))
+    :input-chan entity-chan}))
 
 (s/defn handle-read-sighting :- (s/maybe StoredSighting)
-  [state id]
+  [state :- ESConnState
+   id :- ID]
   (es-stored-sighting->stored-sighting
    (read-fn state id)))
 
-(s/defn handle-update-sighting :- StoredSighting
-  [state id realized]
-  (->> (stored-sighting->es-stored-sighting realized)
-       (update-fn state id)
-       es-stored-sighting->stored-sighting))
+(s/defn handle-update-sighting :- (s/protocol ap/Channel)
+  [state :- ESConnState
+   id :- ID
+   entity-chan :- (s/protocol ap/Channel)]
+  (sp/apply-store-fn
+   {:store-fn (s/fn :- StoredSighting
+                [entity :- StoredSighting]
+                (-> (stored-sighting->es-stored-sighting entity)
+                    (crud/update-doc id state :sighting)
+                    coerce!
+                    es-stored-sighting->stored-sighting))
+    :input-chan entity-chan}))
 
 (def handle-delete-sighting (crud/handle-delete :sighting StoredSighting))
 

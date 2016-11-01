@@ -5,7 +5,7 @@
             [ctia.domain.entities
              [indicator :refer [with-long-id page-with-long-id]]
              [sighting :as sighting]]
-            [ctia.flows.crud :as flows]
+            [ctia.flows.crud :as f]
             [ctia.http.routes.common
              :refer [created PagingParams paginated-ok]]
             [ctia.store :refer :all]
@@ -54,11 +54,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-indicator
-                            :store-fn #(write-store :indicator create-indicator %)
-                            :entity-type :indicator
-                            :identity identity
-                            :entity indicator))))
+         (f/pop-result
+          (f/create-flow :realize-fn realize-indicator
+                         :store-fn #(write-store :indicator create-indicator %)
+                         :entity-type :indicator
+                         :identity identity
+                         :entity indicator)))))
     (PUT "/:id" []
       :return StoredIndicator
       :body [indicator NewIndicator {:description "an updated Indicator"}]
@@ -69,13 +70,14 @@
       :identity identity
       (ok
        (with-long-id
-         (flows/update-flow :get-fn #(read-store :indicator read-indicator %)
-                            :realize-fn realize-indicator
-                            :update-fn #(write-store :indicator update-indicator (:id %) %)
-                            :entity-type :indicator
-                            :entity-id id
-                            :identity identity
-                            :entity indicator))))
+         (f/pop-result
+          (f/update-flow :get-fn #(read-store :indicator read-indicator %)
+                         :realize-fn realize-indicator
+                         :update-fn #(write-store :indicator update-indicator id %)
+                         :entity-type :indicator
+                         :entity-id id
+                         :identity identity
+                         :entity indicator)))))
 
     (GET "/external_id" []
       :return [(s/maybe StoredIndicator)]

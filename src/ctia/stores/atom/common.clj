@@ -1,50 +1,68 @@
 (ns ctia.stores.atom.common
-  (:import java.util.UUID)
-  (:require [ctia.schemas.core :refer [ID]]
-            [schema.core :as s]
+  (:require [clojure.core.async.impl.protocols :as ap]
             [clojure.set :as set]
             [ctia.lib.pagination :refer [default-limit
                                          list-response-schema
                                          paginate
                                          response]]
-            [ctia.lib.schema :as ls]))
+            [ctia.lib.schema :as ls]
+            [ctia.schemas.core :refer [ID]]
+            [ctia.stores.store-pipe :as sp]
+            [schema.core :as s])
+  (:import java.util.UUID))
 
 (defn random-id [prefix]
   (fn [_new-entity_]
     (str prefix "-" (UUID/randomUUID))))
 
 (defn read-handler [Model]
-  (s/fn :- (s/maybe Model)
+  (s/fn read-store-fn :- (s/maybe Model)
     [state :- (ls/atom {s/Str Model})
      id :- ID]
     (get (deref state) id)))
 
 (defn create-handler-from-realized
-  "Create a new resource from a realized object"
+  "Create a new resource from a realized object on the store-pipe
+  thread pool. Returns a channel that will get the result and then
+  close."
   [Model]
-  (s/fn :- Model
+  (s/fn :- (s/protocol ap/Channel)
     [state :- (ls/atom {s/Str Model})
-     model :- Model]
-    (let [id (:id model)]
-      (get (swap! state assoc id model) id))))
+     entity-chan :- (s/protocol ap/Channel)]
+    (sp/apply-store-fn
+     {:store-fn (s/fn create-fn :- Model
+                  [{id :id, :as entity} :- Model]
+                  (get (swap! state assoc id entity) id))
+      :input-chan entity-chan})))
 
 (defn update-handler-from-realized
   "Update a resource using an id and a realized object"
   [Model]
-  (s/fn :- Model
+  (s/fn :- (s/protocol ap/Channel)
     [state :- (ls/atom {s/Str Model})
      id :- ID
-     updated-model :- Model]
-    (get (swap! state assoc id updated-model) id)))
+     updated-entity-chan :- (s/protocol ap/Channel)]
+    (sp/apply-store-fn
+     {:store-fn (s/fn update-fn :- Model
+                  [updated-entity :- Model]
+                  (get (swap! state assoc id updated-entity) id))
+      :input-chan updated-entity-chan})))
 
-(defn delete-handler [Model]
-  (s/fn :- s/Bool
+(defn delete-handler
+  "Delete a resource from an ID on the store the store-pipe thread
+  pool. Returns a channel that will get the result and then close."
+  [Model]
+  (s/fn :- (s/protocol ap/Channel)
     [state :- (ls/atom {s/Str Model})
-     id :- ID]
-    (if (contains? (deref state) id)
-      (do (swap! state dissoc id)
-          true)
-      false)))
+     id-chan :- (s/protocol ap/Channel)]
+    (sp/apply-store-fn
+     {:store-fn (s/fn delete-fn :- s/Bool
+                  [id :- ID]
+                  (if (contains? (deref state) id)
+                    (do (swap! state dissoc id)
+                        true)
+                    false))
+      :input-chan id-chan})))
 
 (defn- match? [v1 v2]
   (cond

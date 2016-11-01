@@ -1,22 +1,27 @@
 (ns ctia.flows.hooks-test
   (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.core.async :as a]
             [ctia.flows.from-java :as fj]
             [ctia.flows.hooks :as h]
             [ctia.flows.hook-protocol :refer [Hook]]
+            [ctia.lib.async :as la]
             [ctia.test-helpers
-             [atom :as at-helpers]
-             [core :as helpers]]
+             [atom :as ath]
+             [core :as th]]
             [clojure.test :as t]))
 
 (t/use-fixtures :once (t/join-fixtures [mth/fixture-schema-validation
-                                        helpers/fixture-properties:clean
-                                        at-helpers/fixture-properties:atom-memory-store
-                                        helpers/fixture-ctia-fast]))
+                                        th/fixture-properties:clean
+                                        ath/fixture-properties:atom-memory-store
+                                        th/fixture-ctia-fast]))
 
 (def obj {:x "x" :y 0 :z {:foo "bar"}})
 
+
+
 ;; -----------------------------------------------------------------------------
 ;; Dummy Hook
+
 (defrecord Dummy [name]
   Hook
   (init [this] :noop)
@@ -36,11 +41,15 @@
   (h/reset-hooks!)
   (test-adding-dummy-hooks)
   (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type  :before-create)
-           (into obj {:dummy "hook1 - hook2 - hook3"})))
-  (t/is (= (h/apply-hooks :entity  obj
-                          :hook-type  :after-create)
+  (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                              :hook-type  :before-create)
+               la/drain-timed
+               th/only)
+           (assoc obj :dummy "hook1 - hook2 - hook3")))
+  (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                              :hook-type  :after-create)
+               la/drain-timed
+               th/only)
            obj)))
 
 (t/deftest check-dummy-hook-read-only
@@ -48,17 +57,22 @@
   (h/reset-hooks!)
   (test-adding-dummy-hooks)
   (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity   obj
-                          :hook-type   :before-create
-                          :read-only?  true)
+  (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                              :hook-type   :before-create
+                              :read-only?  true)
+               la/drain-timed
+               th/only)
            obj))
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type   :after-create
-                          :read-only?  true)
+  (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                              :hook-type   :after-create
+                              :read-only?  true)
+               la/drain-timed
+               th/only)
            obj)))
 
 ;; -----------------------------------------------------------------------------
 ;; nil hook testing
+
 (defrecord Nil [name]
   Hook
   (init [this] :noop)
@@ -75,15 +89,20 @@
   (h/reset-hooks!)
   (test-adding-nil-hooks)
   (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :before-create)
+  (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                              :hook-type :before-create)
+               la/drain-timed
+               th/only)
            obj))
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :after-create)
+  (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                              :hook-type :after-create)
+               la/drain-timed
+               th/only)
            obj)))
 
 ;; -----------------------------------------------------------------------------
 ;; Memory Hook
+
 (defrecord Memory [name]
   Hook
   (init [this] :noop)
@@ -103,13 +122,17 @@
     (h/reset-hooks!)
     (test-adding-memory-hooks)
     (h/init-hooks!)
-    (t/is (= (h/apply-hooks :entity   obj
-                            :prev-entity memory
-                            :hook-type   :before-create)
-             (into obj {:previous {:y "y"}})))
-    (t/is (= (h/apply-hooks :entity obj
-                            :prev-entity memory
-                            :hook-type   :after-create)
+    (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                                :prev-entity memory
+                                :hook-type   :before-create)
+                 la/drain-timed
+                 th/only)
+             (assoc obj :previous {:y "y"})))
+    (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                                :prev-entity memory
+                                :hook-type   :after-create)
+                 la/drain-timed
+                 th/only)
              obj))))
 
 ;; -----------------------------------------------------------------------------
@@ -132,40 +155,51 @@
   (h/reset-hooks!)
   (test-adding-dummy-hooks-from-java)
   (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :before-create)
-           (into obj {"hookJ1 - initialized" "passed"
-                      "hookJ2 - initialized" "passed"
-                      "hookJ3 - initialized" "passed"})))
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :after-create)
+  (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                              :hook-type :before-create)
+               la/drain-timed
+               th/only)
+           (assoc obj
+                  "hookJ1 - initialized" "passed"
+                  "hookJ2 - initialized" "passed"
+                  "hookJ3 - initialized" "passed")))
+  (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                              :hook-type :after-create)
+               la/drain-timed
+               th/only)
            obj))
   (h/reset-hooks!))
 
 
-;; Dummy Hook from Jar file
-(defrecord DummyJ [o]
-  Hook
-  (init [this] (doto (.init o)))
-  (handle [_ stored-object prev-object]
-    (fj/from-java-handle o stored-object prev-object))
-  (destroy [this] (doto (.destroy o))))
+(t/testing "Dummy Hook from Jar file"
 
-(defn test-adding-dummy-hooks-from-jar []
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar1")))
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar2")))
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar3"))))
+  (defrecord DummyJ [o]
+    Hook
+    (init [this] (doto (.init o)))
+    (handle [_ stored-object prev-object]
+      (fj/from-java-handle o stored-object prev-object))
+    (destroy [this] (doto (.destroy o))))
 
-(t/deftest check-dummy-hook-from-jar
-  (h/shutdown!)
-  (h/reset-hooks!)
-  (test-adding-dummy-hooks-from-jar)
-  (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :before-create)
-           (into obj {"hookJar1 - initialized" "passed-from-jar"
-                      "hookJar2 - initialized" "passed-from-jar"
-                      "hookJar3 - initialized" "passed-from-jar"})))
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :after-create)
-           obj)))
+  (defn test-adding-dummy-hooks-from-jar []
+    (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar1")))
+    (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar2")))
+    (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar3"))))
+
+  (t/deftest check-dummy-hook-from-jar
+    (h/shutdown!)
+    (h/reset-hooks!)
+    (test-adding-dummy-hooks-from-jar)
+    (h/init-hooks!)
+    (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                                :hook-type :before-create)
+                 la/drain-timed
+                 th/only)
+             (assoc obj
+                    "hookJar1 - initialized" "passed-from-jar"
+                    "hookJar2 - initialized" "passed-from-jar"
+                    "hookJar3 - initialized" "passed-from-jar")))
+    (t/is (= (-> (h/apply-hooks :entity-chan (la/onto-chan (a/chan) [obj])
+                                :hook-type :after-create)
+                 la/drain-timed
+                 th/only)
+             obj))))

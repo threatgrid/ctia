@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [ctia.domain.entities :refer [realize-incident]]
             [ctia.domain.entities.incident :refer [with-long-id page-with-long-id]]
-            [ctia.flows.crud :as flows]
+            [ctia.flows.crud :as f]
             [ctia.store :refer :all]
             [ctia.schemas.core :refer [NewIncident StoredIncident]]
             [ctia.http.routes.common :refer [created PagingParams paginated-ok]]
@@ -27,11 +27,12 @@
                  :identity identity
                  (created
                   (with-long-id
-                    (flows/create-flow :realize-fn realize-incident
-                                       :store-fn #(write-store :incident create-incident %)
-                                       :entity-type :incident
-                                       :identity identity
-                                       :entity incident))))
+                    (f/pop-result
+                     (f/create-flow :realize-fn realize-incident
+                                    :store-fn #(write-store :incident create-incident %)
+                                    :entity-type :incident
+                                    :identity identity
+                                    :entity incident)))))
            (PUT "/:id" []
                 :return StoredIncident
                 :body [incident NewIncident {:description "an updated incident"}]
@@ -41,13 +42,14 @@
                 :capabilities :create-incident
                 :identity identity
                 (ok (with-long-id
-                      (flows/update-flow :get-fn #(read-store :incident read-incident %)
-                                         :realize-fn realize-incident
-                                         :update-fn #(write-store :incident update-incident (:id %) %)
-                                         :entity-type :incident
-                                         :entity-id id
-                                         :identity identity
-                                         :entity incident))))
+                      (f/pop-result
+                       (f/update-flow :get-fn #(read-store :incident read-incident %)
+                                      :realize-fn realize-incident
+                                      :update-fn #(write-store :incident update-incident id %)
+                                      :entity-type :incident
+                                      :entity-id id
+                                      :identity identity
+                                      :entity incident)))))
 
            (GET "/external_id" []
                 :return [(s/maybe StoredIncident)]
@@ -69,6 +71,7 @@
                 (if-let [d (read-store :incident read-incident id)]
                   (ok (with-long-id d))
                   (not-found)))
+
            (DELETE "/:id" []
                    :no-doc true
                    :path-params [id :- s/Str]
@@ -76,10 +79,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-incident
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :incident read-incident %)
-                                          :delete-fn #(write-store :incident delete-incident %)
-                                          :entity-type :incident
-                                          :entity-id id
-                                          :identity identity)
+                   (if (f/pop-result
+                        (f/delete-flow :get-fn #(read-store :incident read-incident %)
+                                       :delete-fn #(write-store :incident delete-incident %)
+                                       :entity-type :incident
+                                       :entity-id id
+                                       :identity identity))
                      (no-content)
                      (not-found)))))

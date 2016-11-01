@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-data-table]]
    [ctia.domain.entities.data-table :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
+   [ctia.flows.crud :as f]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewDataTable StoredDataTable]]
@@ -28,12 +28,13 @@
                  :identity identity
                  (created
                   (with-long-id
-                    (flows/create-flow :entity-type :data-table
-                                       :realize-fn realize-data-table
-                                       :store-fn #(write-store :data-table create-data-table %)
-                                       :entity-type :data-table
-                                       :identity identity
-                                       :entity data-table))))
+                    (f/pop-result
+                     (f/create-flow :entity-type :data-table
+                                    :realize-fn realize-data-table
+                                    :store-fn #(write-store :data-table create-data-table %)
+                                    :entity-type :data-table
+                                    :identity identity
+                                    :entity data-table)))))
            (GET "/external_id" []
                 :return [(s/maybe StoredDataTable)]
                 :query [q DataTableByExternalIdQueryParams]
@@ -62,10 +63,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-data-table
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :data-table read-data-table %)
-                                          :delete-fn #(write-store :data-table delete-data-table %)
-                                          :entity-type :data-table
-                                          :entity-id id
-                                          :identity identity)
+                   (if (f/pop-result
+                        (f/delete-flow :get-fn #(read-store :data-table read-data-table %)
+                                       :delete-fn #(write-store :data-table delete-data-table %)
+                                       :entity-type :data-table
+                                       :entity-id id
+                                       :identity identity))
                      (no-content)
                      (not-found)))))

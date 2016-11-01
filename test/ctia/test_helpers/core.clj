@@ -154,3 +154,12 @@
 
 (def put
   (mthh/with-port-fn get-http-port mthh/put))
+
+(defn only
+  "Works like clojure.core/first, but throws an exception when there
+  col has more than one item"
+  [col]
+  (when (> (count col) 1)
+    (throw (ex-info "Collection must only have one or zero items"
+                    {:collection col})))
+  (first col))
