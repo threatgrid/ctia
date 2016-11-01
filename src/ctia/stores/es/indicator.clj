@@ -9,6 +9,7 @@
 (def handle-update-indicator (crud/handle-update :indicator StoredIndicator))
 (def handle-delete-indicator (crud/handle-delete :indicator StoredIndicator))
 (def handle-list-indicators (crud/handle-find :indicator StoredIndicator))
+(def handle-query-string-search-indicators (crud/handle-query-string-search :indicator StoredIndicator))
 
 (def ^{:private true} mapping "indicator")
 
@@ -23,6 +24,7 @@
       (search-docs (:conn state)
                    (:index state)
                    mapping
+                   nil
                    {:type "indicator"
                     :id (vec ids)}
                    params))))

@@ -84,5 +84,25 @@
        (search-docs (:conn state)
                     (:index state)
                     (name mapping)
+                    nil
+                    filter-map
+                    params)))))
+
+(defn handle-query-string-search
+  "Generate an ES query string handler using some mapping and schema"
+  [mapping Model]
+  (let [response-schema (list-response-schema Model)
+        coerce! (coerce-to-fn response-schema)]
+    (s/fn :- response-schema
+      [state :- ESConnState
+       query :- s/Str
+       filter-map :- {s/Any s/Any}
+       params]
+
+      (coerce!
+       (search-docs (:conn state)
+                    (:index state)
+                    (name mapping)
+                    {:query_string {:query query}}
                     filter-map
                     params)))))
