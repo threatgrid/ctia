@@ -30,6 +30,7 @@
 (def handle-read-judgement (crud/handle-read :judgement StoredJudgement))
 (def handle-delete-judgement (crud/handle-delete :judgement StoredJudgement))
 (def handle-list-judgements (crud/handle-find :judgement StoredJudgement))
+(def handle-query-string-search-judgements (crud/handle-query-string-search :judgement StoredJudgement))
 
 (defn handle-add-indicator-to-judgement
   "add an indicator relation to a judgement"
@@ -51,8 +52,7 @@
 
 (defn list-active-judgements-by-observable
   [state observable]
-  (let [params {:query (active-judgements-by-observable-query observable)
-                :sort {:priority "desc"
+  (let [params {:sort {:priority "desc"
                        :disposition "asc"
                        "valid_time.start_time" {:order "asc"
                                                 :mode "min"
@@ -62,6 +62,7 @@
     (some->> (search-docs (:conn state)
                           (:index state)
                           mapping
+                          (active-judgements-by-observable-query observable)
                           nil
                           params)
              :data

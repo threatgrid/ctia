@@ -148,6 +148,7 @@
                                           index
                                           "event"
                                           nil
+                                          nil
                                           {:sort_by "timestamp"
                                            :sort_order "asc"
                                            :query {"match_all" {}}})
