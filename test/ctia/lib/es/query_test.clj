@@ -5,7 +5,7 @@
 (deftest nested-terms-test
   (is (= (q/nested-terms [[[:observable :type] "ip"]
                           [[:observable :value] "42.42.42.1"]])
-
+         
          [{:terms {"observable.type" ["ip"]}}
           {:terms {"observable.value" ["42.42.42.1"]}}])))
 
@@ -18,7 +18,7 @@
              [{:terms {"observable.type" ["ip"]}}
               {:terms {"observable.value" ["10.0.0.1"]}}
               {:terms {"test" ["ok"]}}]}}}}
-
+         
          (q/filter-map->terms-query {[:observable :type] "ip"
                                      [:observable :value] "10.0.0.1"
                                      :test "ok"}))))
