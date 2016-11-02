@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-campaign]]
    [ctia.domain.entities.campaign :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
+   [ctia.flows.crud :as f]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewCampaign StoredCampaign]]
@@ -28,11 +28,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-campaign
-                            :store-fn #(write-store :campaign create-campaign %)
-                            :entity-type :campaign
-                            :identity identity
-                            :entity campaign))))
+         (f/pop-result
+          (f/create-flow :realize-fn realize-campaign
+                         :store-fn #(write-store :campaign create-campaign %)
+                         :entity-type :campaign
+                         :identity identity
+                         :entity campaign)))))
     (PUT "/:id" []
       :return StoredCampaign
       :body [campaign NewCampaign {:description "an updated campaign"}]
@@ -43,13 +44,14 @@
       :identity identity
       (ok
        (with-long-id
-         (flows/update-flow :get-fn #(read-store :campaign read-campaign %)
-                            :realize-fn realize-campaign
-                            :update-fn #(write-store :campaign update-campaign (:id %) %)
-                            :entity-type :campaign
-                            :entity-id id
-                            :identity identity
-                            :entity campaign))))
+         (f/pop-result
+          (f/update-flow :get-fn #(read-store :campaign read-campaign %)
+                         :realize-fn realize-campaign
+                         :update-fn #(write-store :campaign update-campaign id %)
+                         :entity-type :campaign
+                         :entity-id id
+                         :identity identity
+                         :entity campaign)))))
     (GET "/external_id" []
       :return [(s/maybe StoredCampaign)]
       :query [q CampaignByExternalIdQueryParams]
@@ -77,10 +79,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-campaign
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :campaign read-campaign %)
-                             :delete-fn #(write-store :campaign delete-campaign %)
-                             :entity-type :campaign
-                             :entity-id id
-                             :identity identity)
+      (if (f/pop-result
+           (f/delete-flow :get-fn #(read-store :campaign read-campaign %)
+                          :delete-fn #(write-store :campaign delete-campaign %)
+                          :entity-type :campaign
+                          :entity-id id
+                          :identity identity))
         (no-content)
         (not-found)))))

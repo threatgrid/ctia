@@ -8,7 +8,7 @@
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.auth :refer [all-capabilities]]
-            [ctia.http.routes.bulk :refer [bulk-size gen-bulk-from-fn get-bulk-max-size]]
+            [ctia.http.routes.bulk :refer [bulk-size get-bulk-max-size]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [core :as helpers :refer [get post]]
@@ -161,21 +161,6 @@
                 {:indicator_id "indicator-2"}]
    :exploit_targets [{:exploit_target_id "exploit-target-123"}
                      {:exploit_target_id "exploit-target-234"}]})
-
-(deftest testing-gen-bulk-from-fn
-  (let [new-bulk {:actors (map mk-new-actor (range 6))
-                  :campaigns (map mk-new-campaign (range 6))}]
-    (testing "testing gen-bulk-from-fn with 2 args"
-      (is (= (gen-bulk-from-fn (fn [lst _] (map (fn [_] :s) lst))
-                               new-bulk)
-             {:actors [:s :s :s :s :s :s]
-              :campaigns [:s :s :s :s :s :s]})))
-    (testing "testing gen-bulk-from-fn with 3 args"
-      (is (= (gen-bulk-from-fn (fn [lst _ x] (map (fn [_] x) lst))
-                               new-bulk
-                               :x)
-             {:actors [:x :x :x :x :x :x]
-              :campaigns [:x :x :x :x :x :x]})))))
 
 (def tst-bulk {:actors (map #(str "actor-" %) (range 6))
                :campaigns (map #(str "campaign-" %) (range 6))})

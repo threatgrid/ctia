@@ -21,7 +21,9 @@
             [ctia.http.server :as http-server]
             [ctia.shutdown :as shutdown]
             [ctia.stores.atom.store :as as-store]
-            [ctia.stores.es.store :as es-store]))
+            [ctia.stores.es.store :as es-store]
+            [ctia.stores.es.create-pipe :as es-create-pipe]
+            [ctia.stores.store-pipe :as store-pipe]))
 
 (defn init-auth-service! []
   (let [auth-service-type (get-in @p/properties [:ctia :auth :type])]
@@ -104,6 +106,8 @@
     :es es-store/->BundleStore}})
 
 (defn init-store-service! []
+  (store-pipe/init!)
+  (es-create-pipe/init!)
   (doseq [[entity-key impls] @store/stores]
     (swap! store/stores assoc entity-key []))
 

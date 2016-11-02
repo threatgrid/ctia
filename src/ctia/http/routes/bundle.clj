@@ -1,7 +1,7 @@
 (ns ctia.http.routes.bundle
   (:require [compojure.api.sweet :refer :all]
             [ctia.domain.entities :refer [realize-bundle]]
-            [ctia.flows.crud :as flows]
+            [ctia.flows.crud :as f]
             [ctia.store :refer :all]
             [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
             [ctia.schemas.core :refer [NewBundle StoredBundle]]
@@ -19,12 +19,14 @@
       :summary "Adds a new Bundle"
       :capabilities :create-bundle
       :identity identity
-      (created (flows/create-flow :entity-type :bundle
-                                  :realize-fn realize-bundle
-                                  :store-fn #(write-store :bundle create-bundle %)
-                                  :entity-type :bundle
-                                  :identity identity
-                                  :entity bundle)))
+      (created
+       (f/pop-result
+        (f/create-flow :entity-type :bundle
+                       :realize-fn realize-bundle
+                       :store-fn #(write-store :bundle create-bundle %)
+                       :entity-type :bundle
+                       :identity identity
+                       :entity bundle))))
     (GET "/:id" []
       :return (s/maybe StoredBundle)
       :summary "Gets a Bundle by ID"
@@ -42,10 +44,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-bundle
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :bundle read-bundle %)
-                             :delete-fn #(write-store :bundle delete-bundle %)
-                             :entity-type :bundle
-                             :entity-id id
-                             :identity identity)
+      (if (f/pop-result
+           (f/delete-flow :get-fn #(read-store :bundle read-bundle %)
+                          :delete-fn #(write-store :bundle delete-bundle %)
+                          :entity-type :bundle
+                          :entity-id id
+                          :identity identity))
         (no-content)
         (not-found)))))

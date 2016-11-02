@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-actor]]
    [ctia.domain.entities.actor :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
+   [ctia.flows.crud :as f]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewActor StoredActor]]
@@ -28,12 +28,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :entity-type :actor
-                            :realize-fn realize-actor
-                            :store-fn #(write-store :actor create-actor %)
-                            :entity-type :actor
-                            :identity identity
-                            :entity actor))))
+         (f/pop-result
+          (f/create-flow :entity-type :actor
+                         :realize-fn realize-actor
+                         :store-fn #(write-store :actor create-actor %)
+                         :identity identity
+                         :entity actor)))))
     (PUT "/:id" []
       :return StoredActor
       :body [actor NewActor {:description "an updated Actor"}]
@@ -44,13 +44,14 @@
       :identity identity
       (ok
        (with-long-id
-         (flows/update-flow :get-fn #(read-store :actor read-actor %)
-                            :realize-fn realize-actor
-                            :update-fn #(write-store :actor update-actor (:id %) %)
-                            :entity-type :actor
-                            :entity-id id
-                            :identity identity
-                            :entity actor))))
+         (f/pop-result
+          (f/update-flow :get-fn #(read-store :actor read-actor %)
+                         :realize-fn realize-actor
+                         :update-fn #(write-store :actor update-actor id %)
+                         :entity-type :actor
+                         :entity-id id
+                         :identity identity
+                         :entity actor)))))
 
     (GET "/external_id" []
       :return [(s/maybe StoredActor)]
@@ -80,10 +81,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-actor
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :actor read-actor %)
-                             :delete-fn #(write-store :actor delete-actor %)
-                             :entity-type :actor
-                             :entity-id id
-                             :identity identity)
+      (if (f/pop-result
+           (f/delete-flow :get-fn #(read-store :actor read-actor %)
+                          :delete-fn #(write-store :actor delete-actor %)
+                          :entity-type :actor
+                          :entity-id id
+                          :identity identity))
         (no-content)
         (not-found)))))

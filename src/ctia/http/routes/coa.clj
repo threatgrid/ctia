@@ -2,7 +2,7 @@
   (:require [compojure.api.sweet :refer :all]
             [ctia.domain.entities :refer [realize-coa]]
             [ctia.domain.entities.coa :refer [with-long-id page-with-long-id]]
-            [ctia.flows.crud :as flows]
+            [ctia.flows.crud :as f]
             [ctia.store :refer :all]
             [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
             [ctia.schemas.core :refer [NewCOA StoredCOA]]
@@ -27,11 +27,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-coa
-                            :store-fn #(write-store :coa create-coa %)
-                            :entity-type :coa
-                            :identity identity
-                            :entity coa))))
+         (f/pop-result
+          (f/create-flow :realize-fn realize-coa
+                         :store-fn #(write-store :coa create-coa %)
+                         :entity-type :coa
+                         :identity identity
+                         :entity coa)))))
     (PUT "/:id" []
       :return StoredCOA
       :body [coa NewCOA {:description "an updated COA"}]
@@ -42,13 +43,14 @@
       :identity identity
       (ok
        (with-long-id
-         (flows/update-flow :get-fn #(read-store :coa read-coa %)
-                            :realize-fn realize-coa
-                            :update-fn #(write-store :coa update-coa (:id %) %)
-                            :entity-type :coa
-                            :entity-id id
-                            :identity identity
-                            :entity coa))))
+         (f/pop-result
+          (f/update-flow :get-fn #(read-store :coa read-coa %)
+                         :realize-fn realize-coa
+                         :update-fn #(write-store :coa update-coa id %)
+                         :entity-type :coa
+                         :entity-id id
+                         :identity identity
+                         :entity coa)))))
 
     (GET "/external_id" []
       :return [(s/maybe StoredCOA)]
@@ -80,7 +82,7 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-coa
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :coa read-coa %)
+      (if (f/delete-flow :get-fn #(read-store :coa read-coa %)
                              :delete-fn #(write-store :coa delete-coa %)
                              :entity-type :coa
                              :entity-id id

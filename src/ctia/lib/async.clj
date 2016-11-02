@@ -107,3 +107,52 @@
   [c :- Channel]
   (if-let [x (a/poll! c)]
     (cons x (lazy-seq (drain c)))))
+
+(s/defn drain-timed :- [s/Any]
+  "Attempt to take all items off of a channel until it is closed,
+  returning a collection, but throw if it takes too long."
+  ([chan :- Channel]
+   (drain-timed chan 1000))
+  ([chan :- Channel
+    max-ms :- s/Int]
+   (let [timer (a/timeout max-ms)]
+     (loop [results []]
+       (let [[v port] (a/alts!! [chan timer] :priority true)]
+         (cond
+           (not= port chan) (throw (ex-info "Drain timed out"
+                                            {:chan chan
+                                             :max-ms max-ms}))
+           (nil? v) results
+           :else (recur (conj results v))))))))
+
+(defn onto-chan
+  "Alternative to a/onto-chan that returns the channel where items are put"
+  [chan collection]
+  (doto chan
+    (a/onto-chan collection)))
+
+(defn on-chan
+  "Put something on a channel, close the channel, and then return the channel"
+  ([thing]
+   (on-chan (a/chan 1) thing))
+  ([chan thing]
+   (doto chan
+     (a/>!! thing)
+     a/close!)))
+
+(defn throwable
+  "If x is a throwable, return it, otherwise nil. Useful when making
+  channels that take a transducer (this is the exception handler)."
+  [x]
+  (when (instance? Throwable x)
+    x))
+
+(defn <!!
+  "Like a/<!! except that it checks if the payload is a Throwable and
+  throws it if so.  This is useful when another thread caught an error
+  and put it onto a channel rather than allow it's self to die."
+  [chan]
+  (let [v (a/<!! chan)]
+    (if (instance? Throwable v)
+      (throw v)
+      v)))

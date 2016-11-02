@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-relationship]]
    [ctia.domain.entities.relationship :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
+   [ctia.flows.crud :as f]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewRelationship StoredRelationship]]
@@ -28,12 +28,13 @@
                  :identity identity
                  (created
                   (with-long-id
-                    (flows/create-flow :entity-type :relationship
-                                       :realize-fn realize-relationship
-                                       :store-fn #(write-store :relationship create-relationship %)
-                                       :entity-type :relationship
-                                       :identity identity
-                                       :entity relationship))))
+                    (f/pop-result
+                     (f/create-flow :entity-type :relationship
+                                    :realize-fn realize-relationship
+                                    :store-fn #(write-store :relationship create-relationship %)
+                                    :entity-type :relationship
+                                    :identity identity
+                                    :entity relationship)))))
            (GET "/external_id" []
                 :return [(s/maybe StoredRelationship)]
                 :query [q RelationshipByExternalIdQueryParams]
@@ -62,10 +63,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-relationship
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :relationship read-relationship %)
-                                          :delete-fn #(write-store :relationship delete-relationship %)
-                                          :entity-type :relationship
-                                          :entity-id id
-                                          :identity identity)
+                   (if (f/pop-result
+                        (f/delete-flow :get-fn #(read-store :relationship read-relationship %)
+                                       :delete-fn #(write-store :relationship delete-relationship %)
+                                       :entity-type :relationship
+                                       :entity-id id
+                                       :identity identity))
                      (no-content)
                      (not-found)))))

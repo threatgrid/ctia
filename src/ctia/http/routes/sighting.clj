@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-sighting check-new-sighting]]
    [ctia.domain.entities.sighting :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
+   [ctia.flows.crud :as f]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewSighting StoredSighting]]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
@@ -29,12 +29,14 @@
       (if (check-new-sighting sighting)
         (created
          (with-long-id
-           (flows/create-flow :realize-fn realize-sighting
-                              :store-fn #(write-store :sighting create-sighting %)
-                              :entity-type :sighting
-                              :identity identity
-                              :entity sighting)))
+           (f/pop-result
+            (f/create-flow :realize-fn realize-sighting
+                           :store-fn #(write-store :sighting create-sighting %)
+                           :entity-type :sighting
+                           :identity identity
+                           :entity sighting))))
         (unprocessable-entity)))
+
     (PUT "/:id" []
       :return StoredSighting
       :body [sighting NewSighting {:description "An updated Sighting"}]
@@ -46,13 +48,14 @@
       (if (check-new-sighting sighting)
         (ok
          (with-long-id
-           (flows/update-flow :get-fn #(read-store :sighting read-sighting %)
-                              :realize-fn realize-sighting
-                              :update-fn #(write-store :sighting update-sighting (:id %) %)
-                              :entity-type :sighting
-                              :entity-id id
-                              :identity identity
-                              :entity sighting)))
+           (f/pop-result
+            (f/update-flow :get-fn #(read-store :sighting read-sighting %)
+                           :realize-fn realize-sighting
+                           :update-fn #(write-store :sighting update-sighting id %)
+                           :entity-type :sighting
+                           :entity-id id
+                           :identity identity
+                           :entity sighting))))
         (unprocessable-entity)))
 
     (GET "/external_id" []
@@ -81,6 +84,12 @@
       :summary "Deletes a Sighting"
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-sighting
-      (if (write-store :sighting delete-sighting id)
+      :identity identity
+      (if (f/pop-result
+           (f/delete-flow :get-fn #(read-store :sighting read-sighting %)
+                          :delete-fn #(write-store :sighting delete-sighting %)
+                          :entity-type :sighting
+                          :entity-id id
+                          :identity identity))
         (no-content)
         (not-found)))))

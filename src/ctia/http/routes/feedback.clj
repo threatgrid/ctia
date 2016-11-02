@@ -3,7 +3,7 @@
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :refer [realize-feedback]]
    [ctia.domain.entities.feedback :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
+   [ctia.flows.crud :as f]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewFeedback StoredFeedback]]
@@ -33,11 +33,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-feedback
-                            :store-fn #(write-store :feedback create-feedback %)
-                            :entity-type :feedback
-                            :identity identity
-                            :entity feedback))))
+         (f/pop-result
+          (f/create-flow :realize-fn realize-feedback
+                         :store-fn #(write-store :feedback create-feedback %)
+                         :entity-type :feedback
+                         :identity identity
+                         :entity feedback)))))
 
     (GET "/" []
       :return [StoredFeedback]
@@ -81,10 +82,11 @@
       :header-params [api_key :- (s/maybe s/Str)]
       :capabilities :delete-feedback
       :identity identity
-      (if (flows/delete-flow :get-fn #(read-store :feedback read-feedback %)
-                             :delete-fn #(write-store :feedback delete-feedback %)
-                             :entity-type :feedback
-                             :entity-id id
-                             :identity identity)
+      (if (f/pop-result
+           (f/delete-flow :get-fn #(read-store :feedback read-feedback %)
+                          :delete-fn #(write-store :feedback delete-feedback %)
+                          :entity-type :feedback
+                          :entity-id id
+                          :identity identity))
         (no-content)
         (not-found)))))
