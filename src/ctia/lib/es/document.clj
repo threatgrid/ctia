@@ -1,5 +1,6 @@
 (ns ctia.lib.es.document
   (:require
+   [clojure.tools.logging :as log]
    [ctia.lib.pagination :as pagination]
    [ctia.lib.es.query :refer [filter-map->terms-query]]
    [clojurewerkz.elastisch.native.bulk :as native-bulk]
@@ -149,6 +150,8 @@
         results (->> res
                      ((hits-from-fn conn))
                      (map :_source))]
+    
+    (log/debug "search-docs: " es-params )
     
     (pagination/response (or results [])
                          (:from es-params)

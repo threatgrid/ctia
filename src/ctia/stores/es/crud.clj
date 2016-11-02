@@ -99,7 +99,7 @@
     (s/fn :- response-schema
       [state :- ESConnState
        query :- s/Str
-       filter-map :- {s/Any s/Any}
+       filter-map :- (s/maybe {s/Any s/Any})
        params]
 
       (coerce!

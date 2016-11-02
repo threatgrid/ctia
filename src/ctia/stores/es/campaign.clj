@@ -7,3 +7,4 @@
 (def handle-update (crud/handle-update :campaign StoredCampaign))
 (def handle-delete (crud/handle-delete :campaign StoredCampaign))
 (def handle-list (crud/handle-find :campaign StoredCampaign))
+(def handle-query-string-search (crud/handle-query-string-search :campaign StoredCampaign))

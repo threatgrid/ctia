@@ -1,4 +1,5 @@
-(ns ctia.store)
+(ns ctia.store
+  (:require [clojure.tools.logging :as log]))
 
 (defprotocol IActorStore
   (read-actor [this id])
@@ -101,6 +102,9 @@
   (delete-data-table [this role])
   (list-data-tables [this filtermap params]))
 
+(defprotocol IQueryStringSearchableStore
+  (query-string-search [this query filtermap params]))
+
 (defonce stores (atom {:judgement []
                        :indicator []
                        :feedback []
@@ -122,3 +126,9 @@
 
 (defn read-store [store read-fn & args]
   (apply read-fn (first (get @stores store)) args))
+
+(defn query-string-search-store [store read-fn & args]
+  (log/debug "query-string-search-store args: " args)
+  (apply read-fn (first (get @stores store)) args))
+
+

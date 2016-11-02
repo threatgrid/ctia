@@ -30,7 +30,7 @@
 (def handle-read (crud/handle-read :judgement StoredJudgement))
 (def handle-delete (crud/handle-delete :judgement StoredJudgement))
 (def handle-list (crud/handle-find :judgement StoredJudgement))
-(def handle-query-string-search-judgements (crud/handle-query-string-search :judgement StoredJudgement))
+(def handle-query-string-search (crud/handle-query-string-search :judgement StoredJudgement))
 
 (defn handle-add-indicator-to
   "add an indicator relation to a judgement"

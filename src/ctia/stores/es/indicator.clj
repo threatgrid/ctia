@@ -9,7 +9,7 @@
 (def handle-update (crud/handle-update :indicator StoredIndicator))
 (def handle-delete (crud/handle-delete :indicator StoredIndicator))
 (def handle-list (crud/handle-find :indicator StoredIndicator))
-(def handle-query-string-search-indicators (crud/handle-query-string-search :indicator StoredIndicator))
+(def handle-query-string-search (crud/handle-query-string-search :indicator StoredIndicator))
 
 (def ^{:private true} mapping "indicator")
 

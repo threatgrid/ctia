@@ -72,6 +72,36 @@
             :owner "foouser"}
            (dissoc judgement :created)))
 
+
+      (testing "GET /ctia/judgement/search"
+        ;; only when ES store
+        (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
+          (let [term "observable.value:1\\.2\\.3\\.4"
+                response (get (str "ctia/judgement/search")
+                              :headers {"api_key" "45c1f5e3f05d0"}
+                              :query-params {"query" term})]
+            (is (= 200 (:status response)))
+            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+                "quoted term works"))
+
+          (let [term "disposition_name:Malicious"
+                response (get (str "ctia/judgement/search")
+                              :headers {"api_key" "45c1f5e3f05d0"}
+                              :query-params {"query" term
+                                             "tlp" "red"})]
+            (is (= 200 (:status response)))
+            (is (empty? (:parsed-body response))
+                "filters are applied, and discriminate"))
+
+          (let [term "disposition_name:Malicious"
+                response (get (str "ctia/judgement/search")
+                              :headers {"api_key" "45c1f5e3f05d0"}
+                              :query-params {"query" term
+                                             "tlp" "green"})]
+            (is (= 200 (:status response)))
+            (is (= 1  (count (:parsed-body response)))
+                "filters are applied, and match properly"))))
+      
       (testing "the judgement ID has correct fields"
         (let [show-props (get-http-show)]
           (is (= (:hostname    judgement-id)      (:hostname    show-props)))

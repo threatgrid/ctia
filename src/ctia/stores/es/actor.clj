@@ -7,3 +7,4 @@
 (def handle-update (crud/handle-update :actor StoredActor))
 (def handle-delete (crud/handle-delete :actor StoredActor))
 (def handle-list (crud/handle-find :actor StoredActor))
+(def handle-query-string-search (crud/handle-query-string-search :actor StoredActor))
