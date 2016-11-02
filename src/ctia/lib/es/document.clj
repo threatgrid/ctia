@@ -24,10 +24,10 @@
     native-document/create
     rest-document/create))
 
-(defn bulk-create-fn [conn]
+(defn bulk-index-fn [conn]
   (if (native-conn? conn)
-    native-bulk/bulk-create
-    rest-bulk/bulk-create))
+    native-bulk/bulk-index
+    rest-bulk/bulk-index))
 
 (defn bulk-fn [conn]
   (if (native-conn? conn)
@@ -79,11 +79,11 @@
 (defn bulk-create-doc
   "create multiple documents on ES and return the created documents"
   [conn docs refresh?]
-  (let [bulk-create (bulk-create-fn conn)
+  (let [bulk-index (bulk-index-fn conn)
         bulk (bulk-fn conn)
-        create-operations (bulk-create docs)]
+        index-operations (bulk-index docs)]
     (bulk conn
-          create-operations
+          index-operations
           {:refresh refresh?}))
   docs)
 
