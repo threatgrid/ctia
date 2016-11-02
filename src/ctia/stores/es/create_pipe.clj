@@ -29,25 +29,16 @@
   (make-worker [this]
     (a/thread
       ;; block for a bit while waiting for a work message
-      (let [[msg port] (a/alts!! [work-chan (a/timeout worker-max-sleep-ms)]
-                                 :priority true)]
-        (cond
-          ;; timed out while waiting
-          (not= port work-chan) (recur)
-
-          ;; the work-chan was closed; terminate
-          (nil? msg) nil
-
-          ;; gather more work messages and then do-some-work; avoid blocking
-          :else (let [msgs
-                      (loop [msgs [msg]]
-                        (if (>= (count msgs) max-messages-per-job)
-                          msgs
-                          (if-let [msg (a/poll! work-chan)]
-                            (recur (conj msgs msg))
-                            msgs)))]
-                  (lp/do-some-work this msgs)
-                  (recur))))))
+      (when-let [msg (la/<!! work-chan)]
+        (let [msgs
+              (loop [msgs [msg]]
+                (if (>= (count msgs) max-messages-per-job)
+                  msgs
+                  (if-let [msg (a/poll! work-chan)]
+                    (recur (conj msgs msg))
+                    msgs)))]
+          (lp/do-some-work this msgs)
+          (recur)))))
 
   (do-some-work [_ msgs]
     (let [refresh? (boolean (some :refresh? msgs))

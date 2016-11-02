@@ -125,36 +125,6 @@
            (nil? v) results
            :else (recur (conj results v))))))))
 
-(defn pipe
-  "Alternative to a/pipe that uses a/thread."
-  ([from to]
-   (pipe from to true))
-  ([from to close?]
-   (a/thread
-     (let [v (a/<!! from)]
-       (if (nil? v)
-         (when close? (a/close! to))
-         (when (a/>!! to v)
-           (recur)))))
-   to))
-
-(defn pipe!
-  "Immediate alternative to a/pipe that uses the current thread.
-  Since this isn't asynchronous, it may block the current thread!  In
-  such a case, if some other thread isn't taking from the 'to channel,
-  the current thread will never un-block.  This can be resolved by
-  buffering the 'to channel, but use with caution."
-  ([from to]
-   (pipe! from to true))
-  ([from to close?]
-   (loop []
-     (let [v (a/<!! from)]
-       (if (nil? v)
-         (when close? (a/close! to))
-         (when (a/>!! to v)
-           (recur)))))
-   to))
-
 (defn onto-chan
   "Alternative to a/onto-chan that returns the channel where items are put"
   [chan collection]

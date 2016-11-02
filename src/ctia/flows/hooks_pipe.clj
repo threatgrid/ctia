@@ -23,18 +23,9 @@
   lp/WorkHandler
   (make-worker [this]
     (a/thread
-      (let [[msg port] (a/alts!! [work-chan (a/timeout worker-max-sleep-ms)]
-                                 :priority true)]
-        (cond
-          ;; timed out while waiting
-          (not= port work-chan) (recur)
-
-          ;; the work-chan closed; terminate
-          (nil? msg) nil
-
-          ;; do some work
-          :else (do (lp/do-some-work this msg)
-                    (recur))))))
+      (when-let [msg (la/<!! work-chan)]
+        (lp/do-some-work this msg)
+        (recur))))
 
   (do-some-work [_ {:keys [result-chan entity-chan hooks prev-entity read-only?]}]
     (try
