@@ -8,4 +8,3 @@
 (def handle-delete (crud/handle-delete :incident StoredIncident))
 (def handle-list (crud/handle-find :incident StoredIncident))
 (def handle-query-string-search (crud/handle-query-string-search :incident StoredIncident))
->>>>>>> Added query string search API to Judgement and Indicators

@@ -67,7 +67,7 @@
     (ju/handle-list state filter-map params))
   (list-judgements-by-observable [this observable params]
     (ju/handle-list state {[:observable :type]  (:type observable)
-                                      [:observable :value] (:value observable)} params))
+                           [:observable :value] (:value observable)} params))
   (calculate-verdict [_ observable]
     (ju/handle-calculate-verdict state observable))
   IQueryStringSearchableStore
@@ -123,7 +123,7 @@
     (in/handle-list-by-judgements state judgements params))
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap params]
-    (in/handle-query-string-search state query filtermap params))))
+    (in/handle-query-string-search state query filtermap params)))
 
 (defrecord TTPStore [state]
   ITTPStore
@@ -139,7 +139,7 @@
     (ttp/handle-list state filter-map params))
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap params]
-    (ttp/handle-query-string-search state query filtermap params))))
+    (ttp/handle-query-string-search state query filtermap params)))
 
 (defrecord ActorStore [state]
   IActorStore
@@ -228,7 +228,7 @@
   (delete-exploit-target [_ id]
     (et/handle-delete state id))
   (list-exploit-targets [_ filter-map params]
-    (et/handle-lis-exploit-targets state filter-map params))
+    (et/handle-list state filter-map params))
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap params]
     (et/handle-query-string-search state query filtermap params)))
