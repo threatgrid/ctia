@@ -17,6 +17,7 @@
     :create-actor
     :read-actor
     :delete-actor
+    :search-actor
 
     ;; Campaign
     :create-campaign

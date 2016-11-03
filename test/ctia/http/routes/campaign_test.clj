@@ -5,6 +5,7 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
@@ -30,7 +31,7 @@
                                       "http://ex.tld/ctia/campaign/campaign-456"]
                        :title "campaign"
                        :description "description"
-                       :tlp "red"
+                       :tlp "green"
                        :campaign_type "anything goes here"
                        :intended_effect ["Theft"]
                        :indicators [{:indicator_id "indicator-foo"}
@@ -61,7 +62,7 @@
                            "http://ex.tld/ctia/campaign/campaign-456"]
             :title "campaign"
             :description "description"
-            :tlp "red"
+            :tlp "green"
             :schema_version schema-version
             :campaign_type "anything goes here"
             :intended_effect ["Theft"]
@@ -106,7 +107,7 @@
                                 "http://ex.tld/ctia/campaign/campaign-456"]
                  :title "campaign"
                  :description "description"
-                 :tlp "red"
+                 :tlp "green"
                  :schema_version schema-version
                  :campaign_type "anything goes here"
                  :intended_effect ["Theft"]
@@ -129,6 +130,8 @@
                  :owner "foouser"}]
                (map #(dissoc % :created :modified) campaigns)))))
 
+      (test-query-string-search :campaign "description" :description)
+      
       (testing "GET /ctia/campaign/:id"
         (let [response (get (str "ctia/campaign/" (:short-id campaign-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
@@ -141,7 +144,7 @@
                                "http://ex.tld/ctia/campaign/campaign-456"]
                 :title "campaign"
                 :description "description"
-                :tlp "red"
+                :tlp "green"
                 :schema_version schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Theft"]

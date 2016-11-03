@@ -33,7 +33,8 @@
                          :specification])))
 
 (def judgement-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
+  (apply s/enum (concat base-entity-sort-fields
+                        sourcable-entity-sort-fields
                         [:disposition
                          :priority
                          :confidence
@@ -52,6 +53,41 @@
                          :confidence
                          :count
                          :sensor])))
+
+(def ttp-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        [:valid_time.start
+                         :valid_time.end
+                         :ttp_type])))
+
+(def actor-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        [:valid_time.start
+                         :valid_time.end
+                         :actor_type
+                         :motivation
+                         :sophistication
+                         :intended_effect])))
+
+(def campaign-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        [:valid_time.start
+                         :valid_time.end
+                         :campaign_type
+                         :status
+                         :activity
+                         :confidence])))
+
+(def coa-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        [:valid_time.start
+                         :valid_time.end
+                         :stage
+                         :coa_type
+                         :impact
+                         :cost
+                         :efficacy
+                         :structured_coa_type])))
 
 (def feedback-sort-fields
   (apply s/enum (concat base-entity-sort-fields
@@ -154,3 +190,82 @@
     (s/optional-key :sort_by)  judgement-sort-fields}))
 
 
+(s/defschema SightingSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :sensor) s/Str
+    (s/optional-key :observables.value) s/Str
+    (s/optional-key :observables.type) s/Str
+    (s/optional-key :sort_by)  sighting-sort-fields}))
+
+
+(s/defschema TTPSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :ttp_type) s/Str
+    (s/optional-key :intended_effect) s/Str
+    (s/optional-key :behavior.malware_type.type) s/Str
+    (s/optional-key :behavior.malware_type.title) s/Str
+    (s/optional-key :behavior.attack_pattern.capec_id) s/Str
+    (s/optional-key :behavior.attack_pattern.title) s/Str
+
+    (s/optional-key :resource.personas) s/Str
+    (s/optional-key :resource.tools.type) s/Str
+    (s/optional-key :resource.tools.vendor) s/Str
+    (s/optional-key :resource.tools.service_pack) s/Str
+    (s/optional-key :resource.infrastructure.title) s/Str
+    (s/optional-key :resource.infrastructure.type) s/Str
+
+    (s/optional-key :victim_targeting.identity) s/Str
+    (s/optional-key :victim_targeting) s/Str
+
+    (s/optional-key :kill_chains) s/Str
+
+    (s/optional-key :sort_by)  ttp-sort-fields}))
+
+
+(s/defschema ActorSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :actor_type) s/Str
+    (s/optional-key :motivation) s/Str
+    (s/optional-key :sophistication) s/Str
+    (s/optional-key :intended_effect) s/Str
+    (s/optional-key :confidence) s/Str
+    (s/optional-key :sort_by)  actor-sort-fields}))
+
+(s/defschema CampaignSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :campaign_type) s/Str
+    (s/optional-key :confidence) s/Str
+    (s/optional-key :activity) s/Str
+    (s/optional-key :sort_by)  campaign-sort-fields}))
+
+
+(s/defschema COASearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :stage) s/Str
+    (s/optional-key :coa_type) s/Str
+    (s/optional-key :impact) s/Str
+    (s/optional-key :objective) s/Str
+    (s/optional-key :cost) s/Str
+    (s/optional-key :efficacy) s/Str
+    (s/optional-key :structured_coa_type) s/Str
+    (s/optional-key :sort_by)  coa-sort-fields}))

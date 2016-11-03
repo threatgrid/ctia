@@ -8,6 +8,7 @@
             [ctim.schemas.common :as c]
             [ctia.auth :as auth]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key assert-post test-get-list]]
@@ -86,34 +87,7 @@
           (is (= (:port        indicator-id)      (:port        show-props)))
           (is (= (:path-prefix indicator-id) (seq (:path-prefix show-props))))))
 
-      (testing "GET /ctia/indicator/search"
-        ;; only when ES store
-        (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
-          (let [term "description"
-                response (get (str "ctia/indicator/search")
-                              :headers {"api_key" "45c1f5e3f05d0"}
-                              :query-params {"query" term})]
-            (is (= 200 (:status response)))
-            (is (= term (first (map :description (:parsed-body response))))
-                "quoted term works"))
-
-          (let [term "description"
-                response (get (str "ctia/indicator/search")
-                              :headers {"api_key" "45c1f5e3f05d0"}
-                              :query-params {"query" term
-                                             "tlp" "red"})]
-            (is (= 200 (:status response)))
-            (is (empty? (:parsed-body response))
-                "filters are applied, and discriminate"))
-
-          (let [term "description"
-                response (get (str "ctia/indicator/search")
-                              :headers {"api_key" "45c1f5e3f05d0"}
-                              :query-params {"query" term
-                                             "tlp" "green"})]
-            (is (= 200 (:status response)))
-            (is (= 1  (count (:parsed-body response)))
-                "filters are applied, and match properly"))))
+      (test-query-string-search :indicator "description" :description)
       
       (testing "GET /ctia/indicator/external_id"
         (let [response (get "ctia/indicator/external_id"

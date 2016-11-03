@@ -6,6 +6,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
@@ -30,8 +31,8 @@
                                       "http://ex.tld/ctia/sighting/sighting-345"]
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                       :description "a sighting"
-                       :tlp "amber"
+                       :description "description"
+                       :tlp "green"
                        :source "source"
                        :sensor "endpoint.sensor"
                        :confidence "High"
@@ -51,8 +52,8 @@
                                       "http://ex.tld/ctia/sighting/sighting-345"]
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                       :description "a sighting"
-                       :tlp "amber"
+                       :description "description"
+                       :tlp "green"
                        :source "source"
                        :sensor "endpoint.sensor"
                        :confidence "High"
@@ -72,8 +73,8 @@
                                       "http://ex.tld/ctia/sighting/sighting-345"]
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                       :description "a sighting"
-                       :tlp "amber"
+                       :description "description"
+                       :tlp "green"
                        :source "source"
                        :sensor "endpoint.sensor"
                        :confidence "High"
@@ -90,8 +91,8 @@
                            "http://ex.tld/ctia/sighting/sighting-345"]
             :timestamp #inst "2016-02-11T00:40:48.212-00:00"
             :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
-            :description "a sighting"
-            :tlp "amber"
+            :description "description"
+            :tlp "green"
             :source "source"
             :sensor "endpoint.sensor"
             :confidence "High"
@@ -124,8 +125,8 @@
                                 "http://ex.tld/ctia/sighting/sighting-345"]
                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                  :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
-                 :description "a sighting"
-                 :tlp "amber"
+                 :description "description"
+                 :tlp "green"
                  :count 1
                  :schema_version schema-version
                  :source "source"
@@ -136,6 +137,8 @@
                  :indicators [{:indicator_id "indicator-22334455"}]}]
                (map #(dissoc % :created :modified) sightings)))))
 
+      (test-query-string-search :sighting "description" :description)
+      
       (testing "GET /ctia/sighting/:id"
         (let [{status :status
                sighting :parsed-body}
@@ -148,8 +151,8 @@
                                      "http://ex.tld/ctia/sighting/sighting-345"]
                       :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                       :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}
-                      :description "a sighting"
-                      :tlp "amber"
+                      :description "description"
+                      :tlp "green"
                       :count 1
                       :schema_version schema-version
                       :source "source"
@@ -217,8 +220,8 @@
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                       :description "a sighting"
-                       :tlp "amber"
+                       :description "description"
+                       :tlp "green"
                        :source "source"
                        :sensor "endpoint.sensor"
                        :confidence "High"}
@@ -234,8 +237,8 @@
                 :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
                        :timestamp "2016-02-11T00:40:48.212-00:00"
                        :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                       :description "a sighting"
-                       :tlp "amber"
+                       :description "description"
+                       :tlp "green"
                        :source "source"
                        :sensor "endpoint.sensor"
                        :confidence "High"
@@ -247,7 +250,7 @@
                       :timestamp "2016-02-11T00:40:48.212-00:00"
                       :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                       :description "updated sighting"
-                      :tlp "amber"
+                      :tlp "green"
                       :source "source"
                       :sensor "endpoint.sensor"
                       :confidence "High"}

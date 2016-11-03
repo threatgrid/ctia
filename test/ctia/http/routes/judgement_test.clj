@@ -8,6 +8,7 @@
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
@@ -73,6 +74,9 @@
            (dissoc judgement :created)))
 
 
+      ;; CLB: Convert to ue the est macro, but since Judgmements ar enot describably, it's a bit hard
+      ;;(test-query-string-search :judgement "Malicious")
+      
       (testing "GET /ctia/judgement/search"
         ;; only when ES store
         (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))

@@ -73,6 +73,12 @@
   (es-paginated-list->paginated-list
    (list-fn state filter-map params)))
 
+
+(s/defn handle-query-string-search-sightings :- StoredSightingList
+  [state query filter-map params]
+  (es-paginated-list->paginated-list
+   (handle-query-string-search state query filter-map params)))
+
 (s/defn handle-list-by-observables :- StoredSightingList
   [state observables :- [Observable] params]
   (handle-list state

@@ -259,8 +259,7 @@
     (sig/handle-list-by-observables state observables params))
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap params]
-    (sig/handle-query-string-search state query filtermap params))))
-
+    (sig/handle-query-string-search-sightings state query filtermap params)))
 
 (defrecord BundleStore [state]
   IBundleStore
