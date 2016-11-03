@@ -28,11 +28,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-ttp
-                            :store-fn #(write-store :ttp create-ttp %)
-                            :entity-type :ttp
-                            :identity identity
-                            :entity ttp))))
+         (first
+          (flows/create-flow :realize-fn realize-ttp
+                             :store-fn #(write-store :ttp create-ttps %)
+                             :entity-type :ttp
+                             :identity identity
+                             :entities [ttp])))))
     (PUT "/:id" []
       :return StoredTTP
       :body [ttp NewTTP {:description "an updated TTP"}]

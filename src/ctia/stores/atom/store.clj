@@ -29,7 +29,7 @@
   IActorStore
   (read-actor [_ id]
     (actor/handle-read-actor state id))
-  (create-actor [_ new-actor]
+  (create-actors [_ new-actor]
     (actor/handle-create-actor state new-actor))
   (update-actor [_ id actor]
     (actor/handle-update-actor state id actor))
@@ -42,7 +42,7 @@
   ICampaignStore
   (read-campaign [_ id]
     (campaign/handle-read-campaign state id))
-  (create-campaign [_ new-campaign]
+  (create-campaigns [_ new-campaign]
     (campaign/handle-create-campaign state new-campaign))
   (update-campaign [_ id new-campaign]
     (campaign/handle-update-campaign state id new-campaign))
@@ -55,7 +55,7 @@
   ICOAStore
   (read-coa [_ id]
     (coa/handle-read-coa state id))
-  (create-coa [_ new-coa]
+  (create-coas [_ new-coa]
     (coa/handle-create-coa state new-coa))
   (update-coa [_ id new-coa]
     (coa/handle-update-coa state id new-coa))
@@ -68,7 +68,7 @@
   IDataTableStore
   (read-data-table [_ id]
     (data-table/handle-read-data-table state id))
-  (create-data-table [_ new-data-table]
+  (create-data-tables [_ new-data-table]
     (data-table/handle-create-data-table state new-data-table))
   (delete-data-table [_ id]
     (data-table/handle-delete-data-table state id))
@@ -79,7 +79,7 @@
   IExploitTargetStore
   (read-exploit-target [_ id]
     (expl-tar/handle-read-exploit-target state id))
-  (create-exploit-target [_ new-exploit-target]
+  (create-exploit-targets [_ new-exploit-target]
     (expl-tar/handle-create-exploit-target state new-exploit-target))
   (update-exploit-target [_ id new-exploit-target]
     (expl-tar/handle-update-exploit-target state id new-exploit-target))
@@ -90,7 +90,7 @@
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
-  (create-feedback [_ new-feedback]
+  (create-feedbacks [_ new-feedback]
     (feedback/handle-create-feedback state new-feedback))
   (read-feedback [_ id]
     (feedback/handle-read-feedback state id))
@@ -112,7 +112,7 @@
   IIncidentStore
   (read-incident [_ id]
     (incident/handle-read-incident state id))
-  (create-incident [_ new-incident]
+  (create-incidents [_ new-incident]
     (incident/handle-create-incident state new-incident))
   (update-incident [_ id incident]
     (incident/handle-update-incident state id incident))
@@ -123,8 +123,8 @@
 
 (defrecord IndicatorStore [state]
   IIndicatorStore
-  (create-indicator [_ new-indicator]
-    (indicator/handle-create-indicator state new-indicator))
+  (create-indicators [_ new-indicators]
+    (indicator/handle-create-indicator state new-indicators))
   (update-indicator [_ id new-indicator]
     (indicator/handle-update-indicator state id new-indicator))
   (read-indicator [_ id]
@@ -138,8 +138,8 @@
 
 (defrecord JudgementStore [state]
   IJudgementStore
-  (create-judgement [_ new-judgement]
-    (judgement/handle-create-judgement state new-judgement))
+  (create-judgements [_ new-judgements]
+    (judgement/handle-create-judgement state new-judgements))
   (read-judgement [_ id]
     (judgement/handle-read-judgement state id))
   (delete-judgement [_ id]
@@ -158,8 +158,8 @@
 
 (defrecord RelationshipStore [state]
   IRelationshipStore
-  (create-relationship [_ new-relationship]
-    (relationship/handle-create-relationship state new-relationship))
+  (create-relationships [_ new-relationships]
+    (relationship/handle-create-relationship state new-relationships))
   (read-relationship [_ id]
     (relationship/handle-read-relationship state id))
   (delete-relationship [_ id]
@@ -169,8 +169,8 @@
 
 (defrecord VerdictStore [state]
   IVerdictStore
-  (create-verdict [_ new-verdict]
-    (verdict/handle-create state new-verdict))
+  (create-verdicts [_ new-verdicts]
+    (verdict/handle-create state new-verdicts))
   (read-verdict [_ id]
     (verdict/handle-read state id))
   (delete-verdict [_ id]
@@ -182,7 +182,7 @@
   ISightingStore
   (read-sighting [_ id]
     (sighting/handle-read-sighting state id))
-  (create-sighting [_ new-sighting]
+  (create-sightings [_ new-sighting]
     (sighting/handle-create-sighting state new-sighting))
   (update-sighting [_ id sighting]
     (sighting/handle-update-sighting state id sighting))
@@ -197,8 +197,8 @@
   ITTPStore
   (read-ttp [_ id]
     (ttp/handle-read-ttp state id))
-  (create-ttp [_ new-ttp]
-    (ttp/handle-create-ttp state new-ttp))
+  (create-ttps [_ new-ttps]
+    (ttp/handle-create-ttp state new-ttps))
   (update-ttp [_ id new-ttp]
     (ttp/handle-update-ttp state id new-ttp))
   (delete-ttp [_ id]
@@ -210,7 +210,7 @@
   IBundleStore
   (read-bundle [_ id]
     (bundle/handle-read-bundle state id))
-  (create-bundle [_ new-bundle]
-    (bundle/handle-create-bundle state new-bundle))
+  (create-bundles [_ new-bundles]
+    (bundle/handle-create-bundle state new-bundles))
   (delete-bundle [_ id]
     (bundle/handle-delete-bundle state id)))

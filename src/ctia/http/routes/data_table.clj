@@ -28,12 +28,14 @@
                  :identity identity
                  (created
                   (with-long-id
-                    (flows/create-flow :entity-type :data-table
-                                       :realize-fn realize-data-table
-                                       :store-fn #(write-store :data-table create-data-table %)
-                                       :entity-type :data-table
-                                       :identity identity
-                                       :entity data-table))))
+                    (first
+                     (flows/create-flow
+                      :entity-type :data-table
+                      :realize-fn realize-data-table
+                      :store-fn #(write-store :data-table create-data-tables %)
+                      :entity-type :data-table
+                      :identity identity
+                      :entities [data-table])))))
            (GET "/external_id" []
                 :return [(s/maybe StoredDataTable)]
                 :query [q DataTableByExternalIdQueryParams]
@@ -62,10 +64,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-data-table
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :data-table read-data-table %)
-                                          :delete-fn #(write-store :data-table delete-data-table %)
-                                          :entity-type :data-table
-                                          :entity-id id
-                                          :identity identity)
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :data-table read-data-table %)
+                        :delete-fn #(write-store :data-table delete-data-table %)
+                        :entity-type :data-table
+                        :entity-id id
+                        :identity identity)
                      (no-content)
                      (not-found)))))

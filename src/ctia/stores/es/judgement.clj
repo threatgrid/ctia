@@ -26,16 +26,16 @@
   (c/coercer! [(s/maybe StoredJudgement)]
               sc/json-schema-coercion-matcher))
 
-(def handle-create-judgement (crud/handle-create :judgement StoredJudgement))
-(def handle-read-judgement (crud/handle-read :judgement StoredJudgement))
-(def handle-delete-judgement (crud/handle-delete :judgement StoredJudgement))
-(def handle-list-judgements (crud/handle-find :judgement StoredJudgement))
+(def handle-create (crud/handle-create :judgement StoredJudgement))
+(def handle-read (crud/handle-read :judgement StoredJudgement))
+(def handle-delete (crud/handle-delete :judgement StoredJudgement))
+(def handle-list (crud/handle-find :judgement StoredJudgement))
 
-(defn handle-add-indicator-to-judgement
+(defn handle-add-indicator-to
   "add an indicator relation to a judgement"
   [state judgement-id indicator-rel]
 
-  (let [judgement (handle-read-judgement state judgement-id)
+  (let [judgement (handle-read state judgement-id)
         indicator-rels (:indicators judgement)
         updated-rels (conj indicator-rels indicator-rel)
         updated {:indicators (set updated-rels)}]
@@ -49,7 +49,7 @@
     indicator-rel))
 
 
-(defn list-active-judgements-by-observable
+(defn list-active-by-observable
   [state observable]
   (let [params {:query (active-judgements-by-observable-query observable)
                 :sort {:priority "desc"
@@ -78,6 +78,6 @@
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [state observable]
 
-  (some-> (list-active-judgements-by-observable state observable)
+  (some-> (list-active-by-observable state observable)
           first
           make-verdict))

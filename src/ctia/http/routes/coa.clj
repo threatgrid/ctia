@@ -27,11 +27,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-coa
-                            :store-fn #(write-store :coa create-coa %)
-                            :entity-type :coa
-                            :identity identity
-                            :entity coa))))
+         (first
+          (flows/create-flow :realize-fn realize-coa
+                             :store-fn #(write-store :coa create-coas %)
+                             :entity-type :coa
+                             :identity identity
+                             :entities [coa])))))
     (PUT "/:id" []
       :return StoredCOA
       :body [coa NewCOA {:description "an updated COA"}]

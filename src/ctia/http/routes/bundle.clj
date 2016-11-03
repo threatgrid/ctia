@@ -19,12 +19,14 @@
       :summary "Adds a new Bundle"
       :capabilities :create-bundle
       :identity identity
-      (created (flows/create-flow :entity-type :bundle
-                                  :realize-fn realize-bundle
-                                  :store-fn #(write-store :bundle create-bundle %)
-                                  :entity-type :bundle
-                                  :identity identity
-                                  :entity bundle)))
+      (created
+       (first
+        (flows/create-flow :entity-type :bundle
+                           :realize-fn realize-bundle
+                           :store-fn #(write-store :bundle create-bundles %)
+                           :entity-type :bundle
+                           :identity identity
+                           :entities [bundle]))))
     (GET "/:id" []
       :return (s/maybe StoredBundle)
       :summary "Gets a Bundle by ID"

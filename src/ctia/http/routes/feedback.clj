@@ -33,11 +33,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-feedback
-                            :store-fn #(write-store :feedback create-feedback %)
-                            :entity-type :feedback
-                            :identity identity
-                            :entity feedback))))
+         (first
+          (flows/create-flow :realize-fn realize-feedback
+                             :store-fn #(write-store :feedback create-feedbacks %)
+                             :entity-type :feedback
+                             :identity identity
+                             :entities [feedback])))))
 
     (GET "/" []
       :return [StoredFeedback]

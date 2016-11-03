@@ -22,11 +22,13 @@
 (defn create-handler-from-realized
   "Create a new resource from a realized object"
   [Model]
-  (s/fn :- Model
+  (s/fn :- [Model]
     [state :- (ls/atom {s/Str Model})
-     model :- Model]
-    (let [id (:id model)]
-      (get (swap! state assoc id model) id))))
+     models :- [Model]]
+    (doall
+     (for [model models]
+       (let [id (:id model)]
+         (get (swap! state assoc id model) id))))))
 
 (defn update-handler-from-realized
   "Update a resource using an id and a realized object"

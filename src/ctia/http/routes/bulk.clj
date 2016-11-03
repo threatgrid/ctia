@@ -25,7 +25,7 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(defn realize
+(defn realize-fn
   "return the realize function provided an entity type key"
   [k]
   (case k
@@ -46,18 +46,19 @@
   "return the create function provided an entity type key"
   [k]
   #(write-store k (case k
-                    :actor          create-actor
-                    :campaign       create-campaign
-                    :coa            create-coa
-                    :data-table     create-data-table
-                    :exploit-target create-exploit-target
-                    :feedback       create-feedback
-                    :incident       create-incident
-                    :indicator      create-indicator
-                    :judgement      create-judgement
-                    :relationship   create-relationship
-                    :sighting       create-sighting
-                    :ttp            create-ttp) %))
+                    :actor          create-actors
+                    :campaign       create-campaigns
+                    :coa            create-coas
+                    :data-table     create-data-tables
+                    :exploit-target create-exploit-targets
+                    :feedback       create-feedbacks
+                    :incident       create-incidents
+                    :indicator      create-indicators
+                    :judgement      create-judgements
+                    :relationship   create-relationships
+                    :sighting       create-sightings
+                    :ttp            create-ttps)
+                %))
 
 (defn read-fn
   "return the create function provided an entity type key"
@@ -74,7 +75,8 @@
                    :judgement      read-judgement
                    :relationship   read-relationship
                    :sighting       read-sighting
-                   :ttp            read-ttp) %))
+                   :ttp            read-ttp)
+               %))
 
 (defn with-long-id-fn
   "return the with-long-id function provided an entity type key"
@@ -97,18 +99,13 @@
   "Create many entities provided their type and returns a list of ids"
   [entities entity-type login]
   (let [with-long-id (with-long-id-fn entity-type)]
-    (->> entities
-         (map #(try
-                 (with-long-id
-                   (flows/create-flow
-                    :entity-type entity-type
-                    :realize-fn (realize entity-type)
-                    :store-fn (create-fn entity-type)
-                    :identity login
-                    :entity %))
-                 (catch Exception e
-                   (do (log/error (pr-str e))
-                       nil))))
+    (->> (flows/create-flow
+          :entity-type entity-type
+          :realize-fn (realize-fn entity-type)
+          :store-fn (create-fn entity-type)
+          :identity login
+          :entities entities)
+         (map with-long-id)
          (map :id))))
 
 (defn read-entities

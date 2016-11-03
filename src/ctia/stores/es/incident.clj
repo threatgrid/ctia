@@ -2,8 +2,8 @@
   (:require [ctia.stores.es.crud :as crud]
             [ctia.schemas.core :refer [StoredIncident]]))
 
-(def handle-create-incident (crud/handle-create :incident StoredIncident))
-(def handle-read-incident (crud/handle-read :incident StoredIncident))
-(def handle-update-incident (crud/handle-update :incident StoredIncident))
-(def handle-delete-incident (crud/handle-delete :incident StoredIncident))
-(def handle-list-incidents (crud/handle-find :incident StoredIncident))
+(def handle-create (crud/handle-create :incident StoredIncident))
+(def handle-read (crud/handle-read :incident StoredIncident))
+(def handle-update (crud/handle-update :incident StoredIncident))
+(def handle-delete (crud/handle-delete :incident StoredIncident))
+(def handle-list (crud/handle-find :incident StoredIncident))

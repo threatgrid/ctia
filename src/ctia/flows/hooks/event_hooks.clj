@@ -91,12 +91,13 @@
   (handle [_ event _]
     (when (judgement? event)
       (let [{{observable :observable :as judgement} :entity owner :owner} event]
-        (when-let [new-verdict (some->
-                                (store/read-store :judgement
-                                                  store/calculate-verdict
-                                                  observable)
-                                (realize-verdict-wrapper judgement owner))]
-          (store/write-store :verdict store/create-verdict new-verdict))))
+        (when-let [new-verdict
+                   (some->
+                    (store/read-store :judgement
+                                      store/calculate-verdict
+                                      observable)
+                    (realize-verdict-wrapper judgement owner))]
+          (store/write-store :verdict store/create-verdicts [new-verdict]))))
     event))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
