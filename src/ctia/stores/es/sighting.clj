@@ -1,5 +1,6 @@
 (ns ctia.stores.es.sighting
-  (:require [ctia.lib.pagination :refer [list-response-schema]]
+  (:require [ctia.lib.es.index :refer [ESConnState]]
+            [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.stores.es.crud :as crud]
             [ctia.schemas.core :refer [Observable StoredSighting]]
             [schema-tools.core :as st]
@@ -38,11 +39,14 @@
   [s :- (s/maybe ESStoredSighting)]
   (when s (dissoc s :observables_hash)))
 
-(s/defn handle-create-sighting :- StoredSighting
-  [state realized]
-  (->> (stored-sighting->es-stored-sighting realized)
-       (create-fn state)
-       es-stored-sighting->stored-sighting))
+(s/defn handle-create-sighting :- [StoredSighting]
+  [state :- ESConnState
+   new-sightings :- [StoredSighting]]
+  (doall
+   (->> new-sightings
+        (map stored-sighting->es-stored-sighting)
+        (create-fn state)
+        (map es-stored-sighting->stored-sighting))))
 
 (s/defn handle-read-sighting :- (s/maybe StoredSighting)
   [state id]

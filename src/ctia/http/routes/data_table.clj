@@ -28,12 +28,13 @@
                  :identity identity
                  (created
                   (with-long-id
-                    (flows/create-flow :entity-type :data-table
-                                       :realize-fn realize-data-table
-                                       :store-fn #(write-store :data-table create-data-table %)
-                                       :entity-type :data-table
-                                       :identity identity
-                                       :entity data-table))))
+                    (first
+                     (flows/create-flow :entity-type :data-table
+                                        :realize-fn realize-data-table
+                                        :store-fn #(write-store :data-table create-data-table %)
+                                        :entity-type :data-table
+                                        :identity identity
+                                        :entities [data-table])))))
            (GET "/external_id" []
                 :return [(s/maybe StoredDataTable)]
                 :query [q DataTableByExternalIdQueryParams]

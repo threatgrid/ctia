@@ -27,11 +27,12 @@
                  :identity identity
                  (created
                   (with-long-id
-                    (flows/create-flow :realize-fn realize-incident
-                                       :store-fn #(write-store :incident create-incident %)
-                                       :entity-type :incident
-                                       :identity identity
-                                       :entity incident))))
+                    (first
+                     (flows/create-flow :realize-fn realize-incident
+                                        :store-fn #(write-store :incident create-incident %)
+                                        :entity-type :incident
+                                        :identity identity
+                                        :entities [incident])))))
            (PUT "/:id" []
                 :return StoredIncident
                 :body [incident NewIncident {:description "an updated incident"}]

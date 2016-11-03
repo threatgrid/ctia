@@ -54,11 +54,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-indicator
-                            :store-fn #(write-store :indicator create-indicator %)
-                            :entity-type :indicator
-                            :identity identity
-                            :entity indicator))))
+         (first
+          (flows/create-flow :realize-fn realize-indicator
+                             :store-fn #(write-store :indicator create-indicator %)
+                             :entity-type :indicator
+                             :identity identity
+                             :entities [indicator])))))
     (PUT "/:id" []
       :return StoredIndicator
       :body [indicator NewIndicator {:description "an updated Indicator"}]

@@ -25,7 +25,7 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(defn realize
+(defn realize-fn
   "return the realize function provided an entity type key"
   [k]
   (case k
@@ -97,18 +97,13 @@
   "Create many entities provided their type and returns a list of ids"
   [entities entity-type login]
   (let [with-long-id (with-long-id-fn entity-type)]
-    (->> entities
-         (map #(try
-                 (with-long-id
-                   (flows/create-flow
-                    :entity-type entity-type
-                    :realize-fn (realize entity-type)
-                    :store-fn (create-fn entity-type)
-                    :identity login
-                    :entity %))
-                 (catch Exception e
-                   (do (log/error (pr-str e))
-                       nil))))
+    (->> (flows/create-flow
+          :entity-type entity-type
+          :realize-fn (realize-fn entity-type)
+          :store-fn (create-fn entity-type)
+          :identity login
+          :entities entities)
+         (map with-long-id)
          (map :id))))
 
 (defn read-entities

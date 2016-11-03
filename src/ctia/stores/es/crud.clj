@@ -4,7 +4,7 @@
             [schema.coerce :as c]
             [ring.swagger.coerce :as sc]
             [ctia.lib.pagination :refer [list-response-schema]]
-            [ctia.lib.es.document :refer [create-doc
+            [ctia.lib.es.document :refer [bulk-create-doc
                                           update-doc
                                           get-doc
                                           delete-doc
@@ -18,15 +18,18 @@
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
-    (s/fn :- (s/maybe Model)
+    (s/fn :- (s/maybe [Model])
       [state :- ESConnState
-       realized :- Model]
-      (-> (create-doc (:conn state)
-                      (:index state)
-                      (name mapping)
-                      realized
-                      (get-in state [:props :refresh] false))
-          coerce!))))
+       models :- [Model]]
+      (->> (bulk-create-doc (:conn state)
+                            (map #(assoc %
+                                         :_id (:id %)
+                                         :_index (:index state)
+                                         :_type (name mapping))
+                                 models)
+                            (get-in state [:props :refresh] false))
+           (map #(dissoc % :_id :_index :_type))
+           (map coerce!)))))
 
 (defn handle-update
   "Generate an ES update handler using some mapping and schema"

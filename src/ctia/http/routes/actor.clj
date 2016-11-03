@@ -28,12 +28,13 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :entity-type :actor
-                            :realize-fn realize-actor
-                            :store-fn #(write-store :actor create-actor %)
-                            :entity-type :actor
-                            :identity identity
-                            :entity actor))))
+         (first
+          (flows/create-flow :entity-type :actor
+                             :realize-fn realize-actor
+                             :store-fn #(write-store :actor create-actor %)
+                             :entity-type :actor
+                             :identity identity
+                             :entities [actor])))))
     (PUT "/:id" []
       :return StoredActor
       :body [actor NewActor {:description "an updated Actor"}]

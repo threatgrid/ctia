@@ -28,11 +28,12 @@
       :identity identity
       (created
        (with-long-id
-         (flows/create-flow :realize-fn realize-campaign
-                            :store-fn #(write-store :campaign create-campaign %)
-                            :entity-type :campaign
-                            :identity identity
-                            :entity campaign))))
+         (first
+          (flows/create-flow :realize-fn realize-campaign
+                             :store-fn #(write-store :campaign create-campaign %)
+                             :entity-type :campaign
+                             :identity identity
+                             :entities [campaign])))))
     (PUT "/:id" []
       :return StoredCampaign
       :body [campaign NewCampaign {:description "an updated campaign"}]

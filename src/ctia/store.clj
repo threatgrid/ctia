@@ -2,13 +2,13 @@
 
 (defprotocol IActorStore
   (read-actor [this id])
-  (create-actor [this new-actor])
+  (create-actor [this new-actors])
   (update-actor [this id actor])
   (delete-actor [this id])
   (list-actors [this filtermap params]))
 
 (defprotocol IJudgementStore
-  (create-judgement [this new-judgement])
+  (create-judgement [this new-judgements])
   (read-judgement [this id])
   (delete-judgement [this id])
   (list-judgements [this filter-map params])
@@ -17,13 +17,13 @@
   (add-indicator-to-judgement [this judgement-id indicator-relationship]))
 
 (defprotocol IVerdictStore
-  (create-verdict [this new-verdict])
+  (create-verdict [this new-verdicts])
   (read-verdict [this id])
   (delete-verdict [this id])
   (list-verdicts [this filter-map params]))
 
 (defprotocol IIndicatorStore
-  (create-indicator [this new-indicator])
+  (create-indicator [this new-indicators])
   (update-indicator [this id indicator])
   (read-indicator [this id])
   (delete-indicator [this id])
@@ -32,41 +32,41 @@
 
 (defprotocol IExploitTargetStore
   (read-exploit-target [this id])
-  (create-exploit-target [this new-exploit-target])
+  (create-exploit-target [this new-exploit-targets])
   (update-exploit-target [this id exploit-target])
   (delete-exploit-target [this id])
   (list-exploit-targets [this filtermap params]))
 
 (defprotocol IFeedbackStore
   (read-feedback [this id])
-  (create-feedback [this new-feedback])
+  (create-feedback [this new-feedbacks])
   (delete-feedback [this id])
   (list-feedback [this filtermap params]))
 
 (defprotocol ITTPStore
   (read-ttp [this id])
-  (create-ttp [this new-ttp])
+  (create-ttp [this new-ttps])
   (update-ttp [this id ttp])
   (delete-ttp [this id])
   (list-ttps [this filtermap params]))
 
 (defprotocol ICampaignStore
   (read-campaign [this id])
-  (create-campaign [this new-campaign])
+  (create-campaign [this new-campaigns])
   (update-campaign [this id campaign])
   (delete-campaign [this id])
   (list-campaigns [this filtermap params]))
 
 (defprotocol ICOAStore
   (read-coa [this id])
-  (create-coa [this new-coa])
+  (create-coa [this new-coas])
   (update-coa [this id coa])
   (delete-coa [this id])
   (list-coas [this filtermap params]))
 
 (defprotocol ISightingStore
   (read-sighting [this id])
-  (create-sighting [this new-sighting])
+  (create-sighting [this new-sightings])
   (update-sighting [this id sighting])
   (delete-sighting [this id])
   (list-sightings [this filtermap params])
@@ -74,19 +74,19 @@
 
 (defprotocol IIncidentStore
   (read-incident [this id])
-  (create-incident [this new-incident])
+  (create-incident [this new-incidents])
   (update-incident [this id incident])
   (delete-incident [this id])
   (list-incidents [this filtermap params]))
 
 (defprotocol IBundleStore
   (read-bundle [this id])
-  (create-bundle [this new-bundle])
+  (create-bundle [this new-bundles])
   (delete-bundle [this id]))
 
 (defprotocol IRelationshipStore
   (read-relationship [this id])
-  (create-relationship [this new-relation])
+  (create-relationship [this new-relations])
   (delete-relationship [this id])
   (list-relationships [this filtermap params]))
 
@@ -97,7 +97,7 @@
 
 (defprotocol IDataTableStore
   (read-data-table [this login])
-  (create-data-table [this new-data-table])
+  (create-data-table [this new-data-tables])
   (delete-data-table [this role])
   (list-data-tables [this filtermap params]))
 

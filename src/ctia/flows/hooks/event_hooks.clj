@@ -96,7 +96,7 @@
                                                   store/calculate-verdict
                                                   observable)
                                 (realize-verdict-wrapper judgement owner))]
-          (store/write-store :verdict store/create-verdict new-verdict))))
+          (store/write-store :verdict store/create-verdict [new-verdict]))))
     event))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}

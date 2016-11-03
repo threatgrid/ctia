@@ -138,8 +138,8 @@
 
 (defrecord JudgementStore [state]
   IJudgementStore
-  (create-judgement [_ new-judgement]
-    (judgement/handle-create-judgement state new-judgement))
+  (create-judgement [_ new-judgements]
+    (judgement/handle-create-judgement state new-judgements))
   (read-judgement [_ id]
     (judgement/handle-read-judgement state id))
   (delete-judgement [_ id]
@@ -169,8 +169,8 @@
 
 (defrecord VerdictStore [state]
   IVerdictStore
-  (create-verdict [_ new-verdict]
-    (verdict/handle-create state new-verdict))
+  (create-verdict [_ new-verdicts]
+    (verdict/handle-create state new-verdicts))
   (read-verdict [_ id]
     (verdict/handle-read state id))
   (delete-verdict [_ id]

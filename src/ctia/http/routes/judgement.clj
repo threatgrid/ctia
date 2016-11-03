@@ -44,11 +44,12 @@
                  :identity identity
                  (created
                   (with-long-id
-                    (flows/create-flow :realize-fn realize-judgement
-                                       :store-fn #(write-store :judgement create-judgement %)
-                                       :entity-type :judgement
-                                       :identity identity
-                                       :entity judgement))))
+                    (first
+                     (flows/create-flow :realize-fn realize-judgement
+                                        :store-fn #(write-store :judgement create-judgement %)
+                                        :entity-type :judgement
+                                        :identity identity
+                                        :entities [judgement])))))
            (POST "/:judgement-id/indicator" []
                  :return (s/maybe RelatedIndicator)
                  :path-params [judgement-id :- s/Str]
