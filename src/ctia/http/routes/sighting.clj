@@ -31,7 +31,7 @@
          (with-long-id
            (first
             (flows/create-flow :realize-fn realize-sighting
-                               :store-fn #(write-store :sighting create-sighting %)
+                               :store-fn #(write-store :sighting create-sightings %)
                                :entity-type :sighting
                                :identity identity
                                :entities [sighting]))))

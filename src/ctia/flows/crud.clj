@@ -135,9 +135,8 @@
 
 (s/defn ^:private apply-event-hooks :- FlowMap
   [{:keys [events] :as fm} :- FlowMap]
-  (doall
-   (for [event events]
-     (h/apply-event-hooks event)))
+  (doseq [event events]
+    (h/apply-event-hooks event))
   fm)
 
 (s/defn ^:private make-result :- s/Any

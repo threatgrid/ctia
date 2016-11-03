@@ -39,7 +39,7 @@
   [s :- (s/maybe ESStoredSighting)]
   (when s (dissoc s :observables_hash)))
 
-(s/defn handle-create-sighting :- [StoredSighting]
+(s/defn handle-create :- [StoredSighting]
   [state :- ESConnState
    new-sightings :- [StoredSighting]]
   (doall
@@ -48,18 +48,18 @@
         (create-fn state)
         (map es-stored-sighting->stored-sighting))))
 
-(s/defn handle-read-sighting :- (s/maybe StoredSighting)
+(s/defn handle-read :- (s/maybe StoredSighting)
   [state id]
   (es-stored-sighting->stored-sighting
    (read-fn state id)))
 
-(s/defn handle-update-sighting :- StoredSighting
+(s/defn handle-update :- StoredSighting
   [state id realized]
   (->> (stored-sighting->es-stored-sighting realized)
        (update-fn state id)
        es-stored-sighting->stored-sighting))
 
-(def handle-delete-sighting (crud/handle-delete :sighting StoredSighting))
+(def handle-delete (crud/handle-delete :sighting StoredSighting))
 
 (s/defn es-paginated-list->paginated-list :- StoredSightingList
   [paginated-list :- ESStoredSightingList]
@@ -67,14 +67,14 @@
              [:data]
              #(map es-stored-sighting->stored-sighting (es-coerce! %))))
 
-(s/defn handle-list-sightings :- StoredSightingList
+(s/defn handle-list :- StoredSightingList
   [state filter-map params]
   (es-paginated-list->paginated-list
    (list-fn state filter-map params)))
 
-(s/defn handle-list-sightings-by-observables :- StoredSightingList
+(s/defn handle-list-by-observables :- StoredSightingList
   [state observables :- [Observable] params]
-  (handle-list-sightings state
-                         {:observables_hash
-                          (obs->hashes observables)}
-                         params))
+  (handle-list state
+               {:observables_hash
+                (obs->hashes observables)}
+               params))

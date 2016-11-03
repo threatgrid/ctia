@@ -29,7 +29,7 @@
        (with-long-id
          (first
           (flows/create-flow :realize-fn realize-coa
-                             :store-fn #(write-store :coa create-coa %)
+                             :store-fn #(write-store :coa create-coas %)
                              :entity-type :coa
                              :identity identity
                              :entities [coa])))))

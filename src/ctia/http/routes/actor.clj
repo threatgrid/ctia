@@ -31,7 +31,7 @@
          (first
           (flows/create-flow :entity-type :actor
                              :realize-fn realize-actor
-                             :store-fn #(write-store :actor create-actor %)
+                             :store-fn #(write-store :actor create-actors %)
                              :entity-type :actor
                              :identity identity
                              :entities [actor])))))

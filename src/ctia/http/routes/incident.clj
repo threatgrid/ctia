@@ -28,11 +28,12 @@
                  (created
                   (with-long-id
                     (first
-                     (flows/create-flow :realize-fn realize-incident
-                                        :store-fn #(write-store :incident create-incident %)
-                                        :entity-type :incident
-                                        :identity identity
-                                        :entities [incident])))))
+                     (flows/create-flow
+                      :realize-fn realize-incident
+                      :store-fn #(write-store :incident create-incidents %)
+                      :entity-type :incident
+                      :identity identity
+                      :entities [incident])))))
            (PUT "/:id" []
                 :return StoredIncident
                 :body [incident NewIncident {:description "an updated incident"}]
@@ -42,13 +43,14 @@
                 :capabilities :create-incident
                 :identity identity
                 (ok (with-long-id
-                      (flows/update-flow :get-fn #(read-store :incident read-incident %)
-                                         :realize-fn realize-incident
-                                         :update-fn #(write-store :incident update-incident (:id %) %)
-                                         :entity-type :incident
-                                         :entity-id id
-                                         :identity identity
-                                         :entity incident))))
+                      (flows/update-flow
+                       :get-fn #(read-store :incident read-incident %)
+                       :realize-fn realize-incident
+                       :update-fn #(write-store :incident update-incident (:id %) %)
+                       :entity-type :incident
+                       :entity-id id
+                       :identity identity
+                       :entity incident))))
 
            (GET "/external_id" []
                 :return [(s/maybe StoredIncident)]
@@ -77,10 +79,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-incident
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :incident read-incident %)
-                                          :delete-fn #(write-store :incident delete-incident %)
-                                          :entity-type :incident
-                                          :entity-id id
-                                          :identity identity)
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :incident read-incident %)
+                        :delete-fn #(write-store :incident delete-incident %)
+                        :entity-type :incident
+                        :entity-id id
+                        :identity identity)
                      (no-content)
                      (not-found)))))

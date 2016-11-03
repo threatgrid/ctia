@@ -45,11 +45,12 @@
                  (created
                   (with-long-id
                     (first
-                     (flows/create-flow :realize-fn realize-judgement
-                                        :store-fn #(write-store :judgement create-judgement %)
-                                        :entity-type :judgement
-                                        :identity identity
-                                        :entities [judgement])))))
+                     (flows/create-flow
+                      :realize-fn realize-judgement
+                      :store-fn #(write-store :judgement create-judgements %)
+                      :entity-type :judgement
+                      :identity identity
+                      :entities [judgement])))))
            (POST "/:judgement-id/indicator" []
                  :return (s/maybe RelatedIndicator)
                  :path-params [judgement-id :- s/Str]
@@ -95,10 +96,11 @@
                    :summary "Deletes a Judgement"
                    :capabilities :delete-judgement
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :judgement read-judgement %)
-                                          :delete-fn #(write-store :judgement delete-judgement %)
-                                          :entity-type :judgement
-                                          :entity-id id
-                                          :identity identity)
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :judgement read-judgement %)
+                        :delete-fn #(write-store :judgement delete-judgement %)
+                        :entity-type :judgement
+                        :entity-id id
+                        :identity identity)
                      (no-content)
                      (not-found)))))

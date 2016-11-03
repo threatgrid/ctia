@@ -21,7 +21,8 @@
            :tags ["Relationship"]
            (POST "/" []
                  :return StoredRelationship
-                 :body [relationship NewRelationship {:description "a new Relationship"}]
+                 :body [relationship NewRelationship
+                        {:description "a new Relationship"}]
                  :header-params [api_key :- (s/maybe s/Str)]
                  :summary "Adds a new Relationship"
                  :capabilities :create-relationship
@@ -29,12 +30,13 @@
                  (created
                   (with-long-id
                     (first
-                     (flows/create-flow :entity-type :relationship
-                                        :realize-fn realize-relationship
-                                        :store-fn #(write-store :relationship create-relationship %)
-                                        :entity-type :relationship
-                                        :identity identity
-                                        :entities [relationship])))))
+                     (flows/create-flow
+                      :entity-type :relationship
+                      :realize-fn realize-relationship
+                      :store-fn #(write-store :relationship create-relationships %)
+                      :entity-type :relationship
+                      :identity identity
+                      :entities [relationship])))))
            (GET "/external_id" []
                 :return [(s/maybe StoredRelationship)]
                 :query [q RelationshipByExternalIdQueryParams]
@@ -63,10 +65,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-relationship
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :relationship read-relationship %)
-                                          :delete-fn #(write-store :relationship delete-relationship %)
-                                          :entity-type :relationship
-                                          :entity-id id
-                                          :identity identity)
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :relationship read-relationship %)
+                        :delete-fn #(write-store :relationship delete-relationship %)
+                        :entity-type :relationship
+                        :entity-id id
+                        :identity identity)
                      (no-content)
                      (not-found)))))

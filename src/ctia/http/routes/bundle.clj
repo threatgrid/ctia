@@ -23,7 +23,7 @@
        (first
         (flows/create-flow :entity-type :bundle
                            :realize-fn realize-bundle
-                           :store-fn #(write-store :bundle create-bundle %)
+                           :store-fn #(write-store :bundle create-bundles %)
                            :entity-type :bundle
                            :identity identity
                            :entities [bundle]))))

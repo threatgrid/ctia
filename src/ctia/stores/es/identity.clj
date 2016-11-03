@@ -19,7 +19,7 @@
    into a vec of strings"
   (vec (map name caps)))
 
-(defn handle-create-identity [state new-identity]
+(defn handle-create [state new-identity]
   (let [id (:login new-identity)
         realized (assoc new-identity :id id)
         transformed (update-in realized [:capabilities]
@@ -34,7 +34,7 @@
         (update-in [:capabilities] capabilities->capabilities-set)
         (dissoc :id))))
 
-(s/defn handle-read-identity :- (s/maybe Identity)
+(s/defn handle-read :- (s/maybe Identity)
   [state :- s/Any login :- s/Str]
   (some-> (get-doc (:conn state)
                    (:index state)
@@ -43,7 +43,7 @@
           (update-in [:capabilities] capabilities->capabilities-set)
           (dissoc :id)))
 
-(defn handle-delete-identity [state login]
+(defn handle-delete [state login]
   (delete-doc (:conn state)
               (:index state)
               mapping

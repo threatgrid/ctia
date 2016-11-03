@@ -56,7 +56,7 @@
        (with-long-id
          (first
           (flows/create-flow :realize-fn realize-indicator
-                             :store-fn #(write-store :indicator create-indicator %)
+                             :store-fn #(write-store :indicator create-indicators %)
                              :entity-type :indicator
                              :identity identity
                              :entities [indicator])))))

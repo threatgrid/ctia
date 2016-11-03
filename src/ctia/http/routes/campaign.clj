@@ -30,7 +30,7 @@
        (with-long-id
          (first
           (flows/create-flow :realize-fn realize-campaign
-                             :store-fn #(write-store :campaign create-campaign %)
+                             :store-fn #(write-store :campaign create-campaigns %)
                              :entity-type :campaign
                              :identity identity
                              :entities [campaign])))))

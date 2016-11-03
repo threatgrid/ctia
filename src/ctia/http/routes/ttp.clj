@@ -30,7 +30,7 @@
        (with-long-id
          (first
           (flows/create-flow :realize-fn realize-ttp
-                             :store-fn #(write-store :ttp create-ttp %)
+                             :store-fn #(write-store :ttp create-ttps %)
                              :entity-type :ttp
                              :identity identity
                              :entities [ttp])))))

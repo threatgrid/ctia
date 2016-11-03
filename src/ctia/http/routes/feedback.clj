@@ -35,7 +35,7 @@
        (with-long-id
          (first
           (flows/create-flow :realize-fn realize-feedback
-                             :store-fn #(write-store :feedback create-feedback %)
+                             :store-fn #(write-store :feedback create-feedbacks %)
                              :entity-type :feedback
                              :identity identity
                              :entities [feedback])))))
