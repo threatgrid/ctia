@@ -1,11 +1,11 @@
 (ns ctia.lib.es.index
-  (:require [clojure.core.memoize :as memo]
-            [schema.core :as s]
-            [clj-time.core :as t]
+  (:require [clj-time.core :as t]
+            [clojure.core.memoize :as memo]
             [clojurewerkz.elastisch.native :as n]
             [clojurewerkz.elastisch.rest :as h]
             [clojurewerkz.elastisch.native.index :as native-index]
-            [clojurewerkz.elastisch.rest.index :as rest-index]))
+            [clojurewerkz.elastisch.rest.index :as rest-index]
+            [schema.core :as s]))
 
 (s/defschema ESConn
   (s/either clojurewerkz.elastisch.rest.Connection
@@ -13,11 +13,16 @@
 
 (def alias-create-fifo-threshold 5)
 
+(s/defschema ESSlicing
+  {:strategy s/Keyword
+   :granularity s/Keyword})
+
 (s/defschema ESConnState
   {:index s/Str
    :props {s/Any s/Any}
    :mapping {s/Any s/Any}
-   :conn ESConn})
+   :conn ESConn
+   (s/optional-key :slicing) ESSlicing})
 
 (defn native-conn? [conn]
   (not (:uri conn)))
@@ -112,4 +117,3 @@
   (memo/fifo create-aliased-index!
              :fifo/threshold
              alias-create-fifo-threshold))
-

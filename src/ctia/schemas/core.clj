@@ -16,7 +16,9 @@
              [ttp :as ttps]
              [verdict :as vs]
              [vocabularies :as vocs]]
-            [flanders.schema :as fs]
+            [flanders
+             [schema :as fs]
+             [utils :as fu]]
             [schema.core :refer [defschema Str Bool]]))
 
 ;; actor
@@ -33,11 +35,11 @@
 
 ;; data-table
 (defschema NewDataTable (-> ds/NewDataTable
-                            fs/replace-either-with-any
+                            fu/replace-either-with-any
                             fs/->schema-tree))
 
 (defschema StoredDataTable (-> ds/StoredDataTable
-                               fs/replace-either-with-any
+                               fu/replace-either-with-any
                                fs/->schema-tree))
 
 ;; exploit-target
@@ -66,11 +68,11 @@
 
 ;; indicator
 (defschema NewIndicator (-> ins/NewIndicator
-                            fs/replace-either-with-any
+                            fu/replace-either-with-any
                             fs/->schema-tree))
 
 (defschema StoredIndicator (-> ins/StoredIndicator
-                               fs/replace-either-with-any
+                               fu/replace-either-with-any
                                fs/->schema-tree))
 
 
@@ -81,11 +83,11 @@
 
 ;; bundle
 (defschema NewBundle (-> bs/NewBundle
-                         fs/replace-either-with-any
+                         fu/replace-either-with-any
                          fs/->schema-tree))
 
 (defschema StoredBundle (-> bs/StoredBundle
-                            fs/replace-either-with-any
+                            fu/replace-either-with-any
                             fs/->schema-tree))
 
 ;; relationships
@@ -110,3 +112,18 @@
 ;; vocabularies
 (defschema ObservableTypeIdentifier
   (fs/->schema-tree vocs/ObservableTypeIdentifier))
+
+(def stored-schema-lookup
+  {:actor StoredActor
+   :bundle StoredBundle
+   :campaign StoredCampaign
+   :coa StoredCOA
+   :exploit-target StoredExploitTarget
+   :feedback StoredFeedback
+   :incident StoredIncident
+   :indicator StoredIndicator
+   :judgement StoredJudgement
+   :relationship StoredRelationship
+   :sighting StoredSighting
+   :ttp StoredTTP
+   :verdict StoredVerdict})

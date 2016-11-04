@@ -6,6 +6,7 @@
     [actor :as actor]
     [campaign :as campaign]
     [coa :as coa]
+    [event :as event]
     [exploit-target :as expl-tar]
     [feedback :as feedback]
     [identity :as identity]
@@ -214,3 +215,10 @@
     (bundle/handle-create-bundle state new-bundles))
   (delete-bundle [_ id]
     (bundle/handle-delete-bundle state id)))
+
+(defrecord EventStore [state]
+  IEventStore
+  (create-events [this new-events]
+    (event/handle-create state new-events))
+  (list-events [this filter-map params]
+    (event/handle-list state filter-map params)))

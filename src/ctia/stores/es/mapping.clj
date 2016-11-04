@@ -811,6 +811,28 @@
      :source_ref string
      :target_ref string}}})
 
+(def dynamic-templates
+  [{:date_as_datetime {:match "*"
+                       :match_mapping_type "date"
+                       :mapping ts}}
+   {:string_not_analyzed {:match "*"
+                          :match_mapping_type "string"
+                          :mapping string}}])
+
+(def event-mapping
+  {"event"
+   {:dynamic_templates dynamic-templates
+    :properties
+    {:owner string
+     :timestamp ts
+     :entity {:type "object"}
+     :id string
+     :http-params {:type "object"}
+     :type string
+     :fields {:type "object"}
+     :judgement_id string
+     :verdict {:type "object"}}}})
+
 
 (def store-mappings
   (merge {}
@@ -828,4 +850,5 @@
          exploit-target-mapping
          sighting-mapping
          identity-mapping
-         bundle-mapping))
+         bundle-mapping
+         event-mapping))

@@ -59,6 +59,10 @@
    {:atom as-store/->DataTableStore
     :es es-store/->DataTableStore}
 
+   :event
+   {:atom as-store/->EventStore
+    :es es-store/->EventStore}
+
    :exploit-target
    {:atom as-store/->ExploitTargetStore
     :es es-store/->ExploitTargetStore}
@@ -108,22 +112,35 @@
     (swap! store/stores assoc entity-key []))
 
   (doseq [[store-key store-list] @store/stores]
-    (let [store-impls (or (some-> (get-in @p/properties [:ctia :store store-key])
-                                  (clojure.string/split #",")) [])
-          store-properties (map (fn [impl]
-                                  {:properties (merge (get-in @p/properties [:ctia :store impl :default] {})
-                                                      (get-in @p/properties [:ctia :store impl store-key] {}))
+    (let [store-impls
+          (or (some-> (get-in @p/properties [:ctia :store store-key])
+                      (clojure.string/split #",")) [])
 
-                                   :builder (get-in store-factories [:builder impl]
-                                                    (fn default-builder [f p] (f)))
+          store-properties
+          (map (fn [impl]
+                 {:properties
+                  (merge (get-in @p/properties
+                                 [:ctia :store impl :default]
+                                 {})
+                         (get-in @p/properties
+                                 [:ctia :store impl store-key]
+                                 {}))
 
-                                   :factory (get-in store-factories [store-key impl]
-                                                    #(throw (ex-info (format "Could not configure %s store" impl)
-                                                                     {:store-key store-key
-                                                                      :store-type (keyword %)})))}) (map keyword store-impls))
+                  :builder
+                  (get-in store-factories [:builder impl]
+                          (fn default-builder [f p] (f)))
 
-          store-instances (doall (map (fn [{:keys [builder factory properties]}]
-                                        (builder factory properties)) store-properties))]
+                  :factory
+                  (get-in store-factories [store-key impl]
+                          #(throw (ex-info (format "Could not configure %s store" impl)
+                                           {:store-key store-key
+                                            :store-type (keyword %)})))})
+               (map keyword store-impls))
+
+          store-instances
+          (doall (map (fn [{:keys [builder factory properties]}]
+                        (builder factory properties))
+                      store-properties))]
 
       (swap! store/stores assoc store-key store-instances))))
 

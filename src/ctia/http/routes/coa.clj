@@ -26,13 +26,13 @@
       :capabilities :create-coa
       :identity identity
       (created
-       (with-long-id
-         (first
-          (flows/create-flow :realize-fn realize-coa
-                             :store-fn #(write-store :coa create-coas %)
-                             :entity-type :coa
-                             :identity identity
-                             :entities [coa])))))
+       (first
+        (flows/create-flow :realize-fn realize-coa
+                           :store-fn #(write-store :coa create-coas %)
+                           :long-id-fn with-long-id
+                           :entity-type :coa
+                           :identity identity
+                           :entities [coa]))))
     (PUT "/:id" []
       :return StoredCOA
       :body [coa NewCOA {:description "an updated COA"}]
@@ -42,14 +42,14 @@
       :capabilities :create-coa
       :identity identity
       (ok
-       (with-long-id
-         (flows/update-flow :get-fn #(read-store :coa read-coa %)
-                            :realize-fn realize-coa
-                            :update-fn #(write-store :coa update-coa (:id %) %)
-                            :entity-type :coa
-                            :entity-id id
-                            :identity identity
-                            :entity coa))))
+       (flows/update-flow :get-fn #(read-store :coa read-coa %)
+                          :realize-fn realize-coa
+                          :update-fn #(write-store :coa update-coa (:id %) %)
+                          :long-id-fn with-long-id
+                          :entity-type :coa
+                          :entity-id id
+                          :identity identity
+                          :entity coa)))
 
     (GET "/external_id" []
       :return [(s/maybe StoredCOA)]

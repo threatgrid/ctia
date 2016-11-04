@@ -43,7 +43,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.3.1"
+                 [threatgrid/ctim "0.3.2-SNAPSHOT"
                   ;; Exclusions:
                   ;; - ring-swagger as 0.22.9 lacks s/Any support
                   :exclusions [metosin/ring-swagger]]

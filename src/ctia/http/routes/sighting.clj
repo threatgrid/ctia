@@ -28,13 +28,13 @@
       :identity identity
       (if (check-new-sighting sighting)
         (created
-         (with-long-id
-           (first
-            (flows/create-flow :realize-fn realize-sighting
-                               :store-fn #(write-store :sighting create-sightings %)
-                               :entity-type :sighting
-                               :identity identity
-                               :entities [sighting]))))
+         (first
+          (flows/create-flow :realize-fn realize-sighting
+                             :store-fn #(write-store :sighting create-sightings %)
+                             :long-id-fn with-long-id
+                             :entity-type :sighting
+                             :identity identity
+                             :entities [sighting])))
         (unprocessable-entity)))
     (PUT "/:id" []
       :return StoredSighting
@@ -46,14 +46,14 @@
       :identity identity
       (if (check-new-sighting sighting)
         (ok
-         (with-long-id
-           (flows/update-flow :get-fn #(read-store :sighting read-sighting %)
-                              :realize-fn realize-sighting
-                              :update-fn #(write-store :sighting update-sighting (:id %) %)
-                              :entity-type :sighting
-                              :entity-id id
-                              :identity identity
-                              :entity sighting)))
+         (flows/update-flow :get-fn #(read-store :sighting read-sighting %)
+                            :realize-fn realize-sighting
+                            :update-fn #(write-store :sighting update-sighting (:id %) %)
+                            :long-id-fn with-long-id
+                            :entity-type :sighting
+                            :entity-id id
+                            :identity identity
+                            :entity sighting))
         (unprocessable-entity)))
 
     (GET "/external_id" []

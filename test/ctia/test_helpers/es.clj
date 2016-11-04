@@ -1,8 +1,9 @@
 (ns ctia.test-helpers.es
   "ES test helpers"
-  (:require [ctia.events.producers.es.producer :as esp]
-            [ctia.lib.es.index :as es-index]
+  (:require [ctia.lib.es.index :as es-index]
+            [ctia.properties :refer [properties]]
             [ctia.store :as store]
+            [ctia.stores.es.store :as es-store]
             [ctia.test-helpers.core :as h]))
 
 (defn recreate-state-index [{:keys [conn index mapping]}]
@@ -26,16 +27,19 @@
           {:keys [state]} store-impls]
     (close-client state)))
 
-(defn purge-producer-indexes []
-  (let [{:keys [conn index]} (esp/init-producer-conn)]
+(defn purge-event-indexes []
+  (let [{:keys [conn index]} (es-store/init-store-conn
+                              (merge
+                               (get-in @properties [:ctia :store :es :default])
+                               (get-in @properties [:ctia :store :es :event])))]
     (when conn
       ((es-index/index-delete-fn conn) conn (str index "*")))))
 
-(defn fixture-purge-producer-indexes [test]
+(defn fixture-purge-event-indexes [test]
   "walk through all producers and delete their index"
-  (purge-producer-indexes)
+  (purge-event-indexes)
   (test)
-  (purge-producer-indexes))
+  (purge-event-indexes))
 
 (defn fixture-properties:es-store [test]
   ;; Note: These properties may be overwritten by ENV variables
@@ -48,6 +52,7 @@
                       "ctia.store.campaign" "es"
                       "ctia.store.coa" "es"
                       "ctia.store.data-table" "es"
+                      "ctia.store.event" "es"
                       "ctia.store.exploit-target" "es"
                       "ctia.store.feedback" "es"
                       "ctia.store.identity" "es"
@@ -74,6 +79,7 @@
                       "ctia.store.campaign" "es"
                       "ctia.store.coa" "es"
                       "ctia.store.data-table" "es"
+                      "ctia.store.event" "es"
                       "ctia.store.exploit-target" "es"
                       "ctia.store.feedback" "es"
                       "ctia.store.identity" "es"

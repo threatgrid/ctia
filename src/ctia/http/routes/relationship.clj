@@ -28,15 +28,15 @@
                  :capabilities :create-relationship
                  :identity identity
                  (created
-                  (with-long-id
-                    (first
-                     (flows/create-flow
-                      :entity-type :relationship
-                      :realize-fn realize-relationship
-                      :store-fn #(write-store :relationship create-relationships %)
-                      :entity-type :relationship
-                      :identity identity
-                      :entities [relationship])))))
+                  (first
+                   (flows/create-flow
+                    :entity-type :relationship
+                    :realize-fn realize-relationship
+                    :store-fn #(write-store :relationship create-relationships %)
+                    :long-id-fn with-long-id
+                    :entity-type :relationship
+                    :identity identity
+                    :entities [relationship]))))
            (GET "/external_id" []
                 :return [(s/maybe StoredRelationship)]
                 :query [q RelationshipByExternalIdQueryParams]

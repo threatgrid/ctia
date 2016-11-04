@@ -6,6 +6,7 @@
              [campaign :as ca]
              [coa :as coa]
              [data-table :as dt]
+             [event :as ev]
              [exploit-target :as et]
              [feedback :as fe]
              [identity :as id]
@@ -22,6 +23,7 @@
                                 ICampaignStore
                                 ICOAStore
                                 IDataTableStore
+                                IEventStore
                                 IExploitTargetStore
                                 IFeedbackStore
                                 IIdentityStore
@@ -66,7 +68,7 @@
     (ju/handle-list state filter-map params))
   (list-judgements-by-observable [this observable params]
     (ju/handle-list state {[:observable :type]  (:type observable)
-                                      [:observable :value] (:value observable)} params))
+                           [:observable :value] (:value observable)} params))
   (calculate-verdict [_ observable]
     (ju/handle-calculate-verdict state observable)))
 
@@ -239,3 +241,10 @@
     (bu/handle-create state new-bundles))
   (delete-bundle [_ id]
     (bu/handle-delete state id)))
+
+(defrecord EventStore [state]
+  IEventStore
+  (create-events [this new-events]
+    (ev/handle-create state new-events))
+  (list-events [this filter-map params]
+    (ev/handle-list state filter-map params)))

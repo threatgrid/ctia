@@ -53,13 +53,13 @@
       :capabilities :create-indicator
       :identity identity
       (created
-       (with-long-id
-         (first
-          (flows/create-flow :realize-fn realize-indicator
-                             :store-fn #(write-store :indicator create-indicators %)
-                             :entity-type :indicator
-                             :identity identity
-                             :entities [indicator])))))
+       (first
+        (flows/create-flow :realize-fn realize-indicator
+                           :store-fn #(write-store :indicator create-indicators %)
+                           :long-id-fn with-long-id
+                           :entity-type :indicator
+                           :identity identity
+                           :entities [indicator]))))
     (PUT "/:id" []
       :return StoredIndicator
       :body [indicator NewIndicator {:description "an updated Indicator"}]
@@ -69,14 +69,14 @@
       :capabilities :create-indicator
       :identity identity
       (ok
-       (with-long-id
-         (flows/update-flow :get-fn #(read-store :indicator read-indicator %)
-                            :realize-fn realize-indicator
-                            :update-fn #(write-store :indicator update-indicator (:id %) %)
-                            :entity-type :indicator
-                            :entity-id id
-                            :identity identity
-                            :entity indicator))))
+       (flows/update-flow :get-fn #(read-store :indicator read-indicator %)
+                          :realize-fn realize-indicator
+                          :update-fn #(write-store :indicator update-indicator (:id %) %)
+                          :long-id-fn with-long-id
+                          :entity-type :indicator
+                          :entity-id id
+                          :identity identity
+                          :entity indicator)))
 
     (GET "/external_id" []
       :return [(s/maybe StoredIndicator)]

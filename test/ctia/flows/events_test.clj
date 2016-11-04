@@ -1,13 +1,10 @@
-(ns ctia.flows.hooks.es-event-hook-test
+(ns ctia.flows.events-test
   (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.string :as str]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.events.producers.es.producer :refer [init-producer-conn]]
-            [ctia.lib.es
-             [document :as document]
-             [index :as index]]
+            [ctia.store :as store]
             [ctim.domain.id :as id]
-            [ctim.schemas.common :as c]
             [ctia.test-helpers
              [atom :as at-helpers]
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
@@ -15,26 +12,34 @@
 
 (use-fixtures :once mth/fixture-schema-validation)
 
-(deftest-for-each-fixture test-event-producer
+(deftest-for-each-fixture test-flow-event-creation
 
-  {:es-filtered-alias (join-fixtures [test-helpers/fixture-properties:clean
-                                      at-helpers/fixture-properties:atom-memory-store
-                                      test-helpers/fixture-properties:es-hook-filtered-alias
-                                      test-helpers/fixture-ctia
-                                      test-helpers/fixture-allow-all-auth
-                                      es-helpers/fixture-purge-producer-indexes])
+  {:memory-store (join-fixtures [test-helpers/fixture-properties:clean
+                                 at-helpers/fixture-properties:atom-memory-store
+                                 test-helpers/fixture-properties:events-enabled
+                                 test-helpers/fixture-ctia
+                                 test-helpers/fixture-allow-all-auth])
 
    :es-aliased-index (join-fixtures [test-helpers/fixture-properties:clean
-                                     at-helpers/fixture-properties:atom-memory-store
-                                     test-helpers/fixture-properties:es-hook-aliased-index
+                                     es-helpers/fixture-properties:es-store
+                                     test-helpers/fixture-properties:events-aliased-index
                                      test-helpers/fixture-ctia
                                      test-helpers/fixture-allow-all-auth
-                                     es-helpers/fixture-purge-producer-indexes])}
+                                     es-helpers/fixture-purge-event-indexes
+                                     es-helpers/fixture-recreate-store-indexes])
+
+   :es-simple-index (join-fixtures [test-helpers/fixture-properties:clean
+                                    es-helpers/fixture-properties:es-store
+                                    test-helpers/fixture-properties:events-enabled
+                                    test-helpers/fixture-ctia
+                                    test-helpers/fixture-allow-all-auth
+                                    es-helpers/fixture-purge-event-indexes
+                                    es-helpers/fixture-recreate-store-indexes])}
 
   (testing "Events are published to es"
-    (let [{{judgement-1-long-id :id} :parsed-body
-           judgement-1-status :status
-           :as judgement-1}
+    (let [{{judgement-1-long-id :id
+            :as judgement-1} :parsed-body
+           judgement-1-status :status}
           (post "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
@@ -49,9 +54,9 @@
           judgement-1-id
           (id/long-id->id judgement-1-long-id)
 
-          {{judgement-2-long-id :id} :parsed-body
-           judgement-2-status :status
-           :as judgement-2}
+          {{judgement-2-long-id :id
+            :as judgement-2} :parsed-body
+           judgement-2-status :status}
           (post "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
@@ -66,9 +71,9 @@
           judgement-2-id
           (id/long-id->id judgement-2-long-id)
 
-          {{judgement-3-long-id :id} :parsed-body
-           judgement-3-status :status
-           :as judgement-3}
+          {{judgement-3-long-id :id
+            :as judgement-3} :parsed-body
+           judgement-3-status :status}
           (post "ctia/judgement"
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
@@ -87,13 +92,21 @@
       (is (= 201 judgement-2-status))
       (is (= 201 judgement-3-status))
 
-      (let [{:keys [index conn props]} (init-producer-conn)]
-        ((index/refresh-fn conn) conn index)
+      (let [events (:data (store/read-store :event
+                                            store/list-events
+                                            {:owner "Unknown"}
+                                            {:sort_by :timestamp
+                                             :sort_order :asc}))]
+
+        (testing "variable event fields have correct type"
+          (doseq [event events]
+            (is (str/starts-with? (:id event) "event-"))
+            (is (instance? java.util.Date (:timestamp event)))))
 
         (is (= [{:owner "Unknown"
                  :entity {:valid_time
-                          {:start_time "2016-02-11T00:40:48.212Z"
-                           :end_time "2525-01-01T00:00:00.000Z"}
+                          {:start_time #inst "2016-02-11T00:40:48.212Z"
+                           :end_time #inst "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -102,16 +115,16 @@
                           :disposition 1
                           :disposition_name "Clean"
                           :priority 100
-                          :id (:short-id judgement-1-id)
+                          :id (id/long-id judgement-1-id)
                           :severity 100
                           :confidence "Low"
-                          :owner "Unknown"}
-                 :id (:short-id judgement-1-id)
+                          :owner "Unknown"
+                          :created (:created judgement-1)}
                  :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
-                          {:start_time "2016-02-11T00:40:48.212Z"
-                           :end_time "2525-01-01T00:00:00.000Z"}
+                          {:start_time #inst "2016-02-11T00:40:48.212Z"
+                           :end_time #inst "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -120,16 +133,16 @@
                           :disposition 2
                           :disposition_name "Malicious"
                           :priority 100
-                          :id (:short-id judgement-2-id)
+                          :id (id/long-id judgement-2-id)
                           :severity 100
                           :confidence "Low"
-                          :owner "Unknown"}
-                 :id (:short-id judgement-2-id)
+                          :owner "Unknown"
+                          :created (:created judgement-2)}
                  :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
-                          {:start_time "2016-02-11T00:40:48.212Z"
-                           :end_time "2525-01-01T00:00:00.000Z"}
+                          {:start_time #inst "2016-02-11T00:40:48.212Z"
+                           :end_time #inst "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -138,19 +151,11 @@
                           :disposition 3
                           :disposition_name "Suspicious"
                           :priority 100
-                          :id (:short-id judgement-3-id)
+                          :id (id/long-id judgement-3-id)
                           :severity 100
                           :confidence "Low"
-                          :owner "Unknown"}
-                 :id (:short-id judgement-3-id)
+                          :owner "Unknown"
+                          :created (:created judgement-3)}
                  :type "CreatedModel"}]
-               (->> (document/search-docs conn
-                                          index
-                                          "event"
-                                          nil
-                                          {:sort_by "timestamp"
-                                           :sort_order "asc"
-                                           :query {"match_all" {}}})
-                    :data
-                    (map #(dissoc % :timestamp :http-params))
-                    (map #(update % :entity dissoc :created)))))))))
+               (map #(dissoc % :http-params :id :timestamp)
+                    events)))))))

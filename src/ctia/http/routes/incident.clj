@@ -26,14 +26,14 @@
                  :capabilities :create-incident
                  :identity identity
                  (created
-                  (with-long-id
-                    (first
-                     (flows/create-flow
-                      :realize-fn realize-incident
-                      :store-fn #(write-store :incident create-incidents %)
-                      :entity-type :incident
-                      :identity identity
-                      :entities [incident])))))
+                  (first
+                   (flows/create-flow
+                    :realize-fn realize-incident
+                    :store-fn #(write-store :incident create-incidents %)
+                    :long-id-fn with-long-id
+                    :entity-type :incident
+                    :identity identity
+                    :entities [incident]))))
            (PUT "/:id" []
                 :return StoredIncident
                 :body [incident NewIncident {:description "an updated incident"}]
@@ -42,15 +42,15 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :create-incident
                 :identity identity
-                (ok (with-long-id
-                      (flows/update-flow
-                       :get-fn #(read-store :incident read-incident %)
-                       :realize-fn realize-incident
-                       :update-fn #(write-store :incident update-incident (:id %) %)
-                       :entity-type :incident
-                       :entity-id id
-                       :identity identity
-                       :entity incident))))
+                (ok (flows/update-flow
+                     :get-fn #(read-store :incident read-incident %)
+                     :realize-fn realize-incident
+                     :update-fn #(write-store :incident update-incident (:id %) %)
+                     :long-id-fn with-long-id
+                     :entity-type :incident
+                     :entity-id id
+                     :identity identity
+                     :entity incident)))
 
            (GET "/external_id" []
                 :return [(s/maybe StoredIncident)]

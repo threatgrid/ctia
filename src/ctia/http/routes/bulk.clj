@@ -103,9 +103,9 @@
           :entity-type entity-type
           :realize-fn (realize-fn entity-type)
           :store-fn (create-fn entity-type)
+          :long-id-fn with-long-id
           :identity login
           :entities entities)
-         (map with-long-id)
          (map :id))))
 
 (defn read-entities

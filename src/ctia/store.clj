@@ -101,6 +101,10 @@
   (delete-data-table [this role])
   (list-data-tables [this filtermap params]))
 
+(defprotocol IEventStore
+  (create-events [this new-events])
+  (list-events [this filtermap params]))
+
 (defonce stores (atom {:judgement []
                        :indicator []
                        :feedback []
@@ -115,7 +119,8 @@
                        :relationship []
                        :identity []
                        :verdict []
-                       :bundle []}))
+                       :bundle []
+                       :event []}))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))
