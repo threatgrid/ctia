@@ -7,7 +7,10 @@
              [sighting :as sighting]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common
-             :refer [created PagingParams paginated-ok]]
+             :refer [created PagingParams paging-param-keys paginated-ok
+                     BaseEntityFilterParams SourcableEntityFilterParams
+                     IndicatorSearchParams
+                     indicator-sort-fields sighting-sort-fields]]
             [ctia.store :refer :all]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
@@ -21,26 +24,27 @@
                                        StoredSighting
                                        StoredTTP]]))
 
+
 (s/defschema IndicatorsByTitleQueryParams
   (st/merge
    PagingParams
-   {(s/optional-key :sort_by) (s/enum :id :title)}))
+   {(s/optional-key :sort_by) indicator-sort-fields}))
 
 (s/defschema IndicatorsListQueryParams
   (st/merge
    PagingParams
-   {(s/optional-key :sort_by) (s/enum :id :title)}))
+   {(s/optional-key :sort_by) indicator-sort-fields}))
 
 (s/defschema IndicatorsByExternalIdQueryParams
   (st/merge
    PagingParams
    {:external_id s/Str
-    (s/optional-key :sort_by) (s/enum :id :title)}))
+    (s/optional-key :sort_by) indicator-sort-fields}))
 
 (s/defschema SightingsByIndicatorQueryParams
   (st/merge
    PagingParams
-   {(s/optional-key :sort_by) (s/enum :id :timestamp :description :source :confidence)}))
+   {(s/optional-key :sort_by) sighting-sort-fields}))
 
 (defroutes indicator-routes
   (context "/indicator" []
@@ -77,7 +81,24 @@
                             :entity-id id
                             :identity identity
                             :entity indicator))))
+    ;; MORE TESTS, INCLUDING FILTER MAP TEST
+    ;; ADD TO OTHER ENTITIES
+    (GET "/search" []
+         :return (s/maybe [StoredIndicator])
+         :summary "Search for an indicator using a Lucene/ES query string"
+         :query [params IndicatorSearchParams]
+         :capabilities #{:read-indicator :search-indicator}
+         :header-params [api_key :- (s/maybe s/Str)]
+         (paginated-ok
+          (page-with-long-id
+           (query-string-search-store :indicator
+                       query-string-search
+                       (:query params)
+                       (dissoc params :query :sort_by :sort_order :offset :limit)
+                       (select-keys params [:sort_by :sort_order :offset :limit])))))
 
+
+    
     (GET "/external_id" []
       :return [(s/maybe StoredIndicator)]
       :query [q IndicatorsByExternalIdQueryParams]
@@ -88,7 +109,7 @@
        (page-with-long-id
         (read-store :indicator list-indicators
                     {:external_ids (:external_id q)} q))))
-
+    
     (GET "/:id" []
       :return (s/maybe StoredIndicator)
       :summary "Gets an Indicator by ID"

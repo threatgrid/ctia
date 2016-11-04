@@ -6,8 +6,9 @@
             [ctia.properties :refer [get-http-show]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
+            [ctia.auth :as auth]
             [ctia.test-helpers
-             [auth :refer [all-capabilities]]
+             [search :refer [test-query-string-search]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key assert-post test-get-list]]
@@ -21,7 +22,7 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-indicator-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (testing "POST /ctia/indicator"
@@ -86,6 +87,8 @@
           (is (= (:port        indicator-id)      (:port        show-props)))
           (is (= (:path-prefix indicator-id) (seq (:path-prefix show-props))))))
 
+      (test-query-string-search :indicator "description" :description)
+      
       (testing "GET /ctia/indicator/external_id"
         (let [response (get "ctia/indicator/external_id"
                             :headers {"api_key" "45c1f5e3f05d0"}
@@ -246,7 +249,7 @@
           (is (= 404 (:status response))))))))
 
 (deftest-for-each-store test-indicator-list-by-coa-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
   (testing "POST /ctia/indicator"
     (let [new-coa-1 {:title "coa-1"
@@ -302,7 +305,7 @@
                      [indicator-1 indicator-3]))))
 
 (deftest-for-each-store test-indicator-list-by-campaign-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
   (testing "POST /ctia/indicator"
     (let [new-campaign-1 {:title "campaign-1"
@@ -362,7 +365,7 @@
                      [indicator-1 indicator-3]))))
 
 (deftest-for-each-store test-indicator-list-by-judgement-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
   (testing "POST /ctia/indicator"
     (let [new-judgement-1 {:observable {:value "1.2.3.4" :type "ip"}
@@ -425,7 +428,7 @@
                      [indicator-1 indicator-3]))))
 
 (deftest-for-each-store test-indicator-list-by-ttp-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
   (testing "POST /ctia/indicator"
     (let [new-ttp-1 {:title "ttp-1"
@@ -485,7 +488,7 @@
                      [indicator-1 indicator-3]))))
 
 (deftest-for-each-store test-indicator-list-by-indicator-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")
   (testing "POST /ctia/indicator"
     (let [new-r-indicator-1 {:title "related-indicator-1"

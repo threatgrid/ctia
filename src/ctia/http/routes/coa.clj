@@ -4,7 +4,7 @@
             [ctia.domain.entities.coa :refer [with-long-id page-with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
+            [ctia.http.routes.common :refer [created paginated-ok PagingParams COASearchParams]]
             [ctia.schemas.core :refer [NewCOA StoredCOA]]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
@@ -64,6 +64,20 @@
                     {:external_ids (:external_id q)}
                     q))))
 
+    (GET "/search" []
+         :return (s/maybe [StoredCOA])
+         :summary "Search for a Course of Action using a Lucene/ES query string"
+         :query [params COASearchParams]
+         :capabilities #{:read-coa :search-coa}
+         :header-params [api_key :- (s/maybe s/Str)]
+         (paginated-ok
+          (page-with-long-id
+           (query-string-search-store :coa
+                                      query-string-search
+                                      (:query params)
+                                      (dissoc params :query :sort_by :sort_order :offset :limit)
+                                      (select-keys params [:sort_by :sort_order :offset :limit])))))
+    
     (GET "/:id" []
       :return (s/maybe StoredCOA)
       :summary "Gets a COA by ID"

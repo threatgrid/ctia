@@ -7,3 +7,4 @@
 (def handle-update (crud/handle-update :coa StoredCOA))
 (def handle-delete (crud/handle-delete :coa StoredCOA))
 (def handle-list (crud/handle-find :coa StoredCOA))
+(def handle-query-string-search (crud/handle-query-string-search :coa StoredCOA))

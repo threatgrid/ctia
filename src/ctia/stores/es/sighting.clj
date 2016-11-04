@@ -16,6 +16,7 @@
 (def read-fn (crud/handle-read :sighting ESStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find :sighting ESStoredSighting))
+(def handle-query-string-search (crud/handle-query-string-search :sighting ESStoredSighting))
 
 (s/defn observable->observable-hash :- s/Str
   "transform an observable to a hash"
@@ -71,6 +72,12 @@
   [state filter-map params]
   (es-paginated-list->paginated-list
    (list-fn state filter-map params)))
+
+
+(s/defn handle-query-string-search-sightings :- StoredSightingList
+  [state query filter-map params]
+  (es-paginated-list->paginated-list
+   (handle-query-string-search state query filter-map params)))
 
 (s/defn handle-list-by-observables :- StoredSightingList
   [state observables :- [Observable] params]

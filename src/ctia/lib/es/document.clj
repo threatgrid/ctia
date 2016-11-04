@@ -1,5 +1,6 @@
 (ns ctia.lib.es.document
   (:require
+   [clojure.tools.logging :as log]
    [ctia.lib.pagination :as pagination]
    [ctia.lib.es.query :refer [filter-map->terms-query]]
    [clojurewerkz.elastisch.native.bulk :as native-bulk]
@@ -129,16 +130,17 @@
    (when offset
      {:from offset})))
 
+
+(defn generate-es-params [query filter-map params]
+  (let [query-map (filter-map->terms-query filter-map query)]
+    (merge (params->pagination params)
+           {:query query-map}
+           (select-keys params [:sort]))))
+
 (defn search-docs
-  "search for documents on es"
-  [conn index-name mapping filter-map params]
-
-  (let [filters (filter-map->terms-query filter-map)
-        es-params (merge (params->pagination params)
-                         (when filter-map
-                           {:query (filter-map->terms-query filter-map)})
-                         (select-keys params [:query :sort]))
-
+  "Search for documents on es using a query string search.  Also applies a filter map, converting the values in the filter-map into must match terms."
+  [conn index-name mapping query filter-map params]
+  (let [ es-params (generate-es-params query filter-map params)
         res (->> ((search-doc-fn conn)
                   conn
                   index-name
@@ -148,7 +150,9 @@
         results (->> res
                      ((hits-from-fn conn))
                      (map :_source))]
-
+    
+    (log/debug "search-docs: " es-params )
+    
     (pagination/response (or results [])
                          (:from es-params)
                          (:size es-params)

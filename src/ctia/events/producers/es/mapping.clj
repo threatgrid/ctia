@@ -17,7 +17,14 @@
     :properties
     {:owner string
      :timestamp ts
-     :entity {:type "object"}
+     :entity {:type "object"
+              :properties
+              {:id string
+               :external_ids string
+               :type string
+               :source string
+               :revision {:type "long"}
+               :owner string}}
      :id string
      :http-params {:type "object"}
      :type string

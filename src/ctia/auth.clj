@@ -17,16 +17,19 @@
     :create-actor
     :read-actor
     :delete-actor
+    :search-actor
 
     ;; Campaign
     :create-campaign
     :read-campaign
     :delete-campaign
+    :search-campaign
 
     ;; COA
     :create-coa
     :read-coa
     :delete-coa
+    :search-coa
 
     ;; Data-Table
     :create-data-table
@@ -37,6 +40,7 @@
     :create-exploit-target
     :read-exploit-target
     :delete-exploit-target
+    :search-exploit-target
 
     ;; Feedback
     :create-feedback
@@ -47,34 +51,40 @@
     :create-incident
     :read-incident
     :delete-incident
+    :search-incident
 
     ;; Indicator
     :read-indicator
     :list-indicators
     :create-indicator
+    :search-indicator
 
     ;; Judgement
     :create-judgement
     :read-judgement
     :list-judgements
     :delete-judgement
+    :search-judgement
 
     ;; Relationship
     :create-relationship
     :read-relationship
     :list-relationships
     :delete-relationship
+    :search-relationship
 
     ;; Sighting
     :create-sighting
     :read-sighting
     :list-sightings
     :delete-sighting
+    :search-sighting
 
     ;; TTP
     :create-ttp
     :read-ttp
     :delete-ttp
+    :search-ttp
 
     ;; Verdict
     :read-verdict

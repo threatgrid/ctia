@@ -111,6 +111,8 @@
                  :owner "foouser"}]
                (map #(dissoc % :created :modified) incidents)))))
 
+      ;;(test-query-string-search :incident "description" :description)
+      
       (testing "GET /ctia/incident/:id"
         (let [response (get (str "ctia/incident/" (:short-id incident-id))
                             :headers {"api_key" "45c1f5e3f05d0"})

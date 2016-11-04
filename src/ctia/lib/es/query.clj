@@ -36,13 +36,18 @@
 
 (defn filter-map->terms-query
   "transforms a filter map to en ES terms query"
-  [filter-map]
-  (let [terms (map (fn [[k v]]
-                     (let [t-key (if (sequential? k) k [k])]
-                       (if (relationship? v)
-                         (terms-from-relationship t-key v)
-                         [t-key v])))
-                   filter-map)]
-    {:filtered
-     {:query {:match_all {}}
-      :filter (q/bool {:must (nested-terms terms)})}}))
+  ([filter-map]
+   (filter-map->terms-query filter-map {:match_all {}}))
+  ([filter-map query]
+   (let [q (or query {:match_all {}})]
+     (if filter-map
+       (let [terms (map (fn [[k v]]
+                          (let [t-key (if (sequential? k) k [k])]
+                            (if (relationship? v)
+                              (terms-from-relationship t-key v)
+                              [t-key v])))
+                        filter-map)]
+         {:filtered
+          {:query q
+           :filter (q/bool {:must (nested-terms terms)})}})
+       q))))
