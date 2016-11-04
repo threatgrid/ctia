@@ -68,7 +68,9 @@
               port 6379}}
         (get-in @properties [:ctia :hook :redismq])]
     (->RedisMQPublisher (rmq/make-queue queue-name
-                                        (lr/server-connection host port timeout-ms)
+                                        {:host host
+                                         :port port
+                                         :timeout-ms timeout-ms}
                                         {:max-depth max-depth}))))
 
 (defrecord ChannelEventPublisher []
