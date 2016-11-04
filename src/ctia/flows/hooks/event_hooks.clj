@@ -11,7 +11,8 @@
    [schema.core :as s]
    [ctia.schemas.core :refer [Verdict
                               StoredVerdict
-                              StoredJudgement]]))
+                              StoredJudgement]]
+   [redismq.core :as rmq]))
 
 (defrecord ESEventProducer [conn]
   Hook
@@ -48,6 +49,27 @@
         (get-in @properties [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection host port timeout-ms)
                            channel-name)))
+
+(defrecord RedisMQPublisher [queue]
+  Hook
+  (init [self]
+    :nothing)
+  (destroy [_]
+    :nothing)
+  (handle [self event _]
+    (rmq/enqueue (get self :queue) event)
+    event))
+
+(defn redismq-publisher []
+  (let [{:keys [queue-name host port timeout-ms max-depth enabled]
+         :as config
+         :or {queue-name "ctim-event-queue"
+              host "localhost"
+              port 6379}}
+        (get-in @properties [:ctia :hook :redismq])]
+    (->RedisMQPublisher (rmq/make-queue queue-name
+                                        (lr/server-connection host port timeout-ms)
+                                        {:max-depth max-depth}))))
 
 (defrecord ChannelEventPublisher []
   Hook
@@ -103,10 +125,12 @@
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
   (let [{{redis-enabled? :enabled} :redis
+         {redismq-enabled? :enabled} :redismq
          {es-enabled? :enabled} :es}
         (get-in @properties [:ctia :hook])]
     (cond-> hooks-m
       redis-enabled? (update :event #(conj % (redis-event-publisher)))
+      redismq-enabled? (update :event #(conj % (redismq-publisher)))
       es-enabled?    (update :event #(conj % (es-event-producer)))
       :always        (update :event #(conj % (->ChannelEventPublisher)))
       :always        (update :event #(conj % (->VerdictGenerator))))))
