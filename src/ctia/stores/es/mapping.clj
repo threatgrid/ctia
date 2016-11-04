@@ -18,8 +18,8 @@
 (def all_text {:type "string"
                :include_in_all true})
 
-(def token {:type "string" :index "not_analyzed"})
-(def all_token {:type "string" :index "not_analyzed"
+(def token {:type "string" :analyzer "lowercase_keyword"})
+(def all_token {:type "string" :analyzer "lowercase_keyword"
                 :include_in_all true})
 
 (def base-entity-mapping
@@ -673,6 +673,14 @@
      {:relationship_type string
       :source_ref all_token
       :target_ref all_token})}})
+
+(def store-settings
+  {:analysis
+   {:analyzer
+    {:lowercase_keyword
+     {:filter ["token_len" "lowercase"]
+      :tokenizer "keyword"
+      :type "customer"}}}})
 
 (def store-mappings
   (merge {}
