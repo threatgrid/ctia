@@ -1,12 +1,10 @@
 #!/bin/bash
 
-
-ip=127.0.0.1
 command -v docker-machine >/dev/null 2>&1 && \
     ip=$(docker-machine ip)
 
 if [ -z "${ip}" ]; then
-    ip="localhost"
+    ip="127.0.0.1"
 fi
 
 echo "Detected IP for docker machine: $ip"
