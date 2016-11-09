@@ -43,7 +43,7 @@
   {:index indexname
    :props props
    :config {:settings store-settings
-                  :mapping  store-mappings}
+            :mappings store-mappings}
    :conn (connect props)})
 
 (s/defn init! :- ESConnState

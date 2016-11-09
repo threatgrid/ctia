@@ -1,6 +1,7 @@
 (ns ctia.lib.es.index
   (:require [clojure.core.memoize :as memo]
             [schema.core :as s]
+            [clojure.tools.logging :as log]
             [clj-time.core :as t]
             [clojurewerkz.elastisch.native :as n]
             [clojurewerkz.elastisch.rest :as h]

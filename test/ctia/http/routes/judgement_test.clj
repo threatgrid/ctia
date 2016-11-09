@@ -40,6 +40,7 @@
                        :priority 100
                        :severity 100
                        :confidence "Low"
+                       :reason "This is a bad IP address that talked to some evil servers"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
                        :indicators [{:confidence "High"
                                      :source "source"
@@ -64,6 +65,7 @@
             :source "test"
             :tlp "green"
             :schema_version schema-version
+            :reason "This is a bad IP address that talked to some evil servers"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2525-01-01T00:00:00.000-00:00"}
             :indicators [{:confidence "High"
@@ -80,13 +82,45 @@
       (testing "GET /ctia/judgement/search"
         ;; only when ES store
         (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
-          (let [term "observable.value:1\\.2\\.3\\.4"
+          (let [term "observable.value:\"1.2.3.4\""
                 response (get (str "ctia/judgement/search")
                               :headers {"api_key" "45c1f5e3f05d0"}
                               :query-params {"query" term})]
             (is (= 200 (:status response)))
             (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
-                "quoted term works"))
+                "IP quoted term works"))
+
+          (let [term "1.2.3.4"
+                response (get (str "ctia/judgement/search")
+                              :headers {"api_key" "45c1f5e3f05d0"}
+                              :query-params {"query" term})]
+            (is (= 200 (:status response)))
+            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+                "IP unquoted, all term works"))
+
+          (let [term "Evil Servers"
+                response (get (str "ctia/judgement/search")
+                              :headers {"api_key" "45c1f5e3f05d0"}
+                              :query-params {"query" term})]
+            (is (= 200 (:status response)))
+            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+                "Full text search, mixed case, _all term works"))
+
+          (let [term "disposition_name:Malicious"
+                response (get (str "ctia/judgement/search")
+                              :headers {"api_key" "45c1f5e3f05d0"}
+                              :query-params {"query" term})]
+            (is (= 200 (:status response)))
+            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+                "uppercase term works"))
+
+          (let [term "disposition_name:malicious"
+                response (get (str "ctia/judgement/search")
+                              :headers {"api_key" "45c1f5e3f05d0"}
+                              :query-params {"query" term})]
+            (is (= 200 (:status response)))
+            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+                "lowercase quoted term works"))
 
           (let [term "disposition_name:Malicious"
                 response (get (str "ctia/judgement/search")
@@ -133,6 +167,7 @@
                 :source "test"
                 :tlp "green"
                 :schema_version schema-version
+                :reason "This is a bad IP address that talked to some evil servers"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"
@@ -163,6 +198,7 @@
                  :source "test"
                  :tlp "green"
                  :schema_version schema-version
+                 :reason "This is a bad IP address that talked to some evil servers"
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                  :indicators [{:confidence "High"
@@ -194,6 +230,7 @@
                 :source "test"
                 :tlp "green"
                 :schema_version schema-version
+                :reason "This is a bad IP address that talked to some evil servers"                 
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
                 :indicators [{:confidence "High"

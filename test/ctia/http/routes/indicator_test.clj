@@ -155,40 +155,6 @@
                        :created
                        :modified)))))
 
-      (testing "GET /ctia/indicator/title/:title"
-        (let [{status :status
-               indicators :parsed-body
-               :as response}
-              (get "ctia/indicator/title/indicator-title"
-                   :headers {"api_key" "45c1f5e3f05d0"})]
-
-          (is (= 200 status))
-          (is (deep=
-               [{:id (id/long-id indicator-id)
-                 :type "indicator"
-                 :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
-                                "http://ex.tld/ctia/indicator/indicator-345"]
-                 :title "indicator-title"
-                 :description "description"
-                 :producer "producer"
-                 :tlp "green"
-                 :schema_version schema-version
-                 :indicator_type ["C2" "IP Watchlist"]
-                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
-                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                 :related_campaigns [{:confidence "High"
-                                      :source "source"
-                                      :relationship "relationship"
-                                      :campaign_id "campaign-123"}]
-                 :composite_indicator_expression {:operator "and"
-                                                  :indicator_ids ["test1" "test2"]}
-                 :related_COAs [{:confidence "High"
-                                 :source "source"
-                                 :relationship "relationship"
-                                 :COA_id "coa-123"}]
-                 :owner "foouser"}]
-               (map #(dissoc % :created :modified) indicators)))))
-
       (testing "PUT /ctia/indicator/:id"
         (let [{status :status
                updated-indicator :parsed-body}
