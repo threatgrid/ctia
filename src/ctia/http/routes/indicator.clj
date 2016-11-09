@@ -129,22 +129,7 @@
                       params)))
         (not-found))))
 
-  (GET "/judgement/:id/indicators" []
-    :tags ["Indicator"]
-    :return (s/maybe [StoredIndicator])
-    :summary "Gets all indicators referencing some judgement"
-    :query [params IndicatorsListQueryParams]
-    :path-params [id :- s/Str]
-    :header-params [api_key :- (s/maybe s/Str)]
-    :capabilities :list-indicators
-    (paginated-ok
-     (page-with-long-id
-      (read-store :indicator
-                  list-indicators
-                  {:judgements #{{:judgement_id (->long-id :judgement id)}}}
-                  params))))
-
-  (GET "/campaign/:id/indicators" []
+    (GET "/campaign/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])
     :summary "Gets all indicators related to a campaign"

@@ -55,6 +55,7 @@
                     :entity-type :judgement
                     :identity identity
                     :entities [judgement]))))
+
            (POST "/:judgement-id/indicator" []
                  :return (s/maybe RelatedIndicator)
                  :path-params [judgement-id :- s/Str]

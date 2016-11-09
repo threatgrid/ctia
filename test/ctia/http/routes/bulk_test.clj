@@ -107,9 +107,7 @@
    :producer "producer"
    :indicator_type ["C2" "IP Watchlist"]
    :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
-                :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-   :judgements [{:judgement_id "judgement-1234"}
-                {:judgement_id "judgement-5678"}]})
+                :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
 
 (defn mk-new-judgement [n]
   {:valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
