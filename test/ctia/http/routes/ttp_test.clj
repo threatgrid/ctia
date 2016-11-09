@@ -7,6 +7,7 @@
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
@@ -94,6 +95,10 @@
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                  :owner "foouser"}]
                (map #(dissoc % :created :modified) ttps)))))
+
+
+      (test-query-string-search :ttp "description" :description)
+      
 
       (testing "GET /ctia/ttp/:id"
         (let [response (get (str "ctia/ttp/" (:short-id ttp-id))

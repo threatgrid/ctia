@@ -6,12 +6,16 @@
   "make nested terms from a ctia filter:
   [[[:observable :type] ip] [[:observable :value] 42.42.42.1]]
   ->
-  [{:terms {observable.type [ip]}} {:terms {observable.value [42.42.42.1]}}]"
+  [{:terms {observable.type [ip]}} {:terms {observable.value [42.42.42.1]}}]
+
+We we force all values to lowercase, since our indexing does the same for all terms.
+"
   (vec (map (fn [[k v]]
               (q/terms (->> k
                             (map name)
                             (str/join "."))
-                       (if (vector? v) v [v])))
+                       (map str/lower-case
+                            (if (coll? v) v [v]))))
             filters)))
 
 (defn- relationship?
@@ -36,13 +40,18 @@
 
 (defn filter-map->terms-query
   "transforms a filter map to en ES terms query"
-  [filter-map]
-  (let [terms (map (fn [[k v]]
-                     (let [t-key (if (sequential? k) k [k])]
-                       (if (relationship? v)
-                         (terms-from-relationship t-key v)
-                         [t-key v])))
-                   filter-map)]
-    {:filtered
-     {:query {:match_all {}}
-      :filter (q/bool {:must (nested-terms terms)})}}))
+  ([filter-map]
+   (filter-map->terms-query filter-map {:match_all {}}))
+  ([filter-map query]
+   (let [q (or query {:match_all {}})]
+     (if filter-map
+       (let [terms (map (fn [[k v]]
+                          (let [t-key (if (sequential? k) k [k])]
+                            (if (relationship? v)
+                              (terms-from-relationship t-key v)
+                              [t-key v])))
+                        filter-map)]
+         {:filtered
+          {:query q
+           :filter (q/bool {:must (nested-terms terms)})}})
+       q))))

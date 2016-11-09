@@ -135,4 +135,3 @@
 (def-property spec-relationship-routes 'relationship)
 (def-property spec-sighting-routes 'sighting)
 (def-property spec-ttp-routes 'ttp)
-(def-property spec-bundle-routes 'bundle)

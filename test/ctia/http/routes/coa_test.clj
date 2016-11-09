@@ -7,6 +7,7 @@
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
@@ -115,6 +116,9 @@
                  :owner "foouser"}]
                (map #(dissoc % :created :modified) coas)))))
 
+      ;; CLB: FIXME
+      ;;(test-query-string-search :coa "description:description" :description)
+      
       (testing "GET /ctia/coa/:id"
         (let [response (get (str "ctia/coa/" (:short-id coa-id))
                             :headers {"api_key" "45c1f5e3f05d0"})

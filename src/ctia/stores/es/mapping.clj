@@ -7,20 +7,71 @@
 ;; not that fields with the same name, nee to have the same mapping,
 ;; even in different entities.  That means
 
-(def ts {:type "date" :format "date_time"})
+(def ts
+  "A mapping for our tiestamps, which should all be ISO8601 format"
+  {:type "date" :format "date_time"})
 
-(def string {:type "string" :index "not_analyzed"})
-(def all_string {:type "string"
-                 :index "not_analyzed"
-                 :include_in_all true})
+(def text
+  "A mapping for free text, or markdown, fields.  They will be
+  analyzed and treated like prose."
+  {:type "string"
+   :analyzer "text_analyzer"
+   :search_quote_analyzer "text_analyzer"
+   :search_analyzer "search_analyzer"})
 
-(def text {:type "string"})
-(def all_text {:type "string" :copy_to "_all"})
+(def all_text
+  "The same as the `text` maping, but will be included in the _all field"
+  {:type "string"
+   :analyzer "text_analyzer"
+   :search_analyzer "search_analyzer"
+   :search_quote_analyzer "text_analyzer"
+   :include_in_all true})
+
+(def token
+  "A mapping for fields whose value should be treated like a symbol.
+  They will not be analyzed, and they will be lowercased."
+  {:type "string"
+   :analyzer "token_analyzer"
+   :search_analyzer "token_analyzer"})
+
+(def all_token
+  "The same as the `token` mapping, but will be included in the _all field"
+  {:type "string"
+   :analyzer "token_analyzer"
+   :search_analyzer "token_analyzer"
+   :include_in_all true})
+
+(def base-entity-mapping
+  {:id all_token
+   :type token
+   :schema_version token
+   :uri {:enabled "false"}
+   :revision {:type "long"}
+   :external_ids all_token
+   :timestamp ts
+   :language token
+   :tlp token
+   })
+
+(def describable-entity-mapping
+  {:title (merge all_text
+                 {:fields {:whole all_token}})
+   :short_description all_text
+   :description all_text})
+
+(def sourcable-entity-mapping
+  {:source token
+   :source_uri token})
+
+(def stored-entity-mapping
+  {:owner token
+   :created ts
+   :modified ts})
 
 (def related
-  {:confidence string
-   :source string
-   :relationship string})
+  {:confidence token
+   :source token
+   :relationship token})
 
 (def valid-time
   {:properties
@@ -29,30 +80,25 @@
 
 (def attack-pattern
   {:properties
-   {:title string
-    :short_description string
+   {:title (merge all_text
+                 {:fields {:whole all_token}})
+    :short_description all_text
     :description all_text
-    :capec_id string}})
+    :capec_id token}})
 
 (def malware-instance
   {:properties
-   {:title string
+   {:title (merge all_text
+                 {:fields {:whole all_token}})
     :description all_text
-    :short_description string
-    :type string}})
+    :short_description all_text
+    :type token}})
 
 (def observable
   {:type "object"
    :properties
-   {:type string
-    :value all_string}})
-
-(def nested-observable
-  {:type "nested"
-   :include_in_all true
-   :properties
-   {:type string
-    :value all_string}})
+   {:type token
+    :value all_token}})
 
 (def behavior
   {:properties
@@ -62,28 +108,28 @@
 (def tool
   {:properties
    {:description all_text
-    :type string
-    :references string
-    :vendor string
-    :version string
-    :schema_version string
-    :service_pack string}})
+    :type token
+    :references token
+    :vendor token
+    :version token
+    :service_pack token}})
 
 (def infrastructure
   {:properties
-   {:title string
+   {:title (merge all_text
+                 {:fields {:whole all_token}})
     :description all_text
-    :short_description string
-    :type string}})
+    :short_description all_text
+    :type token}})
 
 (def related-identities
   {:properties (assoc related
-                      :identity all_string
-                      :information_source string)})
+                      :identity all_token
+                      :information_source token)})
 
 (def related-actors
   {:properties (assoc related
-                      :actor_id all_string)})
+                      :actor_id all_token)})
 
 (def tg-identity
   {:properties
@@ -93,8 +139,8 @@
 (def victim-targeting
   {:properties
    {:identity tg-identity
-    :targeted_systems string
-    :targeted_information string
+    :targeted_systems token
+    :targeted_information token
     :targeted_observables observable}})
 
 (def resource
@@ -111,48 +157,37 @@
 (def related-indicators
   {:properties
    (assoc related
-          :indicator_id all_string)})
+          :indicator_id all_token)})
 
 (def related-judgements
   {:properties
    (assoc related
-          :judgement_id all_string)})
+          :judgement_id all_token)})
 
 (def related-coas
   {:properties
    (assoc related
-          :COA_id all_string)})
+          :COA_id all_token)})
 
 (def related-campaigns
   {:properties
    (assoc related
-          :campaign_id all_string)})
+          :campaign_id all_token)})
 
 (def related-exploit-targets
   {:properties (assoc related
-                      :exploit_target_id all_string)})
+                      :exploit_target_id all_token)})
 (def related-ttps
   {:properties (assoc related
-                      :ttp_id all_string)})
+                      :ttp_id all_token)})
 
 (def related-incidents
   {:properties (assoc related
-                      :incident_id all_string)})
+                      :incident_id all_token)})
 
 (def related-sightings
   {:properties (assoc related
-                      :sighting_id all_string)})
-
-(def specification
-  {:properties
-   {:type string
-    :judgements string
-    :required_judgements related-judgements
-    :query string
-    :variables string
-    :snort_sig string
-    :SIOC string
-    :open_IOC string}})
+                      :sighting_id all_token)})
 
 (def incident-time
   {:properties
@@ -169,154 +204,146 @@
 
 (def non-public-data-compromised
   {:properties
-   {:security_compromise string
+   {:security_compromise token
     :data_encrypted {:type "boolean"}}})
 
 (def property-affected
   {:properties
-   {:property string
+   {:property token
     :description_of_effect text
-    :type_of_availability_loss string
-    :duration_of_availability_loss string
+    :type_of_availability_loss token
+    :duration_of_availability_loss token
     :non_public_data_compromised non-public-data-compromised}})
 
 (def affected-asset
   {:properties
-   {:type string
+   {:type token
     :description all_text
-    :ownership_class string
-    :management_class string
-    :location_class string
+    :ownership_class token
+    :management_class token
+    :location_class token
     :property_affected property-affected
     :identifying_observables observable}})
 
 (def direct-impact-summary
   {:properties
-   {:asset_losses string
-    :business_mission_distruption string
-    :response_and_recovery_costs string}})
+   {:asset_losses token
+    :business_mission_distruption token
+    :response_and_recovery_costs token}})
 
 (def indirect-impact-summary
   {:properties
-   {:loss_of_competitive_advantage string
-    :brand_and_market_damage string
-    :increased_operating_costs string
-    :local_and_regulatory_costs string}})
+   {:loss_of_competitive_advantage token
+    :brand_and_market_damage token
+    :increased_operating_costs token
+    :local_and_regulatory_costs token}})
 
 (def loss-estimation
   {:properties
    {:amount {:type "long"}
-    :iso_currency_code string}})
+    :iso_currency_code token}})
 
 (def total-loss-estimation
   {:properties
    {:initial_reported_total_loss_estimation loss-estimation
     :actual_total_loss_estimation loss-estimation
-    :impact_qualification string
-    :effects string}})
+    :impact_qualification token
+    :effects token}})
 
 (def impact-assessment
   {:properties
    {:direct_impact_summary direct-impact-summary
     :indirect_impact_summary indirect-impact-summary
     :total_loss_estimation total-loss-estimation
-    :impact_qualification string
-    :effects string}})
+    :impact_qualification token
+    :effects token}})
 
 (def contributor
   {:properties
-   {:role string
-    :name string
-    :email string
-    :phone string
-    :organization string
+   {:role token
+    :name token
+    :email token
+    :phone token
+    :organization token
     :date ts
-    :contribution_location string}})
+    :contribution_location token}})
 
 (def coa-requested
   {:properties
    {:time ts
     :contributors contributor
-    :COA all_string}})
+    :COA all_token}})
 
 (def history
   {:properties
    {:action_entry coa-requested
-    :journal_entry string}})
+    :journal_entry token}})
 
 (def vulnerability
   {:properties
-   {:title all_string
+   {:title (merge all_text
+                 {:fields {:whole all_token}})
     :description all_text
     :is_known {:type "boolean"}
     :is_public_acknowledged {:type "boolean"}
     :short_description all_text
-    :cve_id string
-    :osvdb_id string
-    :source string
+    :cve_id token
+    :osvdb_id token
+    :source token
     :discovered_datetime ts
     :published_datetime ts
-    :affected_software string
-    :references string}})
+    :affected_software token
+    :references token}})
 
 (def weakness
   {:properties
    {:description all_text
-    :cwe_id string}})
+    :cwe_id token}})
 
 (def configuration
   {:properties
    {:description all_text
     :short_description all_text
-    :cce_id string}})
-
-(def sighting
-  {:properties
-   {:timestamp ts
-    :source string
-    :reference string
-    :confidence string
-    :description all_text
-    :related_judgements related-judgements}})
+    :cce_id token}})
 
 (def action-type
   {:properties
-   {:type string}})
+   {:type token}})
 
 (def target-type
   {:properties
-   {:type string
-    :specifiers string}})
+   {:type token
+    :specifiers token}})
 
 (def actuator-type
   {:properties
-   {:type string
-    :specifiers string}})
+   {:type token
+    :specifiers token}})
 
 (def additional-properties
   {:properties
-   {:context string}})
+   {:context token}})
 
 (def modifier-type
   {:properties
    {:delay ts
     :duration ts
-    :frequency string
-    :id string
+    :frequency token
+    :id token
     :time valid-time
-    :response string
-    :source string
-    :destination string
-    :method string
-    :search string
-    :location string
-    :option string
+    :response token
+    :source token
+    :destination token
+    :method token
+    :search token
+    :location token
+    :option token
     :additional_properties additional-properties}})
 
 (def open-c2-coa
   {:properties
-   {:type string
-    :id string
+   {:type token
+    :id token
     :action action-type
     :target target-type
     :actuator actuator-type
@@ -327,44 +354,35 @@
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id string
-     :external_ids string
-     :type string
-     :tlp string
-     :uri string
-     :source_uri string
-     :revision {:type "long"}
-     :timestamp ts
-     :schema_version string
-     :language string
-     :observable observable
-     :disposition {:type "long"}
-     :disposition_name string
-     :source string
-     :priority {:type "long"}
-     :confidence string
-     :severity {:type "long"}
-     :valid_time valid-time
-     :reason all_text
-     :reason_uri string
-     :indicators related-indicators
-     :owner string
-     :created ts
-     :modified ts}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:observable observable
+      :disposition {:type "long"}
+      :disposition_name token
+      :priority {:type "long"}
+      :confidence token
+      :severity {:type "long"}
+      :valid_time valid-time
+      :reason all_text
+      :reason_uri token
+      :indicators related-indicators})}})
 
 (def verdict-mapping
   {"verdict"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id string
-     :type string
-     :schema_version string
-     :judgement_id string
+    {:id all_token
+     :type token
+     :schema_version token
+     :judgement_id token
      :observable observable
      :disposition {:type "long"}
-     :disposition_name string
-     :owner string
+     :disposition_name token
+     :owner token
      :created ts}}})
 
 (def feedback-mapping
@@ -372,300 +390,206 @@
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id string
-     :external_ids string
-     :uri string
-     :source_uri string
-     :language string
-     :timestamp ts
-     :type string
-     :tlp string
-     :revision {:type "long"}
-     :schema_version string
-     :entity_id string
-     :source string
-     :feedback {:type "integer"}
-     :reason all_text
-     :owner string
-     :created ts
-     :modified ts}}})
+    (merge
+     base-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:entity_id all_token
+      :feedback {:type "integer"}
+      :reason all_text})}})
 
 (def indicator-mapping
   {"indicator"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id string
-     :external_ids string
-     :type string
-     :timestamp ts
-     :tlp string
-     :source_uri string
-     :schema_version string
-     :revision {:type "long"}
-     :short_description all_text
-     :valid_time valid-time
-     :uri string
-     :title all_string
-     :description all_text
-     :alternate_ids all_string
-     :negate {:type "boolean"}
-     :indicator_type string
-     :language string
-     :tags string
-     :observable observable
-     :judgements related-judgements
-     :composite_indicator_expression {:type "nested"
-                                      :properties
-                                      {:operator string
-                                       :indicator_ids string}}
-     :indicated_TTP related-ttps
-     :likely_impact string
-     :suggested_COAs related-coas
-     :confidence string
-     :sightings related-sightings
-     :related_indicators related-indicators
-     :related_campaigns related-campaigns
-     :related_COAs related-coas
-     :kill_chain_phases string
-     :test_mechanisms string
-     :producer string
-     :specification specification
-     :owner string
-     :created ts
-     :modified ts
-     :source string}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:valid_time valid-time
+      :producer token
+      :negate {:type "boolean"}
+      :indicator_type token
+      :alternate_ids token
+      :tags all_token
+      :judgements related-judgements
+      :composite_indicator_expression {:type "object"
+                                       :properties
+                                       {:operator token
+                                        :indicator_ids token}}
+      :indicated_TTP related-ttps
+      :likely_impact token
+      :suggested_COAs related-coas
+      :confidence token
+      :sightings related-sightings
+      :related_indicators related-indicators
+      :related_campaigns related-campaigns
+      :related_COAs related-coas
+      :kill_chain_phases token
+      :test_mechanisms token
+      :specification {:enabled false}
+      })}})
 
 (def ttp-mapping
   {"ttp"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :external_ids string
-     :title all_string
-     :uri string
-     :source_uri string
-     :language string
-     :revision {:type "long"}
-     :timestamp ts
-     :description all_text
-     :short_description all_text
-     :type string
-     :tlp string
-     :schema_version string
-     :ttp string
-     :valid_time valid-time
-     :intended_effect string
-     :behavior behavior
-     :resources resource
-     :victim_targeting victim-targeting
-     :exploit_targets related-exploit-targets
-     :related_TTPs related-ttps
-     :source string
-     :kill_chains string
-     :ttp_type string
-     :expires ts
-     :indicators related-indicators
-     :owner string
-     :created ts
-     :modified ts}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:ttp token
+      :valid_time valid-time
+      :intended_effect token
+      :behavior behavior
+      :resources resource
+      :victim_targeting victim-targeting
+      :exploit_targets related-exploit-targets
+      :related_TTPs related-ttps
+      :kill_chains token
+      :ttp_type token
+      :expires ts
+      :indicators related-indicators})}})
 
 (def actor-mapping
   {"actor"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :external_ids string
-     :title all_string
-     :tlp string
-     :schema_version string
-     :uri string
-     :source_uri string
-     :revision {:type "long"}
-     :timestamp ts
-     :language string
-     :description all_text
-     :short_description all_text
-     :type string
-     :valid_time valid-time
-     :actor_type string
-     :source string
-     :identity tg-identity
-     :motivation string
-     :sophistication string
-     :intended_effect string
-     :planning_and_operational_support string
-     :observed_TTPs related-ttps
-     :associated_campaigns related-campaigns
-     :associated_actors related-actors
-     :confidence string
-     :owner string
-     :created ts
-     :modified ts}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:valid_time valid-time
+      :actor_type token
+      :identity tg-identity
+      :motivation token
+      :sophistication token
+      :intended_effect token
+      :planning_and_operational_support token
+      :observed_TTPs related-ttps
+      :associated_campaigns related-campaigns
+      :associated_actors related-actors
+      :confidence token})}})
 
 (def campaign-mapping
   {"campaign"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :external_ids string
-     :uri string
-     :source_uri string
-     :language string
-     :timestamp ts
-     :type string
-     :tlp string
-     :revision {:type "long"}
-     :schema_version string
-     :title all_string
-     :description all_text
-     :short_description all_text
-     :valid_time valid-time
-     :names all_string
-     :intended_effect string
-     :status string
-     :related_TTPs related-ttps
-     :related_incidents related-incidents
-     :attribution related-actors
-     :associated_campaigns related-campaigns
-     :confidence string
-     :activity activity
-     :source string
-     :campaign_type string
-     :indicators related-indicators
-     :owner string
-     :created ts
-     :modified ts}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:valid_time valid-time
+      :campaign_type token
+      :names all_token
+      :indicators related-indicators
+      :intended_effect token
+      :status token
+      :related_TTPs related-ttps
+      :related_incidents related-incidents
+      :attribution related-actors
+      :associated_campaigns related-campaigns
+      :confidence token
+      :activity activity})}})
 
 (def coa-mapping
   {"coa"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :external_ids string
-     :uri string
-     :source_uri string
-     :language string
-     :timestamp ts
-     :type string
-     :tlp string
-     :schema_version string
-     :revision {:type "long"}
-     :title all_string
-     :description all_text
-     :short_description all_text
-     :valid_time valid-time
-     :stage string
-     :coa_type string
-     :objective string
-     :impact string
-     :cost string
-     :efficacy string
-     :source string
-     :related_COAs related-coas
-     :owner string
-     :created ts
-     :modified ts
-     :structured_coa_type string
-     :open_c2_coa open-c2-coa}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:valid_time valid-time
+      :stage token
+      :coa_type token
+      :objective text
+      :impact token
+      :cost token
+      :efficacy token
+      :related_COAs related-coas
+      :structured_coa_type token
+      :open_c2_coa open-c2-coa})}})
 
 (def incident-mapping
   {"incident"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :external_ids string
-     :type string
-     :tlp string
-     :revision {:type "long"}
-     :uri string
-     :source_uri string
-     :timestamp ts
-     :schema_version string
-     :language string
-     :title all_string
-     :description all_text
-     :short_description all_text
-     :valid_time valid-time
-     :confidence string
-     :status string
-     :incident_time incident-time
-     :categories string
-     :reporter string
-     :responder string
-     :coordinator string
-     :victim string
-     :affected_assets affected-asset
-     :impact_assessment impact-assessment
-     :source string
-     :security_compromise string
-     :discovery_method string
-     :COA_requested coa-requested
-     :COA_taken coa-requested
-     :contact string
-     :history history
-     :related_indicators related-indicators
-     :related_observables observable
-     :leveraged_TTPs related-ttps
-     :attributed_actors related-actors
-     :related_incidents related-incidents
-     :intended_effect string
-     :owner string
-     :created ts
-     :modified ts}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:valid_time valid-time
+      :confidence token
+      :status token
+      :incident_time incident-time
+      :categories token
+      :reporter token
+      :responder token
+      :coordinator token
+      :victim token
+      :affected_assets affected-asset
+      :impact_assessment impact-assessment
+      :security_compromise token
+      :discovery_method token
+      :COA_requested coa-requested
+      :COA_taken coa-requested
+      :contact token
+      :history history
+      :related_indicators related-indicators
+      :related_observables observable
+      :leveraged_TTPs related-ttps
+      :attributed_actors related-actors
+      :related_incidents related-incidents
+      :intended_effect token})}})
 
 (def exploit-target-mapping
   {"exploit-target"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :external_ids string
-     :type string
-     :tlp string
-     :uri string
-     :source_uri string
-     :language string
-     :timestamp ts
-     :revision {:type "long"}
-     :schema_version string
-     :title all_string
-     :description all_text
-     :short_description all_text
-     :valid_time valid-time
-     :vulnerability vulnerability
-     :weakness weakness
-     :configuration configuration
-     :potential_COAs related-coas
-     :source string
-     :related_exploit_targets related-exploit-targets
-     :owner string
-     :created ts
-     :modified ts}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:valid_time valid-time
+      :vulnerability vulnerability
+      :weakness weakness
+      :configuration configuration
+      :potential_COAs related-coas
+      :related_exploit_targets related-exploit-targets})}})
 
 (def identity-mapping
   {"identity"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id string
-     :role string
-     :capabilities string
-     :login string}}})
+    {:id all_token
+     :role token
+     :capabilities token
+     :login token}}})
 
 (def observed-relation
   {:dynamic "strict"
    :properties
-   {:id string
+   {:id token
     :timestamp ts
-    :origin string
-    :origin_uri string
-    :relation string
+    :origin token
+    :origin_uri token
+    :relation token
     :relation_info {:type "object"
                     :include_in_all false
                     :dynamic true}
@@ -677,139 +601,50 @@
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:type string
-     :id string
-     :external_ids string
-     :timestamp ts
-     :title string
-     :uri string
-     :revision {:type "long"}
-     :language string
-     :description all_text
-     :short_description all_text
-     :tlp string
-     :observed_time valid-time
-     :count {:type "long"}
-     :schema_version string
-     :source string
-     :source_uri string
-     :sensor string
-     :reference string
-     :confidence string
-     :observables observable
-     :observables_hash string
-     :indicators related-indicators
-     :incidents related-incidents
-     :relations observed-relation
-     :owner string
-     :created ts
-     :modified ts}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:observed_time valid-time
+      :count {:type "long"}
+      :sensor token
+      :reference token
+      :confidence token
+      :observables observable
+      :observables_hash token
+      :indicators related-indicators
+      :incidents related-incidents
+      :relations observed-relation})}})
 
 (def data-table-mapping
   {"data-table"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :external_ids string
-     :title all_string
-     :tlp string
-     :schema_version string
-     :uri string
-     :source_uri string
-     :revision {:type "long"}
-     :timestamp ts
-     :language string
-     :description all_text
-     :short_description all_text
-     :type string
-     :valid_time valid-time
-     :source string
-     :owner string
-     :created ts
-     :modified ts
-     :row_count {:type "long"}
-     :columns {:type "object" :enabled false}
-     :rows {:type "object" :enabled false}}}})
-
-
-(def bundle-mapping
-  {"bundle"
-   {:dynamic "strict"
-    :include_in_all false
-    :properties
-    {:id all_string
-     :external_ids string
-     :title all_string
-     :tlp string
-     :schema_version string
-     :uri string
-     :source_uri string
-     :revision {:type "long"}
-     :timestamp ts
-     :language string
-     :description all_text
-     :short_description all_text
-     :type string
-     :valid_time valid-time
-     :source string
-     :owner string
-     :created ts
-     :modified ts
-
-     :actors {:type "object" :enabled false}
-     :campaigns {:type "object" :enabled false}
-     :coas {:type "object" :enabled false}
-     :exploit-targets {:type "object" :enabled false}
-     :data-tables {:type "object" :enabled false}
-     :feedbacks {:type "object" :enabled false}
-     :incidents {:type "object" :enabled false}
-     :indicators {:type "object" :enabled false}
-     :judgements {:type "object" :enabled false}
-     :relationships {:type "object" :enabled false}
-     :sightings {:type "object" :enabled false}
-     :ttps {:type "object" :enabled false}
-     :verdicts {:type "object" :enabled false}
-
-     :actor_refs string
-     :campaign_refs string
-     :coa_refs string
-     :data-table_refs string
-     :exploit-target_refs string
-     :feedback_refs string
-     :incident_refs string
-     :indicator_refs string
-     :judgement_refs string
-     :relationship_refs string
-     :sighting_refs string
-     :ttp_refs string
-     :verdict_refs string}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:valid_time valid-time
+      :row_count {:type "long"}
+      :columns {:enabled false}
+      :rows {:enabled false}})}})
 
 (def relationship-mapping
   {"relationship"
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_string
-     :external_ids string
-     :title all_string
-     :tlp string
-     :schema_version string
-     :uri string
-     :source_uri string
-     :revision {:type "long"}
-     :timestamp ts
-     :language string
-     :description all_text
-     :short_description all_text
-     :type string
-     :source string
-     :owner string
-     :created ts
-     :modified ts
-     :relationship_type string
-     :source_ref string
-     :target_ref string}}})
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:relationship_type token
+      :source_ref all_token
+      :target_ref all_token})}})
 
 (def dynamic-templates
   [{:date_as_datetime {:match "*"
@@ -817,22 +652,50 @@
                        :mapping ts}}
    {:string_not_analyzed {:match "*"
                           :match_mapping_type "string"
-                          :mapping string}}])
+                          :mapping token}}])
 
 (def event-mapping
   {"event"
    {:dynamic_templates dynamic-templates
     :properties
-    {:owner string
+    {:owner token
      :timestamp ts
      :entity {:type "object"}
-     :id string
+     :id token
      :http-params {:type "object"}
-     :type string
+     :type token
      :fields {:type "object"}
-     :judgement_id string
+     :judgement_id token
      :verdict {:type "object"}}}})
 
+(def store-settings
+  {:analysis
+   {:filter
+    {:token_len {:max 255
+                 :min 0
+                 :type "length"}
+     :english_stop {:type "stop"
+                    :stopwords "_english_"}}
+    :analyzer
+    {:default_search ;; same as text_analyzer
+     {:type "custom"
+      :tokenizer "standard"
+      :filter ["lowercase" "english_stop"]
+      }
+     :text_analyzer
+     {:type "custom"
+      :tokenizer "standard"
+      :filter ["lowercase"]
+      }
+     :search_analyzer
+     {:type "custom"
+      :tokenizer "standard"
+      :filter ["lowercase" "english_stop"]
+      }
+     :token_analyzer
+     {:filter ["token_len" "lowercase"]
+      :tokenizer "keyword"
+      :type "custom"}}}})
 
 (def store-mappings
   (merge {}
@@ -850,5 +713,4 @@
          exploit-target-mapping
          sighting-mapping
          identity-mapping
-         bundle-mapping
          event-mapping))

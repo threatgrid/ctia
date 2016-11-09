@@ -74,7 +74,8 @@
 
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.nrepl.enabled" s/Bool
-                      "ctia.hook.redis.enabled" s/Bool})
+                      "ctia.hook.redis.enabled" s/Bool
+                      "ctia.hook.redismq.enabled" s/Bool})
 
    (st/optional-keys {"ctia.events.log" s/Bool
                       "ctia.nrepl.port" s/Int
@@ -82,6 +83,12 @@
                       "ctia.hook.redis.port" s/Int
                       "ctia.hook.redis.channel-name" s/Str
                       "ctia.hook.redis.timeout-ms" s/Int
+
+                      "ctia.hook.redismq.queue-name" s/Str
+                      "ctia.hook.redismq.host" s/Str
+                      "ctia.hook.redismq.port" s/Int
+                      "ctia.hook.redismq.timeout-ms" s/Int
+                      "ctia.hook.redismq.max-depth" s/Int
 
                       "ctia.hooks.before-create" s/Str
                       "ctia.hooks.after-create" s/Str

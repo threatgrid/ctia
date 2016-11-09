@@ -6,11 +6,11 @@
             [ctia.stores.es.store :as es-store]
             [ctia.test-helpers.core :as h]))
 
-(defn recreate-state-index [{:keys [conn index mapping]}]
+(defn recreate-state-index [{:keys [conn index config]}]
   (when conn
     (es-index/delete! conn index)
-
-    (es-index/create! conn index mapping)))
+    
+    (es-index/create! conn index config)))
 
 (defn close-client [{:keys [conn]}]
   "if the connection is native, close the client"
@@ -62,8 +62,7 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.verdict" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.ttp" "es"
-                      "ctia.store.bundle" "es"]
+                      "ctia.store.ttp" "es"]
     (test)))
 
 
@@ -89,8 +88,7 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.verdict" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.ttp" "es"
-                      "ctia.store.bundle" "es"]
+                      "ctia.store.ttp" "es"]
     (test)))
 
 

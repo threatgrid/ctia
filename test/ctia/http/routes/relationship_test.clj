@@ -7,6 +7,7 @@
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
@@ -109,6 +110,8 @@
                        :created
                        :modified)))))
 
+      ;;(test-query-string-search :relationship "description" :description)
+      
       (testing "GET /ctia/relationship/external_id"
         (let [response (get "ctia/relationship/external_id"
                             :headers {"api_key" "45c1f5e3f05d0"}

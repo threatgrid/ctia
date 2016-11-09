@@ -71,7 +71,7 @@
 
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.12"]
-                 [cider/cider-nrepl "0.11.0"]
+                 [cider/cider-nrepl "0.14.0"]
 
                  ;; Database
                  [clojurewerkz/elastisch "3.0.0-beta1"]
@@ -98,7 +98,11 @@
 
                  ;; Docs
                  [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+
+
+                 ;; Hooksx
+                 [redismq "0.1.0-SNAPSHOT"]]
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
                com.andrewmcveigh/cljs-time]
 
@@ -149,9 +153,11 @@
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
              :bench {:dependencies [[cheshire ~cheshire-version]
                                     [perforate "0.3.4"]
+                                    [criterium "0.4.4"]
                                     [org.clojure/test.check "0.9.0"]
                                     [com.gfredericks/test.chuck "0.2.6"]
-                                    [prismatic/schema-generators "0.1.0"]]}
+                                    [prismatic/schema-generators "0.1.0"]]
+                     :source-paths ["src","test","benchmarks"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [org.clojure/test.check "0.9.0"]
@@ -169,7 +175,9 @@
   :perforate {:environments [{:name :actor
                               :namespaces [ctia.http.routes.actor-bench]}
                              {:name :campaign
-                              :namespaces [ctia.http.routes.campaign-bench]}]}
+                              :namespaces [ctia.http.routes.campaign-bench]}
+                             {:name :bulk
+                              :namespaces [ctia.http.routes.bulk-bench]}]}
   :plugins [[lein-shell "0.5.0"]
             [perforate "0.3.4"]]
   :aliases {"kibit" ["with-profile" "prepush" "kibit"]

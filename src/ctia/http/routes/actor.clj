@@ -4,7 +4,7 @@
    [ctia.domain.entities :refer [realize-actor]]
    [ctia.domain.entities.actor :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
+   [ctia.http.routes.common :refer [created paginated-ok PagingParams ActorSearchParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewActor StoredActor]]
    [ring.util.http-response :refer [no-content not-found ok]]
@@ -64,6 +64,20 @@
         (read-store :actor list-actors
                     {:external_ids (:external_id q)} q))))
 
+    (GET "/search" []
+         :return (s/maybe [StoredActor])
+         :summary "Search for an Actor using a Lucene/ES query string"
+         :query [params ActorSearchParams]
+         :capabilities #{:read-actor :search-actor}
+         :header-params [api_key :- (s/maybe s/Str)]
+         (paginated-ok
+          (page-with-long-id
+           (query-string-search-store :actor
+                                      query-string-search
+                                      (:query params)
+                                      (dissoc params :query :sort_by :sort_order :offset :limit)
+                                      (select-keys params [:sort_by :sort_order :offset :limit])))))
+    
     (GET "/:id" []
       :return (s/maybe StoredActor)
       :summary "Gets an Actor by ID"

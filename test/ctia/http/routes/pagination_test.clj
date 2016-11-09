@@ -48,10 +48,11 @@
         (pagination-test-no-sort (str route-pref "/indicators")
                                  {"api_key" "45c1f5e3f05d0"}
                                  [])
-        (pagination-test (str "/ctia/indicator/title/"
-                              (-> indicators first :title))
-                         {"api_key" "45c1f5e3f05d0"}
-                         [:id :title])
+        (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
+          (pagination-test (str "/ctia/indicator/search?query="
+                                (-> indicators first :title))
+                           {"api_key" "45c1f5e3f05d0"}
+                           [:id :title]))
         (pagination-test (str "/ctia/indicator/"
                               (-> created-indicators
                                   first

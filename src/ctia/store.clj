@@ -1,4 +1,5 @@
-(ns ctia.store)
+(ns ctia.store
+  (:require [clojure.tools.logging :as log]))
 
 (defprotocol IActorStore
   (read-actor [this id])
@@ -79,11 +80,6 @@
   (delete-incident [this id])
   (list-incidents [this filtermap params]))
 
-(defprotocol IBundleStore
-  (read-bundle [this id])
-  (create-bundles [this new-bundles])
-  (delete-bundle [this id]))
-
 (defprotocol IRelationshipStore
   (read-relationship [this id])
   (create-relationships [this new-relations])
@@ -101,9 +97,13 @@
   (delete-data-table [this role])
   (list-data-tables [this filtermap params]))
 
+
 (defprotocol IEventStore
   (create-events [this new-events])
   (list-events [this filtermap params]))
+
+(defprotocol IQueryStringSearchableStore
+  (query-string-search [this query filtermap params]))
 
 (defonce stores (atom {:judgement []
                        :indicator []
@@ -119,11 +119,14 @@
                        :relationship []
                        :identity []
                        :verdict []
-                       :bundle []
                        :event []}))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))
 
 (defn read-store [store read-fn & args]
+  (apply read-fn (first (get @stores store)) args))
+
+(defn query-string-search-store [store read-fn & args]
+  (log/debug "query-string-search-store args: " args)
   (apply read-fn (first (get @stores store)) args))

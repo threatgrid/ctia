@@ -1,7 +1,6 @@
 (ns ctia.schemas.core
   (:require [ctim.schemas
              [actor :as as]
-             [bundle :as bs]
              [campaign :as cs]
              [coa :as coas]
              [common :as cos]
@@ -81,15 +80,6 @@
 (defschema NewTTP (fs/->schema-tree ttps/NewTTP))
 (defschema StoredTTP (fs/->schema-tree ttps/StoredTTP))
 
-;; bundle
-(defschema NewBundle (-> bs/NewBundle
-                         fu/replace-either-with-any
-                         fs/->schema-tree))
-
-(defschema StoredBundle (-> bs/StoredBundle
-                            fu/replace-either-with-any
-                            fs/->schema-tree))
-
 ;; relationships
 (defschema NewRelationship (fs/->schema-tree rels/NewRelationship))
 (defschema StoredRelationship (fs/->schema-tree rels/StoredRelationship))
@@ -115,7 +105,6 @@
 
 (def stored-schema-lookup
   {:actor StoredActor
-   :bundle StoredBundle
    :campaign StoredCampaign
    :coa StoredCOA
    :exploit-target StoredExploitTarget

@@ -7,3 +7,4 @@
 (def handle-update (crud/handle-update :ttp StoredTTP))
 (def handle-delete (crud/handle-delete :ttp StoredTTP))
 (def handle-list (crud/handle-find :ttp StoredTTP))
+(def handle-query-string-search (crud/handle-query-string-search :ttp StoredTTP))

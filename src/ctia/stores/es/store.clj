@@ -15,10 +15,9 @@
              [judgement :as ju]
              [relationship :as rel]
              [verdict :as ve]
-             [mapping :refer [store-mappings]]
+             [mapping :refer [store-mappings store-settings]]
              [sighting :as sig]
-             [ttp :as ttp]
-             [bundle :as bu]]
+             [ttp :as ttp]]
             [ctia.store :refer [IActorStore
                                 ICampaignStore
                                 ICOAStore
@@ -34,7 +33,7 @@
                                 IVerdictStore
                                 ISightingStore
                                 ITTPStore
-                                IBundleStore]]))
+                                IQueryStringSearchableStore]]))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection returns a map containing transport,
@@ -43,15 +42,16 @@
 
   {:index indexname
    :props props
-   :mapping store-mappings
+   :config {:settings store-settings
+            :mappings store-mappings}
    :conn (connect props)})
 
 (s/defn init! :- ESConnState
   "initiate an ES Store connection,
   create the index if needed, returns the es conn state"
   [props]
-  (let [{:keys [conn index mapping] :as conn-state} (init-store-conn props)]
-    (es-index/create! conn index mapping)
+  (let [{:keys [conn index config] :as conn-state} (init-store-conn props)]
+    (es-index/create! conn index config)
     conn-state))
 
 (defrecord JudgementStore [state]
@@ -70,7 +70,10 @@
     (ju/handle-list state {[:observable :type]  (:type observable)
                            [:observable :value] (:value observable)} params))
   (calculate-verdict [_ observable]
-    (ju/handle-calculate-verdict state observable)))
+    (ju/handle-calculate-verdict state observable))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (ju/handle-query-string-search state query filtermap params)))
 
 (defrecord RelationshipStore [state]
   IRelationshipStore
@@ -118,7 +121,10 @@
   (list-indicators [_ filter-map params]
     (in/handle-list state filter-map params))
   (list-indicators-by-judgements [_ judgements params]
-    (in/handle-list-by-judgements state judgements params)))
+    (in/handle-list-by-judgements state judgements params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (in/handle-query-string-search state query filtermap params)))
 
 (defrecord TTPStore [state]
   ITTPStore
@@ -131,7 +137,10 @@
   (delete-ttp [_ id]
     (ttp/handle-delete state id))
   (list-ttps [_ filter-map params]
-    (ttp/handle-list state filter-map params)))
+    (ttp/handle-list state filter-map params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (ttp/handle-query-string-search state query filtermap params)))
 
 (defrecord ActorStore [state]
   IActorStore
@@ -144,7 +153,10 @@
   (delete-actor [_ id]
     (ac/handle-delete state id))
   (list-actors [_ filter-map params]
-    (ac/handle-list state filter-map params)))
+    (ac/handle-list state filter-map params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (ac/handle-query-string-search state query filtermap params)))
 
 (defrecord CampaignStore [state]
   ICampaignStore
@@ -157,7 +169,11 @@
   (delete-campaign [_ id]
     (ca/handle-delete state id))
   (list-campaigns [_ filter-map params]
-    (ca/handle-list state filter-map params)))
+    (ca/handle-list state filter-map params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (ca/handle-query-string-search state query filtermap params)))
+
 
 (defrecord COAStore [state]
   ICOAStore
@@ -170,7 +186,10 @@
   (delete-coa [_ id]
     (coa/handle-delete state id))
   (list-coas [_ filter-map params]
-    (coa/handle-list state filter-map params)))
+    (coa/handle-list state filter-map params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (ca/handle-query-string-search state query filtermap params)))
 
 (defrecord DataTableStore [state]
   IDataTableStore
@@ -194,7 +213,10 @@
   (delete-incident [_ id]
     (inc/handle-delete state id))
   (list-incidents [_ filter-map params]
-    (inc/handle-list state filter-map params)))
+    (inc/handle-list state filter-map params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (inc/handle-query-string-search state query filtermap params)))
 
 (defrecord ExploitTargetStore [state]
   IExploitTargetStore
@@ -207,7 +229,11 @@
   (delete-exploit-target [_ id]
     (et/handle-delete state id))
   (list-exploit-targets [_ filter-map params]
-    (et/handle-list state filter-map params)))
+    (et/handle-list state filter-map params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (et/handle-query-string-search state query filtermap params)))
+
 
 (defrecord IdentityStore [state]
   IIdentityStore
@@ -231,16 +257,10 @@
   (list-sightings [_ filter-map params]
     (sig/handle-list state filter-map params))
   (list-sightings-by-observables [_ observables params]
-    (sig/handle-list-by-observables state observables params)))
-
-(defrecord BundleStore [state]
-  IBundleStore
-  (read-bundle [_ id]
-    (bu/handle-read state id))
-  (create-bundles [_ new-bundles]
-    (bu/handle-create state new-bundles))
-  (delete-bundle [_ id]
-    (bu/handle-delete state id)))
+    (sig/handle-list-by-observables state observables params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (sig/handle-query-string-search-sightings state query filtermap params)))
 
 (defrecord EventStore [state]
   IEventStore

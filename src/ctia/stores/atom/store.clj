@@ -17,7 +17,6 @@
     [sighting :as sighting]
     [ttp :as ttp]
     [verdict :as verdict]
-    [bundle :as bundle]
     [data-table :as data-table]]))
 
 (defn init! [{:keys [path mode] :as _props_}]
@@ -206,15 +205,6 @@
     (ttp/handle-delete-ttp state id))
   (list-ttps [_ filter-map params]
     (ttp/handle-list-ttps state filter-map params)))
-
-(defrecord BundleStore [state]
-  IBundleStore
-  (read-bundle [_ id]
-    (bundle/handle-read-bundle state id))
-  (create-bundles [_ new-bundles]
-    (bundle/handle-create-bundle state new-bundles))
-  (delete-bundle [_ id]
-    (bundle/handle-delete-bundle state id)))
 
 (defrecord EventStore [state]
   IEventStore

@@ -11,6 +11,7 @@
                                StoredJudgement]]
     [ctia.store :as store]
     [ctim.domain.id :as id]
+    [redismq.core :as rmq]
     [schema.core :as s]))
 
 (defrecord RedisEventPublisher [conn publish-channel-name]
@@ -30,6 +31,29 @@
         (get-in @properties [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection host port timeout-ms)
                            channel-name)))
+
+(defrecord RedisMQPublisher [queue]
+  Hook
+  (init [self]
+    :nothing)
+  (destroy [_]
+    :nothing)
+  (handle [self event _]
+    (rmq/enqueue (get self :queue) event)
+    event))
+
+(defn redismq-publisher []
+  (let [{:keys [queue-name host port timeout-ms max-depth enabled]
+         :as config
+         :or {queue-name "ctim-event-queue"
+              host "localhost"
+              port 6379}}
+        (get-in @properties [:ctia :hook :redismq])]
+    (->RedisMQPublisher (rmq/make-queue queue-name
+                                        {:host host
+                                         :port port
+                                         :timeout-ms timeout-ms}
+                                        {:max-depth max-depth}))))
 
 (defrecord ChannelEventPublisher []
   Hook
@@ -81,10 +105,11 @@
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
-  (let [{{redis-enabled? :enabled} :redis
-         {es-enabled? :enabled} :es}
+  (let [{{redis? :enabled} :redis
+         {redismq? :enabled} :redismq}
         (get-in @properties [:ctia :hook])]
     (cond-> hooks-m
-      redis-enabled? (update :event #(conj % (redis-event-publisher)))
-      :always        (update :event #(conj % (->ChannelEventPublisher)))
-      :always        (update :event #(conj % (->VerdictGenerator))))))
+      redis?   (update :event #(conj % (redis-event-publisher)))
+      redismq? (update :event #(conj % (redismq-publisher)))
+      :always  (update :event #(conj % (->ChannelEventPublisher)))
+      :always  (update :event #(conj % (->VerdictGenerator))))))
