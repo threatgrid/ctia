@@ -16,8 +16,7 @@
              [verdict :as ve]
              [mapping :refer [store-mappings store-settings]]
              [sighting :as sig]
-             [ttp :as ttp]
-             [bundle :as bu]]
+             [ttp :as ttp]]
             [ctia.store :refer [IActorStore
                                 ICampaignStore
                                 ICOAStore
@@ -32,7 +31,6 @@
                                 IVerdictStore
                                 ISightingStore
                                 ITTPStore
-                                IBundleStore
                                 IQueryStringSearchableStore]]))
 
 (s/defn init-store-conn :- ESConnState
@@ -262,11 +260,3 @@
   (query-string-search [_ query filtermap params]
     (sig/handle-query-string-search-sightings state query filtermap params)))
 
-(defrecord BundleStore [state]
-  IBundleStore
-  (read-bundle [_ id]
-    (bu/handle-read state id))
-  (create-bundles [_ new-bundles]
-    (bu/handle-create state new-bundles))
-  (delete-bundle [_ id]
-    (bu/handle-delete state id)))

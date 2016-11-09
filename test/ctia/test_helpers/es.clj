@@ -57,8 +57,7 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.verdict" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.ttp" "es"
-                      "ctia.store.bundle" "es"]
+                      "ctia.store.ttp" "es"]
     (test)))
 
 
@@ -83,8 +82,7 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.verdict" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.ttp" "es"
-                      "ctia.store.bundle" "es"]
+                      "ctia.store.ttp" "es"]
     (test)))
 
 
