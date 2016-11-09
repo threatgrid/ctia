@@ -36,9 +36,7 @@
             NewRelationship
             StoredRelationship
             Verdict
-            StoredVerdict
-            NewBundle
-            StoredBundle]])
+            StoredVerdict]])
   (:import [java.util UUID]))
 
 (def schema-version ctim-schema-version)
@@ -177,23 +175,6 @@
             :schema_version schema-version
             :created (or (:created prev-sighting) now)
             :modified now))))
-
-(s/defn realize-bundle :- StoredBundle
-  [new-bundle :- NewBundle
-   id :- s/Str
-   login :- s/Str]
-  (let [now (time/now)]
-    (assoc new-bundle
-           :id id
-           :type "bundle"
-           :owner login
-           :created now
-           :tlp (:tlp new-bundle default-tlp)
-           :schema_version schema-version
-           :valid_time {:end_time (or (get-in new-bundle [:valid_time :end_time])
-                                      time/default-expire-date)
-                        :start_time (or (get-in new-bundle [:valid_time :start_time])
-                                        now)})))
 
 (s/defn check-new-sighting :- s/Bool
   "We need either an observable or an indicator,

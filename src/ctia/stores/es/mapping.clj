@@ -630,46 +630,6 @@
       :columns {:enabled false}
       :rows {:enabled false}})}})
 
-(def bundle-mapping
-  {"bundle"
-   {:dynamic "strict"
-    :include_in_all false
-    :properties
-    (merge
-     base-entity-mapping
-     describable-entity-mapping
-     sourcable-entity-mapping
-     stored-entity-mapping
-     {:valid_time valid-time
-
-      :actors {:enabled false}
-      :campaigns {:enabled false}
-      :coas {:enabled false}
-      :exploit-targets {:enabled false}
-      :data-tables {:enabled false}
-      :feedbacks {:enabled false}
-      :incidents {:enabled false}
-      :indicators {:enabled false}
-      :judgements {:enabled false}
-      :relationships {:enabled false}
-      :sightings {:enabled false}
-      :ttps {:enabled false}
-      :verdicts {:enabled false}
-
-      :actor_refs token
-      :campaign_refs token
-      :coa_refs token
-      :data-table_refs token
-      :exploit-target_refs token
-      :feedback_refs token
-      :incident_refs token
-      :indicator_refs token
-      :judgement_refs token
-      :relationship_refs token
-      :sighting_refs token
-      :ttp_refs token
-      :verdict_refs token})}})
-
 (def relationship-mapping
   {"relationship"
    {:dynamic "strict"
@@ -731,5 +691,4 @@
          incident-mapping
          exploit-target-mapping
          sighting-mapping
-         identity-mapping
-         bundle-mapping))
+         identity-mapping))

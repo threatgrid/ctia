@@ -80,11 +80,6 @@
   (delete-incident [this id])
   (list-incidents [this filtermap params]))
 
-(defprotocol IBundleStore
-  (read-bundle [this id])
-  (create-bundles [this new-bundles])
-  (delete-bundle [this id]))
-
 (defprotocol IRelationshipStore
   (read-relationship [this id])
   (create-relationships [this new-relations])
@@ -118,8 +113,7 @@
                        :incident []
                        :relationship []
                        :identity []
-                       :verdict []
-                       :bundle []}))
+                       :verdict []}))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))

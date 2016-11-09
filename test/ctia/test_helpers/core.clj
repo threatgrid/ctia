@@ -75,8 +75,7 @@
                     "ctia.store.judgement" "atom,es"
                     "ctia.store.verdict"  "atom,es"
                     "ctia.store.sighting" "atom,es"
-                    "ctia.store.ttp" "atom,es"
-                    "ctia.store.bundle" "atom,es"]
+                    "ctia.store.ttp" "atom,es"]
     (f)))
 
 (defn fixture-properties:redis-hook [f]
