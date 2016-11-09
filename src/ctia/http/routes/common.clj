@@ -211,15 +211,12 @@
     (s/optional-key :ttp_type) s/Str
     (s/optional-key :intended_effect) s/Str
     (s/optional-key :behavior.malware_type.type) s/Str
-    (s/optional-key :behavior.malware_type.title) s/Str
     (s/optional-key :behavior.attack_pattern.capec_id) s/Str
-    (s/optional-key :behavior.attack_pattern.title) s/Str
 
     (s/optional-key :resource.personas) s/Str
     (s/optional-key :resource.tools.type) s/Str
     (s/optional-key :resource.tools.vendor) s/Str
     (s/optional-key :resource.tools.service_pack) s/Str
-    (s/optional-key :resource.infrastructure.title) s/Str
     (s/optional-key :resource.infrastructure.type) s/Str
 
     (s/optional-key :victim_targeting.identity) s/Str

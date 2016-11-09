@@ -14,7 +14,7 @@
   (when-let [{:keys [indexname] :as props} (get-in @properties [:ctia :hook :es])]
     {:index indexname
      :props props
-     :mapping producer-mappings
+     :config {:mappings producer-mappings}
      :conn (connect props)}))
 
 (s/defschema UpdateMap

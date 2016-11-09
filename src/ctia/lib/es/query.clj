@@ -6,12 +6,16 @@
   "make nested terms from a ctia filter:
   [[[:observable :type] ip] [[:observable :value] 42.42.42.1]]
   ->
-  [{:terms {observable.type [ip]}} {:terms {observable.value [42.42.42.1]}}]"
+  [{:terms {observable.type [ip]}} {:terms {observable.value [42.42.42.1]}}]
+
+We we force all values to lowercase, since our indexing does the same for all terms.
+"
   (vec (map (fn [[k v]]
               (q/terms (->> k
                             (map name)
                             (str/join "."))
-                       (if (vector? v) v [v])))
+                       (map str/lower-case
+                            (if (coll? v) v [v]))))
             filters)))
 
 (defn- relationship?

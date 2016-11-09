@@ -14,7 +14,7 @@
              [judgement :as ju]
              [relationship :as rel]
              [verdict :as ve]
-             [mapping :refer [store-mappings]]
+             [mapping :refer [store-mappings store-settings]]
              [sighting :as sig]
              [ttp :as ttp]
              [bundle :as bu]]
@@ -42,15 +42,16 @@
 
   {:index indexname
    :props props
-   :mapping store-mappings
+   :config {:settings store-settings
+            :mappings store-mappings}
    :conn (connect props)})
 
 (s/defn init! :- ESConnState
   "initiate an ES Store connection,
   create the index if needed, returns the es conn state"
   [props]
-  (let [{:keys [conn index mapping] :as conn-state} (init-store-conn props)]
-    (es-index/create! conn index mapping)
+  (let [{:keys [conn index config] :as conn-state} (init-store-conn props)]
+    (es-index/create! conn index config)
     conn-state))
 
 (defrecord JudgementStore [state]

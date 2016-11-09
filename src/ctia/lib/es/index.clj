@@ -1,6 +1,7 @@
 (ns ctia.lib.es.index
   (:require [clojure.core.memoize :as memo]
             [schema.core :as s]
+            [clojure.tools.logging :as log]
             [clj-time.core :as t]
             [clojurewerkz.elastisch.native :as n]
             [clojurewerkz.elastisch.rest :as h]
@@ -16,7 +17,7 @@
 (s/defschema ESConnState
   {:index s/Str
    :props {s/Any s/Any}
-   :mapping {s/Any s/Any}
+   :config {s/Any s/Any}
    :conn ESConn})
 
 (defn native-conn? [conn]
@@ -64,9 +65,9 @@
 
 (defn create!
   "create an index, abort if already exists"
-  [conn index-name mappings]
+  [conn index-name index-config]
   (when-not ((index-exists?-fn conn) conn index-name)
-    ((index-create-fn conn) conn index-name {:mappings mappings})))
+    ((index-create-fn conn) conn index-name index-config)))
 
 (defn create-alias!
   "create an index alias simple or filtered"
@@ -87,20 +88,20 @@
 
 (s/defn create-aliased-index!
   "create an index with an alias for a slice"
-  [{:keys [conn index mapping] :as state :- ESConnState}
+  [{:keys [conn index index-config] :as state :- ESConnState}
    index-name :- s/Str]
 
-  (create! conn index-name mapping)
+  (create! conn index-name index-config)
   (create-alias! conn index-name index))
 
 (s/defn create-filtered-alias!
   "create a filtered index alias"
-  [{:keys [conn index mapping] :as state :- ESConnState}
+  [{:keys [conn index index-config] :as state :- ESConnState}
    name :- s/Str
    routing :- s/Str
    filter :- {s/Any s/Any}]
 
-  (create! conn index mapping)
+  (create! conn index index-config)
   (create-alias! conn index name routing filter))
 
 (def memo-create-filtered-alias!

@@ -25,11 +25,6 @@
                                        StoredTTP]]))
 
 
-(s/defschema IndicatorsByTitleQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by) indicator-sort-fields}))
-
 (s/defschema IndicatorsListQueryParams
   (st/merge
    PagingParams
@@ -133,19 +128,8 @@
                       list-sightings
                       {:indicators #{{:indicator_id (->long-id :indicator id)}}}
                       params)))
-        (not-found)))
-
-    (GET "/title/:title" []
-      :return (s/maybe [StoredIndicator])
-      :summary "Gets an Indicator by title"
-      :query [params IndicatorsByTitleQueryParams]
-      :path-params [title :- s/Str]
-      :header-params [api_key :- (s/maybe s/Str)]
-      :capabilities :read-indicator
-      (paginated-ok
-       (page-with-long-id
-         (read-store :indicator list-indicators {:title title} params)))))
-
+        (not-found))))
+  
   (GET "/judgement/:id/indicators" []
     :tags ["Indicator"]
     :return (s/maybe [StoredIndicator])

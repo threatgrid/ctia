@@ -19,12 +19,12 @@
 (def handle-query-string-search (crud/handle-query-string-search :sighting ESStoredSighting))
 
 (s/defn observable->observable-hash :- s/Str
-  "transform an observable to a hash"
+  "transform an observable to a hash of the form type:value"
   [{:keys [type value] :as o :- Observable}]
   (str type ":" value))
 
 (s/defn obs->hashes :- [s/Str]
-  "transform a list of observables into hashes"
+  "transform a list of observables into observable hashes"
   [observables :- [Observable]]
   (map observable->observable-hash observables))
 

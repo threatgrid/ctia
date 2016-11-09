@@ -71,7 +71,7 @@
 
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.12"]
-                 [cider/cider-nrepl "0.11.0"]
+                 [cider/cider-nrepl "0.14.0"]
 
                  ;; Database
                  [clojurewerkz/elastisch "3.0.0-beta1"]
