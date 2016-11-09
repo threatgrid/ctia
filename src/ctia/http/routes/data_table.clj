@@ -12,9 +12,7 @@
    [schema.core :as s]))
 
 (s/defschema DataTableByExternalIdQueryParams
-  (st/merge
-   PagingParams
-   {:external_id s/Str}))
+  PagingParams)
 
 (defroutes data-table-routes
   (context "/data-table" []
@@ -36,16 +34,17 @@
                       :entity-type :data-table
                       :identity identity
                       :entities [data-table])))))
-           (GET "/external_id" []
+           (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredDataTable)]
                 :query [q DataTableByExternalIdQueryParams]
+                :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List data-tables by external id"
                 :capabilities #{:read-data-table :external-id}
                 (paginated-ok
                  (page-with-long-id
                   (read-store :data-table list-data-tables
-                              {:external_ids (:external_id q)} q))))
+                              {:external_ids external_id} q))))
 
            (GET "/:id" []
                 :return (s/maybe StoredDataTable)

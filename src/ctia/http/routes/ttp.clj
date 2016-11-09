@@ -12,9 +12,7 @@
    [schema-tools.core :as st]))
 
 (s/defschema TTPByExternalIdQueryParams
-  (st/merge
-   PagingParams
-   {:external_id s/Str}))
+  PagingParams)
 
 (defroutes ttp-routes
   (context "/ttp" []
@@ -33,7 +31,7 @@
                                               :entity-type :ttp
                                               :identity identity
                                               :entities [ttp])))))
-           
+
            (PUT "/:id" []
                 :return StoredTTP
                 :body [ttp NewTTP {:description "an updated TTP"}]
@@ -52,18 +50,19 @@
                                       :entity-id id
                                       :identity identity
                                       :entity ttp))))
-           
-           (GET "/external_id" []
+
+           (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredTTP)]
                 :query [q TTPByExternalIdQueryParams]
+                :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List TTPs by external id"
                 :capabilities #{:read-ttp :external-id}
                 (paginated-ok
                  (page-with-long-id
                   (read-store :ttp list-ttps
-                              {:external_ids (:external_id q)} q))))
-           
+                              {:external_ids external_id} q))))
+
            (GET "/search" []
                 :return (s/maybe [StoredTTP])
                 :summary "Search for a TTP using a Lucene/ES query string"
@@ -77,7 +76,7 @@
                                              (:query params)
                                              (dissoc params :query :sort_by :sort_order :offset :limit)
                                              (select-keys params [:sort_by :sort_order :offset :limit])))))
-           
+
            (GET "/:id" []
                 :return (s/maybe StoredTTP)
                 :summary "Gets a TTP by ID"
