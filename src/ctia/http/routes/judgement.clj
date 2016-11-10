@@ -44,14 +44,15 @@
                  :capabilities :create-judgement
                  :identity identity
                  (created
-                  (with-long-id
-                    (first
-                     (flows/create-flow
-                      :realize-fn realize-judgement
-                      :store-fn #(write-store :judgement create-judgements %)
-                      :entity-type :judgement
-                      :identity identity
-                      :entities [judgement])))))
+                  (first
+                   (flows/create-flow
+                    :realize-fn realize-judgement
+                    :store-fn #(write-store :judgement create-judgements %)
+                    :long-id-fn with-long-id
+                    :entity-type :judgement
+                    :identity identity
+                    :entities [judgement]))))
+
            (POST "/:judgement-id/indicator" []
                  :return (s/maybe RelatedIndicator)
                  :path-params [judgement-id :- s/Str]
@@ -88,11 +89,12 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 (paginated-ok
                  (page-with-long-id
-                  (query-string-search-store :judgement
-                                             query-string-search
-                                             (:query params)
-                                             (dissoc params :query :sort_by :sort_order :offset :limit)
-                                             (select-keys params [:sort_by :sort_order :offset :limit])))))
+                  (query-string-search-store
+                   :judgement
+                   query-string-search
+                   (:query params)
+                   (dissoc params :query :sort_by :sort_order :offset :limit)
+                   (select-keys params [:sort_by :sort_order :offset :limit])))))
 
 
            (GET "/external_id/:external_id" []

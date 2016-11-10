@@ -6,7 +6,7 @@
             [redismq.core :as rmq]
             [ctia.flows.hooks.event-hooks :as hooks]
             [ctia.flows.hooks.event-hooks :as eh]
-            
+
             [ctia.properties :refer [properties]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
@@ -25,6 +25,7 @@
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
                                     at-helpers/fixture-properties:atom-memory-store
                                     fixture-properties:redismq-hook
+                                    test-helpers/fixture-properties:events-enabled
                                     test-helpers/fixture-ctia
                                     test-helpers/fixture-allow-all-auth]))
 

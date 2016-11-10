@@ -25,14 +25,16 @@
                  :capabilities :create-actor
                  :identity identity
                  (created
-                  (with-long-id
-                    (first
-                     (flows/create-flow :entity-type :actor
-                                        :realize-fn realize-actor
-                                        :store-fn #(write-store :actor create-actors %)
-                                        :entity-type :actor
-                                        :identity identity
-                                        :entities [actor])))))
+                  (first
+                   (flows/create-flow
+                    :entity-type :actor
+                    :realize-fn realize-actor
+                    :store-fn #(write-store :actor create-actors %)
+                    :long-id-fn with-long-id
+                    :entity-type :actor
+                    :identity identity
+                    :entities [actor]))))
+
            (PUT "/:id" []
                 :return StoredActor
                 :body [actor NewActor {:description "an updated Actor"}]
@@ -42,14 +44,15 @@
                 :capabilities :create-actor
                 :identity identity
                 (ok
-                 (with-long-id
-                   (flows/update-flow :get-fn #(read-store :actor read-actor %)
-                                      :realize-fn realize-actor
-                                      :update-fn #(write-store :actor update-actor (:id %) %)
-                                      :entity-type :actor
-                                      :entity-id id
-                                      :identity identity
-                                      :entity actor))))
+                 (flows/update-flow
+                  :get-fn #(read-store :actor read-actor %)
+                  :realize-fn realize-actor
+                  :update-fn #(write-store :actor update-actor (:id %) %)
+                  :long-id-fn with-long-id
+                  :entity-type :actor
+                  :entity-id id
+                  :identity identity
+                  :entity actor)))
 
            (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredActor)]
@@ -71,11 +74,12 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 (paginated-ok
                  (page-with-long-id
-                  (query-string-search-store :actor
-                                             query-string-search
-                                             (:query params)
-                                             (dissoc params :query :sort_by :sort_order :offset :limit)
-                                             (select-keys params [:sort_by :sort_order :offset :limit])))))
+                  (query-string-search-store
+                   :actor
+                   query-string-search
+                   (:query params)
+                   (dissoc params :query :sort_by :sort_order :offset :limit)
+                   (select-keys params [:sort_by :sort_order :offset :limit])))))
 
            (GET "/:id" []
                 :return (s/maybe StoredActor)
@@ -94,10 +98,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-actor
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :actor read-actor %)
-                                          :delete-fn #(write-store :actor delete-actor %)
-                                          :entity-type :actor
-                                          :entity-id id
-                                          :identity identity)
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :actor read-actor %)
+                        :delete-fn #(write-store :actor delete-actor %)
+                        :entity-type :actor
+                        :entity-id id
+                        :identity identity)
                      (no-content)
                      (not-found)))))

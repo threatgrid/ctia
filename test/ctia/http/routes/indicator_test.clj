@@ -332,69 +332,6 @@
       (test-get-list (str "ctia/campaign/" (url-encode (:short-id campaign-2-id)) "/indicators")
                      [indicator-1 indicator-3]))))
 
-(deftest-for-each-store test-indicator-list-by-judgement-routes
-  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
-  (whoami-helpers/set-whoami-response api-key "foouser" "user")
-  (testing "POST /ctia/indicator"
-    (let [new-judgement-1 {:observable {:value "1.2.3.4" :type "ip"}
-                           :disposition 2
-                           :source "test"
-                           :priority 100
-                           :severity 100
-                           :confidence "Low"
-                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-          new-judgement-2 {:observable {:value "4.3.2.1" :type "ip"}
-                           :disposition 2
-                           :source "test"
-                           :priority 100
-                           :severity 100
-                           :confidence "Low"
-                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-          judgement-1 (assert-post "ctia/judgement" new-judgement-1)
-          judgement-2 (assert-post "ctia/judgement" new-judgement-2)
-
-          judgement-1-id (id/long-id->id (:id judgement-1))
-          judgement-2-id (id/long-id->id (:id judgement-2))
-
-          new-indicator-1 {:title "indicator-1"
-                           :description "indicator-1"
-                           :producer "producer"
-                           :indicator_type ["C2" "IP Watchlist"]
-                           :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
-                                        :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :judgements [{:judgement_id (id/long-id judgement-1-id)}
-                                        {:judgement_id (id/long-id judgement-2-id)}]}
-          new-indicator-2 {:title "indicator-2"
-                           :description "indicator-2"
-                           :producer "producer"
-                           :indicator_type ["C2" "IP Watchlist"]
-                           :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
-                                        :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :judgements [{:judgement_id (id/long-id judgement-1-id)}]}
-          new-indicator-3 {:title "indicator-3"
-                           :description "indicator-3"
-                           :producer "producer"
-                           :indicator_type ["C2" "IP Watchlist"]
-                           :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
-                                        :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :judgements [{:judgement_id (id/long-id judgement-2-id)}]}
-          new-indicator-4 {:title "indicator-4"
-                           :description "indicator-4"
-                           :producer "producer"
-                           :indicator_type ["C2" "IP Watchlist"]
-                           :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
-                                        :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :judgements []}
-
-          indicator-1 (assert-post "ctia/indicator" new-indicator-1)
-          indicator-2 (assert-post "ctia/indicator" new-indicator-2)
-          indicator-3 (assert-post "ctia/indicator" new-indicator-3)
-          indicator-4 (assert-post "ctia/indicator" new-indicator-4)]
-      (test-get-list (str "ctia/judgement/" (url-encode (:short-id judgement-1-id)) "/indicators")
-                     [indicator-1 indicator-2])
-      (test-get-list (str "ctia/judgement/" (url-encode (:short-id judgement-2-id)) "/indicators")
-                     [indicator-1 indicator-3]))))
-
 (deftest-for-each-store test-indicator-list-by-ttp-routes
   (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
   (whoami-helpers/set-whoami-response api-key "foouser" "user")

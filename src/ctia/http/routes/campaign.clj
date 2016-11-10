@@ -25,13 +25,15 @@
                  :capabilities :create-campaign
                  :identity identity
                  (created
-                  (with-long-id
-                    (first
-                     (flows/create-flow :realize-fn realize-campaign
-                                        :store-fn #(write-store :campaign create-campaigns %)
-                                        :entity-type :campaign
-                                        :identity identity
-                                        :entities [campaign])))))
+                  (first
+                   (flows/create-flow
+                    :realize-fn realize-campaign
+                    :store-fn #(write-store :campaign create-campaigns %)
+                    :long-id-fn with-long-id
+                    :entity-type :campaign
+                    :identity identity
+                    :entities [campaign]))))
+
            (PUT "/:id" []
                 :return StoredCampaign
                 :body [campaign NewCampaign {:description "an updated campaign"}]
@@ -41,14 +43,16 @@
                 :capabilities :create-campaign
                 :identity identity
                 (ok
-                 (with-long-id
-                   (flows/update-flow :get-fn #(read-store :campaign read-campaign %)
-                                      :realize-fn realize-campaign
-                                      :update-fn #(write-store :campaign update-campaign (:id %) %)
-                                      :entity-type :campaign
-                                      :entity-id id
-                                      :identity identity
-                                      :entity campaign))))
+                 (flows/update-flow
+                  :get-fn #(read-store :campaign read-campaign %)
+                  :realize-fn realize-campaign
+                  :update-fn #(write-store :campaign update-campaign (:id %) %)
+                  :long-id-fn with-long-id
+                  :entity-type :campaign
+                  :entity-id id
+                  :identity identity
+                  :entity campaign)))
+
            (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredCampaign)]
                 :query [q CampaignByExternalIdQueryParams]
@@ -69,11 +73,12 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 (paginated-ok
                  (page-with-long-id
-                  (query-string-search-store :campaign
-                                             query-string-search
-                                             (:query params)
-                                             (dissoc params :query :sort_by :sort_order :offset :limit)
-                                             (select-keys params [:sort_by :sort_order :offset :limit])))))
+                  (query-string-search-store
+                   :campaign
+                   query-string-search
+                   (:query params)
+                   (dissoc params :query :sort_by :sort_order :offset :limit)
+                   (select-keys params [:sort_by :sort_order :offset :limit])))))
 
            (GET "/:id" []
                 :return (s/maybe StoredCampaign)
@@ -84,6 +89,7 @@
                 (if-let [d (read-store :campaign read-campaign id)]
                   (ok (with-long-id d))
                   (not-found)))
+
            (DELETE "/:id" []
                    :no-doc true
                    :path-params [id :- s/Str]
@@ -91,10 +97,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-campaign
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :campaign read-campaign %)
-                                          :delete-fn #(write-store :campaign delete-campaign %)
-                                          :entity-type :campaign
-                                          :entity-id id
-                                          :identity identity)
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :campaign read-campaign %)
+                        :delete-fn #(write-store :campaign delete-campaign %)
+                        :entity-type :campaign
+                        :entity-id id
+                        :identity identity)
                      (no-content)
                      (not-found)))))

@@ -12,6 +12,7 @@
 
 (use-fixtures :once (join-fixtures [mht/fixture-schema-validation
                                     helpers/fixture-properties:clean
+                                    helpers/fixture-properties:events-enabled
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)

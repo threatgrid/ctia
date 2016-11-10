@@ -5,6 +5,8 @@
   (:require [clojure.tools.logging :as log]
             [ctia.auth :as auth]
             [ctia.flows.hooks :as h]
+            [ctia.properties :refer [properties]]
+            [ctia.store :as store]
             [ctim.events.obj-to-event :refer [to-create-event
                                               to-update-event
                                               to-delete-event]]
@@ -19,6 +21,7 @@
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
    :identity (s/protocol auth/IIdentity)
+   (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :realize-fn) (s/pred fn?)
    (s/optional-key :results) [s/Bool]
@@ -81,35 +84,44 @@
 
 (s/defn ^:privae apply-after-hooks :- FlowMap
   [{:keys [entities flow-type prev-entity] :as fm} :- FlowMap]
-  (doall
-   (for [entity entities]
-     (h/apply-hooks :entity entity
-                    :prev-entity prev-entity
-                    :hook-type (case flow-type
-                                 :create :after-create
-                                 :update :after-update
-                                 :delete :after-delete)
-                    :read-only? true)))
+  (doseq [entity entities]
+    (h/apply-hooks :entity entity
+                   :prev-entity prev-entity
+                   :hook-type (case flow-type
+                                :create :after-create
+                                :update :after-update
+                                :delete :after-delete)
+                   :read-only? true))
   fm)
 
 (s/defn ^:private create-events :- FlowMap
   [{:keys [create-event-fn entities flow-type identity prev-entity]
     :as fm} :- FlowMap]
-  (assoc fm
-         :events
-         (doall
-          (for [entity entities]
-            (try
-              (if (= :update flow-type)
-                (create-event-fn entity prev-entity)
-                (create-event-fn entity))
-              (catch Throwable e
-                (log/error "Could not create event" e)
-                (throw (ex-info "Could not create event"
-                                {:flow-type flow-type
-                                 :login (auth/login identity)
-                                 :entity entity
-                                 :prev-entity prev-entity}))))))))
+  (if (get-in @properties [:ctia :events :enabled])
+    (assoc fm
+           :events
+           (doall
+            (for [entity entities]
+              (try
+                (if (= :update flow-type)
+                  (create-event-fn entity prev-entity (make-id "event"))
+                  (create-event-fn entity (make-id "event")))
+                (catch Throwable e
+                  (log/error "Could not create event" e)
+                  (throw (ex-info "Could not create event"
+                                  {:flow-type flow-type
+                                   :login (auth/login identity)
+                                   :entity entity
+                                   :prev-entity prev-entity})))))))
+    fm))
+
+(s/defn ^:private write-events :- FlowMap
+  [{:keys [events] :as fm} :- FlowMap]
+  (if events
+    (assoc fm
+           :events
+           (store/write-store :event store/create-events events))
+    fm))
 
 (s/defn ^:private apply-store-fn :- FlowMap
   [{:keys [entities flow-type store-fn] :as fm} :- FlowMap]
@@ -132,6 +144,16 @@
            (doall
             (for [entity entities]
               (store-fn entity))))))
+
+(s/defn ^:private apply-long-id-fn :- FlowMap
+  [{:keys [entities long-id-fn] :as fm}]
+  (if long-id-fn
+    (assoc fm
+           :entities
+           (doall
+            (for [entity entities]
+              (long-id-fn entity))))
+    fm))
 
 (s/defn ^:private apply-event-hooks :- FlowMap
   [{:keys [events] :as fm} :- FlowMap]
@@ -157,18 +179,22 @@
              realize-fn
              store-fn
              identity
-             entities]}]
+             entities
+             long-id-fn]}]
   (-> {:flow-type :create
        :entity-type entity-type
        :entities entities
        :identity identity
+       :long-id-fn long-id-fn
        :realize-fn realize-fn
        :store-fn store-fn
        :create-event-fn to-create-event}
       realize-entities
       apply-before-hooks
-      create-events
       apply-store-fn
+      apply-long-id-fn
+      create-events
+      write-events
       apply-event-hooks
       apply-after-hooks
       make-result))
@@ -186,20 +212,24 @@
              update-fn
              entity-id
              identity
-             entity]}]
+             entity
+             long-id-fn]}]
   (let [prev-entity (get-fn entity-id)]
     (-> {:flow-type :update
          :entity-type entity-type
          :entities [entity]
          :prev-entity prev-entity
          :identity identity
+         :long-id-fn long-id-fn
          :realize-fn realize-fn
          :store-fn update-fn
          :create-event-fn to-update-event}
         realize-entities
         apply-before-hooks
-        create-events
         apply-store-fn
+        apply-long-id-fn
+        create-events
+        write-events
         apply-event-hooks
         apply-after-hooks
         make-result)))
@@ -226,8 +256,9 @@
          :store-fn delete-fn
          :create-event-fn to-delete-event}
         apply-before-hooks
-        create-events
         apply-store-fn
+        create-events
+        write-events
         apply-event-hooks
         apply-after-hooks
         make-result)))

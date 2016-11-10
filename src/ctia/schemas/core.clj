@@ -1,7 +1,6 @@
 (ns ctia.schemas.core
   (:require [ctim.schemas
              [actor :as as]
-             [bundle :as bs]
              [campaign :as cs]
              [coa :as coas]
              [common :as cos]
@@ -16,7 +15,9 @@
              [ttp :as ttps]
              [verdict :as vs]
              [vocabularies :as vocs]]
-            [flanders.schema :as fs]
+            [flanders
+             [schema :as fs]
+             [utils :as fu]]
             [schema.core :refer [defschema Str Bool]]))
 
 ;; actor
@@ -33,11 +34,11 @@
 
 ;; data-table
 (defschema NewDataTable (-> ds/NewDataTable
-                            fs/replace-either-with-any
+                            fu/replace-either-with-any
                             fs/->schema-tree))
 
 (defschema StoredDataTable (-> ds/StoredDataTable
-                               fs/replace-either-with-any
+                               fu/replace-either-with-any
                                fs/->schema-tree))
 
 ;; exploit-target
@@ -66,11 +67,11 @@
 
 ;; indicator
 (defschema NewIndicator (-> ins/NewIndicator
-                            fs/replace-either-with-any
+                            fu/replace-either-with-any
                             fs/->schema-tree))
 
 (defschema StoredIndicator (-> ins/StoredIndicator
-                               fs/replace-either-with-any
+                               fu/replace-either-with-any
                                fs/->schema-tree))
 
 
@@ -78,15 +79,6 @@
 ;; ttp
 (defschema NewTTP (fs/->schema-tree ttps/NewTTP))
 (defschema StoredTTP (fs/->schema-tree ttps/StoredTTP))
-
-;; bundle
-(defschema NewBundle (-> bs/NewBundle
-                         fs/replace-either-with-any
-                         fs/->schema-tree))
-
-(defschema StoredBundle (-> bs/StoredBundle
-                            fs/replace-either-with-any
-                            fs/->schema-tree))
 
 ;; relationships
 (defschema NewRelationship (fs/->schema-tree rels/NewRelationship))
@@ -110,3 +102,17 @@
 ;; vocabularies
 (defschema ObservableTypeIdentifier
   (fs/->schema-tree vocs/ObservableTypeIdentifier))
+
+(def stored-schema-lookup
+  {:actor StoredActor
+   :campaign StoredCampaign
+   :coa StoredCOA
+   :exploit-target StoredExploitTarget
+   :feedback StoredFeedback
+   :incident StoredIncident
+   :indicator StoredIndicator
+   :judgement StoredJudgement
+   :relationship StoredRelationship
+   :sighting StoredSighting
+   :ttp StoredTTP
+   :verdict StoredVerdict})

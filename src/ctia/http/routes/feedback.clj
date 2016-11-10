@@ -31,13 +31,14 @@
                  :capabilities :create-feedback
                  :identity identity
                  (created
-                  (with-long-id
-                    (first
-                     (flows/create-flow :realize-fn realize-feedback
-                                        :store-fn #(write-store :feedback create-feedbacks %)
-                                        :entity-type :feedback
-                                        :identity identity
-                                        :entities [feedback])))))
+                  (first
+                   (flows/create-flow
+                    :realize-fn realize-feedback
+                    :store-fn #(write-store :feedback create-feedbacks %)
+                    :long-id-fn with-long-id
+                    :entity-type :feedback
+                    :identity identity
+                    :entities [feedback]))))
 
            (GET "/" []
                 :return [StoredFeedback]
@@ -81,10 +82,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-feedback
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :feedback read-feedback %)
-                                          :delete-fn #(write-store :feedback delete-feedback %)
-                                          :entity-type :feedback
-                                          :entity-id id
-                                          :identity identity)
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :feedback read-feedback %)
+                        :delete-fn #(write-store :feedback delete-feedback %)
+                        :entity-type :feedback
+                        :entity-id id
+                        :identity identity)
                      (no-content)
                      (not-found)))))

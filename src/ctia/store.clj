@@ -97,6 +97,11 @@
   (delete-data-table [this role])
   (list-data-tables [this filtermap params]))
 
+
+(defprotocol IEventStore
+  (create-events [this new-events])
+  (list-events [this filtermap params]))
+
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this query filtermap params]))
 
@@ -113,7 +118,8 @@
                        :incident []
                        :relationship []
                        :identity []
-                       :verdict []}))
+                       :verdict []
+                       :event []}))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))
@@ -124,5 +130,3 @@
 (defn query-string-search-store [store read-fn & args]
   (log/debug "query-string-search-store args: " args)
   (apply read-fn (first (get @stores store)) args))
-
-

@@ -6,6 +6,7 @@
     [actor :as actor]
     [campaign :as campaign]
     [coa :as coa]
+    [event :as event]
     [exploit-target :as expl-tar]
     [feedback :as feedback]
     [identity :as identity]
@@ -204,3 +205,10 @@
     (ttp/handle-delete-ttp state id))
   (list-ttps [_ filter-map params]
     (ttp/handle-list-ttps state filter-map params)))
+
+(defrecord EventStore [state]
+  IEventStore
+  (create-events [this new-events]
+    (event/handle-create state new-events))
+  (list-events [this filter-map params]
+    (event/handle-list state filter-map params)))

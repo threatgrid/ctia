@@ -18,6 +18,7 @@
    :analyzer "text_analyzer"
    :search_quote_analyzer "text_analyzer"
    :search_analyzer "search_analyzer"})
+
 (def all_text
   "The same as the `text` maping, but will be included in the _all field"
   {:type "string"
@@ -32,6 +33,7 @@
   {:type "string"
    :analyzer "token_analyzer"
    :search_analyzer "token_analyzer"})
+
 (def all_token
   "The same as the `token` mapping, but will be included in the _all field"
   {:type "string"
@@ -644,6 +646,28 @@
       :source_ref all_token
       :target_ref all_token})}})
 
+(def dynamic-templates
+  [{:date_as_datetime {:match "*"
+                       :match_mapping_type "date"
+                       :mapping ts}}
+   {:string_not_analyzed {:match "*"
+                          :match_mapping_type "string"
+                          :mapping token}}])
+
+(def event-mapping
+  {"event"
+   {:dynamic_templates dynamic-templates
+    :properties
+    {:owner token
+     :timestamp ts
+     :entity {:type "object"}
+     :id token
+     :http-params {:type "object"}
+     :type token
+     :fields {:type "object"}
+     :judgement_id token
+     :verdict {:type "object"}}}})
+
 (def store-settings
   {:analysis
    {:filter
@@ -671,10 +695,7 @@
      :token_analyzer
      {:filter ["token_len" "lowercase"]
       :tokenizer "keyword"
-      :type "custom"}
-     }
-    
-    }})
+      :type "custom"}}}})
 
 (def store-mappings
   (merge {}
@@ -691,4 +712,5 @@
          incident-mapping
          exploit-target-mapping
          sighting-mapping
-         identity-mapping))
+         identity-mapping
+         event-mapping))

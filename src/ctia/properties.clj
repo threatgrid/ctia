@@ -72,8 +72,8 @@
                       "ctia.http.show.port" s/Int
                       "ctia.http.bulk.max-size" s/Int})
 
-   (st/required-keys {"ctia.nrepl.enabled" s/Bool
-                      "ctia.hook.es.enabled" s/Bool
+   (st/required-keys {"ctia.events.enabled" s/Bool
+                      "ctia.nrepl.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool
                       "ctia.hook.redismq.enabled" s/Bool})
 
@@ -84,20 +84,11 @@
                       "ctia.hook.redis.channel-name" s/Str
                       "ctia.hook.redis.timeout-ms" s/Int
 
-                      
                       "ctia.hook.redismq.queue-name" s/Str
                       "ctia.hook.redismq.host" s/Str
                       "ctia.hook.redismq.port" s/Int
                       "ctia.hook.redismq.timeout-ms" s/Int
                       "ctia.hook.redismq.max-depth" s/Int
-
-                      "ctia.hook.es.transport" (s/enum :http :native)
-                      "ctia.hook.es.host" s/Str
-                      "ctia.hook.es.port" s/Int
-                      "ctia.hook.es.clustername" s/Str
-                      "ctia.hook.es.indexname" s/Str
-                      "ctia.hook.es.slicing.strategy" (s/enum :filtered-alias :aliased-index)
-                      "ctia.hook.es.slicing.granularity" (s/enum :minute :hour :day :week :month :year)
 
                       "ctia.hooks.before-create" s/Str
                       "ctia.hooks.after-create" s/Str
@@ -105,7 +96,6 @@
                       "ctia.hooks.after-update" s/Str
                       "ctia.hooks.before-delete" s/Str
                       "ctia.hooks.after-delete" s/Str
-                      "ctia.hooks.event" s/Str
 
                       "ctia.metrics.console.enabled" s/Bool
                       "ctia.metrics.console.interval" s/Int
@@ -113,7 +103,12 @@
                       "ctia.metrics.riemann.enabled" s/Bool
                       "ctia.metrics.riemann.host" s/Str
                       "ctia.metrics.riemann.port" s/Int
-                      "ctia.metrics.riemann.interval" s/Int})))
+                      "ctia.metrics.riemann.interval" s/Int
+
+                      "ctia.store.es.event.slicing.strategy"
+                      (s/maybe (s/enum :aliased-index))
+                      "ctia.store.es.event.slicing.granularity"
+                      (s/enum :minute :hour :day :week :month :year)})))
 
 (def configurable-properties
   (mls/keys PropertiesSchema))

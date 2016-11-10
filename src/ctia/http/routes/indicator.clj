@@ -48,13 +48,15 @@
                  :capabilities :create-indicator
                  :identity identity
                  (created
-                  (with-long-id
-                    (first
-                     (flows/create-flow :realize-fn realize-indicator
-                                        :store-fn #(write-store :indicator create-indicators %)
-                                        :entity-type :indicator
-                                        :identity identity
-                                        :entities [indicator])))))
+                  (first
+                   (flows/create-flow
+                    :realize-fn realize-indicator
+                    :store-fn #(write-store :indicator create-indicators %)
+                    :long-id-fn with-long-id
+                    :entity-type :indicator
+                    :identity identity
+                    :entities [indicator]))))
+
            (PUT "/:id" []
                 :return StoredIndicator
                 :body [indicator NewIndicator {:description "an updated Indicator"}]
@@ -64,14 +66,16 @@
                 :capabilities :create-indicator
                 :identity identity
                 (ok
-                 (with-long-id
-                   (flows/update-flow :get-fn #(read-store :indicator read-indicator %)
-                                      :realize-fn realize-indicator
-                                      :update-fn #(write-store :indicator update-indicator (:id %) %)
-                                      :entity-type :indicator
-                                      :entity-id id
-                                      :identity identity
-                                      :entity indicator))))
+                 (flows/update-flow
+                  :get-fn #(read-store :indicator read-indicator %)
+                  :realize-fn realize-indicator
+                  :update-fn #(write-store :indicator update-indicator (:id %) %)
+                  :long-id-fn with-long-id
+                  :entity-type :indicator
+                  :entity-id id
+                  :identity identity
+                  :entity indicator)))
+
            ;; MORE TESTS, INCLUDING FILTER MAP TEST
            ;; ADD TO OTHER ENTITIES
            (GET "/search" []
@@ -82,11 +86,12 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 (paginated-ok
                  (page-with-long-id
-                  (query-string-search-store :indicator
-                                             query-string-search
-                                             (:query params)
-                                             (dissoc params :query :sort_by :sort_order :offset :limit)
-                                             (select-keys params [:sort_by :sort_order :offset :limit])))))
+                  (query-string-search-store
+                   :indicator
+                   query-string-search
+                   (:query params)
+                   (dissoc params :query :sort_by :sort_order :offset :limit)
+                   (select-keys params [:sort_by :sort_order :offset :limit])))))
 
 
 
@@ -126,21 +131,6 @@
                                 {:indicators #{{:indicator_id (->long-id :indicator id)}}}
                                 params)))
                   (not-found))))
-
-  (GET "/judgement/:id/indicators" []
-       :tags ["Indicator"]
-       :return (s/maybe [StoredIndicator])
-       :summary "Gets all indicators referencing some judgement"
-       :query [params IndicatorsListQueryParams]
-       :path-params [id :- s/Str]
-       :header-params [api_key :- (s/maybe s/Str)]
-       :capabilities :list-indicators
-       (paginated-ok
-        (page-with-long-id
-         (read-store :indicator
-                     list-indicators
-                     {:judgements #{{:judgement_id (->long-id :judgement id)}}}
-                     params))))
 
   (GET "/campaign/:id/indicators" []
        :tags ["Indicator"]

@@ -6,6 +6,7 @@
              [campaign :as ca]
              [coa :as coa]
              [data-table :as dt]
+             [event :as ev]
              [exploit-target :as et]
              [feedback :as fe]
              [identity :as id]
@@ -21,6 +22,7 @@
                                 ICampaignStore
                                 ICOAStore
                                 IDataTableStore
+                                IEventStore
                                 IExploitTargetStore
                                 IFeedbackStore
                                 IIdentityStore
@@ -260,3 +262,9 @@
   (query-string-search [_ query filtermap params]
     (sig/handle-query-string-search-sightings state query filtermap params)))
 
+(defrecord EventStore [state]
+  IEventStore
+  (create-events [this new-events]
+    (ev/handle-create state new-events))
+  (list-events [this filter-map params]
+    (ev/handle-list state filter-map params)))

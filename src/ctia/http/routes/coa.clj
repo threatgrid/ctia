@@ -4,7 +4,8 @@
             [ctia.domain.entities.coa :refer [with-long-id page-with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.http.routes.common :refer [created paginated-ok PagingParams COASearchParams]]
+            [ctia.http.routes.common
+             :refer [created paginated-ok PagingParams COASearchParams]]
             [ctia.schemas.core :refer [NewCOA StoredCOA]]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
@@ -24,13 +25,13 @@
                  :capabilities :create-coa
                  :identity identity
                  (created
-                  (with-long-id
-                    (first
-                     (flows/create-flow :realize-fn realize-coa
-                                        :store-fn #(write-store :coa create-coas %)
-                                        :entity-type :coa
-                                        :identity identity
-                                        :entities [coa])))))
+                  (first
+                   (flows/create-flow :realize-fn realize-coa
+                                      :store-fn #(write-store :coa create-coas %)
+                                      :long-id-fn with-long-id
+                                      :entity-type :coa
+                                      :identity identity
+                                      :entities [coa]))))
            (PUT "/:id" []
                 :return StoredCOA
                 :body [coa NewCOA {:description "an updated COA"}]
@@ -40,14 +41,14 @@
                 :capabilities :create-coa
                 :identity identity
                 (ok
-                 (with-long-id
-                   (flows/update-flow :get-fn #(read-store :coa read-coa %)
-                                      :realize-fn realize-coa
-                                      :update-fn #(write-store :coa update-coa (:id %) %)
-                                      :entity-type :coa
-                                      :entity-id id
-                                      :identity identity
-                                      :entity coa))))
+                 (flows/update-flow :get-fn #(read-store :coa read-coa %)
+                                    :realize-fn realize-coa
+                                    :update-fn #(write-store :coa update-coa (:id %) %)
+                                    :long-id-fn with-long-id
+                                    :entity-type :coa
+                                    :entity-id id
+                                    :identity identity
+                                    :entity coa)))
 
            (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredCOA)]
@@ -68,11 +69,12 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 (paginated-ok
                  (page-with-long-id
-                  (query-string-search-store :coa
-                                             query-string-search
-                                             (:query params)
-                                             (dissoc params :query :sort_by :sort_order :offset :limit)
-                                             (select-keys params [:sort_by :sort_order :offset :limit])))))
+                  (query-string-search-store
+                   :coa
+                   query-string-search
+                   (:query params)
+                   (dissoc params :query :sort_by :sort_order :offset :limit)
+                   (select-keys params [:sort_by :sort_order :offset :limit])))))
 
            (GET "/:id" []
                 :return (s/maybe StoredCOA)

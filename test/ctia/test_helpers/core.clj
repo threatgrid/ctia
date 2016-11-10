@@ -35,7 +35,9 @@
   (mth/clear-properties PropertiesSchema)
   ;; Override any properties that are in the default properties file
   ;; yet are unsafe/undesirable for tests
-  (with-properties ["ctia.http.dev-reload"         false
+  (with-properties ["ctia.events.enabled"          false
+                    "ctia.events.log"              false
+                    "ctia.http.dev-reload"         false
                     "ctia.http.min-threads"        9
                     "ctia.http.max-threads"        10
                     "ctia.http.show.protocol"      "http"
@@ -43,7 +45,6 @@
                     "ctia.http.show.port"          "57254"
                     "ctia.http.show.path-prefix"   ""
                     "ctia.nrepl.enabled"           false
-                    "ctia.hook.es.enabled"         false
                     "ctia.hook.redis.enabled"      false
                     "ctia.hook.redis.channel-name" "events-test"
                     "ctia.metrics.riemann.enabled" false
@@ -67,6 +68,7 @@
                     "ctia.store.actor" "atom,es"
                     "ctia.store.campaign" "atom,es"
                     "ctia.store.coa" "atom,es"
+                    "ctia.store.event" "atom,es"
                     "ctia.store.exploit-target" "atom,es"
                     "ctia.store.feedback" "atom,es"
                     "ctia.store.identity" "atom,es"
@@ -82,14 +84,13 @@
   (with-properties ["ctia.hook.redis.enabled" true]
     (f)))
 
-(defn fixture-properties:es-hook-aliased-index [f]
-  (with-properties ["ctia.hook.es.enabled" true
-                    "ctia.hook.es.slicing.strategy" :aliased-index]
+(defn fixture-properties:events-enabled [f]
+  (with-properties ["ctia.events.enabled" true]
     (f)))
 
-(defn fixture-properties:es-hook-filtered-alias [f]
-  (with-properties ["ctia.hook.es.enabled" true
-                    "ctia.hook.es.slicing.strategy" :filtered-alias]
+(defn fixture-properties:events-aliased-index [f]
+  (with-properties ["ctia.events.enabled" true
+                    "ctia.store.es.event.slicing.strategy" :aliased-index]
     (f)))
 
 (defn fixture-properties:hook-classes [f]

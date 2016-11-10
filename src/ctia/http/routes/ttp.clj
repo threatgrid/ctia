@@ -25,12 +25,13 @@
                  :capabilities :create-ttp
                  :identity identity
                  (created
-                  (with-long-id
-                    (first (flows/create-flow :realize-fn realize-ttp
-                                              :store-fn #(write-store :ttp create-ttps %)
-                                              :entity-type :ttp
-                                              :identity identity
-                                              :entities [ttp])))))
+                  (first
+                   (flows/create-flow :realize-fn realize-ttp
+                                      :store-fn #(write-store :ttp create-ttps %)
+                                      :long-id-fn with-long-id
+                                      :entity-type :ttp
+                                      :identity identity
+                                      :entities [ttp]))))
 
            (PUT "/:id" []
                 :return StoredTTP
@@ -41,15 +42,15 @@
                 :capabilities :create-ttp
                 :identity identity
                 (ok
-                 (with-long-id
-                   (flows/update-flow :get-fn #(read-store :ttp
-                                                           (fn [s] (read-ttp s %)))
-                                      :realize-fn realize-ttp
-                                      :update-fn #(write-store :ttp update-ttp (:id %) %)
-                                      :entity-type :ttp
-                                      :entity-id id
-                                      :identity identity
-                                      :entity ttp))))
+                 (flows/update-flow
+                  :get-fn #(read-store :ttp (fn [s] (read-ttp s %)))
+                  :realize-fn realize-ttp
+                  :update-fn #(write-store :ttp update-ttp (:id %) %)
+                  :long-id-fn with-long-id
+                  :entity-type :ttp
+                  :entity-id id
+                  :identity identity
+                  :entity ttp)))
 
            (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredTTP)]
@@ -71,11 +72,12 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 (paginated-ok
                  (page-with-long-id
-                  (query-string-search-store :ttp
-                                             query-string-search
-                                             (:query params)
-                                             (dissoc params :query :sort_by :sort_order :offset :limit)
-                                             (select-keys params [:sort_by :sort_order :offset :limit])))))
+                  (query-string-search-store
+                   :ttp
+                   query-string-search
+                   (:query params)
+                   (dissoc params :query :sort_by :sort_order :offset :limit)
+                   (select-keys params [:sort_by :sort_order :offset :limit])))))
 
            (GET "/:id" []
                 :return (s/maybe StoredTTP)
@@ -94,10 +96,11 @@
                    :header-params [api_key :- (s/maybe s/Str)]
                    :capabilities :delete-ttp
                    :identity identity
-                   (if (flows/delete-flow :get-fn #(read-store :ttp read-ttp %)
-                                          :delete-fn #(write-store :ttp delete-ttp %)
-                                          :entity-type :ttp
-                                          :entity-id id
-                                          :identity identity)
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :ttp read-ttp %)
+                        :delete-fn #(write-store :ttp delete-ttp %)
+                        :entity-type :ttp
+                        :entity-id id
+                        :identity identity)
                      (no-content)
                      (not-found)))))

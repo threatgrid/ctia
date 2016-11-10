@@ -1,5 +1,6 @@
 (ns ctia.flows.hooks.redis-event-hook-test
   (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.redis :as lr]
@@ -16,6 +17,7 @@
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
                                     at-helpers/fixture-properties:atom-memory-store
                                     test-helpers/fixture-properties:redis-hook
+                                    test-helpers/fixture-properties:events-enabled
                                     test-helpers/fixture-ctia
                                     test-helpers/fixture-allow-all-auth]))
 
@@ -98,11 +100,10 @@
                           :disposition 1
                           :disposition_name "Clean"
                           :priority 100
-                          :id (:short-id judgement-1-id)
+                          :id (id/long-id judgement-1-id)
                           :severity 100
                           :confidence "Low"
                           :owner "Unknown"}
-                 :id (:short-id judgement-1-id)
                  :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
@@ -116,11 +117,10 @@
                           :disposition 2
                           :disposition_name "Malicious"
                           :priority 100
-                          :id (:short-id judgement-2-id)
+                          :id (id/long-id judgement-2-id)
                           :severity 100
                           :confidence "Low"
                           :owner "Unknown"}
-                 :id (:short-id judgement-2-id)
                  :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
@@ -134,13 +134,18 @@
                           :disposition 3
                           :disposition_name "Suspicious"
                           :priority 100
-                          :id (:short-id judgement-3-id)
+                          :id (id/long-id judgement-3-id)
                           :severity 100
                           :confidence "Low"
                           :owner "Unknown"}
-                 :id (:short-id judgement-3-id)
                  :type "CreatedModel"}]
                (->> @results
-                    (map #(dissoc % :timestamp :http-params))
-                    (map #(update % :entity dissoc :created))))))
+                    (map #(dissoc % :timestamp :http-params :id))
+                    (map #(update % :entity dissoc :created)))))
+
+        (testing "variable event fields have correct type"
+          (doseq [event @results]
+            (is (str/starts-with? (:id event) "event-"))
+            (is (instance? java.util.Date (:timestamp event))))))
+
       (lr/close-listener listener))))
