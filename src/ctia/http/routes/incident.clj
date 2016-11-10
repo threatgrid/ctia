@@ -11,9 +11,7 @@
             [schema-tools.core :as st]))
 
 (s/defschema IncidentByExternalIdQueryParams
-  (st/merge
-   PagingParams
-   {:external_id s/Str}))
+  PagingParams)
 
 (defroutes incident-routes
   (context "/incident" []
@@ -52,16 +50,17 @@
                      :identity identity
                      :entity incident)))
 
-           (GET "/external_id" []
+           (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredIncident)]
                 :query [q IncidentByExternalIdQueryParams]
+                :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List Incidents by external id"
                 :capabilities #{:read-incident :external-id}
                 (paginated-ok
                  (page-with-long-id
                   (read-store :incident list-incidents
-                              {:external_ids (:external_id q)} q))))
+                              {:external_ids external_id} q))))
 
            (GET "/:id" []
                 :return (s/maybe StoredIncident)

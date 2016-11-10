@@ -1,19 +1,17 @@
 (ns ctia.http.routes.incident-test
   (:refer-clojure :exclude [get])
-  (:require
-    [clj-momo.test-helpers.core :as mth]
-    [clojure.test :refer [deftest is testing use-fixtures join-fixtures]]
-    [ctia.domain.entities :refer [schema-version]]
-    [ctia.properties :refer [get-http-show]]
-    [ctia.test-helpers
-     [core :as helpers :refer [delete get post put]]
-     [fake-whoami-service :as whoami-helpers]
-     [store :refer [deftest-for-each-store]]
-     [auth :refer [all-capabilities]]]
-    [ctim.domain.id :as id]
-    [ctim.schemas
-     [common :as c]
-     [incident :refer [NewIncident StoredIncident]]]))
+  (:require [clj-momo.test-helpers
+             [core :as mth]
+             [http :refer [encode]]]
+            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia.domain.entities :refer [schema-version]]
+            [ctia.properties :refer [get-http-show]]
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [delete get post put]]
+             [fake-whoami-service :as whoami-helpers]
+             [store :refer [deftest-for-each-store]]]
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -81,10 +79,10 @@
           (is (= (:port        incident-id)      (:port        show-props)))
           (is (= (:path-prefix incident-id) (seq (:path-prefix show-props))))))
 
-      (testing "GET /ctia/incident/external_id"
-        (let [response (get "ctia/incident/external_id"
-                            :headers {"api_key" "45c1f5e3f05d0"}
-                            :query-params {"external_id" (rand-nth incident-external-ids)})
+      (testing "GET /ctia/incident/external_id/:external_id"
+        (let [response (get (format "ctia/incident/external_id/%s"
+                                    (encode (rand-nth incident-external-ids)))
+                            :headers {"api_key" "45c1f5e3f05d0"})
               incidents (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=

@@ -1,6 +1,7 @@
 (ns ctia.http.routes.coa-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
+            [clj-momo.test-helpers.http :refer [encode]]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
@@ -84,10 +85,9 @@
           (is (= (:port        coa-id)      (:port        show-props)))
           (is (= (:path-prefix coa-id) (seq (:path-prefix show-props))))))
 
-      (testing "GET /ctia/coa/external_id"
-        (let [response (get "ctia/coa/external_id"
-                            :headers {"api_key" "45c1f5e3f05d0"}
-                            :query-params {"external_id" (rand-nth coa-external-ids)})
+      (testing "GET /ctia/coa/external_id/:external_id"
+        (let [response (get (format "ctia/coa/external_id/%s" (encode (rand-nth coa-external-ids)))
+                            :headers {"api_key" "45c1f5e3f05d0"})
               coas (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=

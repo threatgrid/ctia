@@ -20,7 +20,6 @@
                               StoredJudgement
                               RelatedIndicator]]))
 
-
 (s/defschema FeedbacksByJudgementQueryParams
   (st/merge
    PagingParams
@@ -32,9 +31,7 @@
    {(s/optional-key :sort_by) judgement-sort-fields}))
 
 (s/defschema JudgementsByExternalIdQueryParams
-  (st/merge PagingParams
-            {:external_id s/Str
-             (s/optional-key :sort_by) judgement-sort-fields}))
+  JudgementsQueryParams)
 
 (defroutes judgement-routes
   (context "/judgement" []
@@ -100,10 +97,10 @@
                    (select-keys params [:sort_by :sort_order :offset :limit])))))
 
 
-           (GET "/external_id" []
+           (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredJudgement)]
                 :query [q JudgementsByExternalIdQueryParams]
-
+                :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "Get Judgements by external ids"
                 :capabilities #{:read-judgement :external-id}
@@ -111,7 +108,7 @@
                  (page-with-long-id
                   (read-store :judgement
                               list-judgements
-                              {:external_ids (:external_id q)}
+                              {:external_ids external_id}
                               q))))
 
            (GET "/:id" []

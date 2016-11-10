@@ -1,6 +1,7 @@
 (ns ctia.http.routes.data-table-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
+            [clj-momo.test-helpers.http :refer [encode]]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
@@ -98,10 +99,10 @@
                        :created
                        :modified)))))
 
-      (testing "GET /ctia/data-table/external_id"
-        (let [response (get "ctia/data-table/external_id"
-                            :headers {"api_key" "45c1f5e3f05d0"}
-                            :query-params {"external_id" (rand-nth data-table-external-ids)})
+      (testing "GET /ctia/data-table/external_id/:external_id"
+        (let [response (get (format "ctia/data-table/external_id/%s"
+                                    (encode (rand-nth data-table-external-ids)))
+                            :headers {"api_key" "45c1f5e3f05d0"})
               data-tables (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=

@@ -12,9 +12,7 @@
    [schema.core :as s]))
 
 (s/defschema RelationshipByExternalIdQueryParams
-  (st/merge
-   PagingParams
-   {:external_id s/Str}))
+  PagingParams)
 
 (defroutes relationship-routes
   (context "/relationship" []
@@ -37,16 +35,18 @@
                     :entity-type :relationship
                     :identity identity
                     :entities [relationship]))))
-           (GET "/external_id" []
+
+           (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredRelationship)]
                 :query [q RelationshipByExternalIdQueryParams]
+                :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List relationships by external id"
                 :capabilities #{:read-relationship :external-id}
                 (paginated-ok
                  (page-with-long-id
                   (read-store :relationship list-relationships
-                              {:external_ids (:external_id q)} q))))
+                              {:external_ids external_id} q))))
 
            (GET "/:id" []
                 :return (s/maybe StoredRelationship)

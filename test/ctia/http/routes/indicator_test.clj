@@ -1,18 +1,20 @@
 (ns ctia.http.routes.indicator-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.test-helpers.core :as mth]
+  (:require [clj-momo.test-helpers
+             [core :as mth]
+             [http :refer [encode]]]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [ctia
+             [auth :as auth]
+             [properties :refer [get-http-show]]]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show]]
-            [ctim.domain.id :as id]
-            [ctim.schemas.common :as c]
-            [ctia.auth :as auth]
             [ctia.test-helpers
-             [search :refer [test-query-string-search]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key assert-post test-get-list]]
+             [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
+            [ctim.domain.id :as id]
             [ring.util.codec :refer [url-encode]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -89,10 +91,10 @@
 
       (test-query-string-search :indicator "description" :description)
 
-      (testing "GET /ctia/indicator/external_id"
-        (let [response (get "ctia/indicator/external_id"
-                            :headers {"api_key" "45c1f5e3f05d0"}
-                            :query-params {"external_id" (rand-nth indicator-external-ids)})
+      (testing "GET /ctia/indicator/external_id/:external_id"
+        (let [response (get (format "ctia/indicator/external_id/%s"
+                                    (encode (rand-nth indicator-external-ids)))
+                            :headers {"api_key" "45c1f5e3f05d0"})
               indicators (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
