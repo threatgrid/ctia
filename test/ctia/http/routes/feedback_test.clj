@@ -1,6 +1,7 @@
 (ns ctia.http.routes.feedback-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
+            [clj-momo.test-helpers.http :refer [encode]]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
@@ -94,10 +95,10 @@
                  :tlp "green"}]
                (map #(dissoc % :created :owner) feedbacks)))))
 
-      (testing "GET /ctia/feedback/external_id"
-        (let [response (get "ctia/feedback/external_id"
-                            :headers {"api_key" "45c1f5e3f05d0"}
-                            :query-params {"external_id" (rand-nth feedback-external-ids)})
+      (testing "GET /ctia/feedback/external_id/:external_id"
+        (let [response (get (format "ctia/feedback/external_id/%s"
+                                    (encode (rand-nth feedback-external-ids)))
+                            :headers {"api_key" "45c1f5e3f05d0"})
               feedback (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
