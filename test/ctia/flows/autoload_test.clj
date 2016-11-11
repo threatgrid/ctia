@@ -3,14 +3,14 @@
              [core :as mth]]
             [ctia.flows.autoload :as auto]
             [ctia.flows.hooks :as h]
-            [ctia.test-helpers.atom :as at-helpers]
+            [ctia.test-helpers.es :as es-helpers]
             [ctia.test-helpers.core :as helpers]
             [clojure.test :refer [deftest is join-fixtures use-fixtures]]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
-                                    at-helpers/fixture-properties:atom-memory-store
+                                    es-helpers/fixture-properties:es-store
                                     helpers/fixture-properties:hook-classes
                                     helpers/fixture-ctia-fast]))
 

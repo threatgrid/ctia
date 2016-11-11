@@ -8,14 +8,14 @@
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
-             [atom :as at-helpers]
-             [core :as test-helpers :refer [post]]])
+             [core :as test-helpers :refer [post]]
+             [es :as es-helpers]])
   (:import [java.util.concurrent CountDownLatch TimeUnit]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    at-helpers/fixture-properties:atom-memory-store
+                                    es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:redis-hook
                                     test-helpers/fixture-properties:events-enabled
                                     test-helpers/fixture-ctia

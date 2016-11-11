@@ -1,8 +1,8 @@
 (ns ctia.events-test
   (:require [ctia.events :as e]
             [ctia.lib.async :as la]
-            [ctia.test-helpers.atom :as at-helpers]
             [ctia.test-helpers.core :as helpers]
+            [ctia.test-helpers.es :as es-helpers]
             [ctim.events.obj-to-event :as o2e]
             [clojure.test :as t :refer :all]
             [clojure.core.async :refer [poll! chan tap <!!]]
@@ -11,7 +11,7 @@
 (use-fixtures :once st/validate-schemas)
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
-                                    at-helpers/fixture-properties:atom-memory-store
+                                    es-helpers/fixture-properties:es-store
                                     helpers/fixture-ctia-fast]))
 
 (deftest test-send-event

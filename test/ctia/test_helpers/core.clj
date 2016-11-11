@@ -58,28 +58,6 @@
   (with-properties ["ctia.events.log" "true"]
     (f)))
 
-(defn fixture-properties:multi-store [f]
-  ;; Set properties to enable all the stores
-  (with-properties ["ctia.store.es.default.refresh" true
-                    "ctia.store.es.default.transport" "http"
-                    "ctia.store.es.default.port" "9200"
-                    "ctia.store.es.default.indexname" "test_ctia"
-
-                    "ctia.store.actor" "atom,es"
-                    "ctia.store.campaign" "atom,es"
-                    "ctia.store.coa" "atom,es"
-                    "ctia.store.event" "atom,es"
-                    "ctia.store.exploit-target" "atom,es"
-                    "ctia.store.feedback" "atom,es"
-                    "ctia.store.identity" "atom,es"
-                    "ctia.store.incident" "atom,es"
-                    "ctia.store.indicator" "atom,es"
-                    "ctia.store.judgement" "atom,es"
-                    "ctia.store.verdict"  "atom,es"
-                    "ctia.store.sighting" "atom,es"
-                    "ctia.store.ttp" "atom,es"]
-    (f)))
-
 (defn fixture-properties:redis-hook [f]
   (with-properties ["ctia.hook.redis.enabled" true]
     (f)))

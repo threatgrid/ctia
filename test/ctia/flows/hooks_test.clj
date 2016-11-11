@@ -4,13 +4,13 @@
             [ctia.flows.hooks :as h]
             [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.test-helpers
-             [atom :as at-helpers]
-             [core :as helpers]]
+             [core :as helpers]
+             [es :as es-helpers]]
             [clojure.test :as t]))
 
 (t/use-fixtures :once (t/join-fixtures [mth/fixture-schema-validation
                                         helpers/fixture-properties:clean
-                                        at-helpers/fixture-properties:atom-memory-store
+                                        es-helpers/fixture-properties:es-store
                                         helpers/fixture-ctia-fast]))
 
 (def obj {:x "x" :y 0 :z {:foo "bar"}})

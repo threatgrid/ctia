@@ -5,7 +5,6 @@
             [ctia.http.server :as http-server]
             [ctia.shutdown :as shutdown]
             [ctia.test-helpers
-             [atom :as at-helpers]
              [core :as helpers]
              [es :as esh]]))
 
@@ -20,9 +19,6 @@
                        (start-ctia! :join? false)))))
     http-port))
 
-
-(defn setup-ctia-atom-store! []
-  (setup-ctia! at-helpers/fixture-properties:atom-memory-store))
 
 (defn setup-ctia-es-store! []
   (setup-ctia! esh/fixture-properties:es-store))
