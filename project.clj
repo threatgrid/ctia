@@ -75,7 +75,6 @@
 
                  ;; Database
                  [clojurewerkz/elastisch "3.0.0-beta1"]
-                 [durable-atom "0.0.3"]
 
                  ;; clients
                  [clj-http "2.2.0"
@@ -113,17 +112,13 @@
   :uberjar-name "ctia.jar"
   :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.4.0"
-  :test-selectors {:atom-store :atom-store
-                   :es-store :es-store
+  :test-selectors {:es-store :es-store
                    :es-store-native :es-store-native
-                   :multi-store :multi-store
                    :disabled :disabled
                    :default #(not= :disabled %)
                    :integration #(or (:es-store %)
                                      (:es-store-native %)
-                                     (:multi-store %)
                                      (:integration %)
-                                     (:es-filtered-alias %)
                                      (:es-aliased-index %))
                    :all #(not (:disabled %))}
 

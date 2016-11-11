@@ -20,7 +20,6 @@
             [ctia.flows.hooks :as h]
             [ctia.http.server :as http-server]
             [ctia.shutdown :as shutdown]
-            [ctia.stores.atom.store :as as-store]
             [ctia.stores.es.store :as es-store]))
 
 (defn init-auth-service! []
@@ -38,70 +37,53 @@
    ;; result.  This is where you can do idempotent store setup.
    ;; Specifying a :builder is optional.
    :builder
-   {:atom (fn atom-builder [factory props]
-            (factory (as-store/init! props)))
-    :es (fn es-builder [factory props]
+   {:es (fn es-builder [factory props]
           (factory (es-store/init! props)))}
 
    :actor
-   {:atom as-store/->ActorStore
-    :es es-store/->ActorStore}
+   {:es es-store/->ActorStore}
 
    :campaign
-   {:atom as-store/->CampaignStore
-    :es es-store/->CampaignStore}
+   {:es es-store/->CampaignStore}
 
    :coa
-   {:atom as-store/->COAStore
-    :es es-store/->COAStore}
+   {:es es-store/->COAStore}
 
    :data-table
-   {:atom as-store/->DataTableStore
-    :es es-store/->DataTableStore}
+   {:es es-store/->DataTableStore}
 
    :event
-   {:atom as-store/->EventStore
-    :es es-store/->EventStore}
+   {:es es-store/->EventStore}
 
    :exploit-target
-   {:atom as-store/->ExploitTargetStore
-    :es es-store/->ExploitTargetStore}
+   {:es es-store/->ExploitTargetStore}
 
    :feedback
-   {:atom as-store/->FeedbackStore
-    :es es-store/->FeedbackStore}
+   {:es es-store/->FeedbackStore}
 
    :identity
-   {:atom as-store/->IdentityStore
-    :es es-store/->IdentityStore}
+   {:es es-store/->IdentityStore}
 
    :incident
-   {:atom as-store/->IncidentStore
-    :es es-store/->IncidentStore}
+   {:es es-store/->IncidentStore}
 
    :indicator
-   {:atom as-store/->IndicatorStore
-    :es es-store/->IndicatorStore}
+   {:es es-store/->IndicatorStore}
 
    :judgement
-   {:atom as-store/->JudgementStore
-    :es es-store/->JudgementStore}
+   {:es es-store/->JudgementStore}
 
    :relationship
-   {:atom as-store/->RelationshipStore
-    :es es-store/->RelationshipStore}
+   {:es es-store/->RelationshipStore}
 
    :verdict
-   {:atom as-store/->VerdictStore
-    :es es-store/->VerdictStore}
+   {:es es-store/->VerdictStore}
 
    :sighting
-   {:atom as-store/->SightingStore
-    :es es-store/->SightingStore}
+   {:es es-store/->SightingStore}
 
    :ttp
-   {:atom as-store/->TTPStore
-    :es es-store/->TTPStore}})
+   {:es es-store/->TTPStore}})
 
 (defn init-store-service! []
   (doseq [[entity-key impls] @store/stores]

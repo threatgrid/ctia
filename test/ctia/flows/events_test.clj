@@ -6,7 +6,6 @@
             [ctia.store :as store]
             [ctim.domain.id :as id]
             [ctia.test-helpers
-             [atom :as at-helpers]
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
              [es :as es-helpers]]))
 
@@ -14,13 +13,7 @@
 
 (deftest-for-each-fixture test-flow-event-creation
 
-  {:memory-store (join-fixtures [test-helpers/fixture-properties:clean
-                                 at-helpers/fixture-properties:atom-memory-store
-                                 test-helpers/fixture-properties:events-enabled
-                                 test-helpers/fixture-ctia
-                                 test-helpers/fixture-allow-all-auth])
-
-   :es-aliased-index (join-fixtures [test-helpers/fixture-properties:clean
+  {:es-aliased-index (join-fixtures [test-helpers/fixture-properties:clean
                                      es-helpers/fixture-properties:es-store
                                      test-helpers/fixture-properties:events-aliased-index
                                      test-helpers/fixture-ctia

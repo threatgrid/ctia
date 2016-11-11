@@ -1,8 +1,9 @@
 (ns ctia.logger-test
   (:require [ctia.events :as e]
             [ctia.test-helpers
-             [atom :as at-helpers]
-             [core :as test-helpers]]
+
+             [core :as test-helpers]
+             [es :as es-helpers]]
             [ctim.events.obj-to-event :as o2e]
             [clojure.test :as t :refer :all]
             [schema.test :as st]
@@ -11,7 +12,7 @@
 
 (use-fixtures :once st/validate-schemas)
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    at-helpers/fixture-properties:atom-memory-store
+                                    es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:events-logging
                                     test-helpers/fixture-ctia-fast]))
 

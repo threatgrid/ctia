@@ -3,15 +3,15 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
-             [atom :as at-helpers]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
+             [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
-                                    at-helpers/fixture-properties:atom-memory-store
+                                    es-helpers/fixture-properties:es-store
                                     helpers/fixture-ctia
                                     whoami-helpers/fixture-server]))
 
