@@ -32,6 +32,31 @@
                          :confidence
                          :specification])))
 
+(def incident-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        describable-entity-sort-fields
+                        sourcable-entity-sort-fields
+                        [:valid_time.start
+                         :valid_time.end
+                         :confidence
+                         :status
+                         :incident_time
+                         :reporter
+                         :coordinator
+                         :victim
+                         :security_compromise
+                         :discovery_method
+                         :contact
+                         :intended_effect])))
+
+(def relationship-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        describable-entity-sort-fields
+                        sourcable-entity-sort-fields
+                        [:relationship_type
+                         :source_ref
+                         :target_ref])))
+
 (def judgement-sort-fields
   (apply s/enum (concat base-entity-sort-fields
                         sourcable-entity-sort-fields
@@ -162,6 +187,15 @@
 (s/defschema SourcableEntityFilterParams
   {(s/optional-key :source) s/Str})
 
+(s/defschema IncidentSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :categories) s/Str
+    (s/optional-key :sort_by) incident-sort-fields}))
+
 (s/defschema IndicatorSearchParams
   (st/merge
    PagingParams
@@ -198,7 +232,7 @@
     (s/optional-key :relationship_type) s/Str
     (s/optional-key :source_ref) s/Str
     (s/optional-key :target_ref) s/Str
-    (s/optional-key :sort_by)  judgement-sort-fields}))
+    (s/optional-key :sort_by)  relationship-sort-fields}))
 
 (s/defschema SightingSearchParams
   (st/merge
