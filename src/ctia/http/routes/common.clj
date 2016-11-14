@@ -25,6 +25,14 @@
           sourcable-entity-sort-fields
           describable-entity-sort-fields))
 
+
+(def exploit-target-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        describable-entity-sort-fields
+                        sourcable-entity-sort-fields
+                        [:valid_time.start
+                         :valid_time.end])))
+
 (def incident-sort-fields
   (apply s/enum (concat default-entity-sort-fields
                         describable-entity-sort-fields
@@ -186,6 +194,15 @@
 
 (s/defschema SourcableEntityFilterParams
   {(s/optional-key :source) s/Str})
+
+
+(s/defschema ExploitTargetSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :sort_by) exploit-target-sort-fields}))
 
 (s/defschema IncidentSearchParams
   (st/merge
