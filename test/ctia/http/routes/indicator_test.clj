@@ -359,22 +359,22 @@
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :indicated_TTP [{:ttp_id (id/long-id ttp-1-id)}
-                                           {:ttp_id (id/long-id ttp-2-id)}]}
+                           :indicated_TTP [{:TTP_id (id/long-id ttp-1-id)}
+                                           {:TTP_id (id/long-id ttp-2-id)}]}
           new-indicator-2 {:title "indicator-2"
                            :description "indicator-2"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :indicated_TTP [{:ttp_id (id/long-id ttp-1-id)}]}
+                           :indicated_TTP [{:TTP_id (id/long-id ttp-1-id)}]}
           new-indicator-3 {:title "indicator-3"
                            :description "indicator-3"
                            :producer "producer"
                            :indicator_type ["C2" "IP Watchlist"]
                            :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                         :end_time "2016-07-11T00:40:48.212-00:00"}
-                           :indicated_TTP [{:ttp_id (id/long-id ttp-2-id)}]}
+                           :indicated_TTP [{:TTP_id (id/long-id ttp-2-id)}]}
           new-indicator-4 {:title "indicator-4"
                            :description "indicator-4"
                            :producer "producer"

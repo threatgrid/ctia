@@ -179,7 +179,7 @@
                       :exploit_target_id all_token)})
 (def related-ttps
   {:properties (assoc related
-                      :ttp_id all_token)})
+                      :TTP_id all_token)})
 
 (def related-incidents
   {:properties (assoc related

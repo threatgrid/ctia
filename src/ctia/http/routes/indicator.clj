@@ -174,7 +174,7 @@
         (page-with-long-id
          (read-store :indicator
                      list-indicators
-                     {:indicated_TTP #{{:ttp_id (->long-id :ttp id)}}}
+                     {:indicated_TTP #{{:TTP_id (->long-id :ttp id)}}}
                      params))))
 
   (GET "/indicator/:id/indicators" []
