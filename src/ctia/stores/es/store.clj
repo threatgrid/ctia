@@ -84,7 +84,10 @@
   (delete-relationship [_ id]
     (rel/handle-delete state id))
   (list-relationships [_ filter-map params]
-    (rel/handle-list state filter-map params)))
+    (rel/handle-list state filter-map params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap params]
+    (rel/handle-query-string-search state query filtermap params)))
 
 (defrecord VerdictStore [state]
   IVerdictStore

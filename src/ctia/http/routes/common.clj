@@ -189,6 +189,16 @@
     (s/optional-key :confidence) s/Str
     (s/optional-key :sort_by)  judgement-sort-fields}))
 
+(s/defschema RelationshipSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :relationship_type) s/Str
+    (s/optional-key :source_ref) s/Str
+    (s/optional-key :target_ref) s/Str
+    (s/optional-key :sort_by)  judgement-sort-fields}))
 
 (s/defschema SightingSearchParams
   (st/merge
