@@ -25,12 +25,45 @@
           sourcable-entity-sort-fields
           describable-entity-sort-fields))
 
+
+(def exploit-target-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        describable-entity-sort-fields
+                        sourcable-entity-sort-fields
+                        [:valid_time.start
+                         :valid_time.end])))
+
+(def incident-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        describable-entity-sort-fields
+                        sourcable-entity-sort-fields
+                        [:valid_time.start
+                         :valid_time.end
+                         :confidence
+                         :status
+                         :incident_time
+                         :reporter
+                         :coordinator
+                         :victim
+                         :security_compromise
+                         :discovery_method
+                         :contact
+                         :intended_effect])))
+
 (def indicator-sort-fields
   (apply s/enum (concat default-entity-sort-fields
                         [:indicator_type
                          :likely_impact
                          :confidence
                          :specification])))
+
+(def relationship-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        describable-entity-sort-fields
+                        sourcable-entity-sort-fields
+                        [:relationship_type
+                         :source_ref
+                         :target_ref])))
 
 (def judgement-sort-fields
   (apply s/enum (concat base-entity-sort-fields
@@ -162,6 +195,33 @@
 (s/defschema SourcableEntityFilterParams
   {(s/optional-key :source) s/Str})
 
+
+(s/defschema ExploitTargetSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :sort_by) exploit-target-sort-fields}))
+
+(s/defschema IncidentSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :confidence) s/Str
+    (s/optional-key :status) s/Str
+    (s/optional-key :reporter) s/Str
+    (s/optional-key :coordinator) s/Str
+    (s/optional-key :victim) s/Str
+    (s/optional-key :security_compromise) s/Str
+    (s/optional-key :discovery_method) s/Str
+    (s/optional-key :contact) s/Str
+    (s/optional-key :intended_effect) s/Str
+    (s/optional-key :categories) s/Str
+    (s/optional-key :sort_by) incident-sort-fields}))
+
 (s/defschema IndicatorSearchParams
   (st/merge
    PagingParams
@@ -189,6 +249,16 @@
     (s/optional-key :confidence) s/Str
     (s/optional-key :sort_by)  judgement-sort-fields}))
 
+(s/defschema RelationshipSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {(s/optional-key :query) s/Str
+    (s/optional-key :relationship_type) s/Str
+    (s/optional-key :source_ref) s/Str
+    (s/optional-key :target_ref) s/Str
+    (s/optional-key :sort_by)  relationship-sort-fields}))
 
 (s/defschema SightingSearchParams
   (st/merge
@@ -265,4 +335,4 @@
     (s/optional-key :cost) s/Str
     (s/optional-key :efficacy) s/Str
     (s/optional-key :structured_coa_type) s/Str
-    (s/optional-key :sort_by)  coa-sort-fields}))
+    (s/optional-key :sort_by) coa-sort-fields}))

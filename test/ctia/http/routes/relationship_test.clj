@@ -7,6 +7,7 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
@@ -110,7 +111,7 @@
                        :created
                        :modified)))))
 
-      ;;(test-query-string-search :relationship "description" :description)
+      (test-query-string-search :relationship "description" :description)
 
       (testing "GET /ctia/relationship/external_id/:external_id"
         (let [response (get (format "ctia/relationship/external_id/%s"

@@ -7,6 +7,7 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
@@ -109,7 +110,7 @@
                  :owner "foouser"}]
                (map #(dissoc % :created :modified) incidents)))))
 
-      ;;(test-query-string-search :incident "description" :description)
+      (test-query-string-search :incident "description" :description)
       
       (testing "GET /ctia/incident/:id"
         (let [response (get (str "ctia/incident/" (:short-id incident-id))
