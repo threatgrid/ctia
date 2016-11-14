@@ -25,13 +25,6 @@
           sourcable-entity-sort-fields
           describable-entity-sort-fields))
 
-(def indicator-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        [:indicator_type
-                         :likely_impact
-                         :confidence
-                         :specification])))
-
 (def incident-sort-fields
   (apply s/enum (concat default-entity-sort-fields
                         describable-entity-sort-fields
@@ -48,6 +41,13 @@
                          :discovery_method
                          :contact
                          :intended_effect])))
+
+(def indicator-sort-fields
+  (apply s/enum (concat default-entity-sort-fields
+                        [:indicator_type
+                         :likely_impact
+                         :confidence
+                         :specification])))
 
 (def relationship-sort-fields
   (apply s/enum (concat default-entity-sort-fields
@@ -193,6 +193,15 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    {(s/optional-key :query) s/Str
+    (s/optional-key :confidence) s/Str
+    (s/optional-key :status) s/Str
+    (s/optional-key :reporter) s/Str
+    (s/optional-key :coordinator) s/Str
+    (s/optional-key :victim) s/Str
+    (s/optional-key :security_compromise) s/Str
+    (s/optional-key :discovery_method) s/Str
+    (s/optional-key :contact) s/Str
+    (s/optional-key :intended_effect) s/Str
     (s/optional-key :categories) s/Str
     (s/optional-key :sort_by) incident-sort-fields}))
 
@@ -309,4 +318,4 @@
     (s/optional-key :cost) s/Str
     (s/optional-key :efficacy) s/Str
     (s/optional-key :structured_coa_type) s/Str
-    (s/optional-key :sort_by)  coa-sort-fields}))
+    (s/optional-key :sort_by) coa-sort-fields}))
