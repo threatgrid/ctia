@@ -106,7 +106,6 @@
        (search-docs (:conn state)
                     (:index state)
                     (name mapping)
-                    {:query_string {:query query
-                                           }}
+                    {:query_string {:query query}}
                     filter-map
                     params)))))

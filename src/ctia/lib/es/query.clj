@@ -8,8 +8,7 @@
   ->
   [{:terms {observable.type [ip]}} {:terms {observable.value [42.42.42.1]}}]
 
-We we force all values to lowercase, since our indexing does the same for all terms.
-"
+we force all values to lowercase, since our indexing does the same for all terms."
   (vec (map (fn [[k v]]
               (q/terms (->> k
                             (map name)
@@ -50,8 +49,12 @@ We we force all values to lowercase, since our indexing does the same for all te
                             (if (relationship? v)
                               (terms-from-relationship t-key v)
                               [t-key v])))
-                        filter-map)]
-         {:filtered
-          {:query q
-           :filter (q/bool {:must (nested-terms terms)})}})
+                        filter-map)
+             must-filters (nested-terms terms)]
+
+         (if (empty? must-filters)
+           q {:filtered
+              {:query q
+               :filter (q/bool {:must must-filters})}}))
+
        q))))

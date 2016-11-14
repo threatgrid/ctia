@@ -140,7 +140,7 @@
 (defn search-docs
   "Search for documents on es using a query string search.  Also applies a filter map, converting the values in the filter-map into must match terms."
   [conn index-name mapping query filter-map params]
-  (let [ es-params (generate-es-params query filter-map params)
+  (let [es-params (generate-es-params query filter-map params)
         res (->> ((search-doc-fn conn)
                   conn
                   index-name
@@ -150,9 +150,9 @@
         results (->> res
                      ((hits-from-fn conn))
                      (map :_source))]
-    
-    (log/debug "search-docs: " es-params )
-    
+
+    (log/debug "search-docs:" es-params)
+
     (pagination/response (or results [])
                          (:from es-params)
                          (:size es-params)

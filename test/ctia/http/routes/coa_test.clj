@@ -116,9 +116,6 @@
                  :owner "foouser"}]
                (map #(dissoc % :created :modified) coas)))))
 
-      ;; CLB: FIXME
-      ;;(test-query-string-search :coa "description:description" :description)
-      
       (testing "GET /ctia/coa/:id"
         (let [response (get (str "ctia/coa/" (:short-id coa-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
@@ -151,6 +148,8 @@
                (dissoc coa
                        :created
                        :modified)))))
+
+      (test-query-string-search :coa "description" :description)
 
       (testing "PUT /ctia/coa/:id"
         (let [{updated-coa :parsed-body

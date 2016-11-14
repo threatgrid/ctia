@@ -189,7 +189,7 @@
     (coa/handle-list state filter-map params))
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap params]
-    (ca/handle-query-string-search state query filtermap params)))
+    (coa/handle-query-string-search state query filtermap params)))
 
 (defrecord DataTableStore [state]
   IDataTableStore

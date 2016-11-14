@@ -21,11 +21,7 @@
 
 (def all_text
   "The same as the `text` maping, but will be included in the _all field"
-  {:type "string"
-   :analyzer "text_analyzer"
-   :search_analyzer "search_analyzer"
-   :search_quote_analyzer "text_analyzer"
-   :include_in_all true})
+  (assoc text :include_in_all true))
 
 (def token
   "A mapping for fields whose value should be treated like a symbol.
@@ -50,12 +46,11 @@
    :external_ids all_token
    :timestamp ts
    :language token
-   :tlp token
-   })
+   :tlp token})
 
 (def describable-entity-mapping
-  {:title (merge all_text
-                 {:fields {:whole all_token}})
+  {:title (assoc all_text
+                 :fields {:whole all_token})
    :short_description all_text
    :description all_text})
 
@@ -680,18 +675,15 @@
     {:default_search ;; same as text_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_stop"]
-      }
+      :filter ["lowercase" "english_stop"]}
      :text_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase"]
-      }
+      :filter ["lowercase"]}
      :search_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_stop"]
-      }
+      :filter ["lowercase" "english_stop"]}
      :token_analyzer
      {:filter ["token_len" "lowercase"]
       :tokenizer "keyword"
