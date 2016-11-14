@@ -48,7 +48,7 @@
                        :related_TTPs [{:confidence "High"
                                        :source "source"
                                        :relationship "relationship"
-                                       :ttp_id "ttp-999"}]
+                                       :TTP_id "ttp-999"}]
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})
@@ -80,7 +80,7 @@
             :related_TTPs [{:confidence "High"
                             :source "source"
                             :relationship "relationship"
-                            :ttp_id "ttp-999"}]
+                            :TTP_id "ttp-999"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :owner "foouser"}
@@ -125,7 +125,7 @@
                  :related_TTPs [{:confidence "High"
                                  :source "source"
                                  :relationship "relationship"
-                                 :ttp_id "ttp-999"}]
+                                 :TTP_id "ttp-999"}]
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                  :owner "foouser"}]
@@ -162,7 +162,7 @@
                 :related_TTPs [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :ttp_id "ttp-999"}]
+                                :TTP_id "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
@@ -194,7 +194,7 @@
                           :related_TTPs [{:confidence "High"
                                           :source "source"
                                           :relationship "relationship"
-                                          :ttp_id "ttp-999"}]
+                                          :TTP_id "ttp-999"}]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}}
                    :headers {"api_key" "45c1f5e3f05d0"})
@@ -226,7 +226,7 @@
                 :related_TTPs [{:confidence "High"
                                 :source "source"
                                 :relationship "relationship"
-                                :ttp_id "ttp-999"}]
+                                :TTP_id "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
