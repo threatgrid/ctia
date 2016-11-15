@@ -44,8 +44,8 @@
     (st/optional-keys
      (reduce merge {}
              (map (fn [s] (merge (default-store-properties s)
-                                 (es-store-impl-properties s)
-                                 (atom-store-impl-properties s)))
+                                (es-store-impl-properties s)
+                                (atom-store-impl-properties s)))
                   store-names)))))
 
 (s/defschema PropertiesSchema
@@ -62,6 +62,8 @@
 
    (st/required-keys {"ctia.http.enabled" s/Bool
                       "ctia.http.port" s/Int
+                      "ctia.http.access-control-allow-origin" s/Str
+                      "ctia.http.access-control-allow-methods" s/Str
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
 

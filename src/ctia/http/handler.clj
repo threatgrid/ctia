@@ -1,9 +1,12 @@
 (ns ctia.http.handler
-  (:require [compojure.api.sweet :refer [context defapi]]
-            [compojure.api.core :refer [middleware]]
-            [ctia.http.middleware.auth :as auth]
+  (:require [compojure.api
+             [core :refer [middleware]]
+             [sweet :refer [context defapi]]]
             [ctia.http.exceptions :as ex]
-            [ctia.http.middleware.metrics :as metrics]
+            [ctia.http.middleware
+             [auth :as auth]
+             [cache-control :refer [wrap-cache-control-headers]]
+             [metrics :as metrics]]
             [ctia.http.routes
              [actor :refer [actor-routes]]
              [bulk :refer [bulk-routes]]
@@ -17,18 +20,14 @@
              [incident :refer [incident-routes]]
              [indicator :refer [indicator-routes]]
              [judgement :refer [judgement-routes]]
-             [relationship :refer [relationship-routes]]
              [metrics :refer [metrics-routes]]
              [observable :refer [observable-routes]]
              [properties :refer [properties-routes]]
+             [relationship :refer [relationship-routes]]
              [sighting :refer [sighting-routes]]
              [ttp :refer [ttp-routes]]
              [verdict :refer [verdict-routes]]
              [version :refer [version-routes]]]
-            [ring.middleware
-             [format :refer [wrap-restful-format]]
-             [params :as params]]
-            [ctia.http.middleware.cache-control :refer [wrap-cache-control-headers]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]))
 
 (def api-description
