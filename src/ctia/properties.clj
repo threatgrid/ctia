@@ -31,11 +31,9 @@
    (str "ctia.store.es." store ".port") s/Int
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str
-   (str "ctia.store.es." store ".refresh") s/Bool})
-
-(defn atom-store-impl-properties [store]
-  {(str "ctia.store.atom." store ".mode") (s/enum :durable :memory)
-   (str "ctia.store.atom." store ".path") s/Str})
+   (str "ctia.store.es." store ".refresh") s/Bool
+   (str "ctia.store.es." store ".replicas") s/Num
+   (str "ctia.store.es." store ".shards") s/Num})
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
@@ -44,8 +42,7 @@
     (st/optional-keys
      (reduce merge {}
              (map (fn [s] (merge (default-store-properties s)
-                                 (es-store-impl-properties s)
-                                 (atom-store-impl-properties s)))
+                                (es-store-impl-properties s)))
                   store-names)))))
 
 (s/defschema PropertiesSchema

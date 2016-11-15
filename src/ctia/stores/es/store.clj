@@ -1,6 +1,24 @@
 (ns ctia.stores.es.store
-  (:require [ctia.lib.es.index :as es-index :refer [connect ESConnState]]
-            [schema.core :as s]
+  (:require [clojure.tools.logging :as log]
+            [ctia.lib.es.index :as es-index :refer [connect ESConnState]]
+            [ctia.store
+             :refer
+             [IActorStore
+              ICampaignStore
+              ICOAStore
+              IDataTableStore
+              IEventStore
+              IExploitTargetStore
+              IFeedbackStore
+              IIdentityStore
+              IIncidentStore
+              IIndicatorStore
+              IJudgementStore
+              IQueryStringSearchableStore
+              IRelationshipStore
+              ISightingStore
+              ITTPStore
+              IVerdictStore]]
             [ctia.stores.es
              [actor :as ac]
              [campaign :as ca]
@@ -13,45 +31,32 @@
              [incident :as inc]
              [indicator :as in]
              [judgement :as ju]
-             [relationship :as rel]
-             [verdict :as ve]
              [mapping :refer [store-mappings store-settings]]
+             [relationship :as rel]
              [sighting :as sig]
-             [ttp :as ttp]]
-            [ctia.store :refer [IActorStore
-                                ICampaignStore
-                                ICOAStore
-                                IDataTableStore
-                                IEventStore
-                                IExploitTargetStore
-                                IFeedbackStore
-                                IIdentityStore
-                                IIncidentStore
-                                IIndicatorStore
-                                IJudgementStore
-                                IRelationshipStore
-                                IVerdictStore
-                                ISightingStore
-                                ITTPStore
-                                IQueryStringSearchableStore]]))
+             [ttp :as ttp]
+             [verdict :as ve]]
+            [schema.core :as s]))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection returns a map containing transport,
    mapping, and the configured index name"
-  [{:keys [indexname] :as props}]
+  [{:keys [entity indexname shards replicas] :as props}]
 
-  {:index indexname
-   :props props
-   :config {:settings store-settings
-            :mappings store-mappings}
-   :conn (connect props)})
+  (let [settings {:number_of_shards shards
+                  :nuber_of_replicas replicas}]
+    {:index indexname
+     :props props
+     :config {:settings (merge store-settings settings)
+              :mappings (get store-mappings entity)}
+     :conn (connect props)}))
 
 (s/defn init! :- ESConnState
   "initiate an ES Store connection,
-  create the index if needed, returns the es conn state"
+  put the index template, returns the es conn state"
   [props]
   (let [{:keys [conn index config] :as conn-state} (init-store-conn props)]
-    (es-index/create! conn index config)
+    (es-index/create-template! conn index config)
     conn-state))
 
 (defrecord JudgementStore [state]

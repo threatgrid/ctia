@@ -19,7 +19,7 @@
                                      test-helpers/fixture-ctia
                                      test-helpers/fixture-allow-all-auth
                                      es-helpers/fixture-purge-event-indexes
-                                     es-helpers/fixture-recreate-store-indexes])
+                                     es-helpers/fixture-delete-store-indexes])
 
    :es-simple-index (join-fixtures [test-helpers/fixture-properties:clean
                                     es-helpers/fixture-properties:es-store
@@ -27,7 +27,7 @@
                                     test-helpers/fixture-ctia
                                     test-helpers/fixture-allow-all-auth
                                     es-helpers/fixture-purge-event-indexes
-                                    es-helpers/fixture-recreate-store-indexes])}
+                                    es-helpers/fixture-delete-store-indexes])}
 
   (testing "Events are published to es"
     (let [{{judgement-1-long-id :id

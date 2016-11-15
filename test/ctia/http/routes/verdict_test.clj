@@ -21,12 +21,6 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  (testing "a verdict that doesn't exist is a 404"
-    (let [{status :status}
-          (get "ctia/ip/10.0.0.1/verdict"
-               :headers {"api_key" "45c1f5e3f05d0"})]
-      (is (= 404 status))))
-
   (testing "test setup: create a judgement (1)"
     ;; Incorrect observable
     (let [response (post "ctia/judgement"
@@ -69,6 +63,13 @@
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})]
       (is (= 201 (:status response)))))
+
+
+  (testing "a verdict that doesn't exist is a 404"
+    (let [{status :status}
+          (get "ctia/ip/10.0.0.42/verdict"
+               :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 404 status))))
 
   (testing "test setup: create a judgement (4)"
     ;; Loses a tie because of its timestamp being later
