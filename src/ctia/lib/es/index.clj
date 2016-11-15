@@ -26,6 +26,11 @@
 (defn native-conn? [conn]
   (not (:uri conn)))
 
+(defn create-template-fn [conn]
+  (if (native-conn? conn)
+    native-index/create-template
+    rest-index/create-template))
+
 (defn index-exists?-fn [conn]
   (if (native-conn? conn)
     native-index/exists?
@@ -66,53 +71,10 @@
   (when ((index-exists?-fn conn) conn index-name)
     ((index-delete-fn conn) conn index-name)))
 
-(defn create!
-  "create an index, abort if already exists"
+(defn create-template!
+  "create an index template, update if already exists"
   [conn index-name index-config]
-  (when-not ((index-exists?-fn conn) conn index-name)
-    ((index-create-fn conn) conn index-name index-config)))
 
-(defn create-alias!
-  "create an index alias simple or filtered"
-  ([conn index alias]
-   (:acknowledged
-    ((update-alias-fn conn)
-     conn
-     {:add {:index index
-            :alias alias}})))
-  ([conn index alias routing filter]
-   (:acknowledged
-    ((update-alias-fn conn)
-     conn
-     {:add {:index index
-            :alias alias
-            :routing routing
-            :filter filter}}))))
-
-(s/defn create-aliased-index!
-  "create an index with an alias for a slice"
-  [{:keys [conn index index-config] :as state :- ESConnState}
-   index-name :- s/Str]
-
-  (create! conn index-name index-config)
-  (create-alias! conn index-name index))
-
-(s/defn create-filtered-alias!
-  "create a filtered index alias"
-  [{:keys [conn index index-config] :as state :- ESConnState}
-   name :- s/Str
-   routing :- s/Str
-   filter :- {s/Any s/Any}]
-
-  (create! conn index index-config)
-  (create-alias! conn index name routing filter))
-
-(def memo-create-filtered-alias!
-  (memo/fifo create-filtered-alias!
-             :fifo/threshold
-             alias-create-fifo-threshold))
-
-(def memo-create-aliased-index!
-  (memo/fifo create-aliased-index!
-             :fifo/threshold
-             alias-create-fifo-threshold))
+  (let [template (str index-name "*")
+        opts (assoc index-config :template template)]
+    ((create-template-fn conn) conn index-name opts)))

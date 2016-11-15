@@ -76,7 +76,7 @@
 (def attack-pattern
   {:properties
    {:title (merge all_text
-                 {:fields {:whole all_token}})
+                  {:fields {:whole all_token}})
     :short_description all_text
     :description all_text
     :capec_id token}})
@@ -84,7 +84,7 @@
 (def malware-instance
   {:properties
    {:title (merge all_text
-                 {:fields {:whole all_token}})
+                  {:fields {:whole all_token}})
     :description all_text
     :short_description all_text
     :type token}})
@@ -112,7 +112,7 @@
 (def infrastructure
   {:properties
    {:title (merge all_text
-                 {:fields {:whole all_token}})
+                  {:fields {:whole all_token}})
     :description all_text
     :short_description all_text
     :type token}})
@@ -277,7 +277,7 @@
 (def vulnerability
   {:properties
    {:title (merge all_text
-                 {:fields {:whole all_token}})
+                  {:fields {:whole all_token}})
     :description all_text
     :is_known {:type "boolean"}
     :is_public_acknowledged {:type "boolean"}
@@ -664,7 +664,9 @@
      :verdict {:type "object"}}}})
 
 (def store-settings
-  {:analysis
+  {:nuber_of_replicas 1
+   :number_of_shards 1
+   :analysis
    {:filter
     {:token_len {:max 255
                  :min 0
@@ -690,19 +692,18 @@
       :type "custom"}}}})
 
 (def store-mappings
-  (merge {}
-         judgement-mapping
-         relationship-mapping
-         verdict-mapping
-         indicator-mapping
-         ttp-mapping
-         feedback-mapping
-         actor-mapping
-         campaign-mapping
-         coa-mapping
-         data-table-mapping
-         incident-mapping
-         exploit-target-mapping
-         sighting-mapping
-         identity-mapping
-         event-mapping))
+  {:judgement judgement-mapping
+   :relationship relationship-mapping
+   :verdict verdict-mapping
+   :indicator indicator-mapping
+   :ttp ttp-mapping
+   :feedback feedback-mapping
+   :actor actor-mapping
+   :campaign campaign-mapping
+   :coa coa-mapping
+   :data-table data-table-mapping
+   :incident incident-mapping
+   :exploit-target exploit-target-mapping
+   :sighting sighting-mapping
+   :identity identity-mapping
+   :event event-mapping})

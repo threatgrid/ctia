@@ -1,10 +1,8 @@
 (ns ctia.lib.es.slice
   (:require [clj-momo.lib.time :refer [format-date-time
-                                   format-index-time
-                                   round-date]]
-            [ctia.lib.es.index :refer [ESConnState
-                                       memo-create-aliased-index!
-                                       memo-create-filtered-alias!]]
+                                       format-index-time
+                                       round-date]]
+            [ctia.lib.es.index :refer [ESConnState]]
             [schema.core :as s]))
 
 (s/defschema DateRangeFilter
@@ -58,22 +56,3 @@
     (merge slice-config
            {:filter f
             :name (slice-name (:index state) ts)})))
-
-(s/defn ensure-slice-created! :- s/Bool
-  "Create the required slice if undexisting"
-  [state :- ESConnState
-   slice-props :- SliceProperties]
-
-  (case (:strategy slice-props)
-    :aliased-index
-    (memo-create-aliased-index!
-     state
-     (:name slice-props))
-
-    :filtered-alias
-    (memo-create-filtered-alias!
-     state
-     (:name slice-props)
-     (:name slice-props)
-     (:filter slice-props))
-    (throw (Exception. "Unknown slicing strategy"))))

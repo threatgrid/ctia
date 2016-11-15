@@ -5,7 +5,7 @@
             [ctia.lib.es
              [document :as d]
              [index :refer [connect ESConnState]]
-             [slice :refer [ensure-slice-created! get-slice-props SliceProperties]]]
+             [slice :refer [get-slice-props SliceProperties]]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.properties :refer [properties]]
             [ctim.events.schemas :as event-schemas]
@@ -71,7 +71,6 @@
    events :- [event-schemas/Event]]
   (if (-> state :slicing :strategy)
     (let [slice-props (get-slice-props (:timestamp (first events)) state)]
-      (ensure-slice-created! state slice-props)
       (produce state slice-props events))
     (produce state events))
   events)
