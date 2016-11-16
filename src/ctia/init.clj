@@ -95,30 +95,32 @@
                       (clojure.string/split #",")) [])
 
           store-properties
-          (map (fn [impl]
-                 {:properties
-                  (merge (get-in @p/properties
-                                 [:ctia :store impl :default]
-                                 {})
-                         (get-in @p/properties
-                                 [:ctia :store impl store-key]
-                                 {}))
+          (pmap (fn [impl]
+                  {:properties
+                   (merge
+                    {:entity store-key}
+                    (get-in @p/properties
+                            [:ctia :store impl :default]
+                            {})
+                    (get-in @p/properties
+                            [:ctia :store impl store-key]
+                            {}))
 
-                  :builder
-                  (get-in store-factories [:builder impl]
-                          (fn default-builder [f p] (f)))
+                   :builder
+                   (get-in store-factories [:builder impl]
+                           (fn default-builder [f p] (f)))
 
-                  :factory
-                  (get-in store-factories [store-key impl]
-                          #(throw (ex-info (format "Could not configure %s store" impl)
-                                           {:store-key store-key
-                                            :store-type (keyword %)})))})
-               (map keyword store-impls))
+                   :factory
+                   (get-in store-factories [store-key impl]
+                           #(throw (ex-info (format "Could not configure %s store" impl)
+                                            {:store-key store-key
+                                             :store-type (keyword %)})))})
+                (map keyword store-impls))
 
           store-instances
-          (doall (map (fn [{:keys [builder factory properties]}]
-                        (builder factory properties))
-                      store-properties))]
+          (doall (pmap (fn [{:keys [builder factory properties]}]
+                         (builder factory properties))
+                       store-properties))]
 
       (swap! store/stores assoc store-key store-instances))))
 

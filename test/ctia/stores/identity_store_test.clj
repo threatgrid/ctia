@@ -11,6 +11,13 @@
 
 (deftest-for-each-store test-read-identity
   (testing "Reading not-found identity returns nil"
+
+    (store/write-store :identity
+                       (fn [store]
+                         (store/create-identity store {:login "bar"
+                                                       :capabilities #{:read-actor}
+                                                       :role :admin})))
+
     (is (nil? (store/read-store :identity
                                 (fn [store]
                                   (store/read-identity store "foo")))))))
