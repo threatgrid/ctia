@@ -664,7 +664,7 @@
      :verdict {:type "object"}}}})
 
 (def store-settings
-  {:nuber_of_replicas 1
+  {:number_of_replicas 1
    :number_of_shards 1
    :analysis
    {:filter

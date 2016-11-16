@@ -44,7 +44,7 @@
   [{:keys [entity indexname shards replicas] :as props}]
 
   (let [settings {:number_of_shards shards
-                  :nuber_of_replicas replicas}]
+                  :number_of_replicas replicas}]
     {:index indexname
      :props props
      :config {:settings (merge store-settings settings)
