@@ -35,6 +35,24 @@
   (when (seq id)
     (id/str->short-id id)))
 
+(defn- find-checked-id
+  "Like find-id above, but checks that the hostname in the ID (if it
+  is a long ID) is the local server hostname.  Throws bad-request! on
+  mismatch."
+  [{id :id, :as entity}]
+  (when (seq id)
+    (if (id/long-id? id)
+      (let [id-rec (id/long-id->id id)
+            this-host (get-in @properties [:ctia :http :show :hostname])]
+        (if (= (:hostname id-rec) this-host)
+          (:short-id id-rec)
+          (throw (http-response/bad-request!
+                  {:error "Invalid hostname in ID"
+                   :id id
+                   :this-host this-host
+                   :entity entity}))))
+      (id/str->short-id id))))
+
 (defn- make-id
   [entity-type]
   (str (name entity-type) "-" (UUID/randomUUID)))
@@ -43,7 +61,7 @@
   [{:keys [identity entity-type prev-entity]} :- FlowMap
    entity :- {s/Keyword s/Any}]
   (or (find-id prev-entity)
-      (when-let [entity-id (find-id entity)]
+      (when-let [entity-id (find-checked-id entity)]
         (when-not (auth/capable? identity :specify-id)
           (throw (http-response/bad-request!
                   {:error "Missing capability to specify entity ID"

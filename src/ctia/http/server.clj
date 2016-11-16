@@ -1,23 +1,53 @@
 (ns ctia.http.server
-  (:require [ctia.http.handler :as handler]
-            [ctia.properties :refer [properties]]
-            [ctia.shutdown :as shutdown]
+  (:require [clojure.string :refer [split]]
+            [ctia
+             [properties :refer [properties]]
+             [shutdown :as shutdown]]
+            [ctia.http.handler :as handler]
             [ring.adapter.jetty :as jetty]
-            [ring.middleware.reload :refer [wrap-reload]])
+            [ring.middleware
+             [cors :refer [wrap-cors]]
+             [reload :refer [wrap-reload]]])
   (:import org.eclipse.jetty.server.Server))
 
 (defonce server (atom nil))
 
-(defn- new-jetty-instance [{:keys [dev-reload max-threads min-threads port]
-                            :as _http-config_}]
+(def default-allow-methods "get,post,put,delete")
+
+(defn- allow-origin-regexps [origins-str]
+  "take a CORS allowed origin config string
+   turn it to a a vec of patterns"
+  (vec (map re-pattern
+            (split origins-str #","))))
+
+
+(defn- allow-methods [methods-str]
+  "take a CORS allowed method config string
+   turn it to a a vec of metjod keywords"
+  (vec (map keyword (split methods-str #","))))
+
+
+(defn- new-jetty-instance
+  [{:keys [dev-reload
+           max-threads
+           min-threads
+           port
+           access-control-allow-origin
+           access-control-allow-methods]
+    :or {access-control-allow-methods "get,post,put,delete"}}]
   (doto
-      (jetty/run-jetty (if dev-reload
-                         (wrap-reload #'handler/api-handler)
-                         #'handler/api-handler)
-                       {:port port
-                        :min-threads min-threads
-                        :max-threads max-threads
-                        :join? false})
+      (jetty/run-jetty
+       (cond-> #'handler/api-handler
+         access-control-allow-origin
+         (wrap-cors :access-control-allow-origin
+                    (allow-origin-regexps access-control-allow-origin)
+                    :access-control-allow-methods
+                    (allow-methods access-control-allow-methods))
+         dev-reload wrap-reload)
+       {:port port
+        :min-threads min-threads
+        :max-threads max-threads
+        :join? false})
     (.setStopAtShutdown true)
     (.setStopTimeout (* 1000 10))))
 
@@ -30,7 +60,8 @@
 
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
-  (let [server-instance (new-jetty-instance (get-in @properties [:ctia :http]))]
+  (let [http-config (get-in @properties [:ctia :http])
+        server-instance (new-jetty-instance http-config)]
     (reset! server server-instance)
     (shutdown/register-hook! :http.server stop!)
     (if join?

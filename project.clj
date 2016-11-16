@@ -63,6 +63,7 @@
                  [ring/ring-jetty-adapter "1.5.0"]
                  [javax.servlet/servlet-api "2.5"]
                  [ring/ring-devel "1.4.0"]
+                 [ring-cors "0.1.8"]
                  [ring/ring-codec "1.0.1"
                   ;; Exclusions:
                   ;; - ring-codec 1.0.1 is not using the latest commons-codec
