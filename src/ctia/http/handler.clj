@@ -26,6 +26,12 @@
              [relationship :refer [relationship-routes]]
              [sighting :refer [sighting-routes]]
              [ttp :refer [ttp-routes]]
+<<<<<<< HEAD
+=======
+             [verdict :refer [verdict-routes]]
+             [graphql :refer [graphql-routes]]
+             [bundle :refer [bundle-routes]]
+>>>>>>> First draft of GraphQL support
              [version :refer [version-routes]]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]))
 
@@ -104,7 +110,7 @@
                wrap-cache-control-headers
                ;; always last
                metrics/wrap-metrics]
-
+              
               documentation-routes
               (context "/ctia" []
                        actor-routes
@@ -124,4 +130,5 @@
                        sighting-routes
                        ttp-routes
                        relationship-routes
+                       graphql-routes
                        version-routes)))
