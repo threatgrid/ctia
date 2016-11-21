@@ -41,7 +41,6 @@
   {:id all_token
    :type token
    :schema_version token
-   :uri {:enabled "false"}
    :revision {:type "long"}
    :external_ids all_token
    :timestamp ts

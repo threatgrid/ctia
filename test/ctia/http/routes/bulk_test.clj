@@ -128,7 +128,6 @@
   {:title (str "title" n)
    :description (str "description-" n)
    :short_description "short desc"
-   :uri "http://example.com"
    :revision 1
    :external_ids ["foo" "bar"]
    :timestamp #inst "2016-02-11T00:40:48.212-00:00"
