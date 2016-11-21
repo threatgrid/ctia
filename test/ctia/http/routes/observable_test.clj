@@ -29,7 +29,7 @@
                      :disposition 2
                      :source "judgement 1"
                      :priority 100
-                     :severity 100
+                     :severity "High"
                      :confidence "Low"
                      :indicators []
                      :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}
@@ -99,7 +99,7 @@
                      :disposition 2
                      :source "judgement 2"
                      :priority 100
-                     :severity 100
+                     :severity "High"
                      :confidence "High"
                      :indicators []
                      :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}
@@ -152,7 +152,7 @@
                      :disposition 2
                      :source "judgement 3"
                      :priority 100
-                     :severity 100
+                     :severity "High"
                      :confidence "Low"
                      :indicators []
                      :valid_time {:start_time "2016-02-01T00:00:00.000-00:00"}
@@ -245,7 +245,7 @@
                 :disposition_name "Malicious"
                 :source "judgement 2"
                 :priority 100
-                :severity 100
+                :severity "High"
                 :confidence "High"
                 :indicators [{:indicator_id (id/long-id indicator-2-id)}]
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"
@@ -260,7 +260,7 @@
                 :disposition_name "Malicious"
                 :source "judgement 3"
                 :priority 100
-                :severity 100
+                :severity "High"
                 :confidence "Low"
                 :indicators [{:indicator_id (id/long-id indicator-3-id)}]
                 :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"

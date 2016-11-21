@@ -117,7 +117,7 @@
    :disposition 2
    :source "test"
    :priority 100
-   :severity 100
+   :severity "High"
    :confidence "Low"
    :indicators [{:confidence "High"
                  :source "source"

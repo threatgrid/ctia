@@ -40,7 +40,7 @@
                    :source "source"
                    :tlp "green"
                    :priority 100
-                   :severity 100
+                   :severity "High"
                    :confidence "Low"
                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
       (post "ctia/judgement"
@@ -50,7 +50,7 @@
                    :source "source"
                    :tlp "green"
                    :priority 100
-                   :severity 100
+                   :severity "High"
                    :confidence "Low"
                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
       (post "ctia/judgement"
@@ -60,7 +60,7 @@
                    :source "source"
                    :tlp "green"
                    :priority 100
-                   :severity 100
+                   :severity "High"
                    :confidence "Low"
                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
       (is (= 3 (rmq/current-depth queue)))

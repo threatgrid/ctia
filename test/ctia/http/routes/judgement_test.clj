@@ -37,7 +37,7 @@
                        :disposition 2
                        :source "test"
                        :priority 100
-                       :severity 100
+                       :severity "High"
                        :confidence "Low"
                        :reason "This is a bad IP address that talked to some evil servers"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
@@ -59,7 +59,7 @@
             :disposition 2
             :disposition_name "Malicious"
             :priority 100
-            :severity 100
+            :severity "High"
             :confidence "Low"
             :source "test"
             :tlp "green"
@@ -161,7 +161,7 @@
                 :disposition 2
                 :disposition_name "Malicious"
                 :priority 100
-                :severity 100
+                :severity "High"
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
@@ -192,7 +192,7 @@
                  :disposition 2
                  :disposition_name "Malicious"
                  :priority 100
-                 :severity 100
+                 :severity "High"
                  :confidence "Low"
                  :source "test"
                  :tlp "green"
@@ -224,7 +224,7 @@
                 :disposition 2
                 :disposition_name "Malicious"
                 :priority 100
-                :severity 100
+                :severity "High"
                 :confidence "Low"
                 :source "test"
                 :tlp "green"
@@ -281,7 +281,7 @@
                                               :disposition 3
                                               :source "test"
                                               :priority 100
-                                              :severity 100
+                                              :severity "High"
                                               :confidence "Low"
                                               :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                                        :headers {"api_key" "45c1f5e3f05d0"})
@@ -307,7 +307,7 @@
                        :disposition 2
                        :source "test"
                        :priority 100
-                       :severity 100
+                       :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})]
@@ -320,7 +320,7 @@
             :disposition_name "Malicious"
             :source "test"
             :priority 100
-            :severity 100
+            :severity "High"
             :confidence "Low"
             :tlp "green"
             :schema_version schema-version
@@ -340,7 +340,7 @@
                        :disposition_name "Malicious"
                        :source "test"
                        :priority 100
-                       :severity 100
+                       :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})]
@@ -353,7 +353,7 @@
             :disposition_name "Malicious"
             :source "test"
             :priority 100
-            :severity 100
+            :severity "High"
             :confidence "Low"
             :tlp "green"
             :schema_version schema-version
@@ -372,7 +372,7 @@
                                     :type "ip"}
                        :source "test"
                        :priority 100
-                       :severity 100
+                       :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})]
@@ -385,7 +385,7 @@
             :disposition_name "Unknown"
             :source "test"
             :priority 100
-            :severity 100
+            :severity "High"
             :confidence "Low"
             :tlp "green"
             :schema_version schema-version
@@ -406,7 +406,7 @@
                        :disposition_name "Unknown"
                        :source "test"
                        :priority 100
-                       :severity 100
+                       :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})]
@@ -419,7 +419,7 @@
                         :disposition_name "Unknown"
                         :source "test"
                         :priority 100
-                        :severity 100
+                        :severity "High"
                         :confidence "Low"
                         :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
            judgement)))))
@@ -437,7 +437,7 @@
                        :disposition_name "Unknown"
                        :source (str "dotimes " n)
                        :priority 100
-                       :severity 100
+                       :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})]

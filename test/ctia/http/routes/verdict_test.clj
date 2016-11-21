@@ -30,7 +30,7 @@
                                 :disposition 1
                                 :source "test"
                                 :priority 100
-                                :severity 100
+                                :severity "High"
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})]
@@ -44,7 +44,7 @@
                                 :disposition 1
                                 :source "test"
                                 :priority 90
-                                :severity 100
+                                :severity "High"
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})]
@@ -58,7 +58,7 @@
                                 :disposition 3
                                 :source "test"
                                 :priority 99
-                                :severity 100
+                                :severity "High"
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})]
@@ -79,7 +79,7 @@
                                 :disposition 2
                                 :source "test"
                                 :priority 99
-                                :severity 100
+                                :severity "High"
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:01:00.000-00:00"}}
                          :headers {"api_key" "45c1f5e3f05d0"})
@@ -95,7 +95,7 @@
                        :disposition 2
                        :source "test"
                        :priority 99
-                       :severity 100
+                       :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})
@@ -135,7 +135,7 @@
                        :reason "string",
                        :source_uri "string",
                        :priority 99,
-                       :severity 50,
+                       :severity "Low"
                        :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
                                     :end_time "2016-02-12T14:56:26.719-00:00"}
                        :confidence "Medium"}
@@ -154,7 +154,7 @@
                        :reason "string",
                        :source_uri "string",
                        :priority 99,
-                       :severity 50,
+                       :severity "Low"
                        :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"}
                        :confidence "Medium"}
                 :headers {"api_key" "45c1f5e3f05d0"})

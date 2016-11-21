@@ -358,7 +358,7 @@
       :disposition_name token
       :priority {:type "long"}
       :confidence token
-      :severity {:type "long"}
+      :severity token
       :valid_time valid-time
       :reason all_text
       :reason_uri token

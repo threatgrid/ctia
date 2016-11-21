@@ -25,6 +25,6 @@
                        :source "source"
                        :priority 99
                        :confidence "High"
-                       :severity 88})]
+                       :severity "Medium"})]
       (is (= 400 status))
       (is (= "Invalid hostname in ID" error)))))
