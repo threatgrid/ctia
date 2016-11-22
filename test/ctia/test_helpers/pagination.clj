@@ -124,7 +124,7 @@
 
 (defn pagination-test [route headers sort-fields]
   "all pagination related tests for a list route"
-  (testing (str "paginations tests for: " route)
+  (testing (str "pagination tests for: " route)
     (do (limit-test route headers)
         (offset-test route headers)
         (sort-test route headers sort-fields)

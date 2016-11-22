@@ -13,38 +13,38 @@
                                     es-helpers/fixture-delete-store-indexes
                                     helpers/fixture-allow-all-auth]))
 
-(defspec spec-actor-routes-es-store
+(defspec ^:generative spec-actor-routes-es-store
   specs/spec-actor-routes)
 
-(defspec spec-campaign-routes-es-store
+(defspec ^:generative spec-campaign-routes-es-store
   specs/spec-campaign-routes)
 
-(defspec spec-coa-routes-es-store
+(defspec ^:generative spec-coa-routes-es-store
   specs/spec-coa-routes)
 
-(defspec spec-data-table-routes-es-store
+(defspec ^:generative spec-data-table-routes-es-store
   specs/spec-data-table-routes)
 
-(defspec spec-exploit-target-routes-es-store
+(defspec ^:generative spec-exploit-target-routes-es-store
   specs/spec-exploit-target-routes)
 
-(defspec spec-feedback-routes-es-store
+(defspec ^:generative spec-feedback-routes-es-store
   specs/spec-feedback-routes)
 
-(defspec spec-incident-routes-es-store
+(defspec ^:generative spec-incident-routes-es-store
   specs/spec-incident-routes)
 
-(defspec spec-indicator-routes-es-store
+(defspec ^:generative spec-indicator-routes-es-store
   specs/spec-indicator-routes)
 
-(defspec spec-judgement-routes-es-store
+(defspec ^:generative spec-judgement-routes-es-store
   specs/spec-judgement-routes)
 
-(defspec spec-relationship-routes-es-store
+(defspec ^:generative spec-relationship-routes-es-store
   specs/spec-judgement-routes)
 
-(defspec spec-sighting-routes-es-store
+(defspec ^:generative spec-sighting-routes-es-store
   specs/spec-sighting-routes)
 
-(defspec spec-ttp-routes-es-store
+(defspec ^:generative spec-ttp-routes-es-store
   specs/spec-ttp-routes)

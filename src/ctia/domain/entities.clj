@@ -176,13 +176,6 @@
             :created (or (:created prev-sighting) now)
             :modified now))))
 
-(s/defn check-new-sighting :- s/Bool
-  "We need either an observable or an indicator,
-   as a Sighting is useless without one of them."
-  [sighting :- NewSighting]
-  (not (and (empty? (:observables sighting))
-            (empty? (:indicators sighting)))))
-
 (def realize-ttp
   (default-realize-fn "ttp" NewTTP StoredTTP))
 

@@ -28,8 +28,7 @@
   (update-indicator [this id indicator])
   (read-indicator [this id])
   (delete-indicator [this id])
-  (list-indicators [this filtermap params])
-  (list-indicators-by-judgements [this judgements params]))
+  (list-indicators [this filtermap params]))
 
 (defprotocol IExploitTargetStore
   (read-exploit-target [this id])

@@ -12,19 +12,3 @@
 (def handle-query-string-search (crud/handle-query-string-search :indicator StoredIndicator))
 
 (def ^{:private true} mapping "indicator")
-
-(defn handle-list-by-judgements
-  [state judgements params]
-  (let [ids (some->> judgements
-                     (map :indicators)
-                     (mapcat #(map :indicator_id %))
-                     (map #(id/str->short-id %))
-                     set)]
-    (when ids
-      (search-docs (:conn state)
-                   (:index state)
-                   mapping
-                   nil
-                   {:type "indicator"
-                    :id (vec ids)}
-                   params))))

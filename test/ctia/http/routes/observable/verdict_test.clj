@@ -1,4 +1,4 @@
-(ns ctia.http.routes.verdict-test
+(ns ctia.http.routes.observable.verdict-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.time :as time]
             [clj-momo.test-helpers.core :as mht]
@@ -24,8 +24,7 @@
   (testing "test setup: create a judgement (1)"
     ;; Incorrect observable
     (let [response (post "ctia/judgement"
-                         :body {:indicators []
-                                :observable {:value "127.0.0.1"
+                         :body {:observable {:value "127.0.0.1"
                                              :type "ip"}
                                 :disposition 1
                                 :source "test"

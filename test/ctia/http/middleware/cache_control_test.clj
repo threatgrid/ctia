@@ -34,12 +34,6 @@
                        :actor_type "Hacker"
                        :source "a source"
                        :confidence "High"
-                       :associated_actors [{:actor_id "actor-123"}
-                                           {:actor_id "actor-456"}]
-                       :associated_campaigns [{:campaign_id "campaign-444"}
-                                              {:campaign_id "campaign-555"}]
-                       :observed_TTPs [{:TTP_id "ttp-333"}
-                                       {:TTP_id "ttp-999"}]
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})
@@ -68,12 +62,6 @@
                        :actor_type "Hacker"
                        :source "a source"
                        :confidence "High"
-                       :associated_actors [{:actor_id "actor-123"}
-                                           {:actor_id "actor-456"}]
-                       :associated_campaigns [{:campaign_id "campaign-444"}
-                                              {:campaign_id "campaign-555"}]
-                       :observed_TTPs [{:TTP_id "ttp-333"}
-                                       {:TTP_id "ttp-999"}]
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})

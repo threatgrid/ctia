@@ -53,34 +53,6 @@
                     :identity identity
                     :entities [judgement]))))
 
-           (POST "/:judgement-id/indicator" []
-                 :return (s/maybe RelatedIndicator)
-                 :path-params [judgement-id :- s/Str]
-                 :body [indicator-relationship RelatedIndicator]
-                 :header-params [api_key :- s/Str]
-                 :summary "Adds an Indicator to a Judgement"
-                 :capabilities :create-judgement
-                 (if-let [d (write-store :judgement
-                                         add-indicator-to-judgement
-                                         judgement-id
-                                         indicator-relationship)]
-                   (ok d)
-                   (not-found)))
-
-           (POST "/:judgement-id/indicator" []
-                 :return (s/maybe RelatedIndicator)
-                 :path-params [judgement-id :- s/Str]
-                 :body [indicator-relationship RelatedIndicator]
-                 :header-params [api_key :- s/Str]
-                 :summary "Adds an Indicator to a Judgement"
-                 :capabilities :create-judgement
-                 (if-let [d (write-store :judgement
-                                         add-indicator-to-judgement
-                                         judgement-id
-                                         indicator-relationship)]
-                   (ok d)
-                   (not-found)))
-
            (GET "/search" []
                 :return (s/maybe [StoredJudgement])
                 :summary "Search for a Judgement using a Lucene/ES query string"

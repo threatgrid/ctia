@@ -33,6 +33,7 @@
                     :entity-type :incident
                     :identity identity
                     :entities [incident]))))
+
            (PUT "/:id" []
                 :return StoredIncident
                 :body [incident NewIncident {:description "an updated incident"}]
@@ -87,6 +88,7 @@
                 (if-let [d (read-store :incident read-incident id)]
                   (ok (with-long-id d))
                   (not-found)))
+
            (DELETE "/:id" []
                    :no-doc true
                    :path-params [id :- s/Str]

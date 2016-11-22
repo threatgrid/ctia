@@ -121,6 +121,7 @@
                                      (:es-store-native %)
                                      (:integration %)
                                      (:es-aliased-index %))
+                   :no-gen #(not (:generative %))
                    :all #(not (:disabled %))}
 
   :java-source-paths ["hooks/ctia"]
