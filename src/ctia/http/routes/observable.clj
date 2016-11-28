@@ -67,7 +67,7 @@
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
        :return (s/maybe [StoredJudgement])
-       :summary "Returns all the Judgements associated with the specified observable."
+       :summary "Returns the Judgements associated with the specified observable."
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities :list-judgements
        (paginated-ok
@@ -84,7 +84,7 @@
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
        :return (s/maybe [Reference])
-       :summary (str "Returns all the Indicator references associated with the "
+       :summary (str "Returns the Indicator references associated with the "
                      "specified observable based on Judgement relationships.")
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities #{:list-judgements :list-relationships :list-indicators}
@@ -125,7 +125,7 @@
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities :list-sightings
        :return (s/maybe [StoredSighting])
-       :summary "Returns all Sightings associated with the specified observable."
+       :summary "Returns Sightings associated with the specified observable."
        (paginated-ok
         (sighting/page-with-long-id
          (read-store :sighting
@@ -140,7 +140,7 @@
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
        :return (s/maybe [Reference])
-       :summary (str "Returns all the Indicator references associated with the "
+       :summary (str "Returns Indicator references associated with the "
                      "specified observable based on Sighting relationships.")
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities #{:list-sightings :list-relationships :list-indicators}
@@ -173,12 +173,12 @@
                             (count indicator-ids))))))
 
   (GET "/:observable_type/:observable_value/sightings/incidents" []
-       :tags ["Incidents"]
+       :tags ["Incident"]
        :query [params RefsByObservableQueryParams]
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
        :return (s/maybe [Reference])
-       :summary (str "Returns all of the Incident references associated with the "
+       :summary (str "Returns Incident references associated with the "
                      "specified observable based on Sighting relationships")
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities #{:list-sightings :list-relationships}
