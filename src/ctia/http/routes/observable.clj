@@ -87,7 +87,7 @@
        :summary (str "Returns the Indicator references associated with the "
                      "specified observable based on Judgement relationships.")
        :header-params [api_key :- (s/maybe s/Str)]
-       :capabilities #{:list-judgements :list-relationships :list-indicators}
+       :capabilities #{:list-judgements :list-relationships}
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
               judgements (:data (read-store
@@ -143,7 +143,7 @@
        :summary (str "Returns Indicator references associated with the "
                      "specified observable based on Sighting relationships.")
        :header-params [api_key :- (s/maybe s/Str)]
-       :capabilities #{:list-sightings :list-relationships :list-indicators}
+       :capabilities #{:list-sightings :list-relationships}
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
               sightings (:data (read-store :sighting
