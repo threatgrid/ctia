@@ -35,12 +35,6 @@
    :actor_type "Hacker"
    :source "a source"
    :confidence "High"
-   :associated_actors [{:actor_id "actor-123"}
-                       {:actor_id "actor-456"}]
-   :associated_campaigns [{:campaign_id "campaign-444"}
-                          {:campaign_id "campaign-555"}]
-   :observed_TTPs [{:TTP_id "ttp-333"}
-                   {:TTP_id "ttp-999"}]
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
 
@@ -49,20 +43,6 @@
    :description "description"
    :campaign_type "anything goes here"
    :intended_effect ["Theft"]
-   :indicators [{:indicator_id "indicator-foo"}
-                {:indicator_id "indicator-bar"}]
-   :attribution [{:confidence "High"
-                  :source "source"
-                  :relationship "relationship"
-                  :actor_id "actor-123"}]
-   :related_incidents [{:confidence "High"
-                        :source "source"
-                        :relationship "relationship"
-                        :incident_id "incident-222"}]
-   :related_TTPs [{:confidence "High"
-                   :source "source"
-                   :relationship "relationship"
-                   :TTP_id "ttp-999"}]
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
 
@@ -117,18 +97,13 @@
    :disposition 2
    :source "test"
    :priority 100
-   :severity 100
-   :confidence "Low"
-   :indicators [{:confidence "High"
-                 :source "source"
-                 :relationship "relationship"
-                 :indicator_id "indicator-123"}]})
+   :severity "High"
+   :confidence "Low"})
 
 (defn mk-new-relationship [n]
   {:title (str "title" n)
    :description (str "description-" n)
    :short_description "short desc"
-   :uri "http://example.com"
    :revision 1
    :external_ids ["foo" "bar"]
    :timestamp #inst "2016-02-11T00:40:48.212-00:00"
@@ -146,19 +121,14 @@
    :count 1
    :source "source"
    :sensor "endpoint.sensor"
-   :confidence "High"
-   :indicators [{:indicator_id "indicator-22334455"}]})
+   :confidence "High"})
 
 (defn mk-new-ttp [n]
   {:title (str "ttp-" n)
    :description (str "description: ttp-" n)
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-   :ttp_type "foo"
-   :indicators [{:indicator_id "indicator-1"}
-                {:indicator_id "indicator-2"}]
-   :exploit_targets [{:exploit_target_id "exploit-target-123"}
-                     {:exploit_target_id "exploit-target-234"}]})
+   :ttp_type "foo"})
 
 (deftest testing-gen-bulk-from-fn
   (let [new-bulk {:actors (map mk-new-actor (range 6))

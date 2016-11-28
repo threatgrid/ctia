@@ -53,7 +53,7 @@
                    :entity entity}))))
       (id/str->short-id id))))
 
-(defn- make-id
+(defn make-id
   [entity-type]
   (str (name entity-type) "-" (UUID/randomUUID)))
 

@@ -35,7 +35,6 @@
                  :title "title"
                  :description "description"
                  :short_description "short desc"
-                 :uri "http://example.com"
                  :revision 1
                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                  :language "language"
@@ -58,7 +57,6 @@
             :title "title"
             :description "description"
             :short_description "short desc"
-            :uri "http://example.com"
             :revision 1
             :timestamp #inst "2016-02-11T00:40:48.212-00:00"
             :schema_version schema-version
@@ -95,7 +93,6 @@
                 :title "title"
                 :description "description"
                 :short_description "short desc"
-                :uri "http://example.com"
                 :revision 1
                 :schema_version schema-version
                 :owner "foouser"
@@ -127,7 +124,6 @@
                  :title "title"
                  :description "description"
                  :short_description "short desc"
-                 :uri "http://example.com"
                  :revision 1
                  :schema_version schema-version
                  :owner "foouser"
