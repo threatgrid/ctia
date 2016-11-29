@@ -30,8 +30,11 @@
 =======
              [verdict :refer [verdict-routes]]
              [graphql :refer [graphql-routes]]
+<<<<<<< HEAD
              [bundle :refer [bundle-routes]]
 >>>>>>> First draft of GraphQL support
+=======
+>>>>>>> Remove bundle references
              [version :refer [version-routes]]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]))
 
