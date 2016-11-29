@@ -2,9 +2,10 @@ language: clojure
 lein: lein
 script: lein do clean, javac, test :all
 
-# Cache our Maven deps to be kind to clojars, docker images
+# Cache our Maven deps to be kind to clojars, github, docker images
 cache:
     directories:
+    - $HOME/bin
     - $HOME/.m2
 jdk:
     # https://github.com/travis-ci/travis-ci/issues/5227
@@ -13,16 +14,19 @@ jdk:
     - oraclejdk8
 
 before_install:
+    # create log & bin dir if missing
+    - mkdir -p $LOG_DIR
+    - mkdir -p $BIN_DIR
+
     #https://github.com/travis-ci/travis-ci/issues/5227
     - echo "127.0.0.1 "`hostname` | sudo tee /etc/hosts
-    # install docker-compose
-    - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-    - chmod +x docker-compose
-    - sudo mv docker-compose /usr/local/bin
+
+    # install docker-compose if not in cache
+    - if [ ! -f $COMPOSE_BIN ]; then curl -L {$COMPOSE_URI}/docker-compose-`uname -s`-`uname -m` > $COMPOSE_BIN; fi
+    - chmod +x $COMPOSE_BIN 
 
 before_script:
-    - docker-compose -f containers/dev/docker-compose.yml up -d >/dev/null
-
+    - $COMPOSE_BIN -f containers/dev/docker-compose.yml up -d> $COMPOSE_LOG
     # Wait ES
     - until curl http://127.0.0.1:9200/; do sleep 1; done
 
@@ -34,7 +38,11 @@ services:
 env:
     global:
       - JAVA_OPTS="-XX:MaxPermSize=256m"
-      - COMPOSE_VERSION: 1.4.2
+      - LOG_DIR=$HOME/log
+      - BIN_DIR=$HOME/bin
+      - COMPOSE_URI=https://github.com/docker/compose/releases/download/1.4.2
+      - COMPOSE_BIN=$HOME/bin/docker-compose
+      - COMPOSE_LOG=$HOME/log/docker-compose.log
       - CTIA_STORE_ES_DEFAULT_HOST=127.0.0.1
       - CTIA_STORE_ES_DEFAULT_INDEXNAME=elasticsearch
       - CTIA_STORE_ES_DEFAULT_CLUSTERNAME=elasticsearch
