@@ -14,8 +14,6 @@ jdk:
     - oraclejdk8
 
 before_install:
-    - echo $COMPOSE_BIN
-    - echo $COMPOSE_URI
     # create log & bin dir if missing
     - mkdir -p $LOG_DIR
     - mkdir -p $BIN_DIR
@@ -42,7 +40,6 @@ env:
       - JAVA_OPTS="-XX:MaxPermSize=256m"
       - LOG_DIR=$HOME/log
       - BIN_DIR=$HOME/bin
-      - COMPOSE_VERSION=1.4.2
       - COMPOSE_URI=https://github.com/docker/compose/releases/download/1.4.2
       - COMPOSE_BIN=$HOME/bin/docker-compose
       - COMPOSE_LOG=$HOME/log/docker-compose.log
