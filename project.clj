@@ -43,7 +43,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.3.4-SNAPSHOT"]
+                 [threatgrid/ctim "0.3.4"]
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api
                  ;; 1.1.8 fails to generate JSON schema for s/Any
