@@ -2,11 +2,10 @@
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mht]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
-            [ctia.flows.crud :refer [make-id]]
             [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post]]
+             [core :as helpers :refer [get make-id post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]))
@@ -21,27 +20,15 @@
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
   (let [http-show (get-in @properties [:ctia :http :show])
-        judgement-1-id (id/->id :judgement
-                                (make-id "judgement")
-                                http-show)
-        judgement-2-id (id/->id :judgement
-                                (make-id "judgement")
-                                http-show)
-        judgement-3-id (id/->id :judgement
-                                (make-id "judgement")
-                                http-show)
-        indicator-1-id (id/->id :indicator
-                                (make-id "indicator")
-                                http-show)
-        indicator-2-id (id/->id :indicator
-                                (make-id "indicator")
-                                http-show)
-        relationship-1-id (id/->id :relationship
-                                   (make-id "relationship")
-                                   http-show)
-        relationship-2-id (id/->id :relationship
-                                   (make-id "relationship")
-                                   http-show)
+        judgement-1-id (make-id :judgement)
+        judgement-2-id (make-id :judgement)
+        judgement-3-id (make-id :judgement)
+        indicator-1-id (make-id :indicator)
+        indicator-2-id (make-id :indicator)
+        sighting-1-id (make-id :sighting)
+        relationship-1-id (make-id :relationship)
+        relationship-2-id (make-id :relationship)
+        relationship-3-id (make-id :relationship)
         observable-1 {:type "ip",
                       :value "10.0.0.1"}
         observable-2 {:type "ip"
@@ -72,6 +59,17 @@
                          :confidence "High"
                          :severity "Medium"
                          :external_ids ["judgement-2"]}
+                  :headers {"API_key" "45c1f5e3f05d0"})]
+        (is (= 201 status))))
+
+    ;; This sighting should not be matched (it isn't an indicator)
+    (testing "test setup: create sighting-1"
+      (let [{status :status}
+            (post "ctia/sighting"
+                  :body {:observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                                         :end_time #inst "2016-02-11T00:40:48.212-00:00"}
+                         :observables [observable-1]
+                         :external_ids ["sighting-1"]}
                   :headers {"API_key" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
@@ -110,30 +108,41 @@
         (is (= 201 status))))
 
     ;; This is the relationship that should be matched
-    (testing (str "test setup: create relationship-1 so that judgement-1 is an "
-                  "observation of indicator-1")
+    (testing (str "test setup: create relationship-1 so that judgement-1 is "
+                  "based on indicator-1")
       (let [{status :status}
             (post "ctia/relationship"
                   :body {:id (:short-id relationship-1-id)
                          :source_ref (id/long-id judgement-1-id)
-                         :relationship_type "observable-of"
+                         :relationship_type "based-on"
                          :target_ref (id/long-id indicator-1-id)
                          :external_ids ["relationship-1"]}
                   :headers {"API_key" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This relationship should not be matched
-    (testing (str "test setup: create relationship-2 so that judgement-3 is an "
-                  "observation of indicator-2")
+    (testing (str "test setup: create relationship-2 so that judgement-3 is "
+                  "based on indicator-2")
       (let [{status :status}
             (post "ctia/relationship"
                   :body {:id (:short-id relationship-2-id)
                          :source_ref (id/long-id judgement-3-id)
-                         :relationship_type "observable-of"
+                         :relationship_type "based-on"
                          :target_ref (id/long-id indicator-2-id)
                          :external_ids ["relationship-2"]}
                   :headers {"API_key" "45c1f5e3f05d0"})]
         (is (= 201 status))))
+
+    ;; This relationship should not be matched
+    (testing (str "test setup: create relationship-3 so that judgement-1 is "
+                  "based on sighting-1")
+      (let [{status :status}
+            (post "ctia/relationship"
+                  :body {:id (:short-id relationship-3-id)
+                         :source_ref (id/long-id judgement-1-id)
+                         :relationship_type "based-on"
+                         :target_ref (id/long-id sighting-1-id)
+                         :external_ids ["relationship-3"]})]))
 
     (testing "GET /:observable_type/:observable_value/judgements/indicators"
       (let [{status :status

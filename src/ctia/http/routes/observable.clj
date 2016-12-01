@@ -103,8 +103,7 @@
               relationships (:data (read-store
                                     :relationship
                                     list-relationships
-                                    {:source_ref judgement-ids
-                                     :relationship_type "observable-of"}
+                                    {:source_ref judgement-ids}
                                     nil))
               indicator-ids (->> (map :target_ref relationships)
                                  (map #(id/long-id->id %))
@@ -158,8 +157,7 @@
               relationships (:data (read-store
                                     :relationship
                                     list-relationships
-                                    {:source_ref sighting-ids
-                                     :relationship_type "indicates"}
+                                    {:source_ref sighting-ids}
                                     nil))
               indicator-ids (->> (map :target_ref relationships)
                                  (map #(id/long-id->id %))
@@ -196,8 +194,7 @@
               relationships (:data (read-store
                                     :relationship
                                     list-relationships
-                                    {:source_ref sighting-ids
-                                     :relationship_type "member-of"}
+                                    {:source_ref sighting-ids}
                                     nil))
               incident-ids (->> (map :target_ref relationships)
                                 (map #(id/long-id->id %))
