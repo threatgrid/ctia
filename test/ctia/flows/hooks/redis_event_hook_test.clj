@@ -41,7 +41,7 @@
                          :source "source"
                          :tlp "green"
                          :priority 100
-                         :severity 100
+                         :severity "High"
                          :confidence "Low"
                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
@@ -58,7 +58,7 @@
                          :source "source"
                          :tlp "green"
                          :priority 100
-                         :severity 100
+                         :severity "High"
                          :confidence "Low"
                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
@@ -75,7 +75,7 @@
                          :source "source"
                          :tlp "green"
                          :priority 100
-                         :severity 100
+                         :severity "High"
                          :confidence "Low"
                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
@@ -101,7 +101,7 @@
                           :disposition_name "Clean"
                           :priority 100
                           :id (id/long-id judgement-1-id)
-                          :severity 100
+                          :severity "High"
                           :confidence "Low"
                           :owner "Unknown"}
                  :type "CreatedModel"}
@@ -118,7 +118,7 @@
                           :disposition_name "Malicious"
                           :priority 100
                           :id (id/long-id judgement-2-id)
-                          :severity 100
+                          :severity "High"
                           :confidence "Low"
                           :owner "Unknown"}
                  :type "CreatedModel"}
@@ -135,7 +135,7 @@
                           :disposition_name "Suspicious"
                           :priority 100
                           :id (id/long-id judgement-3-id)
-                          :severity 100
+                          :severity "High"
                           :confidence "Low"
                           :owner "Unknown"}
                  :type "CreatedModel"}]

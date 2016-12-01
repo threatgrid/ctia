@@ -41,7 +41,6 @@
   {:id all_token
    :type token
    :schema_version token
-   :uri {:enabled "false"}
    :revision {:type "long"}
    :external_ids all_token
    :timestamp ts
@@ -359,7 +358,7 @@
       :disposition_name token
       :priority {:type "long"}
       :confidence token
-      :severity {:type "long"}
+      :severity token
       :valid_time valid-time
       :reason all_text
       :reason_uri token

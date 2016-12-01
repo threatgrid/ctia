@@ -128,8 +128,6 @@
     (in/handle-delete state id))
   (list-indicators [_ filter-map params]
     (in/handle-list state filter-map params))
-  (list-indicators-by-judgements [_ judgements params]
-    (in/handle-list-by-judgements state judgements params))
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap params]
     (in/handle-query-string-search state query filtermap params)))

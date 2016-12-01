@@ -26,7 +26,6 @@
              [relationship :refer [relationship-routes]]
              [sighting :refer [sighting-routes]]
              [ttp :refer [ttp-routes]]
-             [verdict :refer [verdict-routes]]
              [version :refer [version-routes]]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]))
 
@@ -96,7 +95,6 @@
                            {:name "Properties", :description "Properties operations"}
                            {:name "Sighting", :description "Sighting operations"}
                            {:name "TTP", :description "TTP operations"}
-                           {:name "Verdict", :description "Verdict operations"}
                            {:name "Bulk", :description "Bulk operations"}
                            {:name "Metrics", :description "Performance Statistics"}
                            {:name "Version", :description "Version Information"}]}}}
@@ -126,5 +124,4 @@
                        sighting-routes
                        ttp-routes
                        relationship-routes
-                       verdict-routes
                        version-routes)))

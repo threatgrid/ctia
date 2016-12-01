@@ -55,12 +55,6 @@
               get-entity# :parsed-body}
              (get (str "ctia/" ~model-type "/" url-id#))]
 
-         ;; For Easy debug
-         ;;(clojure.pprint/pprint new-entity#)
-         ;;(clojure.pprint/pprint (clojure.data/diff new-entity# post-entity#))
-         ;;(clojure.pprint/pprint (clojure.data/diff get-entity# post-entity#))
-
-
          (assert-successfully-created post-status# post-entity#)
          (assert-successful get-status# get-entity#)
 
@@ -76,59 +70,7 @@
 (def-property spec-coa-routes 'coa)
 (def-property spec-data-table-routes 'data-table)
 (def-property spec-exploit-target-routes 'exploit-target)
-
-(def spec-indicator-routes
-  (for-all [[new-indicator new-sightings]
-            (gen/gen-new-indicator-with-new-sightings get-http-show)]
-    (let [{post-status :status
-           post-indicator :parsed-body}
-          (post "ctia/indicator"
-                :body new-indicator)
-
-          indicator-id (id/long-id->id (:id post-indicator))
-          id ((comp encode :short-id) indicator-id)
-
-          {get-indicator-status :status
-           get-indicator :parsed-body}
-          (get (str "ctia/indicator/" id))
-
-          stored-sighting-responses
-          (map #(post "ctia/sighting"
-                      :body %)
-               new-sightings)
-
-          stored-sighting-ids
-          (->> stored-sighting-responses
-               (map (comp :id :parsed-body))
-               set)
-
-          {search-result-status :status
-           search-results :parsed-body
-           :as search-response}
-          (get (str "ctia/indicator/" id "/sightings"))
-
-          search-result-ids
-          (->> search-results
-               (map :id)
-               set)]
-
-      (assert-successfully-created post-status)
-      (doseq [{status :status} stored-sighting-responses]
-        (assert-successfully-created status))
-      (assert-successful get-indicator-status)
-      (assert-successful search-result-status)
-
-      (and
-       ;; Sometimes the indicator ID is reused multiple times during a
-       ;; test run (with no store cleanup in between).  Use subset? to
-       ;; make sure that extra results don't fail the test.  (See
-       ;; issue #328).
-       (set/subset? stored-sighting-ids
-                    search-result-ids)
-       (common= new-indicator
-                post-indicator
-                (dissoc get-indicator :id))))))
-
+(def-property spec-indicator-routes 'indicator)
 (def-property spec-feedback-routes 'feedback)
 (def-property spec-incident-routes 'incident)
 (def-property spec-judgement-routes 'judgement)

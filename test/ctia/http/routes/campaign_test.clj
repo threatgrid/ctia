@@ -35,20 +35,6 @@
                        :tlp "green"
                        :campaign_type "anything goes here"
                        :intended_effect ["Theft"]
-                       :indicators [{:indicator_id "indicator-foo"}
-                                    {:indicator_id "indicator-bar"}]
-                       :attribution [{:confidence "High"
-                                      :source "source"
-                                      :relationship "relationship"
-                                      :actor_id "actor-123"}]
-                       :related_incidents [{:confidence "High"
-                                            :source "source"
-                                            :relationship "relationship"
-                                            :incident_id "incident-222"}]
-                       :related_TTPs [{:confidence "High"
-                                       :source "source"
-                                       :relationship "relationship"
-                                       :TTP_id "ttp-999"}]
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})
@@ -67,20 +53,6 @@
             :schema_version schema-version
             :campaign_type "anything goes here"
             :intended_effect ["Theft"]
-            :indicators [{:indicator_id "indicator-foo"}
-                         {:indicator_id "indicator-bar"}]
-            :attribution [{:confidence "High"
-                           :source "source"
-                           :relationship "relationship"
-                           :actor_id "actor-123"}]
-            :related_incidents [{:confidence "High"
-                                 :source "source"
-                                 :relationship "relationship"
-                                 :incident_id "incident-222"}]
-            :related_TTPs [{:confidence "High"
-                            :source "source"
-                            :relationship "relationship"
-                            :TTP_id "ttp-999"}]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :owner "foouser"}
@@ -112,20 +84,6 @@
                  :schema_version schema-version
                  :campaign_type "anything goes here"
                  :intended_effect ["Theft"]
-                 :indicators [{:indicator_id "indicator-foo"}
-                              {:indicator_id "indicator-bar"}]
-                 :attribution [{:confidence "High"
-                                :source "source"
-                                :relationship "relationship"
-                                :actor_id "actor-123"}]
-                 :related_incidents [{:confidence "High"
-                                      :source "source"
-                                      :relationship "relationship"
-                                      :incident_id "incident-222"}]
-                 :related_TTPs [{:confidence "High"
-                                 :source "source"
-                                 :relationship "relationship"
-                                 :TTP_id "ttp-999"}]
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                  :owner "foouser"}]
@@ -149,20 +107,6 @@
                 :schema_version schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Theft"]
-                :indicators [{:indicator_id "indicator-foo"}
-                             {:indicator_id "indicator-bar"}]
-                :attribution [{:confidence "High"
-                               :source "source"
-                               :relationship "relationship"
-                               :actor_id "actor-123"}]
-                :related_incidents [{:confidence "High"
-                                     :source "source"
-                                     :relationship "relationship"
-                                     :incident_id "incident-222"}]
-                :related_TTPs [{:confidence "High"
-                                :source "source"
-                                :relationship "relationship"
-                                :TTP_id "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}
@@ -181,20 +125,6 @@
                           :tlp "amber"
                           :campaign_type "anything goes here"
                           :intended_effect ["Brand Damage"]
-                          :indicators [{:indicator_id "indicator-foo"}
-                                       {:indicator_id "indicator-bar"}]
-                          :attribution [{:confidence "High"
-                                         :source "source"
-                                         :relationship "relationship"
-                                         :actor_id "actor-123"}]
-                          :related_incidents [{:confidence "High"
-                                               :source "source"
-                                               :relationship "relationship"
-                                               :incident_id "incident-222"}]
-                          :related_TTPs [{:confidence "High"
-                                          :source "source"
-                                          :relationship "relationship"
-                                          :TTP_id "ttp-999"}]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}}
                    :headers {"api_key" "45c1f5e3f05d0"})
@@ -213,20 +143,6 @@
                 :schema_version schema-version
                 :campaign_type "anything goes here"
                 :intended_effect ["Brand Damage"]
-                :indicators [{:indicator_id "indicator-foo"}
-                             {:indicator_id "indicator-bar"}]
-                :attribution [{:confidence "High"
-                               :source "source"
-                               :relationship "relationship"
-                               :actor_id "actor-123"}]
-                :related_incidents [{:confidence "High"
-                                     :source "source"
-                                     :relationship "relationship"
-                                     :incident_id "incident-222"}]
-                :related_TTPs [{:confidence "High"
-                                :source "source"
-                                :relationship "relationship"
-                                :TTP_id "ttp-999"}]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :owner "foouser"}

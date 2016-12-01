@@ -13,9 +13,11 @@
              [properties :refer [properties PropertiesSchema]]
              [store :as store]]
             [ctia.auth.allow-all :as aa]
+            [ctia.flows.crud :as crud]
             [ctia.flows.hooks :as hooks]
             [ctia.http.server :as http-server]
             [ctia.shutdown :as shutdown]
+            [ctim.domain.id :as id]
             [schema.core :as schema])
   (:import java.net.ServerSocket))
 
@@ -132,3 +134,8 @@
 
 (def put
   (mthh/with-port-fn get-http-port mthh/put))
+
+(defn make-id [type-kw]
+  (id/->id type-kw
+           (crud/make-id (name type-kw))
+           (get-in @properties [:ctia :http :show])))

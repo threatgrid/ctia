@@ -43,7 +43,11 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.3.4"]
+                 [threatgrid/ctim "0.4.0"
+                  ;; Exclusions:
+                  ;; - ring-swagger as 0.22.9 lacks s/Any support
+                  :exclusions [metosin/ring-swagger]]
+
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api
                  ;; 1.1.8 fails to generate JSON schema for s/Any
@@ -117,6 +121,7 @@
                                      (:es-store-native %)
                                      (:integration %)
                                      (:es-aliased-index %))
+                   :no-gen #(not (:generative %))
                    :all #(not (:disabled %))}
 
   :java-source-paths ["hooks/ctia"]

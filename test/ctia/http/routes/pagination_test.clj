@@ -21,51 +21,69 @@
 
 (deftest-for-each-store ^:slow test-pagination-lists
   "generate an observable and many records of all listable entities"
-  (testing "with pagination test setup"
-    (let [observable {:type "ip" :value "1.2.3.4"}
-          indicators (->> (gs/sample-by-kw 5 :new-indicator)
-                          (map #(assoc % :title "test")))
-          created-indicators (map #(assert-post "ctia/indicator" %) indicators)
-          indicator-rels (map (fn [{:keys [id]}] {:indicator_id id})
-                              created-indicators)
-          judgements (->> (gs/sample-by-kw 5 :new-judgement)
-                          (map #(assoc %
-                                       :observable observable
-                                       :disposition 5
-                                       :disposition_name "Unknown"
-                                       :indicators indicator-rels)))
-          sightings (->> (gs/sample-by-kw 5 :new-sighting)
-                         (map #(-> (assoc % :observables [observable] :indicators indicator-rels)
-                                   (dissoc % :relations))))
-          route-pref (str "ctia/" (:type observable) "/" (:value observable))]
+  (let [http-show (get-in @properties [:ctia :http :show])
+        observable {:type "ip"
+                    :value "1.2.3.4"}
+        title "test"
+        new-indicators (->> (gs/sample-by-kw 5 :new-indicator)
+                            (map #(assoc % :title title)))
+        created-indicators (map #(assert-post "ctia/indicator" %)
+                                new-indicators)
+        new-judgements (->> (gs/sample-by-kw 5 :new-judgement)
+                            (map #(assoc %
+                                         :observable observable
+                                         :disposition 5
+                                         :disposition_name "Unknown")))
+        new-sightings (->> (gs/sample-by-kw 5 :new-sighting)
+                           (map #(-> (assoc %
+                                            :observables [observable])
+                                     (dissoc % :relations))))
+        route-pref (str "ctia/" (:type observable) "/" (:value observable))]
 
-      (doseq [sighting sightings]
-        (assert-post "ctia/sighting" sighting))
-      (doseq [judgement judgements]
-        (assert-post "ctia/judgement" judgement))
+    (testing "setup: create sightings and their relationships with indicators"
+      (doseq [new-sighting new-sightings
+              :let [{id :id} (assert-post "ctia/sighting" new-sighting)
+                    sighting-id (id/->id :sighting id http-show)]]
+        (doseq [{id :id} created-indicators
+                :let [indicator-id (id/->id :indicator id http-show)]]
+          (assert-post "ctia/relationship"
+                       {:source_ref (id/long-id sighting-id)
+                        :relationship_type "indicates"
+                        :target_ref (id/long-id indicator-id)}))))
 
-      (testing "test paginated lists responses"
-        (pagination-test-no-sort (str route-pref "/indicators")
-                                 {"api_key" "45c1f5e3f05d0"}
-                                 [])
-        (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
-          (pagination-test (str "/ctia/indicator/search?query="
-                                (-> indicators first :title))
-                           {"api_key" "45c1f5e3f05d0"}
-                           [:id :title]))
-        (pagination-test (str "/ctia/indicator/"
-                              (-> created-indicators
-                                  first
-                                  :id
-                                  id/long-id->id
-                                  :short-id
-                                  url/encode)
-                              "/sightings")
+    (testing "setup: create judgements and their relationships with indicators"
+      (doseq [new-judgement new-judgements
+              :let [{id :id} (assert-post "ctia/judgement" new-judgement)
+                    judgement-id (id/->id :judgement id http-show)]]
+        (doseq [{id :id} created-indicators
+                :let [indicator-id (id/->id :indicator id http-show)]]
+          (assert-post "ctia/relationship"
+                       {:source_ref (id/long-id judgement-id)
+                        :relationship_type "observable-of"
+                        :target_ref (id/long-id indicator-id)}))))
+
+    (testing "indicators with query (ES only)"
+      (when (= "es" (get-in @properties [:ctia :store :indicator]))
+        (pagination-test (str "/ctia/indicator/search?query=" title)
                          {"api_key" "45c1f5e3f05d0"}
-                         [:id :timestamp :confidence])
-        (pagination-test (str route-pref "/sightings")
-                         {"api_key" "45c1f5e3f05d0"}
-                         [:id :timestamp :confidence])
-        (pagination-test (str route-pref "/judgements")
-                         {"api_key" "45c1f5e3f05d0"}
-                         [:id :disposition :priority :severity :confidence])))))
+                         [:id :title])))
+
+    (testing "sightings by observable"
+      (pagination-test (str route-pref "/sightings")
+                       {"api_key" "45c1f5e3f05d0"}
+                       [:id :timestamp :confidence]))
+
+    (testing "sightings/indicators by observable"
+      (pagination-test-no-sort (str route-pref "/sightings/indicators")
+                               {"api_key" "45c1f5e3f05d0"}
+                               []))
+
+    (testing "judgements by observable"
+      (pagination-test (str route-pref "/judgements")
+                       {"api_key" "45c1f5e3f05d0"}
+                       [:id :disposition :priority :severity :confidence]))
+
+    (testing "judgements/indicators by observable"
+      (pagination-test-no-sort (str route-pref "/judgements/indicators")
+                               {"api_key" "45c1f5e3f05d0"}
+                               []))))
