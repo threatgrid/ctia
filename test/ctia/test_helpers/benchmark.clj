@@ -12,7 +12,7 @@
   (let [http-port (net/available-port)]
     (println "Default: Launch CTIA on port" http-port)
     (fixture (fn [] (helpers/fixture-properties:clean
-                    #(helpers/with-properties ["ctia.store.es.default.refresh" false
+                    #(helpers/with-properties ["ctia.store.es.default.refresh" "false"
                                                "ctia.http.enabled" true
                                                "ctia.http.port" http-port
                                                "ctia.http.show.port" http-port]
@@ -22,9 +22,6 @@
 
 (defn setup-ctia-es-store! []
   (setup-ctia! esh/fixture-properties:es-store))
-
-(defn setup-ctia-es-store-native! []
-  (setup-ctia! esh/fixture-properties:es-store-native))
 
 (defn cleanup-ctia! [_]
   (shutdown/shutdown-ctia!))

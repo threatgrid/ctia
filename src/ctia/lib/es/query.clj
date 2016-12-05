@@ -1,6 +1,33 @@
 (ns ctia.lib.es.query
-  (:require [clojure.string :as str]
-            [clojurewerkz.elastisch.query :as q]))
+  (:require [clojure.string :as str]))
+
+(defn bool
+  "Boolean Query"
+  [opts]
+  {:bool opts})
+
+(defn filtered
+  "Filtered query"
+  [opts]
+  {:filtered opts})
+
+(defn nested
+  "Nested document query"
+  [opts]
+  {:nested opts})
+
+(defn term
+  "Term Query"
+  ([key values] (term key values nil))
+  ([key values opts]
+   (merge { (if (coll? values) :terms :term) (hash-map key values) }
+          opts)))
+
+(defn terms
+  "Terms Query"
+  ([key values] (terms key values nil))
+  ([key values opts]
+   (term key values opts)))
 
 (defn nested-terms [filters]
   "make nested terms from a ctia filter:
@@ -10,11 +37,11 @@
 
 we force all values to lowercase, since our indexing does the same for all terms."
   (vec (map (fn [[k v]]
-              (q/terms (->> k
-                            (map name)
-                            (str/join "."))
-                       (map str/lower-case
-                            (if (coll? v) v [v]))))
+              (terms (->> k
+                          (map name)
+                          (str/join "."))
+                     (map str/lower-case
+                          (if (coll? v) v [v]))))
             filters)))
 
 (defn- relationship?
@@ -55,6 +82,6 @@ we force all values to lowercase, since our indexing does the same for all terms
          (if (empty? must-filters)
            q {:filtered
               {:query q
-               :filter (q/bool {:must must-filters})}}))
+               :filter (bool {:must must-filters})}}))
 
        q))))

@@ -1,6 +1,6 @@
 (ns ctia.stores.es.query
   (:require [clojure.string :as str]
-            [clojurewerkz.elastisch.query :as q]))
+            [ctia.lib.es.query :as q]))
 
 (defn indicators-by-judgements-query
   "filter to get all indicators
