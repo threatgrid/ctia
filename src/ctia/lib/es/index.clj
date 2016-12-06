@@ -6,7 +6,9 @@
   (:import [org.apache.http.impl.conn PoolingClientConnectionManager
             PoolingHttpClientConnectionManager]))
 
-(def default-cm-options {:timeout 30000 :threads 100})
+(def default-cm-options {:timeout 30000
+                         :threads 100
+                         :default-per-route 100})
 
 (defn make-connection-manager []
   (make-reusable-conn-manager default-cm-options))

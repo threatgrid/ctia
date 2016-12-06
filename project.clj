@@ -106,11 +106,9 @@
   :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.4.0"
   :test-selectors {:es-store :es-store
-                   :es-store-native :es-store-native
                    :disabled :disabled
                    :default #(not= :disabled %)
                    :integration #(or (:es-store %)
-                                     (:es-store-native %)
                                      (:integration %)
                                      (:es-aliased-index %))
                    :no-gen #(not (:generative %))

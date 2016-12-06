@@ -35,7 +35,7 @@
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.store.es.default.shards" 1
                       "ctia.store.es.default.replicas" 1
-                      "ctia.store.es.default.refresh" "wait_for"
+                      "ctia.store.es.default.refresh" "true"
                       "ctia.store.es.default.port" "9200"
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.actor.indexname" "ctia_actor"
