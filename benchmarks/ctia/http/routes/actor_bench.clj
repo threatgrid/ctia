@@ -11,12 +11,6 @@
    :actor_type "Hacker"
    :source "a source"
    :confidence "High"
-   :associated_actors [{:actor_id "actor-123"}
-                       {:actor_id "actor-456"}]
-   :associated_campaigns [{:campaign_id "campaign-444"}
-                          {:campaign_id "campaign-555"}]
-   :observed_TTPs [{:ttp_id "ttp-333"}
-                   {:ttp_id "ttp-999"}]
    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                 :end_time "2016-07-11T00:40:48.212-00:00"}})
 
@@ -29,9 +23,6 @@
    :actor_type "Hacker"
    :source "a source"
    :confidence "High"
-   :associated_actors (gen 100 :actor_id "actor")
-   :associated_campaigns (gen 100 :campaign_id "campaign")
-   :observed_TTPs (gen 100 :ttp_id "ttp")
    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                 :end_time "2016-07-11T00:40:48.212-00:00"}})
 

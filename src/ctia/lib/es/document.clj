@@ -3,16 +3,17 @@
             [clj-http.client :as client]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [ctia.lib.es
-             [index :refer [ESConn]]
-             [query :refer [filter-map->terms-query]]]
+            [ctia.lib.es.index :refer [ESConn]]
             [ctia.lib.pagination :as pagination]
+            [ctia.stores.es.query :refer [filter-map->terms-query]]
             [schema.core :as s]))
 
 (def default-limit 1000)
 
 (s/defschema Refresh
-  (s/enum true false "wait_for"))
+  (s/enum "true"
+          "false"
+          "wait_for"))
 
 (defn create-doc-uri [uri index-name mapping id]
   (format "%s/%s/%s/%s" uri index-name mapping id))

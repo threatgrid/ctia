@@ -14,7 +14,8 @@
 (def text
   "A mapping for free text, or markdown, fields.  They will be
   analyzed and treated like prose."
-  {:type "string"
+  {:type "text"
+   :fielddata true
    :analyzer "text_analyzer"
    :search_quote_analyzer "text_analyzer"
    :search_analyzer "search_analyzer"})
@@ -26,13 +27,16 @@
 (def token
   "A mapping for fields whose value should be treated like a symbol.
   They will not be analyzed, and they will be lowercased."
-  {:type "string"
+  {:type "text"
+   ;; TODO use token and disable fielddata once token analyzer is supported
+   :fielddata true
    :analyzer "token_analyzer"
    :search_analyzer "token_analyzer"})
 
 (def all_token
   "The same as the `token` mapping, but will be included in the _all field"
-  {:type "string"
+  {:type "text"
+   :fielddata true
    :analyzer "token_analyzer"
    :search_analyzer "token_analyzer"
    :include_in_all true})
@@ -62,15 +66,37 @@
    :created ts
    :modified ts})
 
+(def valid-time
+  {:properties
+   {:start_time ts
+    :end_time ts}})
+
 (def related
   {:confidence token
    :source token
    :relationship token})
 
-(def valid-time
+(def related-indicators
   {:properties
-   {:start_time ts
-    :end_time ts}})
+   (assoc related
+          :indicator_id all_token)})
+
+(def related-coas
+  {:properties
+   (assoc related
+          :COA_id all_token)})
+
+(def related-actors
+  {:properties (assoc related
+                      :actor_id all_token)})
+
+(def related-ttps
+  {:properties (assoc related
+                      :TTP_id all_token)})
+
+(def related-incidents
+  {:properties (assoc related
+                      :incident_id all_token)})
 
 (def attack-pattern
   {:properties
@@ -121,10 +147,6 @@
                       :identity all_token
                       :information_source token)})
 
-(def related-actors
-  {:properties (assoc related
-                      :actor_id all_token)})
-
 (def tg-identity
   {:properties
    {:description all_text
@@ -147,41 +169,6 @@
   {:properties
    {:date_time ts
     :description all_text}})
-
-(def related-indicators
-  {:properties
-   (assoc related
-          :indicator_id all_token)})
-
-(def related-judgements
-  {:properties
-   (assoc related
-          :judgement_id all_token)})
-
-(def related-coas
-  {:properties
-   (assoc related
-          :COA_id all_token)})
-
-(def related-campaigns
-  {:properties
-   (assoc related
-          :campaign_id all_token)})
-
-(def related-exploit-targets
-  {:properties (assoc related
-                      :exploit_target_id all_token)})
-(def related-ttps
-  {:properties (assoc related
-                      :TTP_id all_token)})
-
-(def related-incidents
-  {:properties (assoc related
-                      :incident_id all_token)})
-
-(def related-sightings
-  {:properties (assoc related
-                      :sighting_id all_token)})
 
 (def incident-time
   {:properties
@@ -361,8 +348,7 @@
       :severity token
       :valid_time valid-time
       :reason all_text
-      :reason_uri token
-      :indicators related-indicators})}})
+      :reason_uri token})}})
 
 (def verdict-mapping
   {"verdict"
@@ -408,23 +394,15 @@
       :indicator_type token
       :alternate_ids token
       :tags all_token
-      :judgements related-judgements
       :composite_indicator_expression {:type "object"
                                        :properties
                                        {:operator token
                                         :indicator_ids token}}
-      :indicated_TTP related-ttps
       :likely_impact token
-      :suggested_COAs related-coas
       :confidence token
-      :sightings related-sightings
-      :related_indicators related-indicators
-      :related_campaigns related-campaigns
-      :related_COAs related-coas
       :kill_chain_phases token
       :test_mechanisms token
-      :specification {:enabled false}
-      })}})
+      :specification {:enabled false}})}})
 
 (def ttp-mapping
   {"ttp"
@@ -442,12 +420,9 @@
       :behavior behavior
       :resources resource
       :victim_targeting victim-targeting
-      :exploit_targets related-exploit-targets
-      :related_TTPs related-ttps
       :kill_chains token
       :ttp_type token
-      :expires ts
-      :indicators related-indicators})}})
+      :expires ts})}})
 
 (def actor-mapping
   {"actor"
@@ -466,9 +441,7 @@
       :sophistication token
       :intended_effect token
       :planning_and_operational_support token
-      :observed_TTPs related-ttps
-      :associated_campaigns related-campaigns
-      :associated_actors related-actors
+      :related_indicators related-indicators
       :confidence token})}})
 
 (def campaign-mapping
@@ -484,13 +457,8 @@
      {:valid_time valid-time
       :campaign_type token
       :names all_token
-      :indicators related-indicators
       :intended_effect token
       :status token
-      :related_TTPs related-ttps
-      :related_incidents related-incidents
-      :attribution related-actors
-      :associated_campaigns related-campaigns
       :confidence token
       :activity activity})}})
 
@@ -511,9 +479,10 @@
       :impact token
       :cost token
       :efficacy token
-      :related_COAs related-coas
       :structured_coa_type token
-      :open_c2_coa open-c2-coa})}})
+      :open_c2_coa open-c2-coa
+      :related_COAs related-coas})}})
+
 
 (def incident-mapping
   {"incident"
@@ -549,6 +518,7 @@
       :related_incidents related-incidents
       :intended_effect token})}})
 
+
 (def exploit-target-mapping
   {"exploit-target"
    {:dynamic "strict"
@@ -562,9 +532,7 @@
      {:valid_time valid-time
       :vulnerability vulnerability
       :weakness weakness
-      :configuration configuration
-      :potential_COAs related-coas
-      :related_exploit_targets related-exploit-targets})}})
+      :configuration configuration})}})
 
 (def identity-mapping
   {"identity"
@@ -607,8 +575,6 @@
       :confidence token
       :observables observable
       :observables_hash token
-      :indicators related-indicators
-      :incidents related-incidents
       :relations observed-relation})}})
 
 (def data-table-mapping
