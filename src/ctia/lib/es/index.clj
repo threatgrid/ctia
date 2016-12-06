@@ -1,22 +1,8 @@
 (ns ctia.lib.es.index
-  (:require [clj-http
-             [client :as client]
-             [conn-mgr :refer [make-reusable-conn-manager]]]
-            [schema.core :as s])
-  (:import [org.apache.http.impl.conn PoolingClientConnectionManager
-            PoolingHttpClientConnectionManager]))
-
-(def default-cm-options {:timeout 30000
-                         :threads 100
-                         :default-per-route 100})
-
-(defn make-connection-manager []
-  (make-reusable-conn-manager default-cm-options))
-
-(s/defschema ESConn
-  {:cm (s/either PoolingClientConnectionManager
-                 PoolingHttpClientConnectionManager)
-   :uri s/Str})
+  (:require
+   [ctia.lib.es.conn :refer [ESConn default-opts safe-es-read]]
+   [clj-http.client :as client]
+   [schema.core :as s]))
 
 (s/defschema ESSlicing
   {:strategy s/Keyword
@@ -28,14 +14,6 @@
    :config {s/Any s/Any}
    :conn ESConn
    (s/optional-key :slicing) ESSlicing})
-
-(defn connect
-  "instantiate an ES conn from props"
-  [{:keys [transport host port clustername]
-    :or {transport :http}}]
-
-  {:cm (make-connection-manager)
-   :uri (format "http://%s:%s" host port)})
 
 (s/defn index-uri :- s/Str
   [uri :- s/Str
@@ -54,21 +32,20 @@
   [{:keys [uri cm]} :- ESConn
    index-name :- s/Str]
 
-  (->> (client/head (index-uri uri index-name)
-                    {:throw-exceptions false
-                     :connection-manager cm})
-
-       :status
-       (= 200)))
+  (-> (client/head (index-uri uri index-name)
+                   (assoc default-opts
+                          :connection-manager cm))
+      safe-es-read
+      boolean))
 
 (s/defn delete!
-  "delete an index, abort if non existant"
+  "delete indexes using a wildcard"
   [{:keys [uri cm] :as conn} :- ESConn
-   index-name :- s/Str]
+   index-wildcard :- s/Str]
 
-  (when (index-exists? conn index-name)
-    (:body (client/delete (index-uri uri index-name)
-                          {:connection-manager cm}))))
+  (client/delete (index-uri uri index-wildcard)
+                 (assoc default-opts
+                        :connection-manager cm)))
 
 (s/defn create-template!
   "create an index template, update if already exists"
@@ -79,8 +56,8 @@
   (let [template (str index-name "*")
         opts (assoc index-config :template template)]
 
-    (:body (client/put (template-uri uri index-name)
-                       {:form-params opts
-                        :as :json
-                        :content-type :json
-                        :connection-manager cm}))))
+    (safe-es-read
+     (client/put (template-uri uri index-name)
+                 (merge default-opts
+                        {:form-params opts
+                         :connection-manager cm})))))

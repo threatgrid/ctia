@@ -3,8 +3,9 @@
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.mapping :refer [event-mapping]]
             [ctia.lib.es
+             [conn :refer [connect]]
              [document :as d]
-             [index :refer [connect ESConnState]]
+             [index :refer [ESConnState]]
              [slice :refer [get-slice-props SliceProperties]]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.properties :refer [properties]]

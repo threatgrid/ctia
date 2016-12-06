@@ -3,7 +3,7 @@
             [clj-http.client :as client]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [ctia.lib.es.index :refer [ESConn]]
+            [ctia.lib.es.conn :refer [default-opts ESConn safe-es-read]]
             [ctia.lib.pagination :as pagination]
             [ctia.stores.es.query :refer [filter-map->terms-query]]
             [schema.core :as s]))
@@ -61,10 +61,8 @@
   "get a document on es and return only the source"
   [{:keys [uri cm]} :- ESConn index-name mapping id]
   (-> (client/get (get-doc-uri uri index-name mapping id)
-                  {:throw-exceptions false
-                   :connection-manager cm
-                   :as :json})
-      :body
+                  (assoc default-opts :connection-manager cm))
+      safe-es-read
       :_source))
 
 (s/defn create-doc
@@ -75,13 +73,13 @@
    {:keys [id] :as doc} :- s/Any
    refresh? :- Refresh]
 
-  (client/put (create-doc-uri uri index-name mapping id)
-              {:form-params doc
-               :query-params
-               {:refresh refresh?}
-               :connection-manager cm
-               :content-type :json
-               :as :json})
+  (safe-es-read
+   (client/put (create-doc-uri uri index-name mapping id)
+               (merge default-opts
+                      {:form-params doc
+                       :query-params
+                       {:refresh refresh?}
+                       :connection-manager cm})))
   doc)
 
 (s/defn bulk-create-doc
@@ -95,9 +93,13 @@
         bulk-body (-> json-ops
                       (interleave (repeat "\n"))
                       string/join)]
-    (client/post (bulk-uri uri)
-                 {:query-params {:refresh refresh?}
-                  :body bulk-body}))
+
+    (safe-es-read
+     (client/post (bulk-uri uri)
+                  (merge default-opts
+                         {:connection-manager cm
+                          :query-params {:refresh refresh?}
+                          :body bulk-body}))))
   docs)
 
 (s/defn update-doc
@@ -109,12 +111,12 @@
    doc :- s/Any
    refresh? :- Refresh]
 
-  (client/post (update-doc-uri uri index-name mapping id)
-               {:form-params {:doc doc}
-                :query-params {:refresh refresh?}
-                :connection-manager cm
-                :content-type :json
-                :as :json})
+  (safe-es-read
+   (client/post (update-doc-uri uri index-name mapping id)
+                (merge default-opts
+                       {:form-params {:doc doc}
+                        :query-params {:refresh refresh?}
+                        :connection-manager cm})))
   doc)
 
 (s/defn delete-doc
@@ -126,10 +128,10 @@
    refresh? :- Refresh]
 
   (-> (client/delete (delete-doc-uri uri index-name mapping id)
-                     {:query-params {:refresh refresh?}
-                      :connection-manager cm
-                      :as :json})
-      :body
+                     (merge default-opts
+                            {:query-params {:refresh refresh?}
+                             :connection-manager cm}))
+      safe-es-read
       :found))
 
 (defn params->pagination
@@ -166,12 +168,12 @@
    params :- s/Any]
 
   (let [es-params (generate-es-params query filter-map params)
-        res (:body (client/post
-                    (search-uri uri index-name mapping)
-                    {:form-params es-params
-                     :connection-manager cm
-                     :content-type :json
-                     :as :json}))
+        res (safe-es-read
+             (client/post
+              (search-uri uri index-name mapping)
+              (merge default-opts
+                     {:form-params es-params
+                      :connection-manager cm})))
         hits (get-in res [:hits :total] 0)
         results (->> res :hits :hits (map :_source))]
 

@@ -1,6 +1,8 @@
 (ns ctia.stores.es.store
-  (:require [clojure.tools.logging :as log]
-            [ctia.lib.es.index :as es-index :refer [connect ESConnState]]
+  (:require [ctia.lib.es
+             [conn :refer [connect]]
+             [index :as es-index :refer [create-template!
+                                         ESConnState]]]
             [ctia.store
              :refer
              [IActorStore
