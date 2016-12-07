@@ -17,8 +17,7 @@
    [ctia.schemas.core :refer [NewFeedback
                               StoredFeedback
                               NewJudgement
-                              StoredJudgement
-                              RelatedIndicator]]))
+                              StoredJudgement]]))
 
 (s/defschema FeedbacksByJudgementQueryParams
   (st/merge

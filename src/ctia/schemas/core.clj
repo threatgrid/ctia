@@ -16,82 +16,169 @@
              [verdict :as vs]
              [vocabularies :as vocs]]
             [flanders
-             [schema :as fs]
+             [schema :as f-schema]
+             [spec :as f-spec]
              [utils :as fu]]
-            [schema.core :refer [defschema Str Bool]]))
+            [schema.core :refer [Str Bool] :as sc]))
+
+(defmacro defschema [name-sym ddl spec-kw-ns]
+  `(do
+     (sc/defschema ~name-sym (f-schema/->schema-tree ~ddl))
+     (f-spec/->spec ~ddl ~spec-kw-ns)))
 
 ;; actor
-(defschema NewActor (fs/->schema-tree as/NewActor))
-(defschema StoredActor (fs/->schema-tree as/StoredActor))
+
+(defschema NewActor
+  as/NewActor
+  "new-actor")
+
+(defschema StoredActor
+  as/StoredActor
+  "stored-actor")
 
 ;; campaign
-(defschema NewCampaign (fs/->schema-tree cs/NewCampaign))
-(defschema StoredCampaign (fs/->schema-tree cs/StoredCampaign))
+
+(defschema NewCampaign
+  cs/NewCampaign
+  "new-campaign")
+
+(defschema StoredCampaign
+  cs/StoredCampaign
+  "stored-campaign")
 
 ;; coa
-(defschema NewCOA (fs/->schema-tree coas/NewCOA))
-(defschema StoredCOA (fs/->schema-tree coas/StoredCOA))
+
+(defschema NewCOA
+  coas/NewCOA
+  "new-coa")
+
+(defschema StoredCOA
+  coas/StoredCOA
+  "stored-coa")
 
 ;; data-table
-(defschema NewDataTable (-> ds/NewDataTable
-                            fu/replace-either-with-any
-                            fs/->schema-tree))
 
-(defschema StoredDataTable (-> ds/StoredDataTable
-                               fu/replace-either-with-any
-                               fs/->schema-tree))
+(defschema NewDataTable
+  (-> ds/NewDataTable
+      fu/replace-either-with-any)
+  "new-data-table")
+
+(defschema StoredDataTable
+  (-> ds/StoredDataTable
+      fu/replace-either-with-any)
+  "stored-data-table")
 
 ;; exploit-target
-(defschema NewExploitTarget (fs/->schema-tree es/NewExploitTarget))
-(defschema StoredExploitTarget (fs/->schema-tree es/StoredExploitTarget))
+
+(defschema NewExploitTarget
+  es/NewExploitTarget
+  "new-exploit-target")
+
+(defschema StoredExploitTarget
+  es/StoredExploitTarget
+  "stored-exploit-target")
 
 ;; sighting
-(defschema NewSighting (fs/->schema-tree ss/NewSighting))
-(defschema StoredSighting (fs/->schema-tree ss/StoredSighting))
+
+(defschema NewSighting
+  ss/NewSighting
+  "new-sighting")
+
+(defschema StoredSighting
+  ss/StoredSighting
+  "stored-sighting")
 
 ;; judgement
-(defschema NewJudgement (fs/->schema-tree js/NewJudgement))
-(defschema StoredJudgement (fs/->schema-tree js/StoredJudgement))
+
+(defschema NewJudgement
+  js/NewJudgement
+  "new-judgement")
+
+(defschema StoredJudgement
+  js/StoredJudgement
+  "stored-judgement")
 
 ;; verdict
-(defschema Verdict (fs/->schema-tree vs/Verdict))
-(defschema StoredVerdict (fs/->schema-tree vs/StoredVerdict))
+
+(defschema Verdict
+  vs/Verdict
+  "verdict")
+
+(defschema StoredVerdict
+  vs/StoredVerdict
+  "stored-verdict")
 
 ;; feedback
-(defschema NewFeedback (fs/->schema-tree feedbacks/NewFeedback))
-(defschema StoredFeedback (fs/->schema-tree feedbacks/StoredFeedback))
+
+(defschema NewFeedback
+  feedbacks/NewFeedback
+  "new-feedback")
+
+(defschema StoredFeedback
+  feedbacks/StoredFeedback
+  "stored-feedback")
 
 ;; incident
-(defschema NewIncident (fs/->schema-tree is/NewIncident))
-(defschema StoredIncident (fs/->schema-tree is/StoredIncident))
+
+(defschema NewIncident
+  is/NewIncident
+  "new-incident")
+
+(defschema StoredIncident
+  is/StoredIncident
+  "stored-incident")
 
 ;; indicator
-(defschema NewIndicator (-> ins/NewIndicator
-                            fu/replace-either-with-any
-                            fs/->schema-tree))
 
-(defschema StoredIndicator (-> ins/StoredIndicator
-                               fu/replace-either-with-any
-                               fs/->schema-tree))
+(sc/defschema NewIndicator
+  (f-schema/->schema-tree
+   (-> ins/NewIndicator
+       fu/replace-either-with-any)))
 
+(f-spec/->spec ins/NewIndicator "new-indicator")
 
+(sc/defschema StoredIndicator
+  (f-schema/->schema-tree
+   (-> ins/StoredIndicator
+       fu/replace-either-with-any)))
+
+(f-spec/->spec ins/StoredIndicator "stored-indicator")
+
+;; relationship
+
+(defschema NewRelationship
+  rels/NewRelationship
+  "new-relationship")
+
+(defschema StoredRelationship
+  rels/StoredRelationship
+  "stored-relationship")
 
 ;; ttp
-(defschema NewTTP (fs/->schema-tree ttps/NewTTP))
-(defschema StoredTTP (fs/->schema-tree ttps/StoredTTP))
 
-;; relationships
-(defschema NewRelationship (fs/->schema-tree rels/NewRelationship))
-(defschema StoredRelationship (fs/->schema-tree rels/StoredRelationship))
+(defschema NewTTP
+  ttps/NewTTP
+  "new-ttp")
 
-(defschema RelatedIndicator (fs/->schema-tree rels/RelatedIndicator))
+(defschema StoredTTP
+  ttps/StoredTTP
+  "stored-ttp")
 
 ;; common
-(defschema Observable (fs/->schema-tree cos/Observable))
-(defschema Reference (fs/->schema-tree cos/Reference))
-(defschema ID (fs/->schema-tree cos/ID))
 
-(defschema VersionInfo
+(defschema Observable
+  cos/Observable
+  "common.observable")
+
+(defschema Reference
+  cos/Reference
+  "common.reference")
+
+(defschema ID
+  cos/ID
+  "common.id")
+
+(sc/defschema VersionInfo
   "Version information for a specific instance of CTIA"
   {:base Str
    :version Str
@@ -100,8 +187,10 @@
    :supported_features [Str]})
 
 ;; vocabularies
+
 (defschema ObservableTypeIdentifier
-  (fs/->schema-tree vocs/ObservableTypeIdentifier))
+  vocs/ObservableTypeIdentifier
+  "vocab.observable-type-id")
 
 (def stored-schema-lookup
   {:actor StoredActor

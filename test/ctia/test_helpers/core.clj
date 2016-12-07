@@ -6,7 +6,10 @@
             [clj-momo.test-helpers
              [core :as mth]
              [http :as mthh]]
-            [clojure.string :as str]
+            [clojure
+             [spec :as cs]
+             [string :as str]]
+            [clojure.test.check.generators :as gen]
             [ctia
              [auth :as auth]
              [init :as init]
@@ -18,6 +21,10 @@
             [ctia.http.server :as http-server]
             [ctia.shutdown :as shutdown]
             [ctim.domain.id :as id]
+            [ctim.generators.common :as cgc]
+            [flanders
+             [spec :as fs]
+             [utils :as fu]]
             [schema.core :as schema])
   (:import java.net.ServerSocket))
 
@@ -139,3 +146,21 @@
   (id/->id type-kw
            (crud/make-id (name type-kw))
            (get-in @properties [:ctia :http :show])))
+
+(defn fixture-spec-validation [t]
+  (with-redefs [cs/registry-ref (atom (cs/registry))]
+    (cs/check-asserts true)
+    (t)
+    (cs/check-asserts false)))
+
+(defn fixture-spec [node-to-spec ns]
+  (fn [t]
+    (fs/->spec node-to-spec ns)
+    (t)))
+
+(defn fixture-max-spec [node-to-spec ns]
+  (fixture-spec (fu/require-all node-to-spec) ns))
+
+(defn fixture-fast-gen [t]
+  (with-redefs [gen/vector cgc/vector]
+    (t)))
