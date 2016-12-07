@@ -19,23 +19,6 @@
     }
   },
   {
-    "_id": "ctia_judgement",
-    "_type": "dashboard",
-    "_source": {
-      "title": "ctia_judgement",
-      "hits": 0,
-      "description": "",
-      "panelsJSON": "[{\"col\":1,\"id\":\"ctia_judgement_count\",\"panelIndex\":1,\"row\":1,\"size_x\":3,\"size_y\":4,\"type\":\"visualization\"},{\"col\":4,\"id\":\"ctia_judgement_observable_types\",\"panelIndex\":5,\"row\":1,\"size_x\":5,\"size_y\":4,\"type\":\"visualization\"},{\"col\":7,\"id\":\"ctia_judgement_top_10_observable_values_per_week\",\"panelIndex\":6,\"row\":5,\"size_x\":6,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_judgement_top_20_observable_value_per_week\",\"panelIndex\":7,\"row\":5,\"size_x\":6,\"size_y\":6,\"type\":\"visualization\"},{\"id\":\"ctia_judgement_daily_count_start_time\",\"type\":\"visualization\",\"panelIndex\":9,\"size_x\":12,\"size_y\":5,\"col\":1,\"row\":11},{\"id\":\"ctia_judgement_priority\",\"type\":\"visualization\",\"panelIndex\":10,\"size_x\":4,\"size_y\":2,\"col\":9,\"row\":1},{\"id\":\"ctia_judgement_severity\",\"type\":\"visualization\",\"panelIndex\":11,\"size_x\":4,\"size_y\":2,\"col\":9,\"row\":3}]",
-      "optionsJSON": "{\"darkTheme\":true}",
-      "uiStateJSON": "{}",
-      "version": 1,
-      "timeRestore": false,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
-      }
-    }
-  },
-  {
     "_id": "ctia_sighting",
     "_type": "dashboard",
     "_source": {
@@ -43,23 +26,6 @@
       "hits": 0,
       "description": "",
       "panelsJSON": "[{\"col\":1,\"id\":\"ctia_sighting_count\",\"panelIndex\":1,\"row\":1,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_sighting_date_histogram_daily\",\"panelIndex\":3,\"row\":9,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"ctia_sighting_observale_type\",\"panelIndex\":5,\"row\":1,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_sighting_daily_count_start_date\",\"panelIndex\":7,\"row\":14,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_sighting_related_value_per_week\",\"panelIndex\":8,\"row\":19,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"id\":\"ctia_sighting_source_date_histogram_daily\",\"type\":\"visualization\",\"panelIndex\":9,\"size_x\":12,\"size_y\":5,\"col\":1,\"row\":4}]",
-      "optionsJSON": "{\"darkTheme\":true}",
-      "uiStateJSON": "{}",
-      "version": 1,
-      "timeRestore": false,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_event",
-    "_type": "dashboard",
-    "_source": {
-      "title": "ctia_event",
-      "hits": 0,
-      "description": "",
-      "panelsJSON": "[{\"col\":1,\"id\":\"ctia_events_count\",\"panelIndex\":1,\"row\":1,\"size_x\":3,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_entity_source\",\"panelIndex\":2,\"row\":9,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":7,\"id\":\"ctia_events_entity_type\",\"panelIndex\":3,\"row\":9,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":4,\"id\":\"ctia_events_observable_type\",\"panelIndex\":4,\"row\":1,\"size_x\":5,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_start_time_count_daily\",\"panelIndex\":5,\"row\":5,\"size_x\":12,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_related_value_per_day\",\"panelIndex\":6,\"row\":13,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":9,\"id\":\"ctia_events_priority\",\"panelIndex\":7,\"row\":1,\"size_x\":4,\"size_y\":2,\"type\":\"visualization\"},{\"col\":9,\"id\":\"ctia_events_severity\",\"panelIndex\":8,\"row\":3,\"size_x\":4,\"size_y\":2,\"type\":\"visualization\"}]",
       "optionsJSON": "{\"darkTheme\":true}",
       "uiStateJSON": "{}",
       "version": 1,
@@ -104,6 +70,23 @@
     }
   },
   {
+    "_id": "ctia_event",
+    "_type": "dashboard",
+    "_source": {
+      "title": "ctia_event",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"col\":1,\"id\":\"ctia_events_count\",\"panelIndex\":1,\"row\":1,\"size_x\":3,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_entity_source\",\"panelIndex\":2,\"row\":9,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":7,\"id\":\"ctia_events_entity_type\",\"panelIndex\":3,\"row\":9,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":4,\"id\":\"ctia_events_observable_type\",\"panelIndex\":4,\"row\":1,\"size_x\":5,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_start_time_count_daily\",\"panelIndex\":5,\"row\":5,\"size_x\":12,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_related_value_per_day\",\"panelIndex\":6,\"row\":13,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":9,\"id\":\"ctia_events_priority\",\"panelIndex\":7,\"row\":1,\"size_x\":4,\"size_y\":4,\"type\":\"visualization\"}]",
+      "optionsJSON": "{\"darkTheme\":true}",
+      "uiStateJSON": "{}",
+      "version": 1,
+      "timeRestore": false,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
+      }
+    }
+  },
+  {
     "_id": "ctia_relationship",
     "_type": "dashboard",
     "_source": {
@@ -117,6 +100,23 @@
       "timeRestore": false,
       "kibanaSavedObjectMeta": {
         "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}}}]}"
+      }
+    }
+  },
+  {
+    "_id": "ctia_judgement",
+    "_type": "dashboard",
+    "_source": {
+      "title": "ctia_judgement",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"col\":1,\"id\":\"ctia_judgement_count\",\"panelIndex\":1,\"row\":1,\"size_x\":3,\"size_y\":4,\"type\":\"visualization\"},{\"col\":4,\"id\":\"ctia_judgement_observable_types\",\"panelIndex\":5,\"row\":1,\"size_x\":5,\"size_y\":4,\"type\":\"visualization\"},{\"col\":7,\"id\":\"ctia_judgement_top_10_observable_values_per_week\",\"panelIndex\":6,\"row\":5,\"size_x\":6,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_judgement_top_20_observable_value_per_week\",\"panelIndex\":7,\"row\":5,\"size_x\":6,\"size_y\":6,\"type\":\"visualization\"},{\"id\":\"ctia_judgement_daily_count_start_time\",\"type\":\"visualization\",\"panelIndex\":9,\"size_x\":12,\"size_y\":5,\"col\":1,\"row\":11},{\"id\":\"ctia_judgement_priority\",\"type\":\"visualization\",\"panelIndex\":10,\"size_x\":4,\"size_y\":4,\"col\":9,\"row\":1}]",
+      "optionsJSON": "{\"darkTheme\":true}",
+      "uiStateJSON": "{}",
+      "version": 1,
+      "timeRestore": false,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
       }
     }
   },
@@ -233,6 +233,20 @@
     }
   },
   {
+    "_id": "General-overview",
+    "_type": "visualization",
+    "_source": {
+      "title": "General overview",
+      "visState": "{\"title\":\"General overview\",\"type\":\"markdown\",\"params\":{\"markdown\":\"General overview\"},\"aggs\":[],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
     "_id": "Observable-type",
     "_type": "visualization",
     "_source": {
@@ -271,20 +285,6 @@
       "version": 1,
       "kibanaSavedObjectMeta": {
         "searchSourceJSON": "{\n  \"index\": \"ctia_judgement\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "General-overview",
-    "_type": "visualization",
-    "_source": {
-      "title": "General overview",
-      "visState": "{\"title\":\"General overview\",\"type\":\"markdown\",\"params\":{\"markdown\":\"General overview\"},\"aggs\":[],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
       }
     }
   },
