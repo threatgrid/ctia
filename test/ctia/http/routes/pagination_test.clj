@@ -1,23 +1,24 @@
 (ns ctia.http.routes.pagination-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.lib.url :as url]
-            [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [join-fixtures testing use-fixtures]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure
+             [spec :as cs]
+             [test :refer [testing use-fixtures]]]
+            [clojure.spec.gen :as csg]
             [ctia.properties :refer [properties]]
+            [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers
              [core :as helpers]
-             [fake-whoami-service :as whoami-helpers]
              [http :refer [assert-post]]
              [pagination :refer [pagination-test
                                  pagination-test-no-sort]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]
-            [ctim.generators.schemas :as gs]
-            [ring.util.codec :refer [url-encode]]))
+            [ctim.domain.id :as id]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
-                                    helpers/fixture-allow-all-auth]))
+(use-fixtures :once
+  mth/fixture-schema-validation
+  helpers/fixture-properties:clean
+  helpers/fixture-allow-all-auth)
 
 (deftest-for-each-store ^:slow test-pagination-lists
   "generate an observable and many records of all listable entities"
@@ -25,16 +26,16 @@
         observable {:type "ip"
                     :value "1.2.3.4"}
         title "test"
-        new-indicators (->> (gs/sample-by-kw 5 :new-indicator)
+        new-indicators (->> (csg/sample (cs/gen :new-indicator/map 5))
                             (map #(assoc % :title title)))
         created-indicators (map #(assert-post "ctia/indicator" %)
                                 new-indicators)
-        new-judgements (->> (gs/sample-by-kw 5 :new-judgement)
+        new-judgements (->> (csg/sample (cs/gen :new-judgement/map) 5)
                             (map #(assoc %
                                          :observable observable
                                          :disposition 5
                                          :disposition_name "Unknown")))
-        new-sightings (->> (gs/sample-by-kw 5 :new-sighting)
+        new-sightings (->> (csg/sample (cs/gen :new-sighting/map) 5)
                            (map #(-> (assoc %
                                             :observables [observable])
                                      (dissoc % :relations))))

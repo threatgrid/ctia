@@ -2,7 +2,8 @@
   "This namespace handle all necessary flows for creating, updating
   and deleting entities."
   (:import java.util.UUID)
-  (:require [clojure.tools.logging :as log]
+  (:require [clojure.spec :as cs]
+            [clojure.tools.logging :as log]
             [ctia.auth :as auth]
             [ctia.flows.hooks :as h]
             [ctia.properties :refer [properties]]
@@ -25,6 +26,7 @@
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :realize-fn) (s/pred fn?)
    (s/optional-key :results) [s/Bool]
+   (s/optional-key :spec) (s/maybe s/Keyword)
    :store-fn (s/pred fn?)})
 
 (defn- find-id
@@ -72,6 +74,16 @@
                   {:error (format "Invalid entity ID: %s" entity-id)
                    :entity entity}))))
       (make-id entity-type)))
+
+(s/defn ^:private validate-entities :- FlowMap
+  [{:keys [spec entities] :as fm} :- FlowMap]
+  (when spec
+    (doseq [entity entities]
+      (when-not (cs/valid? spec entity)
+        (throw (http-response/bad-request!
+                {:error (cs/explain-str spec entity)
+                 :entity entity})))))
+  fm)
 
 (s/defn ^:private realize-entities :- FlowMap
   [{:keys [entities flow-type identity prev-entity realize-fn] :as fm} :- FlowMap]
@@ -198,15 +210,18 @@
              store-fn
              identity
              entities
-             long-id-fn]}]
+             long-id-fn
+             spec]}]
   (-> {:flow-type :create
        :entity-type entity-type
        :entities entities
        :identity identity
        :long-id-fn long-id-fn
        :realize-fn realize-fn
+       :spec spec
        :store-fn store-fn
        :create-event-fn to-create-event}
+      validate-entities
       realize-entities
       apply-before-hooks
       apply-store-fn
@@ -231,7 +246,8 @@
              entity-id
              identity
              entity
-             long-id-fn]}]
+             long-id-fn
+             spec]}]
   (let [prev-entity (get-fn entity-id)]
     (-> {:flow-type :update
          :entity-type entity-type
@@ -240,8 +256,10 @@
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
+         :spec spec
          :store-fn update-fn
          :create-event-fn to-update-event}
+        validate-entities
         realize-entities
         apply-before-hooks
         apply-store-fn

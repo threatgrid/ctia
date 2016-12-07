@@ -34,7 +34,6 @@
         observable-2 {:type "ip"
                       :value "192.168.1.1"}]
 
-
     ;; This sighting should be matched
     (testing "test setup: create sighting-1"
       (let [{status :status}

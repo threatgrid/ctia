@@ -1,15 +1,16 @@
 (ns ctia.http.routes.relationship
   (:require
-   [compojure.api.sweet :refer :all]
-   [ctia.domain.entities :refer [realize-relationship]]
-   [ctia.domain.entities.relationship :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams RelationshipSearchParams]]
-   [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewRelationship StoredRelationship]]
-   [ring.util.http-response :refer [no-content not-found ok]]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities :refer [realize-relationship]]
+    [ctia.domain.entities.relationship :refer [with-long-id page-with-long-id]]
+    [ctia.flows.crud :as flows]
+    [ctia.http.routes.common
+     :refer [created paginated-ok PagingParams RelationshipSearchParams]]
+    [ctia.store :refer :all]
+    [ctia.schemas.core :refer [NewRelationship StoredRelationship]]
+    [ring.util.http-response :refer [no-content not-found ok]]
+    [schema-tools.core :as st]
+    [schema.core :as s]))
 
 (s/defschema RelationshipByExternalIdQueryParams
   PagingParams)
@@ -34,7 +35,8 @@
                     :long-id-fn with-long-id
                     :entity-type :relationship
                     :identity identity
-                    :entities [relationship]))))
+                    :entities [relationship]
+                    :spec :new-relationship/map))))
 
            (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredRelationship)]

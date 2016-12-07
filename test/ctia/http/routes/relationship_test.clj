@@ -20,6 +20,32 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+(deftest-for-each-store test-relationship-routes-bad-reference
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+
+  (testing "POST /cita/relationship"
+    (let [{status :status
+           {error :error} :parsed-body}
+          (post "ctia/relationship"
+                :body {:external_ids ["http://ex.tld/ctia/relationship/relationship-123"
+                                      "http://ex.tld/ctia/relationship/relationship-456"]
+                       :type "relationship"
+                       :title "title"
+                       :description "description"
+                       :short_description "short desc"
+                       :revision 1
+                       :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+                       :language "language"
+                       :tlp "green"
+                       :source "source"
+                       :source_uri "http://example.com"
+                       :relationship_type "anything"
+                       :source_ref "http://example.com/"
+                       :target_ref "http://example.com/"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 400 status)))))
+
 (deftest-for-each-store test-relationship-routes
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
@@ -41,11 +67,12 @@
                  :tlp "green"
                  :source "source"
                  :source_uri "http://example.com"
-                 :relationship_type "targets"
-                 :source_ref "http://example.com"
-                 :target_ref "http://example.com"}
+                 :relationship_type "based-on"
+                 :source_ref (str "http://example.com/ctia/judgement/judgement-"
+                                  "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
+                 :target_ref (str "http://example.com/ctia/indicator/indicator-"
+                                  "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
                 :headers {"api_key" "45c1f5e3f05d0"})
-
           relationship-id (id/long-id->id (:id relationship))
           relationship-external-ids
           (:external_ids relationship)]
@@ -65,9 +92,11 @@
             :tlp "green"
             :source "source"
             :source_uri "http://example.com"
-            :relationship_type "targets"
-            :source_ref "http://example.com"
-            :target_ref "http://example.com"}
+            :relationship_type "based-on"
+            :source_ref (str "http://example.com/ctia/judgement/judgement-"
+                             "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
+            :target_ref (str "http://example.com/ctia/indicator/indicator-"
+                             "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
            (dissoc relationship
                    :id
                    :created
@@ -101,9 +130,11 @@
                 :tlp "green"
                 :source "source"
                 :source_uri "http://example.com"
-                :relationship_type "targets"
-                :source_ref "http://example.com"
-                :target_ref "http://example.com"}
+                :relationship_type "based-on"
+                :source_ref (str "http://example.com/ctia/judgement/judgement-"
+                                 "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
+                :target_ref (str "http://example.com/ctia/indicator/indicator-"
+                                 "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
                (dissoc relationship
                        :created
                        :modified)))))
@@ -132,9 +163,11 @@
                  :tlp "green"
                  :source "source"
                  :source_uri "http://example.com"
-                 :relationship_type "targets"
-                 :source_ref "http://example.com"
-                 :target_ref "http://example.com"}]
+                 :relationship_type "based-on"
+                 :source_ref (str "http://example.com/ctia/judgement/judgement-"
+                                  "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
+                 :target_ref (str "http://example.com/ctia/indicator/indicator-"
+                                  "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}]
                (map #(dissoc % :created :modified) relationships)))))
 
       (testing "DELETE /ctia/relationship/:id"
