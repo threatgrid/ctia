@@ -1,24 +1,5 @@
 [
   {
-    "_id": "CTIA-Statistics",
-    "_type": "dashboard",
-    "_source": {
-      "title": "CTIA Statistics",
-      "hits": 0,
-      "description": "",
-      "panelsJSON": "[{\"col\":5,\"id\":\"Indicators-confidence-breakdown-by-timestamp-per-week\",\"panelIndex\":8,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Indicator-title-count\",\"panelIndex\":9,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Overview\",\"panelIndex\":11,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Monthly-count\",\"panelIndex\":12,\"row\":1,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Observable-type\",\"panelIndex\":14,\"row\":5,\"size_x\":4,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Priority-summary\",\"panelIndex\":19,\"row\":3,\"size_x\":3,\"size_y\":2,\"type\":\"visualization\"},{\"col\":10,\"id\":\"Severity-summary\",\"panelIndex\":20,\"row\":3,\"size_x\":3,\"size_y\":2,\"type\":\"visualization\"},{\"col\":9,\"id\":\"Source-per-week\",\"panelIndex\":21,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"IP-values-for-domains-per-month\",\"panelIndex\":23,\"row\":23,\"size_x\":6,\"size_y\":8,\"type\":\"visualization\"},{\"col\":5,\"id\":\"Sighting-count-per-hour\",\"panelIndex\":24,\"row\":5,\"size_x\":8,\"size_y\":5,\"type\":\"visualization\"},{\"id\":\"Top-20-observable-counts\",\"type\":\"visualization\",\"panelIndex\":25,\"size_x\":6,\"size_y\":7,\"col\":1,\"row\":10},{\"id\":\"Top-10-observables-per-day\",\"type\":\"visualization\",\"panelIndex\":26,\"size_x\":6,\"size_y\":7,\"col\":7,\"row\":10},{\"id\":\"Unique-count-of-observables-per-day\",\"type\":\"visualization\",\"panelIndex\":27,\"size_x\":6,\"size_y\":8,\"col\":7,\"row\":23}]",
-      "optionsJSON": "{\"darkTheme\":true}",
-      "uiStateJSON": "{\"P-7\":{\"spy\":{\"mode\":{\"fill\":false,\"name\":null}}}}",
-      "version": 1,
-      "timeRestore": true,
-      "timeTo": "now",
-      "timeFrom": "now-15m",
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
-      }
-    }
-  },
-  {
     "_id": "ctia_sighting",
     "_type": "dashboard",
     "_source": {
@@ -115,6 +96,25 @@
       "uiStateJSON": "{}",
       "version": 1,
       "timeRestore": false,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
+      }
+    }
+  },
+  {
+    "_id": "CTIA-Statistics",
+    "_type": "dashboard",
+    "_source": {
+      "title": "CTIA Statistics",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"col\":5,\"id\":\"Indicators-confidence-breakdown-by-timestamp-per-week\",\"panelIndex\":8,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Indicator-title-count\",\"panelIndex\":9,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Overview\",\"panelIndex\":11,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Monthly-count\",\"panelIndex\":12,\"row\":1,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Observable-type\",\"panelIndex\":14,\"row\":5,\"size_x\":4,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Priority-summary\",\"panelIndex\":19,\"row\":3,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":9,\"id\":\"Source-per-week\",\"panelIndex\":21,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"IP-values-for-domains-per-month\",\"panelIndex\":23,\"row\":23,\"size_x\":6,\"size_y\":8,\"type\":\"visualization\"},{\"col\":5,\"id\":\"Sighting-count-per-hour\",\"panelIndex\":24,\"row\":5,\"size_x\":8,\"size_y\":5,\"type\":\"visualization\"},{\"id\":\"Top-20-observable-counts\",\"type\":\"visualization\",\"panelIndex\":25,\"size_x\":6,\"size_y\":7,\"col\":1,\"row\":10},{\"id\":\"Top-10-observables-per-day\",\"type\":\"visualization\",\"panelIndex\":26,\"size_x\":6,\"size_y\":7,\"col\":7,\"row\":10},{\"id\":\"Unique-count-of-observables-per-day\",\"type\":\"visualization\",\"panelIndex\":27,\"size_x\":6,\"size_y\":8,\"col\":7,\"row\":23}]",
+      "optionsJSON": "{\"darkTheme\":true}",
+      "uiStateJSON": "{\"P-7\":{\"spy\":{\"mode\":{\"fill\":false,\"name\":null}}}}",
+      "version": 1,
+      "timeRestore": true,
+      "timeTo": "now",
+      "timeFrom": "now-15m",
       "kibanaSavedObjectMeta": {
         "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
       }
@@ -240,20 +240,6 @@
       "visState": "{\n  \"title\": \"Observable type\",\n  \"type\": \"pie\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"isDonut\": false\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"observable.type\",\n        \"size\": 10,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"disposition_name\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "Judgements by Observable Type",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_judgement\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "Severity-summary",
-    "_type": "visualization",
-    "_source": {
-      "title": "Severity summary",
-      "visState": "{\n  \"title\": \"Severity summary\",\n  \"type\": \"metric\",\n  \"params\": {\n    \"handleNoResults\": true,\n    \"fontSize\": \"21\"\n  },\n  \"aggs\": [\n    {\n      \"id\": \"2\",\n      \"type\": \"max\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"severity\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"severity\"\n      }\n    },\n    {\n      \"id\": \"4\",\n      \"type\": \"min\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"severity\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
         "searchSourceJSON": "{\n  \"index\": \"ctia_judgement\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
