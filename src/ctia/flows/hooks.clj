@@ -1,6 +1,7 @@
 (ns ctia.flows.hooks
   "Handle hooks ([Cf. #159](https://github.com/threatgrid/ctia/issues/159))."
   (:require [ctia.flows.autoload :as auto-hooks]
+            [clojure.tools.logging :as log]
             [ctia.flows.hooks.event-hooks :as event-hooks]
             [ctia.flows.hook-protocol
              :refer [Hook] :as prot]
@@ -92,4 +93,5 @@
 (defn init! []
   (reset-hooks!)
   (init-hooks!)
+  (log/info "Hooks Initialized: " (pr-str @hooks))
   (shutdown/register-hook! :flows.hooks shutdown!))

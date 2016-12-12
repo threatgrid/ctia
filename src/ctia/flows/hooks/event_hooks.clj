@@ -1,4 +1,5 @@
 (ns ctia.flows.hooks.event-hooks
+  (:require [clojure.tools.logging :as log])
   (:require
     [clojure.string :as str]
     [ctia.domain.entities :as entities]
@@ -92,6 +93,7 @@
   (destroy [_]
     :nothing)
   (handle [_ event _]
+    (log/info "VERDICT HANDLER FIRED")
     (when (judgement? event)
       (let [{{observable :observable :as judgement} :entity owner :owner} event]
         (when-let [new-verdict
@@ -100,6 +102,7 @@
                                       store/calculate-verdict
                                       observable)
                     (realize-verdict-wrapper judgement owner))]
+          (log/info "Generated New Verdict:" (pr-str new-verdict))
           (store/write-store :verdict store/create-verdicts [new-verdict]))))
     event))
 
@@ -109,7 +112,8 @@
          {redismq? :enabled} :redismq}
         (get-in @properties [:ctia :hook])]
     (cond-> hooks-m
+      ;;true (update :event #(conj % (->ChannelEventPublisher)))
+      true (update :event #(conj % (->VerdictGenerator)))
       redis?   (update :event #(conj % (redis-event-publisher)))
       redismq? (update :event #(conj % (redismq-publisher)))
-      :always  (update :event #(conj % (->ChannelEventPublisher)))
-      :always  (update :event #(conj % (->VerdictGenerator))))))
+      )))

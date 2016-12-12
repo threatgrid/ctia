@@ -187,7 +187,7 @@
         hits (get-in res [:hits :total] 0)
         results (->> res :hits :hits (map :_source))]
 
-    (log/debug "search-docs:" es-params)
+    (log/info "search-docs:" es-params)
 
     (pagination/response (or results [])
                          (:from es-params)

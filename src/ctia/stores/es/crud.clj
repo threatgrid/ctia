@@ -14,6 +14,14 @@
   [Model]
   (c/coercer! Model sc/json-schema-coercion-matcher))
 
+(defn ensure-document-id 
+  "Returns a document ID.  if id is a object ID, it extract the
+  document ID, if it's a document ID already, it will just return
+  that."
+  [id]
+  (let [[orig docid] (re-matches #".*?([^/]+)\z" id) ]
+    docid))
+
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
@@ -42,7 +50,7 @@
       (-> (update-doc (:conn state)
                       (:index state)
                       (name mapping)
-                      id
+                      (ensure-document-id id)
                       realized
                       (get-in state [:props :refresh] false))
           coerce!))))
@@ -57,7 +65,7 @@
       (-> (get-doc (:conn state)
                    (:index state)
                    (name mapping)
-                   id)
+                   (ensure-document-id id))
           coerce!))))
 
 (defn handle-delete
@@ -70,7 +78,7 @@
     (delete-doc (:conn state)
                 (:index state)
                 (name mapping)
-                id
+                (ensure-document-id id)
                 (get-in state [:props :refresh] false))))
 
 (defn handle-find
@@ -82,7 +90,6 @@
       [state :- ESConnState
        filter-map :- {s/Any s/Any}
        params]
-
       (coerce!
        (search-docs (:conn state)
                     (:index state)
