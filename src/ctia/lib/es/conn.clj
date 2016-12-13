@@ -17,11 +17,6 @@
 (defn make-connection-manager []
   (make-reusable-conn-manager default-cm-options))
 
-(s/defschema ESConn
-  {:cm (s/either PoolingClientConnectionManager
-                 PoolingHttpClientConnectionManager)
-   :uri s/Str})
-
 (defn connect
   "instantiate an ES conn from props"
   [{:keys [transport host port clustername]
@@ -30,12 +25,12 @@
   {:cm (make-connection-manager)
    :uri (format "http://%s:%s" host port)})
 
-(defn safe-es-read [{:keys [status body :as res]}]
+(defn safe-es-read [{:keys [status body]
+                     :as res}]
   (case status
     200 body
     201 body
     404 nil
     (do (log/warn "ES query failed:" res)
-        (throw
-         (ex-info "ES query failed"
-                  {:es-http-res res})))))
+        (throw (ex-info "ES query failed"
+                        {:es-http-res res})))))

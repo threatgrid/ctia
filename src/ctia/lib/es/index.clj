@@ -1,27 +1,19 @@
 (ns ctia.lib.es.index
-  (:require
-   [ctia.lib.es.conn :refer [ESConn default-opts safe-es-read]]
-   [clj-http.client :as client]
-   [schema.core :as s]))
-
-(s/defschema ESSlicing
-  {:strategy s/Keyword
-   :granularity s/Keyword})
-
-(s/defschema ESConnState
-  {:index s/Str
-   :props {s/Any s/Any}
-   :config {s/Any s/Any}
-   :conn ESConn
-   (s/optional-key :slicing) ESSlicing})
+  (:refer-clojure :exclude [get])
+  (:require [clj-http.client :as client]
+            [ctia.lib.es
+             [conn :refer [default-opts safe-es-read]]
+             [schemas :refer [ESConn]]]
+            [schema.core :as s]))
 
 (s/defn index-uri :- s/Str
+  "make an index uri from a host and an index name"
   [uri :- s/Str
    index-name :- s/Str]
-  "make an index uri from a host and an index name"
   (format "%s/%s" uri index-name))
 
 (s/defn template-uri :- s/Str
+  "make a template uri from a host and a template name"
   [uri :- s/Str
    template-name :- s/Str]
   "make a template uri from a host and a template name"
@@ -32,20 +24,44 @@
   [{:keys [uri cm]} :- ESConn
    index-name :- s/Str]
 
-  (-> (client/head (index-uri uri index-name)
-                   (assoc default-opts
-                          :connection-manager cm))
-      safe-es-read
-      boolean))
+  (safe-es-read
+   (-> (client/head (index-uri uri index-name)
+                    (assoc default-opts
+                           :connection-manager cm))
+       safe-es-read
+       boolean)))
+
+
+(s/defn create!
+  "create an index"
+  [{:keys [uri cm] :as conn} :- ESConn
+   index-name :- s/Str
+   settings :- s/Any]
+
+  (safe-es-read
+   (client/put (index-uri uri index-name)
+               (assoc default-opts
+                      :form-params settings
+                      :connection-manager cm))))
+(s/defn get
+  "get an index"
+  [{:keys [uri cm] :as conn} :- ESConn
+   index-name :- s/Str]
+
+  (safe-es-read
+   (client/get (index-uri uri index-name)
+               (assoc default-opts
+                      :connection-manager cm))))
 
 (s/defn delete!
   "delete indexes using a wildcard"
   [{:keys [uri cm] :as conn} :- ESConn
    index-wildcard :- s/Str]
 
-  (client/delete (index-uri uri index-wildcard)
-                 (assoc default-opts
-                        :connection-manager cm)))
+  (safe-es-read
+   (client/delete (index-uri uri index-wildcard)
+                  (assoc default-opts
+                         :connection-manager cm))))
 
 (s/defn create-template!
   "create an index template, update if already exists"
@@ -61,3 +77,4 @@
                  (merge default-opts
                         {:form-params opts
                          :connection-manager cm})))))
+

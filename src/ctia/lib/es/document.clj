@@ -3,34 +3,44 @@
             [clj-http.client :as client]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [ctia.lib.es.conn :refer [default-opts ESConn safe-es-read]]
+            [ctia.lib.es
+             [conn :refer [default-opts safe-es-read]]
+             [schemas :refer [ESConn Refresh]]]
             [ctia.lib.pagination :as pagination]
             [ctia.stores.es.query :refer [filter-map->terms-query]]
             [schema.core :as s]))
 
 (def default-limit 1000)
 
-(s/defschema Refresh
-  (s/enum "true"
-          "false"
-          "wait_for"))
-
-(defn create-doc-uri [uri index-name mapping id]
+(defn create-doc-uri
+  "make an uri for document creation"
+  [uri index-name mapping id]
   (format "%s/%s/%s/%s" uri index-name mapping id))
 
-(def delete-doc-uri create-doc-uri)
-(def get-doc-uri create-doc-uri)
+(def delete-doc-uri
+  "make an uri for doc deletion"
+  create-doc-uri)
 
-(defn update-doc-uri [uri index-name mapping id]
+(def get-doc-uri
+  "make an uri for doc retrieval"
+  create-doc-uri)
+
+(defn update-doc-uri
+  "make an uri for document update"
+  [uri index-name mapping id]
   (format "%s/%s/%s/%s/_update" uri index-name mapping id))
 
-(defn bulk-uri [uri]
+(defn bulk-uri
+  "make an uri for bulk action"
+  [uri]
   (format "%s/_bulk" uri))
 
 (defn search-uri [uri index-name mapping]
+  "make an uri for search action"
   (format "%s/%s/%s/_search" uri index-name mapping))
 
 (def ^:private special-operation-keys
+  "all operations fields for a bulk operation"
   [:_doc_as_upsert
    :_index
    :_type
@@ -47,7 +57,9 @@
    :_version
    :_version_type])
 
-(defn index-operation [doc]
+(defn index-operation
+  "helper to prepare a bulk insert operation"
+  [doc]
   {"index" (select-keys doc special-operation-keys)})
 
 (defn bulk-index
@@ -120,7 +132,7 @@
   doc)
 
 (s/defn delete-doc
-  "delete a document on es and return nil if ok"
+  "delete a document on es, returns boolean"
   [{:keys [uri cm]} :- ESConn
    index-name :- s/Str
    mapping :- s/Str
@@ -149,7 +161,6 @@
    (when offset
      {:from offset})))
 
-
 (defn generate-es-params [query filter-map params]
   (let [query-map (filter-map->terms-query filter-map query)]
     (merge (params->pagination params)
@@ -157,9 +168,8 @@
            (select-keys params [:sort]))))
 
 (s/defn search-docs
-  "Search for documents on es using a query string search.  Also applies a filter map, converting
+  "Search for documents on ES using a query string search.  Also applies a filter map, converting
    the values in the filter-map into must match terms."
-
   [{:keys [uri cm]} :- ESConn
    index-name :- s/Str
    mapping :- s/Str

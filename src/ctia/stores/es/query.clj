@@ -40,18 +40,24 @@ we force all values to lowercase, since our indexing does the same for all terms
 (defn filter-map->terms-query
   "transforms a filter map to en ES terms query"
   ([filter-map]
-   (filter-map->terms-query filter-map {:match_all {}}))
+   (filter-map->terms-query filter-map nil))
   ([filter-map query]
-   (let [q (or query {:match_all {}})]
-     (if filter-map
-       (let [terms (map (fn [[k v]]
-                          (let [t-key (if (sequential? k) k [k])]
-                            [t-key v]))
-                        filter-map)
-             must-filters (nested-terms terms)]
 
-         (if (empty? must-filters)
-           q {:bool
-              {:must q
-               :filter (q/bool {:must must-filters})}}))
-       q))))
+   (if filter-map
+     (let [terms (map (fn [[k v]]
+                        (let [t-key (if (sequential? k) k [k])]
+                          [t-key v]))
+                      filter-map)
+           must-filters (nested-terms terms)]
+
+       (if (empty? must-filters)
+         {:bool
+          {:filter query}}
+
+         {:bool
+          {:filter (q/bool {:must
+                            (if query
+                              (conj must-filters query)
+                              must-filters)})}}))
+     {:bool
+      {:filter query}})))

@@ -20,8 +20,7 @@
 
 (deftest filter-map->terms-query-test
   (is (= {:bool
-          {:must {:match_all {}}
-           :filter
+          {:filter
            {:bool
             {:must
              [{:terms {"observable.type" ["ip"]}}

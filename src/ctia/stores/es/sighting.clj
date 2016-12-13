@@ -1,5 +1,5 @@
 (ns ctia.stores.es.sighting
-  (:require [ctia.lib.es.index :refer [ESConnState]]
+  (:require [ctia.lib.es.schemas :refer [ESConnState]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.stores.es.crud :as crud]
             [ctia.schemas.core :refer [Observable StoredSighting]]
