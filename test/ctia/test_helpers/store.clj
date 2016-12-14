@@ -8,9 +8,5 @@
   `(helpers/deftest-for-each-fixture ~test-name
      {:es-store   (join-fixtures [es-helpers/fixture-properties:es-store
                                   helpers/fixture-ctia
-                                  es-helpers/fixture-delete-store-indexes])
-
-      :es-store-native (join-fixtures [es-helpers/fixture-properties:es-store-native
-                                       helpers/fixture-ctia
-                                       es-helpers/fixture-delete-store-indexes])}
+                                  es-helpers/fixture-delete-store-indexes])}
      ~@body))

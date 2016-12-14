@@ -1,18 +1,7 @@
 (ns ctia.stores.es.query
-  (:require [clojure.string :as str]
-            [clojurewerkz.elastisch.query :as q]))
-
-(defn indicators-by-judgements-query
-  "filter to get all indicators
-   matching a set of judgement ids"
-  [judgement-ids]
-
-  (let [f (q/bool
-           {:must (q/terms :judgements.judgement_id
-                           judgement-ids)})]
-    (q/filtered
-     {:query {:match_all {}}
-      :filter f})))
+  (:require
+   [clojure.string :as str]
+   [ctia.lib.es.query :as q]))
 
 (def unexpired-time-range
   "ES filter that matches objects which
@@ -26,29 +15,43 @@
 (defn active-judgements-by-observable-query
   "a filtered query to get judgements for the specified
   observable, where valid time is in now range"
-
   [{:keys [value type]}]
 
-  (let [observable-filter
-        (q/bool
-         {:must [{:term {"observable.type" type}}
-                 {:term {"observable.value" value}}]})
-        time-filter (q/bool {:must unexpired-time-range})]
+  (q/bool {:filter (concat
+                    unexpired-time-range
+                    [{:term {"observable.type" type}}
+                     {:term {"observable.value" value}}])}))
 
-    (q/filtered {:query observable-filter
-                 :filter time-filter})))
+(defn nested-terms [filters]
+  "make nested terms from a ctia filter:
+  [[[:observable :type] ip] [[:observable :value] 42.42.42.1]]
+  ->
+  [{:terms {observable.type [ip]}} {:terms {observable.value [42.42.42.1]}}]
 
+we force all values to lowercase, since our indexing does the same for all terms."
+  (vec (map (fn [[k v]]
+              (q/terms (->> k
+                            (map name)
+                            (str/join "."))
+                       (map str/lower-case
+                            (if (coll? v) v [v]))))
+            filters)))
 
-(defn sightings-by-observables-query
-  "nested filter to get all indicators
-   matching a set of judgement ids"
-  [observables]
+(defn filter-map->terms-query
+  "transforms a filter map to en ES terms query"
+  ([filter-map]
+   (filter-map->terms-query filter-map {:match_all {}}))
+  ([filter-map query]
+   (let [q (or query {:match_all {}})]
+     (if filter-map
+       (let [terms (map (fn [[k v]]
+                          (let [t-key (if (sequential? k) k [k])]
+                            [t-key v]))
+                        filter-map)
+             must-filters (nested-terms terms)]
 
-  (q/nested
-   :path "observables"
-   :query (q/bool {:should
-                   (map (fn [{:keys [type value]}]
-                          (q/bool
-                           {:must
-                            [{:term {"observables.type" type}}
-                             {:term {"observables.value" value}}]})) observables)})))
+         (if (empty? must-filters)
+           q {:bool
+              {:must q
+               :filter (q/bool {:must must-filters})}}))
+       q))))
