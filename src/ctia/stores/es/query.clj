@@ -17,10 +17,10 @@
   observable, where valid time is in now range"
   [{:keys [value type]}]
 
-  (q/bool {:filter (concat
-                    unexpired-time-range
-                    [{:term {"observable.type" type}}
-                     {:term {"observable.value" value}}])}))
+  (concat
+   unexpired-time-range
+   [{:term {"observable.type" type}}
+    {:term {"observable.value" value}}]))
 
 (defn nested-terms [filters]
   "make nested terms from a ctia filter:
@@ -37,27 +37,36 @@ we force all values to lowercase, since our indexing does the same for all terms
                             (if (coll? v) v [v]))))
             filters)))
 
+;; TODO figure out better that part
 (defn filter-map->terms-query
   "transforms a filter map to en ES terms query"
   ([filter-map]
    (filter-map->terms-query filter-map nil))
   ([filter-map query]
 
-   (if filter-map
-     (let [terms (map (fn [[k v]]
-                        (let [t-key (if (sequential? k) k [k])]
-                          [t-key v]))
-                      filter-map)
-           must-filters (nested-terms terms)]
+   (let [terms (map (fn [[k v]]
+                      (let [t-key (if (sequential? k) k [k])]
+                        [t-key v]))
+                    filter-map)
+         must-filters (nested-terms terms)]
 
-       (if (empty? must-filters)
-         {:bool
-          {:filter query}}
+     (cond
+       ;; a filter map and a query
+       (and filter-map query)
+       {:bool
+        {:filter (conj must-filters query)}}
 
-         {:bool
-          {:filter (q/bool {:must
-                            (if query
-                              (conj must-filters query)
-                              must-filters)})}}))
-     {:bool
-      {:filter query}})))
+       ;; only a filter map
+       (and filter-map (nil? query))
+       {:bool
+        {:filter must-filters}}
+
+       ;; a query without a filter map
+       (and (empty? filter-map) query)
+       {:bool
+        {:filter query}}
+
+       ;; if we neither have a filter map or a query
+       :else
+       {:bool
+        {:match_all {}}}))))
