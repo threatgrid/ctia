@@ -18,7 +18,8 @@ public class Example {
         RedisCommands<String, String> cmds = connection.sync();
 
         int count = 0;
-        for (String value = cmds.lpop(key); value != null; value = cmds.lpop(key)) {
+        String value = null;
+        while (null != (value = cmds.lpop(key))) {
             JSONObject event = new JSONObject(value);
             String type = event.getJSONObject("data")
                 .getJSONObject("entity")
