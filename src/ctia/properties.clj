@@ -26,8 +26,7 @@
   {(str "ctia.store." store) s/Str})
 
 (defn es-store-impl-properties [store]
-  {(str "ctia.store.es." store ".transport") (s/enum :http :native)
-   (str "ctia.store.es." store ".host") s/Str
+  {(str "ctia.store.es." store ".host") s/Str
    (str "ctia.store.es." store ".port") s/Int
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str

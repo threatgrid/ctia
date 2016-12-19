@@ -1,6 +1,8 @@
 (ns ctia.stores.es.store
-  (:require [clojure.tools.logging :as log]
-            [ctia.lib.es.index :as es-index :refer [connect ESConnState]]
+  (:require [ctia.lib.es
+             [conn :refer [connect]]
+             [schemas :refer [ESConnState]]
+             [index :as es-index :refer [create-template!]]]
             [ctia.store
              :refer
              [IActorStore
@@ -39,8 +41,8 @@
             [schema.core :as s]))
 
 (s/defn init-store-conn :- ESConnState
-  "initiate an ES store connection returns a map containing transport,
-   mapping, and the configured index name"
+  "initiate an ES store connection returns
+   a map containing a connection manager, dedicated store index properties"
   [{:keys [entity indexname shards replicas] :as props}]
 
   (let [settings {:number_of_shards shards
@@ -53,7 +55,7 @@
 
 (s/defn init! :- ESConnState
   "initiate an ES Store connection,
-  put the index template, returns the es conn state"
+   put the index template, return an ESConnState"
   [props]
   (let [{:keys [conn index config] :as conn-state} (init-store-conn props)]
     (es-index/create-template! conn index config)
@@ -180,7 +182,6 @@
   (query-string-search [_ query filtermap params]
     (ca/handle-query-string-search state query filtermap params)))
 
-
 (defrecord COAStore [state]
   ICOAStore
   (read-coa [_ id]
@@ -239,7 +240,6 @@
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap params]
     (et/handle-query-string-search state query filtermap params)))
-
 
 (defrecord IdentityStore [state]
   IIdentityStore

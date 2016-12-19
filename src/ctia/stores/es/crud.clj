@@ -1,5 +1,5 @@
 (ns ctia.stores.es.crud
-  (:require [ctia.lib.es.index :refer [ESConnState]]
+  (:require [ctia.lib.es.schemas :refer [ESConnState]]
             [schema.core :as s]
             [schema.coerce :as c]
             [ring.swagger.coerce :as sc]

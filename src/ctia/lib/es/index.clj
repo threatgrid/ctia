@@ -1,80 +1,80 @@
 (ns ctia.lib.es.index
-  (:require [clojure.core.memoize :as memo]
-            [clojurewerkz.elastisch.native :as n]
-            [clojurewerkz.elastisch.native.index :as native-index]
-            [clojurewerkz.elastisch.rest :as h]
-            [clojurewerkz.elastisch.rest.index :as rest-index]
+  (:refer-clojure :exclude [get])
+  (:require [clj-http.client :as client]
+            [ctia.lib.es
+             [conn :refer [default-opts safe-es-read]]
+             [schemas :refer [ESConn]]]
             [schema.core :as s]))
 
-(s/defschema ESConn
-  (s/either clojurewerkz.elastisch.rest.Connection
-            org.elasticsearch.client.transport.TransportClient))
+(s/defn index-uri :- s/Str
+  "make an index uri from a host and an index name"
+  [uri :- s/Str
+   index-name :- s/Str]
+  (format "%s/%s" uri index-name))
 
-(def alias-create-fifo-threshold 5)
+(s/defn template-uri :- s/Str
+  "make a template uri from a host and a template name"
+  [uri :- s/Str
+   template-name :- s/Str]
+  "make a template uri from a host and a template name"
+  (format "%s/_template/%s" uri template-name))
 
-(s/defschema ESSlicing
-  {:strategy s/Keyword
-   :granularity s/Keyword})
+(s/defn index-exists? :- s/Bool
+  "check if the supplied ES index exists"
+  [{:keys [uri cm]} :- ESConn
+   index-name :- s/Str]
 
-(s/defschema ESConnState
-  {:index s/Str
-   :props {s/Any s/Any}
-   :config {s/Any s/Any}
-   :conn ESConn
-   (s/optional-key :slicing) ESSlicing})
+  (safe-es-read
+   (-> (client/head (index-uri uri index-name)
+                    (assoc default-opts
+                           :connection-manager cm))
+       safe-es-read
+       boolean)))
 
-(defn native-conn? [conn]
-  (not (:uri conn)))
 
-(defn create-template-fn [conn]
-  (if (native-conn? conn)
-    native-index/create-template
-    rest-index/create-template))
+(s/defn create!
+  "create an index"
+  [{:keys [uri cm] :as conn} :- ESConn
+   index-name :- s/Str
+   settings :- s/Any]
 
-(defn index-exists?-fn [conn]
-  (if (native-conn? conn)
-    native-index/exists?
-    rest-index/exists?))
+  (safe-es-read
+   (client/put (index-uri uri index-name)
+               (assoc default-opts
+                      :form-params settings
+                      :connection-manager cm))))
+(s/defn get
+  "get an index"
+  [{:keys [uri cm] :as conn} :- ESConn
+   index-name :- s/Str]
 
-(defn index-create-fn [conn]
-  (if (native-conn? conn)
-    native-index/create
-    rest-index/create))
+  (safe-es-read
+   (client/get (index-uri uri index-name)
+               (assoc default-opts
+                      :connection-manager cm))))
 
-(defn index-delete-fn [conn]
-  (if (native-conn? conn)
-    native-index/delete
-    rest-index/delete))
+(s/defn delete!
+  "delete indexes using a wildcard"
+  [{:keys [uri cm] :as conn} :- ESConn
+   index-wildcard :- s/Str]
 
-(defn update-alias-fn [conn]
-  (if (native-conn? conn)
-    native-index/update-aliases
-    rest-index/update-aliases))
+  (safe-es-read
+   (client/delete (index-uri uri index-wildcard)
+                  (assoc default-opts
+                         :connection-manager cm))))
 
-(defn refresh-fn [conn]
-  (if (native-conn? conn)
-    native-index/refresh
-    rest-index/refresh))
-
-(defn connect
-  "instantiate an ES conn from props"
-  [{:keys [transport host port clustername]
-    :or {transport :http}}]
-  (case transport
-    :native (n/connect [[host port]]
-                       {"cluster.name" clustername})
-    :http (h/connect  (str "http://" host ":" port))))
-
-(defn delete!
-  "delete an index, abort if non existant"
-  [conn index-name]
-  (when ((index-exists?-fn conn) conn index-name)
-    ((index-delete-fn conn) conn index-name)))
-
-(defn create-template!
+(s/defn create-template!
   "create an index template, update if already exists"
-  [conn index-name index-config]
+  [{:keys [uri cm]} :- ESConn
+   index-name :- s/Str
+   index-config]
 
   (let [template (str index-name "*")
         opts (assoc index-config :template template)]
-    ((create-template-fn conn) conn index-name opts)))
+
+    (safe-es-read
+     (client/put (template-uri uri index-name)
+                 (merge default-opts
+                        {:form-params opts
+                         :connection-manager cm})))))
+

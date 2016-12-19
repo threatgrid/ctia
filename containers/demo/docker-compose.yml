@@ -20,15 +20,18 @@ services:
       - "6379:6379"
 
   elasticsearch:
-    image: elasticsearch:2.3.3
-    command: "elasticsearch -Des.network.host=0.0.0.0 -Des.cluster.name=elasticsearch -Des.node.master=true"
+    image: elasticsearch:5.1
+    environment:
+      ES_NETWORK_HOST: 0.0.0.0
+      ES_NODE_MASTER: "true"
+      ES_CLUSTER_NAME: elasticsearch
     volumes:
       - ./elasticsearch/data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
       - "9300:9300"
   logstash:
-    image: logstash:latest
+    image: logstash:5.1
     command: logstash -f /etc/logstash/conf.d/logstash.conf
     volumes:
       - ./logstash/config:/etc/logstash/conf.d

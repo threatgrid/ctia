@@ -1,13 +1,11 @@
 (ns ctia.stores.es.event
-  (:require [ctia.schemas.event :as ctia-event-schemas]
-            [ctia.stores.es.crud :as crud]
-            [ctia.stores.es.mapping :refer [event-mapping]]
-            [ctia.lib.es
+  (:require [ctia.lib.es
              [document :as d]
-             [index :refer [connect ESConnState]]
-             [slice :refer [get-slice-props SliceProperties]]]
+             [schemas :refer [ESConnState SliceProperties]]
+             [slice :refer [get-slice-props]]]
             [ctia.lib.pagination :refer [list-response-schema]]
-            [ctia.properties :refer [properties]]
+            [ctia.schemas.event :as ctia-event-schemas]
+            [ctia.stores.es.crud :as crud]
             [ctim.events.schemas :as event-schemas]
             [schema.core :as s]))
 

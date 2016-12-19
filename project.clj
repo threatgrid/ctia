@@ -54,12 +54,7 @@
                  ;; overriding here
                  [metosin/ring-swagger "0.22.11"]
                  [metosin/compojure-api ~compojure-api-version
-                  ;; Exclusions:
-                  ;; - ring-swagger as CTIM provides 0.22.9
-                  ;; - compojure-api 1.1.7 is not using the latest snakeyaml
-                  ;;  - As of 2016-08-25, the latest version is 1.17, elastich
-                  ;;    3.0.0-beta1 wants 1.15, while compojure-api wants 1.13
-                  :exclusions [org.yaml/snakeyaml metosin/ring-swagger]]
+                  :exclusions [metosin/ring-swagger]]
                  [ring/ring-jetty-adapter "1.5.0"]
                  [javax.servlet/servlet-api "2.5"]
                  [ring/ring-devel "1.4.0"]
@@ -73,9 +68,6 @@
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.12"]
                  [cider/cider-nrepl "0.14.0"]
-
-                 ;; Database
-                 [clojurewerkz/elastisch "3.0.0-beta1"]
 
                  ;; clients
                  [clj-http "2.2.0"
@@ -114,11 +106,9 @@
   :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.4.0"
   :test-selectors {:es-store :es-store
-                   :es-store-native :es-store-native
                    :disabled :disabled
                    :default #(not= :disabled %)
                    :integration #(or (:es-store %)
-                                     (:es-store-native %)
                                      (:integration %)
                                      (:es-aliased-index %))
                    :no-gen #(not (:generative %))

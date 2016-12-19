@@ -3,13 +3,14 @@ redis-dev:
   ports:
     - "6379:6379"
 elasticsearch-dev:
-  image: elasticsearch:2.3.3
-  command: "elasticsearch -Des.cluster.name=elasticsearch -Des.node.master=true"
+  image: elasticsearch:5.1
+  environment:
+    - cluster.name=elasticsearch
   ports:
     - "9200:9200"
     - "9300:9300"
 kibana-dev:
-  image: kibana:4.5.1
+  image: kibana:5.1
   ports:
     - "5601:5601"
   environment:

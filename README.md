@@ -44,8 +44,8 @@ a crash course in running clojure projects, check out
 CTIA uses Leiningen as it's "build" tool, you can install it by
 following the instructions here: http://leiningen.org/#install
 
-By default, CTIA uses Elasticsearch as it's data store.  Assuming you
-have Elasticsearch running on 127.0.0.1:9200 you can simply start
+By default, CTIA uses Elasticsearch 5.x as it's data store.  Assuming you
+have it running on 127.0.0.1:9200 you can simply start
 CTIA.
 
 You can jump to the [Developer](#Developer) section to see instructions
