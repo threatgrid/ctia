@@ -18,6 +18,11 @@ This demo integrates:
 
 ## Building and Starting the Containers
 
+### Linux Host Configuration
+If your docker host OS is Linux,
+Elasticsearch 5x bootstrap checks the maximum map count configuration,
+tune it accordingly with `sudo sysctl -w vm.max_map_count=262144`
+
 To build and run the containers with docker-compose, install docker and docker compose.  Then type:
 
     $ sudo docker-compose up
