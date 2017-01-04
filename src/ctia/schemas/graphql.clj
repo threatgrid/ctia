@@ -37,21 +37,25 @@
 ;; TODOS
 ;; - Learn to use Enum values and replace current String types with them
 ;; - Complete Indicator schema
-;;   - indicator(id)
-;;   - indicators search
+;;   - add the rest of the fields
+;;   - indicator(id) - defined but no tests
+;;   - indicators search - defined but no tests
 ;; - judgements search arguments
 ;; - Complete Sighting schema
-;;   - sighting(id)
-;;   - sightings search
+;;   - add the rest of the fields
+;;   - sighting(id)  - defined but no tests
+;;   - sightings search - defined but no tests
 ;;   - Add sighting lookup to Observable type
 ;; - Feedback support
+;;   - Feedback object schema
+;;   - as part of base entity, should be a feedback field which is a Connection to Feedback objects
 
 
 (defn gql-field
   "A function for creating GraphQLFieldDefinitions builders, it
   required the values that define a minimally functional field
   definition. It takes the following arguments in order:
-
+  
   * fname - the field name, as a string
   * type - A GraphQLType, or a  GraphQLTypeReference
   * description - A string description of the field, will be used in the schema documentation
@@ -73,11 +77,16 @@
 (def non-null-string (new GraphQLNonNull graphql.Scalars/GraphQLString))
 (def non-null-int (new GraphQLNonNull graphql.Scalars/GraphQLInt))
 
-(comment
-  (defn graphql-vocab [name description value-description-map]
-    (-> (new GraphQL)))
-  
-  (defn graphql-openvocab [name description value-description-map]))
+
+(defn graphql-vocab [name description value-description-map]
+  (let [typedef (-> (GraphQLEnumType/newEnum)
+                    (.name name)
+                    (.description description))]
+    (doseq [k (keys value-description-map)]
+      (.value typedef k (get value-description-map k) k))
+    typedef))
+
+(defn graphql-openvocab [name description value-description-map])
 
 
 (defprotocol ConvertibleToClojure
@@ -267,6 +276,7 @@ using get, and applies a transform if supplied."
          (for [[k v] record :when (nil? v)] k)))
 
 
+
 (defn add-connect-type-arguments
   "Add the required edge field arguments for Relay support."
   [field-builder]
@@ -286,19 +296,14 @@ using get, and applies a transform if supplied."
                      (type graphql.Scalars/GraphQLInt)
                      (description "return the last N objects")))
       (.argument (.. (GraphQLArgument/newArgument)
-                     (name "after")
+                     (name "before")
                      (type graphql.Scalars/GraphQLString)
                      (description "start from this object")))))
 
-(declare resolve-entity-type)
-
+(declare resolve-type)
 (def entity-type-resolver  (reify TypeResolver
                              (getType [_ obj]
-                               (resolve-entity-type obj))))
-
-
-
-
+                               (resolve-type obj))))
 
 (def NodeInterface
   (-> (GraphQLInterfaceType/newInterface)
@@ -335,6 +340,8 @@ using get, and applies a transform if supplied."
       (.typeResolver entity-type-resolver)
       (add-sourced-object-fields)
       (.build)))
+
+
 
 
 (def PageInfoType
@@ -377,7 +384,7 @@ using get, and applies a transform if supplied."
                          non-null-string
                          "The type of the relationship, see /ctia/doc/defined_relationships.md"
                          (map-fetcher :relationship_type)))
-
+      
       ;; GET TARGET WORKING
       (.field (gql-field "target"
                          NodeInterface
@@ -561,7 +568,6 @@ using get, and applies a transform if supplied."
                          (map-fetcher :reason_uri)))
       (.build)))
 
-
 (def IndicatorType
   (-> (GraphQLObjectType/newObject)
       (.name "Indicator")
@@ -584,50 +590,66 @@ using get, and applies a transform if supplied."
                          (map-fetcher :negate)))
       
       (.field (gql-field "indicator_type"
-                         ValidTimeType
+                         graphql.Scalars/GraphQLString                         
                          "The time range for which this Judgement is considered valid."
-                         (map-fetcher :valid_time)))
+                         (map-fetcher :indicator_type)))
+
+      (.field (gql-field "tags"
+                         (list-type graphql.Scalars/GraphQLString)                         
+                         "tags associated with this indicator."
+                         (map-fetcher :tags)))
       
       (.build)))
 
 
 (comment
-  (f/optional-entries
+        (f/optional-entries
+         
+         (f/entry :composite_indicator_expression CompositeIndicatorExpression)
+         (f/entry :likely_impact f/any-str
+                  :description (str "likely potential impact within the relevant "
+                                    "context if this Indicator were to occur"))
+         (f/entry :confidence v/HighMedLow
+                  :description (str "level of confidence held in the accuracy of this "
+                                    "Indicator"))
+         (f/entry :kill_chain_phases f/any-str-seq
+                  :comment "simplified"
+                  :description "relevant kill chain phases indicated by this Indicator")
+         (f/entry :test_mechanisms f/any-str-seq
+                  :comment "simplified"
+                  :description (str "Test Mechanisms effective at identifying the "
+                                    "cyber Observables specified in this cyber threat "
+                                    "Indicator"))
+         (f/entry :specification (f/conditional
+                                  #(= "Judgement"   (:type %)) JudgementSpecification
+                                  #(= "ThreatBrain" (:type %)) ThreatBrainSpecification
+                                  #(= "Snort"       (:type %)) SnortSpecification
+                                  #(= "SIOC"        (:type %)) SIOCSpecification
+                                  #(= "OpenIOC"     (:type %)) OpenIOCSpecification))))
 
-   (f/entry :indicator_type [v/IndicatorType]
-            :description "Specifies the type or types for this Indicator")
-   (f/entry :tags f/any-str-seq
-            :description "Descriptors for this indicator")
-   (f/entry :composite_indicator_expression CompositeIndicatorExpression)
-   (f/entry :likely_impact f/any-str
-            :description (str "likely potential impact within the relevant "
-                              "context if this Indicator were to occur"))
-   (f/entry :confidence v/HighMedLow
-            :description (str "level of confidence held in the accuracy of this "
-                              "Indicator"))
-   (f/entry :kill_chain_phases f/any-str-seq
-            :comment "simplified"
-            :description "relevant kill chain phases indicated by this Indicator")
-   (f/entry :test_mechanisms f/any-str-seq
-            :comment "simplified"
-            :description (str "Test Mechanisms effective at identifying the "
-                              "cyber Observables specified in this cyber threat "
-                              "Indicator"))
-   (f/entry :specification (f/conditional
-                            #(= "Judgement"   (:type %)) JudgementSpecification
-                            #(= "ThreatBrain" (:type %)) ThreatBrainSpecification
-                            #(= "Snort"       (:type %)) SnortSpecification
-                            #(= "SIOC"        (:type %)) SIOCSpecification
-                            #(= "OpenIOC"     (:type %)) OpenIOCSpecification)))
-      
+(def SightingType
+  (-> (GraphQLObjectType/newObject)
+      (.name "Sighting")
+      (.withInterface NodeInterface)
+      (.withInterface BaseEntityInterface)
+      (.withInterface SourcedObjectInterface)
+      (.withInterface DescribableEntityInterface)
+      (.withInterface RelatableEntityInterface)
+      (add-base-entity-fields)
+      (add-sourced-object-fields)
+      (add-describable-entity-fields)
+      (add-relatable-entity-fields)
+      ;; add the fields here
 )
 
 
 ;; ID needs to be base64 encoded here, since it's opaque, verdicts only have an ID
 ;; for the purposes of our storage subsystem and our quick verdict lookup support
 (def VerdictType
-    (-> (GraphQLObjectType/newObject)
+  (-> (GraphQLObjectType/newObject)
       (.name "Verdict")
+      ;; should implement NodeInterface
+      ;; do they even have an id????
       (.field (gql-field "id"
                          graphql.Scalars/GraphQLID
                          "An opaque ID for the verdict node, this is NOT an entity identifier."
@@ -761,14 +783,10 @@ using get, and applies a transform if supplied."
 
 
 
-
-
-
-
-(defn resolve-entity-type [obj]
+(defn resolve-type [obj]
   (case (get obj :type)
     "judgement" JudgementType
-    ;;"sighting" SightingType
+    "sighting" SightingType
     "indicator" IndicatorType
     "relationship" RelationshipType))
 
@@ -810,9 +828,9 @@ using get, and applies a transform if supplied."
                  (.argument (.. (GraphQLArgument/newArgument)
                                 (name "query")
                                 (type graphql.Scalars/GraphQLString)
-                                (description "a Lucense query string, will only return Judgements matching it.")))
+                                (description "a Lucene query string, will only return Judgements matching it.")))
                  (.dataFetcher (entity-search-fetcher :judgement))))
-
+      
       (field (-> (GraphQLFieldDefinition/newFieldDefinition)
                  (.name "indicator")
                  (.type IndicatorType)
@@ -820,7 +838,40 @@ using get, and applies a transform if supplied."
                                (name "id")
                                (description "The ID of the Indicator")
                                (type non-null-string)))
-                 (.dataFetcher (entity-by-id-fetcher :indicator read-indicator))))))
+                 (.dataFetcher (entity-by-id-fetcher :indicator read-indicator))))
+
+      (field (-> (GraphQLFieldDefinition/newFieldDefinition)
+                 (.name "indicators")
+                 (.type (list-type IndicatorType))
+                 add-connect-type-arguments
+                 (.argument (.. (GraphQLArgument/newArgument)
+                                (name "query")
+                                (type graphql.Scalars/GraphQLString)
+                                (description "a Lucene query string, will only return Indicators matching it.")))
+                 (.dataFetcher (entity-search-fetcher :indicator))))
+
+      (field (-> (GraphQLFieldDefinition/newFieldDefinition)
+                 (.name "sighting")
+                 (.type SightingType)
+                 (.argument (.. (GraphQLArgument/newArgument)
+                               (name "id")
+                               (description "The ID of the Sighting")
+                               (type non-null-string)))
+                 (.dataFetcher (entity-by-id-fetcher :sighting read-sighting))))
+
+      (field (-> (GraphQLFieldDefinition/newFieldDefinition)
+                 (.name "sightings")
+                 (.type (list-type SightingType))
+                 add-connect-type-arguments
+                 (.argument (.. (GraphQLArgument/newArgument)
+                                (name "query")
+                                (type graphql.Scalars/GraphQLString)
+                                (description "a Lucene query string, will only return Sightings matching it.")))
+                 (.dataFetcher (entity-search-fetcher :sighting))))
+
+      ))
+
+
 
 
 (def schema (.. (GraphQLSchema/newSchema)
