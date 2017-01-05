@@ -640,7 +640,7 @@ using get, and applies a transform if supplied."
       (add-describable-entity-fields)
       (add-relatable-entity-fields)
       ;; add the fields here
-)
+      (.build)))
 
 
 ;; ID needs to be base64 encoded here, since it's opaque, verdicts only have an ID
