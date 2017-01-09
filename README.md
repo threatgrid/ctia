@@ -53,6 +53,16 @@ on how to run elasticsearch and other optional supporting tools using
 Docker.  CTIA can use redis to store some of it's objects (Verdicts)
 and also can send streams of events to Redis and Elasticsearch.
 
+#### Purging ES Stores
+
+Using an uberjar you can purge all the ES Stores with this command:
+
+`java -cp ctia.jar:resources:. clojure.main -m ctia.task.purge-es-stores`
+
+Using lein use this one:
+
+`lein run -m ctia.task.purge-es-stores`
+
 ### Run the application locally
 
 Running from a cloned repository:
