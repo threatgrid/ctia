@@ -78,7 +78,6 @@
                          :observable.type
                          :observable.value])))
 
-
 (def sighting-sort-fields
   (apply s/enum (concat default-entity-sort-fields
                         [:observed_time.start
@@ -180,7 +179,6 @@
    and the full resource as body"
   (http-res/created id resource))
 
-
 ;; These are the filter params, per entity.  We place them here since
 ;; they are used across entity routes.  For example, the
 ;; `ctia/indicator:ID/sightings/search` handler needs to know how to
@@ -201,7 +199,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :sort_by) exploit-target-sort-fields}))
 
 (s/defschema IncidentSearchParams
@@ -209,7 +207,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :confidence) s/Str
     (s/optional-key :status) s/Str
     (s/optional-key :reporter) s/Str
@@ -227,7 +225,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :indicator_type) s/Str
     (s/optional-key :tags) s/Int
     (s/optional-key :kill_chain_phases) s/Str
@@ -241,7 +239,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :disposition_name) s/Str
     (s/optional-key :disposition) s/Int
     (s/optional-key :priority) s/Int
@@ -254,7 +252,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :relationship_type) s/Str
     (s/optional-key :source_ref) s/Str
     (s/optional-key :target_ref) s/Str
@@ -265,7 +263,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :sensor) s/Str
     (s/optional-key :observables.value) s/Str
     (s/optional-key :observables.type) s/Str
@@ -277,7 +275,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :ttp_type) s/Str
     (s/optional-key :intended_effect) s/Str
     (s/optional-key :behavior.malware_type.type) s/Str
@@ -302,7 +300,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :actor_type) s/Str
     (s/optional-key :motivation) s/Str
     (s/optional-key :sophistication) s/Str
@@ -315,7 +313,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :campaign_type) s/Str
     (s/optional-key :confidence) s/Str
     (s/optional-key :activity) s/Str
@@ -327,7 +325,7 @@
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   {(s/optional-key :query) s/Str
+   {:query s/Str
     (s/optional-key :stage) s/Str
     (s/optional-key :coa_type) s/Str
     (s/optional-key :impact) s/Str
