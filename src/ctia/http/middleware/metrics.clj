@@ -11,9 +11,12 @@
 
 (defn add-default-metrics
   []
-  (jvm/register-memory-usage-gauge-set default-registry)
-  (jvm/register-garbage-collector-metric-set default-registry)
-  (jvm/register-thread-state-gauge-set default-registry))
+  (try ;; use a try, because these may already be registered if we are
+       ;; reloading the handler
+    (jvm/register-memory-usage-gauge-set default-registry)
+    (jvm/register-garbage-collector-metric-set default-registry)
+    (jvm/register-thread-state-gauge-set default-registry)
+    (catch java.lang.IllegalArgumentException e)))
 
 (defn match-route? [[compiled-path _ verb] request]
   (if (= (name (:request-method request)) verb)
@@ -42,6 +45,7 @@
                       [:place_holder :unregistered])]
         (mark! (get-in meters (drop 1 route)))
         (time! (get-in times (drop 1 route)) (handler request))))))
+
 
 (defn wrap-metrics [handler]
   (let [routes (compojure.api.routes/get-routes handler)

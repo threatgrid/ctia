@@ -92,9 +92,17 @@
                  [markdown-clj "0.9.86"]
                  [hiccup "1.0.5"]
 
+                 ;; CORS support
+                 [ring-cors "0.1.8"]
+                 
 
-                 ;; Hooksx
-                 [redismq "0.1.0-SNAPSHOT"]]
+                 ;; Hooks
+                 [redismq "0.1.0-SNAPSHOT"]
+
+                 ;; GraphQL
+                 [com.graphql-java/graphql-java "2.2.0"]
+
+                 ]
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
                com.andrewmcveigh/cljs-time]
 

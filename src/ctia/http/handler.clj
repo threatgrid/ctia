@@ -26,6 +26,7 @@
              [relationship :refer [relationship-routes]]
              [sighting :refer [sighting-routes]]
              [ttp :refer [ttp-routes]]
+             [graphql :refer [graphql-routes]]
              [version :refer [version-routes]]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]))
 
@@ -104,7 +105,7 @@
                wrap-cache-control-headers
                ;; always last
                metrics/wrap-metrics]
-
+              
               documentation-routes
               (context "/ctia" []
                        actor-routes
@@ -124,4 +125,5 @@
                        sighting-routes
                        ttp-routes
                        relationship-routes
+                       graphql-routes
                        version-routes)))
