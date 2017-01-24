@@ -27,5 +27,5 @@
   (log/info "purging all ES Stores data")
   (setup)
   (delete-store-indexes)
-  (println "done")
+  (log/info "done")
   (System/exit 0))
