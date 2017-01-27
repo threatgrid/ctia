@@ -38,26 +38,21 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
-                 [threatgrid/clj-momo "0.2.1"]
 
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.1"
-                  ;; Exclusions:
-                  ;; - ring-swagger as 0.22.9 lacks s/Any support
-                  :exclusions [metosin/ring-swagger]]
+                 [threatgrid/ctim "0.4.2b"]
 
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api
                  ;; 1.1.8 fails to generate JSON schema for s/Any
                  ;; overriding here
                  [metosin/ring-swagger "0.22.11"]
-                 [metosin/compojure-api ~compojure-api-version
-                  :exclusions [metosin/ring-swagger]]
-                 [ring/ring-jetty-adapter "1.5.0"]
+                 [metosin/compojure-api ~compojure-api-version]
+                 [ring/ring-jetty-adapter "1.5.1"]
                  [javax.servlet/servlet-api "2.5"]
-                 [ring/ring-devel "1.4.0"]
+                 [ring/ring-devel "1.5.1"]
                  [ring-cors "0.1.8"]
                  [ring/ring-codec "1.0.1"
                   ;; Exclusions:
@@ -70,12 +65,7 @@
                  [cider/cider-nrepl "0.14.0"]
 
                  ;; clients
-                 [clj-http "2.2.0"
-                  ;; Exclusions:
-                  ;; - clj-http "2.2.0" (and even the 3.x series) is not using
-                  ;;   the latest commons-io
-                  ;;   - As of 2016-08-25, the latest version is 0.5 (using 0.4)
-                  :exclusions [commons-io]]
+                 [clj-http "3.4.1"]
                  [com.taoensso/carmine "2.12.2"]
 
                  ;; Metrics
@@ -94,15 +84,13 @@
 
                  ;; CORS support
                  [ring-cors "0.1.8"]
-                 
 
                  ;; Hooks
                  [redismq "0.1.0-SNAPSHOT"]
 
                  ;; GraphQL
-                 [com.graphql-java/graphql-java "2.2.0"]
+                 [com.graphql-java/graphql-java "2.2.0"]]
 
-                 ]
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
                com.andrewmcveigh/cljs-time]
 
@@ -134,10 +122,8 @@
 
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
-                                  [com.gfredericks/test.chuck "0.2.6"]
-                                  ;;[perforate "0.3.4"]
-                                  [prismatic/schema-generators "0.1.0"
-                                   :exclusions [prismatic/schema]]]
+                                  [com.gfredericks/test.chuck "0.2.7"]
+                                  [prismatic/schema-generators "0.1.0"]]
                    :pedantic? :warn
 
                    :resource-paths ["test/resources"]}
@@ -150,13 +136,13 @@
                                     [perforate "0.3.4"]
                                     [criterium "0.4.4"]
                                     [org.clojure/test.check "0.9.0"]
-                                    [com.gfredericks/test.chuck "0.2.6"]
+                                    [com.gfredericks/test.chuck "0.2.7"]
                                     [prismatic/schema-generators "0.1.0"]]
                      :source-paths ["src","test","benchmarks"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [org.clojure/test.check "0.9.0"]
-                                   [com.gfredericks/test.chuck "0.2.6"]
+                                   [com.gfredericks/test.chuck "0.2.7"]
                                    [prismatic/schema-generators "0.1.0"]]
                     :pedantic? :abort
                     :java-source-paths ["hooks/ctia"
