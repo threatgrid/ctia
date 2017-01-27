@@ -42,7 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.2b"]
+                 [threatgrid/ctim "0.4.3"]
 
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api
@@ -103,7 +103,8 @@
   :min-lein-version "2.4.0"
   :test-selectors {:es-store :es-store
                    :disabled :disabled
-                   :default #(not= :disabled %)
+                   :default #(not (or (:disabled %)
+                                      (:sleepy %)))
                    :integration #(or (:es-store %)
                                      (:integration %)
                                      (:es-aliased-index %))

@@ -20,7 +20,7 @@
                                  delete-doc
                                  search-docs]]))
 
-(def ^{:private true} mapping "judgement")
+(def ^{:private true} judgement-mapping "judgement")
 
 (def coerce-stored-judgement-list
   (c/coercer! [(s/maybe StoredJudgement)]
@@ -43,7 +43,7 @@
 
     (update-doc (:conn state)
                 (:index state)
-                mapping
+                judgement-mapping
                 judgement-id
                 updated
                 (get-in state [:props :refresh] false))
@@ -52,16 +52,23 @@
 
 (defn list-active-by-observable
   [state observable]
-  (let [params {:sort {:priority "desc"
-                       :disposition "asc"
-                       "valid_time.start_time" {:order "asc"
-                                                :mode "min"
-                                                :nested_filter
-                                                {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}}]
+  (let [params
+        {:sort
+         {:priority
+          "desc"
+
+          :disposition
+          "asc"
+
+          "valid_time.start_time"
+          {:order "asc"
+           :mode "min"
+           :nested_filter
+           {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}}]
 
     (some->> (search-docs (:conn state)
                           (:index state)
-                          mapping
+                          judgement-mapping
                           (active-judgements-by-observable-query observable)
                           nil
                           params)
@@ -74,7 +81,8 @@
    :disposition (:disposition judgement)
    :judgement_id (:id judgement)
    :observable (:observable judgement)
-   :disposition_name (get disposition-map (:disposition judgement))})
+   :disposition_name (get disposition-map (:disposition judgement))
+   :valid_time (:valid_time judgement)})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [state observable]
