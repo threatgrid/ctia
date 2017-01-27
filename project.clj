@@ -38,12 +38,11 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [org.clojure/tools.cli "0.3.5"]
                  [pandect "0.6.0"]
-                 [threatgrid/clj-momo "0.2.1"]
 
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.1"
+                 [threatgrid/ctim "0.4.3"
                   ;; Exclusions:
                   ;; - ring-swagger as 0.22.9 lacks s/Any support
                   :exclusions [metosin/ring-swagger]]
@@ -70,7 +69,7 @@
                  [cider/cider-nrepl "0.14.0"]
 
                  ;; clients
-                 [clj-http "2.2.0"
+                 [clj-http "3.4.1"
                   ;; Exclusions:
                   ;; - clj-http "2.2.0" (and even the 3.x series) is not using
                   ;;   the latest commons-io
@@ -94,7 +93,7 @@
 
                  ;; CORS support
                  [ring-cors "0.1.8"]
-                 
+
 
                  ;; Hooks
                  [redismq "0.1.0-SNAPSHOT"]
@@ -115,7 +114,8 @@
   :min-lein-version "2.4.0"
   :test-selectors {:es-store :es-store
                    :disabled :disabled
-                   :default #(not= :disabled %)
+                   :default #(not (or (:disabled %)
+                                      (:sleepy %)))
                    :integration #(or (:es-store %)
                                      (:integration %)
                                      (:es-aliased-index %))
@@ -134,7 +134,7 @@
 
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
-                                  [com.gfredericks/test.chuck "0.2.6"]
+                                  [com.gfredericks/test.chuck "0.2.7"]
                                   ;;[perforate "0.3.4"]
                                   [prismatic/schema-generators "0.1.0"
                                    :exclusions [prismatic/schema]]]
@@ -150,13 +150,13 @@
                                     [perforate "0.3.4"]
                                     [criterium "0.4.4"]
                                     [org.clojure/test.check "0.9.0"]
-                                    [com.gfredericks/test.chuck "0.2.6"]
+                                    [com.gfredericks/test.chuck "0.2.7"]
                                     [prismatic/schema-generators "0.1.0"]]
                      :source-paths ["src","test","benchmarks"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [org.clojure/test.check "0.9.0"]
-                                   [com.gfredericks/test.chuck "0.2.6"]
+                                   [com.gfredericks/test.chuck "0.2.7"]
                                    [prismatic/schema-generators "0.1.0"]]
                     :pedantic? :abort
                     :java-source-paths ["hooks/ctia"

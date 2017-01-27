@@ -362,6 +362,7 @@
      :observable observable
      :disposition {:type "long"}
      :disposition_name token
+     :valid_time valid-time
      :owner token
      :created ts}}})
 

@@ -1,25 +1,26 @@
 (ns ctia.http.routes.observable
   (:require
-   [compojure.api.sweet :refer :all]
-   [ctia.domain.entities
-    [judgement :as judgement]
-    [sighting :as sighting]
-    [verdict :as verdict]]
-   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-   [ctia.lib.pagination :as pag]
-   [ctia.properties :refer [properties]]
-   [ctia.schemas.core :refer [StoredIndicator
-                              StoredJudgement
-                              StoredSighting
-                              StoredVerdict
-                              ObservableTypeIdentifier
-                              Reference]]
-   [ctia.store :refer :all]
-   [ctim.domain.id :as id]
-   [ctim.schemas.indicator :as csi]
-   [ring.util.http-response :refer [ok not-found]]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+    [compojure.api.sweet :refer :all]
+    [ctia.domain.entities :as entities]
+    [ctia.domain.entities
+     [judgement :as judgement]
+     [sighting :as sighting]
+     [verdict :as verdict]]
+    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+    [ctia.lib.pagination :as pag]
+    [ctia.properties :refer [properties]]
+    [ctia.schemas.core :refer [StoredIndicator
+                               StoredJudgement
+                               StoredSighting
+                               StoredVerdict
+                               ObservableTypeIdentifier
+                               Reference]]
+    [ctia.store :refer :all]
+    [ctim.domain.id :as id]
+    [ctim.schemas.indicator :as csi]
+    [ring.util.http-response :refer [ok not-found]]
+    [schema-tools.core :as st]
+    [schema.core :as s]))
 
 (s/defschema JudgementsByObservableQueryParams
   (st/merge
@@ -49,17 +50,27 @@
                      "observable.")
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities :read-verdict
-       (if-let [d (-> (read-store
-                       :verdict list-verdicts
-                       {[:observable :type] observable_type
-                        [:observable :value] observable_value}
-                       {:sort_by :created
-                        :sort_order :desc
-                        :limit 1})
-                      :data
-                      first)]
-         (ok (verdict/with-long-id d))
-         (not-found)))
+       :login login
+       (let [verdict (-> (read-store
+                          :verdict list-verdicts
+                          {[:observable :type] observable_type
+                           [:observable :value] observable_value}
+                          {:sort_by :created
+                           :sort_order :desc
+                           :limit 1})
+                         :data
+                         first)
+             verdict (if (some-> verdict verdict/expired?)
+                       (-> (read-store :judgement
+                                       calculate-verdict
+                                       {:type observable_type
+                                        :value observable_value})
+                           (entities/realize-verdict login)
+                           (#(write-store :verdict create-verdicts [%])))
+                       verdict)]
+         (if verdict
+           (ok (verdict/with-long-id verdict))
+           (not-found))))
 
   (GET "/:observable_type/:observable_value/judgements" []
        :tags ["Judgement"]
