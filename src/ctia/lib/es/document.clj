@@ -168,8 +168,9 @@
            (select-keys params [:sort]))))
 
 (s/defn search-docs
-  "Search for documents on ES using a query string search.  Also applies a filter map, converting
-   the values in the filter-map into must match terms."
+  "Search for documents on ES using a query string search.  Also
+  applies a filter map, converting the values in the filter-map into
+  must match terms."
   [{:keys [uri cm]} :- ESConn
    index-name :- s/Str
    mapping :- s/Str
