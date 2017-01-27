@@ -12,6 +12,8 @@
                                StoredJudgement]]
     [ctia.store :as store]
     [ctim.domain.id :as id]
+    [ctim.events.schemas :refer [CreateEventType
+                                 DeleteEventType]]
     [redismq.core :as rmq]
     [schema.core :as s]))
 
@@ -68,8 +70,16 @@
     event))
 
 (defn- judgement?
-  [{{t :type} :entity :as event}]
+  [{{t :type} :entity :as _event_}]
   (= "judgement" t))
+
+(defn- create-event?
+  [{type :type :as _event_}]
+  (= type CreateEventType))
+
+(defn- delete-event?
+  [{type :type :as _event_}]
+  (= type DeleteEventType))
 
 (def judgement-prefix "judgement-")
 
@@ -78,13 +88,13 @@
    to build the verdict ID"
   [verdict :- Verdict
    {j-lng-id :id :as judgement} :- StoredJudgement
-   owner :- s/Str]
-  (letfn [(verdict-id [i] (str "verdict-" (subs i (count judgement-prefix))))]
-    (let [j-id-obj (id/long-id->id j-lng-id)
-          j-shrt-id (:short-id j-id-obj)]
-      (if (str/starts-with? j-shrt-id judgement-prefix)
-        (entities/realize-verdict verdict (verdict-id j-shrt-id) owner)
-        (entities/realize-verdict verdict owner)))))
+   owner :- s/Str
+   verdict-id :- s/Str]
+  (let [j-id-obj (id/long-id->id j-lng-id)
+        j-shrt-id (:short-id j-id-obj)]
+    (if (str/starts-with? j-shrt-id judgement-prefix)
+      (entities/realize-verdict verdict verdict-id owner)
+      (entities/realize-verdict verdict owner))))
 
 (defrecord VerdictGenerator []
   Hook
@@ -95,15 +105,25 @@
   (handle [_ event _]
     (log/info "VERDICT HANDLER FIRED")
     (when (judgement? event)
-      (let [{{observable :observable :as judgement} :entity owner :owner} event]
-        (when-let [new-verdict
-                   (some->
-                    (store/read-store :judgement
-                                      store/calculate-verdict
-                                      observable)
-                    (realize-verdict-wrapper judgement owner))]
-          (log/info "Generated New Verdict:" (pr-str new-verdict))
-          (store/write-store :verdict store/create-verdicts [new-verdict]))))
+      (let [{{:keys [id observable] :as judgement} :entity owner :owner} event
+            judgement-id (id/str->short-id id)
+            verdict-id (str "verdict-" (subs judgement-id (count judgement-prefix)))]
+        (cond
+          (create-event? event)
+          (when-let [new-verdict
+                     (some->
+                      (store/read-store :judgement
+                                        store/calculate-verdict
+                                        observable)
+                      (realize-verdict-wrapper judgement owner verdict-id))]
+            (log/info "Generated New Verdict:" (pr-str new-verdict))
+            (store/write-store :verdict store/create-verdicts [new-verdict]))
+
+          (delete-event? event)
+          (do (store/write-store :verdict
+                                 store/delete-verdict
+                                 verdict-id)
+              (log/info "Deleted Verdict:" verdict-id)))))
     event))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
@@ -115,5 +135,4 @@
       ;;true (update :event #(conj % (->ChannelEventPublisher)))
       true (update :event #(conj % (->VerdictGenerator)))
       redis?   (update :event #(conj % (redis-event-publisher)))
-      redismq? (update :event #(conj % (redismq-publisher)))
-      )))
+      redismq? (update :event #(conj % (redismq-publisher))))))
