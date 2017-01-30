@@ -9,7 +9,7 @@
 (defn expired?
   ([verdict]
    (expired? verdict (t/now)))
-  ([verdict at-dt]
+  ([verdict date]
    (if-let [end-time (get-in verdict [:valid_time :end_time])]
-     (t/after? at-dt end-time)
+     (t/after? date end-time)
      false)))
