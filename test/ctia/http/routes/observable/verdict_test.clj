@@ -5,7 +5,7 @@
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post]]
+             [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]))
@@ -114,7 +114,9 @@
                   :disposition 2
                   :disposition_name "Malicious"
                   :judgement_id (:id judgement)
-                  :observable {:value "10.0.0.1", :type "ip"}}
+                  :observable {:value "10.0.0.1", :type "ip"}
+                  :valid_time {:start_time #inst "2016-02-12T00:00:00.000-00:00",
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                  (dissoc verdict :owner :created :schema_version))))))))
 
 (deftest-for-each-store test-observable-verdict-route-2
@@ -174,5 +176,184 @@
                     :type "verdict"
                     :disposition 2
                     :disposition_name "Malicious"
-                    :judgement_id (:id judgement)}
+                    :judgement_id (:id judgement)
+                    :valid_time {:start_time #inst "2016-02-12T14:56:26.814-00:00",
+                                 :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                    (dissoc verdict :owner :created :schema_version)))))))))
+
+(deftest-for-each-store ^:sleepy test-observable-verdict-route-with-expired-judgement
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+
+  (testing "test setup: create a judgement (1) that will expire soon"
+    (let [{status :status}
+          (post "ctia/judgement"
+                :body {:observable {:value "10.0.0.1"
+                                    :type "ip"}
+                       :external_ids ["judgement-1"]
+                       :disposition 2
+                       :source "test"
+                       :priority 100
+                       :severity "High"
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
+                                    :end_time (-> (time/plus-n :seconds (time/now) 2)
+                                                  time/format-date-time)}}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))))
+
+  (Thread/sleep 2000)
+
+  (testing "GET /ctia/:observable_type/:observable_value/verdict"
+    (let [{status :status}
+          (get "ctia/ip/10.0.0.0.1/verdict"
+               :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 404 status))))
+
+  (testing "With a judgement (2) that won't expire"
+    (let [{status :status
+           judgement-2 :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "10.0.0.1"
+                                    :type "ip"}
+                       :external_ids ["judgement-2"]
+                       :disposition 1
+                       :source "test"
+                       :priority 100
+                       :severity "High"
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})
+
+          judgement-2-id
+          (id/long-id->id (:id judgement-2))]
+      (is (= 201 status))
+
+      (testing "test setup: create a judgement (3) that will expire soon"
+        (let [{status :status}
+              (post "ctia/judgement"
+                    :body {:observable {:value "10.0.0.1"
+                                        :type "ip"}
+                           :external_ids ["judgement-3"]
+                           :disposition 2
+                           :source "test"
+                           :priority 100
+                           :severity "High"
+                           :confidence "Low"
+                           :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
+                                        :end_time (-> (time/plus-n :seconds (time/now) 2)
+                                                      time/format-date-time)}}
+                    :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 201 status))))
+
+      (Thread/sleep 2000)
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get "ctia/ip/10.0.0.1/verdict"
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+          (is (= {:type "verdict"
+                  :disposition 1
+                  :disposition_name "Clean"
+                  :judgement_id (:id judgement-2)
+                  :observable {:value "10.0.0.1", :type "ip"}
+                  :valid_time {:start_time #inst "2016-02-12T14:56:26.814-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+                 (dissoc verdict :id :owner :created :schema_version))))))))
+
+(deftest-for-each-store test-observable-verdict-route-when-judgement-deleted
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+
+  (testing "test setup: create judgement-1"
+    (let [{status :status
+           judgement-1 :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "10.0.0.1"
+                                    :type "ip"}
+                       :external_ids ["judgement-1"]
+                       :disposition 1
+                       :source "test"
+                       :priority 100
+                       :severity "High"
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})
+
+          judgement-1-id
+          (some-> (:id judgement-1) id/long-id->id)]
+      (is (= 201 status))
+
+      (testing "test setup: delete judgement-1"
+        (let [{status :status}
+              (delete (str "ctia/judgement/" (:short-id judgement-1-id))
+                      :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 204 status))))
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status}
+              (get "ctia/ip/10.0.0.1/verdict"
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 404 status))))))
+
+  (testing "test setup: create judgement-2"
+    (let [{status :status
+           judgement-2 :parsed-body}
+          (post "ctia/judgement"
+                :body {:observable {:value "10.0.0.1"
+                                    :type "ip"}
+                       :external_ids ["judgement-2"]
+                       :disposition 1
+                       :source "test"
+                       :priority 100
+                       :severity "High"
+                       :confidence "Low"
+                       :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                :headers {"api_key" "45c1f5e3f05d0"})
+
+          judgement-2-id
+          (some-> (:id judgement-2) id/long-id->id)]
+      (is (= 201 status))
+
+      (testing "test setup: create judgement-3"
+        (let [{status :status
+               judgement-3 :parsed-body}
+              (post "ctia/judgement"
+                    :body {:observable {:value "10.0.0.1"
+                                        :type "ip"}
+                           :external_ids ["judgement-3"]
+                           :disposition 1
+                           :source "test"
+                           :priority 100
+                           :severity "High"
+                           :confidence "Low"
+                           :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
+                    :headers {"api_key" "45c1f5e3f05d0"})
+
+              judgement-3-id
+              (some-> (:id judgement-3) id/long-id->id)]
+          (is (= 201 status))
+
+          (testing "test steup: delete judgement-3"
+            (let [{status :status}
+                  (delete (str "ctia/judgement/" (:short-id judgement-3-id))
+                          :headers {"api_key" "45c1f5e3f05d0"})]
+              (is (= 204 status))))))
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get "ctia/ip/10.0.0.1/verdict"
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+          (is (= {:type "verdict"
+                  :id (str "verdict-" (-> (:short-id judgement-2-id) (subs 10)))
+                  :disposition 1
+                  :disposition_name "Clean"
+                  :judgement_id (:id judgement-2)
+                  :observable {:value "10.0.0.1", :type "ip"}
+                  :valid_time {:start_time #inst "2016-02-12T00:00:00.000-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+                 (dissoc verdict :owner :created :schema_version))))))))
