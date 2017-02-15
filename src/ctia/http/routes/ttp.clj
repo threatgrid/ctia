@@ -6,7 +6,11 @@
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewTTP StoredTTP]]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams TTPSearchParams]]
+   [ctia.http.middleware
+    [cache-control :refer [wrap-cache-control]]
+    [un-store :refer [wrap-un-store]]]
+   [ctia.http.routes.common
+    :refer [created paginated-ok PagingParams TTPSearchParams]]
    [ring.util.http-response :refer [ok no-content not-found]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -24,6 +28,7 @@
                  :header-params [api_key :- (s/maybe s/Str)]
                  :capabilities :create-ttp
                  :identity identity
+                 :middleware [wrap-un-store]
                  (created
                   (first
                    (flows/create-flow :realize-fn realize-ttp
@@ -41,6 +46,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :create-ttp
                 :identity identity
+                :middleware [wrap-un-store]
                 (ok
                  (flows/update-flow
                   :get-fn #(read-store :ttp (fn [s] (read-ttp s %)))
@@ -59,6 +65,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List TTPs by external id"
                 :capabilities #{:read-ttp :external-id}
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :ttp list-ttps
@@ -70,6 +77,7 @@
                 :query [params TTPSearchParams]
                 :capabilities #{:read-ttp :search-ttp}
                 :header-params [api_key :- (s/maybe s/Str)]
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (query-string-search-store
@@ -85,10 +93,12 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-ttp
                 :path-params [id :- s/Str]
+                :middleware [wrap-un-store wrap-cache-control]
                 (if-let [d (read-store :ttp
                                        (fn [s] (read-ttp s id)))]
                   (ok (with-long-id d))
                   (not-found)))
+
            (DELETE "/:id" []
                    :no-doc true
                    :path-params [id :- s/Str]

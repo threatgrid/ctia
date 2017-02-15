@@ -111,8 +111,7 @@
                           :id (id/long-id judgement-1-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"
-                          :created (:created judgement-1)}
+                          :owner "Unknown"}
                  :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
@@ -129,8 +128,7 @@
                           :id (id/long-id judgement-2-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"
-                          :created (:created judgement-2)}
+                          :owner "Unknown"}
                  :type "CreatedModel"}
                 {:owner "Unknown"
                  :entity {:valid_time
@@ -147,8 +145,8 @@
                           :id (id/long-id judgement-3-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"
-                          :created (:created judgement-3)}
+                          :owner "Unknown"}
                  :type "CreatedModel"}]
-               (map #(dissoc % :http-params :id :timestamp)
-                    events)))))))
+               (->> events
+                    (map #(dissoc % :http-params :id :timestamp))
+                    (map #(update % :entity dissoc :created)))))))))

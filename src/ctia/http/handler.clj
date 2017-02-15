@@ -5,7 +5,6 @@
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
              [auth :as auth]
-             [cache-control :refer [wrap-cache-control-headers]]
              [metrics :as metrics]]
             [ctia.http.routes
              [actor :refer [actor-routes]]
@@ -102,10 +101,9 @@
 
   (middleware [auth/wrap-authentication
                wrap-not-modified
-               wrap-cache-control-headers
                ;; always last
                metrics/wrap-metrics]
-              
+
               documentation-routes
               (context "/ctia" []
                        actor-routes

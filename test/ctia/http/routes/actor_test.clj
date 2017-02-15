@@ -56,13 +56,10 @@
             :source "a source"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-            :owner "foouser"
             :schema_version schema-version
             :tlp "green"}
            (dissoc actor
-                   :id
-                   :created
-                   :modified)))
+                   :id)))
 
       (testing "the actor ID has correct fields"
         (let [show-props (get-http-show)]
@@ -88,12 +85,9 @@
                 :source "a source"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "foouser"
                 :schema_version schema-version
                 :tlp "green"}
-               (dissoc actor
-                       :created
-                       :modified)))))
+               actor))))
 
       (test-query-string-search :actor "description" :description)
 
@@ -115,10 +109,9 @@
                  :source "a source"
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                 :owner "foouser"
                  :schema_version schema-version
                  :tlp "green"}]
-               (map #(dissoc % :created :modified) actors)))))
+               actors))))
 
       (testing "PUT /ctia/actor/:id"
         (let [response (put (str "ctia/actor/" (:short-id actor-id))
@@ -140,7 +133,6 @@
                 :external_ids ["http://ex.tld/ctia/actor/actor-123"
                                "http://ex.tld/ctia/actor/actor-456"]
                 :type "actor"
-                :created (:created actor)
                 :title "modified actor"
                 :description "updated description"
                 :actor_type "Hacktivist"
@@ -148,11 +140,9 @@
                 :confidence "High"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "foouser"
                 :schema_version schema-version
                 :tlp "green"}
-               (dissoc updated-actor
-                       :modified)))))
+               updated-actor))))
 
       (testing "DELETE /ctia/actor/:id"
         (let [response (delete (str "ctia/actor/" (:short-id actor-id))

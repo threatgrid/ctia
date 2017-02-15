@@ -54,11 +54,8 @@
             :campaign_type "anything goes here"
             :intended_effect ["Theft"]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-            :owner "foouser"}
-           (dissoc campaign
-                   :created
-                   :modified)))
+                         :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
+           campaign))
 
       (testing "the campaign ID has correct fields"
         (let [show-props (get-http-show)]
@@ -85,9 +82,8 @@
                  :campaign_type "anything goes here"
                  :intended_effect ["Theft"]
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                 :owner "foouser"}]
-               (map #(dissoc % :created :modified) campaigns)))))
+                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}}]
+               campaigns))))
 
       (test-query-string-search :campaign "description" :description)
 
@@ -108,11 +104,8 @@
                 :campaign_type "anything goes here"
                 :intended_effect ["Theft"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "foouser"}
-               (dissoc campaign
-                       :created
-                       :modified)))))
+                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
+               campaign))))
 
       (testing "PUT /ctia/campaign/:id"
         (let [{status :status
@@ -136,7 +129,6 @@
                 :external_ids ["http://ex.tld/ctia/campaign/campaign-123"
                                "http://ex.tld/ctia/campaign/campaign-456"]
                 :type "campaign"
-                :created (:created campaign)
                 :title "modified campaign"
                 :description "different description"
                 :tlp "amber"
@@ -144,10 +136,8 @@
                 :campaign_type "anything goes here"
                 :intended_effect ["Brand Damage"]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "foouser"}
-               (dissoc updated-campaign
-                       :modified)))))
+                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
+               updated-campaign))))
 
       (testing "DELETE /ctia/campaign/:id"
         (let [response (delete (str "ctia/campaign/" (:short-id campaign-id))

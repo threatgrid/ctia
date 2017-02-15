@@ -23,7 +23,7 @@
       last-modified (assoc "Last-Modified"
                            (format-rfc822-time last-modified)))))
 
-(defn wrap-cache-control-headers
+(defn wrap-cache-control
   "only applies to GET requests
   appends Last-Modified and Etag headers to body response"
 
@@ -36,3 +36,5 @@
                (ok-response? resp))
         (update resp :headers #(update-headers % etag body))
         resp))))
+
+(def ^:deprecated wrap-cache-control-headers wrap-cache-control)

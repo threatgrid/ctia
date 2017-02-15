@@ -80,6 +80,10 @@
 
 ;; sighting
 
+(defschema Sighting
+  ss/Sighting
+  "sighting")
+
 (defschema NewSighting
   ss/NewSighting
   "new-sighting")

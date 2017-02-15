@@ -4,7 +4,11 @@
    [ctia.domain.entities :refer [realize-campaign]]
    [ctia.domain.entities.campaign :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams CampaignSearchParams]]
+   [ctia.http.routes.common
+    :refer [created paginated-ok PagingParams CampaignSearchParams]]
+   [ctia.http.middleware
+    [cache-control :refer [wrap-cache-control]]
+    [un-store :refer [wrap-un-store]]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewCampaign StoredCampaign]]
    [ring.util.http-response :refer [no-content not-found ok]]
@@ -24,6 +28,7 @@
                  :header-params [api_key :- (s/maybe s/Str)]
                  :capabilities :create-campaign
                  :identity identity
+                 :middleware [wrap-un-store]
                  (created
                   (first
                    (flows/create-flow
@@ -42,6 +47,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :create-campaign
                 :identity identity
+                :middleware [wrap-un-store]
                 (ok
                  (flows/update-flow
                   :get-fn #(read-store :campaign read-campaign %)
@@ -60,6 +66,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List campaigns by external id"
                 :capabilities #{:read-campaign :external-id}
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :campaign list-campaigns
@@ -71,6 +78,7 @@
                 :query [params CampaignSearchParams]
                 :capabilities #{:read-campaign :search-campaign}
                 :header-params [api_key :- (s/maybe s/Str)]
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (query-string-search-store
@@ -86,6 +94,7 @@
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-campaign
+                :middleware [wrap-un-store wrap-cache-control]
                 (if-let [d (read-store :campaign read-campaign id)]
                   (ok (with-long-id d))
                   (not-found)))

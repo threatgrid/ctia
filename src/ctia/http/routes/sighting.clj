@@ -6,7 +6,11 @@
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewSighting StoredSighting]]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams SightingSearchParams]]
+   [ctia.http.routes.common
+    :refer [created paginated-ok PagingParams SightingSearchParams]]
+   [ctia.http.middleware
+    [cache-control :refer [wrap-cache-control]]
+    [un-store :refer [wrap-un-store]]]
    [ring.util.http-response :refer [ok no-content not-found unprocessable-entity]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -24,6 +28,7 @@
                  :summary "Adds a new Sighting"
                  :capabilities :create-sighting
                  :identity identity
+                 :middleware [wrap-un-store]
                  (created
                   (first
                    (flows/create-flow
@@ -42,6 +47,7 @@
                 :path-params [id :- s/Str]
                 :capabilities :create-sighting
                 :identity identity
+                :middleware [wrap-un-store]
                 (ok
                  (flows/update-flow
                   :get-fn #(read-store :sighting read-sighting %)
@@ -54,12 +60,13 @@
                   :entity sighting)))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe StoredSighting)]
+                :return (s/maybe [StoredSighting])
                 :query [q SightingByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List sightings by external id"
                 :capabilities #{:read-sighting :external-id}
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :sighting list-sightings {:external_ids external_id} q))))
@@ -70,6 +77,7 @@
                 :query [params SightingSearchParams]
                 :capabilities #{:read-sighting :search-sighting}
                 :header-params [api_key :- (s/maybe s/Str)]
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (query-string-search-store
@@ -85,6 +93,7 @@
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-sighting
+                :middleware [wrap-un-store wrap-cache-control]
                 (if-let [d (read-store :sighting read-sighting id)]
                   (ok (with-long-id d))
                   (not-found)))

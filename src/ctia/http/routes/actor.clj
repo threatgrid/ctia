@@ -4,7 +4,11 @@
    [ctia.domain.entities :refer [realize-actor]]
    [ctia.domain.entities.actor :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams ActorSearchParams]]
+   [ctia.http.middleware
+    [cache-control :refer [wrap-cache-control]]
+    [un-store :refer [wrap-un-store]]]
+   [ctia.http.routes.common
+    :refer [created paginated-ok PagingParams ActorSearchParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewActor StoredActor]]
    [ring.util.http-response :refer [no-content not-found ok]]
@@ -24,6 +28,7 @@
                  :summary "Adds a new Actor"
                  :capabilities :create-actor
                  :identity identity
+                 :middleware [wrap-un-store]
                  (created
                   (first
                    (flows/create-flow
@@ -43,6 +48,7 @@
                 :path-params [id :- s/Str]
                 :capabilities :create-actor
                 :identity identity
+                :middleware [wrap-un-store]
                 (ok
                  (flows/update-flow
                   :get-fn #(read-store :actor read-actor %)
@@ -61,6 +67,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List actors by external id"
                 :capabilities #{:read-actor :external-id}
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :actor list-actors
@@ -72,6 +79,7 @@
                 :query [params ActorSearchParams]
                 :capabilities #{:read-actor :search-actor}
                 :header-params [api_key :- (s/maybe s/Str)]
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (query-string-search-store
@@ -87,6 +95,7 @@
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-actor
+                :middleware [wrap-un-store wrap-cache-control]
                 (if-let [d (read-store :actor read-actor id)]
                   (ok (with-long-id d))
                   (not-found)))

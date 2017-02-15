@@ -5,6 +5,9 @@
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
             [ctia.schemas.core :refer [NewIncident StoredIncident]]
+            [ctia.http.middleware
+             [cache-control :refer [wrap-cache-control]]
+             [un-store :refer [wrap-un-store]]]
             [ctia.http.routes.common :refer [created IncidentSearchParams
                                              PagingParams paginated-ok]]
             [ring.util.http-response :refer [ok no-content not-found]]
@@ -24,6 +27,7 @@
                  :header-params [api_key :- (s/maybe s/Str)]
                  :capabilities :create-incident
                  :identity identity
+                 :middleware [wrap-un-store]
                  (created
                   (first
                    (flows/create-flow
@@ -42,6 +46,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :create-incident
                 :identity identity
+                :middleware [wrap-un-store]
                 (ok (flows/update-flow
                      :get-fn #(read-store :incident read-incident %)
                      :realize-fn realize-incident
@@ -59,6 +64,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List Incidents by external id"
                 :capabilities #{:read-incident :external-id}
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :incident list-incidents
@@ -70,6 +76,7 @@
                 :query [params IncidentSearchParams]
                 :capabilities #{:read-incident :search-incident}
                 :header-params [api_key :- (s/maybe s/Str)]
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (query-string-search-store
@@ -85,6 +92,7 @@
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-incident
+                :middleware [wrap-un-store wrap-cache-control]
                 (if-let [d (read-store :incident read-incident id)]
                   (ok (with-long-id d))
                   (not-found)))

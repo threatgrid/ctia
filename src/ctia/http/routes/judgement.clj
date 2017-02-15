@@ -4,6 +4,9 @@
    [ctia.domain.entities :refer [realize-feedback realize-judgement]]
    [ctia.domain.entities.judgement :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
+   [ctia.http.middleware
+    [cache-control :refer [wrap-cache-control]]
+    [un-store :refer [wrap-un-store]]]
    [ctia.http.routes.common
     :refer [created paginated-ok PagingParams JudgementSearchParams
             feedback-sort-fields
@@ -42,6 +45,7 @@
                  :summary "Adds a new Judgement"
                  :capabilities :create-judgement
                  :identity identity
+                 :middleware [wrap-un-store]
                  (created
                   (first
                    (flows/create-flow
@@ -58,6 +62,7 @@
                 :query [params JudgementSearchParams]
                 :capabilities #{:read-judgement :search-judgement}
                 :header-params [api_key :- (s/maybe s/Str)]
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (query-string-search-store
@@ -75,6 +80,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "Get Judgements by external ids"
                 :capabilities #{:read-judgement :external-id}
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :judgement
@@ -88,6 +94,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "Gets a Judgement by ID"
                 :capabilities :read-judgement
+                :middleware [wrap-un-store wrap-cache-control]
                 (if-let [d (read-store :judgement read-judgement id)]
                   (ok (with-long-id d))
                   (not-found)))
