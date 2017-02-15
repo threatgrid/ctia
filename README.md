@@ -2,7 +2,7 @@
 [![Stories in Ready](https://badge.waffle.io/threatgrid/ctia.png?label=ready&title=Ready)](https://waffle.io/threatgrid/ctia)
 # Cisco Threat Intel API
 
-A Pragmattic, Operationalized Threat Intel Service and Data Model
+A Pragmatic, Operationalized Threat Intel Service and Data Model
 
 For full documentation see [doc/index.md](doc/index.md)
 
@@ -28,7 +28,7 @@ tools to know what to look for.
 
 In addition to the RESTful HTTP API, it also has an Event Bus.
 
-The data model is define in the [CTIM](/threatgrid/ctim) project,
+The data model is defined in the [CTIM](/threatgrid/ctim) project,
 although it's quite easy to see the API and the models it handles
 using the built-in [Swagger UI](http://localhost:3000/index.html) once
 you have it running.
@@ -41,16 +41,16 @@ a crash course in running clojure projects, check out
 
 ### Data Stores and External Dependencies
 
-CTIA uses Leiningen as it's "build" tool, you can install it by
+CTIA uses Leiningen as its "build" tool, you can install it by
 following the instructions here: http://leiningen.org/#install
 
-By default, CTIA uses Elasticsearch 5.x as it's data store.  Assuming you
+By default, CTIA uses Elasticsearch 5.x as its data store.  Assuming you
 have it running on 127.0.0.1:9200 you can simply start
 CTIA.
 
 You can jump to the [Developer](#Developer) section to see instructions
 on how to run elasticsearch and other optional supporting tools using
-Docker.  CTIA can use redis to store some of it's objects (Verdicts)
+Docker.  CTIA can use redis to store some of its objects (Verdicts)
 and also can send streams of events to Redis and Elasticsearch.
 
 ### Run the application locally
@@ -86,7 +86,7 @@ On Mac OS X, you should use
 [Docker for Mac](https://docs.docker.com/docker-for-mac/) which
 includes all the dependencies you need to run Docker containers.
 
-You can then bring up a development environemnt:
+You can then bring up a development environment:
 
 ```
 cd containers/dev
@@ -95,7 +95,7 @@ docker-compose -f docker-compose.yml up
 ```
 
 If you can't use docker directly and are forced to use Docker Toolbox,
-you will then need to tell your CTIA where to find it's dependencies.
+you will then need to tell your CTIA where to find its dependencies.
 The services will be listening on your docker-machine's IP, which you
 can get with the command, `docker-machine ip`, and then you define
 your own `resources/ctia.properties` file with the following values:
@@ -119,7 +119,7 @@ It can be very useful to use _Kitematic_ to monitor and interact with
 your containers.  You can also use _VirtualBox_ to modify the
 resources available to the VM that is running all of your containers.
 
-If you ever need to reset your entire dev environemnt, you can run
+If you ever need to reset your entire dev environment, you can run
 `docker-compose` to rebuild all the containers from scratch:
 
 ```
