@@ -60,11 +60,8 @@
             :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :composite_indicator_expression {:operator "and"
-                                             :indicator_ids ["test1" "test2"]}
-            :owner "foouser"}
-           (dissoc indicator
-                   :created
-                   :modified)))
+                                             :indicator_ids ["test1" "test2"]}}
+           indicator))
 
       (testing "the indicator ID has correct fields"
         (let [show-props (get-http-show)]
@@ -95,10 +92,8 @@
                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                  :composite_indicator_expression {:operator "and"
-                                                  :indicator_ids ["test1" "test2"]}
-                 :owner "foouser"}]
-               (map #(dissoc % :created :modified) indicators)))))
-
+                                                  :indicator_ids ["test1" "test2"]}}]
+               indicators))))
 
       (testing "GET /ctia/indicator/:id"
         (let [response (get (str "ctia/indicator/" (:short-id indicator-id))
@@ -119,11 +114,8 @@
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :composite_indicator_expression {:operator "and"
-                                                 :indicator_ids ["test1" "test2"]}
-                :owner "foouser"}
-               (dissoc indicator
-                       :created
-                       :modified)))))
+                                                 :indicator_ids ["test1" "test2"]}}
+               indicator))))
 
       (testing "PUT /ctia/indicator/:id"
         (let [{status :status
@@ -147,7 +139,6 @@
                 :external_ids ["http://ex.tld/ctia/indicator/indicator-123"
                                "http://ex.tld/ctia/indicator/indicator-345"]
                 :type "indicator"
-                :created (:created indicator)
                 :title "updated indicator"
                 :description "updated description"
                 :producer "producer"
@@ -157,10 +148,8 @@
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :composite_indicator_expression {:operator "and"
-                                                 :indicator_ids ["test1" "test2"]}
-                :owner "foouser"}
-               (dissoc updated-indicator
-                       :modified)))))
+                                                 :indicator_ids ["test1" "test2"]}}
+               updated-indicator))))
 
       (testing "DELETE /ctia/indicator/:id"
         (let [response (delete (str "ctia/indicator/" (:short-id indicator-id))

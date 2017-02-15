@@ -4,6 +4,9 @@
    [ctia.domain.entities :refer [realize-feedback]]
    [ctia.domain.entities.feedback :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
+   [ctia.http.middleware
+    [cache-control :refer [wrap-cache-control]]
+    [un-store :refer [wrap-un-store]]]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewFeedback StoredFeedback]]
@@ -30,6 +33,7 @@
                  :header-params [api_key :- (s/maybe s/Str)]
                  :capabilities :create-feedback
                  :identity identity
+                 :middleware [wrap-un-store]
                  (created
                   (first
                    (flows/create-flow
@@ -46,6 +50,7 @@
                 :summary "Search Feedback"
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-feedback
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :feedback
@@ -60,6 +65,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List feedback by external id"
                 :capabilities #{:read-feedback :external-id}
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :feedback list-feedback
@@ -71,6 +77,7 @@
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-feedback
+                :middleware [wrap-un-store wrap-cache-control]
                 (if-let [d (read-store :feedback read-feedback id)]
                   (ok (with-long-id d))
                   (not-found)))

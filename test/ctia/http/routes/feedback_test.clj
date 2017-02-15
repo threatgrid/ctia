@@ -51,7 +51,7 @@
             :reason "false positive"
             :schema_version schema-version
             :tlp "green"}
-           (dissoc feedback :created :owner)))
+           feedback))
 
       (testing "the feedback ID has correct fields"
         (let [show-props (get-http-show)]
@@ -75,7 +75,7 @@
                 :type "feedback"
                 :schema_version schema-version
                 :tlp "green"}
-               (dissoc feedback :created :owner)))))
+               feedback))))
 
       (testing "GET /ctia/feedback?entity_id="
         (let [response (get (str "ctia/feedback")
@@ -93,7 +93,7 @@
                  :reason "false positive"
                  :schema_version schema-version
                  :tlp "green"}]
-               (map #(dissoc % :created :owner) feedbacks)))))
+               feedbacks))))
 
       (testing "GET /ctia/feedback/external_id/:external_id"
         (let [response (get (format "ctia/feedback/external_id/%s"
@@ -111,7 +111,7 @@
                  :reason "false positive"
                  :schema_version schema-version
                  :tlp "green"}]
-               (map #(dissoc % :created :owner) feedback)))))
+               feedback))))
 
       (testing "DELETE /ctia/feedback/:id"
         (let [temp-feedback (-> (post "ctia/feedback"

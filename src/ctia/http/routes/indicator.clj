@@ -6,6 +6,9 @@
              [indicator :refer [with-long-id page-with-long-id]]
              [sighting :as sighting]]
             [ctia.flows.crud :as flows]
+            [ctia.http.middleware
+             [cache-control :refer [wrap-cache-control]]
+             [un-store :refer [wrap-un-store]]]
             [ctia.http.routes.common
              :refer [created PagingParams paging-param-keys paginated-ok
                      BaseEntityFilterParams SourcableEntityFilterParams
@@ -47,6 +50,7 @@
                  :header-params [api_key :- (s/maybe s/Str)]
                  :capabilities :create-indicator
                  :identity identity
+                 :middleware [wrap-un-store]
                  (created
                   (first
                    (flows/create-flow
@@ -65,6 +69,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :create-indicator
                 :identity identity
+                :middleware [wrap-un-store]
                 (ok
                  (flows/update-flow
                   :get-fn #(read-store :indicator read-indicator %)
@@ -84,6 +89,7 @@
                 :query [params IndicatorSearchParams]
                 :capabilities #{:read-indicator :search-indicator}
                 :header-params [api_key :- (s/maybe s/Str)]
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (query-string-search-store
@@ -93,8 +99,6 @@
                    (dissoc params :query :sort_by :sort_order :offset :limit)
                    (select-keys params [:sort_by :sort_order :offset :limit])))))
 
-
-
            (GET "/external_id/:external_id" []
                 :return [(s/maybe StoredIndicator)]
                 :query [q IndicatorsByExternalIdQueryParams]
@@ -102,6 +106,7 @@
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List Indicators by external id"
                 :capabilities #{:read-indicator :external-id}
+                :middleware [wrap-un-store wrap-cache-control]
                 (paginated-ok
                  (page-with-long-id
                   (read-store :indicator list-indicators
@@ -113,6 +118,7 @@
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-indicator
+                :middleware [wrap-un-store wrap-cache-control]
                 (if-let [d (read-store :indicator read-indicator id)]
                   (ok (with-long-id d))
                   (not-found)))))
