@@ -50,30 +50,4 @@
         (is (= 200 (:status first-res)))
         (is (not (nil? etag)))
         (is (= 304 (:status second-res)))
-        (is (nil? (:parsed-body second-res))))))
-
-
-  (testing "Cache control with If-Modified-Since"
-    (let [{status :status
-           actor :parsed-body}
-          (post "ctia/actor"
-                :body {:title "actor"
-                       :description "description"
-                       :actor_type "Hacker"
-                       :source "a source"
-                       :confidence "High"
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                    :end_time "2016-07-11T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
-
-          actor-id
-          (id/long-id->id (:id actor))]
-
-      (let [first-res (get-actor actor-id nil)
-            last-modified-since (get-in first-res [:headers "Last-Modified"])
-            second-res (get-actor actor-id {"if-modified-since" last-modified-since})]
-
-        (is (= 200 (:status first-res)))
-        (is (not (nil? last-modified-since)))
-        (is (= 304 (:status second-res)))
         (is (nil? (:parsed-body second-res)))))))

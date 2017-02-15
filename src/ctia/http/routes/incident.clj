@@ -1,13 +1,10 @@
 (ns ctia.http.routes.incident
   (:require [compojure.api.sweet :refer :all]
-            [ctia.domain.entities :refer [realize-incident]]
+            [ctia.domain.entities :as ent]
             [ctia.domain.entities.incident :refer [with-long-id page-with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.schemas.core :refer [NewIncident StoredIncident]]
-            [ctia.http.middleware
-             [cache-control :refer [wrap-cache-control]]
-             [un-store :refer [wrap-un-store]]]
+            [ctia.schemas.core :refer [NewIncident Incident]]
             [ctia.http.routes.common :refer [created IncidentSearchParams
                                              PagingParams paginated-ok]]
             [ring.util.http-response :refer [ok no-content not-found]]
@@ -21,80 +18,83 @@
   (context "/incident" []
            :tags ["Incident"]
            (POST "/" []
-                 :return StoredIncident
+                 :return Incident
                  :body [incident NewIncident {:description "a new incident"}]
                  :summary "Adds a new Incident"
                  :header-params [api_key :- (s/maybe s/Str)]
                  :capabilities :create-incident
                  :identity identity
-                 :middleware [wrap-un-store]
-                 (created
-                  (first
-                   (flows/create-flow
-                    :realize-fn realize-incident
-                    :store-fn #(write-store :incident create-incidents %)
-                    :long-id-fn with-long-id
-                    :entity-type :incident
-                    :identity identity
-                    :entities [incident]))))
+                 (-> (flows/create-flow
+                      :realize-fn ent/realize-incident
+                      :store-fn #(write-store :incident create-incidents %)
+                      :long-id-fn with-long-id
+                      :entity-type :incident
+                      :identity identity
+                      :entities [incident])
+                     first
+                     ent/un-store
+                     created))
 
            (PUT "/:id" []
-                :return StoredIncident
+                :return Incident
                 :body [incident NewIncident {:description "an updated incident"}]
                 :summary "Updates an Incident"
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :create-incident
                 :identity identity
-                :middleware [wrap-un-store]
-                (ok (flows/update-flow
+                (-> (flows/update-flow
                      :get-fn #(read-store :incident read-incident %)
-                     :realize-fn realize-incident
+                     :realize-fn ent/realize-incident
                      :update-fn #(write-store :incident update-incident (:id %) %)
                      :long-id-fn with-long-id
                      :entity-type :incident
                      :entity-id id
                      :identity identity
-                     :entity incident)))
+                     :entity incident)
+                    ent/un-store
+                    ok))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe StoredIncident)]
+                :return [(s/maybe Incident)]
                 :query [q IncidentByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List Incidents by external id"
                 :capabilities #{:read-incident :external-id}
-                :middleware [wrap-un-store wrap-cache-control]
-                (paginated-ok
-                 (page-with-long-id
-                  (read-store :incident list-incidents
-                              {:external_ids external_id} q))))
+                (-> (read-store :incident list-incidents
+                                {:external_ids external_id} q)
+                    page-with-long-id
+                    ent/un-store-page
+                    paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [StoredIncident])
+                :return (s/maybe [Incident])
                 :summary "Search for an Incident using a Lucene/ES query string"
                 :query [params IncidentSearchParams]
                 :capabilities #{:read-incident :search-incident}
                 :header-params [api_key :- (s/maybe s/Str)]
-                :middleware [wrap-un-store wrap-cache-control]
-                (paginated-ok
-                 (page-with-long-id
-                  (query-string-search-store
-                   :incident
-                   query-string-search
-                   (:query params)
-                   (dissoc params :query :sort_by :sort_order :offset :limit)
-                   (select-keys params [:sort_by :sort_order :offset :limit])))))
+                (-> (query-string-search-store
+                     :incident
+                     query-string-search
+                     (:query params)
+                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                    page-with-long-id
+                    ent/un-store-page
+                    paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe StoredIncident)
+                :return (s/maybe Incident)
                 :summary "Gets an Incident by ID"
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-incident
-                :middleware [wrap-un-store wrap-cache-control]
-                (if-let [d (read-store :incident read-incident id)]
-                  (ok (with-long-id d))
+                (if-let [incident (read-store :incident read-incident id)]
+                  (-> incident
+                      with-long-id
+                      ent/un-store
+                      ok)
                   (not-found)))
 
            (DELETE "/:id" []
