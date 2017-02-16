@@ -18,7 +18,7 @@
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as common]
             [ctia.lib.keyword :refer [singular]]
-            [ctia.schemas.bulk :refer [BulkRefs NewBulk StoredBulk]]
+            [ctia.schemas.bulk :refer [Bulk BulkRefs NewBulk StoredBulk]]
             [ctia.properties :refer [properties]]
             [ctia.store :refer :all]
             [ctia.schemas.core :refer [Reference]]
@@ -169,8 +169,9 @@
                  (if (> (bulk-size bulk) (get-bulk-max-size))
                    (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
                    (common/created (gen-bulk-from-fn create-entities bulk login))))
+
            (GET "/" []
-                :return (s/maybe StoredBulk)
+                :return (s/maybe Bulk)
                 :summary "Gets many entities at once"
                 :query-params [{actors          :- [Reference] []}
                                {campaigns       :- [Reference] []}
@@ -212,4 +213,6 @@
                                              :ttps            ttps}))]
                   (if (> (bulk-size bulk) (get-bulk-max-size))
                     (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-                    (ok (gen-bulk-from-fn read-entities bulk)))))))
+                    (-> (gen-bulk-from-fn read-entities bulk)
+                        ent/un-store-map
+                        ok))))))

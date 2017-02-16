@@ -3,7 +3,6 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clj-momo.test-helpers.http :refer [encode]]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
-            [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
@@ -52,7 +51,6 @@
             :row_count 1
             :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
                            "http://ex.tld/ctia/data-table/data-table-456"]
-            :owner "foouser"
             :schema_version c/ctim-schema-version
             :tlp "green"
             :columns [{:name "Column1"
@@ -62,10 +60,7 @@
             :rows [["foo"] ["bar"]]
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
-           (dissoc data-table
-                   :id
-                   :created
-                   :modified)))
+           (dissoc data-table :id)))
 
       (testing "the data-table ID has correct fields"
         (let [show-props (get-http-show)]
@@ -85,7 +80,6 @@
                 :row_count 1
                 :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
                                "http://ex.tld/ctia/data-table/data-table-456"]
-                :owner "foouser"
                 :schema_version c/ctim-schema-version
                 :tlp "green"
                 :columns [{:name "Column1"
@@ -95,9 +89,7 @@
                 :rows [["foo"] ["bar"]]
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
-               (dissoc data-table
-                       :created
-                       :modified)))))
+               data-table))))
 
       (testing "GET /ctia/data-table/external_id/:external_id"
         (let [response (get (format "ctia/data-table/external_id/%s"
@@ -111,7 +103,6 @@
                  :row_count 1
                  :external_ids ["http://ex.tld/ctia/data-table/data-table-123"
                                 "http://ex.tld/ctia/data-table/data-table-456"]
-                 :owner "foouser"
                  :schema_version c/ctim-schema-version
                  :tlp "green"
                  :columns [{:name "Column1"
@@ -121,7 +112,7 @@
                  :rows [["foo"] ["bar"]]
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}}]
-               (map #(dissoc % :created :modified) data-tables)))))
+               data-tables))))
 
       (testing "DELETE /ctia/data-table/:id"
         (let [response (delete (str "ctia/data-table/" (:short-id data-table-id))

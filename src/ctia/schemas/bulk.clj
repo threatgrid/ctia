@@ -2,32 +2,22 @@
   (:require
    [schema.core :as s]
    [schema-tools.core :as st]
-   [ctia.schemas.core
-    :refer [NewActor
-            StoredActor
-            NewCampaign
-            StoredCampaign
-            NewCOA
-            StoredCOA
-            NewDataTable
-            StoredDataTable
-            NewExploitTarget
-            StoredExploitTarget
-            NewFeedback
-            StoredFeedback
-            NewIncident
-            StoredIncident
-            NewIndicator
-            StoredIndicator
-            NewJudgement
-            StoredJudgement
-            NewRelationship
-            StoredRelationship
-            NewSighting
-            StoredSighting
-            NewTTP
-            StoredTTP
-            Reference]]))
+   [ctia.schemas.core :refer :all]))
+
+(s/defschema Bulk
+  (st/optional-keys
+   {:actors          [(s/maybe Actor)]
+    :campaigns       [(s/maybe Campaign)]
+    :coas            [(s/maybe COA)]
+    :data-tables     [(s/maybe DataTable)]
+    :exploit-targets [(s/maybe ExploitTarget)]
+    :feedbacks       [(s/maybe Feedback)]
+    :incidents       [(s/maybe Incident)]
+    :indicators      [(s/maybe Indicator)]
+    :judgements      [(s/maybe Judgement)]
+    :relationships   [(s/maybe Relationship)]
+    :sightings       [(s/maybe Sighting)]
+    :ttps            [(s/maybe TTP)]}))
 
 (s/defschema StoredBulk
   (st/optional-keys

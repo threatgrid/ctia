@@ -191,3 +191,9 @@
 
 (defn un-store-page [page]
   (update page :data un-store-all))
+
+(defn un-store-map [m]
+  (into {}
+        (map (fn [[k v]]
+               [k (un-store-all v)])
+             m)))

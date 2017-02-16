@@ -70,6 +70,11 @@
 
 ;; data-table
 
+(defschema DataTable
+  (-> ds/DataTable
+      fu/replace-either-with-any)
+  "data-table")
+
 (defschema NewDataTable
   (-> ds/NewDataTable
       fu/replace-either-with-any)
@@ -184,6 +189,10 @@
 (f-spec/->spec ins/StoredIndicator "stored-indicator")
 
 ;; relationship
+
+(defschema Relationship
+  rels/Relationship
+  "relationship")
 
 (defschema NewRelationship
   rels/NewRelationship
