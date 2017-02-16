@@ -145,4 +145,4 @@ Eclipse Public License v1.0
 
 The data model of CTIA is closely based on
 [STIX](http://stixproject.github.io/data-model/), with a few
-simplifications.  See [data structures](doc/data_structures.md) for details.
+simplifications.  See [Cisco Threat Intel Model](https://github.com/threatgrid/ctim/tree/master/doc/) for details.
