@@ -40,6 +40,10 @@
              [verdict :as ve]]
             [schema.core :as s]))
 
+(defn delete-state-indexes [{:keys [conn index config]}]
+  (when conn
+    (es-index/delete! conn (str index "*"))))
+
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection returns
    a map containing a connection manager, dedicated store index properties"

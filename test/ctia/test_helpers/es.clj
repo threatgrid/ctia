@@ -6,15 +6,11 @@
             [ctia.stores.es.store :as es-store]
             [ctia.test-helpers.core :as h]))
 
-(defn delete-state-indexes [{:keys [conn index config]}]
-  (when conn
-    (es-index/delete! conn (str index "*"))))
-
 (defn fixture-delete-store-indexes [test]
   "walk through all the es stores delete each store indexes"
   (doseq [store-impls (vals @store/stores)
           {:keys [state]} store-impls]
-    (delete-state-indexes state))
+    (es-store/delete-state-indexes state))
   (test))
 
 (defn purge-event-indexes []
