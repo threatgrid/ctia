@@ -23,10 +23,14 @@
 
 (defmacro defschema [name-sym ddl spec-kw-ns]
   `(do
-     (sc/defschema ~name-sym (f-schema/->schema-tree ~ddl))
+     (sc/defschema ~name-sym (f-schema/->schema ~ddl))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
 
 ;; actor
+
+(defschema Actor
+  as/Actor
+  "actor")
 
 (defschema NewActor
   as/NewActor
@@ -38,6 +42,10 @@
 
 ;; campaign
 
+(defschema Campaign
+  cs/Campaign
+  "campaign")
+
 (defschema NewCampaign
   cs/NewCampaign
   "new-campaign")
@@ -48,6 +56,10 @@
 
 ;; coa
 
+(defschema COA
+  coas/COA
+  "coa")
+
 (defschema NewCOA
   coas/NewCOA
   "new-coa")
@@ -57,6 +69,11 @@
   "stored-coa")
 
 ;; data-table
+
+(defschema DataTable
+  (-> ds/DataTable
+      fu/replace-either-with-any)
+  "data-table")
 
 (defschema NewDataTable
   (-> ds/NewDataTable
@@ -69,6 +86,10 @@
   "stored-data-table")
 
 ;; exploit-target
+
+(defschema ExploitTarget
+  es/ExploitTarget
+  "exploit-target")
 
 (defschema NewExploitTarget
   es/NewExploitTarget
@@ -84,11 +105,19 @@
   ss/NewSighting
   "new-sighting")
 
+(defschema Sighting
+  ss/Sighting
+  "sighting")
+
 (defschema StoredSighting
   ss/StoredSighting
   "stored-sighting")
 
 ;; judgement
+
+(defschema Judgement
+  js/Judgement
+  "judgement")
 
 (defschema NewJudgement
   js/NewJudgement
@@ -110,6 +139,10 @@
 
 ;; feedback
 
+(defschema Feedback
+  feedbacks/Feedback
+  "feedback")
+
 (defschema NewFeedback
   feedbacks/NewFeedback
   "new-feedback")
@@ -119,6 +152,10 @@
   "stored-feedback")
 
 ;; incident
+
+(defschema Incident
+  is/Incident
+  "incident")
 
 (defschema NewIncident
   is/NewIncident
@@ -130,21 +167,32 @@
 
 ;; indicator
 
+(sc/defschema Indicator
+  (f-schema/->schema
+   (-> ins/Indicator
+       fu/replace-either-with-any)))
+
+(f-spec/->spec ins/Indicator "indicator")
+
 (sc/defschema NewIndicator
-  (f-schema/->schema-tree
+  (f-schema/->schema
    (-> ins/NewIndicator
        fu/replace-either-with-any)))
 
 (f-spec/->spec ins/NewIndicator "new-indicator")
 
 (sc/defschema StoredIndicator
-  (f-schema/->schema-tree
+  (f-schema/->schema
    (-> ins/StoredIndicator
        fu/replace-either-with-any)))
 
 (f-spec/->spec ins/StoredIndicator "stored-indicator")
 
 ;; relationship
+
+(defschema Relationship
+  rels/Relationship
+  "relationship")
 
 (defschema NewRelationship
   rels/NewRelationship
@@ -155,6 +203,10 @@
   "stored-relationship")
 
 ;; ttp
+
+(defschema TTP
+  ttps/TTP
+  "ttp")
 
 (defschema NewTTP
   ttps/NewTTP

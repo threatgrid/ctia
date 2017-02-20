@@ -49,9 +49,8 @@
             :severity "High"
             :confidence "Low"
             :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
-                         :end_time #inst "2016-03-11T00:00:00.000-00:00"}
-            :owner auth/not-logged-in-owner}
-           (dissoc judgement :id :created)))
+                         :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
+           (dissoc judgement :id)))
 
       (testing "GET /ctia/judgement"
         (let [{status :status
@@ -72,6 +71,5 @@
                 :severity "High"
                 :confidence "Low"
                 :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
-                             :end_time #inst "2016-03-11T00:00:00.000-00:00"}
-                :owner auth/not-logged-in-owner}
-               (dissoc get-judgement :created))))))))
+                             :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
+               get-judgement)))))))

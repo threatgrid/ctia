@@ -1,12 +1,13 @@
 (ns ctia.http.routes.ttp
   (:require
    [compojure.api.sweet :refer :all]
-   [ctia.domain.entities :refer [realize-ttp]]
+   [ctia.domain.entities :as ent]
    [ctia.domain.entities.ttp :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewTTP StoredTTP]]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams TTPSearchParams]]
+   [ctia.schemas.core :refer [NewTTP TTP]]
+   [ctia.http.routes.common
+    :refer [created paginated-ok PagingParams TTPSearchParams]]
    [ring.util.http-response :refer [ok no-content not-found]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -18,77 +19,85 @@
   (context "/ttp" []
            :tags ["TTP"]
            (POST "/" []
-                 :return StoredTTP
+                 :return TTP
                  :body [ttp NewTTP {:description "a new TTP"}]
                  :summary "Adds a new TTP"
                  :header-params [api_key :- (s/maybe s/Str)]
                  :capabilities :create-ttp
                  :identity identity
-                 (created
-                  (first
-                   (flows/create-flow :realize-fn realize-ttp
-                                      :store-fn #(write-store :ttp create-ttps %)
-                                      :long-id-fn with-long-id
-                                      :entity-type :ttp
-                                      :identity identity
-                                      :entities [ttp]))))
+                 (-> (flows/create-flow :realize-fn ent/realize-ttp
+                                        :store-fn #(write-store :ttp create-ttps %)
+                                        :long-id-fn with-long-id
+                                        :entity-type :ttp
+                                        :identity identity
+                                        :entities [ttp])
+                     first
+                     ent/un-store
+                     created))
 
            (PUT "/:id" []
-                :return StoredTTP
+                :return TTP
                 :body [ttp NewTTP {:description "an updated TTP"}]
                 :summary "Updates a TTP"
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :create-ttp
                 :identity identity
-                (ok
-                 (flows/update-flow
-                  :get-fn #(read-store :ttp (fn [s] (read-ttp s %)))
-                  :realize-fn realize-ttp
-                  :update-fn #(write-store :ttp update-ttp (:id %) %)
-                  :long-id-fn with-long-id
-                  :entity-type :ttp
-                  :entity-id id
-                  :identity identity
-                  :entity ttp)))
+                (-> (flows/update-flow
+                     :get-fn #(read-store :ttp (fn [s] (read-ttp s %)))
+                     :realize-fn ent/realize-ttp
+                     :update-fn #(write-store :ttp update-ttp (:id %) %)
+                     :long-id-fn with-long-id
+                     :entity-type :ttp
+                     :entity-id id
+                     :identity identity
+                     :entity ttp)
+                    ent/un-store
+                    ok))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe StoredTTP)]
+                :return (s/maybe [TTP])
                 :query [q TTPByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List TTPs by external id"
                 :capabilities #{:read-ttp :external-id}
-                (paginated-ok
-                 (page-with-long-id
-                  (read-store :ttp list-ttps
-                              {:external_ids external_id} q))))
+                (-> (read-store :ttp list-ttps
+                                {:external_ids external_id} q)
+                    page-with-long-id
+                    ent/un-store-page
+                    paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [StoredTTP])
+                :return (s/maybe [TTP])
                 :summary "Search for a TTP using a Lucene/ES query string"
                 :query [params TTPSearchParams]
                 :capabilities #{:read-ttp :search-ttp}
                 :header-params [api_key :- (s/maybe s/Str)]
-                (paginated-ok
-                 (page-with-long-id
-                  (query-string-search-store
-                   :ttp
-                   query-string-search
-                   (:query params)
-                   (dissoc params :query :sort_by :sort_order :offset :limit)
-                   (select-keys params [:sort_by :sort_order :offset :limit])))))
+                (-> (query-string-search-store
+                     :ttp
+                     query-string-search
+                     (:query params)
+                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                    page-with-long-id
+                    ent/un-store-page
+                    paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe StoredTTP)
+                :return (s/maybe TTP)
                 :summary "Gets a TTP by ID"
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-ttp
                 :path-params [id :- s/Str]
-                (if-let [d (read-store :ttp
-                                       (fn [s] (read-ttp s id)))]
-                  (ok (with-long-id d))
+                (if-let [ttp (read-store :ttp
+                                         (fn [s] (read-ttp s id)))]
+                  (-> ttp
+                      with-long-id
+                      ent/un-store
+                      ok)
                   (not-found)))
+
            (DELETE "/:id" []
                    :no-doc true
                    :path-params [id :- s/Str]

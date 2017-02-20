@@ -55,13 +55,10 @@
             :source "source"
             :sensor "endpoint.sensor"
             :confidence "High"
-            :owner "foouser"
             :type "sighting"
             :schema_version schema-version
             :count 1}
-           (dissoc sighting
-                   :created
-                   :modified)))
+           sighting))
 
       (testing "the sighting ID has correct fields"
         (let [show-props (get-http-show)]
@@ -89,9 +86,8 @@
                  :source "source"
                  :sensor "endpoint.sensor"
                  :type "sighting"
-                 :owner "foouser"
                  :confidence "High"}]
-               (map #(dissoc % :created :modified) sightings)))))
+               sightings))))
 
       (test-query-string-search :sighting "description" :description)
 
@@ -114,11 +110,8 @@
                       :source "source"
                       :sensor "endpoint.sensor"
                       :confidence "High"
-                      :owner "foouser"
                       :type "sighting"}
-                     (dissoc sighting
-                             :created
-                             :modified)))))
+                     sighting))))
 
       (testing "PUT /ctia/sighting/:id"
         (let [{status :status
@@ -150,11 +143,8 @@
                 :sensor "endpoint.sensor"
                 :confidence "High"
                 :count 1
-                :owner "foouser"
                 :type "sighting"}
-               (dissoc updated-sighting
-                       :created
-                       :modified)))))
+               updated-sighting))))
 
       (testing "DELETE /ctia/sighting/:id"
         (let [{status :status} (delete (str "ctia/sighting/" (:short-id sighting-id))

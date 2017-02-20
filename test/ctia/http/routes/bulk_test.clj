@@ -202,7 +202,7 @@
           (doseq [k (keys new-bulk)]
             (testing (str "retrieved " (name k))
               (is (= (core/get new-bulk k)
-                     (map #(dissoc % :created :id :type :modified :owner :tlp :schema_version :disposition_name)
+                     (map #(dissoc % :id :type :tlp :schema_version :disposition_name)
                           (core/get response k))))
 
               (let [id (id/long-id->id (:id (first (core/get response k))))]

@@ -122,7 +122,7 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
   (let [datamap (initialize-graphql-data)]
-    
+
     (testing "POST /ctia/graphql"
       (testing "Query syntax error"
         (let [{status :status
@@ -175,7 +175,6 @@
                     "has a schema_version")
                 (testing "the judgement"
                   (let [judgement (get verdict "judgement")]
-                    (print "Judgement:")
                     (is (not (empty? judgement))
                         "exits")
                     (is (deep= (dissoc judgement "type" "id")
@@ -201,7 +200,7 @@
                   )))))
 
 
-      
+
       (testing "judgement query"
         (testing "without variables"
           (let [{status :status
@@ -244,7 +243,7 @@
                     "has an id")
                 (is (= (get judgement "type") "judgement")
                     "has a type")
-                
+
                 (is (= (get-in (first (get-in judgement ["relationships" "edges"])) ["node" "target_ref"])
                        (get-in datamap [:indicator-1 :id])))
                 ))))
@@ -301,7 +300,7 @@
               (is (= (get-in body [:data "judgement" "relationships" "pageInfo" "totalHits"])
                      1)
                   "matches element-of relationship")))
-          
+
           (testing "type argument"
             (let [{status :status
                    body :parsed-body}

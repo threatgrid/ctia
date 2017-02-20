@@ -72,11 +72,8 @@
                           :actuator {:type "network"
                                      :specifiers ["router"]}
                           :modifiers {:method ["acl"]
-                                      :location "perimeter"}}
-            :owner "foouser"}
-           (dissoc coa
-                   :created
-                   :modified)))
+                                      :location "perimeter"}}}
+           coa))
 
       (testing "the coa ID has correct fields"
         (let [show-props (get-http-show)]
@@ -112,9 +109,8 @@
                                :actuator {:type "network"
                                           :specifiers ["router"]}
                                :modifiers {:method ["acl"]
-                                           :location "perimeter"}}
-                 :owner "foouser"}]
-               (map #(dissoc % :created :modified) coas)))))
+                                           :location "perimeter"}}}]
+               coas))))
 
       (testing "GET /ctia/coa/:id"
         (let [response (get (str "ctia/coa/" (:short-id coa-id))
@@ -143,11 +139,8 @@
                               :actuator {:type "network"
                                          :specifiers ["router"]}
                               :modifiers {:method ["acl"]
-                                          :location "perimeter"}}
-                :owner "foouser"}
-               (dissoc coa
-                       :created
-                       :modified)))))
+                                          :location "perimeter"}}}
+               coa))))
 
       (test-query-string-search :coa "description" :description)
 
@@ -180,7 +173,6 @@
                 :external_ids ["http://ex.tld/ctia/coa/coa-123"
                                "http://ex.tld/ctia/coa/coa-456"]
                 :type "coa"
-                :created (:created coa)
                 :title "updated coa"
                 :description "updated description"
                 :tlp "white"
@@ -198,10 +190,8 @@
                               :actuator {:type "network"
                                          :specifiers ["router"]}
                               :modifiers {:method ["acl"]
-                                          :location "perimeter"}}
-                :owner "foouser"}
-               (dissoc updated-coa
-                       :modified)))))
+                                          :location "perimeter"}}}
+               updated-coa))))
 
       (testing "DELETE /ctia/coa/:id"
         (let [response (delete (str "/ctia/coa/" (:short-id coa-id))

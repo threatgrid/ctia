@@ -67,11 +67,8 @@
                                   :indicator_id "indicator-123"}]
 
             :related_incidents [{:incident_id "incident-123"}
-                                {:incident_id "indicent-789"}]
-            :owner "foouser"}
-           (dissoc incident
-                   :created
-                   :modified)))
+                                {:incident_id "indicent-789"}]}
+           incident))
 
       (testing "the incident ID has correct fields"
         (let [show-props (get-http-show)]
@@ -106,12 +103,11 @@
                                        :indicator_id "indicator-123"}]
 
                  :related_incidents [{:incident_id "incident-123"}
-                                     {:incident_id "indicent-789"}]
-                 :owner "foouser"}]
-               (map #(dissoc % :created :modified) incidents)))))
+                                     {:incident_id "indicent-789"}]}]
+               incidents))))
 
       (test-query-string-search :incident "description" :description)
-      
+
       (testing "GET /ctia/incident/:id"
         (let [response (get (str "ctia/incident/" (:short-id incident-id))
                             :headers {"api_key" "45c1f5e3f05d0"})
@@ -136,11 +132,8 @@
                                       :relationship "relationship"
                                       :indicator_id "indicator-123"}]
                 :related_incidents [{:incident_id "incident-123"}
-                                    {:incident_id "indicent-789"}]
-                :owner "foouser"}
-               (dissoc incident
-                       :created
-                       :modified)))))
+                                    {:incident_id "indicent-789"}]}
+               incident))))
 
       (testing "PUT /ctia/incident/:id"
         (let [{status :status
@@ -168,7 +161,6 @@
                                "http://ex.tld/ctia/incident/incident-456"]
                 :type "incident"
                 :id (id/long-id incident-id)
-                :created (:created incident)
                 :title "updated incident"
                 :description "updated description"
                 :tlp "green"
@@ -183,10 +175,8 @@
                                       :relationship "relationship"
                                       :indicator_id "indicator-234"}]
                 :related_incidents [{:incident_id "incident-123"}
-                                    {:incident_id "indicent-789"}]
-                :owner "foouser"}
-               (dissoc updated-incident
-                       :modified)))))
+                                    {:incident_id "indicent-789"}]}
+               updated-incident))))
 
       (testing "DELETE /ctia/incident/:id"
         (let [response (delete (str "ctia/incident/" (:short-id incident-id))

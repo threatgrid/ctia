@@ -16,14 +16,12 @@
     (sha1 (.getBytes (pr-str body) "UTF-8"))))
 
 (defn update-headers
-  [headers etag {:keys [created updated] :as body}]
-  (let [last-modified (or updated created)]
-    (cond-> headers
-      etag (assoc "ETag" etag)
-      last-modified (assoc "Last-Modified"
-                           (format-rfc822-time last-modified)))))
+  [headers etag body]
+  (if etag
+    (assoc headers "ETag" etag)
+    headers))
 
-(defn wrap-cache-control-headers
+(defn wrap-cache-control
   "only applies to GET requests
   appends Last-Modified and Etag headers to body response"
 
@@ -34,5 +32,5 @@
 
       (if (and (read-request? req)
                (ok-response? resp))
-        (update resp :headers #(update-headers % etag body))
+        (update resp :headers update-headers etag body)
         resp))))

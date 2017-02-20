@@ -62,9 +62,8 @@
             :schema_version schema-version
             :reason "This is a bad IP address that talked to some evil servers"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "foouser"}
-           (dissoc judgement :created)))
+                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+           judgement))
 
 
       ;; CLB: Convert to ue the est macro, but since Judgmements ar enot describably, it's a bit hard
@@ -160,10 +159,8 @@
                 :schema_version schema-version
                 :reason "This is a bad IP address that talked to some evil servers"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :owner "foouser"}
-               (dissoc judgement
-                       :created)))))
+                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+               judgement))))
       (testing "GET /ctia/judgement/external_id/:external_id"
         (let [response (get (format "ctia/judgement/external_id/%s"
                                     (encode (rand-nth judgement-external-ids)))
@@ -187,9 +184,8 @@
                  :schema_version schema-version
                  :reason "This is a bad IP address that talked to some evil servers"
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                 :owner "foouser"}]
-               (map #(dissoc % :created) judgements)))))
+                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}}]
+               judgements))))
 
       (testing "GET /ctia/judgement/:id with query-param api_key"
         (let [{status :status
@@ -215,9 +211,8 @@
                 :schema_version schema-version
                 :reason "This is a bad IP address that talked to some evil servers"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :owner "foouser"}
-               (dissoc judgement :created)))))
+                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+               judgement))))
 
       (testing "GET /ctia/judgement/:id authentication failures"
         (testing "no api_key"
@@ -304,11 +299,9 @@
             :tlp "green"
             :schema_version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "foouser"}
+                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
            (dissoc judgement
-                   :id
-                   :created)))))
+                   :id)))))
 
   (testing "POST a judgement with disposition_name"
     (let [{status :status
@@ -337,11 +330,9 @@
             :tlp "green"
             :schema_version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "foouser"}
+                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
            (dissoc judgement
-                   :id
-                   :created)))))
+                   :id)))))
 
   (testing "POST a judgement without disposition"
     (let [{status :status
@@ -369,11 +360,9 @@
             :tlp "green"
             :schema_version schema-version
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :owner "foouser"}
+                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
            (dissoc judgement
-                   :id
-                   :created)))))
+                   :id)))))
 
   (testing "POST a judgement with mismatching disposition/disposition_name"
     (let [{status :status

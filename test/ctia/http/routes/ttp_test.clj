@@ -53,11 +53,8 @@
             :description "description"
             :ttp_type "foo"
             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-            :owner "foouser"}
-           (dissoc ttp
-                   :created
-                   :modified)))
+                         :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
+           ttp))
 
       (testing "the ttp ID has correct fields"
         (let [show-props (get-http-show)]
@@ -83,9 +80,8 @@
                  :description "description"
                  :ttp_type "foo"
                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                 :owner "foouser"}]
-               (map #(dissoc % :created :modified) ttps)))))
+                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}}]
+               ttps))))
 
 
       (test-query-string-search :ttp "description" :description)
@@ -107,11 +103,8 @@
                 :description "description"
                 :ttp_type "foo"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "foouser"}
-               (dissoc ttp
-                       :created
-                       :modified)))))
+                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
+               ttp))))
 
       (testing "PUT /ctia/ttp/:id"
         (let [{status :status
@@ -131,17 +124,14 @@
                 :external_ids ["http://ex.tld/ctia/ttp/ttp-123"
                                "http://ex.tld/ctia/ttp/ttp-345"]
                 :type "ttp"
-                :created (:created ttp)
                 :title "updated ttp"
                 :tlp "green"
                 :schema_version schema-version
                 :description "updated description"
                 :ttp_type "bar"
                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :owner "foouser"}
-               (dissoc updated-ttp
-                       :modified)))))
+                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
+               updated-ttp))))
 
       (testing "DELETE /ctia/ttp/:id"
         (let [response (delete (str "ctia/ttp/" (:short-id ttp-id))

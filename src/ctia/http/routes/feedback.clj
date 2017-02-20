@@ -1,12 +1,12 @@
 (ns ctia.http.routes.feedback
   (:require
    [compojure.api.sweet :refer :all]
-   [ctia.domain.entities :refer [realize-feedback]]
+   [ctia.domain.entities :as ent]
    [ctia.domain.entities.feedback :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewFeedback StoredFeedback]]
+   [ctia.schemas.core :refer [NewFeedback Feedback]]
    [ring.util.http-response :refer [ok no-content not-found]]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -24,55 +24,61 @@
   (context "/feedback" []
            :tags ["Feedback"]
            (POST "/" []
-                 :return StoredFeedback
+                 :return Feedback
                  :body [feedback NewFeedback {:description "a new Feedback on an entity"}]
                  :summary "Adds a new Feedback"
                  :header-params [api_key :- (s/maybe s/Str)]
                  :capabilities :create-feedback
                  :identity identity
-                 (created
-                  (first
-                   (flows/create-flow
-                    :realize-fn realize-feedback
-                    :store-fn #(write-store :feedback create-feedbacks %)
-                    :long-id-fn with-long-id
-                    :entity-type :feedback
-                    :identity identity
-                    :entities [feedback]))))
+                 (-> (flows/create-flow
+                      :realize-fn ent/realize-feedback
+                      :store-fn #(write-store :feedback create-feedbacks %)
+                      :long-id-fn with-long-id
+                      :entity-type :feedback
+                      :identity identity
+                      :entities [feedback])
+                     first
+                     ent/un-store
+                     created))
 
            (GET "/" []
-                :return [StoredFeedback]
+                :return [Feedback]
                 :query [params FeedbackQueryParams]
                 :summary "Search Feedback"
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-feedback
-                (paginated-ok
-                 (page-with-long-id
-                  (read-store :feedback
-                              list-feedback
-                              (select-keys params [:entity_id])
-                              (dissoc params :entity_id)))))
+                (-> (read-store :feedback
+                                list-feedback
+                                (select-keys params [:entity_id])
+                                (dissoc params :entity_id))
+                    page-with-long-id
+                    ent/un-store-page
+                    paginated-ok))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe StoredFeedback)]
+                :return [(s/maybe Feedback)]
                 :query [q FeedbackByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :summary "List feedback by external id"
                 :capabilities #{:read-feedback :external-id}
-                (paginated-ok
-                 (page-with-long-id
-                  (read-store :feedback list-feedback
-                              {:external_ids external_id} q))))
+                (-> (read-store :feedback list-feedback
+                                {:external_ids external_id} q)
+                    page-with-long-id
+                    ent/un-store-page
+                    paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe StoredFeedback)
+                :return (s/maybe Feedback)
                 :summary "Gets a Feedback by ID"
                 :path-params [id :- s/Str]
                 :header-params [api_key :- (s/maybe s/Str)]
                 :capabilities :read-feedback
-                (if-let [d (read-store :feedback read-feedback id)]
-                  (ok (with-long-id d))
+                (if-let [feedback (read-store :feedback read-feedback id)]
+                  (-> feedback
+                      with-long-id
+                      ent/un-store
+                      ok)
                   (not-found)))
 
            (DELETE "/:id" []

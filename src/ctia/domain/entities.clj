@@ -180,3 +180,20 @@
   (default-realize-fn "ttp" NewTTP StoredTTP))
 
 (def ->long-id (id/factory:short-id+type->long-id get-http-show))
+
+(defn un-store [m]
+  (dissoc m :created :modified :owner))
+
+(defn un-store-all [x]
+  (if (sequential? x)
+    (map un-store x)
+    (un-store x)))
+
+(defn un-store-page [page]
+  (update page :data un-store-all))
+
+(defn un-store-map [m]
+  (into {}
+        (map (fn [[k v]]
+               [k (un-store-all v)])
+             m)))
