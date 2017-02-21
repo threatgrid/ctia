@@ -9,12 +9,12 @@
     [ctia.http.routes.common :refer [paginated-ok PagingParams]]
     [ctia.lib.pagination :as pag]
     [ctia.properties :refer [properties]]
-    [ctia.schemas.core :refer [StoredIndicator
-                               StoredJudgement
-                               StoredSighting
-                               StoredVerdict
+    [ctia.schemas.core :refer [Indicator
+                               Judgement
                                ObservableTypeIdentifier
-                               Reference]]
+                               Reference
+                               Sighting
+                               Verdict]]
     [ctia.store :refer :all]
     [ctim.domain.id :as id]
     [ctim.schemas.indicator :as csi]
@@ -45,7 +45,7 @@
        :tags ["Verdict"]
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
-       :return (s/maybe StoredVerdict)
+       :return (s/maybe Verdict)
        :summary (str "Returns the current Verdict associated with the specified "
                      "observable.")
        :header-params [api_key :- (s/maybe s/Str)]
@@ -69,7 +69,10 @@
                            (#(write-store :verdict create-verdicts [%])))
                        verdict)]
          (if verdict
-           (ok (verdict/with-long-id verdict))
+           (-> verdict
+               verdict/with-long-id
+               entities/un-store
+               ok)
            (not-found))))
 
   (GET "/:observable_type/:observable_value/judgements" []
@@ -77,17 +80,18 @@
        :query [params JudgementsByObservableQueryParams]
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
-       :return (s/maybe [StoredJudgement])
+       :return (s/maybe [Judgement])
        :summary "Returns the Judgements associated with the specified observable."
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities :list-judgements
-       (paginated-ok
-        (judgement/page-with-long-id
-         (read-store :judgement
-                     list-judgements-by-observable
-                     {:type observable_type
-                      :value observable_value}
-                     params))))
+       (-> (read-store :judgement
+                       list-judgements-by-observable
+                       {:type observable_type
+                        :value observable_value}
+                       params)
+           judgement/page-with-long-id
+           entities/un-store-page
+           paginated-ok))
 
   (GET "/:observable_type/:observable_value/judgements/indicators" []
        :tags ["Indicator"]
@@ -134,15 +138,16 @@
                      observable_value :- s/Str]
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities :list-sightings
-       :return (s/maybe [StoredSighting])
+       :return (s/maybe [Sighting])
        :summary "Returns Sightings associated with the specified observable."
-       (paginated-ok
-        (sighting/page-with-long-id
-         (read-store :sighting
-                     list-sightings-by-observables
-                     [{:type observable_type
-                       :value observable_value}]
-                     params))))
+       (-> (read-store :sighting
+                       list-sightings-by-observables
+                       [{:type observable_type
+                         :value observable_value}]
+                       params)
+           sighting/page-with-long-id
+           entities/un-store-page
+           paginated-ok))
 
   (GET "/:observable_type/:observable_value/sightings/indicators" []
        :tags ["Indicator"]

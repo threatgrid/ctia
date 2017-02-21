@@ -78,7 +78,8 @@
           (:external_ids relationship)]
       (is (= 201 status))
       (is (deep=
-           {:external_ids ["http://ex.tld/ctia/relationship/relationship-123"
+           {:id (id/long-id relationship-id)
+            :external_ids ["http://ex.tld/ctia/relationship/relationship-123"
                            "http://ex.tld/ctia/relationship/relationship-456"]
             :type "relationship"
             :title "title"
@@ -87,7 +88,6 @@
             :revision 1
             :timestamp #inst "2016-02-11T00:40:48.212-00:00"
             :schema_version schema-version
-            :owner "foouser"
             :language "language"
             :tlp "green"
             :source "source"
@@ -97,10 +97,7 @@
                              "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
             :target_ref (str "http://example.com/ctia/indicator/indicator-"
                              "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
-           (dissoc relationship
-                   :id
-                   :created
-                   :modified)))
+           relationship))
 
       (testing "the relationship ID has correct fields"
         (let [show-props (get-http-show)]
@@ -124,7 +121,6 @@
                 :short_description "short desc"
                 :revision 1
                 :schema_version schema-version
-                :owner "foouser"
                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                 :language "language"
                 :tlp "green"
@@ -135,9 +131,7 @@
                                  "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
                 :target_ref (str "http://example.com/ctia/indicator/indicator-"
                                  "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
-               (dissoc relationship
-                       :created
-                       :modified)))))
+               relationship))))
 
       (test-query-string-search :relationship "description" :description)
 
@@ -157,7 +151,6 @@
                  :short_description "short desc"
                  :revision 1
                  :schema_version schema-version
-                 :owner "foouser"
                  :timestamp #inst "2016-02-11T00:40:48.212-00:00"
                  :language "language"
                  :tlp "green"
@@ -168,7 +161,7 @@
                                   "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
                  :target_ref (str "http://example.com/ctia/indicator/indicator-"
                                   "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}]
-               (map #(dissoc % :created :modified) relationships)))))
+               relationships))))
 
       (testing "DELETE /ctia/relationship/:id"
         (let [response (delete (str "ctia/relationship/" (:short-id relationship-id))

@@ -7,7 +7,7 @@
     [ctia.flows.hook-protocol :refer [Hook]]
     [ctia.lib.redis :as lr]
     [ctia.properties :refer [properties]]
-    [ctia.schemas.core :refer [Verdict
+    [ctia.schemas.core :refer [NewVerdict
                                StoredVerdict
                                StoredJudgement]]
     [ctia.store :as store]
@@ -86,7 +86,7 @@
 (s/defn realize-verdict-wrapper :- StoredVerdict
   "Realizes a verdict, using the associated judgement ID, if available,
    to build the verdict ID"
-  [verdict :- Verdict
+  [verdict :- NewVerdict
    {j-lng-id :id :as judgement} :- StoredJudgement
    owner :- s/Str
    verdict-id :- s/Str]

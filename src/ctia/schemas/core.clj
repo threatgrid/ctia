@@ -129,6 +129,10 @@
 
 ;; verdict
 
+(defschema NewVerdict
+  vs/NewVerdict
+  "new-verdict")
+
 (defschema Verdict
   vs/Verdict
   "verdict")

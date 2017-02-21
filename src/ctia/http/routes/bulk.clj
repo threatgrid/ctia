@@ -18,7 +18,7 @@
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as common]
             [ctia.lib.keyword :refer [singular]]
-            [ctia.schemas.bulk :refer [Bulk BulkRefs NewBulk StoredBulk]]
+            [ctia.schemas.bulk :refer [Bulk BulkRefs NewBulk]]
             [ctia.properties :refer [properties]]
             [ctia.store :refer :all]
             [ctia.schemas.core :refer [Reference]]
