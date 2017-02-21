@@ -355,16 +355,14 @@
    {:dynamic "strict"
     :include_in_all false
     :properties
-    {:id all_token
-     :type token
-     :schema_version token
-     :judgement_id token
-     :observable observable
-     :disposition {:type "long"}
-     :disposition_name token
-     :valid_time valid-time
-     :owner token
-     :created ts}}})
+    (merge
+     base-entity-mapping
+     stored-entity-mapping
+     {:judgement_id token
+      :observable observable
+      :disposition {:type "long"}
+      :disposition_name token
+      :valid_time valid-time})}})
 
 (def feedback-mapping
   {"feedback"

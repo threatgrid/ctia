@@ -35,7 +35,7 @@
             StoredTTP
             NewRelationship
             StoredRelationship
-            Verdict
+            NewVerdict
             StoredVerdict]])
   (:import [java.util UUID]))
 
@@ -140,17 +140,18 @@
                                         now)})))
 
 (s/defn realize-verdict :- StoredVerdict
-  ([new-verdict :- Verdict
+  ([new-verdict :- NewVerdict
     login :- s/Str]
    (realize-verdict new-verdict (str "verdict-" (UUID/randomUUID)) login))
-  ([new-verdict :- Verdict
+  ([new-verdict :- NewVerdict
     id :- s/Str
     login :- s/Str]
    (let [now (time/now)]
      (assoc new-verdict
             :id id
             :schema_version schema-version
-            :created now))))
+            :created now
+            :owner login))))
 
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting
