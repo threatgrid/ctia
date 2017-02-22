@@ -140,18 +140,15 @@
                                         now)})))
 
 (s/defn realize-verdict :- StoredVerdict
+  ([new-verdict :- NewVerdict]
+   (realize-verdict new-verdict (str "verdict-" (UUID/randomUUID))))
   ([new-verdict :- NewVerdict
-    login :- s/Str]
-   (realize-verdict new-verdict (str "verdict-" (UUID/randomUUID)) login))
-  ([new-verdict :- NewVerdict
-    id :- s/Str
-    login :- s/Str]
+    id :- s/Str]
    (let [now (time/now)]
      (assoc new-verdict
             :id id
             :schema_version schema-version
-            :created now
-            :owner login))))
+            :created now))))
 
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting

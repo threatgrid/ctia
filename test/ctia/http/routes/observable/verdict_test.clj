@@ -8,8 +8,7 @@
              [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]
-            [ctim.schemas.common :as csc]))
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mht/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -110,15 +109,13 @@
               (get "ctia/ip/10.0.0.1/verdict"
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
-          (is (= {:id (str "verdict-" (-> (:short-id judgment-id) (subs 10)))
-                  :type "verdict"
+          (is (= {:type "verdict"
                   :disposition 2
                   :disposition_name "Malicious"
                   :judgement_id (:id judgement)
                   :observable {:value "10.0.0.1", :type "ip"}
                   :valid_time {:start_time #inst "2016-02-12T00:00:00.000-00:00",
-                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                  :schema_version csc/ctim-schema-version}
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                  verdict)))))))
 
 (deftest-for-each-store test-observable-verdict-route-2
@@ -173,15 +170,13 @@
                 (get "ctia/ip/10.0.0.1/verdict"
                      :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 200 status))
-            (is (= {:id (str "verdict-" (-> (:short-id judgement-id) (subs 10)))
-                    :observable {:value "10.0.0.1",:type "ip"}
+            (is (= {:observable {:value "10.0.0.1",:type "ip"}
                     :type "verdict"
                     :disposition 2
                     :disposition_name "Malicious"
                     :judgement_id (:id judgement)
                     :valid_time {:start_time #inst "2016-02-12T14:56:26.814-00:00",
-                                 :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                    :schema_version csc/ctim-schema-version}
+                                 :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                    verdict))))))))
 
 (deftest-for-each-store ^:sleepy test-observable-verdict-route-with-expired-judgement
@@ -263,9 +258,8 @@
                   :judgement_id (:id judgement-2)
                   :observable {:value "10.0.0.1", :type "ip"}
                   :valid_time {:start_time #inst "2016-02-12T14:56:26.814-00:00"
-                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                  :schema_version csc/ctim-schema-version}
-                 (dissoc verdict :id))))))))
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+                 verdict)))))))
 
 (deftest-for-each-store test-observable-verdict-route-when-judgement-deleted
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
@@ -353,12 +347,10 @@
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (= {:type "verdict"
-                  :id (str "verdict-" (-> (:short-id judgement-2-id) (subs 10)))
                   :disposition 1
                   :disposition_name "Clean"
                   :judgement_id (:id judgement-2)
                   :observable {:value "10.0.0.1", :type "ip"}
                   :valid_time {:start_time #inst "2016-02-12T00:00:00.000-00:00"
-                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                  :schema_version csc/ctim-schema-version}
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                  verdict)))))))

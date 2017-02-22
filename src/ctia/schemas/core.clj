@@ -16,6 +16,7 @@
              [verdict :as vs]
              [vocabularies :as vocs]]
             [flanders
+             [core :as f]
              [schema :as f-schema]
              [spec :as f-spec]
              [utils :as fu]]
@@ -130,7 +131,13 @@
 ;; verdict
 
 (defschema NewVerdict
-  vs/NewVerdict
+  (f/map-of
+   {:description "An unrealized verdict"}
+   (:entries vs/Verdict)
+   (f/optional-entries
+    (f/entry :id cos/ID)
+    (f/entry :created cos/Time)
+    (f/entry :schema_version f/any-str)))
   "new-verdict")
 
 (defschema Verdict

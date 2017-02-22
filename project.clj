@@ -42,7 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.4"]
+                 [threatgrid/ctim "0.4.5"]
 
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api

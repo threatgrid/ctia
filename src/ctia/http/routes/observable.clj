@@ -65,13 +65,14 @@
                                        calculate-verdict
                                        {:type observable_type
                                         :value observable_value})
-                           (entities/realize-verdict login)
+                           entities/realize-verdict
                            (#(write-store :verdict create-verdicts [%])))
                        verdict)]
          (if verdict
            (-> verdict
                verdict/with-long-id
                entities/un-store
+               (dissoc :id :schema_version) ;; remove some store fields
                ok)
            (not-found))))
 
