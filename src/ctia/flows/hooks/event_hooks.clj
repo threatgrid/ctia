@@ -88,13 +88,12 @@
    to build the verdict ID"
   [verdict :- NewVerdict
    {j-lng-id :id :as judgement} :- StoredJudgement
-   owner :- s/Str
    verdict-id :- s/Str]
   (let [j-id-obj (id/long-id->id j-lng-id)
         j-shrt-id (:short-id j-id-obj)]
     (if (str/starts-with? j-shrt-id judgement-prefix)
-      (entities/realize-verdict verdict verdict-id owner)
-      (entities/realize-verdict verdict owner))))
+      (entities/realize-verdict verdict verdict-id)
+      (entities/realize-verdict verdict))))
 
 (defrecord VerdictGenerator []
   Hook
@@ -105,7 +104,7 @@
   (handle [_ event _]
     (log/info "VERDICT HANDLER FIRED")
     (when (judgement? event)
-      (let [{{:keys [id observable] :as judgement} :entity owner :owner} event
+      (let [{{:keys [id observable] :as judgement} :entity} event
             judgement-id (id/str->short-id id)
             verdict-id (str "verdict-" (subs judgement-id (count judgement-prefix)))]
         (cond
@@ -115,7 +114,7 @@
                       (store/read-store :judgement
                                         store/calculate-verdict
                                         observable)
-                      (realize-verdict-wrapper judgement owner verdict-id))]
+                      (realize-verdict-wrapper judgement verdict-id))]
             (log/info "Generated New Verdict:" (pr-str new-verdict))
             (store/write-store :verdict store/create-verdicts [new-verdict]))
 
