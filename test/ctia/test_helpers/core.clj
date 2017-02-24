@@ -115,6 +115,13 @@
     (f)
     (reset! auth/auth-service orig-auth-srvc)))
 
+(defn fixture-properties:static-auth [name secret]
+  (fn [f]
+    (with-properties ["ctia.auth.type" "static"
+                      "ctia.auth.static.secret" secret
+                      "ctia.auth.static.name" name]
+      (f))))
+
 (defn set-capabilities! [login role caps]
   (store/write-store :identity store/create-identity {:login login
                                                       :role role
