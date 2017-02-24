@@ -35,6 +35,34 @@
           (some-> judgement :id id/long-id->id)]
       (is (= 201 status))
 
+      (testing "fails without the correct key"
+        (let [{status :status}
+              (post "ctia/judgement"
+                    :body {:observable {:value "1.2.3.4"
+                                        :type "ip"}
+                           :disposition 2
+                           :source "test"
+                           :priority 100
+                           :severity "High"
+                           :confidence "Low"
+                           :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
+                                        :end_time "2016-03-11T00:00:00.000-00:00"}})]
+          (is (= 401 status)))
+
+        (let [{status :status}
+              (post "ctia/judgement"
+                    :body {:observable {:value "1.2.3.4"
+                                        :type "ip"}
+                           :disposition 2
+                           :source "test"
+                           :priority 100
+                           :severity "High"
+                           :confidence "Low"
+                           :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
+                                        :end_time "2016-03-11T00:00:00.000-00:00"}}
+                    :headers {"api_key" "bloodbending"})]
+          (is (= 401 status))))
+
       (testing "GET /ctia/judgement"
         (let [{status :status
                get-judgement :parsed-body}
@@ -58,12 +86,12 @@
                              :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
                get-judgement)))
 
-        (testing "fails without the correct key"
+        (testing "succeeds with any key"
           (let [{status :status}
                 (get (str "ctia/judgement/" (:short-id judgement-id))
                      :headers {"api_key" "bloodbending"})]
-            (is (= 403 status)))
+            (is (= 200 status)))
 
           (let [{status :status}
                 (get (str "ctia/judgement/" (:short-id judgement-id)))]
-            (is (= 403 status))))))))
+            (is (= 200 status))))))))
