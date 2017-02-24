@@ -15,6 +15,7 @@
              [store :as store]]
             [ctia.auth
              [allow-all :as allow-all]
+             [static :as static-auth]
              [threatgrid :as threatgrid]]
             [ctia.version :as version]
             [ctia.flows.hooks :as h]
@@ -23,10 +24,11 @@
             [ctia.stores.es.store :as es-store]))
 
 (defn init-auth-service! []
-  (let [auth-service-type (get-in @p/properties [:ctia :auth :type])]
+  (let [{auth-service-type :type :as auth} (get-in @p/properties [:ctia :auth])]
     (case auth-service-type
       :allow-all (reset! auth/auth-service (allow-all/->AuthService))
       :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service))
+      :static (reset! auth/auth-service (static-auth/->AuthService auth))
       (throw (ex-info "Auth service not configured"
                       {:message "Unknown service"
                        :requested-service auth-service-type})))))
