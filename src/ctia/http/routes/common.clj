@@ -30,15 +30,15 @@
   (apply s/enum (concat default-entity-sort-fields
                         describable-entity-sort-fields
                         sourcable-entity-sort-fields
-                        [:valid_time.start
-                         :valid_time.end])))
+                        [:valid_time.start_time
+                         :valid_time.end_time])))
 
 (def incident-sort-fields
   (apply s/enum (concat default-entity-sort-fields
                         describable-entity-sort-fields
                         sourcable-entity-sort-fields
-                        [:valid_time.start
-                         :valid_time.end
+                        [:valid_time.start_time
+                         :valid_time.end_time
                          :confidence
                          :status
                          :incident_time
@@ -72,30 +72,30 @@
                          :priority
                          :confidence
                          :severity
-                         :valid_time.start
-                         :valid_time.end
+                         :valid_time.start_time
+                         :valid_time.end_time
                          :reason
                          :observable.type
                          :observable.value])))
 
 (def sighting-sort-fields
   (apply s/enum (concat default-entity-sort-fields
-                        [:observed_time.start
-                         :observed_time.end
+                        [:observed_time.start_time
+                         :observed_time.end_time
                          :confidence
                          :count
                          :sensor])))
 
 (def ttp-sort-fields
   (apply s/enum (concat default-entity-sort-fields
-                        [:valid_time.start
-                         :valid_time.end
+                        [:valid_time.start_time
+                         :valid_time.end_time
                          :ttp_type])))
 
 (def actor-sort-fields
   (apply s/enum (concat default-entity-sort-fields
-                        [:valid_time.start
-                         :valid_time.end
+                        [:valid_time.start_time
+                         :valid_time.end_time
                          :actor_type
                          :motivation
                          :sophistication
@@ -103,8 +103,8 @@
 
 (def campaign-sort-fields
   (apply s/enum (concat default-entity-sort-fields
-                        [:valid_time.start
-                         :valid_time.end
+                        [:valid_time.start_time
+                         :valid_time.end_time
                          :campaign_type
                          :status
                          :activity
@@ -112,8 +112,8 @@
 
 (def coa-sort-fields
   (apply s/enum (concat default-entity-sort-fields
-                        [:valid_time.start
-                         :valid_time.end
+                        [:valid_time.start_time
+                         :valid_time.end_time
                          :stage
                          :coa_type
                          :impact

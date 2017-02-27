@@ -30,7 +30,8 @@
                                :disposition
                                :priority
                                :severity
-                               :confidence)}))
+                               :confidence
+                               :valid_time.start_time)}))
 
 (s/defschema RefsByObservableQueryParams
   (st/dissoc PagingParams :sort_by :sort_order))
@@ -38,7 +39,11 @@
 (s/defschema SightingsByObservableQueryParams
   (st/merge
    PagingParams
-   {(s/optional-key :sort_by) (s/enum :id :timestamp :confidence)}))
+   {(s/optional-key :sort_by) (s/enum
+                               :id
+                               :timestamp
+                               :confidence
+                               :observed_time.start_time)}))
 
 (defroutes observable-routes
   (GET "/:observable_type/:observable_value/verdict" []
