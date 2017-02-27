@@ -72,7 +72,10 @@
     (testing "sightings by observable"
       (pagination-test (str route-pref "/sightings")
                        {"api_key" "45c1f5e3f05d0"}
-                       [:id :timestamp :confidence]))
+                       [:id
+                        :timestamp
+                        :confidence
+                        :observed_time.start_time]))
 
     (testing "sightings/indicators by observable"
       (pagination-test-no-sort (str route-pref "/sightings/indicators")
@@ -82,7 +85,12 @@
     (testing "judgements by observable"
       (pagination-test (str route-pref "/judgements")
                        {"api_key" "45c1f5e3f05d0"}
-                       [:id :disposition :priority :severity :confidence]))
+                       [:id
+                        :disposition
+                        :priority
+                        :severity
+                        :confidence
+                        :valid_time.start_time]))
 
     (testing "judgements/indicators by observable"
       (pagination-test-no-sort (str route-pref "/judgements/indicators")
