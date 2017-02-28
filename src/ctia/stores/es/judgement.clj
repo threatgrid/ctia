@@ -67,7 +67,7 @@
           {:order "asc"
            :mode "min"
            :nested_filter
-           {"range" {"valid_time.start_time" {"lte" (str now-str "||/d")}}}}}}]
+           {"range" {"valid_time.start_time" {"lte" now-str}}}}}}]
 
     (some->> (search-docs (:conn state)
                           (:index state)

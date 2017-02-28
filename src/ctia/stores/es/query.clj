@@ -8,9 +8,9 @@
   valid time range is not expired"
   [time-str]
   [{:range
-    {"valid_time.start_time" {"lte" (str time-str "||/d")}}}
+    {"valid_time.start_time" {"lte" time-str}}}
    {:range
-    {"valid_time.end_time" {"gt" (str time-str "||/d")}}}])
+    {"valid_time.end_time" {"gt" time-str}}}])
 
 (defn active-judgements-by-observable-query
   "a filtered query to get judgements for the specified
