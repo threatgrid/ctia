@@ -354,3 +354,43 @@
                   :valid_time {:start_time #inst "2016-02-12T00:00:00.000-00:00"
                                :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                  verdict)))))))
+
+(deftest-for-each-store test-observable-verdict-with-future-expiration
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+
+  (testing "a regression where :start_date of 'today' fails in the ES query"
+    (let [sha (str "39091a6e0d00472273c3d644a47611b"
+                   "ac95554d8d48899ec74d1b3127542f89b")
+
+          {status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:valid_time {:start_time (-> (time/now)
+                                                    time/format-date-time)
+                                    :end_time (-> (time/plus-n :weeks (time/now) 2)
+                                                  time/format-date-time)}
+                       :observable {:value sha,
+                                    :type "sha256"}
+                       :reason_uri "https://example.com/",
+                       :source "Example",
+                       :external_ids ["judgement-1"],
+                       :disposition 2,
+                       :disposition_name "Malicious"
+                       :reason "Example judgement",
+                       :source_uri "https://example.com/",
+                       :priority 0,
+                       :severity "None",
+                       :tlp "green",
+                       :confidence "None"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get (str "ctia/sha256/" sha "/verdict")
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+          (is (= (:id judgement)
+                 (:judgement_id verdict))))))))
