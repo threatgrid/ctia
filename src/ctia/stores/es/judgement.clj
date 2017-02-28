@@ -1,6 +1,7 @@
 (ns ctia.stores.es.judgement
   (:import java.util.UUID)
   (:require
+   [clj-momo.lib.time :as time]
    [schema.core :as s]
    [schema.coerce :as c]
 
@@ -52,7 +53,9 @@
 
 (defn list-active-by-observable
   [state observable]
-  (let [params
+  (let [now-str (-> (time/now) time/format-date-time)
+
+        params
         {:sort
          {:priority
           "desc"
@@ -64,12 +67,13 @@
           {:order "asc"
            :mode "min"
            :nested_filter
-           {"range" {"valid_time.start_time" {"lt" "now/d"}}}}}}]
+           {"range" {"valid_time.start_time" {"lte" now-str}}}}}}]
 
     (some->> (search-docs (:conn state)
                           (:index state)
                           judgement-mapping
-                          (active-judgements-by-observable-query observable)
+                          (active-judgements-by-observable-query observable
+                                                                 now-str)
                           nil
                           params)
              :data

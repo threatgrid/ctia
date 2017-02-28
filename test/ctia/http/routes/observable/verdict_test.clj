@@ -1,6 +1,9 @@
 (ns ctia.http.routes.observable.verdict-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.lib.time :as time]
+  (:require [clj-time
+             [core :as clj-time]
+             [format :as format]]
+            [clj-momo.lib.time :as time]
             [clj-momo.test-helpers.core :as mht]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
@@ -354,3 +357,161 @@
                   :valid_time {:start_time #inst "2016-02-12T00:00:00.000-00:00"
                                :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                  verdict)))))))
+
+(deftest-for-each-store test-observable-verdict-with-different-valid-times
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+
+  (testing ":start_time is now and :end_time is in 2 weeks"
+
+    (let [{:keys [type value]
+           :as observable}
+          {:type "sha256"
+           :value (str "39091a6e0d00472273c3d644a47611b"
+                       "ac95554d8d48899ec74d1b3127542f89b")}
+
+          {status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:valid_time {:start_time (-> (time/now)
+                                                    time/format-date-time)
+                                    :end_time (-> (time/plus-n :weeks (time/now) 2)
+                                                  time/format-date-time)}
+                       :observable observable
+                       :reason_uri "https://example.com/",
+                       :source "Example",
+                       :external_ids ["judgement-1"],
+                       :disposition 2,
+                       :disposition_name "Malicious"
+                       :reason "Example judgement",
+                       :source_uri "https://example.com/",
+                       :priority 0,
+                       :severity "None",
+                       :tlp "green",
+                       :confidence "None"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get (str "ctia/" type "/" value "/verdict")
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+          (is (= (:id judgement)
+                 (:judgement_id verdict)))))))
+
+  (testing ":start_time and :end_time are the same (now)"
+    (let [{status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:valid_time {:start_time (-> (time/now)
+                                                    time/format-date-time)
+                                    :end_time (-> (time/now)
+                                                  time/format-date-time)}
+                       :observable {:value "10.0.0.1"
+                                    :type "ip"}
+                       :reason_uri "https://example.com/",
+                       :source "Example",
+                       :external_ids ["judgement-2"],
+                       :disposition 2,
+                       :disposition_name "Malicious"
+                       :reason "Example judgement",
+                       :source_uri "https://example.com/",
+                       :priority 0,
+                       :severity "None",
+                       :tlp "green",
+                       :confidence "None"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get "ctia/ip/10.0.0.1/verdict"
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 404 status))))))
+
+  (testing ":end_time is today, but in the future"
+    (let [format (partial format/unparse (format/formatters :date-time))
+
+          {:keys [type value]
+           :as observable}
+          {:type "ip"
+           :value "10.0.0.2"}
+
+          {status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:valid_time {:start_time (-> (clj-time/now)
+                                                    (clj-time/minus
+                                                     (clj-time/minutes 10))
+                                                    format)
+                                    :end_time (-> (clj-time/now)
+                                                  (clj-time/plus
+                                                   (clj-time/seconds 10))
+                                                  format)}
+                       :observable observable
+                       :reason_uri "https://example.com/",
+                       :source "Example",
+                       :external_ids ["judgement-3"],
+                       :disposition 2,
+                       :disposition_name "Malicious"
+                       :reason "Example judgement",
+                       :source_uri "https://example.com/",
+                       :priority 0,
+                       :severity "None",
+                       :tlp "green",
+                       :confidence "None"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get (str "ctia/" type "/" value "/verdict")
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+          (is (= (:id judgement)
+                 (:judgement_id verdict)))))))
+
+  (testing ":start_time and :end_time are both in the future"
+    (let [format (partial format/unparse (format/formatters :date-time))
+
+          {:keys [type value]
+           :as observable}
+          {:type "ip"
+           :value "10.0.0.3"}
+
+          {status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:valid_time {:start_time (-> (clj-time/now)
+                                                    (clj-time/plus
+                                                     (clj-time/minutes 1))
+                                                    format)
+                                    :end_time (-> (clj-time/now)
+                                                  (clj-time/plus
+                                                   (clj-time/minutes 2))
+                                                  format)}
+                       :observable observable
+                       :reason_uri "https://example.com/",
+                       :source "Example",
+                       :external_ids ["judgement-4"],
+                       :disposition 2,
+                       :disposition_name "Malicious"
+                       :reason "Example judgement",
+                       :source_uri "https://example.com/",
+                       :priority 0,
+                       :severity "None",
+                       :tlp "green",
+                       :confidence "None"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get (str "ctia/" type "/" value "/verdict")
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 404 status)))))))

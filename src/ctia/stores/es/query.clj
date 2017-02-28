@@ -3,22 +3,22 @@
    [clojure.string :as str]
    [ctia.lib.es.query :as q]))
 
-(def unexpired-time-range
+(defn- unexpired-time-range
   "ES filter that matches objects which
   valid time range is not expired"
-
+  [time-str]
   [{:range
-    {"valid_time.start_time" {"lt" "now/d"}}}
+    {"valid_time.start_time" {"lte" time-str}}}
    {:range
-    {"valid_time.end_time" {"gt" "now/d"}}}])
+    {"valid_time.end_time" {"gt" time-str}}}])
 
 (defn active-judgements-by-observable-query
   "a filtered query to get judgements for the specified
   observable, where valid time is in now range"
-  [{:keys [value type]}]
+  [{:keys [value type]} time-str]
 
   (concat
-   unexpired-time-range
+   (unexpired-time-range time-str)
    [{:term {"observable.type" type}}
     {:term {"observable.value" value}}]))
 
