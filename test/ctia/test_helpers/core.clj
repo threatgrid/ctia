@@ -44,7 +44,8 @@
   (mth/clear-properties PropertiesSchema)
   ;; Override any properties that are in the default properties file
   ;; yet are unsafe/undesirable for tests
-  (with-properties ["ctia.events.enabled"          true
+  (with-properties ["ctia.auth.type"               "allow-all"
+                    "ctia.events.enabled"          true
                     "ctia.events.log"              false
                     "ctia.http.dev-reload"         false
                     "ctia.http.min-threads"        9
