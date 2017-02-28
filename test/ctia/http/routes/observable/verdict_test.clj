@@ -362,10 +362,13 @@
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
 
-  (testing ":start_time is now and :end_date is in 2 weeks"
+  (testing ":start_time is now and :end_time is in 2 weeks"
 
-    (let [sha (str "39091a6e0d00472273c3d644a47611b"
-                   "ac95554d8d48899ec74d1b3127542f89b")
+    (let [{:keys [type value]
+           :as observable}
+          {:type "sha256"
+           :value (str "39091a6e0d00472273c3d644a47611b"
+                       "ac95554d8d48899ec74d1b3127542f89b")}
 
           {status :status
            judgement :parsed-body}
@@ -374,8 +377,7 @@
                                                     time/format-date-time)
                                     :end_time (-> (time/plus-n :weeks (time/now) 2)
                                                   time/format-date-time)}
-                       :observable {:value sha,
-                                    :type "sha256"}
+                       :observable observable
                        :reason_uri "https://example.com/",
                        :source "Example",
                        :external_ids ["judgement-1"],
@@ -393,7 +395,7 @@
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [{status :status
                verdict :parsed-body}
-              (get (str "ctia/sha256/" sha "/verdict")
+              (get (str "ctia/" type "/" value "/verdict")
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (= (:id judgement)
@@ -433,6 +435,11 @@
   (testing ":end_time is today, but in the future"
     (let [format (partial format/unparse (format/formatters :date-time))
 
+          {:keys [type value]
+           :as observable}
+          {:type "ip"
+           :value "10.0.0.2"}
+
           {status :status
            judgement :parsed-body}
           (post "ctia/judgement"
@@ -444,8 +451,7 @@
                                                   (clj-time/plus
                                                    (clj-time/seconds 10))
                                                   format)}
-                       :observable {:value "10.0.0.2"
-                                    :type "ip"}
+                       :observable observable
                        :reason_uri "https://example.com/",
                        :source "Example",
                        :external_ids ["judgement-3"],
@@ -463,8 +469,49 @@
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [{status :status
                verdict :parsed-body}
-              (get "ctia/ip/10.0.0.2/verdict"
+              (get (str "ctia/" type "/" value "/verdict")
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (= (:id judgement)
-                 (:judgement_id verdict))))))))
+                 (:judgement_id verdict)))))))
+
+  (testing ":start_time and :end_time are both in the future"
+    (let [format (partial format/unparse (format/formatters :date-time))
+
+          {:keys [type value]
+           :as observable}
+          {:type "ip"
+           :value "10.0.0.3"}
+
+          {status :status
+           judgement :parsed-body}
+          (post "ctia/judgement"
+                :body {:valid_time {:start_time (-> (clj-time/now)
+                                                    (clj-time/plus
+                                                     (clj-time/minutes 1))
+                                                    format)
+                                    :end_time (-> (clj-time/now)
+                                                  (clj-time/plus
+                                                   (clj-time/minutes 2))
+                                                  format)}
+                       :observable observable
+                       :reason_uri "https://example.com/",
+                       :source "Example",
+                       :external_ids ["judgement-4"],
+                       :disposition 2,
+                       :disposition_name "Malicious"
+                       :reason "Example judgement",
+                       :source_uri "https://example.com/",
+                       :priority 0,
+                       :severity "None",
+                       :tlp "green",
+                       :confidence "None"}
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))
+
+      (testing "GET /ctia/:observable_type/:observable_value/verdict"
+        (let [{status :status
+               verdict :parsed-body}
+              (get (str "ctia/" type "/" value "/verdict")
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= 404 status)))))))
