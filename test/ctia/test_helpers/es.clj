@@ -1,6 +1,9 @@
 (ns ctia.test-helpers.es
   "ES test helpers"
-  (:require [ctia.lib.es.index :as es-index]
+  (:require [cheshire.core :as json]
+            [clj-http.client :as http]
+            [clojure.pprint :refer [pprint]]
+            [ctia.lib.es.index :as es-index]
             [ctia.properties :refer [properties]]
             [ctia.store :as store]
             [ctia.stores.es.store :as es-store]
@@ -67,3 +70,32 @@
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
     (test)))
+
+(defn- url-for-type [type]
+  (assert (keyword? type) "Type must be a keyword")
+  (let [{:keys [indexname host port]}
+        (-> @ctia.store/stores
+            type
+            first
+            :state
+            :props)]
+    (assert (seq host) "Missing host")
+    (assert (integer? port) "Missing port")
+    (assert (seq indexname) "Missing index-name")
+    (str "http://" host ":" port "/" indexname "/" (name type) "/?refresh=true")))
+
+(defn post-to-es [obj]
+  (let [{:keys [status] :as response}
+        (http/post
+         (url-for-type (-> obj :type keyword))
+         {:as :json
+          :content-type :json
+          :throw-exceptions false
+          :body (json/generate-string obj)})]
+    (when (not= 201 status)
+      (println "Post to ES failed.\nWrong HTTP status code: " status)
+      (pprint response)
+      (throw (AssertionError. "POST to ES failed")))))
+
+(defn post-all-to-es [objects]
+  (run! post-to-es objects))
