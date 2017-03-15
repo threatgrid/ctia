@@ -12,7 +12,7 @@
                            GraphQLTypeReference
                            DataFetcher
                            TypeResolver
-                           
+
                            GraphQLNonNull))
   (:import (graphql.Scalars))
   (:require [clj-time.coerce :as time-coerce])
@@ -21,6 +21,7 @@
             [schema.core :as s]
             ;;[clj-momo.lib.time :refer [date->iso8601]]
             [ctia.properties :refer [get-http-show]]
+            [ctia.domain.entities.judgement :as j-ent]
             [ctim.domain.id :refer [factory:short-id->long-id]]))
 
 
@@ -55,11 +56,11 @@
   "A function for creating GraphQLFieldDefinitions builders, it
   required the values that define a minimally functional field
   definition. It takes the following arguments in order:
-  
+
   * fname - the field name, as a string
   * type - A GraphQLType, or a  GraphQLTypeReference
   * description - A string description of the field, will be used in the schema documentation
-  * fetcher - an object implmenting the DataFetcher interface" 
+  * fetcher - an object implmenting the DataFetcher interface"
   [fname ftype description fetcher]
   (.. (GraphQLFieldDefinition/newFieldDefinition)
       (name fname)
@@ -102,10 +103,10 @@
                 (assoc m (keyword k) (->clj v)))
               {}
               entries)))
-  
+
   java.util.List
   (->clj [o] (vec (map ->clj o)))
-  
+
   java.lang.Object
   (->clj [o] o)
 
@@ -271,8 +272,8 @@ using get, and applies a transform if supplied."
                          (map-fetcher :source_uri)))))
 
 (defn- remove-nil-values [record]
-  (apply dissoc                                                                                            
-         record                                                                                                  
+  (apply dissoc
+         record
          (for [[k v] record :when (nil? v)] k)))
 
 
@@ -313,7 +314,7 @@ using get, and applies a transform if supplied."
       (.field (gql-field "id"
                          graphql.Scalars/GraphQLID
                          "ID of the object"
-                         (map-fetcher :id)))      
+                         (map-fetcher :id)))
       (.build)))
 
 (def BaseEntityInterface
@@ -384,16 +385,16 @@ using get, and applies a transform if supplied."
                          non-null-string
                          "The type of the relationship, see /ctia/doc/defined_relationships.md"
                          (map-fetcher :relationship_type)))
-      
+
       ;; GET TARGET WORKING
       (.field (gql-field "target"
                          NodeInterface
                          "The target object of this relationship"
                          (entity-by-key-fetcher :target_ref)))
-      
+
       ;; GET SOURCE WORKING
-      
-      
+
+
       (.build)))
 
 (def RelationshipEdgeType
@@ -466,7 +467,7 @@ using get, and applies a transform if supplied."
                     (fn [i n]
                       {:node n
                        :cursor (+ i offset)})
-                    (with-long-ids 
+                    (with-long-ids
                       :entity (:data results)))}))))))
 
 (defn add-relatable-entity-fields
@@ -588,23 +589,23 @@ using get, and applies a transform if supplied."
                          graphql.Scalars/GraphQLBoolean
                          "when true, the absence of this pattern is the indicator"
                          (map-fetcher :negate)))
-      
+
       (.field (gql-field "indicator_type"
-                         graphql.Scalars/GraphQLString                         
+                         graphql.Scalars/GraphQLString
                          "The time range for which this Judgement is considered valid."
                          (map-fetcher :indicator_type)))
 
       (.field (gql-field "tags"
-                         (list-type graphql.Scalars/GraphQLString)                         
+                         (list-type graphql.Scalars/GraphQLString)
                          "tags associated with this indicator."
                          (map-fetcher :tags)))
-      
+
       (.build)))
 
 
 (comment
         (f/optional-entries
-         
+
          (f/entry :composite_indicator_expression CompositeIndicatorExpression)
          (f/entry :likely_impact f/any-str
                   :description (str "likely potential impact within the relevant "
@@ -643,24 +644,12 @@ using get, and applies a transform if supplied."
       (.build)))
 
 
-;; ID needs to be base64 encoded here, since it's opaque, verdicts only have an ID
-;; for the purposes of our storage subsystem and our quick verdict lookup support
 (def VerdictType
   (-> (GraphQLObjectType/newObject)
       (.name "Verdict")
-      ;; should implement NodeInterface
-      ;; do they even have an id????
-      (.field (gql-field "id"
-                         graphql.Scalars/GraphQLID
-                         "An opaque ID for the verdict node, this is NOT an entity identifier."
-                         (map-fetcher :id)))
       (.field (gql-field "type"
                          non-null-string
                          "type of the object"
-                         (map-fetcher :type)))
-      (.field (gql-field "schema_version"
-                         non-null-string
-                         "schema_version of the object"
                          (map-fetcher :type)))
       (.field (gql-field "disposition_name"
                          graphql.Scalars/GraphQLString
@@ -722,7 +711,6 @@ using get, and applies a transform if supplied."
                          non-null-string
                          "The value of the observable, a string representation."
                          (map-fetcher :value)))
-
       (.field (-> (GraphQLFieldDefinition/newFieldDefinition)
                   (.name "verdict")
                   (.type VerdictType)
@@ -731,16 +719,13 @@ using get, and applies a transform if supplied."
                                   (get [_ env]
                                     (let [obs (.getSource env)]
                                       (log/debug "Fetching verdict for: " (pr-str obs))
-                                      (let [result (read-store
-                                                    :verdict list-verdicts
-                                                    {[:observable :type] (:type obs)
-                                                     [:observable :value] (:value obs)}
-                                                    {:sort_by :created
-                                                     :sort_order :desc
-                                                     :limit 1})]
+                                      (let [result (some-> (read-store :judgement
+                                                                       calculate-verdict
+                                                                       obs)
+                                                           (update :judgement_id j-ent/short-id->long-id))]
                                         (log/debug "Verdict result: " (pr-str result))
-                                        (first (:data result )))))))))
-      
+                                        result)))))))
+
       ;; Lookup Judgements by Observables
       (.field (-> (GraphQLFieldDefinition/newFieldDefinition)
                   (.name "judgements")
@@ -777,7 +762,7 @@ using get, and applies a transform if supplied."
                                     (fn [i n]
                                       {:cursor (+ i offset)
                                        :node n})
-                                    (with-long-ids 
+                                    (with-long-ids
                                       :judgement (:data results)))})))))))
       (.build)))
 
@@ -811,7 +796,7 @@ using get, and applies a transform if supplied."
                  (.dataFetcher (reify DataFetcher
                                 (get [_ env]
                                   (->clj (.getArguments env)))))))
-      
+
       (field (-> (GraphQLFieldDefinition/newFieldDefinition)
                  (.name "judgement")
                  (.type JudgementType)
@@ -830,7 +815,7 @@ using get, and applies a transform if supplied."
                                 (type graphql.Scalars/GraphQLString)
                                 (description "a Lucene query string, will only return Judgements matching it.")))
                  (.dataFetcher (entity-search-fetcher :judgement))))
-      
+
       (field (-> (GraphQLFieldDefinition/newFieldDefinition)
                  (.name "indicator")
                  (.type IndicatorType)
@@ -905,10 +890,10 @@ using get, and applies a transform if supplied."
 (comment
 
   (new GraphQL schema)
-  
-  
+
+
   (doquery "query TestQuery { observable(type: \"ip\" value: $foo) { value }}" {"foo" 1})
-  
+
   (doquery "query TestQuery {
             judgement(id: \"judgement-4c9e48bf-14a3-459c-a287-0939c394a3ac\") {
               id

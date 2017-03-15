@@ -1,17 +1,10 @@
 (ns ctia.flows.hooks.event-hooks
   (:require [clojure.tools.logging :as log])
   (:require
-    [clojure.string :as str]
-    [ctia.domain.entities :as entities]
     [ctia.events :as events]
     [ctia.flows.hook-protocol :refer [Hook]]
     [ctia.lib.redis :as lr]
     [ctia.properties :refer [properties]]
-    [ctia.schemas.core :refer [NewVerdict
-                               StoredVerdict
-                               StoredJudgement]]
-    [ctia.store :as store]
-    [ctim.domain.id :as id]
     [ctim.events.schemas :refer [CreateEventType
                                  DeleteEventType]]
     [redismq.core :as rmq]
@@ -81,57 +74,11 @@
   [{type :type :as _event_}]
   (= type DeleteEventType))
 
-(def judgement-prefix "judgement-")
-
-(s/defn realize-verdict-wrapper :- StoredVerdict
-  "Realizes a verdict, using the associated judgement ID, if available,
-   to build the verdict ID"
-  [verdict :- NewVerdict
-   {j-lng-id :id :as judgement} :- StoredJudgement
-   verdict-id :- s/Str]
-  (let [j-id-obj (id/long-id->id j-lng-id)
-        j-shrt-id (:short-id j-id-obj)]
-    (if (str/starts-with? j-shrt-id judgement-prefix)
-      (entities/realize-verdict verdict verdict-id)
-      (entities/realize-verdict verdict))))
-
-(defrecord VerdictGenerator []
-  Hook
-  (init [_]
-    :nothing)
-  (destroy [_]
-    :nothing)
-  (handle [_ event _]
-    (log/info "VERDICT HANDLER FIRED")
-    (when (judgement? event)
-      (let [{{:keys [id observable] :as judgement} :entity} event
-            judgement-id (id/str->short-id id)
-            verdict-id (str "verdict-" (subs judgement-id (count judgement-prefix)))]
-        (cond
-          (create-event? event)
-          (when-let [new-verdict
-                     (some->
-                      (store/read-store :judgement
-                                        store/calculate-verdict
-                                        observable)
-                      (realize-verdict-wrapper judgement verdict-id))]
-            (log/info "Generated New Verdict:" (pr-str new-verdict))
-            (store/write-store :verdict store/create-verdicts [new-verdict]))
-
-          (delete-event? event)
-          (do (store/write-store :verdict
-                                 store/delete-verdict
-                                 verdict-id)
-              (log/info "Deleted Verdict:" verdict-id)))))
-    event))
-
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq}
         (get-in @properties [:ctia :hook])]
     (cond-> hooks-m
-      ;;true (update :event #(conj % (->ChannelEventPublisher)))
-      true (update :event #(conj % (->VerdictGenerator)))
       redis?   (update :event #(conj % (redis-event-publisher)))
       redismq? (update :event #(conj % (redismq-publisher))))))
