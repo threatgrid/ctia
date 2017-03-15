@@ -29,7 +29,7 @@
     (post-all-to-es
      [{:valid_time
        {:start_time (two-months-ago)
-        :end_time (after-were-all-dead)},
+        :end_time (in-the-year-2525)},
        :schema_version "0.4.3",
        :observable {:value "biz.baz.net", :type "domain"},
        :reason_uri "https://feed.example.com/12345",
@@ -49,7 +49,7 @@
        :owner "Unknown"}
       {:valid_time
        {:start_time (two-months-ago)
-        :end_time (after-were-all-dead)},
+        :end_time (in-the-year-2525)},
        :schema_version "0.4.3",
        :observable {:value "biz.baz.net", :type "domain"},
        :type "verdict",
@@ -60,7 +60,7 @@
        :judgement_id "judgement-b64b635f-eda3-4c9c-bb46-e11dc361066f"}
       {:valid_time
        {:start_time (one-week-ago)
-        :end_time (after-were-all-dead)},
+        :end_time (in-the-year-2525)},
        :schema_version "0.4.3",
        :observable {:value "biz.baz.net", :type "domain"},
        :reason_uri "https://feed.example.com/12345",
@@ -87,7 +87,7 @@
               {:start_time (time/timestamp
                             (two-months-ago))
                :end_time (time/timestamp
-                          (after-were-all-dead))},
+                          (in-the-year-2525))},
               :observable {:value "biz.baz.net",
                            :type "domain"},
               :type "verdict",
@@ -125,7 +125,7 @@
        :owner "Unknown"}
       {:valid_time
        {:start_time (one-week-ago)
-        :end_time (after-were-all-dead)},
+        :end_time (in-the-year-2525)},
        :schema_version "0.4.3",
        :observable {:value "foo.bar.net", :type "domain"},
        :reason_uri "https://feed.example.com/12345",
@@ -183,7 +183,7 @@
               {:start_time (time/timestamp
                             (one-week-ago))
                :end_time (time/timestamp
-                          (after-were-all-dead))},
+                          (in-the-year-2525))},
               :observable {:value "foo.bar.net",
                            :type "domain"},
               :type "verdict",

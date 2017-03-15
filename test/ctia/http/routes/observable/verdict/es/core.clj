@@ -64,7 +64,7 @@
           (time/weeks 2))
          format-date-time))))
 
-(def after-were-all-dead
+(def in-the-year-2525
   (memoize
    (fn []
      (-> (time/date-time 2525 1 1)
