@@ -75,8 +75,12 @@
                                           entities/realize-verdict)]
                          (log/info "Generated New Verdict:"
                                    (pr-str realized-verdict))
-                         (write-store :verdict create-verdicts
-                                      [realized-verdict])
+                         (try
+                           (write-store :verdict create-verdicts
+                                        [realized-verdict])
+                           (catch Exception e
+                             (log/error e {:message "Failed writing verdict"
+                                           :new-verdict realized-verdict})))
                          realized-verdict)
                        verdict)]
          (if verdict
