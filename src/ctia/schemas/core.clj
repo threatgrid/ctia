@@ -130,23 +130,9 @@
 
 ;; verdict
 
-(defschema NewVerdict
-  (f/map-of
-   {:description "An unrealized verdict"}
-   (:entries vs/Verdict)
-   (f/optional-entries
-    (f/entry :id cos/ID)
-    (f/entry :created cos/Time)
-    (f/entry :schema_version f/any-str)))
-  "new-verdict")
-
 (defschema Verdict
   vs/Verdict
   "verdict")
-
-(defschema StoredVerdict
-  vs/StoredVerdict
-  "stored-verdict")
 
 ;; feedback
 
@@ -266,5 +252,4 @@
    :judgement StoredJudgement
    :relationship StoredRelationship
    :sighting StoredSighting
-   :ttp StoredTTP
-   :verdict StoredVerdict})
+   :ttp StoredTTP})

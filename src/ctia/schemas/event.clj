@@ -23,5 +23,4 @@
       CreateEventType (st/assoc CreateEvent :entity entity-schema)
       UpdateEventType (st/assoc UpdateEvent :entity entity-schema)
       DeleteEventType (st/assoc DeleteEvent :entity entity-schema)
-      VerdictChangeEventType (st/assoc VerdictChangeEvent :entity entity-schema)
       Event)))

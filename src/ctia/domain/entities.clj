@@ -34,9 +34,7 @@
             NewTTP
             StoredTTP
             NewRelationship
-            StoredRelationship
-            NewVerdict
-            StoredVerdict]])
+            StoredRelationship]])
   (:import [java.util UUID]))
 
 (def schema-version ctim-schema-version)
@@ -138,17 +136,6 @@
                                       time/default-expire-date)
                         :start_time (or (get-in new-judgement [:valid_time :start_time])
                                         now)})))
-
-(s/defn realize-verdict :- StoredVerdict
-  ([new-verdict :- NewVerdict]
-   (realize-verdict new-verdict (str "verdict-" (UUID/randomUUID))))
-  ([new-verdict :- NewVerdict
-    id :- s/Str]
-   (let [now (time/now)]
-     (assoc new-verdict
-            :id id
-            :schema_version schema-version
-            :created now))))
 
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting

@@ -10,10 +10,10 @@
    [ring.swagger.coerce :as sc]
    [ctim.schemas.common :refer [disposition-map]]
 
-   [ctia.schemas.core :refer [NewVerdict
-                              StoredJudgement
+   [ctia.schemas.core :refer [StoredJudgement
                               NewJudgement
-                              StoredJudgement]]
+                              StoredJudgement
+                              Verdict]]
    [ctia.stores.es.query :refer
     [active-judgements-by-observable-query]]
 
@@ -79,16 +79,16 @@
              :data
              coerce-stored-judgement-list)))
 
-(s/defn make-verdict :- NewVerdict
+(s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]
   {:type "verdict"
    :disposition (:disposition judgement)
+   :disposition_name (get disposition-map (:disposition judgement))
    :judgement_id (:id judgement)
    :observable (:observable judgement)
-   :disposition_name (get disposition-map (:disposition judgement))
    :valid_time (:valid_time judgement)})
 
-(s/defn handle-calculate-verdict :- (s/maybe NewVerdict)
+(s/defn handle-calculate-verdict :- (s/maybe Verdict)
   [state observable]
 
   (some-> (list-active-by-observable state observable)

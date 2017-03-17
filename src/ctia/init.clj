@@ -78,9 +78,6 @@
    :relationship
    {:es es-store/->RelationshipStore}
 
-   :verdict
-   {:es es-store/->VerdictStore}
-
    :sighting
    {:es es-store/->SightingStore}
 

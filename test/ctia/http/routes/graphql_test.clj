@@ -151,7 +151,7 @@
                       :body {:query "query TestQuery {
                                  observable(type: \"ip\" value: \"1.2.3.4\") {
                                    value
-                                   verdict { id type schema_version disposition_name disposition
+                                   verdict { type disposition_name disposition
                                              judgement { id type external_ids tlp disposition disposition_name priority confidence severity reason reason_uri valid_time { start_time end_time } observable { value type } source source_uri } }
                                    judgements(first: 1 after:\"0\") { pageInfo { totalHits hasNextPage } edges { node { reason type  source id } } }
                                  }
@@ -171,8 +171,6 @@
                     "has correct disposition_name")
                 (is (= (get verdict "type") "verdict")
                     "has correct type")
-                (is (not (empty? (get verdict "schema_version")))
-                    "has a schema_version")
                 (testing "the judgement"
                   (let [judgement (get verdict "judgement")]
                     (is (not (empty? judgement))

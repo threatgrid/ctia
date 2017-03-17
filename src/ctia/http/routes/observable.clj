@@ -4,8 +4,7 @@
    [ctia.domain.entities :as entities]
    [ctia.domain.entities
     [judgement :as judgement]
-    [sighting :as sighting]
-    [verdict :as verdict]]
+    [sighting :as sighting]]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
    [ctia.lib.pagination :as pag]
    [ctia.properties :refer [properties]]
@@ -57,39 +56,12 @@
        :header-params [api_key :- (s/maybe s/Str)]
        :capabilities :read-verdict
        :login login
-       (let [verdict (-> (read-store
-                          :verdict list-verdicts
-                          {[:observable :type] observable_type
-                           [:observable :value] observable_value}
-                          {:sort_by :created
-                           :sort_order :desc
-                           :limit 1})
-                         :data
-                         first)
-             verdict (if (some-> verdict verdict/expired?)
-                       (when-let [realized-verdict
-                                  (some-> (read-store :judgement
-                                                      calculate-verdict
-                                                      {:type observable_type
-                                                       :value observable_value})
-                                          entities/realize-verdict)]
-                         (log/info "Generated New Verdict:"
-                                   (pr-str realized-verdict))
-                         (try
-                           (write-store :verdict create-verdicts
-                                        [realized-verdict])
-                           (catch Exception e
-                             (log/error e {:message "Failed writing verdict"
-                                           :new-verdict realized-verdict})))
-                         realized-verdict)
-                       verdict)]
-         (if verdict
-           (-> verdict
-               verdict/with-long-id
-               entities/un-store
-               (dissoc :id :schema_version) ;; remove some store fields
-               ok)
-           (not-found))))
+       (or (some-> (read-store :judgement
+                               calculate-verdict
+                               {:type observable_type :value observable_value})
+                   (update :judgement_id judgement/short-id->long-id)
+                   ok)
+           (not-found)))
 
   (GET "/:observable_type/:observable_value/judgements" []
        :tags ["Judgement"]

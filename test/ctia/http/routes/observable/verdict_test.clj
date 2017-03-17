@@ -1,4 +1,4 @@
-(ns ctia.http.routes.observable.verdict.verdict-test
+(ns ctia.http.routes.observable.verdict-test
   (:refer-clojure :exclude [get])
   (:require [clj-time
              [core :as clj-time]

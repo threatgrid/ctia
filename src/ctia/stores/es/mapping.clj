@@ -350,22 +350,6 @@
       :reason all_text
       :reason_uri token})}})
 
-(def verdict-mapping
-  {"verdict"
-   {:dynamic "strict"
-    :include_in_all false
-    :properties
-    {:id all_token
-     :type token
-     :schema_version token
-     :judgement_id token
-     :observable observable
-     :disposition {:type "long"}
-     :disposition_name token
-     :valid_time valid-time
-     :owner token
-     :created ts}}})
-
 (def feedback-mapping
   {"feedback"
    {:dynamic "strict"
@@ -626,8 +610,7 @@
      :http-params {:type "object"}
      :type token
      :fields {:type "object"}
-     :judgement_id token
-     :verdict {:type "object"}}}})
+     :judgement_id token}}})
 
 (def store-settings
   {:number_of_replicas 1
@@ -660,7 +643,6 @@
 (def store-mappings
   {:judgement judgement-mapping
    :relationship relationship-mapping
-   :verdict verdict-mapping
    :indicator indicator-mapping
    :ttp ttp-mapping
    :feedback feedback-mapping

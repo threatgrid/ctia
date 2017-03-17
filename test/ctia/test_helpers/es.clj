@@ -50,7 +50,6 @@
                       "ctia.store.indicator" "es"
                       "ctia.store.judgement" "es"
                       "ctia.store.relationship" "es"
-                      "ctia.store.verdict" "es"
                       "ctia.store.sighting" "es"
                       "ctia.store.ttp" "es"]
     (test)))

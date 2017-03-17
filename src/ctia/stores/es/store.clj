@@ -19,8 +19,7 @@
               IQueryStringSearchableStore
               IRelationshipStore
               ISightingStore
-              ITTPStore
-              IVerdictStore]]
+              ITTPStore]]
             [ctia.stores.es
              [actor :as ac]
              [campaign :as ca]
@@ -36,8 +35,7 @@
              [mapping :refer [store-mappings store-settings]]
              [relationship :as rel]
              [sighting :as sig]
-             [ttp :as ttp]
-             [verdict :as ve]]
+             [ttp :as ttp]]
             [schema.core :as s]))
 
 (defn delete-state-indexes [{:keys [conn index config]}]
@@ -99,17 +97,6 @@
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap params]
     (rel/handle-query-string-search state query filtermap params)))
-
-(defrecord VerdictStore [state]
-  IVerdictStore
-  (create-verdicts [_ new-verdicts]
-    (ve/handle-create state new-verdicts))
-  (read-verdict [_ id]
-    (ve/handle-read state id))
-  (delete-verdict [_ id]
-    (ve/handle-delete state id))
-  (list-verdicts [_ filter-map params]
-    (ve/handle-list state filter-map params)))
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
