@@ -146,6 +146,21 @@
       safe-es-read
       :found))
 
+(defn sort-params
+  [sort_by sort_order]
+  (let [sort-field-str (if (keyword? sort_by)
+                         (name sort_by)
+                         sort_by)
+        sort-fields
+        (map (fn [field]
+               (let [sp (clojure.string/split field #":")]
+                 {(first sp)
+                  {:order (or (second sp)
+                              sort_order)}}))
+             (clojure.string/split sort-field-str #","))]
+
+    {:sort (apply merge {} sort-fields)}))
+
 (defn params->pagination
   [{:keys [sort_by sort_order offset limit]
     :or {sort_by :id
@@ -155,7 +170,7 @@
   (merge
    {}
    (when sort_by
-     {:sort {sort_by sort_order}})
+     (sort-params sort_by sort_order))
    (when limit
      {:size limit})
    (when offset

@@ -26,12 +26,13 @@
   (st/merge
    PagingParams
    {(s/optional-key :sort_by) (s/enum
-                               :id
-                               :disposition
-                               :priority
-                               :severity
-                               :confidence
-                               :valid_time.start_time)}))
+                               "id"
+                               "disposition"
+                               "priority"
+                               "severity"
+                               "confidence"
+                               "valid_time.start_time"
+                               "disposition:asc,valid_time.start_time:desc")}))
 
 (s/defschema RefsByObservableQueryParams
   (st/dissoc PagingParams :sort_by :sort_order))

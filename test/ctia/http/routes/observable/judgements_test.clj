@@ -29,7 +29,10 @@
                        :priority 99
                        :confidence "High"
                        :severity "Medium"
-                       :external_ids ["judgement-1"]}
+                       :external_ids ["judgement-1"]
+                       :disposition_name "Malicious"
+                       :disposition 2
+                       :valid_time {:start_time "2017-02-11T00:40:48.212-00:00"}}
                 :headers {"API_key" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
@@ -42,11 +45,28 @@
                        :priority 99
                        :confidence "High"
                        :severity "Medium"
-                       :external_ids ["judgement-2"]}
+                       :disposition 5
+                       :external_ids ["judgement-2"]
+                       :valid_time {:start_time "2017-02-11T00:40:48.212-00:00"}}
+                :headers {"API_key" "45c1f5e3f05d0"})]
+      (is (= 201 status))))
+
+  (testing "test setup: create a judgement (3)"
+    (let [{status :status}
+          (post "ctia/judgement"
+                :body {:observable {:type "ip",
+                                    :value "10.0.0.1"}
+                       :source "source"
+                       :priority 99
+                       :confidence "High"
+                       :severity "Medium"
+                       :disposition 5
+                       :external_ids ["judgement-3"]
+                       :valid_time {:start_time "2017-02-12T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
-  (testing "test setup: create a judgement (2)"
+  (testing "test setup: create a judgement (4)"
     (let [{status :status}
           (post "ctia/judgement"
                 :body {:observable {:type "ip",
@@ -55,7 +75,9 @@
                        :priority 99
                        :confidence "High"
                        :severity "Medium"
-                       :external_ids ["judgement-3"]}
+                       :disposition 5
+                       :external_ids ["judgement-4"]
+                       :valid_time {:start_time "2017-02-13T00:40:48.212-00:00"}}
                 :headers {"api_key" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
@@ -65,5 +87,14 @@
           (get "ctia/ip/10.0.0.1/judgements"
                :headers {"api_key" "45c1f5e3f05d0"})]
       (is (= 200 status))
-      (is (= #{"judgement-1" "judgement-2"}
-             (set (mapcat :external_ids judgements)))))))
+      (is (= #{"judgement-1" "judgement-2" "judgement-3"}
+             (set (mapcat :external_ids judgements))))))
+
+  (testing "GET /:observable_type/:observable_value/judgements?sort_by=disposition%3Aasc%2Cvalid_time.start_time%3Adesc"
+    (let [{status :status
+           judgements :parsed-body}
+          (get "ctia/ip/10.0.0.1/judgements?sort_by=disposition%3Aasc%2Cvalid_time.start_time%3Adesc"
+               :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 200 status))
+      (is (= ["judgement-1" "judgement-3" "judgement-2"]
+             (mapcat :external_ids judgements))))))
