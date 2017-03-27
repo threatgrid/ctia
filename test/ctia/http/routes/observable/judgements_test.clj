@@ -94,6 +94,7 @@
     (let [{status :status
            judgements :parsed-body}
           (get "ctia/ip/10.0.0.1/judgements?sort_by=disposition%3Aasc%2Cvalid_time.start_time%3Adesc"
+               :params {:sort_by "disposition:asc,valid_time.start_time:desc"}
                :headers {"api_key" "45c1f5e3f05d0"})]
       (is (= 200 status))
       (is (= ["judgement-1" "judgement-3" "judgement-2"]

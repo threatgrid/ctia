@@ -159,7 +159,7 @@
                               sort_order)}}))
              (clojure.string/split sort-field-str #","))]
 
-    {:sort (apply merge {} sort-fields)}))
+    {:sort (into {} sort-fields)}))
 
 (defn params->pagination
   [{:keys [sort_by sort_order offset limit]
