@@ -14,7 +14,6 @@
              [coa :refer [coa-routes]]
              [data-table :refer [data-table-routes]]
              [documentation :refer [documentation-routes]]
-             [event :refer [event-routes]]
              [exploit-target :refer [exploit-target-routes]]
              [feedback :refer [feedback-routes]]
              [incident :refer [incident-routes]]
@@ -113,7 +112,6 @@
                        campaign-routes
                        coa-routes
                        data-table-routes
-                       event-routes
                        exploit-target-routes
                        feedback-routes
                        incident-routes
