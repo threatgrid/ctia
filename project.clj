@@ -89,11 +89,7 @@
                  [redismq "0.1.0-SNAPSHOT"]
 
                  ;; GraphQL
-                 [com.graphql-java/graphql-java "2.2.0"]
-
-                 ;; TO BE REMOVED
-                 [threatgrid/clj-momo "0.2.5-SNAPSHOT"]
-                 ]
+                 [com.graphql-java/graphql-java "2.2.0"]]
 
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
                com.andrewmcveigh/cljs-time]
@@ -149,7 +145,7 @@
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.7"]
                                    [prismatic/schema-generators "0.1.0"]]
-                    :pedantic? :warn
+                    :pedantic? :abort
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
                     :resource-paths ["test/resources"

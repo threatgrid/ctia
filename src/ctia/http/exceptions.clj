@@ -36,14 +36,20 @@
   "Handle ES query parsing error"
   [^Exception e data request]
   (logging/log! :warn e (ex-message e))
-  (let [es-message (-> e
-                       ex-data
-                       :es-http-res
-                       :body
-                       (json/read-str :key-fn keyword))]
-    (bad-request {:type "ES query parsing error"
-                  :data (-> es-message :error :root_cause first :reason)
-                  :class (.getName (class e))})))
+  (let [es-message (some-> e
+                           ex-data
+                           :es-http-res
+                           :body
+                           (json/read-str :key-fn keyword))]
+
+    (bad-request
+     {:type "ES query parsing error"
+      :message (some-> es-message
+                       :error
+                       :root_cause
+                       first
+                       :reason)
+      :class (.getName (class e))})))
 
 (defn default-error-handler
   "Handle default error"

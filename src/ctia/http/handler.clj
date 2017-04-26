@@ -68,7 +68,7 @@
 (defapi api-handler
   {:exceptions
    {:handlers
-    {ex/request-parsing-handler :compojure.api.exception/request-parsing
+    {:compojure.api.exception/request-parsing ex/request-parsing-handler
      :compojure.api.exception/request-validation ex/request-validation-handler
      :compojure.api.exception/response-validation ex/response-validation-handler
      :clj-momo.lib.es.conn/es-query-parsing-error ex/es-query-parsing-error-handler
