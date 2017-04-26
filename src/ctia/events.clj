@@ -47,12 +47,6 @@
    (let [event (if timestamp event (assoc event :timestamp (time/now)))]
      (a/>!! ch event))))
 
-(s/defn recent-events :- [ModelEvent]
-  "Returns up to the requested number of the  most recent events.
-   Defaults to attempting to get *event-buffer-size* events."
-  ([] (recent-events la/*channel-buffer-size*))
-  ([n :- Long] (take n (la/drain (:recent @central-channel)))))
-
 (s/defn register-listener :- Channel
   "Convenience wrapper for registering a listener on the central event channel."
   ([listen-fn :- (=> s/Any es/Event)
