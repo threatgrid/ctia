@@ -1,11 +1,7 @@
 (ns ctia.stores.es.identity
-  (:import java.util.UUID)
-  (:require
-   [schema.core :as s]
-   [ctia.schemas.identity :refer [Identity]]
-   [ctia.lib.es.document :refer [create-doc
-                                 get-doc
-                                 delete-doc]]))
+  (:require [clj-momo.lib.es.document :refer [create-doc delete-doc get-doc]]
+            [ctia.schemas.identity :refer [Identity]]
+            [schema.core :as s]))
 
 (def ^{:private true} mapping "identity")
 

@@ -1,5 +1,5 @@
 (ns ctia.stores.es.event
-  (:require [ctia.lib.es
+  (:require [clj-momo.lib.es
              [document :as d]
              [schemas :refer [ESConnState SliceProperties]]
              [slice :refer [get-slice-props]]]

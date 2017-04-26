@@ -68,10 +68,12 @@
 (defapi api-handler
   {:exceptions
    {:handlers
-    {:compojure.api.exception/request-parsing ex/request-parsing-handler
+    {ex/request-parsing-handler :compojure.api.exception/request-parsing
      :compojure.api.exception/request-validation ex/request-validation-handler
      :compojure.api.exception/response-validation ex/response-validation-handler
+     :clj-momo.lib.es.conn/es-query-parsing-error ex/es-query-parsing-error-handler
      :compojure.api.exception/default ex/default-error-handler}}
+
    :swagger {:ui "/"
              :spec "/swagger.json"
              :data {:info {:title "CTIA"
