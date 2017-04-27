@@ -2,11 +2,11 @@
   "This ns declare all handler for server exceptions.
 
   See <https://github.com/metosin/compojure-api/wiki/Exception-handling>"
-  (:require
-   [compojure.api.impl.logging :as logging]
-   [compojure.api.exception :as ex]
-   [ring.util.http-response :refer [internal-server-error]])
-  (import clojure.lang.ExceptionInfo))
+  (import clojure.lang.ExceptionInfo)
+  (:require [compojure.api.exception :as ex]
+            [compojure.api.impl.logging :as logging]
+            [ring.util.http-response :refer [internal-server-error bad-request]]
+            [clojure.data.json :as json]))
 
 (defn ex-message [^Exception e]
   (str
@@ -31,6 +31,25 @@
   [^Exception e data request]
   (logging/log! :error e (ex-message e))
   (ex/response-validation-handler e data request))
+
+(defn es-query-parsing-error-handler
+  "Handle ES query parsing error"
+  [^Exception e data request]
+  (logging/log! :warn e (ex-message e))
+  (let [es-message (some-> e
+                           ex-data
+                           :es-http-res
+                           :body
+                           (json/read-str :key-fn keyword))]
+
+    (bad-request
+     {:type "ES query parsing error"
+      :message (some-> es-message
+                       :error
+                       :root_cause
+                       first
+                       :reason)
+      :class (.getName (class e))})))
 
 (defn default-error-handler
   "Handle default error"

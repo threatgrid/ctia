@@ -1,7 +1,6 @@
 (ns ctia.stores.es.query
-  (:require
-   [clojure.string :as str]
-   [ctia.lib.es.query :as q]))
+  (:require [clj-momo.lib.es.query :as q]
+            [clojure.string :as str]))
 
 (defn- unexpired-time-range
   "ES filter that matches objects which

@@ -1,25 +1,15 @@
 (ns ctia.stores.es.judgement
-  (:import java.util.UUID)
-  (:require
-   [clj-momo.lib.time :as time]
-   [schema.core :as s]
-   [schema.coerce :as c]
-
-   [ctia.stores.es.crud :as crud]
-
-   [ring.swagger.coerce :as sc]
-   [ctim.schemas.common :refer [disposition-map]]
-
-   [ctia.schemas.core :refer [StoredJudgement
-                              NewJudgement
-                              StoredJudgement
-                              Verdict]]
-   [ctia.stores.es.query :refer
-    [active-judgements-by-observable-query]]
-
-   [ctia.lib.es.document :refer [update-doc
-                                 delete-doc
-                                 search-docs]]))
+  (:require [clj-momo.lib.es.document :refer [search-docs update-doc]]
+            [clj-momo.lib.time :as time]
+            [ctia.schemas.core :refer [StoredJudgement Verdict]]
+            [ctia.stores.es
+             [crud :as crud]
+             [query :refer [active-judgements-by-observable-query]]]
+            [ctim.schemas.common :refer [disposition-map]]
+            [ring.swagger.coerce :as sc]
+            [schema
+             [coerce :as c]
+             [core :as s]]))
 
 (def ^{:private true} judgement-mapping "judgement")
 

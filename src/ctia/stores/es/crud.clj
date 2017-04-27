@@ -1,20 +1,18 @@
 (ns ctia.stores.es.crud
-  (:require [ctia.lib.es.schemas :refer [ESConnState]]
-            [schema.core :as s]
-            [schema.coerce :as c]
-            [ring.swagger.coerce :as sc]
+  (:require [clj-momo.lib.es
+             [document :refer [bulk-create-doc delete-doc get-doc search-docs update-doc]]
+             [schemas :refer [ESConnState]]]
             [ctia.lib.pagination :refer [list-response-schema]]
-            [ctia.lib.es.document :refer [bulk-create-doc
-                                          update-doc
-                                          get-doc
-                                          delete-doc
-                                          search-docs]]))
+            [ring.swagger.coerce :as sc]
+            [schema
+             [coerce :as c]
+             [core :as s]]))
 
 (defn coerce-to-fn
   [Model]
   (c/coercer! Model sc/json-schema-coercion-matcher))
 
-(defn ensure-document-id 
+(defn ensure-document-id
   "Returns a document ID.  if id is a object ID, it extract the
   document ID, if it's a document ID already, it will just return
   that."
