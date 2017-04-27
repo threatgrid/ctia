@@ -9,14 +9,17 @@
             [metrics.ring.instrument :refer [instrument]]
             [slugger.core :refer [->slug]]))
 
-(defn add-default-metrics
-  []
-  (try ;; use a try, because these may already be registered if we are
-       ;; reloading the handler
-    (jvm/register-memory-usage-gauge-set default-registry)
-    (jvm/register-garbage-collector-metric-set default-registry)
-    (jvm/register-thread-state-gauge-set default-registry)
-    (catch java.lang.IllegalArgumentException e)))
+(def ^:private add-default-metrics
+  (let [done? (volatile! false)
+        lock (Object.)]
+    (fn []
+      "This should only ever be done once"
+      (locking lock
+        (when-not @done?
+          (jvm/register-memory-usage-gauge-set default-registry)
+          (jvm/register-garbage-collector-metric-set default-registry)
+          (jvm/register-thread-state-gauge-set default-registry)
+          (vreset! done? true))))))
 
 (defn match-route? [[compiled-path _ verb] request]
   (if (= (name (:request-method request)) verb)
