@@ -42,8 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.9"]
-                 [threatgrid/clj-momo "0.2.6-SNAPSHOT"]
+                 [threatgrid/ctim "0.4.9b-SNAPSHOT"]
 
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api
