@@ -43,6 +43,7 @@
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
                  [threatgrid/ctim "0.4.5"]
+                 [threatgrid/clj-momo "0.2.6-SNAPSHOT"]
 
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api
@@ -145,7 +146,7 @@
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.7"]
                                    [prismatic/schema-generators "0.1.0"]]
-                    :pedantic? :abort
+                    :pedantic? :warn
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
                     :resource-paths ["test/resources"
