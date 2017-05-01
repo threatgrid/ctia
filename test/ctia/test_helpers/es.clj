@@ -2,10 +2,11 @@
   "ES test helpers"
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
+            [clj-momo.lib.es.index :as es-index]
             [clojure.pprint :refer [pprint]]
-            [ctia.lib.es.index :as es-index]
-            [ctia.properties :refer [properties]]
-            [ctia.store :as store]
+            [ctia
+             [properties :refer [properties]]
+             [store :as store]]
             [ctia.stores.es.store :as es-store]
             [ctia.test-helpers.core :as h]))
 

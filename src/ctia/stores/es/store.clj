@@ -1,8 +1,8 @@
 (ns ctia.stores.es.store
-  (:require [ctia.lib.es
+  (:require [clj-momo.lib.es
              [conn :refer [connect]]
-             [schemas :refer [ESConnState]]
-             [index :as es-index :refer [create-template!]]]
+             [index :as es-index]
+             [schemas :refer [ESConnState]]]
             [ctia.store
              :refer
              [IActorStore
