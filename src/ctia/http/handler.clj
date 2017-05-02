@@ -1,12 +1,13 @@
 (ns ctia.http.handler
-  (:require [compojure.api
+  (:require [clj-momo.ring.middleware.metrics :as metrics]
+            [compojure.api
              [core :refer [middleware]]
+             [routes :as routes]
              [sweet :refer [context defapi]]]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
              [auth :as auth]
-             [cache-control :refer [wrap-cache-control]]
-             [metrics :as metrics]]
+             [cache-control :refer [wrap-cache-control]]]
             [ctia.http.routes
              [actor :refer [actor-routes]]
              [bulk :refer [bulk-routes]]
@@ -105,7 +106,7 @@
                wrap-not-modified
                wrap-cache-control
                ;; always last
-               metrics/wrap-metrics]
+               (metrics/wrap-metrics "ctia" routes/get-routes)]
 
               documentation-routes
               (context "/ctia" []
