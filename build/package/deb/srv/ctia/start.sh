@@ -11,7 +11,7 @@
 # CTIA_LOGFILE
 
 # Load the deployment-specific env variables
-source ./environment
+source /srv/ctia/environment
 
 # ***********************************************
 # These are package-specific settings and do not
