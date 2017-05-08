@@ -64,6 +64,7 @@ script:
   - ./build/run-tests.sh && ./build/debian-package.sh
 
 notifications:
+  email: false
   hipchat:
     rooms:
       - secure: "Ec3/ASBzCcC+oTDJOcsTb+h2MHSWMZP2PbgZTOvHuf8nOokMU2LUjQi6ptaeMQlESvLPGGp8/b+mOOAaLQI15BrK0M+FaUfBxElHvWMqR9MxpNyprgDvs+0koZn/A6Ewal/eMHFl3IP1afBikDEbQWQJnhOtvgKYDZdX5sya4H9kCdPw+kFnj2CcOGybnIGuGGyZ90pvOsEobW6sYDz3B799YBki1QGcQ+8y9x5icUDV1ZdvhLZj+IP++kATqxyqq4VadF7PgbiBbac0umviiSpqE/RsD5tcAbm1a+57qIrzW1ofLDndUdp56gACOVvpvem0AjSfX3AHj7gYylLRk1KlDquNy55Ue/WfxUwyR59gvvueFlz+lQYcIVV7HDsE6uxQe4AcEUQ1pRdsCEUnPAbOqtouHGyqVyjMv42GDbf5nuPdPLIVodRD8mGfS+NCERB0sl62VFvM/dkJEz2BrLdgqOELwA2qZIZqgbhVTjsG6sVAa7G5t88eByIDKQjZWxq491hKbxPPU46s5/QXEQGTIOr6E+/52E+aRxcKT4232k404Mhga9U7TxLdKT2/VSLYOKU8cVGWHo317e7eJvucWJTSJ90yuCEUM0kyRckwuygZVTxUgql6DXadFVtdAKuNt6ZQM+UNGtnUODwFc/ZZGgMnJEM84+3N1AXaAKU="
