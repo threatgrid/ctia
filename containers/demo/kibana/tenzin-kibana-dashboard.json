@@ -1,80 +1,29 @@
 [
   {
-    "_id": "ctia_sighting",
+    "_id": "Cluster-Health",
     "_type": "dashboard",
     "_source": {
-      "title": "ctia_sighting",
+      "title": "Cluster Health",
       "hits": 0,
       "description": "",
-      "panelsJSON": "[{\"col\":1,\"id\":\"ctia_sighting_count\",\"panelIndex\":1,\"row\":1,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_sighting_date_histogram_daily\",\"panelIndex\":3,\"row\":9,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"ctia_sighting_observale_type\",\"panelIndex\":5,\"row\":1,\"size_x\":6,\"size_y\":3,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_sighting_daily_count_start_date\",\"panelIndex\":7,\"row\":14,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_sighting_related_value_per_week\",\"panelIndex\":8,\"row\":19,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"id\":\"ctia_sighting_source_date_histogram_daily\",\"type\":\"visualization\",\"panelIndex\":9,\"size_x\":12,\"size_y\":5,\"col\":1,\"row\":4}]",
+      "panelsJSON": "[{\"col\":1,\"id\":\"Disk-Usage\",\"panelIndex\":1,\"row\":3,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Percentage-Memory-Used\",\"panelIndex\":2,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Filesystem-Free\",\"panelIndex\":3,\"row\":5,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":7,\"id\":\"I-slash-O-Wait\",\"panelIndex\":4,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Memory-Swap-Used\",\"panelIndex\":5,\"row\":5,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":7,\"id\":\"System-Load-1\",\"panelIndex\":6,\"row\":3,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"System-Disk-I-slash-O-Read-Time\",\"panelIndex\":7,\"row\":7,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"}]",
       "optionsJSON": "{\"darkTheme\":true}",
       "uiStateJSON": "{}",
       "version": 1,
       "timeRestore": false,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"query\":\"storage\",\"analyze_wildcard\":true}}}]}"
       }
     }
   },
   {
-    "_id": "ctia_verdict",
+    "_id": "Judgement_dashboard",
     "_type": "dashboard",
     "_source": {
-      "title": "ctia_verdict",
+      "title": "Judgement_dashboard",
       "hits": 0,
       "description": "",
-      "panelsJSON": "[{\"id\":\"ctia_verdict_created_date_count_daily\",\"type\":\"visualization\",\"panelIndex\":1,\"size_x\":12,\"size_y\":5,\"col\":1,\"row\":5},{\"id\":\"ctia_verdict_disposition_count\",\"type\":\"visualization\",\"panelIndex\":2,\"size_x\":4,\"size_y\":4,\"col\":9,\"row\":1},{\"id\":\"ctia_verdict_observable_type\",\"type\":\"visualization\",\"panelIndex\":3,\"size_x\":4,\"size_y\":4,\"col\":5,\"row\":1},{\"id\":\"ctia_verdict_top20_observables_by_day\",\"type\":\"visualization\",\"panelIndex\":4,\"size_x\":12,\"size_y\":7,\"col\":1,\"row\":10},{\"id\":\"ctia_verdict_count\",\"type\":\"visualization\",\"panelIndex\":5,\"size_x\":4,\"size_y\":4,\"col\":1,\"row\":1}]",
-      "optionsJSON": "{\"darkTheme\":true}",
-      "uiStateJSON": "{}",
-      "version": 1,
-      "timeRestore": false,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}}}]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_indicators",
-    "_type": "dashboard",
-    "_source": {
-      "title": "ctia_indicator",
-      "hits": 0,
-      "description": "",
-      "panelsJSON": "[\n  {\n    \"id\": \"ctia_indicator_count\",\n    \"type\": \"visualization\",\n    \"panelIndex\": 1,\n    \"size_x\": 6,\n    \"size_y\": 3,\n    \"col\": 1,\n    \"row\": 1\n  },\n  {\n    \"id\": \"ctia_indicator_daily_count\",\n    \"type\": \"visualization\",\n    \"panelIndex\": 2,\n    \"size_x\": 12,\n    \"size_y\": 4,\n    \"col\": 1,\n    \"row\": 4\n  },\n  {\n    \"id\": \"ctia_indicator_top_20_title\",\n    \"type\": \"visualization\",\n    \"panelIndex\": 4,\n    \"size_x\": 12,\n    \"size_y\": 5,\n    \"col\": 1,\n    \"row\": 8\n  }\n]",
-      "optionsJSON": "{\n  \"darkTheme\": true\n}",
-      "uiStateJSON": "{}",
-      "version": 1,
-      "timeRestore": false,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"filter\": [\n    {\n      \"query\": {\n        \"query_string\": {\n          \"query\": \"*\",\n          \"analyze_wildcard\": true\n        }\n      }\n    }\n  ]\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_event",
-    "_type": "dashboard",
-    "_source": {
-      "title": "ctia_event",
-      "hits": 0,
-      "description": "",
-      "panelsJSON": "[{\"col\":1,\"id\":\"ctia_events_count\",\"panelIndex\":1,\"row\":1,\"size_x\":3,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_entity_source\",\"panelIndex\":2,\"row\":9,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":7,\"id\":\"ctia_events_entity_type\",\"panelIndex\":3,\"row\":9,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":4,\"id\":\"ctia_events_observable_type\",\"panelIndex\":4,\"row\":1,\"size_x\":5,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_start_time_count_daily\",\"panelIndex\":5,\"row\":5,\"size_x\":12,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_events_related_value_per_day\",\"panelIndex\":6,\"row\":13,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":9,\"id\":\"ctia_events_priority\",\"panelIndex\":7,\"row\":1,\"size_x\":4,\"size_y\":4,\"type\":\"visualization\"}]",
-      "optionsJSON": "{\"darkTheme\":true}",
-      "uiStateJSON": "{}",
-      "version": 1,
-      "timeRestore": false,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_relationship",
-    "_type": "dashboard",
-    "_source": {
-      "title": "ctia_relationship",
-      "hits": 0,
-      "description": "",
-      "panelsJSON": "[{\"id\":\"ctia_relationship_count\",\"type\":\"visualization\",\"panelIndex\":1,\"size_x\":4,\"size_y\":5,\"col\":1,\"row\":1},{\"id\":\"ctia_relationship_created_date_daily\",\"type\":\"visualization\",\"panelIndex\":2,\"size_x\":8,\"size_y\":5,\"col\":5,\"row\":1}]",
+      "panelsJSON": "[{\"id\":\"Judgement_count_per_day\",\"type\":\"visualization\",\"panelIndex\":1,\"size_x\":9,\"size_y\":5,\"col\":1,\"row\":1},{\"id\":\"Judgement_observable_types\",\"type\":\"visualization\",\"panelIndex\":3,\"size_x\":4,\"size_y\":6,\"col\":1,\"row\":6},{\"id\":\"Judgement_priority\",\"type\":\"visualization\",\"panelIndex\":4,\"size_x\":4,\"size_y\":5,\"col\":5,\"row\":12},{\"id\":\"Judgement_severity\",\"type\":\"visualization\",\"panelIndex\":5,\"size_x\":4,\"size_y\":5,\"col\":1,\"row\":12},{\"id\":\"Judgement_source\",\"type\":\"visualization\",\"panelIndex\":6,\"size_x\":12,\"size_y\":6,\"col\":1,\"row\":17},{\"id\":\"Judgement_top_20_observable_values_per_month\",\"type\":\"visualization\",\"panelIndex\":7,\"size_x\":8,\"size_y\":6,\"col\":5,\"row\":6},{\"id\":\"Judgement_total_count\",\"type\":\"visualization\",\"panelIndex\":8,\"size_x\":3,\"size_y\":4,\"col\":10,\"row\":1},{\"id\":\"Judgement_disposition_name\",\"type\":\"visualization\",\"panelIndex\":9,\"size_x\":4,\"size_y\":5,\"col\":9,\"row\":12}]",
       "optionsJSON": "{\"darkTheme\":true}",
       "uiStateJSON": "{}",
       "version": 1,
@@ -85,13 +34,13 @@
     }
   },
   {
-    "_id": "ctia_judgement",
+    "_id": "Sighting_dashboard",
     "_type": "dashboard",
     "_source": {
-      "title": "ctia_judgement",
+      "title": "Sighting_dashboard",
       "hits": 0,
       "description": "",
-      "panelsJSON": "[{\"col\":1,\"id\":\"ctia_judgement_count\",\"panelIndex\":1,\"row\":1,\"size_x\":3,\"size_y\":4,\"type\":\"visualization\"},{\"col\":4,\"id\":\"ctia_judgement_observable_types\",\"panelIndex\":5,\"row\":1,\"size_x\":5,\"size_y\":4,\"type\":\"visualization\"},{\"col\":7,\"id\":\"ctia_judgement_top_10_observable_values_per_week\",\"panelIndex\":6,\"row\":5,\"size_x\":6,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"ctia_judgement_top_20_observable_value_per_week\",\"panelIndex\":7,\"row\":5,\"size_x\":6,\"size_y\":6,\"type\":\"visualization\"},{\"id\":\"ctia_judgement_daily_count_start_time\",\"type\":\"visualization\",\"panelIndex\":9,\"size_x\":12,\"size_y\":5,\"col\":1,\"row\":11},{\"id\":\"ctia_judgement_priority\",\"type\":\"visualization\",\"panelIndex\":10,\"size_x\":4,\"size_y\":4,\"col\":9,\"row\":1}]",
+      "panelsJSON": "[{\"col\":1,\"id\":\"Sighting_confidence\",\"panelIndex\":1,\"row\":11,\"size_x\":6,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Sighting_count_per_day\",\"panelIndex\":2,\"row\":1,\"size_x\":9,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Sighting_observable_types\",\"panelIndex\":3,\"row\":11,\"size_x\":6,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Sighting_top_20_observable_values_per_month\",\"panelIndex\":4,\"row\":6,\"size_x\":12,\"size_y\":5,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Sighting_top_20_observables_per_month\",\"panelIndex\":5,\"row\":16,\"size_x\":12,\"size_y\":6,\"type\":\"visualization\"},{\"col\":10,\"id\":\"Sighting_total_count\",\"panelIndex\":6,\"row\":1,\"size_x\":3,\"size_y\":5,\"type\":\"visualization\"}]",
       "optionsJSON": "{\"darkTheme\":true}",
       "uiStateJSON": "{}",
       "version": 1,
@@ -102,254 +51,174 @@
     }
   },
   {
-    "_id": "CTIA-Statistics",
+    "_id": "Indicator_dashboard",
     "_type": "dashboard",
     "_source": {
-      "title": "CTIA Statistics",
+      "title": "Indicator_dashboard",
       "hits": 0,
       "description": "",
-      "panelsJSON": "[{\"col\":5,\"id\":\"Indicators-confidence-breakdown-by-timestamp-per-week\",\"panelIndex\":8,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Indicator-title-count\",\"panelIndex\":9,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Overview\",\"panelIndex\":11,\"row\":1,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Monthly-count\",\"panelIndex\":12,\"row\":1,\"size_x\":6,\"size_y\":4,\"type\":\"visualization\"},{\"col\":1,\"id\":\"Observable-type\",\"panelIndex\":14,\"row\":5,\"size_x\":4,\"size_y\":5,\"type\":\"visualization\"},{\"col\":7,\"id\":\"Priority-summary\",\"panelIndex\":19,\"row\":3,\"size_x\":6,\"size_y\":2,\"type\":\"visualization\"},{\"col\":9,\"id\":\"Source-per-week\",\"panelIndex\":21,\"row\":17,\"size_x\":4,\"size_y\":6,\"type\":\"visualization\"},{\"col\":1,\"id\":\"IP-values-for-domains-per-month\",\"panelIndex\":23,\"row\":23,\"size_x\":6,\"size_y\":8,\"type\":\"visualization\"},{\"col\":5,\"id\":\"Sighting-count-per-hour\",\"panelIndex\":24,\"row\":5,\"size_x\":8,\"size_y\":5,\"type\":\"visualization\"},{\"id\":\"Top-20-observable-counts\",\"type\":\"visualization\",\"panelIndex\":25,\"size_x\":6,\"size_y\":7,\"col\":1,\"row\":10},{\"id\":\"Top-10-observables-per-day\",\"type\":\"visualization\",\"panelIndex\":26,\"size_x\":6,\"size_y\":7,\"col\":7,\"row\":10},{\"id\":\"Unique-count-of-observables-per-day\",\"type\":\"visualization\",\"panelIndex\":27,\"size_x\":6,\"size_y\":8,\"col\":7,\"row\":23}]",
+      "panelsJSON": "[{\"id\":\"Indicator_confidence\",\"type\":\"visualization\",\"panelIndex\":1,\"size_x\":6,\"size_y\":5,\"col\":7,\"row\":6},{\"id\":\"Indicator_count_per_day\",\"type\":\"visualization\",\"panelIndex\":2,\"size_x\":10,\"size_y\":5,\"col\":1,\"row\":1},{\"id\":\"Indicator_producer\",\"type\":\"visualization\",\"panelIndex\":3,\"size_x\":6,\"size_y\":5,\"col\":1,\"row\":6},{\"id\":\"Indicator_total_count\",\"type\":\"visualization\",\"panelIndex\":4,\"size_x\":2,\"size_y\":5,\"col\":11,\"row\":1}]",
       "optionsJSON": "{\"darkTheme\":true}",
-      "uiStateJSON": "{\"P-7\":{\"spy\":{\"mode\":{\"fill\":false,\"name\":null}}}}",
+      "uiStateJSON": "{}",
       "version": 1,
-      "timeRestore": true,
-      "timeTo": "now",
-      "timeFrom": "now-15m",
+      "timeRestore": false,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}}}]}"
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}}}]}"
       }
     }
   },
   {
-    "_id": "IP-values-for-domains-per-month",
+    "_id": "Event_dashboard",
+    "_type": "dashboard",
+    "_source": {
+      "title": "Event_dashboard",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"id\":\"event_confidence\",\"type\":\"visualization\",\"panelIndex\":1,\"size_x\":6,\"size_y\":4,\"col\":7,\"row\":16},{\"id\":\"event_count_per_day\",\"type\":\"visualization\",\"panelIndex\":2,\"size_x\":9,\"size_y\":5,\"col\":1,\"row\":1},{\"id\":\"event_observable_types\",\"type\":\"visualization\",\"panelIndex\":3,\"size_x\":6,\"size_y\":5,\"col\":1,\"row\":6},{\"id\":\"Event_relations_related_type\",\"type\":\"visualization\",\"panelIndex\":4,\"size_x\":6,\"size_y\":5,\"col\":7,\"row\":6},{\"id\":\"Event_relations_source_type\",\"type\":\"visualization\",\"panelIndex\":5,\"size_x\":6,\"size_y\":4,\"col\":1,\"row\":16},{\"id\":\"Event_top_20_entity_source\",\"type\":\"visualization\",\"panelIndex\":6,\"size_x\":6,\"size_y\":5,\"col\":1,\"row\":20},{\"id\":\"Event_top_20_entity_source_uri\",\"type\":\"visualization\",\"panelIndex\":7,\"size_x\":6,\"size_y\":5,\"col\":7,\"row\":20},{\"id\":\"event_top_20_observable_values_per_month\",\"type\":\"visualization\",\"panelIndex\":8,\"size_x\":12,\"size_y\":5,\"col\":1,\"row\":11},{\"id\":\"Event_top_20_relations_origin_per_month\",\"type\":\"visualization\",\"panelIndex\":9,\"size_x\":6,\"size_y\":5,\"col\":1,\"row\":25},{\"id\":\"Event_top_20_relations_origin_uri_per_month\",\"type\":\"visualization\",\"panelIndex\":10,\"size_x\":6,\"size_y\":5,\"col\":7,\"row\":25},{\"id\":\"Event_top_20_relations_source_value\",\"type\":\"visualization\",\"panelIndex\":12,\"size_x\":6,\"size_y\":5,\"col\":1,\"row\":30},{\"id\":\"event_total_count\",\"type\":\"visualization\",\"panelIndex\":13,\"size_x\":3,\"size_y\":5,\"col\":10,\"row\":1},{\"id\":\"Event_top_20_relations_related_value\",\"type\":\"visualization\",\"panelIndex\":14,\"size_x\":6,\"size_y\":5,\"col\":7,\"row\":30}]",
+      "optionsJSON": "{\"darkTheme\":true}",
+      "uiStateJSON": "{}",
+      "version": 1,
+      "timeRestore": false,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}}}]}"
+      }
+    }
+  },
+  {
+    "_id": "Relationship_dashboard",
+    "_type": "dashboard",
+    "_source": {
+      "title": "Relationship_dashboard",
+      "hits": 0,
+      "description": "",
+      "panelsJSON": "[{\"id\":\"Relationship_count_per_day\",\"type\":\"visualization\",\"panelIndex\":1,\"size_x\":9,\"size_y\":3,\"col\":1,\"row\":1},{\"id\":\"Relationship_source\",\"type\":\"visualization\",\"panelIndex\":2,\"size_x\":4,\"size_y\":6,\"col\":1,\"row\":12},{\"id\":\"Relationship_source_ref_per_month\",\"type\":\"visualization\",\"panelIndex\":3,\"size_x\":12,\"size_y\":4,\"col\":1,\"row\":4},{\"id\":\"Relationship_target_ref_per_month\",\"type\":\"visualization\",\"panelIndex\":4,\"size_x\":12,\"size_y\":4,\"col\":1,\"row\":8},{\"id\":\"Relationship_total_count\",\"type\":\"visualization\",\"panelIndex\":5,\"size_x\":3,\"size_y\":3,\"col\":10,\"row\":1}]",
+      "optionsJSON": "{\"darkTheme\":true}",
+      "uiStateJSON": "{}",
+      "version": 1,
+      "timeRestore": false,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"filter\":[{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}}}]}"
+      }
+    }
+  },
+  {
+    "_id": "System-Disk-I-slash-O-Read-Time",
     "_type": "visualization",
     "_source": {
-      "title": "IP values for domains per month",
-      "visState": "{\"title\":\"IP values for domains per month\",\"type\":\"histogram\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"mode\":\"stacked\",\"scale\":\"linear\",\"setYExtents\":false,\"shareYAxis\":true,\"times\":[],\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"relations.source.value\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"relations.related.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"_term\"}},{\"id\":\"4\",\"type\":\"date_histogram\",\"schema\":\"split\",\"params\":{\"field\":\"timestamp\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{},\"row\":true}}],\"listeners\":{}}",
+      "title": "System Disk I/O Read Time",
+      "visState": "{\n  \"title\": \"System Disk I/O Read Time\",\n  \"type\": \"line\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"showCircles\": true,\n    \"smoothLines\": false,\n    \"interpolate\": \"linear\",\n    \"scale\": \"linear\",\n    \"drawLinesBetweenPoints\": true,\n    \"radiusRatio\": 9,\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"system.diskio.read.time\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"@timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"beat.hostname\",\n        \"size\": 20,\n        \"order\": \"desc\",\n        \"orderBy\": \"_term\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"*\"}},\"filter\":[]}"
+        "searchSourceJSON": "{\n  \"index\": \"metricbeat-*\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
       }
     }
   },
   {
-    "_id": "Source-per-week",
+    "_id": "Percentage-Memory-Used",
     "_type": "visualization",
     "_source": {
-      "title": "Source per week",
-      "visState": "{\"title\":\"Source per week\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"source\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"timestamp\",\"interval\":\"w\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "title": "Percentage Memory Used",
+      "visState": "{\n  \"title\": \"Percentage Memory Used\",\n  \"type\": \"line\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"showCircles\": true,\n    \"smoothLines\": false,\n    \"interpolate\": \"linear\",\n    \"scale\": \"linear\",\n    \"drawLinesBetweenPoints\": true,\n    \"radiusRatio\": 9,\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"system.memory.actual.used.pct\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"@timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"beat.hostname\",\n        \"size\": 15,\n        \"order\": \"desc\",\n        \"orderBy\": \"_term\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+        "searchSourceJSON": "{\n  \"index\": \"metricbeat-*\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
       }
     }
   },
   {
-    "_id": "Sighting-count-per-hour",
+    "_id": "Memory-Swap-Used",
     "_type": "visualization",
     "_source": {
-      "title": "Sighting count per hour",
-      "visState": "{\"aggs\":[{\"id\":\"1\",\"params\":{\"customLabel\":\"Sightings per Hour\"},\"schema\":\"metric\",\"type\":\"count\"},{\"id\":\"2\",\"params\":{\"customInterval\":\"2h\",\"extended_bounds\":{},\"field\":\"timestamp\",\"interval\":\"h\",\"min_doc_count\":1},\"schema\":\"segment\",\"type\":\"date_histogram\"}],\"listeners\":{},\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"interpolate\":\"linear\",\"mode\":\"stacked\",\"scale\":\"linear\",\"setYExtents\":false,\"shareYAxis\":true,\"smoothLines\":false,\"times\":[],\"yAxis\":{}},\"title\":\"Sighting count per hour\",\"type\":\"area\"}",
+      "title": "Memory Swap Used",
+      "visState": "{\n  \"title\": \"Memory Swap Used\",\n  \"type\": \"line\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"showCircles\": true,\n    \"smoothLines\": false,\n    \"interpolate\": \"linear\",\n    \"scale\": \"linear\",\n    \"drawLinesBetweenPoints\": true,\n    \"radiusRatio\": 9,\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"system.memory.swap.used.pct\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"@timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"beat.hostname\",\n        \"size\": 20,\n        \"order\": \"desc\",\n        \"orderBy\": \"_term\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"_type:sighting\"}},\"filter\":[]}"
+        "searchSourceJSON": "{\n  \"index\": \"metricbeat-*\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
       }
     }
   },
   {
-    "_id": "Top-20-observable-counts",
+    "_id": "Filesystem-Free",
     "_type": "visualization",
     "_source": {
-      "title": "Top 20 observable counts",
-      "visState": "{\"title\":\"Top 20 observable counts\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
+      "title": "Filesystem Free",
+      "visState": "{\n  \"title\": \"Filesystem Free\",\n  \"type\": \"line\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"showCircles\": true,\n    \"smoothLines\": false,\n    \"interpolate\": \"linear\",\n    \"scale\": \"linear\",\n    \"drawLinesBetweenPoints\": true,\n    \"radiusRatio\": 9,\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"system.filesystem.free\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"@timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"beat.hostname\",\n        \"size\": 20,\n        \"order\": \"desc\",\n        \"orderBy\": \"_term\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+        "searchSourceJSON": "{\n  \"index\": \"metricbeat-*\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
       }
     }
   },
   {
-    "_id": "Top-10-observables-per-day",
+    "_id": "I-slash-O-Wait",
     "_type": "visualization",
     "_source": {
-      "title": "Top 10 observables per day",
-      "visState": "{\"title\":\"Top 10 observables per day\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"relations.source.value\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
+      "title": "I/O Wait",
+      "visState": "{\n  \"title\": \"I/O Wait\",\n  \"type\": \"line\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"showCircles\": true,\n    \"smoothLines\": false,\n    \"interpolate\": \"linear\",\n    \"scale\": \"linear\",\n    \"drawLinesBetweenPoints\": true,\n    \"radiusRatio\": 9,\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"system.cpu.iowait.pct\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"@timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"beat.hostname\",\n        \"size\": 20,\n        \"order\": \"desc\",\n        \"orderBy\": \"_term\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+        "searchSourceJSON": "{\n  \"index\": \"metricbeat-*\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
       }
     }
   },
   {
-    "_id": "Unique-count-of-observables-per-day",
+    "_id": "Disk-Usage",
     "_type": "visualization",
     "_source": {
-      "title": "Unique count of observables per day",
-      "visState": "{\"title\":\"Unique count of observables per day\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"cardinality\",\"schema\":\"metric\",\"params\":{\"field\":\"relations.source.value\",\"customLabel\":\"Unique count of domains\"}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"relations.related.value\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"IP address\"}}],\"listeners\":{}}",
+      "title": "Disk Usage",
+      "visState": "{\n  \"title\": \"Disk Usage\",\n  \"type\": \"line\",\n  \"params\": {\n    \"addLegend\": true,\n    \"addTimeMarker\": false,\n    \"addTooltip\": true,\n    \"defaultYExtents\": false,\n    \"drawLinesBetweenPoints\": true,\n    \"interpolate\": \"linear\",\n    \"legendPosition\": \"right\",\n    \"radiusRatio\": 9,\n    \"scale\": \"linear\",\n    \"setYExtents\": false,\n    \"shareYAxis\": true,\n    \"showCircles\": true,\n    \"smoothLines\": false,\n    \"times\": [],\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"system.filesystem.used.pct\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"@timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    },\n    {\n      \"id\": \"4\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"beat.hostname\",\n        \"size\": 20,\n        \"order\": \"desc\",\n        \"orderBy\": \"_term\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+        "searchSourceJSON": "{\n  \"index\": \"metricbeat-*\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
       }
     }
   },
   {
-    "_id": "Indicators-confidence-breakdown-by-timestamp-per-week",
+    "_id": "System-Load-1",
     "_type": "visualization",
     "_source": {
-      "title": "Indicators confidence breakdown by timestamp per week",
-      "visState": "{\"title\":\"Indicators confidence breakdown by timestamp per week\",\"type\":\"pie\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"isDonut\":false},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"indicators.confidence\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"w\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "title": "System Load 1",
+      "visState": "{\n  \"title\": \"System Load 1\",\n  \"type\": \"line\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"showCircles\": true,\n    \"smoothLines\": false,\n    \"interpolate\": \"linear\",\n    \"scale\": \"linear\",\n    \"drawLinesBetweenPoints\": true,\n    \"radiusRatio\": 9,\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"max\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"system.load.1\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"@timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"beat.hostname\",\n        \"size\": 20,\n        \"order\": \"desc\",\n        \"orderBy\": \"_term\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+        "searchSourceJSON": "{\n  \"index\": \"metricbeat-*\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
       }
     }
   },
   {
-    "_id": "Sighting-count-per-day",
+    "_id": "Disk-Usage-(bytes)",
     "_type": "visualization",
     "_source": {
-      "title": "Sighting count per day",
-      "visState": "{\"title\":\"Sighting count per day\",\"type\":\"area\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"interpolate\":\"linear\",\"mode\":\"stacked\",\"scale\":\"linear\",\"setYExtents\":false,\"shareYAxis\":true,\"smoothLines\":false,\"times\":[],\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{\"customLabel\":\"Sightings per Day\"}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "title": "Disk Usage (bytes)",
+      "visState": "{\"title\":\"Disk Usage (bytes)\",\"type\":\"line\",\"params\":{\"addLegend\":true,\"addTimeMarker\":false,\"addTooltip\":true,\"defaultYExtents\":false,\"drawLinesBetweenPoints\":true,\"interpolate\":\"linear\",\"legendPosition\":\"right\",\"radiusRatio\":9,\"scale\":\"linear\",\"setYExtents\":false,\"shareYAxis\":true,\"showCircles\":true,\"smoothLines\":false,\"times\":[],\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"avg\",\"schema\":\"metric\",\"params\":{\"field\":\"system.filesystem.used.bytes\"}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"@timestamp\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"4\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"beat.hostname\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"_term\"}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia*\",\"query\":{\"query_string\":{\"analyze_wildcard\":true,\"query\":\"_type:sighting\"}},\"filter\":[]}"
+        "searchSourceJSON": "{\"index\":\"metricbeat-*\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
       }
     }
   },
   {
-    "_id": "Observable-type",
+    "_id": "Judgement_count_per_day",
     "_type": "visualization",
     "_source": {
-      "title": "Observable type",
-      "visState": "{\n  \"title\": \"Observable type\",\n  \"type\": \"pie\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"isDonut\": false\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"observable.type\",\n        \"size\": 10,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"disposition_name\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "Judgements by Observable Type",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_judgement\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "Priority-summary",
-    "_type": "visualization",
-    "_source": {
-      "title": "Priority summary",
-      "visState": "{\n  \"title\": \"Priority summary\",\n  \"type\": \"metric\",\n  \"params\": {\n    \"handleNoResults\": true,\n    \"fontSize\": \"21\"\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"max\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"priority\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"priority\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"min\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"priority\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_judgement\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "General-overview",
-    "_type": "visualization",
-    "_source": {
-      "title": "General overview",
-      "visState": "{\"title\":\"General overview\",\"type\":\"markdown\",\"params\":{\"markdown\":\"General overview\"},\"aggs\":[],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "Indicator-title-count",
-    "_type": "visualization",
-    "_source": {
-      "title": "Indicator title count",
-      "visState": "{\n  \"title\": \"Indicator title count\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"type\",\n        \"size\": 10,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"terms\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"title\",\n        \"size\": 10,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_indicator\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "observable_types",
-    "_type": "visualization",
-    "_source": {
-      "title": "observable_types",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"observables.type\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_sighting\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "monthly_count",
-    "_type": "visualization",
-    "_source": {
-      "title": "monthly_count",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"table\",\n  \"params\": {\n    \"perPage\": 10,\n    \"showPartialRows\": false,\n    \"showMeticsAtAllLevels\": false\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"date_histogram\",\n      \"schema\": \"bucket\",\n      \"params\": {\n        \"field\": \"timestamp\",\n        \"interval\": \"M\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_sighting\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "priority_summary",
-    "_type": "visualization",
-    "_source": {
-      "title": "priority_summary",
-      "visState": "{\n  \"title\": \"priority_summary\",\n  \"type\": \"metric\",\n  \"params\": {\n    \"handleNoResults\": true,\n    \"fontSize\": \"32\"\n  },\n  \"aggs\": [\n    {\n      \"id\": \"2\",\n      \"type\": \"max\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"priority\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"min\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"priority\"\n      }\n    },\n    {\n      \"id\": \"1\",\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"priority\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_judgement\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "overview",
-    "_type": "visualization",
-    "_source": {
-      "title": "overview",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"metric\",\n  \"params\": {\n    \"handleNoResults\": true,\n    \"fontSize\": 60\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_sighting\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_judgement_top_20_observable_value_per_week",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_judgement_top_20_observable_value_per_week",
-      "visState": "{\"title\":\"ctia_judgement_top_20_observable_values\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"w\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "title": "Judgement_count_per_day",
+      "visState": "{\"title\":\"Judgement_count_per_day\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -359,53 +228,11 @@
     }
   },
   {
-    "_id": "ctia_judgement_observable_types",
+    "_id": "Indicator_count_per_day",
     "_type": "visualization",
     "_source": {
-      "title": "ctia_judgement_observable_types",
-      "visState": "{\"title\":\"ctia_jedgement_observable_types\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.type\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_sighting_date_histogram_daily",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_sighting_date_histogram_daily",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"timestamp\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_sighting\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_judgement_count",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_judgement_count",
-      "visState": "{\"title\":\"ctia_judgment_count\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":60},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_indicator_count",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_indicator_count",
-      "visState": "{\"title\":\"ctia_indicator_count\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"45\"},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
+      "title": "Indicator_count_per_day",
+      "visState": "{\"title\":\"Indicator_count_per_day\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -415,25 +242,11 @@
     }
   },
   {
-    "_id": "ctia_sighting_count",
+    "_id": "Judgement_top_20_observable_values_per_month",
     "_type": "visualization",
     "_source": {
-      "title": "ctia_sighting_count",
-      "visState": "{\"title\":\"ctia_sighting_count\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"45\"},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_sighting\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_judgement_top_10_observable_values_per_week",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_judgement_top_10_observable_values_per_week",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"w\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"observable.value\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
+      "title": "Judgement_top_20_observable_values_per_month",
+      "visState": "{\"title\":\"Judgement_top_20_observable_values_per_month\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -443,11 +256,11 @@
     }
   },
   {
-    "_id": "ctia_sighting_observale_type",
+    "_id": "Sighting_top_20_observable_values_per_month",
     "_type": "visualization",
     "_source": {
-      "title": "ctia_sighting_observale_type",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observables.type\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
+      "title": "Sighting_top_20_observable_values_per_month",
+      "visState": "{\"title\":\"Sighting_top_20_observable_values_per_month\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observables.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -457,39 +270,11 @@
     }
   },
   {
-    "_id": "ctia_indicator_top_20_title",
+    "_id": "Sighting_top_20_observables_per_month",
     "_type": "visualization",
     "_source": {
-      "title": "ctia_indicator_top_20_title",
-      "visState": "{\"title\":\"ctia_indicator_top_20_title\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"title\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_indicator\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_indicator_daily_count",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_indicator_daily_count",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_indicator\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_sighting_related_value_per_week",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_sighting_related_value_per_week",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"relations.related.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"observed_time.start_time\",\"interval\":\"w\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "title": "Sighting_top_20_observables_per_month",
+      "visState": "{\"title\":\"Sighting_top_20_observables_per_month\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observables_hash\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -499,11 +284,11 @@
     }
   },
   {
-    "_id": "ctia_sighting_daily_count_start_date",
+    "_id": "Sighting_count_per_day",
     "_type": "visualization",
     "_source": {
-      "title": "ctia_sighting_daily_count_start_date",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"observed_time.start_time\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "title": "Sighting_count_per_day",
+      "visState": "{\"title\":\"Sighting_count_per_day\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"observed_time.start_time\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -513,207 +298,11 @@
     }
   },
   {
-    "_id": "ctia_judgement_daily_count_start_time",
+    "_id": "Relationship_count_per_day",
     "_type": "visualization",
     "_source": {
-      "title": "ctia_judgement_daily_count_start_time",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_sighting_source_date_histogram_daily",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_sighting_source_date_histogram_daily",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"observed_time.start_time\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}},{\"id\":\"3\",\"type\":\"terms\",\"schema\":\"group\",\"params\":{\"field\":\"source\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_sighting\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_judgement_priority",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_judgement_priority",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"30\"},\"aggs\":[{\"id\":\"1\",\"type\":\"max\",\"schema\":\"metric\",\"params\":{\"field\":\"priority\"}},{\"id\":\"2\",\"type\":\"min\",\"schema\":\"metric\",\"params\":{\"field\":\"priority\"}},{\"id\":\"3\",\"type\":\"avg\",\"schema\":\"metric\",\"params\":{\"field\":\"priority\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_events_related_value_per_day",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_events_related_value_per_day",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.relations.related.value\",\n        \"size\": 20,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"date_histogram\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"timestamp\",\n        \"interval\": \"d\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_events_entity_source",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_events_entity_source",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.source\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"date_histogram\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_events_entity_type",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_events_entity_type",
-      "visState": "{\n  \"title\": \"ctia_events_entity_type\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.type\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"date_histogram\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"timestamp\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_events_observable_type",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_events_observable_type",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.observables.type\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_events_priority",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_events_priority",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"metric\",\n  \"params\": {\n    \"handleNoResults\": true,\n    \"fontSize\": \"30\"\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"max\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"entity.priority\"\n      }\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"min\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"entity.priority\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"type\": \"avg\",\n      \"schema\": \"metric\",\n      \"params\": {\n        \"field\": \"entity.priority\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_events_count",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_events_count",
-      "visState": "{\n  \"title\": \"ctia_events_count\",\n  \"type\": \"metric\",\n  \"params\": {\n    \"handleNoResults\": true,\n    \"fontSize\": \"45\"\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_verdict_top20_observables_by_day",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_verdict_top20_observables_by_day",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"created\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_verdict\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_events_start_time_count_daily",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_events_start_time_count_daily",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.observed_time.start_time\",\n        \"interval\": \"d\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_verdict_created_date_count_daily",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_verdict_created_date_count_daily",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"created\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_verdict\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_verdict_observable_type",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_verdict_observable_type",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.type\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_verdict\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_verdict_count",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_verdict_count",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"45\"},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\"index\":\"ctia_verdict\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_relationship_created_date_daily",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_relationship_created_date_daily",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"created\",\"interval\":\"d\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "title": "Relationship_count_per_day",
+      "visState": "{\"title\":\"Relationship_count_per_day\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"created\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -723,39 +312,11 @@
     }
   },
   {
-    "_id": "ctia_verdict_disposition_count",
+    "_id": "Relationship_target_ref_per_month",
     "_type": "visualization",
     "_source": {
-      "title": "ctia_verdict_disposition_name_count",
-      "visState": "{\n  \"title\": \"New Visualization\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"disposition_name\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_verdict\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "Monthly-count",
-    "_type": "visualization",
-    "_source": {
-      "title": "Monthly count",
-      "visState": "{\n  \"title\": \"Monthly count\",\n  \"type\": \"table\",\n  \"params\": {\n    \"perPage\": 10,\n    \"showPartialRows\": false,\n    \"showMeticsAtAllLevels\": false\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"type\": \"date_histogram\",\n      \"schema\": \"bucket\",\n      \"params\": {\n        \"field\": \"timestamp\",\n        \"interval\": \"M\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
-      "uiStateJSON": "{}",
-      "description": "",
-      "version": 1,
-      "kibanaSavedObjectMeta": {
-        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
-      }
-    }
-  },
-  {
-    "_id": "ctia_relationship_count",
-    "_type": "visualization",
-    "_source": {
-      "title": "ctia_relationship_count",
-      "visState": "{\"title\":\"New Visualization\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"45\"},\"aggs\":[{\"id\":\"1\",\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
+      "title": "Relationship_target_ref_per_month",
+      "visState": "{\"title\":\"Relationship_target_ref_per_month\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"target_ref\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"created\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
@@ -765,16 +326,394 @@
     }
   },
   {
-    "_id": "Overview",
+    "_id": "Relationship_source_ref_per_month",
     "_type": "visualization",
     "_source": {
-      "title": "Overview",
-      "visState": "{\n  \"title\": \"Overview\",\n  \"type\": \"metric\",\n  \"params\": {\n    \"handleNoResults\": true,\n    \"fontSize\": \"53\"\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    }\n  ],\n  \"listeners\": {}\n}",
+      "title": "Relationship_source_ref_per_month",
+      "visState": "{\"title\":\"Relationship_source_ref_per_month\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"source_ref\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"created\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_relationship\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Judgement_observable_types",
+    "_type": "visualization",
+    "_source": {
+      "title": "Judgement_observable_types",
+      "visState": "{\"title\":\"Judgement_observable_types\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observable.type\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Judgement_disposition_name",
+    "_type": "visualization",
+    "_source": {
+      "title": "Judgement_disposition_name",
+      "visState": "{\"title\":\"Judgement_disposition_name\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"disposition_name\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Sighting_confidence",
+    "_type": "visualization",
+    "_source": {
+      "title": "Sighting_confidence",
+      "visState": "{\"title\":\"Sighting_confidence\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"confidence\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_sighting\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Indicator_confidence",
+    "_type": "visualization",
+    "_source": {
+      "title": "Indicator_confidence",
+      "visState": "{\"title\":\"Indicator_confidence\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"confidence\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_indicator\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Judgement_severity",
+    "_type": "visualization",
+    "_source": {
+      "title": "Judgement_severity",
+      "visState": "{\"title\":\"Judgement_severity\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":true,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"severity\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Judgement_priority",
+    "_type": "visualization",
+    "_source": {
+      "title": "Judgement_priority",
+      "visState": "{\"title\":\"Judgement_priority\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"priority\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Indicator_producer",
+    "_type": "visualization",
+    "_source": {
+      "title": "Indicator_producer",
+      "visState": "{\"title\":\"Indicator_producer\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"producer\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_indicator\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Judgement_source",
+    "_type": "visualization",
+    "_source": {
+      "title": "Judgement_source",
+      "visState": "{\"title\":\"Judgement_source\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"source\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"valid_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Relationship_source",
+    "_type": "visualization",
+    "_source": {
+      "title": "Relationship_source",
+      "visState": "{\"title\":\"Relationship_source\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"source\",\"size\":5,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"created\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_relationship\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Sighting_observable_types",
+    "_type": "visualization",
+    "_source": {
+      "title": "Sighting_observable_types",
+      "visState": "{\"title\":\"Sighting_observable_types\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"observables.type\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_sighting\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Relationship_total_count",
+    "_type": "visualization",
+    "_source": {
+      "title": "Relationship_total_count",
+      "visState": "{\"title\":\"Relationship_total_count\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"40\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_relationship\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Indicator_total_count",
+    "_type": "visualization",
+    "_source": {
+      "title": "Indicator_total_count",
+      "visState": "{\"title\":\"Indicator_total_count\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"40\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_indicator\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Judgement_total_count",
+    "_type": "visualization",
+    "_source": {
+      "title": "Judgement_total_count",
+      "visState": "{\"title\":\"Judgement_total_count\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"40\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_judgement\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Sighting_total_count",
+    "_type": "visualization",
+    "_source": {
+      "title": "Sighting_total_count",
+      "visState": "{\"title\":\"Sighting_total_count\",\"type\":\"metric\",\"params\":{\"handleNoResults\":true,\"fontSize\":\"40\"},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_sighting\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "event_top_20_observable_values_per_month",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_top_20_observable_values_per_month",
+      "visState": "{\n  \"title\": \"event_top_20_observable_values_per_month\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"addLegend\": true,\n    \"addTimeMarker\": false,\n    \"addTooltip\": true,\n    \"defaultYExtents\": false,\n    \"legendPosition\": \"right\",\n    \"mode\": \"stacked\",\n    \"scale\": \"linear\",\n    \"setYExtents\": false,\n    \"shareYAxis\": true,\n    \"times\": [],\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.observables.value\",\n        \"size\": 20,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"entity.observed_time.start_time\",\n        \"interval\": \"M\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"analyze_wildcard\": true,\n      \"query\": \"*\"\n    }\n  },\n  \"filter\": []\n}"
+      }
+    }
+  },
+  {
+    "_id": "Event_top_20_relations_origin_uri_per_month",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_top_20_relations_origin_uri_per_month",
+      "visState": "{\"title\":\"Event_top_20_relations_origin_uri_per_month\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"entity.relations.origin_uri\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"entity.observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_event\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Event_top_20_relations_origin_per_month",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_top_20_relations_origin_per_month",
+      "visState": "{\"title\":\"Event_top_20_relations_origin_per_month\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"entity.relations.origin\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"entity.observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_event\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "event_observable_types",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_observable_types",
+      "visState": "{\n  \"title\": \"event_observable_types\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.observables.type\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"entity.observed_time.start_time\",\n        \"interval\": \"M\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
       "uiStateJSON": "{}",
       "description": "",
       "version": 1,
       "kibanaSavedObjectMeta": {
         "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
+      }
+    }
+  },
+  {
+    "_id": "event_confidence",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_confidence",
+      "visState": "{\n  \"title\": \"event_confidence\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"terms\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.confidence\",\n        \"size\": 5,\n        \"order\": \"desc\",\n        \"orderBy\": \"1\"\n      }\n    },\n    {\n      \"id\": \"3\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"group\",\n      \"params\": {\n        \"field\": \"entity.observed_time.start_time\",\n        \"interval\": \"M\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
+      }
+    }
+  },
+  {
+    "_id": "event_count_per_day",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_count_per_day",
+      "visState": "{\n  \"title\": \"event_count_per_day\",\n  \"type\": \"histogram\",\n  \"params\": {\n    \"shareYAxis\": true,\n    \"addTooltip\": true,\n    \"addLegend\": true,\n    \"legendPosition\": \"right\",\n    \"scale\": \"linear\",\n    \"mode\": \"stacked\",\n    \"times\": [],\n    \"addTimeMarker\": false,\n    \"defaultYExtents\": false,\n    \"setYExtents\": false,\n    \"yAxis\": {}\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    },\n    {\n      \"id\": \"2\",\n      \"enabled\": true,\n      \"type\": \"date_histogram\",\n      \"schema\": \"segment\",\n      \"params\": {\n        \"field\": \"entity.observed_time.start_time\",\n        \"interval\": \"auto\",\n        \"customInterval\": \"2h\",\n        \"min_doc_count\": 1,\n        \"extended_bounds\": {}\n      }\n    }\n  ],\n  \"listeners\": {}\n}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
+      }
+    }
+  },
+  {
+    "_id": "event_total_count",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_total_count",
+      "visState": "{\n  \"title\": \"event_total_count\",\n  \"type\": \"metric\",\n  \"params\": {\n    \"handleNoResults\": true,\n    \"fontSize\": \"40\"\n  },\n  \"aggs\": [\n    {\n      \"id\": \"1\",\n      \"enabled\": true,\n      \"type\": \"count\",\n      \"schema\": \"metric\",\n      \"params\": {}\n    }\n  ],\n  \"listeners\": {}\n}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\n  \"index\": \"ctia_event\",\n  \"query\": {\n    \"query_string\": {\n      \"query\": \"*\",\n      \"analyze_wildcard\": true\n    }\n  },\n  \"filter\": []\n}"
+      }
+    }
+  },
+  {
+    "_id": "Event_top_20_relations_related_value",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_top_20_relations_related_value",
+      "visState": "{\"title\":\"Event_top_20_relations_related_value\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"entity.relations.related.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"entity.observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_event\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Event_top_20_relations_source_value",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_top_20_relations_source_value",
+      "visState": "{\"title\":\"Event_top_20_relations_source_value\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"entity.relations.source.value\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"entity.observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_event\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Event_relations_related_type",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_relations_related_type",
+      "visState": "{\"title\":\"Event_relations_related_type\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"entity.relations.related.type\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"entity.observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_event\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Event_relations_source_type",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_relations_source_type",
+      "visState": "{\"title\":\"Event_relations_source_type\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"entity.relations.source.type\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"entity.observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_event\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Event_top_20_entity_source_uri",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_top_20_entity_source_uri",
+      "visState": "{\"title\":\"Event_top_20_entity_source_uri\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"entity.source_uri\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"entity.observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_event\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
+      }
+    }
+  },
+  {
+    "_id": "Event_top_20_entity_source",
+    "_type": "visualization",
+    "_source": {
+      "title": "Event_top_20_entity_source",
+      "visState": "{\"title\":\"Event_top_20_entity_source\",\"type\":\"histogram\",\"params\":{\"shareYAxis\":true,\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"scale\":\"linear\",\"mode\":\"stacked\",\"times\":[],\"addTimeMarker\":false,\"defaultYExtents\":false,\"setYExtents\":false,\"yAxis\":{}},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"entity.source\",\"size\":20,\"order\":\"desc\",\"orderBy\":\"1\"}},{\"id\":\"3\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"group\",\"params\":{\"field\":\"entity.observed_time.start_time\",\"interval\":\"M\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}],\"listeners\":{}}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"ctia_event\",\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}},\"filter\":[]}"
       }
     }
   }
