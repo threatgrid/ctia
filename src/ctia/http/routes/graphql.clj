@@ -6,10 +6,8 @@
    [schema.core :as s]
    [ring.util.request :refer [body-string]]
    [ring.util.http-response :refer :all]
-   [ctia.schemas.graphql :as gql])
-  (:import graphql.GraphQL))
-
-
+   [ctia.schemas.graphql :as gql]
+   [ctia.schemas.graphql2 :as gql2]))
 
 (defroutes graphql-routes
   (POST "/graphql" []
@@ -19,22 +17,16 @@
         :body [body gql/RelayGraphQLQuery {:description "a Relay compatible GraphQL body"}]
         :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
         (let [request-context {}
-              query (get body :query)
-              varmap (java.util.HashMap.
-                      (into {} 
-                            (for [[k v] (get body :variables {})] 
-                              [(name k) v])))]
-          (log/info "Graphql call body: " (pr-str body) " variables: " varmap)
-          (let [result (.execute (new GraphQL gql/schema)
-                                 query
-                                 nil
-                                 varmap)
-                data (.getData result)
-                errors (map str (.getErrors result))]
+              {:keys [query variables]} body]
+          (log/info "Graphql call body: " (pr-str body) " variables: " variables)
+          (let [{:keys [errors data] :as result}
+                (gql2/execute query variables)
+                str-errors (map str errors)]
+            (log/info "Graphql result:" result)
             (if data
-              (if (not (empty? errors))
-                (do (log/info "Graphql errors: " (pr-str errors))
+              (if (seq str-errors)
+                (do (log/info "Graphql errors: " (pr-str str-errors))
                     (internal-server-error))
                 (ok {:data data}))
-              (do (log/info "Graphql errors: " (pr-str errors))
-                  (bad-request {:errors errors})))))))
+              (do (log/info "Graphql errors: " (pr-str str-errors))
+                  (bad-request {:errors str-errors})))))))
