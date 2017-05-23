@@ -1,17 +1,18 @@
 (ns ctia.schemas.graphql.helpers
-  (:require [clojure.tools.logging :as log]
-            [clojure.walk :refer [stringify-keys]])
-  (:import [graphql GraphQL]
-           [graphql.schema
-            DataFetcher
-            GraphQLArgument
-            GraphQLEnumType
-            GraphQLFieldDefinition
-            GraphQLList
-            GraphQLNonNull
-            GraphQLObjectType
-            GraphQLSchema
-            GraphQLTypeReference]))
+  (:require [clojure
+             [string :as str]
+             [walk :refer [stringify-keys]]]
+            [clojure.tools.logging :as log])
+  (:import graphql.GraphQL
+           (graphql.schema DataFetcher
+                           GraphQLArgument
+                           GraphQLEnumType
+                           GraphQLFieldDefinition
+                           GraphQLList
+                           GraphQLNonNull
+                           GraphQLObjectType
+                           GraphQLSchema
+                           GraphQLTypeReference)))
 
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
@@ -48,13 +49,19 @@
   nil
   (->clj [_] nil))
 
+(defn- escape-enum-value-name
+  [enum-value-name]
+  (str/replace enum-value-name #"[-]" "_"))
+
 (defn enum
   [enum-name description c]
   (let [graphql-enum (-> (GraphQLEnumType/newEnum)
                          (.name enum-name)
                          (.description description))]
     (doseq [value c]
-      (.value graphql-enum value))
+      (.value graphql-enum
+              (escape-enum-value-name value)
+              value))
     (.build graphql-enum)))
 
 (defn list-type
@@ -97,20 +104,26 @@
 (defn new-argument
   [arg-name
    arg-type
-   arg-description]
-  (-> (GraphQLArgument/newArgument)
-      (.name arg-name)
-      (.type arg-type)
-      (.description (or arg-description ""))))
+   arg-description
+   arg-default-value]
+  (let [new-arg (-> (GraphQLArgument/newArgument)
+                    (.name arg-name)
+                    (.type arg-type)
+                    (.description (or arg-description "")))]
+    (when (some? arg-default-value)
+      (.defaultValue new-arg arg-default-value))
+    new-arg))
 
 (defn add-args
   [field args]
   (doseq [[k {arg-type :type
               arg-description :description
+              arg-default-value :default
               :or {arg-description ""}}] args]
     (.argument field (new-argument (name k)
                                    arg-type
-                                   arg-description)))
+                                   arg-description
+                                   arg-default-value)))
   field)
 
 (defn new-field
@@ -172,3 +185,4 @@
   (let [result (.execute graphql query nil (->java variables))]
     {:data (.getData result)
      :errors (.getErrors result)}))
+

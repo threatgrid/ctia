@@ -2,14 +2,16 @@
   (:require [ctia.domain.entities :as ent]
             [ctia.domain.entities.judgement :refer [with-long-id]]
             [ctia.schemas.graphql.common :as c]
-            [ctia.schemas.graphql.observable :as o]
             [ctia.schemas.graphql.helpers :as g]
+            [ctia.schemas.graphql.observable :as o]
+            [ctia.schemas.graphql.relationship :as r]
             [ctia.store :refer :all])
   (:import graphql.Scalars))
 
 (def judgement-fields
   (merge c/base-entity-fields
-         c/sourced-object-entries
+         c/sourced-object-fields
+         r/relatable-entity-fields
          (g/non-nulls
           {:observable {:type o/ObservableType}
            :disposition {:type c/DispositionNumberType}

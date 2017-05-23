@@ -39,19 +39,28 @@
                        "position of the object does not have an upper bound.")
      :resolve (g/map-resolver :end_time format-date-time)}}))
 
-(def sourced-object-entries
+(def describable-entity-fields
+  {:title {:type Scalars/GraphQLString}
+   :description {:type Scalars/GraphQLString}
+   :short_description {:type Scalars/GraphQLString}})
+
+(def sourced-object-fields
   {:source {:type (g/non-null Scalars/GraphQLString)}
    :source_uri {:type Scalars/GraphQLString}})
 
+(def sourcable-object-fields
+  {:source {:type Scalars/GraphQLString}
+   :source_uri {:type Scalars/GraphQLString}})
+
 (def base-entity-fields
-  {:id {:type (g/non-null Scalars/GraphQLID)}
-   :type {:type (g/non-null Scalars/GraphQLString)}
-   :schema_version {:type (g/non-null Scalars/GraphQLString)
-                    :description "CTIM schema version for this entity"}
-   :revision {:type Scalars/GraphQLInt}
-   :external_ids {:type (g/list-type Scalars/GraphQLString)}
-   :timestamp {:type Scalars/GraphQLString}
-   :language {:type Scalars/GraphQLString}
-   :tlp {:type TLP}})
-
-
+  (into
+   (g/non-nulls
+    {:id {:type Scalars/GraphQLID}
+     :type {:type Scalars/GraphQLString}
+     :schema_version {:type Scalars/GraphQLString
+                      :description "CTIM schema version for this entity"}})
+   {:revision {:type Scalars/GraphQLInt}
+    :external_ids {:type (g/list-type Scalars/GraphQLString)}
+    :timestamp {:type Scalars/GraphQLString}
+    :language {:type Scalars/GraphQLString}
+    :tlp {:type TLP}}))
