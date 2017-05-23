@@ -1,13 +1,19 @@
 (ns ctia.http.routes.graphql
-  (:require [clojure.tools.logging :as log])
-  (:require 
-   [compojure.api.sweet :refer :all]
-   [compojure.api.sweet :refer :all]
-   [schema.core :as s]
-   [ring.util.request :refer [body-string]]
-   [ring.util.http-response :refer :all]
-   [ctia.schemas.graphql :as gql]
-   [ctia.schemas.graphql2 :as gql2]))
+  (:require [clojure.tools.logging :as log]
+            [compojure.api
+             [core :as c]
+             [sweet :refer :all]]
+            [ctia.schemas
+             [graphql :as gql]
+             [graphql2 :as gql2]]
+            [ring-graphql-ui.core :refer [graphiql]]
+            [ring.util.http-response :refer :all]
+            [schema.core :as s]))
+
+(def graphiql-route
+  (c/undocumented
+   (graphiql {:path "/graphiql"
+              :endpoint "ctia/graphql"})))
 
 (defroutes graphql-routes
   (POST "/graphql" []
