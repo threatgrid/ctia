@@ -89,7 +89,7 @@
                  [redismq "0.1.0-SNAPSHOT"]
 
                  ;; GraphQL
-                 [threatgrid/ring-graphql-ui "0.1.0"]
+                 [threatgrid/ring-graphql-ui "0.1.1"]
                  [com.graphql-java/graphql-java "2.4.0"]]
 
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)

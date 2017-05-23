@@ -6,14 +6,17 @@
             [ctia.schemas
              [graphql :as gql]
              [graphql2 :as gql2]]
-            [ring-graphql-ui.core :refer [graphiql]]
+            [ring-graphql-ui.core :refer [graphiql
+                                          voyager]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def graphiql-route
+(def graphql-ui-routes
   (c/undocumented
    (graphiql {:path "/graphiql"
-              :endpoint "ctia/graphql"})))
+              :endpoint "/ctia/graphql"})
+   (voyager {:path "/voyager"
+             :endpoint "/ctia/graphql"})))
 
 (defroutes graphql-routes
   (POST "/graphql" []

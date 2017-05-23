@@ -27,7 +27,7 @@
              [sighting :refer [sighting-routes]]
              [ttp :refer [ttp-routes]]
              [graphql :refer [graphql-routes
-                              graphiql-route]]
+                              graphql-ui-routes]]
              [version :refer [version-routes]]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]))
 
@@ -110,7 +110,7 @@
                (metrics/wrap-metrics "ctia" routes/get-routes)]
 
               documentation-routes
-              graphiql-route
+              graphql-ui-routes
               (context "/ctia" []
                        actor-routes
                        bulk-routes
