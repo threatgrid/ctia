@@ -8,9 +8,11 @@
                            GraphQLArgument
                            GraphQLEnumType
                            GraphQLFieldDefinition
+                           GraphQLInterfaceType
                            GraphQLList
                            GraphQLNonNull
                            GraphQLObjectType
+                           GraphQLOutputType
                            GraphQLSchema
                            GraphQLTypeReference)))
 
@@ -102,10 +104,10 @@
        (f (get value k))))))
 
 (defn new-argument
-  [arg-name
-   arg-type
-   arg-description
-   arg-default-value]
+  [^String arg-name
+   ^GraphQLOutputType arg-type
+   ^String arg-description
+   ^Object arg-default-value]
   (let [new-arg (-> (GraphQLArgument/newArgument)
                     (.name arg-name)
                     (.type arg-type)
@@ -115,23 +117,26 @@
     new-arg))
 
 (defn add-args
-  [field args]
+  [^GraphQLFieldDefinition field
+   args]
   (doseq [[k {arg-type :type
               arg-description :description
               arg-default-value :default
               :or {arg-description ""}}] args]
-    (.argument field (new-argument (name k)
-                                   arg-type
-                                   arg-description
-                                   arg-default-value)))
+    (let [^GraphQLArgument narg
+          (new-argument (name k)
+                        arg-type
+                        arg-description
+                        arg-default-value)]
+      (.argument field narg)))
   field)
 
 (defn new-field
-  [field-name
-   field-type
-   field-description
+  [^String field-name
+   ^GraphQLOutputType field-type
+   ^String field-description
    field-args
-   field-data-fetcher]
+   ^DataFetcher field-data-fetcher]
   (-> (GraphQLFieldDefinition/newFieldDefinition)
       (.name field-name)
       (.type field-type)
@@ -140,7 +145,8 @@
       (add-args field-args)))
 
 (defn add-fields
-  [t fields]
+  [^GraphQLObjectType t
+   fields]
   (doseq [[k {field-type :type
               field-description :description
               field-args :args
@@ -148,41 +154,53 @@
               :or {field-description ""
                    field-args {}
                    field-resolver (map-resolver k)}}] fields]
-    (.field t (new-field (name k)
-                         field-type
-                         field-description
-                         field-args
-                         (fn->data-fetcher field-resolver))))
+    (let [^GraphQLFieldDefinition newf
+          (new-field (name k)
+                     field-type
+                     field-description
+                     field-args
+                     (fn->data-fetcher field-resolver))]
+      (.field t newf)))
   t)
 
 (defn new-object
-  [object-name description interfaces fields]
+  [^String object-name
+   ^String description
+   interfaces
+   fields]
   (let [graphql-object (-> (GraphQLObjectType/newObject)
                            (.description description)
                            (.name object-name))]
-    (doseq [interface interfaces]
+    (doseq [^GraphQLInterfaceType interface interfaces]
       (.withInterface graphql-object interface))
     (-> graphql-object
         (add-fields fields)
         (.build))))
 
 (defn new-ref
-  [object-name]
+  [^String object-name]
   (new GraphQLTypeReference object-name))
 
 (defn new-schema
-  [query]
+  [^GraphQLObjectType query]
   (-> (GraphQLSchema/newSchema)
       (.query query)
       (.build)))
 
 (defn new-graphql
-  [schema]
+  [^GraphQLSchema schema]
   (-> (GraphQL/newGraphQL schema)
       (.build)))
 
-(defn execute [graphql query variables]
-  (let [result (.execute graphql query nil (->java variables))]
+(defn execute
+  [^GraphQL graphql
+   ^String query
+   ^String operation-name
+   ^java.util.Map variables]
+  (let [result (.execute graphql
+                         query
+                         operation-name
+                         nil
+                         (->java (or variables {})))]
     {:data (.getData result)
      :errors (.getErrors result)}))
-
