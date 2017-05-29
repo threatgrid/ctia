@@ -1,12 +1,19 @@
 (ns ctia.schemas.graphql2
-  (:require [clojure.tools.logging :as log]
-            [ctia.schemas.graphql.helpers :as g]
-            [ctia.schemas.graphql.judgement
-             :refer [JudgementType
-                     judgement-by-id]]
-            [ctia.schemas.graphql.observable
-             :refer [ObservableType]])
+  (:require [ctia.schemas.graphql
+             [helpers :as g]
+             [judgement :refer [judgement-by-id JudgementType]]
+             [observable :refer [ObservableType]]]
+            [schema.core :as s])
   (:import graphql.Scalars))
+
+(s/defschema RelayGraphQLQuery
+  {:query s/Str
+   (s/optional-key :operationName) (s/maybe s/Str)
+   (s/optional-key :variables) s/Any})
+
+(s/defschema RelayGraphQLResponse
+  {:data s/Any
+   (s/optional-key :errors) [s/Any]})
 
 (def QueryType
   (g/new-object
@@ -28,5 +35,5 @@
 (def schema (g/new-schema QueryType))
 (def graphql (g/new-graphql schema))
 
-(defn execute [query variables]
-  (g/execute graphql query variables))
+(defn execute [query operation-name variables]
+  (g/execute graphql query operation-name variables))

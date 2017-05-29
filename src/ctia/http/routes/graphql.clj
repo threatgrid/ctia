@@ -4,7 +4,6 @@
              [core :as c]
              [sweet :refer :all]]
             [ctia.schemas
-             [graphql :as gql]
              [graphql2 :as gql2]]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]
@@ -13,29 +12,30 @@
 
 (def graphql-ui-routes
   (c/undocumented
+   ;; --- GraphiQL https://github.com/shahankit/custom-graphiql/
    (graphiql {:path "/graphiql"
               :endpoint "/ctia/graphql"})
+   ;; --- GraphQL Voyager https://github.com/APIs-guru/graphql-voyager
    (voyager {:path "/voyager"
              :endpoint "/ctia/graphql"})))
 
 (defroutes graphql-routes
   (POST "/graphql" []
-        :tags ["GraphQL" "Relay"]
-        :return gql/RelayGraphQLResponse
+        :tags ["GraphQL"]
+        :return gql2/RelayGraphQLResponse
         :header-params [api_key :- (s/maybe s/Str)]
-        :body [body gql/RelayGraphQLQuery {:description "a Relay compatible GraphQL body"}]
+        :body [body gql2/RelayGraphQLQuery {:description "a Relay compatible GraphQL body"}]
         :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
         (let [request-context {}
-              {:keys [query variables]} body]
+              {:keys [query operationName variables]} body]
           (log/info "Graphql call body: " (pr-str body) " variables: " variables)
           (let [{:keys [errors data] :as result}
-                (gql2/execute query variables)
+                (gql2/execute query operationName variables)
                 str-errors (map str errors)]
             (log/info "Graphql result:" result)
-            (if data
-              (if (seq str-errors)
-                (do (log/info "Graphql errors: " (pr-str str-errors))
-                    (internal-server-error))
-                (ok {:data data}))
-              (do (log/info "Graphql errors: " (pr-str str-errors))
-                  (bad-request {:errors str-errors})))))))
+            (cond
+              (seq str-errors) (do (log/info "Graphql errors: " (pr-str str-errors))
+                                   (bad-request {:data data
+                                                 :errors str-errors}))
+              (some? data) (ok {:data data})
+              :else (internal-server-error))))))
