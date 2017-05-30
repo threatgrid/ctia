@@ -1,12 +1,16 @@
 (ns ctia.schemas.graphql.relationship
-  (:require [ctia.schemas.graphql.common :as c]
+  (:require [ctia.domain.entities :as ent]
+            [ctia.domain.entities.relationship
+             :refer [page-with-long-id]]
+            [ctia.schemas.graphql.common :as c]
             [ctia.schemas.graphql.helpers :as g]
             [ctia.schemas.graphql.observable :as o]
             [ctia.schemas.graphql.pagination :as p]
             [ctia.store :refer :all]
             [ctim.schemas.vocabularies :as voc]
             [clojure.tools.logging :as log]
-            [flanders.example :refer :all])
+            [flanders.example :refer :all]
+            [ctia.domain.entities :as ent])
   (:import graphql.Scalars))
 
 (def relationship-connection-type-name "RelationshipConnection")
@@ -41,33 +45,30 @@
   (p/new-connection RelationshipType
                     "relationships"))
 
-(defn- remove-empty-values
+(defn- remove-map-empty-values
   [m]
   (into {} (filter second m)))
 
 (defn search-relationships
   [_ args src]
-  (let [{:keys [query relationship_type target_type
-                after first before last]} args
+  (let [{:keys [query relationship_type target_type]} args
         filter-map {:relationship_type relationship_type
                     :target_type target_type
                     :source_ref (:id src)}
-        params {}
-        result (query-string-search-store
-                :relationship
-                query-string-search
-                query
-                (remove-empty-values filter-map)
-                params)]
+        paging-params (p/connection-params->paging-params args)
+        params (select-keys paging-params [:limit :offset])
+        result (-> (query-string-search-store
+                    :relationship
+                    query-string-search
+                    query
+                    (remove-map-empty-values filter-map)
+                    params)
+                   page-with-long-id
+                   ent/un-store-page)]
     (log/debug "Search relationships graphql args " args)
-    (log/debug "Search relationhips filter " filter-map)
-    (log/debug "Search relationhips filter " params)
-    {:pageInfo {:hasNextPage true
-                :hasPreviousPage false
-                :startCursor 1
-                :endCursor 1}
-     :totalCount 0
-     :edges []}))
+    (-> result
+        (p/result->connection-response paging-params)
+        (assoc :relationships (:data result)))))
 
 (def relatable-entity-fields
   {:relationships
@@ -79,7 +80,8 @@
      {:query
       {:type Scalars/GraphQLString
        :description (str "A Lucense query string, will only "
-                         "return Relationships matching it.")}
+                         "return Relationships matching it.")
+       :default "*"}
       :relationship_type
       {:type RelationshipTypeType
        :description (str "restrict to Relations with the specified relationship_type.")}

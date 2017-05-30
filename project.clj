@@ -89,8 +89,14 @@
                  [redismq "0.1.0-SNAPSHOT"]
 
                  ;; GraphQL
-                 [threatgrid/ring-graphql-ui "0.1.1"]
-                 [com.graphql-java/graphql-java "3.0.0"]]
+                 [org.clojure/data.codec "0.1.0"]
+                 [threatgrid/ring-graphql-ui "0.1.1"
+                  :exclusions [commons-fileupload
+                               ring/ring-core
+                               cheshire
+                               metosin/ring-http-response]]
+                 [com.graphql-java/graphql-java "3.0.0"
+                  :exclusions [org.slf4j/slf4j-api]]]
 
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
                com.andrewmcveigh/cljs-time]
