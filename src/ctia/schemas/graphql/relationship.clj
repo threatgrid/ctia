@@ -1,16 +1,17 @@
 (ns ctia.schemas.graphql.relationship
-  (:require [ctia.domain.entities :as ent]
-            [ctia.domain.entities.relationship
-             :refer [page-with-long-id]]
+  (:require [ctim.domain.id :as id]
             [ctia.schemas.graphql.common :as c]
             [ctia.schemas.graphql.helpers :as g]
             [ctia.schemas.graphql.observable :as o]
             [ctia.schemas.graphql.pagination :as p]
-            [ctia.store :refer :all]
+            [ctia.schemas.graphql.refs :as refs]
+            [ctia.schemas.graphql.resolvers
+             :refer [entity-by-id
+                     search-relationships]]
             [ctim.schemas.vocabularies :as voc]
             [clojure.tools.logging :as log]
-            [flanders.example :refer :all]
-            [ctia.domain.entities :as ent])
+            [schema.core :as s]
+            [ctia.schemas.graphql.common :as common])
   (:import graphql.Scalars))
 
 (def relationship-connection-type-name "RelationshipConnection")
@@ -19,6 +20,23 @@
   (g/enum "RelationshipType"
           ""
           voc/relationship-type))
+
+(s/defn ref->entity-type :- s/Str
+  "Extracts the entity type from the Reference"
+  [ref :- s/Str]
+  (some-> ref
+          id/long-id->id
+          :type))
+
+(def Entity
+  (g/new-union
+   "Entity"
+   ""
+   (fn [obj args schema]
+     (log/debug "Entity resolution" obj args)
+     (case (:type obj)
+       "judgement" (.getType schema refs/judgement-type-name)))
+   [refs/JudgementRef]))
 
 (def relation-fields
   (merge
@@ -29,6 +47,18 @@
     {:relationship_type {:type RelationshipTypeType}
      :source_ref {:type Scalars/GraphQLString
                   :description "The ID of the source object"}
+     :source {:type Entity
+              :resolve (fn [_ args src]
+                         (log/debug "Source resolver" args src)
+                         (let [ref (:source_ref src)
+                               entity-type (ref->entity-type ref)]
+                           (entity-by-id entity-type ref)))}
+     :target {:type Entity
+              :resolve (fn [_ args src]
+                         (log/debug "Target resolver" args src)
+                         (let [ref (:target_ref src)
+                               entity-type (ref->entity-type ref)]
+                           (entity-by-id entity-type ref)))}
      :target_ref {:type Scalars/GraphQLString
                   :description (str "The type of the relationship, "
                                     "see /ctia/doc/defined_relationships.md")}})))
@@ -41,48 +71,18 @@
                 []
                 relation-fields))
 
-(def RelationshipsConnectionType
-  (p/new-connection RelationshipType
-                    "relationships"))
-
-(defn- remove-map-empty-values
-  [m]
-  (into {} (filter second m)))
-
-(defn search-relationships
-  [_ args src]
-  (let [{:keys [query relationship_type target_type]} args
-        filter-map {:relationship_type relationship_type
-                    :target_type target_type
-                    :source_ref (:id src)}
-        paging-params (p/connection-params->paging-params args)
-        params (select-keys paging-params [:limit :offset])
-        result (-> (query-string-search-store
-                    :relationship
-                    query-string-search
-                    query
-                    (remove-map-empty-values filter-map)
-                    params)
-                   page-with-long-id
-                   ent/un-store-page)]
-    (log/debug "Search relationships graphql args " args)
-    (-> result
-        (p/result->connection-response paging-params)
-        (assoc :relationships (:data result)))))
+(def RelationshipConnectionType
+  (p/new-connection RelationshipType))
 
 (def relatable-entity-fields
   {:relationships
-   {:type RelationshipsConnectionType
+   {:type RelationshipConnectionType
     :description (str "A connection containing the Relationship objects "
                       "that has this object a their source.")
     :args
     (merge
-     {:query
-      {:type Scalars/GraphQLString
-       :description (str "A Lucense query string, will only "
-                         "return Relationships matching it.")
-       :default "*"}
-      :relationship_type
+     common/lucene-query-arguments
+     {:relationship_type
       {:type RelationshipTypeType
        :description (str "restrict to Relations with the specified relationship_type.")}
       :target_type

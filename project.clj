@@ -89,7 +89,7 @@
                  [redismq "0.1.0-SNAPSHOT"]
 
                  ;; GraphQL
-                 [org.clojure/data.codec "0.1.0"]
+                 [base64-clj "0.1.1"]
                  [threatgrid/ring-graphql-ui "0.1.1"
                   :exclusions [commons-fileupload
                                ring/ring-core

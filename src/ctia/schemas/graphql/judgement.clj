@@ -1,11 +1,10 @@
 (ns ctia.schemas.graphql.judgement
-  (:require [ctia.domain.entities :as ent]
-            [ctia.domain.entities.judgement :refer [with-long-id]]
-            [ctia.schemas.graphql.common :as c]
+  (:require [ctia.schemas.graphql.common :as c]
             [ctia.schemas.graphql.helpers :as g]
             [ctia.schemas.graphql.observable :as o]
-            [ctia.schemas.graphql.relationship :as r]
-            [ctia.store :refer :all])
+            [ctia.schemas.graphql.pagination :as p]
+            [ctia.schemas.graphql.refs :as refs]
+            [ctia.schemas.graphql.relationship :as r])
   (:import graphql.Scalars))
 
 (def judgement-fields
@@ -25,16 +24,11 @@
          {:reason {:type (Scalars/GraphQLString)}
           :reason_uri {:type (Scalars/GraphQLString)}}))
 
-(def judgement-type-name "Judgement")
-
 (def JudgementType
-  (g/new-object judgement-type-name
+  (g/new-object refs/judgement-type-name
                 "A judgement about the intent or nature of an observable."
                 []
                 judgement-fields))
 
-(defn judgement-by-id
-  [id]
-  (some-> (read-store :judgement read-judgement id)
-          with-long-id
-          ent/un-store))
+(def JudgementConnectionType
+  (p/new-connection JudgementType))

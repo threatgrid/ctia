@@ -113,7 +113,8 @@
               :edges [{:cursor "MA=="
                        :node 0}
                       {:cursor "MQ=="
-                       :node 1}]}
+                       :node 1}]
+              :nodes [0 1]}
              first-page-response))
       (is (= {:pageInfo
               {:hasNextPage true
@@ -124,7 +125,8 @@
               :edges [{:cursor "Mg=="
                        :node 2}
                       {:cursor "Mw=="
-                       :node 3}]}
+                       :node 3}]
+              :nodes [2 3]}
              next-page-response))))
   (testing "Backwards paging"
     (let [last-page-params (sut/connection-params->paging-params
@@ -149,7 +151,8 @@
               :edges [{:cursor "OA=="
                        :node 8}
                       {:cursor "OQ=="
-                       :node 9}]}
+                       :node 9}]
+              :nodes [8 9]}
              last-page-response))
       (is (= {:pageInfo
               {:hasNextPage true
@@ -160,5 +163,6 @@
               :edges [{:cursor "Ng=="
                        :node 6}
                       {:cursor "Nw=="
-                       :node 7}]}
+                       :node 7}]
+              :nodes [6 7]}
              next-page-response)))))

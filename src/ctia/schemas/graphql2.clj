@@ -1,9 +1,16 @@
 (ns ctia.schemas.graphql2
   (:require [ctia.schemas.graphql
+             [common :as common]
              [helpers :as g]
-             [judgement :refer [judgement-by-id JudgementType]]
-             [observable :refer [ObservableType]]]
-            [schema.core :as s])
+             [judgement :refer [JudgementType
+                                JudgementConnectionType]]
+             [observable :refer [ObservableType]]
+             [relationship :refer [RelationshipConnectionType]]
+             [resolvers :refer [judgement-by-id
+                                search-judgements
+                                search-relationships]]]
+            [schema.core :as s]
+            [ctia.schemas.graphql.pagination :as p])
   (:import graphql.Scalars))
 
 (s/defschema RelayGraphQLQuery
@@ -25,6 +32,20 @@
      :args {:id {:type (g/non-null Scalars/GraphQLString)}}
      :resolve
      (fn [_ args _] (judgement-by-id (:id args)))}
+    :judgements
+    {:type JudgementConnectionType
+     :args
+     (merge
+      common/lucene-query-arguments
+      p/connection-arguments)
+     :resolve search-judgements}
+    :relationships
+    {:type RelationshipConnectionType
+     :args
+     (merge
+      common/lucene-query-arguments
+      p/connection-arguments)
+     :resolve search-relationships}
     :observable
     {:type ObservableType
      :args {:type {:type (g/non-null Scalars/GraphQLString)}

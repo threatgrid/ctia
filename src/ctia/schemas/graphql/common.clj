@@ -64,3 +64,9 @@
     :timestamp {:type Scalars/GraphQLString}
     :language {:type Scalars/GraphQLString}
     :tlp {:type TLP}}))
+
+(def lucene-query-arguments
+  {:query {:type Scalars/GraphQLString
+           :description (str "A Lucene query string, will only "
+                             "return Relationships matching it.")
+           :default "*"}})

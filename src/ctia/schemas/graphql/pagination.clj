@@ -1,10 +1,10 @@
 (ns ctia.schemas.graphql.pagination
-  (:require [clojure.tools.logging :as log]
-            [clojure.data.codec.base64 :as b64]
+  (:require [base64-clj.core :as b64]
             [clojure.string :as str]
+            [clojure.tools.logging :as log]
             [ctia.schemas.graphql.helpers :as g]
-            [schema.core :as s]
-            [schema-tools.core :as st])
+            [schema-tools.core :as st]
+            [schema.core :as s])
   (:import graphql.Scalars))
 
 (def PageInfo
@@ -34,22 +34,21 @@
     :cursor {:type (g/non-null Scalars/GraphQLString)}}))
 
 (defn new-connection
-  [node-type list-name]
-  (let [capitalized-list-name (str/capitalize list-name)
-        connection-name (str capitalized-list-name
+  [node-type]
+  (let [type-name (str/capitalize (.getName node-type))
+        connection-name (str type-name
                              "Connection")
-        edge-name (str capitalized-list-name
+        edge-name (str type-name
                        "Edge")]
     (g/new-object
      connection-name
-     (str "A connection to a list of " capitalized-list-name)
+     (str "A connection to a list of " type-name)
      []
-     (assoc {:pageInfo {:type (g/non-null PageInfo)}
-             :totalCount {:type Scalars/GraphQLInt}
-             :edges {:type (g/list-type (new-edge node-type
-                                                  edge-name))}}
-            (keyword (str/lower-case list-name))
-            {:type (g/list-type node-type)}))))
+     {:pageInfo {:type (g/non-null PageInfo)}
+      :totalCount {:type Scalars/GraphQLInt}
+      :edges {:type (g/list-type (new-edge node-type
+                                           edge-name))}
+      :nodes {:type (g/list-type node-type)}})))
 
 ;;------- Limit/Offset with opaque cursor
 ;; See : https://github.com/darthtrevino/relay-cursor-paging/blob/master/src/getPagingParameters.ts
@@ -91,7 +90,8 @@
               :startCursor (s/maybe Cursor)
               :endCursor (s/maybe Cursor)}
    :totalCount s/Int
-   :edges (s/maybe [Edge])})
+   :edges (s/maybe [Edge])
+   :nodes (s/maybe [s/Any])})
 
 (s/defschema Result
   {:data [s/Any]
@@ -100,16 +100,14 @@
 (s/defn serialize-cursor :- (s/maybe Cursor)
   [offset :- (s/maybe s/Int)]
   (when offset
-    (String. (b64/encode (.getBytes (str offset))))))
+    (b64/encode (str offset))))
 
 (s/defn unserialize-cursor :- (s/maybe s/Int)
   [cursor :- (s/maybe Cursor)]
   (when cursor
     (try
       (-> cursor
-          (.getBytes)
           b64/decode
-          (String.)
           (Integer/parseInt))
       (catch Exception e
         (log/warn e "Unable to unserialize cursor")
@@ -208,4 +206,5 @@
       :startCursor (:cursor (first edges))
       :endCursor (:cursor (last edges))}
      :totalCount (:total-hits paging)
-     :edges edges}))
+     :edges edges
+     :nodes data}))

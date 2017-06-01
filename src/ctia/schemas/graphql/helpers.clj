@@ -14,7 +14,9 @@
                            GraphQLObjectType
                            GraphQLOutputType
                            GraphQLSchema
-                           GraphQLTypeReference)))
+                           GraphQLTypeReference
+                           GraphQLUnionType
+                           TypeResolver)))
 
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
@@ -168,14 +170,40 @@
    ^String description
    interfaces
    fields]
-  (let [graphql-object (-> (GraphQLObjectType/newObject)
-                           (.description description)
-                           (.name object-name))]
+  (let [^GraphQLObjectType graphql-object
+        (-> (GraphQLObjectType/newObject)
+            (.description description)
+            (.name object-name))]
     (doseq [^GraphQLInterfaceType interface interfaces]
       (.withInterface graphql-object interface))
     (-> graphql-object
         (add-fields fields)
         (.build))))
+
+(defn fn->type-resolver
+  [f]
+  (reify TypeResolver
+    (getType [_ env]
+      (let [object (->clj (.getObject env))
+            args (->clj (.getArguments env))
+            schema (.getSchema env)]
+        (f object args schema)))))
+
+(defn new-union
+  [^String union-name
+   ^String description
+   type-resolver-fn
+   types]
+  (let [^TypeResolver type-resolver
+        (fn->type-resolver type-resolver-fn)
+        ^GraphQLUnionType
+        graphql-union (-> (GraphQLUnionType/newUnionType)
+                          (.description description)
+                          (.name union-name)
+                          (.typeResolver type-resolver))]
+    (doseq [type types]
+      (.possibleType graphql-union type))
+    (.build graphql-union)))
 
 (defn new-ref
   [^String object-name]
