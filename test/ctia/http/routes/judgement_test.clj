@@ -268,6 +268,117 @@
                               :headers {"api_key" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))
 
+(deftest-for-each-store test-judgement-sorted-search
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+
+  (testing "With some judgements"
+    (let [make-judgement (fn [& {:as custom}]
+                           (merge
+                            {:observable {:value "1.2.3.4" :type "ip"}
+                             :source "test"
+                             :priority 100
+                             :severity "High"
+                             :confidence "Low"}
+                            custom))
+
+          {status :status} (post "ctia/bulk"
+                                 :body {:judgements
+                                        [(make-judgement
+                                          :disposition 5,
+                                          :disposition_name "Unknown",
+                                          :external_ids ["judgment-1"]
+                                          :valid_time {:start_time "2017-05-01T20:46:41.690Z",
+                                                       :end_time "2017-05-15T21:46:41.690Z"})
+                                         (make-judgement
+                                          :disposition 2,
+                                          :disposition_name "Malicious",
+                                          :external_ids ["judgement-2"]
+                                          :valid_time {:start_time "2017-05-01T20:46:41.690Z",
+                                                       :end_time "2017-05-15T21:46:41.690Z"})
+                                         (make-judgement
+                                          :disposition 2,
+                                          :disposition_name "Malicious",
+                                          :external_ids ["judgement-3"]
+                                          :valid_time {:start_time "2017-05-01T20:46:41.690Z",
+                                                       :end_time "2017-05-10T21:46:41.690Z"})
+                                         (make-judgement
+                                          :disposition 1,
+                                          :disposition_name "Clean",
+                                          :external_ids ["judgement-4"]
+                                          :valid_time {:start_time "2017-05-01T20:46:41.690Z",
+                                                       :end_time "2017-05-15T21:46:41.690Z"})
+                                         (make-judgement
+                                          :disposition 3,
+                                          :disposition_name "Suspicious",
+                                          :external_ids ["judgment-5"]
+                                          :valid_time {:start_time "2017-05-01T20:46:41.690Z",
+                                                       :end_time "2017-05-15T21:46:41.690Z"})
+                                         (make-judgement
+                                          :disposition 2,
+                                          :disposition_name "Malicious",
+                                          :external_ids ["judgement-6"]
+                                          :valid_time {:start_time "2017-05-01T21:46:41.690Z",
+                                                       :end_time "2017-05-15T22:46:41.690Z"})
+                                         (make-judgement
+                                          :disposition 4,
+                                          :disposition_name "Common",
+                                          :external_ids ["judgement-7"]
+                                          :valid_time {:start_time "2017-05-01T20:46:41.690Z",
+                                                       :end_time "2017-05-15T21:46:41.690Z"})]}
+                                 :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= 201 status)))
+
+    (testing "Search with multiple sort_by parameters"
+
+      (let [{judgements :parsed-body
+             status :status}
+            (get "ctia/judgement/search?sort_by=valid_time.end_time:desc,disposition:asc,valid_time.start_time:desc&query=*"
+                 :headers {"api_key" "45c1f5e3f05d0"})]
+        (is (= 200 status))
+
+        (is (= [{:disposition 2,
+                 :disposition_name "Malicious",
+                 :external_ids ["judgement-6"],
+                 :valid_time {:start_time #inst "2017-05-01T21:46:41.690-00:00",
+                              :end_time #inst "2017-05-15T22:46:41.690-00:00"}}
+                {:disposition 1,
+                 :disposition_name "Clean",
+                 :external_ids ["judgement-4"],
+                 :valid_time {:start_time #inst "2017-05-01T20:46:41.690-00:00",
+                              :end_time #inst "2017-05-15T21:46:41.690-00:00"}}
+                {:disposition 2,
+                 :disposition_name "Malicious",
+                 :external_ids ["judgement-2"],
+                 :valid_time {:start_time #inst "2017-05-01T20:46:41.690-00:00",
+                              :end_time #inst "2017-05-15T21:46:41.690-00:00"}}
+                {:disposition 3,
+                 :disposition_name "Suspicious",
+                 :external_ids ["judgment-5"],
+                 :valid_time {:start_time #inst "2017-05-01T20:46:41.690-00:00",
+                              :end_time #inst "2017-05-15T21:46:41.690-00:00"}}
+                {:disposition 4,
+                 :disposition_name "Common",
+                 :external_ids ["judgement-7"],
+                 :valid_time {:start_time #inst "2017-05-01T20:46:41.690-00:00",
+                              :end_time #inst "2017-05-15T21:46:41.690-00:00"}}
+                {:disposition 5,
+                 :disposition_name "Unknown",
+                 :external_ids ["judgment-1"],
+                 :valid_time {:start_time #inst "2017-05-01T20:46:41.690-00:00",
+                              :end_time #inst "2017-05-15T21:46:41.690-00:00"}}
+                {:disposition 2,
+                 :disposition_name "Malicious",
+                 :external_ids ["judgement-3"],
+                 :valid_time {:start_time #inst "2017-05-01T20:46:41.690-00:00",
+                              :end_time #inst "2017-05-10T21:46:41.690-00:00"}}]
+               (map #(select-keys %
+                                  [:disposition
+                                   :disposition_name
+                                   :external_ids
+                                   :valid_time])
+                    judgements)))))))
+
 (deftest-for-each-store test-judgement-routes-for-dispositon-determination
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
