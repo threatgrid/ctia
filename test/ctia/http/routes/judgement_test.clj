@@ -290,7 +290,6 @@
                                           :external_ids ["judgment-1"]
                                           :valid_time {:start_time "2017-05-01T20:46:41.690Z",
                                                        :end_time "2017-05-15T21:46:41.690Z"})
-
                                          (make-judgement
                                           :disposition 2,
                                           :disposition_name "Malicious",
