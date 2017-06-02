@@ -76,7 +76,11 @@
                          :valid_time.end_time
                          :reason
                          :observable.type
-                         :observable.value])))
+                         :observable.value
+                         (keyword
+                          (str "valid_time.end_time:desc,"
+                               "disposition:asc,"
+                               "valid_time.start_time:desc"))])))
 
 (def sighting-sort-fields
   (apply s/enum (concat default-entity-sort-fields
