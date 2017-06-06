@@ -28,8 +28,8 @@
    "confidence" "Low"
    "reason" "This is a bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
-   "valid_time" {"start_time" "2016-02-11T00:40:48Z"
-                 "end_time" "2025-03-11T00:40:48Z"}})
+   "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
+                 "end_time" "2025-03-11T00:40:48.000Z"}})
 
 (def judgement-2
   {"observable" {"value" "1.2.3.4"
@@ -45,8 +45,8 @@
    "confidence" "High"
    "reason" "This is a bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
-   "valid_time" {"start_time" "2016-02-11T00:40:48Z"
-                 "end_time" "2025-03-11T00:40:48Z"}})
+   "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
+                 "end_time" "2025-03-11T00:40:48.000Z"}})
 
 (def judgement-3
   {"observable" {"value" "8.8.8.8"
@@ -61,8 +61,8 @@
    "confidence" "High"
    "reason" "This is a bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
-   "valid_time" {"start_time" "2016-02-11T00:40:48Z"
-                 "end_time" "2025-03-11T00:40:48Z"}})
+   "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
+                 "end_time" "2025-03-11T00:40:48.000Z"}})
 
 (def indicator-1
   {"title" "Bad IP because someone said so"
@@ -109,20 +109,16 @@
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
-                                    whoami-helpers/fixture-server
-                                    ]))
+                                    whoami-helpers/fixture-server]))
 
 ;;ctia.test-helpers.core/fixture-properties:events-enabled
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-
-
 (deftest-for-each-store test-graphql-route
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
   (let [datamap (initialize-graphql-data)]
-
     (testing "POST /ctia/graphql"
       (testing "Query syntax error"
         (let [{status :status
@@ -132,7 +128,7 @@
                     :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 400 status))
           (is (deep= body
-                     {:errors ["InvalidSyntaxError{sourceLocations=[SourceLocation{line=1, column=5}]}"]}))))
+                     {:errors ["InvalidSyntaxError{sourceLocations=[SourceLocation{line=1, column=0}]}"]}))))
       (testing "Query validation error"
         (let [{status :status
                body :parsed-body}
@@ -153,7 +149,7 @@
                                    value
                                    verdict { type disposition_name disposition
                                              judgement { id type external_ids tlp disposition disposition_name priority confidence severity reason reason_uri valid_time { start_time end_time } observable { value type } source source_uri } }
-                                   judgements(first: 1 after:\"0\") { pageInfo { totalHits hasNextPage } edges { node { reason type  source id } } }
+                                   judgements(first: 1) { totalCount pageInfo { endCursor hasNextPage } edges { node { reason type source id } } }
                                  }
                                }"}
                       :headers {"api_key" "45c1f5e3f05d0"})]
@@ -188,7 +184,7 @@
                     ))))
 
             (testing "the judgement connection"
-              (is (deep= (get-in body [:data "observable" "judgements" "pageInfo" "totalHits"]) 2)
+              (is (deep= (get-in body [:data "observable" "judgements" "totalCount"]) 2)
                   "judgement Connection pageInfo is correct")
               (is (deep= (get-in body [:data "observable" "judgements" "pageInfo" "hasNextPage"]) true)
                   "judgement Connection pageInfo.hasNextPage is correct")
@@ -213,7 +209,8 @@
                                           "   observable { value type }\n"
                                           "   source source_uri\n"
                                           "   relationships {\n"
-                                          "     pageInfo { totalHits hasNextPage }\n"
+                                          "     totalCount"
+                                          "     pageInfo { hasNextPage }\n"
                                           "       edges { node {\n"
                                           "                 target_ref"
                                           "               }\n"
@@ -286,7 +283,7 @@
                                        (str "query TestQuery {\n"
                                             " judgement(id: \"" (get-in datamap [:judgement-1 :id]) "\") { \n"
                                             "   relationships(relationship_type: \"element-of\") {\n"
-                                            "     pageInfo { totalHits }\n"
+                                            "     totalCount\n"
                                             "   }\n"
                                             " }\n"
                                             "}")}
@@ -295,7 +292,7 @@
               (is (= 200 status))
               (is (empty? (:errors body))
                   "No errors")
-              (is (= (get-in body [:data "judgement" "relationships" "pageInfo" "totalHits"])
+              (is (= (get-in body [:data "judgement" "relationships" "totalCount"])
                      1)
                   "matches element-of relationship")))
 
@@ -307,7 +304,7 @@
                                        (str "query TestQuery {\n"
                                             " judgement(id: \"" (get-in datamap [:judgement-1 :id]) "\") { \n"
                                             "   relationships(relationship_type: \"indicates\") {\n"
-                                            "     pageInfo { totalHits }\n"
+                                            "     totalCount \n"
                                             "   }\n"
                                             " }\n"
                                             "}")}
@@ -316,7 +313,7 @@
               (is (= 200 status))
               (is (empty? (:errors body))
                   "No errors")
-              (is (= (get-in body [:data "judgement" "relationships" "pageInfo" "totalHits"])
+              (is (= (get-in body [:data "judgement" "relationships" "totalCount"])
                      0)
                   "does not match element-of relationship"))
 
@@ -327,7 +324,7 @@
                                        (str "query TestQuery {\n"
                                             " judgement(id: \"" (get-in datamap [:judgement-1 :id]) "\") { \n"
                                             "   relationships(relationship_type: \"element-of\") {\n"
-                                            "     pageInfo { totalHits }\n"
+                                            "     totalCount \n"
                                             "   }\n"
                                             " }\n"
                                             "}")}
@@ -336,13 +333,6 @@
               (is (= 200 status))
               (is (empty? (:errors body))
                   "No errors")
-              (is (= (get-in body [:data "judgement" "relationships" "pageInfo" "totalHits"])
+              (is (= (get-in body [:data "judgement" "relationships" "totalCount"])
                      1)
-                  "matches element-of relationship")))
-
-
-
-
-          )
-
-        ))))
+                  "matches element-of relationship"))))))))

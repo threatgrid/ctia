@@ -42,7 +42,11 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.9c"]
+                 [threatgrid/ctim "0.4.11-SNAPSHOT"
+                  :exclusions [joda-time
+                               clj-time
+                               riemann-clojure-client
+                               com.andrewmcveigh/cljs-time]]
 
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api

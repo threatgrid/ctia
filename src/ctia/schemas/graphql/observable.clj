@@ -1,33 +1,14 @@
 (ns ctia.schemas.graphql.observable
-  (:require [ctia.domain.entities
-             [judgement :as judgement]]
-            [ctia.schemas.graphql.helpers :as g]
+  (:require [ctia.domain.entities.judgement :as ctim-judgement-entity]
+            [ctia.schemas.graphql
+             [flanders :as f]
+             [helpers :as g]
+             [judgement :as judgement]
+             [pagination :as pagination]
+             [resolvers :as resolvers]
+             [verdict :as verdict]]
             [ctia.store :refer :all]
-            [ctia.schemas.graphql.common :as c])
-  (:import graphql.Scalars))
-
-(def observable-type-name "Observable")
-(def ObservableTypeRef (g/new-ref observable-type-name))
-
-(def verdict-fields
-  (into
-   (g/non-nulls
-    {:type {:type Scalars/GraphQLString}
-     :disposition {:type c/DispositionNumberType}
-     :observable {:type ObservableTypeRef}
-     :valid_time {:type c/ValidTime}})
-   {:judgement_id {:type Scalars/GraphQLString}
-    :disposition_name {:type c/DispositionNameType}}))
-
-(def verdict-type-name "Verdict")
-
-(def VerdictType
-  (g/new-object
-   verdict-type-name
-   (str "A Verdict is chosen from all of the Judgements on that Observable "
-        "which have not yet expired.")
-   []
-   verdict-fields))
+            [ctim.schemas.common :as ctim-common-schema]))
 
 (defn observable-verdict
   [{observable-type :type
@@ -35,20 +16,21 @@
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value})
-          (update :judgement_id judgement/short-id->long-id)))
+          (update :judgement_id ctim-judgement-entity/short-id->long-id)))
 
-;; enum can not be used for the observable type.
-;; - is not a valid character for an enum value.
 (def observable-fields
-  {:value {:type (g/non-null Scalars/GraphQLString)}
-   :type {:type (g/non-null Scalars/GraphQLString)}
-   :verdict {:type VerdictType
-             :resolve (fn [_ _ value]
-                        (observable-verdict value))}})
+  {:verdict {:type verdict/VerdictType
+             :resolve (fn [_ _ src]
+                        (observable-verdict (select-keys src [:type :value])))}
+   :judgements {:type judgement/JudgementConnectionType
+                :args pagination/connection-arguments
+                :resolve (fn [_ args src]
+                           (resolvers/search-judgements-by-observable
+                            (select-keys src [:type :value])
+                            args))}})
 
 (def ObservableType
-  (g/new-object observable-type-name
-                (str "A simple, atomic value which has a consistent identity, "
-                     "and is stable enough to be attributed an intent or nature.")
-                []
-                observable-fields))
+  (let [{:keys [fields name description]}
+        (f/->graphql ctim-common-schema/Observable)]
+    (g/new-object name description [] (into observable-fields
+                                            fields))))

@@ -68,11 +68,13 @@
    :backward-paging? s/Bool})
 
 (s/defschema ConnectionParams
-  (st/optional-keys
-   {:first s/Int
-    :last s/Int
-    :after Cursor
-    :before Cursor}))
+  (st/merge
+   {s/Keyword s/Any}
+   (st/optional-keys
+    {:first (s/maybe s/Int)
+     :last (s/maybe s/Int)
+     :after (s/maybe Cursor)
+     :before (s/maybe Cursor)})))
 
 (s/defschema PagingParams
   (st/merge
@@ -149,7 +151,7 @@
 (s/defn connection-params->paging-params :- PagingParams
   "Computes limit/offset params from cursor-based
    pagination params."
-  [{:keys [first last after before]
+  [{:keys [after before]
     first-param :first
     last-param :last
     :as connection-params} :- ConnectionParams]

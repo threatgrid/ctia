@@ -1,25 +1,34 @@
 (ns ctia.schemas.graphql.relationship
-  (:require [ctim.domain.id :as id]
-            [ctia.schemas.graphql.common :as c]
-            [ctia.schemas.graphql.helpers :as g]
-            [ctia.schemas.graphql.observable :as o]
-            [ctia.schemas.graphql.pagination :as p]
-            [ctia.schemas.graphql.refs :as refs]
-            [ctia.schemas.graphql.resolvers
-             :refer [entity-by-id
-                     search-relationships]]
-            [ctim.schemas.vocabularies :as voc]
-            [clojure.tools.logging :as log]
-            [schema.core :as s]
-            [ctia.schemas.graphql.common :as common])
+  (:require [clojure.tools.logging :as log]
+            [ctia.schemas.graphql
+             [common :as common]
+             [flanders :as f]
+             [helpers :as g]
+             [pagination :as p]
+             [refs :as refs]
+             [resolvers :as res :refer [entity-by-id search-relationships]]]
+            [ctim.domain.id :as id]
+            [ctim.schemas
+             [indicator :as ctim-ind]
+             [judgement :as ctim-j]
+             [relationship :as ctim-rel]
+             [sighting :as ctim-sig]
+             [vocabularies :as ctim-voc]]
+            [schema.core :as s])
   (:import graphql.Scalars))
 
-(def relationship-connection-type-name "RelationshipConnection")
+(def related-judgement-fields
+  {:judgement {:type refs/JudgementRef
+               :description "The related Judgement"
+               :resolve (fn [_ _ src]
+                          (when-let [id (:judgement_id src)]
+                            (res/judgement-by-id id)))}})
 
-(def RelationshipTypeType
-  (g/enum "RelationshipType"
-          ""
-          voc/relationship-type))
+(def RelatedJudgement
+  (let [{:keys [fields name description]}
+        (f/->graphql ctim-rel/RelatedJudgement)]
+    (g/new-object name description [] (into fields
+                                            related-judgement-fields))))
 
 (s/defn ref->entity-type :- s/Str
   "Extracts the entity type from the Reference"
@@ -34,20 +43,18 @@
    ""
    (fn [obj args schema]
      (log/debug "Entity resolution" obj args)
-     (case (:type obj)
-       "judgement" (.getType schema refs/judgement-type-name)))
-   [refs/JudgementRef]))
+     (condp = (:type obj)
+       ctim-j/type-identifier (g/get-type schema refs/judgement-type-name)
+       ctim-ind/type-identifier (g/get-type schema refs/indicator-type-name)
+       ctim-sig/type-identifier (g/get-type schema refs/sighting-type-name)))
+   [refs/JudgementRef
+    refs/IndicatorRef
+    refs/SightingRef]))
 
 (def relation-fields
   (merge
-   c/base-entity-fields
-   c/describable-entity-fields
-   c/sourcable-object-fields
    (g/non-nulls
-    {:relationship_type {:type RelationshipTypeType}
-     :source_ref {:type Scalars/GraphQLString
-                  :description "The ID of the source object"}
-     :source {:type Entity
+    {:source {:type Entity
               :resolve (fn [_ args src]
                          (log/debug "Source resolver" args src)
                          (let [ref (:source_ref src)
@@ -58,18 +65,17 @@
                          (log/debug "Target resolver" args src)
                          (let [ref (:target_ref src)
                                entity-type (ref->entity-type ref)]
-                           (entity-by-id entity-type ref)))}
-     :target_ref {:type Scalars/GraphQLString
-                  :description (str "The type of the relationship, "
-                                    "see /ctia/doc/defined_relationships.md")}})))
-
-(def relationship-type-name "Relationship")
+                           (entity-by-id entity-type ref)))}})))
 
 (def RelationshipType
-  (g/new-object relationship-type-name
-                "Represents a relationship between two entities"
-                []
-                relation-fields))
+  (let [{:keys [fields name description]}
+        (f/->graphql ctim-rel/Relationship
+                     {refs/observable-type-name refs/ObservableTypeRef})]
+    (g/new-object name
+                  description
+                  []
+                  (merge fields
+                         relation-fields))))
 
 (def RelationshipConnectionType
   (p/new-connection RelationshipType))
@@ -83,7 +89,7 @@
     (merge
      common/lucene-query-arguments
      {:relationship_type
-      {:type RelationshipTypeType
+      {:type Scalars/GraphQLString
        :description (str "restrict to Relations with the specified relationship_type.")}
       :target_type
       {:type Scalars/GraphQLString

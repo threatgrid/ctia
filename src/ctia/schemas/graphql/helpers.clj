@@ -4,19 +4,15 @@
              [walk :refer [stringify-keys]]]
             [clojure.tools.logging :as log])
   (:import graphql.GraphQL
-           (graphql.schema DataFetcher
-                           GraphQLArgument
-                           GraphQLEnumType
-                           GraphQLFieldDefinition
-                           GraphQLInterfaceType
-                           GraphQLList
-                           GraphQLNonNull
-                           GraphQLObjectType
-                           GraphQLOutputType
-                           GraphQLSchema
-                           GraphQLTypeReference
-                           GraphQLUnionType
-                           TypeResolver)))
+           [graphql.schema
+            DataFetcher GraphQLArgument GraphQLEnumType GraphQLFieldDefinition
+            GraphQLInterfaceType GraphQLList GraphQLNonNull GraphQLObjectType
+            GraphQLOutputType GraphQLSchema GraphQLTypeReference
+            GraphQLUnionType TypeResolver]))
+
+;; Type registry to avoid any duplicates when using new-object
+;; or new-enum. Contains a map with types indexed by name
+(def default-type-registry (atom {}))
 
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
@@ -54,29 +50,38 @@
   (->clj [_] nil))
 
 (defn- escape-enum-value-name
+  "A GraphQL Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
   [enum-value-name]
-  (str/replace enum-value-name #"[-]" "_"))
+  (str/replace enum-value-name #"[- \.]" "_"))
 
 (defn enum
-  [enum-name description c]
-  (let [graphql-enum (-> (GraphQLEnumType/newEnum)
+  "Creates a GraphQLEnumType. If a type with the same name has already been
+   created, the corresponding object is retrieved from the provided or the
+   default type repository."
+  ([enum-name description c] (enum enum-name
+                                   description
+                                   c
+                                   default-type-registry))
+  ([enum-name description c registry]
+   (or (get @registry enum-name)
+       (let [builder (-> (GraphQLEnumType/newEnum)
                          (.name enum-name)
                          (.description description))]
-    (doseq [value c]
-      (.value graphql-enum
-              (escape-enum-value-name value)
-              value))
-    (.build graphql-enum)))
+         (doseq [value c]
+           (.value builder
+                   (escape-enum-value-name value)
+                   value))
+         (let [graphql-enum (.build builder)]
+           (swap! registry assoc enum-name graphql-enum)
+           graphql-enum)))))
 
-(defn list-type
-  [t]
-  (GraphQLList/list t))
+(defn list-type [t] (GraphQLList/list t))
 
-(defn non-null
-  [t]
-  (GraphQLNonNull/nonNull t))
+(defn non-null [t] (GraphQLNonNull/nonNull t))
 
 (defn non-nulls
+  "Takes a map containing GraphQL fields and decorates them
+  with the GraphQLNonNull wrapper."
   [m]
   (into
    {}
@@ -85,6 +90,8 @@
         m)))
 
 (defn fn->data-fetcher
+  "Converts a function that takes 3 parameters (context, args and value)
+  to a GraphQL DataFetcher"
   [f]
   (reify DataFetcher
     (get [_ env]
@@ -139,6 +146,7 @@
    ^String field-description
    field-args
    ^DataFetcher field-data-fetcher]
+  (log/debug "New field" field-name field-type)
   (-> (GraphQLFieldDefinition/newFieldDefinition)
       (.name field-name)
       (.type field-type)
@@ -166,21 +174,31 @@
   t)
 
 (defn new-object
-  [^String object-name
-   ^String description
-   interfaces
-   fields]
-  (let [^GraphQLObjectType graphql-object
-        (-> (GraphQLObjectType/newObject)
-            (.description description)
-            (.name object-name))]
-    (doseq [^GraphQLInterfaceType interface interfaces]
-      (.withInterface graphql-object interface))
-    (-> graphql-object
-        (add-fields fields)
-        (.build))))
+  "Creates a GraphQLObjectType. If a type with the same name has already been
+   created, the corresponding object is retrieved from the provided or the
+   default type repository."
+  ([object-name description interfaces fields]
+   (new-object object-name description interfaces fields default-type-registry))
+  ([^String object-name
+    ^String description
+    interfaces
+    fields
+    registry]
+   (or (get @registry object-name)
+       (let [builder (-> (GraphQLObjectType/newObject)
+                         (.description description)
+                         (.name object-name))]
+         (doseq [^GraphQLInterfaceType interface interfaces]
+           (.withInterface builder interface))
+         (let [obj (-> builder
+                       (add-fields fields)
+                       (.build))]
+           (swap! registry assoc object-name obj)
+           obj)))))
 
 (defn fn->type-resolver
+  "Converts a function that takes the current object, the args
+  and the global schema to a TypeResolver."
   [f]
   (reify TypeResolver
     (getType [_ env]
@@ -214,6 +232,12 @@
   (-> (GraphQLSchema/newSchema)
       (.query query)
       (.build)))
+
+(defn get-type
+  "Retrieves a Type from the given schema by its name"
+  [^GraphQLSchema schema
+   ^String type-name]
+  (.getType schema type-name))
 
 (defn new-graphql
   [^GraphQLSchema schema]

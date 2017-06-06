@@ -1,4 +1,4 @@
-(ns ctia.schemas.graphql.judgement
+(ns ctia.schemas.graphql.indicator
   (:require [ctia.schemas.graphql
              [feedback :as feedback]
              [flanders :as f]
@@ -6,16 +6,18 @@
              [pagination :as pagination]
              [refs :as refs]
              [relationship :as relationship]]
-            [ctim.schemas.judgement :as ctim-judgement-schema]))
+            [ctim.schemas.indicator :as ctim-indicator-schema]))
 
-(def JudgementType
+(def IndicatorType
   (let [{:keys [fields name description]}
-        (f/->graphql ctim-judgement-schema/Judgement
-                     {refs/observable-type-name refs/ObservableTypeRef})]
+        (f/->graphql
+         ctim-indicator-schema/Indicator
+         {refs/related-judgement-type-name relationship/RelatedJudgement
+          refs/observable-type-name refs/ObservableTypeRef})]
     (g/new-object name description []
                   (merge fields
                          feedback/feedback-connection-field
                          relationship/relatable-entity-fields))))
 
-(def JudgementConnectionType
-  (pagination/new-connection JudgementType))
+(def IndicatorConnectionType
+  (pagination/new-connection IndicatorType))
