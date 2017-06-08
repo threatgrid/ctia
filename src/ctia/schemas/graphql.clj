@@ -7,13 +7,15 @@
              [judgement :refer [JudgementType
                                 JudgementConnectionType]]
              [observable :refer [ObservableType]]
-             [relationship :refer [RelationshipConnectionType]]
              [resolvers :as res]
              [sighting :refer [SightingType
                                SightingConnectionType]]]
             [schema.core :as s]
             [ctia.schemas.graphql.pagination :as p])
   (:import graphql.Scalars))
+
+;; TODO
+;; Sorting : https://github.com/graphql/graphql-relay-js/issues/20
 
 (s/defschema RelayGraphQLQuery
   {:query s/Str
@@ -50,13 +52,9 @@
                  :args {:type {:type (g/non-null Scalars/GraphQLString)}
                         :value {:type (g/non-null Scalars/GraphQLString)}}
                  :resolve (fn [_ args _] args)}
-    :relationships {:type RelationshipConnectionType
-                    :args (into common/lucene-query-arguments
-                                p/connection-arguments)
-                    :resolve res/search-relationships}
     :sighting {:type SightingType
                :args search-by-id-args
-               :resolve (fn [_ args _] (res/indicator-by-id (:id args)))}
+               :resolve (fn [_ args _] (res/sighting-by-id (:id args)))}
     :sightings {:type SightingConnectionType
                 :args (into common/lucene-query-arguments
                             p/connection-arguments)

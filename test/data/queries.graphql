@@ -1,0 +1,272 @@
+query ObservableQueryTest($type: String!, $value: String!, $first: Int, $after: String) {
+  observable(type: $type, value: $value) {
+    ...observableBaseFields
+    verdict {
+      ...verdictFields
+    }
+    judgements(first: $first after: $after) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...judgementFields
+      }
+      edges {
+        node {
+          ...judgementFields
+        }
+      }
+    }
+  }
+}
+
+query JudgementQueryTest($id: String!, $relationship_type: String = "element-of", $first: Int, $after: String) {
+  judgement(id: $id) {
+    ...judgementFields
+    relationships(relationship_type: $relationship_type first: $first after: $after) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...relationshipBaseFields
+        target {
+          ...indicatorFields
+        }
+        source {
+          ...judgementFields
+        }
+      }
+      edges {
+        node {
+          ...relationshipBaseFields
+          target {
+            ...indicatorFields
+          }
+          source {
+            ...judgementFields
+          }
+        }
+      }
+    }
+  }
+}
+
+query JudgementsQueryTest($query: String, $after: String, $first: Int) {
+  judgements(first: $first, after: $after, query: $query) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...judgementFields
+    }
+    edges {
+      node {
+        ...judgementFields
+      }
+    }
+  }
+}
+
+query IndicatorQueryTest($id: String!, $relationship_type: String = "variant-of", $first: Int, $after: String) {
+  indicator(id: $id) {
+    ...indicatorFields
+    relationships(relationship_type: $relationship_type first: $first after: $after) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...relationshipBaseFields
+        target {
+          ...indicatorFields
+        }
+        source {
+          ...indicatorFields
+        }
+      }
+      edges {
+        node {
+          ...relationshipBaseFields
+          target {
+            ...indicatorFields
+          }
+          source {
+            ...indicatorFields
+          }
+        }
+      }
+    }
+  }
+}
+
+query IndicatorsQueryTest($query: String, $after: String, $first: Int) {
+  indicators(first: $first, after: $after, query: $query) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...indicatorFields
+    }
+    edges {
+      node {
+        ...indicatorFields
+      }
+    }
+  }
+}
+
+query SightingQueryTest($id: String!, $relationship_type: String = "element-of") {
+  sighting(id: $id) {
+    ...sightingFields
+    relationships(relationship_type: $relationship_type) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...relationshipBaseFields
+      }
+      edges {
+        node {
+          ...relationshipBaseFields
+          target {
+            ...judgementFields
+          }
+          source {
+            ...sightingFields
+          }
+        }
+        cursor
+      }
+    }
+  }
+}
+
+query SightingsQueryTest($query: String, $after: String, $first: Int) {
+  sightings(first: $first, after: $after, query: $query) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...sightingFields
+    }
+    edges {
+      node {
+        ...sightingFields
+      }
+    }
+  }
+}
+
+fragment indicatorFields on Indicator {
+  id
+  type
+  title
+  tlp
+  producer
+  description
+  indicator_type
+  valid_time {
+    ...validTimeFields
+  }
+}
+
+fragment relationshipBaseFields on Relationship {
+  relationship_type
+  target_ref
+  source_ref
+}
+
+fragment pageInfoFields on PageInfo {
+  hasNextPage
+  hasPreviousPage
+  startCursor
+  endCursor
+}
+
+fragment judgementFields on Judgement {
+  id
+  type
+  disposition
+  disposition_name
+  valid_time {
+    ...validTimeFields
+  }
+  observable {
+    ...observableBaseFields
+  }
+  reason
+  reason_uri
+  source
+  source_uri
+  external_ids
+  confidence
+  severity
+  tlp
+  priority
+}
+
+fragment sightingFields on Sighting {
+  id
+  type
+  description
+  confidence
+  count
+  observables {
+    ...observableBaseFields
+  }
+  observed_time {
+    ...observedTimeFields
+  }
+  sensor
+  source
+  tlp
+  source_uri
+  relations {
+    ...observedRelationFields
+  }
+}
+
+fragment verdictFields on Verdict {
+  type
+  disposition
+  disposition_name
+  observable {
+    ...observableBaseFields
+  }
+  judgement_id
+  judgement {
+    ...judgementFields
+  }
+}
+
+fragment validTimeFields on ValidTime {
+  start_time
+  end_time
+}
+
+fragment observedTimeFields on ObservedTime {
+  start_time
+  end_time
+}
+
+fragment observedRelationFields on ObservedRelation {
+  origin
+  relation
+  source {
+    ...observableBaseFields
+  }
+  related {
+    ...observableBaseFields
+  }
+}
+
+fragment observableBaseFields on Observable {
+  type
+  value
+}

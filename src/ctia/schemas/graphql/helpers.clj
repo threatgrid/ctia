@@ -49,6 +49,17 @@
   nil
   (->clj [_] nil))
 
+(defn valid-enum-name?
+  "A GraphQLEnum Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
+  [n]
+  (some?
+   (when (and n (not (empty? n)))
+     (re-matches #"[_A-Za-z][_0-9A-Za-z]*" n))))
+
+(defn valid-enum-names?
+  [c]
+  (every? valid-enum-name? c))
+
 (defn- escape-enum-value-name
   "A GraphQL Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
   [enum-value-name]

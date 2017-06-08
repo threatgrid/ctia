@@ -122,7 +122,10 @@
                                               name
                                               description
                                               values)
-                                  (g/enum name description values)))}
+                                  ;; Do not use enum for invalid values
+                                  (if (g/valid-enum-names? values)
+                                    (g/enum name description values)
+                                    Scalars/GraphQLString)))}
        (when description
          {:description description})))))
 
