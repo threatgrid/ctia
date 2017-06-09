@@ -1,8 +1,9 @@
 (ns ctia.schemas.graphql.flanders
-  (:require [clj-momo.lib.time :refer [format-date-time]]
+  (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
             [clojure.core.match :refer [match]]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
+            [ctia.schemas.graphql.scalars :refer [GraphQLDate]]
             [ctia.schemas.graphql.helpers :as g])
   (:import [flanders.types
             AnythingType BooleanType EitherType InstType IntegerType KeywordType
@@ -88,9 +89,8 @@
 
   InstType
   (->graphql' [{:keys [description key]} _ _]
-    {:type Scalars/GraphQLString
-     :description description
-     :resolve (g/map-resolver key format-date-time)})
+    {:type GraphQLDate
+     :description description})
 
   IntegerType
   (->graphql' [{:keys [description]} _ _]

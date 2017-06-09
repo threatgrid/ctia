@@ -2,7 +2,8 @@
   (:require [clojure
              [string :as str]
              [walk :refer [stringify-keys]]]
-            [clojure.tools.logging :as log])
+            [clojure.tools.logging :as log]
+            [clojure.walk :as walk])
   (:import graphql.GraphQL
            [graphql.schema
             DataFetcher GraphQLArgument GraphQLEnumType GraphQLFieldDefinition
@@ -265,5 +266,5 @@
                          operation-name
                          nil
                          (->java (or variables {})))]
-    {:data (.getData result)
+    {:data (->clj (.getData result))
      :errors (.getErrors result)}))

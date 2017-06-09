@@ -166,6 +166,7 @@ query SightingsQueryTest($query: String, $after: String, $first: Int) {
 fragment indicatorFields on Indicator {
   id
   type
+  schema_version
   title
   tlp
   producer
@@ -192,6 +193,7 @@ fragment pageInfoFields on PageInfo {
 fragment judgementFields on Judgement {
   id
   type
+  schema_version
   disposition
   disposition_name
   valid_time {
@@ -214,6 +216,7 @@ fragment judgementFields on Judgement {
 fragment sightingFields on Sighting {
   id
   type
+  schema_version
   description
   confidence
   count
