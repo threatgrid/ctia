@@ -53,6 +53,25 @@ query JudgementQueryTest($id: String!, $relationship_type: String = "element-of"
   }
 }
 
+query JudgementFeedbacksQueryTest($id: String!, $first: Int, $after: String) {
+  judgement(id: $id) {
+    feedbacks(first: $first, after: $after) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...feedbackFields
+      }
+      edges {
+        node {
+          ...feedbackFields
+        }
+      }
+    }
+  }
+}
+
 query JudgementsQueryTest($query: String, $after: String, $first: Int) {
   judgements(first: $first, after: $after, query: $query) {
     totalCount
@@ -102,6 +121,25 @@ query IndicatorQueryTest($id: String!, $relationship_type: String = "variant-of"
   }
 }
 
+query IndicatorFeedbacksQueryTest($id: String!, $first: Int, $after: String) {
+  indicator(id: $id) {
+    feedbacks(first: $first, after: $after) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...feedbackFields
+      }
+      edges {
+        node {
+          ...feedbackFields
+        }
+      }
+    }
+  }
+}
+
 query IndicatorsQueryTest($query: String, $after: String, $first: Int) {
   indicators(first: $first, after: $after, query: $query) {
     totalCount
@@ -119,28 +157,52 @@ query IndicatorsQueryTest($query: String, $after: String, $first: Int) {
   }
 }
 
-query SightingQueryTest($id: String!, $relationship_type: String = "element-of") {
+query SightingQueryTest($id: String!, $relationship_type: String = "indicates", $first: Int, $after: String) {
   sighting(id: $id) {
     ...sightingFields
-    relationships(relationship_type: $relationship_type) {
+    relationships(relationship_type: $relationship_type first: $first after: $after) {
       totalCount
       pageInfo {
         ...pageInfoFields
       }
       nodes {
         ...relationshipBaseFields
+        target {
+          ...indicatorFields
+        }
+        source {
+          ...sightingFields
+        }
       }
       edges {
         node {
           ...relationshipBaseFields
           target {
-            ...judgementFields
+            ...indicatorFields
           }
           source {
             ...sightingFields
           }
         }
-        cursor
+      }
+    }
+  }
+}
+
+query SightingFeedbacksQueryTest($id: String!, $first: Int, $after: String) {
+  sighting(id: $id) {
+    feedbacks(first: $first, after: $after) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...feedbackFields
+      }
+      edges {
+        node {
+          ...feedbackFields
+        }
       }
     }
   }
@@ -272,4 +334,10 @@ fragment observedRelationFields on ObservedRelation {
 fragment observableBaseFields on Observable {
   type
   value
+}
+
+fragment feedbackFields on Feedback {
+  feedback
+  entity_id
+  reason
 }

@@ -127,6 +127,15 @@
                  "source" {"type" "url", "value" "http://alegroup.info/"},
                  "related" {"type" "ip", "value" "194.87.217.87"}}]})
 
+(defn feedback-1 [entity_id]
+  {:feedback -1
+   :reason "False positive"
+   :entity_id entity_id})
+
+(defn feedback-2 [entity_id]
+  {:feedback 0
+   :reason "Unknown"
+   :entity_id entity_id})
 
 (defn initialize-graphql-data []
   (let [i1 (gh/create-object "indicator" indicator-1)
@@ -137,6 +146,12 @@
         j3 (gh/create-object "judgement" judgement-3)
         s1 (gh/create-object "sighting" sighting-1)
         s2 (gh/create-object "sighting" sighting-2)]
+    (gh/create-object "feedback" (feedback-1 (:id i1)))
+    (gh/create-object "feedback" (feedback-2 (:id i1)))
+    (gh/create-object "feedback" (feedback-1 (:id j1)))
+    (gh/create-object "feedback" (feedback-2 (:id j1)))
+    (gh/create-object "feedback" (feedback-1 (:id s1)))
+    (gh/create-object "feedback" (feedback-2 (:id s1)))
     (gh/create-object "relationship"
                    {:relationship_type "element-of"
                     :target_ref (:id i1)
@@ -155,8 +170,12 @@
                     :source_ref (:id j3)})
     (gh/create-object "relationship"
                    {:relationship_type "indicates"
-                    :target_ref (:id i2)
+                    :target_ref (:id i1)
                     :source_ref (:id s1)})
+    (gh/create-object "relationship"
+                      {:relationship_type "indicates"
+                       :target_ref (:id i2)
+                       :source_ref (:id s1)})
     (gh/create-object "relationship"
                    {:relationship_type "variant-of"
                     :target_ref (:id i2)
@@ -251,6 +270,7 @@
         judgement-1-id (get-in datamap [:judgement-1 :id])
         judgement-2-id (get-in datamap [:judgement-2 :id])
         judgement-3-id (get-in datamap [:judgement-3 :id])
+        sighting-1-id (get-in datamap [:sighting-1 :id])
         graphql-queries (slurp "test/data/queries.graphql")]
 
     (testing "POST /ctia/graphql"
@@ -333,7 +353,15 @@
                                :target_ref indicator-2-id
                                :source_ref judgement-1-id
                                :source (:judgement-1 datamap)
-                               :target (:indicator-2 datamap)}]))))
+                               :target (:indicator-2 datamap)}]))
+
+          (testing "feedbacks connection"
+            (connection-test "JudgementFeedbacksQueryTest"
+                             graphql-queries
+                             {:id judgement-1-id}
+                             [:judgement :feedbacks]
+                             [(feedback-1 judgement-1-id)
+                              (feedback-2 judgement-1-id)]))))
 
       (testing "judgements query"
         (testing "judgements connection"
@@ -384,7 +412,15 @@
                                :target_ref indicator-3-id
                                :source_ref indicator-1-id
                                :source (:indicator-1 datamap)
-                               :target (:indicator-3 datamap)}]))))
+                               :target (:indicator-3 datamap)}]))
+
+          (testing "feedbacks connection"
+            (connection-test "IndicatorFeedbacksQueryTest"
+                             graphql-queries
+                             {:id indicator-1-id}
+                             [:indicator :feedbacks]
+                             [(feedback-1 indicator-1-id)
+                              (feedback-2 indicator-1-id)]))))
 
       (testing "indicators query"
 
@@ -421,7 +457,31 @@
           (testing "the sighting"
             (is (= (:sighting-1 datamap)
                    (-> (:sighting data)
-                       (dissoc :relationships)))))))
+                       (dissoc :relationships)))))
+
+          (testing "relationships connection"
+            (connection-test "SightingQueryTest"
+                             graphql-queries
+                             {:id sighting-1-id}
+                             [:sighting :relationships]
+                             [{:relationship_type "indicates"
+                               :target_ref indicator-1-id
+                               :source_ref sighting-1-id
+                               :source (:sighting-1 datamap)
+                               :target (:indicator-1 datamap)}
+                              {:relationship_type "indicates"
+                               :target_ref indicator-2-id
+                               :source_ref sighting-1-id
+                               :source (:sighting-1 datamap)
+                               :target (:indicator-2 datamap)}]))
+
+          (testing "feedbacks connection"
+            (connection-test "SightingFeedbacksQueryTest"
+                             graphql-queries
+                             {:id sighting-1-id}
+                             [:sighting :feedbacks]
+                             [(feedback-1 sighting-1-id)
+                              (feedback-2 sighting-1-id)]))))
 
       (testing "sightings query"
 

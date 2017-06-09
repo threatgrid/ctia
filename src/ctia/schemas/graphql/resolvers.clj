@@ -47,12 +47,13 @@
    args :- {s/Keyword s/Any}]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (select-keys paging-params [:limit :offset])]
+    (log/debug "Search feedback for entity id: " entity-id)
     (some-> (read-store :feedback
                         list-feedback
                         {:entity_id entity-id}
                         params)
             ctim-feedback-entity/page-with-long-id
-            ctim-entities/un-store
+            ctim-entities/un-store-page
             (pagination/result->connection-response paging-params))))
 
 ;;---- Indicator
