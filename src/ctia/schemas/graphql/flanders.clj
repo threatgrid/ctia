@@ -27,7 +27,7 @@
   EitherType
   (->graphql' [{:keys [choices tests key]} f _]
     (let [choice-types (map f choices)]
-      (log/debug "EitherType choices" choice-types)
+      (log/debug "EitherType choices" (pr-str choice-types))
       {:type (g/new-union
               (str/capitalize (name key))
               ""
@@ -54,7 +54,7 @@
                            (assoc m k v))
                          {}
                          (map f entries))]
-      (log/debug "MapType" name description entries fields)
+      (log/debug "MapType" name description (pr-str entries) (pr-str fields))
       (cond root? {:fields fields
                    :name name
                    :description description}

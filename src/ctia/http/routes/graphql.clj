@@ -28,14 +28,15 @@
         :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
         (let [request-context {}
               {:keys [query operationName variables]} body]
-          (log/info "Graphql call body: " (pr-str body) " variables: " variables)
+          (log/debug "Graphql call body: " (pr-str body) " variables: " (pr-str variables))
           (let [{:keys [errors data] :as result}
                 (gql/execute query operationName variables)
                 str-errors (map str errors)]
-            (log/info "Graphql result:" result)
+            (log/debug "Graphql result:" result)
             (cond
-              (seq str-errors) (do (log/info "Graphql errors: " (pr-str str-errors))
+              (seq str-errors) (do (log/error "Graphql errors: " (pr-str str-errors))
                                    (bad-request (cond-> {:errors str-errors}
                                                   (some? data) (assoc :data data))))
               (some? data) (ok {:data data})
-              :else (internal-server-error))))))
+              :else (internal-server-error
+                     {:error "No data or errors were returned by the GraphQL query"}))))))

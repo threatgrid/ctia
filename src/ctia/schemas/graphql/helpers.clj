@@ -101,6 +101,10 @@
           [k (assoc v :type (non-null elt-type))])
         m)))
 
+(defn debug
+  [msg value]
+  (log/debugf msg (pr-str value)))
+
 (defn fn->data-fetcher
   "Converts a function that takes 3 parameters (context, args and value)
   to a GraphQL DataFetcher"
@@ -111,10 +115,10 @@
             args (->clj (.getArguments env))
             value (->clj (.getSource env))
             result (f context args value)]
-        (log/debug "data-fetcher context:" context)
-        (log/debug "data-fetcher args:" args)
-        (log/debug "data-fetcher value:" value)
-        (log/debug "data-fetcher result:" result)
+        (debug "data-fetcher context:" context)
+        (debug "data-fetcher args:" args)
+        (debug "data-fetcher value:"  value)
+        (debug "data-fetcher result:" result)
         result))))
 
 (defn map-resolver
@@ -158,7 +162,7 @@
    ^String field-description
    field-args
    ^DataFetcher field-data-fetcher]
-  (log/debug "New field" field-name field-type)
+  (log/debug "New field" field-name (pr-str field-type))
   (-> (GraphQLFieldDefinition/newFieldDefinition)
       (.name field-name)
       (.type field-type)
