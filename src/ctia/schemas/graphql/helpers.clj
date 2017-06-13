@@ -6,10 +6,13 @@
             [clojure.walk :as walk])
   (:import graphql.GraphQL
            [graphql.schema
-            DataFetcher GraphQLArgument GraphQLEnumType GraphQLFieldDefinition
+            DataFetcher GraphQLArgument GraphQLArgument$Builder GraphQLEnumType
+            GraphQLFieldDefinition GraphQLInputObjectType
+            GraphQLInputObjectType$Builder GraphQLInputObjectField
+            GraphQLInputObjectField$Builder GraphQLInputType
             GraphQLInterfaceType GraphQLList GraphQLNonNull GraphQLObjectType
-            GraphQLOutputType GraphQLSchema GraphQLTypeReference
-            GraphQLUnionType TypeResolver]))
+            GraphQLObjectType$Builder GraphQLOutputType GraphQLSchema
+            GraphQLTypeReference GraphQLUnionType TypeResolver]))
 
 ;; Type registry to avoid any duplicates when using new-object
 ;; or new-enum. Contains a map with types indexed by name
@@ -65,17 +68,20 @@
   "Creates a GraphQLEnumType. If a type with the same name has already been
    created, the corresponding object is retrieved from the provided or the
    default type repository."
-  ([enum-name description c] (enum enum-name
+  ([enum-name description values] (enum enum-name
                                    description
-                                   c
+                                   values
                                    default-type-registry))
-  ([enum-name description c registry]
+  ([enum-name description values registry]
    (or (get @registry enum-name)
        (let [builder (-> (GraphQLEnumType/newEnum)
                          (.name enum-name)
-                         (.description description))]
-         (doseq [value c]
-           (.value builder value))
+                         (.description description))
+             names-and-values? (map? values)]
+         (doseq [value values]
+           (if names-and-values?
+             (.value builder (key value) (val value))
+             (.value builder value)))
          (let [graphql-enum (.build builder)]
            (swap! registry assoc enum-name graphql-enum)
            graphql-enum)))))
@@ -121,18 +127,21 @@
      (when value
        (f (get value k))))))
 
+;----- Input
+
 (defn new-argument
   [^String arg-name
    ^GraphQLOutputType arg-type
    ^String arg-description
    ^Object arg-default-value]
-  (let [new-arg (-> (GraphQLArgument/newArgument)
-                    (.name arg-name)
-                    (.type arg-type)
-                    (.description (or arg-description "")))]
+  (let [^GraphQLArgument$Builder builder
+        (-> (GraphQLArgument/newArgument)
+            (.name arg-name)
+            (.type arg-type)
+            (.description (or arg-description "")))]
     (when (some? arg-default-value)
-      (.defaultValue new-arg arg-default-value))
-    new-arg))
+      (.defaultValue builder arg-default-value))
+    (.build builder)))
 
 (defn add-args
   [^GraphQLFieldDefinition field
@@ -149,6 +158,48 @@
       (.argument field narg)))
   field)
 
+(defn new-input-field
+  [^String field-name
+   ^GraphQLInputType field-type
+   ^String field-description
+   ^Object default-value]
+  (log/debug "New input field" field-name (pr-str field-type))
+  (let [^GraphQLInputObjectField$Builder builder
+        (-> (GraphQLInputObjectField/newInputObjectField)
+            (.name field-name)
+            (.type field-type)
+            (.description field-description))]
+    (when (some? default-value)
+      (.defaultValue builder default-value))
+    (.build builder)))
+
+(defn add-input-fields
+  [^GraphQLInputObjectType$Builder builder
+   fields]
+  (doseq [[k {field-type :type
+              field-description :description
+              field-default-value :default-value
+              :or {field-description ""}}] fields]
+    (let [^GraphQLInputObjectField newf
+          (new-input-field (name k)
+                           field-type
+                           field-description
+                           field-default-value)]
+      (.field builder newf)))
+  builder)
+
+(defn new-input-object
+  [^String object-name
+   ^String description
+   fields]
+  (-> (GraphQLInputObjectType/newInputObject)
+      (.name object-name)
+      (.description description)
+      (add-input-fields fields)
+      (.build)))
+
+;;----- Ouput
+
 (defn new-field
   [^String field-name
    ^GraphQLOutputType field-type
@@ -161,10 +212,11 @@
       (.type field-type)
       (.description field-description)
       (.dataFetcher field-data-fetcher)
-      (add-args field-args)))
+      (add-args field-args)
+      (.build)))
 
 (defn add-fields
-  [^GraphQLObjectType t
+  [^GraphQLObjectType$Builder builder
    fields]
   (doseq [[k {field-type :type
               field-description :description
@@ -179,8 +231,8 @@
                      field-description
                      field-args
                      (fn->data-fetcher field-resolver))]
-      (.field t newf)))
-  t)
+      (.field builder newf)))
+  builder)
 
 (defn new-object
   "Creates a GraphQLObjectType. If a type with the same name has already been
@@ -196,12 +248,11 @@
    (or (get @registry object-name)
        (let [builder (-> (GraphQLObjectType/newObject)
                          (.description description)
-                         (.name object-name))]
+                         (.name object-name)
+                         (add-fields fields))]
          (doseq [^GraphQLInterfaceType interface interfaces]
            (.withInterface builder interface))
-         (let [obj (-> builder
-                       (add-fields fields)
-                       (.build))]
+         (let [obj (.build builder)]
            (swap! registry assoc object-name obj)
            obj)))))
 

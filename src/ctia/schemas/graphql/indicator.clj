@@ -5,7 +5,9 @@
              [helpers :as g]
              [pagination :as pagination]
              [refs :as refs]
-             [relationship :as relationship]]
+             [relationship :as relationship]
+             [sorting :as sorting]]
+            [ctia.schemas.sorting :as sort-fields]
             [ctim.schemas.indicator :as ctim-indicator-schema]))
 
 (def IndicatorType
@@ -18,6 +20,14 @@
                   (merge fields
                          feedback/feedback-connection-field
                          relationship/relatable-entity-fields))))
+
+(def indicator-order-arg
+  (sorting/order-by-arg
+   "IndicatorOrder"
+   "indicators"
+   (into {}
+         (map (juxt sorting/sorting-kw->enum-name name)
+              sort-fields/indicator-sort-fields))))
 
 (def IndicatorConnectionType
   (pagination/new-connection IndicatorType))

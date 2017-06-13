@@ -1,6 +1,7 @@
 (ns ctia.http.routes.common
   (:require [clojure.string :as str]
             [clj-http.headers :refer [canonicalize]]
+            [ctia.schemas.sorting :as sorting]
             [ring.util.http-status :refer [ok]]
             [ring.util.http-response :as http-res]
             [schema.core :as s]
@@ -8,132 +9,45 @@
             [ring.swagger.schema :refer [describe]]))
 
 
-;; These are the fields that are sortable, per entity.  We place them
-;; here since they are used by more than one entity's routes.  For
-;; isntance, the indicator route needs to know how to sort sightings
-;; for the `ctia/indicator/:ID/sighting` handler
-;;
-(def base-entity-sort-fields [:id :schema_version :revision
-                              :timestamp :language :tlp])
-
-(def sourcable-entity-sort-fields [:source :source_uri])
-
-(def describable-entity-sort-fields [:title])
-
-(def default-entity-sort-fields
-  (concat base-entity-sort-fields
-          sourcable-entity-sort-fields
-          describable-entity-sort-fields))
-
-
 (def exploit-target-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        describable-entity-sort-fields
-                        sourcable-entity-sort-fields
-                        [:valid_time.start_time
-                         :valid_time.end_time])))
+  (apply s/enum sorting/exploit-target-sort-fields))
 
 (def incident-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        describable-entity-sort-fields
-                        sourcable-entity-sort-fields
-                        [:valid_time.start_time
-                         :valid_time.end_time
-                         :confidence
-                         :status
-                         :incident_time
-                         :reporter
-                         :coordinator
-                         :victim
-                         :security_compromise
-                         :discovery_method
-                         :contact
-                         :intended_effect])))
+  (apply s/enum sorting/incident-sort-fields))
 
 (def indicator-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        [:indicator_type
-                         :likely_impact
-                         :confidence
-                         :specification])))
+  (apply s/enum sorting/indicator-sort-fields))
 
 (def relationship-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        describable-entity-sort-fields
-                        sourcable-entity-sort-fields
-                        [:relationship_type
-                         :source_ref
-                         :target_ref])))
+  (apply s/enum sorting/relationship-sort-fields))
 
 (def judgement-sort-fields
-  (apply s/enum (concat base-entity-sort-fields
-                        sourcable-entity-sort-fields
-                        [:disposition
-                         :priority
-                         :confidence
-                         :severity
-                         :valid_time.start_time
-                         :valid_time.end_time
-                         :reason
-                         :observable.type
-                         :observable.value])))
+  (apply s/enum sorting/judgement-sort-fields))
 
 (def sighting-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        [:observed_time.start_time
-                         :observed_time.end_time
-                         :confidence
-                         :count
-                         :sensor])))
+  (apply s/enum sorting/sighting-sort-fields))
 
 (def ttp-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        [:valid_time.start_time
-                         :valid_time.end_time
-                         :ttp_type])))
+  (apply s/enum sorting/ttp-sort-fields))
 
 (def actor-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        [:valid_time.start_time
-                         :valid_time.end_time
-                         :actor_type
-                         :motivation
-                         :sophistication
-                         :intended_effect])))
+  (apply s/enum sorting/actor-sort-fields))
 
 (def campaign-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        [:valid_time.start_time
-                         :valid_time.end_time
-                         :campaign_type
-                         :status
-                         :activity
-                         :confidence])))
+  (apply s/enum sorting/campaign-sort-fields))
 
 (def coa-sort-fields
-  (apply s/enum (concat default-entity-sort-fields
-                        [:valid_time.start_time
-                         :valid_time.end_time
-                         :stage
-                         :coa_type
-                         :impact
-                         :cost
-                         :efficacy
-                         :structured_coa_type])))
+  (apply s/enum sorting/coa-sort-fields))
 
 (def feedback-sort-fields
-  (apply s/enum (concat base-entity-sort-fields
-                        sourcable-entity-sort-fields
-                        [:entity_id
-                         :feedback
-                         :reason])))
+  (apply s/enum sorting/feedback-sort-fields))
 
 
 ;; Paging related values and code
 
 (s/defschema PagingParams
   "A schema defining the accepted paging and sorting related query parameters."
-  {(s/optional-key :sort_by) (describe (apply s/enum default-entity-sort-fields) "Sort results on a field")
+  {(s/optional-key :sort_by) (describe (apply s/enum sorting/default-entity-sort-fields) "Sort results on a field")
    (s/optional-key :sort_order) (describe (s/enum :asc :desc) "Sort direction")
    (s/optional-key :offset) (describe Long "Pagination Offset")
    (s/optional-key :limit) (describe Long "Pagination Limit")})

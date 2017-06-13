@@ -6,7 +6,9 @@
              [helpers :as g]
              [pagination :as p]
              [refs :as refs]
-             [resolvers :as res :refer [entity-by-id search-relationships]]]
+             [resolvers :as res :refer [entity-by-id search-relationships]]
+             [sorting :as sorting]]
+            [ctia.schemas.sorting :as sort-fields]
             [ctim.domain.id :as id]
             [ctim.schemas
              [indicator :as ctim-ind]
@@ -76,6 +78,14 @@
                   []
                   (merge fields
                          relation-fields))))
+
+(def relationship-order-arg
+  (sorting/order-by-arg
+   "RelationshipOrder"
+   "relationships"
+   (into {}
+         (map (juxt sorting/sorting-kw->enum-name name)
+              sort-fields/relationship-sort-fields))))
 
 (def RelationshipConnectionType
   (p/new-connection RelationshipType))
