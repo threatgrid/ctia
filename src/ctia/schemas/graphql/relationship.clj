@@ -56,18 +56,18 @@
 (def relation-fields
   (merge
    (g/non-nulls
-    {:source {:type Entity
-              :resolve (fn [_ args src]
-                         (log/debug "Source resolver" args src)
-                         (let [ref (:source_ref src)
-                               entity-type (ref->entity-type ref)]
-                           (entity-by-id entity-type ref)))}
-     :target {:type Entity
-              :resolve (fn [_ args src]
-                         (log/debug "Target resolver" args src)
-                         (let [ref (:target_ref src)
-                               entity-type (ref->entity-type ref)]
-                           (entity-by-id entity-type ref)))}})))
+    {:source_entity {:type Entity
+                     :resolve (fn [_ args src]
+                                (log/debug "Source resolver" args src)
+                                (let [ref (:source_ref src)
+                                      entity-type (ref->entity-type ref)]
+                                  (entity-by-id entity-type ref)))}
+     :target_entity {:type Entity
+                     :resolve (fn [_ args src]
+                                (log/debug "Target resolver" args src)
+                                (let [ref (:target_ref src)
+                                      entity-type (ref->entity-type ref)]
+                                  (entity-by-id entity-type ref)))}})))
 
 (def RelationshipType
   (let [{:keys [fields name description]}
@@ -105,5 +105,6 @@
       {:type Scalars/GraphQLString
        :description (str "restrict to Relationships whose target is of the "
                          "specified CTIM entity type.")}}
-     p/connection-arguments)
+     p/connection-arguments
+     relationship-order-arg)
     :resolve search-relationships}})

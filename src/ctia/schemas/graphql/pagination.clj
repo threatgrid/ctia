@@ -75,14 +75,13 @@
     {:first (s/maybe s/Int)
      :last (s/maybe s/Int)
      :after (s/maybe Cursor)
-     :before (s/maybe Cursor)
-     :orderBy [{:field s/Str
-                :direction (s/enum "ASC" "DESC")}]})))
+     :before (s/maybe Cursor)})))
 
 (s/defschema PagingParams
   (st/merge
    {:limit s/Int
-    :offset s/Int}
+    :offset s/Int
+    (s/optional-key :sort_by) s/Str}
    PagingDirection))
 
 (s/defschema Edge

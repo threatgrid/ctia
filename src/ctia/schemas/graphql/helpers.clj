@@ -4,7 +4,7 @@
              [walk :refer [stringify-keys]]]
             [clojure.tools.logging :as log]
             [clojure.walk :as walk])
-  (:import graphql.GraphQL
+  (:import [graphql GraphQL GraphQLException]
            [graphql.schema
             DataFetcher GraphQLArgument GraphQLArgument$Builder GraphQLEnumType
             GraphQLFieldDefinition GraphQLInputObjectType
@@ -102,7 +102,7 @@
 
 (defn debug
   [msg value]
-  (log/debugf msg (pr-str value)))
+  (log/debug msg (pr-str value)))
 
 (defn fn->data-fetcher
   "Converts a function that takes 3 parameters (context, args and value)
@@ -309,10 +309,14 @@
    ^String query
    ^String operation-name
    ^java.util.Map variables]
-  (let [result (.execute graphql
-                         query
-                         operation-name
-                         nil
-                         (->java (or variables {})))]
-    {:data (->clj (.getData result))
-     :errors (.getErrors result)}))
+  (try
+    (let [result (.execute graphql
+                           query
+                           operation-name
+                           nil
+                           (->java (or variables {})))]
+      {:data (->clj (.getData result))
+       :errors (.getErrors result)})
+    (catch GraphQLException e
+      (log/error e)
+      {:errors [(.getMessage e)]})))

@@ -5,6 +5,7 @@
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
+            [ctia.schemas.sorting :as sort-fields]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
@@ -15,6 +16,12 @@
             [ctim.domain.id :as id]
             [clojure.java.io :as io]
             [clojure.walk :as walk]))
+
+(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
+                                    helpers/fixture-properties:clean
+                                    whoami-helpers/fixture-server]))
+
+(use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (def judgement-1
   {"observable" {"value" "1.2.3.4"
@@ -43,9 +50,9 @@
    "tlp" "green"
    "source" "test"
    "source_uri" "https://panacea.threatgrid.com/ips/1.2.3.4"
-   "priority" 100
-   "severity" "High"
-   "confidence" "High"
+   "priority" 90
+   "severity" "Medium"
+   "confidence" "Medium"
    "reason" "This is a bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
@@ -55,15 +62,15 @@
   {"observable" {"value" "8.8.8.8"
                  "type" "ip"}
    "external_ids" ["http://ex.tld/ctia/judgement/judgement-678"]
-   "disposition" 2
-   "disposition_name" "Malicious"
+   "disposition" 1
+   "disposition_name" "Clean"
    "tlp" "green"
    "source" "test"
    "source_uri" "https://panacea.threatgrid.com/ips/8.8.8.8"
-   "priority" 100
-   "severity" "High"
+   "priority" 80
+   "severity" "None"
    "confidence" "High"
-   "reason" "This is a bad IP address that talked to some evil servers"
+   "reason" "This is a clean IP address"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
                  "end_time" "2025-03-11T00:40:48.000Z"}})
@@ -193,73 +200,6 @@
      :sighting-1 s1
      :sighting-2 s2}))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
-                                    whoami-helpers/fixture-server]))
-
-(use-fixtures :each whoami-helpers/fixture-reset-state)
-
-(defn nodes->edges
-  [nodes]
-  (mapv (fn [node]
-          {:node node})
-        nodes))
-
-(defn connection-test
-  "Test a connection with more than one edge"
-  [operation-name
-   graphql-query
-   variables
-   connection-path
-   expected-nodes]
-  ;; page 1
-  (let [{:keys [data errors status]}
-        (gh/query graphql-query
-                  (into variables
-                        {:first 1})
-                  operation-name)]
-    (is (= 200 status))
-    (is (empty? errors) "No errors")
-    (let [{nodes-p1 :nodes
-           edges-p1 :edges
-           page-info-p1 :pageInfo
-           total-count-p1 :totalCount}
-          (get-in data connection-path)]
-      (is (= (count expected-nodes)
-             total-count-p1))
-      (is (= (count nodes-p1) 1)
-          "The first page contains 1 node")
-      (is (= (count edges-p1) 1)
-          "The first page contains 1 edge")
-      ;; page 2
-      (let [{:keys [data errors status]}
-            (gh/query graphql-query
-                   (into variables
-                         {:first 50
-                          :after (:endCursor page-info-p1)})
-                   operation-name)]
-        (is (= 200 status))
-        (is (empty? errors) "No errors")
-        (let [{nodes-p2 :nodes
-               edges-p2 :edges
-               page-info-p2 :pageInfo
-               total-count-p2 :totalCount}
-              (get-in data connection-path)]
-          (is (= (count expected-nodes)
-                 total-count-p2))
-          (is (= (count nodes-p2) (- (count expected-nodes)
-                                     (count nodes-p1)))
-              "The second page contains all remaining nodes")
-          (is (= (count edges-p2) (- (count expected-nodes)
-                                     (count edges-p1)))
-              "The second page contains all remaining edges")
-          (is (= (set expected-nodes)
-                 (set (concat nodes-p1 nodes-p2)))
-              "All nodes have been retrieved")
-          (is (= (set (nodes->edges expected-nodes))
-                 (set (concat edges-p1 edges-p2)))
-              "All edges have been retrieved"))))))
-
 (deftest-for-each-store test-graphql-route
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
@@ -318,13 +258,22 @@
                        (:judgement verdict))))))
 
           (testing "judgements connection"
-              (connection-test "ObservableQueryTest"
-                               graphql-queries
-                               {:type "ip"
-                                :value "1.2.3.4"}
-                               [:observable :judgements]
-                               [(:judgement-1 datamap)
-                                (:judgement-2 datamap)]))))
+              (gh/connection-test "ObservableQueryTest"
+                                  graphql-queries
+                                  {:type "ip"
+                                   :value "1.2.3.4"}
+                                  [:observable :judgements]
+                                  [(:judgement-1 datamap)
+                                   (:judgement-2 datamap)])
+
+              (testing "sorting"
+                (gh/connection-sort-test
+                 "ObservableQueryTest"
+                 graphql-queries
+                 {:type "ip"
+                  :value "1.2.3.4"}
+                 [:observable :judgements]
+                 sort-fields/judgement-sort-fields)))))
 
       (testing "judgement query"
         (let [{:keys [data errors status]}
@@ -340,38 +289,62 @@
                            :relationships))))
 
           (testing "relationships connection"
-            (connection-test "JudgementQueryTest"
+            (gh/connection-test "JudgementQueryTest"
                              graphql-queries
                              {:id judgement-1-id}
                              [:judgement :relationships]
                              [{:relationship_type "element-of"
                                :target_ref indicator-1-id
                                :source_ref judgement-1-id
-                               :source (:judgement-1 datamap)
-                               :target (:indicator-1 datamap)}
+                               :source_entity (:judgement-1 datamap)
+                               :target_entity (:indicator-1 datamap)}
                               {:relationship_type "element-of"
                                :target_ref indicator-2-id
                                :source_ref judgement-1-id
-                               :source (:judgement-1 datamap)
-                               :target (:indicator-2 datamap)}]))
+                               :source_entity (:judgement-1 datamap)
+                               :target_entity (:indicator-2 datamap)}])
+
+            (testing "sorting"
+              (gh/connection-sort-test
+               "JudgementQueryTest"
+               graphql-queries
+               {:id judgement-1-id}
+               [:judgement :relationships]
+               sort-fields/relationship-sort-fields)))
 
           (testing "feedbacks connection"
-            (connection-test "JudgementFeedbacksQueryTest"
+            (gh/connection-test "JudgementFeedbacksQueryTest"
                              graphql-queries
                              {:id judgement-1-id}
                              [:judgement :feedbacks]
                              [(feedback-1 judgement-1-id)
-                              (feedback-2 judgement-1-id)]))))
+                              (feedback-2 judgement-1-id)])
+
+            (testing "sorting"
+              (gh/connection-sort-test
+               "JudgementFeedbacksQueryTest"
+               graphql-queries
+               {:id judgement-1-id}
+               [:judgement :feedbacks]
+               sort-fields/feedback-sort-fields)))))
 
       (testing "judgements query"
         (testing "judgements connection"
-          (connection-test "JudgementsQueryTest"
+          (gh/connection-test "JudgementsQueryTest"
                            graphql-queries
                            {:query "*"}
                            [:judgements]
                            [(:judgement-1 datamap)
                             (:judgement-2 datamap)
-                            (:judgement-3 datamap)]))
+                            (:judgement-3 datamap)])
+
+          (testing "sorting"
+            (gh/connection-sort-test
+             "JudgementsQueryTest"
+             graphql-queries
+             {:query "*"}
+             [:judgements]
+             sort-fields/judgement-sort-fields)))
 
         (testing "query argument"
           (let [{:keys [data errors status]}
@@ -399,39 +372,63 @@
                            :relationships))))
 
           (testing "relationships connection"
-            (connection-test "IndicatorQueryTest"
+            (gh/connection-test "IndicatorQueryTest"
                              graphql-queries
                              {:id indicator-1-id}
                              [:indicator :relationships]
                              [{:relationship_type "variant-of"
                                :target_ref indicator-2-id
                                :source_ref indicator-1-id
-                               :source (:indicator-1 datamap)
-                               :target (:indicator-2 datamap)}
+                               :source_entity (:indicator-1 datamap)
+                               :target_entity (:indicator-2 datamap)}
                               {:relationship_type "variant-of"
                                :target_ref indicator-3-id
                                :source_ref indicator-1-id
-                               :source (:indicator-1 datamap)
-                               :target (:indicator-3 datamap)}]))
+                               :source_entity (:indicator-1 datamap)
+                               :target_entity (:indicator-3 datamap)}])
+
+            (testing "sorting"
+              (gh/connection-sort-test
+               "IndicatorQueryTest"
+               graphql-queries
+               {:id indicator-1-id}
+               [:indicator :relationships]
+               sort-fields/relationship-sort-fields)))
 
           (testing "feedbacks connection"
-            (connection-test "IndicatorFeedbacksQueryTest"
+            (gh/connection-test "IndicatorFeedbacksQueryTest"
                              graphql-queries
                              {:id indicator-1-id}
                              [:indicator :feedbacks]
                              [(feedback-1 indicator-1-id)
-                              (feedback-2 indicator-1-id)]))))
+                              (feedback-2 indicator-1-id)])
+
+            (testing "sorting"
+              (gh/connection-sort-test
+               "IndicatorFeedbacksQueryTest"
+               graphql-queries
+               {:id indicator-1-id}
+               [:indicator :feedbacks]
+               sort-fields/feedback-sort-fields)))))
 
       (testing "indicators query"
 
         (testing "indicators connection"
-          (connection-test "IndicatorsQueryTest"
+          (gh/connection-test "IndicatorsQueryTest"
                            graphql-queries
                            {"query" "*"}
                            [:indicators]
                            [(:indicator-1 datamap)
                             (:indicator-2 datamap)
-                            (:indicator-3 datamap)]))
+                            (:indicator-3 datamap)])
+
+          (testing "sorting"
+            (gh/connection-sort-test
+             "IndicatorsQueryTest"
+             graphql-queries
+             {:query "*"}
+             [:indicators]
+             sort-fields/indicator-sort-fields)))
 
         (testing "query argument"
           (let [{:keys [data errors status]}
@@ -460,38 +457,62 @@
                        (dissoc :relationships)))))
 
           (testing "relationships connection"
-            (connection-test "SightingQueryTest"
+            (gh/connection-test "SightingQueryTest"
                              graphql-queries
                              {:id sighting-1-id}
                              [:sighting :relationships]
                              [{:relationship_type "indicates"
                                :target_ref indicator-1-id
                                :source_ref sighting-1-id
-                               :source (:sighting-1 datamap)
-                               :target (:indicator-1 datamap)}
+                               :source_entity (:sighting-1 datamap)
+                               :target_entity (:indicator-1 datamap)}
                               {:relationship_type "indicates"
                                :target_ref indicator-2-id
                                :source_ref sighting-1-id
-                               :source (:sighting-1 datamap)
-                               :target (:indicator-2 datamap)}]))
+                               :source_entity (:sighting-1 datamap)
+                               :target_entity (:indicator-2 datamap)}])
+
+            (testing "sorting"
+              (gh/connection-sort-test
+               "SightingQueryTest"
+               graphql-queries
+               {:id sighting-1-id}
+               [:sighting :relationships]
+               sort-fields/relationship-sort-fields)))
 
           (testing "feedbacks connection"
-            (connection-test "SightingFeedbacksQueryTest"
+            (gh/connection-test "SightingFeedbacksQueryTest"
                              graphql-queries
                              {:id sighting-1-id}
                              [:sighting :feedbacks]
                              [(feedback-1 sighting-1-id)
-                              (feedback-2 sighting-1-id)]))))
+                              (feedback-2 sighting-1-id)])
+
+            (testing "sorting"
+              (gh/connection-sort-test
+               "SightingFeedbacksQueryTest"
+               graphql-queries
+               {:id sighting-1-id}
+               [:sighting :feedbacks]
+               sort-fields/feedback-sort-fields)))))
 
       (testing "sightings query"
 
         (testing "sightings connection"
-          (connection-test "SightingsQueryTest"
+          (gh/connection-test "SightingsQueryTest"
                            graphql-queries
                            {"query" "*"}
                            [:sightings]
                            [(:sighting-1 datamap)
-                            (:sighting-2 datamap)]))
+                            (:sighting-2 datamap)])
+
+          (testing "sorting"
+            (gh/connection-sort-test
+             "SightingsQueryTest"
+             graphql-queries
+             {:query "*"}
+             [:sightings]
+             sort-fields/sighting-sort-fields)))
 
         (testing "query argument"
           (let [{:keys [data errors status]}

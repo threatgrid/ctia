@@ -17,7 +17,7 @@
    {s/Keyword s/Any}
    (st/optional-keys
     {:orderBy [{:field s/Str
-                :direction (s/enum "ASC" "DESC")}]})))
+                :direction (s/enum "asc" "desc")}]})))
 
 (def OrderDirection
   (g/enum

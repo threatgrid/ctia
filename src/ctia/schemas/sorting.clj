@@ -1,5 +1,10 @@
 (ns ctia.schemas.sorting)
 
+;; These are the fields that are sortable, per entity.  We place them
+;; here since they are used by more than one entity's routes.  For
+;; isntance, the indicator route needs to know how to sort sightings
+;; for the `ctia/indicator/:ID/sighting` handler
+;;
 (def base-entity-sort-fields [:id :schema_version :revision
                               :timestamp :language :tlp])
 
@@ -41,8 +46,7 @@
   (concat default-entity-sort-fields
           [:indicator_type
            :likely_impact
-           :confidence
-           :specification]))
+           :confidence]))
 
 (def relationship-sort-fields
   (concat default-entity-sort-fields
