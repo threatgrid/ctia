@@ -115,17 +115,7 @@
       (merge
        {:type (match [id?  open? (seq values)]
                      [true _     _  ] Scalars/GraphQLID
-                     [_    true  _  ] Scalars/GraphQLString
-                     [_    _     nil] Scalars/GraphQLString
-                     :else      (do
-                                  (log/debugf "Enum %s, description: %s, values: %s"
-                                              name
-                                              description
-                                              values)
-                                  ;; Do not use enum for invalid values
-                                  (if (g/valid-enum-names? values)
-                                    (g/enum name description values)
-                                    Scalars/GraphQLString)))}
+                     :else            Scalars/GraphQLString)}
        (when description
          {:description description})))))
 

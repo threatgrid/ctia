@@ -50,21 +50,16 @@
   nil
   (->clj [_] nil))
 
-(defn valid-enum-name?
-  "A GraphQLEnum Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
+(defn valid-type-name?
+  "A GraphQL Type Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
   [n]
   (some?
    (when (and n (not (empty? n)))
      (re-matches #"[_A-Za-z][_0-9A-Za-z]*" n))))
 
-(defn valid-enum-names?
+(defn valid-type-names?
   [c]
-  (every? valid-enum-name? c))
-
-(defn- escape-enum-value-name
-  "A GraphQL Name must be non-null, non-empty and match [_A-Za-z][_0-9A-Za-z]*"
-  [enum-value-name]
-  (str/replace enum-value-name #"[- \.]" "_"))
+  (every? valid-type-name? c))
 
 (defn enum
   "Creates a GraphQLEnumType. If a type with the same name has already been
@@ -80,9 +75,7 @@
                          (.name enum-name)
                          (.description description))]
          (doseq [value c]
-           (.value builder
-                   (escape-enum-value-name value)
-                   value))
+           (.value builder value))
          (let [graphql-enum (.build builder)]
            (swap! registry assoc enum-name graphql-enum)
            graphql-enum)))))

@@ -22,18 +22,18 @@
                      "Description 2"
                      ["V1"])))))
 
-(deftest valid-enum-name?-test
-  (is (not (sut/valid-enum-name? nil))
-      "null enum name is invalid")
-  (is (not (sut/valid-enum-name? ""))
+(deftest valid-type-name?-test
+  (is (not (sut/valid-type-name? nil))
+      "null type name is invalid")
+  (is (not (sut/valid-type-name? ""))
       "empty name is invalid")
-  (is (not (sut/valid-enum-name? "a-b"))
+  (is (not (sut/valid-type-name? "a-b"))
       "name with dash char is invalid")
-  (is (sut/valid-enum-name? "judgement")
+  (is (sut/valid-type-name? "judgement")
       "normal name is valid"))
 
-(deftest valid-enum-names?-test
-  (is (not (sut/valid-enum-names? ["a-b" "aa"]))
+(deftest valid-type-names?-test
+  (is (not (sut/valid-type-names? ["a-b" "aa"]))
       "Invalid if one of the collection is not valid")
-  (is (sut/valid-enum-names? ["judgement" "indicator"])
+  (is (sut/valid-type-names? ["judgement" "indicator"])
       "Valid if all names are valid"))
