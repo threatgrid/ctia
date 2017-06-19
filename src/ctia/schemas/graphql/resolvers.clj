@@ -28,7 +28,7 @@
    args :- {s/Keyword s/Any}
    page-with-long-id-fn]
   (let [paging-params (pagination/connection-params->paging-params args)
-        params (select-keys paging-params [:limit :offset])]
+        params (select-keys paging-params [:limit :offset :sort_by])]
     (log/debugf "Search entity %s graphql args %s" entity-type args)
     (some-> (query-string-search-store
              entity-type
@@ -46,7 +46,7 @@
   [entity-id :- s/Str
    args :- {s/Keyword s/Any}]
   (let [paging-params (pagination/connection-params->paging-params args)
-        params (select-keys paging-params [:limit :offset])]
+        params (select-keys paging-params [:limit :offset :sort_by])]
     (log/debug "Search feedback for entity id: " entity-id)
     (some-> (read-store :feedback
                         list-feedback
@@ -86,7 +86,7 @@
   [observable :- ctia-schemas/Observable
    args :- {s/Keyword s/Any}]
   (let [paging-params (pagination/connection-params->paging-params args)
-        params (select-keys paging-params [:limit :offset])]
+        params (select-keys paging-params [:limit :offset :sort_by])]
     (some-> (read-store :judgement
                         list-judgements-by-observable
                         observable

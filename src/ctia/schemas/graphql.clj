@@ -2,14 +2,17 @@
   (:require [ctia.schemas.graphql
              [common :as common]
              [helpers :as g]
-             [indicator :refer [IndicatorType
-                                IndicatorConnectionType]]
-             [judgement :refer [JudgementType
-                                JudgementConnectionType]]
+             [indicator :as indicator
+              :refer [IndicatorType
+                      IndicatorConnectionType]]
+             [judgement :as judgement
+              :refer [JudgementType
+                      JudgementConnectionType]]
              [observable :refer [ObservableType]]
              [resolvers :as res]
-             [sighting :refer [SightingType
-                               SightingConnectionType]]]
+             [sighting :as sighting
+              :refer [SightingType
+                      SightingConnectionType]]]
             [schema.core :as s]
             [ctia.schemas.graphql.pagination :as p])
   (:import graphql.Scalars))
@@ -38,15 +41,17 @@
                 :args search-by-id-args
                 :resolve (fn [_ args _] (res/indicator-by-id (:id args)))}
     :indicators {:type IndicatorConnectionType
-                 :args (into common/lucene-query-arguments
-                             p/connection-arguments)
+                 :args (merge common/lucene-query-arguments
+                              indicator/indicator-order-arg
+                              p/connection-arguments)
                  :resolve res/search-indicators}
     :judgement {:type JudgementType
                 :args search-by-id-args
                 :resolve (fn [_ args _] (res/judgement-by-id (:id args)))}
     :judgements {:type JudgementConnectionType
-                 :args (into common/lucene-query-arguments
-                             p/connection-arguments)
+                 :args (merge common/lucene-query-arguments
+                              judgement/judgement-order-arg
+                              p/connection-arguments)
                  :resolve res/search-judgements}
     :observable {:type ObservableType
                  :args {:type {:type (g/non-null Scalars/GraphQLString)}
@@ -56,8 +61,9 @@
                :args search-by-id-args
                :resolve (fn [_ args _] (res/sighting-by-id (:id args)))}
     :sightings {:type SightingConnectionType
-                :args (into common/lucene-query-arguments
-                            p/connection-arguments)
+                :args (merge common/lucene-query-arguments
+                             sighting/sighting-order-arg
+                             p/connection-arguments)
                 :resolve res/search-sightings}}))
 
 (def schema (g/new-schema QueryType))

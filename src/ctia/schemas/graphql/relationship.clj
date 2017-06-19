@@ -6,7 +6,9 @@
              [helpers :as g]
              [pagination :as p]
              [refs :as refs]
-             [resolvers :as res :refer [entity-by-id search-relationships]]]
+             [resolvers :as res :refer [entity-by-id search-relationships]]
+             [sorting :as sorting]]
+            [ctia.schemas.sorting :as sort-fields]
             [ctim.domain.id :as id]
             [ctim.schemas
              [indicator :as ctim-ind]
@@ -54,18 +56,18 @@
 (def relation-fields
   (merge
    (g/non-nulls
-    {:source {:type Entity
-              :resolve (fn [_ args src]
-                         (log/debug "Source resolver" args src)
-                         (let [ref (:source_ref src)
-                               entity-type (ref->entity-type ref)]
-                           (entity-by-id entity-type ref)))}
-     :target {:type Entity
-              :resolve (fn [_ args src]
-                         (log/debug "Target resolver" args src)
-                         (let [ref (:target_ref src)
-                               entity-type (ref->entity-type ref)]
-                           (entity-by-id entity-type ref)))}})))
+    {:source_entity {:type Entity
+                     :resolve (fn [_ args src]
+                                (log/debug "Source resolver" args src)
+                                (let [ref (:source_ref src)
+                                      entity-type (ref->entity-type ref)]
+                                  (entity-by-id entity-type ref)))}
+     :target_entity {:type Entity
+                     :resolve (fn [_ args src]
+                                (log/debug "Target resolver" args src)
+                                (let [ref (:target_ref src)
+                                      entity-type (ref->entity-type ref)]
+                                  (entity-by-id entity-type ref)))}})))
 
 (def RelationshipType
   (let [{:keys [fields name description]}
@@ -76,6 +78,14 @@
                   []
                   (merge fields
                          relation-fields))))
+
+(def relationship-order-arg
+  (sorting/order-by-arg
+   "RelationshipOrder"
+   "relationships"
+   (into {}
+         (map (juxt sorting/sorting-kw->enum-name name)
+              sort-fields/relationship-sort-fields))))
 
 (def RelationshipConnectionType
   (p/new-connection RelationshipType))
@@ -95,5 +105,6 @@
       {:type Scalars/GraphQLString
        :description (str "restrict to Relationships whose target is of the "
                          "specified CTIM entity type.")}}
-     p/connection-arguments)
+     p/connection-arguments
+     relationship-order-arg)
     :resolve search-relationships}})

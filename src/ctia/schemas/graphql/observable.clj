@@ -23,7 +23,8 @@
              :resolve (fn [_ _ src]
                         (observable-verdict (select-keys src [:type :value])))}
    :judgements {:type judgement/JudgementConnectionType
-                :args pagination/connection-arguments
+                :args (into pagination/connection-arguments
+                            judgement/judgement-order-arg)
                 :resolve (fn [_ args src]
                            (resolvers/search-judgements-by-observable
                             (select-keys src [:type :value])

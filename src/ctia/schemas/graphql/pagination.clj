@@ -4,7 +4,8 @@
             [clojure.tools.logging :as log]
             [ctia.schemas.graphql.helpers :as g]
             [schema-tools.core :as st]
-            [schema.core :as s])
+            [schema.core :as s]
+            [ctia.schemas.graphql.sorting :as sorting])
   (:import graphql.Scalars))
 
 (def PageInfo
@@ -79,7 +80,8 @@
 (s/defschema PagingParams
   (st/merge
    {:limit s/Int
-    :offset s/Int}
+    :offset s/Int
+    (s/optional-key :sort_by) s/Str}
    PagingDirection))
 
 (s/defschema Edge
@@ -158,8 +160,9 @@
   (let [{:keys [forward-paging?
                 backward-paging?] :as direction}
         (validate-paging connection-params)]
-    (into
+    (merge
      direction
+     (sorting/connection-params->sorting-params connection-params)
      (cond
        forward-paging?
        (let [after-offset (unserialize-cursor after)]
