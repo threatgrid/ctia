@@ -57,6 +57,15 @@
     (first (sort v))
     v))
 
+(defn by-min-value-and-id
+  [sort-field-path]
+  (fn [x y]
+    (let [c (compare (min-value (get-in x sort-field-path))
+                     (min-value (get-in y sort-field-path)))]
+      (if (not= c 0)
+        c
+        (compare (:id x) (:id y))))))
+
 (defn connection-sort-test
   "Test a connection with a list of sort-fields.
   It uses the $sort_field variable to specify a sort field.
@@ -66,24 +75,19 @@
    variables
    connection-path
    sort-fields]
-  (doseq [sort-field sort-fields]
+  ;; Free text fields are currently not sortable. Remove them
+  (doseq [sort-field (disj (set sort-fields) :reason :description :title)]
     (let [{:keys [data errors status]}
           (query graphql-query
                  variables
                  operation-name)
           connection-data (get-in data connection-path)
           sort-field-path (sort-kw->path sort-field)
-          sort-field-fn #(min-value
-                          (get-in % sort-field-path))
           nodes-ref (->> (:nodes connection-data)
-                         (sort-by sort-field-fn)
-                         (map sort-field-fn)
-                         (remove nil?))
+                         (sort (by-min-value-and-id sort-field-path)))
           edges-ref (->> (:edges connection-data)
                          (map :node)
-                         (sort-by sort-field-fn)
-                         (map sort-field-fn)
-                         (remove nil?))]
+                         (sort (by-min-value-and-id sort-field-path)))]
       (is (= 200 status))
       (is (empty? errors) "No errors")
       (let [{:keys [data errors status]}
@@ -92,22 +96,30 @@
                          {:sort_field (sorting/sorting-kw->enum-name sort-field)})
                    operation-name)
             connection-data (get-in data connection-path)
-            nodes (->> (:nodes connection-data)
-                       (map sort-field-fn)
-                       (remove nil?))
-            edges (->> (:edges connection-data)
-                       (map :node)
-                       (map sort-field-fn)
-                       (remove nil?))]
+            nodes (:nodes connection-data)
+            edges (map :node (:edges connection-data))]
         (is (= 200 status))
         (is (empty? errors) "No errors")
         (is (not-empty (:nodes connection-data))
             (str "Result not empty when sorted by " sort-field))
         (is (= nodes-ref nodes)
-            (str "Nodes are correctly sorted by " sort-field))
+            (str "Nodes should be correctly sorted by " sort-field))
         (is (not-empty (:edges connection-data)))
         (is (= edges-ref edges)
-            (str "Edges are correctly sorted by " sort-field))))))
+            (str "Edges should be correctly sorted by " sort-field)))
+      (let [{data :data}
+            (query graphql-query
+                   (into variables
+                         {:sort_field (sorting/sorting-kw->enum-name sort-field)
+                          :sort_direction "desc"})
+                   operation-name)
+            connection-data (get-in data connection-path)]
+        (is (not= nodes-ref (:nodes connection-data))
+            (str "Nodes should not be sorted the same way in asc and desc direction - "
+                 sort-field))
+        (is (not= nodes-ref (map :node (:edges connection-data)))
+            (str "Edges should not be sorted the same way in asc and desc direction - "
+                 sort-field))))))
 
 (defn connection-test
   "Test a connection with more than one edge.

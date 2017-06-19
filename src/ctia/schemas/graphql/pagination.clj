@@ -18,7 +18,7 @@
     :startCursor {:type Scalars/GraphQLString}
     :endCursor {:type Scalars/GraphQLString}}))
 
-(def connection-arguments               ;
+(def connection-arguments
   {:after {:type Scalars/GraphQLString}
    :first {:type Scalars/GraphQLInt
            :default 50}

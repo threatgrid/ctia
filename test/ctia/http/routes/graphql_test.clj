@@ -36,7 +36,7 @@
    "priority" 100
    "severity" "High"
    "confidence" "Low"
-   "reason" "This is a bad IP address that talked to some evil servers"
+   "reason" "This is a very bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
                  "end_time" "2025-03-11T00:40:48.000Z"}})

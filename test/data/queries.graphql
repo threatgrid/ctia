@@ -1,10 +1,10 @@
-query ObservableQueryTest($type: String!, $value: String!, $first: Int, $after: String, $sort_field:JudgementOrderField = ID) {
+query ObservableQueryTest($type: String!, $value: String!, $first: Int, $after: String, $sort_field:JudgementOrderField = ID, $sort_direction: OrderDirection = asc) {
   observable(type: $type, value: $value) {
     ...observableBaseFields
     verdict {
       ...verdictFields
     }
-    judgements(first: $first after: $after, orderBy: [{field: $sort_field, direction: asc}]) {
+    judgements(first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
         ...pageInfoFields
@@ -21,10 +21,10 @@ query ObservableQueryTest($type: String!, $value: String!, $first: Int, $after: 
   }
 }
 
-query JudgementQueryTest($id: String!, $relationship_type: String = "element-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID) {
+query JudgementQueryTest($id: String!, $relationship_type: String = "element-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
   judgement(id: $id) {
     ...judgementFields
-    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: asc}]) {
+    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
         ...pageInfoFields
@@ -53,9 +53,9 @@ query JudgementQueryTest($id: String!, $relationship_type: String = "element-of"
   }
 }
 
-query JudgementFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID) {
+query JudgementFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
   judgement(id: $id) {
-    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: asc}]) {
+    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
         ...pageInfoFields
@@ -72,8 +72,8 @@ query JudgementFeedbacksQueryTest($id: String!, $first: Int, $after: String, $so
   }
 }
 
-query JudgementsQueryTest($query: String, $after: String, $first: Int, $sort_field:JudgementOrderField = ID) {
-  judgements(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: asc}]) {
+query JudgementsQueryTest($query: String, $after: String, $first: Int, $sort_field:JudgementOrderField = ID, $sort_direction: OrderDirection = asc) {
+  judgements(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
     totalCount
     pageInfo {
       ...pageInfoFields
@@ -89,10 +89,10 @@ query JudgementsQueryTest($query: String, $after: String, $first: Int, $sort_fie
   }
 }
 
-query IndicatorQueryTest($id: String!, $relationship_type: String = "variant-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID) {
+query IndicatorQueryTest($id: String!, $relationship_type: String = "variant-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
   indicator(id: $id) {
     ...indicatorFields
-    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: asc}]) {
+    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
         ...pageInfoFields
@@ -121,9 +121,9 @@ query IndicatorQueryTest($id: String!, $relationship_type: String = "variant-of"
   }
 }
 
-query IndicatorFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID) {
+query IndicatorFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
   indicator(id: $id) {
-    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: asc}]) {
+    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
         ...pageInfoFields
@@ -140,8 +140,8 @@ query IndicatorFeedbacksQueryTest($id: String!, $first: Int, $after: String, $so
   }
 }
 
-query IndicatorsQueryTest($query: String, $after: String, $first: Int, $sort_field: IndicatorOrderField = ID) {
-  indicators(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: asc}]) {
+query IndicatorsQueryTest($query: String, $after: String, $first: Int, $sort_field: IndicatorOrderField = ID, $sort_direction: OrderDirection = asc) {
+  indicators(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
     totalCount
     pageInfo {
       ...pageInfoFields
@@ -157,10 +157,10 @@ query IndicatorsQueryTest($query: String, $after: String, $first: Int, $sort_fie
   }
 }
 
-query SightingQueryTest($id: String!, $relationship_type: String = "indicates", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID) {
+query SightingQueryTest($id: String!, $relationship_type: String = "indicates", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
   sighting(id: $id) {
     ...sightingFields
-    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: asc}]) {
+    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
         ...pageInfoFields
@@ -189,9 +189,9 @@ query SightingQueryTest($id: String!, $relationship_type: String = "indicates", 
   }
 }
 
-query SightingFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID) {
+query SightingFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
   sighting(id: $id) {
-    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: asc}]) {
+    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
         ...pageInfoFields
@@ -208,8 +208,8 @@ query SightingFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sor
   }
 }
 
-query SightingsQueryTest($query: String, $after: String, $first: Int, $sort_field: SightingOrderField = ID) {
-  sightings(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: asc}]) {
+query SightingsQueryTest($query: String, $after: String, $first: Int, $sort_field: SightingOrderField = ID, $sort_direction: OrderDirection = asc) {
+  sightings(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
     totalCount
     pageInfo {
       ...pageInfoFields
