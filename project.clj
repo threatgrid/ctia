@@ -42,7 +42,11 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.9c"]
+                 [threatgrid/ctim "0.4.11"
+                  :exclusions [joda-time
+                               clj-time
+                               riemann-clojure-client
+                               com.andrewmcveigh/cljs-time]]
 
                  ;; Web server
                  ;; ring-swagger 0.22.10 provided by compojure-api
@@ -90,7 +94,14 @@
                  [ymilky/franzy "0.0.1"]
 
                  ;; GraphQL
-                 [com.graphql-java/graphql-java "2.2.0"]]
+                 [base64-clj "0.1.1"]
+                 [threatgrid/ring-graphql-ui "0.1.1"
+                  :exclusions [commons-fileupload
+                               ring/ring-core
+                               cheshire
+                               metosin/ring-http-response]]
+                 [com.graphql-java/graphql-java "3.0.0"
+                  :exclusions [org.slf4j/slf4j-api]]]
 
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
                com.andrewmcveigh/cljs-time]

@@ -1,0 +1,343 @@
+query ObservableQueryTest($type: String!, $value: String!, $first: Int, $after: String, $sort_field:JudgementOrderField = ID, $sort_direction: OrderDirection = asc) {
+  observable(type: $type, value: $value) {
+    ...observableBaseFields
+    verdict {
+      ...verdictFields
+    }
+    judgements(first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...judgementFields
+      }
+      edges {
+        node {
+          ...judgementFields
+        }
+      }
+    }
+  }
+}
+
+query JudgementQueryTest($id: String!, $relationship_type: String = "element-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
+  judgement(id: $id) {
+    ...judgementFields
+    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...relationshipBaseFields
+        target_entity {
+          ...indicatorFields
+        }
+        source_entity {
+          ...judgementFields
+        }
+      }
+      edges {
+        node {
+          ...relationshipBaseFields
+          target_entity {
+            ...indicatorFields
+          }
+          source_entity {
+            ...judgementFields
+          }
+        }
+      }
+    }
+  }
+}
+
+query JudgementFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
+  judgement(id: $id) {
+    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...feedbackFields
+      }
+      edges {
+        node {
+          ...feedbackFields
+        }
+      }
+    }
+  }
+}
+
+query JudgementsQueryTest($query: String, $after: String, $first: Int, $sort_field:JudgementOrderField = ID, $sort_direction: OrderDirection = asc) {
+  judgements(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...judgementFields
+    }
+    edges {
+      node {
+        ...judgementFields
+      }
+    }
+  }
+}
+
+query IndicatorQueryTest($id: String!, $relationship_type: String = "variant-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
+  indicator(id: $id) {
+    ...indicatorFields
+    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...relationshipBaseFields
+        target_entity {
+          ...indicatorFields
+        }
+        source_entity {
+          ...indicatorFields
+        }
+      }
+      edges {
+        node {
+          ...relationshipBaseFields
+          target_entity {
+            ...indicatorFields
+          }
+          source_entity {
+            ...indicatorFields
+          }
+        }
+      }
+    }
+  }
+}
+
+query IndicatorFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
+  indicator(id: $id) {
+    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...feedbackFields
+      }
+      edges {
+        node {
+          ...feedbackFields
+        }
+      }
+    }
+  }
+}
+
+query IndicatorsQueryTest($query: String, $after: String, $first: Int, $sort_field: IndicatorOrderField = ID, $sort_direction: OrderDirection = asc) {
+  indicators(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...indicatorFields
+    }
+    edges {
+      node {
+        ...indicatorFields
+      }
+    }
+  }
+}
+
+query SightingQueryTest($id: String!, $relationship_type: String = "indicates", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
+  sighting(id: $id) {
+    ...sightingFields
+    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...relationshipBaseFields
+        target_entity {
+          ...indicatorFields
+        }
+        source_entity {
+          ...sightingFields
+        }
+      }
+      edges {
+        node {
+          ...relationshipBaseFields
+          target_entity {
+            ...indicatorFields
+          }
+          source_entity {
+            ...sightingFields
+          }
+        }
+      }
+    }
+  }
+}
+
+query SightingFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
+  sighting(id: $id) {
+    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...feedbackFields
+      }
+      edges {
+        node {
+          ...feedbackFields
+        }
+      }
+    }
+  }
+}
+
+query SightingsQueryTest($query: String, $after: String, $first: Int, $sort_field: SightingOrderField = ID, $sort_direction: OrderDirection = asc) {
+  sightings(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...sightingFields
+    }
+    edges {
+      node {
+        ...sightingFields
+      }
+    }
+  }
+}
+
+fragment indicatorFields on Indicator {
+  id
+  type
+  schema_version
+  title
+  tlp
+  producer
+  description
+  indicator_type
+  valid_time {
+    ...validTimeFields
+  }
+}
+
+fragment relationshipBaseFields on Relationship {
+  relationship_type
+  target_ref
+  source_ref
+}
+
+fragment pageInfoFields on PageInfo {
+  hasNextPage
+  hasPreviousPage
+  startCursor
+  endCursor
+}
+
+fragment judgementFields on Judgement {
+  id
+  type
+  schema_version
+  disposition
+  disposition_name
+  valid_time {
+    ...validTimeFields
+  }
+  observable {
+    ...observableBaseFields
+  }
+  reason
+  reason_uri
+  source
+  source_uri
+  external_ids
+  confidence
+  severity
+  tlp
+  priority
+}
+
+fragment sightingFields on Sighting {
+  id
+  type
+  schema_version
+  description
+  confidence
+  count
+  observables {
+    ...observableBaseFields
+  }
+  observed_time {
+    ...observedTimeFields
+  }
+  sensor
+  source
+  tlp
+  source_uri
+  relations {
+    ...observedRelationFields
+  }
+}
+
+fragment verdictFields on Verdict {
+  type
+  disposition
+  disposition_name
+  observable {
+    ...observableBaseFields
+  }
+  judgement_id
+  judgement {
+    ...judgementFields
+  }
+}
+
+fragment validTimeFields on ValidTime {
+  start_time
+  end_time
+}
+
+fragment observedTimeFields on ObservedTime {
+  start_time
+  end_time
+}
+
+fragment observedRelationFields on ObservedRelation {
+  origin
+  relation
+  source {
+    ...observableBaseFields
+  }
+  related {
+    ...observableBaseFields
+  }
+}
+
+fragment observableBaseFields on Observable {
+  type
+  value
+}
+
+fragment feedbackFields on Feedback {
+  feedback
+  entity_id
+  reason
+}
