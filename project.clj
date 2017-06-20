@@ -87,6 +87,7 @@
 
                  ;; Hooks
                  [redismq "0.1.0-SNAPSHOT"]
+                 [ymilky/franzy "0.0.1"]
 
                  ;; GraphQL
                  [com.graphql-java/graphql-java "2.2.0"]]

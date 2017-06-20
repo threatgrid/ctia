@@ -8,6 +8,7 @@
     [ctim.events.schemas :refer [CreateEventType
                                  DeleteEventType]]
     [redismq.core :as rmq]
+    [ctia.flows.hooks.kafka :as kafka]
     [schema.core :as s]))
 
 (defrecord RedisEventPublisher [conn publish-channel-name]
@@ -78,7 +79,9 @@
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq}
-        (get-in @properties [:ctia :hook])]
+        (get-in @properties [:ctia :hook])
+        kafka-hook (kafka/new-publisher)]
     (cond-> hooks-m
-      redis?   (update :event #(conj % (redis-event-publisher)))
-      redismq? (update :event #(conj % (redismq-publisher))))))
+      redis?     (update :event #(conj % (redis-event-publisher)))
+      redismq?   (update :event #(conj % (redismq-publisher)))
+      kafka-hook (update :event #(conj % kafka-hook)))))
