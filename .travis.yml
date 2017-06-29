@@ -53,7 +53,7 @@ install:
     - which deb-s3
 
 before_script:
-    - $COMPOSE_BIN -f containers/dev/docker-compose.yml up -d> $COMPOSE_LOG
+    - $COMPOSE_BIN -f containers/test/docker-compose.yml up -d> $COMPOSE_LOG
     # Wait ES
     - until curl http://127.0.0.1:9200/; do sleep 1; done
 
