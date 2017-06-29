@@ -86,15 +86,22 @@ Obviously, one may tweak the java arguments as needed.
 
 ## Development
 
-We provide a default `docker-compose-dev.yml` which will bring up the
-dependencies you need in containers.
-
-
 The easiest way to get running is to use `docker`.
 
 On Mac OS X, you should use
 [Docker for Mac](https://docs.docker.com/docker-for-mac/) which
 includes all the dependencies you need to run Docker containers.
+
+**With Kafka and Zookeeper now part of the dev cluster, you will need
+  to increase the memory you allocate to Docker.  You can do this thru
+  your Docker preferences.  This has been tested with an 8mb
+  allocation.**
+
+We  provide a  default `containers/dev/docker-compose.yml`  which will
+bring up the  dependencies you need in containers.  We  also provide a
+`containers/test/docker-compose.yml`    which     is    the    cluster
+configuration that our Travis CI tests again.  If you add services, be
+sure  to update  both so  your unit  tests work.
 
 You can then bring up a development environment:
 
@@ -103,6 +110,37 @@ cd containers/dev
 docker-compose -f docker-compose.yml build
 docker-compose -f docker-compose.yml up
 ```
+
+Using docker for mac, this will bind the following ports on your
+development machine to the services running in the containers:
+
+* Redis - 6379
+* elasticsearch - 9200 and 9300
+* kibana - 5601
+* zookeeper - 2181
+* kafka - 9092
+
+If you run into issues with one of your contains being in a weird
+state, you can delete the image.  First shut down the docker-compose
+cluster, and then run `docker images ls` to list the images, and then
+you can delete the image for the container that is giving you trouble.
+The usual culprits are elasticsearch and zookeeper.
+
+It can be very useful to use _Kitematic_ to monitor and interact with
+your containers.
+
+
+If you ever need to reset your entire dev environment, perform the
+following steps
+
+* `docker images ps` - to get a list of images and their image IDs
+* `docker rmi IMGID` - to delete the `zookeeper`, `elasticsearch`, `kafka`, `kibana` and `redis` images
+* `cd containers/dev; docker-compose -f docker-compose.yml up --force-recreate`
+
+Now, in another terminal, you can run CTIA.
+
+
+#### Deprecated Docker Toolbox support
 
 If you can't use docker directly and are forced to use Docker Toolbox,
 you will then need to tell your CTIA where to find its dependencies.
@@ -124,21 +162,6 @@ Or you could initialize your properties with:
 ```
 lein init-properties
 ```
-
-It can be very useful to use _Kitematic_ to monitor and interact with
-your containers.  You can also use _VirtualBox_ to modify the
-resources available to the VM that is running all of your containers.
-
-If you ever need to reset your entire dev environment, you can run
-`docker-compose` to rebuild all the containers from scratch:
-
-```
-cd containers/dev
-docker-compose -f docker-compose.yml up --force-recreate
-```
-
-Now, in another terminal, you can run CTIA.
-
 
 ### Testing and CI
 
