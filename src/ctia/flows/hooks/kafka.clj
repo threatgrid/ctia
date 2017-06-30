@@ -1,5 +1,6 @@
 (ns ctia.flows.hooks.kafka
   (:require [clojure.tools.logging :as log]
+            [clojure.string :as str]
             [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.properties :refer [properties]]
             [cheshire.core :as json]
@@ -17,20 +18,20 @@
   (destroy [_]
     (.close producer))
   (handle [_ event _]
-    (kafka/send-async! producer topic partition production-key event opts)))
+    (let [event-json (json/encode event)]
+      (kafka/send-async! producer topic partition production-key event-json opts))))
 
 (defn new-publisher
   ([]
    (let [{:keys [enabled host port topic partition security truststore password]}
-         (get-in @properties [:cita :hook :kafka])
-
-         config (cond-> {:bootstrap.servers (str host ":" port)}
-                  security (assoc :security.protocol (str/upper-case security))
-                  truststore (assoc :ssl.truststore.location truststore)
-                  password (assoc :ssl.truststore.password password))
-         options (pd/make-default-producer-options)
-         key-ser (serializers/string-serializer)
-         val-ser (serializers/string-serializer)
-         producer (producer/make-producer config key-ser val-ser options)]
+         (get-in @properties [:ctia :hook :kafka])]
      (when enabled
-       (->KafkaPublisher producer topic partition options)))))
+       (let [config (cond-> {:bootstrap.servers (str host ":" port)}
+                            security (assoc :security.protocol (str/upper-case security))
+                            truststore (assoc :ssl.truststore.location truststore)
+                            password (assoc :ssl.truststore.password password))
+             options (pd/make-default-producer-options)
+             key-ser (serializers/string-serializer)
+             val-ser (serializers/string-serializer)
+             producer (producer/make-producer config key-ser val-ser options)]
+         (->KafkaPublisher producer topic partition options))))))
