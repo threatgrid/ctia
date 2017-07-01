@@ -26,6 +26,7 @@
    (let [{:keys [enabled host port topic partition security truststore password]}
          (get-in @properties [:ctia :hook :kafka])]
      (when enabled
+       (log/info "Configuring Kafka publishing")
        (let [config (cond-> {:bootstrap.servers (str host ":" port)}
                             security (assoc :security.protocol (str/upper-case security))
                             truststore (assoc :ssl.truststore.location truststore)
