@@ -26,7 +26,7 @@ function build-and-publish-package {
   # Build the debian package
   dpkg-deb -Z gzip -b ./target/pkg/deb ./target/pkg/ctia-$BUILD_NAME.deb
 
-  deb-s3 upload --access-key-id $DEB_ACCESS_KEY --secret-access-key $DEB_SECRET_KEY --bucket $DEB_BUCKET --arch amd64 --codename ctia --component $PKG_TYPE --use-ssl ./target/pkg/ctia-$BUILD_NAME.deb
+  deb-s3 upload  --preserve-versions --access-key-id $DEB_ACCESS_KEY --secret-access-key $DEB_SECRET_KEY --bucket $DEB_BUCKET --arch amd64 --codename ctia --component $PKG_TYPE --use-ssl ./target/pkg/ctia-$BUILD_NAME.deb
 }
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
