@@ -22,7 +22,7 @@
                  :return Relationship
                  :body [relationship NewRelationship
                         {:description "a new Relationship"}]
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "Adds a new Relationship"
                  :capabilities :create-relationship
                  :identity identity
@@ -43,7 +43,7 @@
                 :return [(s/maybe Relationship)]
                 :query [q RelationshipByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List relationships by external id"
                 :capabilities #{:read-relationship :external-id}
                 (-> (read-store :relationship list-relationships
@@ -57,7 +57,7 @@
                 :summary "Search for a Relationship using a Lucene/ES query string"
                 :query [params RelationshipSearchParams]
                 :capabilities #{:read-relationship :search-relationship}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :relationship
                      query-string-search
@@ -72,7 +72,7 @@
                 :return (s/maybe Relationship)
                 :summary "Gets an Relationship by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-relationship
                 (if-let [relationship (read-store :relationship read-relationship id)]
                   (-> relationship
@@ -85,7 +85,7 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes an Relationship"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-relationship
                    :identity identity
                    (if (flows/delete-flow

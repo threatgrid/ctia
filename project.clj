@@ -1,5 +1,5 @@
 (def cheshire-version "5.6.3")
-(def compojure-api-version "1.1.8")
+(def compojure-api-version "1.1.9")
 (def schema-tools-version "0.9.0")
 (def schema-version "1.1.3")
 
@@ -49,11 +49,10 @@
                                com.andrewmcveigh/cljs-time]]
 
                  ;; Web server
-                 ;; ring-swagger 0.22.10 provided by compojure-api
-                 ;; 1.1.8 fails to generate JSON schema for s/Any
-                 ;; overriding here
-                 [metosin/ring-swagger "0.22.11"]
-                 [metosin/compojure-api ~compojure-api-version]
+                 [metosin/compojure-api ~compojure-api-version
+                  :exclusions [com.google.code.findbugs/jsr305
+                               com.andrewmcveigh/cljs-time
+                               org.clojure/core.memoize]]
                  [ring/ring-jetty-adapter "1.5.1"]
                  [javax.servlet/servlet-api "2.5"]
                  [ring/ring-devel "1.5.1"]

@@ -22,7 +22,7 @@
                  :return TTP
                  :body [ttp NewTTP {:description "a new TTP"}]
                  :summary "Adds a new TTP"
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-ttp
                  :identity identity
                  (-> (flows/create-flow :realize-fn ent/realize-ttp
@@ -41,7 +41,7 @@
                 :body [ttp NewTTP {:description "an updated TTP"}]
                 :summary "Updates a TTP"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :create-ttp
                 :identity identity
                 (-> (flows/update-flow
@@ -61,7 +61,7 @@
                 :return (s/maybe [TTP])
                 :query [q TTPByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List TTPs by external id"
                 :capabilities #{:read-ttp :external-id}
                 (-> (read-store :ttp list-ttps
@@ -75,7 +75,7 @@
                 :summary "Search for a TTP using a Lucene/ES query string"
                 :query [params TTPSearchParams]
                 :capabilities #{:read-ttp :search-ttp}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :ttp
                      query-string-search
@@ -89,7 +89,7 @@
            (GET "/:id" []
                 :return (s/maybe TTP)
                 :summary "Gets a TTP by ID"
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-ttp
                 :path-params [id :- s/Str]
                 (if-let [ttp (read-store :ttp
@@ -104,7 +104,7 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes a TTP"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-ttp
                    :identity identity
                    (if (flows/delete-flow

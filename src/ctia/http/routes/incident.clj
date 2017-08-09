@@ -21,7 +21,7 @@
                  :return Incident
                  :body [incident NewIncident {:description "a new incident"}]
                  :summary "Adds a new Incident"
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-incident
                  :identity identity
                  (-> (flows/create-flow
@@ -41,7 +41,7 @@
                 :body [incident NewIncident {:description "an updated incident"}]
                 :summary "Updates an Incident"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :create-incident
                 :identity identity
                 (-> (flows/update-flow
@@ -61,7 +61,7 @@
                 :return [(s/maybe Incident)]
                 :query [q IncidentByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List Incidents by external id"
                 :capabilities #{:read-incident :external-id}
                 (-> (read-store :incident list-incidents
@@ -75,7 +75,7 @@
                 :summary "Search for an Incident using a Lucene/ES query string"
                 :query [params IncidentSearchParams]
                 :capabilities #{:read-incident :search-incident}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :incident
                      query-string-search
@@ -90,7 +90,7 @@
                 :return (s/maybe Incident)
                 :summary "Gets an Incident by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-incident
                 (if-let [incident (read-store :incident read-incident id)]
                   (-> incident
@@ -103,7 +103,7 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes an Incident"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-incident
                    :identity identity
                    (if (flows/delete-flow

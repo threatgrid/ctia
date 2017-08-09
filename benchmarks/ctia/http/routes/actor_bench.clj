@@ -35,7 +35,7 @@
         (post "ctia/actor"
               :body big-actor
               :port port
-              :headers {"api_key" "45c1f5e3f05d0"})]
+              :headers {"Authorization" "45c1f5e3f05d0"})]
     (if (= 201 status)
       (delete (str "ctia/actor" (:id parsed_body)))
       (prn "play-big: " status))))

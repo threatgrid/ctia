@@ -35,7 +35,7 @@
            (POST "/" []
                  :return Judgement
                  :body [judgement NewJudgement {:description "a new Judgement"}]
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "Adds a new Judgement"
                  :capabilities :create-judgement
                  :identity identity
@@ -56,7 +56,7 @@
                 :summary "Search for a Judgement using a Lucene/ES query string"
                 :query [params JudgementSearchParams]
                 :capabilities #{:read-judgement :search-judgement}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :judgement
                      query-string-search
@@ -71,7 +71,7 @@
                 :return [(s/maybe Judgement)]
                 :query [q JudgementsByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Get Judgements by external ids"
                 :capabilities #{:read-judgement :external-id}
                 (-> (read-store :judgement
@@ -85,7 +85,7 @@
            (GET "/:id" []
                 :return (s/maybe Judgement)
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Gets a Judgement by ID"
                 :capabilities :read-judgement
                 (if-let [judgement (read-store :judgement read-judgement id)]
@@ -99,7 +99,7 @@
            (DELETE "/:id" []
                    :no-doc true
                    :path-params [id :- s/Str]
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :summary "Deletes a Judgement"
                    :capabilities :delete-judgement
                    :identity identity

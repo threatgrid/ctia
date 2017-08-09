@@ -35,7 +35,7 @@
                                 :severity "High"
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 (:status response)))))
 
   (testing "test setup: create a judgement (2)"
@@ -49,7 +49,7 @@
                                 :severity "High"
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 (:status response)))))
 
   (testing "test setup: create a judgement (3)"
@@ -63,14 +63,14 @@
                                 :severity "High"
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})]
+                         :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 (:status response)))))
 
 
   (testing "a verdict that doesn't exist is a 404"
     (let [{status :status}
           (get "ctia/ip/10.0.0.42/verdict"
-               :headers {"api_key" "45c1f5e3f05d0"})]
+               :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 404 status))))
 
   (testing "test setup: create a judgement (4)"
@@ -84,7 +84,7 @@
                                 :severity "High"
                                 :confidence "Low"
                                 :valid_time {:start_time "2016-02-12T00:01:00.000-00:00"}}
-                         :headers {"api_key" "45c1f5e3f05d0"})
+                         :headers {"Authorization" "45c1f5e3f05d0"})
           judgement-1 (:parsed-body response)]
       (is (= 201 (:status response)))))
 
@@ -100,7 +100,7 @@
                        :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           judgment-id
           (id/long-id->id (:id judgement))]
@@ -110,7 +110,7 @@
         (let [{status :status
                verdict :parsed-body}
               (get "ctia/ip/10.0.0.1/verdict"
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (= {:type "verdict"
                   :disposition 2
@@ -142,7 +142,7 @@
                        :valid_time {:start_time "2016-02-12T14:56:26.719-00:00"
                                     :end_time "2016-02-12T14:56:26.814-00:00"}
                        :confidence "Medium"}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
   (testing "with a verdict judgement"
@@ -160,7 +160,7 @@
                        :severity "Low"
                        :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"}
                        :confidence "Medium"}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           judgement-id
           (id/long-id->id (:id judgement))]
@@ -171,7 +171,7 @@
           (let [{status :status
                  verdict :parsed-body}
                 (get "ctia/ip/10.0.0.1/verdict"
-                     :headers {"api_key" "45c1f5e3f05d0"})]
+                     :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 200 status))
             (is (= {:observable {:value "10.0.0.1",:type "ip"}
                     :type "verdict"
@@ -199,7 +199,7 @@
                        :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           judgement-1-id
           (some-> (:id judgement-1) id/long-id->id)]
@@ -208,13 +208,13 @@
       (testing "test setup: delete judgement-1"
         (let [{status :status}
               (delete (str "ctia/judgement/" (:short-id judgement-1-id))
-                      :headers {"api_key" "45c1f5e3f05d0"})]
+                      :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 status))))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [{status :status}
               (get "ctia/ip/10.0.0.1/verdict"
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 404 status))))))
 
   (testing "test setup: create judgement-2"
@@ -230,7 +230,7 @@
                        :severity "High"
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           judgement-2-id
           (some-> (:id judgement-2) id/long-id->id)]
@@ -249,7 +249,7 @@
                            :severity "High"
                            :confidence "Low"
                            :valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}}
-                    :headers {"api_key" "45c1f5e3f05d0"})
+                    :headers {"Authorization" "45c1f5e3f05d0"})
 
               judgement-3-id
               (some-> (:id judgement-3) id/long-id->id)]
@@ -258,14 +258,14 @@
           (testing "test steup: delete judgement-3"
             (let [{status :status}
                   (delete (str "ctia/judgement/" (:short-id judgement-3-id))
-                          :headers {"api_key" "45c1f5e3f05d0"})]
+                          :headers {"Authorization" "45c1f5e3f05d0"})]
               (is (= 204 status))))))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [{status :status
                verdict :parsed-body}
               (get "ctia/ip/10.0.0.1/verdict"
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (= {:type "verdict"
                   :disposition 1
@@ -307,14 +307,14 @@
                        :severity "None",
                        :tlp "green",
                        :confidence "None"}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [{status :status
                verdict :parsed-body}
               (get (str "ctia/" type "/" value "/verdict")
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (= (:id judgement)
                  (:judgement_id verdict)))))))
@@ -340,14 +340,14 @@
                        :severity "None",
                        :tlp "green",
                        :confidence "None"}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [{status :status
                verdict :parsed-body}
               (get "ctia/ip/10.0.0.1/verdict"
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 404 status))))))
 
   (testing ":end_time is today, but in the future"
@@ -381,14 +381,14 @@
                        :severity "None",
                        :tlp "green",
                        :confidence "None"}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [{status :status
                verdict :parsed-body}
               (get (str "ctia/" type "/" value "/verdict")
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (= (:id judgement)
                  (:judgement_id verdict)))))))
@@ -424,12 +424,12 @@
                        :severity "None",
                        :tlp "green",
                        :confidence "None"}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))
 
       (testing "GET /ctia/:observable_type/:observable_value/verdict"
         (let [{status :status
                verdict :parsed-body}
               (get (str "ctia/" type "/" value "/verdict")
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 404 status)))))))

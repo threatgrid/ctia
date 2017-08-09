@@ -45,8 +45,7 @@
                                              :indicator_id (fake-long-id 'indicator 123)}]
                        :related_incidents [{:incident_id (fake-long-id 'incident 123)}
                                            {:incident_id (fake-long-id 'incident 789)}]}
-                :headers {"api_key" "45c1f5e3f05d0"})
-
+                :headers {"Authorization" "45c1f5e3f05d0"})
           incident-id (id/long-id->id (:id incident))
           incident-external-ids (:external_ids incident)]
       (is (= 201 status))
@@ -83,7 +82,7 @@
       (testing "GET /ctia/incident/external_id/:external_id"
         (let [response (get (format "ctia/incident/external_id/%s"
                                     (encode (rand-nth incident-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               incidents (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -113,7 +112,7 @@
 
       (testing "GET /ctia/incident/:id"
         (let [response (get (str "ctia/incident/" (:short-id incident-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               incident (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -157,7 +156,7 @@
                                                 :indicator_id (fake-long-id 'indicator 234)}]
                           :related_incidents [{:incident_id (fake-long-id 'incident 123)}
                                               {:incident_id (fake-long-id 'incident 789)}]}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
                {:external_ids ["http://ex.tld/ctia/incident/incident-123"
@@ -207,10 +206,10 @@
 
       (testing "DELETE /ctia/incident/:id"
         (let [response (delete (str "ctia/incident/" (:short-id incident-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/incident/" (:id incident))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response))))))))
 
   (testing "POST invalid /ctia/incident"

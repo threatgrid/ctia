@@ -43,7 +43,7 @@
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-1]
                          :external_ids ["sighting-1"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This sighting should not be matched (no incident relationship)
@@ -55,7 +55,7 @@
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-1]
                          :external_ids ["sighting-2"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This sighting should not be matched (different observable)
@@ -67,7 +67,7 @@
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-2]
                          :external_ids ["sighting-3"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This judgement should not be matched (it isn't an incident)
@@ -80,7 +80,7 @@
                          :confidence "High"
                          :severity "Medium"
                          :external_ids ["judgement-1"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
 
@@ -91,7 +91,7 @@
                   :body {:id (:short-id incident-1-id)
                          :confidence "High"
                          :external_ids ["incident-1"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This incident should not be found
@@ -101,7 +101,7 @@
                   :body {:id (:short-id incident-2-id)
                          :confidence "High"
                          :external_ids ["incident-2"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This is the relationship that should be matched
@@ -114,7 +114,7 @@
                          :relationship_type "member-of"
                          :target_ref (id/long-id incident-1-id)
                          :external_ids ["relationship-1"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This relationship should not be matched
@@ -127,7 +127,7 @@
                          :relationship_type "member-of"
                          :target_ref (id/long-id incident-2-id)
                          :external_ids ["relationship-2"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This relationship should not be matched
@@ -140,7 +140,7 @@
                          :relationship_type "based-on"
                          :target_ref (id/long-id judgement-1-id)
                          :external_ids ["relationship-3"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     (testing "GET /:observable_type/:observable_value/sightings/incidents"
@@ -148,7 +148,7 @@
              incident-ids :parsed-body}
             (get (str "ctia/" (:type observable-1) "/" (:value observable-1)
                       "/sightings/incidents")
-                 :headers {"API_key" "45c1f5e3f05d0"})]
+                 :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 200 status))
         (is (= #{(id/long-id incident-1-id)}
                (set incident-ids)))))))

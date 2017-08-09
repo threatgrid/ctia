@@ -66,12 +66,12 @@
     (testing "indicators with query (ES only)"
       (when (= "es" (get-in @properties [:ctia :store :indicator]))
         (pagination-test (str "/ctia/indicator/search?query=" title)
-                         {"api_key" "45c1f5e3f05d0"}
+                         {"Authorization" "45c1f5e3f05d0"}
                          [:id :title])))
 
     (testing "sightings by observable"
       (pagination-test (str route-pref "/sightings")
-                       {"api_key" "45c1f5e3f05d0"}
+                       {"Authorization" "45c1f5e3f05d0"}
                        [:id
                         :timestamp
                         :confidence
@@ -79,12 +79,12 @@
 
     (testing "sightings/indicators by observable"
       (pagination-test-no-sort (str route-pref "/sightings/indicators")
-                               {"api_key" "45c1f5e3f05d0"}
+                               {"Authorization" "45c1f5e3f05d0"}
                                []))
 
     (testing "judgements by observable"
       (pagination-test (str route-pref "/judgements")
-                       {"api_key" "45c1f5e3f05d0"}
+                       {"Authorization" "45c1f5e3f05d0"}
                        [:id
                         :disposition
                         :priority
@@ -94,5 +94,5 @@
 
     (testing "judgements/indicators by observable"
       (pagination-test-no-sort (str route-pref "/judgements/indicators")
-                               {"api_key" "45c1f5e3f05d0"}
+                               {"Authorization" "45c1f5e3f05d0"}
                                []))))
