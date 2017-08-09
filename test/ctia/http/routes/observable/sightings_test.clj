@@ -30,7 +30,7 @@
                                      {:type "user"
                                       :value "foobar"}]
                        :external_ids ["sighting-1"]}
-                :headers {"API_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
 
@@ -42,7 +42,7 @@
                        :observables [{:type "user"
                                       :value "foobar"}]
                        :external_ids ["sighting-2"]}
-                :headers {"API_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
   (testing "test setup: create a sighting (3)"
@@ -53,14 +53,14 @@
                        :observables [{:type "ip",
                                       :value "10.0.0.1"}]
                        :external_ids ["sighting-3"]}
-                :headers {"API_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
   (testing "GET /:observable_type/:observable_value/sightings"
     (let [{status :status
            sightings :parsed-body}
           (get "ctia/ip/10.0.0.1/sightings"
-               :headers {"api_key" "45c1f5e3f05d0"})]
+               :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 200 status))
       (is (= #{"sighting-1" "sighting-3"}
              (set (mapcat :external_ids sightings)))))))

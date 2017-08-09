@@ -5,14 +5,14 @@
 
 (defn wrap-authentication [handler]
   (fn [request]
-    (let [api_key (or (get-in request [:headers "api_key"])
-                      (get-in request [:query-params "api_key"]))
-          id (auth/identity-for-token @auth-service api_key)]
+    (let [Authorization (or (get-in request [:headers "authorization"])
+                      (get-in request [:query-params "Authorization"]))
+          id (auth/identity-for-token @auth-service Authorization)]
       (handler
        (-> request
            (assoc :identity id
                   :login (auth/login id))
-           (assoc-in [:headers "api_key"] api_key))))))
+           (assoc-in [:headers "authorization"] Authorization))))))
 
 (defn require-capability! [required-capability id]
   (if (and required-capability

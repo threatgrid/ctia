@@ -151,7 +151,7 @@
            (POST "/" []
                  :return BulkRefs
                  :body [bulk NewBulk {:description "a new Bulk object"}]
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "Adds a lot of new entities in only one HTTP call"
                  :capabilities #{:create-actor
                                  :create-campaign
@@ -185,7 +185,7 @@
                                {relationships   :- [Reference] []}
                                {sightings       :- [Reference] []}
                                {ttps            :- [Reference] []}]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities #{:read-actor
                                 :read-campaign
                                 :read-coa

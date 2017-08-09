@@ -11,7 +11,6 @@
             [ctia.test-helpers
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
-             [http :refer [api-key assert-post test-get-list]]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
@@ -41,7 +40,7 @@
                                     :end_time "2016-07-11T00:40:48.212-00:00"}
                        :composite_indicator_expression {:operator "and"
                                                         :indicator_ids ["test1" "test2"]}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           indicator-id (id/long-id->id (:id indicator))
           indicator-external-ids (:external_ids indicator)]
@@ -75,7 +74,7 @@
       (testing "GET /ctia/indicator/external_id/:external_id"
         (let [response (get (format "ctia/indicator/external_id/%s"
                                     (encode (rand-nth indicator-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               indicators (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -97,7 +96,7 @@
 
       (testing "GET /ctia/indicator/:id"
         (let [response (get (str "ctia/indicator/" (:short-id indicator-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               indicator (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -132,7 +131,7 @@
                                        :end_time "2016-07-11T00:40:48.212-00:00"}
                           :composite_indicator_expression {:operator "and"
                                                            :indicator_ids ["test1" "test2"]}}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
                {:id (id/long-id indicator-id)
@@ -153,6 +152,6 @@
 
       (testing "DELETE /ctia/indicator/:id"
         (let [response (delete (str "ctia/indicator/" (:short-id indicator-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           ;; Deleting indicators is not allowed
           (is (= 404 (:status response))))))))

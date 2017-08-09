@@ -43,7 +43,7 @@
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-1]
                          :external_ids ["sighting-1"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This sighting should not be matched (no indicator relationship)
@@ -55,7 +55,7 @@
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-1]
                          :external_ids ["sighting-2"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This sighting should not be matched (different observable)
@@ -67,7 +67,7 @@
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-2]
                          :external_ids ["sighting-3"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This judgement should not be matched (it isn't an incident)
@@ -80,7 +80,7 @@
                          :confidence "High"
                          :severity "Medium"
                          :external_ids ["judgement-1"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This indicator should be found based on the observable/relationship
@@ -90,7 +90,7 @@
                   :body {:id (:short-id indicator-1-id)
                          :producer "producer"
                          :external_ids ["indicator-1"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This indicator should not be found
@@ -100,7 +100,7 @@
                   :body {:id (:short-id indicator-2-id)
                          :producer "producer"
                          :external_ids ["indicator-2"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This is the relationship that should be matched
@@ -113,7 +113,7 @@
                          :relationship_type "indicates"
                          :target_ref (id/long-id indicator-1-id)
                          :external_ids ["relationship-1"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This relationship should not be matched
@@ -126,7 +126,7 @@
                          :relationship_type "indicates"
                          :target_ref (id/long-id indicator-2-id)
                          :external_ids ["relationship-2"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     ;; This relationship should not be matched
@@ -139,7 +139,7 @@
                          :relationship_type "based-on"
                          :target_ref (id/long-id judgement-1-id)
                          :external_ids ["relationship-3"]}
-                  :headers {"API_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 201 status))))
 
     (testing "GET /:observable_type/:observable_value/sightings/indicators"
@@ -147,7 +147,7 @@
              indicator-ids :parsed-body}
             (get (str "ctia/" (:type observable-1) "/" (:value observable-1)
                       "/sightings/indicators")
-                 :headers {"API_key" "45c1f5e3f05d0"})]
+                 :headers {"Authorization" "45c1f5e3f05d0"})]
         (is (= 200 status))
         (is (= #{(id/long-id indicator-1-id)}
                (set indicator-ids)))))))

@@ -180,7 +180,7 @@
                     :ttps (map mk-new-ttp (range nb))}
           response (post "ctia/bulk"
                          :body new-bulk
-                         :headers {"api_key" "45c1f5e3f05d0"})
+                         :headers {"Authorization" "45c1f5e3f05d0"})
           bulk-ids (:parsed-body response)
           show-props (get-http-show)]
 
@@ -196,7 +196,7 @@
                response :parsed-body}
               (get (str "ctia/bulk?"
                         (make-get-query-str-from-bulkrefs bulk-ids))
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
 
           (doseq [k (keys new-bulk)]
@@ -263,11 +263,11 @@
          response :body
          response-ok :parsed-body} (post "ctia/bulk"
                                          :body new-ok-bulk
-                                         :headers {"api_key" "45c1f5e3f05d0"})
+                                         :headers {"Authorization" "45c1f5e3f05d0"})
         {status-too-big :status
          response-too-big :parsed-body} (post "ctia/bulk"
                                               :body new-too-big-bulk
-                                              :headers {"api_key" "45c1f5e3f05d0"})]
+                                              :headers {"Authorization" "45c1f5e3f05d0"})]
     (testing "POST of right size bulk are accepted"
       (is (empty? (:errors response-ok)) "No errors")
       (is (= 201 status-ok)))

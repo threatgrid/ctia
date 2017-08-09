@@ -37,7 +37,7 @@
                        :ttp_type "foo"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           ttp-id (id/long-id->id (:id ttp))
           ttp-external-ids (:external_ids ttp)]
@@ -66,7 +66,7 @@
       (testing "GET /ctia/ttp/external_id/:external_id"
         (let [response (get (format "ctia/ttp/external_id/%s"
                                     (encode (rand-nth ttp-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               ttps (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -89,7 +89,7 @@
 
       (testing "GET /ctia/ttp/:id"
         (let [response (get (str "ctia/ttp/" (:short-id ttp-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               ttp (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -117,7 +117,7 @@
                           :ttp_type "bar"
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
                {:id (id/long-id ttp-id)
@@ -135,8 +135,8 @@
 
       (testing "DELETE /ctia/ttp/:id"
         (let [response (delete (str "ctia/ttp/" (:short-id ttp-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/ttp/" (:short-id ttp-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

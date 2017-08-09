@@ -54,7 +54,7 @@
        :return (s/maybe Verdict)
        :summary (str "Returns the current Verdict associated with the specified "
                      "observable.")
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :read-verdict
        :login login
        (or (some-> (read-store :judgement
@@ -71,7 +71,7 @@
                      observable_value :- s/Str]
        :return (s/maybe [Judgement])
        :summary "Returns the Judgements associated with the specified observable."
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :list-judgements
        (-> (read-store :judgement
                        list-judgements-by-observable
@@ -90,7 +90,7 @@
        :return (s/maybe [Reference])
        :summary (str "Returns the Indicator references associated with the "
                      "specified observable based on Judgement relationships.")
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-judgements :list-relationships}
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
@@ -125,7 +125,7 @@
        :query [params SightingsByObservableQueryParams]
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :list-sightings
        :return (s/maybe [Sighting])
        :summary "Returns Sightings associated with the specified observable."
@@ -146,7 +146,7 @@
        :return (s/maybe [Reference])
        :summary (str "Returns Indicator references associated with the "
                      "specified observable based on Sighting relationships.")
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-sightings :list-relationships}
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
@@ -183,7 +183,7 @@
        :return (s/maybe [Reference])
        :summary (str "Returns Incident references associated with the "
                      "specified observable based on Sighting relationships")
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-sightings :list-relationships}
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])

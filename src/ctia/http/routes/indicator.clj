@@ -36,7 +36,7 @@
                  :return Indicator
                  :body [indicator NewIndicator {:description "a new Indicator"}]
                  :summary "Adds a new Indicator"
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-indicator
                  :identity identity
                  (-> (flows/create-flow
@@ -55,7 +55,7 @@
                 :body [indicator NewIndicator {:description "an updated Indicator"}]
                 :summary "Updates an Indicator"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :create-indicator
                 :identity identity
                 (-> (flows/update-flow
@@ -77,7 +77,7 @@
                 :summary "Search for an indicator using a Lucene/ES query string"
                 :query [params IndicatorSearchParams]
                 :capabilities #{:read-indicator :search-indicator}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :indicator
                      query-string-search
@@ -92,7 +92,7 @@
                 :return [(s/maybe Indicator)]
                 :query [q IndicatorsByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List Indicators by external id"
                 :capabilities #{:read-indicator :external-id}
                 (-> (read-store :indicator list-indicators
@@ -105,7 +105,7 @@
                 :return (s/maybe Indicator)
                 :summary "Gets an Indicator by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-indicator
                 (if-let [indicator (read-store :indicator read-indicator id)]
                   (-> indicator
