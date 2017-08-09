@@ -22,7 +22,7 @@
                  :return Campaign
                  :body [campaign NewCampaign {:description "a new campaign"}]
                  :summary "Adds a new Campaign"
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-campaign
                  :identity identity
                  (-> (flows/create-flow
@@ -41,7 +41,7 @@
                 :body [campaign NewCampaign {:description "an updated campaign"}]
                 :summary "Updates a Campaign"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :create-campaign
                 :identity identity
                 (-> (flows/update-flow
@@ -60,7 +60,7 @@
                 :return (s/maybe [Campaign])
                 :query [q CampaignByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List campaigns by external id"
                 :capabilities #{:read-campaign :external-id}
                 (-> (read-store :campaign list-campaigns
@@ -74,7 +74,7 @@
                 :summary "Search for a Campaign using a Lucene/ES query string"
                 :query [params CampaignSearchParams]
                 :capabilities #{:read-campaign :search-campaign}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :campaign
                      query-string-search
@@ -89,7 +89,7 @@
                 :return (s/maybe Campaign)
                 :summary "Gets a Campaign by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-campaign
                 (if-let [campaign (read-store :campaign read-campaign id)]
                   (-> campaign
@@ -102,7 +102,7 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes a Campaign"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-campaign
                    :identity identity
                    (if (flows/delete-flow

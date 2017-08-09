@@ -66,6 +66,6 @@
     :tags ["Metrics"]
     (GET "/" []
       :summary "Display Metrics"
-      :header-params [api_key :- (s/maybe s/Str)]
+      :header-params [{Authorization :- (s/maybe s/Str) nil}]
       :capabilities :developer
       (ok (render-metrics)))))

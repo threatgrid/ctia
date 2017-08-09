@@ -21,7 +21,7 @@
                  :return COA
                  :body [coa NewCOA {:description "a new COA"}]
                  :summary "Adds a new COA"
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-coa
                  :identity identity
                  (-> (flows/create-flow :realize-fn ent/realize-coa
@@ -39,7 +39,7 @@
                 :body [coa NewCOA {:description "an updated COA"}]
                 :summary "Updates a COA"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :create-coa
                 :identity identity
                 (-> (flows/update-flow :get-fn #(read-store :coa read-coa %)
@@ -57,7 +57,7 @@
                 :return (s/maybe [COA])
                 :query [q COAByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List COAs by external id"
                 :capabilities #{:read-coa :external-id}
                 (-> (read-store :coa list-coas {:external_ids external_id} q)
@@ -70,7 +70,7 @@
                 :summary "Search for a Course of Action using a Lucene/ES query string"
                 :query [params COASearchParams]
                 :capabilities #{:read-coa :search-coa}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :coa
                      query-string-search
@@ -85,7 +85,7 @@
                 :return (s/maybe COA)
                 :summary "Gets a COA by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-coa
                 (if-let [coa (read-store :coa (fn [s] (read-coa s id)))]
                   (-> coa
@@ -98,7 +98,7 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes a COA"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-coa
                    :identity identity
                    (if (flows/delete-flow :get-fn #(read-store :coa read-coa %)

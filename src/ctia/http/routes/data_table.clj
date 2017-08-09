@@ -20,7 +20,7 @@
            (POST "/" []
                  :return DataTable
                  :body [data-table NewDataTable {:description "a new Data Table"}]
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "Adds a new Data Table"
                  :capabilities :create-data-table
                  :identity identity
@@ -40,7 +40,7 @@
                 :return [(s/maybe DataTable)]
                 :query [q DataTableByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List data-tables by external id"
                 :capabilities #{:read-data-table :external-id}
                 (-> (read-store :data-table list-data-tables
@@ -53,7 +53,7 @@
                 :return (s/maybe DataTable)
                 :summary "Gets a Data Table by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-data-table
                 (if-let [data-table (read-store :data-table read-data-table id)]
                   (-> data-table
@@ -66,7 +66,7 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes a Data Table"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-data-table
                    :identity identity
                    (if (flows/delete-flow

@@ -37,7 +37,7 @@
                        :intended_effect ["Theft"]
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           campaign-id (id/long-id->id (:id campaign))
           campaign-external-ids (:external_ids campaign)]
@@ -67,7 +67,7 @@
       (testing "GET /ctia/campaign/external_id/:external_id"
         (let [response (get (format "ctia/campaign/external_id/%s"
                                     (encode (rand-nth campaign-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               campaigns (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -89,7 +89,7 @@
 
       (testing "GET /ctia/campaign/:id"
         (let [response (get (str "ctia/campaign/" (:short-id campaign-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               campaign (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -120,7 +120,7 @@
                           :intended_effect ["Brand Damage"]
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}}
-                   :headers {"api_key" "45c1f5e3f05d0"})
+                   :headers {"Authorization" "45c1f5e3f05d0"})
 
               updated-campaign-id (id/long-id->id (:id updated-campaign))]
           (is (= 200 status))
@@ -141,8 +141,8 @@
 
       (testing "DELETE /ctia/campaign/:id"
         (let [response (delete (str "ctia/campaign/" (:short-id campaign-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/campaign/" (:short-id campaign-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

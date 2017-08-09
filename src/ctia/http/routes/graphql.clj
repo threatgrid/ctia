@@ -23,7 +23,7 @@
   (POST "/graphql" []
         :tags ["GraphQL"]
         :return gql/RelayGraphQLResponse
-        :header-params [api_key :- (s/maybe s/Str)]
+        :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :body [body gql/RelayGraphQLQuery {:description "a Relay compatible GraphQL body"}]
         :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
         (let [request-context {}

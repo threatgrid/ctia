@@ -37,7 +37,7 @@
                        :confidence "High"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           actor-id
           (id/long-id->id (:id actor))
@@ -70,7 +70,7 @@
 
       (testing "GET /ctia/actor/:id"
         (let [response (get (str "ctia/actor/" (:short-id actor-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               actor (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -94,7 +94,7 @@
       (testing "GET /ctia/actor/external_id/:external_id"
         (let [response (get (format "ctia/actor/external_id/%s"
                                     (encode (rand-nth actor-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               actors (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -125,7 +125,7 @@
                                    :confidence "High"
                                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                                 :end_time "2016-07-11T00:40:48.212-00:00"}}
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               updated-actor (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -146,8 +146,8 @@
 
       (testing "DELETE /ctia/actor/:id"
         (let [response (delete (str "ctia/actor/" (:short-id actor-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/actor/" (:short-id actor-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

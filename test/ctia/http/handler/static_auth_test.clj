@@ -30,7 +30,7 @@
                        :confidence "Low"
                        :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                     :end_time "2016-03-11T00:00:00.000-00:00"}}
-                :headers {"api_key" "tearbending"})
+                :headers {"Authorization" "tearbending"})
           judgement-id
           (some-> judgement :id id/long-id->id)]
       (is (= 201 status))
@@ -60,14 +60,14 @@
                            :confidence "Low"
                            :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                         :end_time "2016-03-11T00:00:00.000-00:00"}}
-                    :headers {"api_key" "bloodbending"})]
+                    :headers {"Authorization" "bloodbending"})]
           (is (= 401 status))))
 
       (testing "GET /ctia/judgement"
         (let [{status :status
                get-judgement :parsed-body}
               (get (str "ctia/judgement/" (:short-id judgement-id))
-                   :headers {"api_key" "tearbending"})]
+                   :headers {"Authorization" "tearbending"})]
           (is (= 200 status))
           (is (deep=
                {:id (:id judgement)
@@ -89,7 +89,7 @@
         (testing "succeeds with any key"
           (let [{status :status}
                 (get (str "ctia/judgement/" (:short-id judgement-id))
-                     :headers {"api_key" "bloodbending"})]
+                     :headers {"Authorization" "bloodbending"})]
             (is (= 200 status)))
 
           (let [{status :status}

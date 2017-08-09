@@ -21,7 +21,7 @@
            (POST "/" []
                  :return Actor
                  :body [actor NewActor {:description "a new Actor"}]
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "Adds a new Actor"
                  :capabilities :create-actor
                  :identity identity
@@ -40,7 +40,7 @@
            (PUT "/:id" []
                 :return Actor
                 :body [actor NewActor {:description "an updated Actor"}]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Updates an Actor"
                 :path-params [id :- s/Str]
                 :capabilities :create-actor
@@ -61,7 +61,7 @@
                 :return (s/maybe [Actor])
                 :query [q ActorByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List actors by external id"
                 :capabilities #{:read-actor :external-id}
                 (-> (read-store :actor list-actors
@@ -75,7 +75,7 @@
                 :summary "Search for an Actor using a Lucene/ES query string"
                 :query [params ActorSearchParams]
                 :capabilities #{:read-actor :search-actor}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :actor
                      query-string-search
@@ -90,7 +90,7 @@
                 :return (s/maybe Actor)
                 :summary "Gets an Actor by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-actor
                 (if-let [actor (read-store :actor read-actor id)]
                   (-> actor
@@ -103,7 +103,7 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes an Actor"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-actor
                    :identity identity
                    (if (flows/delete-flow

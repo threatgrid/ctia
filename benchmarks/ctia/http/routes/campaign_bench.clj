@@ -58,7 +58,7 @@
         (post "ctia/campaign"
               :port port
               :body big-campaign
-              :headers {"api_key" "45c1f5e3f05d0"})]
+              :headers {"Authorization" "45c1f5e3f05d0"})]
     (if (= 201 status)
       (delete (str "ctia/campaign" (:id parsed_body)))
       (prn "play-big: " status))))

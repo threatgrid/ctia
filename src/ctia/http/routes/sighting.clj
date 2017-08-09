@@ -21,7 +21,7 @@
            (POST "/" []
                  :return Sighting
                  :body [sighting NewSighting {:description "A new Sighting"}]
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "Adds a new Sighting"
                  :capabilities :create-sighting
                  :identity identity
@@ -39,7 +39,7 @@
            (PUT "/:id" []
                 :return Sighting
                 :body [sighting NewSighting {:description "An updated Sighting"}]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Updates a Sighting"
                 :path-params [id :- s/Str]
                 :capabilities :create-sighting
@@ -60,7 +60,7 @@
                 :return (s/maybe [Sighting])
                 :query [q SightingByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List sightings by external id"
                 :capabilities #{:read-sighting :external-id}
                 (-> (read-store :sighting list-sightings {:external_ids external_id} q)
@@ -73,7 +73,7 @@
                 :summary "Search for Sightings using a Lucene/ES query string"
                 :query [params SightingSearchParams]
                 :capabilities #{:read-sighting :search-sighting}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :sighting
                      query-string-search
@@ -88,7 +88,7 @@
                 :return (s/maybe Sighting)
                 :summary "Gets a Sighting by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-sighting
                 (if-let [sighting (read-store :sighting read-sighting id)]
                   (-> sighting
@@ -100,7 +100,7 @@
            (DELETE "/:id" []
                    :path-params [id :- s/Str]
                    :summary "Deletes a Sighting"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-sighting
                    (if (write-store :sighting delete-sighting id)
                      (no-content)

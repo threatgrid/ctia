@@ -27,7 +27,7 @@
                  :return Feedback
                  :body [feedback NewFeedback {:description "a new Feedback on an entity"}]
                  :summary "Adds a new Feedback"
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-feedback
                  :identity identity
                  (-> (flows/create-flow
@@ -45,7 +45,7 @@
                 :return [Feedback]
                 :query [params FeedbackQueryParams]
                 :summary "Search Feedback"
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-feedback
                 (-> (read-store :feedback
                                 list-feedback
@@ -59,7 +59,7 @@
                 :return [(s/maybe Feedback)]
                 :query [q FeedbackByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List feedback by external id"
                 :capabilities #{:read-feedback :external-id}
                 (-> (read-store :feedback list-feedback
@@ -72,7 +72,7 @@
                 :return (s/maybe Feedback)
                 :summary "Gets a Feedback by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-feedback
                 (if-let [feedback (read-store :feedback read-feedback id)]
                   (-> feedback
@@ -85,7 +85,7 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes a feedback"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-feedback
                    :identity identity
                    (if (flows/delete-flow
