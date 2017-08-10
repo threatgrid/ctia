@@ -23,13 +23,14 @@
 
 (defn new-publisher
   ([]
-   (let [{:keys [enabled host port topic partition security truststore password]}
+   (let [{:keys [enabled host port topic partition security truststore keystore password]}
          (get-in @properties [:ctia :hook :kafka])]
      (when enabled
        (log/info "Configuring Kafka publishing")
        (let [config (cond-> {:bootstrap.servers (str host ":" port)}
                             security (assoc :security.protocol (str/upper-case security))
                             truststore (assoc :ssl.truststore.location truststore)
+                            keystore (assoc :ssl.keystore.location keystore)
                             password (assoc :ssl.truststore.password password))
              options (pd/make-default-producer-options)
              key-ser (serializers/string-serializer)

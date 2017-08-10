@@ -97,6 +97,7 @@
                       "ctia.hook.kafka.partition" s/Int
                       "ctia.hook.kafka.security" s/Str
                       "ctia.hook.kafka.truststore" s/Str
+                      "ctia.hook.kafka.keystore" s/Str
                       "ctia.hook.kafka.password" s/Str
 
                       "ctia.hooks.before-create" s/Str
