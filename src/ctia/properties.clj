@@ -65,6 +65,9 @@
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
 
+   (st/optional-keys {"ctia.http.jwt.enabled" s/Bool
+                      "ctia.http.jwt.public-key-path" s/Str})
+
    (st/optional-keys {"ctia.http.dev-reload" s/Bool
                       "ctia.http.show.protocol" s/Str
                       "ctia.http.show.hostname" s/Str

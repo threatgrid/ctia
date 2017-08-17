@@ -7,7 +7,6 @@
   (capable? [this capabilities]))
 
 (defprotocol IAuth
-  (require-login? [this])
   (identity-for-token [this token]))
 
 (defonce auth-service (atom nil))

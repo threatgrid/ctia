@@ -103,8 +103,7 @@
                            {:name "Metrics", :description "Performance Statistics"}
                            {:name "Version", :description "Version Information"}]}}}
 
-  (middleware [auth/wrap-authentication
-               wrap-not-modified
+  (middleware [wrap-not-modified
                wrap-cache-control
                ;; always last
                (metrics/wrap-metrics "ctia" routes/get-routes)]

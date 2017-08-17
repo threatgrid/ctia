@@ -12,7 +12,8 @@
              [fake-whoami-service :as whoami-helpers]
              [pagination :refer [pagination-test]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [clj-momo.lib.clj-time.core :as time]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -192,7 +193,7 @@
                judgement :parsed-body
                :as response}
               (get (str "ctia/judgement/" (:short-id judgement-id))
-                   :query-params {"Authorization" "45c1f5e3f05d0"})]
+                   :query-params {:Authorization "45c1f5e3f05d0"})]
           (is (= 200 (:status response)))
           (is (deep=
                {:id (id/long-id judgement-id)
@@ -267,6 +268,70 @@
           (let [response (get (str "ctia/judgement/" (:short-id temp-judgement-id))
                               :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))
+
+(deftest-for-each-store test-judgement-with-jwt-routes
+  (helpers/set-capabilities! "foouser" "user" all-capabilities)
+  (helpers/set-capabilities! "baruser" "user" #{})
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
+
+  (testing "POST /ctia/judgement"
+    (let [{judgement :parsed-body
+           status :status}
+          (post "ctia/judgement"
+                :body {:observable {:value "1.2.3.4"
+                                    :type "ip"}
+                       :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                                      "http://ex.tld/ctia/judgement/judgement-456"]
+                       :disposition 2
+                       :source "test"
+                       :priority 100
+                       :severity "High"
+                       :confidence "Low"
+                       :reason "This is a bad IP address that talked to some evil servers"
+                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                :headers {"Authorization" "45c1f5e3f05d0"})
+          judgement-id (id/long-id->id (:id judgement))
+          judgement-external-ids (:external_ids judgement)]
+
+      (is (= 201 status))
+
+      (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
+        (let [{status :status
+               judgement :parsed-body
+               :as response}
+              (get (str "ctia/judgement/" (:short-id judgement-id))
+                   :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
+          (is (= 401 (:status response)))))
+
+      (testing "GET /ctia/judgement/:id with JWT Authorization header"
+        (with-redefs [time/now (constantly (time/date-time 2017 06 30 9 35 2))]
+          (let [jwt-token "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJyM2UwM2FjNmUtOGQwOS00ZDVlLTg1OTgtMzBlNTFhMjZkZDJkIiwiZXhwIjoxNDk5NDE5MDIzLCJpYXQiOjE0OTg4MTQyMjMsIm5iZiI6MTQ5ODgxMzkyMywic3ViIjoiZm9vQGJhci5jb20iLCJ1c2VyLWlkZW50aWZpZXIiOiJmb29AYmFyLmNvbSIsInVzZXJfaWQiOiJmMDAxMDkyNC1lMWJjLTRiMDMtYjYwMC04OWM2Y2Y1Mjc1N2MiLCJmb28iOiJiYXIifQ.Mq2M-iw3gviGL5VrVsY9OVp1vlyaGx4o-lr7hXj5Q5GqYk0j8U58A_eRTE3ROHk5d_wR7BqWbjvfWzCrBHtXo_0jE2QVtHfAKD66MbdZKIaK3cp0gGAqmy4EvQpj_N0pJVJZTr-za94_srT08XT-q0nujKiFajms0yB2Kd5mDwvbBRBSUzoAk323NpShnnhY51zqc1-Evd64SaREHePEJFVrWrGrQzaJpdfz3KSZFo6tYD7-b2ZhGPUm-fRBbcJPSYxsDERMTtKXTaZDfAjpOY8xjvBeXtKFkHCkIuZNbss-kWl0lHXHxPPERUTGfd_deEOri_D2KKewjeQ4il9fyQ"
+                {status :status
+                 judgement :parsed-body
+                 :as response}
+                (get (str "ctia/judgement/" (:short-id judgement-id))
+                     :headers {"Authorization" (str "Bearer " jwt-token)})]
+            (is (= 200 (:status response)))
+            (is (=
+                 {:id (id/long-id judgement-id)
+                  :type "judgement"
+                  :observable {:value "1.2.3.4"
+                               :type "ip"}
+                  :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                                 "http://ex.tld/ctia/judgement/judgement-456"]
+                  :disposition 2
+                  :disposition_name "Malicious"
+                  :priority 100
+                  :severity "High"
+                  :confidence "Low"
+                  :source "test"
+                  :tlp "green"
+                  :schema_version schema-version
+                  :reason "This is a bad IP address that talked to some evil servers"
+                  :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+                 judgement))))))))
 
 (deftest-for-each-store test-judgement-routes-for-dispositon-determination
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
