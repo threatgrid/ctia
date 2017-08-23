@@ -53,9 +53,7 @@
                              :capabilities (->> (str/lower-case role)
                                                 keyword
                                                 (get auth/default-capabilities))}))))
-     auth/denied-identity-singleton))
-  (require-login? [_]
-    true))
+     auth/denied-identity-singleton)))
 
 (defn make-auth-service []
   (let [{:keys [whoami-url cache]} (get-in @properties [:ctia :auth :threatgrid])

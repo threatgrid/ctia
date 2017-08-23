@@ -7,7 +7,7 @@
 (defrecord Identity []
   IIdentity
   (authenticated? [_]
-    false)
+    true)
   (login [_]
     auth/not-logged-in-owner)
   (allowed-capabilities [_]
@@ -21,6 +21,4 @@
 (defrecord AuthService []
   IAuth
   (identity-for-token [_ _]
-    identity-singleton)
-  (require-login? [_]
-    false))
+    identity-singleton))

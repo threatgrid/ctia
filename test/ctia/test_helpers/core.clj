@@ -54,6 +54,8 @@
                     "ctia.http.show.hostname"      "localhost"
                     "ctia.http.show.port"          "57254"
                     "ctia.http.show.path-prefix"   ""
+                    "ctia.http.jwt.enabled"        true
+                    "ctia.http.jwt.public-key-path" "resources/cert/ctia-jwt.pub"
                     "ctia.nrepl.enabled"           false
                     "ctia.hook.redis.enabled"      false
                     "ctia.hook.redis.channel-name" "events-test"

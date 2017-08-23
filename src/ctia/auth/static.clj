@@ -49,6 +49,4 @@
   (identity-for-token [_ token]
     (if (= token (get-in auth-config [:static :secret]))
       (->WriteIdentity (get-in auth-config [:static :name]))
-      (->ReadOnlyIdentity)))
-  (require-login? [_]
-    true))
+      (->ReadOnlyIdentity))))
