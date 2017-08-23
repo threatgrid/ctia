@@ -3,22 +3,37 @@
             [compojure.api.meta :as meta]
             [ring.util.http-response :as http-response]))
 
-(defn wrap-authentication [handler]
+(defn add-id-to-request
+  "Add id metas to the request"
+  [request id login auth-header]
+  (if (some? id)
+    (-> request
+        (assoc :identity id
+               :login login)
+        (assoc-in [:headers "authorization"] auth-header))
+    request))
+
+(defn testable-wrap-authentication
+  "wrap-autentication middleware."
+  [handler auth-service]
   (fn [request]
-    (let [Authorization (or (get-in request [:headers "authorization"])
-                      (get-in request [:query-params "Authorization"]))
-          id (auth/identity-for-token @auth-service Authorization)]
-      (handler
-       (-> request
-           (assoc :identity id
-                  :login (auth/login id))
-           (assoc-in [:headers "authorization"] Authorization))))))
+    (handler
+     (if (:login request)
+       request
+       (let [auth-header (or (get-in request [:headers "authorization"])
+                             (get-in request [:query-params "Authorization"]))
+             id (auth/identity-for-token auth-service auth-header)
+             login (auth/login id)]
+         (add-id-to-request request id login auth-header))))))
+
+(defn wrap-authentication [handler]
+  (testable-wrap-authentication handler @auth-service))
 
 (defn require-capability! [required-capability id]
-  (if (and required-capability
-           (auth/require-login? @auth/auth-service))
+  (if required-capability
     (cond
-      (not (auth/authenticated? id))
+      (or (nil? id)
+          (not (auth/authenticated? id)))
       (http-response/forbidden! {:message "Only authenticated users allowed"})
 
       (not (auth/capable? id required-capability))

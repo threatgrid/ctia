@@ -3,10 +3,14 @@
             [ctia
              [properties :refer [properties]]
              [shutdown :as shutdown]]
+            [ctia.auth.jwt :as auth-jwt]
+            [ctia.http.middleware.auth :as auth]
             [ctia.http.handler :as handler]
+            [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
              [cors :refer [wrap-cors]]
+             [params :refer [wrap-params]]
              [reload :refer [wrap-reload]]])
   (:import org.eclipse.jetty.server.Server))
 
@@ -33,16 +37,30 @@
            min-threads
            port
            access-control-allow-origin
-           access-control-allow-methods]
+           access-control-allow-methods
+           jwt]
     :or {access-control-allow-methods "get,post,put,delete"}}]
   (doto
       (jetty/run-jetty
        (cond-> #'handler/api-handler
+
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (allow-methods access-control-allow-methods))
+
+         true auth/wrap-authentication
+
+         (:enabled jwt)
+         auth-jwt/wrap-jwt-to-ctia-auth
+
+         (:enabled jwt)
+         ((rjwt/wrap-jwt-auth-fn {:pubkey-path (:public-key-path jwt)
+                                  :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}))
+
+         true wrap-params
+
          dev-reload wrap-reload)
        {:port port
         :min-threads min-threads
