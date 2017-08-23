@@ -4,13 +4,14 @@
             [ring.util.http-response :as http-response]))
 
 (defn add-id-to-request
-  "Given a request and a discoverd id and auth header
-  change the request accordingly"
+  "Add id metas to the request"
   [request id login auth-header]
-  (-> request
-      (assoc :identity id
-             :login login)
-      (assoc-in [:headers "authorization"] auth-header)))
+  (if (some? id)
+    (-> request
+        (assoc :identity id
+               :login login)
+        (assoc-in [:headers "authorization"] auth-header))
+    request))
 
 (defn testable-wrap-authentication
   "wrap-autentication middleware."
@@ -23,8 +24,7 @@
                              (get-in request [:query-params "Authorization"]))
              id (auth/identity-for-token auth-service auth-header)
              login (auth/login id)]
-         (cond-> request
-           (some? id) (add-id-to-request id login auth-header)))))))
+         (add-id-to-request request id login auth-header))))))
 
 (defn wrap-authentication [handler]
   (testable-wrap-authentication handler @auth-service))
