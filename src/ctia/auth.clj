@@ -113,7 +113,7 @@
    :admin
    all-capabilities})
 
-(def not-logged-in-owner "Unknown User")
+(def not-logged-in-owner "Unknown")
 
 (def not-logged-in-group "Unknown Group")
 
