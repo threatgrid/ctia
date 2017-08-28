@@ -10,6 +10,8 @@
     true)
   (login [_]
     auth/not-logged-in-owner)
+  (group [_]
+    auth/admingroup)
   (allowed-capabilities [_]
     auth/all-capabilities)
   (capable? [_ _]

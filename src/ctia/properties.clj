@@ -56,7 +56,8 @@
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
                       "ctia.auth.threatgrid.whoami-url" s/Str
                       "ctia.auth.static.secret" s/Str
-                      "ctia.auth.static.name" s/Str})
+                      "ctia.auth.static.name" s/Str
+                      "ctia.auth.static.group" s/Str})
 
    (st/required-keys {"ctia.http.enabled" s/Bool
                       "ctia.http.port" s/Int

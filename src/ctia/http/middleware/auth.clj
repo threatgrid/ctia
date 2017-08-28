@@ -5,10 +5,11 @@
 
 (defn add-id-to-request
   "Add id metas to the request"
-  [request id login auth-header]
+  [request id login group auth-header]
   (if (some? id)
     (-> request
         (assoc :identity id
+               :group group
                :login login)
         (assoc-in [:headers "authorization"] auth-header))
     request))
@@ -23,8 +24,9 @@
        (let [auth-header (or (get-in request [:headers "authorization"])
                              (get-in request [:query-params "Authorization"]))
              id (auth/identity-for-token auth-service auth-header)
-             login (auth/login id)]
-         (add-id-to-request request id login auth-header))))))
+             login (auth/login id)
+             group (auth/group id)]
+         (add-id-to-request request id login group auth-header))))))
 
 (defn wrap-authentication [handler]
   (testable-wrap-authentication handler @auth-service))
@@ -56,6 +58,10 @@
 (defmethod meta/restructure-param :login [_ bind-to acc]
   (update acc :lets into
           [bind-to `(:login ~'+compojure-api-request+)]))
+
+(defmethod meta/restructure-param :group [_ bind-to acc]
+  (update acc :lets into
+          [bind-to `(:group ~'+compojure-api-request+)]))
 
 (defmethod meta/restructure-param :identity [_ bind-to acc]
   (update acc :lets into
