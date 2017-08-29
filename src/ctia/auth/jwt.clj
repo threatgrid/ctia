@@ -9,6 +9,8 @@
     true)
   (login [_]
     (:sub jwt))
+  (group [_]
+    (:business_guid jwt))
   (allowed-capabilities [_]
     (:user auth/default-capabilities))
   (capable? [this required-capabilities]
@@ -20,7 +22,9 @@
   (fn [request]
     (handler
      (if-let [jwt (:jwt request)]
-       (assoc request
-              :identity (->Identity jwt)
-              :login (:sub jwt))
+       (let [identity (->Identity jwt)]
+         (assoc request
+                :identity identity
+                :login (auth/login identity)
+                :group (auth/group identity)))
        request))))

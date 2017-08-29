@@ -10,7 +10,8 @@
         request-no-jwt {:body "foo"
                         :url "http://localhost:8080/foo"}
         request-jwt (assoc request-no-jwt
-                           :jwt {:sub "subject name"})
+                           :jwt {:sub "subject name"
+                                 :business_guid "organization-id"})
         response-no-jwt (wrapped-handler request-no-jwt)
         response-jwt (wrapped-handler request-jwt)]
     (is (= {:body {:body "foo"
@@ -19,8 +20,11 @@
            response-no-jwt))
     (is (= {:body {:body "foo"
                    :url "http://localhost:8080/foo"
-                   :jwt {:sub "subject name"}
-                   :identity #ctia.auth.jwt.Identity{:jwt {:sub "subject name"}}
+                   :jwt {:sub "subject name"
+                         :business_guid "organization-id"}
+                   :identity #ctia.auth.jwt.Identity{:jwt {:sub "subject name"
+                                                           :business_guid "organization-id"}}
+                   :group "organization-id"
                    :login "subject name"}
             :status 200}
            response-jwt))))

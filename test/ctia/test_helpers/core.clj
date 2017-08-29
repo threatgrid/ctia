@@ -122,7 +122,8 @@
   (fn [f]
     (with-properties ["ctia.auth.type" "static"
                       "ctia.auth.static.secret" secret
-                      "ctia.auth.static.name" name]
+                      "ctia.auth.static.name" name
+                      "ctia.auth.static.group" name]
       (f))))
 
 (defn set-capabilities! [login role caps]
