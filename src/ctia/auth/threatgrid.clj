@@ -22,6 +22,8 @@
     true)
   (login [_]
     login)
+  (group [_]
+    login) ;; TODO check if there is an organization field we could use here
   (allowed-capabilities [_]
     capabilities)
   (capable? [this required-capabilities]

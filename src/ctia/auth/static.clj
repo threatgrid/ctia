@@ -20,12 +20,14 @@
                   #{:developer
                     :specify-id}))
 
-(defrecord WriteIdentity [name]
+(defrecord WriteIdentity [name guid]
   IIdentity
   (authenticated? [_]
     true)
   (login [_]
     name)
+  (group [_]
+    guid)
   (allowed-capabilities [_]
     write-capabilities)
   (capable? [this required-capabilities]
@@ -38,6 +40,8 @@
     true)
   (login [_]
     auth/not-logged-in-owner)
+  (group [_]
+    auth/not-logged-in-group)
   (allowed-capabilities [_]
     read-only-capabilities)
   (capable? [this required-capabilities]
@@ -48,5 +52,6 @@
   IAuth
   (identity-for-token [_ token]
     (if (= token (get-in auth-config [:static :secret]))
-      (->WriteIdentity (get-in auth-config [:static :name]))
+      (->WriteIdentity (get-in auth-config [:static :name])
+                       (get-in auth-config [:static :group]))
       (->ReadOnlyIdentity))))

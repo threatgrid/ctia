@@ -7,11 +7,13 @@
   (is (= (sut/add-id-to-request {:status 200 :body "Test"}
                                 "test-identity"
                                 "test-login"
+                                "test-group"
                                 "api-key 1234-1234-1234-1234")
          {:status 200
           :body "Test"
           :identity "test-identity"
           :login "test-login"
+          :group "test-group"
           :headers {"authorization" "api-key 1234-1234-1234-1234"}})))
 
 (deftest testable-wrap-authentication-test
