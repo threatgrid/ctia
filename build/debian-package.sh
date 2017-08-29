@@ -35,8 +35,14 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
     echo "OK: master branch detected"
     build-and-publish-package "int"
 
+  elif [[ ${TRAVIS_BRANCH} == "release" ]]; then
+    # non-pr builds on 'release' branch yield REL packages
+    echo "OK: release branch detected using regex"
+    build-and-publish-package "rel"
+
   elif [[ ${TRAVIS_BRANCH} =~ ^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$ ]]; then
     # non-pr builds on 'rel-yyyymmdd' branches yield REL packages
+    # To be removed at a future date, depending on the success of the new method
     echo "OK: release branch detected using regex"
     build-and-publish-package "rel"
 
