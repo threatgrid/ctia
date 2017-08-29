@@ -7,7 +7,8 @@
             [franzy.clients.producer.defaults :as pd]
             [franzy.clients.producer.protocols :as kafka]
             [franzy.clients.producer.client :as producer]
-            [franzy.serialization.serializers :as serializers]))
+            [franzy.serialization.serializers :as serializers]
+            [clients.core :as c]))
 
 (def production-key "data")
 
@@ -19,7 +20,9 @@
     (.close producer))
   (handle [_ event _]
     (let [event-json (json/encode event)]
-      (kafka/send-async! producer topic partition production-key event-json opts))))
+      (c/retry-exp
+       "send to Kafka"
+       (kafka/send-async! producer topic partition production-key event-json opts)))))
 
 (defn new-publisher
   ([]
