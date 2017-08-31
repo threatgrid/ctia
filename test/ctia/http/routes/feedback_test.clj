@@ -20,10 +20,17 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-feedback-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (helpers/set-capabilities! "baruser" "user" #{})
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (whoami-helpers/set-whoami-response "2222222222222"
+                                      "baruser"
+                                      "bargroup"
+                                      "user")
 
   (testing "POST /ctia/feedback"
     (let [{feedback :parsed-body

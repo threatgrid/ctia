@@ -3,7 +3,7 @@
 (defprotocol IIdentity
   (authenticated? [this])
   (login [this])
-  (group [this])
+  (groups [this])
   (allowed-capabilities [this])
   (capable? [this capabilities]))
 
@@ -115,9 +115,9 @@
 
 (def not-logged-in-owner "Unknown")
 
-(def not-logged-in-group "Unknown Group")
+(def not-logged-in-groups ["Unknown Group"])
 
-(def admingroup "Administators")
+(def admingroup "Administrators")
 
 (defrecord DeniedIdentity []
   IIdentity
@@ -125,8 +125,8 @@
     false)
   (login [_]
     not-logged-in-owner)
-  (group [_]
-    not-logged-in-group)
+  (groups [_]
+    not-logged-in-groups)
   (allowed-capabilities [_]
     #{})
   (capable? [_ _]

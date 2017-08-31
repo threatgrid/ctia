@@ -8,12 +8,15 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
+             [access-control :refer [access-control-test]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key]]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.sightings
+             :refer [new-sighting-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -22,8 +25,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-sighting-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
   (testing "POST /ctia/sighting"
     (let [{status :status
            sighting :parsed-body}
@@ -153,3 +159,9 @@
           (let [{status :status} (get (str "ctia/sighting/" (:short-id sighting-id))
                                       :headers {"Authorization" api-key})]
             (is (= 404 status))))))))
+
+(deftest-for-each-store test-sighting-routes-access-control
+  (access-control-test "sighting"
+                       new-sighting-minimal
+                       true
+                       true))

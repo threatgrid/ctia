@@ -22,8 +22,11 @@
                     :headers (merge headers {"Authorization" "45c1f5e3f05d0"})) [:status :headers :parsed-body]))
 
 (deftest test-cache-control-middleware
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "Cache control with ETags"
     (let [{status :status

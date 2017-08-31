@@ -42,7 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.13"
+                 [threatgrid/ctim "0.4.17-SNAPSHOT"
                   :exclusions [joda-time
                                clj-time
                                riemann-clojure-client
@@ -65,8 +65,8 @@
                  [threatgrid/ring-jwt-middleware "0.0.2" :exclusions [metosin/ring-http-response riemann-clojure-client joda-time clj-time com.google.code.findbugs/jsr305 com.andrewmcveigh/cljs-time]]
 
                  ;; nREPL server
-                 [org.clojure/tools.nrepl "0.2.12"]
-                 [cider/cider-nrepl "0.14.0"]
+                 [org.clojure/tools.nrepl "0.2.13"]
+                 [cider/cider-nrepl "0.15.0"]
 
                  ;; clients
                  [clj-http "3.4.1"]

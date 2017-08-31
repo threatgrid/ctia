@@ -6,8 +6,11 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctim.domain.id :as id]
+            [ctim.examples.coas
+             :refer [new-coa-minimal]]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [access-control :refer [access-control-test]]
              [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
@@ -21,8 +24,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-coa-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/coa"
     (let [{status :status
@@ -200,3 +206,9 @@
           (let [response (get (str "/ctia/coa/" (:short-id coa-id))
                               :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))
+
+(deftest-for-each-store test-coa-routes-access-control
+  (access-control-test "coa"
+                       new-coa-minimal
+                       true
+                       true))

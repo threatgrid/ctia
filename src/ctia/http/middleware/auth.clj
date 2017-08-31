@@ -1,15 +1,16 @@
 (ns ctia.http.middleware.auth
   (:require [ctia.auth :as auth :refer [auth-service]]
             [compojure.api.meta :as meta]
-            [ring.util.http-response :as http-response]))
+            [ring.util.http-response :as http-response]
+            [schema.core :as s]))
 
 (defn add-id-to-request
   "Add id metas to the request"
-  [request id login group auth-header]
+  [request id login groups auth-header]
   (if (some? id)
     (-> request
         (assoc :identity id
-               :group group
+               :groups groups
                :login login)
         (assoc-in [:headers "authorization"] auth-header))
     request))
@@ -25,8 +26,8 @@
                              (get-in request [:query-params "Authorization"]))
              id (auth/identity-for-token auth-service auth-header)
              login (auth/login id)
-             group (auth/group id)]
-         (add-id-to-request request id login group auth-header))))))
+             groups (auth/groups id)]
+         (add-id-to-request request id login groups auth-header))))))
 
 (defn wrap-authentication [handler]
   (testable-wrap-authentication handler @auth-service))
@@ -44,6 +45,13 @@
                                     :owner (auth/login id)}))))
 
 
+(s/defn ident->map :- (s/maybe {:login (s/maybe s/Str)
+                                :groups (s/maybe [s/Str])})
+  [ident]
+  (when ident
+    {:login (auth/login ident)
+     :groups (auth/groups ident)}))
+
 ;; Create a compojure-api meta-data handler for capability-based
 ;; security. The :identity field must by on the request object
 ;; already, put there by the wrap-authentication middleware. This
@@ -59,10 +67,15 @@
   (update acc :lets into
           [bind-to `(:login ~'+compojure-api-request+)]))
 
-(defmethod meta/restructure-param :group [_ bind-to acc]
+(defmethod meta/restructure-param :groups [_ bind-to acc]
   (update acc :lets into
-          [bind-to `(:group ~'+compojure-api-request+)]))
+          [bind-to `(:groups ~'+compojure-api-request+)]))
 
 (defmethod meta/restructure-param :identity [_ bind-to acc]
   (update acc :lets into
           [bind-to `(:identity ~'+compojure-api-request+)]))
+
+(defmethod meta/restructure-param :identity-map [_ bind-to acc]
+  (update acc :lets into
+          [bind-to `(ident->map
+                     (:identity ~'+compojure-api-request+))]))

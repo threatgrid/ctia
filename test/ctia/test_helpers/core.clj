@@ -126,8 +126,10 @@
                       "ctia.auth.static.group" name]
       (f))))
 
-(defn set-capabilities! [login role caps]
+(defn set-capabilities!
+  [login groups role caps]
   (store/write-store :identity store/create-identity {:login login
+                                                      :groups groups
                                                       :role role
                                                       :capabilities caps}))
 

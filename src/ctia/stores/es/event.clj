@@ -67,6 +67,7 @@
   "produce an event to ES"
   [state :- ESConnState
    events :- [event-schemas/Event]]
+
   (if (-> state :slicing :strategy)
     (let [slice-props (get-slice-props (:timestamp (first events)) state)]
       (produce state slice-props events))
@@ -82,6 +83,10 @@
 (s/defn handle-list :- (list-response-schema event-schemas/Event)
   [state :- ESConnState
    filter-map :- {s/Any s/Any}
+   ident
    params]
-  (update (handle-list-raw state filter-map params)
+  (update (handle-list-raw state
+                           filter-map
+                           ident
+                           params)
           :data #(map coerce-event! %)))

@@ -4,7 +4,10 @@
    [ctia.domain.entities :as ent]
    [ctia.domain.entities.data-table :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
+   [ctia.http.routes.common
+    :refer [created
+            paginated-ok
+            PagingParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewDataTable DataTable]]
    [ring.util.http-response :refer [no-content not-found ok]]
@@ -24,10 +27,14 @@
                  :summary "Adds a new Data Table"
                  :capabilities :create-data-table
                  :identity identity
+                 :identity-map identity-map
                  (-> (flows/create-flow
                       :entity-type :data-table
                       :realize-fn ent/realize-data-table
-                      :store-fn #(write-store :data-table create-data-tables %)
+                      :store-fn #(write-store :data-table
+                                              create-data-tables
+                                              %
+                                              identity-map)
                       :long-id-fn with-long-id
                       :entity-type :data-table
                       :identity identity
@@ -43,8 +50,13 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List data-tables by external id"
                 :capabilities #{:read-data-table :external-id}
-                (-> (read-store :data-table list-data-tables
-                                {:external_ids external_id} q)
+                :identity identity
+                :identity-map identity-map
+                (-> (read-store :data-table
+                                list-data-tables
+                                {:external_ids external_id}
+                                identity-map
+                                q)
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
@@ -55,7 +67,12 @@
                 :path-params [id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-data-table
-                (if-let [data-table (read-store :data-table read-data-table id)]
+                :identity identity
+                :identity-map identity-map
+                (if-let [data-table (read-store :data-table
+                                                read-data-table
+                                                id
+                                                identity-map)]
                   (-> data-table
                       with-long-id
                       ent/un-store
@@ -69,9 +86,16 @@
                    :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-data-table
                    :identity identity
+                   :identity-map identity-map
                    (if (flows/delete-flow
-                        :get-fn #(read-store :data-table read-data-table %)
-                        :delete-fn #(write-store :data-table delete-data-table %)
+                        :get-fn #(read-store :data-table
+                                             read-data-table
+                                             %
+                                             identity-map)
+                        :delete-fn #(write-store :data-table
+                                                 delete-data-table
+                                                 %
+                                                 identity-map)
                         :entity-type :data-table
                         :entity-id id
                         :identity identity)

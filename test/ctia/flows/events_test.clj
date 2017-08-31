@@ -88,6 +88,8 @@
       (let [events (:data (store/read-store :event
                                             store/list-events
                                             {:owner "Unknown"}
+                                            {:login "Unknown"
+                                             :groups ["Administrators"]}
                                             {:sort_by :timestamp
                                              :sort_order :asc}))]
 
@@ -97,6 +99,7 @@
             (is (instance? java.util.Date (:timestamp event)))))
 
         (is (= [{:owner "Unknown"
+                 :groups ["Administrators"]
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212Z"
                            :end_time #inst "2525-01-01T00:00:00.000Z"}
@@ -111,9 +114,11 @@
                           :id (id/long-id judgement-1-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"}
+                          :owner "Unknown"
+                          :groups ["Administrators"]}
                  :type "CreatedModel"}
                 {:owner "Unknown"
+                 :groups ["Administrators"]
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212Z"
                            :end_time #inst "2525-01-01T00:00:00.000Z"}
@@ -128,9 +133,11 @@
                           :id (id/long-id judgement-2-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"}
+                          :owner "Unknown"
+                          :groups ["Administrators"]}
                  :type "CreatedModel"}
                 {:owner "Unknown"
+                 :groups ["Administrators"]
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212Z"
                            :end_time #inst "2525-01-01T00:00:00.000Z"}
@@ -145,7 +152,8 @@
                           :id (id/long-id judgement-3-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"}
+                          :owner "Unknown"
+                          :groups ["Administrators"]}
                  :type "CreatedModel"}]
                (->> events
                     (map #(dissoc % :http-params :id :timestamp))

@@ -26,8 +26,8 @@
     true)
   (login [_]
     name)
-  (group [_]
-    guid)
+  (groups [_]
+    (remove nil? [guid]))
   (allowed-capabilities [_]
     write-capabilities)
   (capable? [this required-capabilities]
@@ -40,8 +40,8 @@
     true)
   (login [_]
     auth/not-logged-in-owner)
-  (group [_]
-    auth/not-logged-in-group)
+  (groups [_]
+    (remove nil? auth/not-logged-in-groups))
   (allowed-capabilities [_]
     read-only-capabilities)
   (capable? [this required-capabilities]

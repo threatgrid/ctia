@@ -12,22 +12,26 @@
 
 (defn observable-verdict
   [{observable-type :type
-    observable-value :value}]
+    observable-value :value}
+   ident]
   (some-> (read-store :judgement
                       calculate-verdict
-                      {:type observable-type :value observable-value})
+                      {:type observable-type :value observable-value}
+                      ident)
           (update :judgement_id ctim-judgement-entity/short-id->long-id)))
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType
-             :resolve (fn [_ _ src]
-                        (observable-verdict (select-keys src [:type :value])))}
+             :resolve (fn [context _ src]
+                        (observable-verdict (select-keys src [:type :value])
+                                            (:ident context)))}
    :judgements {:type judgement/JudgementConnectionType
                 :args (into pagination/connection-arguments
                             judgement/judgement-order-arg)
-                :resolve (fn [_ args src]
+                :resolve (fn [context args src]
                            (resolvers/search-judgements-by-observable
                             (select-keys src [:type :value])
+                            context
                             args))}})
 
 (def ObservableType

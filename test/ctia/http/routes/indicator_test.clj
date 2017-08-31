@@ -10,10 +10,14 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [core :as helpers :refer [delete get post put]]
+             [access-control
+              :refer [access-control-test]]
              [fake-whoami-service :as whoami-helpers]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
+            [ctim.examples.indicators
+             :refer [new-indicator-minimal]]
             [ring.util.codec :refer [url-encode]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -23,8 +27,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-indicator-routes
-  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/indicator"
     (let [{status :status
@@ -155,3 +162,9 @@
                                :headers {"Authorization" "45c1f5e3f05d0"})]
           ;; Deleting indicators is not allowed
           (is (= 404 (:status response))))))))
+
+(deftest-for-each-store test-indicator-routes-access-control
+  (access-control-test "indicator"
+                       new-indicator-minimal
+                       true
+                       false))
