@@ -71,7 +71,7 @@
                  ;; clients
                  [clj-http "3.4.1"]
                  [com.taoensso/carmine "2.12.2"]
-                 [quoll/clients "0.1.2"]
+                 [quoll/clients "0.1.2" :exclusions [com.andrewmcveigh/cljs-time org.clojure/tools.logging]]
 
                  ;; Metrics
                  [metrics-clojure "2.7.0"]
