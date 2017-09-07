@@ -543,6 +543,14 @@
     :source observable
     :related observable}})
 
+(def sighting-target
+  {:dynamic "strict"
+   :properties
+   {:type token
+    :os token
+    :observables observable
+    :properties_data_tables token}})
+
 (def sighting-mapping
   {"sighting"
    {:dynamic "strict"
@@ -556,6 +564,7 @@
      {:observed_time valid-time
       :count {:type "long"}
       :sensor token
+      :target sighting-target
       :reference token
       :confidence token
       :observables observable

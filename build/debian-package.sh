@@ -26,7 +26,7 @@ function build-and-publish-package {
   # Build the debian package
   dpkg-deb -Z gzip -b ./target/pkg/deb ./target/pkg/ctia-$BUILD_NAME.deb
 
-  deb-s3 upload --access-key-id $DEB_ACCESS_KEY --secret-access-key $DEB_SECRET_KEY --bucket $DEB_BUCKET --arch amd64 --codename ctia --component $PKG_TYPE --use-ssl ./target/pkg/ctia-$BUILD_NAME.deb
+  deb-s3 upload  --preserve-versions --access-key-id $DEB_ACCESS_KEY --secret-access-key $DEB_SECRET_KEY --bucket $DEB_BUCKET --arch amd64 --codename ctia --component $PKG_TYPE ./target/pkg/ctia-$BUILD_NAME.deb
 }
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
@@ -35,8 +35,14 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
     echo "OK: master branch detected"
     build-and-publish-package "int"
 
+  elif [[ ${TRAVIS_BRANCH} == "release" ]]; then
+    # non-pr builds on 'release' branch yield REL packages
+    echo "OK: release branch detected using regex"
+    build-and-publish-package "rel"
+
   elif [[ ${TRAVIS_BRANCH} =~ ^rel-[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])$ ]]; then
     # non-pr builds on 'rel-yyyymmdd' branches yield REL packages
+    # To be removed at a future date, depending on the success of the new method
     echo "OK: release branch detected using regex"
     build-and-publish-package "rel"
 
