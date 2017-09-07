@@ -30,7 +30,8 @@
                       :long-id-fn with-long-id
                       :entity-type :incident
                       :identity identity
-                      :entities [incident])
+                      :entities [incident]
+                      :spec :new-incident/map)
                      first
                      ent/un-store
                      created))
@@ -51,7 +52,8 @@
                      :entity-type :incident
                      :entity-id id
                      :identity identity
-                     :entity incident)
+                     :entity incident
+                     :spec :new-incident/map)
                     ent/un-store
                     ok))
 

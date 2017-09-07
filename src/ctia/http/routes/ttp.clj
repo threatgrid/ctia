@@ -30,7 +30,8 @@
                                         :long-id-fn with-long-id
                                         :entity-type :ttp
                                         :identity identity
-                                        :entities [ttp])
+                                        :entities [ttp]
+                                        :spec :new-ttp/map)
                      first
                      ent/un-store
                      created))
@@ -51,7 +52,8 @@
                      :entity-type :ttp
                      :entity-id id
                      :identity identity
-                     :entity ttp)
+                     :entity ttp
+                     :spec :new-ttp/map)
                     ent/un-store
                     ok))
 

@@ -31,7 +31,8 @@
                       :long-id-fn with-long-id
                       :entity-type :campaign
                       :identity identity
-                      :entities [campaign])
+                      :entities [campaign]
+                      :spec :new-campaign/map)
                      first
                      ent/un-store
                      created))
@@ -52,7 +53,8 @@
                      :entity-type :campaign
                      :entity-id id
                      :identity identity
-                     :entity campaign)
+                     :entity campaign
+                     :spec :new-campaign/map)
                     ent/un-store
                     ok))
 

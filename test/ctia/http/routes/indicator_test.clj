@@ -9,7 +9,7 @@
              [properties :refer [get-http-show]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [delete get post put fake-long-id]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key assert-post test-get-list]]
              [search :refer [test-query-string-search]]
@@ -40,7 +40,8 @@
                        :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}
                        :composite_indicator_expression {:operator "and"
-                                                        :indicator_ids ["test1" "test2"]}}
+                                                        :indicator_ids [(fake-long-id 'indicator 1)
+                                                                        (fake-long-id 'indicator 2)]}}
                 :headers {"api_key" "45c1f5e3f05d0"})
 
           indicator-id (id/long-id->id (:id indicator))
@@ -60,7 +61,8 @@
             :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :composite_indicator_expression {:operator "and"
-                                             :indicator_ids ["test1" "test2"]}}
+                                             :indicator_ids [(fake-long-id 'indicator 1)
+                                                             (fake-long-id 'indicator 2)]}}
            indicator))
 
       (testing "the indicator ID has correct fields"
@@ -92,7 +94,8 @@
                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                  :composite_indicator_expression {:operator "and"
-                                                  :indicator_ids ["test1" "test2"]}}]
+                                                  :indicator_ids [(fake-long-id 'indicator 1)
+                                                                  (fake-long-id 'indicator 2)]}}]
                indicators))))
 
       (testing "GET /ctia/indicator/:id"
@@ -114,7 +117,8 @@
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :composite_indicator_expression {:operator "and"
-                                                 :indicator_ids ["test1" "test2"]}}
+                                                 :indicator_ids [(fake-long-id 'indicator 1)
+                                                                 (fake-long-id 'indicator 2)]}}
                indicator))))
 
       (testing "PUT /ctia/indicator/:id"
@@ -131,7 +135,8 @@
                           :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}
                           :composite_indicator_expression {:operator "and"
-                                                           :indicator_ids ["test1" "test2"]}}
+                                                           :indicator_ids [(fake-long-id 'indicator 1)
+                                                                           (fake-long-id 'indicator 2)]}}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
@@ -148,7 +153,8 @@
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :composite_indicator_expression {:operator "and"
-                                                 :indicator_ids ["test1" "test2"]}}
+                                                 :indicator_ids [(fake-long-id 'indicator 1)
+                                                                 (fake-long-id 'indicator 2)]}}
                updated-indicator))))
 
       (testing "DELETE /ctia/indicator/:id"

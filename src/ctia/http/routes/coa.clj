@@ -29,7 +29,8 @@
                                         :long-id-fn with-long-id
                                         :entity-type :coa
                                         :identity identity
-                                        :entities [coa])
+                                        :entities [coa]
+                                        :spec :new-coa/map)
                      first
                      ent/un-store
                      created))
@@ -49,7 +50,8 @@
                                        :entity-type :coa
                                        :entity-id id
                                        :identity identity
-                                       :entity coa)
+                                       :entity coa
+                                       :spec :new-coa/map)
                     ent/un-store
                     ok))
 

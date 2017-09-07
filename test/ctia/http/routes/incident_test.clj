@@ -9,7 +9,7 @@
             [ctia.test-helpers
              [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [delete get post put fake-long-id]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]))
@@ -39,9 +39,9 @@
                        :related_indicators [{:confidence "High"
                                              :source "source"
                                              :relationship "relationship"
-                                             :indicator_id "indicator-123"}]
-                       :related_incidents [{:incident_id "incident-123"}
-                                           {:incident_id "indicent-789"}]}
+                                             :indicator_id (fake-long-id 'indicator 123)}]
+                       :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                           {:incident_id (fake-long-id 'incident 789)}]}
                 :headers {"api_key" "45c1f5e3f05d0"})
 
           incident-id (id/long-id->id (:id incident))
@@ -64,10 +64,10 @@
             :related_indicators [{:confidence "High"
                                   :source "source"
                                   :relationship "relationship"
-                                  :indicator_id "indicator-123"}]
+                                  :indicator_id (fake-long-id 'indicator 123)}]
 
-            :related_incidents [{:incident_id "incident-123"}
-                                {:incident_id "indicent-789"}]}
+            :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                {:incident_id (fake-long-id 'incident 789)}]}
            incident))
 
       (testing "the incident ID has correct fields"
@@ -100,10 +100,10 @@
                  :related_indicators [{:confidence "High"
                                        :source "source"
                                        :relationship "relationship"
-                                       :indicator_id "indicator-123"}]
+                                       :indicator_id (fake-long-id 'indicator 123)}]
 
-                 :related_incidents [{:incident_id "incident-123"}
-                                     {:incident_id "indicent-789"}]}]
+                 :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                     {:incident_id (fake-long-id 'incident 789)}]}]
                incidents))))
 
       (test-query-string-search :incident "description" :description)
@@ -130,9 +130,9 @@
                 :related_indicators [{:confidence "High"
                                       :source "source"
                                       :relationship "relationship"
-                                      :indicator_id "indicator-123"}]
-                :related_incidents [{:incident_id "incident-123"}
-                                    {:incident_id "indicent-789"}]}
+                                      :indicator_id (fake-long-id 'indicator 123)}]
+                :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                    {:incident_id (fake-long-id 'incident 789)}]}
                incident))))
 
       (testing "PUT /ctia/incident/:id"
@@ -151,9 +151,9 @@
                           :related_indicators [{:confidence "High"
                                                 :source "another source"
                                                 :relationship "relationship"
-                                                :indicator_id "indicator-234"}]
-                          :related_incidents [{:incident_id "incident-123"}
-                                              {:incident_id "indicent-789"}]}
+                                                :indicator_id (fake-long-id 'indicator 234)}]
+                          :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                              {:incident_id (fake-long-id 'incident 789)}]}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
@@ -173,9 +173,9 @@
                 :related_indicators [{:confidence "High"
                                       :source "another source"
                                       :relationship "relationship"
-                                      :indicator_id "indicator-234"}]
-                :related_incidents [{:incident_id "incident-123"}
-                                    {:incident_id "indicent-789"}]}
+                                      :indicator_id (fake-long-id 'indicator 234)}]
+                :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                    {:incident_id (fake-long-id 'incident 789)}]}
                updated-incident))))
 
       (testing "DELETE /ctia/incident/:id"
