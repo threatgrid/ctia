@@ -93,6 +93,12 @@
                  ;; Hooks
                  [redismq "0.1.0-SNAPSHOT"]
                  [ymilky/franzy "0.0.1"]
+                 [ymilky/franzy-admin "0.0.1"
+                  :exclusions [com.andrewmcveigh/cljs-time
+                               com.taoensso/encore
+                               com.taoensso/timbre
+                               io.netty/netty
+                               net.sf.jopt-simple/jopt-simple]]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]

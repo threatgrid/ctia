@@ -91,8 +91,9 @@
                       "ctia.hook.redismq.timeout-ms" s/Int
                       "ctia.hook.redismq.max-depth" s/Int
 
-                      "ctia.hook.kafka.host" s/Str
-                      "ctia.hook.kafka.port" s/Int
+                      "ctia.hook.kafka.zookeeper.host-ports" s/Str
+
+                      "ctia.hook.kafka.host-ports" s/Str
                       "ctia.hook.kafka.topic" s/Str
                       "ctia.hook.kafka.partition" s/Int
                       "ctia.hook.kafka.security" s/Str
