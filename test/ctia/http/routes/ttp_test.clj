@@ -3,7 +3,9 @@
   (:require [clj-momo.test-helpers
              [core :as mht]
              [http :refer [encode]]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
@@ -12,7 +14,8 @@
              [fake-whoami-service :as whoami-helpers]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.ttps :as ex]))
 
 (use-fixtures :once (join-fixtures [mht/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -133,10 +136,37 @@
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
                updated-ttp))))
 
+      (testing "PUT invalid /ctia/ttp/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/ttp/" (:short-id ttp-id))
+                   :body {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                                         "http://ex.tld/ctia/ttp/ttp-345"]
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :description "updated description"
+                          :ttp_type "bar"
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                       :end_time "2016-07-11T00:40:48.212-00:00"}}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/ttp/:id"
         (let [response (delete (str "ctia/ttp/" (:short-id ttp-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/ttp/" (:short-id ttp-id))
                               :headers {"api_key" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response)))))))))
+            (is (= 404 (:status response))))))))
+
+  (testing "POST invalid /ctia/ttp"
+    (let [{status :status
+           body :body}
+          (post "ctia/ttp"
+                :body (assoc ex/new-ttp-minimal
+                              ;; This field has an invalid length
+                             :title (apply str (repeatedly 1025 (constantly \0))))
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= status 400))
+      (is (re-find #"error.*in.*title" (str/lower-case body))))))

@@ -3,18 +3,21 @@
   (:require [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia
              [auth :as auth]
              [properties :refer [get-http-show]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [delete get post put fake-long-id]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key assert-post test-get-list]]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
+            [ctim.examples.indicators :as ex]
             [ring.util.codec :refer [url-encode]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -40,7 +43,8 @@
                        :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}
                        :composite_indicator_expression {:operator "and"
-                                                        :indicator_ids ["test1" "test2"]}}
+                                                        :indicator_ids [(fake-long-id 'indicator 1)
+                                                                        (fake-long-id 'indicator 2)]}}
                 :headers {"api_key" "45c1f5e3f05d0"})
 
           indicator-id (id/long-id->id (:id indicator))
@@ -60,7 +64,8 @@
             :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                          :end_time #inst "2016-07-11T00:40:48.212-00:00"}
             :composite_indicator_expression {:operator "and"
-                                             :indicator_ids ["test1" "test2"]}}
+                                             :indicator_ids [(fake-long-id 'indicator 1)
+                                                             (fake-long-id 'indicator 2)]}}
            indicator))
 
       (testing "the indicator ID has correct fields"
@@ -92,7 +97,8 @@
                  :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                               :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                  :composite_indicator_expression {:operator "and"
-                                                  :indicator_ids ["test1" "test2"]}}]
+                                                  :indicator_ids [(fake-long-id 'indicator 1)
+                                                                  (fake-long-id 'indicator 2)]}}]
                indicators))))
 
       (testing "GET /ctia/indicator/:id"
@@ -114,7 +120,8 @@
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :composite_indicator_expression {:operator "and"
-                                                 :indicator_ids ["test1" "test2"]}}
+                                                 :indicator_ids [(fake-long-id 'indicator 1)
+                                                                 (fake-long-id 'indicator 2)]}}
                indicator))))
 
       (testing "PUT /ctia/indicator/:id"
@@ -131,7 +138,8 @@
                           :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}
                           :composite_indicator_expression {:operator "and"
-                                                           :indicator_ids ["test1" "test2"]}}
+                                                           :indicator_ids [(fake-long-id 'indicator 1)
+                                                                           (fake-long-id 'indicator 2)]}}
                    :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
@@ -148,11 +156,44 @@
                 :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
                 :composite_indicator_expression {:operator "and"
-                                                 :indicator_ids ["test1" "test2"]}}
+                                                 :indicator_ids [(fake-long-id 'indicator 1)
+                                                                 (fake-long-id 'indicator 2)]}}
                updated-indicator))))
+
+      (testing "PUT invalid /ctia/indicator/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/indicator/" (:short-id indicator-id))
+                   :body {:external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                                         "http://ex.tld/ctia/indicator/indicator-345"]
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :description "updated description"
+                          :producer "producer"
+                          :tlp "amber"
+                          :indicator_type ["IP Watchlist"]
+                          :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
+                                       :end_time "2016-07-11T00:40:48.212-00:00"}
+                          :composite_indicator_expression {:operator "and"
+                                                           :indicator_ids [(fake-long-id 'indicator 1)
+                                                                           (fake-long-id 'indicator 2)]}}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
       (testing "DELETE /ctia/indicator/:id"
         (let [response (delete (str "ctia/indicator/" (:short-id indicator-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           ;; Deleting indicators is not allowed
-          (is (= 404 (:status response))))))))
+          (is (= 404 (:status response)))))))
+
+  (testing "POST invalid /ctia/indicator"
+    (let [{status :status
+           body :body}
+          (post "ctia/indicator"
+                :body (assoc ex/new-indicator-minimal
+                             ;; This field has an invalid length
+                             :title (apply str (repeatedly 1025 (constantly \0))))
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= status 400))
+      (is (re-find #"error.*in.*title" (str/lower-case body))))))

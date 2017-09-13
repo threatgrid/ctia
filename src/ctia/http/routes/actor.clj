@@ -32,7 +32,8 @@
                       :long-id-fn with-long-id
                       :entity-type :actor
                       :identity identity
-                      :entities [actor])
+                      :entities [actor]
+                      :spec :new-actor/map)
                      first
                      ent/un-store
                      created))
@@ -53,7 +54,8 @@
                      :entity-type :actor
                      :entity-id id
                      :identity identity
-                     :entity actor)
+                     :entity actor
+                     :spec :new-actor/map)
                     ent/un-store
                     ok))
 

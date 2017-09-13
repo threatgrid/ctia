@@ -45,7 +45,8 @@
                       :long-id-fn with-long-id
                       :entity-type :judgement
                       :identity identity
-                      :entities [judgement])
+                      :entities [judgement]
+                      :spec :new-judgement/map)
                      first
                      ent/un-store
                      created))

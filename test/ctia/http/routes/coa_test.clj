@@ -2,10 +2,13 @@
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clj-momo.test-helpers.http :refer [encode]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctim.domain.id :as id]
+            [ctim.examples.coas :as ex]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [search :refer [test-query-string-search]]
@@ -193,10 +196,48 @@
                                           :location "perimeter"}}}
                updated-coa))))
 
+      (testing "PUT invalid /ctia/coa/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/coa/" (:short-id coa-id))
+                   :body {:external_ids ["http://ex.tld/ctia/coa/coa-123"
+                                         "http://ex.tld/ctia/coa/coa-456"]
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :description "updated description"
+                          :tlp "white"
+                          :coa_type "Hardening"
+                          :objective ["foo" "bar"]
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                          :structured_coa_type "openc2"
+                          :open_c2_coa {:type "structured_coa"
+                                        :id "openc2_coa_1"
+                                        :action {:type "allow"}
+                                        :target {:type "cybox:Network_Connection"
+                                                 :specifiers "10.10.1.0"}
+                                        :actuator {:type "network"
+                                                   :specifiers ["router"]}
+                                        :modifiers {:method ["acl"]
+                                                    :location "perimeter"}}}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/coa/:id"
         (let [response (delete (str "/ctia/coa/" (:short-id coa-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "/ctia/coa/" (:short-id coa-id))
                               :headers {"api_key" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response)))))))))
+            (is (= 404 (:status response))))))))
+
+  (testing "POST invalid /ctia/coa"
+    (let [{status :status
+           body :body}
+          (post "ctia/coa"
+                :body (assoc ex/new-coa-minimal
+                             ;; This field has an invalid length
+                             :title (apply str (repeatedly 1025 (constantly \0))))
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= status 400))
+      (is (re-find #"error.*in.*title" (str/lower-case body))))))

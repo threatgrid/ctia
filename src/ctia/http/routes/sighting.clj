@@ -31,7 +31,8 @@
                       :long-id-fn with-long-id
                       :entity-type :sighting
                       :identity identity
-                      :entities [sighting])
+                      :entities [sighting]
+                      :spec :new-sighting/map)
                      first
                      ent/un-store
                      created))
@@ -52,7 +53,8 @@
                      :entity-type :sighting
                      :entity-id id
                      :identity identity
-                     :entity sighting)
+                     :entity sighting
+                     :spec :new-sighting/map)
                     ent/un-store
                     ok))
 

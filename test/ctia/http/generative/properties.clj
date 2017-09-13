@@ -11,7 +11,21 @@
             [ctia.test-helpers.core
              :refer [post get]]
             [ctim.domain.id :as id]
-            [ctim.schemas.judgement :as csj]))
+            [ctim.schemas
+             [actor :refer [NewActor]]
+             [campaign :refer [NewCampaign]]
+             [coa :refer [NewCOA]]
+             [exploit-target :refer [NewExploitTarget]]
+             [feedback :refer [NewFeedback]]
+             [incident :refer [NewIncident]]
+             [indicator :refer [NewIndicator]]
+             [judgement :refer [NewJudgement] :as csj]
+             [relationship :refer [NewRelationship]]
+             [sighting :refer [NewSighting]]
+             [ttp :refer [NewTTP]]]
+            [flanders
+             [spec :as fs]
+             [utils :as fu]]))
 
 (defn api-for-route [model-type entity-gen]
   (for-all
@@ -47,51 +61,65 @@
           (common= post-entity
                    (dissoc get-entity :id)))))))
 
+(doseq [[entity kw-ns] [[NewActor "max-new-actor"]
+                        [NewCampaign "max-new-campaign"]
+                        [NewCOA "max-new-coa"]
+                        [NewExploitTarget "max-new-exploit-target"]
+                        [NewFeedback "max-new-feedback"]
+                        [NewIncident "max-new-incident"]
+                        [NewIndicator "max-new-indicator"]
+                        [NewJudgement "max-new-judgement"]
+                        [NewRelationship "max-new-relationship"]
+                        [NewSighting "max-new-sighting"]
+                        [NewTTP "max-new-ttp"]]]
+  (fs/->spec (fu/require-all entity)
+             kw-ns))
+
 (defn spec-gen [kw-ns]
   (tcg/fmap #(dissoc % :id)
             (cs/gen (keyword kw-ns "map"))))
 
 (def api-for-actor-routes
   (api-for-route 'actor
-                 (spec-gen "new-actor")))
+                 (spec-gen "max-new-actor")))
 
 (def api-for-campaign-routes
   (api-for-route 'campaign
-                 (spec-gen "new-campaign")))
+                 (spec-gen "max-new-campaign")))
 
 (def api-for-coa-routes
   (api-for-route 'coa
-                 (spec-gen "new-coa")))
+                 (spec-gen "max-new-coa")))
 
 (def api-for-exploit-target-routes
   (api-for-route 'exploit-target
-                 (spec-gen "new-exploit-target")))
+                 (spec-gen "max-new-exploit-target")))
 
 (def api-for-indicator-routes
   (api-for-route 'indicator
-                 (spec-gen "new-indicator")))
+                 (spec-gen "max-new-indicator")))
 
 (def api-for-feedback-routes
   (api-for-route 'feedback
-                 (spec-gen "new-feedback")))
+                 (spec-gen "max-new-feedback")))
 
 (def api-for-incident-routes
   (api-for-route 'incident
-                 (spec-gen "new-incident")))
+                 (spec-gen "max-new-incident")))
 
 (def api-for-judgement-routes
   (api-for-route 'judgement
                  (tcg/fmap csj/fix-disposition
-                           (spec-gen "new-judgement"))))
+                           (spec-gen "max-new-judgement"))))
 
 (def api-for-relationship-routes
   (api-for-route 'relationship
-                 (spec-gen "new-relationship")))
+                 (spec-gen "max-new-relationship")))
 
 (def api-for-sighting-routes
   (api-for-route 'sighting
-                 (spec-gen "new-sighting")))
+                 (spec-gen "max-new-sighting")))
 
 (def api-for-ttp-routes
   (api-for-route 'ttp
-                 (spec-gen "new-ttp")))
+                 (spec-gen "max-new-ttp")))

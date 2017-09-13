@@ -45,7 +45,8 @@
                       :long-id-fn with-long-id
                       :entity-type :indicator
                       :identity identity
-                      :entities [indicator])
+                      :entities [indicator]
+                      :spec :new-indicator/map)
                      first
                      ent/un-store
                      created))
@@ -66,7 +67,8 @@
                      :entity-type :indicator
                      :entity-id id
                      :identity identity
-                     :entity indicator)
+                     :entity indicator
+                     :spec :new-indicator/map)
                     ent/un-store
                     ok))
 

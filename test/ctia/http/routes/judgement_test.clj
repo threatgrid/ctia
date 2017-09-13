@@ -3,7 +3,9 @@
   (:require [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
@@ -12,7 +14,8 @@
              [fake-whoami-service :as whoami-helpers]
              [pagination :refer [pagination-test]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.judgements :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -266,7 +269,18 @@
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/judgement/" (:short-id temp-judgement-id))
                               :headers {"api_key" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response)))))))))
+            (is (= 404 (:status response))))))))
+
+  (testing "POST invalid /ctia/judgement"
+    (let [{status :status
+           body :body}
+          (post "ctia/judgement"
+                :body (assoc ex/new-judgement-minimal
+                             ;; This field has an invalid length
+                             :reason (apply str (repeatedly 1025 (constantly \0))))
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= status 400))
+      (is (re-find #"error.*in.*reason" (str/lower-case body))))))
 
 (deftest-for-each-store test-judgement-routes-for-dispositon-determination
   (helpers/set-capabilities! "foouser" "user" all-capabilities)
