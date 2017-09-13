@@ -3,7 +3,9 @@
   (:require [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia
              [auth :as auth]
              [properties :refer [get-http-show]]]
@@ -15,6 +17,7 @@
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
+            [ctim.examples.indicators :as ex]
             [ring.util.codec :refer [url-encode]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -161,4 +164,15 @@
         (let [response (delete (str "ctia/indicator/" (:short-id indicator-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
           ;; Deleting indicators is not allowed
-          (is (= 404 (:status response))))))))
+          (is (= 404 (:status response)))))))
+
+  (testing "POST invalid /ctia/indicator"
+    (let [{status :status
+           body :body}
+          (post "ctia/indicator"
+                :body (assoc ex/new-indicator-minimal
+                             ;; This field has an invalid length
+                             :title (apply str (repeatedly 1025 (constantly \0))))
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= status 400))
+      (is (re-find #"error.*in.*title" (str/lower-case body))))))

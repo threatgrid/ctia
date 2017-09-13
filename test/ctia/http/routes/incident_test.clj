@@ -3,7 +3,9 @@
   (:require [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
@@ -12,7 +14,8 @@
              [core :as helpers :refer [delete get post put fake-long-id]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.incidents :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -184,4 +187,15 @@
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/incident/" (:id incident))
                               :headers {"api_key" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response)))))))))
+            (is (= 404 (:status response))))))))
+
+  (testing "POST invalid /ctia/incident"
+    (let [{status :status
+           body :body}
+          (post "ctia/incident"
+                :body (assoc ex/new-incident-minimal
+                             ;; This field has an invalid length
+                             :title (apply str (repeatedly 1025 (constantly \0))))
+                :headers {"api_key" "45c1f5e3f05d0"})]
+      (is (= status 400))
+      (is (re-find #"error.*in.*title" (str/lower-case body))))))
