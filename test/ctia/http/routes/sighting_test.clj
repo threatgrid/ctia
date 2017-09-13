@@ -149,6 +149,26 @@
                 :type "sighting"}
                updated-sighting))))
 
+      (testing "PUT invalid /ctia/sighting/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/sighting/" (:short-id sighting-id))
+                   :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                          :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                                         "http://ex.tld/ctia/sighting/sighting-345"]
+                          :timestamp "2016-02-11T00:40:48.212-00:00"
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                          :description "updated sighting"
+                          :tlp "green"
+                          :source "source"
+                          :sensor "endpoint.sensor"
+                          :confidence "High"}
+                   :headers {"api_key" api-key})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/sighting/:id"
         (let [{status :status} (delete (str "ctia/sighting/" (:short-id sighting-id))
                                        :headers {"api_key" api-key})]

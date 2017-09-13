@@ -147,6 +147,25 @@
                 :tlp "green"}
                updated-actor))))
 
+      (testing "PUT invalid /ctia/actor/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/actor/" (:short-id actor-id))
+                   :body {:external_ids ["http://ex.tld/ctia/actor/actor-123"
+                                         "http://ex.tld/ctia/actor/actor-456"]
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :description "updated description"
+                          :actor_type "Hacktivist"
+                          :type "actor"
+                          :source "a source"
+                          :confidence "High"
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                       :end_time "2016-07-11T00:40:48.212-00:00"}}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/actor/:id"
         (let [response (delete (str "ctia/actor/" (:short-id actor-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]

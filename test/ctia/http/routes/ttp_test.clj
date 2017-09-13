@@ -136,6 +136,22 @@
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
                updated-ttp))))
 
+      (testing "PUT invalid /ctia/ttp/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/ttp/" (:short-id ttp-id))
+                   :body {:external_ids ["http://ex.tld/ctia/ttp/ttp-123"
+                                         "http://ex.tld/ctia/ttp/ttp-345"]
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :description "updated description"
+                          :ttp_type "bar"
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                       :end_time "2016-07-11T00:40:48.212-00:00"}}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/ttp/:id"
         (let [response (delete (str "ctia/ttp/" (:short-id ttp-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
@@ -149,7 +165,7 @@
            body :body}
           (post "ctia/ttp"
                 :body (assoc ex/new-ttp-minimal
-                             ;; This field has an invalid length
+                              ;; This field has an invalid length
                              :title (apply str (repeatedly 1025 (constantly \0))))
                 :headers {"api_key" "45c1f5e3f05d0"})]
       (is (= status 400))

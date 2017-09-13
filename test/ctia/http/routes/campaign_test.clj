@@ -142,6 +142,24 @@
                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}}
                updated-campaign))))
 
+      (testing "PUT invalid /ctia/campaign/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/campaign/" (:short-id campaign-id))
+                   :body {;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :external_ids ["http://ex.tld/ctia/campaign/campaign-123"
+                                         "http://ex.tld/ctia/campaign/campaign-456"]
+                          :description "different description"
+                          :tlp "amber"
+                          :campaign_type "anything goes here"
+                          :intended_effect ["Brand Damage"]
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
+                                       :end_time "2016-07-11T00:40:48.212-00:00"}}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/campaign/:id"
         (let [response (delete (str "ctia/campaign/" (:short-id campaign-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]

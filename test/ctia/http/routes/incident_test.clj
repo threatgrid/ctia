@@ -181,6 +181,30 @@
                                     {:incident_id (fake-long-id 'incident 789)}]}
                updated-incident))))
 
+      (testing "PUT invalid /ctia/incident/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/incident/" (:short-id incident-id))
+                   :body {:external_ids ["http://ex.tld/ctia/incident/incident-123"
+                                         "http://ex.tld/ctia/incident/incident-456"]
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :description "updated description"
+                          :tlp "green"
+                          :confidence "Low"
+                          :categories ["Denial of Service"
+                                       "Improper Usage"]
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                          :related_indicators [{:confidence "High"
+                                                :source "another source"
+                                                :relationship "relationship"
+                                                :indicator_id (fake-long-id 'indicator 234)}]
+                          :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                              {:incident_id (fake-long-id 'incident 789)}]}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/incident/:id"
         (let [response (delete (str "ctia/incident/" (:short-id incident-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]

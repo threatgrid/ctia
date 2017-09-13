@@ -160,6 +160,27 @@
                                                                  (fake-long-id 'indicator 2)]}}
                updated-indicator))))
 
+      (testing "PUT invalid /ctia/indicator/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/indicator/" (:short-id indicator-id))
+                   :body {:external_ids ["http://ex.tld/ctia/indicator/indicator-123"
+                                         "http://ex.tld/ctia/indicator/indicator-345"]
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :description "updated description"
+                          :producer "producer"
+                          :tlp "amber"
+                          :indicator_type ["IP Watchlist"]
+                          :valid_time {:start_time "2016-05-11T00:40:48.212-00:00"
+                                       :end_time "2016-07-11T00:40:48.212-00:00"}
+                          :composite_indicator_expression {:operator "and"
+                                                           :indicator_ids [(fake-long-id 'indicator 1)
+                                                                           (fake-long-id 'indicator 2)]}}
+                   :headers {"api_key" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/indicator/:id"
         (let [response (delete (str "ctia/indicator/" (:short-id indicator-id))
                                :headers {"api_key" "45c1f5e3f05d0"})]
