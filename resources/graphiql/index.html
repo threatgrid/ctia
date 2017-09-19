@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body {
+        height: 100%;
+        margin: 0;
+        width: 100%;
+        overflow: hidden;
+      }
+      #graphiql {
+        height: 100vh;
+      }
+    </style>
+
+    <script src="node_modules/react/dist/react.min.js"></script>
+    <script src="node_modules/react-dom/dist/react-dom.min.js"></script>
+    <script src='conf.js' type='text/javascript'></script>
+
+    <link rel="stylesheet" href="custom-graphiql.css" />
+    <script src="custom-graphiql.min.js"></script>
+  </head>
+  <body>
+    <div id="graphiql">Loading...</div>
+    <script>
+     function log() {
+         if ('console' in window) {
+             console.log.apply(console, arguments);
+         }
+     }
+
+     function setJwtHeader() {
+         log("detect JWT token");
+         var jwt_token = window.localStorage.getItem(":iroh-auth-token");
+         var graphiql_headers = JSON.parse(window.localStorage.getItem("cgraphiql:headers")) || {};
+         
+         if(jwt_token && jwt_token.trim() != "") {
+             log("Set bearer token: " + jwt_token);
+             graphiql_headers['Authorization'] = "Bearer " + jwt_token;
+         }
+         window.localStorage.setItem("cgraphiql:headers", JSON.stringify(graphiql_headers));
+     }
+
+     setJwtHeader();
+
+     ReactDOM.render(
+         React.createElement(CustomGraphiQL, {currentURL: window.GRAPHIQL_CONF.endpoint}),
+         document.getElementById('graphiql')
+     );
+    </script>
+  </body>
+</html>
