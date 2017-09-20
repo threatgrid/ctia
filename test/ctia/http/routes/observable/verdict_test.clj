@@ -128,8 +128,7 @@
   ;; This test case catches a bug that was in the atom store
   ;; It tests the code path where priority is equal but dispositions differ
   (testing "test setup: create a judgement (1)"
-    (let [{status :status
-           :as response}
+    (let [{status :status}
           (post "ctia/judgement"
                 :body {:observable {:value "string",
                                     :type "device"},
@@ -140,11 +139,10 @@
                        :source_uri "string",
                        :priority 99,
                        :severity "Low"
-                       :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
-                                    :end_time "2016-02-12T14:56:26.719-00:00"}
+                       :valid_time {:start_time "2016-02-12T14:56:26.719-00:00"
+                                    :end_time "2016-02-12T14:56:26.814-00:00"}
                        :confidence "Medium"}
                 :headers {"api_key" "45c1f5e3f05d0"})]
-      (clojure.pprint/pprint ['response response])
       (is (= 201 status))))
 
   (testing "with a verdict judgement"
