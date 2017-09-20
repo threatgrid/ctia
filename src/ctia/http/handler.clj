@@ -3,7 +3,7 @@
             [compojure.api
              [core :refer [middleware]]
              [routes :as routes]
-             [sweet :refer [context defapi]]]
+             [sweet :refer [context api]]]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
              [auth :as auth]
@@ -29,6 +29,7 @@
              [graphql :refer [graphql-routes
                               graphql-ui-routes]]
              [version :refer [version-routes]]]
+            [ctia.properties :refer [properties]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]))
 
 (def api-description
@@ -66,66 +67,69 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
-(defapi api-handler
-  {:exceptions
-   {:handlers
-    {:compojure.api.exception/request-parsing ex/request-parsing-handler
-     :compojure.api.exception/request-validation ex/request-validation-handler
-     :compojure.api.exception/response-validation ex/response-validation-handler
-     :clj-momo.lib.es.conn/es-query-parsing-error ex/es-query-parsing-error-handler
-     :compojure.api.exception/default ex/default-error-handler}}
+(defn api-handler []
+  (api {:exceptions
+        {:handlers
+         {:compojure.api.exception/request-parsing ex/request-parsing-handler
+          :compojure.api.exception/request-validation ex/request-validation-handler
+          :compojure.api.exception/response-validation ex/response-validation-handler
+          :clj-momo.lib.es.conn/es-query-parsing-error ex/es-query-parsing-error-handler
+          :compojure.api.exception/default ex/default-error-handler}}
 
-   :swagger {:ui "/"
-             :spec "/swagger.json"
-             :data {:info {:title "CTIA"
-                           :license {:name "All Rights Reserved",
-                                     :url ""}
-                           :contact {:name "Cisco Security Business Group -- Advanced Threat "
-                                     :url "http://github.com/threatgrid/ctia"
-                                     :email "cisco-intel-api-support@cisco.com"}
-                           :description api-description}
+        :swagger {:ui "/"
+                  :spec "/swagger.json"
+                  :options {:ui {:jwtLocalStorageKey
+                                 (get-in @properties
+                                         [:ctia :http :jwt :local-storage-key])}}
+                  :data {:info {:title "CTIA"
+                                :license {:name "All Rights Reserved",
+                                          :url ""}
+                                :contact {:name "Cisco Security Business Group -- Advanced Threat "
+                                          :url "http://github.com/threatgrid/ctia"
+                                          :email "cisco-intel-api-support@cisco.com"}
+                                :description api-description}
 
-                    :tags [{:name "Actor" :description "Actor operations"}
-                           {:name "Campaign" :description "Campaign operations"}
-                           {:name "COA" :description "COA operations"}
-                           {:name "DataTable" :description "DataTable operations"}
-                           {:name "Events" :description "Events operations"}
-                           {:name "ExploitTarget" :description "ExploitTarget operations"}
-                           {:name "Feedback" :description "Feedback operations"}
-                           {:name "Incident" :description "Incident operations"}
-                           {:name "Indicator", :description "Indicator operations"}
-                           {:name "Judgement", :description "Judgement operations"}
-                           {:name "Relationship", :description "Relationship operations"}
-                           {:name "Properties", :description "Properties operations"}
-                           {:name "Sighting", :description "Sighting operations"}
-                           {:name "TTP", :description "TTP operations"}
-                           {:name "Bulk", :description "Bulk operations"}
-                           {:name "Metrics", :description "Performance Statistics"}
-                           {:name "Version", :description "Version Information"}]}}}
+                         :tags [{:name "Actor" :description "Actor operations"}
+                                {:name "Campaign" :description "Campaign operations"}
+                                {:name "COA" :description "COA operations"}
+                                {:name "DataTable" :description "DataTable operations"}
+                                {:name "Events" :description "Events operations"}
+                                {:name "ExploitTarget" :description "ExploitTarget operations"}
+                                {:name "Feedback" :description "Feedback operations"}
+                                {:name "Incident" :description "Incident operations"}
+                                {:name "Indicator", :description "Indicator operations"}
+                                {:name "Judgement", :description "Judgement operations"}
+                                {:name "Relationship", :description "Relationship operations"}
+                                {:name "Properties", :description "Properties operations"}
+                                {:name "Sighting", :description "Sighting operations"}
+                                {:name "TTP", :description "TTP operations"}
+                                {:name "Bulk", :description "Bulk operations"}
+                                {:name "Metrics", :description "Performance Statistics"}
+                                {:name "Version", :description "Version Information"}]}}}
 
-  (middleware [wrap-not-modified
-               wrap-cache-control
-               ;; always last
-               (metrics/wrap-metrics "ctia" routes/get-routes)]
+       (middleware [wrap-not-modified
+                    wrap-cache-control
+                    ;; always last
+                    (metrics/wrap-metrics "ctia" routes/get-routes)]
 
-              documentation-routes
-              graphql-ui-routes
-              (context "/ctia" []
-                       actor-routes
-                       bulk-routes
-                       campaign-routes
-                       coa-routes
-                       data-table-routes
-                       exploit-target-routes
-                       feedback-routes
-                       incident-routes
-                       indicator-routes
-                       judgement-routes
-                       metrics-routes
-                       observable-routes
-                       properties-routes
-                       sighting-routes
-                       ttp-routes
-                       relationship-routes
-                       graphql-routes
-                       version-routes)))
+                   documentation-routes
+                   (graphql-ui-routes)
+                   (context "/ctia" []
+                            actor-routes
+                            bulk-routes
+                            campaign-routes
+                            coa-routes
+                            data-table-routes
+                            exploit-target-routes
+                            feedback-routes
+                            incident-routes
+                            indicator-routes
+                            judgement-routes
+                            metrics-routes
+                            observable-routes
+                            properties-routes
+                            sighting-routes
+                            ttp-routes
+                            relationship-routes
+                            graphql-routes
+                            version-routes))))

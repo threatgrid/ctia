@@ -74,9 +74,8 @@
 
        function addJWTAuthorization() {
            log("detect JWT token");
-           var jwt_token = window.localStorage.getItem(":iroh-auth-token");
+           var jwt_token = window.localStorage.getItem(window.API_CONF.jwtLocalStorageKey);
            if(jwt_token && jwt_token.trim() != "") {
-               log(jwt_token);
                var apiKeyAuth = new SwaggerClient.ApiKeyAuthorization("Authorization", "Bearer " + jwt_token, "header");
                window.swaggerUi.api.clientAuthorizations.add("bearer", apiKeyAuth);
                log("Set bearer token: " + jwt_token);

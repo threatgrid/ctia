@@ -32,14 +32,14 @@
 
      function setJwtHeader() {
          log("detect JWT token");
-         var jwt_token = window.localStorage.getItem(":iroh-auth-token");
-         var graphiql_headers = JSON.parse(window.localStorage.getItem("cgraphiql:headers")) || {};
-         
+         var jwt_token = window.localStorage.getItem(window.GRAPHIQL_CONF.jwtLocalStorageKey);
+         var headers = JSON.parse(window.localStorage.getItem("cgraphiql:headers")) || {};
+
          if(jwt_token && jwt_token.trim() != "") {
+             headers['Authorization'] = "Bearer " + jwt_token;
              log("Set bearer token: " + jwt_token);
-             graphiql_headers['Authorization'] = "Bearer " + jwt_token;
          }
-         window.localStorage.setItem("cgraphiql:headers", JSON.stringify(graphiql_headers));
+         window.localStorage.setItem("cgraphiql:headers", JSON.stringify(headers));
      }
 
      setJwtHeader();

@@ -43,10 +43,11 @@
                  'Accept': 'application/json',
                  'Content-Type': 'application/json',
              };
-             var jwt_token = window.localStorage.getItem(":iroh-auth-token");
+             
+             var jwt_token = window.localStorage.getItem(window.GRAPHQL_VOYAGER_CONF.jwtLocalStorageKey);
              if(jwt_token && jwt_token.trim() != "") {
-                 log("Set bearer token: " + jwt_token);
                  headers['Authorization'] = "Bearer " + jwt_token;
+                 log("Set bearer token: " + jwt_token);
              }
 
              // This example expects a GraphQL server at the path /graphql.

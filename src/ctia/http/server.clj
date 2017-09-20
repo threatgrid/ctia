@@ -42,7 +42,7 @@
     :or {access-control-allow-methods "get,post,put,delete"}}]
   (doto
       (jetty/run-jetty
-       (cond-> #'handler/api-handler
+       (cond-> (handler/api-handler)
 
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
