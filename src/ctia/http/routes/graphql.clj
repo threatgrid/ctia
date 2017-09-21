@@ -3,6 +3,7 @@
             [compojure.api
              [core :as c]
              [sweet :refer :all]]
+            [ctia.properties :refer [properties]]
             [ctia.schemas
              [graphql :as gql]]
             [ring-graphql-ui.core :refer [graphiql
@@ -10,14 +11,18 @@
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(def graphql-ui-routes
-  (c/undocumented
-   ;; --- GraphiQL https://github.com/shahankit/custom-graphiql/
-   (graphiql {:path "/graphiql"
-              :endpoint "/ctia/graphql"})
-   ;; --- GraphQL Voyager https://github.com/APIs-guru/graphql-voyager
-   (voyager {:path "/voyager"
-             :endpoint "/ctia/graphql"})))
+(defn graphql-ui-routes []
+  (let [jwt-storage-key
+        (get-in @properties [:ctia :http :jwt :local-storage-key])]
+    (c/undocumented
+     ;; --- GraphiQL https://github.com/shahankit/custom-graphiql/
+     (graphiql {:path "/graphiql"
+                :endpoint "/ctia/graphql"
+                :jwtLocalStorageKey jwt-storage-key})
+     ;; --- GraphQL Voyager https://github.com/APIs-guru/graphql-voyager
+     (voyager {:path "/voyager"
+               :endpoint "/ctia/graphql"
+               :jwtLocalStorageKey jwt-storage-key}))))
 
 (defroutes graphql-routes
   (POST "/graphql" []

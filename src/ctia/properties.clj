@@ -67,7 +67,8 @@
                       "ctia.http.max-threads" s/Int})
 
    (st/optional-keys {"ctia.http.jwt.enabled" s/Bool
-                      "ctia.http.jwt.public-key-path" s/Str})
+                      "ctia.http.jwt.public-key-path" s/Str
+                      "ctia.http.jwt.local-storage-key" s/Str})
 
    (st/optional-keys {"ctia.http.dev-reload" s/Bool
                       "ctia.http.show.protocol" s/Str
