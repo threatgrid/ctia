@@ -11,7 +11,10 @@
 
 (def Login s/Str)
 
+(def Group s/Str)
+
 (s/defschema Identity
   {:role Role
+   :groups [Group]
    :capabilities #{Capability}
    :login s/Str})

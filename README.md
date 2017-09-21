@@ -179,3 +179,70 @@ Eclipse Public License v1.0
 The data model of CTIA is closely based on
 [STIX](http://stixproject.github.io/data-model/), with a few
 simplifications.  See [Cisco Threat Intel Model](https://github.com/threatgrid/ctim/tree/master/doc/) for details.
+
+### Data Access Control
+
+Document Access control is defined at the document level, rules are defined using TLP (Traffic Light Protocol) by default:
+
+#### Green/White TLP
+
+| Identity  | Read     | Write    |
+|-----------|----------|----------|
+| Owner     | &#10004; | &#10004; |
+| Group/Org | &#10004; | &#10004; |
+| Others    | &#10004; |          |
+
+#### Amber TLP
+
+| Identity  | Read     | Write    |
+|-----------|----------|----------|
+| Owner     | &#10004; | &#10004; |
+| Group/Org | &#10004; | &#10004; |
+| Others    |          |          |
+
+#### Red TLP
+
+| Identity  | Read     | Write    |
+|-----------|----------|----------|
+| Owner     | &#10004; | &#10004; |
+| Group/Org |          |          |
+| Others    |          |          |
+
+
+#### Custom Access Rules
+
+it is possible to grant additional access to any user/group using either `authorized_users`
+or `authorized_groups` document fields, when an identity is marked in one of these fields, 
+it gets full R/W access to the documents.
+
+Examples:
+
+The following actor Entity is marked as `Red`, thus allowing only its owner RW access,
+since "foo" and "bar" are marked as `authorized_users` the owners of those identites also have RW access.
+
+```json
+  {"id": "actor-5023697b-3857-4652-9b53-ccda297f9c3e",
+   "type": "actor",
+   "schema_version": "0.4.2",
+   "actor_type": "Hacker",
+   "confidence": "High",
+   "source": "a source",
+   "tlp": "red",
+   "valid_time": {},
+   "authorized_users": ["foo" "bar"]}
+```
+
+The following actor Entity is marked as `Amber`, thus allowing only its owner or group RW access,
+since "foogroup" and "bargroup" are marked as `authorized_groups` identities in these groups also get full RW access.
+
+```json
+  {"id": "actor-5023697b-3857-4652-9b53-ccda297f9c3e",
+   "type": "actor",
+   "schema_version": "0.4.2",
+   "actor_type": "Hacker",
+   "confidence": "High",
+   "source": "a source",
+   "tlp": "red",
+   "valid_time": {},
+   "authorized_groups": ["foogroup" "bargroup"]}
+```

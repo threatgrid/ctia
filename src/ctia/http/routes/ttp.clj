@@ -7,7 +7,10 @@
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewTTP TTP]]
    [ctia.http.routes.common
-    :refer [created paginated-ok PagingParams TTPSearchParams]]
+    :refer [created
+            paginated-ok
+            PagingParams
+            TTPSearchParams]]
    [ring.util.http-response :refer [ok no-content not-found]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -25,8 +28,9 @@
                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-ttp
                  :identity identity
+                 :identity-map identity-map
                  (-> (flows/create-flow :realize-fn ent/realize-ttp
-                                        :store-fn #(write-store :ttp create-ttps %)
+                                        :store-fn #(write-store :ttp create-ttps % identity-map)
                                         :long-id-fn with-long-id
                                         :entity-type :ttp
                                         :identity identity
@@ -44,10 +48,16 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :create-ttp
                 :identity identity
+                :identity-map identity-map
                 (-> (flows/update-flow
-                     :get-fn #(read-store :ttp (fn [s] (read-ttp s %)))
+                     :get-fn #(read-store :ttp
+                                          (fn [s] (read-ttp s % identity-map)))
                      :realize-fn ent/realize-ttp
-                     :update-fn #(write-store :ttp update-ttp (:id %) %)
+                     :update-fn #(write-store :ttp
+                                              update-ttp
+                                              (:id %)
+                                              %
+                                              identity-map)
                      :long-id-fn with-long-id
                      :entity-type :ttp
                      :entity-id id
@@ -64,8 +74,12 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List TTPs by external id"
                 :capabilities #{:read-ttp :external-id}
+                :identity identity
+                :identity-map identity-map
                 (-> (read-store :ttp list-ttps
-                                {:external_ids external_id} q)
+                                {:external_ids external_id}
+                                identity-map
+                                q)
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
@@ -75,12 +89,15 @@
                 :summary "Search for a TTP using a Lucene/ES query string"
                 :query [params TTPSearchParams]
                 :capabilities #{:read-ttp :search-ttp}
+                :identity identity
+                :identity-map identity-map
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :ttp
                      query-string-search
                      (:query params)
                      (dissoc params :query :sort_by :sort_order :offset :limit)
+                     identity-map
                      (select-keys params [:sort_by :sort_order :offset :limit]))
                     page-with-long-id
                     ent/un-store-page
@@ -91,9 +108,13 @@
                 :summary "Gets a TTP by ID"
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-ttp
+                :identity identity
+                :identity-map identity-map
                 :path-params [id :- s/Str]
                 (if-let [ttp (read-store :ttp
-                                         (fn [s] (read-ttp s id)))]
+                                         (fn [s] (read-ttp s
+                                                          id
+                                                          identity-map)))]
                   (-> ttp
                       with-long-id
                       ent/un-store
@@ -107,9 +128,13 @@
                    :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-ttp
                    :identity identity
+                   :identity-map identity-map
                    (if (flows/delete-flow
-                        :get-fn #(read-store :ttp read-ttp %)
-                        :delete-fn #(write-store :ttp delete-ttp %)
+                        :get-fn #(read-store :ttp read-ttp % identity)
+                        :delete-fn #(write-store :ttp
+                                                 delete-ttp
+                                                 %
+                                                 identity-map)
                         :entity-type :ttp
                         :entity-id id
                         :identity identity)

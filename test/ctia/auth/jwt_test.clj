@@ -24,7 +24,7 @@
                          :business_guid "organization-id"}
                    :identity #ctia.auth.jwt.Identity{:jwt {:sub "subject name"
                                                            :business_guid "organization-id"}}
-                   :group "organization-id"
-                   :login "subject name"}
+                   :groups ["organization-id"]
+                   :login  "subject name"}
             :status 200}
            response-jwt))))

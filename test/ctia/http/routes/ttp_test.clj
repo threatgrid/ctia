@@ -13,6 +13,7 @@
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [search :refer [test-query-string-search]]
+             [access-control :refer [access-control-test]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
             [ctim.examples.ttps :as ex]))
@@ -24,10 +25,16 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-ttp-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (helpers/set-capabilities! "baruser" "user" #{})
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+  (whoami-helpers/set-whoami-response "2222222222222"
+                                      "baruser"
+                                      "bargroup"
+                                      "user")
 
   (testing "POST /ctia/ttp"
     (let [{status :status
@@ -157,7 +164,7 @@
                                :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/ttp/" (:short-id ttp-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response))))))))
 
   (testing "POST invalid /ctia/ttp"
@@ -170,3 +177,9 @@
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-ttp-routes-access-control
+  (access-control-test "ttp"
+                       ex/new-ttp-minimal
+                       true
+                       true))

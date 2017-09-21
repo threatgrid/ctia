@@ -39,9 +39,13 @@
                  :summary "Adds a new Judgement"
                  :capabilities :create-judgement
                  :identity identity
+                 :identity-map identity-map
                  (-> (flows/create-flow
                       :realize-fn ent/realize-judgement
-                      :store-fn #(write-store :judgement create-judgements %)
+                      :store-fn #(write-store :judgement
+                                              create-judgements
+                                              %
+                                              identity-map)
                       :long-id-fn with-long-id
                       :entity-type :judgement
                       :identity identity
@@ -56,13 +60,15 @@
                 :summary "Search for a Judgement using a Lucene/ES query string"
                 :query [params JudgementSearchParams]
                 :capabilities #{:read-judgement :search-judgement}
+                :identity identity
+                :identity-map identity-map
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                (-> (query-string-search-store
-                     :judgement
-                     query-string-search
-                     (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                (-> (query-string-search-store :judgement
+                                               query-string-search
+                                               (:query params)
+                                               (dissoc params :query :sort_by :sort_order :offset :limit)
+                                               identity-map
+                                               (select-keys params [:sort_by :sort_order :offset :limit]))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
@@ -74,9 +80,12 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Get Judgements by external ids"
                 :capabilities #{:read-judgement :external-id}
+                :identity identity
+                :identity-map identity-map
                 (-> (read-store :judgement
                                 list-judgements
                                 {:external_ids external_id}
+                                identity-map
                                 q)
                     page-with-long-id
                     ent/un-store-page
@@ -88,7 +97,12 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Gets a Judgement by ID"
                 :capabilities :read-judgement
-                (if-let [judgement (read-store :judgement read-judgement id)]
+                :identity identity
+                :identity-map identity-map
+                (if-let [judgement (read-store :judgement
+                                               read-judgement
+                                               id
+                                               identity-map)]
                   (-> judgement
                       with-long-id
                       ent/un-store
@@ -103,9 +117,16 @@
                    :summary "Deletes a Judgement"
                    :capabilities :delete-judgement
                    :identity identity
+                   :identity-map identity-map
                    (if (flows/delete-flow
-                        :get-fn #(read-store :judgement read-judgement %)
-                        :delete-fn #(write-store :judgement delete-judgement %)
+                        :get-fn #(read-store :judgement
+                                             read-judgement
+                                             %
+                                             identity-map)
+                        :delete-fn #(write-store :judgement
+                                                 delete-judgement
+                                                 %
+                                                 identity-map)
                         :entity-type :judgement
                         :entity-id id
                         :identity identity)

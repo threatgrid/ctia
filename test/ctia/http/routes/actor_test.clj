@@ -9,6 +9,7 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
@@ -21,11 +22,18 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
+(use-fixtures :each
+  whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-actor-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser"
+                             ["foogroup"]
+                             "user"
+                             all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/actor"
     (let [{status :status
@@ -180,7 +188,13 @@
           (post "ctia/actor"
                 :body (assoc ex/new-actor-minimal
                              ;; This field has an invalid length
-                             :title (apply str (repeatedly 1025 (constantly \0))))
+                             :title (clojure.string/join (repeatedly 1025 (constantly \0))))
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-actor-routes-access-control
+  (access-control-test "actor"
+                       ex/new-actor-minimal
+                       true
+                       true))

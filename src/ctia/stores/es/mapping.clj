@@ -8,7 +8,7 @@
 ;; even in different entities.  That means
 
 (def ts
-  "A mapping for our tiestamps, which should all be ISO8601 format"
+  "A mapping for our timestamps, which should all be ISO8601 format"
   {:type "date" :format "date_time"})
 
 (def text
@@ -63,6 +63,9 @@
 
 (def stored-entity-mapping
   {:owner token
+   :groups token
+   :authorized_users token
+   :authorized_groups token
    :created ts
    :modified ts})
 
@@ -527,7 +530,8 @@
     {:id all_token
      :role token
      :capabilities token
-     :login token}}})
+     :login token
+     :groups token}}})
 
 (def observed-relation
   {:dynamic "strict"
@@ -613,6 +617,7 @@
    {:dynamic_templates dynamic-templates
     :properties
     {:owner token
+     :groups token
      :timestamp ts
      :entity {:type "object"}
      :id token

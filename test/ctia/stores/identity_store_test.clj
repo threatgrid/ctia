@@ -15,6 +15,7 @@
     (store/write-store :identity
                        (fn [store]
                          (store/create-identity store {:login "bar"
+                                                       :groups ["foogroup"]
                                                        :capabilities #{:read-actor}
                                                        :role :admin})))
 

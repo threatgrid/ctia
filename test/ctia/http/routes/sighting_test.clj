@@ -10,6 +10,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
+             [access-control :refer [access-control-test]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key]]
@@ -25,8 +26,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-sighting-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
   (testing "POST /ctia/sighting"
     (let [{status :status
            sighting :parsed-body}
@@ -187,3 +191,9 @@
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-sighting-routes-access-control
+  (access-control-test "sighting"
+                       ex/new-sighting-minimal
+                       true
+                       true))

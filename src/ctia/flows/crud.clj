@@ -86,16 +86,33 @@
   fm)
 
 (s/defn ^:private realize-entities :- FlowMap
-  [{:keys [entities flow-type identity prev-entity realize-fn] :as fm} :- FlowMap]
-  (let [login (auth/login identity)]
+  [{:keys [entities
+           flow-type
+           identity
+           prev-entity
+           realize-fn] :as fm} :- FlowMap]
+  (let [login (auth/login identity)
+        groups (auth/groups identity)]
     (assoc fm
            :entities
            (doall
             (for [entity entities
                   :let [entity-id (find-entity-id fm entity)]]
               (case flow-type
-                :create (realize-fn entity entity-id login)
-                :update (realize-fn entity entity-id login prev-entity)
+                :create (realize-fn entity
+                                    entity-id
+                                    login
+                                    groups)
+                :update (if prev-entity
+                          (realize-fn entity
+                                      entity-id
+                                      login
+                                      groups
+                                      prev-entity)
+                          (realize-fn entity
+                                      entity-id
+                                      login
+                                      groups))
                 :delete entity))))))
 
 (s/defn ^:private apply-before-hooks :- FlowMap
@@ -112,7 +129,7 @@
                                         :delete :before-delete)
                            :read-only? (= flow-type :delete))))))
 
-(s/defn ^:privae apply-after-hooks :- FlowMap
+(s/defn ^:private apply-after-hooks :- FlowMap
   [{:keys [entities flow-type prev-entity] :as fm} :- FlowMap]
   (doseq [entity entities]
     (h/apply-hooks :entity entity

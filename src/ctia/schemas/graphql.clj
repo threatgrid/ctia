@@ -39,7 +39,9 @@
    []
    {:indicator {:type IndicatorType
                 :args search-by-id-args
-                :resolve (fn [_ args _] (res/indicator-by-id (:id args)))}
+                :resolve (fn [context args _] (res/indicator-by-id
+                                              (:id args)
+                                              (:ident context)))}
     :indicators {:type IndicatorConnectionType
                  :args (merge common/lucene-query-arguments
                               indicator/indicator-order-arg
@@ -47,7 +49,9 @@
                  :resolve res/search-indicators}
     :judgement {:type JudgementType
                 :args search-by-id-args
-                :resolve (fn [_ args _] (res/judgement-by-id (:id args)))}
+                :resolve (fn [context args _]
+                           (res/judgement-by-id (:id args)
+                                                (:ident context)))}
     :judgements {:type JudgementConnectionType
                  :args (merge common/lucene-query-arguments
                               judgement/judgement-order-arg
@@ -59,7 +63,9 @@
                  :resolve (fn [_ args _] args)}
     :sighting {:type SightingType
                :args search-by-id-args
-               :resolve (fn [_ args _] (res/sighting-by-id (:id args)))}
+               :resolve (fn [context args _]
+                          (res/sighting-by-id (:id args)
+                                              (:ident context)))}
     :sightings {:type SightingConnectionType
                 :args (merge common/lucene-query-arguments
                              sighting/sighting-order-arg
@@ -69,5 +75,5 @@
 (def schema (g/new-schema QueryType))
 (def graphql (g/new-graphql schema))
 
-(defn execute [query operation-name variables]
-  (g/execute graphql query operation-name variables))
+(defn execute [query operation-name variables context]
+  (g/execute graphql query operation-name variables context))

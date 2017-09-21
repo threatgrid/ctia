@@ -12,6 +12,8 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [core :as helpers :refer [delete get post put fake-long-id]]
+             [access-control
+              :refer [access-control-test]]
              [fake-whoami-service :as whoami-helpers]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
@@ -26,8 +28,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-indicator-routes
-  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/indicator"
     (let [{status :status
@@ -176,7 +181,7 @@
                           :composite_indicator_expression {:operator "and"
                                                            :indicator_ids [(fake-long-id 'indicator 1)
                                                                            (fake-long-id 'indicator 2)]}}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
@@ -193,6 +198,12 @@
                 :body (assoc ex/new-indicator-minimal
                              ;; This field has an invalid length
                              :title (apply str (repeatedly 1025 (constantly \0))))
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-indicator-routes-access-control
+  (access-control-test "indicator"
+                       ex/new-indicator-minimal
+                       true
+                       false))

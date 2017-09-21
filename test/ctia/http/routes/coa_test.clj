@@ -11,6 +11,7 @@
             [ctim.examples.coas :as ex]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [access-control :refer [access-control-test]]
              [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
@@ -24,8 +25,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-coa-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/coa"
     (let [{status :status
@@ -237,7 +241,13 @@
           (post "ctia/coa"
                 :body (assoc ex/new-coa-minimal
                              ;; This field has an invalid length
-                             :title (apply str (repeatedly 1025 (constantly \0))))
+                             :title (clojure.string/join (repeatedly 1025 (constantly \0))))
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-coa-routes-access-control
+  (access-control-test "coa"
+                       ex/new-coa-minimal
+                       true
+                       true))

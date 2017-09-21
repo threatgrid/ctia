@@ -8,7 +8,9 @@
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.auth :refer [all-capabilities]]
-            [ctia.http.routes.bulk :refer [bulk-size gen-bulk-from-fn get-bulk-max-size]]
+            [ctia.http.routes.bulk :refer [bulk-size
+                                           gen-bulk-from-fn
+                                           get-bulk-max-size]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [core :as helpers :refer [get post]]
@@ -162,8 +164,11 @@
              (keys bulk-ids))))
 
 (deftest-for-each-store test-bulk-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
   (testing "POST /ctia/bulk"
     (let [nb 8
           new-bulk {:actors (map mk-new-actor (range nb))
@@ -229,8 +234,11 @@
            (* nb 12)))))
 
 (deftest-for-each-store bulk-max-size-post-test
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   ;; Check changing the properties change the computed bulk max size
   (is (= 100 (get-bulk-max-size)))

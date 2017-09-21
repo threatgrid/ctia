@@ -89,6 +89,7 @@
         (is (.await finish-signal 10 TimeUnit/SECONDS)
             "Unexpected timeout waiting for subscriptions")
         (is (= [{:owner "Unknown"
+                 :groups ["Administrators"]
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -103,9 +104,11 @@
                           :id (id/long-id judgement-1-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"}
+                          :owner "Unknown"
+                          :groups ["Administrators"]}
                  :type "CreatedModel"}
                 {:owner "Unknown"
+                 :groups ["Administrators"]
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -120,9 +123,11 @@
                           :id (id/long-id judgement-2-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"}
+                          :owner "Unknown"
+                          :groups ["Administrators"]}
                  :type "CreatedModel"}
                 {:owner "Unknown"
+                 :groups ["Administrators"]
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -137,7 +142,8 @@
                           :id (id/long-id judgement-3-id)
                           :severity "High"
                           :confidence "Low"
-                          :owner "Unknown"}
+                          :owner "Unknown"
+                          :groups ["Administrators"]}
                  :type "CreatedModel"}]
                (->> @results
                     (map #(dissoc % :timestamp :http-params :id))

@@ -10,6 +10,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [search :refer [test-query-string-search]]
+             [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put fake-long-id]]
              [fake-whoami-service :as whoami-helpers]
@@ -24,8 +25,8 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-incident-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
 
   (testing "POST /ctia/incident"
     (let [{status :status
@@ -200,7 +201,7 @@
                                                 :indicator_id (fake-long-id 'indicator 234)}]
                           :related_incidents [{:incident_id (fake-long-id 'incident 123)}
                                               {:incident_id (fake-long-id 'incident 789)}]}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
@@ -218,7 +219,13 @@
           (post "ctia/incident"
                 :body (assoc ex/new-incident-minimal
                              ;; This field has an invalid length
-                             :title (apply str (repeatedly 1025 (constantly \0))))
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                             :title (clojure.string/join (repeatedly 1025 (constantly \0))))
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-incident-routes-access-control
+  (access-control-test "incident"
+                       ex/new-incident-minimal
+                       true
+                       true))

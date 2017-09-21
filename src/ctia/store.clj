@@ -2,82 +2,82 @@
   (:require [clojure.tools.logging :as log]))
 
 (defprotocol IActorStore
-  (read-actor [this id])
-  (create-actors [this new-actors])
-  (update-actor [this id actor])
-  (delete-actor [this id])
-  (list-actors [this filtermap params]))
+  (read-actor [this id ident])
+  (create-actors [this new-actors ident])
+  (update-actor [this id actor ident])
+  (delete-actor [this id ident])
+  (list-actors [this filtermap ident params]))
 
 (defprotocol IJudgementStore
-  (create-judgements [this new-judgements])
-  (read-judgement [this id])
-  (delete-judgement [this id])
-  (list-judgements [this filter-map params])
-  (calculate-verdict [this observable])
-  (list-judgements-by-observable [this observable params])
-  (add-indicator-to-judgement [this judgement-id indicator-relationship]))
+  (create-judgements [this new-judgements ident])
+  (read-judgement [this id ident])
+  (delete-judgement [this id ident])
+  (list-judgements [this filter-map ident params])
+  (calculate-verdict [this observable ident])
+  (list-judgements-by-observable [this observable ident params])
+  (add-indicator-to-judgement [this judgement-id indicator-relationship ident]))
 
 (defprotocol IIndicatorStore
-  (create-indicators [this new-indicators])
-  (update-indicator [this id indicator])
-  (read-indicator [this id])
-  (delete-indicator [this id])
-  (list-indicators [this filtermap params]))
+  (create-indicators [this new-indicators ident])
+  (update-indicator [this id indicator ident])
+  (read-indicator [this id ident])
+  (delete-indicator [this id ident])
+  (list-indicators [this filtermap ident params]))
 
 (defprotocol IExploitTargetStore
-  (read-exploit-target [this id])
-  (create-exploit-targets [this new-exploit-targets])
-  (update-exploit-target [this id exploit-target])
-  (delete-exploit-target [this id])
-  (list-exploit-targets [this filtermap params]))
+  (read-exploit-target [this id ident])
+  (create-exploit-targets [this new-exploit-targets ident])
+  (update-exploit-target [this id exploit-target ident])
+  (delete-exploit-target [this id ident])
+  (list-exploit-targets [this filtermap ident params]))
 
 (defprotocol IFeedbackStore
-  (read-feedback [this id])
-  (create-feedbacks [this new-feedbacks])
-  (delete-feedback [this id])
-  (list-feedback [this filtermap params]))
+  (read-feedback [this id ident])
+  (create-feedbacks [this new-feedbacks ident])
+  (delete-feedback [this id ident])
+  (list-feedback [this filtermap ident params]))
 
 (defprotocol ITTPStore
-  (read-ttp [this id])
-  (create-ttps [this new-ttps])
-  (update-ttp [this id ttp])
-  (delete-ttp [this id])
-  (list-ttps [this filtermap params]))
+  (read-ttp [this id ident])
+  (create-ttps [this new-ttps ident])
+  (update-ttp [this id ttp ident])
+  (delete-ttp [this id ident])
+  (list-ttps [this filtermap ident params]))
 
 (defprotocol ICampaignStore
-  (read-campaign [this id])
-  (create-campaigns [this new-campaigns])
-  (update-campaign [this id campaign])
-  (delete-campaign [this id])
-  (list-campaigns [this filtermap params]))
+  (read-campaign [this id ident])
+  (create-campaigns [this new-campaigns ident])
+  (update-campaign [this id campaign ident])
+  (delete-campaign [this id ident])
+  (list-campaigns [this filtermap ident params]))
 
 (defprotocol ICOAStore
-  (read-coa [this id])
-  (create-coas [this new-coas])
-  (update-coa [this id coa])
-  (delete-coa [this id])
-  (list-coas [this filtermap params]))
+  (read-coa [this id ident])
+  (create-coas [this new-coas ident])
+  (update-coa [this id coa ident])
+  (delete-coa [this id ident])
+  (list-coas [this filtermap ident params]))
 
 (defprotocol ISightingStore
-  (read-sighting [this id])
-  (create-sightings [this new-sightings])
-  (update-sighting [this id sighting])
-  (delete-sighting [this id])
-  (list-sightings [this filtermap params])
-  (list-sightings-by-observables [this observable params]))
+  (read-sighting [this id ident])
+  (create-sightings [this new-sightings ident])
+  (update-sighting [this id sighting ident])
+  (delete-sighting [this id ident])
+  (list-sightings [this filtermap ident params])
+  (list-sightings-by-observables [this observable ident params]))
 
 (defprotocol IIncidentStore
-  (read-incident [this id])
-  (create-incidents [this new-incidents])
-  (update-incident [this id incident])
-  (delete-incident [this id])
-  (list-incidents [this filtermap params]))
+  (read-incident [this id ident])
+  (create-incidents [this new-incidents ident])
+  (update-incident [this id incident ident])
+  (delete-incident [this id ident])
+  (list-incidents [this filtermap ident params]))
 
 (defprotocol IRelationshipStore
-  (read-relationship [this id])
-  (create-relationships [this new-relations])
-  (delete-relationship [this id])
-  (list-relationships [this filtermap params]))
+  (read-relationship [this id ident])
+  (create-relationships [this new-relations ident])
+  (delete-relationship [this id ident])
+  (list-relationships [this filtermap ident params]))
 
 (defprotocol IIdentityStore
   (read-identity [this login])
@@ -85,18 +85,18 @@
   (delete-identity [this org-id role]))
 
 (defprotocol IDataTableStore
-  (read-data-table [this login])
-  (create-data-tables [this new-data-tables])
-  (delete-data-table [this role])
-  (list-data-tables [this filtermap params]))
+  (read-data-table [this id ident])
+  (create-data-tables [this new-data-tables ident])
+  (delete-data-table [this id ident])
+  (list-data-tables [this filtermap ident params]))
 
 
 (defprotocol IEventStore
   (create-events [this new-events])
-  (list-events [this filtermap params]))
+  (list-events [this filtermap ident params]))
 
 (defprotocol IQueryStringSearchableStore
-  (query-string-search [this query filtermap params]))
+  (query-string-search [this query filtermap ident params]))
 
 (defonce stores (atom {:judgement []
                        :indicator []
