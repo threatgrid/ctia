@@ -1,19 +1,21 @@
 (ns ctia.http.routes.judgement-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.test-helpers
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
              [pagination :refer [pagination-test]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
-            [clj-momo.lib.clj-time.core :as time]))
+            [ctim.examples.judgements :refer [new-judgement-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -22,10 +24,16 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-judgement-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (helpers/set-capabilities! "baruser" "user" #{})
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroupi"] "user" all-capabilities)
+  (helpers/set-capabilities! "baruser"  ["bargroup"] "user" #{})
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+  (whoami-helpers/set-whoami-response "2222222222222"
+                                      "baruser"
+                                      "bargroup"
+                                      "user")
 
   (testing "POST /ctia/judgement"
     (let [{judgement :parsed-body
@@ -250,17 +258,17 @@
                    body)))))
 
       (testing "DELETE /ctia/judgement/:id"
-        (let [temp-judgement (-> (post "ctia/judgement"
-                                       :body {:observable {:value "9.8.7.6"
-                                                           :type "ip"}
-                                              :disposition 3
-                                              :source "test"
-                                              :priority 100
-                                              :severity "High"
-                                              :confidence "Low"
-                                              :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                                       :headers {"Authorization" "45c1f5e3f05d0"})
-                                 :parsed-body)
+        (let [temp-judgement (:parsed-body
+                              (post "ctia/judgement"
+                                    :body {:observable {:value "9.8.7.6"
+                                                        :type "ip"}
+                                           :disposition 3
+                                           :source "test"
+                                           :priority 100
+                                           :severity "High"
+                                           :confidence "Low"
+                                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                                    :headers {"Authorization" "45c1f5e3f05d0"}))
               temp-judgement-id (id/long-id->id (:id temp-judgement))
               response (delete (str "ctia/judgement/" (:short-id temp-judgement-id))
                                :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -270,10 +278,10 @@
             (is (= 404 (:status response)))))))))
 
 (deftest-for-each-store test-judgement-with-jwt-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (helpers/set-capabilities! "baruser" "user" #{})
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
 
   (testing "POST /ctia/judgement"
     (let [{judgement :parsed-body
@@ -334,8 +342,11 @@
                  judgement))))))))
 
 (deftest-for-each-store test-judgement-routes-for-dispositon-determination
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST a judgement with dispositon (id)"
     (let [{status :status
@@ -458,8 +469,11 @@
            judgement)))))
 
 (deftest-for-each-store test-list-judgements-by-observable-pagination
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (dotimes [n 30]
     (let [{status :status}
@@ -481,3 +495,9 @@
    "ctia/ip/1.2.3.4/judgements"
    {"Authorization" "45c1f5e3f05d0"}
    [:id :disposition :priority :severity :confidence]))
+
+(deftest-for-each-store test-judgement-routes-access-control
+  (access-control-test "judgement"
+                       new-judgement-minimal
+                       false
+                       true))

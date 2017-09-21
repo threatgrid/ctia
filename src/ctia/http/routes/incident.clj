@@ -5,8 +5,10 @@
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
             [ctia.schemas.core :refer [NewIncident Incident]]
-            [ctia.http.routes.common :refer [created IncidentSearchParams
-                                             PagingParams paginated-ok]]
+            [ctia.http.routes.common :refer [created
+                                             IncidentSearchParams
+                                             PagingParams
+                                             paginated-ok]]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
             [schema-tools.core :as st]))
@@ -24,9 +26,13 @@
                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-incident
                  :identity identity
+                 :identity-map identity-map
                  (-> (flows/create-flow
                       :realize-fn ent/realize-incident
-                      :store-fn #(write-store :incident create-incidents %)
+                      :store-fn #(write-store :incident
+                                              create-incidents
+                                              %
+                                              identity-map)
                       :long-id-fn with-long-id
                       :entity-type :incident
                       :identity identity
@@ -43,10 +49,18 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :create-incident
                 :identity identity
+                :identity-map identity-map
                 (-> (flows/update-flow
-                     :get-fn #(read-store :incident read-incident %)
+                     :get-fn #(read-store :incident
+                                          read-incident
+                                          %
+                                          identity-map)
                      :realize-fn ent/realize-incident
-                     :update-fn #(write-store :incident update-incident (:id %) %)
+                     :update-fn #(write-store :incident
+                                              update-incident
+                                              (:id %)
+                                              %
+                                              identity-map)
                      :long-id-fn with-long-id
                      :entity-type :incident
                      :entity-id id
@@ -62,8 +76,12 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List Incidents by external id"
                 :capabilities #{:read-incident :external-id}
+                :identity identity
+                :identity-map identity-map
                 (-> (read-store :incident list-incidents
-                                {:external_ids external_id} q)
+                                {:external_ids external_id}
+                                identity-map
+                                q)
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
@@ -73,12 +91,15 @@
                 :summary "Search for an Incident using a Lucene/ES query string"
                 :query [params IncidentSearchParams]
                 :capabilities #{:read-incident :search-incident}
+                :identity identity
+                :identity-map identity-map
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :incident
                      query-string-search
                      (:query params)
                      (dissoc params :query :sort_by :sort_order :offset :limit)
+                     identity-map
                      (select-keys params [:sort_by :sort_order :offset :limit]))
                     page-with-long-id
                     ent/un-store-page
@@ -90,7 +111,12 @@
                 :path-params [id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-incident
-                (if-let [incident (read-store :incident read-incident id)]
+                :identity identity
+                :identity-map identity-map
+                (if-let [incident (read-store :incident
+                                              read-incident
+                                              id
+                                              identity-map)]
                   (-> incident
                       with-long-id
                       ent/un-store
@@ -104,9 +130,16 @@
                    :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-incident
                    :identity identity
+                   :identity-map identity-map
                    (if (flows/delete-flow
-                        :get-fn #(read-store :incident read-incident %)
-                        :delete-fn #(write-store :incident delete-incident %)
+                        :get-fn #(read-store :incident
+                                             read-incident
+                                             %
+                                             identity-map)
+                        :delete-fn #(write-store :incident
+                                                 delete-incident
+                                                 %
+                                                 identity-map)
                         :entity-type :incident
                         :entity-id id
                         :identity identity)

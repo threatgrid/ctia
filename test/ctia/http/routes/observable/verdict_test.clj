@@ -21,8 +21,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-observable-verdict-route
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "test setup: create a judgement (1)"
     ;; Incorrect observable
@@ -122,8 +125,11 @@
                  verdict)))))))
 
 (deftest-for-each-store test-observable-verdict-route-2
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   ;; This test case catches a bug that was in the atom store
   ;; It tests the code path where priority is equal but dispositions differ
@@ -183,8 +189,11 @@
                    verdict))))))))
 
 (deftest-for-each-store test-observable-verdict-route-when-judgement-deleted
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "test setup: create judgement-1"
     (let [{status :status
@@ -277,8 +286,11 @@
                  verdict)))))))
 
 (deftest-for-each-store test-observable-verdict-with-different-valid-times
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing ":start_time is now and :end_time is in 2 weeks"
 
@@ -433,3 +445,212 @@
               (get (str "ctia/" type "/" value "/verdict")
                    :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 404 status)))))))
+
+(deftest-for-each-store test-observable-verdict-access-control
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (helpers/set-capabilities! "baruser" ["bargroup"] "user" all-capabilities)
+  (helpers/set-capabilities! "foobaruser" ["bargroup"] "user" all-capabilities)
+
+  (whoami-helpers/set-whoami-response "foouser"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (whoami-helpers/set-whoami-response "baruser"
+                                      "baruser"
+                                      "bargroup"
+                                      "user")
+
+  (whoami-helpers/set-whoami-response "foobaruser"
+                                      "foobaruser"
+                                      "bargroup"
+                                      "user")
+
+  (testing "verdict route TLP behavior"
+    (let [green-observable
+          {:type "domain"
+           :value "green.com"}
+          amber-observable
+          {:type "domain"
+           :value "amber.com"}
+          red-observable
+          {:type "domain"
+           :value "red.com"}
+          auth-observable
+          {:type "domain"
+           :value "auth.com"}
+          base-judgement
+          {:valid_time {:start_time "2016-02-12T00:00:00.000-00:00"}
+           :observable green-observable
+           :reason_uri "https://example.com/",
+           :source "Example",
+           :disposition 2,
+           :disposition_name "Malicious"
+           :reason "Example judgement",
+           :source_uri "https://example.com/",
+           :priority 0,
+           :severity "None",
+           :tlp "green",
+           :confidence "None"}
+          green-judgement-post
+          (post "ctia/judgement"
+                :body (assoc base-judgement
+                             :observable green-observable
+                             :tlp "green")
+                :headers {"Authorization" "foouser"})
+          amber-judgement-post
+          (post "ctia/judgement"
+                :body (assoc base-judgement
+                             :observable amber-observable
+                             :tlp "amber")
+                :headers {"Authorization" "baruser"})
+          red-judgement-post
+          (post "ctia/judgement"
+                :body (assoc base-judgement
+                             :observable red-observable
+                             :tlp "red")
+                :headers {"Authorization" "foobaruser"})
+          authorized-groups-judgement-post
+          (post "ctia/judgement"
+                :body (assoc base-judgement
+                             :observable auth-observable
+                             :tlp "red"
+                             :authorized_groups ["bargroup"])
+                :headers {"Authorization" "baruser"})]
+
+      (is (= 201 (:status green-judgement-post)))
+
+      (testing "a green Judgement implies a verdict readable by everyone"
+        (let [{status-1 :status
+               verdict-1 :parsed-body}
+              (get (str "ctia/"
+                        (:type green-observable)
+                        "/" (:value green-observable)
+                        "/verdict")
+                   :headers {"Authorization" "foouser"})
+              {status-2 :status
+               verdict-2 :parsed-body}
+              (get (str "ctia/"
+                        (:type green-observable)
+                        "/"
+                        (:value green-observable)
+                        "/verdict")
+                   :headers {"Authorization" "baruser"})
+              {status-3 :status
+               verdict-3 :parsed-body}
+              (get (str "ctia/"
+                        (:type green-observable)
+                        "/"
+                        (:value green-observable)
+                        "/verdict")
+                   :headers {"Authorization" "foobaruser"})]
+
+          (is (= 200 status-1))
+          (is (= (get-in green-judgement-post [:parsed-body :id])
+                 (:judgement_id verdict-1)))
+
+          (is (= 200 status-2))
+          (is (= (get-in green-judgement-post [:parsed-body :id])
+                 (:judgement_id verdict-2)))
+
+          (is (= 200 status-3))
+          (is (= (get-in green-judgement-post [:parsed-body :id])
+                 (:judgement_id verdict-3)))))
+
+      (is (= 201 (:status amber-judgement-post)))
+
+      (testing "an amber Judgement implies a verdict readable by members of the same group only"
+        (let [{status-1 :status
+               verdict-1 :parsed-body}
+              (get (str "ctia/"
+                        (:type amber-observable)
+                        "/" (:value amber-observable)
+                        "/verdict")
+                   :headers {"Authorization" "foouser"})
+              {status-2 :status
+               verdict-2 :parsed-body}
+              (get (str "ctia/"
+                        (:type amber-observable)
+                        "/"
+                        (:value amber-observable)
+                        "/verdict")
+                   :headers {"Authorization" "baruser"})
+              {status-3 :status
+               verdict-3 :parsed-body}
+              (get (str "ctia/"
+                        (:type amber-observable)
+                        "/"
+                        (:value amber-observable)
+                        "/verdict")
+                   :headers {"Authorization" "foobaruser"})]
+
+          (is (= 404 status-1))
+          (is (= 200 status-2))
+          (is (= (get-in amber-judgement-post [:parsed-body :id])
+                 (:judgement_id verdict-2)))
+
+          (is (= 200 status-3))
+          (is (= (get-in amber-judgement-post [:parsed-body :id])
+                 (:judgement_id verdict-3)))))
+
+      (testing "a red Judgement implies a verdict readable to the owner only"
+        (let [{status-1 :status
+               verdict-1 :parsed-body}
+              (get (str "ctia/"
+                        (:type red-observable)
+                        "/" (:value red-observable)
+                        "/verdict")
+                   :headers {"Authorization" "foouser"})
+              {status-2 :status
+               verdict-2 :parsed-body}
+              (get (str "ctia/"
+                        (:type red-observable)
+                        "/"
+                        (:value red-observable)
+                        "/verdict")
+                   :headers {"Authorization" "baruser"})
+              {status-3 :status
+               verdict-3 :parsed-body}
+              (get (str "ctia/"
+                        (:type red-observable)
+                        "/"
+                        (:value red-observable)
+                        "/verdict")
+                   :headers {"Authorization" "foobaruser"})]
+
+          (is (= 404 status-1))
+          (is (= 404 status-2))
+          (is (= 200 status-3))
+          (is (= (get-in red-judgement-post [:parsed-body :id])
+                 (:judgement_id verdict-3)))))
+
+      (testing "a Judgement with authorized_groups"
+        (let [{status-1 :status
+               verdict-1 :parsed-body}
+              (get (str "ctia/"
+                        (:type auth-observable)
+                        "/" (:value auth-observable)
+                        "/verdict")
+                   :headers {"Authorization" "foouser"})
+              {status-2 :status
+               verdict-2 :parsed-body}
+              (get (str "ctia/"
+                        (:type auth-observable)
+                        "/"
+                        (:value auth-observable)
+                        "/verdict")
+                   :headers {"Authorization" "baruser"})
+              {status-3 :status
+               verdict-3 :parsed-body}
+              (get (str "ctia/"
+                        (:type auth-observable)
+                        "/"
+                        (:value auth-observable)
+                        "/verdict")
+                   :headers {"Authorization" "foobaruser"})]
+
+          (is (= 404 status-1))
+          (is (= 200 status-2))
+          (is (= 200 status-3))
+          (is (= (get-in authorized-groups-judgement-post [:parsed-body :id])
+                 (:judgement_id verdict-3))))))))

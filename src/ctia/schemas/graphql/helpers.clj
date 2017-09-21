@@ -308,12 +308,13 @@
   [^GraphQL graphql
    ^String query
    ^String operation-name
-   ^java.util.Map variables]
+   ^java.util.Map variables
+   ^java.util.Map context]
   (try
     (let [result (.execute graphql
                            query
                            operation-name
-                           nil
+                           (->java (or context {}))
                            (->java (or variables {})))]
       {:data (->clj (.getData result))
        :errors (.getErrors result)})

@@ -42,23 +42,24 @@
 
 (s/defn handle-create :- [StoredSighting]
   [state :- ESConnState
-   new-sightings :- [StoredSighting]]
+   new-sightings :- [StoredSighting]
+   ident]
   (doall
-   (->> new-sightings
-        (map stored-sighting->es-stored-sighting)
-        (create-fn state)
-        (map es-stored-sighting->stored-sighting))))
+   (as-> new-sightings $
+     (map stored-sighting->es-stored-sighting $)
+     (create-fn state $ ident)
+     (map es-stored-sighting->stored-sighting $))))
 
 (s/defn handle-read :- (s/maybe StoredSighting)
-  [state id]
+  [state id ident]
   (es-stored-sighting->stored-sighting
-   (read-fn state id)))
+   (read-fn state id ident)))
 
 (s/defn handle-update :- StoredSighting
-  [state id realized]
-  (->> (stored-sighting->es-stored-sighting realized)
-       (update-fn state id)
-       es-stored-sighting->stored-sighting))
+  [state id realized ident]
+  (as-> (stored-sighting->es-stored-sighting realized) $
+    (update-fn state id $ ident)
+    (es-stored-sighting->stored-sighting $)))
 
 (def handle-delete (crud/handle-delete :sighting StoredSighting))
 
@@ -69,19 +70,20 @@
              #(map es-stored-sighting->stored-sighting (es-coerce! %))))
 
 (s/defn handle-list :- StoredSightingList
-  [state filter-map params]
+  [state filter-map ident params]
   (es-paginated-list->paginated-list
-   (list-fn state filter-map params)))
+   (list-fn state filter-map ident params)))
 
 
 (s/defn handle-query-string-search-sightings :- StoredSightingList
-  [state query filter-map params]
+  [state query filter-map ident params]
   (es-paginated-list->paginated-list
-   (handle-query-string-search state query filter-map params)))
+   (handle-query-string-search state query filter-map ident params)))
 
 (s/defn handle-list-by-observables :- StoredSightingList
-  [state observables :- [Observable] params]
+  [state observables :- [Observable] ident params]
   (handle-list state
                {:observables_hash
                 (obs->hashes observables)}
+               ident
                params))

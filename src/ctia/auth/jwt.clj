@@ -9,8 +9,8 @@
     true)
   (login [_]
     (:sub jwt))
-  (group [_]
-    (:business_guid jwt))
+  (groups [_]
+    (remove nil? [(:business_guid jwt)]))
   (allowed-capabilities [_]
     (:user auth/default-capabilities))
   (capable? [this required-capabilities]
@@ -25,6 +25,6 @@
        (let [identity (->Identity jwt)]
          (assoc request
                 :identity identity
-                :login (auth/login identity)
-                :group (auth/group identity)))
+                :login    (auth/login identity)
+                :groups   (auth/groups identity)))
        request))))

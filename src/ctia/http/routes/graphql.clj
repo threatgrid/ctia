@@ -31,11 +31,14 @@
         :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :body [body gql/RelayGraphQLQuery {:description "a Relay compatible GraphQL body"}]
         :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
-        (let [request-context {}
+        :identity-map identity-map
+        (let [request-context {:ident identity-map}
               {:keys [query operationName variables]} body]
-          (log/debug "Graphql call body: " (pr-str body) " variables: " (pr-str variables))
+          (log/debug "Graphql call body: "
+                     (pr-str body)
+                     " variables: " (pr-str variables))
           (let [{:keys [errors data] :as result}
-                (gql/execute query operationName variables)
+                (gql/execute query operationName variables request-context)
                 str-errors (map str errors)]
             (log/debug "Graphql result:" result)
             (cond

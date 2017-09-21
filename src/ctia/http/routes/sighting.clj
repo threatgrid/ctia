@@ -7,7 +7,10 @@
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewSighting Sighting]]
    [ctia.http.routes.common
-    :refer [created paginated-ok PagingParams SightingSearchParams]]
+    :refer [created
+            paginated-ok
+            PagingParams
+            SightingSearchParams]]
    [ring.util.http-response :refer [ok no-content not-found unprocessable-entity]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -25,9 +28,13 @@
                  :summary "Adds a new Sighting"
                  :capabilities :create-sighting
                  :identity identity
+                 :identity-map identity-map
                  (-> (flows/create-flow
                       :realize-fn ent/realize-sighting
-                      :store-fn #(write-store :sighting create-sightings %)
+                      :store-fn #(write-store :sighting
+                                              create-sightings
+                                              %
+                                              identity-map)
                       :long-id-fn with-long-id
                       :entity-type :sighting
                       :identity identity
@@ -44,10 +51,18 @@
                 :path-params [id :- s/Str]
                 :capabilities :create-sighting
                 :identity identity
+                :identity-map identity-map
                 (-> (flows/update-flow
-                     :get-fn #(read-store :sighting read-sighting %)
+                     :get-fn #(read-store :sighting
+                                          read-sighting
+                                          %
+                                          identity-map)
                      :realize-fn ent/realize-sighting
-                     :update-fn #(write-store :sighting update-sighting (:id %) %)
+                     :update-fn #(write-store :sighting
+                                              update-sighting
+                                              (:id %)
+                                              %
+                                              identity-map)
                      :long-id-fn with-long-id
                      :entity-type :sighting
                      :entity-id id
@@ -63,7 +78,13 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List sightings by external id"
                 :capabilities #{:read-sighting :external-id}
-                (-> (read-store :sighting list-sightings {:external_ids external_id} q)
+                :identity identity
+                :identity-map identity-map
+                (-> (read-store :sighting
+                                list-sightings
+                                {:external_ids external_id}
+                                identity-map
+                                q)
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
@@ -74,11 +95,14 @@
                 :query [params SightingSearchParams]
                 :capabilities #{:read-sighting :search-sighting}
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                :identity identity
+                :identity-map identity-map
                 (-> (query-string-search-store
                      :sighting
                      query-string-search
                      (:query params)
                      (dissoc params :query :sort_by :sort_order :offset :limit)
+                     identity-map
                      (select-keys params [:sort_by :sort_order :offset :limit]))
                     page-with-long-id
                     ent/un-store-page
@@ -90,7 +114,12 @@
                 :path-params [id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-sighting
-                (if-let [sighting (read-store :sighting read-sighting id)]
+                :identity identity
+                :identity-map identity-map
+                (if-let [sighting (read-store :sighting
+                                              read-sighting
+                                              id
+                                              identity-map)]
                   (-> sighting
                       with-long-id
                       ent/un-store
@@ -102,6 +131,11 @@
                    :summary "Deletes a Sighting"
                    :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-sighting
-                   (if (write-store :sighting delete-sighting id)
+                   :identity identity
+                   :identity-map identity-map
+                   (if (write-store :sighting
+                                    delete-sighting
+                                    id
+                                    identity-map)
                      (no-content)
                      (not-found)))))

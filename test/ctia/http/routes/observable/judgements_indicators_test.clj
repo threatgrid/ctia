@@ -16,8 +16,11 @@
                                     whoami-helpers/fixture-server]))
 
 (deftest-for-each-store test-observable-judgements-indicators
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (let [http-show (get-in @properties [:ctia :http :show])
         judgement-1-id (make-id :judgement)
