@@ -93,7 +93,7 @@
         (put  (format "ctia/%s/%s"
                       entity
                       (:short-id player-1-entity-id))
-              :body player-1-entity
+              :body (dissoc player-1-entity :id)
               :headers {"Authorization" "player-2-token"})
 
         {player-2-1-entity-delete-status :status}
@@ -112,7 +112,7 @@
         (put  (format "ctia/%s/%s"
                       entity
                       (:short-id player-3-entity-id))
-              :body player-1-entity
+              :body (dissoc player-1-entity :id)
               :headers {"Authorization" "player-2-token"})
 
         {player-2-2-entity-delete-status :status}
@@ -291,7 +291,7 @@
                              :id
                              id/long-id->id
                              :short-id))
-                 :body (assoc (:parsed-body player-1-entity-repost)
+                 :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
                               :authorized_users ["player2"])
                  :headers {"Authorization" "player-1-token"})]
 
@@ -339,7 +339,7 @@
                              :id
                              id/long-id->id
                              :short-id))
-                 :body (assoc (:parsed-body player-1-entity-repost2)
+                 :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
                               :authorized_groups ["bargroup"])
                  :headers {"Authorization" "player-1-token"})]
         ;; player 1 allows player 2-3 group (if record is updatable)
@@ -473,7 +473,7 @@
                              :id
                              id/long-id->id
                              :short-id))
-                 :body (assoc (:parsed-body player-1-entity-repost)
+                 :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
                               :authorized_users ["player2"])
                  :headers {"Authorization" "player-1-token"})]
 
@@ -518,7 +518,7 @@
                              :id
                              id/long-id->id
                              :short-id))
-                 :body (assoc (:parsed-body player-1-entity-repost2)
+                 :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
                               :authorized_groups ["bargroup"])
                  :headers {"Authorization" "player-1-token"})]
         ;; player 1 allows player 2-3 group (if record is updatable)
@@ -649,7 +649,7 @@
                              :id
                              id/long-id->id
                              :short-id))
-                 :body (assoc (:parsed-body player-1-entity-repost)
+                 :body (assoc (dissoc (:parsed-body player-1-entity-repost) :id)
                               :authorized_users ["player2"])
                  :headers {"Authorization" "player-1-token"})]
 
@@ -692,7 +692,7 @@
                              :id
                              id/long-id->id
                              :short-id))
-                 :body (assoc (:parsed-body player-1-entity-repost2)
+                 :body (assoc (dissoc (:parsed-body player-1-entity-repost2) :id)
                               :authorized_groups ["bargroup"])
                  :headers {"Authorization" "player-1-token"})]
         ;; player 1 allows player 2-3 group (if record is updatable)

@@ -169,7 +169,7 @@
                           :source "source"
                           :sensor "endpoint.sensor"
                           :confidence "High"}
-                   :headers {"api_key" api-key})]
+                   :headers {"Authorization" api-key})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
