@@ -139,8 +139,8 @@
                        :source_uri "string",
                        :priority 99,
                        :severity "Low"
-                       :valid_time {:start_time "2016-02-12T14:56:26.814-00:00"
-                                    :end_time "2016-02-12T14:56:26.719-00:00"}
+                       :valid_time {:start_time "2016-02-12T14:56:26.719-00:00"
+                                    :end_time "2016-02-12T14:56:26.814-00:00"}
                        :confidence "Medium"}
                 :headers {"api_key" "45c1f5e3f05d0"})]
       (is (= 201 status))))
