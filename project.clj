@@ -42,7 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.17"
+                 [threatgrid/ctim "0.4.18-SNAPSHOT"
                   :exclusions [joda-time
                                clj-time
                                riemann-clojure-client
