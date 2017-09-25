@@ -16,12 +16,18 @@
 (defn- memo [f]
   (memo/ttl f :ttl/threshold cache-ttl-ms))
 
-(defrecord Identity [role login capabilities]
+(defrecord Identity
+    [role
+     login
+     groups
+     capabilities]
   auth/IIdentity
   (authenticated? [_]
     true)
   (login [_]
     login)
+  (groups [_]
+    (remove nil? groups))
   (allowed-capabilities [_]
     capabilities)
   (capable? [this required-capabilities]
@@ -35,27 +41,30 @@
                               :throw-exceptions false
                               :query-params {"api_key" token}})]
       (if (= 200 (:status response))
-        (-> (:body response)
-            json/parse-string)))))
+        (json/parse-string
+         (:body response))))))
 
 (defn lookup-stored-identity [login]
   (store/read-store :identity store/read-identity login))
 
-(defrecord ThreatgridAuthService [whoami-fn lookup-stored-identity-fn]
+(defrecord ThreatgridAuthService [whoami-fn
+                                  lookup-stored-identity-fn]
   auth/IAuth
   (identity-for-token [_ token]
-    (or
-     (when-let [{{:strs [role login]} "data"} (when token (whoami-fn token))]
-       (when (and role login)
-         (map->Identity (or (lookup-stored-identity-fn login)
-                            {:login login
-                             :role role
-                             :capabilities (->> (str/lower-case role)
-                                                keyword
-                                                (get auth/default-capabilities))}))))
-     auth/denied-identity-singleton))
-  (require-login? [_]
-    true))
+    (or (when-let [{{:strs [role
+                            login
+                            organization_id]} "data"}
+                   (when token (whoami-fn token))]
+          (when (and role login organization_id)
+            (map->Identity (or (lookup-stored-identity-fn login)
+                               {:login login
+                                ;; TODO check if this the right field we could use here
+                                :groups [organization_id]
+                                :role role
+                                :capabilities (->> (str/lower-case role)
+                                                   keyword
+                                                   (get auth/default-capabilities))}))))
+        auth/denied-identity-singleton)))
 
 (defn make-auth-service []
   (let [{:keys [whoami-url cache]} (get-in @properties [:ctia :auth :threatgrid])

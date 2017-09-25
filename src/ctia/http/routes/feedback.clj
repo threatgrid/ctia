@@ -4,7 +4,10 @@
    [ctia.domain.entities :as ent]
    [ctia.domain.entities.feedback :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common :refer [created paginated-ok PagingParams]]
+   [ctia.http.routes.common
+    :refer [created
+            paginated-ok
+            PagingParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewFeedback Feedback]]
    [ring.util.http-response :refer [ok no-content not-found]]
@@ -27,15 +30,20 @@
                  :return Feedback
                  :body [feedback NewFeedback {:description "a new Feedback on an entity"}]
                  :summary "Adds a new Feedback"
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-feedback
                  :identity identity
+                 :identity-map identity-map
                  (-> (flows/create-flow
                       :realize-fn ent/realize-feedback
-                      :store-fn #(write-store :feedback create-feedbacks %)
+                      :store-fn #(write-store :feedback
+                                              create-feedbacks
+                                              %
+                                              identity-map)
                       :long-id-fn with-long-id
                       :entity-type :feedback
                       :identity identity
+                      :identity-map identity-map
                       :entities [feedback])
                      first
                      ent/un-store
@@ -45,11 +53,14 @@
                 :return [Feedback]
                 :query [params FeedbackQueryParams]
                 :summary "Search Feedback"
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-feedback
+                :identity identity
+                :identity-map identity-map
                 (-> (read-store :feedback
                                 list-feedback
                                 (select-keys params [:entity_id])
+                                identity-map
                                 (dissoc params :entity_id))
                     page-with-long-id
                     ent/un-store-page
@@ -59,11 +70,16 @@
                 :return [(s/maybe Feedback)]
                 :query [q FeedbackByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List feedback by external id"
                 :capabilities #{:read-feedback :external-id}
-                (-> (read-store :feedback list-feedback
-                                {:external_ids external_id} q)
+                :identity identity
+                :identity-map identity-map
+                (-> (read-store :feedback
+                                list-feedback
+                                {:external_ids external_id}
+                                identity-map
+                                q)
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
@@ -72,9 +88,14 @@
                 :return (s/maybe Feedback)
                 :summary "Gets a Feedback by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-feedback
-                (if-let [feedback (read-store :feedback read-feedback id)]
+                :identity identity
+                :identity-map identity-map
+                (if-let [feedback (read-store :feedback
+                                              read-feedback
+                                              id
+                                              identity-map)]
                   (-> feedback
                       with-long-id
                       ent/un-store
@@ -85,12 +106,19 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes a feedback"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-feedback
                    :identity identity
+                   :identity-map identity-map
                    (if (flows/delete-flow
-                        :get-fn #(read-store :feedback read-feedback %)
-                        :delete-fn #(write-store :feedback delete-feedback %)
+                        :get-fn #(read-store :feedback
+                                             read-feedback
+                                             %
+                                             identity-map)
+                        :delete-fn #(write-store :feedback
+                                                 delete-feedback
+                                                 %
+                                                 identity-map)
                         :entity-type :feedback
                         :entity-id id
                         :identity identity)

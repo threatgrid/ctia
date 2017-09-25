@@ -10,6 +10,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
+             [access-control :refer [access-control-test]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key]]
@@ -25,8 +26,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-sighting-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
   (testing "POST /ctia/sighting"
     (let [{status :status
            sighting :parsed-body}
@@ -41,7 +45,7 @@
                        :source "source"
                        :sensor "endpoint.sensor"
                        :confidence "High"}
-                :headers {"api_key" api-key})
+                :headers {"Authorization" api-key})
 
           sighting-id (id/long-id->id (:id sighting))
           sighting-external-ids (:external_ids sighting)]
@@ -73,7 +77,7 @@
       (testing "GET /ctia/sighting/external_id/:external_id"
         (let [response (get (format "ctia/sighting/external_id/%s"
                                     (encode (rand-nth sighting-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               sightings (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -98,7 +102,7 @@
         (let [{status :status
                sighting :parsed-body}
               (get (str "ctia/sighting/" (:short-id sighting-id))
-                   :headers {"api_key" api-key})]
+                   :headers {"Authorization" api-key})]
           (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
           (is (deep= {:id (id/long-id sighting-id)
@@ -130,7 +134,7 @@
                           :source "source"
                           :sensor "endpoint.sensor"
                           :confidence "High"}
-                   :headers {"api_key" api-key})]
+                   :headers {"Authorization" api-key})]
           (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
           (is (deep=
@@ -165,16 +169,16 @@
                           :source "source"
                           :sensor "endpoint.sensor"
                           :confidence "High"}
-                   :headers {"api_key" api-key})]
+                   :headers {"Authorization" api-key})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
       (testing "DELETE /ctia/sighting/:id"
         (let [{status :status} (delete (str "ctia/sighting/" (:short-id sighting-id))
-                                       :headers {"api_key" api-key})]
+                                       :headers {"Authorization" api-key})]
           (is (= 204 status))
           (let [{status :status} (get (str "ctia/sighting/" (:short-id sighting-id))
-                                      :headers {"api_key" api-key})]
+                                      :headers {"Authorization" api-key})]
             (is (= 404 status)))))))
 
   (testing "POST invalid /ctia/sighting"
@@ -184,6 +188,12 @@
                 :body (assoc ex/new-sighting-minimal
                              ;; This field has an invalid length
                              :title (apply str (repeatedly 1025 (constantly \0))))
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-sighting-routes-access-control
+  (access-control-test "sighting"
+                       ex/new-sighting-minimal
+                       true
+                       true))

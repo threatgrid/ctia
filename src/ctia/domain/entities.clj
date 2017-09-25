@@ -43,17 +43,20 @@
   (s/fn default-realize :- StoredModel
     ([new-object :- Model
       id :- s/Str
-      login :- s/Str]
-     (default-realize new-object id login nil))
+      owner :- s/Str
+      groups :- [s/Str]]
+     (default-realize new-object id owner groups nil))
     ([new-object :- Model
       id :- s/Str
-      login :- s/Str
+      owner :- s/Str
+      groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
      (let [now (time/now)]
        (assoc new-object
               :id id
               :type type-name
-              :owner login
+              :owner (or (:owner prev-object) owner)
+              :groups (or (:groups prev-object) groups)
               :schema_version schema-version
               :created (or (:created prev-object) now)
               :modified now
@@ -82,12 +85,14 @@
 (s/defn realize-feedback :- StoredFeedback
   [new-feedback :- NewFeedback
    id :- s/Str
-   login :- s/Str]
+   owner :- s/Str
+   groups :- [s/Str]]
   (assoc new-feedback
          :id id
          :type "feedback"
          :created (time/now)
-         :owner login
+         :owner owner
+         :groups groups
          :tlp (:tlp new-feedback default-tlp)
          :schema_version schema-version))
 
@@ -100,12 +105,14 @@
 (s/defn realize-relationship :- StoredRelationship
   [new-relationship :- NewRelationship
    id :- s/Str
-   login :- s/Str]
+   owner :- s/Str
+   groups :- [s/Str]]
   (assoc new-relationship
          :id id
          :type "relationship"
          :created (time/now)
-         :owner login
+         :owner owner
+         :groups groups
          :tlp (:tlp new-relationship default-tlp)
          :schema_version schema-version))
 
@@ -113,7 +120,8 @@
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
    id :- s/Str
-   login :- s/Str]
+   owner :- s/Str
+   groups :- [s/Str]]
   (let [now (time/now)
         disposition (try
                       (determine-disposition-id new-judgement)
@@ -128,29 +136,35 @@
            :type "judgement"
            :disposition disposition
            :disposition_name disposition_name
-           :owner login
+           :owner owner
+           :groups groups
            :created now
            :tlp (:tlp new-judgement default-tlp)
            :schema_version schema-version
-           :valid_time {:end_time (or (get-in new-judgement [:valid_time :end_time])
+           :valid_time {:end_time (or (get-in new-judgement
+                                              [:valid_time :end_time])
                                       time/default-expire-date)
-                        :start_time (or (get-in new-judgement [:valid_time :start_time])
+                        :start_time (or (get-in new-judgement
+                                                [:valid_time :start_time])
                                         now)})))
 
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting
     id :- s/Str
-    login :- s/Str]
-   (realize-sighting new-sighting id login nil))
+    owner :- s/Str
+    groups :- [s/Str]]
+   (realize-sighting new-sighting id owner groups nil))
   ([new-sighting :- NewSighting
     id :- s/Str
-    login :- s/Str
+    owner :- s/Str
+    groups :- [s/Str]
     prev-sighting :- (s/maybe StoredSighting)]
    (let [now (time/now)]
      (assoc new-sighting
             :id id
             :type "sighting"
-            :owner login
+            :owner (or (:owner prev-sighting) owner)
+            :groups (or (:groups prev-sighting) groups)
             :count (:count new-sighting
                            (:count prev-sighting 1))
             :confidence (:confidence new-sighting
@@ -167,7 +181,11 @@
 (def ->long-id (id/factory:short-id+type->long-id get-http-show))
 
 (defn un-store [m]
-  (dissoc m :created :modified :owner))
+  (dissoc m
+          :created
+          :modified
+          :owner
+          :groups))
 
 (defn un-store-all [x]
   (if (sequential? x)

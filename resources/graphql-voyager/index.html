@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+         body {
+             height: 100%;
+             margin: 0;
+             width: 100%;
+             overflow: hidden;
+         }
+         #voyager {
+             height: 100vh;
+         }
+        </style>
+        <script src="node_modules/react/dist/react.min.js"></script>
+        <script src="node_modules/react-dom/dist/react-dom.min.js"></script>
+        <script src='conf.js' type='text/javascript'></script>
+        
+        <!--
+             These two files can be found in the npm module, however you may wish to
+             copy them directly into your environment, or perhaps include them in your
+             favored resource bundler.
+           -->
+        <link rel="stylesheet" href="dist/voyager.css" />
+        <script src="dist/voyager.min.js"></script>
+    </head>
+    <body>
+        <div id="voyager">Loading...</div>
+        <script>
+         function log() {
+             if ('console' in window) {
+                 console.log.apply(console, arguments);
+             }
+         }
+
+         // Defines a GraphQL introspection fetcher using the fetch API. You're not required to
+         // use fetch, and could instead implement introspectionProvider however you like,
+         // as long as it returns a Promise
+         // Voyager passes introspectionQuery as an agrument for this function
+         function introspectionProvider(introspectionQuery) {
+             var headers = {
+                 'Accept': 'application/json',
+                 'Content-Type': 'application/json',
+             };
+             
+             var jwt_token = window.localStorage.getItem(window.GRAPHQL_VOYAGER_CONF.jwtLocalStorageKey);
+             if(jwt_token && jwt_token.trim() != "") {
+                 headers['Authorization'] = "Bearer " + jwt_token;
+                 log("Set bearer token: " + jwt_token);
+             }
+
+             // This example expects a GraphQL server at the path /graphql.
+             // Change this to point wherever you host your GraphQL server.
+             return fetch(window.GRAPHQL_VOYAGER_CONF.endpoint, {
+                 method: 'post',
+                 headers: headers,
+                 body: JSON.stringify({query: introspectionQuery}),
+                 credentials: 'include',
+             }).then(function (response) {
+                 return response.text();
+             }).then(function (responseBody) {
+                 try {
+                     return JSON.parse(responseBody);
+                 } catch (error) {
+                     return responseBody;
+                 }
+             });
+         }
+         // Render <Voyager /> into the body.
+         GraphQLVoyager.init(document.getElementById('voyager'), {
+             introspection: introspectionProvider
+         });
+        </script>
+    </body>
+</html>

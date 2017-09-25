@@ -22,9 +22,9 @@
 (def related-judgement-fields
   {:judgement {:type refs/JudgementRef
                :description "The related Judgement"
-               :resolve (fn [_ _ src]
+               :resolve (fn [context _ src]
                           (when-let [id (:judgement_id src)]
-                            (res/judgement-by-id id)))}})
+                            (res/judgement-by-id id (:ident context))))}})
 
 (def RelatedJudgement
   (let [{:keys [fields name description]}
@@ -57,17 +57,21 @@
   (merge
    (g/non-nulls
     {:source_entity {:type Entity
-                     :resolve (fn [_ args src]
+                     :resolve (fn [context args src]
                                 (log/debug "Source resolver" args src)
                                 (let [ref (:source_ref src)
                                       entity-type (ref->entity-type ref)]
-                                  (entity-by-id entity-type ref)))}
+                                  (entity-by-id entity-type
+                                                ref
+                                                (:ident context))))}
      :target_entity {:type Entity
-                     :resolve (fn [_ args src]
+                     :resolve (fn [context args src]
                                 (log/debug "Target resolver" args src)
                                 (let [ref (:target_ref src)
                                       entity-type (ref->entity-type ref)]
-                                  (entity-by-id entity-type ref)))}})))
+                                  (entity-by-id entity-type
+                                                ref
+                                                (:ident context))))}})))
 
 (def RelationshipType
   (let [{:keys [fields name description]}

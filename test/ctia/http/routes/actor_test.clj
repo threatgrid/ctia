@@ -9,6 +9,7 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
@@ -21,11 +22,18 @@
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
+(use-fixtures :each
+  whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-actor-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser"
+                             ["foogroup"]
+                             "user"
+                             all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/actor"
     (let [{status :status
@@ -40,7 +48,7 @@
                        :confidence "High"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           actor-id
           (id/long-id->id (:id actor))
@@ -73,7 +81,7 @@
 
       (testing "GET /ctia/actor/:id"
         (let [response (get (str "ctia/actor/" (:short-id actor-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               actor (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -97,7 +105,7 @@
       (testing "GET /ctia/actor/external_id/:external_id"
         (let [response (get (format "ctia/actor/external_id/%s"
                                     (encode (rand-nth actor-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               actors (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -128,7 +136,7 @@
                                    :confidence "High"
                                    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                                 :end_time "2016-07-11T00:40:48.212-00:00"}}
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               updated-actor (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -162,16 +170,16 @@
                           :confidence "High"
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                        :end_time "2016-07-11T00:40:48.212-00:00"}}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
       (testing "DELETE /ctia/actor/:id"
         (let [response (delete (str "ctia/actor/" (:short-id actor-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/actor/" (:short-id actor-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response))))))))
 
   (testing "POST invalid /ctia/actor"
@@ -180,7 +188,13 @@
           (post "ctia/actor"
                 :body (assoc ex/new-actor-minimal
                              ;; This field has an invalid length
-                             :title (apply str (repeatedly 1025 (constantly \0))))
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                             :title (clojure.string/join (repeatedly 1025 (constantly \0))))
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-actor-routes-access-control
+  (access-control-test "actor"
+                       ex/new-actor-minimal
+                       true
+                       true))

@@ -1,12 +1,13 @@
 (ns ctia.http.routes.common
-  (:require [clojure.string :as str]
-            [clj-http.headers :refer [canonicalize]]
-            [ctia.schemas.sorting :as sorting]
-            [ring.util.http-status :refer [ok]]
-            [ring.util.http-response :as http-res]
-            [schema.core :as s]
-            [schema-tools.core :as st]
-            [ring.swagger.schema :refer [describe]]))
+  (:require
+   [clojure.string :as str]
+   [clj-http.headers :refer [canonicalize]]
+   [ctia.schemas.sorting :as sorting]
+   [ring.util.http-status :refer [ok]]
+   [ring.util.http-response :as http-res]
+   [schema.core :as s]
+   [schema-tools.core :as st]
+   [ring.swagger.schema :refer [describe]]))
 
 
 (def exploit-target-sort-fields

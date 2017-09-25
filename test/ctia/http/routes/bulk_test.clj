@@ -8,7 +8,9 @@
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.auth :refer [all-capabilities]]
-            [ctia.http.routes.bulk :refer [bulk-size gen-bulk-from-fn get-bulk-max-size]]
+            [ctia.http.routes.bulk :refer [bulk-size
+                                           gen-bulk-from-fn
+                                           get-bulk-max-size]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [core :as helpers :refer [get post]]
@@ -162,8 +164,11 @@
              (keys bulk-ids))))
 
 (deftest-for-each-store test-bulk-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
   (testing "POST /ctia/bulk"
     (let [nb 8
           new-bulk {:actors (map mk-new-actor (range nb))
@@ -180,7 +185,7 @@
                     :ttps (map mk-new-ttp (range nb))}
           response (post "ctia/bulk"
                          :body new-bulk
-                         :headers {"api_key" "45c1f5e3f05d0"})
+                         :headers {"Authorization" "45c1f5e3f05d0"})
           bulk-ids (:parsed-body response)
           show-props (get-http-show)]
 
@@ -196,7 +201,7 @@
                response :parsed-body}
               (get (str "ctia/bulk?"
                         (make-get-query-str-from-bulkrefs bulk-ids))
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
 
           (doseq [k (keys new-bulk)]
@@ -229,8 +234,11 @@
            (* nb 12)))))
 
 (deftest-for-each-store bulk-max-size-post-test
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   ;; Check changing the properties change the computed bulk max size
   (is (= 100 (get-bulk-max-size)))
@@ -263,11 +271,11 @@
          response :body
          response-ok :parsed-body} (post "ctia/bulk"
                                          :body new-ok-bulk
-                                         :headers {"api_key" "45c1f5e3f05d0"})
+                                         :headers {"Authorization" "45c1f5e3f05d0"})
         {status-too-big :status
          response-too-big :parsed-body} (post "ctia/bulk"
                                               :body new-too-big-bulk
-                                              :headers {"api_key" "45c1f5e3f05d0"})]
+                                              :headers {"Authorization" "45c1f5e3f05d0"})]
     (testing "POST of right size bulk are accepted"
       (is (empty? (:errors response-ok)) "No errors")
       (is (= 201 status-ok)))

@@ -11,6 +11,7 @@
             [ctim.examples.coas :as ex]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [access-control :refer [access-control-test]]
              [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
@@ -24,8 +25,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-coa-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/coa"
     (let [{status :status
@@ -48,7 +52,7 @@
                                                 :specifiers ["router"]}
                                      :modifiers {:method ["acl"]
                                                  :location "perimeter"}}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           coa-id (id/long-id->id (:id coa))
           coa-external-ids (:external_ids coa)]
@@ -87,7 +91,7 @@
 
       (testing "GET /ctia/coa/external_id/:external_id"
         (let [response (get (format "ctia/coa/external_id/%s" (encode (rand-nth coa-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               coas (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -117,7 +121,7 @@
 
       (testing "GET /ctia/coa/:id"
         (let [response (get (str "ctia/coa/" (:short-id coa-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               coa (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -169,7 +173,7 @@
                                                    :specifiers ["router"]}
                                         :modifiers {:method ["acl"]
                                                     :location "perimeter"}}}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
                {:id (id/long-id coa-id)
@@ -219,16 +223,16 @@
                                                    :specifiers ["router"]}
                                         :modifiers {:method ["acl"]
                                                     :location "perimeter"}}}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
       (testing "DELETE /ctia/coa/:id"
         (let [response (delete (str "/ctia/coa/" (:short-id coa-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "/ctia/coa/" (:short-id coa-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response))))))))
 
   (testing "POST invalid /ctia/coa"
@@ -237,7 +241,13 @@
           (post "ctia/coa"
                 :body (assoc ex/new-coa-minimal
                              ;; This field has an invalid length
-                             :title (apply str (repeatedly 1025 (constantly \0))))
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                             :title (clojure.string/join (repeatedly 1025 (constantly \0))))
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-coa-routes-access-control
+  (access-control-test "coa"
+                       ex/new-coa-minimal
+                       true
+                       true))

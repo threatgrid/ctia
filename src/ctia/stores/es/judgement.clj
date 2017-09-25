@@ -4,14 +4,16 @@
             [ctia.schemas.core :refer [StoredJudgement Verdict]]
             [ctia.stores.es
              [crud :as crud]
-             [query :refer [active-judgements-by-observable-query]]]
+             [query :refer [active-judgements-by-observable-query
+                            find-restriction-query-part]]]
             [ctim.schemas.common :refer [disposition-map]]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
              [core :as s]]))
 
-(def ^{:private true} judgement-mapping "judgement")
+(def ^{:private true}
+  judgement-mapping "judgement")
 
 (def coerce-stored-judgement-list
   (c/coercer! [(s/maybe StoredJudgement)]
@@ -42,9 +44,15 @@
 
 
 (defn list-active-by-observable
-  [state observable]
-  (let [now-str (-> (time/now) time/format-date-time)
-
+  [state observable ident]
+  (let [now-str (time/format-date-time (time/timestamp))
+        composed-query
+        (assoc-in
+         (find-restriction-query-part ident)
+         [:bool :must]
+         (active-judgements-by-observable-query
+          observable
+          now-str))
         params
         {:sort
          {:priority
@@ -58,16 +66,15 @@
            :mode "min"
            :nested_filter
            {"range" {"valid_time.start_time" {"lte" now-str}}}}}}]
-
-    (some->> (search-docs (:conn state)
-                          (:index state)
-                          judgement-mapping
-                          (active-judgements-by-observable-query observable
-                                                                 now-str)
-                          nil
-                          params)
-             :data
-             coerce-stored-judgement-list)))
+    (some->>
+     (search-docs (:conn state)
+                  (:index state)
+                  judgement-mapping
+                  composed-query
+                  nil
+                  params)
+     :data
+     coerce-stored-judgement-list)))
 
 (s/defn make-verdict :- Verdict
   [judgement :- StoredJudgement]
@@ -79,8 +86,8 @@
    :valid_time (:valid_time judgement)})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
-  [state observable]
+  [state observable ident]
 
-  (some-> (list-active-by-observable state observable)
+  (some-> (list-active-by-observable state observable ident)
           first
           make-verdict))

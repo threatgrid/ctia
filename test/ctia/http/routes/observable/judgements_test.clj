@@ -17,8 +17,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-observable-judgements-route
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "test setup: create a judgement (1)"
     (let [{status :status}
@@ -33,7 +36,7 @@
                        :disposition_name "Malicious"
                        :disposition 2
                        :valid_time {:start_time "2017-02-11T00:40:48.212-00:00"}}
-                :headers {"API_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
   (testing "test setup: create a judgement (2)"
@@ -48,7 +51,7 @@
                        :disposition 5
                        :external_ids ["judgement-2"]
                        :valid_time {:start_time "2017-02-11T00:40:48.212-00:00"}}
-                :headers {"API_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
   (testing "test setup: create a judgement (3)"
@@ -63,7 +66,7 @@
                        :disposition 5
                        :external_ids ["judgement-3"]
                        :valid_time {:start_time "2017-02-12T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
   (testing "test setup: create a judgement (4)"
@@ -78,14 +81,14 @@
                        :disposition 5
                        :external_ids ["judgement-4"]
                        :valid_time {:start_time "2017-02-13T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 201 status))))
 
   (testing "GET /:observable_type/:observable_value/judgements"
     (let [{status :status
            judgements :parsed-body}
           (get "ctia/ip/10.0.0.1/judgements"
-               :headers {"api_key" "45c1f5e3f05d0"})]
+               :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 200 status))
       (is (= #{"judgement-1" "judgement-2" "judgement-3"}
              (set (mapcat :external_ids judgements))))))
@@ -95,7 +98,7 @@
            judgements :parsed-body}
           (get "ctia/ip/10.0.0.1/judgements?sort_by=disposition%3Aasc%2Cvalid_time.start_time%3Adesc"
                :params {:sort_by "disposition:asc,valid_time.start_time:desc"}
-               :headers {"api_key" "45c1f5e3f05d0"})]
+               :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 200 status))
       (is (= ["judgement-1" "judgement-3" "judgement-2"]
              (mapcat :external_ids judgements))))))

@@ -3,11 +3,11 @@
 (defprotocol IIdentity
   (authenticated? [this])
   (login [this])
+  (groups [this])
   (allowed-capabilities [this])
   (capable? [this capabilities]))
 
 (defprotocol IAuth
-  (require-login? [this])
   (identity-for-token [this token]))
 
 (defonce auth-service (atom nil))
@@ -115,12 +115,18 @@
 
 (def not-logged-in-owner "Unknown")
 
+(def not-logged-in-groups ["Unknown Group"])
+
+(def admingroup "Administrators")
+
 (defrecord DeniedIdentity []
   IIdentity
   (authenticated? [_]
     false)
   (login [_]
     not-logged-in-owner)
+  (groups [_]
+    not-logged-in-groups)
   (allowed-capabilities [_]
     #{})
   (capable? [_ _]

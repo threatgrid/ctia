@@ -12,8 +12,9 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [core :as helpers :refer [delete get post put fake-long-id]]
+             [access-control
+              :refer [access-control-test]]
              [fake-whoami-service :as whoami-helpers]
-             [http :refer [api-key assert-post test-get-list]]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
@@ -27,8 +28,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-indicator-routes
-  (helpers/set-capabilities! "foouser" "user" auth/all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/indicator"
     (let [{status :status
@@ -45,7 +49,7 @@
                        :composite_indicator_expression {:operator "and"
                                                         :indicator_ids [(fake-long-id 'indicator 1)
                                                                         (fake-long-id 'indicator 2)]}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           indicator-id (id/long-id->id (:id indicator))
           indicator-external-ids (:external_ids indicator)]
@@ -80,7 +84,7 @@
       (testing "GET /ctia/indicator/external_id/:external_id"
         (let [response (get (format "ctia/indicator/external_id/%s"
                                     (encode (rand-nth indicator-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               indicators (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -103,7 +107,7 @@
 
       (testing "GET /ctia/indicator/:id"
         (let [response (get (str "ctia/indicator/" (:short-id indicator-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               indicator (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -140,7 +144,7 @@
                           :composite_indicator_expression {:operator "and"
                                                            :indicator_ids [(fake-long-id 'indicator 1)
                                                                            (fake-long-id 'indicator 2)]}}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
                {:id (id/long-id indicator-id)
@@ -177,13 +181,13 @@
                           :composite_indicator_expression {:operator "and"
                                                            :indicator_ids [(fake-long-id 'indicator 1)
                                                                            (fake-long-id 'indicator 2)]}}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
       (testing "DELETE /ctia/indicator/:id"
         (let [response (delete (str "ctia/indicator/" (:short-id indicator-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           ;; Deleting indicators is not allowed
           (is (= 404 (:status response)))))))
 
@@ -194,6 +198,12 @@
                 :body (assoc ex/new-indicator-minimal
                              ;; This field has an invalid length
                              :title (apply str (repeatedly 1025 (constantly \0))))
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-indicator-routes-access-control
+  (access-control-test "indicator"
+                       ex/new-indicator-minimal
+                       true
+                       false))

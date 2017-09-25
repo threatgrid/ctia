@@ -56,7 +56,8 @@
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
                       "ctia.auth.threatgrid.whoami-url" s/Str
                       "ctia.auth.static.secret" s/Str
-                      "ctia.auth.static.name" s/Str})
+                      "ctia.auth.static.name" s/Str
+                      "ctia.auth.static.group" s/Str})
 
    (st/required-keys {"ctia.http.enabled" s/Bool
                       "ctia.http.port" s/Int
@@ -64,6 +65,10 @@
                       "ctia.http.access-control-allow-methods" s/Str
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
+
+   (st/optional-keys {"ctia.http.jwt.enabled" s/Bool
+                      "ctia.http.jwt.public-key-path" s/Str
+                      "ctia.http.jwt.local-storage-key" s/Str})
 
    (st/optional-keys {"ctia.http.dev-reload" s/Bool
                       "ctia.http.show.protocol" s/Str

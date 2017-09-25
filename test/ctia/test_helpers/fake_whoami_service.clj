@@ -76,8 +76,8 @@
 (defrecord FakeWhoAmIService [whoami-fn server requests url port token->response]
   IFakeWhoAmIServer
   (start-server [this]
-    (reset! server (jetty/run-jetty (-> (make-handler this)
-                                        params/wrap-params)
+    (reset! server (jetty/run-jetty (params/wrap-params
+                                     (make-handler this))
                                     {:port port
                                      :min-threads 9
                                      :max-threads 10
@@ -131,17 +131,20 @@
 
 (s/defn ->whoami-response :- WhoAmIResponse
   [login :- s/Str
+   group :- s/Str
    role :- s/Str]
   {"data" {"login" login
-           "role" role}})
+           "role" role
+           "organization_id" group}})
 
 (s/defn set-whoami-response
   "Meant to be called from code that is wrapped in 'fixture-server'
    because it assumes that FakeWhoAmIService is being used"
   ([token :- s/Str
     login :- s/Str
+    group :- s/Str
     role :- s/Str]
-   (set-whoami-response token (->whoami-response login role)))
+   (set-whoami-response token (->whoami-response login group role)))
   ([token :- s/Str
     response :- WhoAmIResponse]
    (register-token-response @fake-whoami-service
@@ -151,7 +154,7 @@
 (defn fixture-server
   "Start and stop a fake whoami service. Sets the auth property with the URL to
    the service, so the CTIA instance/HTTP server should be started after this."
-  [test]
+  [t]
   (let [port (net/available-port)]
     (reset! fake-whoami-service (make-fake-whoami-service port))
     (try
@@ -160,7 +163,7 @@
         ["ctia.auth.threatgrid.whoami-url" (str "http://localhost:" port "/")
          "ctia.auth.threatgrid.cache" false
          "ctia.auth.type" "threatgrid"]
-        (test))
+        (t))
       (finally
         (stop-server @fake-whoami-service)))
     (reset! fake-whoami-service nil)))
@@ -168,6 +171,6 @@
 (defn fixture-reset-state
   "May be used inside of fixture-server, eg fixture :once
    fixture-server and fixture :each fixture-reset-state."
-  [test]
+  [t]
   (clear-all @fake-whoami-service)
-  (test))
+  (t))

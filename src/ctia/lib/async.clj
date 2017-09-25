@@ -1,7 +1,8 @@
 (ns ctia.lib.async
   (:require [clj-momo.lib.time :as time]
             [clojure.core.async :as a :refer [go-loop alt! alt!! chan tap thread]]
-            [schema.core :as s :refer [=>]])
+            [schema.core :as s :refer [=>]]
+            [clojure.core.async.impl.buffers :refer :all])
   (:import [clojure.core.async.impl.protocols Channel]
            [clojure.core.async.impl.buffers FixedBuffer]
            [clojure.core.async Mult]))

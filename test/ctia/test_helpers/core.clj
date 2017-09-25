@@ -54,6 +54,8 @@
                     "ctia.http.show.hostname"      "localhost"
                     "ctia.http.show.port"          "57254"
                     "ctia.http.show.path-prefix"   ""
+                    "ctia.http.jwt.enabled"        true
+                    "ctia.http.jwt.public-key-path" "resources/cert/ctia-jwt.pub"
                     "ctia.nrepl.enabled"           false
                     "ctia.hook.redis.enabled"      false
                     "ctia.hook.redis.channel-name" "events-test"
@@ -120,11 +122,14 @@
   (fn [f]
     (with-properties ["ctia.auth.type" "static"
                       "ctia.auth.static.secret" secret
-                      "ctia.auth.static.name" name]
+                      "ctia.auth.static.name" name
+                      "ctia.auth.static.group" name]
       (f))))
 
-(defn set-capabilities! [login role caps]
+(defn set-capabilities!
+  [login groups role caps]
   (store/write-store :identity store/create-identity {:login login
+                                                      :groups groups
                                                       :role role
                                                       :capabilities caps}))
 

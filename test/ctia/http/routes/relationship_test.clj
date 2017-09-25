@@ -8,11 +8,14 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [search :refer [test-query-string-search]]
+             [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.relationships
+             :refer [new-relationship-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -21,8 +24,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-relationship-routes-bad-reference
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /cita/relationship"
     (let [{status :status
@@ -43,12 +49,15 @@
                        :relationship_type "anything"
                        :source_ref "http://example.com/"
                        :target_ref "http://example.com/"}
-                :headers {"api_key" "45c1f5e3f05d0"})]
+                :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 400 status)))))
 
 (deftest-for-each-store test-relationship-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/relationship"
     (let [{status :status
@@ -72,7 +81,7 @@
                                   "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
                  :target_ref (str "http://example.com/ctia/indicator/indicator-"
                                   "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
           relationship-id (id/long-id->id (:id relationship))
           relationship-external-ids
           (:external_ids relationship)]
@@ -108,7 +117,7 @@
 
       (testing "GET /ctia/relationship/:id"
         (let [response (get (str "ctia/relationship/" (:short-id relationship-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               relationship (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -138,7 +147,7 @@
       (testing "GET /ctia/relationship/external_id/:external_id"
         (let [response (get (format "ctia/relationship/external_id/%s"
                                     (encode (rand-nth relationship-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               relationships (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -165,8 +174,14 @@
 
       (testing "DELETE /ctia/relationship/:id"
         (let [response (delete (str "ctia/relationship/" (:short-id relationship-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/relationship/" (:short-id relationship-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))
+
+(deftest-for-each-store test-relationship-routes-access-control
+  (access-control-test "relationship"
+                       new-relationship-minimal
+                       false
+                       true))

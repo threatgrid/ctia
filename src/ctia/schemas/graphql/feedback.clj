@@ -30,6 +30,9 @@
     :description "Related Feedbacks"
     :args (into pagination/connection-arguments
                 feedback-order-arg)
-    :resolve (fn [_ args src]
-               (resolvers/search-feedbacks-by-entity-id (:id src) args))}})
+    :resolve
+    (fn [context args src]
+      (resolvers/search-feedbacks-by-entity-id (:id src)
+                                               context
+                                               args))}})
 
