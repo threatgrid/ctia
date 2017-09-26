@@ -43,8 +43,9 @@
 (defmacro def-stored-schema [name-sym ddl spec-kw-ns]
   `(do
      (sc/defschema ~name-sym
-       (st/merge ACLStoredEntity
-                 (f-schema/->schema ~ddl)))
+       (st/merge
+        (f-schema/->schema ~ddl)
+        ACLStoredEntity))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
 
 (defmacro def-acl-schema [name-sym ddl spec-kw-ns]
