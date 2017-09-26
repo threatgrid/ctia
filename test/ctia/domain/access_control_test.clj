@@ -26,6 +26,13 @@
                  {:login "anyone"
                   :groups ["everyone"]}))))
 
+(defn test-no-group [tlp sut-fn check-fn]
+  (is (check-fn (sut-fn
+                 {:tlp tlp
+                  :owner "foo"}
+                 {:login "anyone"
+                  :groups ["everyone"]}))))
+
 (defn test-authorized_users-mismatch [tlp sut-fn check-fn]
   (is (check-fn (sut-fn
                  {:tlp tlp
@@ -69,6 +76,7 @@
     (test-matching-user "white" sut/allow-read? true?)
     (test-matching-group "white" sut/allow-read? true?)
     (test-user-group-mismatch "white" sut/allow-read? true?)
+    (test-no-group "white" sut/allow-read? true?)
     (test-authorized_users-mismatch "white" sut/allow-read? true?)
     (test-authorized_groups-mismatch "white" sut/allow-read? true?)
     (test-authorized_users-match "white" sut/allow-read? true?)
@@ -78,6 +86,7 @@
   (testing "green TLPs should allow document read to everyone"
     (test-matching-user "green" sut/allow-read? true?)
     (test-matching-group "green" sut/allow-read? true?)
+    (test-no-group "green" sut/allow-read? true?)
     (test-user-group-mismatch "green" sut/allow-read? true?)
     (test-authorized_users-mismatch "green" sut/allow-read? true?)
     (test-authorized_groups-mismatch "green" sut/allow-read? true?)
@@ -88,6 +97,7 @@
   (testing "amber TLPs should allow document read to same group"
     (test-matching-user "amber" sut/allow-read? true?)
     (test-matching-group "amber" sut/allow-read? true?)
+    (test-no-group "amber" sut/allow-read? false?)
     (test-user-group-mismatch "amber" sut/allow-read? false?)
     (test-authorized_users-mismatch "amber" sut/allow-read? false?)
     (test-authorized_groups-mismatch "amber" sut/allow-read? false?)
@@ -98,6 +108,7 @@
   (testing "red TLPs should allow document read to owner only"
     (test-matching-user "red" sut/allow-read? true?)
     (test-matching-group "red" sut/allow-read? false?)
+    (test-no-group "red" sut/allow-read? false?)
     (test-user-group-mismatch "red" sut/allow-read? false?)
     (test-authorized_users-mismatch "red" sut/allow-read? false?)
     (test-authorized_groups-mismatch "red" sut/allow-read? false?)
@@ -110,6 +121,7 @@
   (testing "white TLP should allow document write to user/group"
     (test-matching-user "white" sut/allow-write? true?)
     (test-matching-group "white" sut/allow-write? true?)
+    (test-no-group "white" sut/allow-write? false?)
     (test-user-group-mismatch "white" sut/allow-write? false?)
     (test-authorized_users-mismatch "white" sut/allow-write? false?)
     (test-authorized_groups-mismatch "white" sut/allow-write? false?)
@@ -120,6 +132,7 @@
   (testing "green TLPs should allow document write to user/group"
     (test-matching-user "green" sut/allow-write? true?)
     (test-matching-group "green" sut/allow-write? true?)
+    (test-no-group "green" sut/allow-write? false?)
     (test-user-group-mismatch "green" sut/allow-write? false?)
     (test-authorized_users-mismatch "green" sut/allow-write? false?)
     (test-authorized_groups-mismatch "green" sut/allow-write? false?)
@@ -130,6 +143,7 @@
   (testing "amber TLPs should allow document write to same group"
     (test-matching-user "amber" sut/allow-write? true?)
     (test-matching-group "amber" sut/allow-write? true?)
+    (test-no-group "amber" sut/allow-write? false?)
     (test-user-group-mismatch "amber" sut/allow-write? false?)
     (test-authorized_users-mismatch "amber" sut/allow-write? false?)
     (test-authorized_groups-mismatch "amber" sut/allow-write? false?)
@@ -140,6 +154,7 @@
   (testing "red TLPs should allow document write to owner only"
     (test-matching-user "red" sut/allow-write? true?)
     (test-matching-group "red" sut/allow-write? false?)
+    (test-no-group "red" sut/allow-write? false?)
     (test-user-group-mismatch "red" sut/allow-write? false?)
     (test-authorized_users-mismatch "red" sut/allow-write? false?)
     (test-authorized_groups-mismatch "red" sut/allow-write? false?)

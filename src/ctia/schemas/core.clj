@@ -32,7 +32,7 @@
 
 (sc/defschema ACLStoredEntity
   (st/merge ACLEntity
-            {:groups [Str]}))
+            {(sc/optional-key :groups) [Str]}))
 
 (defmacro defschema [name-sym ddl spec-kw-ns]
   `(do
