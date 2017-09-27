@@ -51,8 +51,9 @@
 (defmacro def-acl-schema [name-sym ddl spec-kw-ns]
   `(do
      (sc/defschema ~name-sym
-       (st/merge ACLEntity
-                 (f-schema/->schema ~ddl)))
+       (st/merge
+        (f-schema/->schema ~ddl)
+        ACLEntity))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
 ;; actor
 
@@ -200,18 +201,19 @@
 (f-spec/->spec ins/Indicator "indicator")
 
 (sc/defschema NewIndicator
-  (st/merge ACLEntity
-            (f-schema/->schema
-             (fu/replace-either-with-any
-              ins/NewIndicator))))
+  (st/merge
+   (f-schema/->schema
+    (fu/replace-either-with-any
+     ins/NewIndicator))
+   ACLEntity))
 
 (f-spec/->spec ins/NewIndicator "new-indicator")
 
 (sc/defschema StoredIndicator
-  (st/merge ACLStoredEntity
-            (f-schema/->schema
+  (st/merge (f-schema/->schema
              (fu/replace-either-with-any
-              ins/StoredIndicator))))
+              ins/StoredIndicator))
+            ACLStoredEntity))
 
 (f-spec/->spec ins/StoredIndicator "stored-indicator")
 
