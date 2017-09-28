@@ -2,7 +2,7 @@
   "This ns declare all handler for server exceptions.
 
   See <https://github.com/metosin/compojure-api/wiki/Exception-handling>"
-  (import clojure.lang.ExceptionInfo)
+  (:import clojure.lang.ExceptionInfo)
   (:require [compojure.api.exception :as ex]
             [compojure.api.impl.logging :as logging]
             [ring.util.http-response :refer [internal-server-error
