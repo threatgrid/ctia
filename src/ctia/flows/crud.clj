@@ -2,18 +2,22 @@
   "This namespace handle all necessary flows for creating, updating
   and deleting entities."
   (:import java.util.UUID)
-  (:require [clojure.spec :as cs]
-            [clojure.tools.logging :as log]
-            [ctia.auth :as auth]
-            [ctia.flows.hooks :as h]
-            [ctia.properties :refer [properties]]
-            [ctia.store :as store]
-            [ctim.events.obj-to-event :refer [to-create-event
-                                              to-update-event
-                                              to-delete-event]]
-            [ctim.domain.id :as id]
-            [ring.util.http-response :as http-response]
-            [schema.core :as s]))
+  (:require
+   [ctia.domain.access-control
+    :refer [allowed-tlps
+            allowed-tlp?]]
+   [clojure.spec :as cs]
+   [clojure.tools.logging :as log]
+   [ctia.auth :as auth]
+   [ctia.flows.hooks :as h]
+   [ctia.properties :refer [properties]]
+   [ctia.store :as store]
+   [ctim.events.obj-to-event :refer [to-create-event
+                                     to-update-event
+                                     to-delete-event]]
+   [ctim.domain.id :as id]
+   [ring.util.http-response :as http-response]
+   [schema.core :as s]))
 
 (s/defschema FlowMap
   {:create-event-fn (s/pred fn?)
@@ -82,7 +86,14 @@
       (when-not (cs/valid? spec entity)
         (throw (http-response/bad-request!
                 {:error (cs/explain-str spec entity)
-                 :entity entity})))))
+                 :entity entity})))
+      (when-let [entity-tlp (:tlp entity)]
+        (when-not (allowed-tlp? entity-tlp)
+          (throw (http-response/bad-request!
+                  {:error (format "Invalid document TLP %s, allowed TLPs are: %s"
+                                  entity-tlp
+                                  (clojure.string/join "," (allowed-tlps)))
+                   :entity entity}))))))
   fm)
 
 (s/defn ^:private realize-entities :- FlowMap
