@@ -67,6 +67,13 @@ status)
 stop)
     if [ -f $PID_FILE ]; then
         PID=`cat $PID_FILE`
+        # kill child processes first
+        pgrep -P $PID | xargs echo "Killing child processes"
+        pgrep -P $PID | xargs kill -15
+        sleep 2
+        pgrep -P $PID | xargs kill -9
+
+        # kill parent process afterward
         kill -15 $PID
         sleep 2
         kill -9 $PID
