@@ -19,8 +19,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-data-table-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "POST /ctia/data-table"
     (let [{status :status
@@ -40,7 +43,7 @@
                        :rows [["foo"] ["bar"]]
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           data-table-id (id/long-id->id (:id data-table))
           data-table-external-ids (:external_ids data-table)]
@@ -71,7 +74,7 @@
 
       (testing "GET /ctia/data-table/:id"
         (let [response (get (str "ctia/data-table/" (:short-id data-table-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               data-table (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -94,7 +97,7 @@
       (testing "GET /ctia/data-table/external_id/:external_id"
         (let [response (get (format "ctia/data-table/external_id/%s"
                                     (encode (rand-nth data-table-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               data-tables (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -116,8 +119,8 @@
 
       (testing "DELETE /ctia/data-table/:id"
         (let [response (delete (str "ctia/data-table/" (:short-id data-table-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/data-table/" (:short-id data-table-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

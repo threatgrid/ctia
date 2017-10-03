@@ -54,6 +54,8 @@
                     "ctia.http.show.hostname"      "localhost"
                     "ctia.http.show.port"          "57254"
                     "ctia.http.show.path-prefix"   ""
+                    "ctia.http.jwt.enabled"        true
+                    "ctia.http.jwt.public-key-path" "resources/cert/ctia-jwt.pub"
                     "ctia.nrepl.enabled"           false
                     "ctia.hook.redis.enabled"      false
                     "ctia.hook.redis.channel-name" "events-test"
@@ -120,11 +122,14 @@
   (fn [f]
     (with-properties ["ctia.auth.type" "static"
                       "ctia.auth.static.secret" secret
-                      "ctia.auth.static.name" name]
+                      "ctia.auth.static.name" name
+                      "ctia.auth.static.group" name]
       (f))))
 
-(defn set-capabilities! [login role caps]
+(defn set-capabilities!
+  [login groups role caps]
   (store/write-store :identity store/create-identity {:login login
+                                                      :groups groups
                                                       :role role
                                                       :capabilities caps}))
 
@@ -150,11 +155,6 @@
 (def put
   (mthh/with-port-fn get-http-port mthh/put))
 
-(defn make-id [type-kw]
-  (id/->id type-kw
-           (crud/make-id (name type-kw))
-           (get-in @properties [:ctia :http :show])))
-
 (defn fixture-spec-validation [t]
   (with-redefs [cs/registry-ref (atom (cs/registry))]
     (cs/check-asserts true)
@@ -172,3 +172,32 @@
 (defn fixture-fast-gen [t]
   (with-redefs [gen/vector cgc/vector]
     (t)))
+
+(defn make-id
+  "Make a long style ID using CTIA code (eg with a random UUID).
+  Returns an ID object."
+  [type-kw]
+  (id/->id type-kw
+           (crud/make-id (name type-kw))
+           (get-in @properties [:ctia :http :show])))
+
+(def zero-uuid "00000000-0000-0000-0000-000000000000")
+
+(defn fake-short-id
+  "Make a fake short style ID with a deterministic UUID.  Returns a
+  string."
+  [entity-name id]
+  (let [id-str (str id)
+        id-cnt (count id-str)]
+    (assert (<= id-cnt 8)
+            "ID must be 8 chars or less")
+    (str entity-name "-" id-str (subs zero-uuid id-cnt))))
+
+(defn fake-long-id
+  "Make a fake long style ID with a deterministic UUID.  Returns a
+  string."
+  [entity-name id]
+  (id/long-id
+   (id/->id (keyword entity-name)
+            (fake-short-id entity-name id)
+            (get-in @properties [:ctia :http :show]))))

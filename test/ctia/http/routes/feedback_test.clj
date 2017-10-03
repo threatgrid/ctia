@@ -20,10 +20,17 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-feedback-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (helpers/set-capabilities! "baruser" "user" #{})
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
-  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (whoami-helpers/set-whoami-response "2222222222222"
+                                      "baruser"
+                                      "bargroup"
+                                      "user")
 
   (testing "POST /ctia/feedback"
     (let [{feedback :parsed-body
@@ -36,7 +43,7 @@
                        :type "feedback"
                        :reason "false positive"
                        :tlp "green"}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           feedback-id (id/long-id->id (:id feedback))
           feedback-external-ids (:external_ids feedback)]
@@ -62,7 +69,7 @@
 
       (testing "GET /ctia/feedback/:id"
         (let [response (get (str "ctia/feedback/" (:short-id feedback-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               feedback (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -80,7 +87,7 @@
       (testing "GET /ctia/feedback?entity_id="
         (let [response (get (str "ctia/feedback")
                             :query-params {:entity_id "judgement-123"}
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               feedbacks (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -98,7 +105,7 @@
       (testing "GET /ctia/feedback/external_id/:external_id"
         (let [response (get (format "ctia/feedback/external_id/%s"
                                     (encode (rand-nth feedback-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               feedback (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -119,13 +126,13 @@
                                              :entity_id "judgement-42"
                                              :reason "false positive"
                                              :tlp "green"}
-                                      :headers {"api_key" "45c1f5e3f05d0"})
+                                      :headers {"Authorization" "45c1f5e3f05d0"})
                                 :parsed-body)
 
               temp-feedback-id (id/long-id->id (:id temp-feedback))
               response (delete (str "ctia/feedback/" (:short-id temp-feedback-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/feedback/" (:short-id temp-feedback-id))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response)))))))))

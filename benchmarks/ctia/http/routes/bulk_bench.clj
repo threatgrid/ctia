@@ -46,7 +46,7 @@
                   :port port
                   :socket-timeout 120000
                   :conn-timeout 120000
-                  :headers {"api_key" "45c1f5e3f05d0"})]
+                  :headers {"Authorization" "45c1f5e3f05d0"})]
         (when-not (= 201 status)
           (prn "play-create-bulk: " status))))
     (catch Exception e

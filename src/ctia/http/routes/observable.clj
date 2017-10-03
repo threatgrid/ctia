@@ -5,7 +5,9 @@
    [ctia.domain.entities
     [judgement :as judgement]
     [sighting :as sighting]]
-   [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+   [ctia.http.routes.common
+    :refer [paginated-ok
+            PagingParams]]
    [ctia.lib.pagination :as pag]
    [ctia.properties :refer [properties]]
    [ctia.schemas.core :refer [Indicator
@@ -25,14 +27,15 @@
 (s/defschema JudgementsByObservableQueryParams
   (st/merge
    PagingParams
-   {(s/optional-key :sort_by) (s/enum
-                               "id"
-                               "disposition"
-                               "priority"
-                               "severity"
-                               "confidence"
-                               "valid_time.start_time"
-                               "disposition:asc,valid_time.start_time:desc")}))
+   {(s/optional-key :sort_by)
+    (s/enum
+     "id"
+     "disposition"
+     "priority"
+     "severity"
+     "confidence"
+     "valid_time.start_time"
+     "disposition:asc,valid_time.start_time:desc")}))
 
 (s/defschema RefsByObservableQueryParams
   (st/dissoc PagingParams :sort_by :sort_order))
@@ -40,11 +43,12 @@
 (s/defschema SightingsByObservableQueryParams
   (st/merge
    PagingParams
-   {(s/optional-key :sort_by) (s/enum
-                               :id
-                               :timestamp
-                               :confidence
-                               :observed_time.start_time)}))
+   {(s/optional-key :sort_by)
+    (s/enum
+     :id
+     :timestamp
+     :confidence
+     :observed_time.start_time)}))
 
 (defroutes observable-routes
   (GET "/:observable_type/:observable_value/verdict" []
@@ -54,12 +58,15 @@
        :return (s/maybe Verdict)
        :summary (str "Returns the current Verdict associated with the specified "
                      "observable.")
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :read-verdict
-       :login login
+       :identity identity
+       :identity-map identity-map
        (or (some-> (read-store :judgement
                                calculate-verdict
-                               {:type observable_type :value observable_value})
+                               {:type observable_type
+                                :value observable_value}
+                               identity-map)
                    (update :judgement_id judgement/short-id->long-id)
                    ok)
            (not-found)))
@@ -71,12 +78,15 @@
                      observable_value :- s/Str]
        :return (s/maybe [Judgement])
        :summary "Returns the Judgements associated with the specified observable."
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :list-judgements
+       :identity identity
+       :identity-map identity-map
        (-> (read-store :judgement
                        list-judgements-by-observable
                        {:type observable_type
                         :value observable_value}
+                       identity-map
                        params)
            judgement/page-with-long-id
            entities/un-store-page
@@ -90,8 +100,10 @@
        :return (s/maybe [Reference])
        :summary (str "Returns the Indicator references associated with the "
                      "specified observable based on Judgement relationships.")
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-judgements :list-relationships}
+       :identity identity
+       :identity-map identity-map
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
               judgements (:data (read-store
@@ -99,6 +111,7 @@
                                  list-judgements-by-observable
                                  {:type observable_type
                                   :value observable_value}
+                                 identity-map
                                  nil))
               judgement-ids (->> judgements
                                  (map :id)
@@ -108,6 +121,7 @@
                                     :relationship
                                     list-relationships
                                     {:source_ref judgement-ids}
+                                    identity-map
                                     nil))
               indicator-ids (->> (map :target_ref relationships)
                                  (map #(id/long-id->id %))
@@ -125,14 +139,17 @@
        :query [params SightingsByObservableQueryParams]
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :list-sightings
+       :identity identity
+       :identity-map identity-map
        :return (s/maybe [Sighting])
        :summary "Returns Sightings associated with the specified observable."
        (-> (read-store :sighting
                        list-sightings-by-observables
                        [{:type observable_type
                          :value observable_value}]
+                       identity-map
                        params)
            sighting/page-with-long-id
            entities/un-store-page
@@ -146,14 +163,17 @@
        :return (s/maybe [Reference])
        :summary (str "Returns Indicator references associated with the "
                      "specified observable based on Sighting relationships.")
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-sightings :list-relationships}
+       :identity identity
+       :identity-map identity-map
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
               sightings (:data (read-store :sighting
                                            list-sightings-by-observables
                                            [{:type observable_type
                                              :value observable_value}]
+                                           identity-map
                                            nil))
               sighting-ids (->> sightings
                                 (map :id)
@@ -163,6 +183,7 @@
                                     :relationship
                                     list-relationships
                                     {:source_ref sighting-ids}
+                                    identity-map
                                     nil))
               indicator-ids (->> (map :target_ref relationships)
                                  (map #(id/long-id->id %))
@@ -183,14 +204,17 @@
        :return (s/maybe [Reference])
        :summary (str "Returns Incident references associated with the "
                      "specified observable based on Sighting relationships")
-       :header-params [api_key :- (s/maybe s/Str)]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-sightings :list-relationships}
+       :identity identity
+       :identity-map identity-map
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
               sightings (:data (read-store :sighting
                                            list-sightings-by-observables
                                            [{:type observable_type
                                              :value observable_value}]
+                                           identity-map
                                            nil))
               sighting-ids (->> sightings
                                 (map :id)
@@ -200,6 +224,7 @@
                                     :relationship
                                     list-relationships
                                     {:source_ref sighting-ids}
+                                    identity-map
                                     nil))
               incident-ids (->> (map :target_ref relationships)
                                 (map #(id/long-id->id %))

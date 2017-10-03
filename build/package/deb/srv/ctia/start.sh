@@ -9,6 +9,7 @@
 # CTIA_HEADLESS
 # CTIA_LOG_LEVEL
 # CTIA_LOGFILE
+# CTIA_JMX_PORT
 
 # Load the deployment-specific env variables
 source /srv/ctia/environment
@@ -25,5 +26,7 @@ CLASSPATH=$BIN_DIR:$CTIA_JAR
 LANG=en_US.UTF-8
 
 JVM_ARGS="-Xmx$CTIA_MAX_MEMORY -Djava.awt.headless=$CTIA_HEADLESS -Dlog.console.threshold=$CTIA_LOG_LEVEL"
+JMX_ARGS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=$CTIA_JMX_PORT -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
 
-exec java $JVM_ARGS -cp $CLASSPATH $MAIN_CLASS 2>&1 >> $CTIA_LOGFILE
+exec java $JVM_ARGS $JMX_ARGS -cp $CLASSPATH $MAIN_CLASS 2>&1 >> $CTIA_LOGFILE
+

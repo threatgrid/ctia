@@ -201,8 +201,11 @@
      :sighting-2 s2}))
 
 (deftest-for-each-store test-graphql-route
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
   (let [datamap (initialize-graphql-data)
         indicator-1-id (get-in datamap [:indicator-1 :id])
         indicator-2-id (get-in datamap [:indicator-2 :id])
@@ -224,8 +227,8 @@
       (testing "Query validation error"
         (let [{:keys [data errors status]}
               (gh/query "query TestQuery { nonexistent }"
-                     {}
-                     "TestQuery")]
+                        {}
+                        "TestQuery")]
           (is (= 400 status))
           (is (= errors
                  ["ValidationError{validationErrorType=FieldUndefined, sourceLocations=[SourceLocation{line=1, column=19}], description='Field nonexistent is undefined'}"]))))
@@ -233,9 +236,9 @@
       (testing "observable query"
         (let [{:keys [data errors status]}
               (gh/query graphql-queries
-                     {:type "ip"
-                      :value "1.2.3.4"}
-                     "ObservableQueryTest")]
+                        {:type "ip"
+                         :value "1.2.3.4"}
+                        "ObservableQueryTest")]
           (is (= 200 status))
           (is (empty? errors) "No errors")
 
@@ -258,28 +261,28 @@
                        (:judgement verdict))))))
 
           (testing "judgements connection"
-              (gh/connection-test "ObservableQueryTest"
-                                  graphql-queries
-                                  {:type "ip"
-                                   :value "1.2.3.4"}
-                                  [:observable :judgements]
-                                  [(:judgement-1 datamap)
-                                   (:judgement-2 datamap)])
+            (gh/connection-test "ObservableQueryTest"
+                                graphql-queries
+                                {:type "ip"
+                                 :value "1.2.3.4"}
+                                [:observable :judgements]
+                                [(:judgement-1 datamap)
+                                 (:judgement-2 datamap)])
 
-              (testing "sorting"
-                (gh/connection-sort-test
-                 "ObservableQueryTest"
-                 graphql-queries
-                 {:type "ip"
-                  :value "1.2.3.4"}
-                 [:observable :judgements]
-                 sort-fields/judgement-sort-fields)))))
+            (testing "sorting"
+              (gh/connection-sort-test
+               "ObservableQueryTest"
+               graphql-queries
+               {:type "ip"
+                :value "1.2.3.4"}
+               [:observable :judgements]
+               sort-fields/judgement-sort-fields)))))
 
       (testing "judgement query"
         (let [{:keys [data errors status]}
               (gh/query graphql-queries
-                     {:id judgement-1-id}
-                     "JudgementQueryTest")]
+                        {:id judgement-1-id}
+                        "JudgementQueryTest")]
           (is (= 200 status))
           (is (empty? errors) "No errors")
 
@@ -290,19 +293,19 @@
 
           (testing "relationships connection"
             (gh/connection-test "JudgementQueryTest"
-                             graphql-queries
-                             {:id judgement-1-id}
-                             [:judgement :relationships]
-                             [{:relationship_type "element-of"
-                               :target_ref indicator-1-id
-                               :source_ref judgement-1-id
-                               :source_entity (:judgement-1 datamap)
-                               :target_entity (:indicator-1 datamap)}
-                              {:relationship_type "element-of"
-                               :target_ref indicator-2-id
-                               :source_ref judgement-1-id
-                               :source_entity (:judgement-1 datamap)
-                               :target_entity (:indicator-2 datamap)}])
+                                graphql-queries
+                                {:id judgement-1-id}
+                                [:judgement :relationships]
+                                [{:relationship_type "element-of"
+                                  :target_ref indicator-1-id
+                                  :source_ref judgement-1-id
+                                  :source_entity (:judgement-1 datamap)
+                                  :target_entity (:indicator-1 datamap)}
+                                 {:relationship_type "element-of"
+                                  :target_ref indicator-2-id
+                                  :source_ref judgement-1-id
+                                  :source_entity (:judgement-1 datamap)
+                                  :target_entity (:indicator-2 datamap)}])
 
             (testing "sorting"
               (gh/connection-sort-test
@@ -314,11 +317,11 @@
 
           (testing "feedbacks connection"
             (gh/connection-test "JudgementFeedbacksQueryTest"
-                             graphql-queries
-                             {:id judgement-1-id}
-                             [:judgement :feedbacks]
-                             [(feedback-1 judgement-1-id)
-                              (feedback-2 judgement-1-id)])
+                                graphql-queries
+                                {:id judgement-1-id}
+                                [:judgement :feedbacks]
+                                [(feedback-1 judgement-1-id)
+                                 (feedback-2 judgement-1-id)])
 
             (testing "sorting"
               (gh/connection-sort-test
@@ -331,12 +334,12 @@
       (testing "judgements query"
         (testing "judgements connection"
           (gh/connection-test "JudgementsQueryTest"
-                           graphql-queries
-                           {:query "*"}
-                           [:judgements]
-                           [(:judgement-1 datamap)
-                            (:judgement-2 datamap)
-                            (:judgement-3 datamap)])
+                              graphql-queries
+                              {:query "*"}
+                              [:judgements]
+                              [(:judgement-1 datamap)
+                               (:judgement-2 datamap)
+                               (:judgement-3 datamap)])
 
           (testing "sorting"
             (gh/connection-sort-test
@@ -349,9 +352,9 @@
         (testing "query argument"
           (let [{:keys [data errors status]}
                 (gh/query graphql-queries
-                       {:query (format "external_ids:\"%s\""
-                                       "http://ex.tld/ctia/judgement/judgement-123")}
-                       "JudgementsQueryTest")]
+                          {:query (format "external_ids:\"%s\""
+                                          "http://ex.tld/ctia/judgement/judgement-123")}
+                          "JudgementsQueryTest")]
             (is (= 200 status))
             (is (empty? errors) "No errors")
             (is (= [(:judgement-1 datamap)]
@@ -361,8 +364,8 @@
       (testing "indicator query"
         (let [{:keys [data errors status]}
               (gh/query graphql-queries
-                     {:id indicator-1-id}
-                     "IndicatorQueryTest")]
+                        {:id indicator-1-id}
+                        "IndicatorQueryTest")]
           (is (= 200 status))
           (is (empty? errors) "No errors")
 
@@ -373,19 +376,19 @@
 
           (testing "relationships connection"
             (gh/connection-test "IndicatorQueryTest"
-                             graphql-queries
-                             {:id indicator-1-id}
-                             [:indicator :relationships]
-                             [{:relationship_type "variant-of"
-                               :target_ref indicator-2-id
-                               :source_ref indicator-1-id
-                               :source_entity (:indicator-1 datamap)
-                               :target_entity (:indicator-2 datamap)}
-                              {:relationship_type "variant-of"
-                               :target_ref indicator-3-id
-                               :source_ref indicator-1-id
-                               :source_entity (:indicator-1 datamap)
-                               :target_entity (:indicator-3 datamap)}])
+                                graphql-queries
+                                {:id indicator-1-id}
+                                [:indicator :relationships]
+                                [{:relationship_type "variant-of"
+                                  :target_ref indicator-2-id
+                                  :source_ref indicator-1-id
+                                  :source_entity (:indicator-1 datamap)
+                                  :target_entity (:indicator-2 datamap)}
+                                 {:relationship_type "variant-of"
+                                  :target_ref indicator-3-id
+                                  :source_ref indicator-1-id
+                                  :source_entity (:indicator-1 datamap)
+                                  :target_entity (:indicator-3 datamap)}])
 
             (testing "sorting"
               (gh/connection-sort-test
@@ -397,11 +400,11 @@
 
           (testing "feedbacks connection"
             (gh/connection-test "IndicatorFeedbacksQueryTest"
-                             graphql-queries
-                             {:id indicator-1-id}
-                             [:indicator :feedbacks]
-                             [(feedback-1 indicator-1-id)
-                              (feedback-2 indicator-1-id)])
+                                graphql-queries
+                                {:id indicator-1-id}
+                                [:indicator :feedbacks]
+                                [(feedback-1 indicator-1-id)
+                                 (feedback-2 indicator-1-id)])
 
             (testing "sorting"
               (gh/connection-sort-test
@@ -415,12 +418,12 @@
 
         (testing "indicators connection"
           (gh/connection-test "IndicatorsQueryTest"
-                           graphql-queries
-                           {"query" "*"}
-                           [:indicators]
-                           [(:indicator-1 datamap)
-                            (:indicator-2 datamap)
-                            (:indicator-3 datamap)])
+                              graphql-queries
+                              {"query" "*"}
+                              [:indicators]
+                              [(:indicator-1 datamap)
+                               (:indicator-2 datamap)
+                               (:indicator-3 datamap)])
 
           (testing "sorting"
             (gh/connection-sort-test
@@ -433,8 +436,8 @@
         (testing "query argument"
           (let [{:keys [data errors status]}
                 (gh/query graphql-queries
-                       {:query "indicator_type:\"C2\""}
-                       "IndicatorsQueryTest")]
+                          {:query "indicator_type:\"C2\""}
+                          "IndicatorsQueryTest")]
             (is (= 200 status))
             (is (empty? errors) "No errors")
             (is (= 1 (get-in data [:indicators :totalCount]))
@@ -446,8 +449,8 @@
       (testing "sighting query"
         (let [{:keys [data errors status]}
               (gh/query graphql-queries
-                     {:id (get-in datamap [:sighting-1 :id])}
-                     "SightingQueryTest")]
+                        {:id (get-in datamap [:sighting-1 :id])}
+                        "SightingQueryTest")]
           (is (= 200 status))
           (is (empty? errors) "No errors")
 
@@ -458,19 +461,19 @@
 
           (testing "relationships connection"
             (gh/connection-test "SightingQueryTest"
-                             graphql-queries
-                             {:id sighting-1-id}
-                             [:sighting :relationships]
-                             [{:relationship_type "indicates"
-                               :target_ref indicator-1-id
-                               :source_ref sighting-1-id
-                               :source_entity (:sighting-1 datamap)
-                               :target_entity (:indicator-1 datamap)}
-                              {:relationship_type "indicates"
-                               :target_ref indicator-2-id
-                               :source_ref sighting-1-id
-                               :source_entity (:sighting-1 datamap)
-                               :target_entity (:indicator-2 datamap)}])
+                                graphql-queries
+                                {:id sighting-1-id}
+                                [:sighting :relationships]
+                                [{:relationship_type "indicates"
+                                  :target_ref indicator-1-id
+                                  :source_ref sighting-1-id
+                                  :source_entity (:sighting-1 datamap)
+                                  :target_entity (:indicator-1 datamap)}
+                                 {:relationship_type "indicates"
+                                  :target_ref indicator-2-id
+                                  :source_ref sighting-1-id
+                                  :source_entity (:sighting-1 datamap)
+                                  :target_entity (:indicator-2 datamap)}])
 
             (testing "sorting"
               (gh/connection-sort-test
@@ -482,11 +485,11 @@
 
           (testing "feedbacks connection"
             (gh/connection-test "SightingFeedbacksQueryTest"
-                             graphql-queries
-                             {:id sighting-1-id}
-                             [:sighting :feedbacks]
-                             [(feedback-1 sighting-1-id)
-                              (feedback-2 sighting-1-id)])
+                                graphql-queries
+                                {:id sighting-1-id}
+                                [:sighting :feedbacks]
+                                [(feedback-1 sighting-1-id)
+                                 (feedback-2 sighting-1-id)])
 
             (testing "sorting"
               (gh/connection-sort-test
@@ -500,11 +503,11 @@
 
         (testing "sightings connection"
           (gh/connection-test "SightingsQueryTest"
-                           graphql-queries
-                           {"query" "*"}
-                           [:sightings]
-                           [(:sighting-1 datamap)
-                            (:sighting-2 datamap)])
+                              graphql-queries
+                              {"query" "*"}
+                              [:sightings]
+                              [(:sighting-1 datamap)
+                               (:sighting-2 datamap)])
 
           (testing "sorting"
             (gh/connection-sort-test
@@ -517,9 +520,9 @@
         (testing "query argument"
           (let [{:keys [data errors status]}
                 (gh/query graphql-queries
-                       {:query (format "description:\"%s\""
-                                       (get sighting-1 "description"))}
-                       "SightingsQueryTest")]
+                          {:query (format "description:\"%s\""
+                                          (get sighting-1 "description"))}
+                          "SightingsQueryTest")]
             (is (= 200 status))
             (is (empty? errors) "No errors")
             (is (= 1 (get-in data [:sightings :totalCount]))

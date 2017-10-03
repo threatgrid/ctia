@@ -2,10 +2,12 @@
   "This ns declare all handler for server exceptions.
 
   See <https://github.com/metosin/compojure-api/wiki/Exception-handling>"
-  (import clojure.lang.ExceptionInfo)
+  (:import clojure.lang.ExceptionInfo)
   (:require [compojure.api.exception :as ex]
             [compojure.api.impl.logging :as logging]
-            [ring.util.http-response :refer [internal-server-error bad-request]]
+            [ring.util.http-response :refer [internal-server-error
+                                             bad-request
+                                             unauthorized]]
             [clojure.data.json :as json]))
 
 (defn ex-message [^Exception e]
@@ -50,6 +52,15 @@
                        first
                        :reason)
       :class (.getName (class e))})))
+
+(defn access-control-error-handler
+  "Handle access control error"
+  [^Exception e data request]
+  (logging/log! :info e (ex-message e))
+  (unauthorized
+   {:type "Access Control Error"
+    :message (.getMessage e)
+    :class (.getName (class e))}))
 
 (defn default-error-handler
   "Handle default error"

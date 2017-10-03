@@ -19,11 +19,14 @@
 
 (defn get-actor [actor-id headers]
   (select-keys (get (str "ctia/actor/" (:short-id actor-id))
-                    :headers (merge headers {"api_key" "45c1f5e3f05d0"})) [:status :headers :parsed-body]))
+                    :headers (merge headers {"Authorization" "45c1f5e3f05d0"})) [:status :headers :parsed-body]))
 
 (deftest test-cache-control-middleware
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
 
   (testing "Cache control with ETags"
     (let [{status :status
@@ -36,7 +39,7 @@
                        :confidence "High"
                        :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
                                     :end_time "2016-07-11T00:40:48.212-00:00"}}
-                :headers {"api_key" "45c1f5e3f05d0"})
+                :headers {"Authorization" "45c1f5e3f05d0"})
 
           actor-id
           (id/long-id->id (:id actor))]

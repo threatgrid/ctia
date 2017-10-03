@@ -20,196 +20,228 @@
              [schema :as f-schema]
              [spec :as f-spec]
              [utils :as fu]]
-            [schema.core :refer [Str Bool] :as sc]))
+            [schema.core :refer [Str Bool] :as sc]
+            [schema-tools.core :as st]))
+
+
+
+(sc/defschema ACLEntity
+  (st/optional-keys
+   {:authorized_users [Str]
+    :authorized_groups [Str]}))
+
+(sc/defschema ACLStoredEntity
+  (st/merge ACLEntity
+            {(sc/optional-key :groups) [Str]}))
 
 (defmacro defschema [name-sym ddl spec-kw-ns]
   `(do
-     (sc/defschema ~name-sym (f-schema/->schema ~ddl))
+     (sc/defschema ~name-sym
+       (f-schema/->schema ~ddl))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
 
+(defmacro def-stored-schema [name-sym ddl spec-kw-ns]
+  `(do
+     (sc/defschema ~name-sym
+       (st/merge
+        (f-schema/->schema ~ddl)
+        ACLStoredEntity))
+     (f-spec/->spec ~ddl ~spec-kw-ns)))
+
+(defmacro def-acl-schema [name-sym ddl spec-kw-ns]
+  `(do
+     (sc/defschema ~name-sym
+       (st/merge
+        (f-schema/->schema ~ddl)
+        ACLEntity))
+     (f-spec/->spec ~ddl ~spec-kw-ns)))
 ;; actor
 
-(defschema Actor
+(def-acl-schema Actor
   as/Actor
   "actor")
 
-(defschema NewActor
+(def-acl-schema NewActor
   as/NewActor
   "new-actor")
 
-(defschema StoredActor
+(def-stored-schema StoredActor
   as/StoredActor
   "stored-actor")
 
 ;; campaign
 
-(defschema Campaign
+(def-acl-schema Campaign
   cs/Campaign
   "campaign")
 
-(defschema NewCampaign
+(def-acl-schema NewCampaign
   cs/NewCampaign
   "new-campaign")
 
-(defschema StoredCampaign
+(def-stored-schema StoredCampaign
   cs/StoredCampaign
   "stored-campaign")
 
 ;; coa
 
-(defschema COA
+(def-acl-schema COA
   coas/COA
   "coa")
 
-(defschema NewCOA
+(def-acl-schema NewCOA
   coas/NewCOA
   "new-coa")
 
-(defschema StoredCOA
+(def-stored-schema StoredCOA
   coas/StoredCOA
   "stored-coa")
 
 ;; data-table
 
-(defschema DataTable
-  (-> ds/DataTable
-      fu/replace-either-with-any)
+(def-acl-schema DataTable
+  (fu/replace-either-with-any
+   ds/DataTable)
   "data-table")
 
-(defschema NewDataTable
-  (-> ds/NewDataTable
-      fu/replace-either-with-any)
+(def-acl-schema NewDataTable
+  (fu/replace-either-with-any
+   ds/NewDataTable)
   "new-data-table")
 
-(defschema StoredDataTable
-  (-> ds/StoredDataTable
-      fu/replace-either-with-any)
+(def-stored-schema StoredDataTable
+  (fu/replace-either-with-any
+   ds/StoredDataTable)
   "stored-data-table")
 
 ;; exploit-target
 
-(defschema ExploitTarget
+(def-acl-schema ExploitTarget
   es/ExploitTarget
   "exploit-target")
 
-(defschema NewExploitTarget
+(def-acl-schema NewExploitTarget
   es/NewExploitTarget
   "new-exploit-target")
 
-(defschema StoredExploitTarget
+(def-stored-schema StoredExploitTarget
   es/StoredExploitTarget
   "stored-exploit-target")
 
 ;; sighting
 
-(defschema NewSighting
+(def-acl-schema NewSighting
   ss/NewSighting
   "new-sighting")
 
-(defschema Sighting
+(def-acl-schema Sighting
   ss/Sighting
   "sighting")
 
-(defschema StoredSighting
+(def-stored-schema StoredSighting
   ss/StoredSighting
   "stored-sighting")
 
 ;; judgement
 
-(defschema Judgement
+(def-acl-schema Judgement
   js/Judgement
   "judgement")
 
-(defschema NewJudgement
+(def-acl-schema NewJudgement
   js/NewJudgement
   "new-judgement")
 
-(defschema StoredJudgement
+(def-stored-schema StoredJudgement
   js/StoredJudgement
   "stored-judgement")
 
 ;; verdict
 
-(defschema Verdict
+(def-acl-schema Verdict
   vs/Verdict
   "verdict")
 
 ;; feedback
 
-(defschema Feedback
+(def-acl-schema Feedback
   feedbacks/Feedback
   "feedback")
 
-(defschema NewFeedback
+(def-acl-schema NewFeedback
   feedbacks/NewFeedback
   "new-feedback")
 
-(defschema StoredFeedback
+(def-stored-schema StoredFeedback
   feedbacks/StoredFeedback
   "stored-feedback")
 
 ;; incident
 
-(defschema Incident
+(def-acl-schema Incident
   is/Incident
   "incident")
 
-(defschema NewIncident
+(def-acl-schema NewIncident
   is/NewIncident
   "new-incident")
 
-(defschema StoredIncident
+(def-stored-schema StoredIncident
   is/StoredIncident
   "stored-incident")
 
 ;; indicator
 
 (sc/defschema Indicator
-  (f-schema/->schema
-   (-> ins/Indicator
-       fu/replace-either-with-any)))
+  (st/merge ACLEntity
+            (f-schema/->schema
+             (fu/replace-either-with-any
+              ins/Indicator))))
 
 (f-spec/->spec ins/Indicator "indicator")
 
 (sc/defschema NewIndicator
-  (f-schema/->schema
-   (-> ins/NewIndicator
-       fu/replace-either-with-any)))
+  (st/merge
+   (f-schema/->schema
+    (fu/replace-either-with-any
+     ins/NewIndicator))
+   ACLEntity))
 
 (f-spec/->spec ins/NewIndicator "new-indicator")
 
 (sc/defschema StoredIndicator
-  (f-schema/->schema
-   (-> ins/StoredIndicator
-       fu/replace-either-with-any)))
+  (st/merge (f-schema/->schema
+             (fu/replace-either-with-any
+              ins/StoredIndicator))
+            ACLStoredEntity))
 
 (f-spec/->spec ins/StoredIndicator "stored-indicator")
 
 ;; relationship
 
-(defschema Relationship
+(def-acl-schema Relationship
   rels/Relationship
   "relationship")
 
-(defschema NewRelationship
+(def-acl-schema NewRelationship
   rels/NewRelationship
   "new-relationship")
 
-(defschema StoredRelationship
+(def-stored-schema StoredRelationship
   rels/StoredRelationship
   "stored-relationship")
 
 ;; ttp
 
-(defschema TTP
+(def-acl-schema TTP
   ttps/TTP
   "ttp")
 
-(defschema NewTTP
+(def-acl-schema NewTTP
   ttps/NewTTP
   "new-ttp")
 
-(defschema StoredTTP
+(def-stored-schema StoredTTP
   ttps/StoredTTP
   "stored-ttp")
 

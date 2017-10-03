@@ -9,6 +9,6 @@
            :tags ["Properties"]
            :summary "The currently running properties"
            :capabilities :developer
-           :header-params [api_key :- (s/maybe s/Str)]
+           :header-params [{Authorization :- (s/maybe s/Str) nil}]
            (GET "/" []
                 (ok @properties))))

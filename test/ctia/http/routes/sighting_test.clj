@@ -3,17 +3,21 @@
   (:require [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
+             [access-control :refer [access-control-test]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key]]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.sightings :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -22,8 +26,11 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-sighting-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response api-key "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response api-key
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
   (testing "POST /ctia/sighting"
     (let [{status :status
            sighting :parsed-body}
@@ -38,7 +45,7 @@
                        :source "source"
                        :sensor "endpoint.sensor"
                        :confidence "High"}
-                :headers {"api_key" api-key})
+                :headers {"Authorization" api-key})
 
           sighting-id (id/long-id->id (:id sighting))
           sighting-external-ids (:external_ids sighting)]
@@ -70,7 +77,7 @@
       (testing "GET /ctia/sighting/external_id/:external_id"
         (let [response (get (format "ctia/sighting/external_id/%s"
                                     (encode (rand-nth sighting-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               sightings (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -95,7 +102,7 @@
         (let [{status :status
                sighting :parsed-body}
               (get (str "ctia/sighting/" (:short-id sighting-id))
-                   :headers {"api_key" api-key})]
+                   :headers {"Authorization" api-key})]
           (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
           (is (deep= {:id (id/long-id sighting-id)
@@ -127,7 +134,7 @@
                           :source "source"
                           :sensor "endpoint.sensor"
                           :confidence "High"}
-                   :headers {"api_key" api-key})]
+                   :headers {"Authorization" api-key})]
           (is (empty? (:errors sighting)) "No errors when")
           (is (= 200 status))
           (is (deep=
@@ -146,10 +153,47 @@
                 :type "sighting"}
                updated-sighting))))
 
+      (testing "PUT invalid /ctia/sighting/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/sighting/" (:short-id sighting-id))
+                   :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                          :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
+                                         "http://ex.tld/ctia/sighting/sighting-345"]
+                          :timestamp "2016-02-11T00:40:48.212-00:00"
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :observed_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                          :description "updated sighting"
+                          :tlp "green"
+                          :source "source"
+                          :sensor "endpoint.sensor"
+                          :confidence "High"}
+                   :headers {"Authorization" api-key})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
       (testing "DELETE /ctia/sighting/:id"
         (let [{status :status} (delete (str "ctia/sighting/" (:short-id sighting-id))
-                                       :headers {"api_key" api-key})]
+                                       :headers {"Authorization" api-key})]
           (is (= 204 status))
           (let [{status :status} (get (str "ctia/sighting/" (:short-id sighting-id))
-                                      :headers {"api_key" api-key})]
-            (is (= 404 status))))))))
+                                      :headers {"Authorization" api-key})]
+            (is (= 404 status)))))))
+
+  (testing "POST invalid /ctia/sighting"
+    (let [{status :status
+           body :body}
+          (post "ctia/sighting"
+                :body (assoc ex/new-sighting-minimal
+                             ;; This field has an invalid length
+                             :title (apply str (repeatedly 1025 (constantly \0))))
+                :headers {"Authorization" "45c1f5e3f05d0"})]
+      (is (= status 400))
+      (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-sighting-routes-access-control
+  (access-control-test "sighting"
+                       ex/new-sighting-minimal
+                       true
+                       true))

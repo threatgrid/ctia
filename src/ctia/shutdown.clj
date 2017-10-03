@@ -22,6 +22,12 @@
       (catch Exception excep
         (log/error excep (format "Shutdown hook %s failed" name))))))
 
+(defn shutdown-ctia-and-agents! []
+  (log/warn "shutting down CTIA")
+  (shutdown-ctia!)
+  (log/warn "shutting down agents")
+  (shutdown-agents))
+
 (defn init! []
   (let [side-effect-agent (agent nil)]
     (dosync
@@ -31,4 +37,4 @@
              (fn [_]
                (.addShutdownHook
                 (Runtime/getRuntime)
-                (Thread. shutdown-ctia!))))))))
+                (Thread. shutdown-ctia-and-agents!))))))))

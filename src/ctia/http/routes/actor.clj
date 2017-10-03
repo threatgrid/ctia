@@ -5,7 +5,10 @@
    [ctia.domain.entities.actor :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common
-    :refer [created paginated-ok PagingParams ActorSearchParams]]
+    :refer [created
+            paginated-ok
+            PagingParams
+            ActorSearchParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewActor Actor]]
    [ring.util.http-response :refer [no-content not-found ok]]
@@ -21,18 +24,23 @@
            (POST "/" []
                  :return Actor
                  :body [actor NewActor {:description "a new Actor"}]
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "Adds a new Actor"
                  :capabilities :create-actor
                  :identity identity
+                 :identity-map identity-map
                  (-> (flows/create-flow
                       :entity-type :actor
                       :realize-fn ent/realize-actor
-                      :store-fn #(write-store :actor create-actors %)
+                      :store-fn #(write-store :actor
+                                              create-actors
+                                              %
+                                              identity-map)
                       :long-id-fn with-long-id
                       :entity-type :actor
                       :identity identity
-                      :entities [actor])
+                      :entities [actor]
+                      :spec :new-actor/map)
                      first
                      ent/un-store
                      created))
@@ -40,20 +48,29 @@
            (PUT "/:id" []
                 :return Actor
                 :body [actor NewActor {:description "an updated Actor"}]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Updates an Actor"
                 :path-params [id :- s/Str]
                 :capabilities :create-actor
                 :identity identity
+                :identity-map identity-map
                 (-> (flows/update-flow
-                     :get-fn #(read-store :actor read-actor %)
+                     :get-fn #(read-store :actor
+                                          read-actor
+                                          %
+                                          identity-map)
                      :realize-fn ent/realize-actor
-                     :update-fn #(write-store :actor update-actor (:id %) %)
+                     :update-fn #(write-store :actor
+                                              update-actor
+                                              (:id %)
+                                              %
+                                              identity-map)
                      :long-id-fn with-long-id
                      :entity-type :actor
                      :entity-id id
                      :identity identity
-                     :entity actor)
+                     :entity actor
+                     :spec :new-actor/map)
                     ent/un-store
                     ok))
 
@@ -61,11 +78,15 @@
                 :return (s/maybe [Actor])
                 :query [q ActorByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List actors by external id"
                 :capabilities #{:read-actor :external-id}
+                :identity identity
+                :identity-map identity-map
                 (-> (read-store :actor list-actors
-                                {:external_ids external_id} q)
+                                {:external_ids external_id}
+                                identity-map
+                                q)
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
@@ -75,12 +96,15 @@
                 :summary "Search for an Actor using a Lucene/ES query string"
                 :query [params ActorSearchParams]
                 :capabilities #{:read-actor :search-actor}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :identity identity
+                :identity-map identity-map
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :actor
                      query-string-search
                      (:query params)
                      (dissoc params :query :sort_by :sort_order :offset :limit)
+                     identity-map
                      (select-keys params [:sort_by :sort_order :offset :limit]))
                     page-with-long-id
                     ent/un-store-page
@@ -90,9 +114,14 @@
                 :return (s/maybe Actor)
                 :summary "Gets an Actor by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-actor
-                (if-let [actor (read-store :actor read-actor id)]
+                :identity identity
+                :identity-map identity-map
+                (if-let [actor (read-store :actor
+                                           read-actor
+                                           id
+                                           identity-map)]
                   (-> actor
                       with-long-id
                       ent/un-store
@@ -103,12 +132,19 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes an Actor"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-actor
                    :identity identity
+                   :identity-map identity-map
                    (if (flows/delete-flow
-                        :get-fn #(read-store :actor read-actor %)
-                        :delete-fn #(write-store :actor delete-actor %)
+                        :get-fn #(read-store :actor
+                                             read-actor
+                                             %
+                                             identity-map)
+                        :delete-fn #(write-store :actor
+                                                 delete-actor
+                                                 %
+                                                 identity-map)
                         :entity-type :actor
                         :entity-id id
                         :identity identity)

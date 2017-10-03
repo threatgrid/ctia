@@ -44,39 +44,41 @@
 
 (defn create-fn
   "return the create function provided an entity type key"
-  [k]
-  #(write-store k (case k
-                    :actor          create-actors
-                    :campaign       create-campaigns
-                    :coa            create-coas
-                    :data-table     create-data-tables
-                    :exploit-target create-exploit-targets
-                    :feedback       create-feedbacks
-                    :incident       create-incidents
-                    :indicator      create-indicators
-                    :judgement      create-judgements
-                    :relationship   create-relationships
-                    :sighting       create-sightings
-                    :ttp            create-ttps)
-                %))
+  [k ident]
+  #(write-store
+    k (case k
+        :actor          create-actors
+        :campaign       create-campaigns
+        :coa            create-coas
+        :data-table     create-data-tables
+        :exploit-target create-exploit-targets
+        :feedback       create-feedbacks
+        :incident       create-incidents
+        :indicator      create-indicators
+        :judgement      create-judgements
+        :relationship   create-relationships
+        :sighting       create-sightings
+        :ttp            create-ttps)
+    % ident))
 
 (defn read-fn
   "return the create function provided an entity type key"
-  [k]
-  #(read-store k (case k
-                   :actor          read-actor
-                   :campaign       read-campaign
-                   :coa            read-coa
-                   :data-table     read-data-table
-                   :exploit-target read-exploit-target
-                   :feedback       read-feedback
-                   :incident       read-incident
-                   :indicator      read-indicator
-                   :judgement      read-judgement
-                   :relationship   read-relationship
-                   :sighting       read-sighting
-                   :ttp            read-ttp)
-               %))
+  [k ident]
+  #(read-store
+    k (case k
+        :actor          read-actor
+        :campaign       read-campaign
+        :coa            read-coa
+        :data-table     read-data-table
+        :exploit-target read-exploit-target
+        :feedback       read-feedback
+        :incident       read-incident
+        :indicator      read-indicator
+        :judgement      read-judgement
+        :relationship   read-relationship
+        :sighting       read-sighting
+        :ttp            read-ttp)
+    % ident))
 
 (defn with-long-id-fn
   "return the with-long-id function provided an entity type key"
@@ -102,7 +104,7 @@
     (->> (flows/create-flow
           :entity-type entity-type
           :realize-fn (realize-fn entity-type)
-          :store-fn (create-fn entity-type)
+          :store-fn (create-fn entity-type login)
           :long-id-fn with-long-id
           :identity login
           :entities entities)
@@ -110,15 +112,15 @@
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
-  [ids entity-type]
-  (let [read-entity (read-fn entity-type)
+  [ids entity-type ident]
+  (let [read-entity (read-fn entity-type ident)
         with-long-id (with-long-id-fn entity-type)]
     (->> ids
          (map (fn [id] (try (with-long-id
-                              (read-entity id))
-                            (catch Exception e
-                              (do (log/error (pr-str e))
-                                  nil))))))))
+                             (read-entity id))
+                           (catch Exception e
+                             (do (log/error (pr-str e))
+                                 nil))))))))
 
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
@@ -151,8 +153,9 @@
            (POST "/" []
                  :return BulkRefs
                  :body [bulk NewBulk {:description "a new Bulk object"}]
-                 :header-params [api_key :- (s/maybe s/Str)]
-                 :summary "Adds a lot of new entities in only one HTTP call"
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                 :summary "POST many new entities using a single HTTP call"
+                 :identity login
                  :capabilities #{:create-actor
                                  :create-campaign
                                  :create-coa
@@ -165,14 +168,14 @@
                                  :create-relationship
                                  :create-sighting
                                  :create-ttp}
-                 :identity login
-                 (if (> (bulk-size bulk) (get-bulk-max-size))
+                 (if (> (bulk-size bulk)
+                        (get-bulk-max-size))
                    (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
                    (common/created (gen-bulk-from-fn create-entities bulk login))))
 
            (GET "/" []
                 :return (s/maybe Bulk)
-                :summary "Gets many entities at once"
+                :summary "GET many entities at once"
                 :query-params [{actors          :- [Reference] []}
                                {campaigns       :- [Reference] []}
                                {coas            :- [Reference] []}
@@ -185,7 +188,7 @@
                                {relationships   :- [Reference] []}
                                {sightings       :- [Reference] []}
                                {ttps            :- [Reference] []}]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities #{:read-actor
                                 :read-campaign
                                 :read-coa
@@ -198,6 +201,7 @@
                                 :read-relationship
                                 :read-sighting
                                 :read-ttp}
+                :identity identity
                 (let [bulk (into {} (remove (comp empty? second)
                                             {:actors          actors
                                              :campaigns       campaigns
@@ -213,6 +217,6 @@
                                              :ttps            ttps}))]
                   (if (> (bulk-size bulk) (get-bulk-max-size))
                     (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-                    (-> (gen-bulk-from-fn read-entities bulk)
+                    (-> (gen-bulk-from-fn read-entities bulk identity)
                         ent/un-store-map
                         ok))))))

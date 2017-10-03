@@ -26,6 +26,7 @@
    query :- s/Str
    filtermap :- {s/Keyword (s/maybe s/Str)}
    args :- {s/Keyword s/Any}
+   ident
    page-with-long-id-fn]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (select-keys paging-params [:limit :offset :sort_by])]
@@ -35,6 +36,7 @@
              query-string-search
              query
              (remove-map-empty-values filtermap)
+             ident
              params)
             page-with-long-id-fn
             ctim-entities/un-store-page
@@ -44,6 +46,7 @@
 
 (s/defn search-feedbacks-by-entity-id
   [entity-id :- s/Str
+   context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (select-keys paging-params [:limit :offset :sort_by])]
@@ -51,6 +54,7 @@
     (some-> (read-store :feedback
                         list-feedback
                         {:entity_id entity-id}
+                        (:ident context)
                         params)
             ctim-feedback-entity/page-with-long-id
             ctim-entities/un-store-page
@@ -59,68 +63,76 @@
 ;;---- Indicator
 
 (defn search-indicators
-  [_ args src]
+  [context args src]
   (search-entity :indicator
                  (:query args)
                  {}
                  args
+                 (:ident context)
                  ctim-indicator-entity/page-with-long-id))
 
 (s/defn indicator-by-id
-  [id :- s/Str]
-  (some-> (read-store :indicator read-indicator id)
+  [id :- s/Str
+   ident]
+  (some-> (read-store :indicator read-indicator id ident)
           ctim-indicator-entity/with-long-id
           ctim-entities/un-store))
 
 ;;---- Judgement
 
 (defn search-judgements
-  [_ args src]
+  [context args src]
   (search-entity :judgement
                  (:query args)
                  {}
                  args
+                 (:ident context)
                  ctim-judgement-entity/page-with-long-id))
 
 (s/defn search-judgements-by-observable :- pagination/Connection
   [observable :- ctia-schemas/Observable
+   context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (select-keys paging-params [:limit :offset :sort_by])]
     (some-> (read-store :judgement
                         list-judgements-by-observable
                         observable
+                        (:ident context)
                         params)
             ctim-judgement-entity/page-with-long-id
             ctim-entities/un-store
             (pagination/result->connection-response paging-params))))
 
 (s/defn judgement-by-id
-  [id :- s/Str]
-  (some-> (read-store :judgement read-judgement id)
+  [id :- s/Str
+   ident]
+  (some-> (read-store :judgement read-judgement id ident)
           ctim-judgement-entity/with-long-id
           ctim-entities/un-store))
 
 ;;---- Sighting
 
 (defn search-sightings
-  [_ args src]
+  [context args src]
   (search-entity :sighting
                  (:query args)
                  {}
                  args
+                 (:ident context)
                  ctim-sighting-entity/page-with-long-id))
 
 (s/defn sighting-by-id
-  [id :- s/Str]
-  (some-> (read-store :sighting read-sighting id)
+  [id :- s/Str
+   ident]
+  (some-> (read-store :sighting read-sighting id ident)
           ctim-sighting-entity/with-long-id
           ctim-entities/un-store))
 
 ;;---- Relationship
 
 (defn search-relationships
-  [_ args src]
+  [context args src]
   (let [{:keys [query relationship_type target_type]} args
         filtermap {:relationship_type relationship_type
                    :target_type target_type
@@ -129,12 +141,14 @@
                    query
                    filtermap
                    args
+                   (:ident context)
                    ctim-relationship-entity/page-with-long-id)))
 
 (s/defn entity-by-id :- s/Any
   [entity-type :- s/Str
-   id :- s/Str]
+   id :- s/Str
+   ident]
   (condp = entity-type
-    ctim-judgement-schema/type-identifier (judgement-by-id id)
-    ctim-sighting-schema/type-identifier (sighting-by-id id)
-    ctim-indicator-schema/type-identifier (indicator-by-id id)))
+    ctim-judgement-schema/type-identifier (judgement-by-id id ident)
+    ctim-sighting-schema/type-identifier (sighting-by-id id ident)
+    ctim-indicator-schema/type-identifier (indicator-by-id id ident)))

@@ -5,7 +5,10 @@
    [ctia.domain.entities.campaign :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common
-    :refer [created paginated-ok PagingParams CampaignSearchParams]]
+    :refer [created
+            paginated-ok
+            PagingParams
+            CampaignSearchParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [NewCampaign Campaign]]
    [ring.util.http-response :refer [no-content not-found ok]]
@@ -22,16 +25,21 @@
                  :return Campaign
                  :body [campaign NewCampaign {:description "a new campaign"}]
                  :summary "Adds a new Campaign"
-                 :header-params [api_key :- (s/maybe s/Str)]
+                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :capabilities :create-campaign
                  :identity identity
+                 :identity-map identity-map
                  (-> (flows/create-flow
                       :realize-fn ent/realize-campaign
-                      :store-fn #(write-store :campaign create-campaigns %)
+                      :store-fn #(write-store :campaign
+                                              create-campaigns
+                                              %
+                                              identity-map)
                       :long-id-fn with-long-id
                       :entity-type :campaign
                       :identity identity
-                      :entities [campaign])
+                      :entities [campaign]
+                      :spec :new-campaign/map)
                      first
                      ent/un-store
                      created))
@@ -41,18 +49,27 @@
                 :body [campaign NewCampaign {:description "an updated campaign"}]
                 :summary "Updates a Campaign"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :create-campaign
                 :identity identity
+                :identity-map identity-map
                 (-> (flows/update-flow
-                     :get-fn #(read-store :campaign read-campaign %)
+                     :get-fn #(read-store :campaign
+                                          read-campaign
+                                          %
+                                          identity-map)
                      :realize-fn ent/realize-campaign
-                     :update-fn #(write-store :campaign update-campaign (:id %) %)
+                     :update-fn #(write-store :campaign
+                                              update-campaign
+                                              (:id %)
+                                              %
+                                              identity-map)
                      :long-id-fn with-long-id
                      :entity-type :campaign
                      :entity-id id
                      :identity identity
-                     :entity campaign)
+                     :entity campaign
+                     :spec :new-campaign/map)
                     ent/un-store
                     ok))
 
@@ -60,11 +77,16 @@
                 :return (s/maybe [Campaign])
                 :query [q CampaignByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "List campaigns by external id"
                 :capabilities #{:read-campaign :external-id}
-                (-> (read-store :campaign list-campaigns
-                                {:external_ids external_id} q)
+                :identity identity
+                :identity-map identity-map
+                (-> (read-store :campaign
+                                list-campaigns
+                                {:external_ids external_id}
+                                identity-map
+                                q)
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
@@ -74,12 +96,15 @@
                 :summary "Search for a Campaign using a Lucene/ES query string"
                 :query [params CampaignSearchParams]
                 :capabilities #{:read-campaign :search-campaign}
-                :header-params [api_key :- (s/maybe s/Str)]
+                :identity identity
+                :identity-map identity-map
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 (-> (query-string-search-store
                      :campaign
                      query-string-search
                      (:query params)
                      (dissoc params :query :sort_by :sort_order :offset :limit)
+                     identity-map
                      (select-keys params [:sort_by :sort_order :offset :limit]))
                     page-with-long-id
                     ent/un-store-page
@@ -89,9 +114,14 @@
                 :return (s/maybe Campaign)
                 :summary "Gets a Campaign by ID"
                 :path-params [id :- s/Str]
-                :header-params [api_key :- (s/maybe s/Str)]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-campaign
-                (if-let [campaign (read-store :campaign read-campaign id)]
+                :identity identity
+                :identity-map identity-map
+                (if-let [campaign (read-store :campaign
+                                              read-campaign
+                                              id
+                                              identity-map)]
                   (-> campaign
                       with-long-id
                       ent/un-store
@@ -102,12 +132,19 @@
                    :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes a Campaign"
-                   :header-params [api_key :- (s/maybe s/Str)]
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                    :capabilities :delete-campaign
                    :identity identity
+                   :identity-map identity-map
                    (if (flows/delete-flow
-                        :get-fn #(read-store :campaign read-campaign %)
-                        :delete-fn #(write-store :campaign delete-campaign %)
+                        :get-fn #(read-store :campaign
+                                             read-campaign
+                                             %
+                                             identity-map)
+                        :delete-fn #(write-store :campaign
+                                                 delete-campaign
+                                                 %
+                                                 identity-map)
                         :entity-type :campaign
                         :entity-id id
                         :identity identity)

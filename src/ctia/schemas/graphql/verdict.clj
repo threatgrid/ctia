@@ -9,9 +9,9 @@
 (def verdict-fields
   {:judgement {:type refs/JudgementRef
                :description "The confidence with which the judgement was made."
-               :resolve (fn [_ _ src]
+               :resolve (fn [context _ src]
                           (when-let [id (:judgement_id src)]
-                            (resolvers/judgement-by-id id)))}})
+                            (resolvers/judgement-by-id id (:ident context))))}})
 
 (def VerdictType
   (let [{:keys [fields name description]}

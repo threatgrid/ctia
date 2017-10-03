@@ -3,16 +3,20 @@
   (:require [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
              [search :refer [test-query-string-search]]
+             [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [delete get post put fake-long-id]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.incidents :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -21,8 +25,8 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (deftest-for-each-store test-incident-routes
-  (helpers/set-capabilities! "foouser" "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "user")
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
 
   (testing "POST /ctia/incident"
     (let [{status :status
@@ -39,11 +43,10 @@
                        :related_indicators [{:confidence "High"
                                              :source "source"
                                              :relationship "relationship"
-                                             :indicator_id "indicator-123"}]
-                       :related_incidents [{:incident_id "incident-123"}
-                                           {:incident_id "indicent-789"}]}
-                :headers {"api_key" "45c1f5e3f05d0"})
-
+                                             :indicator_id (fake-long-id 'indicator 123)}]
+                       :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                           {:incident_id (fake-long-id 'incident 789)}]}
+                :headers {"Authorization" "45c1f5e3f05d0"})
           incident-id (id/long-id->id (:id incident))
           incident-external-ids (:external_ids incident)]
       (is (= 201 status))
@@ -64,10 +67,10 @@
             :related_indicators [{:confidence "High"
                                   :source "source"
                                   :relationship "relationship"
-                                  :indicator_id "indicator-123"}]
+                                  :indicator_id (fake-long-id 'indicator 123)}]
 
-            :related_incidents [{:incident_id "incident-123"}
-                                {:incident_id "indicent-789"}]}
+            :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                {:incident_id (fake-long-id 'incident 789)}]}
            incident))
 
       (testing "the incident ID has correct fields"
@@ -80,7 +83,7 @@
       (testing "GET /ctia/incident/external_id/:external_id"
         (let [response (get (format "ctia/incident/external_id/%s"
                                     (encode (rand-nth incident-external-ids)))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               incidents (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -100,17 +103,17 @@
                  :related_indicators [{:confidence "High"
                                        :source "source"
                                        :relationship "relationship"
-                                       :indicator_id "indicator-123"}]
+                                       :indicator_id (fake-long-id 'indicator 123)}]
 
-                 :related_incidents [{:incident_id "incident-123"}
-                                     {:incident_id "indicent-789"}]}]
+                 :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                     {:incident_id (fake-long-id 'incident 789)}]}]
                incidents))))
 
       (test-query-string-search :incident "description" :description)
 
       (testing "GET /ctia/incident/:id"
         (let [response (get (str "ctia/incident/" (:short-id incident-id))
-                            :headers {"api_key" "45c1f5e3f05d0"})
+                            :headers {"Authorization" "45c1f5e3f05d0"})
               incident (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
@@ -130,9 +133,9 @@
                 :related_indicators [{:confidence "High"
                                       :source "source"
                                       :relationship "relationship"
-                                      :indicator_id "indicator-123"}]
-                :related_incidents [{:incident_id "incident-123"}
-                                    {:incident_id "indicent-789"}]}
+                                      :indicator_id (fake-long-id 'indicator 123)}]
+                :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                    {:incident_id (fake-long-id 'incident 789)}]}
                incident))))
 
       (testing "PUT /ctia/incident/:id"
@@ -151,10 +154,10 @@
                           :related_indicators [{:confidence "High"
                                                 :source "another source"
                                                 :relationship "relationship"
-                                                :indicator_id "indicator-234"}]
-                          :related_incidents [{:incident_id "incident-123"}
-                                              {:incident_id "indicent-789"}]}
-                   :headers {"api_key" "45c1f5e3f05d0"})]
+                                                :indicator_id (fake-long-id 'indicator 234)}]
+                          :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                              {:incident_id (fake-long-id 'incident 789)}]}
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
           (is (deep=
                {:external_ids ["http://ex.tld/ctia/incident/incident-123"
@@ -173,15 +176,56 @@
                 :related_indicators [{:confidence "High"
                                       :source "another source"
                                       :relationship "relationship"
-                                      :indicator_id "indicator-234"}]
-                :related_incidents [{:incident_id "incident-123"}
-                                    {:incident_id "indicent-789"}]}
+                                      :indicator_id (fake-long-id 'indicator 234)}]
+                :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                    {:incident_id (fake-long-id 'incident 789)}]}
                updated-incident))))
+
+      (testing "PUT invalid /ctia/incident/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/incident/" (:short-id incident-id))
+                   :body {:external_ids ["http://ex.tld/ctia/incident/incident-123"
+                                         "http://ex.tld/ctia/incident/incident-456"]
+                          ;; This field has an invalid length
+                          :title (apply str (repeatedly 1025 (constantly \0)))
+                          :description "updated description"
+                          :tlp "green"
+                          :confidence "Low"
+                          :categories ["Denial of Service"
+                                       "Improper Usage"]
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
+                          :related_indicators [{:confidence "High"
+                                                :source "another source"
+                                                :relationship "relationship"
+                                                :indicator_id (fake-long-id 'indicator 234)}]
+                          :related_incidents [{:incident_id (fake-long-id 'incident 123)}
+                                              {:incident_id (fake-long-id 'incident 789)}]}
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
 
       (testing "DELETE /ctia/incident/:id"
         (let [response (delete (str "ctia/incident/" (:short-id incident-id))
-                               :headers {"api_key" "45c1f5e3f05d0"})]
+                               :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
           (let [response (get (str "ctia/incident/" (:id incident))
-                              :headers {"api_key" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response)))))))))
+                              :headers {"Authorization" "45c1f5e3f05d0"})]
+            (is (= 404 (:status response))))))))
+
+  (testing "POST invalid /ctia/incident"
+    (let [{status :status
+           body :body}
+          (post "ctia/incident"
+                :body (assoc ex/new-incident-minimal
+                             ;; This field has an invalid length
+                             :title (clojure.string/join (repeatedly 1025 (constantly \0))))
+                :headers {"Authorization" "45c1f5e3f05d0"})]
+      (is (= status 400))
+      (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-incident-routes-access-control
+  (access-control-test "incident"
+                       ex/new-incident-minimal
+                       true
+                       true))
