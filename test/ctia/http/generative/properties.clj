@@ -47,12 +47,13 @@
                 encode)
 
             {get-status :status
-             get-entity :parsed-body}
+             get-entity :parsed-body
+             :as response}
             (get (str "ctia/" type "/" url-id))]
 
         (if (not= 200 get-status)
           (throw (ex-info "GET did not return status 200"
-                          get-entity)))
+                          response)))
 
         (if-not (empty? (keys new-entity))
           (common= new-entity
