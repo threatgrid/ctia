@@ -41,12 +41,21 @@
    :search_analyzer "token_analyzer"
    :include_in_all true})
 
+(def external-reference
+  {:properties
+   {:source_name token
+    :description all_text
+    :url token
+    :hashes token
+    :external_id token}})
+
 (def base-entity-mapping
   {:id all_token
    :type token
    :schema_version token
    :revision {:type "long"}
    :external_ids all_token
+   :external_references external-reference
    :timestamp ts
    :language token
    :tlp token})
