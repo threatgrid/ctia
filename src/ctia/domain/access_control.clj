@@ -1,8 +1,24 @@
 (ns ctia.domain.access-control
-  (:require [schema.core :as s]))
+  (:require [ctia.properties :refer [get-access-control]]
+            [ctim.schemas.common :as csc]
+            [schema.core :as s]))
 
 (def public-tlps
   ["white" "green"])
+
+(def tlps ["white" "green" "amber" "red"])
+
+(defn properties-default-tlp []
+  (or (:default-tlp (get-access-control))
+      csc/default-tlp))
+
+(defn allowed-tlps []
+  (let [min-tlp (or (:min-tlp (get-access-control) "white"))]
+    (nthrest tlps
+             (.indexOf tlps min-tlp))))
+
+(defn allowed-tlp? [tlp]
+  (some #{tlp} (allowed-tlps)))
 
 (s/defn allowed-group? :- s/Bool
   [doc ident]

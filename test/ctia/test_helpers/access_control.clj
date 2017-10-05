@@ -719,6 +719,32 @@
                                   [(:parsed-body player-1-entity-update2)
                                    (:parsed-body player-3-entity-repost2)])))))
 
+(defn test-access-control-tlp-settings
+  [entity new-entity]
+  (swap! ctia.properties/properties assoc-in
+         [:ctia :access-control]
+         {:default-tlp "amber"
+          :min-tlp "amber"})
+
+  (let [{status-default-tlp :status
+         body-default-tlp :parsed-body}
+        (post (format "ctia/%s" entity)
+              :body (dissoc new-entity :tlp)
+              :headers {"Authorization" "player-1-token"})
+        {status-disallowed-tlp :status
+         body-disallowed-tlp :parsed-body}
+        (post (format "ctia/%s" entity)
+              :body (assoc new-entity :tlp "white")
+              :headers {"Authorization" "player-1-token"})]
+
+    (is (= 201 status-default-tlp))
+    (is (= "amber" (:tlp body-default-tlp)))
+
+
+    (is (= 400 status-disallowed-tlp))
+    (is (= "Invalid document TLP white, allowed TLPs are: amber,red"
+           (:error body-disallowed-tlp)))))
+
 (defn access-control-test
   [entity
    new-entity
@@ -763,4 +789,7 @@
   (test-access-control-entity-tlp-red entity
                                       new-entity
                                       can-update?
-                                      can-delete?))
+                                      can-delete?)
+
+  (test-access-control-tlp-settings entity
+                                    new-entity))

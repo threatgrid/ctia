@@ -1,41 +1,39 @@
 (ns ctia.domain.entities
-  (:require
-   [clj-momo.lib.time :as time]
-   [ctia.properties :refer [get-http-show]]
-   [ctim.domain.id :as id]
-   [ring.util.http-response :as http-response]
-   [schema.core :as s]
-   [ctim.schemas.common
-    :refer [ctim-schema-version
-            default-tlp
-            determine-disposition-id
-            disposition-map]]
-   [ctia.schemas.core
-    :refer [NewActor
-            StoredActor
-            NewCampaign
-            StoredCampaign
-            NewCOA
-            StoredCOA
-            NewDataTable
-            StoredDataTable
-            NewExploitTarget
-            StoredExploitTarget
-            NewFeedback
-            StoredFeedback
-            NewIncident
-            StoredIncident
-            NewIndicator
-            StoredIndicator
-            NewJudgement
-            StoredJudgement
-            NewSighting
-            StoredSighting
-            NewTTP
-            StoredTTP
-            NewRelationship
-            StoredRelationship]])
-  (:import [java.util UUID]))
+  (:require [clj-momo.lib.time :as time]
+            [ctia.domain.access-control :refer [properties-default-tlp]]
+            [ctia.properties :refer [get-http-show]]
+            [ctia.schemas.core
+             :refer
+             [NewActor
+              NewCampaign
+              NewCOA
+              NewDataTable
+              NewExploitTarget
+              NewFeedback
+              NewIncident
+              NewIndicator
+              NewJudgement
+              NewRelationship
+              NewSighting
+              NewTTP
+              StoredActor
+              StoredCampaign
+              StoredCOA
+              StoredDataTable
+              StoredExploitTarget
+              StoredFeedback
+              StoredIncident
+              StoredIndicator
+              StoredJudgement
+              StoredRelationship
+              StoredSighting
+              StoredTTP]]
+            [ctim.domain.id :as id]
+            [ctim.schemas.common
+             :refer
+             [ctim-schema-version determine-disposition-id disposition-map]]
+            [ring.util.http-response :as http-response]
+            [schema.core :as s]))
 
 (def schema-version ctim-schema-version)
 
@@ -60,7 +58,8 @@
               :schema_version schema-version
               :created (or (:created prev-object) now)
               :modified now
-              :tlp (:tlp new-object (:tlp prev-object default-tlp))
+              :tlp (:tlp new-object
+                         (:tlp prev-object (properties-default-tlp)))
               :valid_time (or (:valid_time prev-object)
                               {:end_time (or (get-in new-object [:valid_time :end_time])
                                              time/default-expire-date)
@@ -93,7 +92,7 @@
          :created (time/now)
          :owner owner
          :groups groups
-         :tlp (:tlp new-feedback default-tlp)
+         :tlp (:tlp new-feedback (properties-default-tlp))
          :schema_version schema-version))
 
 (def realize-incident
@@ -113,7 +112,7 @@
          :created (time/now)
          :owner owner
          :groups groups
-         :tlp (:tlp new-relationship default-tlp)
+         :tlp (:tlp new-relationship (properties-default-tlp))
          :schema_version schema-version))
 
 
@@ -139,7 +138,7 @@
            :owner owner
            :groups groups
            :created now
-           :tlp (:tlp new-judgement default-tlp)
+           :tlp (:tlp new-judgement (properties-default-tlp))
            :schema_version schema-version
            :valid_time {:end_time (or (get-in new-judgement
                                               [:valid_time :end_time])
@@ -170,7 +169,7 @@
             :confidence (:confidence new-sighting
                                      (:confidence prev-sighting "Unknown"))
             :tlp (:tlp new-sighting
-                       (:tlp prev-sighting default-tlp))
+                       (:tlp prev-sighting (properties-default-tlp)))
             :schema_version schema-version
             :created (or (:created prev-sighting) now)
             :modified now))))
