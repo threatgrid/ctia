@@ -77,12 +77,6 @@
            :count
            :sensor]))
 
-(def ttp-sort-fields
-  (concat default-entity-sort-fields
-          [:valid_time.start_time
-           :valid_time.end_time
-           :ttp_type]))
-
 (def actor-sort-fields
   (concat default-entity-sort-fields
           [:valid_time.start_time
@@ -118,3 +112,15 @@
           [:entity_id
            :feedback
            :reason]))
+
+(def attack-pattern-sort-fields
+  (concat base-entity-sort-fields
+          [:name]))
+
+(def malware-sort-fields
+  (concat base-entity-sort-fields
+          [:name]))
+
+(def tool-sort-fields
+  (concat base-entity-sort-fields
+          [:name]))

@@ -7,12 +7,12 @@
              [core :as core]
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
-            [ctia.auth :refer [all-capabilities]]
             [ctia.http.routes.bulk :refer [bulk-size
                                            gen-bulk-from-fn
                                            get-bulk-max-size]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
@@ -39,6 +39,10 @@
    :confidence "High"
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
+
+(defn mk-new-attack-pattern [n]
+  {:name (str "attack-pattern-" n)
+   :description (str "description: attack-pattern-" n)})
 
 (defn mk-new-campaign [n]
   {:title (str "campaign" n)
@@ -102,6 +106,10 @@
    :severity "High"
    :confidence "Low"})
 
+(defn mk-new-malware [n]
+  {:name (str "malware-" n)
+   :labels [(str "malware-label-" n)]})
+
 (defn mk-new-relationship [n]
   {:title (str "title" n)
    :description (str "description-" n)
@@ -125,12 +133,9 @@
    :sensor "endpoint.sensor"
    :confidence "High"})
 
-(defn mk-new-ttp [n]
-  {:title (str "ttp-" n)
-   :description (str "description: ttp-" n)
-   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-   :ttp_type "foo"})
+(defn mk-new-tool [n]
+  {:name (str "tool-" n)
+   :labels [(str "tool-label-" n)]})
 
 (deftest testing-gen-bulk-from-fn
   (let [new-bulk {:actors (map mk-new-actor (range 6))
@@ -170,8 +175,9 @@
                                       "foogroup"
                                       "user")
   (testing "POST /ctia/bulk"
-    (let [nb 8
+    (let [nb 7
           new-bulk {:actors (map mk-new-actor (range nb))
+                    :attack-patterns (map mk-new-attack-pattern (range nb))
                     :campaigns (map mk-new-campaign (range nb))
                     :coas (map mk-new-coa (range nb))
                     :data-tables (map mk-new-data-table (range nb))
@@ -180,9 +186,10 @@
                     :incidents (map mk-new-incident (range nb))
                     :indicators (map mk-new-indicator (range nb))
                     :judgements (map mk-new-judgement (range nb))
+                    :malwares (map mk-new-malware (range nb))
                     :relationships (map mk-new-relationship (range nb))
                     :sightings (map mk-new-sighting (range nb))
-                    :ttps (map mk-new-ttp (range nb))}
+                    :tools (map mk-new-tool (range nb))}
           response (post "ctia/bulk"
                          :body new-bulk
                          :headers {"Authorization" "45c1f5e3f05d0"})
@@ -219,6 +226,7 @@
 (deftest get-bulk-max-size-test
   (let [nb 10
         new-bulk {:actors (map mk-new-actor (range nb))
+                  :attack-patterns (map mk-new-attack-pattern (range nb))
                   :campaigns (map mk-new-campaign (range nb))
                   :coas (map mk-new-coa (range nb))
                   :data-tables (map mk-new-data-table (range nb))
@@ -227,11 +235,12 @@
                   :incidents (map mk-new-incident (range nb))
                   :indicators (map mk-new-indicator (range nb))
                   :judgements (map mk-new-judgement (range nb))
+                  :malwares (map mk-new-malware (range nb))
                   :relationships (map mk-new-relationship (range nb))
                   :sightings (map mk-new-sighting (range nb))
-                  :ttps (map mk-new-ttp (range nb))}]
+                  :tools (map mk-new-tool (range nb))}]
     (is (= (bulk-size new-bulk)
-           (* nb 12)))))
+           (* nb (count new-bulk))))))
 
 (deftest-for-each-store bulk-max-size-post-test
   (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -242,8 +251,9 @@
 
   ;; Check changing the properties change the computed bulk max size
   (is (= 100 (get-bulk-max-size)))
-  (let [nb 8
+  (let [nb 7
         new-ok-bulk {:actors (map mk-new-actor (range nb))
+                     :attack-patterns (map mk-new-attack-pattern (range nb))
                      :campaigns (map mk-new-campaign (range nb))
                      :coas (map mk-new-coa (range nb))
                      :data-tables (map mk-new-data-table (range nb))
@@ -252,10 +262,12 @@
                      :incidents (map mk-new-incident (range nb))
                      :indicators (map mk-new-indicator (range nb))
                      :judgements (map mk-new-judgement (range nb))
+                     :malwares (map mk-new-malware (range nb))
                      :relationships (map mk-new-relationship (range nb))
                      :sightings (map mk-new-sighting (range nb))
-                     :ttps (map mk-new-ttp (range nb))}
+                     :tools (map mk-new-tool (range nb))}
         new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 5)))
+                          :attack-patterns (map mk-new-attack-pattern (range nb))
                           :campaigns (map mk-new-campaign (range nb))
                           :coas (map mk-new-coa (range nb))
                           :data-tables (map mk-new-data-table (range nb))
@@ -264,9 +276,10 @@
                           :incidents (map mk-new-incident (range nb))
                           :indicators (map mk-new-indicator (range nb))
                           :judgements (map mk-new-judgement (range nb))
+                          :malwares (map mk-new-malware (range nb))
                           :relationships (map mk-new-relationship (range nb))
                           :sightings (map mk-new-sighting (range nb))
-                          :ttps (map mk-new-ttp (range nb))}
+                          :tools (map mk-new-tool (range nb))}
         {status-ok :status
          response :body
          response-ok :parsed-body} (post "ctia/bulk"

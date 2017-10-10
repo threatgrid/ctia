@@ -10,6 +10,7 @@
              [cache-control :refer [wrap-cache-control]]]
             [ctia.http.routes
              [actor :refer [actor-routes]]
+             [attack-pattern :refer [attack-pattern-routes]]
              [bulk :refer [bulk-routes]]
              [campaign :refer [campaign-routes]]
              [coa :refer [coa-routes]]
@@ -20,12 +21,13 @@
              [incident :refer [incident-routes]]
              [indicator :refer [indicator-routes]]
              [judgement :refer [judgement-routes]]
+             [malware :refer [malware-routes]]
              [metrics :refer [metrics-routes]]
              [observable :refer [observable-routes]]
              [properties :refer [properties-routes]]
              [relationship :refer [relationship-routes]]
              [sighting :refer [sighting-routes]]
-             [ttp :refer [ttp-routes]]
+             [tool :refer [tool-routes]]
              [graphql :refer [graphql-routes
                               graphql-ui-routes]]
              [version :refer [version-routes]]]
@@ -90,6 +92,7 @@
                                 :description api-description}
 
                          :tags [{:name "Actor" :description "Actor operations"}
+                                {:name "Attack Pattern" :description "Attack Pattern operations"}
                                 {:name "Campaign" :description "Campaign operations"}
                                 {:name "COA" :description "COA operations"}
                                 {:name "DataTable" :description "DataTable operations"}
@@ -99,10 +102,10 @@
                                 {:name "Incident" :description "Incident operations"}
                                 {:name "Indicator", :description "Indicator operations"}
                                 {:name "Judgement", :description "Judgement operations"}
+                                {:name "Malware", :description "Malware operations"}
                                 {:name "Relationship", :description "Relationship operations"}
                                 {:name "Properties", :description "Properties operations"}
                                 {:name "Sighting", :description "Sighting operations"}
-                                {:name "TTP", :description "TTP operations"}
                                 {:name "Bulk", :description "Bulk operations"}
                                 {:name "Metrics", :description "Performance Statistics"}
                                 {:name "Version", :description "Version Information"}]}}}
@@ -116,6 +119,7 @@
                    (graphql-ui-routes)
                    (context "/ctia" []
                             actor-routes
+                            attack-pattern-routes
                             bulk-routes
                             campaign-routes
                             coa-routes
@@ -125,11 +129,12 @@
                             incident-routes
                             indicator-routes
                             judgement-routes
+                            malware-routes
                             metrics-routes
                             observable-routes
                             properties-routes
                             sighting-routes
-                            ttp-routes
+                            tool-routes
                             relationship-routes
                             graphql-routes
                             version-routes))))
