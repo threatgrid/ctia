@@ -99,6 +99,7 @@
                                 {:name "Events" :description "Events operations"}
                                 {:name "ExploitTarget" :description "ExploitTarget operations"}
                                 {:name "Feedback" :description "Feedback operations"}
+                                {:name "GraphQL" :description "GraphQL operations"}
                                 {:name "Incident" :description "Incident operations"}
                                 {:name "Indicator", :description "Indicator operations"}
                                 {:name "Judgement", :description "Judgement operations"}
@@ -108,6 +109,8 @@
                                 {:name "Sighting", :description "Sighting operations"}
                                 {:name "Bulk", :description "Bulk operations"}
                                 {:name "Metrics", :description "Performance Statistics"}
+                                {:name "Tool", :description "Tool operations"}
+                                {:name "Verdict", :description "Verdict operations"}
                                 {:name "Version", :description "Version Information"}]}}}
 
        (middleware [wrap-not-modified
