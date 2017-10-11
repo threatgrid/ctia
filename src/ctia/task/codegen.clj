@@ -1,13 +1,13 @@
 (ns ctia.task.codegen
-  ^{:doc "A task to generate swagger client libraries for a handful of languages"}
-  (:require [ctia.init :refer [start-ctia!]]
-            [clojure.java.io :as io]
-            [clojure.java.shell :as shell]
-            [ctia.properties :refer [properties]]
-            [clojure.string :as str]))
+  (:require [clojure.java
+             [io :as io]
+             [shell :as shell]]
+            [ctia
+             [init :refer [start-ctia!]]
+             [properties :refer [properties]]]))
 
 ;; swagger codegen package
-(def codegen-version "2.1.6")
+(def codegen-version "2.2.3")
 (def codegen-repo "http://central.maven.org/maven2/io/swagger/swagger-codegen-cli/")
 (def jar-uri (str codegen-repo
                   codegen-version
@@ -15,7 +15,6 @@
                   codegen-version ".jar"))
 
 (def local-jar-uri (str "/tmp/swagger-codegen-" codegen-version ".jar"))
-
 
 (def artifact-id "ctia-client")
 (def description "a client library for CTIA")
@@ -56,8 +55,9 @@
   (when-let [err (:err (apply shell/sh args))]
     (println err)))
 
-(defn setup []
+(defn setup
   "start CTIA and download swagger-codegen if needed"
+  []
   (println "starting CTIA...")
   (start-ctia! :join? false)
   (when-not (.exists (io/file local-jar-uri))
@@ -79,7 +79,6 @@
    "--artifact-id" (get-in langs [lang :artifact-id] artifact-id)
    "--artifact-version" artifact-version])
 
-
 (defn props->additional-properties [props]
   ["--additional-properties"
    (->> props
@@ -99,8 +98,9 @@
         full-command (into base additional)]
     (apply exec-command full-command)))
 
-(defn -main [output-dir]
+(defn -main
   "invoke with lein run -m ctia.task.codegen <output-dir>"
+  [output-dir]
   (setup)
   (doseq [[lang props] langs]
     (generate-language lang props output-dir))

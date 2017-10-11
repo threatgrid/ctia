@@ -101,26 +101,24 @@
   "Create many entities provided their type and returns a list of ids"
   [entities entity-type login]
   (let [with-long-id (with-long-id-fn entity-type)]
-    (->> (flows/create-flow
-          :entity-type entity-type
-          :realize-fn (realize-fn entity-type)
-          :store-fn (create-fn entity-type login)
-          :long-id-fn with-long-id
-          :identity login
-          :entities entities)
-         (map :id))))
+    (map :id (flows/create-flow
+              :entity-type entity-type
+              :realize-fn (realize-fn entity-type)
+              :store-fn (create-fn entity-type login)
+              :long-id-fn with-long-id
+              :identity login
+              :entities entities))))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type ident]
   (let [read-entity (read-fn entity-type ident)
         with-long-id (with-long-id-fn entity-type)]
-    (->> ids
-         (map (fn [id] (try (with-long-id
-                             (read-entity id))
-                           (catch Exception e
-                             (do (log/error (pr-str e))
-                                 nil))))))))
+    (map (fn [id] (try (with-long-id
+                        (read-entity id))
+                      (catch Exception e
+                        (do (log/error (pr-str e))
+                            nil)))) ids)))
 
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
