@@ -2,6 +2,7 @@
   (:require [clj-momo.lib.es
              [document :as es-doc]
              [index :as es-index]]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
             [ctia
              [init :refer [init-store-service! log-properties]]
@@ -27,7 +28,7 @@
        (update-in doc
                   [:valid_time
                    :end_time]
-                  #(clojure.string/replace % #"2535" "2525"))
+                  #(string/replace % #"2535" "2525"))
        doc))))
 
 (def available-operations
@@ -60,6 +61,7 @@
   {:conn (-> store first :state :conn)
    :indexname (-> store first :state :index)
    :mapping (-> store first :state :props :entity name)
+   :type (-> store first :state :props :entity name)
    :settings (-> store first :state :props :settings)})
 
 (defn stores->maps
@@ -78,9 +80,9 @@
              current-stores)))
 
 (defn setup
-  "iit properties, start CTIA and its store service"
+  "init properties, start CTIA and its store service"
   []
-  (log/warn "starting CTIA Stores...")
+  (log/info "starting CTIA Stores...")
   (p/init!)
   (log-properties)
   (init-store-service!))
@@ -88,19 +90,23 @@
 (defn fetch-batch
   "fetch a batch of documents from an es index"
   [{:keys [conn indexname mapping]} batch-size offset]
-  (es-doc/search-docs
-   conn
-   indexname
-   mapping
-   nil
-   {}
-   {:offset (or offset 0)
-    :limit batch-size}))
+  (let [params {:offset (or offset 0)
+                :limit batch-size}]
+    (es-doc/search-docs
+     conn
+     indexname
+     mapping
+     nil
+     {}
+     params)))
 
 (defn store-batch
   "store a batch of documents using a bulk operation"
-  [{:keys [conn indexname mapping]} batch]
-  (log/warnf "storing %s records" (count batch))
+  [{:keys [conn indexname mapping type]} batch]
+  (log/infof "%s - storing %s records"
+             type
+             (count batch))
+
   (let [prepared-docs
         (map #(assoc %
                      :_id (:id %)
@@ -116,13 +122,16 @@
   "create the target store, pushing its template"
   [target-store]
   (let [wildcard (str (:indexname target-store) "*")]
-    (log/warnf "purging index: %s"
+    (log/infof "%s - purging indexes: %s"
+               (:type target-store)
                wildcard)
     (es-index/delete! (:conn target-store)
                       wildcard))
-  (log/warnf "creating index template: %s"
+  (log/infof "%s - creating index template: %s"
+             (:type target-store)
              (:indexname target-store))
-  (log/warnf "creating index: %s"
+  (log/infof "%s - creating index: %s"
+             (:type target-store)
              (:indexname target-store))
 
   (es-index/create! (:conn target-store)
@@ -139,10 +148,14 @@
 
   (when confirm?
     (create-target-store target-store))
+
   (let [store-size (-> (fetch-batch current-store 1 0)
                        :paging
                        :total-hits)]
-    (log/warnf "store size: %s records" store-size))
+    (log/infof "%s - store size: %s records"
+               (:type current-store)
+               store-size))
+
   (loop [offset 0
          migrated-count 0]
     (let [{:keys [data paging]
@@ -158,11 +171,15 @@
       (when (seq migrated)
         (when confirm?
           (store-batch target-store migrated))
-        (log/warnf "migrated: %s" migrated-count))
+
+        (log/infof "%s - migrated: %s documents"
+                   (:type current-store)
+                   migrated-count))
       (if next
         (recur offset migrated-count)
-        (log/warnf "finished migrating store: %s"
-                   (:indexname current-store))))))
+        (log/infof "%s - finished migrating %s documents"
+                   (:type current-store)
+                   migrated-count)))))
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
@@ -174,11 +191,11 @@
         operations (compose-operations ops)
         batch-size (or batch-size default-batch-size)]
 
-    (log/warnf "migrating stores: %s" (keys current-stores))
-    (log/warnf "batch size: %s" batch-size)
+    (log/infof "migrating stores: %s" (keys current-stores))
+    (log/infof "set batch size: %s" batch-size)
 
     (doseq [[sk sr] current-stores]
-      (log/warnf "migrating store: %s" sk)
+      (log/infof "migrating store: %s" sk)
       (migrate-store sr
                      (sk target-stores)
                      operations
@@ -189,16 +206,15 @@
   "invoke with lein run -m ctia.task.migrate-es-stores <suffix> <operations> <batch-size> <confirm?>"
   [suffix ops batch-size confirm?]
 
-  (assert suffix
-          "Please provide an indexname suffix for target store creation")
+  (assert suffix "Please provide an indexname suffix for target store creation")
   (assert ops "Please provide a csv operation list")
   (assert batch-size "Please specify a batch size")
 
-  (log/warn "migrating all ES Stores")
+  (log/info "migrating all ES Stores")
   (setup)
   (migrate-store-indexes suffix
                          ops
                          (read-string batch-size)
                          (boolean (or confirm? false)))
-  (log/warn "migration complete")
+  (log/info "migration complete")
   (System/exit 0))
