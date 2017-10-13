@@ -51,8 +51,8 @@
 (defn source-store-map->target-store-map
   "transform a source store map into a target map,
   essentially updating indexname"
-  [store suffix]
-  (update store :indexname str "_" suffix))
+  [store prefix]
+  (update store :indexname #(str prefix "_" %)))
 
 (defn store->map
   "transfrom a store record
@@ -62,7 +62,8 @@
    :indexname (-> store first :state :index)
    :mapping (-> store first :state :props :entity name)
    :type (-> store first :state :props :entity name)
-   :settings (-> store first :state :props :settings)})
+   :settings (-> store first :state :props :settings)
+   :config (-> store first :state :config)})
 
 (defn stores->maps
   "transform store records to maps"
@@ -73,10 +74,10 @@
 
 (defn source-store-maps->target-store-maps
   "transform target store records to maps"
-  [current-stores suffix]
+  [current-stores prefix]
   (into {}
         (map (fn [[sk sr]]
-               {sk (source-store-map->target-store-map sr suffix)})
+               {sk (source-store-map->target-store-map sr prefix)})
              current-stores)))
 
 (defn setup
@@ -134,6 +135,10 @@
              (:type target-store)
              (:indexname target-store))
 
+  (es-index/create-template! (:conn target-store)
+                             (:indexname target-store)
+                             (:config target-store))
+
   (es-index/create! (:conn target-store)
                     (:indexname target-store)
                     (:settings target-store)))
@@ -145,7 +150,6 @@
    operations
    batch-size
    confirm?]
-
   (when confirm?
     (create-target-store target-store))
 
@@ -183,11 +187,11 @@
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
-  [suffix ops batch-size confirm?]
+  [prefix ops batch-size confirm?]
   (let [current-stores (stores->maps @stores)
         target-stores
         (source-store-maps->target-store-maps current-stores
-                                              suffix)
+                                              prefix)
         operations (compose-operations ops)
         batch-size (or batch-size default-batch-size)]
 
@@ -203,16 +207,16 @@
                      confirm?))))
 
 (defn -main
-  "invoke with lein run -m ctia.task.migrate-es-stores <suffix> <operations> <batch-size> <confirm?>"
-  [suffix ops batch-size confirm?]
+  "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <operations> <batch-size> <confirm?>"
+  [prefix ops batch-size confirm?]
 
-  (assert suffix "Please provide an indexname suffix for target store creation")
+  (assert prefix "Please provide an indexname suffix for target store creation")
   (assert ops "Please provide a csv operation list")
   (assert batch-size "Please specify a batch size")
 
   (log/info "migrating all ES Stores")
   (setup)
-  (migrate-store-indexes suffix
+  (migrate-store-indexes prefix
                          ops
                          (read-string batch-size)
                          (boolean (or confirm? false)))

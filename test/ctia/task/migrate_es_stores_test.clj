@@ -1,12 +1,12 @@
 (ns ctia.task.migrate-es-stores-test
-  (:require [clj-momo.test-helpers.core :as mth]
+  (:require [clj-http.client :as client]
+            [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.task.migrate-es-stores :as sut]
             [ctia.properties :as props]
-            [clj-http.client :as client]
+            [ctia.task.migrate-es-stores :as sut]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post]]
+             [core :as helpers :refer [post with-atom-logger]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :refer [make-transient-id]]
@@ -20,8 +20,7 @@
              [judgements :refer [judgement-minimal]]
              [relationships :refer [relationship-minimal]]
              [sightings :refer [sighting-minimal]]
-             [ttps :refer [ttp-minimal]]]
-            [clojure.tools.logging :as log]))
+             [ttps :refer [ttp-minimal]]]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -55,17 +54,6 @@
   (let [index-refresh-url
         (format "http://%s:%s/%s/_refresh" host port index)]
     (:status (client/post index-refresh-url))))
-
-(defmacro with-atom-logger
-  [atom-logger & body]
-  `(let [patched-log#
-         (fn [logger#
-             level#
-             throwable#
-             message#]
-           (swap! ~atom-logger conj message#))]
-     (with-redefs [log/log* patched-log#]
-       ~@body)))
 
 (def examples
   {:actors (n-doc actor-minimal fixtures-nb)
@@ -172,7 +160,7 @@
                       (:indexname campaign) fixtures-nb
                       (:indexname sighting) fixtures-nb
                       (:indexname actor) fixtures-nb}
-                     (map (fn [[k v]] {(str k "_foo") v}))
+                     (map (fn [[k v]] {(str  "foo_" k) v}))
                      (into {})
                      clojure.walk/keywordize-keys)
                 refreshes (doseq [index (keys expected-indices)]

@@ -203,3 +203,14 @@
    (id/->id (keyword entity-name)
             (fake-short-id entity-name id)
             (get-in @properties [:ctia :http :show]))))
+
+(defmacro with-atom-logger
+  [atom-logger & body]
+  `(let [patched-log#
+         (fn [logger#
+             level#
+             throwable#
+             message#]
+           (swap! ~atom-logger conj message#))]
+     (with-redefs [clojure.tools.logging/log* patched-log#]
+       ~@body)))
