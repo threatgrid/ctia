@@ -1,7 +1,9 @@
 (ns ctia.task.migrate-es-stores-test
   (:require [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure
+             [test :refer [deftest is join-fixtures testing use-fixtures]]
+             [walk :refer [keywordize-keys]]]
             [ctia.properties :as props]
             [ctia.task.migrate-es-stores :as sut]
             [ctia.test-helpers
@@ -108,7 +110,7 @@
       (let [logger (atom [])]
         (with-atom-logger logger
           (sut/migrate-store-indexes "foo"
-                                     "add-groups,fix-end-time"
+                                     "__test"
                                      10
                                      true))
 
@@ -132,7 +134,8 @@
                   "ttp - finished migrating 100 documents"]
                  messages))))
 
-        (testing "shall produce new indices with enough documents"
+        (testing "shall produce new indices
+                  with enough documents and the right transforms"
           (let [{:keys [default
                         data-table
                         relationship
@@ -149,23 +152,27 @@
                  :as es-props}
                 (get-in @props/properties [:ctia :store :es])
                 expected-indices
-                (->> {(:indexname relationship) fixtures-nb
-                      (:indexname judgement) fixtures-nb
-                      (:indexname exploit-target) fixtures-nb
-                      (:indexname coa) fixtures-nb
-                      (:indexname ttp) fixtures-nb
-                      (:indexname incident) fixtures-nb
-                      (:indexname event) (* (count (keys examples)) fixtures-nb)
-                      (:indexname indicator) fixtures-nb
-                      (:indexname campaign) fixtures-nb
-                      (:indexname sighting) fixtures-nb
-                      (:indexname actor) fixtures-nb}
-                     (map (fn [[k v]] {(str  "foo_" k) v}))
+                (->> {relationship fixtures-nb
+                      judgement fixtures-nb
+                      exploit-target fixtures-nb
+                      coa fixtures-nb
+                      ttp fixtures-nb
+                      incident fixtures-nb
+                      event (* (count (keys examples))
+                               fixtures-nb)
+                      indicator fixtures-nb
+                      campaign fixtures-nb
+                      sighting fixtures-nb
+                      actor fixtures-nb}
+                     (map (fn [[k v]]
+                            {(str  "foo_" (:indexname k)) v}))
                      (into {})
-                     clojure.walk/keywordize-keys)
-                refreshes (doseq [index (keys expected-indices)]
-                            (refresh-index (:host default)
-                                           (:port default) (name index)))
+                     keywordize-keys)
+                refreshes
+                (doseq [index (keys expected-indices)]
+                  (refresh-index (:host default)
+                                 (:port default)
+                                 (name index)))
                 cat-indices-url
                 (format "http://%s:%s/_cat/indices?format=json&pretty=true"
                         (:host default)
@@ -180,8 +187,24 @@
                             {index (read-string
                                     (:docs.count entry))}))
                      (into {})
-                     clojure.walk/keywordize-keys)]
+                     keywordize-keys)]
 
             (is (= expected-indices
                    (select-keys formatted-cat-indices
-                                (keys expected-indices))))))))))
+                                (keys expected-indices))))
+
+            (doseq [[index _]
+                    expected-indices]
+              (let [search-url (format "http://%s:%s/%s/_search"
+                                       (:host default)
+                                       (:port default)
+                                       (name index))
+                    {:keys [body]
+                     :as search-res}
+                    (client/get search-url {:as :json})
+                    hits (->> body
+                              :hits
+                              :hits
+                              (map #(get-in % [:_source :groups])))]
+                (is (every? #(= ["migration-test"] %)
+                            hits))))))))))

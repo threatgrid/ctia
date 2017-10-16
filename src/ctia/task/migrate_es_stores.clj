@@ -28,12 +28,15 @@
        (update-in doc
                   [:valid_time
                    :end_time]
-                  #(string/replace % #"2535" "2525"))
+                  #(string/replace %
+                                   #"2535"
+                                   "2525"))
        doc))))
 
 (def available-operations
   "define all migration operations here"
-  {:default (map identity)
+  {:__test (map #(assoc % :groups ["migration-test"]))
+   :default (map identity)
    :add-groups add-groups
    :fix-end-time fix-end-time})
 
@@ -126,8 +129,9 @@
     (log/infof "%s - purging indexes: %s"
                (:type target-store)
                wildcard)
-    (es-index/delete! (:conn target-store)
-                      wildcard))
+    (es-index/delete!
+     (:conn target-store)
+     wildcard))
   (log/infof "%s - creating index template: %s"
              (:type target-store)
              (:indexname target-store))
@@ -135,13 +139,15 @@
              (:type target-store)
              (:indexname target-store))
 
-  (es-index/create-template! (:conn target-store)
-                             (:indexname target-store)
-                             (:config target-store))
+  (es-index/create-template!
+   (:conn target-store)
+   (:indexname target-store)
+   (:config target-store))
 
-  (es-index/create! (:conn target-store)
-                    (:indexname target-store)
-                    (:settings target-store)))
+  (es-index/create!
+   (:conn target-store)
+   (:indexname target-store)
+   (:settings target-store)))
 
 (defn migrate-store
   "migrate a single store"
@@ -213,7 +219,6 @@
   (assert prefix "Please provide an indexname suffix for target store creation")
   (assert ops "Please provide a csv operation list")
   (assert batch-size "Please specify a batch size")
-
   (log/info "migrating all ES Stores")
   (setup)
   (migrate-store-indexes prefix
