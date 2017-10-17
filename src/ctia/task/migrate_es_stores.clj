@@ -47,10 +47,8 @@
 
 (defn compose-operations
   "compose operations from a list of keywords"
-  [ops]
-  (let [operation-keys (map keyword
-                            (clojure.string/split ops #","))
-        operations (vals (select-keys available-operations
+  [operation-keys]
+  (let [operations (vals (select-keys available-operations
                                       operation-keys))]
     (apply comp
            (:default available-operations)
@@ -60,7 +58,7 @@
   "transform a source store map into a target map,
   essentially updating indexname"
   [store prefix]
-  (update store :indexname #(str prefix "_" %)))
+  (update store :indexname #(str "v" prefix "_" %)))
 
 (defn store->map
   "transfrom a store record
@@ -163,7 +161,6 @@
    confirm?]
   (when confirm?
     (create-target-store target-store))
-
   (let [store-size (-> (fetch-batch current-store 1 0)
                        :paging
                        :total-hits)]
@@ -221,13 +218,13 @@
   "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <operations> <batch-size> <confirm?>"
   [prefix ops batch-size confirm?]
 
-  (assert prefix "Please provide an indexname suffix for target store creation")
+  (assert prefix "Please provide an indexname prefix for target store creation")
   (assert ops "Please provide a csv operation list")
   (assert batch-size "Please specify a batch size")
   (log/info "migrating all ES Stores")
   (setup)
   (migrate-store-indexes prefix
-                         ops
+                         (map keyword (clojure.string/split ops #","))
                          (read-string batch-size)
                          (boolean (or confirm? false)))
   (log/info "migration complete")
