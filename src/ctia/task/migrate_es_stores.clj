@@ -61,7 +61,7 @@
   (update store :indexname #(str "v" prefix "_" %)))
 
 (defn store->map
-  "transfrom a store record
+  "transform a store record
    into a properties map for easier manipulation"
   [store]
   {:conn (-> store first :state :conn)
