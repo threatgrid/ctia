@@ -79,15 +79,22 @@
 
 (deftest fix-end-time-test
   (is (= (transduce sut/fix-end-time conj [{}]) [{}]))
-  (is (= (transduce sut/fix-end-time conj [{:valid_time
-                                            {:start_time "foo"}}])
+  (is (= (transduce sut/fix-end-time conj
+                    [{:valid_time
+                      {:start_time "foo"}}])
          [{:valid_time
            {:start_time "foo"}}]))
   (is (= (transduce sut/fix-end-time conj
                     [{:valid_time
-                      {:end_time "2535"}}])
+                      {:end_time #inst "2535-01-01T00:00:00.000-00:00"}}])
          [{:valid_time
-           {:end_time "2525"}}])))
+           {:end_time #inst "2525-01-01T00:00:00.000-00:00"}}]))
+
+  (is (= (transduce sut/fix-end-time conj
+                    [{:valid_time
+                      {:end_time #inst "2524-01-01T00:00:00.000-00:00"}}])
+         [{:valid_time
+           {:end_time #inst "2524-01-01T00:00:00.000-00:00"}}])))
 
 (deftest test-migrate-store-indexes
   (helpers/set-capabilities! "foouser"

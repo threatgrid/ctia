@@ -1,13 +1,16 @@
 (ns ctia.task.migrate-es-stores
-  (:require [clj-momo.lib.es
-             [document :as es-doc]
-             [index :as es-index]]
-            [clojure.string :as string]
-            [clojure.tools.logging :as log]
-            [ctia
-             [init :refer [init-store-service! log-properties]]
-             [properties :as p]
-             [store :refer [stores]]]))
+  (:require
+   [clj-momo.lib.clj-time.core :as time-core]
+   [clj-momo.lib.clj-time.coerce :as time-coerce]
+   [clj-momo.lib.es
+    [document :as es-doc]
+    [index :as es-index]]
+   [clojure.string :as string]
+   [clojure.tools.logging :as log]
+   [ctia
+    [init :refer [init-store-service! log-properties]]
+    [properties :as p]
+    [store :refer [stores]]]))
 
 (def default-batch-size 100)
 
@@ -28,9 +31,11 @@
        (update-in doc
                   [:valid_time
                    :end_time]
-                  #(string/replace %
-                                   #"2535"
-                                   "2525"))
+                  #(let [max-end-time (time-core/internal-date 2525 01 01)
+                         end-time (time-coerce/to-internal-date %)]
+                     (if (time-core/after? end-time max-end-time)
+                       max-end-time
+                       end-time)))
        doc))))
 
 (def available-operations
