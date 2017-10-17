@@ -69,32 +69,11 @@
    :sightings (n-doc sighting-minimal fixtures-nb)
    :ttps (n-doc ttp-minimal fixtures-nb)})
 
-(deftest add-groups-test
-  (is (= (transduce sut/add-groups conj [{}])
-         [{:groups ["tenzin"]}]))
-  (is (= (transduce sut/add-groups conj [{:groups []}])
-         [{:groups ["tenzin"]}]))
-  (is (= (transduce sut/add-groups conj [{:groups ["foo"]}])
-         [{:groups ["foo"]}])))
-
-(deftest fix-end-time-test
-  (is (= (transduce sut/fix-end-time conj [{}]) [{}]))
-  (is (= (transduce sut/fix-end-time conj
-                    [{:valid_time
-                      {:start_time "foo"}}])
-         [{:valid_time
-           {:start_time "foo"}}]))
-  (is (= (transduce sut/fix-end-time conj
-                    [{:valid_time
-                      {:end_time #inst "2535-01-01T00:00:00.000-00:00"}}])
-         [{:valid_time
-           {:end_time #inst "2525-01-01T00:00:00.000-00:00"}}]))
-
-  (is (= (transduce sut/fix-end-time conj
-                    [{:valid_time
-                      {:end_time #inst "2524-01-01T00:00:00.000-00:00"}}])
-         [{:valid_time
-           {:end_time #inst "2524-01-01T00:00:00.000-00:00"}}])))
+(deftest prefixed-index-test
+  (is (= "v0.4.2_ctia_actor"
+         (sut/prefixed-index "ctia_actor" "0.4.2")))
+  (is (= "v0.4.2_ctia_actor"
+         (sut/prefixed-index "v0.4.1_ctia_actor" "0.4.2"))))
 
 (deftest test-migrate-store-indexes
   (helpers/set-capabilities! "foouser"
@@ -109,15 +88,15 @@
   (testing "migrate ES Stores test setup"
     (post-bulk examples)
     (testing "simulate migrate es indexes"
-      (sut/migrate-store-indexes "foo"
-                                 "add-groups,fix-end-time"
+      (sut/migrate-store-indexes "0.0.0"
+                                 [:0.4.16]
                                  10
                                  false))
     (testing "migrate es indexes"
       (let [logger (atom [])]
         (with-atom-logger logger
-          (sut/migrate-store-indexes "foo"
-                                     "__test"
+          (sut/migrate-store-indexes "0.0.0"
+                                     [:__test]
                                      10
                                      true))
 
@@ -172,7 +151,7 @@
                       sighting fixtures-nb
                       actor fixtures-nb}
                      (map (fn [[k v]]
-                            {(str  "foo_" (:indexname k)) v}))
+                            {(str  "v0.0.0_" (:indexname k)) v}))
                      (into {})
                      keywordize-keys)
                 refreshes

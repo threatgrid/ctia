@@ -1,75 +1,50 @@
 (ns ctia.task.migrate-es-stores
-  (:require
-   [clj-momo.lib.clj-time.core :as time-core]
-   [clj-momo.lib.clj-time.coerce :as time-coerce]
-   [clj-momo.lib.es
-    [document :as es-doc]
-    [index :as es-index]]
-   [clojure.string :as string]
-   [clojure.tools.logging :as log]
-   [ctia
-    [init :refer [init-store-service! log-properties]]
-    [properties :as p]
-    [store :refer [stores]]]))
+  (:require [clj-momo.lib.es
+             [document :as es-doc]
+             [index :as es-index]]
+            [clojure.string :as string]
+            [clojure.tools.logging :as log]
+            [ctia
+             [init :refer [init-store-service! log-properties]]
+             [properties :as p]
+             [store :refer [stores]]]
+            [ctia.task.migrations :refer [available-migrations]]))
 
 (def default-batch-size 100)
 
-(def add-groups
-  "set a document group to [\"tenzin\"] if unset"
-  (map (fn [{:keys [groups]
-            :as doc}]
-         (if-not (seq groups)
-           (assoc doc :groups ["tenzin"])
-           doc))))
+(defn compose-migrations
+  "compose migrations from a list of keywords"
+  [migration-keys]
+  (let [migrations
+        (vals (select-keys available-migrations
+                           migration-keys))]
+    (if (seq migrations)
+      (apply comp migrations)
+      (do (log/warn "target migration not found, copying data")
+          (map identity)))))
 
-(def fix-end-time
-  "fix end_time to 2535"
-  (map
-   (fn [{:keys [valid_time]
-        :as doc}]
-     (if (:end_time valid_time)
-       (update-in doc
-                  [:valid_time
-                   :end_time]
-                  #(let [max-end-time (time-core/internal-date 2525 01 01)
-                         end-time (time-coerce/to-internal-date %)]
-                     (if (time-core/after? end-time max-end-time)
-                       max-end-time
-                       end-time)))
-       doc))))
-
-(def available-operations
-  "define all migration operations here"
-  {:__test (map #(assoc % :groups ["migration-test"]))
-   :default (map identity)
-   :add-groups add-groups
-   :fix-end-time fix-end-time})
-
-(defn compose-operations
-  "compose operations from a list of keywords"
-  [operation-keys]
-  (let [operations (vals (select-keys available-operations
-                                      operation-keys))]
-    (apply comp
-           (:default available-operations)
-           operations)))
+(defn prefixed-index [index prefix]
+  (let [version-trimmed (string/replace index #"^v\w+.\w+.\w_" "")]
+    (str "v" prefix "_" version-trimmed)))
 
 (defn source-store-map->target-store-map
   "transform a source store map into a target map,
   essentially updating indexname"
   [store prefix]
-  (update store :indexname #(str "v" prefix "_" %)))
+  (update store :indexname #(prefixed-index % prefix)))
 
 (defn store->map
   "transform a store record
    into a properties map for easier manipulation"
   [store]
-  {:conn (-> store first :state :conn)
-   :indexname (-> store first :state :index)
-   :mapping (-> store first :state :props :entity name)
-   :type (-> store first :state :props :entity name)
-   :settings (-> store first :state :props :settings)
-   :config (-> store first :state :config)})
+  (let [store-state (-> store first :state)
+        entity-type (-> store-state :props :entity name)]
+    {:conn (:conn store-state)
+     :indexname (:index store-state)
+     :mapping entity-type
+     :type entity-type
+     :settings (-> store-state :props :settings)
+     :config (:config store-state)}))
 
 (defn stores->maps
   "transform store records to maps"
@@ -156,7 +131,7 @@
   "migrate a single store"
   [current-store
    target-store
-   operations
+   migrations
    batch-size
    confirm?]
   (when confirm?
@@ -177,7 +152,7 @@
                        offset)
           next (:next paging)
           offset (:offset next)
-          migrated (transduce operations conj data)
+          migrated (transduce migrations conj data)
           migrated-count (+ migrated-count
                             (count migrated))]
       (when (seq migrated)
@@ -195,12 +170,12 @@
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
-  [prefix ops batch-size confirm?]
+  [prefix migrations batch-size confirm?]
   (let [current-stores (stores->maps @stores)
         target-stores
         (source-store-maps->target-store-maps current-stores
                                               prefix)
-        operations (compose-operations ops)
+        migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
 
     (log/infof "migrating stores: %s" (keys current-stores))
@@ -210,21 +185,21 @@
       (log/infof "migrating store: %s" sk)
       (migrate-store sr
                      (sk target-stores)
-                     operations
+                     migrations
                      batch-size
                      confirm?))))
 
 (defn -main
-  "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <operations> <batch-size> <confirm?>"
-  [prefix ops batch-size confirm?]
+  "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>"
+  [prefix migrations batch-size confirm?]
 
   (assert prefix "Please provide an indexname prefix for target store creation")
-  (assert ops "Please provide a csv operation list")
+  (assert migrations "Please provide a csv migration list argument")
   (assert batch-size "Please specify a batch size")
   (log/info "migrating all ES Stores")
   (setup)
   (migrate-store-indexes prefix
-                         (map keyword (clojure.string/split ops #","))
+                         (map keyword (string/split migrations #","))
                          (read-string batch-size)
                          (boolean (or confirm? false)))
   (log/info "migration complete")
