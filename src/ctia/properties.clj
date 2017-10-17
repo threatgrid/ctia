@@ -1,18 +1,16 @@
-(ns ^{:doc "Properties (aka configuration) of the application.
-            Properties are stored in property files.  There is a
-            default file which can be overridden by placing an
-            alternative properties file on the classpath, or by
+(ns ^{:doc "Properties (aka configuration) of the application.\n
+            Properties are stored in property files.  There is a\n
+            default file which can be overridden by placing an\n
+            alternative properties file on the classpath or by\n
             setting system properties."}
     ctia.properties
-  (:require [clj-momo.properties :as mp]
-            [clj-momo.lib
-             [map :as map]
-             [schema :as mls]]
-            [schema.core :as s]
+  (:require [clj-momo.lib.schema :as mls]
+            [clj-momo.properties :as mp]
+            [ctia.store :as store]
             [schema-tools.core :as st]
-            [ctia.store :refer [stores]]
-            [ctia.store :as store])
-  (:import java.util.Properties))
+            [schema.core :as s]
+            [ctia.schemas.core
+             :refer [TLP]]))
 
 (def files
   "Property file names, they will be merged, with last one winning"
@@ -83,6 +81,9 @@
                       "ctia.hook.redismq.enabled" s/Bool
                       "ctia.hook.kafka.enabled" s/Bool})
 
+   (st/required-keys {"ctia.access-control.min-tlp" TLP
+                      "ctia.access-control.default-tlp" TLP})
+
    (st/optional-keys {"ctia.events.log" s/Bool
                       "ctia.nrepl.port" s/Int
                       "ctia.hook.redis.host" s/Str
@@ -135,3 +136,6 @@
 
 (defn get-http-show []
   (get-in @properties [:ctia :http :show]))
+
+(defn get-access-control []
+  (get-in @properties [:ctia :access-control]))

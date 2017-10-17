@@ -217,6 +217,9 @@
 
 (f-spec/->spec ins/StoredIndicator "stored-indicator")
 
+
+
+
 ;; relationship
 
 (def-acl-schema Relationship
@@ -246,6 +249,10 @@
   "stored-ttp")
 
 ;; common
+
+(sc/defschema TLP
+  (f-schema/->schema
+   cos/TLP))
 
 (defschema Observable
   cos/Observable

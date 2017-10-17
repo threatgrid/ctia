@@ -1,4 +1,4 @@
-(def cheshire-version "5.6.3")
+(def cheshire-version "5.7.0")
 (def compojure-api-version "1.1.9")
 (def schema-tools-version "0.9.0")
 (def schema-version "1.1.3")
@@ -31,7 +31,7 @@
              "-server"]
   :pedantic? :warn
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [clj-time "0.12.0"]
+                 [clj-time "0.13.0"]
                  [org.clojure/core.async "0.2.374"]
                  [org.slf4j/slf4j-log4j12 "1.7.21"]
                  [org.clojure/core.memoize "0.5.8"]
@@ -42,12 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.18"
-                  :exclusions [joda-time
-                               clj-time
-                               riemann-clojure-client
-                               com.andrewmcveigh/cljs-time]]
-
+                 [threatgrid/ctim "0.4.19"]
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
                   :exclusions [com.google.code.findbugs/jsr305
@@ -74,13 +69,13 @@
                  [quoll/clients "0.1.2" :exclusions [com.andrewmcveigh/cljs-time org.clojure/tools.logging]]
 
                  ;; Metrics
-                 [metrics-clojure "2.7.0"]
-                 [metrics-clojure-jvm "2.7.0"]
-                 [metrics-clojure-ring "2.7.0"]
-                 [metrics-clojure-riemann "2.7.0"]
+                 [metrics-clojure "2.9.0"]
+                 [metrics-clojure-jvm "2.9.0"]
+                 [metrics-clojure-ring "2.9.0"]
+                 [metrics-clojure-riemann "2.9.0"]
                  [clout "2.1.2"]
                  [slugger "1.0.1"]
-                 [riemann-clojure-client "0.4.2"]
+                 [riemann-clojure-client "0.4.5"]
                  [com.google.protobuf/protobuf-java "2.6.1"]
 
                  ;; Docs
