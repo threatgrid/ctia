@@ -1,18 +1,21 @@
 (ns ctia.stores.es.identity
-  (:require [clj-momo.lib.es.document :refer [create-doc delete-doc get-doc]]
+  (:require [clj-momo.lib.es.document
+             :refer [create-doc delete-doc get-doc]]
             [ctia.schemas.identity :refer [Identity]]
             [schema.core :as s]))
 
 (def ^{:private true} mapping "identity")
 
-(defn capabilities->capabilities-set [caps]
+(defn capabilities->capabilities-set
   "transform a vec of capabilities from es
    to a set of keywords"
-  (set (map #(-> % keyword) caps)))
+  [caps]
+  (set (map keyword caps)))
 
-(defn capabilities-set->capabilities [caps]
+(defn capabilities-set->capabilities
   "transform a set of capabilities
    into a vec of strings"
+  [caps]
   (vec (map name caps)))
 
 (defn handle-create [state new-identity]
@@ -43,4 +46,5 @@
   (delete-doc (:conn state)
               (:index state)
               mapping
-              login))
+              login
+              true))
