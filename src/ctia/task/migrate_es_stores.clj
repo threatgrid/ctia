@@ -8,9 +8,49 @@
              [init :refer [init-store-service! log-properties]]
              [properties :as p]
              [store :refer [stores]]]
-            [ctia.task.migrations :refer [available-migrations]]))
+            [ctia.schemas
+             [core :refer [StoredActor
+                           StoredCampaign
+                           StoredCOA
+                           StoredDataTable
+                           StoredExploitTarget
+                           StoredFeedback
+                           StoredIncident
+                           StoredIndicator
+                           StoredJudgement
+                           StoredRelationship
+                           StoredSighting
+                           StoredTTP]]
+             [identity :refer [Identity]]]
+            [ctia.stores.es.crud :refer [coerce-to-fn]]
+            [ctia.task.migrations :refer [available-migrations]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (def default-batch-size 100)
+
+(def all-types
+  {:actor StoredActor
+   :campaign StoredCampaign
+   :coa StoredCOA
+   :data-table StoredDataTable
+   :event s/Any
+   :exploit-target StoredExploitTarget
+   :feedback StoredFeedback
+   :incident StoredIncident
+   :indicator StoredIndicator
+   :identity (st/merge {s/Any s/Any} Identity)
+   :judgement StoredJudgement
+   :relationship StoredRelationship
+   :sighting (st/merge StoredSighting
+                       {(s/optional-key :observables_hash) s/Any})
+   :ttp StoredTTP})
+
+(defn type->schema [type]
+  (if-let [schema (get all-types type)]
+    schema
+    (do (log/warn "missing schema definition for: %s" type)
+        s/Any)))
 
 (defn compose-migrations
   "compose migrations from a list of keywords"
@@ -189,18 +229,67 @@
                      batch-size
                      confirm?))))
 
+(defn check-store
+  "check a single store"
+  [target-store
+   batch-size]
+  (let [store-schema (type->schema (keyword (:type target-store)))
+        coerce! (coerce-to-fn [store-schema])
+        store-size (-> (fetch-batch target-store 1 0)
+                       :paging
+                       :total-hits)]
+    (log/infof "%s - store size: %s records"
+               (:type target-store)
+               store-size)
+
+    (loop [offset 0
+           checked-count 0]
+      (let [{:keys [data paging]
+             :as batch}
+            (fetch-batch target-store
+                         batch-size
+                         offset)
+            next (:next paging)
+            offset (:offset next)
+            checked (coerce! data)
+            checked-count (+ checked-count
+                             (count checked))]
+        (if next
+          (recur offset checked-count)
+          (log/infof "%s - finished checking %s documents"
+                     (:type target-store)
+                     checked-count))))))
+
+(defn check-store-indexes
+  "check all new es store indexes"
+  [batch-size prefix]
+  (let [current-stores (stores->maps @stores)
+        target-stores
+        (source-store-maps->target-store-maps current-stores
+                                              prefix)
+        batch-size (or batch-size default-batch-size)]
+
+    (log/infof "checking stores: %s" (keys current-stores))
+    (log/infof "set batch size: %s" batch-size)
+
+    (doseq [[sk sr] target-stores]
+      (log/infof "checking store: %s" sk)
+      (check-store sr batch-size))))
 (defn -main
   "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>"
   [prefix migrations batch-size confirm?]
-
-  (assert prefix "Please provide an indexname prefix for target store creation")
-  (assert migrations "Please provide a csv migration list argument")
-  (assert batch-size "Please specify a batch size")
-  (log/info "migrating all ES Stores")
-  (setup)
-  (migrate-store-indexes prefix
-                         (map keyword (string/split migrations #","))
-                         (read-string batch-size)
-                         (or (boolean (read-string confirm?)) false))
-  (log/info "migration complete")
-  (System/exit 0))
+  (let [confirm? (or (boolean (read-string confirm?)) false)
+        batch-size (read-string batch-size)]
+    (assert prefix "Please provide an indexname prefix for target store creation")
+    (assert migrations "Please provide a csv migration list argument")
+    (assert batch-size "Please specify a batch size")
+    (log/info "migrating all ES Stores")
+    (setup)
+    (migrate-store-indexes prefix
+                           (map keyword (string/split migrations #","))
+                           batch-size
+                           confirm?)
+    (when confirm?
+      (check-store-indexes batch-size prefix))
+    (log/info "migration complete")
+    (System/exit 0)))
