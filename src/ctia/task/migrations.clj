@@ -28,7 +28,9 @@
        doc))))
 
 (defn append-version [version]
-  (map #(assoc % :schema_version version)))
+  (map #(if-not (seq (:capabilities %))
+          (assoc % :schema_version version)
+          %)))
 
 (def available-migrations
   {:__test (map #(assoc % :groups ["migration-test"]))
