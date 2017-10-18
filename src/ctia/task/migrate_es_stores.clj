@@ -24,7 +24,7 @@
           (map identity)))))
 
 (defn prefixed-index [index prefix]
-  (let [version-trimmed (string/replace index #"^v\w+.\w+.\w_" "")]
+  (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
     (str "v" prefix "_" version-trimmed)))
 
 (defn source-store-map->target-store-map
