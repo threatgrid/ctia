@@ -85,7 +85,7 @@
                  [ring-cors "0.1.8"]
 
                  ;; Hooks
-                 [redismq "0.1.0-SNAPSHOT"]
+                 [redismq "0.1.0"]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]
