@@ -18,7 +18,7 @@
 ;;   valid, and update the exclusions/comments accordingly
 ;; - Maybe you can just delete the dep! (doesn't hurt to check)
 
-(defproject ctia "0.1.0-SNAPSHOT"
+(defproject ctia "1.0.0-rc1"
   :description "Cisco Threat Intelligence API"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
