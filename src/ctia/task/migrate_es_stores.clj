@@ -201,6 +201,6 @@
   (migrate-store-indexes prefix
                          (map keyword (string/split migrations #","))
                          (read-string batch-size)
-                         (boolean (or confirm? false)))
+                         (or (boolean (read-string confirm?)) false))
   (log/info "migration complete")
   (System/exit 0))
