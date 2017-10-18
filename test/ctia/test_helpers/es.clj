@@ -10,12 +10,13 @@
             [ctia.stores.es.store :as es-store]
             [ctia.test-helpers.core :as h]))
 
-(defn fixture-delete-store-indexes [test]
+(defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
+  [t]
   (doseq [store-impls (vals @store/stores)
           {:keys [state]} store-impls]
     (es-store/delete-state-indexes state))
-  (test))
+  (t))
 
 (defn purge-event-indexes []
   (let [{:keys [conn index]} (es-store/init-store-conn
@@ -25,13 +26,14 @@
     (when conn
       (es-index/delete! conn (str index "*")))))
 
-(defn fixture-purge-event-indexes [test]
+(defn fixture-purge-event-indexes
   "walk through all producers and delete their index"
+  [t]
   (purge-event-indexes)
-  (test)
+  (t)
   (purge-event-indexes))
 
-(defn fixture-properties:es-store [test]
+(defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.store.es.default.shards" 1
                       "ctia.store.es.default.replicas" 1
@@ -53,36 +55,36 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.sighting" "es"
                       "ctia.store.ttp" "es"]
-    (test)))
+    (t)))
 
-(defn fixture-properties:es-hook [test]
+(defn fixture-properties:es-hook [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
                       "ctia.hook.es.port" 9200
                       "ctia.hook.es.indexname" "test_ctia_events"]
-    (test)))
+    (t)))
 
-(defn fixture-properties:es-hook:aliased-index [test]
+(defn fixture-properties:es-hook:aliased-index [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.hook.es.enabled" true
                       "ctia.hook.es.port" 9200
                       "ctia.hook.es.indexname" "test_ctia_events"
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
-    (test)))
+    (t)))
 
-(defn- url-for-type [type]
+(defn- url-for-type [t]
   (assert (keyword? type) "Type must be a keyword")
   (let [{:keys [indexname host port]}
         (-> @ctia.store/stores
-            type
+            t
             first
             :state
             :props)]
     (assert (seq host) "Missing host")
     (assert (integer? port) "Missing port")
     (assert (seq indexname) "Missing index-name")
-    (str "http://" host ":" port "/" indexname "/" (name type) "/?refresh=true")))
+    (str "http://" host ":" port "/" indexname "/" (name t) "/?refresh=true")))
 
 (defn post-to-es [obj]
   (let [{:keys [status] :as response}
