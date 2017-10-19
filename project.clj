@@ -42,7 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.19"]
+                 [threatgrid/ctim "0.4.20-SNAPSHOT"]
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
                   :exclusions [com.google.code.findbugs/jsr305
@@ -85,7 +85,7 @@
                  [ring-cors "0.1.8"]
 
                  ;; Hooks
-                 [redismq "0.1.0"]
+                 [redismq "0.1.0-SNAPSHOT"]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]

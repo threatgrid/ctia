@@ -8,7 +8,7 @@
             [ctia.properties :refer [properties]]
             [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers
-             [core :as helpers]
+             [core :as helpers :refer [url-id]]
              [http :refer [assert-post]]
              [pagination :refer [pagination-test
                                  pagination-test-no-sort]]
@@ -27,18 +27,21 @@
                     :value "1.2.3.4"}
         title "test"
         new-indicators (->> (csg/sample (cs/gen :new-indicator/map 5))
-                            (map #(assoc % :title title)))
+                            (map #(assoc % :title title))
+                            (map #(assoc % :id (url-id :indicator))))
         created-indicators (map #(assert-post "ctia/indicator" %)
                                 new-indicators)
         new-judgements (->> (csg/sample (cs/gen :new-judgement/map) 5)
                             (map #(assoc %
                                          :observable observable
                                          :disposition 5
-                                         :disposition_name "Unknown")))
+                                         :disposition_name "Unknown"))
+                            (map #(assoc % :id (url-id :judgement))))
         new-sightings (->> (csg/sample (cs/gen :new-sighting/map) 5)
                            (map #(-> (assoc %
                                             :observables [observable])
-                                     (dissoc % :relations))))
+                                     (dissoc % :relations)))
+                           (map #(assoc % :id (url-id :sighting))))
         route-pref (str "ctia/" (:type observable) "/" (:value observable))]
 
     (testing "setup: create sightings and their relationships with indicators"

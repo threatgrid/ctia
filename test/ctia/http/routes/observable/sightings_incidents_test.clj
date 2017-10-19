@@ -41,7 +41,7 @@
     (testing "test setup: create sighting-1"
       (let [{status :status}
             (post "ctia/sighting"
-                  :body {:id (:short-id sighting-1-id)
+                  :body {:id (id/long-id sighting-1-id)
                          :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-1]
@@ -53,7 +53,7 @@
     (testing "test setup: create sighting-2"
       (let [{status :status}
             (post "ctia/sighting"
-                  :body {:id (:short-id sighting-2-id)
+                  :body {:id (id/long-id sighting-2-id)
                          :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-1]
@@ -65,7 +65,7 @@
     (testing "test setup: create sighting-3"
       (let [{status :status}
             (post "ctia/sighting"
-                  :body {:id (:short-id sighting-3-id)
+                  :body {:id (id/long-id sighting-3-id)
                          :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-2]
@@ -91,7 +91,7 @@
     (testing "test setup: create incident-1"
       (let [{status :status}
             (post "ctia/incident"
-                  :body {:id (:short-id incident-1-id)
+                  :body {:id (id/long-id incident-1-id)
                          :confidence "High"
                          :external_ids ["incident-1"]}
                   :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -101,7 +101,7 @@
     (testing "test setup: create incident-1"
       (let [{status :status}
             (post "ctia/incident"
-                  :body {:id (:short-id incident-2-id)
+                  :body {:id (id/long-id incident-2-id)
                          :confidence "High"
                          :external_ids ["incident-2"]}
                   :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -112,7 +112,7 @@
                   "member of incident-1")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-1-id)
+                  :body {:id (id/long-id relationship-1-id)
                          :source_ref (id/long-id sighting-1-id)
                          :relationship_type "member-of"
                          :target_ref (id/long-id incident-1-id)
@@ -125,7 +125,7 @@
                   "member of incident-2")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-2-id)
+                  :body {:id (id/long-id relationship-2-id)
                          :source_ref (id/long-id sighting-3-id)
                          :relationship_type "member-of"
                          :target_ref (id/long-id incident-2-id)
@@ -138,7 +138,7 @@
                   "based on judgement-1")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-3-id)
+                  :body {:id (id/long-id relationship-3-id)
                          :source_ref (id/long-id sighting-3-id)
                          :relationship_type "based-on"
                          :target_ref (id/long-id judgement-1-id)
