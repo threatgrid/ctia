@@ -7,7 +7,9 @@
             [ctia
              [properties :refer [properties]]
              [store :as store]]
-            [ctia.stores.es.store :as es-store]
+            [ctia.stores.es
+             [init :as es-init]
+             [store :as es-store]]
             [ctia.test-helpers.core :as h]))
 
 (defn fixture-delete-store-indexes
@@ -19,10 +21,8 @@
   (t))
 
 (defn purge-event-indexes []
-  (let [{:keys [conn index]} (es-store/init-store-conn
-                              (merge
-                               (get-in @properties [:ctia :store :es :default])
-                               (get-in @properties [:ctia :store :es :event])))]
+  (let [{:keys [conn index]} (es-init/init-store-conn
+                              (es-init/get-store-properties :event))]
     (when conn
       (es-index/delete! conn (str index "*")))))
 
