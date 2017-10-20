@@ -10,6 +10,7 @@
              [store :refer [stores]]]
             [ctia.schemas
              [core :refer [StoredActor
+                           StoredAttackPattern
                            StoredCampaign
                            StoredCOA
                            StoredDataTable
@@ -18,9 +19,10 @@
                            StoredIncident
                            StoredIndicator
                            StoredJudgement
+                           StoredMalware
                            StoredRelationship
                            StoredSighting
-                           StoredTTP]]
+                           StoredTool]]
              [identity :refer [Identity]]]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.task.migrations :refer [available-migrations]]
@@ -31,6 +33,7 @@
 
 (def all-types
   {:actor StoredActor
+   :attack-pattern StoredAttackPattern
    :campaign StoredCampaign
    :coa StoredCOA
    :data-table StoredDataTable
@@ -41,10 +44,11 @@
    :indicator StoredIndicator
    :identity (st/merge {s/Any s/Any} Identity)
    :judgement StoredJudgement
+   :malware StoredMalware
    :relationship StoredRelationship
    :sighting (st/merge StoredSighting
                        {(s/optional-key :observables_hash) s/Any})
-   :ttp StoredTTP})
+   :tool StoredTool})
 
 (defn type->schema [type]
   (if-let [schema (get all-types type)]

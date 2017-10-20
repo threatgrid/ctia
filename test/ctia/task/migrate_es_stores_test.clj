@@ -14,15 +14,17 @@
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [actors :refer [actor-minimal]]
+             [attack-patterns :refer [attack-pattern-minimal]]
              [campaigns :refer [campaign-minimal]]
              [coas :refer [coa-minimal]]
              [exploit-targets :refer [exploit-target-minimal]]
              [incidents :refer [incident-minimal]]
              [indicators :refer [indicator-minimal]]
              [judgements :refer [judgement-minimal]]
+             [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
              [sightings :refer [sighting-minimal]]
-             [ttps :refer [ttp-minimal]]]))
+             [tools :refer [tool-minimal]]]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -59,15 +61,17 @@
 
 (def examples
   {:actors (n-doc actor-minimal fixtures-nb)
+   :attack-patterns (n-doc attack-pattern-minimal fixtures-nb)
    :campaigns (n-doc campaign-minimal fixtures-nb)
    :coas (n-doc coa-minimal fixtures-nb)
    :exploit-targets (n-doc exploit-target-minimal fixtures-nb)
    :incidents (n-doc incident-minimal fixtures-nb)
    :indicators (n-doc indicator-minimal fixtures-nb)
    :judgements (n-doc judgement-minimal fixtures-nb)
+   :malwares (n-doc malware-minimal fixtures-nb)
    :relationships (n-doc relationship-minimal fixtures-nb)
    :sightings (n-doc sighting-minimal fixtures-nb)
-   :ttps (n-doc ttp-minimal fixtures-nb)})
+   :tools (n-doc tool-minimal fixtures-nb)})
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -107,7 +111,7 @@
                  ["campaign - finished migrating 100 documents"
                   "indicator - finished migrating 100 documents"
                   "exploit-target - finished migrating 100 documents"
-                  "event - finished migrating 1000 documents"
+                  "event - finished migrating 1200 documents"
                   "actor - finished migrating 100 documents"
                   "relationship - finished migrating 100 documents"
                   "incident - finished migrating 100 documents"
@@ -117,7 +121,9 @@
                   "data-table - finished migrating 0 documents"
                   "feedback - finished migrating 0 documents"
                   "sighting - finished migrating 100 documents"
-                  "ttp - finished migrating 100 documents"]
+                  "attack-pattern - finished migrating 100 documents"
+                  "malware - finished migrating 100 documents"
+                  "tool - finished migrating 100 documents"]
                  messages))))
 
         (testing "shall produce new indices
@@ -128,7 +134,9 @@
                         judgement
                         exploit-target
                         coa
-                        ttp
+                        tool
+                        attack-pattern
+                        malware
                         incident
                         event
                         indicator
@@ -142,7 +150,9 @@
                       judgement fixtures-nb
                       exploit-target fixtures-nb
                       coa fixtures-nb
-                      ttp fixtures-nb
+                      attack-pattern fixtures-nb
+                      malware fixtures-nb
+                      tool fixtures-nb
                       incident fixtures-nb
                       event (* (count (keys examples))
                                fixtures-nb)
