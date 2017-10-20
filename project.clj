@@ -86,6 +86,7 @@
 
                  ;; Hooks
                  [redismq "0.1.0-SNAPSHOT"]
+                 [threatgrid/redismq "0.1.0"]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]
