@@ -28,9 +28,6 @@
 (def sighting-sort-fields
   (apply s/enum sorting/sighting-sort-fields))
 
-(def ttp-sort-fields
-  (apply s/enum sorting/ttp-sort-fields))
-
 (def actor-sort-fields
   (apply s/enum sorting/actor-sort-fields))
 
@@ -43,6 +40,14 @@
 (def feedback-sort-fields
   (apply s/enum sorting/feedback-sort-fields))
 
+(def attack-pattern-sort-fields
+  (apply s/enum sorting/attack-pattern-sort-fields))
+
+(def malware-sort-fields
+  (apply s/enum sorting/malware-sort-fields))
+
+(def tool-sort-fields
+  (apply s/enum sorting/tool-sort-fields))
 
 ;; Paging related values and code
 
@@ -184,32 +189,6 @@
     (s/optional-key :observables.type) s/Str
     (s/optional-key :sort_by)  sighting-sort-fields}))
 
-
-(s/defschema TTPSearchParams
-  (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
-   {:query s/Str
-    (s/optional-key :ttp_type) s/Str
-    (s/optional-key :intended_effect) s/Str
-    (s/optional-key :behavior.malware_type.type) s/Str
-    (s/optional-key :behavior.attack_pattern.capec_id) s/Str
-
-    (s/optional-key :resource.personas) s/Str
-    (s/optional-key :resource.tools.type) s/Str
-    (s/optional-key :resource.tools.vendor) s/Str
-    (s/optional-key :resource.tools.service_pack) s/Str
-    (s/optional-key :resource.infrastructure.type) s/Str
-
-    (s/optional-key :victim_targeting.identity) s/Str
-    (s/optional-key :victim_targeting) s/Str
-
-    (s/optional-key :kill_chains) s/Str
-
-    (s/optional-key :sort_by)  ttp-sort-fields}))
-
-
 (s/defschema ActorSearchParams
   (st/merge
    PagingParams
@@ -249,3 +228,36 @@
     (s/optional-key :efficacy) s/Str
     (s/optional-key :structured_coa_type) s/Str
     (s/optional-key :sort_by) coa-sort-fields}))
+
+(s/defschema AttackPatternSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   {:query s/Str}
+   (st/optional-keys
+    {:kill_chain_phases.kill_chain_name s/Str
+     :kill_chain_phases.phase_name s/Str
+     :sort_by attack-pattern-sort-fields})))
+
+(s/defschema MalwareSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   {:query s/Str}
+   (st/optional-keys
+    {:labels s/Str
+     :kill_chain_phases.kill_chain_name s/Str
+     :kill_chain_phases.phase_name s/Str
+     :sort_by malware-sort-fields})))
+
+(s/defschema ToolSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   {:query s/Str}
+   (st/optional-keys
+    {:labels s/Str
+     :kill_chain_phases.kill_chain_name s/Str
+     :kill_chain_phases.phase_name s/Str
+     :tool_version s/Str
+     :sort_by malware-sort-fields})))

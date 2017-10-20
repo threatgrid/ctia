@@ -13,6 +13,7 @@
             [ctim.domain.id :as id]
             [ctim.schemas
              [actor :refer [NewActor]]
+             [attack-pattern :refer [NewAttackPattern]]
              [campaign :refer [NewCampaign]]
              [coa :refer [NewCOA]]
              [exploit-target :refer [NewExploitTarget]]
@@ -20,9 +21,10 @@
              [incident :refer [NewIncident]]
              [indicator :refer [NewIndicator]]
              [judgement :refer [NewJudgement] :as csj]
+             [malware :refer [NewMalware]]
              [relationship :refer [NewRelationship]]
              [sighting :refer [NewSighting]]
-             [ttp :refer [NewTTP]]]
+             [tool :refer [NewTool]]]
             [flanders
              [spec :as fs]
              [utils :as fu]]))
@@ -47,12 +49,13 @@
                 encode)
 
             {get-status :status
-             get-entity :parsed-body}
+             get-entity :parsed-body
+             :as response}
             (get (str "ctia/" type "/" url-id))]
 
         (if (not= 200 get-status)
           (throw (ex-info "GET did not return status 200"
-                          get-entity)))
+                          response)))
 
         (if-not (empty? (keys new-entity))
           (common= new-entity
@@ -62,6 +65,7 @@
                    (dissoc get-entity :id)))))))
 
 (doseq [[entity kw-ns] [[NewActor "max-new-actor"]
+                        [NewAttackPattern "max-new-attack-pattern"]
                         [NewCampaign "max-new-campaign"]
                         [NewCOA "max-new-coa"]
                         [NewExploitTarget "max-new-exploit-target"]
@@ -69,9 +73,10 @@
                         [NewIncident "max-new-incident"]
                         [NewIndicator "max-new-indicator"]
                         [NewJudgement "max-new-judgement"]
+                        [NewMalware "max-new-malware"]
                         [NewRelationship "max-new-relationship"]
                         [NewSighting "max-new-sighting"]
-                        [NewTTP "max-new-ttp"]]]
+                        [NewTool "max-new-tool"]]]
   (fs/->spec (fu/require-all entity)
              kw-ns))
 
@@ -82,6 +87,10 @@
 (def api-for-actor-routes
   (api-for-route 'actor
                  (spec-gen "max-new-actor")))
+
+(def api-for-attack-pattern-routes
+  (api-for-route 'attack-pattern
+                 (spec-gen "max-new-attack-pattern")))
 
 (def api-for-campaign-routes
   (api-for-route 'campaign
@@ -112,6 +121,10 @@
                  (tcg/fmap csj/fix-disposition
                            (spec-gen "max-new-judgement"))))
 
+(def api-for-malware-routes
+  (api-for-route 'malware
+                 (spec-gen "max-new-malware")))
+
 (def api-for-relationship-routes
   (api-for-route 'relationship
                  (spec-gen "max-new-relationship")))
@@ -120,6 +133,6 @@
   (api-for-route 'sighting
                  (spec-gen "max-new-sighting")))
 
-(def api-for-ttp-routes
-  (api-for-route 'ttp
-                 (spec-gen "max-new-ttp")))
+(def api-for-tool-routes
+  (api-for-route 'tool
+                 (spec-gen "max-new-tool")))

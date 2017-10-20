@@ -7,6 +7,7 @@
 (s/defschema Bulk
   (st/optional-keys
    {:actors          [(s/maybe Actor)]
+    :attack-patterns [(s/maybe AttackPattern)]
     :campaigns       [(s/maybe Campaign)]
     :coas            [(s/maybe COA)]
     :data-tables     [(s/maybe DataTable)]
@@ -15,13 +16,15 @@
     :incidents       [(s/maybe Incident)]
     :indicators      [(s/maybe Indicator)]
     :judgements      [(s/maybe Judgement)]
+    :malwares        [(s/maybe Malware)]
     :relationships   [(s/maybe Relationship)]
     :sightings       [(s/maybe Sighting)]
-    :ttps            [(s/maybe TTP)]}))
+    :tools           [(s/maybe Tool)]}))
 
 (s/defschema StoredBulk
   (st/optional-keys
    {:actors          [(s/maybe StoredActor)]
+    :attack-patterns [(s/maybe StoredAttackPattern)]
     :campaigns       [(s/maybe StoredCampaign)]
     :coas            [(s/maybe StoredCOA)]
     :data-tables     [(s/maybe StoredDataTable)]
@@ -30,13 +33,15 @@
     :incidents       [(s/maybe StoredIncident)]
     :indicators      [(s/maybe StoredIndicator)]
     :judgements      [(s/maybe StoredJudgement)]
+    :malwares        [(s/maybe StoredMalware)]
     :relationships   [(s/maybe StoredRelationship)]
     :sightings       [(s/maybe StoredSighting)]
-    :ttps            [(s/maybe StoredTTP)]}))
+    :tools           [(s/maybe StoredTool)]}))
 
 (s/defschema BulkRefs
   (st/optional-keys
    {:actors          [(s/maybe Reference)]
+    :attack-patterns [(s/maybe Reference)]
     :campaigns       [(s/maybe Reference)]
     :coas            [(s/maybe Reference)]
     :data-tables     [(s/maybe Reference)]
@@ -45,13 +50,15 @@
     :incidents       [(s/maybe Reference)]
     :indicators      [(s/maybe Reference)]
     :judgements      [(s/maybe Reference)]
+    :malwares        [(s/maybe Reference)]
     :relationships   [(s/maybe Reference)]
     :sightings       [(s/maybe Reference)]
-    :ttps            [(s/maybe Reference)]}))
+    :tools           [(s/maybe Reference)]}))
 
 (s/defschema NewBulk
   (st/optional-keys
    {:actors          [NewActor]
+    :attack-patterns [NewAttackPattern]
     :campaigns       [NewCampaign]
     :coas            [NewCOA]
     :data-tables     [NewDataTable]
@@ -60,6 +67,7 @@
     :incidents       [NewIncident]
     :indicators      [NewIndicator]
     :judgements      [NewJudgement]
+    :malwares        [NewMalware]
     :relationships   [NewRelationship]
     :sightings       [NewSighting]
-    :ttps            [NewTTP]}))
+    :tools           [NewTool]}))

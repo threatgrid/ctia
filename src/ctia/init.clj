@@ -45,6 +45,9 @@
    :actor
    {:es es-store/->ActorStore}
 
+   :attack-pattern
+   {:es es-store/->AttackPatternStore}
+
    :campaign
    {:es es-store/->CampaignStore}
 
@@ -75,14 +78,17 @@
    :judgement
    {:es es-store/->JudgementStore}
 
+   :malware
+   {:es es-store/->MalwareStore}
+
    :relationship
    {:es es-store/->RelationshipStore}
 
    :sighting
    {:es es-store/->SightingStore}
 
-   :ttp
-   {:es es-store/->TTPStore}})
+   :tool
+   {:es es-store/->ToolStore}})
 
 (defn init-store-service! []
   (doseq [[entity-key impls] @store/stores]
