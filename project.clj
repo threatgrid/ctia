@@ -85,7 +85,6 @@
                  [ring-cors "0.1.8"]
 
                  ;; Hooks
-                 [redismq "0.1.0-SNAPSHOT"]
                  [threatgrid/redismq "0.1.0"]
 
                  ;; GraphQL
