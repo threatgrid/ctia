@@ -115,13 +115,13 @@
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"
-  [{:keys [conn indexname mapping]} batch-size offset sort]
+  [{:keys [conn indexname mapping]} batch-size offset sort-keys]
   (let [params
         (merge
          {:offset (or offset 0)
           :limit batch-size}
-         (when sort
-           {:search_after sort}))]
+         (when sort-keys
+           {:search_after sort-keys}))]
     (es-doc/search-docs
      conn
      indexname
@@ -191,14 +191,14 @@
                store-size))
 
   (loop [offset 0
-         sort nil
+         sort-keys nil
          migrated-count 0]
     (let [{:keys [data paging]
            :as batch}
           (fetch-batch current-store
                        batch-size
                        offset
-                       sort)
+                       sort-keys)
           next (:next paging)
           offset (:offset next)
           search_after (:sort paging)
@@ -254,14 +254,14 @@
                store-size)
 
     (loop [offset 0
-           sort nil
+           sort-keys nil
            checked-count 0]
       (let [{:keys [data paging]
              :as batch}
             (fetch-batch target-store
                          batch-size
                          offset
-                         sort)
+                         sort-keys)
             next (:next paging)
             offset (:offset next)
             search_after (:sort paging)
