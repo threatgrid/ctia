@@ -183,6 +183,15 @@
            (crud/make-id (name type-kw))
            (get-in @properties [:ctia :http :show])))
 
+(defn url-id
+  ([type-kw]
+   (url-id (crud/make-id (name type-kw)) type-kw))
+  ([short-id type-kw]
+   (id/long-id
+    (id/short-id->id (name type-kw)
+                     short-id
+                     (get-in @properties [:ctia :http :show])))))
+
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 
 (defn fake-short-id
