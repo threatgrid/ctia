@@ -115,9 +115,13 @@
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"
-  [{:keys [conn indexname mapping]} batch-size offset]
-  (let [params {:offset (or offset 0)
-                :limit batch-size}]
+  [{:keys [conn indexname mapping]} batch-size offset sort]
+  (let [params
+        (merge
+         {:offset (or offset 0)
+          :limit batch-size}
+         (when sort
+           {:search_after sort}))]
     (es-doc/search-docs
      conn
      indexname
@@ -132,7 +136,6 @@
   (log/infof "%s - storing %s records"
              type
              (count batch))
-
   (let [prepared-docs
         (map #(assoc %
                      :_id (:id %)
@@ -180,7 +183,7 @@
    confirm?]
   (when confirm?
     (create-target-store target-store))
-  (let [store-size (-> (fetch-batch current-store 1 0)
+  (let [store-size (-> (fetch-batch current-store 1 0 nil)
                        :paging
                        :total-hits)]
     (log/infof "%s - store size: %s records"
@@ -188,17 +191,21 @@
                store-size))
 
   (loop [offset 0
+         sort nil
          migrated-count 0]
     (let [{:keys [data paging]
            :as batch}
           (fetch-batch current-store
                        batch-size
-                       offset)
+                       offset
+                       sort)
           next (:next paging)
           offset (:offset next)
+          search_after (:sort paging)
           migrated (transduce migrations conj data)
           migrated-count (+ migrated-count
                             (count migrated))]
+
       (when (seq migrated)
         (when confirm?
           (store-batch target-store migrated))
@@ -207,7 +214,7 @@
                    (:type current-store)
                    migrated-count))
       (if next
-        (recur offset migrated-count)
+        (recur offset search_after migrated-count)
         (log/infof "%s - finished migrating %s documents"
                    (:type current-store)
                    migrated-count)))))
@@ -239,7 +246,7 @@
    batch-size]
   (let [store-schema (type->schema (keyword (:type target-store)))
         coerce! (coerce-to-fn [store-schema])
-        store-size (-> (fetch-batch target-store 1 0)
+        store-size (-> (fetch-batch target-store 1 0 nil)
                        :paging
                        :total-hits)]
     (log/infof "%s - store size: %s records"
@@ -247,19 +254,22 @@
                store-size)
 
     (loop [offset 0
+           sort nil
            checked-count 0]
       (let [{:keys [data paging]
              :as batch}
             (fetch-batch target-store
                          batch-size
-                         offset)
+                         offset
+                         sort)
             next (:next paging)
             offset (:offset next)
+            search_after (:sort paging)
             checked (coerce! data)
             checked-count (+ checked-count
                              (count checked))]
         (if next
-          (recur offset checked-count)
+          (recur offset search_after checked-count)
           (log/infof "%s - finished checking %s documents"
                      (:type target-store)
                      checked-count))))))
