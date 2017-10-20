@@ -147,7 +147,7 @@
 (defn create-target-store
   "create the target store, pushing its template"
   [target-store]
-  (let [wildcard (str (:indexname target-store) "*")]
+  (let [wildcard (:indexname target-store)]
     (log/infof "%s - purging indexes: %s"
                (:type target-store)
                wildcard)
