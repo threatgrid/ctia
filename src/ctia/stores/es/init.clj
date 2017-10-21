@@ -65,6 +65,7 @@
 
 (def ^:private factories
   {:actor          (make-factory es-store/->ActorStore)
+   :attack-pattern (make-factory es-store/->AttackPatternStore)
    :campaign       (make-factory es-store/->CampaignStore)
    :coa            (make-factory es-store/->COAStore)
    :data-table     (make-factory es-store/->DataTableStore)
@@ -75,9 +76,10 @@
    :incident       (make-factory es-store/->IncidentStore)
    :indicator      (make-factory es-store/->IndicatorStore)
    :judgement      (make-factory es-store/->JudgementStore)
+   :malware        (make-factory es-store/->MalwareStore)
    :relationship   (make-factory es-store/->RelationshipStore)
    :sighting       (make-factory es-store/->SightingStore)
-   :ttp            (make-factory es-store/->TTPStore)})
+   :tool           (make-factory es-store/->ToolStore)})
 
 (defn init-store! [store-kw]
   (when-let [factory (get factories store-kw)]

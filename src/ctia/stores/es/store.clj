@@ -3,6 +3,7 @@
             [ctia.store
              :refer
              [IActorStore
+              IAttackPatternStore
               ICampaignStore
               ICOAStore
               IDataTableStore
@@ -13,12 +14,14 @@
               IIncidentStore
               IIndicatorStore
               IJudgementStore
+              IMalwareStore
               IQueryStringSearchableStore
               IRelationshipStore
               ISightingStore
-              ITTPStore]]
+              IToolStore]]
             [ctia.stores.es
              [actor :as ac]
+             [attack-pattern :as attack]
              [campaign :as ca]
              [coa :as coa]
              [data-table :as dt]
@@ -29,9 +32,11 @@
              [incident :as inc]
              [indicator :as in]
              [judgement :as ju]
+             [malware :as malware]
+             [mapping :refer [store-mappings store-settings]]
              [relationship :as rel]
              [sighting :as sig]
-             [ttp :as ttp]]
+             [tool :as tool]]
             [schema.core :as s]))
 
 (defn delete-state-indexes [{:keys [conn index config]}]
@@ -99,22 +104,6 @@
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap ident params]
     (in/handle-query-string-search state query filtermap ident params)))
-
-(defrecord TTPStore [state]
-  ITTPStore
-  (read-ttp [_ id ident]
-    (ttp/handle-read state id ident))
-  (create-ttps [_ new-ttps ident]
-    (ttp/handle-create state new-ttps ident))
-  (update-ttp [_ id new-ttp ident]
-    (ttp/handle-update state id new-ttp ident))
-  (delete-ttp [_ id ident]
-    (ttp/handle-delete state id ident))
-  (list-ttps [_ filter-map ident params]
-    (ttp/handle-list state filter-map ident params))
-  IQueryStringSearchableStore
-  (query-string-search [_ query filtermap ident params]
-    (ttp/handle-query-string-search state query filtermap ident params)))
 
 (defrecord ActorStore [state]
   IActorStore
@@ -233,6 +222,54 @@
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap ident params]
     (sig/handle-query-string-search-sightings state query filtermap ident params)))
+
+(defrecord AttackPatternStore [state]
+  IAttackPatternStore
+  (read-attack-pattern [_ id ident]
+    (attack/handle-read state id ident))
+  (create-attack-patterns [_ new-attack-patterns ident]
+    (attack/handle-create state new-attack-patterns ident))
+  (update-attack-pattern [_ id attack-pattern ident]
+    (attack/handle-update state id attack-pattern ident))
+  (delete-attack-pattern [_ id ident]
+    (attack/handle-delete state id ident))
+  (list-attack-patterns [_ filter-map ident params]
+    (attack/handle-list state filter-map ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (attack/handle-query-string-search state query filtermap ident params)))
+
+(defrecord MalwareStore [state]
+  IMalwareStore
+  (read-malware [_ id ident]
+    (malware/handle-read state id ident))
+  (create-malwares [_ new-malwares ident]
+    (malware/handle-create state new-malwares ident))
+  (update-malware [_ id malware ident]
+    (malware/handle-update state id malware ident))
+  (delete-malware [_ id ident]
+    (malware/handle-delete state id ident))
+  (list-malwares [_ filter-map ident params]
+    (malware/handle-list state filter-map ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (malware/handle-query-string-search state query filtermap ident params)))
+
+(defrecord ToolStore [state]
+  IToolStore
+  (read-tool [_ id ident]
+    (tool/handle-read state id ident))
+  (create-tools [_ new-tools ident]
+    (tool/handle-create state new-tools ident))
+  (update-tool [_ id tool ident]
+    (tool/handle-update state id tool ident))
+  (delete-tool [_ id ident]
+    (tool/handle-delete state id ident))
+  (list-tools [_ filter-map ident params]
+    (tool/handle-list state filter-map ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (tool/handle-query-string-search state query filtermap ident params)))
 
 (defrecord EventStore [state]
   IEventStore

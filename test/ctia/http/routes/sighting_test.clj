@@ -11,7 +11,7 @@
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [access-control :refer [access-control-test]]
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [delete get post put url-id]]
              [fake-whoami-service :as whoami-helpers]
              [http :refer [api-key]]
              [search :refer [test-query-string-search]]
@@ -35,7 +35,7 @@
     (let [{status :status
            sighting :parsed-body}
           (post "ctia/sighting"
-                :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                :body {:id (url-id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c" :sighting)
                        :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
                                       "http://ex.tld/ctia/sighting/sighting-345"]
                        :timestamp "2016-02-11T00:40:48.212-00:00"
@@ -124,7 +124,7 @@
         (let [{status :status
                updated-sighting :parsed-body}
               (put (str "ctia/sighting/" (:short-id sighting-id))
-                   :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                   :body {:id (url-id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c" :sighting)
                           :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
                                          "http://ex.tld/ctia/sighting/sighting-345"]
                           :timestamp "2016-02-11T00:40:48.212-00:00"
@@ -157,7 +157,7 @@
         (let [{status :status
                body :body}
               (put (str "ctia/sighting/" (:short-id sighting-id))
-                   :body {:id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c"
+                   :body {:id (url-id "sighting-7d24c22a-96e3-40fb-81d3-eae158f0770c" :sighting)
                           :external_ids ["http://ex.tld/ctia/sighting/sighting-123"
                                          "http://ex.tld/ctia/sighting/sighting-345"]
                           :timestamp "2016-02-11T00:40:48.212-00:00"

@@ -1,41 +1,56 @@
 (ns ctia.domain.entities
-  (:require [clj-momo.lib.time :as time]
-            [ctia.domain.access-control :refer [properties-default-tlp]]
-            [ctia.properties :refer [get-http-show]]
-            [ctia.schemas.core
-             :refer
-             [NewActor
-              NewCampaign
-              NewCOA
-              NewDataTable
-              NewExploitTarget
-              NewFeedback
-              NewIncident
-              NewIndicator
-              NewJudgement
-              NewRelationship
-              NewSighting
-              NewTTP
-              StoredActor
-              StoredCampaign
-              StoredCOA
-              StoredDataTable
-              StoredExploitTarget
-              StoredFeedback
-              StoredIncident
-              StoredIndicator
-              StoredJudgement
-              StoredRelationship
-              StoredSighting
-              StoredTTP]]
-            [ctim.domain.id :as id]
-            [ctim.schemas.common
-             :refer
-             [ctim-schema-version determine-disposition-id disposition-map]]
-            [ring.util.http-response :as http-response]
-            [schema.core :as s]))
+  (:require
+   [clj-momo.lib.time :as time]
+   [ctia.domain.access-control :refer [properties-default-tlp]]
+   [ctia.properties :refer [get-http-show]]
+   [ctim.domain.id :as id]
+   [ring.util.http-response :as http-response]
+   [schema.core :as s]
+   [ctim.schemas.common
+    :refer [ctim-schema-version
+            default-tlp
+            determine-disposition-id
+            disposition-map]]
+   [ctia.schemas.core
+    :as ctia-schemas
+    :refer [NewActor
+            StoredActor
+            NewAttackPattern
+            StoredAttackPattern
+            NewCampaign
+            StoredCampaign
+            NewCOA
+            StoredCOA
+            NewDataTable
+            StoredDataTable
+            NewExploitTarget
+            StoredExploitTarget
+            NewFeedback
+            StoredFeedback
+            NewIncident
+            StoredIncident
+            NewIndicator
+            StoredIndicator
+            NewJudgement
+            StoredJudgement
+            NewMalware
+            StoredMalware
+            NewSighting
+            StoredSighting
+            NewTool
+            StoredTool
+            NewRelationship
+            StoredRelationship]])
+  (:import [java.util UUID]))
 
 (def schema-version ctim-schema-version)
+
+(defn contains-key?
+  "Returns true if the schema contains the given key, false otherwise."
+  [schema k]
+  (or (contains? schema (s/optional-key k))
+      (contains? schema (s/required-key k))
+      (contains? schema k)))
 
 (defn default-realize-fn [type-name Model StoredModel]
   (s/fn default-realize :- StoredModel
@@ -50,24 +65,28 @@
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
      (let [now (time/now)]
-       (assoc new-object
-              :id id
-              :type type-name
-              :owner (or (:owner prev-object) owner)
-              :groups (or (:groups prev-object) groups)
-              :schema_version schema-version
-              :created (or (:created prev-object) now)
-              :modified now
-              :tlp (:tlp new-object
-                         (:tlp prev-object (properties-default-tlp)))
-              :valid_time (or (:valid_time prev-object)
-                              {:end_time (or (get-in new-object [:valid_time :end_time])
-                                             time/default-expire-date)
-                               :start_time (or (get-in new-object [:valid_time :start_time])
-                                               now)}))))))
+       (merge new-object
+              {:id id
+               :type type-name
+               :owner (or (:owner prev-object) owner)
+               :groups (or (:groups prev-object) groups)
+               :schema_version schema-version
+               :created (or (:created prev-object) now)
+               :modified now
+               :tlp (:tlp new-object
+                          (:tlp prev-object (properties-default-tlp)))}
+              (when (contains-key? Model :valid_time)
+                {:valid_time (or (:valid_time prev-object)
+                                 {:end_time (or (get-in new-object [:valid_time :end_time])
+                                                time/default-expire-date)
+                                  :start_time (or (get-in new-object [:valid_time :start_time])
+                                                  now)})}))))))
 
 (def realize-actor
   (default-realize-fn "actor" NewActor StoredActor))
+
+(def realize-attack-pattern
+  (default-realize-fn "attack-pattern" NewAttackPattern StoredAttackPattern))
 
 (def realize-campaign
   (default-realize-fn "campaign" NewCampaign StoredCampaign))
@@ -115,7 +134,6 @@
          :tlp (:tlp new-relationship (properties-default-tlp))
          :schema_version schema-version))
 
-
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
    id :- s/Str
@@ -147,6 +165,9 @@
                                                 [:valid_time :start_time])
                                         now)})))
 
+(def realize-malware
+  (default-realize-fn "malware" NewMalware StoredMalware))
+
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting
     id :- s/Str
@@ -174,8 +195,8 @@
             :created (or (:created prev-sighting) now)
             :modified now))))
 
-(def realize-ttp
-  (default-realize-fn "ttp" NewTTP StoredTTP))
+(def realize-tool
+  (default-realize-fn "tool" NewTool StoredTool))
 
 (def ->long-id (id/factory:short-id+type->long-id get-http-show))
 

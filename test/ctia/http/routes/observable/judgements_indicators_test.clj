@@ -41,7 +41,7 @@
     (testing "test setup: create judgement-1"
       (let [{status :status}
             (post "ctia/judgement"
-                  :body {:id (:short-id judgement-1-id)
+                  :body {:id (id/long-id judgement-1-id)
                          :observable observable-1
                          :source "source"
                          :priority 99
@@ -55,7 +55,7 @@
     (testing "test setup: create judgement-2"
       (let [{status :status}
             (post "ctia/judgement"
-                  :body {:id (:short-id judgement-2-id)
+                  :body {:id (id/long-id judgement-2-id)
                          :observable observable-1
                          :source "source"
                          :priority 99
@@ -80,7 +80,7 @@
     (testing "test setup: create judgement-3"
       (let [{status :status}
             (post "ctia/judgement"
-                  :body {:id (:short-id judgement-3-id)
+                  :body {:id (id/long-id judgement-3-id)
                          :observable observable-2
                          :source "source"
                          :priority 99
@@ -94,7 +94,7 @@
     (testing "test setup: create indicator-1"
       (let [{status :status}
             (post "ctia/indicator"
-                  :body {:id (:short-id indicator-1-id)
+                  :body {:id (id/long-id indicator-1-id)
                          :producer "producer"
                          :external_ids ["indicator-1"]}
                   :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -104,7 +104,7 @@
     (testing "test setup: create indicator-2"
       (let [{status :status}
             (post "ctia/indicator"
-                  :body {:id (:short-id indicator-2-id)
+                  :body {:id (id/long-id indicator-2-id)
                          :producer "producer"
                          :external_ids ["indicator-2"]}
                   :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -115,7 +115,7 @@
                   "based on indicator-1")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-1-id)
+                  :body {:id (id/long-id relationship-1-id)
                          :source_ref (id/long-id judgement-1-id)
                          :relationship_type "based-on"
                          :target_ref (id/long-id indicator-1-id)
@@ -128,7 +128,7 @@
                   "based on indicator-2")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-2-id)
+                  :body {:id (id/long-id relationship-2-id)
                          :source_ref (id/long-id judgement-3-id)
                          :relationship_type "based-on"
                          :target_ref (id/long-id indicator-2-id)
@@ -141,7 +141,7 @@
                   "based on sighting-1")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-3-id)
+                  :body {:id (id/long-id relationship-3-id)
                          :source_ref (id/long-id judgement-1-id)
                          :relationship_type "based-on"
                          :target_ref (id/long-id sighting-1-id)

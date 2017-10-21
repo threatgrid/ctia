@@ -19,6 +19,12 @@
     :delete-actor
     :search-actor
 
+    ;; Attack Pattern
+    :create-attack-pattern
+    :read-attack-pattern
+    :delete-attack-pattern
+    :search-attack-pattern
+
     ;; Campaign
     :create-campaign
     :read-campaign
@@ -66,6 +72,12 @@
     :delete-judgement
     :search-judgement
 
+    ;; Malware
+    :create-malware
+    :read-malware
+    :delete-malware
+    :search-malware
+
     ;; Relationship
     :create-relationship
     :read-relationship
@@ -80,11 +92,11 @@
     :delete-sighting
     :search-sighting
 
-    ;; TTP
-    :create-ttp
-    :read-ttp
-    :delete-ttp
-    :search-ttp
+    ;; Tool
+    :create-tool
+    :read-tool
+    :delete-tool
+    :search-tool
 
     ;; Verdict
     :read-verdict
@@ -97,6 +109,7 @@
 (def default-capabilities
   {:user
    #{:read-actor
+     :read-attack-pattern
      :read-campaign
      :read-coa
      :read-exploit-target
@@ -106,9 +119,10 @@
      :list-indicators
      :read-judgement
      :list-judgements
+     :read-malware
      :read-sighting
      :list-sightings
-     :read-ttp
+     :read-tool
      :read-verdict}
    :admin
    all-capabilities})

@@ -41,7 +41,7 @@
     (testing "test setup: create sighting-1"
       (let [{status :status}
             (post "ctia/sighting"
-                  :body {:id (:short-id sighting-1-id)
+                  :body {:id (id/long-id sighting-1-id)
                          :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-1]
@@ -53,7 +53,7 @@
     (testing "test setup: create sighting-2"
       (let [{status :status}
             (post "ctia/sighting"
-                  :body {:id (:short-id sighting-2-id)
+                  :body {:id (id/long-id sighting-2-id)
                          :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-1]
@@ -65,7 +65,7 @@
     (testing "test setup: create sighting-3"
       (let [{status :status}
             (post "ctia/sighting"
-                  :body {:id (:short-id sighting-3-id)
+                  :body {:id (id/long-id sighting-3-id)
                          :observed_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                          :end_time #inst "2016-02-11T00:40:48.212-00:00"}
                          :observables [observable-2]
@@ -90,7 +90,7 @@
     (testing "test setup: create indicator-1"
       (let [{status :status}
             (post "ctia/indicator"
-                  :body {:id (:short-id indicator-1-id)
+                  :body {:id (id/long-id indicator-1-id)
                          :producer "producer"
                          :external_ids ["indicator-1"]}
                   :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -100,7 +100,7 @@
     (testing "test setup: create indicator-2"
       (let [{status :status}
             (post "ctia/indicator"
-                  :body {:id (:short-id indicator-2-id)
+                  :body {:id (id/long-id indicator-2-id)
                          :producer "producer"
                          :external_ids ["indicator-2"]}
                   :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -111,7 +111,7 @@
                   "indication of indicator-1")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-1-id)
+                  :body {:id (id/long-id relationship-1-id)
                          :source_ref (id/long-id sighting-1-id)
                          :relationship_type "indicates"
                          :target_ref (id/long-id indicator-1-id)
@@ -124,7 +124,7 @@
                   "indication of indicator-2")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-2-id)
+                  :body {:id (id/long-id relationship-2-id)
                          :source_ref (id/long-id sighting-3-id)
                          :relationship_type "indicates"
                          :target_ref (id/long-id indicator-2-id)
@@ -137,7 +137,7 @@
                   "based on judgement-1")
       (let [{status :status}
             (post "ctia/relationship"
-                  :body {:id (:short-id relationship-3-id)
+                  :body {:id (id/long-id relationship-3-id)
                          :source_ref (id/long-id sighting-3-id)
                          :relationship_type "based-on"
                          :target_ref (id/long-id judgement-1-id)

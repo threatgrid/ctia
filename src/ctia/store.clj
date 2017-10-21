@@ -37,13 +37,6 @@
   (delete-feedback [this id ident])
   (list-feedback [this filtermap ident params]))
 
-(defprotocol ITTPStore
-  (read-ttp [this id ident])
-  (create-ttps [this new-ttps ident])
-  (update-ttp [this id ttp ident])
-  (delete-ttp [this id ident])
-  (list-ttps [this filtermap ident params]))
-
 (defprotocol ICampaignStore
   (read-campaign [this id ident])
   (create-campaigns [this new-campaigns ident])
@@ -90,6 +83,26 @@
   (delete-data-table [this id ident])
   (list-data-tables [this filtermap ident params]))
 
+(defprotocol IAttackPatternStore
+  (read-attack-pattern [this id ident])
+  (create-attack-patterns [this new-attack-patterns ident])
+  (update-attack-pattern [this id attack-pattern ident])
+  (delete-attack-pattern [this id ident])
+  (list-attack-patterns [this filtermap ident params]))
+
+(defprotocol IMalwareStore
+  (read-malware [this id ident])
+  (create-malwares [this new-malwares ident])
+  (update-malware [this id malware ident])
+  (delete-malware [this id ident])
+  (list-malwares [this filtermap ident params]))
+
+(defprotocol IToolStore
+  (read-tool [this id ident])
+  (create-tools [this new-tools ident])
+  (update-tool [this id tool ident])
+  (delete-tool [this id ident])
+  (list-tools [this filtermap ident params]))
 
 (defprotocol IEventStore
   (create-events [this new-events])
@@ -101,7 +114,6 @@
 (def empty-stores {:judgement []
                    :indicator []
                    :feedback []
-                   :ttp []
                    :campaign []
                    :actor []
                    :coa []
@@ -111,6 +123,9 @@
                    :incident []
                    :relationship []
                    :identity []
+                   :attack-pattern []
+                   :malware []
+                   :tool []
                    :event []})
 
 (defonce stores (atom empty-stores))
