@@ -1,8 +1,5 @@
 (ns ctia.stores.es.store
-  (:require [clj-momo.lib.es
-             [conn :refer [connect]]
-             [index :as es-index]
-             [schemas :refer [ESConnState]]]
+  (:require [clj-momo.lib.es.index :as es-index]
             [ctia.store
              :refer
              [IActorStore
@@ -45,27 +42,6 @@
 (defn delete-state-indexes [{:keys [conn index config]}]
   (when conn
     (es-index/delete! conn (str index "*"))))
-
-(s/defn init-store-conn :- ESConnState
-  "initiate an ES store connection returns
-   a map containing a connection manager, dedicated store index properties"
-  [{:keys [entity indexname shards replicas] :as props}]
-
-  (let [settings {:number_of_shards shards
-                  :number_of_replicas replicas}]
-    {:index indexname
-     :props props
-     :config {:settings (merge store-settings settings)
-              :mappings (get store-mappings entity)}
-     :conn (connect props)}))
-
-(s/defn init! :- ESConnState
-  "initiate an ES Store connection,
-   put the index template, return an ESConnState"
-  [props]
-  (let [{:keys [conn index config] :as conn-state} (init-store-conn props)]
-    (es-index/create-template! conn index config)
-    conn-state))
 
 (defrecord JudgementStore [state]
   IJudgementStore

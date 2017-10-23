@@ -21,7 +21,9 @@
             [ctia.flows.hooks :as h]
             [ctia.http.server :as http-server]
             [ctia.shutdown :as shutdown]
-            [ctia.stores.es.store :as es-store]))
+            [ctia.stores.es
+             [init :as es-init]
+             [store :as es-store]]))
 
 (defn init-auth-service! []
   (let [{auth-service-type :type :as auth} (get-in @p/properties [:ctia :auth])]
@@ -33,101 +35,23 @@
                       {:message "Unknown service"
                        :requested-service auth-service-type})))))
 
-(def store-factories
-  { ;; A :builder is called on each store creation and is passed the
-   ;; associated factory function.  It should return the factory
-   ;; result.  This is where you can do idempotent store setup.
-   ;; Specifying a :builder is optional.
-   :builder
-   {:es (fn es-builder [factory props]
-          (factory (es-store/init! props)))}
+(defn- get-store-types [store-kw]
+  (or (some-> (get-in @p/properties [:ctia :store store-kw])
+              (clojure.string/split #","))
+      []))
 
-   :actor
-   {:es es-store/->ActorStore}
-
-   :attack-pattern
-   {:es es-store/->AttackPatternStore}
-
-   :campaign
-   {:es es-store/->CampaignStore}
-
-   :coa
-   {:es es-store/->COAStore}
-
-   :data-table
-   {:es es-store/->DataTableStore}
-
-   :event
-   {:es es-store/->EventStore}
-
-   :exploit-target
-   {:es es-store/->ExploitTargetStore}
-
-   :feedback
-   {:es es-store/->FeedbackStore}
-
-   :identity
-   {:es es-store/->IdentityStore}
-
-   :incident
-   {:es es-store/->IncidentStore}
-
-   :indicator
-   {:es es-store/->IndicatorStore}
-
-   :judgement
-   {:es es-store/->JudgementStore}
-
-   :malware
-   {:es es-store/->MalwareStore}
-
-   :relationship
-   {:es es-store/->RelationshipStore}
-
-   :sighting
-   {:es es-store/->SightingStore}
-
-   :tool
-   {:es es-store/->ToolStore}})
+(defn- build-store [store-kw store-type]
+  (case store-type
+    "es" (es-init/init-store! store-kw)))
 
 (defn init-store-service! []
-  (doseq [[entity-key impls] @store/stores]
-    (swap! store/stores assoc entity-key []))
-
-  (doseq [[store-key store-list] @store/stores]
-    (let [store-impls
-          (or (some-> (get-in @p/properties [:ctia :store store-key])
-                      (clojure.string/split #",")) [])
-
-          store-properties
-          (pmap (fn [impl]
-                  {:properties
-                   (merge
-                    {:entity store-key}
-                    (get-in @p/properties
-                            [:ctia :store impl :default]
-                            {})
-                    (get-in @p/properties
-                            [:ctia :store impl store-key]
-                            {}))
-
-                   :builder
-                   (get-in store-factories [:builder impl]
-                           (fn default-builder [f p] (f)))
-
-                   :factory
-                   (get-in store-factories [store-key impl]
-                           #(throw (ex-info (format "Could not configure %s store" impl)
-                                            {:store-key store-key
-                                             :store-type (keyword %)})))})
-                (map keyword store-impls))
-
-          store-instances
-          (doall (pmap (fn [{:keys [builder factory properties]}]
-                         (builder factory properties))
-                       store-properties))]
-
-      (swap! store/stores assoc store-key store-instances))))
+  (reset! store/stores
+          (->> (keys store/empty-stores)
+               (map (fn [store-kw]
+                      [store-kw (keep (partial build-store store-kw)
+                                      (get-store-types store-kw))]))
+               (into {})
+               (merge-with into store/empty-stores))))
 
 (defn log-properties []
   (log/debug (with-out-str

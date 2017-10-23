@@ -111,22 +111,24 @@
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this query filtermap ident params]))
 
-(defonce stores (atom {:judgement []
-                       :indicator []
-                       :feedback []
-                       :campaign []
-                       :actor []
-                       :coa []
-                       :data-table []
-                       :exploit-target []
-                       :sighting []
-                       :incident []
-                       :relationship []
-                       :identity []
-                       :attack-pattern []
-                       :malware []
-                       :tool []
-                       :event []}))
+(def empty-stores {:judgement []
+                   :indicator []
+                   :feedback []
+                   :campaign []
+                   :actor []
+                   :coa []
+                   :data-table []
+                   :exploit-target []
+                   :sighting []
+                   :incident []
+                   :relationship []
+                   :identity []
+                   :attack-pattern []
+                   :malware []
+                   :tool []
+                   :event []})
+
+(defonce stores (atom empty-stores))
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))
