@@ -53,7 +53,8 @@
 
 (s/defschema PagingParams
   "A schema defining the accepted paging and sorting related query parameters."
-  {(s/optional-key :sort_by) (describe (apply s/enum sorting/default-entity-sort-fields) "Sort results on a field")
+  {(s/optional-key :sort_by) (describe (apply s/enum sorting/default-entity-sort-fields)
+                                       "Sort results on a field")
    (s/optional-key :sort_order) (describe (s/enum :asc :desc) "Sort direction")
    (s/optional-key :offset) (describe Long "Pagination Offset")
    (s/optional-key :limit) (describe Long "Pagination Limit")})

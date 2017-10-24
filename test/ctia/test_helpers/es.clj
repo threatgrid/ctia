@@ -52,6 +52,7 @@
                       "ctia.store.identity" "es"
                       "ctia.store.incident" "es"
                       "ctia.store.indicator" "es"
+                      "ctia.store.investigation" "es"
                       "ctia.store.judgement" "es"
                       "ctia.store.malware" "es"
                       "ctia.store.relationship" "es"

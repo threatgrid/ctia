@@ -39,7 +39,7 @@
     (st/optional-keys
      (reduce merge {}
              (map (fn [s] (merge (default-store-properties s)
-                                (es-store-impl-properties s)))
+                                 (es-store-impl-properties s)))
                   store-names)))))
 
 (s/defschema PropertiesSchema

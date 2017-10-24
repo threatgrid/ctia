@@ -108,6 +108,13 @@
   (create-events [this new-events])
   (list-events [this filtermap ident params]))
 
+(defprotocol IInvestigationStore
+  (read-investigation [this id ident])
+  (create-investigations [this new-investigations ident])
+  (update-investigation [this id investigation ident])
+  (delete-investigation [this id ident])
+  (list-investigations [this filtermap ident params]))
+
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this query filtermap ident params]))
 
@@ -126,7 +133,8 @@
                    :attack-pattern []
                    :malware []
                    :tool []
-                   :event []})
+                   :event []
+                   :investigation []})
 
 (defonce stores (atom empty-stores))
 

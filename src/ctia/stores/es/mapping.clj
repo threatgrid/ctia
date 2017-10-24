@@ -635,6 +635,16 @@
       :tokenizer "keyword"
       :type "custom"}}}})
 
+(def investigation-mapping
+  {"investigation"
+   {:dynamic true
+    :properties
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping)}})
+
 (def store-mappings
   {:judgement judgement-mapping
    :relationship relationship-mapping
@@ -651,4 +661,5 @@
    :attack-pattern attack-pattern-mapping
    :malware malware-mapping
    :tool tool-mapping
-   :event event-mapping})
+   :event event-mapping
+   :investigation investigation-mapping})

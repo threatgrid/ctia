@@ -20,6 +20,7 @@
              [feedback :refer [feedback-routes]]
              [incident :refer [incident-routes]]
              [indicator :refer [indicator-routes]]
+             [investigation :refer [investigation-routes]]
              [judgement :refer [judgement-routes]]
              [malware :refer [malware-routes]]
              [metrics :refer [metrics-routes]]
@@ -131,6 +132,7 @@
                             feedback-routes
                             incident-routes
                             indicator-routes
+                            investigation-routes
                             judgement-routes
                             malware-routes
                             metrics-routes

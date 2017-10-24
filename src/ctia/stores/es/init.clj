@@ -75,6 +75,7 @@
    :identity       (make-factory es-store/->IdentityStore)
    :incident       (make-factory es-store/->IncidentStore)
    :indicator      (make-factory es-store/->IndicatorStore)
+   :investigation  (make-factory es-store/->InvestigationStore)
    :judgement      (make-factory es-store/->JudgementStore)
    :malware        (make-factory es-store/->MalwareStore)
    :relationship   (make-factory es-store/->RelationshipStore)
