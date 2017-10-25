@@ -294,4 +294,4 @@
     (inv/handle-list state filtermap ident params))
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap ident params]
-    (tool/handle-query-string-search state query filtermap ident params)))
+    (inv/handle-query-string-search state query filtermap ident params)))
