@@ -76,6 +76,21 @@
                            :bar "bar"}))
                (dissoc investigation :id)))))
 
+      (testing "GET /ctia/investigation/external_id/:external_id"
+        (let [ext-id (-> ex/investigation-maximal :external_ids first)
+
+              {status :status
+               investigations :parsed-body}
+              (get (str "ctia/investigation/external_id/" (encode ext-id))
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
+          (is (= 200 status))
+          (is (deep=
+               [(-> ex/investigation-maximal
+                    (dissoc :id)
+                    (merge {:foo "foo"
+                            :bar "bar"}))]
+               (map #(dissoc % :id) investigations)))))
+
       (testing "PUT /ctia/investigation/:id"
         (let [{status :status
                updated-investigation :parsed-body}

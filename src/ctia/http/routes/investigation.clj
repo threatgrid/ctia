@@ -18,7 +18,7 @@
    [schema.core :as s]))
 
 
-(s/defschema InvestigationQueryParams
+(s/defschema InvestigationsByExternalIdQueryParams
   PagingParams)
 
 (defroutes investigation-routes
@@ -77,6 +77,24 @@
                      :spec :new-investigation/map)
                     ent/un-store
                     ok))
+
+           (GET "/external_id/:external_id" []
+                :return (s/maybe [Investigation])
+                :query [q InvestigationsByExternalIdQueryParams]
+                :path-params [external_id :- s/Str]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                :summary "Get Investigations by external IDs"
+                :capabilities #{:read-investigation :external-id}
+                :identity identity
+                :identity-map identity-map
+                (-> (read-store :investigation
+                                list-investigations
+                                {:external_ids external_id}
+                                identity-map
+                                q)
+                    page-with-long-id
+                    ent/un-store-page
+                    paginated-ok))
 
            (GET "/:id" []
                 :return (s/maybe Investigation)
