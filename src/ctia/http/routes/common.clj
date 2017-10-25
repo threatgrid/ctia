@@ -49,6 +49,9 @@
 (def tool-sort-fields
   (apply s/enum sorting/tool-sort-fields))
 
+(def InvestigationSortFields
+  (apply s/enum sorting/investigation-sort-fields))
+
 ;; Paging related values and code
 
 (s/defschema PagingParams
@@ -262,3 +265,11 @@
      :kill_chain_phases.phase_name s/Str
      :tool_version s/Str
      :sort_by malware-sort-fields})))
+
+(s/defschema InvestigationSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   {:query s/Str}
+   {s/Keyword s/Any}))

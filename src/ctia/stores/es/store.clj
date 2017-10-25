@@ -291,4 +291,7 @@
   (delete-investigation [this id ident]
     (inv/handle-delete state id ident))
   (list-investigations [this filtermap ident params]
-    (inv/handle-list state filtermap ident params)))
+    (inv/handle-list state filtermap ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (tool/handle-query-string-search state query filtermap ident params)))

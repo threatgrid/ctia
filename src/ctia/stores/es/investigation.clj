@@ -8,3 +8,5 @@
 (def handle-update (crud/handle-update :investigation StoredInvestigation))
 (def handle-delete (crud/handle-delete :investigation StoredInvestigation))
 (def handle-list (crud/handle-find :investigation StoredInvestigation))
+(def handle-query-string-search (crud/handle-query-string-search
+                                 :investigation StoredInvestigation))

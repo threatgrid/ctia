@@ -1,5 +1,6 @@
 (ns ctia.http.routes.investigation
   (:require
+   [clojure.tools.logging :as log]
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :as ent]
    [ctia.domain.entities.investigation
@@ -10,7 +11,7 @@
     :refer [created
             paginated-ok
             PagingParams
-            ActorSearchParams]]
+            InvestigationSearchParams]]
    [ctia.store :refer :all]
    [ctia.schemas.core :refer [Investigation NewInvestigation]]
    [ring.util.http-response :refer [no-content not-found ok]]
@@ -92,6 +93,25 @@
                                 {:external_ids external_id}
                                 identity-map
                                 q)
+                    page-with-long-id
+                    ent/un-store-page
+                    paginated-ok))
+
+           (GET "/search" []
+                :return (s/maybe [Investigation])
+                :summary "Search for an Investigation using a Lucene/ES query string"
+                :query [params InvestigationSearchParams]
+                :capabilities #{:read-investigation :search-investigation}
+                :identity identity
+                :identity-map identity-map
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                (-> (query-string-search-store
+                     :investigation
+                     query-string-search
+                     (:query params)
+                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     identity-map
+                     (select-keys params [:sort_by :sort_order :offset :limit]))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))

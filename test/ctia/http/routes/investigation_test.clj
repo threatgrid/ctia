@@ -13,6 +13,7 @@
     [auth :refer [all-capabilities]]
     [core :as helpers :refer [delete get post put]]
     [fake-whoami-service :as whoami-helpers]
+    [search :refer [test-query-string-search]]
     [store :refer [deftest-for-each-store]]]
    [ctim.domain.id :as id]
    [ctim.examples.investigations :as ex]))
@@ -75,6 +76,8 @@
                    (merge {:foo "foo"
                            :bar "bar"}))
                (dissoc investigation :id)))))
+
+      (test-query-string-search :investigation "foo" :foo)
 
       (testing "GET /ctia/investigation/external_id/:external_id"
         (let [ext-id (-> ex/investigation-maximal :external_ids first)
