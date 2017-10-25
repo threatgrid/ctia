@@ -57,7 +57,7 @@
                        :bar "bar"}))
            (dissoc investigation :id)))
 
-      (testing "the actor ID has correct fields"
+      (testing "the Investigation ID has correct fields"
         (let [show-props (get-http-show)]
           (is (= (:hostname    investigation-id)      (:hostname    show-props)))
           (is (= (:protocol    investigation-id)      (:protocol    show-props)))
