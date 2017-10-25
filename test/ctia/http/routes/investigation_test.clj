@@ -94,23 +94,6 @@
                             :bar "bar"}))]
                (map #(dissoc % :id) investigations)))))
 
-      (testing "PUT /ctia/investigation/:id"
-        (let [{status :status
-               updated-investigation :parsed-body}
-              (put (str "ctia/investigation/" (:short-id investigation-id))
-                   :body (-> ex/investigation-maximal
-                             (dissoc :id)
-                             (merge {:foo "spam"
-                                     :bar "eggs"}))
-                   :headers {"Authorization" "45c1f5e3f05d0"})]
-          (is (= 200 status))
-          (is (deep=
-               (-> ex/investigation-maximal
-                   (dissoc :id)
-                   (merge {:foo "spam"
-                           :bar "eggs"}))
-               (dissoc updated-investigation :id)))))
-
       (testing "DELETE /ctia/investigation/:id"
         (let [{status :status
                :as response}
