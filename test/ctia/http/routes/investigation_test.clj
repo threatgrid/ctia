@@ -111,21 +111,6 @@
                            :bar "eggs"}))
                (dissoc updated-investigation :id)))))
 
-      (testing "PUT /ctia/investigation/:id with invalid :title"
-        (let [{status :status
-               body :body}
-              (put (str "ctia/investigation/" (:short-id investigation-id))
-                   :body (-> ex/investigation-maximal
-                             (dissoc :id)
-                             (merge {:foo "foo"
-                                     :bar "bar"
-                                     :title (apply str
-                                                   (repeatedly 1025
-                                                               (constantly \0)))}))
-                   :headers {"Authorization" "45c1f5e3f05d0"})]
-          (is (= status 400))
-          (is (re-find #"error.*in.*title" (str/lower-case body)))))
-
       (testing "DELETE /ctia/investigation/:id"
         (let [{status :status
                :as response}

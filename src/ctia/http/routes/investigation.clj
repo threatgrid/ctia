@@ -49,36 +49,6 @@
                      ent/un-store
                      created))
 
-           (PUT "/:id" []
-                :return Investigation
-                :body [investigation NewInvestigation
-                       {:description "an updated Investigation"}]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :summary "Updates an Investigation"
-                :path-params [id :- s/Str]
-                :capabilities :create-investigation
-                :identity identity
-                :identity-map identity-map
-                (-> (flows/update-flow
-                     :get-fn #(read-store :investigation
-                                          read-investigation
-                                          %
-                                          identity-map)
-                     :realize-fn ent/realize-investigation
-                     :update-fn #(write-store :investigation
-                                              update-investigation
-                                              (:id %)
-                                              %
-                                              identity-map)
-                     :long-id-fn with-long-id
-                     :entity-type :investigation
-                     :entity-id id
-                     :identity identity
-                     :entity investigation
-                     :spec :new-investigation/map)
-                    ent/un-store
-                    ok))
-
            (GET "/external_id/:external_id" []
                 :return (s/maybe [Investigation])
                 :query [q InvestigationsByExternalIdQueryParams]
