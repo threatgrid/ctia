@@ -160,6 +160,8 @@
                                      "test/resources/hooks/JarHook.jar"
                                      "test/resources/hooks/AutoloadHook.jar"
                                      "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}
+
+             :dev-test {:pedantic? :warn}
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}}
   :perforate {:environments [{:name :actor
@@ -170,7 +172,8 @@
                               :namespaces [ctia.http.routes.bulk-bench]}]}
   :plugins [[lein-shell "0.5.0"]
             [perforate "0.3.4"]]
-  :aliases {"kibit" ["with-profile" "prepush" "kibit"]
+  :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
+            "kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
 
             "prepush" ^{:doc "Check code quality before pushing"}
@@ -179,7 +182,7 @@
             "bench" ^{:doc (str "Launch benchmarks"
                                 "; use `lein bench actor` to only launch"
                                 " actor related benchmarks")}
-            ["with-profile" "test" "perforate"]
+            ["with-profile" "test,dev-test" "perforate"]
 
             "init-properties" ^{:doc (str "create an initial `ctia.properties`"
                                           " using docker machine ip")}
