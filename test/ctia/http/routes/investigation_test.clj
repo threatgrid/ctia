@@ -36,7 +36,7 @@
                                       "foogroup"
                                       "user")
 
-  (testing "POST /ctia/attack-pattern"
+  (testing "POST /ctia/investigation"
     (let [{status :status
            investigation :parsed-body}
           (post "ctia/investigation"
