@@ -77,7 +77,7 @@
                            :bar "bar"}))
                (dissoc investigation :id)))))
 
-      (test-query-string-search :investigation "foo" :foo)
+      (test-query-string-search :investigation "description" :description)
 
       (testing "GET /ctia/investigation/external_id/:external_id"
         (let [ext-id (-> ex/investigation-maximal :external_ids first)

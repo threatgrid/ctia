@@ -637,7 +637,7 @@
 
 (def investigation-mapping
   {"investigation"
-   {:dynamic true
+   {:dynamic false
     :properties
     (merge
      base-entity-mapping
