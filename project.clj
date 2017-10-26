@@ -42,7 +42,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.22-SNAPSHOT"]
+                 [threatgrid/ctim "0.4.22"]
                  [threatgrid/clj-momo "0.2.14"]
 
                  ;; Web server
