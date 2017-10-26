@@ -13,6 +13,7 @@
               IIdentityStore
               IIncidentStore
               IIndicatorStore
+              IInvestigationStore
               IJudgementStore
               IMalwareStore
               IQueryStringSearchableStore
@@ -31,6 +32,7 @@
              [identity :as id]
              [incident :as inc]
              [indicator :as in]
+             [investigation :as inv]
              [judgement :as ju]
              [malware :as malware]
              [mapping :refer [store-mappings store-settings]]
@@ -277,3 +279,19 @@
     (ev/handle-create state new-events))
   (list-events [this filter-map ident params]
     (ev/handle-list state filter-map ident params)))
+
+(defrecord InvestigationStore [state]
+  IInvestigationStore
+  (read-investigation [_ id ident]
+    (inv/handle-read state id ident))
+  (create-investigations [_ new-investigations ident]
+    (inv/handle-create state new-investigations ident))
+  (update-investigation [_ id investigation ident]
+    (inv/handle-update state id investigation ident))
+  (delete-investigation [this id ident]
+    (inv/handle-delete state id ident))
+  (list-investigations [this filtermap ident params]
+    (inv/handle-list state filtermap ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (inv/handle-query-string-search state query filtermap ident params)))

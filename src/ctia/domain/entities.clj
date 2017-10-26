@@ -31,6 +31,8 @@
             StoredIncident
             NewIndicator
             StoredIndicator
+            NewInvestigation
+            StoredInvestigation
             NewJudgement
             StoredJudgement
             NewMalware
@@ -119,6 +121,9 @@
 
 (def realize-indicator
   (default-realize-fn "indicator" NewIndicator StoredIndicator))
+
+(def realize-investigation
+  (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
 
 (s/defn realize-relationship :- StoredRelationship
   [new-relationship :- NewRelationship

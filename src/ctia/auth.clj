@@ -65,6 +65,13 @@
     :create-indicator
     :search-indicator
 
+    ;; Investigation
+    :read-investigation
+    :list-investigations
+    :create-investigation
+    :search-investigation
+    :delete-investigation
+
     ;; Judgement
     :create-judgement
     :read-judgement

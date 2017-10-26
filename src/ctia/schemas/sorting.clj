@@ -124,3 +124,9 @@
 (def tool-sort-fields
   (concat base-entity-sort-fields
           [:name]))
+
+
+(def investigation-sort-fields
+  (concat default-entity-sort-fields
+          describable-entity-sort-fields
+          sourcable-entity-sort-fields))

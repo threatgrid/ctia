@@ -10,6 +10,7 @@
              [feedback :as feedbacks]
              [incident :as is]
              [indicator :as ins]
+             [investigation :as inv]
              [judgement :as js]
              [malware :as malware]
              [relationship :as rels]
@@ -57,6 +58,7 @@
         (f-schema/->schema ~ddl)
         ACLEntity))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
+
 ;; actor
 
 (def-acl-schema Actor
@@ -220,6 +222,28 @@
 (f-spec/->spec ins/StoredIndicator "stored-indicator")
 
 
+;; investigation
+
+(sc/defschema Investigation
+  (st/merge (f-schema/->schema inv/Investigation)
+            ACLEntity
+            {sc/Keyword sc/Any}))
+
+(f-spec/->spec inv/Investigation "investigation")
+
+(sc/defschema NewInvestigation
+  (st/merge (f-schema/->schema inv/NewInvestigation)
+            ACLEntity
+            {sc/Keyword sc/Any}))
+
+(f-spec/->spec inv/NewInvestigation "new-investigation")
+
+(sc/defschema StoredInvestigation
+  (st/merge (f-schema/->schema inv/StoredInvestigation)
+            ACLStoredEntity
+            {sc/Keyword sc/Any}))
+
+(f-spec/->spec inv/StoredInvestigation "stored-investigation")
 
 
 ;; relationship
