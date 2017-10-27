@@ -3,6 +3,11 @@
             [clj-momo.lib.set :refer [as-set]]
             [clojure.set :as set]))
 
+(def ^:private write-capabilities
+  (set/difference auth/all-capabilities
+                  #{:specify-id
+                    :developer}))
+
 (defrecord Identity [jwt]
   auth/IIdentity
   (authenticated? [_]
@@ -12,7 +17,7 @@
   (groups [_]
     (remove nil? [(:business_guid jwt)]))
   (allowed-capabilities [_]
-    (:user auth/default-capabilities))
+    write-capabilities)
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
                  (auth/allowed-capabilities this))))
