@@ -4,8 +4,8 @@
              [properties :refer [properties]]
              [shutdown :as shutdown]]
             [ctia.auth.jwt :as auth-jwt]
-            [ctia.http.middleware.auth :as auth]
             [ctia.http.handler :as handler]
+            [ctia.http.middleware.auth :as auth]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -18,16 +18,18 @@
 
 (def default-allow-methods "get,post,put,delete")
 
-(defn- allow-origin-regexps [origins-str]
+(defn- allow-origin-regexps
   "take a CORS allowed origin config string
    turn it to a a vec of patterns"
+  [origins-str]
   (vec (map re-pattern
             (split origins-str #","))))
 
 
-(defn- allow-methods [methods-str]
+(defn- allow-methods
   "take a CORS allowed method config string
    turn it to a a vec of metjod keywords"
+  [methods-str]
   (vec (map keyword (split methods-str #","))))
 
 
@@ -56,8 +58,12 @@
          auth-jwt/wrap-jwt-to-ctia-auth
 
          (:enabled jwt)
-         ((rjwt/wrap-jwt-auth-fn {:pubkey-path (:public-key-path jwt)
-                                  :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}))
+         ((rjwt/wrap-jwt-auth-fn
+           (merge
+            {:pubkey-path (:public-key-path jwt)
+             :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+            (when-let [lifetime (:lifetime-in-sec jwt)]
+              {:jwt-max-lifetime-in-sec lifetime}))))
 
          true wrap-params
 
