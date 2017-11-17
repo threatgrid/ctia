@@ -183,6 +183,15 @@
            (crud/make-id (name type-kw))
            (get-in @properties [:ctia :http :show])))
 
+(defn url-id
+  ([type-kw]
+   (url-id (crud/make-id (name type-kw)) type-kw))
+  ([short-id type-kw]
+   (id/long-id
+    (id/short-id->id (name type-kw)
+                     short-id
+                     (get-in @properties [:ctia :http :show])))))
+
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 
 (defn fake-short-id
@@ -203,3 +212,14 @@
    (id/->id (keyword entity-name)
             (fake-short-id entity-name id)
             (get-in @properties [:ctia :http :show]))))
+
+(defmacro with-atom-logger
+  [atom-logger & body]
+  `(let [patched-log#
+         (fn [logger#
+             level#
+             throwable#
+             message#]
+           (swap! ~atom-logger conj message#))]
+     (with-redefs [clojure.tools.logging/log* patched-log#]
+       ~@body)))

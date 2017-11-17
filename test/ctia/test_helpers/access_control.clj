@@ -90,7 +90,7 @@
 
         {player-2-1-entity-overwrite-status :status
          player-2-1-entity-overwrite-body :body}
-        (put  (format "ctia/%s/%s"
+        (put (format "ctia/%s/%s"
                       entity
                       (:short-id player-1-entity-id))
               :body (dissoc player-1-entity :id)

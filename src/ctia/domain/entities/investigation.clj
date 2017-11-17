@@ -1,10 +1,10 @@
-(ns ctia.domain.entities.ttp
+(ns ctia.domain.entities.investigation
   (:require
-    [ctia.properties :refer [get-http-show]]
-    [ctim.domain.id :as id]))
+   [ctia.properties :refer [get-http-show]]
+   [ctim.domain.id :as id]))
 
 (def short-id->long-id
-  (id/factory:short-id->long-id :ttp get-http-show))
+  (id/factory:short-id->long-id :investigation get-http-show))
 
 (defn with-long-id [entity]
   (update entity :id short-id->long-id))

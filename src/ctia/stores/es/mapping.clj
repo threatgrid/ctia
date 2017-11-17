@@ -41,12 +41,21 @@
    :search_analyzer "token_analyzer"
    :include_in_all true})
 
+(def external-reference
+  {:properties
+   {:source_name token
+    :description all_text
+    :url token
+    :hashes token
+    :external_id token}})
+
 (def base-entity-mapping
   {:id all_token
    :type token
    :schema_version token
    :revision {:type "long"}
    :external_ids all_token
+   :external_references external-reference
    :timestamp ts
    :language token
    :tlp token})
@@ -68,6 +77,11 @@
    :authorized_groups token
    :created ts
    :modified ts})
+
+(def kill-chain-phase
+  {:properties
+   {:kill_chain_name token
+    :phase_name token}})
 
 (def valid-time
   {:properties
@@ -93,57 +107,15 @@
   {:properties (assoc related
                       :actor_id all_token)})
 
-(def related-ttps
-  {:properties (assoc related
-                      :TTP_id all_token)})
-
 (def related-incidents
   {:properties (assoc related
                       :incident_id all_token)})
-
-(def attack-pattern
-  {:properties
-   {:title (merge all_text
-                  {:fields {:whole all_token}})
-    :short_description all_text
-    :description all_text
-    :capec_id token}})
-
-(def malware-instance
-  {:properties
-   {:title (merge all_text
-                  {:fields {:whole all_token}})
-    :description all_text
-    :short_description all_text
-    :type token}})
 
 (def observable
   {:type "object"
    :properties
    {:type token
     :value all_token}})
-
-(def behavior
-  {:properties
-   {:attack_patterns attack-pattern
-    :malware_type malware-instance}})
-
-(def tool
-  {:properties
-   {:description all_text
-    :type token
-    :references token
-    :vendor token
-    :version token
-    :service_pack token}})
-
-(def infrastructure
-  {:properties
-   {:title (merge all_text
-                  {:fields {:whole all_token}})
-    :description all_text
-    :short_description all_text
-    :type token}})
 
 (def related-identities
   {:properties (assoc related
@@ -154,19 +126,6 @@
   {:properties
    {:description all_text
     :related_identities related-identities}})
-
-(def victim-targeting
-  {:properties
-   {:identity tg-identity
-    :targeted_systems token
-    :targeted_information token
-    :targeted_observables observable}})
-
-(def resource
-  {:properties
-   {:tools tool
-    :infrastructure infrastructure
-    :personas tg-identity}})
 
 (def activity
   {:properties
@@ -184,7 +143,6 @@
     :restoration_achieved ts
     :incident_reported ts
     :incident_closed ts}})
-
 
 (def non-public-data-compromised
   {:properties
@@ -388,29 +346,9 @@
                                         :indicator_ids token}}
       :likely_impact token
       :confidence token
-      :kill_chain_phases token
+      :kill_chain_phases kill-chain-phase
       :test_mechanisms token
       :specification {:enabled false}})}})
-
-(def ttp-mapping
-  {"ttp"
-   {:dynamic "strict"
-    :include_in_all false
-    :properties
-    (merge
-     base-entity-mapping
-     describable-entity-mapping
-     sourcable-entity-mapping
-     stored-entity-mapping
-     {:ttp token
-      :valid_time valid-time
-      :intended_effect token
-      :behavior behavior
-      :resources resource
-      :victim_targeting victim-targeting
-      :kill_chains token
-      :ttp_type token
-      :expires ts})}})
 
 (def actor-mapping
   {"actor"
@@ -501,7 +439,6 @@
       :history history
       :related_indicators related-indicators
       :related_observables observable
-      :leveraged_TTPs related-ttps
       :attributed_actors related-actors
       :related_incidents related-incidents
       :intended_effect token})}})
@@ -604,6 +541,50 @@
       :source_ref all_token
       :target_ref all_token})}})
 
+(def attack-pattern-mapping
+  {"attack-pattern"
+   {:dynamic "strict"
+    :include_in_all false
+    :properties
+    (merge
+     base-entity-mapping
+     stored-entity-mapping
+     {:name all_token
+      :description all_text
+      :kill_chain_phases kill-chain-phase
+      :x_mitre_data_sources token
+      :x_mitre_platforms token
+      :x_mitre_contributors token})}})
+
+(def malware-mapping
+  {"malware"
+   {:dynamic "strict"
+    :include_in_all false
+    :properties
+    (merge
+     base-entity-mapping
+     stored-entity-mapping
+     {:name all_token
+      :description all_text
+      :labels token
+      :kill_chain_phases kill-chain-phase
+      :x_mitre_aliases token})}})
+
+(def tool-mapping
+  {"tool"
+   {:dynamic "strict"
+    :include_in_all false
+    :properties
+    (merge
+     base-entity-mapping
+     stored-entity-mapping
+     {:name all_token
+      :description all_text
+      :labels token
+      :kill_chain_phases kill-chain-phase
+      :tool_version token
+      :x_mitre_aliases token})}})
+
 (def dynamic-templates
   [{:date_as_datetime {:match "*"
                        :match_mapping_type "date"
@@ -654,11 +635,20 @@
       :tokenizer "keyword"
       :type "custom"}}}})
 
+(def investigation-mapping
+  {"investigation"
+   {:dynamic false
+    :properties
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping)}})
+
 (def store-mappings
   {:judgement judgement-mapping
    :relationship relationship-mapping
    :indicator indicator-mapping
-   :ttp ttp-mapping
    :feedback feedback-mapping
    :actor actor-mapping
    :campaign campaign-mapping
@@ -668,4 +658,8 @@
    :exploit-target exploit-target-mapping
    :sighting sighting-mapping
    :identity identity-mapping
-   :event event-mapping})
+   :attack-pattern attack-pattern-mapping
+   :malware malware-mapping
+   :tool tool-mapping
+   :event event-mapping
+   :investigation investigation-mapping})

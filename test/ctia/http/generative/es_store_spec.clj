@@ -21,6 +21,9 @@
 (defspec ^:generative api-for-actor-routes-es-store
   prop/api-for-actor-routes)
 
+(defspec ^:generative api-for-attack-pattern-routes-es-store
+  prop/api-for-attack-pattern-routes)
+
 (defspec ^:generative api-for-campaign-routes-es-store
   prop/api-for-campaign-routes)
 
@@ -42,11 +45,14 @@
 (defspec ^:generative api-for-judgement-routes-es-store
   prop/api-for-judgement-routes)
 
+(defspec ^:generative api-for-malware-routes-es-store
+  prop/api-for-malware-routes)
+
 (defspec ^:generative api-for-relationship-routes-es-store
   prop/api-for-judgement-routes)
 
 (defspec ^:generative api-for-sighting-routes-es-store
   prop/api-for-sighting-routes)
 
-(defspec ^:generative api-for-ttp-routes-es-store
-  prop/api-for-ttp-routes)
+(defspec ^:generative api-for-tool-routes-es-store
+  prop/api-for-tool-routes)

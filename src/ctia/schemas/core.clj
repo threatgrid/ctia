@@ -1,6 +1,7 @@
 (ns ctia.schemas.core
   (:require [ctim.schemas
              [actor :as as]
+             [attack-pattern :as attack]
              [campaign :as cs]
              [coa :as coas]
              [common :as cos]
@@ -9,10 +10,12 @@
              [feedback :as feedbacks]
              [incident :as is]
              [indicator :as ins]
+             [investigation :as inv]
              [judgement :as js]
+             [malware :as malware]
              [relationship :as rels]
              [sighting :as ss]
-             [ttp :as ttps]
+             [tool :as tool]
              [verdict :as vs]
              [vocabularies :as vocs]]
             [flanders
@@ -55,6 +58,7 @@
         (f-schema/->schema ~ddl)
         ACLEntity))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
+
 ;; actor
 
 (def-acl-schema Actor
@@ -218,6 +222,28 @@
 (f-spec/->spec ins/StoredIndicator "stored-indicator")
 
 
+;; investigation
+
+(sc/defschema Investigation
+  (st/merge (f-schema/->schema inv/Investigation)
+            ACLEntity
+            {sc/Keyword sc/Any}))
+
+(f-spec/->spec inv/Investigation "investigation")
+
+(sc/defschema NewInvestigation
+  (st/merge (f-schema/->schema inv/NewInvestigation)
+            ACLEntity
+            {sc/Keyword sc/Any}))
+
+(f-spec/->spec inv/NewInvestigation "new-investigation")
+
+(sc/defschema StoredInvestigation
+  (st/merge (f-schema/->schema inv/StoredInvestigation)
+            ACLStoredEntity
+            {sc/Keyword sc/Any}))
+
+(f-spec/->spec inv/StoredInvestigation "stored-investigation")
 
 
 ;; relationship
@@ -234,19 +260,47 @@
   rels/StoredRelationship
   "stored-relationship")
 
-;; ttp
+;; Attack Pattern
 
-(def-acl-schema TTP
-  ttps/TTP
-  "ttp")
+(def-acl-schema AttackPattern
+  attack/AttackPattern
+  "attack-pattern")
 
-(def-acl-schema NewTTP
-  ttps/NewTTP
-  "new-ttp")
+(def-acl-schema NewAttackPattern
+  attack/NewAttackPattern
+  "new-attack-pattern")
 
-(def-stored-schema StoredTTP
-  ttps/StoredTTP
-  "stored-ttp")
+(def-stored-schema StoredAttackPattern
+  attack/StoredAttackPattern
+  "stored-attack-pattern")
+
+;; Malware
+
+(def-acl-schema Malware
+  malware/Malware
+  "malware")
+
+(def-acl-schema NewMalware
+  malware/NewMalware
+  "new-malware")
+
+(def-stored-schema StoredMalware
+  malware/StoredMalware
+  "stored-malware")
+
+;; Tool
+
+(def-acl-schema Tool
+  tool/Tool
+  "tool")
+
+(def-acl-schema NewTool
+  tool/NewTool
+  "new-tool")
+
+(def-stored-schema StoredTool
+  tool/StoredTool
+  "stored-tool")
 
 ;; common
 
@@ -282,6 +336,7 @@
 
 (def stored-schema-lookup
   {:actor StoredActor
+   :attack-pattern StoredAttackPattern
    :campaign StoredCampaign
    :coa StoredCOA
    :exploit-target StoredExploitTarget
@@ -289,6 +344,7 @@
    :incident StoredIncident
    :indicator StoredIndicator
    :judgement StoredJudgement
+   :malware StoredMalware
    :relationship StoredRelationship
    :sighting StoredSighting
-   :ttp StoredTTP})
+   :tool StoredTool})

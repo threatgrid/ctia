@@ -39,7 +39,7 @@
     (st/optional-keys
      (reduce merge {}
              (map (fn [s] (merge (default-store-properties s)
-                                (es-store-impl-properties s)))
+                                 (es-store-impl-properties s)))
                   store-names)))))
 
 (s/defschema PropertiesSchema
@@ -66,7 +66,8 @@
 
    (st/optional-keys {"ctia.http.jwt.enabled" s/Bool
                       "ctia.http.jwt.public-key-path" s/Str
-                      "ctia.http.jwt.local-storage-key" s/Str})
+                      "ctia.http.jwt.local-storage-key" s/Str
+                      "ctia.http.jwt.lifetime-in-sec" s/Num})
 
    (st/optional-keys {"ctia.http.dev-reload" s/Bool
                       "ctia.http.show.protocol" s/Str

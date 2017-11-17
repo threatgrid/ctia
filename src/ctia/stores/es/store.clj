@@ -1,11 +1,9 @@
 (ns ctia.stores.es.store
-  (:require [clj-momo.lib.es
-             [conn :refer [connect]]
-             [index :as es-index]
-             [schemas :refer [ESConnState]]]
+  (:require [clj-momo.lib.es.index :as es-index]
             [ctia.store
              :refer
              [IActorStore
+              IAttackPatternStore
               ICampaignStore
               ICOAStore
               IDataTableStore
@@ -15,13 +13,16 @@
               IIdentityStore
               IIncidentStore
               IIndicatorStore
+              IInvestigationStore
               IJudgementStore
+              IMalwareStore
               IQueryStringSearchableStore
               IRelationshipStore
               ISightingStore
-              ITTPStore]]
+              IToolStore]]
             [ctia.stores.es
              [actor :as ac]
+             [attack-pattern :as attack]
              [campaign :as ca]
              [coa :as coa]
              [data-table :as dt]
@@ -31,37 +32,18 @@
              [identity :as id]
              [incident :as inc]
              [indicator :as in]
+             [investigation :as inv]
              [judgement :as ju]
+             [malware :as malware]
              [mapping :refer [store-mappings store-settings]]
              [relationship :as rel]
              [sighting :as sig]
-             [ttp :as ttp]]
+             [tool :as tool]]
             [schema.core :as s]))
 
 (defn delete-state-indexes [{:keys [conn index config]}]
   (when conn
     (es-index/delete! conn (str index "*"))))
-
-(s/defn init-store-conn :- ESConnState
-  "initiate an ES store connection returns
-   a map containing a connection manager, dedicated store index properties"
-  [{:keys [entity indexname shards replicas] :as props}]
-
-  (let [settings {:number_of_shards shards
-                  :number_of_replicas replicas}]
-    {:index indexname
-     :props props
-     :config {:settings (merge store-settings settings)
-              :mappings (get store-mappings entity)}
-     :conn (connect props)}))
-
-(s/defn init! :- ESConnState
-  "initiate an ES Store connection,
-   put the index template, return an ESConnState"
-  [props]
-  (let [{:keys [conn index config] :as conn-state} (init-store-conn props)]
-    (es-index/create-template! conn index config)
-    conn-state))
 
 (defrecord JudgementStore [state]
   IJudgementStore
@@ -124,22 +106,6 @@
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap ident params]
     (in/handle-query-string-search state query filtermap ident params)))
-
-(defrecord TTPStore [state]
-  ITTPStore
-  (read-ttp [_ id ident]
-    (ttp/handle-read state id ident))
-  (create-ttps [_ new-ttps ident]
-    (ttp/handle-create state new-ttps ident))
-  (update-ttp [_ id new-ttp ident]
-    (ttp/handle-update state id new-ttp ident))
-  (delete-ttp [_ id ident]
-    (ttp/handle-delete state id ident))
-  (list-ttps [_ filter-map ident params]
-    (ttp/handle-list state filter-map ident params))
-  IQueryStringSearchableStore
-  (query-string-search [_ query filtermap ident params]
-    (ttp/handle-query-string-search state query filtermap ident params)))
 
 (defrecord ActorStore [state]
   IActorStore
@@ -259,9 +225,73 @@
   (query-string-search [_ query filtermap ident params]
     (sig/handle-query-string-search-sightings state query filtermap ident params)))
 
+(defrecord AttackPatternStore [state]
+  IAttackPatternStore
+  (read-attack-pattern [_ id ident]
+    (attack/handle-read state id ident))
+  (create-attack-patterns [_ new-attack-patterns ident]
+    (attack/handle-create state new-attack-patterns ident))
+  (update-attack-pattern [_ id attack-pattern ident]
+    (attack/handle-update state id attack-pattern ident))
+  (delete-attack-pattern [_ id ident]
+    (attack/handle-delete state id ident))
+  (list-attack-patterns [_ filter-map ident params]
+    (attack/handle-list state filter-map ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (attack/handle-query-string-search state query filtermap ident params)))
+
+(defrecord MalwareStore [state]
+  IMalwareStore
+  (read-malware [_ id ident]
+    (malware/handle-read state id ident))
+  (create-malwares [_ new-malwares ident]
+    (malware/handle-create state new-malwares ident))
+  (update-malware [_ id malware ident]
+    (malware/handle-update state id malware ident))
+  (delete-malware [_ id ident]
+    (malware/handle-delete state id ident))
+  (list-malwares [_ filter-map ident params]
+    (malware/handle-list state filter-map ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (malware/handle-query-string-search state query filtermap ident params)))
+
+(defrecord ToolStore [state]
+  IToolStore
+  (read-tool [_ id ident]
+    (tool/handle-read state id ident))
+  (create-tools [_ new-tools ident]
+    (tool/handle-create state new-tools ident))
+  (update-tool [_ id tool ident]
+    (tool/handle-update state id tool ident))
+  (delete-tool [_ id ident]
+    (tool/handle-delete state id ident))
+  (list-tools [_ filter-map ident params]
+    (tool/handle-list state filter-map ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (tool/handle-query-string-search state query filtermap ident params)))
+
 (defrecord EventStore [state]
   IEventStore
   (create-events [this new-events]
     (ev/handle-create state new-events))
   (list-events [this filter-map ident params]
     (ev/handle-list state filter-map ident params)))
+
+(defrecord InvestigationStore [state]
+  IInvestigationStore
+  (read-investigation [_ id ident]
+    (inv/handle-read state id ident))
+  (create-investigations [_ new-investigations ident]
+    (inv/handle-create state new-investigations ident))
+  (update-investigation [_ id investigation ident]
+    (inv/handle-update state id investigation ident))
+  (delete-investigation [this id ident]
+    (inv/handle-delete state id ident))
+  (list-investigations [this filtermap ident params]
+    (inv/handle-list state filtermap ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (inv/handle-query-string-search state query filtermap ident params)))

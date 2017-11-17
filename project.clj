@@ -18,7 +18,7 @@
 ;;   valid, and update the exclusions/comments accordingly
 ;; - Maybe you can just delete the dep! (doesn't hurt to check)
 
-(defproject ctia "0.1.0-SNAPSHOT"
+(defproject ctia "1.0.0-rc1"
   :description "Cisco Threat Intelligence API"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
@@ -42,7 +42,9 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.19"]
+                 [threatgrid/ctim "0.4.22"]
+                 [threatgrid/clj-momo "0.2.14"]
+
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
                   :exclusions [com.google.code.findbugs/jsr305
@@ -166,6 +168,8 @@
                                      "test/resources/hooks/JarHook.jar"
                                      "test/resources/hooks/AutoloadHook.jar"
                                      "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}
+
+             :dev-test {:pedantic? :warn}
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}}
   :perforate {:environments [{:name :actor
@@ -176,7 +180,8 @@
                               :namespaces [ctia.http.routes.bulk-bench]}]}
   :plugins [[lein-shell "0.5.0"]
             [perforate "0.3.4"]]
-  :aliases {"kibit" ["with-profile" "prepush" "kibit"]
+  :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
+            "kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
 
             "prepush" ^{:doc "Check code quality before pushing"}
@@ -185,7 +190,7 @@
             "bench" ^{:doc (str "Launch benchmarks"
                                 "; use `lein bench actor` to only launch"
                                 " actor related benchmarks")}
-            ["with-profile" "test" "perforate"]
+            ["with-profile" "test,dev-test" "perforate"]
 
             "init-properties" ^{:doc (str "create an initial `ctia.properties`"
                                           " using docker machine ip")}

@@ -4,6 +4,7 @@
             [ctia.domain.entities :as ent]
             [ctia.domain.entities
              [actor :as act-ent]
+             [attack-pattern :as attack-ent]
              [campaign :as cam-ent]
              [coa :as coa-ent]
              [exploit-target :as ept-ent]
@@ -12,9 +13,10 @@
              [incident :as inc-ent]
              [indicator :as ind-ent]
              [judgement :as jud-ent]
+             [malware :as malware-ent]
              [relationship :as rel-ent]
              [sighting :as sig-ent]
-             [ttp :as ttp-ent]]
+             [tool :as tool-ent]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as common]
             [ctia.lib.keyword :refer [singular]]
@@ -30,6 +32,7 @@
   [k]
   (case k
     :actor          ent/realize-actor
+    :attack-pattern ent/realize-attack-pattern
     :campaign       ent/realize-campaign
     :coa            ent/realize-coa
     :data-table     ent/realize-data-table
@@ -38,9 +41,10 @@
     :incident       ent/realize-incident
     :indicator      ent/realize-indicator
     :judgement      ent/realize-judgement
+    :malware        ent/realize-malware
     :relationship   ent/realize-relationship
     :sighting       ent/realize-sighting
-    :ttp            ent/realize-ttp))
+    :tool           ent/realize-tool))
 
 (defn create-fn
   "return the create function provided an entity type key"
@@ -48,6 +52,7 @@
   #(write-store
     k (case k
         :actor          create-actors
+        :attack-pattern create-attack-patterns
         :campaign       create-campaigns
         :coa            create-coas
         :data-table     create-data-tables
@@ -56,9 +61,10 @@
         :incident       create-incidents
         :indicator      create-indicators
         :judgement      create-judgements
+        :malware        create-malwares
         :relationship   create-relationships
         :sighting       create-sightings
-        :ttp            create-ttps)
+        :tool           create-tools)
     % ident))
 
 (defn read-fn
@@ -67,6 +73,7 @@
   #(read-store
     k (case k
         :actor          read-actor
+        :attack-pattern read-attack-pattern
         :campaign       read-campaign
         :coa            read-coa
         :data-table     read-data-table
@@ -75,9 +82,10 @@
         :incident       read-incident
         :indicator      read-indicator
         :judgement      read-judgement
+        :malware        read-malware
         :relationship   read-relationship
         :sighting       read-sighting
-        :ttp            read-ttp)
+        :tool           read-tool)
     % ident))
 
 (defn with-long-id-fn
@@ -85,6 +93,7 @@
   [k]
   (case k
     :actor          act-ent/with-long-id
+    :attack-pattern attack-ent/with-long-id
     :campaign       cam-ent/with-long-id
     :coa            coa-ent/with-long-id
     :data-table     dt-ent/with-long-id
@@ -93,34 +102,33 @@
     :incident       inc-ent/with-long-id
     :indicator      ind-ent/with-long-id
     :judgement      jud-ent/with-long-id
+    :malware        malware-ent/with-long-id
     :relationship   rel-ent/with-long-id
     :sighting       sig-ent/with-long-id
-    :ttp            ttp-ent/with-long-id))
+    :tool           tool-ent/with-long-id))
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
   [entities entity-type login]
   (let [with-long-id (with-long-id-fn entity-type)]
-    (->> (flows/create-flow
-          :entity-type entity-type
-          :realize-fn (realize-fn entity-type)
-          :store-fn (create-fn entity-type login)
-          :long-id-fn with-long-id
-          :identity login
-          :entities entities)
-         (map :id))))
+    (map :id (flows/create-flow
+              :entity-type entity-type
+              :realize-fn (realize-fn entity-type)
+              :store-fn (create-fn entity-type login)
+              :long-id-fn with-long-id
+              :identity login
+              :entities entities))))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type ident]
   (let [read-entity (read-fn entity-type ident)
         with-long-id (with-long-id-fn entity-type)]
-    (->> ids
-         (map (fn [id] (try (with-long-id
-                             (read-entity id))
-                           (catch Exception e
-                             (do (log/error (pr-str e))
-                                 nil))))))))
+    (map (fn [id] (try (with-long-id
+                        (read-entity id))
+                      (catch Exception e
+                        (do (log/error (pr-str e))
+                            nil)))) ids)))
 
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
@@ -157,6 +165,7 @@
                  :summary "POST many new entities using a single HTTP call"
                  :identity login
                  :capabilities #{:create-actor
+                                 :create-attack-pattern
                                  :create-campaign
                                  :create-coa
                                  :create-data-table
@@ -165,9 +174,10 @@
                                  :create-incident
                                  :create-indicator
                                  :create-judgement
+                                 :create-malware
                                  :create-relationship
                                  :create-sighting
-                                 :create-ttp}
+                                 :create-tool}
                  (if (> (bulk-size bulk)
                         (get-bulk-max-size))
                    (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
@@ -177,6 +187,7 @@
                 :return (s/maybe Bulk)
                 :summary "GET many entities at once"
                 :query-params [{actors          :- [Reference] []}
+                               {attack-patterns :- [Reference] []}
                                {campaigns       :- [Reference] []}
                                {coas            :- [Reference] []}
                                {data-tables     :- [Reference] []}
@@ -185,11 +196,13 @@
                                {incidents       :- [Reference] []}
                                {indicators      :- [Reference] []}
                                {judgements      :- [Reference] []}
+                               {malwares        :- [Reference] []}
                                {relationships   :- [Reference] []}
                                {sightings       :- [Reference] []}
-                               {ttps            :- [Reference] []}]
+                               {tools           :- [Reference] []}]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities #{:read-actor
+                                :read-attack-pattern
                                 :read-campaign
                                 :read-coa
                                 :read-data-table
@@ -198,12 +211,14 @@
                                 :read-incident
                                 :read-indicator
                                 :read-judgement
+                                :read-malware
                                 :read-relationship
                                 :read-sighting
-                                :read-ttp}
+                                :read-tool}
                 :identity identity
                 (let [bulk (into {} (remove (comp empty? second)
                                             {:actors          actors
+                                             :attack-patterns attack-patterns
                                              :campaigns       campaigns
                                              :coas            coas
                                              :data-tables     data-tables
@@ -212,9 +227,10 @@
                                              :incidents       incidents
                                              :indicators      indicators
                                              :judgements      judgements
+                                             :malwares        malwares
                                              :relationships   relationships
                                              :sightings       sightings
-                                             :ttps            ttps}))]
+                                             :tools           tools}))]
                   (if (> (bulk-size bulk) (get-bulk-max-size))
                     (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
                     (-> (gen-bulk-from-fn read-entities bulk identity)

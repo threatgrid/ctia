@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is testing]]
             [clojure.tools.logging :refer [log*]]
+            [ctia.properties :refer [properties]]
             [ctia.test-helpers.core :as helpers :refer [get]]))
 
 (defn test-query-string-search [entity query query-field]
@@ -9,7 +10,7 @@
 
     (testing (format "GET %s" search-uri)
       ;; only when ES store
-      (when (= "es" (get-in @ctia.properties/properties [:ctia :store entity]))
+      (when (= "es" (get-in @properties [:ctia :store entity]))
 
         (let [response (get search-uri
                             :headers {"Authorization" "45c1f5e3f05d0"}
