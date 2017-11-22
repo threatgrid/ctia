@@ -26,11 +26,17 @@
             (split origins-str #","))))
 
 
+(defn- str->vec-of-keywords
+  "take a string with words separated with commas, returns a vec of keywords"
+  [s]
+  (mapv keyword (split s #",")))
+
+
 (defn- allow-methods
   "take a CORS allowed method config string
    turn it to a a vec of metjod keywords"
   [methods-str]
-  (vec (map keyword (split methods-str #","))))
+  (str->vec-of-keywords methods-str))
 
 
 (defn- new-jetty-instance
@@ -40,6 +46,8 @@
            port
            access-control-allow-origin
            access-control-allow-methods
+           access-control-allow-headers
+           access-control-expose-headers
            jwt]
     :or {access-control-allow-methods "get,post,put,delete"}}]
   (doto
@@ -50,7 +58,11 @@
          (wrap-cors :access-control-allow-origin
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
-                    (allow-methods access-control-allow-methods))
+                    (allow-methods access-control-allow-methods)
+                    :access-control-allow-headers
+                    (str->vec-of-keywords access-control-allow-headers)
+                    :access-control-expose-headers
+                    (str->vec-of-keywords access-control-expose-headers))
 
          true auth/wrap-authentication
 

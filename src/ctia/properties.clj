@@ -61,6 +61,8 @@
                       "ctia.http.port" s/Int
                       "ctia.http.access-control-allow-origin" s/Str
                       "ctia.http.access-control-allow-methods" s/Str
+                      "ctia.http.access-control-allow-headers" s/Str
+                      "ctia.http.access-control-expose-headers" s/Str
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
 
