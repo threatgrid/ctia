@@ -16,8 +16,6 @@
 
 (defonce server (atom nil))
 
-(def default-allow-methods "get,post,put,delete")
-
 (defn- allow-origin-regexps
   "take a CORS allowed origin config string
    turn it to a a vec of patterns"
@@ -25,19 +23,10 @@
   (vec (map re-pattern
             (split origins-str #","))))
 
-
-(defn- str->vec-of-keywords
+(defn- str->set-of-keywords
   "take a string with words separated with commas, returns a vec of keywords"
   [s]
-  (mapv keyword (split s #",")))
-
-
-(defn- allow-methods
-  "take a CORS allowed method config string
-   turn it to a a vec of metjod keywords"
-  [methods-str]
-  (str->vec-of-keywords methods-str))
-
+  (set (map keyword (split s #","))))
 
 (defn- new-jetty-instance
   [{:keys [dev-reload
@@ -46,8 +35,6 @@
            port
            access-control-allow-origin
            access-control-allow-methods
-           access-control-allow-headers
-           access-control-expose-headers
            jwt]
     :or {access-control-allow-methods "get,post,put,delete"}}]
   (doto
@@ -58,11 +45,8 @@
          (wrap-cors :access-control-allow-origin
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
-                    (allow-methods access-control-allow-methods)
-                    :access-control-allow-headers
-                    (str->vec-of-keywords access-control-allow-headers)
-                    :access-control-expose-headers
-                    (str->vec-of-keywords access-control-expose-headers))
+                    (str->set-of-keywords access-control-allow-methods)
+                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag")
 
          true auth/wrap-authentication
 
