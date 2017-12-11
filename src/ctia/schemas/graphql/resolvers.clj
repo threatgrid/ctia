@@ -4,6 +4,7 @@
             [ctia.domain.entities
              [feedback :as ctim-feedback-entity]
              [indicator :as ctim-indicator-entity]
+             [investigation :as ctim-investigation-entity]
              [judgement :as ctim-judgement-entity]
              [relationship :as ctim-relationship-entity]
              [sighting :as ctim-sighting-entity]]
@@ -77,6 +78,25 @@
   (some-> (read-store :indicator read-indicator id ident)
           ctim-indicator-entity/with-long-id
           ctim-entities/un-store))
+
+;;---- Investigation
+
+(defn search-investigations
+  [context args src]
+  (search-entity :investigation
+                 (:query args)
+                 {}
+                 args
+                 (:ident context)
+                 ctim-investigation-entity/page-with-long-id))
+
+(s/defn investigation-by-id
+  [id :- s/Str
+   ident]
+  (some-> (read-store :investigation read-investigation id ident)
+          ctim-investigation-entity/with-long-id
+          ctim-entities/un-store))
+
 
 ;;---- Judgement
 

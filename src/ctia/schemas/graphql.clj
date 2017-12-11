@@ -5,6 +5,9 @@
              [indicator :as indicator
               :refer [IndicatorType
                       IndicatorConnectionType]]
+             [investigation :as investigation
+              :refer [InvestigationType
+                      InvestigationConnectionType]]
              [judgement :as judgement
               :refer [JudgementType
                       JudgementConnectionType]]
@@ -40,13 +43,23 @@
    {:indicator {:type IndicatorType
                 :args search-by-id-args
                 :resolve (fn [context args _] (res/indicator-by-id
-                                              (:id args)
-                                              (:ident context)))}
+                                               (:id args)
+                                               (:ident context)))}
     :indicators {:type IndicatorConnectionType
                  :args (merge common/lucene-query-arguments
                               indicator/indicator-order-arg
                               p/connection-arguments)
                  :resolve res/search-indicators}
+    :investigation {:type InvestigationType
+                    :args search-by-id-args
+                    :resolve (fn [context args _] (res/investigation-by-id
+                                                   (:id args)
+                                                   (:ident context)))}
+    :investigations {:type InvestigationConnectionType
+                     :args (merge common/lucene-query-arguments
+                                  investigation/investigation-order-arg
+                                  p/connection-arguments)
+                     :resolve res/search-investigations}
     :judgement {:type JudgementType
                 :args search-by-id-args
                 :resolve (fn [context args _]
