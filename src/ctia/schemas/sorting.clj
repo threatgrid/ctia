@@ -48,6 +48,9 @@
            :likely_impact
            :confidence]))
 
+(def investigation-sort-fields
+  base-entity-sort-fields)
+
 (def relationship-sort-fields
   (concat default-entity-sort-fields
           describable-entity-sort-fields
