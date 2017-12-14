@@ -153,27 +153,22 @@
           {}
           (keys bulk)))
 
-(defn debug [msg v]
-  (println msg v)
-  v)
-
 (defn gen-create-bulk
   [bulk login]
-  (let [new-entities (debug "new entities" (gen-bulk-from-fn
-                                            create-entities
-                                            (dissoc bulk :relationships)
-                                            {}
-                                            login))
-        tempids (debug "tempids" (reduce (fn [acc [_ v]]
-                                           (into acc (:tempids v)))
-                                         {}
-                                         new-entities))
-        new-relationships (debug "new relationships" (gen-bulk-from-fn
-                                                      create-entities
-                                                      (select-keys bulk [:relationships])
-                                                      tempids
-                                                      login))
-        ]
+  (let [new-entities (gen-bulk-from-fn
+                      create-entities
+                      (dissoc bulk :relationships)
+                      {}
+                      login)
+        tempids (reduce (fn [acc [_ v]]
+                          (into acc (:tempids v)))
+                        {}
+                        new-entities)
+        new-relationships (gen-bulk-from-fn
+                           create-entities
+                           (select-keys bulk [:relationships])
+                           tempids
+                           login)]
     (->> (into new-entities new-relationships)
          (map (fn [[k {:keys [data]}]]
                 {k data}))
