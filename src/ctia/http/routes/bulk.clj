@@ -109,15 +109,19 @@
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
-  [entities entity-type login]
+  [entities entity-type tempids login]
   (let [with-long-id (with-long-id-fn entity-type)]
-    (map :id (flows/create-flow
-              :entity-type entity-type
-              :realize-fn (realize-fn entity-type)
-              :store-fn (create-fn entity-type login)
-              :long-id-fn with-long-id
-              :identity login
-              :entities entities))))
+    (update (flows/create-flow
+             :entity-type entity-type
+             :realize-fn (realize-fn entity-type)
+             :store-fn (create-fn entity-type login)
+             :long-id-fn with-long-id
+             :enveloped-result? true
+             :identity login
+             :entities entities
+             :tempids tempids)
+            :data
+            #(map :id %))))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
@@ -149,6 +153,32 @@
           {}
           (keys bulk)))
 
+(defn debug [msg v]
+  (println msg v)
+  v)
+
+(defn gen-create-bulk
+  [bulk login]
+  (let [new-entities (debug "new entities" (gen-bulk-from-fn
+                                            create-entities
+                                            (dissoc bulk :relationships)
+                                            {}
+                                            login))
+        tempids (debug "tempids" (reduce (fn [acc [_ v]]
+                                           (into acc (:tempids v)))
+                                         {}
+                                         new-entities))
+        new-relationships (debug "new relationships" (gen-bulk-from-fn
+                                                      create-entities
+                                                      (select-keys bulk [:relationships])
+                                                      tempids
+                                                      login))
+        ]
+    (->> (into new-entities new-relationships)
+         (map (fn [[k {:keys [data]}]]
+                {k data}))
+         (into {}))))
+
 (defn bulk-size [bulk]
   (apply + (map count (vals bulk))))
 
@@ -159,7 +189,7 @@
   (context "/bulk" []
            :tags ["Bulk"]
            (POST "/" []
-                 :return BulkRefs
+                 :return s/Any
                  :body [bulk NewBulk {:description "a new Bulk object"}]
                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "POST many new entities using a single HTTP call"
@@ -181,7 +211,7 @@
                  (if (> (bulk-size bulk)
                         (get-bulk-max-size))
                    (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-                   (common/created (gen-bulk-from-fn create-entities bulk login))))
+                   (common/created (gen-create-bulk bulk login))))
 
            (GET "/" []
                 :return (s/maybe Bulk)

@@ -295,3 +295,38 @@
     (testing "POST of too big bulks are rejected"
       (is (empty? (:errors response-too-big)) "No errors")
       (is (= 400 status-too-big)))))
+
+(defn get-entity
+  [entities id]
+  (some->> entities
+           (filter #(= id (:id %)))
+           first))
+
+(deftest-for-each-store bulk-with-transient-ids
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (let [[tool1 tool2 :as tools] (->> (map mk-new-tool (range 2))
+                                     (map #(assoc % :id (id/make-transient-id nil))))
+        relationship (assoc (mk-new-relationship 1)
+                            :target_ref (:id tool1)
+                            :source_ref (:id tool2)
+                            :id (id/make-transient-id nil))
+        {status-create :status
+         bulk-ids :parsed-body} (post "ctia/bulk"
+                                      :body {:tools tools
+                                             :relationships [relationship]}
+                                      :headers {"Authorization" "45c1f5e3f05d0"})
+        {status-get :status
+         {:keys [relationships tools]} :parsed-body}
+        (get (str "ctia/bulk?"
+                  (make-get-query-str-from-bulkrefs bulk-ids))
+             :headers {"Authorization" "45c1f5e3f05d0"})
+        {:keys [target_ref source_ref]} (first relationships)]
+    (is (= 201 status-create))
+    (is (= 200 status-get))
+    (is (= (:name tool1) (:name (get-entity tools target_ref))))
+    (is (= (:name tool2) (:name (get-entity tools source_ref))))))
