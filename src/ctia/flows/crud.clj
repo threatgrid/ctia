@@ -31,8 +31,8 @@
    (s/optional-key :realize-fn) (s/pred fn?)
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
-   (s/optional-key :tempids) {s/Str s/Str}
-   (s/optional-key :enveloped-result?) s/Bool
+   (s/optional-key :tempids) (s/maybe {s/Str s/Str})
+   (s/optional-key :enveloped-result?) (s/maybe s/Bool)
    :store-fn (s/pred fn?)})
 
 (defn- find-id

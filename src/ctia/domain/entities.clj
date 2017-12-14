@@ -58,13 +58,13 @@
   (s/fn default-realize :- StoredModel
     ([new-object :- Model
       id :- s/Str
-      tempids :- {s/Str s/Str}
+      tempids :- (s/maybe {s/Str s/Str})
       owner :- s/Str
       groups :- [s/Str]]
      (default-realize new-object id tempids owner groups nil))
     ([new-object :- Model
       id :- s/Str
-      tempids :- {s/Str s/Str}
+      tempids :- (s/maybe {s/Str s/Str})
       owner :- s/Str
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
@@ -132,7 +132,7 @@
   [{:keys [source_ref target_ref]
     :as new-relationship} :- NewRelationship
    id :- s/Str
-   tempids :- {s/Str s/Str}
+   tempids :- (s/maybe {s/Str s/Str})
    owner :- s/Str
    groups :- [s/Str]]
 
@@ -150,7 +150,7 @@
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
    id :- s/Str
-   tempids :- {s/Str s/Str}
+   tempids :- (s/maybe {s/Str s/Str})
    owner :- s/Str
    groups :- [s/Str]]
   (let [now (time/now)
@@ -185,13 +185,13 @@
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting
     id :- s/Str
-    tempids :- {s/Str s/Str}
+    tempids :- (s/maybe {s/Str s/Str})
     owner :- s/Str
     groups :- [s/Str]]
    (realize-sighting new-sighting id tempids owner groups nil))
   ([new-sighting :- NewSighting
     id :- s/Str
-    tempids :- {s/Str s/Str}
+    tempids :- (s/maybe {s/Str s/Str})
     owner :- s/Str
     groups :- [s/Str]
     prev-sighting :- (s/maybe StoredSighting)]
