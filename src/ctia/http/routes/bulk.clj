@@ -172,10 +172,9 @@
   The create-entities set the enveloped-result? to True in the flow
   configuration to get :data and :tempids for each entity in the result."
   [entities]
-  (reduce (fn [acc [_ v]]
-            (into acc (:tempids v)))
-          {}
-          entities))
+  (->> entities
+       (map (fn [[_ v]] (:tempids v)))
+       (reduce into {})))
 
 (defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
