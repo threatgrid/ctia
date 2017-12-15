@@ -109,15 +109,19 @@
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
-  [entities entity-type login]
+  [entities entity-type tempids login]
   (let [with-long-id (with-long-id-fn entity-type)]
-    (map :id (flows/create-flow
-              :entity-type entity-type
-              :realize-fn (realize-fn entity-type)
-              :store-fn (create-fn entity-type login)
-              :long-id-fn with-long-id
-              :identity login
-              :entities entities))))
+    (update (flows/create-flow
+             :entity-type entity-type
+             :realize-fn (realize-fn entity-type)
+             :store-fn (create-fn entity-type login)
+             :long-id-fn with-long-id
+             :enveloped-result? true
+             :identity login
+             :entities entities
+             :tempids tempids)
+            :data
+            #(map :id %))))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
@@ -148,6 +152,59 @@
                           args)))
           {}
           (keys bulk)))
+
+(defn tempids
+  "Merges tempids from all entities
+   {:entity-type1 {:data []
+                   :tempids {transientid1 id1
+                             transientid2 id2}}
+    :entity-type2 {:data []
+                   :tempids {transientid3 id3
+                             transientid4 id4}}}
+
+   ->
+
+   {transientid1 id1
+    transientid2 id2
+    transientid3 id3
+    transientid4 id4}
+
+  The create-entities set the enveloped-result? to True in the flow
+  configuration to get :data and :tempids for each entity in the result."
+  [entities]
+  (->> entities
+       (map (fn [[_ v]] (:tempids v)))
+       (reduce into {})))
+
+(defn create-bulk
+  "Creates entities in bulk. To define relationships between entities,
+   transient IDs can be used. They are automatically converted into
+   real IDs.
+
+   1. Creates all entities except Relationships
+   2. Creates Relationships with mapping between transient and real IDs"
+  [bulk login]
+  (let [new-entities (gen-bulk-from-fn
+                      create-entities
+                      (dissoc bulk :relationships)
+                      {}
+                      login)
+        entities-tempids (tempids new-entities)
+        new-relationships (gen-bulk-from-fn
+                           create-entities
+                           (select-keys bulk [:relationships])
+                           entities-tempids
+                           login)
+        all-tempids (merge entities-tempids
+                           (tempids new-relationships))
+        ;; Extracting data from the enveloped flow result
+        ;; {:entity-type {:data [] :tempids {} :errors {}}}
+        bulk-refs (->> (into new-entities new-relationships)
+                       (map (fn [[k {:keys [data]}]]
+                              {k data}))
+                       (into {}))]
+    (cond-> bulk-refs
+      (seq all-tempids) (assoc :tempids all-tempids))))
 
 (defn bulk-size [bulk]
   (apply + (map count (vals bulk))))
@@ -181,7 +238,7 @@
                  (if (> (bulk-size bulk)
                         (get-bulk-max-size))
                    (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-                   (common/created (gen-bulk-from-fn create-entities bulk login))))
+                   (common/created (create-bulk bulk login))))
 
            (GET "/" []
                 :return (s/maybe Bulk)

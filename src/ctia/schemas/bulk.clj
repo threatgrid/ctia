@@ -53,7 +53,8 @@
     :malwares        [(s/maybe Reference)]
     :relationships   [(s/maybe Reference)]
     :sightings       [(s/maybe Reference)]
-    :tools           [(s/maybe Reference)]}))
+    :tools           [(s/maybe Reference)]
+    :tempids         TempIDs}))
 
 (s/defschema NewBulk
   (st/optional-keys

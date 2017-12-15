@@ -11,6 +11,7 @@
    [ctia.auth :as auth]
    [ctia.flows.hooks :as h]
    [ctia.properties :refer [properties]]
+   [ctia.schemas.core :refer [TempIDs]]
    [ctia.store :as store]
    [ctim.events.obj-to-event :refer [to-create-event
                                      to-update-event
@@ -31,6 +32,8 @@
    (s/optional-key :realize-fn) (s/pred fn?)
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
+   (s/optional-key :tempids) (s/maybe TempIDs)
+   (s/optional-key :enveloped-result?) (s/maybe s/Bool)
    :store-fn (s/pred fn?)})
 
 (defn- find-id
@@ -64,9 +67,10 @@
   (str (name entity-type) "-" (UUID/randomUUID)))
 
 (s/defn ^:private find-entity-id :- s/Str
-  [{:keys [identity entity-type prev-entity]} :- FlowMap
+  [{:keys [identity entity-type prev-entity tempids]} :- FlowMap
    entity :- {s/Keyword s/Any}]
   (or (find-id prev-entity)
+      (get tempids (:id entity))
       (when-let [entity-id (find-checked-id entity)]
         (when-not (auth/capable? identity :specify-id)
           (throw (http-response/bad-request!
@@ -96,10 +100,26 @@
                    :entity entity}))))))
   fm)
 
+(s/defn ^:private create-ids-from-transient :- FlowMap
+  "Creates IDs for entities identified by transient IDs that have not
+   yet been resolved."
+  [{:keys [entities
+           entity-type]
+    :as fm} :- FlowMap]
+  (let [newtempids
+        (->> entities
+             (map (fn [{:keys [id]}]
+                    (when (and id (re-matches id/transient-id-re id))
+                      [id (make-id entity-type)])))
+             (remove nil?)
+             (into {}))]
+    (update fm :tempids (fnil into {}) newtempids)))
+
 (s/defn ^:private realize-entities :- FlowMap
   [{:keys [entities
            flow-type
            identity
+           tempids
            prev-entity
            realize-fn] :as fm} :- FlowMap]
   (let [login (auth/login identity)
@@ -112,16 +132,19 @@
               (case flow-type
                 :create (realize-fn entity
                                     entity-id
+                                    tempids
                                     login
                                     groups)
                 :update (if prev-entity
                           (realize-fn entity
                                       entity-id
+                                      tempids
                                       login
                                       groups
                                       prev-entity)
                           (realize-fn entity
                                       entity-id
+                                      tempids
                                       login
                                       groups))
                 :delete entity))))))
@@ -204,13 +227,19 @@
               (store-fn entity))))))
 
 (s/defn ^:private apply-long-id-fn :- FlowMap
-  [{:keys [entities long-id-fn] :as fm}]
+  [{:keys [entities tempids long-id-fn] :as fm}]
   (if long-id-fn
-    (assoc fm
-           :entities
-           (doall
-            (for [entity entities]
-              (long-id-fn entity))))
+    (let [short-ids (map :id entities)
+          new-entities (map long-id-fn entities)
+          long-ids (map :id new-entities)
+          short-to-long-map (zipmap short-ids long-ids)
+          new-tempids (->> tempids
+                           (map (fn [[tempid short-id]]
+                                  [tempid (get short-to-long-map short-id short-id)]))
+                           (into {}))]
+      (assoc fm
+             :entities new-entities
+             :tempids new-tempids))
     fm))
 
 (s/defn ^:private apply-event-hooks :- FlowMap
@@ -220,11 +249,15 @@
   fm)
 
 (s/defn ^:private make-result :- s/Any
-  [{:keys [flow-type] :as fm} :- FlowMap]
+  [{:keys [flow-type entities results
+           enveloped-result? tempids] :as fm} :- FlowMap]
   (case flow-type
-    :create (:entities fm)
-    :delete (first (:results fm))
-    :update (first (:entities fm))))
+    :create (if enveloped-result?
+              (cond-> {:data entities}
+                (seq tempids) (assoc :tempids tempids))
+              entities)
+    :delete (first results)
+    :update (first entities)))
 
 (defn create-flow
   "This function centralizes the create workflow.
@@ -238,18 +271,23 @@
              store-fn
              identity
              entities
+             tempids
              long-id-fn
-             spec]}]
+             spec
+             enveloped-result?]}]
   (-> {:flow-type :create
        :entity-type entity-type
        :entities entities
+       :tempids tempids
        :identity identity
        :long-id-fn long-id-fn
        :realize-fn realize-fn
        :spec spec
        :store-fn store-fn
-       :create-event-fn to-create-event}
+       :create-event-fn to-create-event
+       :enveloped-result? enveloped-result?}
       validate-entities
+      create-ids-from-transient
       realize-entities
       apply-before-hooks
       apply-store-fn
