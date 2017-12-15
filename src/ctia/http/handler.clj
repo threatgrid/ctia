@@ -78,8 +78,7 @@
           :compojure.api.exception/response-validation ex/response-validation-handler
           :clj-momo.lib.es.conn/es-query-parsing-error ex/es-query-parsing-error-handler
           :access-control-error ex/access-control-error-handler
-          :compojure.api.exception/default ex/default-error-handler
-          }}
+          :compojure.api.exception/default ex/default-error-handler}}
         :swagger {:ui "/"
                   :spec "/swagger.json"
                   :options {:ui {:jwtLocalStorageKey

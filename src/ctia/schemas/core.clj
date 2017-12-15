@@ -26,8 +26,6 @@
             [schema.core :refer [Str Bool] :as sc]
             [schema-tools.core :as st]))
 
-
-
 (sc/defschema ACLEntity
   (st/optional-keys
    {:authorized_users [Str]
@@ -319,6 +317,12 @@
 (defschema ID
   cos/ID
   "common.id")
+
+(def TransientID sc/Str)
+
+(sc/defschema TempIDs
+  "Mapping table between transient and permanent IDs"
+  {TransientID ID})
 
 (sc/defschema VersionInfo
   "Version information for a specific instance of CTIA"

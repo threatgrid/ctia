@@ -11,6 +11,7 @@
    [ctia.auth :as auth]
    [ctia.flows.hooks :as h]
    [ctia.properties :refer [properties]]
+   [ctia.schemas.core :refer [TempIDs]]
    [ctia.store :as store]
    [ctim.events.obj-to-event :refer [to-create-event
                                      to-update-event
@@ -31,7 +32,7 @@
    (s/optional-key :realize-fn) (s/pred fn?)
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
-   (s/optional-key :tempids) (s/maybe {s/Str s/Str})
+   (s/optional-key :tempids) (s/maybe TempIDs)
    (s/optional-key :enveloped-result?) (s/maybe s/Bool)
    :store-fn (s/pred fn?)})
 

@@ -323,10 +323,16 @@
         {status-get :status
          {:keys [relationships tools]} :parsed-body}
         (get (str "ctia/bulk?"
-                  (make-get-query-str-from-bulkrefs bulk-ids))
+                  (make-get-query-str-from-bulkrefs (dissoc bulk-ids :tempids)))
              :headers {"Authorization" "45c1f5e3f05d0"})
-        {:keys [target_ref source_ref]} (first relationships)]
+        {:keys [target_ref source_ref]} (first relationships)
+        stored-tool-1 (get-entity tools target_ref)
+        stored-tool-2 (get-entity tools source_ref)]
     (is (= 201 status-create))
     (is (= 200 status-get))
-    (is (= (:name tool1) (:name (get-entity tools target_ref))))
-    (is (= (:name tool2) (:name (get-entity tools source_ref))))))
+    (is (= (:name tool1) (:name stored-tool-1)))
+    (is (= (:name tool2) (:name stored-tool-2)))
+    (is (= (hash-map (:id tool1) (:id stored-tool-1)
+                     (:id tool2) (:id stored-tool-2)
+                     (:id relationship) (:id (first relationships)))
+           (:tempids bulk-ids)))))
