@@ -297,6 +297,7 @@
       (is (= 400 status-too-big)))))
 
 (defn get-entity
+  "Finds an entity in a collection by its ID"
   [entities id]
   (some->> entities
            (filter #(= id (:id %)))
@@ -315,11 +316,13 @@
                             :target_ref (:id tool1)
                             :source_ref (:id tool2)
                             :id (id/make-transient-id nil))
+        ;; Submit all entities to create
         {status-create :status
          bulk-ids :parsed-body} (post "ctia/bulk"
                                       :body {:tools tools
                                              :relationships [relationship]}
                                       :headers {"Authorization" "45c1f5e3f05d0"})
+        ;; Retrieve all entities that have been created
         {status-get :status
          {:keys [relationships tools]} :parsed-body}
         (get (str "ctia/bulk?"
@@ -328,11 +331,15 @@
         {:keys [target_ref source_ref]} (first relationships)
         stored-tool-1 (get-entity tools target_ref)
         stored-tool-2 (get-entity tools source_ref)]
-    (is (= 201 status-create))
-    (is (= 200 status-get))
-    (is (= (:name tool1) (:name stored-tool-1)))
-    (is (= (:name tool2) (:name stored-tool-2)))
+    (is (= 201 status-create) "The bulk create should be successfull")
+    (is (= 200 status-get) "All entities should be retrieved")
+    (is (= (:name tool1) (:name stored-tool-1))
+        "The target ref should be the ID of the stored entity")
+    (is (= (:name tool2) (:name stored-tool-2))
+        "The source ref should be the ID of the stored entity")
     (is (= (hash-map (:id tool1) (:id stored-tool-1)
                      (:id tool2) (:id stored-tool-2)
                      (:id relationship) (:id (first relationships)))
-           (:tempids bulk-ids)))))
+           (:tempids bulk-ids))
+        (str "The :tempid field should contain the mapping between all "
+             "transient and real IDs"))))
