@@ -74,7 +74,8 @@
                       "ctia.http.show.hostname" s/Str
                       "ctia.http.show.path-prefix" s/Str
                       "ctia.http.show.port" s/Int
-                      "ctia.http.bulk.max-size" s/Int})
+                      "ctia.http.bulk.max-size" s/Int
+                      "ctia.http.bundle.external-id-prefix" s/Str})
 
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.nrepl.enabled" s/Bool

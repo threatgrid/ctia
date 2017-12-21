@@ -153,7 +153,7 @@
           {}
           (keys bulk)))
 
-(defn tempids
+(defn merge-tempids
   "Merges tempids from all entities
    {:entity-type1 {:data []
                    :tempids {transientid1 id1
@@ -183,28 +183,29 @@
 
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
-  [bulk login]
-  (let [new-entities (gen-bulk-from-fn
-                      create-entities
-                      (dissoc bulk :relationships)
-                      {}
-                      login)
-        entities-tempids (tempids new-entities)
-        new-relationships (gen-bulk-from-fn
-                           create-entities
-                           (select-keys bulk [:relationships])
-                           entities-tempids
-                           login)
-        all-tempids (merge entities-tempids
-                           (tempids new-relationships))
-        ;; Extracting data from the enveloped flow result
-        ;; {:entity-type {:data [] :tempids {} :errors {}}}
-        bulk-refs (->> (into new-entities new-relationships)
-                       (map (fn [[k {:keys [data]}]]
-                              {k data}))
-                       (into {}))]
-    (cond-> bulk-refs
-      (seq all-tempids) (assoc :tempids all-tempids))))
+  ([bulk login] (create-bulk bulk {} login))
+  ([bulk tempids login]
+   (let [new-entities (gen-bulk-from-fn
+                       create-entities
+                       (dissoc bulk :relationships)
+                       tempids
+                       login)
+         entities-tempids (merge-tempids new-entities)
+         new-relationships (gen-bulk-from-fn
+                            create-entities
+                            (select-keys bulk [:relationships])
+                            entities-tempids
+                            login)
+         all-tempids (merge entities-tempids
+                            (merge-tempids new-relationships))
+         ;; Extracting data from the enveloped flow result
+         ;; {:entity-type {:data [] :tempids {} :errors {}}}
+         bulk-refs (->> (into new-entities new-relationships)
+                        (map (fn [[k {:keys [data]}]]
+                               {k data}))
+                        (into {}))]
+     (cond-> bulk-refs
+       (seq all-tempids) (assoc :tempids all-tempids)))))
 
 (defn bulk-size [bulk]
   (apply + (map count (vals bulk))))
