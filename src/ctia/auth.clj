@@ -111,7 +111,8 @@
     ;; Other
     :developer
     :specify-id
-    :external-id})
+    :external-id
+    :import-bundle})
 
 (def default-capabilities
   {:user

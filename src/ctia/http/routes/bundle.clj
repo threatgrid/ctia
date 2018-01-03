@@ -3,6 +3,7 @@
             [ctia.http.routes.bulk :as bulk]
             [ctia.lib.keyword :refer [singular]]
             [ctia.properties :refer [properties]]
+            [ctia.schemas.bulk :refer [Bulk]]
             [ctia.schemas.core :refer [NewBundle]]
             [ctia.store :refer :all]
             [ring.util.http-response :refer :all]
@@ -11,13 +12,15 @@
             [ctim.domain.id :as id]
             [clojure.string :as str]
             [clojure.set :as set]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [ctia.domain.entities :as ent]))
 
 (s/defschema EntityImportResult
   (st/optional-keys
    {:id s/Str
-    :tempid s/Str
+    :original_id s/Str
     :action (s/enum "update" "create")
+    :type s/Keyword
     :external_id s/Str
     :error s/Str}))
 
@@ -32,21 +35,7 @@
      :old-entity s/Any})))
 
 (s/defschema BundleImportResult
-  (st/optional-keys
-   {:actors          [EntityImportResult]
-    :attack-patterns [EntityImportResult]
-    :campaigns       [EntityImportResult]
-    :coas            [EntityImportResult]
-    :data-tables     [EntityImportResult]
-    :exploit-targets [EntityImportResult]
-    :feedbacks       [EntityImportResult]
-    :incidents       [EntityImportResult]
-    :indicators      [EntityImportResult]
-    :judgements      [EntityImportResult]
-    :malwares        [EntityImportResult]
-    :relationships   [EntityImportResult]
-    :sightings       [EntityImportResult]
-    :tools           [EntityImportResult]}))
+  {:results [EntityImportResult]})
 
 (defn list-fn
   "Returns the list function for a given entity type"
@@ -73,6 +62,10 @@
 
 (def default-external-id-prefix "ctia-")
 
+(defn debug [msg v]
+  (println msg v)
+  v)
+
 (s/defn valid-external-id :- (s/maybe s/Str)
   "Returns the external ID that can be used to check whether an entity has
   already been imported or not."
@@ -86,19 +79,23 @@
 
 (s/defn entity->import-data :- EntityImportData
   "Initializes an result map with an entity of the bundle."
-  [{:keys [id external_ids] :as entity}]
+  [{:keys [id external_ids] :as entity} entity-type]
   (let [external_id (valid-external-id external_ids)]
     (cond-> {:action "create"
-             :new-entity entity}
-      (transient-id? id) (assoc :tempid id)
+             :new-entity entity
+             :type entity-type}
+      (transient-id? id) (assoc :original_id id)
       external_id (assoc :external_id external_id))))
 
 (s/defn init-import-data :- [EntityImportData]
-  [entities]
-  (map entity->import-data entities))
+  [entities entity-type]
+  (map #(entity->import-data % entity-type) entities))
 
 (defn find-by-external-ids
   [external_ids entity-type identity-map]
+  (log/debugf "Searching %s matching these external_ids %s"
+              entity-type
+              (pr-str external_ids))
   (->> (read-store entity-type (list-fn entity-type)
                    {:external_ids external_ids}
                    identity-map
@@ -108,12 +105,14 @@
 (defn by-external-id
   "Index entities by external_id"
   [entities]
+  (debug "entities" entities)
   (let [entity-with-external-id
         (reduce (fn [acc {:keys [external_ids] :as entity}]
                   (set/union acc
                              (set (map (fn [external_id]
                                          {:external_id external_id
-                                          :entity entity})))))
+                                          :entity entity})
+                                       external_ids))))
                 #{}
                 entities)]
     (set/index entity-with-external-id [:external_id])))
@@ -124,22 +123,35 @@
    an error is reported."
   [entities-by-external-id
    import-data :- [EntityImportData]]
-  (map (fn [{:keys [external_id] :as entity-data}]
+  (debug "entities-by-external-id" entities-by-external-id)
+  (map (fn [{:keys [external_id]
+             entity-type :type
+             :as entity-data}]
          (if external_id
-           (let [[old-entity old-entity-2 :as old-entities]
-                 (get entities-by-external-id external_id)]
+           (let [with-long-id-fn (bulk/with-long-id-fn entity-type)
+                 old-entities
+                 (get entities-by-external-id {:external_id external_id})
+                 old-entity (some-> old-entities
+                                    first
+                                    :entity
+                                    with-long-id-fn
+                                    ent/un-store)
+                 num-old-entities (count old-entities)]
              (cond-> entity-data
                ;; only one entity linked to the external ID
                (and old-entity
-                    (not old-entity-2)) (assoc :old-entity old-entity
-                                               :id (:id old-entity))
+                    (= num-old-entities 1)) (assoc :old-entity old-entity
+                                                   :action "update"
+                                                   :id (:id old-entity)
+                                                   )
                ;; more than one entity linked to the external ID
-               old-entity-2 (assoc :error
-                                   (format
-                                    (str "More than one entity is "
-                                         "linked to the external id %s (%s)")
-                                    external_id
-                                    (pr-str (map :id old-entities))))))
+               (> num-old-entities 1)
+               (assoc :error
+                      (format
+                       (str "More than one entity is "
+                            "linked to the external id %s (%s)")
+                       external_id
+                       (pr-str (map :id old-entities))))))
            entity-data))
        import-data))
 
@@ -157,52 +169,63 @@
   [entities
    entity-type
    identity-map]
-  (let [import-data (init-import-data entities)
+  (let [import-data (debug "initial-import-data" (init-import-data entities entity-type))
+        external-ids (remove nil? (map :external_id import-data))
         entities-by-external-id
-        (-> (map :external_id import-data)
+        (-> external-ids
             (find-by-external-ids entity-type
                                   identity-map)
             by-external-id)]
-    (map merge-entity
-         (with-old-entities
-           import-data
-           entities-by-external-id))))
+    (debug "merged entities"
+           (map merge-entity
+                (with-old-entities
+                  entities-by-external-id
+                  import-data)))))
 
 (s/defn import-data->tempids
   [import-data :- [EntityImportData]]
   (->> import-data
-       (map (fn [{:keys [tempid id]}]
-              (when tempid
-                [tempid id])))
+       (map (fn [{:keys [original_id id]}]
+              (when (and original_id id)
+                [original_id id])))
        (remove nil?)
        (into {})))
 
+(def entities-keys (map :k (keys Bulk)))
+
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
-   identity-map]
-  (let [bundle-import-data
+   login]
+  (let [bundle-entities (select-keys bundle entities-keys)
+        bundle-import-data
         (reduce-kv (fn [m k v]
-                     (assoc m k (merge-entities v (singular k) identity-map)))
-                   bundle)
-        tempids (->> bundle-import-data
-                     (map import-data->tempids)
-                     (reduce into {}))
+                     (assoc m k (merge-entities v (singular k) login)))
+                   {}
+                   bundle-entities)
+        tempids (debug "tempids"
+                       (->> bundle-import-data
+                            (map (fn [[_ import-data]]
+                                   (import-data->tempids import-data)))
+                            (reduce into {})))
         bulk
-        (reduce-kv (fn [m k v]
-                     (assoc m k (->> (map (fn [{:keys [new-entity error]}]
-                                            (when-not error
-                                              new-entity))
-                                          v)
-                                     (remove nil?))))
-                   bundle)
-        {all-tempids :tempids} (bulk/create-bulk bulk tempids identity-map)]
-    (reduce-kv (fn [m k v]
-                 (assoc m k (map (fn [{:keys [tempid] :as entity-data}]
-                                   (let [id (get tempids tempid)]
-                                     (cond-> (dissoc entity-data :new-entity :old-entity)
-                                       id (assoc :id id))))
-                                 v)))
-               bundle-import-data)))
+        (debug "bulk" (reduce-kv (fn [m k v]
+                                   (assoc m k (->> (map (fn [{:keys [new-entity error]}]
+                                                          (when-not error
+                                                            new-entity))
+                                                        v)
+                                                   (remove nil?))))
+                                 {}
+                                 bundle-import-data))
+        {all-tempids :tempids} (debug "bulk result" (bulk/create-bulk bulk tempids login))
+        results (reduce-kv (fn [m k v]
+                             (into m (map (fn [{:keys [original_id] :as entity-data}]
+                                            (let [id (get all-tempids original_id)]
+                                              (cond-> (dissoc entity-data :new-entity :old-entity)
+                                                id (assoc :id id))))
+                                          v)))
+                           []
+                           bundle-import-data)]
+    {:results results}))
 
 (defroutes bundle-routes
   (context "/bundle" []
@@ -232,4 +255,4 @@
                  (if (> (bulk/bulk-size bundle)
                         (bulk/get-bulk-max-size))
                    (bad-request (str "Bundle max nb of entities: " (bulk/get-bulk-max-size)))
-                   (ok "Imported")))))
+                   (ok (import-bundle bundle login))))))

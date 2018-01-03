@@ -113,6 +113,7 @@
                       [id (make-id entity-type)])))
              (remove nil?)
              (into {}))]
+    (println "MMMMMMMMMM" newtempids)
     (update fm :tempids (fnil into {}) newtempids)))
 
 (s/defn ^:private realize-entities :- FlowMap
