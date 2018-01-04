@@ -74,8 +74,7 @@
                       "ctia.http.show.hostname" s/Str
                       "ctia.http.show.path-prefix" s/Str
                       "ctia.http.show.port" s/Int
-                      "ctia.http.bulk.max-size" s/Int
-                      "ctia.http.bundle.external-id-prefix" s/Str})
+                      "ctia.http.bulk.max-size" s/Int})
 
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.nrepl.enabled" s/Bool
@@ -112,6 +111,8 @@
                       "ctia.metrics.riemann.host" s/Str
                       "ctia.metrics.riemann.port" s/Int
                       "ctia.metrics.riemann.interval" s/Int
+
+                      "ctia.store.external-key-prefixes" s/Str
 
                       "ctia.store.es.event.slicing.strategy"
                       (s/maybe (s/enum :aliased-index))

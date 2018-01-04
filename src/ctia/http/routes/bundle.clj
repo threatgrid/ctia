@@ -13,7 +13,8 @@
             [clojure.string :as str]
             [clojure.set :as set]
             [clojure.tools.logging :as log]
-            [ctia.domain.entities :as ent]))
+            [ctia.domain.entities :as ent]
+            [clojure.string :as string]))
 
 (s/defschema EntityImportResult
   (st/optional-keys
@@ -60,47 +61,70 @@
   [id]
   (and id (re-matches id/transient-id-re id)))
 
-(def default-external-id-prefix "ctia-")
+(def default-external-key-prefixes "ctia-")
 
 (defn debug [msg v]
-  (println msg v)
+  (log/debug msg v)
   v)
+
+(s/defn prefixed-external-ids :- [s/Str]
+  "Returns all external IDs prefixed by the given key-prefix."
+  [key-prefix external-ids]
+  (->> external-ids
+       (filter #(str/starts-with? % key-prefix))))
 
 (s/defn valid-external-id :- (s/maybe s/Str)
   "Returns the external ID that can be used to check whether an entity has
   already been imported or not."
-  [external-ids]
-  (let [valid-prefix (get-in @properties
-                             [:ctia :http :bundle :external-id-prefix]
-                             default-external-id-prefix)]
-    (->> external-ids
-         (filter #(str/starts-with? % valid-prefix))
-         first)))
+  [external-ids key-prefixes]
+  (let [valid-external-ids (mapcat #(prefixed-external-ids % external-ids)
+                                   key-prefixes)]
+    (if (> (count valid-external-ids) 1)
+      (log/warnf (str "More than 1 valid external ID has been found "
+                      "(key-prefixes:%s | external-ids:%s)")
+                 (pr-str key-prefixes) (pr-str external-ids))
+      (first valid-external-ids))))
+
+(defn parse-key-prefixes
+  [s]
+  (map string/trim
+       (string/split s #",")))
 
 (s/defn entity->import-data :- EntityImportData
   "Initializes an result map with an entity of the bundle."
-  [{:keys [id external_ids] :as entity} entity-type]
-  (let [external_id (valid-external-id external_ids)]
+  [{:keys [id external_ids] :as entity}
+   entity-type
+   external-key-prefixes]
+  (let [key-prefixes (parse-key-prefixes
+                      (or external-key-prefixes
+                          (get-in @properties
+                                  [:ctia :store :external-key-prefixes]
+                                  default-external-key-prefixes)))
+        external_id (valid-external-id external_ids key-prefixes)]
     (cond-> {:action "create"
              :new-entity entity
              :type entity-type}
       (transient-id? id) (assoc :original_id id)
-      external_id (assoc :external_id external_id))))
+      external_id (assoc :external_id external_id)
+      (not external_id) (assoc :error "No valid external ID has been provided"))))
 
 (s/defn init-import-data :- [EntityImportData]
-  [entities entity-type]
-  (map #(entity->import-data % entity-type) entities))
+  [entities entity-type external-key-prefixes]
+  (map #(entity->import-data % entity-type external-key-prefixes)
+       entities))
 
 (defn find-by-external-ids
   [external_ids entity-type identity-map]
   (log/debugf "Searching %s matching these external_ids %s"
               entity-type
               (pr-str external_ids))
-  (->> (read-store entity-type (list-fn entity-type)
-                   {:external_ids external_ids}
-                   identity-map
-                   {:limit (count external_ids)})
-       :data))
+  (if (seq external_ids)
+    (->> (read-store entity-type (list-fn entity-type)
+                     {:external_ids external_ids}
+                     identity-map
+                     {:limit (count external_ids)})
+         :data)
+    []))
 
 (defn by-external-id
   "Index entities by external_id"
@@ -142,8 +166,7 @@
                (and old-entity
                     (= num-old-entities 1)) (assoc :old-entity old-entity
                                                    :action "update"
-                                                   :id (:id old-entity)
-                                                   )
+                                                   :id (:id old-entity))
                ;; more than one entity linked to the external ID
                (> num-old-entities 1)
                (assoc :error
@@ -168,8 +191,12 @@
 (s/defn merge-entities :- [EntityImportData]
   [entities
    entity-type
+   external-key-prefixes :- (s/maybe s/Str)
    identity-map]
-  (let [import-data (debug "initial-import-data" (init-import-data entities entity-type))
+  (let [import-data (debug "initial-import-data"
+                           (init-import-data entities
+                                             entity-type
+                                             external-key-prefixes))
         external-ids (remove nil? (map :external_id import-data))
         entities-by-external-id
         (-> external-ids
@@ -195,11 +222,15 @@
 
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
+   external-key-prefixes :- (s/maybe s/Str)
    login]
   (let [bundle-entities (select-keys bundle entities-keys)
         bundle-import-data
         (reduce-kv (fn [m k v]
-                     (assoc m k (merge-entities v (singular k) login)))
+                     (assoc m k (merge-entities v
+                                                (singular k)
+                                                external-key-prefixes
+                                                login)))
                    {}
                    bundle-entities)
         tempids (debug "tempids"
@@ -209,11 +240,14 @@
                             (reduce into {})))
         bulk
         (debug "bulk" (reduce-kv (fn [m k v]
-                                   (assoc m k (->> (map (fn [{:keys [new-entity error]}]
-                                                          (when-not error
-                                                            new-entity))
-                                                        v)
-                                                   (remove nil?))))
+                                   (when-let [entities
+                                              (seq
+                                               (->> (map (fn [{:keys [new-entity error]}]
+                                                           (when-not error
+                                                             new-entity))
+                                                         v)
+                                                    (remove nil?)))]
+                                     (assoc m k entities)))
                                  {}
                                  bundle-import-data))
         {all-tempids :tempids} (debug "bulk result" (bulk/create-bulk bulk tempids login))
@@ -233,6 +267,9 @@
            (POST "/import" []
                  :return BundleImportResult
                  :body [bundle NewBundle {:description "a Bundle to import"}]
+                 :query-params [{external-key-prefixes
+                                 :- (describe s/Str "Comma separated list of external key prefixes")
+                                 nil}]
                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "POST many new entities using a single HTTP call"
                  :identity login
@@ -255,4 +292,4 @@
                  (if (> (bulk/bulk-size bundle)
                         (bulk/get-bulk-max-size))
                    (bad-request (str "Bundle max nb of entities: " (bulk/get-bulk-max-size)))
-                   (ok (import-bundle bundle login))))))
+                   (ok (import-bundle bundle external-key-prefixes login))))))
