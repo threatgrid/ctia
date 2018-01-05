@@ -3,11 +3,13 @@
             [compojure.api
              [core :refer [middleware]]
              [routes :as routes]
-             [sweet :refer [context api]]]
+             [sweet :refer [context api undocumented]]]
+            [compojure.route :as rt]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
              [auth :as auth]
-             [cache-control :refer [wrap-cache-control]]]
+             [cache-control :refer [wrap-cache-control]]
+             [unknown :as unk]]
             [ctia.http.routes
              [actor :refer [actor-routes]]
              [attack-pattern :refer [attack-pattern-routes]]
@@ -33,7 +35,8 @@
                               graphql-ui-routes]]
              [version :refer [version-routes]]]
             [ctia.properties :refer [properties]]
-            [ring.middleware.not-modified :refer [wrap-not-modified]]))
+            [ring.middleware.not-modified :refer [wrap-not-modified]]
+            [ring.util.http-response :refer [ok]]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -142,4 +145,6 @@
                             tool-routes
                             relationship-routes
                             graphql-routes
-                            version-routes))))
+                            version-routes))
+       (undocumented
+         (rt/not-found (ok (unk/err-html))))))

@@ -3,7 +3,7 @@
   (:require [clj-momo.test-helpers
              [core :refer [common=]]
              [http :refer [encode]]]
-            [clojure.spec :as cs]
+            [clojure.spec.alpha :as cs]
             [clojure.test.check.generators :as tcg]
             [clojure.test.check.properties :refer [for-all]]
             [ctia.properties :refer [get-http-show]]

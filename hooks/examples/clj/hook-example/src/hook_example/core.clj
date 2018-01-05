@@ -1,6 +1,6 @@
 (ns hook-example.core
   "An example on how to implement hooks for CTIA"
-  (require [ctia.flows.hook-protocol :refer [Hook]]))
+  (:require [ctia.flows.hook-protocol :refer [Hook]]))
 
 (defrecord HookExample [name]
   Hook

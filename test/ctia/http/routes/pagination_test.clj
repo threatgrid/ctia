@@ -1,10 +1,9 @@
 (ns ctia.http.routes.pagination-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure
-             [spec :as cs]
-             [test :refer [testing use-fixtures]]]
-            [clojure.spec.gen :as csg]
+            [clojure.test :refer [testing use-fixtures]]
+            [clojure.spec.alpha :as cs]
+            [clojure.spec.gen.alpha :as csg]
             [ctia.properties :refer [properties]]
             [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers

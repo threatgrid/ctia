@@ -6,7 +6,7 @@
    [ctia.domain.access-control
     :refer [allowed-tlps
             allowed-tlp?]]
-   [clojure.spec :as cs]
+   [clojure.spec.alpha :as cs]
    [clojure.tools.logging :as log]
    [ctia.auth :as auth]
    [ctia.flows.hooks :as h]
