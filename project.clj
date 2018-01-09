@@ -68,6 +68,7 @@
                  ;; clients
                  [clj-http "3.4.1"]
                  [com.taoensso/carmine "2.12.2"]
+                 [quoll/clients "0.1.2" :exclusions [com.andrewmcveigh/cljs-time org.clojure/tools.logging]]
 
                  ;; Metrics
                  [metrics-clojure "2.9.0"]
@@ -87,7 +88,14 @@
                  [ring-cors "0.1.8"]
 
                  ;; Hooks
-                 [threatgrid/redismq "0.1.0"]
+                 [redismq "0.1.0-SNAPSHOT"]
+                 [ymilky/franzy "0.0.1"]
+                 [ymilky/franzy-admin "0.0.1"
+                  :exclusions [com.andrewmcveigh/cljs-time
+                               com.taoensso/encore
+                               com.taoensso/timbre
+                               io.netty/netty
+                               net.sf.jopt-simple/jopt-simple]]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]

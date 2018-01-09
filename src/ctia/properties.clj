@@ -79,7 +79,8 @@
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.nrepl.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool
-                      "ctia.hook.redismq.enabled" s/Bool})
+                      "ctia.hook.redismq.enabled" s/Bool
+                      "ctia.hook.kafka.enabled" s/Bool})
 
    (st/required-keys {"ctia.access-control.min-tlp" TLP
                       "ctia.access-control.default-tlp" TLP})
@@ -96,6 +97,16 @@
                       "ctia.hook.redismq.port" s/Int
                       "ctia.hook.redismq.timeout-ms" s/Int
                       "ctia.hook.redismq.max-depth" s/Int
+
+                      "ctia.hook.kafka.zookeeper.host-ports" s/Str
+
+                      "ctia.hook.kafka.host-ports" s/Str
+                      "ctia.hook.kafka.topic" s/Str
+                      "ctia.hook.kafka.partition" s/Int
+                      "ctia.hook.kafka.security" s/Str
+                      "ctia.hook.kafka.truststore" s/Str
+                      "ctia.hook.kafka.keystore" s/Str
+                      "ctia.hook.kafka.password" s/Str
 
                       "ctia.hooks.before-create" s/Str
                       "ctia.hooks.after-create" s/Str
