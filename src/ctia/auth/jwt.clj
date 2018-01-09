@@ -15,7 +15,7 @@
   (login [_]
     (:sub jwt))
   (groups [_]
-    (remove nil? [(:business_guid jwt)]))
+    (remove nil? [(get jwt "cisco.com/iroh/org/id")]))
   (allowed-capabilities [_]
     write-capabilities)
   (capable? [this required-capabilities]
