@@ -1,16 +1,18 @@
 (ns ctia.schemas.graphql.feedback
-  (:require [ctia.schemas.graphql
-             [flanders :as f]
-             [helpers :as g]
-             [pagination :as pagination]
-             [resolvers :as resolvers]]
-            [ctim.schemas.feedback :as ctim-feedback]
-            [ctia.schemas.graphql.sorting :as sorting]
-            [ctia.schemas.sorting :as sort-fields]))
+  (:require
+   [flanders.utils :as fu]
+   [ctia.schemas.graphql
+    [flanders :as f]
+    [helpers :as g]
+    [pagination :as pagination]
+    [resolvers :as resolvers]]
+   [ctim.schemas.feedback :as ctim-feedback]
+   [ctia.schemas.graphql.sorting :as sorting]
+   [ctia.schemas.sorting :as sort-fields]))
 
 (def FeedbackType
   (let [{:keys [fields name description]}
-        (f/->graphql ctim-feedback/Feedback)]
+        (f/->graphql (fu/optionalize-all ctim-feedback/Feedback))]
     (g/new-object name description [] fields)))
 
 (def feedback-order-arg

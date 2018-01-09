@@ -9,6 +9,17 @@
    [schema-tools.core :as st]
    [ring.swagger.schema :refer [describe]]))
 
+(def search-options [:sort_by
+                     :sort_order
+                     :offset
+                     :limit
+                     :fields])
+
+(def filter-map-search-options
+  (conj search-options :query))
+
+(def datatable-sort-fields
+  (apply s/enum sorting/default-entity-sort-fields))
 
 (def exploit-target-sort-fields
   (apply s/enum sorting/exploit-target-sort-fields))
@@ -24,6 +35,10 @@
 
 (def judgement-sort-fields
   (apply s/enum sorting/judgement-sort-fields))
+
+(def judgements-by-observable-sort-fields
+  (apply s/enum (map name (conj sorting/judgement-sort-fields
+                                "disposition:asc,valid_time.start_time:desc"))))
 
 (def sighting-sort-fields
   (apply s/enum sorting/sighting-sort-fields))
@@ -49,7 +64,7 @@
 (def tool-sort-fields
   (apply s/enum sorting/tool-sort-fields))
 
-(def InvestigationSortFields
+(def investigation-sort-fields
   (apply s/enum sorting/investigation-sort-fields))
 
 ;; Paging related values and code
@@ -118,19 +133,145 @@
   {(s/optional-key :source) s/Str})
 
 
+;; actor
+
+(s/defschema ActorFieldsParam
+  {(s/optional-key :fields) [actor-sort-fields]})
+
+(s/defschema ActorSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   ActorFieldsParam
+   {:query s/Str
+    (s/optional-key :actor_type) s/Str
+    (s/optional-key :motivation) s/Str
+    (s/optional-key :sophistication) s/Str
+    (s/optional-key :intended_effect) s/Str
+    (s/optional-key :confidence) s/Str
+    (s/optional-key :sort_by)  actor-sort-fields}))
+
+(def ActorGetParams ActorFieldsParam)
+
+(s/defschema ActorByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   ActorFieldsParam))
+
+;; campaign
+
+(s/defschema CampaignFieldsParam
+  {(s/optional-key :fields) [campaign-sort-fields]})
+
+(s/defschema CampaignSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   CampaignFieldsParam
+   {:query s/Str
+    (s/optional-key :campaign_type) s/Str
+    (s/optional-key :confidence) s/Str
+    (s/optional-key :activity) s/Str
+    (s/optional-key :sort_by)  campaign-sort-fields}))
+
+(def CampaignGetParams CampaignFieldsParam)
+
+(s/defschema CampaignByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   CampaignFieldsParam))
+
+;; COA
+
+(s/defschema COAFieldsParam
+  {(s/optional-key :fields) [coa-sort-fields]})
+
+(s/defschema COASearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   COAFieldsParam
+   {:query s/Str
+    (s/optional-key :stage) s/Str
+    (s/optional-key :coa_type) s/Str
+    (s/optional-key :impact) s/Str
+    (s/optional-key :objective) s/Str
+    (s/optional-key :cost) s/Str
+    (s/optional-key :efficacy) s/Str
+    (s/optional-key :structured_coa_type) s/Str
+    (s/optional-key :sort_by) coa-sort-fields}))
+
+(def COAGetParams COAFieldsParam)
+
+(s/defschema COAByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   COAFieldsParam))
+
+;; data-table
+
+(s/defschema DataTableFieldsParam
+  {(s/optional-key :fields) [datatable-sort-fields]})
+
+(def DataTableGetParams DataTableFieldsParam)
+
+(s/defschema DataTableByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   DataTableFieldsParam))
+
+;; exploit-target
+
+(s/defschema ExploitTargetFieldsParam
+  {(s/optional-key :fields) [exploit-target-sort-fields]})
+
 (s/defschema ExploitTargetSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
+   ExploitTargetFieldsParam
    {:query s/Str
     (s/optional-key :sort_by) exploit-target-sort-fields}))
+
+(def ExploitTargetGetParams ExploitTargetFieldsParam)
+
+(s/defschema ExploitTargetByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   ExploitTargetFieldsParam))
+
+;; feedback
+
+(s/defschema FeedbackFieldsParam
+  {(s/optional-key :fields) [feedback-sort-fields]})
+
+(s/defschema FeedbackQueryParams
+  (st/merge
+   FeedbackFieldsParam
+   PagingParams
+   {:entity_id s/Str
+    (s/optional-key :sort_by) feedback-sort-fields}))
+
+(def FeedbackGetParams FeedbackFieldsParam)
+
+(s/defschema FeedbackByExternalIdQueryParams
+  (st/dissoc FeedbackQueryParams :entity_id))
+
+;; incident
+
+(s/defschema IncidentFieldsParam
+  {(s/optional-key :fields) [incident-sort-fields]})
 
 (s/defschema IncidentSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
+   IncidentFieldsParam
    {:query s/Str
     (s/optional-key :confidence) s/Str
     (s/optional-key :status) s/Str
@@ -144,11 +285,24 @@
     (s/optional-key :categories) s/Str
     (s/optional-key :sort_by) incident-sort-fields}))
 
+(def IncidentGetParams IncidentFieldsParam)
+
+(s/defschema IncidentByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   IncidentFieldsParam))
+
+;; indicator
+
+(s/defschema IndicatorFieldsParam
+  {(s/optional-key :fields) [indicator-sort-fields]})
+
 (s/defschema IndicatorSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
+   IndicatorFieldsParam
    {:query s/Str
     (s/optional-key :indicator_type) s/Str
     (s/optional-key :tags) s/Int
@@ -158,11 +312,28 @@
     (s/optional-key :confidence) s/Str
     (s/optional-key :sort_by)  indicator-sort-fields}))
 
+(def IndicatorGetParams IndicatorFieldsParam)
+
+(s/defschema IndicatorsListQueryParams
+  (st/merge
+   PagingParams
+   IndicatorFieldsParam
+   {(s/optional-key :sort_by) indicator-sort-fields}))
+
+(s/defschema IndicatorsByExternalIdQueryParams
+  IndicatorsListQueryParams)
+
+;; judgement
+
+(s/defschema JudgementFieldsParam
+  {(s/optional-key :fields) [judgement-sort-fields]})
+
 (s/defschema JudgementSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
+   JudgementFieldsParam
    {:query s/Str
     (s/optional-key :disposition_name) s/Str
     (s/optional-key :disposition) s/Int
@@ -171,82 +342,109 @@
     (s/optional-key :confidence) s/Str
     (s/optional-key :sort_by)  judgement-sort-fields}))
 
+(def JudgementGetParams JudgementFieldsParam)
+
+(s/defschema FeedbacksByJudgementQueryParams
+  (st/merge
+   PagingParams
+   JudgementFieldsParam
+   {(s/optional-key :sort_by) feedback-sort-fields}))
+
+(s/defschema JudgementsQueryParams
+  (st/merge
+   PagingParams
+   JudgementFieldsParam
+   {(s/optional-key :sort_by) judgement-sort-fields}))
+
+(s/defschema JudgementsByExternalIdQueryParams
+  (st/merge
+   JudgementsQueryParams
+   JudgementFieldsParam))
+
+(s/defschema JudgementsByObservableQueryParams
+  (st/merge
+   PagingParams
+   JudgementFieldsParam
+   {(s/optional-key :sort_by) judgements-by-observable-sort-fields}))
+
+;; relationship
+
+(s/defschema RelationshipFieldsParam
+  {(s/optional-key :fields) [relationship-sort-fields]})
+
 (s/defschema RelationshipSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
+   RelationshipFieldsParam
    {:query s/Str
     (s/optional-key :relationship_type) s/Str
     (s/optional-key :source_ref) s/Str
     (s/optional-key :target_ref) s/Str
     (s/optional-key :sort_by)  relationship-sort-fields}))
 
+(s/defschema RelationshipGetParams RelationshipFieldsParam)
+
+(s/defschema RelationshipByExternalIdQueryParams
+  (st/merge PagingParams
+            RelationshipFieldsParam))
+
+;; sighting
+
+(s/defschema SightingFieldsParam
+  {(s/optional-key :fields) [sighting-sort-fields]})
+
 (s/defschema SightingSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
+   SightingFieldsParam
    {:query s/Str
     (s/optional-key :sensor) s/Str
     (s/optional-key :observables.value) s/Str
     (s/optional-key :observables.type) s/Str
     (s/optional-key :sort_by)  sighting-sort-fields}))
 
-(s/defschema ActorSearchParams
+(def SightingGetParams SightingFieldsParam)
+
+(s/defschema SightingByExternalIdQueryParams
   (st/merge
    PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
-   {:query s/Str
-    (s/optional-key :actor_type) s/Str
-    (s/optional-key :motivation) s/Str
-    (s/optional-key :sophistication) s/Str
-    (s/optional-key :intended_effect) s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :sort_by)  actor-sort-fields}))
+   SightingFieldsParam))
 
-(s/defschema CampaignSearchParams
-  (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
-   {:query s/Str
-    (s/optional-key :campaign_type) s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :activity) s/Str
-    (s/optional-key :sort_by)  campaign-sort-fields}))
+;; attack-pattern
 
-
-(s/defschema COASearchParams
-  (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
-   {:query s/Str
-    (s/optional-key :stage) s/Str
-    (s/optional-key :coa_type) s/Str
-    (s/optional-key :impact) s/Str
-    (s/optional-key :objective) s/Str
-    (s/optional-key :cost) s/Str
-    (s/optional-key :efficacy) s/Str
-    (s/optional-key :structured_coa_type) s/Str
-    (s/optional-key :sort_by) coa-sort-fields}))
+(s/defschema AttackPatternFieldsParam
+  {(s/optional-key :fields) [attack-pattern-sort-fields]})
 
 (s/defschema AttackPatternSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
+   AttackPatternFieldsParam
    {:query s/Str}
    (st/optional-keys
     {:kill_chain_phases.kill_chain_name s/Str
      :kill_chain_phases.phase_name s/Str
      :sort_by attack-pattern-sort-fields})))
 
+(s/defschema AttackPatternGetParams AttackPatternFieldsParam)
+
+(s/defschema AttackPatternByExternalIdQueryParams
+  (st/merge PagingParams AttackPatternFieldsParam))
+
+;; malware
+
+(s/defschema MalwareFieldsParam
+  {(s/optional-key :fields) [malware-sort-fields]})
+
 (s/defschema MalwareSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
+   MalwareFieldsParam
    {:query s/Str}
    (st/optional-keys
     {:labels s/Str
@@ -254,10 +452,22 @@
      :kill_chain_phases.phase_name s/Str
      :sort_by malware-sort-fields})))
 
+(s/defschema MalwareGetParams MalwareFieldsParam)
+
+(s/defschema MalwareByExternalIdQueryParams
+  (st/merge PagingParams
+            MalwareFieldsParam))
+
+;; tool
+
+(s/defschema ToolFieldsParam
+  {(s/optional-key :fields) [tool-sort-fields]})
+
 (s/defschema ToolSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
+   ToolFieldsParam
    {:query s/Str}
    (st/optional-keys
     {:labels s/Str
@@ -266,10 +476,29 @@
      :tool_version s/Str
      :sort_by malware-sort-fields})))
 
+(s/defschema ToolGetParams ToolFieldsParam)
+
+(s/defschema ToolByExternalIdQueryParams
+  (st/merge PagingParams
+            ToolFieldsParam))
+
+;; investigation
+
+(s/defschema InvestigationFieldsParam
+  {(s/optional-key :fields) [investigation-sort-fields]})
+
 (s/defschema InvestigationSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
+   InvestigationFieldsParam
    {:query s/Str}
    {s/Keyword s/Any}))
+
+(def InvestigationGetParams InvestigationFieldsParam)
+
+(s/defschema InvestigationsByExternalIdQueryParams
+  (st/merge
+   InvestigationFieldsParam
+   PagingParams))

@@ -6,17 +6,19 @@
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common
     :refer [created
+            search-options
+            filter-map-search-options
             paginated-ok
             PagingParams
-            ActorSearchParams]]
+            ActorGetParams
+            ActorSearchParams
+            ActorByExternalIdQueryParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewActor Actor]]
+   [ctia.schemas.core
+    :refer [NewActor Actor PartialActor PartialActorList]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-(s/defschema ActorByExternalIdQueryParams
-  PagingParams)
 
 (defroutes actor-routes
   (context "/actor" []
@@ -58,7 +60,8 @@
                      :get-fn #(read-store :actor
                                           read-actor
                                           %
-                                          identity-map)
+                                          identity-map
+                                          {})
                      :realize-fn ent/realize-actor
                      :update-fn #(write-store :actor
                                               update-actor
@@ -75,7 +78,7 @@
                     ok))
 
            (GET "/external_id/:external_id" []
-                :return (s/maybe [Actor])
+                :return PartialActorList
                 :query [q ActorByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -92,7 +95,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [Actor])
+                :return PartialActorList
                 :summary "Search for an Actor using a Lucene/ES query string"
                 :query [params ActorSearchParams]
                 :capabilities #{:read-actor :search-actor}
@@ -103,17 +106,18 @@
                      :actor
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Actor)
+                :return (s/maybe PartialActor)
                 :summary "Gets an Actor by ID"
                 :path-params [id :- s/Str]
+                :query [params ActorGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-actor
                 :identity identity
@@ -121,7 +125,8 @@
                 (if-let [actor (read-store :actor
                                            read-actor
                                            id
-                                           identity-map)]
+                                           identity-map
+                                           params)]
                   (-> actor
                       with-long-id
                       ent/un-store
@@ -140,7 +145,8 @@
                         :get-fn #(read-store :actor
                                              read-actor
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :actor
                                                  delete-actor
                                                  %

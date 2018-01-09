@@ -42,8 +42,8 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.22"]
-                 [threatgrid/clj-momo "0.2.14"]
+                 [threatgrid/ctim "0.4.23-SNAPSHOT"]
+                 [threatgrid/clj-momo "0.2.17-SNAPSHOT"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
@@ -63,7 +63,7 @@
 
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.13"]
-                 [cider/cider-nrepl "0.15.0"]
+                 [cider/cider-nrepl "0.15.1"]
 
                  ;; clients
                  [clj-http "3.4.1"]

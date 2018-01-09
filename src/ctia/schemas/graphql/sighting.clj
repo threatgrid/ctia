@@ -1,19 +1,21 @@
 (ns ctia.schemas.graphql.sighting
-  (:require [ctia.schemas.graphql
-             [feedback :as feedback]
-             [flanders :as flanders]
-             [helpers :as g]
-             [pagination :as pagination]
-             [refs :as refs]
-             [relationship :as relationship]
-             [sorting :as sorting]]
-            [ctia.schemas.sorting :as sort-fields]
-            [ctim.schemas.sighting :as ctim-sighting]))
+  (:require
+   [flanders.utils :as fu]
+   [ctia.schemas.graphql
+    [feedback :as feedback]
+    [flanders :as flanders]
+    [helpers :as g]
+    [pagination :as pagination]
+    [refs :as refs]
+    [relationship :as relationship]
+    [sorting :as sorting]]
+   [ctia.schemas.sorting :as sort-fields]
+   [ctim.schemas.sighting :as ctim-sighting]))
 
 (def SightingType
   (let [{:keys [fields name description]}
         (flanders/->graphql
-         ctim-sighting/Sighting
+         (fu/optionalize-all ctim-sighting/Sighting)
          {refs/observable-type-name refs/ObservableTypeRef})]
     (g/new-object
      name

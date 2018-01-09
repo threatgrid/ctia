@@ -199,33 +199,6 @@
                               :end_time #inst "2525-01-01T00:00:00.000-00:00"}}]
                judgements))))
 
-      (testing "GET /ctia/judgement/:id with query-param Authorization"
-        (let [{status :status
-               judgement :parsed-body
-               :as response}
-              (get (str "ctia/judgement/" (:short-id judgement-id))
-                   :query-params {:Authorization "45c1f5e3f05d0"})]
-          (is (= 200 (:status response)))
-          (is (deep=
-               {:id (id/long-id judgement-id)
-                :type "judgement"
-                :observable {:value "1.2.3.4"
-                             :type "ip"}
-                :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                               "http://ex.tld/ctia/judgement/judgement-456"]
-                :disposition 2
-                :disposition_name "Malicious"
-                :priority 100
-                :severity "High"
-                :confidence "Low"
-                :source "test"
-                :tlp "green"
-                :schema_version schema-version
-                :reason "This is a bad IP address that talked to some evil servers"
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-               judgement))))
-
       (testing "GET /ctia/judgement/:id authentication failures"
         (testing "no Authorization"
           (let [{body :parsed-body status :status}

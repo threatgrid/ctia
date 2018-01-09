@@ -7,11 +7,13 @@
     [sighting :as sighting]]
    [ctia.http.routes.common
     :refer [paginated-ok
-            PagingParams]]
+            PagingParams
+            JudgementsByObservableQueryParams]]
    [ctia.lib.pagination :as pag]
    [ctia.properties :refer [properties]]
    [ctia.schemas.core :refer [Indicator
                               Judgement
+                              PartialJudgementList
                               ObservableTypeIdentifier
                               Reference
                               Sighting
@@ -23,19 +25,6 @@
    [schema-tools.core :as st]
    [schema.core :as s]
    [clojure.tools.logging :as log]))
-
-(s/defschema JudgementsByObservableQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by)
-    (s/enum
-     "id"
-     "disposition"
-     "priority"
-     "severity"
-     "confidence"
-     "valid_time.start_time"
-     "disposition:asc,valid_time.start_time:desc")}))
 
 (s/defschema RefsByObservableQueryParams
   (st/dissoc PagingParams :sort_by :sort_order))
@@ -76,7 +65,7 @@
        :query [params JudgementsByObservableQueryParams]
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
-       :return (s/maybe [Judgement])
+       :return PartialJudgementList
        :summary "Returns the Judgements associated with the specified observable."
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :list-judgements

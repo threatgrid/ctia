@@ -3,6 +3,16 @@
             [ctim.schemas.common :as csc]
             [schema.core :as s]))
 
+(def acl-fields
+  "Those fields should always be retrieved from _source
+   to check access control"
+  [:id
+   :owner
+   :groups
+   :tlp
+   :authorized_users
+   :authorized_groups])
+
 (def public-tlps
   ["white" "green"])
 
@@ -13,7 +23,7 @@
       csc/default-tlp))
 
 (defn allowed-tlps []
-  (let [min-tlp (or (:min-tlp (get-access-control) "white"))]
+  (let [min-tlp (:min-tlp (get-access-control) "white")]
     (nthrest tlps
              (.indexOf tlps min-tlp))))
 

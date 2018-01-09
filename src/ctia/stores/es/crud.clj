@@ -9,13 +9,24 @@
              [schemas :refer [ESConnState]]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.domain.access-control
-             :refer [allow-read? allow-write?]]
+             :refer [acl-fields allow-read? allow-write?]]
             [ctia.stores.es.query
              :refer [find-restriction-query-part]]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
              [core :as s]]))
+
+(defn make-es-read-params
+  "Prepare ES Params for read operations, setting the _source field
+   and including ACL mandatory ones."
+  [{:keys [fields]
+    :as params}]
+  (if (coll? fields)
+    (-> params
+        (assoc :_source (concat fields acl-fields))
+        (dissoc :fields))
+    params))
 
 (defn coerce-to-fn
   [Model]
@@ -60,7 +71,8 @@
             (get-doc (:conn state)
                      (:index state)
                      (name mapping)
-                     (ensure-document-id id))]
+                     (ensure-document-id id)
+                     {})]
 
         (if (allow-write? current-doc ident)
           (coerce! (update-doc (:conn state)
@@ -77,17 +89,19 @@
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe Model)
-      [state :- ESConnState
-       id :- s/Str
-       ident]
-      (if-let [doc (coerce! (get-doc (:conn state)
-                                     (:index state)
-                                     (name mapping)
-                                     (ensure-document-id id)))]
-        (if (allow-read? doc ident)
-          doc
-          (throw (ex-info "You are not allowed to read this document"
-                          {:type :access-control-error})))))))
+      ([state :- ESConnState
+        id :- s/Str
+        ident
+        params]
+       (when-let [doc (coerce! (get-doc (:conn state)
+                                        (:index state)
+                                        (name mapping)
+                                        (ensure-document-id id)
+                                        (make-es-read-params params)))]
+         (if (allow-read? doc ident)
+           doc
+           (throw (ex-info "You are not allowed to read this document"
+                           {:type :access-control-error}))))))))
 
 (defn access-control-filter-list
   "Given an ident, keep only documents it is allowed to read"
@@ -104,7 +118,8 @@
     (if-let [doc (get-doc (:conn state)
                           (:index state)
                           (name mapping)
-                          (ensure-document-id id))]
+                          (ensure-document-id id)
+                          {})]
       (if (allow-write? doc ident)
         (delete-doc (:conn state)
                     (:index state)
@@ -131,7 +146,7 @@
                              (name mapping)
                              (find-restriction-query-part ident)
                              filter-map
-                             params))
+                             (make-es-read-params params)))
        :data access-control-filter-list ident))))
 
 (defn handle-query-string-search
@@ -152,5 +167,5 @@
                              {:bool {:must [(find-restriction-query-part ident)
                                             {:query_string {:query query}}]}}
                              filter-map
-                             params))
+                             (make-es-read-params params)))
        :data access-control-filter-list ident))))

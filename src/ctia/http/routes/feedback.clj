@@ -7,21 +7,16 @@
    [ctia.http.routes.common
     :refer [created
             paginated-ok
+            FeedbackGetParams
+            FeedbackQueryParams
+            FeedbackByExternalIdQueryParams
             PagingParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewFeedback Feedback]]
+   [ctia.schemas.core
+    :refer [NewFeedback Feedback PartialFeedback PartialFeedbackList]]
    [ring.util.http-response :refer [ok no-content not-found]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-(s/defschema FeedbackQueryParams
-  (st/merge
-   PagingParams
-   {:entity_id s/Str
-    (s/optional-key :sort_by) (s/enum :id :feedback :reason)}))
-
-(s/defschema FeedbackByExternalIdQueryParams
-  (st/dissoc FeedbackQueryParams :entity_id))
 
 (defroutes feedback-routes
   (context "/feedback" []
@@ -50,7 +45,7 @@
                      created))
 
            (GET "/" []
-                :return [Feedback]
+                :return PartialFeedbackList
                 :query [params FeedbackQueryParams]
                 :summary "Search Feedback"
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -67,7 +62,7 @@
                     paginated-ok))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe Feedback)]
+                :return PartialFeedbackList
                 :query [q FeedbackByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -85,9 +80,10 @@
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Feedback)
+                :return (s/maybe PartialFeedback)
                 :summary "Gets a Feedback by ID"
                 :path-params [id :- s/Str]
+                :query [params FeedbackGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-feedback
                 :identity identity
@@ -95,7 +91,8 @@
                 (if-let [feedback (read-store :feedback
                                               read-feedback
                                               id
-                                              identity-map)]
+                                              identity-map
+                                              params)]
                   (-> feedback
                       with-long-id
                       ent/un-store
@@ -114,7 +111,8 @@
                         :get-fn #(read-store :feedback
                                              read-feedback
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :feedback
                                                  delete-feedback
                                                  %

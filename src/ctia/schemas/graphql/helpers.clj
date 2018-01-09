@@ -104,16 +104,66 @@
   [msg value]
   (log/debug msg (pr-str value)))
 
+(defn get-selections [s]
+  (some-> s .getSelectionSet .getSelections))
+
+(defn get-selections-get [s]
+  (some-> s .getSelectionSet .get))
+
+(defn fragment-spread? [x]
+  (instance? graphql.language.FragmentSpread x))
+
+(defn resolve-fields [env all-fragments]
+  (let [selections (get-selections env)
+        fragments (filter fragment-spread? selections)
+        non-fragments (remove fragment-spread? selections)
+        non-fragment-fields (map #(.getName %) non-fragments)
+        fragment-names (->> fragments
+                            (map #(.getName %))
+                            (map keyword))
+        fragments (map #(get all-fragments %) fragment-names)
+        fragment-fields (mapcat #(get-selections %) fragments)
+        fragments-fields (map #(.getName %) fragment-fields)]
+    (map #(if (string? %)
+            (keyword %)
+            (keyword (.getName %)))
+         (concat non-fragment-fields
+                 fragment-fields))))
+
+(defn traverse [edges-node n]
+  (let [selections (get-selections edges-node)]
+    (if (seq selections)
+      (when-let [filtered (filter #(= (.getName %) n) selections)]
+        (-> filtered first)))))
+
+(defn full-selection [env fragments]
+  (let [selections  (->clj (get-selections-get env))
+        nodes (:nodes selections)
+        edges-node (some->> selections
+                            :edges
+                            (mapcat get-selections)
+                            (filter #(= (.getName %) "node"))
+                            first)
+        node-target-entity (traverse edges-node "target_entity")
+        node-source-entity (traverse edges-node "source_entity")]
+    (set (cond-> []
+           nodes (concat (mapcat #(resolve-fields % fragments) nodes))
+           edges-node (concat (resolve-fields edges-node fragments))
+           node-target-entity (concat (resolve-fields node-target-entity fragments))
+           node-source-entity (concat (resolve-fields node-source-entity fragments))))))
+
 (defn fn->data-fetcher
-  "Converts a function that takes 3 parameters (context, args and value)
+  "Converts a function that takes 3 parameters (context, args, value)
   to a GraphQL DataFetcher"
   [f]
   (reify DataFetcher
     (get [_ env]
-      (let [context (->clj (.getContext env))
+      (let [fragments (->clj (.getFragmentsByName env))
+            context (->clj (.getContext env))
             args (->clj (.getArguments env))
             value (->clj (.getSource env))
-            result (f context args value)]
+            field-selection (full-selection env fragments)
+            result (f context (assoc args :fields field-selection) value)]
         (debug "data-fetcher context:" context)
         (debug "data-fetcher args:" args)
         (debug "data-fetcher value:"  value)
@@ -127,7 +177,7 @@
      (when value
        (f (get value k))))))
 
-;----- Input
+                                        ;----- Input
 
 (defn new-argument
   [^String arg-name

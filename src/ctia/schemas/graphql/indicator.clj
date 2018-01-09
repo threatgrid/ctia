@@ -1,19 +1,21 @@
 (ns ctia.schemas.graphql.indicator
-  (:require [ctia.schemas.graphql
-             [feedback :as feedback]
-             [flanders :as f]
-             [helpers :as g]
-             [pagination :as pagination]
-             [refs :as refs]
-             [relationship :as relationship]
-             [sorting :as sorting]]
-            [ctia.schemas.sorting :as sort-fields]
-            [ctim.schemas.indicator :as ctim-indicator-schema]))
+  (:require
+   [flanders.utils :as fu]
+   [ctia.schemas.graphql
+    [feedback :as feedback]
+    [flanders :as f]
+    [helpers :as g]
+    [pagination :as pagination]
+    [refs :as refs]
+    [relationship :as relationship]
+    [sorting :as sorting]]
+   [ctia.schemas.sorting :as sort-fields]
+   [ctim.schemas.indicator :as ctim-indicator-schema]))
 
 (def IndicatorType
   (let [{:keys [fields name description]}
         (f/->graphql
-         ctim-indicator-schema/Indicator
+         (fu/optionalize-all ctim-indicator-schema/Indicator)
          {refs/related-judgement-type-name relationship/RelatedJudgement
           refs/observable-type-name refs/ObservableTypeRef})]
     (g/new-object name description []

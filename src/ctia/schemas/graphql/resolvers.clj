@@ -30,7 +30,8 @@
    ident
    page-with-long-id-fn]
   (let [paging-params (pagination/connection-params->paging-params args)
-        params (select-keys paging-params [:limit :offset :sort_by])]
+        params (merge (select-keys paging-params [:limit :offset :sort_by])
+                      (select-keys args [:fields]))]
     (log/debugf "Search entity %s graphql args %s" entity-type args)
     (some-> (query-string-search-store
              entity-type
@@ -75,7 +76,7 @@
 (s/defn indicator-by-id
   [id :- s/Str
    ident]
-  (some-> (read-store :indicator read-indicator id ident)
+  (some-> (read-store :indicator read-indicator id ident {})
           ctim-indicator-entity/with-long-id
           ctim-entities/un-store))
 
@@ -93,7 +94,7 @@
 (s/defn investigation-by-id
   [id :- s/Str
    ident]
-  (some-> (read-store :investigation read-investigation id ident)
+  (some-> (read-store :investigation read-investigation id ident {})
           ctim-investigation-entity/with-long-id
           ctim-entities/un-store))
 
@@ -114,7 +115,7 @@
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}]
   (let [paging-params (pagination/connection-params->paging-params args)
-        params (select-keys paging-params [:limit :offset :sort_by])]
+        params (select-keys paging-params [:limit :offset :sort_by :fields])]
     (some-> (read-store :judgement
                         list-judgements-by-observable
                         observable
@@ -127,7 +128,7 @@
 (s/defn judgement-by-id
   [id :- s/Str
    ident]
-  (some-> (read-store :judgement read-judgement id ident)
+  (some-> (read-store :judgement read-judgement id ident {})
           ctim-judgement-entity/with-long-id
           ctim-entities/un-store))
 
@@ -145,7 +146,7 @@
 (s/defn sighting-by-id
   [id :- s/Str
    ident]
-  (some-> (read-store :sighting read-sighting id ident)
+  (some-> (read-store :sighting read-sighting id ident {})
           ctim-sighting-entity/with-long-id
           ctim-entities/un-store))
 
