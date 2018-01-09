@@ -11,7 +11,7 @@
                         :url "http://localhost:8080/foo"}
         request-jwt (assoc request-no-jwt
                            :jwt {:sub "subject name"
-                                 :business_guid "organization-id"})
+                                 "cisco.com/iroh/org/id" "organization-id"})
         response-no-jwt (wrapped-handler request-no-jwt)
         response-jwt (wrapped-handler request-jwt)]
     (is (= {:body {:body "foo"
@@ -21,9 +21,9 @@
     (is (= {:body {:body "foo"
                    :url "http://localhost:8080/foo"
                    :jwt {:sub "subject name"
-                         :business_guid "organization-id"}
+                         "cisco.com/iroh/org/id" "organization-id"}
                    :identity #ctia.auth.jwt.Identity{:jwt {:sub "subject name"
-                                                           :business_guid "organization-id"}}
+                                                           "cisco.com/iroh/org/id" "organization-id"}}
                    :groups ["organization-id"]
                    :login  "subject name"}
             :status 200}
