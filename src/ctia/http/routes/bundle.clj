@@ -20,7 +20,7 @@
   (st/optional-keys
    {:id s/Str
     :original_id s/Str
-    :action (s/enum "update" "create")
+    :action (s/enum "keep" "create")
     :type s/Keyword
     :external_id s/Str
     :error s/Str}))
@@ -147,22 +147,6 @@
                 entities)]
     (set/index entity-with-external-id [:external_id])))
 
-(s/defn merge-entity :- EntityImportData
-  "Merges the existing entity with the new"
-  [{:keys [id old-entity new-entity]
-    :as entity-data} :- EntityImportData]
-  (if old-entity
-    (assoc entity-data
-           :new-entity
-           (into old-entity
-                 (dissoc new-entity :id)))
-    entity-data))
-
-(s/defn merge-entities :- [EntityImportData]
-  "Merges existing entities with news"
-  [entities-import-data :- [EntityImportData]]
-  (map merge-entity entities-import-data))
-
 (s/defn entities-import-data->tempids :- TempIDs
   "Get a mapping table between orignal IDs and real IDs"
   [import-data :- [EntityImportData]]
@@ -218,8 +202,8 @@
                (cond-> entity-data
                  ;; only one entity linked to the external ID
                  (and old-entity
-                      (= num-old-entities 1)) (assoc :old-entity old-entity
-                                                     :action "update"
+                      (= num-old-entities 1)) (assoc :action "keep"
+                                                     ;;:old-entity old-entity
                                                      :id (:id old-entity))
                  ;; more than one entity linked to the external ID
                  (> num-old-entities 1)
@@ -233,6 +217,9 @@
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
+  "Prepares the import data by searching all existing
+   entities based on their external IDs. Only new entities
+   will be imported"
   [bundle-entities
    external-key-prefixes
    identity-map]
@@ -240,23 +227,26 @@
             (let [entity-type (singular k)]
               (-> v
                   (init-import-data entity-type external-key-prefixes)
-                  (with-existing-entities entity-type identity-map)
-                  merge-entities)))
+                  (with-existing-entities entity-type identity-map))))
           bundle-entities))
 
 (s/defn prepare-bulk
+  "Creates the bulk data structure with all entities to create."
   [bundle-import-data :- BundleImportData]
   (map-kv (fn [k v]
             (->> v
-                 (map (fn [{:keys [new-entity error]}]
-                        (when-not error
+                 (map (fn [{:keys [new-entity error action]}]
+                        ;; Add only new entities without error
+                        (when (and (= action "create")
+                                   (not error))
                           new-entity)))
                  (remove nil?)))
           bundle-import-data))
 
-(s/defn build-results :- BundleImportResult
+(s/defn build-response :- BundleImportResult
+  "Builds response from the bulk result"
   [import-data :- BundleImportData
-   tempids :- TempIDs]
+   tempids :- (s/maybe TempIDs)]
   {:results
    (map (fn [{:keys [original_id] :as entity-data}]
           (let [id (get tempids original_id)]
@@ -272,13 +262,13 @@
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
                                            login)
-        bulk (prepare-bulk bundle-import-data)
+        bulk (debug "bulk" (prepare-bulk bundle-import-data))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (reduce into {}))
         {all-tempids :tempids} (debug "bulk result" (bulk/create-bulk bulk tempids login))]
-    (build-results bundle-import-data all-tempids)))
+    (build-response bundle-import-data all-tempids)))
 
 (defroutes bundle-routes
   (context "/bundle" []

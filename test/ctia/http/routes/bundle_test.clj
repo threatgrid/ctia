@@ -188,14 +188,14 @@
             bundle-result (:parsed-body response)]
         (is (= 200 (:status response)))
 
-        (is (every? #(= "update" %)
+        (is (every? #(= "keep" %)
                     (map :action (:results bundle-result)))
-            "All entities are updated")
+            "All existing entities are not updated")
 
-        (doseq [entity (concat (:indicators bundle)
-                               (:sightings bundle)
+        (doseq [entity (concat indicators
+                               sightings
                                (map #(resolve-ids bundle-result %)
-                                    (:relationships bundle)))]
+                                    relationships))]
           (validate-entity-record
            (find-result-by-original-id bundle-result (:id entity))
            entity))))
@@ -218,7 +218,7 @@
         (is (= 200 (:status response-update)))
         (is (every? #(= "create" %)
                     (map :action (:results bundle-result-create)))
-            "All entities are created")
-        (is (every? #(= "update" %)
+            "All new entities are created")
+        (is (every? #(= "keep" %)
                     (map :action (:results bundle-result-update)))
-            "All entities are updated")))))
+            "All existing entities are not updated")))))

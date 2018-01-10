@@ -245,8 +245,7 @@ When a bundle is submitted:
 
 1. All entities that have already been imported with the external ID whose prefix has been configured with the `ctia.store.external-key-prefixes` property are searched.
 2. If they are identified by transient IDs, a mapping table between transient and stored IDs is built.
-3. All entities are updated using the ElasticSearch bulk API.
-4. All new entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions.
+3. Only new entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. Existing entities are not modified.
 
 If more than one entity is referenced by the same external ID, an error is reported.
 

@@ -110,18 +110,19 @@
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
   [entities entity-type tempids login]
-  (let [with-long-id (with-long-id-fn entity-type)]
-    (update (flows/create-flow
-             :entity-type entity-type
-             :realize-fn (realize-fn entity-type)
-             :store-fn (create-fn entity-type login)
-             :long-id-fn with-long-id
-             :enveloped-result? true
-             :identity login
-             :entities entities
-             :tempids tempids)
-            :data
-            #(map :id %))))
+  (when (seq entities)
+    (let [with-long-id (with-long-id-fn entity-type)]
+      (update (flows/create-flow
+               :entity-type entity-type
+               :realize-fn (realize-fn entity-type)
+               :store-fn (create-fn entity-type login)
+               :long-id-fn with-long-id
+               :enveloped-result? true
+               :identity login
+               :entities entities
+               :tempids tempids)
+              :data
+              #(map :id %)))))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
