@@ -1,6 +1,8 @@
 (ns ctia.http.routes.judgement-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.lib.clj-time.core :as time]
+  (:require [ctia.schemas.sorting
+             :refer [judgement-sort-fields]]
+            [clj-momo.lib.clj-time.core :as time]
             [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
@@ -10,11 +12,13 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [http :refer [doc-id->rel-url]]
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post]]
              [fake-whoami-service :as whoami-helpers]
              [pagination :refer [pagination-test]]
+             [field-selection :refer [field-selection-tests]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
             [ctim.examples.judgements :as ex]
@@ -455,33 +459,43 @@
                         :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
            judgement)))))
 
-(deftest-for-each-store test-list-judgements-by-observable-pagination
+(deftest-for-each-store test-judgement-pagination-field-selection
   (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                       "foouser"
                                       "foogroup"
                                       "user")
 
-  (dotimes [n 30]
-    (let [{status :status}
-          (post "ctia/judgement"
-                :body {:observable {:value "1.2.3.4"
-                                    :type "ip"}
-                       :disposition 5
-                       :disposition_name "Unknown"
-                       :source (str "dotimes " n)
-                       :priority 100
-                       :severity "High"
-                       :confidence "Low"
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                :headers {"Authorization" "45c1f5e3f05d0"})]
-      (assert (= 201 status)
-              (format "Expected status to be 200 but was %s on loop %s" status n))))
+  (let [posted-docs
+        (doall (map #(:parsed-body
+                      (post "ctia/judgement"
+                            :body {:observable {:value "1.2.3.4"
+                                                :type "ip"}
+                                   :disposition 5
+                                   :disposition_name "Unknown"
+                                   :source (str "dotimes " %)
+                                   :priority 100
+                                   :severity "High"
+                                   :confidence "Low"
+                                   :revision 1
+                                   :language "fr"
+                                   :source_uri "http://foo.bar"
+                                   :reason "foo"
+                                   :timestamp "2016-02-11T00:40:48.212-00:00"
+                                   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}
+                            :headers {"Authorization" "45c1f5e3f05d0"}))
+                    (range 0 30)))]
 
-  (pagination-test
-   "ctia/ip/1.2.3.4/judgements"
-   {"Authorization" "45c1f5e3f05d0"}
-   [:id :disposition :priority :severity :confidence]))
+    (pagination-test
+     "ctia/ip/1.2.3.4/judgements"
+     {"Authorization" "45c1f5e3f05d0"}
+     [:id :disposition :priority :severity :confidence])
+
+    (field-selection-tests
+     ["ctia/ip/1.2.3.4/judgements"
+      (-> posted-docs first :id doc-id->rel-url)]
+     {"Authorization" "45c1f5e3f05d0"}
+     judgement-sort-fields)))
 
 (deftest-for-each-store test-judgement-routes-access-control
   (access-control-test "judgement"

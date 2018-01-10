@@ -24,9 +24,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo}
 
-  :jvm-opts ["-Xmx4g" ;; On some OSX VMs, this is needed to increase available memory
-             "-Djava.awt.headless=true"
-             "-XX:MaxPermSize=256m"
+  :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
   :pedantic? :warn
@@ -42,7 +40,10 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.23-SNAPSHOT"]
+                 [threatgrid/ctim "0.4.22"]
+                 [threatgrid/flanders "0.1.13-SNAPSHOT"
+                  :exclusions [com.google.code.findbugs/jsr305
+                               com.andrewmcveigh/cljs-time]]
                  [threatgrid/clj-momo "0.2.17-SNAPSHOT"]
 
                  ;; Web server
