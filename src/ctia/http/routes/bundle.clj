@@ -20,10 +20,10 @@
   (st/optional-keys
    {:id s/Str
     :original_id s/Str
-    :action (s/enum "keep" "create")
+    :result (s/enum "error" "created" "exists")
     :type s/Keyword
     :external_id s/Str
-    :error s/Str}))
+    :error s/Any}))
 
 (s/defschema EntityImportData
   "Data structure used to keep a link between
@@ -66,7 +66,7 @@
 (def default-external-key-prefixes "ctia-")
 
 (defn debug [msg v]
-  (log/debug msg v)
+  (log/info msg v)
   v)
 
 (s/defn prefixed-external-ids :- [s/Str]
@@ -105,12 +105,12 @@
                                   [:ctia :store :external-key-prefixes]
                                   default-external-key-prefixes)))
         external_id (valid-external-id external_ids key-prefixes)]
-    (cond-> {:action "create"
-             :new-entity entity
+    (when (not external_id)
+      (log/warnf "No valid external ID has been provided (id:%s)" id))
+    (cond-> {:new-entity entity
              :type entity-type}
       (transient-id? id) (assoc :original_id id)
-      external_id (assoc :external_id external_id)
-      (not external_id) (assoc :error "No valid external ID has been provided"))))
+      external_id (assoc :external_id external_id))))
 
 (defn find-by-external-ids
   [import-data entity-type identity-map]
@@ -202,7 +202,7 @@
                (cond-> entity-data
                  ;; only one entity linked to the external ID
                  (and old-entity
-                      (= num-old-entities 1)) (assoc :action "keep"
+                      (= num-old-entities 1)) (assoc :result "exists"
                                                      ;;:old-entity old-entity
                                                      :id (:id old-entity))
                  ;; more than one entity linked to the external ID
@@ -230,29 +230,48 @@
                   (with-existing-entities entity-type identity-map))))
           bundle-entities))
 
+(defn create?
+  "Whether the provided entity should be created or not"
+  [{:keys [new-entity error result] :as entity}]
+  ;; Add only new entities without error
+  (and (not= result "exists")
+       (not error)))
+
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
   [bundle-import-data :- BundleImportData]
   (map-kv (fn [k v]
             (->> v
-                 (map (fn [{:keys [new-entity error action]}]
-                        ;; Add only new entities without error
-                        (when (and (= action "create")
-                                   (not error))
-                          new-entity)))
-                 (remove nil?)))
+                 (filter create?)
+                 (remove nil?)
+                 (map :new-entity)))
+          bundle-import-data))
+
+(s/defn with-bulk-result
+  [bundle-import-data :- BundleImportData
+   {:keys [tempids] :as bulk-result}]
+  (debug "BULK!!!!" bulk-result)
+  (map-kv (fn [k v]
+            (let [{submitted true
+                   not-submitted false} (debug "HHHHHH" (group-by create? v))]
+              (concat
+               (map (fn [entity-import-data
+                         {:keys [error] :as entity-bulk-result}]
+                      (cond-> entity-import-data
+                        error (assoc :error error
+                                     :result "error")
+                        (not error) (assoc :id entity-bulk-result
+                                           :result "created")))
+                    (debug "submitted" submitted) (debug "bulk-result" (get bulk-result k)))
+               not-submitted)))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult
-  "Builds response from the bulk result"
-  [import-data :- BundleImportData
-   tempids :- (s/maybe TempIDs)]
-  {:results
-   (map (fn [{:keys [original_id] :as entity-data}]
-          (let [id (get tempids original_id)]
-            (cond-> (dissoc entity-data :new-entity :old-entity)
-              id (assoc :id id))))
-        (apply concat (vals import-data)))})
+  "Builds response"
+  [bundle-import-data :- BundleImportData]
+  {:results (map
+             #(dissoc % :new-entity :old-entity)
+             (apply concat (vals bundle-import-data)))})
 
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
@@ -266,9 +285,11 @@
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
-                     (reduce into {}))
-        {all-tempids :tempids} (debug "bulk result" (bulk/create-bulk bulk tempids login))]
-    (build-response bundle-import-data all-tempids)))
+                     (reduce into {}))]
+    (debug "Import bundle reponse"
+           (->> (bulk/create-bulk bulk tempids login)
+                (with-bulk-result bundle-import-data)
+                build-response))))
 
 (defroutes bundle-routes
   (context "/bundle" []

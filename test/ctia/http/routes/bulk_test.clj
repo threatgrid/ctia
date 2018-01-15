@@ -11,12 +11,15 @@
                                            gen-bulk-from-fn
                                            get-bulk-max-size]]
             [ctia.properties :refer [get-http-show]]
+            [ctia.store :refer [stores]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctia.stores.es.init :as es-init]
+            [clj-momo.lib.es.index :as es-index]))
 
 
 (defn fixture-properties:small-max-bulk-size [test]
@@ -326,7 +329,7 @@
         {status-get :status
          {:keys [relationships tools]} :parsed-body}
         (get (str "ctia/bulk?"
-                  (make-get-query-str-from-bulkrefs (dissoc bulk-ids :tempids)))
+                  (make-get-query-str-from-bulkrefs (dissoc bulk-ids :tempids :errors)))
              :headers {"Authorization" "45c1f5e3f05d0"})
         {:keys [target_ref source_ref]} (first relationships)
         stored-tool-1 (get-entity tools target_ref)
@@ -343,3 +346,44 @@
            (:tempids bulk-ids))
         (str "The :tempid field should contain the mapping between all "
              "transient and real IDs"))))
+
+(deftest-for-each-store bulk-error-test
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (let [tool-store-state (-> @stores :tool first :state)
+        indexname (:index tool-store-state)]
+    (es-index/create! (:conn tool-store-state)
+                      indexname
+                      (-> tool-store-state :props :settings))
+    (es-index/close! (:conn tool-store-state) indexname))
+
+  (let [tools (->> [(mk-new-tool 1)
+                    (mk-new-tool 2)]
+                   (map #(assoc % :id (id/make-transient-id nil))))
+        sighting (assoc (mk-new-sighting 1)
+                        :id
+                        (id/make-transient-id nil))
+        ;; Submit all entities to create
+        {status-create :status
+         bulk-ids :parsed-body}
+        (post "ctia/bulk"
+              :body {:tools tools
+                     :sightings [sighting]}
+              :headers {"Authorization" "45c1f5e3f05d0"})
+        ;; Retrieve all entities that have been created
+        {status-get :status
+         {:keys [sightings] :as body} :parsed-body}
+        (get (str "ctia/bulk?"
+                  (make-get-query-str-from-bulkrefs
+                   (dissoc bulk-ids :tempids :tools)))
+             :headers {"Authorization" "45c1f5e3f05d0"})]
+    (is (= 201 status-create) "The bulk create should be successfull")
+    (is (= 200 status-get) "All valid entities should be retrieved")
+    (is (not (empty? (:tools bulk-ids))))
+    (is (every? #(contains? % :error) (:tools bulk-ids)))
+    (is (= (:description sighting)
+           (:description (first sightings))))))
