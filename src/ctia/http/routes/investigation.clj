@@ -17,7 +17,8 @@
             InvestigationGetParams
             InvestigationsByExternalIdQueryParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [Investigation NewInvestigation]]
+   [ctia.schemas.core
+    :refer [Investigation NewInvestigation PartialInvestigation PartialInvestigationList]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -50,7 +51,7 @@
                      created))
 
            (GET "/external_id/:external_id" []
-                :return (s/maybe [Investigation])
+                :return PartialInvestigationList
                 :query [q InvestigationsByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -68,7 +69,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [Investigation])
+                :return PartialInvestigationList
                 :summary "Search for an Investigation using a Lucene/ES query string"
                 :query [params InvestigationSearchParams]
                 :capabilities #{:read-investigation :search-investigation}
@@ -87,7 +88,7 @@
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Investigation)
+                :return (s/maybe PartialInvestigation)
                 :summary "Gets an Investigation by ID"
                 :path-params [id :- s/Str]
                 :query [params InvestigationGetParams]

@@ -21,7 +21,7 @@
 (def es-coerce! (crud/coerce-to-fn [(s/maybe ESPartialStoredSighting)]))
 
 (def create-fn (crud/handle-create :sighting ESStoredSighting))
-(def read-fn (crud/handle-read :sighting ESStoredSighting))
+(def read-fn (crud/handle-read :sighting ESPartialStoredSighting))
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find :sighting ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search :sighting ESPartialStoredSighting))
@@ -55,15 +55,15 @@
       s)))
 
 (s/defn es-stored-sighting->stored-sighting
-  :- (s/maybe PartialStoredSighting)
+  :- (s/maybe StoredSighting)
   "remove the computed observables hash from a sighting"
-  [s :- (s/maybe ESPartialStoredSighting)]
+  [s :- (s/maybe ESStoredSighting)]
   (when s (dissoc s :observables_hash)))
 
 (s/defn es-partial-stored-sighting->partial-stored-sighting
   :- (s/maybe PartialStoredSighting)
   "remove the computed observables hash from a sighting"
-  [s :- (s/maybe ESStoredSighting)]
+  [s :- (s/maybe ESPartialStoredSighting)]
   (when s (dissoc s :observables_hash)))
 
 (s/defn handle-create :- [StoredSighting]
@@ -94,7 +94,7 @@
   [paginated-list :- ESPartialStoredSightingList]
   (update-in paginated-list
              [:data]
-             #(map es-stored-sighting->stored-sighting (es-coerce! %))))
+             #(map es-partial-stored-sighting->partial-stored-sighting (es-coerce! %))))
 
 (s/defn handle-list :- PartialStoredSightingList
   [state filter-map ident params]

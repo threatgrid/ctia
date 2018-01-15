@@ -1,6 +1,9 @@
 (ns ctia.http.routes.actor-test
   (:refer-clojure :exclude [get])
-  (:require [ctia.schemas.sorting
+  (:require [ctim.examples.actors
+             :refer [new-actor-minimal
+                     new-actor-maximal]]
+            [ctia.schemas.sorting
              :refer [actor-sort-fields]]
             [clj-momo.test-helpers
              [core :as mth]
@@ -20,8 +23,7 @@
              [field-selection :refer [field-selection-tests]]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]
-            [ctim.examples.actors :as ex]))
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -191,7 +193,7 @@
     (let [{status :status
            body :body}
           (post "ctia/actor"
-                :body (assoc ex/new-actor-minimal
+                :body (assoc new-actor-minimal
                              ;; This field has an invalid length
                              :title (clojure.string/join (repeatedly 1025 (constantly \0))))
                 :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -208,22 +210,10 @@
   (let [posted-docs
         (doall (map #(:parsed-body
                       (post "ctia/actor"
-                            :body {:external_ids ["http://ex.tld/ctia/actor/actor-123"
-                                                  "http://ex.tld/ctia/actor/actor-456"]
-                                   :title "actor"
-                                   :description "description"
-                                   :actor_type "Hacker"
-                                   :source (str "dotimes " %)
-                                   :confidence "High"
-                                   :motivation "Opportunistic"
-                                   :revision 1
-                                   :language "elvish"
-                                   :sophistication "Innovator"
-                                   :source_uri "http://foo.bar"
-                                   :intended_effect "Destruction"
-                                   :timestamp "2016-02-11T00:40:48.212-00:00"
-                                   :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                                :end_time "2016-07-11T00:40:48.212-00:00"}}
+                            :body (-> new-actor-maximal
+                                      (dissoc :id)
+                                      (assoc :source (str "dotimes " %)
+                                             :title "foo"))
                             :headers {"Authorization" "45c1f5e3f05d0"}))
                     (range 0 30)))]
 
@@ -240,6 +230,6 @@
 
 (deftest-for-each-store test-actor-routes-access-control
   (access-control-test "actor"
-                       ex/new-actor-minimal
+                       new-actor-minimal
                        true
                        true))

@@ -407,6 +407,17 @@
     (s/optional-key :observables.type) s/Str
     (s/optional-key :sort_by)  sighting-sort-fields}))
 
+(s/defschema SightingsByObservableQueryParams
+  (st/merge
+   PagingParams
+   SightingFieldsParam
+   {(s/optional-key :sort_by)
+    (s/enum
+     :id
+     :timestamp
+     :confidence
+     :observed_time.start_time)}))
+
 (def SightingGetParams SightingFieldsParam)
 
 (s/defschema SightingByExternalIdQueryParams

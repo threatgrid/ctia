@@ -114,7 +114,7 @@
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe AttackPattern)
+                :return (s/maybe PartialAttackPattern)
                 :summary "Gets an Attack Pattern by ID"
                 :path-params [id :- s/Str]
                 :query [params AttackPatternGetParams]

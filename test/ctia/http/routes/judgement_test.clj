@@ -1,6 +1,8 @@
 (ns ctia.http.routes.judgement-test
   (:refer-clojure :exclude [get])
-  (:require [ctia.schemas.sorting
+  (:require [ctim.examples.judgements
+             :refer [new-judgement-maximal]]
+            [ctia.schemas.sorting
              :refer [judgement-sort-fields]]
             [clj-momo.lib.clj-time.core :as time]
             [clj-momo.test-helpers
@@ -469,23 +471,12 @@
   (let [posted-docs
         (doall (map #(:parsed-body
                       (post "ctia/judgement"
-                            :body {:observable {:value "1.2.3.4"
-                                                :type "ip"}
-                                   :disposition 5
-                                   :disposition_name "Unknown"
-                                   :source (str "dotimes " %)
-                                   :priority 100
-                                   :severity "High"
-                                   :confidence "Low"
-                                   :revision 1
-                                   :language "fr"
-                                   :source_uri "http://foo.bar"
-                                   :reason "foo"
-                                   :timestamp "2016-02-11T00:40:48.212-00:00"
-                                   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}
+                            :body (-> new-judgement-maximal
+                                      (dissoc :id)
+                                      (assoc :source (str "dotimes " %)
+                                             :observable {:value "1.2.3.4", :type "ip"}))
                             :headers {"Authorization" "45c1f5e3f05d0"}))
                     (range 0 30)))]
-
     (pagination-test
      "ctia/ip/1.2.3.4/judgements"
      {"Authorization" "45c1f5e3f05d0"}

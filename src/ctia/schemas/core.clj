@@ -361,6 +361,9 @@
             ACLEntity
             {sc/Keyword sc/Any}))
 
+(sc/defschema PartialInvestigationList
+  [PartialInvestigation])
+
 (sc/defschema NewInvestigation
   (st/merge (f-schema/->schema inv/NewInvestigation)
             ACLEntity
