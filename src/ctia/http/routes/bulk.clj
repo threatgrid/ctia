@@ -192,7 +192,6 @@
                        (dissoc bulk :relationships)
                        tempids
                        login)
-         _ (println "ZZZZZZZZZ" new-entities)
          entities-tempids (merge-tempids new-entities)
          new-relationships (gen-bulk-from-fn
                             create-entities

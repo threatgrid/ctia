@@ -42,28 +42,42 @@
     docid))
 
 (defn remove-es-actions
+  "Removes the ES action level
+
+  [{:index {:_id \"1\"}}
+   {:index {:_id \"2\"}}]
+
+  ->
+
+  [{:_id \"1\"}
+   {:_id \"2\"}]
+  "
   [items]
   (map (comp val first) items))
 
-(defn build-create-results
-  [bulk-results coerce-fn]
-  (->> bulk-results
-       (map #(dissoc % :_id :_index :_type))
-       (map coerce-fn)))
+(defn build-create-result
+  [item coerce-fn]
+  (-> item
+      (dissoc :_id :_index :_type)
+      coerce-fn))
 
-(defn with-partial-results
-  "Add partial results to the thrown exception"
+(defn partial-results
+  "Build partial results when an error occurs for one or more items
+   in the bulk operation.
+
+   Ex:
+
+   [{model1}
+    {:error \"Error message item2\"}
+    {model3}]"
   [exception-data models coerce-fn]
   (let [{{:keys [errors items]}
          :es-http-res-body} exception-data]
-    {:data (->> items
-                remove-es-actions
-                (map (fn [{:keys [error] :as item}]
-                       (if error
-                         {:error error}
-                         (-> item
-                             (dissoc :_id :_index :_type)
-                             coerce-fn)))))}))
+    {:data (map (fn [{:keys [error] :as item} model]
+                  (if error
+                    {:error error}
+                    (build-create-result model coerce-fn)))
+                (remove-es-actions items) models)}))
 
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
@@ -75,19 +89,19 @@
        ident]
       (try
         (->> (bulk-create-doc (:conn state)
-                             (map #(assoc %
-                                          :_id (:id %)
-                                          :_index (:index state)
-                                          :_type (name mapping))
-                                  models)
-                             (get-in state [:props :refresh] false))
-             (map #(dissoc % :_id :_index :_type))
-             (map coerce!))
+                              (map #(assoc %
+                                           :_id (:id %)
+                                           :_index (:index state)
+                                           :_type (name mapping))
+                                   models)
+                              (get-in state [:props :refresh] false))
+             (map #(build-create-result % coerce!)))
         (catch Exception e
           (throw
            (if-let [ex-data (ex-data e)]
+             ;; Add partial results to the exception data map
              (ex-info (.getMessage e)
-                      (with-partial-results ex-data models coerce!))
+                      (partial-results ex-data models coerce!))
              e)))))))
 
 (defn handle-update

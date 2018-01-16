@@ -254,5 +254,6 @@
         (let [indicators (filter
                           #(= :indicator (:type %))
                           (:results bundle-result-create))]
-          (is (not (empty? indicators)))
+          (is (not (empty? indicators))
+              "The result collection for indicators is not empty")
           (is (every? #(contains? % :error) indicators)))))))

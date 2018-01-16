@@ -135,7 +135,6 @@
     {:external_id \"ctia-2\"} {:external_id \"ctia-2\"
                                :entity {...}}}"
   [entities]
-  (debug "entities" entities)
   (let [entity-with-external-id
         (reduce (fn [acc {:keys [external_ids] :as entity}]
                   (set/union acc
@@ -248,13 +247,14 @@
           bundle-import-data))
 
 (s/defn with-bulk-result
+  "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
    {:keys [tempids] :as bulk-result}]
-  (debug "BULK!!!!" bulk-result)
   (map-kv (fn [k v]
             (let [{submitted true
-                   not-submitted false} (debug "HHHHHH" (group-by create? v))]
+                   not-submitted false} (group-by create? v)]
               (concat
+               ;; Only submitted entities are processed
                (map (fn [entity-import-data
                          {:keys [error] :as entity-bulk-result}]
                       (cond-> entity-import-data
@@ -262,12 +262,12 @@
                                      :result "error")
                         (not error) (assoc :id entity-bulk-result
                                            :result "created")))
-                    (debug "submitted" submitted) (debug "bulk-result" (get bulk-result k)))
+                    submitted (get bulk-result k))
                not-submitted)))
           bundle-import-data))
 
 (s/defn build-response :- BundleImportResult
-  "Builds response"
+  "Build bundle import response"
   [bundle-import-data :- BundleImportData]
   {:results (map
              #(dissoc % :new-entity :old-entity)
@@ -281,12 +281,12 @@
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
                                            login)
-        bulk (debug "bulk" (prepare-bulk bundle-import-data))
+        bulk (debug "Bulk" (prepare-bulk bundle-import-data))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (reduce into {}))]
-    (debug "Import bundle reponse"
+    (debug "Import bundle response"
            (->> (bulk/create-bulk bulk tempids login)
                 (with-bulk-result bundle-import-data)
                 build-response))))

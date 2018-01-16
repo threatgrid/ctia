@@ -182,21 +182,20 @@
   (if (get-in @properties [:ctia :events :enabled])
     (assoc fm
            :events
-           (remove nil?
-                   (doall
-                    (for [{:keys [error] :as entity} entities]
-                      (when (not error)
-                        (try
-                          (if (= :update flow-type)
-                            (create-event-fn entity prev-entity (make-id "event"))
-                            (create-event-fn entity (make-id "event")))
-                          (catch Throwable e
-                            (log/error "Could not create event" e)
-                            (throw (ex-info "Could not create event"
-                                            {:flow-type flow-type
-                                             :login (auth/login identity)
-                                             :entity entity
-                                             :prev-entity prev-entity})))))))))
+           (doall
+            (for [{:keys [error] :as entity} entities
+                  :when (not error)]
+              (try
+                (if (= :update flow-type)
+                  (create-event-fn entity prev-entity (make-id "event"))
+                  (create-event-fn entity (make-id "event")))
+                (catch Throwable e
+                  (log/error "Could not create event" e)
+                  (throw (ex-info "Could not create event"
+                                  {:flow-type flow-type
+                                   :login (auth/login identity)
+                                   :entity entity
+                                   :prev-entity prev-entity})))))))
     fm))
 
 (s/defn ^:private write-events :- FlowMap
@@ -216,7 +215,7 @@
     (catch Exception e
       (if enveloped-result?
         ;; Set partial results with errors if the enveloped-results format
-        ;; is used. Try to attach a transient ID if one has been used
+        ;; is used, otherwise throw an exception
         (if-let [{:keys [data]} (ex-data e)]
           (assoc fm :entities data)
           (throw e))
@@ -241,11 +240,6 @@
             (for [entity entities]
               (store-fn entity))))))
 
-(defn error?
-  [entity]
-  (contains? entity :error))
-
-
 (s/defn ^:private apply-long-id-fn :- FlowMap
   [{:keys [entities tempids long-id-fn] :as fm}]
   (if long-id-fn
@@ -256,13 +250,14 @@
                   {}
                   entities)
           new-entities (map (fn [{:keys [id] :as entity}]
-                              (if id
-                                (assoc entity :id (get short-to-long-map id))
-                                entity))
+                              (cond-> entity
+                                id (assoc :id (get short-to-long-map id))))
                             entities)
           new-tempids (->> tempids
                            (map (fn [[tempid short-id]]
-                                  [tempid (get short-to-long-map short-id short-id)]))
+                                  (when-let [long-id (get short-to-long-map short-id)]
+                                    [tempid long-id])))
+                           (remove nil?)
                            (into {}))]
       (assoc fm
              :entities new-entities
@@ -280,10 +275,8 @@
            enveloped-result? tempids] :as fm} :- FlowMap]
   (case flow-type
     :create (if enveloped-result?
-              (do
-                (println "ENTITIES" entities)
-                (cond-> {:data entities}
-                   (seq tempids) (assoc :tempids tempids)))
+              (cond-> {:data entities}
+                (seq tempids) (assoc :tempids tempids))
               entities)
     :delete (first results)
     :update (first entities)))

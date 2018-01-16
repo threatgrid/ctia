@@ -263,7 +263,7 @@ Response of the bundle API endpoint:
 |---------------|-----------|
 |`:id`          |The real ID|
 |`:original_id` |Provided ID if different from real ID (ex: transient ID) |
-|`:action`      |`update` or `create`|
+|`:result`      |`error`, `created` or `exists` |
 |`:external_id` |External ID used to identify the entity|
 |`:error`       |Error message|
 

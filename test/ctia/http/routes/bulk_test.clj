@@ -329,7 +329,7 @@
         {status-get :status
          {:keys [relationships tools]} :parsed-body}
         (get (str "ctia/bulk?"
-                  (make-get-query-str-from-bulkrefs (dissoc bulk-ids :tempids :errors)))
+                  (make-get-query-str-from-bulkrefs (dissoc bulk-ids :tempids)))
              :headers {"Authorization" "45c1f5e3f05d0"})
         {:keys [target_ref source_ref]} (first relationships)
         stored-tool-1 (get-entity tools target_ref)
