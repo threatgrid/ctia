@@ -109,7 +109,10 @@
   [msg value]
   (log/debug msg (pr-str value)))
 
-(defn get-selections [s]
+(defn get-selections
+  "return selections if the given entity
+   is either a Field or a FragmentDefinition"
+  [s]
   (when (or (instance? Field s)
             (instance? FragmentDefinition s))
     (some-> s .getSelectionSet .getSelections)))
@@ -123,32 +126,47 @@
 (defn fragment-definition? [x]
   (instance? FragmentDefinition x))
 
-(defn resolve-fragment-selections [s fragments]
+(defn resolve-fragment-selections
+  "if the given entity is a FragmentSpread
+  return its definition else return the entity"
+  [s fragments]
   (if (fragment-spread? s)
     (let [f-name (.getName s)]
-      (get fragments (keyword f-name)))
-    s))
+      (get fragments (keyword f-name))) s))
 
-(defn fields->selections [all-fields fragments]
+(defn fields->selections
+  "Given a fields list and a fragment def map,
+  recursively pull all selections"
+  [all-fields fragments]
   (loop [fields all-fields
          names []]
     (let [field (first fields)
+          ;; if the field is a Fragment, replace it with its definition
           resolved (resolve-fragment-selections field fragments)
+          ;; if a field has sub selections, fetch them
           selections (get-selections resolved)
+          ;; compute a selection list with (when available)
+          ;; field name and sub selection field names
           new-names (cond-> []
                       (and resolved
                            (not (fragment-definition? resolved)))
                       (conj (.getName resolved))
                       selections (concat (fields->selections selections fragments)))
+          ;; finally distinct the selection field names
           acc (distinct (concat names new-names))]
 
+      ;; recurr the next fields or return the list when done
       (if-let [remaining-fields (seq (rest fields))]
         (recur remaining-fields acc)
         (map keyword acc)))))
 
 (s/defn env->field-selection :- [s/Keyword]
-  "Given a DataFetchingEnvironmentImpl and a fragment definition map
-  recursively pull all selected fields as a flat sequence"
+  "Given a DataFetchingEnvironmentImpl and a Fragment definition map
+  recursively pull all selected fields as a flat sequence
+  TODO: Starting from graphql-java 7.0.0 DataFetchingFieldSelectionSetImpl
+  seems to return more fields but looks still insufficient,
+  we should replace this function with what graphql-java
+  provides whenever possible."
   [env :- DataFetchingEnvironment
    fragments :- {s/Keyword FragmentDefinition}]
   (let [selection-set (get-selections-get env)
