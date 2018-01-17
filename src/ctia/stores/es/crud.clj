@@ -60,7 +60,8 @@
             (get-doc (:conn state)
                      (:index state)
                      (name mapping)
-                     (ensure-document-id id))]
+                     (ensure-document-id id)
+                     {})]
 
         (if (allow-write? current-doc ident)
           (coerce! (update-doc (:conn state)
@@ -83,7 +84,8 @@
       (if-let [doc (coerce! (get-doc (:conn state)
                                      (:index state)
                                      (name mapping)
-                                     (ensure-document-id id)))]
+                                     (ensure-document-id id)
+                                     {}))]
         (if (allow-read? doc ident)
           doc
           (throw (ex-info "You are not allowed to read this document"
@@ -104,7 +106,8 @@
     (if-let [doc (get-doc (:conn state)
                           (:index state)
                           (name mapping)
-                          (ensure-document-id id))]
+                          (ensure-document-id id)
+                          {})]
       (if (allow-write? doc ident)
         (delete-doc (:conn state)
                     (:index state)

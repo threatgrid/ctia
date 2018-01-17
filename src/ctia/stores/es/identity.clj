@@ -38,7 +38,8 @@
   (some-> (get-doc (:conn state)
                    (:index state)
                    mapping
-                   login)
+                   login
+                   {})
           (update-in [:capabilities] capabilities->capabilities-set)
           (dissoc :id)))
 
