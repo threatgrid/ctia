@@ -33,8 +33,9 @@
     :args (into pagination/connection-arguments
                 feedback-order-arg)
     :resolve
-    (fn [context args src]
+    (fn [context args field-selection src]
       (resolvers/search-feedbacks-by-entity-id (:id src)
                                                context
-                                               args))}})
+                                               args
+                                               field-selection))}})
 

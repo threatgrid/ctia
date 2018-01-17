@@ -2,10 +2,15 @@
   (:require [clojure
              [string :as str]
              [walk :refer [stringify-keys]]]
+            [schema.core :as s]
             [clojure.tools.logging :as log]
             [clojure.walk :as walk])
   (:import [graphql GraphQL GraphQLException]
+           [graphql.language
+            Field FragmentDefinition FragmentSpread]
            [graphql.schema
+            DataFetchingEnvironment
+            DataFetchingFieldSelectionSetImpl
             DataFetcher GraphQLArgument GraphQLArgument$Builder GraphQLEnumType
             GraphQLFieldDefinition GraphQLInputObjectType
             GraphQLInputObjectType$Builder GraphQLInputObjectField
@@ -105,55 +110,60 @@
   (log/debug msg (pr-str value)))
 
 (defn get-selections [s]
-  (some-> s .getSelectionSet .getSelections))
+  (when (or (instance? Field s)
+            (instance? FragmentDefinition s))
+    (some-> s .getSelectionSet .getSelections)))
 
 (defn get-selections-get [s]
   (some-> s .getSelectionSet .get))
 
 (defn fragment-spread? [x]
-  (instance? graphql.language.FragmentSpread x))
+  (instance? FragmentSpread x))
 
-(defn resolve-fields [env all-fragments]
-  (let [selections (get-selections env)
-        fragments (filter fragment-spread? selections)
-        non-fragments (remove fragment-spread? selections)
-        non-fragment-fields (map #(.getName %) non-fragments)
-        fragment-names (->> fragments
-                            (map #(.getName %))
-                            (map keyword))
-        fragments (map #(get all-fragments %) fragment-names)
-        fragment-fields (mapcat #(get-selections %) fragments)
-        fragments-fields (map #(.getName %) fragment-fields)]
-    (map #(if (string? %)
-            (keyword %)
-            (keyword (.getName %)))
-         (concat non-fragment-fields
-                 fragment-fields))))
+(defn fragment-definition? [x]
+  (instance? FragmentDefinition x))
 
-(defn traverse [edges-node n]
-  (let [selections (get-selections edges-node)]
-    (if (seq selections)
-      (when-let [filtered (filter #(= (.getName %) n) selections)]
-        (-> filtered first)))))
+(defn resolve-fragment-selections [s fragments]
+  (if (fragment-spread? s)
+    (let [f-name (.getName s)]
+      (get fragments (keyword f-name)))
+    s))
 
-(defn full-selection [env fragments]
-  (let [selections  (->clj (get-selections-get env))
-        nodes (:nodes selections)
-        edges-node (some->> selections
-                            :edges
-                            (mapcat get-selections)
-                            (filter #(= (.getName %) "node"))
-                            first)
-        node-target-entity (traverse edges-node "target_entity")
-        node-source-entity (traverse edges-node "source_entity")]
-    (set (cond-> []
-           nodes (concat (mapcat #(resolve-fields % fragments) nodes))
-           edges-node (concat (resolve-fields edges-node fragments))
-           node-target-entity (concat (resolve-fields node-target-entity fragments))
-           node-source-entity (concat (resolve-fields node-source-entity fragments))))))
+(defn fields->selections [all-fields fragments]
+  (loop [fields all-fields
+         names []]
+    (let [field (first fields)
+          resolved (resolve-fragment-selections field fragments)
+          selections (get-selections resolved)
+          new-names (cond-> []
+                      (and resolved
+                           (not (fragment-definition? resolved)))
+                      (conj (.getName resolved))
+                      selections (concat (fields->selections selections fragments)))
+          acc (distinct (concat names new-names))]
+
+      (if-let [remaining-fields (seq (rest fields))]
+        (recur remaining-fields acc)
+        (map keyword acc)))))
+
+(s/defn env->field-selection :- [s/Keyword]
+  "Given a DataFetchingEnvironmentImpl and a fragment definition map
+  recursively pull all selected fields as a flat sequence"
+  [env :- DataFetchingEnvironment
+   fragments :- {s/Keyword FragmentDefinition}]
+  (let [selection-set (get-selections-get env)
+        first-fields (keys (->clj selection-set))
+        fields (mapcat (fn [[k v]] v) selection-set)
+        detected-selections (fields->selections
+                             (concat fields
+                                     (->clj (.getFields env))) fragments)]
+    (distinct
+     (cond-> [:type]
+       (seq first-fields) (concat first-fields)
+       (seq detected-selections) (concat detected-selections)))))
 
 (defn fn->data-fetcher
-  "Converts a function that takes 3 parameters (context, args, value)
+  "Converts a function that takes 4 parameters (context, args, field-selection value)
   to a GraphQL DataFetcher"
   [f]
   (reify DataFetcher
@@ -162,8 +172,8 @@
             context (->clj (.getContext env))
             args (->clj (.getArguments env))
             value (->clj (.getSource env))
-            field-selection (full-selection env fragments)
-            result (f context (assoc args :fields field-selection) value)]
+            field-selection (env->field-selection env fragments)
+            result (f context args field-selection value)]
         (debug "data-fetcher context:" context)
         (debug "data-fetcher args:" args)
         (debug "data-fetcher value:"  value)
@@ -173,7 +183,7 @@
 (defn map-resolver
   ([k] (map-resolver k identity))
   ([k f]
-   (fn [_ _ value]
+   (fn [_ _ _ value]
      (when value
        (f (get value k))))))
 

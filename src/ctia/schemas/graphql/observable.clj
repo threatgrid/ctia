@@ -24,17 +24,18 @@
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType
-             :resolve (fn [context _ src]
+             :resolve (fn [context _ _ src]
                         (observable-verdict (select-keys src [:type :value])
                                             (:ident context)))}
    :judgements {:type judgement/JudgementConnectionType
                 :args (into pagination/connection-arguments
                             judgement/judgement-order-arg)
-                :resolve (fn [context args src]
+                :resolve (fn [context args field-selection src]
                            (resolvers/search-judgements-by-observable
                             (select-keys src [:type :value])
                             context
-                            args))}})
+                            args
+                            field-selection))}})
 
 (def ObservableType
   (let [{:keys [fields name description]}

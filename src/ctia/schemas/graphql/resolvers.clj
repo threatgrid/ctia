@@ -28,11 +28,13 @@
    filtermap :- {s/Keyword (s/maybe s/Str)}
    args :- {s/Keyword s/Any}
    ident
+   field-selection
    page-with-long-id-fn]
   (let [paging-params (pagination/connection-params->paging-params args)
-        params (merge (select-keys paging-params [:limit :offset :sort_by])
-                      (select-keys args [:fields]))]
+        params (cond-> (select-keys paging-params [:limit :offset :sort_by])
+                 field-selection (assoc :fields field-selection))]
     (log/debugf "Search entity %s graphql args %s" entity-type args)
+
     (some-> (query-string-search-store
              entity-type
              query-string-search
@@ -49,9 +51,11 @@
 (s/defn search-feedbacks-by-entity-id
   [entity-id :- s/Str
    context :- {s/Keyword s/Any}
-   args :- {s/Keyword s/Any}]
+   args :- {s/Keyword s/Any}
+   field-selection :- (s/maybe [s/Keyword])]
   (let [paging-params (pagination/connection-params->paging-params args)
-        params (select-keys paging-params [:limit :offset :sort_by])]
+        params (cond-> (select-keys paging-params [:limit :offset :sort_by])
+                 field-selection (assoc :fields field-selection))]
     (log/debug "Search feedback for entity id: " entity-id)
     (some-> (read-store :feedback
                         list-feedback
@@ -65,36 +69,48 @@
 ;;---- Indicator
 
 (defn search-indicators
-  [context args src]
+  [context args field-selection src]
   (search-entity :indicator
                  (:query args)
                  {}
                  args
                  (:ident context)
+                 field-selection
                  ctim-indicator-entity/page-with-long-id))
 
 (s/defn indicator-by-id
   [id :- s/Str
-   ident]
-  (some-> (read-store :indicator read-indicator id ident {})
+   ident
+   field-selection :- (s/maybe [s/Keyword])]
+  (some-> (read-store :indicator
+                      read-indicator
+                      id
+                      ident
+                      {:fields field-selection})
           ctim-indicator-entity/with-long-id
           ctim-entities/un-store))
 
 ;;---- Investigation
 
 (defn search-investigations
-  [context args src]
+  [context args field-selection src]
   (search-entity :investigation
                  (:query args)
                  {}
                  args
                  (:ident context)
+                 field-selection
                  ctim-investigation-entity/page-with-long-id))
 
 (s/defn investigation-by-id
   [id :- s/Str
-   ident]
-  (some-> (read-store :investigation read-investigation id ident {})
+   ident
+   field-selection :- (s/maybe [s/Keyword])]
+  (some-> (read-store :investigation
+                      read-investigation
+                      id
+                      ident
+                      {:fields field-selection})
           ctim-investigation-entity/with-long-id
           ctim-entities/un-store))
 
@@ -102,20 +118,23 @@
 ;;---- Judgement
 
 (defn search-judgements
-  [context args src]
+  [context args field-selection src]
   (search-entity :judgement
                  (:query args)
                  {}
                  args
                  (:ident context)
+                 field-selection
                  ctim-judgement-entity/page-with-long-id))
 
 (s/defn search-judgements-by-observable :- pagination/Connection
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
-   args :- {s/Keyword s/Any}]
+   args :- {s/Keyword s/Any}
+   field-selection :- (s/maybe [s/Keyword])]
   (let [paging-params (pagination/connection-params->paging-params args)
-        params (select-keys paging-params [:limit :offset :sort_by :fields])]
+        params (cond-> (select-keys paging-params [:limit :offset :sort_by])
+                 field-selection (assoc :fields field-selection))]
     (some-> (read-store :judgement
                         list-judgements-by-observable
                         observable
@@ -127,33 +146,44 @@
 
 (s/defn judgement-by-id
   [id :- s/Str
-   ident]
-  (some-> (read-store :judgement read-judgement id ident {})
+   ident
+   field-selection :- (s/maybe [s/Keyword])]
+  (some-> (read-store :judgement
+                      read-judgement
+                      id
+                      ident
+                      {:fields field-selection})
           ctim-judgement-entity/with-long-id
           ctim-entities/un-store))
 
 ;;---- Sighting
 
 (defn search-sightings
-  [context args src]
+  [context args field-selection src]
   (search-entity :sighting
                  (:query args)
                  {}
                  args
                  (:ident context)
+                 field-selection
                  ctim-sighting-entity/page-with-long-id))
 
 (s/defn sighting-by-id
   [id :- s/Str
-   ident]
-  (some-> (read-store :sighting read-sighting id ident {})
+   ident
+   field-selection :- (s/maybe [s/Keyword])]
+  (some-> (read-store :sighting
+                      read-sighting
+                      id
+                      ident
+                      {:fields field-selection})
           ctim-sighting-entity/with-long-id
           ctim-entities/un-store))
 
 ;;---- Relationship
 
 (defn search-relationships
-  [context args src]
+  [context args field-selection src]
   (let [{:keys [query relationship_type target_type]} args
         filtermap {:relationship_type relationship_type
                    :target_type target_type
@@ -163,13 +193,16 @@
                    filtermap
                    args
                    (:ident context)
+                   field-selection
                    ctim-relationship-entity/page-with-long-id)))
 
 (s/defn entity-by-id :- s/Any
   [entity-type :- s/Str
    id :- s/Str
-   ident]
-  (condp = entity-type
-    ctim-judgement-schema/type-identifier (judgement-by-id id ident)
-    ctim-sighting-schema/type-identifier (sighting-by-id id ident)
-    ctim-indicator-schema/type-identifier (indicator-by-id id ident)))
+   ident
+   field-selection :- (s/maybe [s/Keyword])]
+  (let [f (condp = entity-type
+            ctim-judgement-schema/type-identifier judgement-by-id
+            ctim-sighting-schema/type-identifier sighting-by-id
+            ctim-indicator-schema/type-identifier indicator-by-id)]
+    (f id ident field-selection)))
