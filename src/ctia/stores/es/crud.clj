@@ -89,19 +89,19 @@
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe Model)
-      ([state :- ESConnState
-        id :- s/Str
-        ident
-        params]
-       (when-let [doc (coerce! (get-doc (:conn state)
-                                        (:index state)
-                                        (name mapping)
-                                        (ensure-document-id id)
-                                        (make-es-read-params params)))]
-         (if (allow-read? doc ident)
-           doc
-           (throw (ex-info "You are not allowed to read this document"
-                           {:type :access-control-error}))))))))
+      [state :- ESConnState
+       id :- s/Str
+       ident
+       params]
+      (when-let [doc (coerce! (get-doc (:conn state)
+                                       (:index state)
+                                       (name mapping)
+                                       (ensure-document-id id)
+                                       (make-es-read-params params)))]
+        (if (allow-read? doc ident)
+          doc
+          (throw (ex-info "You are not allowed to read this document"
+                          {:type :access-control-error})))))))
 
 (defn access-control-filter-list
   "Given an ident, keep only documents it is allowed to read"

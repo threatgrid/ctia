@@ -6,9 +6,8 @@
             [clj-momo.test-helpers
              [core :as mth]
              [http :as mthh]]
-            [clojure
-             [spec :as cs]
-             [string :as str]]
+            [clojure.string :as str]
+            [clojure.spec.alpha :as cs]
             [clojure.test.check.generators :as gen]
             [ctia
              [auth :as auth]

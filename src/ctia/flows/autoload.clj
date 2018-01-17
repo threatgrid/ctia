@@ -14,7 +14,7 @@
                                                                     #"/")))])
                           ~hook-cls-sym))]
     (assert (satisfies? Hook hook-obj)
-            (str hook-cls " doesn't satisfies `ctia.flows.hooks/Hook` protcol!"))
+            (str hook-cls " doesn't satisfy `ctia.flows.hooks/Hook` protocol!"))
     hook-obj))
 
 (defn- java-class

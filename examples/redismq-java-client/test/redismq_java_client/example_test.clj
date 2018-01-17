@@ -1,7 +1,7 @@
 (ns redismq-java-client.example-test
   (:require [cheshire.core :as json]
             [clj-momo.properties :as mp]
-            [clojure.spec :as cs]
+            [clojure.spec.alpha :as cs]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :refer [for-all]]

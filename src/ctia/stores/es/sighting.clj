@@ -28,7 +28,7 @@
 
 (s/defn observable->observable-hash :- s/Str
   "transform an observable to a hash of the form type:value"
-  [{:keys [type value] :as o :- Observable}]
+  [{:keys [type value] :as o} :- Observable]
   (str type ":" value))
 
 (s/defn obs->hashes :- [s/Str]
@@ -39,7 +39,7 @@
 (s/defn stored-sighting->es-stored-sighting
   :- (s/maybe ESStoredSighting)
   "adds an observables hash to a sighting"
-  [{:keys [observables] :as s :- (s/maybe StoredSighting)}]
+  [{:keys [observables] :as s} :- (s/maybe StoredSighting)]
   (when s
     (assoc s :observables_hash
            (map observable->observable-hash observables))))
@@ -47,7 +47,7 @@
 (s/defn partial-stored-sighting->es-partial-stored-sighting
   :- (s/maybe ESPartialStoredSighting)
   "adds an observables hash to a partial-sighting"
-  [{:keys [observables] :as s :- (s/maybe PartialStoredSighting)}]
+  [{:keys [observables] :as s} :- (s/maybe PartialStoredSighting)]
   (when s
     (if observables
       (assoc s :observables_hash

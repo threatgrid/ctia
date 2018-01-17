@@ -1,6 +1,6 @@
 (ns ctia.flows.from-java
   (:require [ctia.flows.hook-protocol :refer [Hook]])
-  (:import java.util.HashMap))
+  (:import [java.util HashMap]))
 
 (defn from-java-handle
   "Helper to import Java obeying `Hook` java interface."

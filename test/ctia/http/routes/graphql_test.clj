@@ -236,7 +236,7 @@
         (let [{:keys [data errors status]} (gh/query "dummy" {} "")]
           (is (= 400 status))
           (is (= errors
-                 ["InvalidSyntaxError{sourceLocations=[SourceLocation{line=1, column=0}]}"]))))
+                 ["InvalidSyntaxError{ message=Invalid Syntax ,locations=[SourceLocation{line=1, column=0}]}"]))))
 
       (testing "Query validation error"
         (let [{:keys [data errors status]}
@@ -245,7 +245,7 @@
                         "TestQuery")]
           (is (= 400 status))
           (is (= errors
-                 ["ValidationError{validationErrorType=FieldUndefined, sourceLocations=[SourceLocation{line=1, column=19}], description='Field nonexistent is undefined'}"]))))
+                 ["ValidationError{validationErrorType=FieldUndefined, message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined, locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]))))
 
       (testing "observable query"
         (let [{:keys [data errors status]}

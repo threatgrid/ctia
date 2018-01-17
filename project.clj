@@ -1,7 +1,7 @@
-(def cheshire-version "5.7.0")
-(def compojure-api-version "1.1.9")
-(def schema-tools-version "0.9.0")
-(def schema-version "1.1.3")
+(def cheshire-version "5.8.0")
+(def compojure-api-version "1.1.11")
+(def schema-tools-version "0.9.1")
+(def schema-version "1.1.7")
 
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -28,48 +28,33 @@
              "-Dlog.console.threshold=INFO"
              "-server"]
   :pedantic? :warn
-  :dependencies [[org.clojure/clojure "1.8.0"]
-                 [clj-time "0.13.0"]
-                 [org.clojure/core.async "0.2.374"]
-                 [org.slf4j/slf4j-log4j12 "1.7.21"]
-                 [org.clojure/core.memoize "0.5.8"]
-                 [org.clojure/tools.logging "0.3.1"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
+                 [clj-time "0.14.2"]
+                 [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
+                 [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
+                 [org.clojure/core.memoize "0.5.9"]
+                 [org.clojure/tools.logging "0.4.0"]
                  [org.clojure/tools.cli "0.3.5"]
-                 [pandect "0.6.0"]
+                 [pandect "0.6.1"]
 
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.22"]
-                 [threatgrid/flanders "0.1.13"
-                  :exclusions [com.google.code.findbugs/jsr305
-                               com.andrewmcveigh/cljs-time]]
-                 [threatgrid/clj-momo "0.2.18"
-                  ;; TODO: Please remove those exclusions once the dependency upgrade is done
-                  :exclusions [metosin/schema-tools
-                               com.fasterxml.jackson.core/*
-                               com.fasterxml.jackson.dataformat/*
-                               metrics-clojure
-                               metrics-clojure-ring
-                               cheshire
-                               metrics-clojure-jvm
-                               metrics-clojure-riemann
-                               clj-http
-                               clj-time
-                               com.andrewmcveigh/cljs-time
-                               org.apache.httpcomponents/*
-                               io.dropwizard.metrics/*
-                               prismatic/schema]]
+                 [threatgrid/ctim "0.4.23"
+                  :exclusions [metosin/ring-swagger
+                               com.google.guava/guava]]
+                 [threatgrid/clj-momo "0.2.18"]
+
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
                   :exclusions [com.google.code.findbugs/jsr305
                                com.andrewmcveigh/cljs-time
-                               org.clojure/core.memoize]]
-                 [ring/ring-jetty-adapter "1.5.1"]
-                 [javax.servlet/servlet-api "2.5"]
-                 [ring/ring-devel "1.5.1"]
-                 [ring-cors "0.1.8"]
-                 [ring/ring-codec "1.0.1"
+                               org.clojure/core.memoize
+                               org.clojure/tools.reader]]
+                 [ring/ring-jetty-adapter "1.6.3"]
+                 [ring/ring-devel "1.6.3"]
+                 [ring-cors "0.1.11"]
+                 [ring/ring-codec "1.1.0"
                   ;; Exclusions:
                   ;; - ring-codec 1.0.1 is not using the latest commons-codec
                   ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)
@@ -78,28 +63,25 @@
 
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.13"]
-                 [cider/cider-nrepl "0.15.1"]
+                 [cider/cider-nrepl "0.16.0"]
 
                  ;; clients
-                 [clj-http "3.4.1"]
-                 [com.taoensso/carmine "2.12.2"]
+                 [clj-http "3.7.0" :exclusions [commons-codec]]
+                 [com.taoensso/carmine "2.17.0"]
 
                  ;; Metrics
-                 [metrics-clojure "2.9.0"]
-                 [metrics-clojure-jvm "2.9.0"]
-                 [metrics-clojure-ring "2.9.0"]
-                 [metrics-clojure-riemann "2.9.0"]
+                 [metrics-clojure "2.10.0"]
+                 [metrics-clojure-jvm "2.10.0"]
+                 [metrics-clojure-ring "2.10.0"]
+                 [metrics-clojure-riemann "2.10.0"]
                  [clout "2.1.2"]
                  [slugger "1.0.1"]
                  [riemann-clojure-client "0.4.5"]
-                 [com.google.protobuf/protobuf-java "2.6.1"]
+                 [com.google.protobuf/protobuf-java "3.5.1"]
 
                  ;; Docs
-                 [markdown-clj "0.9.86"]
-                 [hiccup "1.0.5"]
-
-                 ;; CORS support
-                 [ring-cors "0.1.8"]
+                 [markdown-clj "1.0.1"]
+                 [hiccup "2.0.0-alpha1"]
 
                  ;; Hooks
                  [threatgrid/redismq "0.1.0"]
@@ -111,7 +93,7 @@
                                ring/ring-core
                                cheshire
                                metosin/ring-http-response]]
-                 [com.graphql-java/graphql-java "3.0.0"
+                 [com.graphql-java/graphql-java "6.0"
                   :exclusions [org.slf4j/slf4j-api]]]
 
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
@@ -146,8 +128,8 @@
 
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
-                                  [com.gfredericks/test.chuck "0.2.7"]
-                                  [prismatic/schema-generators "0.1.0"]]
+                                  [com.gfredericks/test.chuck "0.2.8"]
+                                  [prismatic/schema-generators "0.1.1"]]
                    :pedantic? :warn
 
                    :resource-paths ["test/resources"]}
@@ -160,14 +142,14 @@
                                     [perforate "0.3.4"]
                                     [criterium "0.4.4"]
                                     [org.clojure/test.check "0.9.0"]
-                                    [com.gfredericks/test.chuck "0.2.7"]
-                                    [prismatic/schema-generators "0.1.0"]]
+                                    [com.gfredericks/test.chuck "0.2.8"]
+                                    [prismatic/schema-generators "0.1.1"]]
                      :source-paths ["src","test","benchmarks"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [org.clojure/test.check "0.9.0"]
-                                   [com.gfredericks/test.chuck "0.2.7"]
-                                   [prismatic/schema-generators "0.1.0"]]
+                                   [com.gfredericks/test.chuck "0.2.8"]
+                                   [prismatic/schema-generators "0.1.1"]]
                     :pedantic? :abort
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
