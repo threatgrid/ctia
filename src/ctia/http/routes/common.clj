@@ -67,6 +67,14 @@
 (def investigation-sort-fields
   (apply s/enum sorting/investigation-sort-fields))
 
+(def investigation-select-fields
+  (apply s/enum (concat sorting/investigation-sort-fields
+                        [:description
+                         :type
+                         :search-txt
+                         :short_description
+                         :created_at])))
+
 ;; Paging related values and code
 
 (s/defschema PagingParams
@@ -496,7 +504,7 @@
 ;; investigation
 
 (s/defschema InvestigationFieldsParam
-  {(s/optional-key :fields) [investigation-sort-fields]})
+  {(s/optional-key :fields) [investigation-select-fields]})
 
 (s/defschema InvestigationSearchParams
   (st/merge
