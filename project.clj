@@ -41,11 +41,25 @@
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
                  [threatgrid/ctim "0.4.22"]
-                 [threatgrid/flanders "0.1.13-SNAPSHOT"
+                 [threatgrid/flanders "0.1.13"
                   :exclusions [com.google.code.findbugs/jsr305
                                com.andrewmcveigh/cljs-time]]
-                 [threatgrid/clj-momo "0.2.17-SNAPSHOT"]
-
+                 [threatgrid/clj-momo "0.2.18"
+                  ;; TODO: Please remove those exclusions once the dependency upgrade is done
+                  :exclusions [metosin/schema-tools
+                               com.fasterxml.jackson.core/*
+                               com.fasterxml.jackson.dataformat/*
+                               metrics-clojure
+                               metrics-clojure-ring
+                               cheshire
+                               metrics-clojure-jvm
+                               metrics-clojure-riemann
+                               clj-http
+                               clj-time
+                               com.andrewmcveigh/cljs-time
+                               org.apache.httpcomponents/*
+                               io.dropwizard.metrics/*
+                               prismatic/schema]]
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
                   :exclusions [com.google.code.findbugs/jsr305
