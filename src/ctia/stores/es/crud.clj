@@ -9,13 +9,24 @@
              [schemas :refer [ESConnState]]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.domain.access-control
-             :refer [allow-read? allow-write?]]
+             :refer [acl-fields allow-read? allow-write?]]
             [ctia.stores.es.query
              :refer [find-restriction-query-part]]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
              [core :as s]]))
+
+(defn make-es-read-params
+  "Prepare ES Params for read operations, setting the _source field
+   and including ACL mandatory ones."
+  [{:keys [fields]
+    :as params}]
+  (if (coll? fields)
+    (-> params
+        (assoc :_source (concat fields acl-fields))
+        (dissoc :fields))
+    params))
 
 (defn coerce-to-fn
   [Model]
@@ -80,12 +91,13 @@
     (s/fn :- (s/maybe Model)
       [state :- ESConnState
        id :- s/Str
-       ident]
-      (if-let [doc (coerce! (get-doc (:conn state)
-                                     (:index state)
-                                     (name mapping)
-                                     (ensure-document-id id)
-                                     {}))]
+       ident
+       params]
+      (when-let [doc (coerce! (get-doc (:conn state)
+                                       (:index state)
+                                       (name mapping)
+                                       (ensure-document-id id)
+                                       (make-es-read-params params)))]
         (if (allow-read? doc ident)
           doc
           (throw (ex-info "You are not allowed to read this document"
@@ -134,7 +146,7 @@
                              (name mapping)
                              (find-restriction-query-part ident)
                              filter-map
-                             params))
+                             (make-es-read-params params)))
        :data access-control-filter-list ident))))
 
 (defn handle-query-string-search
@@ -155,5 +167,5 @@
                              {:bool {:must [(find-restriction-query-part ident)
                                             {:query_string {:query query}}]}}
                              filter-map
-                             params))
+                             (make-es-read-params params)))
        :data access-control-filter-list ident))))

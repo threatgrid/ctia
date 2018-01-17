@@ -7,16 +7,21 @@
    [ctia.http.routes.common
     :refer [created
             paginated-ok
+            search-options
+            filter-map-search-options
             PagingParams
+            CampaignByExternalIdQueryParams
+            CampaignGetParams
             CampaignSearchParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewCampaign Campaign]]
+   [ctia.schemas.core
+    :refer [NewCampaign
+            Campaign
+            PartialCampaign
+            PartialCampaignList]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-(s/defschema CampaignByExternalIdQueryParams
-  PagingParams)
 
 (defroutes campaign-routes
   (context "/campaign" []
@@ -57,7 +62,8 @@
                      :get-fn #(read-store :campaign
                                           read-campaign
                                           %
-                                          identity-map)
+                                          identity-map
+                                          {})
                      :realize-fn ent/realize-campaign
                      :update-fn #(write-store :campaign
                                               update-campaign
@@ -74,7 +80,7 @@
                     ok))
 
            (GET "/external_id/:external_id" []
-                :return (s/maybe [Campaign])
+                :return PartialCampaignList
                 :query [q CampaignByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -92,7 +98,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [Campaign])
+                :return PartialCampaignList
                 :summary "Search for a Campaign using a Lucene/ES query string"
                 :query [params CampaignSearchParams]
                 :capabilities #{:read-campaign :search-campaign}
@@ -103,17 +109,18 @@
                      :campaign
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Campaign)
+                :return (s/maybe PartialCampaign)
                 :summary "Gets a Campaign by ID"
                 :path-params [id :- s/Str]
+                :query [params CampaignGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-campaign
                 :identity identity
@@ -121,7 +128,8 @@
                 (if-let [campaign (read-store :campaign
                                               read-campaign
                                               id
-                                              identity-map)]
+                                              identity-map
+                                              params)]
                   (-> campaign
                       with-long-id
                       ent/un-store
@@ -140,7 +148,8 @@
                         :get-fn #(read-store :campaign
                                              read-campaign
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :campaign
                                                  delete-campaign
                                                  %

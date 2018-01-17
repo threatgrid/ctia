@@ -42,9 +42,10 @@
    []
    {:indicator {:type IndicatorType
                 :args search-by-id-args
-                :resolve (fn [context args _] (res/indicator-by-id
-                                               (:id args)
-                                               (:ident context)))}
+                :resolve (fn [context args field-selection _] (res/indicator-by-id
+                                                               (:id args)
+                                                               (:ident context)
+                                                               field-selection))}
     :indicators {:type IndicatorConnectionType
                  :args (merge common/lucene-query-arguments
                               indicator/indicator-order-arg
@@ -52,9 +53,10 @@
                  :resolve res/search-indicators}
     :investigation {:type InvestigationType
                     :args search-by-id-args
-                    :resolve (fn [context args _] (res/investigation-by-id
-                                                   (:id args)
-                                                   (:ident context)))}
+                    :resolve (fn [context args field-selection _] (res/investigation-by-id
+                                                                   (:id args)
+                                                                   (:ident context)
+                                                                   field-selection))}
     :investigations {:type InvestigationConnectionType
                      :args (merge common/lucene-query-arguments
                                   investigation/investigation-order-arg
@@ -62,9 +64,10 @@
                      :resolve res/search-investigations}
     :judgement {:type JudgementType
                 :args search-by-id-args
-                :resolve (fn [context args _]
+                :resolve (fn [context args field-selection _]
                            (res/judgement-by-id (:id args)
-                                                (:ident context)))}
+                                                (:ident context)
+                                                field-selection))}
     :judgements {:type JudgementConnectionType
                  :args (merge common/lucene-query-arguments
                               judgement/judgement-order-arg
@@ -73,12 +76,13 @@
     :observable {:type ObservableType
                  :args {:type {:type (g/non-null Scalars/GraphQLString)}
                         :value {:type (g/non-null Scalars/GraphQLString)}}
-                 :resolve (fn [_ args _] args)}
+                 :resolve (fn [_ args _ _] args)}
     :sighting {:type SightingType
                :args search-by-id-args
-               :resolve (fn [context args _]
+               :resolve (fn [context args field-selection _]
                           (res/sighting-by-id (:id args)
-                                              (:ident context)))}
+                                              (:ident context)
+                                              field-selection))}
     :sightings {:type SightingConnectionType
                 :args (merge common/lucene-query-arguments
                              sighting/sighting-order-arg

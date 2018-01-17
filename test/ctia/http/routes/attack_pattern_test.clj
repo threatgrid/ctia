@@ -1,22 +1,30 @@
 (ns ctia.http.routes.attack-pattern-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
-            [clojure
-             [string :as str]
-             [test :refer [is join-fixtures testing use-fixtures]]]
-            [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show]]
-            [ctia.test-helpers
-             [access-control :refer [access-control-test]]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put]]
-             [fake-whoami-service :as whoami-helpers]
-             [search :refer [test-query-string-search]]
-             [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]
-            [ctim.examples.attack-patterns :as ex]))
+  (:require
+   [ctim.examples.attack-patterns
+    :refer [new-attack-pattern-minimal
+            new-attack-pattern-maximal]]
+   [ctia.schemas.sorting
+    :refer [attack-pattern-sort-fields]]
+   [clj-momo.test-helpers
+    [core :as mth]
+    [http :refer [encode]]]
+   [clojure
+    [string :as str]
+    [test :refer [is join-fixtures testing use-fixtures]]]
+   [ctia.domain.entities :refer [schema-version]]
+   [ctia.properties :refer [get-http-show]]
+   [ctia.test-helpers
+    [http :refer [doc-id->rel-url]]
+    [access-control :refer [access-control-test]]
+    [auth :refer [all-capabilities]]
+    [core :as helpers :refer [delete get post put]]
+    [fake-whoami-service :as whoami-helpers]
+    [pagination :refer [pagination-test]]
+    [field-selection :refer [field-selection-tests]]
+    [search :refer [test-query-string-search]]
+    [store :refer [deftest-for-each-store]]]
+   [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -151,15 +159,42 @@
     (let [{status :status
            body :body}
           (post "ctia/attack-pattern"
-                :body (assoc ex/new-attack-pattern-minimal
+                :body (assoc new-attack-pattern-minimal
                              ;; This field has an invalid length
                              :name (clojure.string/join (repeatedly 1025 (constantly \0))))
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*name" (str/lower-case body))))))
 
+(deftest-for-each-store test-attack-pattern-pagination-field-selection
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (let [posted-docs
+        (doall (map #(:parsed-body
+                      (post "ctia/attack-pattern"
+                            :body (-> new-attack-pattern-maximal
+                                      (dissoc :id)
+                                      (assoc :description (str "dotimes " %)))
+                            :headers {"Authorization" "45c1f5e3f05d0"}))
+                    (range 0 30)))]
+
+    (pagination-test
+     "ctia/attack-pattern/search?query=*"
+     {"Authorization" "45c1f5e3f05d0"}
+     attack-pattern-sort-fields)
+
+    (field-selection-tests
+     ["ctia/attack-pattern/search?query=*"
+      (-> posted-docs first :id doc-id->rel-url)]
+     {"Authorization" "45c1f5e3f05d0"}
+     attack-pattern-sort-fields)))
+
 (deftest-for-each-store test-attack-pattern-routes-access-control
   (access-control-test "attack-pattern"
-                       ex/new-attack-pattern-minimal
+                       new-attack-pattern-minimal
                        true
                        true))

@@ -2,21 +2,24 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :as ent]
-   [ctia.domain.entities.tool :refer [with-long-id page-with-long-id]]
+   [ctia.domain.entities.tool
+    :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common
     :refer [created
             paginated-ok
+            filter-map-search-options
+            search-options
             PagingParams
-            ToolSearchParams]]
+            ToolSearchParams
+            ToolGetParams
+            ToolByExternalIdQueryParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewTool Tool]]
+   [ctia.schemas.core
+    :refer [NewTool Tool PartialTool PartialToolList]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-(s/defschema ToolByExternalIdQueryParams
-  PagingParams)
 
 (defroutes tool-routes
   (context "/tool" []
@@ -58,7 +61,8 @@
                      :get-fn #(read-store :tool
                                           read-tool
                                           %
-                                          identity-map)
+                                          identity-map
+                                          {})
                      :realize-fn ent/realize-tool
                      :update-fn #(write-store :tool
                                               update-tool
@@ -75,7 +79,7 @@
                     ok))
 
            (GET "/external_id/:external_id" []
-                :return (s/maybe [Tool])
+                :return PartialToolList
                 :query [q ToolByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -92,7 +96,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [Tool])
+                :return PartialToolList
                 :summary "Search for a Tool using a Lucene/ES query string"
                 :query [params ToolSearchParams]
                 :capabilities #{:read-tool :search-tool}
@@ -103,25 +107,27 @@
                      :tool
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Tool)
+                :return (s/maybe PartialTool)
                 :summary "Gets a Tool by ID"
+                :query [params ToolGetParams]
                 :path-params [id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-tool
                 :identity identity
                 :identity-map identity-map
                 (if-let [tool (read-store :tool
-                                           read-tool
-                                           id
-                                           identity-map)]
+                                          read-tool
+                                          id
+                                          identity-map
+                                          params)]
                   (-> tool
                       with-long-id
                       ent/un-store
@@ -140,7 +146,8 @@
                         :get-fn #(read-store :tool
                                              read-tool
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :tool
                                                  delete-tool
                                                  %

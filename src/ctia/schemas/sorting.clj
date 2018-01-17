@@ -33,7 +33,15 @@
            :valid_time.end_time
            :confidence
            :status
-           :incident_time
+           :incident_time.first_malicious_action
+           :incident_time.initial_compromise
+           :incident_time.first_data_exfiltration
+           :incident_time.incident_discovery
+           :incident_time.incident_opened
+           :incident_time.containment_achieved
+           :incident_time.restoration_achieved
+           :incident_time.incident_reported
+           :incident_time.incident_closed
            :reporter
            :coordinator
            :victim
@@ -95,7 +103,8 @@
            :valid_time.end_time
            :campaign_type
            :status
-           :activity
+           :activity.date_time
+           :activity.description
            :confidence]))
 
 (def coa-sort-fields

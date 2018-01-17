@@ -10,17 +10,18 @@
    [ctia.http.routes.common
     :refer [created
             paginated-ok
+            filter-map-search-options
+            search-options
             PagingParams
-            InvestigationSearchParams]]
+            InvestigationSearchParams
+            InvestigationGetParams
+            InvestigationsByExternalIdQueryParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [Investigation NewInvestigation]]
+   [ctia.schemas.core
+    :refer [Investigation NewInvestigation PartialInvestigation PartialInvestigationList]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-
-(s/defschema InvestigationsByExternalIdQueryParams
-  PagingParams)
 
 (defroutes investigation-routes
   (context "/investigation" []
@@ -50,7 +51,7 @@
                      created))
 
            (GET "/external_id/:external_id" []
-                :return (s/maybe [Investigation])
+                :return PartialInvestigationList
                 :query [q InvestigationsByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -68,7 +69,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [Investigation])
+                :return PartialInvestigationList
                 :summary "Search for an Investigation using a Lucene/ES query string"
                 :query [params InvestigationSearchParams]
                 :capabilities #{:read-investigation :search-investigation}
@@ -79,17 +80,18 @@
                      :investigation
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Investigation)
+                :return (s/maybe PartialInvestigation)
                 :summary "Gets an Investigation by ID"
                 :path-params [id :- s/Str]
+                :query [params InvestigationGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-investigation
                 :identity identity
@@ -97,7 +99,8 @@
                 (if-let [investigation (read-store :investigation
                                                    read-investigation
                                                    id
-                                                   identity-map)]
+                                                   identity-map
+                                                   params)]
                   (-> investigation
                       with-long-id
                       ent/un-store
@@ -116,7 +119,8 @@
                         :get-fn #(read-store :investigation
                                              read-investigation
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :investigation
                                                  delete-investigation
                                                  %

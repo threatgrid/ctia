@@ -6,29 +6,25 @@
              [sighting :as sighting]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common
-             :refer [created PagingParams paging-param-keys paginated-ok
+             :refer [created
+                     PagingParams
+                     paging-param-keys
+                     paginated-ok
                      BaseEntityFilterParams SourcableEntityFilterParams
                      IndicatorSearchParams
+                     IndicatorGetParams
+                     IndicatorsByExternalIdQueryParams
+                     IndicatorsListQueryParams
+                     search-options
+                     filter-map-search-options
                      indicator-sort-fields
                      sighting-sort-fields]]
             [ctia.store :refer :all]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
             [schema-tools.core :as st]
-            [ctia.schemas.core :refer [NewIndicator Indicator]]))
-
-(s/defschema IndicatorsListQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by) indicator-sort-fields}))
-
-(s/defschema IndicatorsByExternalIdQueryParams
-  IndicatorsListQueryParams)
-
-(s/defschema SightingsByIndicatorQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by) sighting-sort-fields}))
+            [ctia.schemas.core
+             :refer [NewIndicator Indicator PartialIndicator PartialIndicatorList]]))
 
 (defroutes indicator-routes
   (context "/indicator" []
@@ -69,7 +65,8 @@
                      :get-fn #(read-store :indicator
                                           read-indicator
                                           %
-                                          identity-map)
+                                          identity-map
+                                          {})
                      :realize-fn ent/realize-indicator
                      :update-fn #(write-store :indicator
                                               update-indicator
@@ -88,7 +85,7 @@
            ;; MORE TESTS, INCLUDING FILTER MAP TEST
            ;; ADD TO OTHER ENTITIES
            (GET "/search" []
-                :return (s/maybe [Indicator])
+                :return PartialIndicatorList
                 :summary "Search for an indicator using a Lucene/ES query string"
                 :query [params IndicatorSearchParams]
                 :capabilities #{:read-indicator :search-indicator}
@@ -99,15 +96,15 @@
                      :indicator
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe Indicator)]
+                :return PartialIndicatorList
                 :query [q IndicatorsByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -125,9 +122,10 @@
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Indicator)
+                :return (s/maybe PartialIndicator)
                 :summary "Gets an Indicator by ID"
                 :path-params [id :- s/Str]
+                :query [params IndicatorGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-indicator
                 :identity identity
@@ -135,7 +133,8 @@
                 (if-let [indicator (read-store :indicator
                                                read-indicator
                                                id
-                                               identity-map)]
+                                               identity-map
+                                               params)]
                   (-> indicator
                       with-long-id
                       ent/un-store

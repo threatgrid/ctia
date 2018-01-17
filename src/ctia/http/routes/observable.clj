@@ -7,11 +7,15 @@
     [sighting :as sighting]]
    [ctia.http.routes.common
     :refer [paginated-ok
-            PagingParams]]
+            PagingParams
+            JudgementsByObservableQueryParams
+            SightingsByObservableQueryParams]]
    [ctia.lib.pagination :as pag]
    [ctia.properties :refer [properties]]
    [ctia.schemas.core :refer [Indicator
                               Judgement
+                              PartialJudgementList
+                              PartialSightingList
                               ObservableTypeIdentifier
                               Reference
                               Sighting
@@ -24,31 +28,8 @@
    [schema.core :as s]
    [clojure.tools.logging :as log]))
 
-(s/defschema JudgementsByObservableQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by)
-    (s/enum
-     "id"
-     "disposition"
-     "priority"
-     "severity"
-     "confidence"
-     "valid_time.start_time"
-     "disposition:asc,valid_time.start_time:desc")}))
-
 (s/defschema RefsByObservableQueryParams
   (st/dissoc PagingParams :sort_by :sort_order))
-
-(s/defschema SightingsByObservableQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by)
-    (s/enum
-     :id
-     :timestamp
-     :confidence
-     :observed_time.start_time)}))
 
 (defroutes observable-routes
   (GET "/:observable_type/:observable_value/verdict" []
@@ -76,7 +57,7 @@
        :query [params JudgementsByObservableQueryParams]
        :path-params [observable_type :- ObservableTypeIdentifier
                      observable_value :- s/Str]
-       :return (s/maybe [Judgement])
+       :return PartialJudgementList
        :summary "Returns the Judgements associated with the specified observable."
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :list-judgements
@@ -112,7 +93,7 @@
                                  {:type observable_type
                                   :value observable_value}
                                  identity-map
-                                 nil))
+                                 {:fields [:id]}))
               judgement-ids (->> judgements
                                  (map :id)
                                  (map #(id/short-id->id :judgement % http-show))
@@ -122,7 +103,7 @@
                                     list-relationships
                                     {:source_ref judgement-ids}
                                     identity-map
-                                    nil))
+                                    {:fields [:target_ref]}))
               indicator-ids (->> (map :target_ref relationships)
                                  (map #(id/long-id->id %))
                                  (filter #(= "indicator" (:type %)))
@@ -143,7 +124,7 @@
        :capabilities :list-sightings
        :identity identity
        :identity-map identity-map
-       :return (s/maybe [Sighting])
+       :return PartialSightingList
        :summary "Returns Sightings associated with the specified observable."
        (-> (read-store :sighting
                        list-sightings-by-observables
@@ -174,7 +155,7 @@
                                            [{:type observable_type
                                              :value observable_value}]
                                            identity-map
-                                           nil))
+                                           {:fields [:id]}))
               sighting-ids (->> sightings
                                 (map :id)
                                 (map #(id/short-id->id :sighting % http-show))
@@ -184,7 +165,7 @@
                                     list-relationships
                                     {:source_ref sighting-ids}
                                     identity-map
-                                    nil))
+                                    {:fields [:target_ref]}))
               indicator-ids (->> (map :target_ref relationships)
                                  (map #(id/long-id->id %))
                                  (filter #(= "indicator" (:type %)))
@@ -215,7 +196,7 @@
                                            [{:type observable_type
                                              :value observable_value}]
                                            identity-map
-                                           nil))
+                                           {:fields [:id]}))
               sighting-ids (->> sightings
                                 (map :id)
                                 (map #(id/short-id->id :sighting % http-show))
@@ -225,7 +206,7 @@
                                     list-relationships
                                     {:source_ref sighting-ids}
                                     identity-map
-                                    nil))
+                                    {:fields [:target_ref]}))
               incident-ids (->> (map :target_ref relationships)
                                 (map #(id/long-id->id %))
                                 (filter #(= "incident" (:type %)))

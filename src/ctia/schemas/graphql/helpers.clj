@@ -2,10 +2,15 @@
   (:require [clojure
              [string :as str]
              [walk :refer [stringify-keys]]]
+            [schema.core :as s]
             [clojure.tools.logging :as log]
             [clojure.walk :as walk])
   (:import [graphql GraphQL GraphQLException]
+           [graphql.language
+            Field FragmentDefinition FragmentSpread]
            [graphql.schema
+            DataFetchingEnvironment
+            DataFetchingFieldSelectionSetImpl
             DataFetcher GraphQLArgument GraphQLArgument$Builder GraphQLEnumType
             GraphQLFieldDefinition GraphQLInputObjectType
             GraphQLInputObjectType$Builder GraphQLInputObjectField
@@ -104,16 +109,89 @@
   [msg value]
   (log/debug msg (pr-str value)))
 
+(defn get-selections
+  "return selections if the given entity
+   is either a Field or a FragmentDefinition"
+  [s]
+  (when (or (instance? Field s)
+            (instance? FragmentDefinition s))
+    (some-> s .getSelectionSet .getSelections)))
+
+(defn get-selections-get [s]
+  (some-> s .getSelectionSet .get))
+
+(defn fragment-spread? [x]
+  (instance? FragmentSpread x))
+
+(defn fragment-definition? [x]
+  (instance? FragmentDefinition x))
+
+(defn resolve-fragment-selections
+  "if the given entity is a FragmentSpread
+  return its definition else return the entity"
+  [s fragments]
+  (if (fragment-spread? s)
+    (let [f-name (.getName s)]
+      (get fragments (keyword f-name))) s))
+
+(defn fields->selections
+  "Given a fields list and a fragment def map,
+  recursively pull all selections"
+  [all-fields fragments]
+  (loop [fields all-fields
+         names []]
+    (let [field (first fields)
+          ;; if the field is a Fragment, replace it with its definition
+          resolved (resolve-fragment-selections field fragments)
+          ;; if a field has sub selections, fetch them
+          selections (get-selections resolved)
+          ;; compute a selection list with (when available)
+          ;; field name and sub selection field names
+          new-names (cond-> []
+                      (and resolved
+                           (not (fragment-definition? resolved)))
+                      (conj (.getName resolved))
+                      selections (concat (fields->selections selections fragments)))
+          ;; finally distinct the selection field names
+          acc (distinct (concat names new-names))]
+
+      ;; recurr the next fields or return the list when done
+      (if-let [remaining-fields (seq (rest fields))]
+        (recur remaining-fields acc)
+        (map keyword acc)))))
+
+(s/defn env->field-selection :- [s/Keyword]
+  "Given a DataFetchingEnvironmentImpl and a Fragment definition map
+  recursively pull all selected fields as a flat sequence
+  TODO: Starting from graphql-java 7.0.0 DataFetchingFieldSelectionSetImpl
+  seems to return more fields but looks still insufficient,
+  we should replace this function with what graphql-java
+  provides whenever possible."
+  [env :- DataFetchingEnvironment
+   fragments :- {s/Keyword FragmentDefinition}]
+  (let [selection-set (get-selections-get env)
+        first-fields (keys (->clj selection-set))
+        fields (mapcat (fn [[k v]] v) selection-set)
+        detected-selections (fields->selections
+                             (concat fields
+                                     (->clj (.getFields env))) fragments)]
+    (distinct
+     (cond-> [:type]
+       (seq first-fields) (concat first-fields)
+       (seq detected-selections) (concat detected-selections)))))
+
 (defn fn->data-fetcher
-  "Converts a function that takes 3 parameters (context, args and value)
+  "Converts a function that takes 4 parameters (context, args, field-selection value)
   to a GraphQL DataFetcher"
   [f]
   (reify DataFetcher
     (get [_ env]
-      (let [context (->clj (.getContext env))
+      (let [fragments (->clj (.getFragmentsByName env))
+            context (->clj (.getContext env))
             args (->clj (.getArguments env))
             value (->clj (.getSource env))
-            result (f context args value)]
+            field-selection (env->field-selection env fragments)
+            result (f context args field-selection value)]
         (debug "data-fetcher context:" context)
         (debug "data-fetcher args:" args)
         (debug "data-fetcher value:"  value)
@@ -123,11 +201,11 @@
 (defn map-resolver
   ([k] (map-resolver k identity))
   ([k f]
-   (fn [_ _ value]
+   (fn [_ _ _ value]
      (when value
        (f (get value k))))))
 
-;----- Input
+                                        ;----- Input
 
 (defn new-argument
   [^String arg-name

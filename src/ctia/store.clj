@@ -2,15 +2,15 @@
   (:require [clojure.tools.logging :as log]))
 
 (defprotocol IActorStore
-  (read-actor [this id ident])
   (create-actors [this new-actors ident])
+  (read-actor [this id ident params])
   (update-actor [this id actor ident])
   (delete-actor [this id ident])
   (list-actors [this filtermap ident params]))
 
 (defprotocol IJudgementStore
   (create-judgements [this new-judgements ident])
-  (read-judgement [this id ident])
+  (read-judgement [this id ident params])
   (delete-judgement [this id ident])
   (list-judgements [this filter-map ident params])
   (calculate-verdict [this observable ident])
@@ -20,39 +20,39 @@
 (defprotocol IIndicatorStore
   (create-indicators [this new-indicators ident])
   (update-indicator [this id indicator ident])
-  (read-indicator [this id ident])
+  (read-indicator [this id ident params])
   (delete-indicator [this id ident])
   (list-indicators [this filtermap ident params]))
 
 (defprotocol IExploitTargetStore
-  (read-exploit-target [this id ident])
+  (read-exploit-target [this id ident params])
   (create-exploit-targets [this new-exploit-targets ident])
   (update-exploit-target [this id exploit-target ident])
   (delete-exploit-target [this id ident])
   (list-exploit-targets [this filtermap ident params]))
 
 (defprotocol IFeedbackStore
-  (read-feedback [this id ident])
+  (read-feedback [this id ident params])
   (create-feedbacks [this new-feedbacks ident])
   (delete-feedback [this id ident])
   (list-feedback [this filtermap ident params]))
 
 (defprotocol ICampaignStore
-  (read-campaign [this id ident])
+  (read-campaign [this id ident params])
   (create-campaigns [this new-campaigns ident])
   (update-campaign [this id campaign ident])
   (delete-campaign [this id ident])
   (list-campaigns [this filtermap ident params]))
 
 (defprotocol ICOAStore
-  (read-coa [this id ident])
+  (read-coa [this id ident params])
   (create-coas [this new-coas ident])
   (update-coa [this id coa ident])
   (delete-coa [this id ident])
   (list-coas [this filtermap ident params]))
 
 (defprotocol ISightingStore
-  (read-sighting [this id ident])
+  (read-sighting [this id ident params])
   (create-sightings [this new-sightings ident])
   (update-sighting [this id sighting ident])
   (delete-sighting [this id ident])
@@ -60,14 +60,14 @@
   (list-sightings-by-observables [this observable ident params]))
 
 (defprotocol IIncidentStore
-  (read-incident [this id ident])
+  (read-incident [this id ident params])
   (create-incidents [this new-incidents ident])
   (update-incident [this id incident ident])
   (delete-incident [this id ident])
   (list-incidents [this filtermap ident params]))
 
 (defprotocol IRelationshipStore
-  (read-relationship [this id ident])
+  (read-relationship [this id ident params])
   (create-relationships [this new-relations ident])
   (delete-relationship [this id ident])
   (list-relationships [this filtermap ident params]))
@@ -78,27 +78,27 @@
   (delete-identity [this org-id role]))
 
 (defprotocol IDataTableStore
-  (read-data-table [this id ident])
+  (read-data-table [this id ident params])
   (create-data-tables [this new-data-tables ident])
   (delete-data-table [this id ident])
   (list-data-tables [this filtermap ident params]))
 
 (defprotocol IAttackPatternStore
-  (read-attack-pattern [this id ident])
+  (read-attack-pattern [this id ident params])
   (create-attack-patterns [this new-attack-patterns ident])
   (update-attack-pattern [this id attack-pattern ident])
   (delete-attack-pattern [this id ident])
   (list-attack-patterns [this filtermap ident params]))
 
 (defprotocol IMalwareStore
-  (read-malware [this id ident])
+  (read-malware [this id ident params])
   (create-malwares [this new-malwares ident])
   (update-malware [this id malware ident])
   (delete-malware [this id ident])
   (list-malwares [this filtermap ident params]))
 
 (defprotocol IToolStore
-  (read-tool [this id ident])
+  (read-tool [this id ident params])
   (create-tools [this new-tools ident])
   (update-tool [this id tool ident])
   (delete-tool [this id ident])
@@ -109,7 +109,7 @@
   (list-events [this filtermap ident params]))
 
 (defprotocol IInvestigationStore
-  (read-investigation [this id ident])
+  (read-investigation [this id ident params])
   (create-investigations [this new-investigations ident])
   (update-investigation [this id investigation ident])
   (delete-investigation [this id ident])

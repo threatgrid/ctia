@@ -1,6 +1,10 @@
 (ns ctia.http.routes.coa-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.test-helpers.core :as mth]
+  (:require [ctim.examples.coas
+             :refer [new-coa-maximal]]
+            [ctia.schemas.sorting
+             :refer [coa-sort-fields]]
+            [clj-momo.test-helpers.core :as mth]
             [clj-momo.test-helpers.http :refer [encode]]
             [clojure
              [string :as str]
@@ -11,11 +15,14 @@
             [ctim.examples.coas :as ex]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
+             [http :refer [doc-id->rel-url]]
              [access-control :refer [access-control-test]]
              [search :refer [test-query-string-search]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
+             [pagination :refer [pagination-test]]
+             [field-selection :refer [field-selection-tests]]
              [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -245,6 +252,34 @@
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-coa-pagination-field-selection
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (let [posted-docs
+        (doall (map #(:parsed-body
+                      (post "ctia/coa"
+                            :body
+                            (-> new-coa-maximal
+                                (dissoc :id)
+                                (assoc :source (str "dotimes " %)))
+                            :headers {"Authorization" "45c1f5e3f05d0"}))
+                    (range 0 30)))]
+
+    (pagination-test
+     "ctia/coa/search?query=*"
+     {"Authorization" "45c1f5e3f05d0"}
+     coa-sort-fields)
+
+    (field-selection-tests
+     ["ctia/coa/search?query=*"
+      (-> posted-docs first :id doc-id->rel-url)]
+     {"Authorization" "45c1f5e3f05d0"}
+     coa-sort-fields)))
 
 (deftest-for-each-store test-coa-routes-access-control
   (access-control-test "coa"

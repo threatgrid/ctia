@@ -7,15 +7,15 @@
    [ctia.http.routes.common
     :refer [created
             paginated-ok
-            PagingParams]]
+            PagingParams
+            DataTableGetParams
+            DataTableByExternalIdQueryParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewDataTable DataTable]]
+   [ctia.schemas.core
+    :refer [NewDataTable DataTable PartialDataTable PartialDataTableList]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-(s/defschema DataTableByExternalIdQueryParams
-  PagingParams)
 
 (defroutes data-table-routes
   (context "/data-table" []
@@ -44,7 +44,7 @@
                      created))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe DataTable)]
+                :return PartialDataTableList
                 :query [q DataTableByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -62,9 +62,10 @@
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe DataTable)
+                :return (s/maybe PartialDataTable)
                 :summary "Gets a Data Table by ID"
                 :path-params [id :- s/Str]
+                :query [params DataTableGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-data-table
                 :identity identity
@@ -72,7 +73,8 @@
                 (if-let [data-table (read-store :data-table
                                                 read-data-table
                                                 id
-                                                identity-map)]
+                                                identity-map
+                                                params)]
                   (-> data-table
                       with-long-id
                       ent/un-store
@@ -91,7 +93,8 @@
                         :get-fn #(read-store :data-table
                                              read-data-table
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :data-table
                                                  delete-data-table
                                                  %

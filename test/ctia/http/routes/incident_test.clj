@@ -1,6 +1,10 @@
 (ns ctia.http.routes.incident-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.test-helpers
+  (:require [ctim.examples.incidents
+             :refer [new-incident-maximal]]
+            [ctia.schemas.sorting
+             :refer [incident-sort-fields]]
+            [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
             [clojure
@@ -9,11 +13,14 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [http :refer [doc-id->rel-url]]
              [search :refer [test-query-string-search]]
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put fake-long-id]]
              [fake-whoami-service :as whoami-helpers]
+             [pagination :refer [pagination-test]]
+             [field-selection :refer [field-selection-tests]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
             [ctim.examples.incidents :as ex]))
@@ -223,6 +230,33 @@
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
+
+(deftest-for-each-store test-incident-pagination-field-selection
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (let [posted-docs
+        (doall (map #(:parsed-body
+                      (post "ctia/incident"
+                            :body (-> new-incident-maximal
+                                      (dissoc :id)
+                                      (assoc :source (str "dotimes " %)))
+                            :headers {"Authorization" "45c1f5e3f05d0"}))
+                    (range 0 30)))]
+
+    (pagination-test
+     "ctia/incident/search?query=*"
+     {"Authorization" "45c1f5e3f05d0"}
+     incident-sort-fields)
+
+    (field-selection-tests
+     ["ctia/incident/search?query=*"
+      (-> posted-docs first :id doc-id->rel-url)]
+     {"Authorization" "45c1f5e3f05d0"}
+     incident-sort-fields)))
 
 (deftest-for-each-store test-incident-routes-access-control
   (access-control-test "incident"

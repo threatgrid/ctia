@@ -7,16 +7,18 @@
    [ctia.http.routes.common
     :refer [created
             paginated-ok
+            filter-map-search-options
+            search-options
             PagingParams
-            AttackPatternSearchParams]]
+            AttackPatternGetParams
+            AttackPatternSearchParams
+            AttackPatternByExternalIdQueryParams]]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewAttackPattern AttackPattern]]
+   [ctia.schemas.core
+    :refer [NewAttackPattern AttackPattern PartialAttackPattern PartialAttackPatternList]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
-
-(s/defschema AttackPatternByExternalIdQueryParams
-  PagingParams)
 
 (defroutes attack-pattern-routes
   (context "/attack-pattern" []
@@ -58,7 +60,8 @@
                      :get-fn #(read-store :attack-pattern
                                           read-attack-pattern
                                           %
-                                          identity-map)
+                                          identity-map
+                                          {})
                      :realize-fn ent/realize-attack-pattern
                      :update-fn #(write-store :attack-pattern
                                               update-attack-pattern
@@ -75,7 +78,7 @@
                     ok))
 
            (GET "/external_id/:external_id" []
-                :return (s/maybe [AttackPattern])
+                :return PartialAttackPatternList
                 :query [q AttackPatternByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -92,7 +95,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [AttackPattern])
+                :return PartialAttackPatternList
                 :summary "Search for an Attack Pattern using a Lucene/ES query string"
                 :query [params AttackPatternSearchParams]
                 :capabilities #{:read-attack-pattern :search-attack-pattern}
@@ -103,25 +106,27 @@
                      :attack-pattern
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe AttackPattern)
+                :return (s/maybe PartialAttackPattern)
                 :summary "Gets an Attack Pattern by ID"
                 :path-params [id :- s/Str]
+                :query [params AttackPatternGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-attack-pattern
                 :identity identity
                 :identity-map identity-map
                 (if-let [attack-pattern (read-store :attack-pattern
-                                           read-attack-pattern
-                                           id
-                                           identity-map)]
+                                                    read-attack-pattern
+                                                    id
+                                                    identity-map
+                                                    params)]
                   (-> attack-pattern
                       with-long-id
                       ent/un-store
@@ -140,7 +145,8 @@
                         :get-fn #(read-store :attack-pattern
                                              read-attack-pattern
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :attack-pattern
                                                  delete-attack-pattern
                                                  %

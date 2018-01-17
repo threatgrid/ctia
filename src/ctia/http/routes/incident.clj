@@ -1,20 +1,26 @@
 (ns ctia.http.routes.incident
   (:require [compojure.api.sweet :refer :all]
             [ctia.domain.entities :as ent]
-            [ctia.domain.entities.incident :refer [with-long-id page-with-long-id]]
+            [ctia.domain.entities.incident
+             :refer [with-long-id page-with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.store :refer :all]
-            [ctia.schemas.core :refer [NewIncident Incident]]
+            [ctia.schemas.core
+             :refer [NewIncident
+                     Incident
+                     PartialIncident
+                     PartialIncidentList]]
             [ctia.http.routes.common :refer [created
+                                             search-options
+                                             filter-map-search-options
+                                             paginated-ok
+                                             IncidentByExternalIdQueryParams
                                              IncidentSearchParams
-                                             PagingParams
-                                             paginated-ok]]
+                                             IncidentGetParams
+                                             PagingParams]]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
             [schema-tools.core :as st]))
-
-(s/defschema IncidentByExternalIdQueryParams
-  PagingParams)
 
 (defroutes incident-routes
   (context "/incident" []
@@ -55,7 +61,8 @@
                      :get-fn #(read-store :incident
                                           read-incident
                                           %
-                                          identity-map)
+                                          identity-map
+                                          {})
                      :realize-fn ent/realize-incident
                      :update-fn #(write-store :incident
                                               update-incident
@@ -72,7 +79,7 @@
                     ok))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe Incident)]
+                :return PartialIncidentList
                 :query [q IncidentByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -89,7 +96,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [Incident])
+                :return PartialIncidentList
                 :summary "Search for an Incident using a Lucene/ES query string"
                 :query [params IncidentSearchParams]
                 :capabilities #{:read-incident :search-incident}
@@ -100,17 +107,18 @@
                      :incident
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Incident)
+                :return (s/maybe PartialIncident)
                 :summary "Gets an Incident by ID"
                 :path-params [id :- s/Str]
+                :query [params IncidentGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-incident
                 :identity identity
@@ -118,7 +126,8 @@
                 (if-let [incident (read-store :incident
                                               read-incident
                                               id
-                                              identity-map)]
+                                              identity-map
+                                              params)]
                   (-> incident
                       with-long-id
                       ent/un-store
@@ -137,7 +146,8 @@
                         :get-fn #(read-store :incident
                                              read-incident
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :incident
                                                  delete-incident
                                                  %
