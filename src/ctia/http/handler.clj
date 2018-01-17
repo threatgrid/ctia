@@ -130,8 +130,7 @@
                             actor-routes
                             attack-pattern-routes
                             bulk-routes
-                            bundle-routes
-                            ;;(undocumented bundle-routes)
+                            (undocumented bundle-routes)
                             campaign-routes
                             coa-routes
                             data-table-routes
