@@ -5,7 +5,16 @@
    [ctia.domain.entities.judgement :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common
-    :refer [created paginated-ok PagingParams JudgementSearchParams
+    :refer [created
+            paginated-ok
+            PagingParams
+            JudgementGetParams
+            JudgementSearchParams
+            JudgementsByExternalIdQueryParams
+            FeedbacksByJudgementQueryParams
+            JudgementsQueryParams
+            filter-map-search-options
+            search-options
             feedback-sort-fields
             judgement-sort-fields]]
    [ctia.properties :refer [get-http-show]]
@@ -14,20 +23,8 @@
    [ring.util.http-response :refer [ok no-content not-found]]
    [schema.core :as s]
    [schema-tools.core :as st]
-   [ctia.schemas.core :refer [NewJudgement Judgement]]))
-
-(s/defschema FeedbacksByJudgementQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by) feedback-sort-fields}))
-
-(s/defschema JudgementsQueryParams
-  (st/merge
-   PagingParams
-   {(s/optional-key :sort_by) judgement-sort-fields}))
-
-(s/defschema JudgementsByExternalIdQueryParams
-  JudgementsQueryParams)
+   [ctia.schemas.core
+    :refer [NewJudgement Judgement PartialJudgement PartialJudgementList]]))
 
 (defroutes judgement-routes
   (context "/judgement" []
@@ -56,7 +53,7 @@
                      created))
 
            (GET "/search" []
-                :return (s/maybe [Judgement])
+                :return PartialJudgementList
                 :summary "Search for a Judgement using a Lucene/ES query string"
                 :query [params JudgementSearchParams]
                 :capabilities #{:read-judgement :search-judgement}
@@ -66,15 +63,15 @@
                 (-> (query-string-search-store :judgement
                                                query-string-search
                                                (:query params)
-                                               (dissoc params :query :sort_by :sort_order :offset :limit)
+                                               (apply dissoc params filter-map-search-options)
                                                identity-map
-                                               (select-keys params [:sort_by :sort_order :offset :limit]))
+                                               (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/external_id/:external_id" []
-                :return [(s/maybe Judgement)]
+                :return PartialJudgementList
                 :query [q JudgementsByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -92,8 +89,9 @@
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Judgement)
+                :return (s/maybe PartialJudgement)
                 :path-params [id :- s/Str]
+                :query [params JudgementGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Gets a Judgement by ID"
                 :capabilities :read-judgement
@@ -102,7 +100,8 @@
                 (if-let [judgement (read-store :judgement
                                                read-judgement
                                                id
-                                               identity-map)]
+                                               identity-map
+                                               params)]
                   (-> judgement
                       with-long-id
                       ent/un-store
@@ -122,7 +121,8 @@
                         :get-fn #(read-store :judgement
                                              read-judgement
                                              %
-                                             identity-map)
+                                             identity-map
+                                             {})
                         :delete-fn #(write-store :judgement
                                                  delete-judgement
                                                  %

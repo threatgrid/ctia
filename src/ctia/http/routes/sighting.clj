@@ -5,18 +5,20 @@
    [ctia.domain.entities.sighting :refer [with-long-id page-with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.store :refer :all]
-   [ctia.schemas.core :refer [NewSighting Sighting]]
+   [ctia.schemas.core
+    :refer [NewSighting Sighting PartialSighting PartialSightingList]]
    [ctia.http.routes.common
     :refer [created
             paginated-ok
+            search-options
+            filter-map-search-options
             PagingParams
-            SightingSearchParams]]
+            SightingGetParams
+            SightingSearchParams
+            SightingByExternalIdQueryParams]]
    [ring.util.http-response :refer [ok no-content not-found unprocessable-entity]]
    [schema.core :as s]
    [schema-tools.core :as st]))
-
-(s/defschema SightingByExternalIdQueryParams
-  PagingParams)
 
 (defroutes sighting-routes
   (context "/sighting" []
@@ -57,7 +59,8 @@
                      :get-fn #(read-store :sighting
                                           read-sighting
                                           %
-                                          identity-map)
+                                          identity-map
+                                          {})
                      :realize-fn ent/realize-sighting
                      :update-fn #(write-store :sighting
                                               update-sighting
@@ -74,7 +77,7 @@
                     ok))
 
            (GET "/external_id/:external_id" []
-                :return (s/maybe [Sighting])
+                :return PartialSightingList
                 :query [q SightingByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -92,7 +95,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [Sighting])
+                :return PartialSightingList
                 :summary "Search for Sightings using a Lucene/ES query string"
                 :query [params SightingSearchParams]
                 :capabilities #{:read-sighting :search-sighting}
@@ -103,17 +106,18 @@
                      :sighting
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe Sighting)
+                :return (s/maybe PartialSighting)
                 :summary "Gets a Sighting by ID"
                 :path-params [id :- s/Str]
+                :query [params SightingGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-sighting
                 :identity identity
@@ -121,7 +125,8 @@
                 (if-let [sighting (read-store :sighting
                                               read-sighting
                                               id
-                                              identity-map)]
+                                              identity-map
+                                              params)]
                   (-> sighting
                       with-long-id
                       ent/un-store

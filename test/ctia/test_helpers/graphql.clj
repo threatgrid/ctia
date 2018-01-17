@@ -133,9 +133,9 @@
   ;; page 1
   (let [{:keys [data errors status]}
         (query graphql-query
-                  (into variables
-                        {:first 1})
-                  operation-name)]
+               (into variables
+                     {:first 1})
+               operation-name)]
     (is (= 200 status))
     (is (empty? errors) "No errors")
     (let [{nodes-p1 :nodes

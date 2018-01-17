@@ -1,6 +1,11 @@
 (ns ctia.http.routes.actor-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.test-helpers
+  (:require [ctim.examples.actors
+             :refer [new-actor-minimal
+                     new-actor-maximal]]
+            [ctia.schemas.sorting
+             :refer [actor-sort-fields]]
+            [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
             [clojure
@@ -9,14 +14,16 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctia.test-helpers
+             [http :refer [doc-id->rel-url]]
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
              [fake-whoami-service :as whoami-helpers]
+             [pagination :refer [pagination-test]]
+             [field-selection :refer [field-selection-tests]]
              [search :refer [test-query-string-search]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]
-            [ctim.examples.actors :as ex]))
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -186,15 +193,43 @@
     (let [{status :status
            body :body}
           (post "ctia/actor"
-                :body (assoc ex/new-actor-minimal
+                :body (assoc new-actor-minimal
                              ;; This field has an invalid length
                              :title (clojure.string/join (repeatedly 1025 (constantly \0))))
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
 
+(deftest-for-each-store test-actor-pagination-field-selection
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+
+  (let [posted-docs
+        (doall (map #(:parsed-body
+                      (post "ctia/actor"
+                            :body (-> new-actor-maximal
+                                      (dissoc :id)
+                                      (assoc :source (str "dotimes " %)
+                                             :title "foo"))
+                            :headers {"Authorization" "45c1f5e3f05d0"}))
+                    (range 0 30)))]
+
+    (pagination-test
+     "ctia/actor/search?query=*"
+     {"Authorization" "45c1f5e3f05d0"}
+     actor-sort-fields)
+
+    (field-selection-tests
+     ["ctia/actor/search?query=*"
+      (-> posted-docs first :id doc-id->rel-url)]
+     {"Authorization" "45c1f5e3f05d0"}
+     actor-sort-fields)))
+
 (deftest-for-each-store test-actor-routes-access-control
   (access-control-test "actor"
-                       ex/new-actor-minimal
+                       new-actor-minimal
                        true
                        true))

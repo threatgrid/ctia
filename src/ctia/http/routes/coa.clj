@@ -7,15 +7,17 @@
             [ctia.http.routes.common
              :refer [created
                      paginated-ok
+                     search-options
+                     filter-map-search-options
                      PagingParams
-                     COASearchParams]]
-            [ctia.schemas.core :refer [NewCOA COA]]
+                     COAGetParams
+                     COASearchParams
+                     COAByExternalIdQueryParams]]
+            [ctia.schemas.core
+             :refer [NewCOA COA PartialCOA PartialCOAList]]
             [ring.util.http-response :refer [ok no-content not-found]]
             [schema.core :as s]
             [schema-tools.core :as st]))
-
-(s/defschema COAByExternalIdQueryParams
-  PagingParams)
 
 (defroutes coa-routes
   (context "/coa" []
@@ -54,7 +56,8 @@
                 (-> (flows/update-flow :get-fn #(read-store :coa
                                                             read-coa
                                                             %
-                                                            identity-map)
+                                                            identity-map
+                                                            {})
                                        :realize-fn ent/realize-coa
                                        :update-fn #(write-store :coa
                                                                 update-coa
@@ -71,7 +74,7 @@
                     ok))
 
            (GET "/external_id/:external_id" []
-                :return (s/maybe [COA])
+                :return PartialCOAList
                 :query [q COAByExternalIdQueryParams]
                 :path-params [external_id :- s/Str]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -89,7 +92,7 @@
                     paginated-ok))
 
            (GET "/search" []
-                :return (s/maybe [COA])
+                :return PartialCOAList
                 :summary "Search for a Course of Action using a Lucene/ES query string"
                 :query [params COASearchParams]
                 :capabilities #{:read-coa :search-coa}
@@ -100,22 +103,23 @@
                      :coa
                      query-string-search
                      (:query params)
-                     (dissoc params :query :sort_by :sort_order :offset :limit)
+                     (apply dissoc params filter-map-search-options)
                      identity-map
-                     (select-keys params [:sort_by :sort_order :offset :limit]))
+                     (select-keys params search-options))
                     page-with-long-id
                     ent/un-store-page
                     paginated-ok))
 
            (GET "/:id" []
-                :return (s/maybe COA)
+                :return (s/maybe PartialCOA)
                 :summary "Gets a COA by ID"
                 :path-params [id :- s/Str]
+                :query [params COAGetParams]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :capabilities :read-coa
                 :identity identity
                 :identity-map identity-map
-                (if-let [coa (read-store :coa (fn [s] (read-coa s id identity-map)))]
+                (if-let [coa (read-store :coa (fn [s] (read-coa s id identity-map params)))]
                   (-> coa
                       with-long-id
                       ent/un-store
@@ -133,7 +137,8 @@
                    (if (flows/delete-flow :get-fn #(read-store :coa
                                                                read-coa
                                                                %
-                                                               identity-map)
+                                                               identity-map
+                                                               {})
                                           :delete-fn #(write-store :coa
                                                                    delete-coa
                                                                    %

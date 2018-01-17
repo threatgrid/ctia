@@ -1,34 +1,37 @@
 (ns ctia.schemas.graphql.relationship
-  (:require [clojure.tools.logging :as log]
-            [ctia.schemas.graphql
-             [common :as common]
-             [flanders :as f]
-             [helpers :as g]
-             [pagination :as p]
-             [refs :as refs]
-             [resolvers :as res :refer [entity-by-id search-relationships]]
-             [sorting :as sorting]]
-            [ctia.schemas.sorting :as sort-fields]
-            [ctim.domain.id :as id]
-            [ctim.schemas
-             [indicator :as ctim-ind]
-             [judgement :as ctim-j]
-             [relationship :as ctim-rel]
-             [sighting :as ctim-sig]
-             [vocabularies :as ctim-voc]]
-            [schema.core :as s])
+  (:require
+   [flanders.utils :as fu]
+   [clojure.tools.logging :as log]
+   [ctia.schemas.graphql
+    [common :as common]
+    [flanders :as f]
+    [helpers :as g]
+    [pagination :as p]
+    [refs :as refs]
+    [resolvers :as res
+     :refer [entity-by-id search-relationships]]
+    [sorting :as sorting]]
+   [ctia.schemas.sorting :as sort-fields]
+   [ctim.domain.id :as id]
+   [ctim.schemas
+    [indicator :as ctim-ind]
+    [judgement :as ctim-j]
+    [relationship :as ctim-rel]
+    [sighting :as ctim-sig]
+    [vocabularies :as ctim-voc]]
+   [schema.core :as s])
   (:import graphql.Scalars))
 
 (def related-judgement-fields
   {:judgement {:type refs/JudgementRef
                :description "The related Judgement"
-               :resolve (fn [context _ src]
+               :resolve (fn [context _ field-selection src]
                           (when-let [id (:judgement_id src)]
-                            (res/judgement-by-id id (:ident context))))}})
+                            (res/judgement-by-id id (:ident context) field-selection)))}})
 
 (def RelatedJudgement
   (let [{:keys [fields name description]}
-        (f/->graphql ctim-rel/RelatedJudgement)]
+        (f/->graphql (fu/optionalize-all ctim-rel/RelatedJudgement))]
     (g/new-object name description [] (into fields
                                             related-judgement-fields))))
 
@@ -57,25 +60,27 @@
   (merge
    (g/non-nulls
     {:source_entity {:type Entity
-                     :resolve (fn [context args src]
+                     :resolve (fn [context args field-selection src]
                                 (log/debug "Source resolver" args src)
                                 (let [ref (:source_ref src)
                                       entity-type (ref->entity-type ref)]
                                   (entity-by-id entity-type
                                                 ref
-                                                (:ident context))))}
+                                                (:ident context)
+                                                field-selection)))}
      :target_entity {:type Entity
-                     :resolve (fn [context args src]
+                     :resolve (fn [context args field-selection src]
                                 (log/debug "Target resolver" args src)
                                 (let [ref (:target_ref src)
                                       entity-type (ref->entity-type ref)]
                                   (entity-by-id entity-type
                                                 ref
-                                                (:ident context))))}})))
+                                                (:ident context)
+                                                field-selection)))}})))
 
 (def RelationshipType
   (let [{:keys [fields name description]}
-        (f/->graphql ctim-rel/Relationship
+        (f/->graphql (fu/optionalize-all ctim-rel/Relationship)
                      {refs/observable-type-name refs/ObservableTypeRef})]
     (g/new-object name
                   description

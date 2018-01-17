@@ -1,7 +1,10 @@
 (ns ctia.stores.es.judgement
   (:require [clj-momo.lib.es.document :refer [search-docs update-doc]]
             [clj-momo.lib.time :as time]
-            [ctia.schemas.core :refer [StoredJudgement Verdict]]
+            [ctia.domain.access-control
+             :refer [allow-write?]]
+            [ctia.schemas.core
+             :refer [StoredJudgement PartialStoredJudgement Verdict]]
             [ctia.stores.es
              [crud :as crud]
              [query :refer [active-judgements-by-observable-query
@@ -20,27 +23,28 @@
               sc/json-schema-coercion-matcher))
 
 (def handle-create (crud/handle-create :judgement StoredJudgement))
-(def handle-read (crud/handle-read :judgement StoredJudgement))
-(def handle-delete (crud/handle-delete :judgement StoredJudgement))
-(def handle-list (crud/handle-find :judgement StoredJudgement))
-(def handle-query-string-search (crud/handle-query-string-search :judgement StoredJudgement))
+(def handle-read (crud/handle-read :judgement PartialStoredJudgement))
+(def handle-delete (crud/handle-delete :judgement PartialStoredJudgement))
+(def handle-list (crud/handle-find :judgement PartialStoredJudgement))
+(def handle-query-string-search (crud/handle-query-string-search :judgement PartialStoredJudgement))
 
 (defn handle-add-indicator-to
   "add an indicator relation to a judgement"
-  [state judgement-id indicator-rel]
-
-  (let [judgement (handle-read state judgement-id)
+  [state judgement-id indicator-rel ident]
+  (let [judgement (handle-read state judgement-id ident {})
         indicator-rels (:indicators judgement)
         updated-rels (conj indicator-rels indicator-rel)
         updated {:indicators (set updated-rels)}]
-
-    (update-doc (:conn state)
-                (:index state)
-                judgement-mapping
-                judgement-id
-                updated
-                (get-in state [:props :refresh] false))
-    indicator-rel))
+    (if (allow-write? judgement ident)
+      (do (update-doc (:conn state)
+                      (:index state)
+                      judgement-mapping
+                      judgement-id
+                      updated
+                      (get-in state [:props :refresh] false))
+          indicator-rel)
+      (throw (ex-info "You are not allowed to update this document"
+                      {:type :access-control-error})))))
 
 
 (defn list-active-by-observable

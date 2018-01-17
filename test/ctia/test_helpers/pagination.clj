@@ -79,19 +79,21 @@
 
   (testing (str route " with sort")
     (doall (map (fn [field]
-                  (is (deep=
-                       (->> (get route :headers headers)
-                            :parsed-body
-                            (sort-by field)
-                            (map field)
-                            (remove nil?))
-                       (->> (get route
-                                 :headers headers
-                                 :query-params {:sort_by (name field)
-                                                :sort_order "asc"})
-                            :parsed-body
-                            (map field)
-                            (remove nil?)))))
+                  (let [manually-sorted (->> (get route :headers headers)
+                                             :parsed-body
+                                             (sort-by field)
+                                             (map field)
+                                             (remove nil?))
+                        route-sorted (->> (get route
+                                               :headers headers
+                                               :query-params {:sort_by (name field)
+                                                              :sort_order "asc"})
+                                          :parsed-body
+                                          (map field)
+                                          (remove nil?))]
+                    (is (deep=
+                         manually-sorted
+                         route-sorted) field)))
                 sort-fields))))
 
 (defn edge-cases-test [route headers]

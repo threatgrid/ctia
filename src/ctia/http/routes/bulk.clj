@@ -69,7 +69,7 @@
 
 (defn read-fn
   "return the create function provided an entity type key"
-  [k ident]
+  [k ident params]
   #(read-store
     k (case k
         :actor          read-actor
@@ -86,7 +86,7 @@
         :relationship   read-relationship
         :sighting       read-sighting
         :tool           read-tool)
-    % ident))
+    % ident params))
 
 (defn with-long-id-fn
   "return the with-long-id function provided an entity type key"
@@ -126,13 +126,13 @@
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type ident]
-  (let [read-entity (read-fn entity-type ident)
+  (let [read-entity (read-fn entity-type ident {})
         with-long-id (with-long-id-fn entity-type)]
     (map (fn [id] (try (with-long-id
-                        (read-entity id))
-                      (catch Exception e
-                        (do (log/error (pr-str e))
-                            nil)))) ids)))
+                         (read-entity id))
+                       (catch Exception e
+                         (do (log/error (pr-str e))
+                             nil)))) ids)))
 
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
