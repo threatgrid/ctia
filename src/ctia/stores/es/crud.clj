@@ -53,7 +53,7 @@
    {:_id \"2\"}]
   "
   [items]
-  (map (comp val first) items))
+  (map (comp first vals) items))
 
 (defn build-create-result
   [item coerce-fn]
