@@ -18,7 +18,8 @@
                                      to-delete-event]]
    [ctim.domain.id :as id]
    [ring.util.http-response :as http-response]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [clojure.set :as set]))
 
 (s/defschema FlowMap
   {:create-event-fn (s/pred fn?)
@@ -179,38 +180,54 @@
   [{:keys [create-event-fn entities flow-type identity prev-entity]
     :as fm} :- FlowMap]
   (if (get-in @properties [:ctia :events :enabled])
-    (assoc fm
-           :events
-           (doall
-            (for [entity entities]
-              (try
-                (if (= :update flow-type)
-                  (create-event-fn entity prev-entity (make-id "event"))
-                  (create-event-fn entity (make-id "event")))
-                (catch Throwable e
-                  (log/error "Could not create event" e)
-                  (throw (ex-info "Could not create event"
-                                  {:flow-type flow-type
-                                   :login (auth/login identity)
-                                   :entity entity
-                                   :prev-entity prev-entity})))))))
+    (let [events
+          (->> entities
+               (filter #(nil? (:error %)))
+               (map (fn [entity]
+                      (try
+                        (if (= :update flow-type)
+                          (create-event-fn entity prev-entity
+                                           (make-id "event"))
+                          (create-event-fn entity (make-id "event")))
+                        (catch Throwable e
+                          (log/error "Could not create event" e)
+                          (throw (ex-info "Could not create event"
+                                          {:flow-type flow-type
+                                           :login (auth/login identity)
+                                           :entity entity
+                                           :prev-entity prev-entity}))))))
+               doall)]
+      (cond-> fm
+        (seq events) (assoc :events events)))
     fm))
 
 (s/defn ^:private write-events :- FlowMap
   [{:keys [events] :as fm} :- FlowMap]
-  (if events
+  (if (seq events)
     (assoc fm
            :events
            (store/write-store :event store/create-events events))
     fm))
 
-(s/defn ^:private apply-store-fn :- FlowMap
-  [{:keys [entities flow-type store-fn] :as fm} :- FlowMap]
-  (case flow-type
-    :create
+(s/defn apply-create-store-fn
+  [{:keys [entities store-fn enveloped-result? tempids] :as fm} :- FlowMap]
+  (try
     (assoc fm
            :entities
            (store-fn entities))
+    (catch Exception e
+      (if enveloped-result?
+        ;; Set partial results with errors if the enveloped-results format
+        ;; is used, otherwise throw an exception
+        (if-let [{:keys [data]} (ex-data e)]
+          (assoc fm :entities data)
+          (throw e))
+        (throw e)))))
+
+(s/defn ^:private apply-store-fn :- FlowMap
+  [{:keys [entities flow-type store-fn] :as fm} :- FlowMap]
+  (case flow-type
+    :create (apply-create-store-fn fm)
 
     :delete
     (assoc fm
@@ -226,20 +243,40 @@
             (for [entity entities]
               (store-fn entity))))))
 
+(defn short-to-long-ids-map
+  "Builds a mapping table between short and long IDs"
+  [entities long-id-fn]
+  (->> entities
+       (filter #(nil? (:error %)))
+       (map (fn [{:keys [error id] :as entity}]
+              [id (:id (long-id-fn entity))]))
+       (into {})))
+
+(defn entities-with-long-ids
+  "Converts entity IDs from short to long format"
+  [entities short-to-long-map]
+  (map (fn [{:keys [id] :as entity}]
+         (cond-> entity
+           id (assoc :id (get short-to-long-map id))))
+       entities))
+
+(defn tempids-with-long-ids
+  "Converts IDs in the tempids mapping table from short to long format"
+  [tempids short-to-long-map]
+  (->> tempids
+       (map (fn [[tempid short-id]]
+              (when-let [long-id (get short-to-long-map short-id)]
+                [tempid long-id])))
+       (remove nil?)
+       (into {})))
+
 (s/defn ^:private apply-long-id-fn :- FlowMap
   [{:keys [entities tempids long-id-fn] :as fm}]
   (if long-id-fn
-    (let [short-ids (map :id entities)
-          new-entities (map long-id-fn entities)
-          long-ids (map :id new-entities)
-          short-to-long-map (zipmap short-ids long-ids)
-          new-tempids (->> tempids
-                           (map (fn [[tempid short-id]]
-                                  [tempid (get short-to-long-map short-id short-id)]))
-                           (into {}))]
+    (let [short-to-long-map (short-to-long-ids-map entities long-id-fn)]
       (assoc fm
-             :entities new-entities
-             :tempids new-tempids))
+             :entities (entities-with-long-ids entities short-to-long-map)
+             :tempids (tempids-with-long-ids tempids short-to-long-map)))
     fm))
 
 (s/defn ^:private apply-event-hooks :- FlowMap

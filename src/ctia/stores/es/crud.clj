@@ -15,7 +15,8 @@
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
-             [core :as s]]))
+             [core :as s]]
+            [clojure.set :as set]))
 
 (defn make-es-read-params
   "Prepare ES Params for read operations, setting the _source field
@@ -40,6 +41,44 @@
   (let [[orig docid] (re-matches #".*?([^/]+)\z" id) ]
     docid))
 
+(defn remove-es-actions
+  "Removes the ES action level
+
+  [{:index {:_id \"1\"}}
+   {:index {:_id \"2\"}}]
+
+  ->
+
+  [{:_id \"1\"}
+   {:_id \"2\"}]
+  "
+  [items]
+  (map (comp first vals) items))
+
+(defn build-create-result
+  [item coerce-fn]
+  (-> item
+      (dissoc :_id :_index :_type)
+      coerce-fn))
+
+(defn partial-results
+  "Build partial results when an error occurs for one or more items
+   in the bulk operation.
+
+   Ex:
+
+   [{model1}
+    {:error \"Error message item2\"}
+    {model3}]"
+  [exception-data models coerce-fn]
+  (let [{{:keys [errors items]}
+         :es-http-res-body} exception-data]
+    {:data (map (fn [{:keys [error] :as item} model]
+                  (if error
+                    {:error error}
+                    (build-create-result model coerce-fn)))
+                (remove-es-actions items) models)}))
+
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
@@ -48,15 +87,22 @@
       [state :- ESConnState
        models :- [Model]
        ident]
-      (->> (bulk-create-doc (:conn state)
-                            (map #(assoc %
-                                         :_id (:id %)
-                                         :_index (:index state)
-                                         :_type (name mapping))
-                                 models)
-                            (get-in state [:props :refresh] false))
-           (map #(dissoc % :_id :_index :_type))
-           (map coerce!)))))
+      (try
+        (->> (bulk-create-doc (:conn state)
+                              (map #(assoc %
+                                           :_id (:id %)
+                                           :_index (:index state)
+                                           :_type (name mapping))
+                                   models)
+                              (get-in state [:props :refresh] false))
+             (map #(build-create-result % coerce!)))
+        (catch Exception e
+          (throw
+           (if-let [ex-data (ex-data e)]
+             ;; Add partial results to the exception data map
+             (ex-info (.getMessage e)
+                      (partial-results ex-data models coerce!))
+             e)))))))
 
 (defn handle-update
   "Generate an ES update handler using some mapping and schema"

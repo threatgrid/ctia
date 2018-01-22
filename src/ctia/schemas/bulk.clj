@@ -4,6 +4,10 @@
    [schema-tools.core :as st]
    [ctia.schemas.core :refer :all]))
 
+(s/defschema EntityError
+  "Error related to one entity of the bulk"
+  {:error s/Any})
+
 (s/defschema Bulk
   (st/optional-keys
    {:actors          [(s/maybe Actor)]

@@ -112,6 +112,8 @@
                       "ctia.metrics.riemann.port" s/Int
                       "ctia.metrics.riemann.interval" s/Int
 
+                      "ctia.store.external-key-prefixes" s/Str
+
                       "ctia.store.es.event.slicing.strategy"
                       (s/maybe (s/enum :aliased-index))
                       "ctia.store.es.event.slicing.granularity"

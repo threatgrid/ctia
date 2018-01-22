@@ -20,12 +20,13 @@
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as common]
             [ctia.lib.keyword :refer [singular]]
-            [ctia.schemas.bulk :refer [Bulk BulkRefs NewBulk]]
+            [ctia.schemas.bulk :refer [Bulk BulkRefs EntityError NewBulk]]
             [ctia.properties :refer [properties]]
             [ctia.store :refer :all]
             [ctia.schemas.core :refer [Reference]]
             [ring.util.http-response :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [clojure.set :as set]))
 
 (defn realize-fn
   "return the realize function provided an entity type key"
@@ -109,19 +110,20 @@
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
-  [entities entity-type tempids login]
-  (let [with-long-id (with-long-id-fn entity-type)]
-    (update (flows/create-flow
-             :entity-type entity-type
-             :realize-fn (realize-fn entity-type)
-             :store-fn (create-fn entity-type login)
-             :long-id-fn with-long-id
-             :enveloped-result? true
-             :identity login
-             :entities entities
-             :tempids tempids)
-            :data
-            #(map :id %))))
+  [new-entities entity-type tempids login]
+  (when (seq new-entities)
+    (let [with-long-id (with-long-id-fn entity-type)]
+      (update (flows/create-flow
+               :entity-type entity-type
+               :realize-fn (realize-fn entity-type)
+               :store-fn (create-fn entity-type login)
+               :long-id-fn with-long-id
+               :enveloped-result? true
+               :identity login
+               :entities new-entities
+               :tempids tempids)
+              :data (partial map (fn [{:keys [error id] :as result}]
+                                   (if error result id)))))))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
@@ -153,7 +155,7 @@
           {}
           (keys bulk)))
 
-(defn tempids
+(defn merge-tempids
   "Merges tempids from all entities
    {:entity-type1 {:data []
                    :tempids {transientid1 id1
@@ -171,8 +173,8 @@
 
   The create-entities set the enveloped-result? to True in the flow
   configuration to get :data and :tempids for each entity in the result."
-  [entities]
-  (->> entities
+  [entities-by-type]
+  (->> entities-by-type
        (map (fn [[_ v]] (:tempids v)))
        (reduce into {})))
 
@@ -183,28 +185,30 @@
 
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
-  [bulk login]
-  (let [new-entities (gen-bulk-from-fn
-                      create-entities
-                      (dissoc bulk :relationships)
-                      {}
-                      login)
-        entities-tempids (tempids new-entities)
-        new-relationships (gen-bulk-from-fn
-                           create-entities
-                           (select-keys bulk [:relationships])
-                           entities-tempids
-                           login)
-        all-tempids (merge entities-tempids
-                           (tempids new-relationships))
-        ;; Extracting data from the enveloped flow result
-        ;; {:entity-type {:data [] :tempids {} :errors {}}}
-        bulk-refs (->> (into new-entities new-relationships)
-                       (map (fn [[k {:keys [data]}]]
-                              {k data}))
-                       (into {}))]
-    (cond-> bulk-refs
-      (seq all-tempids) (assoc :tempids all-tempids))))
+  ([bulk login] (create-bulk bulk {} login))
+  ([bulk tempids login]
+   (let [new-entities (gen-bulk-from-fn
+                       create-entities
+                       (dissoc bulk :relationships)
+                       tempids
+                       login)
+         entities-tempids (merge-tempids new-entities)
+         new-relationships (gen-bulk-from-fn
+                            create-entities
+                            (select-keys bulk [:relationships])
+                            entities-tempids
+                            login)
+         all-tempids (merge entities-tempids
+                            (merge-tempids new-relationships))
+         all-entities (into new-entities new-relationships)
+         ;; Extracting data from the enveloped flow result
+         ;; {:entity-type {:data [] :tempids {}}
+         bulk-refs (->> all-entities
+                        (map (fn [[k {:keys [data]}]]
+                               {k data}))
+                        (into {}))]
+     (cond-> bulk-refs
+       (seq all-tempids) (assoc :tempids all-tempids)))))
 
 (defn bulk-size [bulk]
   (apply + (map count (vals bulk))))

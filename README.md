@@ -235,6 +235,38 @@ since "foogroup" and "bargroup" are marked as `authorized_groups` identities in 
    "authorized_groups": ["foogroup" "bargroup"]}
 ```
 
+## Bundle import
+
+The `/bundle` API endpoint allows users with the correct permissions to POST a CTIM [bundle object](https://github.com/threatgrid/ctim/blob/master/src/ctim/schemas/bundle.cljc).
+
+The ability to post bundles is controlled by the `import-bundle` capability.
+
+When a bundle is submitted:
+
+1. All entities that have already been imported with the external ID whose prefix has been configured with the `ctia.store.external-key-prefixes` property are searched.
+2. If they are identified by transient IDs, a mapping table between transient and stored IDs is built.
+3. Only new entities are created in the same way as the `/bulk` API endpoint with transient IDs resolutions. Existing entities are not modified.
+
+If more than one entity is referenced by the same external ID, an error is reported.
+
+Response of the bundle API endpoint:
+
+```clojure
+{:results [{:id "http://example.com/ctia/entity-type/entity-type-991d8dfb-b54e-4435-ac58-2297b4d886c1"
+            :tempid "transient:1f48f48c-4130-47f1-92dc-a6df8ab110b6"
+            :action "create"
+            :external_id "indicator-abuse-ch-077d653844d95d8cd8e4e51cb1f9215feae50426"
+            :error "An error occurs"}]
+```
+
+|Field          |Description|
+|---------------|-----------|
+|`:id`          |The real ID|
+|`:original_id` |Provided ID if different from real ID (ex: transient ID) |
+|`:result`      |`error`, `created` or `exists` |
+|`:external_id` |External ID used to identify the entity|
+|`:error`       |Error message|
+
 ### Store Migrations
  
  There is a dedicated task to migrate data from prior versions of CTIA.
