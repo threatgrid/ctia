@@ -548,6 +548,7 @@
     :properties
     (merge
      base-entity-mapping
+     sourcable-entity-mapping
      stored-entity-mapping
      {:name all_token
       :description all_text
@@ -563,6 +564,7 @@
     :properties
     (merge
      base-entity-mapping
+     sourcable-entity-mapping
      stored-entity-mapping
      {:name all_token
       :description all_text
@@ -577,6 +579,7 @@
     :properties
     (merge
      base-entity-mapping
+     sourcable-entity-mapping
      stored-entity-mapping
      {:name all_token
       :description all_text

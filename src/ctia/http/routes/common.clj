@@ -442,6 +442,7 @@
   (st/merge
    PagingParams
    BaseEntityFilterParams
+   SourcableEntityFilterParams
    AttackPatternFieldsParam
    {:query s/Str}
    (st/optional-keys
@@ -463,6 +464,7 @@
   (st/merge
    PagingParams
    BaseEntityFilterParams
+   SourcableEntityFilterParams
    MalwareFieldsParam
    {:query s/Str}
    (st/optional-keys
@@ -486,6 +488,7 @@
   (st/merge
    PagingParams
    BaseEntityFilterParams
+   SourcableEntityFilterParams
    ToolFieldsParam
    {:query s/Str}
    (st/optional-keys

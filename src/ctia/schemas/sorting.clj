@@ -127,16 +127,18 @@
 
 (def attack-pattern-sort-fields
   (concat base-entity-sort-fields
+          sourcable-entity-sort-fields
           [:name]))
 
 (def malware-sort-fields
   (concat base-entity-sort-fields
+          sourcable-entity-sort-fields
           [:name]))
 
 (def tool-sort-fields
   (concat base-entity-sort-fields
+          sourcable-entity-sort-fields
           [:name]))
-
 
 (def investigation-sort-fields
   (concat default-entity-sort-fields
