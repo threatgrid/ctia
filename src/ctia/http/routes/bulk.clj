@@ -1,6 +1,7 @@
 (ns ctia.http.routes.bulk
   (:require [compojure.api.sweet :refer :all]
             [clojure.tools.logging :as log]
+            [ctia.auth :as auth]
             [ctia.domain.entities :as ent]
             [ctia.domain.entities
              [actor :as act-ent]
@@ -49,7 +50,7 @@
 
 (defn create-fn
   "return the create function provided an entity type key"
-  [k ident]
+  [k auth-identity]
   #(write-store
     k (case k
         :actor          create-actors
@@ -66,11 +67,11 @@
         :relationship   create-relationships
         :sighting       create-sightings
         :tool           create-tools)
-    % ident))
+    % (auth/ident->map auth-identity)))
 
 (defn read-fn
   "return the create function provided an entity type key"
-  [k ident params]
+  [k auth-identity params]
   #(read-store
     k (case k
         :actor          read-actor
@@ -87,7 +88,7 @@
         :relationship   read-relationship
         :sighting       read-sighting
         :tool           read-tool)
-    % ident params))
+    % (auth/ident->map auth-identity) params))
 
 (defn with-long-id-fn
   "return the with-long-id function provided an entity type key"
@@ -110,16 +111,16 @@
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
-  [new-entities entity-type tempids login]
+  [new-entities entity-type tempids auth-identity]
   (when (seq new-entities)
     (let [with-long-id (with-long-id-fn entity-type)]
       (update (flows/create-flow
                :entity-type entity-type
                :realize-fn (realize-fn entity-type)
-               :store-fn (create-fn entity-type login)
+               :store-fn (create-fn entity-type auth-identity)
                :long-id-fn with-long-id
                :enveloped-result? true
-               :identity login
+               :identity auth-identity
                :entities new-entities
                :tempids tempids)
               :data (partial map (fn [{:keys [error id] :as result}]
@@ -127,8 +128,8 @@
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
-  [ids entity-type ident]
-  (let [read-entity (read-fn entity-type ident {})
+  [ids entity-type auth-identity]
+  (let [read-entity (read-fn entity-type auth-identity {})
         with-long-id (with-long-id-fn entity-type)]
     (map (fn [id] (try (with-long-id
                          (read-entity id))
@@ -276,7 +277,7 @@
                                 :read-relationship
                                 :read-sighting
                                 :read-tool}
-                :identity identity
+                :identity auth-identity
                 (let [bulk (into {} (remove (comp empty? second)
                                             {:actors          actors
                                              :attack-patterns attack-patterns
@@ -294,6 +295,6 @@
                                              :tools           tools}))]
                   (if (> (bulk-size bulk) (get-bulk-max-size))
                     (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-                    (-> (gen-bulk-from-fn read-entities bulk identity)
+                    (-> (gen-bulk-from-fn read-entities bulk auth-identity)
                         ent/un-store-map
                         ok))))))

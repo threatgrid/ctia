@@ -44,14 +44,6 @@
                                     :capabilities required-capability
                                     :owner (auth/login id)}))))
 
-
-(s/defn ident->map :- (s/maybe {:login (s/maybe s/Str)
-                                :groups (s/maybe [s/Str])})
-  [ident]
-  (when ident
-    {:login (auth/login ident)
-     :groups (auth/groups ident)}))
-
 ;; Create a compojure-api meta-data handler for capability-based
 ;; security. The :identity field must by on the request object
 ;; already, put there by the wrap-authentication middleware. This
@@ -77,5 +69,5 @@
 
 (defmethod meta/restructure-param :identity-map [_ bind-to acc]
   (update acc :lets into
-          [bind-to `(ident->map
+          [bind-to `(auth/ident->map
                      (:identity ~'+compojure-api-request+))]))
