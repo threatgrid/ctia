@@ -1,4 +1,5 @@
-(ns ctia.auth)
+(ns ctia.auth
+  (:require [schema.core :as s]))
 
 (defprotocol IIdentity
   (authenticated? [this])
@@ -155,3 +156,10 @@
     false))
 
 (def denied-identity-singleton (->DeniedIdentity))
+
+(s/defn ident->map :- (s/maybe {:login (s/maybe s/Str)
+                                :groups (s/maybe [s/Str])})
+  [ident]
+  (when ident
+    {:login (login ident)
+     :groups (groups ident)}))

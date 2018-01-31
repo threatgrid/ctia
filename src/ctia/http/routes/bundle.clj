@@ -1,5 +1,6 @@
 (ns ctia.http.routes.bundle
   (:require [compojure.api.sweet :refer :all]
+            [ctia.auth :as auth]
             [ctia.http.routes.bulk :as bulk]
             [ctia.lib.keyword :refer [singular]]
             [ctia.properties :refer [properties]]
@@ -113,7 +114,7 @@
       external_id (assoc :external_id external_id))))
 
 (defn find-by-external-ids
-  [import-data entity-type identity-map]
+  [import-data entity-type auth-identity]
   (let [external-ids (remove nil? (map :external_id import-data))]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
@@ -121,7 +122,7 @@
     (if (seq external-ids)
       (:data (read-store entity-type (list-fn entity-type)
                        {:external_ids external-ids}
-                       identity-map
+                       (auth/ident->map auth-identity)
                        {:limit (count external-ids)}))
       [])))
 
@@ -227,12 +228,12 @@
    will be imported"
   [bundle-entities
    external-key-prefixes
-   identity-map]
+   auth-identity]
   (map-kv (fn [k v]
             (let [entity-type (singular k)]
               (-> v
                   (init-import-data entity-type external-key-prefixes)
-                  (with-existing-entities entity-type identity-map))))
+                  (with-existing-entities entity-type auth-identity))))
           bundle-entities))
 
 (defn create?
@@ -282,18 +283,18 @@
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
-   login]
+   auth-identity :- (s/protocol auth/IIdentity)]
   (let [bundle-entities (select-keys bundle entities-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
-                                           login)
+                                           auth-identity)
         bulk (debug "Bulk" (prepare-bulk bundle-import-data))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))]
     (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids login)
+           (->> (bulk/create-bulk bulk tempids auth-identity)
                 (with-bulk-result bundle-import-data)
                 build-response))))
 
@@ -309,8 +310,7 @@
                    nil}]
                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "POST many new entities using a single HTTP call"
-                 :identity login
-                 :identity-map identity-map
+                 :identity auth-identity
                  :capabilities #{:create-actor
                                  :create-attack-pattern
                                  :create-campaign
@@ -329,4 +329,4 @@
                  (if (> (bulk/bulk-size bundle)
                         (bulk/get-bulk-max-size))
                    (bad-request (str "Bundle max nb of entities: " (bulk/get-bulk-max-size)))
-                   (ok (import-bundle bundle external-key-prefixes login))))))
+                   (ok (import-bundle bundle external-key-prefixes auth-identity))))))
