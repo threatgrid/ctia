@@ -16,8 +16,7 @@
             [schema
              [coerce :as c]
              [core :as s]]
-            [clojure.set :as set]
-            [clojure.tools.logging :as log]))
+            [clojure.set :as set]))
 
 (defn make-es-read-params
   "Prepare ES Params for read operations, setting the _source field
@@ -177,10 +176,6 @@
         (throw (ex-info "You are not allowed to delete this document"
                         {:type :access-control-error}))))))
 
-(defn debug [msg v]
-  (log/debug msg v)
-  v)
-
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [mapping Model]
@@ -192,13 +187,12 @@
        ident
        params]
       (update
-       (coerce! (debug "Search docs"
-                 (search-docs (:conn state)
-                              (:index state)
-                              (name mapping)
-                              (find-restriction-query-part ident)
-                              filter-map
-                              (make-es-read-params params))))
+       (coerce! (search-docs (:conn state)
+                             (:index state)
+                             (name mapping)
+                             (find-restriction-query-part ident)
+                             filter-map
+                             (make-es-read-params params)))
        :data access-control-filter-list ident))))
 
 (defn handle-query-string-search
