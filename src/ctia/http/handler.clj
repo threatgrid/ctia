@@ -98,7 +98,7 @@
 
                          :tags [{:name "Actor" :description "Actor operations"}
                                 {:name "Attack Pattern" :description "Attack Pattern operations"}
-                                {:name "Bundle" :description "Bundle import"}
+                                {:name "Bundle" :description "Bundle import (Beta)"}
                                 {:name "Campaign" :description "Campaign operations"}
                                 {:name "COA" :description "COA operations"}
                                 {:name "DataTable" :description "DataTable operations"}
@@ -130,7 +130,7 @@
                             actor-routes
                             attack-pattern-routes
                             bulk-routes
-                            (undocumented bundle-routes)
+                            bundle-routes
                             campaign-routes
                             coa-routes
                             data-table-routes

@@ -21,9 +21,14 @@
   (helpers/with-properties ["ctia.http.bulk.max-size" 100]
     (test)))
 
+(defn fixture-find-by-external-ids-limit [test]
+  (with-redefs [sut/find-by-external-ids-limit 5]
+    (test)))
+
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     fixture-properties:small-max-bulk-size
+                                    fixture-find-by-external-ids-limit
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
@@ -190,6 +195,8 @@
             bundle-result (:parsed-body response)]
         (is (= 200 (:status response)))
 
+        (is (pos? (count (:results bundle-result))))
+
         (is (every? #(= "exists" %)
                     (map :result (:results bundle-result)))
             "All existing entities are not updated")
@@ -208,16 +215,22 @@
                                  (assoc (first indicators)
                                         :external_ids
                                         ["custom-2"]))}
-            response-create (post "ctia/bundle/import?external-key-prefixes=custom-"
+            response-create (post "ctia/bundle/import"
+                                  :query-params {"external-key-prefixes" "custom-"}
                                   :body bundle
                                   :headers {"Authorization" "45c1f5e3f05d0"})
             bundle-result-create (:parsed-body response-create)
-            response-update (post "ctia/bundle/import?external-key-prefixes=custom-"
+            response-update (post "ctia/bundle/import"
+                                  :query-params {"external-key-prefixes" "custom-"}
                                   :body bundle
                                   :headers {"Authorization" "45c1f5e3f05d0"})
             bundle-result-update (:parsed-body response-update)]
         (is (= 200 (:status response-create)))
         (is (= 200 (:status response-update)))
+
+        (is (pos? (count (:results bundle-result-create))))
+        (is (pos? (count (:results bundle-result-update))))
+
         (is (every? #(= "created" %)
                     (map :result (:results bundle-result-create)))
             "All new entities are created")
@@ -257,3 +270,36 @@
           (is (not (empty? indicators))
               "The result collection for indicators is not empty")
           (is (every? #(contains? % :error) indicators)))))))
+
+(deftest-for-each-store find-by-external-ids-test
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+  (let [nb-entities (+ sut/find-by-external-ids-limit 5)
+        bundle {:type "bundle"
+                :source "source"
+                :indicators (set (map mk-indicator (range nb-entities)))}
+        response-create (post "ctia/bundle/import"
+                              :body bundle
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+        bundle-result-create (:parsed-body response-create)
+        response-update (post "ctia/bundle/import"
+                              :body bundle
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+        bundle-result-update (:parsed-body response-update)]
+    (is (= 200 (:status response-create)))
+    (is (= 200 (:status response-update)))
+
+    (is (= nb-entities
+           (count (:results bundle-result-create))))
+    (is (= nb-entities
+           (count (:results bundle-result-update))))
+
+    (is (every? #(= "created" %)
+                (map :result (:results bundle-result-create)))
+        "All new entities are created")
+    (is (every? #(= "exists" %)
+                (map :result (:results bundle-result-update)))
+        "All existing entities are not updated")))

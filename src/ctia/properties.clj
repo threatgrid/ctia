@@ -28,7 +28,7 @@
    (str "ctia.store.es." store ".port") s/Int
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str
-   (str "ctia.store.es." store ".refresh") s/Bool
+   (str "ctia.store.es." store ".refresh") (s/enum "wait_for" "true" "false")
    (str "ctia.store.es." store ".replicas") s/Num
    (str "ctia.store.es." store ".shards") s/Num})
 

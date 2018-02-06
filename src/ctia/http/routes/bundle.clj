@@ -113,6 +113,8 @@
       (transient-id? id) (assoc :original_id id)
       external_id (assoc :external_id external_id))))
 
+(def find-by-external-ids-limit 1000)
+
 (defn find-by-external-ids
   [import-data entity-type auth-identity]
   (let [external-ids (remove nil? (map :external_id import-data))]
@@ -120,10 +122,20 @@
                 entity-type
                 (pr-str external-ids))
     (if (seq external-ids)
-      (:data (read-store entity-type (list-fn entity-type)
-                       {:external_ids external-ids}
-                       (auth/ident->map auth-identity)
-                       {:limit (count external-ids)}))
+      (debug (format "Results for %s:" (pr-str external-ids))
+             (loop [paging {:offset 0
+                            :limit find-by-external-ids-limit}
+                    entities []]
+               (let [{results :data
+                      {next-page :next} :paging}
+                     (read-store entity-type (list-fn entity-type)
+                                 {:external_ids external-ids}
+                                 (auth/ident->map auth-identity)
+                                 paging)
+                     acc-entities (into entities results)]
+                 (if next-page
+                   (recur next-page acc-entities)
+                   acc-entities))))
       [])))
 
 (defn by-external-id
@@ -199,7 +211,8 @@
                                             :id (:id old-entity))
         ;; more than one entity linked to the external ID
         (> num-old-entities 1)
-        (assoc :error
+        (assoc :result "error"
+               :error
                (format
                 (str "More than one entity is "
                      "linked to the external id %s (%s)")
@@ -238,10 +251,9 @@
 
 (defn create?
   "Whether the provided entity should be created or not"
-  [{:keys [new-entity error result] :as entity}]
+  [{:keys [result] :as entity}]
   ;; Add only new entities without error
-  (and (not= result "exists")
-       (not error)))
+  (not (contains? #{"error" "exists"} result)))
 
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
