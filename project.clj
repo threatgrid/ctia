@@ -43,7 +43,7 @@
                  [threatgrid/ctim "0.4.24"
                   :exclusions [metosin/ring-swagger
                                com.google.guava/guava]]
-                 [threatgrid/clj-momo "0.2.19-SNAPSHOT"]
+                 [threatgrid/clj-momo "0.2.19"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
