@@ -115,6 +115,19 @@
 
 (def find-by-external-ids-limit 1000)
 
+(defn all-pages
+  "Retrieves all external ids using pagination."
+  [f]
+  (loop [paging {:offset 0
+                 :limit find-by-external-ids-limit}
+         entities []]
+    (let [{results :data
+           {next-page :next} :paging} (f paging)
+          acc-entities (into entities results)]
+      (if next-page
+        (recur next-page acc-entities)
+        acc-entities))))
+
 (defn find-by-external-ids
   [import-data entity-type auth-identity]
   (let [external-ids (remove nil? (map :external_id import-data))]
@@ -123,19 +136,12 @@
                 (pr-str external-ids))
     (if (seq external-ids)
       (debug (format "Results for %s:" (pr-str external-ids))
-             (loop [paging {:offset 0
-                            :limit find-by-external-ids-limit}
-                    entities []]
-               (let [{results :data
-                      {next-page :next} :paging}
-                     (read-store entity-type (list-fn entity-type)
-                                 {:external_ids external-ids}
-                                 (auth/ident->map auth-identity)
-                                 paging)
-                     acc-entities (into entities results)]
-                 (if next-page
-                   (recur next-page acc-entities)
-                   acc-entities))))
+             (all-pages
+              (fn [paging]
+                (read-store entity-type (list-fn entity-type)
+                            {:external_ids external-ids}
+                            (auth/ident->map auth-identity)
+                            paging))))
       [])))
 
 (defn by-external-id
