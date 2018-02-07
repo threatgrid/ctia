@@ -25,9 +25,11 @@
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
-                                    whoami-helpers/fixture-server]))
+
+(use-fixtures :once
+  (join-fixtures [mth/fixture-schema-validation
+                  helpers/fixture-properties:clean
+                  whoami-helpers/fixture-server]))
 
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
@@ -43,18 +45,13 @@
                                       "user")
 
   (testing "POST /ctia/actor"
-    (let [{status :status
+    (let [new-actor (-> new-actor-maximal
+                        (dissoc :id)
+                        (assoc :description "description"))
+          {status :status
            actor :parsed-body}
           (post "ctia/actor"
-                :body {:external_ids ["http://ex.tld/ctia/actor/actor-123"
-                                      "http://ex.tld/ctia/actor/actor-456"]
-                       :title "actor"
-                       :description "description"
-                       :actor_type "Hacker"
-                       :source "a source"
-                       :confidence "High"
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                    :end_time "2016-07-11T00:40:48.212-00:00"}}
+                :body new-actor
                 :headers {"Authorization" "45c1f5e3f05d0"})
 
           actor-id
@@ -64,20 +61,7 @@
           (:external_ids actor)]
       (is (= 201 status))
       (is (deep=
-           {:external_ids ["http://ex.tld/ctia/actor/actor-123"
-                           "http://ex.tld/ctia/actor/actor-456"]
-            :type "actor"
-            :description "description",
-            :actor_type "Hacker",
-            :title "actor",
-            :confidence "High",
-            :source "a source"
-            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-            :schema_version schema-version
-            :tlp "green"}
-           (dissoc actor
-                   :id)))
+           (assoc new-actor :id (id/long-id actor-id)) actor))
 
       (testing "the actor ID has correct fields"
         (let [show-props (get-http-show)]
@@ -92,20 +76,7 @@
               actor (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:id (id/long-id actor-id)
-                :external_ids ["http://ex.tld/ctia/actor/actor-123"
-                               "http://ex.tld/ctia/actor/actor-456"]
-                :type "actor"
-                :description "description",
-                :actor_type "Hacker",
-                :title "actor",
-                :confidence "High",
-                :source "a source"
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :schema_version schema-version
-                :tlp "green"}
-               actor))))
+               (assoc new-actor :id (id/long-id actor-id)) actor))))
 
       (test-query-string-search :actor "description" :description)
 
@@ -116,67 +87,28 @@
               actors (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:id (id/long-id actor-id)
-                 :external_ids ["http://ex.tld/ctia/actor/actor-123"
-                                "http://ex.tld/ctia/actor/actor-456"]
-                 :type "actor"
-                 :description "description",
-                 :actor_type "Hacker",
-                 :title "actor",
-                 :confidence "High",
-                 :source "a source"
-                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                 :schema_version schema-version
-                 :tlp "green"}]
+               [(assoc actor :id (id/long-id actor-id))]
                actors))))
 
       (testing "PUT /ctia/actor/:id"
-        (let [response (put (str "ctia/actor/" (:short-id actor-id))
-                            :body {:external_ids ["http://ex.tld/ctia/actor/actor-123"
-                                                  "http://ex.tld/ctia/actor/actor-456"]
-                                   :title "modified actor"
-                                   :description "updated description"
-                                   :actor_type "Hacktivist"
-                                   :type "actor"
-                                   :source "a source"
-                                   :confidence "High"
-                                   :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                                :end_time "2016-07-11T00:40:48.212-00:00"}}
+        (let [with-updates (assoc actor
+                                  :title "modified actor")
+              response (put (str "ctia/actor/" (:short-id actor-id))
+                            :body with-updates
                             :headers {"Authorization" "45c1f5e3f05d0"})
               updated-actor (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:id (id/long-id actor-id)
-                :external_ids ["http://ex.tld/ctia/actor/actor-123"
-                               "http://ex.tld/ctia/actor/actor-456"]
-                :type "actor"
-                :title "modified actor"
-                :description "updated description"
-                :actor_type "Hacktivist"
-                :source "a source"
-                :confidence "High"
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2016-07-11T00:40:48.212-00:00"}
-                :schema_version schema-version
-                :tlp "green"}
+               with-updates
                updated-actor))))
 
       (testing "PUT invalid /ctia/actor/:id"
         (let [{status :status
                body :body}
               (put (str "ctia/actor/" (:short-id actor-id))
-                   :body {:external_ids ["http://ex.tld/ctia/actor/actor-123"
-                                         "http://ex.tld/ctia/actor/actor-456"]
-                          ;; This field has an invalid length
-                          :title (apply str (repeatedly 1025 (constantly \0)))
-                          :description "updated description"
-                          :actor_type "Hacktivist"
-                          :type "actor"
-                          :source "a source"
-                          :confidence "High"
-                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"
-                                       :end_time "2016-07-11T00:40:48.212-00:00"}}
+                   :body (assoc actor
+                                :title (clojure.string/join
+                                        (repeatedly 1025 (constantly \0))))
                    :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
@@ -193,8 +125,8 @@
     (let [{status :status
            body :body}
           (post "ctia/actor"
+                ;; This field has an invalid length
                 :body (assoc new-actor-minimal
-                             ;; This field has an invalid length
                              :title (clojure.string/join (repeatedly 1025 (constantly \0))))
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
