@@ -23,6 +23,7 @@
              [judgement :refer [NewJudgement] :as csj]
              [malware :refer [NewMalware]]
              [relationship :refer [NewRelationship]]
+             [scratchpad :refer [NewScratchpad]]
              [sighting :refer [NewSighting]]
              [tool :refer [NewTool]]]
             [flanders
@@ -76,7 +77,8 @@
                         [NewMalware "max-new-malware"]
                         [NewRelationship "max-new-relationship"]
                         [NewSighting "max-new-sighting"]
-                        [NewTool "max-new-tool"]]]
+                        [NewTool "max-new-tool"]
+                        [NewScratchpad "max-new-scratchpad"]]]
   (fs/->spec (fu/require-all entity)
              kw-ns))
 
@@ -136,3 +138,7 @@
 (def api-for-tool-routes
   (api-for-route 'tool
                  (spec-gen "max-new-tool")))
+
+(def api-for-scratchpad-routes
+  (api-for-route 'scratchpad
+                 (spec-gen "max-new-scratchpad")))
