@@ -115,6 +115,13 @@
   (delete-investigation [this id ident])
   (list-investigations [this filtermap ident params]))
 
+(defprotocol IScratchpadStore
+  (read-scratchpad [this id ident params])
+  (create-scratchpads [this new-scratchpads ident])
+  (update-scratchpad [this id scratchpad ident])
+  (delete-scratchpad [this id ident])
+  (list-scratchpads [this filtermap ident params]))
+
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this query filtermap ident params]))
 
@@ -134,7 +141,8 @@
                    :malware []
                    :tool []
                    :event []
-                   :investigation []})
+                   :investigation []
+                   :scratchpad []})
 
 (defonce stores (atom empty-stores))
 

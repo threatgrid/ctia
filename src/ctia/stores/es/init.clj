@@ -79,6 +79,7 @@
    :judgement      (make-factory es-store/->JudgementStore)
    :malware        (make-factory es-store/->MalwareStore)
    :relationship   (make-factory es-store/->RelationshipStore)
+   :scratchpad     (make-factory es-store/->ScratchpadStore)
    :sighting       (make-factory es-store/->SightingStore)
    :tool           (make-factory es-store/->ToolStore)})
 

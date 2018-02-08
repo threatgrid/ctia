@@ -18,6 +18,7 @@
               IMalwareStore
               IQueryStringSearchableStore
               IRelationshipStore
+              IScratchpadStore
               ISightingStore
               IToolStore]]
             [ctia.stores.es
@@ -33,6 +34,7 @@
              [incident :as inc]
              [indicator :as in]
              [investigation :as inv]
+             [scratchpad :as scr]
              [judgement :as ju]
              [malware :as malware]
              [mapping :refer [store-mappings store-settings]]
@@ -295,3 +297,19 @@
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap ident params]
     (inv/handle-query-string-search state query filtermap ident params)))
+
+(defrecord ScratchpadStore [state]
+  IScratchpadStore
+  (read-scratchpad [_ id ident params]
+    (scr/handle-read state id ident params))
+  (create-scratchpads [_ new-scratchpads ident]
+    (scr/handle-create state new-scratchpads ident))
+  (update-scratchpad [_ id scratchpad ident]
+    (scr/handle-update state id scratchpad ident))
+  (delete-scratchpad [this id ident]
+    (scr/handle-delete state id ident))
+  (list-scratchpads [this filtermap ident params]
+    (scr/handle-list state filtermap ident params))
+  IQueryStringSearchableStore
+  (query-string-search [_ query filtermap ident params]
+    (scr/handle-query-string-search state query filtermap ident params)))

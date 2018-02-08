@@ -30,6 +30,7 @@
              [observable :refer [observable-routes]]
              [properties :refer [properties-routes]]
              [relationship :refer [relationship-routes]]
+             [scratchpad :refer [scratchpad-routes]]
              [sighting :refer [sighting-routes]]
              [tool :refer [tool-routes]]
              [graphql :refer [graphql-routes
@@ -112,6 +113,7 @@
                                 {:name "Malware", :description "Malware operations"}
                                 {:name "Relationship", :description "Relationship operations"}
                                 {:name "Properties", :description "Properties operations"}
+                                {:name "Scratchpad", :description "Scratchpad operations"}
                                 {:name "Sighting", :description "Sighting operations"}
                                 {:name "Bulk", :description "Bulk operations"}
                                 {:name "Metrics", :description "Performance Statistics"}
@@ -145,9 +147,10 @@
                             observable-routes
                             properties-routes
                             sighting-routes
+                            scratchpad-routes
                             tool-routes
                             relationship-routes
                             graphql-routes
                             version-routes))
        (undocumented
-         (rt/not-found (ok (unk/err-html))))))
+        (rt/not-found (ok (unk/err-html))))))
