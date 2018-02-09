@@ -38,7 +38,8 @@
                       :store-fn #(write-store :relationship
                                               create-relationships
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :relationship
                       :identity identity

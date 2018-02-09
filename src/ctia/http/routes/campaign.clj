@@ -39,7 +39,8 @@
                       :store-fn #(write-store :campaign
                                               create-campaigns
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :campaign
                       :identity identity

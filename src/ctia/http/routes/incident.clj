@@ -38,7 +38,8 @@
                       :store-fn #(write-store :incident
                                               create-incidents
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :incident
                       :identity identity

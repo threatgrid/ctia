@@ -4,7 +4,8 @@
             alternative properties file on the classpath or by\n
             setting system properties."}
     ctia.properties
-  (:require [clj-momo.lib.schema :as mls]
+  (:require [clj-momo.lib.es.schemas :refer [Refresh]]
+            [clj-momo.lib.schema :as mls]
             [clj-momo.properties :as mp]
             [ctia.store :as store]
             [schema-tools.core :as st]
@@ -28,7 +29,7 @@
    (str "ctia.store.es." store ".port") s/Int
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str
-   (str "ctia.store.es." store ".refresh") (s/enum "wait_for" "true" "false")
+   (str "ctia.store.es." store ".refresh") Refresh
    (str "ctia.store.es." store ".replicas") s/Num
    (str "ctia.store.es." store ".shards") s/Num})
 
@@ -113,6 +114,7 @@
                       "ctia.metrics.riemann.interval" s/Int
 
                       "ctia.store.external-key-prefixes" s/Str
+                      "ctia.store.bundle-refresh" Refresh
 
                       "ctia.store.es.event.slicing.strategy"
                       (s/maybe (s/enum :aliased-index))

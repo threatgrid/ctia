@@ -47,8 +47,8 @@
 
 (defrecord JudgementStore [state]
   IJudgementStore
-  (create-judgements [_ new-judgements ident]
-    (ju/handle-create state new-judgements ident))
+  (create-judgements [_ new-judgements ident params]
+    (ju/handle-create state new-judgements ident params))
   (add-indicator-to-judgement [_ judgement-id indicator-rel ident]
     (ju/handle-add-indicator-to state judgement-id indicator-rel ident))
   (read-judgement [_ id ident params]
@@ -68,8 +68,8 @@
 
 (defrecord RelationshipStore [state]
   IRelationshipStore
-  (create-relationships [_ new-relationships ident]
-    (rel/handle-create state new-relationships ident))
+  (create-relationships [_ new-relationships ident params]
+    (rel/handle-create state new-relationships ident params))
   (read-relationship [_ id ident params]
     (rel/handle-read state id ident params))
   (delete-relationship [_ id ident]
@@ -82,8 +82,8 @@
 
 (defrecord FeedbackStore [state]
   IFeedbackStore
-  (create-feedbacks [_ new-feedbacks ident]
-    (fe/handle-create state new-feedbacks ident))
+  (create-feedbacks [_ new-feedbacks ident params]
+    (fe/handle-create state new-feedbacks ident params))
   (read-feedback [_ id ident params]
     (fe/handle-read state id ident params))
   (delete-feedback [_ id ident]
@@ -93,8 +93,8 @@
 
 (defrecord IndicatorStore [state]
   IIndicatorStore
-  (create-indicators [_ new-indicators ident]
-    (in/handle-create state new-indicators ident))
+  (create-indicators [_ new-indicators ident params]
+    (in/handle-create state new-indicators ident params))
   (update-indicator [_ id new-indicator ident]
     (in/handle-update state id new-indicator ident))
   (read-indicator [_ id ident params]
@@ -111,8 +111,8 @@
   IActorStore
   (read-actor [_ id ident params]
     (ac/handle-read state id ident params))
-  (create-actors [_ new-actors ident]
-    (ac/handle-create state new-actors ident))
+  (create-actors [_ new-actors ident params]
+    (ac/handle-create state new-actors ident params))
   (update-actor [_ id actor ident]
     (ac/handle-update state id actor ident))
   (delete-actor [_ id ident]
@@ -127,8 +127,8 @@
   ICampaignStore
   (read-campaign [_ id ident params]
     (ca/handle-read state id ident params))
-  (create-campaigns [_ new-campaigns ident]
-    (ca/handle-create state new-campaigns ident))
+  (create-campaigns [_ new-campaigns ident params]
+    (ca/handle-create state new-campaigns ident params))
   (update-campaign [_ id new-campaign ident]
     (ca/handle-update state id new-campaign ident))
   (delete-campaign [_ id ident]
@@ -143,8 +143,8 @@
   ICOAStore
   (read-coa [_ id ident params]
     (coa/handle-read state id ident params))
-  (create-coas [_ new-coas ident]
-    (coa/handle-create state new-coas ident))
+  (create-coas [_ new-coas ident params]
+    (coa/handle-create state new-coas ident params))
   (update-coa [_ id new-coa ident]
     (coa/handle-update state id new-coa ident))
   (delete-coa [_ id ident]
@@ -159,8 +159,8 @@
   IDataTableStore
   (read-data-table [_ id ident params]
     (dt/handle-read state id ident params))
-  (create-data-tables [_ new-data-tables ident]
-    (dt/handle-create state new-data-tables ident))
+  (create-data-tables [_ new-data-tables ident params]
+    (dt/handle-create state new-data-tables ident params))
   (delete-data-table [_ id ident]
     (dt/handle-delete state id ident))
   (list-data-tables [_ filter-map ident params]
@@ -170,8 +170,8 @@
   IIncidentStore
   (read-incident [_ id ident params]
     (inc/handle-read state id ident params))
-  (create-incidents [_ new-incidents ident]
-    (inc/handle-create state new-incidents ident))
+  (create-incidents [_ new-incidents ident params]
+    (inc/handle-create state new-incidents ident params))
   (update-incident [_ id new-incident ident]
     (inc/handle-update state id new-incident ident))
   (delete-incident [_ id ident]
@@ -186,8 +186,8 @@
   IExploitTargetStore
   (read-exploit-target [_ id ident params]
     (et/handle-read state id ident params))
-  (create-exploit-targets [_ new-exploit-targets ident]
-    (et/handle-create state new-exploit-targets ident))
+  (create-exploit-targets [_ new-exploit-targets ident params]
+    (et/handle-create state new-exploit-targets ident params))
   (update-exploit-target [_ id new-exploit-target ident]
     (et/handle-update state id new-exploit-target ident))
   (delete-exploit-target [_ id ident]
@@ -211,8 +211,8 @@
   ISightingStore
   (read-sighting [_ id ident params]
     (sig/handle-read state id ident params))
-  (create-sightings [_ new-sightings ident]
-    (sig/handle-create state new-sightings ident))
+  (create-sightings [_ new-sightings ident params]
+    (sig/handle-create state new-sightings ident params))
   (update-sighting [_ id sighting ident]
     (sig/handle-update state id sighting ident))
   (delete-sighting [_ id ident]
@@ -229,8 +229,8 @@
   IAttackPatternStore
   (read-attack-pattern [_ id ident params]
     (attack/handle-read state id ident params))
-  (create-attack-patterns [_ new-attack-patterns ident]
-    (attack/handle-create state new-attack-patterns ident))
+  (create-attack-patterns [_ new-attack-patterns ident params]
+    (attack/handle-create state new-attack-patterns ident params))
   (update-attack-pattern [_ id attack-pattern ident]
     (attack/handle-update state id attack-pattern ident))
   (delete-attack-pattern [_ id ident]
@@ -245,8 +245,8 @@
   IMalwareStore
   (read-malware [_ id ident params]
     (malware/handle-read state id ident params))
-  (create-malwares [_ new-malwares ident]
-    (malware/handle-create state new-malwares ident))
+  (create-malwares [_ new-malwares ident params]
+    (malware/handle-create state new-malwares ident params))
   (update-malware [_ id malware ident]
     (malware/handle-update state id malware ident))
   (delete-malware [_ id ident]
@@ -261,8 +261,8 @@
   IToolStore
   (read-tool [_ id ident params]
     (tool/handle-read state id ident params))
-  (create-tools [_ new-tools ident]
-    (tool/handle-create state new-tools ident))
+  (create-tools [_ new-tools ident params]
+    (tool/handle-create state new-tools ident params))
   (update-tool [_ id tool ident]
     (tool/handle-update state id tool ident))
   (delete-tool [_ id ident]
@@ -284,8 +284,8 @@
   IInvestigationStore
   (read-investigation [_ id ident params]
     (inv/handle-read state id ident params))
-  (create-investigations [_ new-investigations ident]
-    (inv/handle-create state new-investigations ident))
+  (create-investigations [_ new-investigations ident params]
+    (inv/handle-create state new-investigations ident params))
   (update-investigation [_ id investigation ident]
     (inv/handle-update state id investigation ident))
   (delete-investigation [this id ident]

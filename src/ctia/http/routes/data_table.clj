@@ -34,7 +34,8 @@
                       :store-fn #(write-store :data-table
                                               create-data-tables
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :data-table
                       :identity identity

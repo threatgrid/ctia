@@ -37,7 +37,8 @@
                       :store-fn #(write-store :actor
                                               create-actors
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :actor
                       :identity identity

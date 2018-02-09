@@ -34,7 +34,8 @@
                                         :store-fn #(write-store :coa
                                                                 create-coas
                                                                 %
-                                                                identity-map)
+                                                                identity-map
+                                                                {})
                                         :long-id-fn with-long-id
                                         :entity-type :coa
                                         :identity identity
