@@ -146,15 +146,11 @@
   ~~~~
   "
   [func bulk & args]
-  (reduce (fn [acc entity-type]
-            (assoc acc
-                   entity-type
-                   (apply func
-                          (get bulk entity-type)
-                          (singular entity-type)
-                          args)))
-          {}
-          (keys bulk)))
+  (->> bulk
+       (pmap (fn [[entity-type entities]]
+               [entity-type
+                (apply func entities (singular entity-type) args)]))
+       (into {})))
 
 (defn merge-tempids
   "Merges tempids from all entities
@@ -194,7 +190,7 @@
                        (dissoc bulk :relationships)
                        tempids
                        login
-                       {})
+                       {:refresh refresh})
          entities-tempids (merge-tempids new-entities)
          new-relationships (gen-bulk-from-fn
                             create-entities
