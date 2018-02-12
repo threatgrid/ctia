@@ -40,7 +40,7 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.25-SNAPSHOT"
+                 [threatgrid/ctim "0.4.25"
                   :exclusions [metosin/ring-swagger
                                com.google.guava/guava]]
                  [threatgrid/clj-momo "0.2.19"]
