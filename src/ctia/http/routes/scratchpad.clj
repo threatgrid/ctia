@@ -2,22 +2,28 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.domain.entities :as ent]
-   [ctia.domain.entities.scratchpad :refer [with-long-id page-with-long-id]]
+   [ctia.domain.entities.scratchpad
+    :refer
+    [page-with-long-id with-long-id]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common
-    :refer [created
-            search-options
-            filter-map-search-options
-            paginated-ok
-            PagingParams
-            ScratchpadGetParams
-            ScratchpadSearchParams
-            ScratchpadByExternalIdQueryParams]]
-   [ctia.store :refer :all]
+    :refer
+    [created
+     filter-map-search-options
+     paginated-ok
+     ScratchpadByExternalIdQueryParams
+     ScratchpadGetParams
+     ScratchpadSearchParams
+     search-options]]
    [ctia.schemas.core
-    :refer [NewScratchpad Scratchpad PartialScratchpad PartialScratchpadList]]
+    :refer
+    [NewScratchpad
+     PartialNewScratchpad
+     PartialScratchpad
+     PartialScratchpadList
+     Scratchpad]]
+   [ctia.store :refer :all]
    [ring.util.http-response :refer [no-content not-found ok]]
-   [schema-tools.core :as st]
    [schema.core :as s]))
 
 (defroutes scratchpad-routes
@@ -76,6 +82,36 @@
                      :spec :new-scratchpad/map)
                     ent/un-store
                     ok))
+
+           (PATCH "/:id" []
+                  :return Scratchpad
+                  :body [partial-scratchpad PartialNewScratchpad {:description "a Scratchpad partial update"}]
+                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                  :summary "Partially Update a Scratchpad"
+                  :path-params [id :- s/Str]
+                  :capabilities :create-scratchpad
+                  :identity identity
+                  :identity-map identity-map
+                  (-> (flows/patch-flow
+                       :get-fn #(read-store :scratchpad
+                                            read-scratchpad
+                                            %
+                                            identity-map
+                                            {})
+                       :realize-fn ent/realize-scratchpad
+                       :update-fn #(write-store :scratchpad
+                                                update-scratchpad
+                                                (:id %)
+                                                %
+                                                identity-map)
+                       :long-id-fn with-long-id
+                       :entity-type :scratchpad
+                       :entity-id id
+                       :identity identity
+                       :partial-entity partial-scratchpad
+                       :spec :new-scratchpad/map)
+                      ent/un-store
+                      ok))
 
            (GET "/external_id/:external_id" []
                 :return PartialScratchpadList

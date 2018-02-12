@@ -156,6 +156,9 @@
 (def put
   (mthh/with-port-fn get-http-port mthh/put))
 
+(def patch
+  (mthh/with-port-fn get-http-port mthh/patch))
+
 (defn fixture-spec-validation [t]
   (with-redefs [cs/registry-ref (atom (cs/registry))]
     (cs/check-asserts true)

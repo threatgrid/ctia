@@ -431,6 +431,11 @@
    scr/NewScratchpad)
   "new-scratchpad")
 
+(def-acl-schema PartialNewScratchpad
+  (fu/replace-either-with-any
+   (fu/optionalize-all scr/NewScratchpad))
+  "new-scratchpad")
+
 (def-stored-schema StoredScratchpad
   (fu/replace-either-with-any
    scr/StoredScratchpad)

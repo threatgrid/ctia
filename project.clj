@@ -44,7 +44,7 @@
                  [threatgrid/ctim "0.4.25-SNAPSHOT"
                   :exclusions [metosin/ring-swagger
                                com.google.guava/guava]]
-                 [threatgrid/clj-momo "0.2.19"]
+                 [threatgrid/clj-momo "0.2.20-SNAPSHOT"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
@@ -151,7 +151,7 @@
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.8"]
                                    [prismatic/schema-generators "0.1.1"]]
-                    :pedantic? :abort
+                    :pedantic? :warn
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
                     :resource-paths ["test/resources"

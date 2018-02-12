@@ -17,7 +17,7 @@
              [http :refer [doc-id->rel-url]]
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [delete get post put patch]]
              [fake-whoami-service :as whoami-helpers]
              [pagination :refer [pagination-test]]
              [field-selection :refer [field-selection-tests]]
@@ -100,6 +100,16 @@
           (is (deep=
                with-updates
                updated-scratchpad))))
+
+      (testing "PATCH /ctia/scratchpad/:id"
+        (let [updates {:title "patched scratchpad"}
+              response (patch (str "ctia/scratchpad/" (:short-id scratchpad-id))
+                              :body updates
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= "patched scratchpad"
+                 (:title updated-scratchpad)))))
 
       (testing "DELETE /ctia/scratchpad/:id"
         (let [response (delete (str "ctia/scratchpad/" (:short-id scratchpad-id))
