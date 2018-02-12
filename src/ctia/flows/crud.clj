@@ -1,7 +1,7 @@
 (ns ctia.flows.crud
   "This namespace handle all necessary flows for creating, updating
   and deleting entities."
-  (:require [clj-momo.lib.map :refer [deep-merge]]
+  (:require [clj-momo.lib.map :refer [deep-merge-with]]
             [clojure.spec.alpha :as cs]
             [clojure.tools.logging :as log]
             [ctia
@@ -376,7 +376,6 @@
 (defn patch-flow
   "This function centralizes the patch workflow.
   It is helpful to easily add new hooks name
-
   To be noted:
     - `:before-update` hooks can modify the entity stored.
     - `:after-update` hooks are read only"
@@ -386,12 +385,21 @@
              update-fn
              entity-id
              identity
+             patch-operation
              partial-entity
              long-id-fn
              spec]}]
   (let [prev-entity (get-fn entity-id)
-        entity (-> prev-entity
-                   (deep-merge partial-entity)
+        patch-fn (case patch-operation
+                   :add (fn [& args] (->> args
+                                          (map #(or % []))
+                                          (apply into)))
+                   :remove (fn [a b] (remove (set b) (or a [])))
+                   :replace (fn [& args] (last args))
+                   (fn [& args] (last args)))
+        entity (-> (deep-merge-with patch-fn
+                                    prev-entity
+                                    partial-entity)
                    un-store
                    (dissoc :id))]
     (-> {:flow-type :update

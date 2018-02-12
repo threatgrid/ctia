@@ -1,29 +1,31 @@
 (ns ctia.http.routes.scratchpad-test
   (:refer-clojure :exclude [get])
-  (:require [ctim.examples.scratchpads
-             :refer [new-scratchpad-minimal
-                     new-scratchpad-maximal]]
-            [ctia.schemas.sorting
-             :refer [scratchpad-sort-fields]]
-            [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
-            [clojure
-             [string :as str]
-             [test :refer [is join-fixtures testing use-fixtures]]]
-            [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show]]
-            [ctia.test-helpers
-             [http :refer [doc-id->rel-url]]
-             [access-control :refer [access-control-test]]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put patch]]
-             [fake-whoami-service :as whoami-helpers]
-             [pagination :refer [pagination-test]]
-             [field-selection :refer [field-selection-tests]]
-             [search :refer [test-query-string-search]]
-             [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]))
+  (:require
+   [clojure.set :refer [subset?]]
+   [ctim.examples.scratchpads
+    :refer [new-scratchpad-minimal
+            new-scratchpad-maximal]]
+   [ctia.schemas.sorting
+    :refer [scratchpad-sort-fields]]
+   [clj-momo.test-helpers
+    [core :as mth]
+    [http :refer [encode]]]
+   [clojure
+    [string :as str]
+    [test :refer [is join-fixtures testing use-fixtures]]]
+   [ctia.domain.entities :refer [schema-version]]
+   [ctia.properties :refer [get-http-show]]
+   [ctia.test-helpers
+    [http :refer [doc-id->rel-url]]
+    [access-control :refer [access-control-test]]
+    [auth :refer [all-capabilities]]
+    [core :as helpers :refer [delete get post put patch]]
+    [fake-whoami-service :as whoami-helpers]
+    [pagination :refer [pagination-test]]
+    [field-selection :refer [field-selection-tests]]
+    [search :refer [test-query-string-search]]
+    [store :refer [deftest-for-each-store]]]
+   [ctim.domain.id :as id]))
 
 
 (use-fixtures :once
@@ -111,6 +113,40 @@
           (is (= "patched scratchpad"
                  (:title updated-scratchpad)))))
 
+      ;; atomic operation tests
+      (testing "POST /ctia/scratchpad/:id/observables :add"
+        (let [new-observables [{:type "ip" :value "42.42.42.42"}]
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
+                             :body {:operation :add
+                                    :observables new-observables}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (subset? (set new-observables)
+                       (set (:observables updated-scratchpad))))))
+
+      (testing "POST /ctia/scratchpad/:id/observables :remove"
+        (let [deleted-observables [{:value "85:28:cb:6a:21:41" :type "mac_address"}
+                                   {:value "42.42.42.42" :type "ip"}]
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
+                             :body {:operation :remove
+                                    :observables deleted-observables}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (not (subset? (set deleted-observables)
+                            (set (:observables updated-scratchpad)))))))
+
+      (testing "POST /ctia/scratchpad/:id/observables :replace"
+        (let [observables [{:value "42.42.42.42" :type "ip"}]
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
+                             :body {:operation :replace
+                                    :observables observables}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= observables (:observables updated-scratchpad)))))
+
       (testing "DELETE /ctia/scratchpad/:id"
         (let [response (delete (str "ctia/scratchpad/" (:short-id scratchpad-id))
                                :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -118,6 +154,7 @@
           (let [response (get (str "ctia/scratchpad/" (:short-id scratchpad-id))
                               :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response))))))))
+
 
   (testing "POST invalid /ctia/scratchpad"
     (let [{status :status

@@ -17,7 +17,8 @@
      search-options]]
    [ctia.schemas.core
     :refer
-    [NewScratchpad
+    [Observable
+     NewScratchpad
      PartialNewScratchpad
      PartialScratchpad
      PartialScratchpadList
@@ -25,6 +26,10 @@
    [ctia.store :refer :all]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema.core :as s]))
+
+(s/defschema ScratchpadObservablesUpdate
+  {:operation (s/enum :add :remove :replace)
+   :observables [Observable]})
 
 (defroutes scratchpad-routes
   (context "/scratchpad" []
@@ -108,6 +113,7 @@
                        :entity-type :scratchpad
                        :entity-id id
                        :identity identity
+                       :patch-operation :replace
                        :partial-entity partial-scratchpad
                        :spec :new-scratchpad/map)
                       ent/un-store
@@ -191,4 +197,37 @@
                         :entity-id id
                         :identity identity)
                      (no-content)
-                     (not-found)))))
+                     (not-found)))
+
+           (context "/:id/observables" []
+                    (POST "/" []
+                          :return Scratchpad
+                          :body [operation ScratchpadObservablesUpdate
+                                 {:description "A scratchpad Observables operation"}]
+                          :path-params [id :- s/Str]
+                          :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                          :summary "Adds observables to a scratchpad"
+                          :capabilities :create-scratchpad
+                          :identity identity
+                          :identity-map identity-map
+                          (-> (flows/patch-flow
+                               :get-fn #(read-store :scratchpad
+                                                    read-scratchpad
+                                                    %
+                                                    identity-map
+                                                    {})
+                               :realize-fn ent/realize-scratchpad
+                               :update-fn #(write-store :scratchpad
+                                                        update-scratchpad
+                                                        (:id %)
+                                                        %
+                                                        identity-map)
+                               :long-id-fn with-long-id
+                               :entity-type :scratchpad
+                               :entity-id id
+                               :identity identity
+                               :patch-operation (:operation operation)
+                               :partial-entity {:observables (:observables operation)}
+                               :spec :new-scratchpad/map)
+                              ent/un-store
+                              ok)))))
