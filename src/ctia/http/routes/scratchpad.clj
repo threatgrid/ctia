@@ -22,14 +22,12 @@
      PartialNewScratchpad
      PartialScratchpad
      PartialScratchpadList
-     Scratchpad]]
+     Scratchpad
+     ScratchpadObservablesUpdate
+     ScratchpadTextsUpdate]]
    [ctia.store :refer :all]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema.core :as s]))
-
-(s/defschema ScratchpadObservablesUpdate
-  {:operation (s/enum :add :remove :replace)
-   :observables [Observable]})
 
 (defroutes scratchpad-routes
   (context "/scratchpad" []
@@ -175,30 +173,6 @@
                       ok)
                   (not-found)))
 
-           (DELETE "/:id" []
-                   :no-doc true
-                   :path-params [id :- s/Str]
-                   :summary "Deletes an Scratchpad"
-                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                   :capabilities :delete-scratchpad
-                   :identity identity
-                   :identity-map identity-map
-                   (if (flows/delete-flow
-                        :get-fn #(read-store :scratchpad
-                                             read-scratchpad
-                                             %
-                                             identity-map
-                                             {})
-                        :delete-fn #(write-store :scratchpad
-                                                 delete-scratchpad
-                                                 %
-                                                 identity-map)
-                        :entity-type :scratchpad
-                        :entity-id id
-                        :identity identity)
-                     (no-content)
-                     (not-found)))
-
            (context "/:id/observables" []
                     (POST "/" []
                           :return Scratchpad
@@ -206,7 +180,7 @@
                                  {:description "A scratchpad Observables operation"}]
                           :path-params [id :- s/Str]
                           :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                          :summary "Adds observables to a scratchpad"
+                          :summary "Edit Observables on a scratchpad"
                           :capabilities :create-scratchpad
                           :identity identity
                           :identity-map identity-map
@@ -230,4 +204,60 @@
                                :partial-entity {:observables (:observables operation)}
                                :spec :new-scratchpad/map)
                               ent/un-store
-                              ok)))))
+                              ok)))
+
+           (context "/:id/texts" []
+                    (POST "/" []
+                          :return Scratchpad
+                          :body [operation ScratchpadTextsUpdate
+                                 {:description "A scratchpad Texts operation"}]
+                          :path-params [id :- s/Str]
+                          :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                          :summary "Edit Texts on a scratchpad"
+                          :capabilities :create-scratchpad
+                          :identity identity
+                          :identity-map identity-map
+                          (-> (flows/patch-flow
+                               :get-fn #(read-store :scratchpad
+                                                    read-scratchpad
+                                                    %
+                                                    identity-map
+                                                    {})
+                               :realize-fn ent/realize-scratchpad
+                               :update-fn #(write-store :scratchpad
+                                                        update-scratchpad
+                                                        (:id %)
+                                                        %
+                                                        identity-map)
+                               :long-id-fn with-long-id
+                               :entity-type :scratchpad
+                               :entity-id id
+                               :identity identity
+                               :patch-operation (:operation operation)
+                               :partial-entity {:texts (:texts operation)}
+                               :spec :new-scratchpad/map)
+                              ent/un-store
+                              ok)))
+           (DELETE "/:id" []
+                   :no-doc true
+                   :path-params [id :- s/Str]
+                   :summary "Deletes an Scratchpad"
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                   :capabilities :delete-scratchpad
+                   :identity identity
+                   :identity-map identity-map
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :scratchpad
+                                             read-scratchpad
+                                             %
+                                             identity-map
+                                             {})
+                        :delete-fn #(write-store :scratchpad
+                                                 delete-scratchpad
+                                                 %
+                                                 identity-map)
+                        :entity-type :scratchpad
+                        :entity-id id
+                        :identity identity)
+                     (no-content)
+                     (not-found)))))

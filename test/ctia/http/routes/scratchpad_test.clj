@@ -113,7 +113,9 @@
           (is (= "patched scratchpad"
                  (:title updated-scratchpad)))))
 
-      ;; atomic operation tests
+      ;; -------- atomic operation tests ------------
+
+      ;; observables
       (testing "POST /ctia/scratchpad/:id/observables :add"
         (let [new-observables [{:type "ip" :value "42.42.42.42"}]
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
@@ -146,6 +148,41 @@
               updated-scratchpad (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= observables (:observables updated-scratchpad)))))
+
+      ;; texts
+      (testing "POST /ctia/scratchpad/:id/texts :add"
+        (let [new-texts [{:type "some" :text "text"}]
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
+                             :body {:operation :add
+                                    :texts new-texts}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (subset? (set new-texts)
+                       (set (:texts updated-scratchpad))))))
+
+      (testing "POST /ctia/scratchpad/:id/observables :remove"
+        (let [deleted-texts [{:type "some" :text "text"}]
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
+                             :body {:operation :remove
+                                    :texts deleted-texts}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (not (subset? (set deleted-texts)
+                            (set (:texts updated-scratchpad)))))))
+
+      (testing "POST /ctia/scratchpad/:id/observables :replace"
+        (let [texts [{:type "text" :text "text"}]
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
+                             :body {:operation :replace
+                                    :texts texts}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= texts (:texts updated-scratchpad)))))
+
+
 
       (testing "DELETE /ctia/scratchpad/:id"
         (let [response (delete (str "ctia/scratchpad/" (:short-id scratchpad-id))

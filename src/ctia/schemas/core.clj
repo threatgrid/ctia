@@ -446,6 +446,16 @@
    (fu/optionalize-all scr/StoredScratchpad))
   "partial-stored-scratchpad")
 
+(sc/defschema ScratchpadObservablesUpdate
+  (st/merge
+   {:operation (sc/enum :add :remove :replace)}
+   (st/select-keys Scratchpad [:observables])))
+
+(sc/defschema ScratchpadTextsUpdate
+  (st/merge
+   {:operation (sc/enum :add :remove :replace)}
+   (st/select-keys Scratchpad [:texts])))
+
 
 ;; Attack Pattern
 
