@@ -50,7 +50,7 @@
 
 (defn create-fn
   "return the create function provided an entity type key"
-  [k auth-identity]
+  [k auth-identity params]
   #(write-store
     k (case k
         :actor          create-actors
@@ -67,7 +67,7 @@
         :relationship   create-relationships
         :sighting       create-sightings
         :tool           create-tools)
-    % (auth/ident->map auth-identity)))
+    % (auth/ident->map auth-identity) params))
 
 (defn read-fn
   "return the create function provided an entity type key"
@@ -111,13 +111,13 @@
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
-  [new-entities entity-type tempids auth-identity]
+  [new-entities entity-type tempids auth-identity params]
   (when (seq new-entities)
     (let [with-long-id (with-long-id-fn entity-type)]
       (update (flows/create-flow
                :entity-type entity-type
                :realize-fn (realize-fn entity-type)
-               :store-fn (create-fn entity-type auth-identity)
+               :store-fn (create-fn entity-type auth-identity params)
                :long-id-fn with-long-id
                :enveloped-result? true
                :identity auth-identity
@@ -146,15 +146,11 @@
   ~~~~
   "
   [func bulk & args]
-  (reduce (fn [acc entity-type]
-            (assoc acc
-                   entity-type
-                   (apply func
-                          (get bulk entity-type)
-                          (singular entity-type)
-                          args)))
-          {}
-          (keys bulk)))
+  (->> bulk
+       (pmap (fn [[entity-type entities]]
+               [entity-type
+                (apply func entities (singular entity-type) args)]))
+       (into {})))
 
 (defn merge-tempids
   "Merges tempids from all entities
@@ -186,19 +182,22 @@
 
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
-  ([bulk login] (create-bulk bulk {} login))
-  ([bulk tempids login]
+  ([bulk login] (create-bulk bulk {} login {}))
+  ([bulk tempids login {:keys [refresh] :as params
+                        :or {refresh "false"}}]
    (let [new-entities (gen-bulk-from-fn
                        create-entities
                        (dissoc bulk :relationships)
                        tempids
-                       login)
+                       login
+                       {:refresh refresh})
          entities-tempids (merge-tempids new-entities)
          new-relationships (gen-bulk-from-fn
                             create-entities
                             (select-keys bulk [:relationships])
                             entities-tempids
-                            login)
+                            login
+                            {:refresh refresh})
          all-tempids (merge entities-tempids
                             (merge-tempids new-relationships))
          all-entities (into new-entities new-relationships)

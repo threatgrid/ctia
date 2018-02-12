@@ -38,7 +38,8 @@
                       :store-fn #(write-store :tool
                                               create-tools
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :tool
                       :identity identity

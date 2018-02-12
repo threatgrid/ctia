@@ -42,7 +42,8 @@
                       :store-fn #(write-store :indicator
                                               create-indicators
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :indicator
                       :identity identity

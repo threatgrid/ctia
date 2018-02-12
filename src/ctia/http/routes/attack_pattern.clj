@@ -37,7 +37,8 @@
                       :store-fn #(write-store :attack-pattern
                                               create-attack-patterns
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :attack-pattern
                       :identity identity

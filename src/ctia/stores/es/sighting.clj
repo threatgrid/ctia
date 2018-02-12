@@ -69,11 +69,12 @@
 (s/defn handle-create :- [StoredSighting]
   [state :- ESConnState
    new-sightings :- [StoredSighting]
-   ident]
+   ident
+   params]
   (doall
    (as-> new-sightings $
      (map stored-sighting->es-stored-sighting $)
-     (create-fn state $ ident)
+     (create-fn state $ ident params)
      (map es-stored-sighting->stored-sighting $))))
 
 (s/defn handle-read :- (s/maybe PartialStoredSighting)

@@ -36,7 +36,8 @@
                       :store-fn #(write-store :sighting
                                               create-sightings
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :sighting
                       :identity identity

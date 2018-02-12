@@ -87,7 +87,7 @@
     (assert (seq host) "Missing host")
     (assert (integer? port) "Missing port")
     (assert (seq indexname) "Missing index-name")
-    (str "http://" host ":" port "/" indexname "/" (name t) "/?refresh=true")))
+    (str "http://" host ":" port "/" indexname "/" (name t) "/")))
 
 (defn post-to-es [obj]
   (let [{:keys [status] :as response}

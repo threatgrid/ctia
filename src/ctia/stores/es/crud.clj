@@ -86,7 +86,8 @@
     (s/fn :- (s/maybe [Model])
       [state :- ESConnState
        models :- [Model]
-       ident]
+       ident
+       {:keys [refresh] :as params}]
       (try
         (->> (bulk-create-doc (:conn state)
                               (map #(assoc %
@@ -94,7 +95,8 @@
                                            :_index (:index state)
                                            :_type (name mapping))
                                    models)
-                              (get-in state [:props :refresh] false))
+                              (or refresh
+                                  (get-in state [:props :refresh] false)))
              (map #(build-create-result % coerce!)))
         (catch Exception e
           (throw

@@ -40,7 +40,8 @@
                       :store-fn #(write-store :investigation
                                               create-investigations
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :investigation
                       :identity identity

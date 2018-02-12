@@ -34,7 +34,8 @@
                       :store-fn #(write-store :feedback
                                               create-feedbacks
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :feedback
                       :identity identity
