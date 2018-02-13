@@ -46,6 +46,12 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
     echo "OK: release branch detected using regex"
     build-and-publish-package "rel"
 
+  elif [[ ${TRAVIS_BRANCH} =~ ^v[0-9]+(.[0-9]+)+$ ]]; then
+    # non-pr builds on 'v?.?' branches yield REL packages
+    # To be removed at a future date, once we're sure the process works.
+    echo "OK: v branch detected using regex"
+    build-and-publish-package "rel"
+
   else
     echo "Not on master or release branch. Not building a package."
   fi
