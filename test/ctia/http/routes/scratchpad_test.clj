@@ -1,6 +1,8 @@
 (ns ctia.http.routes.scratchpad-test
   (:refer-clojure :exclude [get])
   (:require
+   [ctim.schemas.common
+    :refer [ctim-schema-version]]
    [clojure.set :refer [subset?]]
    [ctim.examples.scratchpads
     :refer [new-scratchpad-minimal
@@ -161,7 +163,7 @@
           (is (subset? (set new-texts)
                        (set (:texts updated-scratchpad))))))
 
-      (testing "POST /ctia/scratchpad/:id/observables :remove"
+      (testing "POST /ctia/scratchpad/:id/texts :remove"
         (let [deleted-texts [{:type "some" :text "text"}]
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
                              :body {:operation :remove
@@ -172,7 +174,7 @@
           (is (not (subset? (set deleted-texts)
                             (set (:texts updated-scratchpad)))))))
 
-      (testing "POST /ctia/scratchpad/:id/observables :replace"
+      (testing "POST /ctia/scratchpad/:id/texts :replace"
         (let [texts [{:type "text" :text "text"}]
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
                              :body {:operation :replace
@@ -182,6 +184,52 @@
           (is (= 200 (:status response)))
           (is (= texts (:texts updated-scratchpad)))))
 
+      ;; bundle
+      (testing "POST /ctia/scratchpad/:id/bundle :add"
+        (let [new-bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
+                                                :type "malware"
+                                                :schema_version ctim-schema-version
+                                                :name "TEST"
+                                                :labels ["malware"]}}}
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/bundle")
+                             :body {:operation :add
+                                    :bundle new-bundle-entities}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+
+          (is (= 200 (:status response)))
+          (is (subset? (set (:malwares new-bundle-entities))
+                       (set (-> updated-scratchpad :bundle :malwares))))))
+
+      (testing "POST /ctia/scratchpad/:id/bundle :remove"
+        (let [deleted-bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
+                                                    :type "malware"
+                                                    :schema_version ctim-schema-version
+                                                    :name "TEST"
+                                                    :labels ["malware"]}}}
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/bundle")
+                             :body {:operation :remove
+                                    :bundle deleted-bundle-entities}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (not (subset? (set (:malwares deleted-bundle-entities))
+                            (set (-> updated-scratchpad :bundle :malwares)))))))
+
+      (testing "POST /ctia/scratchpad/:id/bundle :replace"
+        (let [bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
+                                            :type "malware"
+                                            :schema_version ctim-schema-version
+                                            :name "TEST"
+                                            :labels ["malware"]}}}
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/bundle")
+                             :body {:operation :replace
+                                    :bundle bundle-entities}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= (:malwares bundle-entities)
+                 (-> updated-scratchpad :bundle :malwares)))))
 
 
       (testing "DELETE /ctia/scratchpad/:id"

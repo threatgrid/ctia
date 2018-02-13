@@ -30,6 +30,8 @@
    :identity (s/protocol auth/IIdentity)
    (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
+   (s/optional-key :partial-entity) (s/maybe {s/Keyword s/Any})
+   (s/optional-key :patch-operation) (s/enum :add :remove :replace)
    (s/optional-key :realize-fn) (s/pred fn?)
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
@@ -296,6 +298,50 @@
     :delete (first results)
     :update (first entities)))
 
+
+(defn recast [orig-coll new-coll]
+  (cond
+    (vector? orig-coll) (vec new-coll)
+    (set? orig-coll) (set new-coll)
+    :else new-coll))
+
+(defn add-colls [& args]
+  (let [new-coll
+        (->> args
+             (map #(or % []))
+             (apply into))]
+    (recast (first args) new-coll)))
+
+(defn remove-colls [& args]
+  (let [new-coll
+        (reduce
+         (fn [a b]
+           (remove (or (set b) #{})
+                   (or a []))) args)]
+    (recast (first args) new-coll)))
+
+(defn replace-colls [& args]
+  (let [new-coll (last args)]
+    (recast (first args) new-coll)))
+
+(s/defn patch-entities :- FlowMap
+  [{:keys [prev-entity
+           partial-entity
+           patch-operation]
+    :as fm} :- FlowMap]
+
+  (let [patch-fn (case patch-operation
+                   :add add-colls
+                   :remove remove-colls
+                   :replace replace-colls
+                   replace-colls)
+        entity (-> (deep-merge-with patch-fn
+                                    prev-entity
+                                    partial-entity)
+                   un-store
+                   (dissoc :id))]
+    (assoc fm :entities [entity])))
+
 (defn create-flow
   "This function centralizes the create workflow.
   It is helpful to easily add new hooks name
@@ -347,6 +393,7 @@
              realize-fn
              update-fn
              entity-id
+             partial-entity
              identity
              entity
              long-id-fn
@@ -356,6 +403,7 @@
          :entity-type entity-type
          :entities [entity]
          :prev-entity prev-entity
+         :partial-entity partial-entity
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
@@ -389,29 +437,20 @@
              partial-entity
              long-id-fn
              spec]}]
-  (let [prev-entity (get-fn entity-id)
-        patch-fn (case patch-operation
-                   :add (fn [& args] (->> args
-                                          (map #(or % []))
-                                          (apply into)))
-                   :remove (fn [a b] (remove (set b) (or a [])))
-                   :replace (fn [& args] (last args))
-                   (fn [& args] (last args)))
-        entity (-> (deep-merge-with patch-fn
-                                    prev-entity
-                                    partial-entity)
-                   un-store
-                   (dissoc :id))]
+  (let [prev-entity (get-fn entity-id)]
     (-> {:flow-type :update
          :entity-type entity-type
-         :entities [entity]
+         :entities []
          :prev-entity prev-entity
+         :partial-entity partial-entity
+         :patch-operation patch-operation
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn
          :spec spec
          :store-fn update-fn
          :create-event-fn to-update-event}
+        patch-entities
         validate-entities
         realize-entities
         apply-before-hooks

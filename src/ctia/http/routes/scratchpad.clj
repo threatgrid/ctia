@@ -24,7 +24,8 @@
      PartialScratchpadList
      Scratchpad
      ScratchpadObservablesUpdate
-     ScratchpadTextsUpdate]]
+     ScratchpadTextsUpdate
+     ScratchpadBundleUpdate]]
    [ctia.store :refer :all]
    [ring.util.http-response :refer [no-content not-found ok]]
    [schema.core :as s]))
@@ -238,6 +239,40 @@
                                :spec :new-scratchpad/map)
                               ent/un-store
                               ok)))
+
+           (context "/:id/bundle" []
+                    (POST "/" []
+                          :return Scratchpad
+                          :body [operation ScratchpadBundleUpdate
+                                 {:description "A scratchpad Bundle operation"}]
+                          :path-params [id :- s/Str]
+                          :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                          :summary "Edit a Bundle on a scratchpad"
+                          :capabilities :create-scratchpad
+                          :identity identity
+                          :identity-map identity-map
+                          (-> (flows/patch-flow
+                               :get-fn #(read-store :scratchpad
+                                                    read-scratchpad
+                                                    %
+                                                    identity-map
+                                                    {})
+                               :realize-fn ent/realize-scratchpad
+                               :update-fn #(write-store :scratchpad
+                                                        update-scratchpad
+                                                        (:id %)
+                                                        %
+                                                        identity-map)
+                               :long-id-fn with-long-id
+                               :entity-type :scratchpad
+                               :entity-id id
+                               :identity identity
+                               :patch-operation (:operation operation)
+                               :partial-entity {:bundle (:bundle operation)}
+                               :spec :new-scratchpad/map)
+                              ent/un-store
+                              ok)))
+
            (DELETE "/:id" []
                    :no-doc true
                    :path-params [id :- s/Str]
