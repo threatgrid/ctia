@@ -47,7 +47,8 @@
                       :store-fn #(write-store :scratchpad
                                               create-scratchpads
                                               %
-                                              identity-map)
+                                              identity-map
+                                              {})
                       :long-id-fn with-long-id
                       :entity-type :scratchpad
                       :identity identity

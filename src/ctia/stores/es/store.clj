@@ -302,8 +302,8 @@
   IScratchpadStore
   (read-scratchpad [_ id ident params]
     (scr/handle-read state id ident params))
-  (create-scratchpads [_ new-scratchpads ident]
-    (scr/handle-create state new-scratchpads ident))
+  (create-scratchpads [_ new-scratchpads ident params]
+    (scr/handle-create state new-scratchpads ident params))
   (update-scratchpad [_ id scratchpad ident]
     (scr/handle-update state id scratchpad ident))
   (delete-scratchpad [this id ident]

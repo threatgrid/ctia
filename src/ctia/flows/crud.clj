@@ -16,7 +16,9 @@
             [ctim.domain.id :as id]
             [ctim.events.obj-to-event
              :refer
-             [to-create-event to-delete-event to-update-event]]
+             [to-create-event
+              to-delete-event
+              to-update-event]]
             [ring.util.http-response :as http-response]
             [schema.core :as s])
   (:import java.util.UUID))
@@ -297,7 +299,6 @@
               entities)
     :delete (first results)
     :update (first entities)))
-
 
 (defn recast [orig-coll new-coll]
   (cond

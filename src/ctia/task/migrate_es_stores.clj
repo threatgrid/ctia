@@ -145,7 +145,7 @@
     (es-doc/bulk-create-doc
      conn
      prepared-docs
-     "false")))
+     "wait_for")))
 
 (defn create-target-store
   "create the target store, pushing its template"

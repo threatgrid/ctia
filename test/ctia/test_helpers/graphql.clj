@@ -12,11 +12,11 @@
                       :body obj
                       :headers {"Authorization" "45c1f5e3f05d0"})]
     (when (not= status 201)
-      (throw (Exception. (format "Failed to create %s obj: %s Status: %s Response:%s"
+      (throw (Exception. (format "Failed to create %s Status: %s Response: %s obj: %s"
                                  (pr-str type)
-                                 (pr-str obj)
                                  status
-                                 body))))
+                                 body
+                                 (pr-str obj)))))
     body))
 
 (defn query

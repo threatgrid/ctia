@@ -117,7 +117,7 @@
 
 (defprotocol IScratchpadStore
   (read-scratchpad [this id ident params])
-  (create-scratchpads [this new-scratchpads ident])
+  (create-scratchpads [this new-scratchpads ident params])
   (update-scratchpad [this id scratchpad ident])
   (delete-scratchpad [this id ident])
   (list-scratchpads [this filtermap ident params]))
