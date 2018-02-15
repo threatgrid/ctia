@@ -57,5 +57,5 @@
 (defspec ^:generative api-for-tool-routes-es-store
   prop/api-for-tool-routes)
 
-(defspec ^:disabled api-for-scratchpad-routes-es-store
-  prop/api-for-scratchpad-routes)
+#_(defspec ^:disabled api-for-scratchpad-routes-es-store
+    prop/api-for-scratchpad-routes)
