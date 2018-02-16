@@ -65,20 +65,24 @@
           (common= post-entity
                    (dissoc get-entity :id)))))))
 
-(doseq [[entity kw-ns] [[NewActor "max-new-actor"]
-                        [NewAttackPattern "max-new-attack-pattern"]
-                        [NewCampaign "max-new-campaign"]
-                        [NewCOA "max-new-coa"]
-                        [NewExploitTarget "max-new-exploit-target"]
-                        [NewFeedback "max-new-feedback"]
-                        [NewIncident "max-new-incident"]
-                        [NewIndicator "max-new-indicator"]
-                        [NewJudgement "max-new-judgement"]
-                        [NewMalware "max-new-malware"]
-                        [NewRelationship "max-new-relationship"]
-                        [NewSighting "max-new-sighting"]
-                        [NewTool "max-new-tool"]
-                        [NewScratchpad "max-new-scratchpad"]]]
+(doseq [[entity kw-ns]
+        [[NewActor "max-new-actor"]
+         [NewAttackPattern "max-new-attack-pattern"]
+         [NewCampaign "max-new-campaign"]
+         [NewCOA "max-new-coa"]
+         [NewExploitTarget "max-new-exploit-target"]
+         [NewFeedback "max-new-feedback"]
+         [NewIncident "max-new-incident"]
+         [NewIndicator "max-new-indicator"]
+         [NewJudgement "max-new-judgement"]
+         [NewMalware "max-new-malware"]
+         [NewRelationship "max-new-relationship"]
+         [NewSighting "max-new-sighting"]
+         [NewTool "max-new-tool"]
+         ;; TODO enable again once scratchpad/bundle/data_table
+         ;;does not trigger StackOverFlow Exception
+         ;;[NewScratchpad "max-new-scratchpad"]
+         ]]
   (fs/->spec (fu/require-all entity)
              kw-ns))
 
@@ -139,6 +143,6 @@
   (api-for-route 'tool
                  (spec-gen "max-new-tool")))
 
-(def api-for-scratchpad-routes
-  (api-for-route 'scratchpad
-                 (spec-gen "max-new-scratchpad")))
+#_(def api-for-scratchpad-routes
+    (api-for-route 'scratchpad
+                   (spec-gen "max-new-scratchpad")))
