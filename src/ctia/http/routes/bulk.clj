@@ -13,9 +13,11 @@
              [feedback :as fbk-ent]
              [incident :as inc-ent]
              [indicator :as ind-ent]
+             [investigation :as inv-ent]
              [judgement :as jud-ent]
              [malware :as malware-ent]
              [relationship :as rel-ent]
+             [scratchpad :as scr-ent]
              [sighting :as sig-ent]
              [tool :as tool-ent]]
             [ctia.flows.crud :as flows]
@@ -41,10 +43,12 @@
     :exploit-target ent/realize-exploit-target
     :feedback       ent/realize-feedback
     :incident       ent/realize-incident
+    :investigation  ent/realize-investigation
     :indicator      ent/realize-indicator
     :judgement      ent/realize-judgement
     :malware        ent/realize-malware
     :relationship   ent/realize-relationship
+    :scratchpad     ent/realize-scratchpad
     :sighting       ent/realize-sighting
     :tool           ent/realize-tool))
 
@@ -62,9 +66,11 @@
         :feedback       create-feedbacks
         :incident       create-incidents
         :indicator      create-indicators
+        :investigation  create-investigations
         :judgement      create-judgements
         :malware        create-malwares
         :relationship   create-relationships
+        :scratchpad     create-scratchpads
         :sighting       create-sightings
         :tool           create-tools)
     % (auth/ident->map auth-identity) params))
@@ -83,9 +89,11 @@
         :feedback       read-feedback
         :incident       read-incident
         :indicator      read-indicator
+        :investigation  read-investigation
         :judgement      read-judgement
         :malware        read-malware
         :relationship   read-relationship
+        :scratchpad     read-scratchpad
         :sighting       read-sighting
         :tool           read-tool)
     % (auth/ident->map auth-identity) params))
@@ -103,9 +111,11 @@
     :feedback       fbk-ent/with-long-id
     :incident       inc-ent/with-long-id
     :indicator      ind-ent/with-long-id
+    :investigation  inv-ent/with-long-id
     :judgement      jud-ent/with-long-id
     :malware        malware-ent/with-long-id
     :relationship   rel-ent/with-long-id
+    :scratchpad     scr-ent/with-long-id
     :sighting       sig-ent/with-long-id
     :tool           tool-ent/with-long-id))
 
@@ -233,10 +243,12 @@
                                  :create-exploit-target
                                  :create-feedback
                                  :create-incident
+                                 :create-investigation
                                  :create-indicator
                                  :create-judgement
                                  :create-malware
                                  :create-relationship
+                                 :create-scratchpad
                                  :create-sighting
                                  :create-tool}
                  (if (> (bulk-size bulk)
@@ -256,9 +268,11 @@
                                {feedbacks       :- [Reference] []}
                                {incidents       :- [Reference] []}
                                {indicators      :- [Reference] []}
+                               {investigations  :- [Reference] []}
                                {judgements      :- [Reference] []}
                                {malwares        :- [Reference] []}
                                {relationships   :- [Reference] []}
+                               {scratchpads     :- [Reference] []}
                                {sightings       :- [Reference] []}
                                {tools           :- [Reference] []}]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -271,9 +285,11 @@
                                 :read-feedback
                                 :read-incident
                                 :read-indicator
+                                :read-investigation
                                 :read-judgement
                                 :read-malware
                                 :read-relationship
+                                :read-scratchpad
                                 :read-sighting
                                 :read-tool}
                 :identity auth-identity
@@ -286,10 +302,12 @@
                                              :exploit-targets exploit-targets
                                              :feedbacks       feedbacks
                                              :incidents       incidents
+                                             :investigations  investigations
                                              :indicators      indicators
                                              :judgements      judgements
                                              :malwares        malwares
                                              :relationships   relationships
+                                             :scratchpads     scratchpads
                                              :sightings       sightings
                                              :tools           tools}))]
                   (if (> (bulk-size bulk) (get-bulk-max-size))

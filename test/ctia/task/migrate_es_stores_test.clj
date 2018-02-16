@@ -20,9 +20,11 @@
              [exploit-targets :refer [exploit-target-minimal]]
              [incidents :refer [incident-minimal]]
              [indicators :refer [indicator-minimal]]
+             [investigations :refer [investigation-minimal]]
              [judgements :refer [judgement-minimal]]
              [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
+             [scratchpads :refer [scratchpad-minimal]]
              [sightings :refer [sighting-minimal]]
              [tools :refer [tool-minimal]]]))
 
@@ -54,10 +56,24 @@
 (defn n-doc [fixture nb]
   (map randomize (repeat nb fixture)))
 
-(defn refresh-index [host port index]
-  (let [index-refresh-url
-        (format "http://%s:%s/%s/_refresh" host port index)]
-    (:status (client/post index-refresh-url))))
+(defn refresh-indices [host port]
+  (client/post (format "http://%s:%s/_refresh" host port)))
+
+(defn make-cat-indices-url [host port]
+  (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
+
+(defn get-cat-indices [host port]
+  (let [url (make-cat-indices-url host
+                                  port)
+        {:keys [body]
+         :as cat-response} (client/get url {:as :json})]
+    (->> body
+         (map (fn [{:keys [index]
+                    :as entry}]
+                {index (read-string
+                        (:docs.count entry))}))
+         (into {})
+         keywordize-keys)))
 
 (def examples
   {:actors (n-doc actor-minimal fixtures-nb)
@@ -67,9 +83,11 @@
    :exploit-targets (n-doc exploit-target-minimal fixtures-nb)
    :incidents (n-doc incident-minimal fixtures-nb)
    :indicators (n-doc indicator-minimal fixtures-nb)
+   :investigations (n-doc investigation-minimal fixtures-nb)
    :judgements (n-doc judgement-minimal fixtures-nb)
    :malwares (n-doc malware-minimal fixtures-nb)
    :relationships (n-doc relationship-minimal fixtures-nb)
+   :scratchpads (n-doc scratchpad-minimal fixtures-nb)
    :sightings (n-doc sighting-minimal fixtures-nb)
    :tools (n-doc tool-minimal fixtures-nb)})
 
@@ -111,15 +129,17 @@
                  ["campaign - finished migrating 100 documents"
                   "indicator - finished migrating 100 documents"
                   "exploit-target - finished migrating 100 documents"
-                  "event - finished migrating 1200 documents"
+                  "event - finished migrating 1400 documents"
                   "actor - finished migrating 100 documents"
                   "relationship - finished migrating 100 documents"
                   "incident - finished migrating 100 documents"
+                  "investigation - finished migrating 100 documents"
                   "coa - finished migrating 100 documents"
                   "identity - finished migrating 1 documents"
                   "judgement - finished migrating 100 documents"
                   "data-table - finished migrating 0 documents"
                   "feedback - finished migrating 0 documents"
+                  "scratchpad - finished migrating 100 documents"
                   "sighting - finished migrating 100 documents"
                   "attack-pattern - finished migrating 100 documents"
                   "malware - finished migrating 100 documents"
@@ -133,6 +153,7 @@
                         relationship
                         judgement
                         exploit-target
+                        investigation
                         coa
                         tool
                         attack-pattern
@@ -142,6 +163,7 @@
                         indicator
                         campaign
                         sighting
+                        scratchpad
                         actor]
                  :as es-props}
                 (get-in @props/properties [:ctia :store :es])
@@ -157,34 +179,19 @@
                       event (* (count (keys examples))
                                fixtures-nb)
                       indicator fixtures-nb
+                      investigation fixtures-nb
                       campaign fixtures-nb
+                      scratchpad fixtures-nb
                       sighting fixtures-nb
                       actor fixtures-nb}
                      (map (fn [[k v]]
                             {(str  "v0.0.0_" (:indexname k)) v}))
                      (into {})
                      keywordize-keys)
-                refreshes
-                (doseq [index (keys expected-indices)]
-                  (refresh-index (:host default)
-                                 (:port default)
-                                 (name index)))
-                cat-indices-url
-                (format "http://%s:%s/_cat/indices?format=json&pretty=true"
-                        (:host default)
-                        (:port default))
-                {:keys [body]
-                 :as cat-response}
-                (client/get cat-indices-url {:as :json})
-                formatted-cat-indices
-                (->> body
-                     (map (fn [{:keys [index]
-                               :as entry}]
-                            {index (read-string
-                                    (:docs.count entry))}))
-                     (into {})
-                     keywordize-keys)]
-
+                refreshes (refresh-indices (:host default)
+                                           (:port default))
+                formatted-cat-indices (get-cat-indices (:host default)
+                                                       (:port default))]
             (is (= expected-indices
                    (select-keys formatted-cat-indices
                                 (keys expected-indices))))
