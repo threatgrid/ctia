@@ -40,7 +40,10 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/flanders "0.1.16-SNAPSHOT"]
+                 [threatgrid/flanders "0.1.16"
+                  :exclusions [prismatic/plumbing
+                               potemkin
+                               com.andrewmcveigh/cljs-time]]
                  [threatgrid/ctim "0.4.26"
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
@@ -152,7 +155,7 @@
                                    [org.clojure/test.check "0.9.0"]
                                    [com.gfredericks/test.chuck "0.2.8"]
                                    [prismatic/schema-generators "0.1.1"]]
-                    :pedantic? :warn
+                    :pedantic? :abort
                     :java-source-paths ["hooks/ctia"
                                         "test/java"]
                     :resource-paths ["test/resources"

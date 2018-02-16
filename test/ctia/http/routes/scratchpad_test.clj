@@ -115,7 +115,7 @@
           (is (= "patched scratchpad"
                  (:title updated-scratchpad)))))
 
-      ;; -------- atomic operation tests ------------
+      ;; -------- partial update operation tests ------------
 
       ;; observables
       (testing "POST /ctia/scratchpad/:id/observables :add"
