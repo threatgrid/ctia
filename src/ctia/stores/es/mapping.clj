@@ -550,7 +550,8 @@
      base-entity-mapping
      sourcable-entity-mapping
      stored-entity-mapping
-     {:name all_token
+     {:abstraction_level token
+      :name all_token
       :description all_text
       :kill_chain_phases kill-chain-phase
       :x_mitre_data_sources token
