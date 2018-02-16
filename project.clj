@@ -40,9 +40,10 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/flanders "0.1.15"]
+                 [threatgrid/flanders "0.1.16-SNAPSHOT"]
                  [threatgrid/ctim "0.4.26"
-                  :exclusions [metosin/ring-swagger
+                  :exclusions [threatgrid/flanders
+                               metosin/ring-swagger
                                com.google.guava/guava]]
                  [threatgrid/clj-momo "0.2.20-SNAPSHOT"]
 
