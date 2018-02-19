@@ -300,20 +300,28 @@
     :delete (first results)
     :update (first entities)))
 
-(defn recast [orig-coll new-coll]
+(defn recast
+  "given a source collection and the target one,
+   cast target the same as source"
+  [orig-coll new-coll]
   (cond
     (vector? orig-coll) (vec new-coll)
     (set? orig-coll) (set new-coll)
     :else new-coll))
 
 (defn add-colls [& args]
+  "given many collections as argument
+   concat them keeping the first argument type"
   (let [new-coll
         (->> args
              (map #(or % []))
              (apply into))]
     (recast (first args) new-coll)))
 
-(defn remove-colls [& args]
+(defn remove-colls
+  "given many collections as argument
+   remove items on a from b successively"
+  [& args]
   (let [new-coll
         (reduce
          (fn [a b]
@@ -321,7 +329,10 @@
                    (or a []))) args)]
     (recast (first args) new-coll)))
 
-(defn replace-colls [& args]
+(defn replace-colls
+  "given many collections as argument
+   replace a from b successively"
+  [& args]
   (let [new-coll (last args)]
     (recast (first args) new-coll)))
 
@@ -394,7 +405,6 @@
              realize-fn
              update-fn
              entity-id
-             partial-entity
              identity
              entity
              long-id-fn
@@ -404,7 +414,6 @@
          :entity-type entity-type
          :entities [entity]
          :prev-entity prev-entity
-         :partial-entity partial-entity
          :identity identity
          :long-id-fn long-id-fn
          :realize-fn realize-fn

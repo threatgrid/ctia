@@ -113,69 +113,101 @@
               updated-scratchpad (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (= "patched scratchpad"
-                 (:title updated-scratchpad)))))
+                 (:title updated-scratchpad)))
 
+          (patch (str "ctia/scratchpad/" (:short-id scratchpad-id))
+                 :body {:title "scratchpad"}
+                 :headers {"Authorization" "45c1f5e3f05d0"})))
+      
       ;; -------- partial update operation tests ------------
 
       ;; observables
       (testing "POST /ctia/scratchpad/:id/observables :add"
         (let [new-observables [{:type "ip" :value "42.42.42.42"}]
+              expected-entity (update scratchpad :observables concat new-observables)
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
                              :body {:operation :add
                                     :observables new-observables}
                              :headers {"Authorization" "45c1f5e3f05d0"})
               updated-scratchpad (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (subset? (set new-observables)
-                       (set (:observables updated-scratchpad))))))
+          (is (deep= expected-entity updated-scratchpad))))
 
       (testing "POST /ctia/scratchpad/:id/observables :remove"
         (let [deleted-observables [{:value "85:28:cb:6a:21:41" :type "mac_address"}
                                    {:value "42.42.42.42" :type "ip"}]
+              expected-entity (update scratchpad :observables #(remove (set deleted-observables) %))
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
                              :body {:operation :remove
                                     :observables deleted-observables}
                              :headers {"Authorization" "45c1f5e3f05d0"})
               updated-scratchpad (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (not (subset? (set deleted-observables)
-                            (set (:observables updated-scratchpad)))))))
+          (is (deep= expected-entity
+                     updated-scratchpad))))
 
       (testing "POST /ctia/scratchpad/:id/observables :replace"
         (let [observables [{:value "42.42.42.42" :type "ip"}]
+              expected-entity (assoc scratchpad :observables observables)
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
                              :body {:operation :replace
                                     :observables observables}
                              :headers {"Authorization" "45c1f5e3f05d0"})
               updated-scratchpad (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= observables (:observables updated-scratchpad)))))
+          (is (deep= expected-entity
+                     updated-scratchpad))))
+
+      (testing "POST /ctia/scratchpad/:id/observables :replace"
+        (let [observables (:observables new-scratchpad-maximal)
+              expected-entity (assoc scratchpad :observables observables)
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
+                             :body {:operation :replace
+                                    :observables observables}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep= expected-entity
+                     updated-scratchpad))))
+
 
       ;; texts
       (testing "POST /ctia/scratchpad/:id/texts :add"
         (let [new-texts [{:type "some" :text "text"}]
+              expected-entity (update scratchpad :texts concat new-texts)
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
                              :body {:operation :add
                                     :texts new-texts}
                              :headers {"Authorization" "45c1f5e3f05d0"})
               updated-scratchpad (:parsed-body response)]
+
+
           (is (= 200 (:status response)))
-          (is (subset? (set new-texts)
-                       (set (:texts updated-scratchpad))))))
+          (is (deep= expected-entity updated-scratchpad))))
 
       (testing "POST /ctia/scratchpad/:id/texts :remove"
         (let [deleted-texts [{:type "some" :text "text"}]
+              expected-entity (update scratchpad :texts #(remove (set deleted-texts) %))
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
                              :body {:operation :remove
                                     :texts deleted-texts}
                              :headers {"Authorization" "45c1f5e3f05d0"})
               updated-scratchpad (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (not (subset? (set deleted-texts)
-                            (set (:texts updated-scratchpad)))))))
+          (is (deep= expected-entity updated-scratchpad))))
 
       (testing "POST /ctia/scratchpad/:id/texts :replace"
         (let [texts [{:type "text" :text "text"}]
+              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
+                             :body {:operation :replace
+                                    :texts texts}
+                             :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-scratchpad (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (= texts (:texts updated-scratchpad)))))
+
+      (testing "POST /ctia/scratchpad/:id/texts :replace"
+        (let [texts (:texts new-scratchpad-maximal)
               response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
                              :body {:operation :replace
                                     :texts texts}
@@ -198,6 +230,8 @@
               updated-scratchpad (:parsed-body response)]
 
           (is (= 200 (:status response)))
+          (is (not= (:malwares updated-scratchpad)
+                    (:malwares new-bundle-entities)))
           (is (subset? (set (:malwares new-bundle-entities))
                        (set (-> updated-scratchpad :bundle :malwares))))))
 
@@ -213,6 +247,8 @@
                              :headers {"Authorization" "45c1f5e3f05d0"})
               updated-scratchpad (:parsed-body response)]
           (is (= 200 (:status response)))
+          (is (deep= (update scratchpad :bundle dissoc :malwares)
+                     (update updated-scratchpad :bundle dissoc :malwares)))
           (is (not (subset? (set (:malwares deleted-bundle-entities))
                             (set (-> updated-scratchpad :bundle :malwares)))))))
 
@@ -228,6 +264,8 @@
                              :headers {"Authorization" "45c1f5e3f05d0"})
               updated-scratchpad (:parsed-body response)]
           (is (= 200 (:status response)))
+          (is (deep= (update scratchpad :bundle dissoc :malwares)
+                     (update updated-scratchpad :bundle dissoc :malwares)))
           (is (= (:malwares bundle-entities)
                  (-> updated-scratchpad :bundle :malwares)))))
 
