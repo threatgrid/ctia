@@ -6,7 +6,7 @@
             [ctia.properties :refer [properties]]
             [ctia.schemas.bulk :refer [Bulk]]
             [ctia.schemas.core :refer [NewBundle TempIDs]]
-            [ctia.store :refer :all]
+            [ctia.store :refer [list-fn read-store]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
             [schema-tools.core :as st]
@@ -14,7 +14,8 @@
             [clojure.string :as str]
             [clojure.set :as set]
             [clojure.tools.logging :as log]
-            [ctia.domain.entities :as ent]
+            [ctia.domain.entities :as ent
+             :refer [with-long-id-fn]]
             [clojure.string :as string]))
 
 (s/defschema EntityImportResult
@@ -40,25 +41,6 @@
 
 (s/defschema BundleImportResult
   {:results [EntityImportResult]})
-
-(defn list-fn
-  "Returns the list function for a given entity type"
-  [entity-type]
-  (case entity-type
-    :actor          list-actors
-    :attack-pattern list-attack-patterns
-    :campaign       list-campaigns
-    :coa            list-coas
-    :data-table     list-data-tables
-    :exploit-target list-exploit-targets
-    :feedback       list-feedback
-    :incident       list-incidents
-    :indicator      list-indicators
-    :judgement      list-judgements
-    :malware        list-malwares
-    :relationship   list-relationships
-    :sighting       list-sightings
-    :tool           list-tools))
 
 (defn transient-id?
   [id]
@@ -202,7 +184,7 @@
    entity-type
    find-by-external-id]
   (if-let [old-entities (find-by-external-id external_id)]
-    (let [with-long-id-fn (bulk/with-long-id-fn entity-type)
+    (let [with-long-id-fn (with-long-id-fn entity-type)
           old-entity (some-> old-entities
                              first
                              :entity

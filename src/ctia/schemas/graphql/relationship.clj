@@ -14,10 +14,13 @@
    [ctia.schemas.sorting :as sort-fields]
    [ctim.domain.id :as id]
    [ctim.schemas
+    [attack-pattern :as ctim-ap]
     [indicator :as ctim-ind]
     [judgement :as ctim-j]
+    [malware :as ctim-malw]
     [relationship :as ctim-rel]
     [sighting :as ctim-sig]
+    [tool :as ctim-tool]
     [vocabularies :as ctim-voc]]
    [schema.core :as s])
   (:import graphql.Scalars))
@@ -27,7 +30,10 @@
                :description "The related Judgement"
                :resolve (fn [context _ field-selection src]
                           (when-let [id (:judgement_id src)]
-                            (res/judgement-by-id id (:ident context) field-selection)))}})
+                            (res/entity-by-id :judgement
+                                              id
+                                              (:ident context)
+                                              field-selection)))}})
 
 (def RelatedJudgement
   (let [{:keys [fields name description]}
@@ -35,12 +41,13 @@
     (g/new-object name description [] (into fields
                                             related-judgement-fields))))
 
-(s/defn ref->entity-type :- s/Str
+(s/defn ref->entity-type :- s/Keyword
   "Extracts the entity type from the Reference"
   [ref :- s/Str]
   (some-> ref
           id/long-id->id
-          :type))
+          :type
+          keyword))
 
 (def Entity
   (g/new-union
@@ -49,12 +56,18 @@
    (fn [obj args schema]
      (log/debug "Entity resolution" obj args)
      (condp = (:type obj)
+       ctim-ap/type-identifier (g/get-type schema refs/attack-pattern-type-name)
        ctim-j/type-identifier (g/get-type schema refs/judgement-type-name)
+       ctim-malw/type-identifier (g/get-type schema refs/malware-type-name)
        ctim-ind/type-identifier (g/get-type schema refs/indicator-type-name)
-       ctim-sig/type-identifier (g/get-type schema refs/sighting-type-name)))
-   [refs/JudgementRef
+       ctim-sig/type-identifier (g/get-type schema refs/sighting-type-name)
+       ctim-tool/type-identifier (g/get-type schema refs/tool-type-name)))
+   [refs/AttackPatternRef
+    refs/JudgementRef
+    refs/MalwareRef
     refs/IndicatorRef
-    refs/SightingRef]))
+    refs/SightingRef
+    refs/ToolRef]))
 
 (def relation-fields
   (merge

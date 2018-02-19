@@ -13,7 +13,10 @@
                :description "The confidence with which the judgement was made."
                :resolve (fn [context _ field-selection src]
                           (when-let [id (:judgement_id src)]
-                            (resolvers/judgement-by-id id (:ident context) field-selection)))}})
+                            (resolvers/entity-by-id :judgement
+                                                    id
+                                                    (:ident context)
+                                                    field-selection)))}})
 
 (def VerdictType
   (let [{:keys [fields name description]}
