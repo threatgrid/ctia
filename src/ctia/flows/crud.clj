@@ -315,7 +315,7 @@
   (let [new-coll
         (->> args
              (map #(or % []))
-             (apply into))]
+             (reduce into))]
     (recast (first args) new-coll)))
 
 (defn remove-colls

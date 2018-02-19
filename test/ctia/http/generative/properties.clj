@@ -143,6 +143,7 @@
   (api-for-route 'tool
                  (spec-gen "max-new-tool")))
 
+;; TODO: uncomment that when we figure out why generative tests fail on data-table
 #_(def api-for-scratchpad-routes
     (api-for-route 'scratchpad
                    (spec-gen "max-new-scratchpad")))
