@@ -75,6 +75,9 @@
                          :short_description
                          :created_at])))
 
+(def scratchpad-sort-fields
+  (apply s/enum sorting/scratchpad-sort-fields))
+
 ;; Paging related values and code
 
 (s/defschema PagingParams
@@ -397,6 +400,28 @@
 (s/defschema RelationshipByExternalIdQueryParams
   (st/merge PagingParams
             RelationshipFieldsParam))
+
+;; scratchpad
+
+(s/defschema ScratchpadFieldsParam
+  {(s/optional-key :fields) [scratchpad-sort-fields]})
+
+(s/defschema ScratchpadSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   ScratchpadFieldsParam
+   {:query s/Str
+    (s/optional-key :texts.text) s/Str
+    (s/optional-key :sort_by) scratchpad-sort-fields}))
+
+(def ScratchpadGetParams ScratchpadFieldsParam)
+
+(s/defschema ScratchpadByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   ScratchpadFieldsParam))
 
 ;; sighting
 

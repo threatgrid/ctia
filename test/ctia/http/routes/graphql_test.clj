@@ -1,21 +1,15 @@
 (ns ctia.http.routes.graphql-test
-  (:require [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
+  (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
-            [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show]]
             [ctia.schemas.sorting :as sort-fields]
+            [ctim.examples.scratchpads
+             :refer [new-scratchpad-maximal]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
              [fake-whoami-service :as whoami-helpers]
              [graphql :as gh]
-             [search :refer [test-query-string-search]]
-             [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]
-            [clojure.java.io :as io]
-            [clojure.walk :as walk]))
+             [store :refer [deftest-for-each-store]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -25,9 +19,9 @@
 
 (def judgement-1
   {"observable" {"value" "1.2.3.4"
-                "type" "ip"}
+                 "type" "ip"}
    "external_ids" ["http://ex.tld/ctia/judgement/judgement-123"
-                  "http://ex.tld/ctia/judgement/judgement-456"]
+                   "http://ex.tld/ctia/judgement/judgement-456"]
    "disposition" 2
    "disposition_name" "Malicious"
    "tlp" "green"
@@ -43,7 +37,7 @@
 
 (def judgement-2
   {"observable" {"value" "1.2.3.4"
-                "type" "ip"}
+                 "type" "ip"}
    "external_ids" ["http://ex.tld/ctia/judgement/judgement-789"]
    "disposition" 2
    "disposition_name" "Malicious"
@@ -141,6 +135,15 @@
                  "relation" "Hosted_By",
                  "source" {"type" "url", "value" "http://alegroup.info/"},
                  "related" {"type" "ip", "value" "194.87.217.87"}}]})
+(def scratchpad-1
+  (-> new-scratchpad-maximal
+      (assoc :title "foo")
+      (dissoc :id)))
+
+(def scratchpad-2
+  (-> new-scratchpad-maximal
+      (assoc :title "bar")
+      (dissoc :id)))
 
 (defn feedback-1 [entity_id]
   {:feedback -1
@@ -161,6 +164,8 @@
         j1  (gh/create-object "judgement" judgement-1)
         j2  (gh/create-object "judgement" judgement-2)
         j3  (gh/create-object "judgement" judgement-3)
+        sc1 (gh/create-object "scratchpad" scratchpad-1)
+        sc2 (gh/create-object "scratchpad" scratchpad-2)
         s1  (gh/create-object "sighting" sighting-1)
         s2  (gh/create-object "sighting" sighting-2)]
     (gh/create-object "feedback" (feedback-1 (:id i1)))
@@ -209,6 +214,8 @@
      :judgement-1 j1
      :judgement-2 j2
      :judgement-3 j3
+     :scratchpad-1 sc1
+     :scratchpad-2 sc2
      :sighting-1 s1
      :sighting-2 s2}))
 
@@ -224,6 +231,8 @@
         indicator-3-id (get-in datamap [:indicator-3 :id])
         investigation-1-id (get-in datamap [:investigation-1 :id])
         investigation-2-id (get-in datamap [:investigation-2 :id])
+        scratchpad-1-id (get-in datamap [:scratchpad-1 :id])
+        scratchpad-2-id (get-in datamap [:scratchpad-2 :id])
         judgement-1-id (get-in datamap [:judgement-1 :id])
         judgement-2-id (get-in datamap [:judgement-2 :id])
         judgement-3-id (get-in datamap [:judgement-3 :id])
@@ -501,7 +510,52 @@
             (is (= [(:investigation-1 datamap)]
                    (get-in data [:investigations :nodes]))
                 "The investigation matches the search query"))))
+                                        ;-----------------------
 
+      (testing "scratchpad query"
+        (let [{:keys [data errors status]}
+              (gh/query graphql-queries
+                        {:id scratchpad-1-id}
+                        "ScratchpadQueryTest")]
+
+          (is (= 200 status))
+          (is (empty? errors) "No errors")
+
+          (testing "the scratchpad"
+            (is (= (dissoc (:scratchpad-1 datamap) :bundle :texts)
+                   (:scratchpad data))))))
+
+      (testing "scratchpads query"
+        (testing "scratchpads connection"
+          (gh/connection-test "ScratchpadsQueryTest"
+                              graphql-queries
+                              {"query" "*"}
+                              [:scratchpads]
+                              [(dissoc (:scratchpad-1 datamap) :bundle :texts)
+                               (dissoc (:scratchpad-2 datamap) :bundle :texts)])
+
+          (testing "sorting"
+            (gh/connection-sort-test
+             "ScratchpadsQueryTest"
+             graphql-queries
+             {:query "*"}
+             [:scratchpads]
+             sort-fields/scratchpad-sort-fields)))
+
+        (testing "query argument"
+          (let [{:keys [data errors status]}
+                (gh/query graphql-queries
+                          {:query "title:\"foo\""}
+                          "ScratchpadsQueryTest")]
+            (is (= 200 status))
+            (is (empty? errors) "No errors")
+            (is (= 1 (get-in data [:scratchpads :totalCount]))
+                "Only one scratchpad matches to the query")
+            (is (= [(dissoc (:scratchpad-1 datamap) :bundle :texts)]
+                   (get-in data [:scratchpads :nodes]))
+                "The scratchpad matches the search query"))))
+
+                                        ;---------------------------
       (testing "sighting query"
         (let [{:keys [data errors status]}
               (gh/query graphql-queries

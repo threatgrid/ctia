@@ -17,6 +17,7 @@
     [judgement :as js]
     [malware :as malware]
     [relationship :as rels]
+    [scratchpad :as scr]
     [sighting :as ss]
     [tool :as tool]
     [verdict :as vs]
@@ -382,7 +383,7 @@
             ACLStoredEntity
             {sc/Keyword sc/Any}))
 
-;; relationship
+;; Relationship
 
 
 (def-acl-schema Relationship
@@ -407,6 +408,7 @@
 (def-stored-schema PartialStoredRelationship
   (fu/optionalize-all rels/StoredRelationship)
   "partial-stored-relationship")
+
 
 ;; Attack Pattern
 
@@ -494,6 +496,58 @@
   bundle/Bundle
   "bundle")
 
+
+;; Scratchpad
+
+
+(def-acl-schema Scratchpad
+  (fu/replace-either-with-any
+   scr/Scratchpad)
+  "scratchpad")
+
+(def-acl-schema PartialScratchpad
+  (fu/replace-either-with-any
+   (fu/optionalize-all scr/Scratchpad))
+  "partial-scratchpad")
+
+(sc/defschema PartialScratchpadList
+  [PartialScratchpad])
+
+(def-acl-schema NewScratchpad
+  (fu/replace-either-with-any
+   scr/NewScratchpad)
+  "new-scratchpad")
+
+(def-acl-schema PartialNewScratchpad
+  (fu/replace-either-with-any
+   (fu/optionalize-all scr/NewScratchpad))
+  "new-scratchpad")
+
+(def-stored-schema StoredScratchpad
+  (fu/replace-either-with-any
+   scr/StoredScratchpad)
+  "stored-scratchpad")
+
+(def-stored-schema PartialStoredScratchpad
+  (fu/replace-either-with-any
+   (fu/optionalize-all scr/StoredScratchpad))
+  "partial-stored-scratchpad")
+
+(sc/defschema ScratchpadObservablesUpdate
+  (st/merge
+   {:operation (sc/enum :add :remove :replace)}
+   (st/select-keys Scratchpad [:observables])))
+
+(sc/defschema ScratchpadTextsUpdate
+  (st/merge
+   {:operation (sc/enum :add :remove :replace)}
+   (st/select-keys Scratchpad [:texts])))
+
+(sc/defschema ScratchpadBundleUpdate
+  {:operation (sc/enum :add :remove :replace)
+   :bundle (st/optional-keys Bundle)})
+
+
 ;; common
 
 (sc/defschema TLP
@@ -545,4 +599,6 @@
    :malware StoredMalware
    :relationship StoredRelationship
    :sighting StoredSighting
-   :tool StoredTool})
+   :tool StoredTool
+   :investigation StoredInvestigation
+   :scratchpad StoredScratchpad})

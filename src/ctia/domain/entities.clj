@@ -37,6 +37,8 @@
             StoredJudgement
             NewMalware
             StoredMalware
+            NewScratchpad
+            StoredScratchpad
             NewSighting
             StoredSighting
             NewTool
@@ -128,6 +130,9 @@
 
 (def realize-investigation
   (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
+
+(def realize-scratchpad
+  (default-realize-fn "scratchpad" NewScratchpad StoredScratchpad))
 
 (s/defn realize-relationship :- StoredRelationship
   [{:keys [source_ref target_ref]

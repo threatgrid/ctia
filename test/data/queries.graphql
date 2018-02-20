@@ -271,6 +271,49 @@ fragment investigationFields on Investigation {
   source
 }
 
+query ScratchpadQueryTest($id: String!) {
+  scratchpad(id: $id) {
+    ...scratchpadFields
+  }
+}
+
+query ScratchpadsQueryTest($query: String, $after: String, $first: Int, $sort_field:ScratchpadOrderField = ID, $sort_direction: OrderDirection = asc) {
+  scratchpads(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...scratchpadFields
+    }
+    edges {
+      node {
+        ...scratchpadFields
+      }
+    }
+  }
+}
+
+fragment scratchpadFields on Scratchpad {
+  id
+  type
+  schema_version
+  revision
+  external_ids
+  timestamp
+  language
+  title
+  description
+  short_description
+  tlp
+  source
+  source_uri
+  observables {
+    ...observableBaseFields
+  }
+}
+
+
 fragment relationshipBaseFields on Relationship {
   relationship_type
   target_ref

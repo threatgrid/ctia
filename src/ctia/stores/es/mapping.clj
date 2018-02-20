@@ -550,7 +550,8 @@
      base-entity-mapping
      sourcable-entity-mapping
      stored-entity-mapping
-     {:name all_token
+     {:abstraction_level token
+      :name all_token
       :description all_text
       :kill_chain_phases kill-chain-phase
       :x_mitre_data_sources token
@@ -571,6 +572,23 @@
       :labels token
       :kill_chain_phases kill-chain-phase
       :x_mitre_aliases token})}})
+
+(def texts
+  {:properties {:type token
+                :text text}})
+
+(def scratchpad-mapping
+  {"scratchpad"
+   {:dynamic false
+    :properties
+    (merge
+     base-entity-mapping
+     describable-entity-mapping
+     sourcable-entity-mapping
+     stored-entity-mapping
+     {:observables observable
+      :bundle {:enabled false}
+      :texts texts})}})
 
 (def tool-mapping
   {"tool"
@@ -665,4 +683,5 @@
    :malware malware-mapping
    :tool tool-mapping
    :event event-mapping
-   :investigation investigation-mapping})
+   :investigation investigation-mapping
+   :scratchpad scratchpad-mapping})

@@ -1,7 +1,7 @@
 (ns ctia.http.routes.coa-test
   (:refer-clojure :exclude [get])
   (:require [ctim.examples.coas
-             :refer [new-coa-maximal]]
+             :refer [new-coa-minimal new-coa-maximal]]
             [ctia.schemas.sorting
              :refer [coa-sort-fields]]
             [clj-momo.test-helpers.core :as mth]
@@ -12,7 +12,6 @@
             [ctia.domain.entities :refer [schema-version]]
             [ctia.properties :refer [get-http-show]]
             [ctim.domain.id :as id]
-            [ctim.examples.coas :as ex]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
              [http :refer [doc-id->rel-url]]
@@ -42,52 +41,13 @@
     (let [{status :status
            coa :parsed-body}
           (post "ctia/coa"
-                :body {:external_ids ["http://ex.tld/ctia/coa/coa-123"
-                                      "http://ex.tld/ctia/coa/coa-456"]
-                       :title "coa"
-                       :description "description"
-                       :coa_type "Eradication"
-                       :objective ["foo" "bar"]
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                       :structured_coa_type "openc2"
-                       :open_c2_coa {:type "structured_coa"
-                                     :id "openc2_coa_1"
-                                     :action {:type "deny"}
-                                     :target {:type "cybox:Network_Connection"
-                                              :specifiers "10.10.1.0"}
-                                     :actuator {:type "network"
-                                                :specifiers ["router"]}
-                                     :modifiers {:method ["acl"]
-                                                 :location "perimeter"}}}
+                :body (dissoc new-coa-maximal :id)
                 :headers {"Authorization" "45c1f5e3f05d0"})
 
           coa-id (id/long-id->id (:id coa))
           coa-external-ids (:external_ids coa)]
       (is (= 201 status))
-      (is (deep=
-           {:id (id/long-id coa-id)
-            :external_ids ["http://ex.tld/ctia/coa/coa-123"
-                           "http://ex.tld/ctia/coa/coa-456"]
-            :type "coa"
-            :title "coa"
-            :description "description"
-            :tlp "green"
-            :schema_version schema-version
-            :coa_type "Eradication"
-            :objective ["foo" "bar"]
-            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :structured_coa_type "openc2"
-            :open_c2_coa {:type "structured_coa"
-                          :id "openc2_coa_1"
-                          :action {:type "deny"}
-                          :target {:type "cybox:Network_Connection"
-                                   :specifiers "10.10.1.0"}
-                          :actuator {:type "network"
-                                     :specifiers ["router"]}
-                          :modifiers {:method ["acl"]
-                                      :location "perimeter"}}}
-           coa))
+      (is (deep= (assoc new-coa-maximal :id (id/long-id coa-id)) coa))
 
       (testing "the coa ID has correct fields"
         (let [show-props (get-http-show)]
@@ -102,28 +62,7 @@
               coas (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:id (id/long-id coa-id)
-                 :external_ids ["http://ex.tld/ctia/coa/coa-123"
-                                "http://ex.tld/ctia/coa/coa-456"]
-                 :type "coa"
-                 :title "coa"
-                 :description "description"
-                 :tlp "green"
-                 :schema_version schema-version
-                 :coa_type "Eradication"
-                 :objective ["foo" "bar"]
-                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                 :structured_coa_type "openc2"
-                 :open_c2_coa {:type "structured_coa"
-                               :id "openc2_coa_1"
-                               :action {:type "deny"}
-                               :target {:type "cybox:Network_Connection"
-                                        :specifiers "10.10.1.0"}
-                               :actuator {:type "network"
-                                          :specifiers ["router"]}
-                               :modifiers {:method ["acl"]
-                                           :location "perimeter"}}}]
+               [(assoc new-coa-maximal :id (id/long-id coa-id))]
                coas))))
 
       (testing "GET /ctia/coa/:id"
@@ -132,104 +71,31 @@
               coa (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:id (id/long-id coa-id)
-                :external_ids ["http://ex.tld/ctia/coa/coa-123"
-                               "http://ex.tld/ctia/coa/coa-456"]
-                :type "coa"
-                :title "coa"
-                :description "description"
-                :tlp "green"
-                :schema_version schema-version
-                :coa_type "Eradication"
-                :objective ["foo" "bar"]
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :structured_coa_type "openc2"
-                :open_c2_coa {:type "structured_coa"
-                              :id "openc2_coa_1"
-                              :action {:type "deny"}
-                              :target {:type "cybox:Network_Connection"
-                                       :specifiers "10.10.1.0"}
-                              :actuator {:type "network"
-                                         :specifiers ["router"]}
-                              :modifiers {:method ["acl"]
-                                          :location "perimeter"}}}
+               (assoc new-coa-maximal :id (id/long-id coa-id))
                coa))))
 
       (test-query-string-search :coa "description" :description)
 
       (testing "PUT /ctia/coa/:id"
-        (let [{updated-coa :parsed-body
+        (let [with-updates (assoc coa
+                                  :title "updated coa"
+                                  :description "updated description")
+              {updated-coa :parsed-body
                status :status}
               (put (str "ctia/coa/" (:short-id coa-id))
-                   :body {:external_ids ["http://ex.tld/ctia/coa/coa-123"
-                                         "http://ex.tld/ctia/coa/coa-456"]
-                          :title "updated coa"
-                          :description "updated description"
-                          :tlp "white"
-                          :coa_type "Hardening"
-                          :objective ["foo" "bar"]
-                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                          :structured_coa_type "openc2"
-                          :open_c2_coa {:type "structured_coa"
-                                        :id "openc2_coa_1"
-                                        :action {:type "allow"}
-                                        :target {:type "cybox:Network_Connection"
-                                                 :specifiers "10.10.1.0"}
-                                        :actuator {:type "network"
-                                                   :specifiers ["router"]}
-                                        :modifiers {:method ["acl"]
-                                                    :location "perimeter"}}}
+                   :body with-updates
                    :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 200 status))
-          (is (deep=
-               {:id (id/long-id coa-id)
-                :external_ids ["http://ex.tld/ctia/coa/coa-123"
-                               "http://ex.tld/ctia/coa/coa-456"]
-                :type "coa"
-                :title "updated coa"
-                :description "updated description"
-                :tlp "white"
-                :schema_version schema-version
-                :coa_type "Hardening"
-                :objective ["foo" "bar"]
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :structured_coa_type "openc2"
-                :open_c2_coa {:type "structured_coa"
-                              :id "openc2_coa_1"
-                              :action {:type "allow"}
-                              :target {:type "cybox:Network_Connection"
-                                       :specifiers "10.10.1.0"}
-                              :actuator {:type "network"
-                                         :specifiers ["router"]}
-                              :modifiers {:method ["acl"]
-                                          :location "perimeter"}}}
-               updated-coa))))
+          (is (deep= with-updates updated-coa))))
 
       (testing "PUT invalid /ctia/coa/:id"
         (let [{status :status
                body :body}
               (put (str "ctia/coa/" (:short-id coa-id))
-                   :body {:external_ids ["http://ex.tld/ctia/coa/coa-123"
-                                         "http://ex.tld/ctia/coa/coa-456"]
-                          ;; This field has an invalid length
-                          :title (apply str (repeatedly 1025 (constantly \0)))
-                          :description "updated description"
-                          :tlp "white"
-                          :coa_type "Hardening"
-                          :objective ["foo" "bar"]
-                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                          :structured_coa_type "openc2"
-                          :open_c2_coa {:type "structured_coa"
-                                        :id "openc2_coa_1"
-                                        :action {:type "allow"}
-                                        :target {:type "cybox:Network_Connection"
-                                                 :specifiers "10.10.1.0"}
-                                        :actuator {:type "network"
-                                                   :specifiers ["router"]}
-                                        :modifiers {:method ["acl"]
-                                                    :location "perimeter"}}}
+                   ;; use an invalid length
+                   :body (assoc coa
+                                :title (clojure.string/join
+                                        (repeatedly 1025 (constantly \0))))
                    :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= status 400))
           (is (re-find #"error.*in.*title" (str/lower-case body)))))
@@ -246,9 +112,10 @@
     (let [{status :status
            body :body}
           (post "ctia/coa"
-                :body (assoc ex/new-coa-minimal
-                             ;; This field has an invalid length
-                             :title (clojure.string/join (repeatedly 1025 (constantly \0))))
+                ;; This field has an invalid length
+                :body (assoc new-coa-minimal
+                             :title (clojure.string/join
+                                     (repeatedly 1025 (constantly \0))))
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
@@ -283,6 +150,6 @@
 
 (deftest-for-each-store test-coa-routes-access-control
   (access-control-test "coa"
-                       ex/new-coa-minimal
+                       new-coa-minimal
                        true
                        true))

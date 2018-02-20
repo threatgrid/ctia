@@ -40,10 +40,15 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/ctim "0.4.25"
-                  :exclusions [metosin/ring-swagger
+                 [threatgrid/flanders "0.1.16"
+                  :exclusions [prismatic/plumbing
+                               potemkin
+                               com.andrewmcveigh/cljs-time]]
+                 [threatgrid/ctim "0.4.26"
+                  :exclusions [threatgrid/flanders
+                               metosin/ring-swagger
                                com.google.guava/guava]]
-                 [threatgrid/clj-momo "0.2.19"]
+                 [threatgrid/clj-momo "0.2.20"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version

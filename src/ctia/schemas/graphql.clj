@@ -8,6 +8,9 @@
              [investigation :as investigation
               :refer [InvestigationType
                       InvestigationConnectionType]]
+             [scratchpad :as scratchpad
+              :refer [ScratchpadType
+                      ScratchpadConnectionType]]
              [judgement :as judgement
               :refer [JudgementType
                       JudgementConnectionType]]
@@ -62,6 +65,18 @@
                                   investigation/investigation-order-arg
                                   p/connection-arguments)
                      :resolve res/search-investigations}
+    :scratchpad {:type ScratchpadType
+                 :args search-by-id-args
+                 :resolve (fn [context args field-selection _] (res/scratchpad-by-id
+                                                                (:id args)
+                                                                (:ident context)
+                                                                field-selection))}
+    :scratchpads {:type ScratchpadConnectionType
+                  :args (merge common/lucene-query-arguments
+                               scratchpad/scratchpad-order-arg
+                               p/connection-arguments)
+                  :resolve res/search-scratchpads}
+
     :judgement {:type JudgementType
                 :args search-by-id-args
                 :resolve (fn [context args field-selection _]

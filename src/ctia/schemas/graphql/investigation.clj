@@ -1,17 +1,19 @@
 (ns ctia.schemas.graphql.investigation
-  (:require [ctia.schemas.graphql
-             [flanders :as flanders]
-             [helpers :as g]
-             [pagination :as pagination]
-             [refs :as refs]
-             [sorting :as sorting]]
-            [ctia.schemas.sorting :as sort-fields]
-            [ctim.schemas.investigation :as ctim-investigation]))
+  (:require
+   [flanders.utils :as fu]
+   [ctia.schemas.graphql
+    [flanders :as flanders]
+    [helpers :as g]
+    [pagination :as pagination]
+    [refs :as refs]
+    [sorting :as sorting]]
+   [ctia.schemas.sorting :as sort-fields]
+   [ctim.schemas.investigation :as ctim-investigation]))
 
 (def InvestigationType
   (let [{:keys [fields name description]}
         (flanders/->graphql
-         ctim-investigation/Investigation
+         (fu/optionalize-all ctim-investigation/Investigation)
          {})]
     (g/new-object
      name

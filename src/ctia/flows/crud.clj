@@ -1,25 +1,27 @@
 (ns ctia.flows.crud
   "This namespace handle all necessary flows for creating, updating
   and deleting entities."
-  (:import java.util.UUID)
-  (:require
-   [ctia.domain.access-control
-    :refer [allowed-tlps
-            allowed-tlp?]]
-   [clojure.spec.alpha :as cs]
-   [clojure.tools.logging :as log]
-   [ctia.auth :as auth]
-   [ctia.flows.hooks :as h]
-   [ctia.properties :refer [properties]]
-   [ctia.schemas.core :refer [TempIDs]]
-   [ctia.store :as store]
-   [ctim.events.obj-to-event :refer [to-create-event
-                                     to-update-event
-                                     to-delete-event]]
-   [ctim.domain.id :as id]
-   [ring.util.http-response :as http-response]
-   [schema.core :as s]
-   [clojure.set :as set]))
+  (:require [clj-momo.lib.map :refer [deep-merge-with]]
+            [clojure.spec.alpha :as cs]
+            [clojure.tools.logging :as log]
+            [ctia
+             [auth :as auth]
+             [properties :refer [properties]]
+             [store :as store]]
+            [ctia.domain
+             [access-control :refer [allowed-tlp? allowed-tlps]]
+             [entities :refer [un-store]]]
+            [ctia.flows.hooks :as h]
+            [ctia.schemas.core :refer [TempIDs]]
+            [ctim.domain.id :as id]
+            [ctim.events.obj-to-event
+             :refer
+             [to-create-event
+              to-delete-event
+              to-update-event]]
+            [ring.util.http-response :as http-response]
+            [schema.core :as s])
+  (:import java.util.UUID))
 
 (s/defschema FlowMap
   {:create-event-fn (s/pred fn?)
@@ -30,6 +32,8 @@
    :identity (s/protocol auth/IIdentity)
    (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
+   (s/optional-key :partial-entity) (s/maybe {s/Keyword s/Any})
+   (s/optional-key :patch-operation) (s/enum :add :remove :replace)
    (s/optional-key :realize-fn) (s/pred fn?)
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
@@ -296,6 +300,60 @@
     :delete (first results)
     :update (first entities)))
 
+(defn recast
+  "given a source collection and the target one,
+   cast target the same as source"
+  [orig-coll new-coll]
+  (cond
+    (vector? orig-coll) (vec new-coll)
+    (set? orig-coll) (set new-coll)
+    :else new-coll))
+
+(defn add-colls [& args]
+  "given many collections as argument
+   concat them keeping the first argument type"
+  (let [new-coll
+        (->> args
+             (map #(or % []))
+             (reduce into))]
+    (recast (first args) new-coll)))
+
+(defn remove-colls
+  "given many collections as argument
+   remove items on a from b successively"
+  [& args]
+  (let [new-coll
+        (reduce
+         (fn [a b]
+           (remove (or (set b) #{})
+                   (or a []))) args)]
+    (recast (first args) new-coll)))
+
+(defn replace-colls
+  "given many collections as argument
+   replace a from b successively"
+  [& args]
+  (let [new-coll (last args)]
+    (recast (first args) new-coll)))
+
+(s/defn patch-entities :- FlowMap
+  [{:keys [prev-entity
+           partial-entity
+           patch-operation]
+    :as fm} :- FlowMap]
+
+  (let [patch-fn (case patch-operation
+                   :add add-colls
+                   :remove remove-colls
+                   :replace replace-colls
+                   replace-colls)
+        entity (-> (deep-merge-with patch-fn
+                                    prev-entity
+                                    partial-entity)
+                   un-store
+                   (dissoc :id))]
+    (assoc fm :entities [entity])))
+
 (defn create-flow
   "This function centralizes the create workflow.
   It is helpful to easily add new hooks name
@@ -362,6 +420,47 @@
          :spec spec
          :store-fn update-fn
          :create-event-fn to-update-event}
+        validate-entities
+        realize-entities
+        apply-before-hooks
+        apply-store-fn
+        apply-long-id-fn
+        create-events
+        write-events
+        apply-event-hooks
+        apply-after-hooks
+        make-result)))
+
+(defn patch-flow
+  "This function centralizes the patch workflow.
+  It is helpful to easily add new hooks name
+  To be noted:
+    - `:before-update` hooks can modify the entity stored.
+    - `:after-update` hooks are read only"
+  [& {:keys [entity-type
+             get-fn
+             realize-fn
+             update-fn
+             entity-id
+             identity
+             patch-operation
+             partial-entity
+             long-id-fn
+             spec]}]
+  (let [prev-entity (get-fn entity-id)]
+    (-> {:flow-type :update
+         :entity-type entity-type
+         :entities []
+         :prev-entity prev-entity
+         :partial-entity partial-entity
+         :patch-operation patch-operation
+         :identity identity
+         :long-id-fn long-id-fn
+         :realize-fn realize-fn
+         :spec spec
+         :store-fn update-fn
+         :create-event-fn to-update-event}
+        patch-entities
         validate-entities
         realize-entities
         apply-before-hooks

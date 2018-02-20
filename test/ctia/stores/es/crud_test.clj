@@ -2,6 +2,8 @@
   (:require [ctia.stores.es.crud :as sut]
             [clojure.test :as t :refer [is testing deftest]]))
 
+
+
 (deftest partial-results-test
   (is (= {:data [{:error "Exception"}
                  {:id "124"}]}
