@@ -1,6 +1,7 @@
 (ns ctia.http.routes.relationship-test
   (:refer-clojure :exclude [get])
   (:require
+   [clojure.string :as str]
    [ctim.examples.relationships
     :refer [new-relationship-maximal
             new-relationship-minimal]]
@@ -17,12 +18,14 @@
     [search :refer [test-query-string-search]]
     [access-control :refer [access-control-test]]
     [auth :refer [all-capabilities]]
-    [core :as helpers :refer [delete get post]]
+    [core :as helpers :refer [delete get post put]]
     [fake-whoami-service :as whoami-helpers]
     [pagination :refer [pagination-test]]
     [field-selection :refer [field-selection-tests]]
     [store :refer [deftest-for-each-store]]]
-   [ctim.domain.id :as id]))
+   [ctim.domain.id :as id]
+   [ctim.examples.relationships :refer [new-relationship-minimal
+                                        new-relationship-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -38,24 +41,18 @@
                                       "user")
 
   (testing "POST /cita/relationship"
-    (let [{status :status
+    (let [new-relationship (-> new-relationship-maximal
+                               (assoc
+                                :source_ref "http://example.com/"
+                                :target_ref "http://example.com/"
+                                :external_ids
+                                ["http://ex.tld/ctia/relationship/relationship-123"
+                                 "http://ex.tld/ctia/relationship/relationship-456"])
+                               (dissoc :id))
+          {status :status
            {error :error} :parsed-body}
           (post "ctia/relationship"
-                :body {:external_ids ["http://ex.tld/ctia/relationship/relationship-123"
-                                      "http://ex.tld/ctia/relationship/relationship-456"]
-                       :type "relationship"
-                       :title "title"
-                       :description "description"
-                       :short_description "short desc"
-                       :revision 1
-                       :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                       :language "language"
-                       :tlp "green"
-                       :source "source"
-                       :source_uri "http://example.com"
-                       :relationship_type "anything"
-                       :source_ref "http://example.com/"
-                       :target_ref "http://example.com/"}
+                :body new-relationship
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= 400 status)))))
 
@@ -67,52 +64,28 @@
                                       "user")
 
   (testing "POST /ctia/relationship"
-    (let [{status :status
+    (let [new-relationship
+          (-> new-relationship-maximal
+              (assoc
+               :source_ref (str "http://example.com/ctia/judgement/judgement-"
+                                "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
+               :target_ref (str "http://example.com/ctia/indicator/indicator-"
+                                "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")
+               :external_ids
+               ["http://ex.tld/ctia/relationship/relationship-123"
+                "http://ex.tld/ctia/relationship/relationship-456"])
+              (dissoc :id))
+          {status :status
            relationship :parsed-body}
           (post "ctia/relationship"
-                :body
-                {:external_ids ["http://ex.tld/ctia/relationship/relationship-123"
-                                "http://ex.tld/ctia/relationship/relationship-456"]
-                 :type "relationship"
-                 :title "title"
-                 :description "description"
-                 :short_description "short desc"
-                 :revision 1
-                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                 :language "language"
-                 :tlp "green"
-                 :source "source"
-                 :source_uri "http://example.com"
-                 :relationship_type "based-on"
-                 :source_ref (str "http://example.com/ctia/judgement/judgement-"
-                                  "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
-                 :target_ref (str "http://example.com/ctia/indicator/indicator-"
-                                  "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
+                :body new-relationship
                 :headers {"Authorization" "45c1f5e3f05d0"})
           relationship-id (id/long-id->id (:id relationship))
           relationship-external-ids
           (:external_ids relationship)]
       (is (= 201 status))
       (is (deep=
-           {:id (id/long-id relationship-id)
-            :external_ids ["http://ex.tld/ctia/relationship/relationship-123"
-                           "http://ex.tld/ctia/relationship/relationship-456"]
-            :type "relationship"
-            :title "title"
-            :description "description"
-            :short_description "short desc"
-            :revision 1
-            :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-            :schema_version schema-version
-            :language "language"
-            :tlp "green"
-            :source "source"
-            :source_uri "http://example.com"
-            :relationship_type "based-on"
-            :source_ref (str "http://example.com/ctia/judgement/judgement-"
-                             "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
-            :target_ref (str "http://example.com/ctia/indicator/indicator-"
-                             "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
+           (assoc new-relationship :id (id/long-id relationship-id))
            relationship))
 
       (testing "the relationship ID has correct fields"
@@ -128,25 +101,7 @@
               relationship (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               {:id (:id relationship)
-                :external_ids ["http://ex.tld/ctia/relationship/relationship-123"
-                               "http://ex.tld/ctia/relationship/relationship-456"]
-                :type "relationship"
-                :title "title"
-                :description "description"
-                :short_description "short desc"
-                :revision 1
-                :schema_version schema-version
-                :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                :language "language"
-                :tlp "green"
-                :source "source"
-                :source_uri "http://example.com"
-                :relationship_type "based-on"
-                :source_ref (str "http://example.com/ctia/judgement/judgement-"
-                                 "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
-                :target_ref (str "http://example.com/ctia/indicator/indicator-"
-                                 "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}
+               (assoc new-relationship :id (id/long-id relationship-id))
                relationship))))
 
       (test-query-string-search :relationship "description" :description)
@@ -158,26 +113,32 @@
               relationships (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [{:id (:id relationship)
-                 :external_ids ["http://ex.tld/ctia/relationship/relationship-123"
-                                "http://ex.tld/ctia/relationship/relationship-456"]
-                 :type "relationship"
-                 :title "title"
-                 :description "description"
-                 :short_description "short desc"
-                 :revision 1
-                 :schema_version schema-version
-                 :timestamp #inst "2016-02-11T00:40:48.212-00:00"
-                 :language "language"
-                 :tlp "green"
-                 :source "source"
-                 :source_uri "http://example.com"
-                 :relationship_type "based-on"
-                 :source_ref (str "http://example.com/ctia/judgement/judgement-"
-                                  "f9832ac2-ee90-4e18-9ce6-0c4e4ff61a7a")
-                 :target_ref (str "http://example.com/ctia/indicator/indicator-"
-                                  "8c94ca8d-fb2b-4556-8517-8e6923d8d3c7")}]
+               [(assoc new-relationship :id (id/long-id relationship-id))]
                relationships))))
+
+      (testing "PUT /ctia/relationship/:id"
+        (let [with-updates (assoc relationship
+                                  :title "modified relationship")
+              response (put (str "ctia/relationship/" (:short-id relationship-id))
+                            :body with-updates
+                            :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-relationship (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               with-updates
+               updated-relationship))))
+
+      (testing "PUT invalid /ctia/relationship/:id"
+        (let [{status :status
+               body :body}
+              (put (str "ctia/relationship/" (:short-id relationship-id))
+                   :body (assoc relationship
+                                :title (clojure.string/join
+                                        (repeatedly 1025 (constantly \0))))
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
+          (is (= status 400))
+          (is (re-find #"error.*in.*title" (str/lower-case body)))))
+
 
       (testing "DELETE /ctia/relationship/:id"
         (let [response (delete (str "ctia/relationship/" (:short-id relationship-id))

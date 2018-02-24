@@ -49,6 +49,36 @@
                      ent/un-store
                      created))
 
+           (PUT "/:id" []
+                :return Relationship
+                :body [relationship NewRelationship {:description "an updated Relationship"}]
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                :summary "Updates a Relationship"
+                :path-params [id :- s/Str]
+                :capabilities :create-relationship
+                :identity identity
+                :identity-map identity-map
+                (-> (flows/update-flow
+                     :get-fn #(read-store :relationship
+                                          read-relationship
+                                          %
+                                          identity-map
+                                          {})
+                     :realize-fn ent/realize-relationship
+                     :update-fn #(write-store :relationship
+                                              update-relationship
+                                              (:id %)
+                                              %
+                                              identity-map)
+                     :long-id-fn with-long-id
+                     :entity-type :relationship
+                     :entity-id id
+                     :identity identity
+                     :entity relationship
+                     :spec :new-relationship/map)
+                    ent/un-store
+                    ok))
+
            (GET "/external_id/:external_id" []
                 :return PartialRelationshipList
                 :query [q RelationshipByExternalIdQueryParams]
