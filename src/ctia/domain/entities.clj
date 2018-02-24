@@ -135,23 +135,29 @@
   (default-realize-fn "scratchpad" NewScratchpad StoredScratchpad))
 
 (s/defn realize-relationship :- StoredRelationship
-  [{:keys [source_ref target_ref]
-    :as new-relationship} :- NewRelationship
-   id :- s/Str
-   tempids :- (s/maybe TempIDs)
-   owner :- s/Str
-   groups :- [s/Str]]
-
-  (assoc new-relationship
-         :id id
-         :type "relationship"
-         :source_ref (get tempids source_ref source_ref)
-         :target_ref (get tempids target_ref target_ref)
-         :created (time/now)
-         :owner owner
-         :groups groups
-         :tlp (:tlp new-relationship (properties-default-tlp))
-         :schema_version schema-version))
+  ([{:keys [source_ref target_ref]
+     :as new-relationship} :- NewRelationship
+    id :- s/Str
+    tempids :- (s/maybe TempIDs)
+    owner :- s/Str
+    groups :- [s/Str]
+    prev-object]
+   (assoc new-relationship
+          :id id
+          :type "relationship"
+          :source_ref (get tempids source_ref source_ref)
+          :target_ref (get tempids target_ref target_ref)
+          :created (time/now)
+          :owner (or (:owner prev-object) owner)
+          :groups (or (:groups prev-object) groups)
+          :tlp (:tlp new-relationship (properties-default-tlp))
+          :schema_version schema-version))
+  ([new-relationship
+    id :- s/Str
+    tempids :- (s/maybe TempIDs)
+    owner :- s/Str
+    groups :- [s/Str]]
+   (realize-relationship new-relationship id tempids owner groups {})))
 
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
