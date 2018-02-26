@@ -69,6 +69,7 @@
 (defprotocol IRelationshipStore
   (read-relationship [this id ident params])
   (create-relationships [this new-relations ident params])
+  (update-relationship [this id relationship ident])
   (delete-relationship [this id ident])
   (list-relationships [this filtermap ident params]))
 
