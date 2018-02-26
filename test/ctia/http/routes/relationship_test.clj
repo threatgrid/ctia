@@ -178,5 +178,5 @@
 (deftest-for-each-store test-relationship-routes-access-control
   (access-control-test "relationship"
                        new-relationship-minimal
-                       false
+                       true
                        true))
