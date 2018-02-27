@@ -191,7 +191,7 @@
    :judgement      create-judgements
    :malware        create-malwares
    :relationship   create-relationships
-   :scratchpad     create-scratchpad
+   :scratchpad     create-scratchpads
    :sighting       create-sightings
    :tool           create-tools})
 

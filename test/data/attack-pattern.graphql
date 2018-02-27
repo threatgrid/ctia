@@ -85,6 +85,7 @@ fragment attackPatternFields on AttackPattern {
   kill_chain_phases {
     ...killChainPhaseFields
   }
+  abstraction_level
   x_mitre_data_sources
   x_mitre_platforms
   x_mitre_contributors

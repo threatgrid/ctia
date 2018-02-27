@@ -76,14 +76,6 @@
                                   investigation/investigation-order-arg
                                   p/connection-arguments)
                      :resolve (res/search-entity-resolver :investigation)}
-    :scratchpad {:type ScratchpadType
-                 :args search-by-id-args
-                 :resolve (res/entity-by-id-resolver :scratchpad)}
-    :scratchpads {:type ScratchpadConnectionType
-                  :args (merge common/lucene-query-arguments
-                               scratchpad/scratchpad-order-arg
-                               p/connection-arguments)
-                  :resolve (res/search-entity-resolver :investigation)}
     :judgement {:type JudgementType
                 :args search-by-id-args
                 :resolve (res/entity-by-id-resolver :judgement)}
@@ -104,6 +96,14 @@
                  :args {:type {:type (g/non-null Scalars/GraphQLString)}
                         :value {:type (g/non-null Scalars/GraphQLString)}}
                  :resolve (fn [_ args _ _] args)}
+    :scratchpad {:type ScratchpadType
+                 :args search-by-id-args
+                 :resolve (res/entity-by-id-resolver :scratchpad)}
+    :scratchpads {:type ScratchpadConnectionType
+                  :args (merge common/lucene-query-arguments
+                               scratchpad/scratchpad-order-arg
+                               p/connection-arguments)
+                  :resolve (res/search-entity-resolver :scratchpad)}
     :sighting {:type SightingType
                :args search-by-id-args
                :resolve (res/entity-by-id-resolver :sighting)}

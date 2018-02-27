@@ -25,6 +25,7 @@
     [judgement :as jud-ent]
     [malware :as malware-ent]
     [relationship :as rel-ent]
+    [scratchpad :as scr-ent]
     [sighting :as sig-ent]
     [tool :as tool-ent]]
    [ctia.schemas.core
@@ -269,6 +270,7 @@
    :judgement      realize-judgement
    :malware        realize-malware
    :relationship   realize-relationship
+   :scratchpad     realize-scratchpad
    :sighting       realize-sighting
    :tool           realize-tool})
 
@@ -286,6 +288,7 @@
    :judgement      jud-ent/page-with-long-id
    :malware        malware-ent/page-with-long-id
    :relationship   rel-ent/page-with-long-id
+   :scratchpad     scr-ent/page-with-long-id
    :sighting       sig-ent/page-with-long-id
    :tool           tool-ent/page-with-long-id})
 
@@ -303,5 +306,6 @@
    :judgement      jud-ent/with-long-id
    :malware        malware-ent/with-long-id
    :relationship   rel-ent/with-long-id
+   :scratchpad     scr-ent/with-long-id
    :sighting       sig-ent/with-long-id
    :tool           tool-ent/with-long-id})
