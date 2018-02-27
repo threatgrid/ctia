@@ -54,12 +54,13 @@ Auth related configuration, available options vary depending on the choosen auth
 
    Configure JWT authentication support
 
-| Property                        | Description                           | Possible values      |
-|---------------------------------+---------------------------------------+----------------------|
-| ctia.http.jwt.enabled           | enable JWT auth support               | true, false          |
-| ctia.http.jwt.public-key-path   | set the JWT key path                  | string (a full path) |
-| ctia.http.jwt.local-storage-key | set JWT local storage key             | string (a full path) |
-| ctia.http.dev-reload            | Development Only, reload code on edit | true, false          |
+| Property                        | Description                           | Possible values                    |
+|---------------------------------+---------------------------------------+------------------------------------|
+| ctia.http.jwt.enabled           | enable JWT auth support               | true, false                        |
+| ctia.http.jwt.public-key-path   | set the JWT key path                  | string (a full path)               |
+| ctia.http.jwt.local-storage-key | set JWT local storage key             | string (a full path)               |
+| ctia.http.jwt.claim-prefix      | JWT claim prefix                      | string (should be globally unique) |
+| ctia.http.dev-reload            | Development Only, reload code on edit | true, false                        |
 
 
 *** Show   
