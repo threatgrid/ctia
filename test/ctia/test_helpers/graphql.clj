@@ -19,6 +19,16 @@
                                  (pr-str obj)))))
     body))
 
+(defn feedback-1 [entity_id]
+  {:feedback -1
+   :reason "False positive"
+   :entity_id entity_id})
+
+(defn feedback-2 [entity_id]
+  {:feedback 0
+   :reason "Unknown"
+   :entity_id entity_id})
+
 (defn query
   "Requests the GraphQL endpoint"
   [query
