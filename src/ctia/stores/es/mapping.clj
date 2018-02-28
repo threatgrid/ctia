@@ -621,7 +621,8 @@
     {:owner token
      :groups token
      :timestamp ts
-     :entity {:type "object"}
+     :entity {:enabled false
+              :type "object"}
      :id token
      :http-params {:type "object"}
      :type token
