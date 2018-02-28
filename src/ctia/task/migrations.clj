@@ -27,9 +27,10 @@
                        end-time)))
        doc))))
 
-(defn append-version [version]
+(defn append-version
   "append the version field only
    if the document is not a user"
+  [version]
   (map #(if-not (seq (:capabilities %))
           (assoc % :schema_version version)
           %)))
@@ -37,26 +38,29 @@
 (def target-observed_time
   "append observed_time to sighting/target
   inheriting the sighting"
-  (fn [{:keys [target observed_time] :as doc}]
-    (if (and target
-             (not (:observed_time target)))
-      (update doc :target assoc :observed_time observed_time)
-      doc)))
+  (map (fn [{:keys [target observed_time] :as doc}]
+         (if (and target
+                  (not (:observed_time target)))
+           (update doc :target assoc :observed_time observed_time)
+           doc))))
 
-(def pluralize-targets
+(def pluralize-target
   "a sighting can have multiple targets"
-  (fn [{:keys [target] :as doc}]
-    (if target (-> doc
-                   (assoc :targets [target])
-                   (dissoc :target))
-        doc)))
+  (map (fn [{:keys [type target] :as doc}]
+         (if (and (= "sighting" type)
+                  (not (nil? target)))
+           (-> doc
+               (assoc :targets (if (vector? target)
+                                 target [target]))
+               (dissoc :target))
+           doc))))
 
 (def available-migrations
   {:__test (map #(assoc % :groups ["migration-test"]))
    :0.4.16 (comp add-groups
                  fix-end-time
                  (append-version "0.4.16"))
-   :0.4.26 (comp pluralize-targets
+   :0.4.26 (comp pluralize-target
                  target-observed_time
                  add-groups
                  fix-end-time
