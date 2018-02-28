@@ -60,8 +60,8 @@
    :0.4.16 (comp add-groups
                  fix-end-time
                  (append-version "0.4.16"))
-   :0.4.26 (comp pluralize-target
+   :0.4.27 (comp pluralize-target
                  target-observed_time
                  add-groups
                  fix-end-time
-                 (append-version "0.4.26"))})
+                 (append-version "0.4.27"))})
