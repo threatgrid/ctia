@@ -8,6 +8,7 @@
     [judgement :as judgement]
     [pagination :as pagination]
     [resolvers :as resolvers]
+    [sighting :as sighting]
     [verdict :as verdict]]
    [ctia.store :refer :all]
    [ctim.schemas.common :as ctim-common-schema]))
@@ -35,7 +36,16 @@
                             (select-keys src [:type :value])
                             context
                             args
-                            field-selection))}})
+                            field-selection))}
+   :sightings {:type sighting/SightingConnectionType
+               :args (into pagination/connection-arguments
+                           sighting/sighting-order-arg)
+               :resolve (fn [context args field-selection src]
+                          (resolvers/search-sightings-by-observable
+                           (select-keys src [:type :value])
+                           context
+                           args
+                           field-selection))}})
 
 (def ObservableType
   (let [{:keys [fields name description]}

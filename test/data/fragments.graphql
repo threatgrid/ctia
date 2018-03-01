@@ -1,0 +1,31 @@
+fragment relationshipBaseFields on Relationship {
+  relationship_type
+  target_ref
+  source_ref
+}
+
+fragment pageInfoFields on PageInfo {
+  hasNextPage
+  hasPreviousPage
+  startCursor
+  endCursor
+}
+
+fragment killChainPhaseFields on KillChainPhase {
+  kill_chain_name
+  phase_name
+}
+
+fragment externalReferenceFields on ExternalReference {
+  source_name
+  external_id
+  url
+  description
+  hashes
+}
+
+fragment feedbackFields on Feedback {
+  feedback
+  entity_id
+  reason
+}

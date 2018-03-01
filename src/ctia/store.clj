@@ -156,3 +156,59 @@
 (defn query-string-search-store [store read-fn & args]
   (log/debug "query-string-search-store args: " store read-fn args)
   (apply read-fn (first (get @stores store)) args))
+
+(def read-fn
+  {:actor          read-actor
+   :attack-pattern read-attack-pattern
+   :campaign       read-campaign
+   :coa            read-coa
+   :data-table     read-data-table
+   :exploit-target read-exploit-target
+   :feedback       read-feedback
+   :identity       read-identity
+   :incident       read-incident
+   :indicator      read-indicator
+   :investigation  read-investigation
+   :judgement      read-judgement
+   :malware        read-malware
+   :relationship   read-relationship
+   :scratchpad     read-scratchpad
+   :sighting       read-sighting
+   :tool           read-tool})
+
+(def create-fn
+  {:actor          create-actors
+   :attack-pattern create-attack-patterns
+   :campaign       create-campaigns
+   :coa            create-coas
+   :data-table     create-data-tables
+   :exploit-target create-exploit-targets
+   :feedback       create-feedbacks
+   :identity       create-identity
+   :incident       create-incidents
+   :indicator      create-indicators
+   :investigation  create-investigations
+   :judgement      create-judgements
+   :malware        create-malwares
+   :relationship   create-relationships
+   :scratchpad     create-scratchpads
+   :sighting       create-sightings
+   :tool           create-tools})
+
+(def list-fn
+  {:actor          list-actors
+   :attack-pattern list-attack-patterns
+   :campaign       list-campaigns
+   :coa            list-coas
+   :data-table     list-data-tables
+   :exploit-target list-exploit-targets
+   :feedback       list-feedback
+   :incident       list-incidents
+   :indicator      list-indicators
+   :investigation  list-investigations
+   :judgement      list-judgements
+   :malware        list-malwares
+   :relationship   list-relationships
+   :scratchpad     list-scratchpads
+   :sighting       list-sightings
+   :tool           list-tools})
