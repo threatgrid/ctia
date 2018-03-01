@@ -42,6 +42,36 @@
 (s/defschema BundleImportResult
   {:results [EntityImportResult]})
 
+(def bundle-entity-keys #{:actors
+                          :attack_patterns
+                          :campaigns
+                          :coas
+                          :data-tables
+                          :exploit-targets
+                          :feedbacks
+                          :incidents
+                          :indicators
+                          :judgements
+                          :malwares
+                          :relationships
+                          :sightings
+                          :tools})
+
+(defn entity-type-from-bundle-key
+  "Converts a bundle entity key to an entity type
+   Ex: :attack_patterns -> :attack-pattern"
+  [bundle-key]
+  (case bundle-key
+    :attack_patterns :attack-pattern
+    (singular bundle-key)))
+
+(defn bulk-key
+  "Converts a bundle key to a bulk key
+   Ex: :attack_patterns -> :attack-patterns"
+  [bundle-key]
+  (bulk/bulk-key
+   (entity-type-from-bundle-key bundle-key)))
+
 (defn transient-id?
   [id]
   (and id (re-matches id/transient-id-re id)))
@@ -155,11 +185,9 @@
               [original_id id]))
        (into {})))
 
-(def entities-keys (map :k (keys Bulk)))
-
 (defn map-kv
-  "Apply a function to all entity collections within a map
-  of entities indexed by entity type."
+  "Returns a map where values are the result of applying
+   f to each key and value."
   [f m]
   (into {}
         (map (fn [[k v]]
@@ -231,7 +259,7 @@
    external-key-prefixes
    auth-identity]
   (map-kv (fn [k v]
-            (let [entity-type (singular k)]
+            (let [entity-type (entity-type-from-bundle-key k)]
               (-> v
                   (init-import-data entity-type external-key-prefixes)
                   (with-existing-entities entity-type auth-identity))))
@@ -243,15 +271,25 @@
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
+(s/defn with-bulk-keys
+  "Renames all map keys from bundle to bulk format
+   (ex: attack_patterns -> attack-patterns)"
+  [m]
+  (->> m
+       (map (fn [[k v]]
+              [(bulk-key k) v]))
+       (into {})))
+
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
   [bundle-import-data :- BundleImportData]
-  (map-kv (fn [k v]
-            (->> v
-                 (filter create?)
-                 (remove nil?)
-                 (map :new-entity)))
-          bundle-import-data))
+  (->> bundle-import-data
+       (map-kv (fn [k v]
+                 (->> v
+                      (filter create?)
+                      (remove nil?)
+                      (map :new-entity))))
+       with-bulk-keys))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
@@ -269,7 +307,7 @@
                                      :result "error")
                         (not error) (assoc :id entity-bulk-result
                                            :result "created")))
-                    submitted (get bulk-result k))
+                    submitted (get bulk-result (bulk-key k)))
                not-submitted)))
           bundle-import-data))
 
@@ -288,7 +326,7 @@
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)]
-  (let [bundle-entities (select-keys bundle entities-keys)
+  (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
                                            auth-identity)

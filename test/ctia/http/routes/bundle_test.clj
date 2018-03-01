@@ -6,7 +6,9 @@
              [http :refer [encode]]]
             [clojure.test :as t
              :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.walk :refer [prewalk]]
             [ctim.domain.id :as id]
+            [ctim.examples.bundles :refer [bundle-maximal]]
             [ctia.store :refer [stores]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -143,6 +145,39 @@
   [entity]
   (update entity :description str "-modified"))
 
+(defn deep-dissoc
+  "Dissoc a key in the given map recursively"
+  [m k]
+  (prewalk #(if (map? %)
+              (dissoc % k)
+              %)
+           m))
+
+(defn count-bundle-entities
+  "Returns a map containing the number of entities
+   per entity type
+   Ex:
+   {:attack-pattern 1
+    :indicator 2}"
+  [bundle]
+  (->> (select-keys bundle sut/bundle-entity-keys)
+       (map (fn [[k v]]
+              [(sut/entity-type-from-bundle-key k) (count v)]))
+       (into {})))
+
+(defn count-bundle-result-entities
+  "Returns a map containing the number of entities with the given result.
+   The map is indexed by entity type.
+  Ex:
+   {:attack-pattern 1
+    :indicator 2}"
+  [import-result result]
+  (->> import-result
+       (filter #(= result (:result %)))
+       (group-by :type)
+       (map (fn [[k v]] [k (count v)]))
+       (into {})))
+
 (deftest-for-each-store bundle-import-test
   (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
@@ -159,6 +194,17 @@
                            (range)
                            indicators
                            sightings)]
+    (testing "Import bundle with all entity types"
+      (let [new-bundle (deep-dissoc bundle-maximal :id)
+            response (post "ctia/bundle/import"
+                           :body new-bundle
+                           :headers {"Authorization" "45c1f5e3f05d0"})
+            bundle-result (:parsed-body response)]
+        (is (= 200 (:status response)))
+        (is (= (count-bundle-entities new-bundle)
+               (count-bundle-result-entities (:results bundle-result)
+                                             "created"))
+            "All entities are created")))
     (testing "Create"
       (let [bundle {:type "bundle"
                     :source "source"

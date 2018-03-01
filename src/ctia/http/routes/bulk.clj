@@ -96,6 +96,13 @@
        (map (fn [[_ v]] (:tempids v)))
        (reduce into {})))
 
+(defn bulk-key
+  "Returns the bulk key for a given entity type"
+  [entity-type]
+  (-> (name entity-type)
+      (str "s")
+      keyword))
+
 (defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
    transient IDs can be used. They are automatically converted into
