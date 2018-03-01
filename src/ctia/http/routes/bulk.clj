@@ -16,6 +16,27 @@
             [schema.core :as s]
             [clojure.set :as set]))
 
+(defn bulk-key
+  "Returns the bulk key for a given entity type"
+  [entity-type]
+  (case entity-type
+    :attack-pattern :attack_patterns
+    :data-table :data_tables
+    :exploit-target :exploit_targets
+    (-> (name entity-type)
+        (str "s")
+        keyword)))
+
+(defn entity-type-from-bulk-key
+  "Converts a bulk entity key to an entity type
+   Ex: :attack_patterns -> :attack-pattern"
+  [k]
+  (case k
+    :attack_patterns :attack-pattern
+    :exploit_targets :exploit-target
+    :data_tables :data-table
+    (singular k)))
+
 (defn create-fn
   "return the create function provided an entity type key"
   [k auth-identity params]
@@ -70,7 +91,7 @@
   (->> bulk
        (pmap (fn [[entity-type entities]]
                [entity-type
-                (apply func entities (singular entity-type) args)]))
+                (apply func entities (entity-type-from-bulk-key entity-type) args)]))
        (into {})))
 
 (defn merge-tempids
@@ -95,13 +116,6 @@
   (->> entities-by-type
        (map (fn [[_ v]] (:tempids v)))
        (reduce into {})))
-
-(defn bulk-key
-  "Returns the bulk key for a given entity type"
-  [entity-type]
-  (-> (name entity-type)
-      (str "s")
-      keyword))
 
 (defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
@@ -178,11 +192,11 @@
                 :return (s/maybe Bulk)
                 :summary "GET many entities at once"
                 :query-params [{actors          :- [Reference] []}
-                               {attack-patterns :- [Reference] []}
+                               {attack_patterns :- [Reference] []}
                                {campaigns       :- [Reference] []}
                                {coas            :- [Reference] []}
-                               {data-tables     :- [Reference] []}
-                               {exploit-targets :- [Reference] []}
+                               {data_tables     :- [Reference] []}
+                               {exploit_targets :- [Reference] []}
                                {feedbacks       :- [Reference] []}
                                {incidents       :- [Reference] []}
                                {indicators      :- [Reference] []}
@@ -213,11 +227,11 @@
                 :identity auth-identity
                 (let [bulk (into {} (remove (comp empty? second)
                                             {:actors          actors
-                                             :attack-patterns attack-patterns
+                                             :attack_patterns attack_patterns
                                              :campaigns       campaigns
                                              :coas            coas
-                                             :data-tables     data-tables
-                                             :exploit-targets exploit-targets
+                                             :data_tables     data_tables
+                                             :exploit_targets exploit_targets
                                              :feedbacks       feedbacks
                                              :incidents       incidents
                                              :investigations  investigations

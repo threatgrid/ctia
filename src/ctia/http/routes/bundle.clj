@@ -46,14 +46,16 @@
                           :attack_patterns
                           :campaigns
                           :coas
-                          :data-tables
-                          :exploit-targets
+                          :data_tables
+                          :exploit_targets
                           :feedbacks
                           :incidents
+                          :investigations
                           :indicators
                           :judgements
                           :malwares
                           :relationships
+                          :scratchpads
                           :sightings
                           :tools})
 
@@ -61,16 +63,12 @@
   "Converts a bundle entity key to an entity type
    Ex: :attack_patterns -> :attack-pattern"
   [bundle-key]
-  (case bundle-key
-    :attack_patterns :attack-pattern
-    (singular bundle-key)))
+  (bulk/entity-type-from-bulk-key bundle-key))
 
 (defn bulk-key
-  "Converts a bundle key to a bulk key
-   Ex: :attack_patterns -> :attack-patterns"
+  "Converts a bundle key to a bulk key"
   [bundle-key]
-  (bulk/bulk-key
-   (entity-type-from-bundle-key bundle-key)))
+  bundle-key)
 
 (defn transient-id?
   [id]
