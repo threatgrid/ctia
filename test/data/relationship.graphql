@@ -1,0 +1,15 @@
+query RelationshipsWithoutTargetRefQueryTest($id: String!) {
+  sighting(id: $id) {
+    relationships {
+      nodes {
+        target_entity {
+          ...indicatorFields
+        }
+      }
+    }
+  }
+}
+
+fragment indicatorFields on Indicator {
+  type
+}
