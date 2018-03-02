@@ -6,6 +6,9 @@
             [ctia.store :refer :all]
             [schema.core :as s]))
 
+;; Default fields that must always be retrieved
+(def default-fields [:id :type])
+
 (defn- remove-map-empty-values
   [m]
   (into {} (filter second m)))
@@ -21,7 +24,9 @@
    with-long-id-fn]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
-                 field-selection (assoc :fields field-selection))]
+                 field-selection (assoc :fields
+                                        (concat default-fields
+                                                field-selection)))]
     (log/debugf "Search entity %s graphql args %s" entity-type args)
 
     (some-> (query-string-search-store
@@ -51,12 +56,16 @@
    id :- s/Str
    ident
    field-selection :- (s/maybe [s/Keyword])]
+  (log/debugf "Retrieve %s (id:%s, fields:%s)"
+              entity-type-kw
+              id
+              field-selection)
   (let [with-long-id-fn (ctim-entities/with-long-id-fn entity-type-kw)]
     (some-> (read-store entity-type-kw
                         (read-fn entity-type-kw)
                         id
                         ident
-                        {:fields field-selection})
+                        {:fields (concat default-fields field-selection)})
             with-long-id-fn
             ctim-entities/un-store)))
 
@@ -77,7 +86,8 @@
    field-selection :- (s/maybe [s/Keyword])]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
-                 field-selection (assoc :fields field-selection))
+                 field-selection (assoc :fields
+                                        (concat default-fields field-selection)))
         page-with-long-id-fn (ctim-entities/page-with-long-id-fn :feedback)]
     (log/debug "Search feedback for entity id: " entity-id)
     (some-> (read-store :feedback
@@ -98,7 +108,8 @@
    field-selection :- (s/maybe [s/Keyword])]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
-                 field-selection (assoc :fields field-selection))
+                 field-selection (assoc :fields
+                                        (concat default-fields field-selection)))
         page-with-long-id-fn (ctim-entities/page-with-long-id-fn :judgement)]
     (some-> (read-store :judgement
                         list-judgements-by-observable
@@ -118,7 +129,8 @@
    field-selection :- (s/maybe [s/Keyword])]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
-                 field-selection (assoc :fields field-selection))
+                 field-selection (assoc :fields
+                                        (concat default-fields field-selection)))
         page-with-long-id-fn (ctim-entities/page-with-long-id-fn :sighting)]
     (some-> (read-store :sighting
                         list-sightings-by-observables
@@ -142,5 +154,5 @@
                    filtermap
                    args
                    (:ident context)
-                   field-selection
+                   (concat field-selection [:target_ref :source_ref])
                    (ctim-entities/page-with-long-id-fn :sighting))))
