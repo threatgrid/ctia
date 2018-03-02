@@ -14,6 +14,7 @@
              [init :as init]
              [properties :refer [properties PropertiesSchema]]
              [store :as store]]
+            [clojure.walk :refer [prewalk]]
             [ctia.auth.allow-all :as aa]
             [ctia.flows.crud :as crud]
             [ctia.flows.hooks :as hooks]
@@ -225,3 +226,11 @@
            (swap! ~atom-logger conj message#))]
      (with-redefs [clojure.tools.logging/log* patched-log#]
        ~@body)))
+
+(defn deep-dissoc
+  "Dissoc a key in the given map recursively"
+  [m k]
+  (prewalk #(if (map? %)
+              (dissoc % k)
+              %)
+           m))
