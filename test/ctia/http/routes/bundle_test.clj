@@ -12,7 +12,7 @@
             [ctia.store :refer [stores]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post]]
+             [core :as helpers :refer [get post deep-dissoc]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
             [clojure.set :as set]
@@ -144,14 +144,6 @@
 (defn with-modified-description
   [entity]
   (update entity :description str "-modified"))
-
-(defn deep-dissoc
-  "Dissoc a key in the given map recursively"
-  [m k]
-  (prewalk #(if (map? %)
-              (dissoc % k)
-              %)
-           m))
 
 (defn count-bundle-entities
   "Returns a map containing the number of entities
