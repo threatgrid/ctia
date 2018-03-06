@@ -69,7 +69,6 @@
 
                  ;; nREPL server
                  [org.clojure/tools.nrepl "0.2.13"]
-                 [cider/cider-nrepl "0.16.0"]
 
                  ;; clients
                  [clj-http "3.7.0" :exclusions [commons-codec]]
