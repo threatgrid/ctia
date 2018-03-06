@@ -1,6 +1,5 @@
 (ns ctia.init
-  (:require [cider.nrepl :refer [cider-nrepl-handler]]
-            [clj-momo.properties :as mp]
+  (:require [clj-momo.properties :as mp]
             [clojure.tools.nrepl.server :as nrepl-server]
             [clojure.tools.logging :as log]
             [ctia.lib.metrics
@@ -101,8 +100,7 @@
          nrepl-enabled? :enabled} (get-in @p/properties [:ctia :nrepl])]
     (when (and nrepl-enabled? nrepl-port)
       (log/info (str "Starting nREPL server on port " nrepl-port))
-      (nrepl-server/start-server :port nrepl-port
-                                 :handler cider-nrepl-handler)))
+      (nrepl-server/start-server :port nrepl-port)))
   ;; Start HTTP server
   (let [{http-port :port
          enabled? :enabled} (get-in @p/properties [:ctia :http])]
