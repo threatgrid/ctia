@@ -74,6 +74,19 @@
       (contains? schema (s/required-key k))
       (contains? schema k)))
 
+(defn make-valid-time
+  "make a valid-time object from either in this order:
+  the newest value, the previous value or the default value"
+  [prev-valid-time new-valid-time now]
+  {:valid_time {:start_time
+                (or (:start_time new-valid-time)
+                    (:start_time prev-valid-time)
+                    now)
+                :end_time
+                (or (:end_time new-valid-time)
+                    (:end_time prev-valid-time)
+                    time/default-expire-date)}})
+
 (defn default-realize-fn [type-name Model StoredModel]
   (s/fn default-realize :- StoredModel
     ([new-object :- Model
@@ -100,11 +113,9 @@
                :tlp (:tlp new-object
                           (:tlp prev-object (properties-default-tlp)))}
               (when (contains-key? Model :valid_time)
-                {:valid_time (or (:valid_time prev-object)
-                                 {:end_time (or (get-in new-object [:valid_time :end_time])
-                                                time/default-expire-date)
-                                  :start_time (or (get-in new-object [:valid_time :start_time])
-                                                  now)})}))))))
+                (make-valid-time (:valid_time prev-object)
+                                 (:valid_time new-object)
+                                 now)))))))
 
 (def realize-actor
   (default-realize-fn "actor" NewActor StoredActor))

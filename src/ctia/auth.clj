@@ -65,6 +65,7 @@
     :list-indicators
     :create-indicator
     :search-indicator
+    :delete-indicator
 
     ;; Investigation
     :read-investigation
