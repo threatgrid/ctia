@@ -36,7 +36,7 @@
            access-control-allow-origin
            access-control-allow-methods
            jwt]
-    :or {access-control-allow-methods "get,post,put,delete"}}]
+    :or {access-control-allow-methods "get,post,put,patch,delete"}}]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler)
