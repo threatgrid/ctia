@@ -34,11 +34,12 @@
    Authenticate using a configurable static set of credentials, 
    users will share the same Authorization token.
 
- | Property                | Description                  | Possible values |
- |-------------------------+------------------------------+-----------------|
- | ctia.auth.static.secret | set the Authorization secret | string          |
- | ctia.auth.static.name   | set the login identity       | string          |
- | ctia.auth.static.group  | set the login group          | string          |
+ | Property                                | Description                          | Possible values |
+ |-----------------------------------------+--------------------------------------+-----------------|
+ | ctia.auth.static.secret                 | set the Authorization secret         | string          |
+ | ctia.auth.static.name                   | set the login identity               | string          |
+ | ctia.auth.static.group                  | set the login group                  | string          |
+ | ctia.auth.static.readonly-for-anonymous | enable readonly access for anonymous | true, false     |
 
 
 ** Access Control
@@ -218,6 +219,7 @@
   available entities are: 
 
   =actor=
+  =attack-pattern=
   =campaign=
   =coa=
   =event=
@@ -227,15 +229,19 @@
   =identity=
   =incident=
   =indicator=
-  =judgement= 
-  =relationship= 
+  =investigation=
+  =judgement=
+  =malware=
+  =relationship=
+  =scratchpad=
   =sighting=
-  =ttp=
+  =tool=
 
 
-| Property            | Description                                      | Possible values |
-|---------------------+--------------------------------------------------+-----------------|
-| ctia.store.<entity> | select a store implementation for a given entity | es              |
+| Property                  | Description                                                          | Possible values |
+|---------------------------+----------------------------------------------------------------------+-----------------|
+| ctia.store.<entity>       | select a store implementation for a given entity                     | es              |
+| ctia.store.bundle-refresh | control when changes made by this request are made visible to search | string          |
 
 
 *** ES
@@ -243,11 +249,11 @@
 Set ES Store implementation settings, 
 one can set defaults for all ES stores using =default= as entity
 
-| Property                         | Description                                                   | Possible values |
-|----------------------------------+---------------------------------------------------------------+-----------------|
-| ctia.store.es.[entity].host      | ES instance host                                              | string          |
-| ctia.store.es.[entity].port      | ES instance port                                              | port            |
-| ctia.store.es.[entity].indexname | ES index name to use                                          | string          |
-| ctia.store.es.[entity].refresh   | wether to trigger an index refresh after each write operation | boolean         |
-| ctia.store.es.[entity].replicas  | how many replicas to setup at index creation                  | number          |
-| ctia.store.es.[entity].shards    | how many shards to setup at index creation                    | number          |
+| Property                         | Description                                                          | Possible values |
+|----------------------------------+----------------------------------------------------------------------+-----------------|
+| ctia.store.es.[entity].host      | ES instance host                                                     | string          |
+| ctia.store.es.[entity].port      | ES instance port                                                     | port            |
+| ctia.store.es.[entity].indexname | ES index name to use                                                 | string          |
+| ctia.store.es.[entity].refresh   | control when changes made by this request are made visible to search | string          |
+| ctia.store.es.[entity].replicas  | how many replicas to setup at index creation                         | number          |
+| ctia.store.es.[entity].shards    | how many shards to setup at index creation                           | number          |
