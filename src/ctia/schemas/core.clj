@@ -575,10 +575,11 @@
 (sc/defschema VersionInfo
   "Version information for a specific instance of CTIA"
   {:base Str
-   :version Str
-   :build Str
+   :ctim-version Str
+   :ctia-build Str
    :beta Bool
-   :supported_features [Str]})
+   :ctia-config Str
+   :ctia-supported_features [Str]})
 
 ;; vocabularies
 
