@@ -18,7 +18,8 @@
                                        ["create" "delete"])))
                        set)
                   #{:developer
-                    :specify-id}))
+                    :specify-id
+                    :import-bundle}))
 
 (defrecord WriteIdentity [name guid]
   IIdentity
@@ -51,7 +52,11 @@
 (defrecord AuthService [auth-config]
   IAuth
   (identity-for-token [_ token]
-    (if (= token (get-in auth-config [:static :secret]))
-      (->WriteIdentity (get-in auth-config [:static :name])
-                       (get-in auth-config [:static :group]))
-      (->ReadOnlyIdentity))))
+    (let [secret (get-in auth-config [:static :secret])
+          readonly? (get-in auth-config [:static :readonly-for-anonymous])]
+      (cond
+        (= token secret) (->WriteIdentity (get-in auth-config [:static :name])
+                                          (get-in auth-config [:static :group]))
+        ;; Readonly access when the password does not match
+        readonly? (->ReadOnlyIdentity)
+        :else auth/denied-identity-singleton))))
