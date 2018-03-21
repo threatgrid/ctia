@@ -27,6 +27,17 @@ function build-and-publish-package {
   dpkg-deb -Z gzip -b ./target/pkg/deb ./target/pkg/ctia-$BUILD_NAME.deb
 
   deb-s3 upload  --preserve-versions --access-key-id $DEB_ACCESS_KEY --secret-access-key $DEB_SECRET_KEY --bucket $DEB_BUCKET --arch amd64 --codename ctia --component $PKG_TYPE ./target/pkg/ctia-$BUILD_NAME.deb
+  
+  # Upload the jar directly to the artifacts S3 bucket
+  if [ "${PKG_TYPE}" == "int" ]; then
+    ARTIFACTS_BUCKET="372070498991-int-saltstack"
+  elif [ "${PKG_TYPE}" == "rel" ]; then
+    ARTIFACTS_BUCKET="372070498991-test-saltstack"
+  fi
+  ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
+  pip install --upgrade --user awscli
+  export PATH=$PATH:$HOME/.local/bin
+  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME}
 }
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
