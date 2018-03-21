@@ -5,7 +5,7 @@
              [feedback :as ctim-feedback-entity]
              [indicator :as ctim-indicator-entity]
              [investigation :as ctim-investigation-entity]
-             [scratchpad :as ctim-scratchpad-entity]
+             [casebook :as ctim-casebook-entity]
              [judgement :as ctim-judgement-entity]
              [relationship :as ctim-relationship-entity]
              [sighting :as ctim-sighting-entity]]
@@ -115,28 +115,28 @@
           ctim-investigation-entity/with-long-id
           ctim-entities/un-store))
 
-;;---- Scratchpad
+;;---- Casebook
 
-(defn search-scratchpads
+(defn search-casebooks
   [context args field-selection src]
-  (search-entity :scratchpad
+  (search-entity :casebook
                  (:query args)
                  {}
                  args
                  (:ident context)
                  field-selection
-                 ctim-scratchpad-entity/page-with-long-id))
+                 ctim-casebook-entity/page-with-long-id))
 
-(s/defn scratchpad-by-id
+(s/defn casebook-by-id
   [id :- s/Str
    ident
    field-selection :- (s/maybe [s/Keyword])]
-  (some-> (read-store :scratchpad
-                      read-scratchpad
+  (some-> (read-store :casebook
+                      read-casebook
                       id
                       ident
                       {:fields field-selection})
-          ctim-scratchpad-entity/with-long-id
+          ctim-casebook-entity/with-long-id
           ctim-entities/un-store))
 
 

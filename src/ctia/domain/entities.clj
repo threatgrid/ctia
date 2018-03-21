@@ -37,8 +37,8 @@
             StoredJudgement
             NewMalware
             StoredMalware
-            NewScratchpad
-            StoredScratchpad
+            NewCasebook
+            StoredCasebook
             NewSighting
             StoredSighting
             NewTool
@@ -131,8 +131,8 @@
 (def realize-investigation
   (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
 
-(def realize-scratchpad
-  (default-realize-fn "scratchpad" NewScratchpad StoredScratchpad))
+(def realize-casebook
+  (default-realize-fn "casebook" NewCasebook StoredCasebook))
 
 (s/defn realize-relationship :- StoredRelationship
   [{:keys [source_ref target_ref]

@@ -93,12 +93,12 @@
     :delete-relationship
     :search-relationship
 
-    ;; Scratchpad
-    :create-scratchpad
-    :read-scratchpad
-    :list-scratchpads
-    :delete-scratchpad
-    :search-scratchpad
+    ;; Casebook
+    :create-casebook
+    :read-casebook
+    :list-casebooks
+    :delete-casebook
+    :search-casebook
 
     ;; Sighting
     :create-sighting

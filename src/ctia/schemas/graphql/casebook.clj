@@ -1,4 +1,4 @@
-(ns ctia.schemas.graphql.scratchpad
+(ns ctia.schemas.graphql.casebook
   (:require
    [flanders.utils :as fu]
    [ctia.schemas.graphql
@@ -8,12 +8,12 @@
     [refs :as refs]
     [sorting :as sorting]]
    [ctia.schemas.sorting :as sort-fields]
-   [ctim.schemas.scratchpad :as ctim-scratchpad]))
+   [ctim.schemas.casebook :as ctim-casebook]))
 
-(def ScratchpadType
+(def CasebookType
   (let [{:keys [fields name description]}
         (flanders/->graphql
-         (fu/optionalize-all ctim-scratchpad/Scratchpad)
+         (fu/optionalize-all ctim-casebook/Casebook)
          {refs/observable-type-name refs/ObservableTypeRef
           refs/judgement-type-name refs/JudgementRef
           refs/sighting-type-name refs/SightingRef
@@ -25,13 +25,13 @@
      []
      fields)))
 
-(def scratchpad-order-arg
+(def casebook-order-arg
   (sorting/order-by-arg
-   "ScratchpadOrder"
-   "scratchpads"
+   "CasebookOrder"
+   "casebooks"
    (into {}
          (map (juxt sorting/sorting-kw->enum-name name)
-              sort-fields/scratchpad-sort-fields))))
+              sort-fields/casebook-sort-fields))))
 
-(def ScratchpadConnectionType
-  (pagination/new-connection ScratchpadType))
+(def CasebookConnectionType
+  (pagination/new-connection CasebookType))

@@ -2,8 +2,8 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.schemas.sorting :as sort-fields]
-            [ctim.examples.scratchpads
-             :refer [new-scratchpad-maximal]]
+            [ctim.examples.casebooks
+             :refer [new-casebook-maximal]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
@@ -135,13 +135,13 @@
                  "relation" "Hosted_By",
                  "source" {"type" "url", "value" "http://alegroup.info/"},
                  "related" {"type" "ip", "value" "194.87.217.87"}}]})
-(def scratchpad-1
-  (-> new-scratchpad-maximal
+(def casebook-1
+  (-> new-casebook-maximal
       (assoc :title "foo")
       (dissoc :id)))
 
-(def scratchpad-2
-  (-> new-scratchpad-maximal
+(def casebook-2
+  (-> new-casebook-maximal
       (assoc :title "bar")
       (dissoc :id)))
 
@@ -164,8 +164,8 @@
         j1  (gh/create-object "judgement" judgement-1)
         j2  (gh/create-object "judgement" judgement-2)
         j3  (gh/create-object "judgement" judgement-3)
-        sc1 (gh/create-object "scratchpad" scratchpad-1)
-        sc2 (gh/create-object "scratchpad" scratchpad-2)
+        sc1 (gh/create-object "casebook" casebook-1)
+        sc2 (gh/create-object "casebook" casebook-2)
         s1  (gh/create-object "sighting" sighting-1)
         s2  (gh/create-object "sighting" sighting-2)]
     (gh/create-object "feedback" (feedback-1 (:id i1)))
@@ -214,8 +214,8 @@
      :judgement-1 j1
      :judgement-2 j2
      :judgement-3 j3
-     :scratchpad-1 sc1
-     :scratchpad-2 sc2
+     :casebook-1 sc1
+     :casebook-2 sc2
      :sighting-1 s1
      :sighting-2 s2}))
 
@@ -231,8 +231,8 @@
         indicator-3-id (get-in datamap [:indicator-3 :id])
         investigation-1-id (get-in datamap [:investigation-1 :id])
         investigation-2-id (get-in datamap [:investigation-2 :id])
-        scratchpad-1-id (get-in datamap [:scratchpad-1 :id])
-        scratchpad-2-id (get-in datamap [:scratchpad-2 :id])
+        casebook-1-id (get-in datamap [:casebook-1 :id])
+        casebook-2-id (get-in datamap [:casebook-2 :id])
         judgement-1-id (get-in datamap [:judgement-1 :id])
         judgement-2-id (get-in datamap [:judgement-2 :id])
         judgement-3-id (get-in datamap [:judgement-3 :id])
@@ -512,48 +512,48 @@
                 "The investigation matches the search query"))))
                                         ;-----------------------
 
-      (testing "scratchpad query"
+      (testing "casebook query"
         (let [{:keys [data errors status]}
               (gh/query graphql-queries
-                        {:id scratchpad-1-id}
-                        "ScratchpadQueryTest")]
+                        {:id casebook-1-id}
+                        "CasebookQueryTest")]
 
           (is (= 200 status))
           (is (empty? errors) "No errors")
 
-          (testing "the scratchpad"
-            (is (= (dissoc (:scratchpad-1 datamap) :bundle :texts)
-                   (:scratchpad data))))))
+          (testing "the casebook"
+            (is (= (dissoc (:casebook-1 datamap) :bundle :texts)
+                   (:casebook data))))))
 
-      (testing "scratchpads query"
-        (testing "scratchpads connection"
-          (gh/connection-test "ScratchpadsQueryTest"
+      (testing "casebooks query"
+        (testing "casebooks connection"
+          (gh/connection-test "CasebooksQueryTest"
                               graphql-queries
                               {"query" "*"}
-                              [:scratchpads]
-                              [(dissoc (:scratchpad-1 datamap) :bundle :texts)
-                               (dissoc (:scratchpad-2 datamap) :bundle :texts)])
+                              [:casebooks]
+                              [(dissoc (:casebook-1 datamap) :bundle :texts)
+                               (dissoc (:casebook-2 datamap) :bundle :texts)])
 
           (testing "sorting"
             (gh/connection-sort-test
-             "ScratchpadsQueryTest"
+             "CasebooksQueryTest"
              graphql-queries
              {:query "*"}
-             [:scratchpads]
-             sort-fields/scratchpad-sort-fields)))
+             [:casebooks]
+             sort-fields/casebook-sort-fields)))
 
         (testing "query argument"
           (let [{:keys [data errors status]}
                 (gh/query graphql-queries
                           {:query "title:\"foo\""}
-                          "ScratchpadsQueryTest")]
+                          "CasebooksQueryTest")]
             (is (= 200 status))
             (is (empty? errors) "No errors")
-            (is (= 1 (get-in data [:scratchpads :totalCount]))
-                "Only one scratchpad matches to the query")
-            (is (= [(dissoc (:scratchpad-1 datamap) :bundle :texts)]
-                   (get-in data [:scratchpads :nodes]))
-                "The scratchpad matches the search query"))))
+            (is (= 1 (get-in data [:casebooks :totalCount]))
+                "Only one casebook matches to the query")
+            (is (= [(dissoc (:casebook-1 datamap) :bundle :texts)]
+                   (get-in data [:casebooks :nodes]))
+                "The casebook matches the search query"))))
 
                                         ;---------------------------
       (testing "sighting query"

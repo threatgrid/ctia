@@ -24,7 +24,7 @@
              [judgements :refer [judgement-minimal]]
              [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
-             [scratchpads :refer [scratchpad-minimal]]
+             [casebooks :refer [casebook-minimal]]
              [sightings :refer [sighting-minimal]]
              [tools :refer [tool-minimal]]]))
 
@@ -87,7 +87,7 @@
    :judgements (n-doc judgement-minimal fixtures-nb)
    :malwares (n-doc malware-minimal fixtures-nb)
    :relationships (n-doc relationship-minimal fixtures-nb)
-   :scratchpads (n-doc scratchpad-minimal fixtures-nb)
+   :casebooks (n-doc casebook-minimal fixtures-nb)
    :sightings (n-doc sighting-minimal fixtures-nb)
    :tools (n-doc tool-minimal fixtures-nb)})
 
@@ -139,7 +139,7 @@
                   "judgement - finished migrating 100 documents"
                   "data-table - finished migrating 0 documents"
                   "feedback - finished migrating 0 documents"
-                  "scratchpad - finished migrating 100 documents"
+                  "casebook - finished migrating 100 documents"
                   "sighting - finished migrating 100 documents"
                   "attack-pattern - finished migrating 100 documents"
                   "malware - finished migrating 100 documents"
@@ -163,7 +163,7 @@
                         indicator
                         campaign
                         sighting
-                        scratchpad
+                        casebook
                         actor]
                  :as es-props}
                 (get-in @props/properties [:ctia :store :es])
@@ -181,7 +181,7 @@
                       indicator fixtures-nb
                       investigation fixtures-nb
                       campaign fixtures-nb
-                      scratchpad fixtures-nb
+                      casebook fixtures-nb
                       sighting fixtures-nb
                       actor fixtures-nb}
                      (map (fn [[k v]]

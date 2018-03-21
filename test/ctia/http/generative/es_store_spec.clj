@@ -59,5 +59,5 @@
 
 ;; TODO this test is disabled for now as this entity contains
 ;; data-table which triggers a StackOverflow Exception, find a wat to enable it again
-#_(defspec ^:disabled api-for-scratchpad-routes-es-store
-    prop/api-for-scratchpad-routes)
+#_(defspec ^:disabled api-for-casebook-routes-es-store
+    prop/api-for-casebook-routes)

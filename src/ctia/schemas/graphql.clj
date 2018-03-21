@@ -8,9 +8,9 @@
              [investigation :as investigation
               :refer [InvestigationType
                       InvestigationConnectionType]]
-             [scratchpad :as scratchpad
-              :refer [ScratchpadType
-                      ScratchpadConnectionType]]
+             [casebook :as casebook
+              :refer [CasebookType
+                      CasebookConnectionType]]
              [judgement :as judgement
               :refer [JudgementType
                       JudgementConnectionType]]
@@ -65,18 +65,6 @@
                                   investigation/investigation-order-arg
                                   p/connection-arguments)
                      :resolve res/search-investigations}
-    :scratchpad {:type ScratchpadType
-                 :args search-by-id-args
-                 :resolve (fn [context args field-selection _] (res/scratchpad-by-id
-                                                                (:id args)
-                                                                (:ident context)
-                                                                field-selection))}
-    :scratchpads {:type ScratchpadConnectionType
-                  :args (merge common/lucene-query-arguments
-                               scratchpad/scratchpad-order-arg
-                               p/connection-arguments)
-                  :resolve res/search-scratchpads}
-
     :judgement {:type JudgementType
                 :args search-by-id-args
                 :resolve (fn [context args field-selection _]
@@ -92,6 +80,17 @@
                  :args {:type {:type (g/non-null Scalars/GraphQLString)}
                         :value {:type (g/non-null Scalars/GraphQLString)}}
                  :resolve (fn [_ args _ _] args)}
+    :casebook {:type CasebookType
+               :args search-by-id-args
+               :resolve (fn [context args field-selection _] (res/casebook-by-id
+                                                              (:id args)
+                                                              (:ident context)
+                                                              field-selection))}
+    :casebooks {:type CasebookConnectionType
+                :args (merge common/lucene-query-arguments
+                             casebook/casebook-order-arg
+                             p/connection-arguments)
+                :resolve res/search-casebooks}
     :sighting {:type SightingType
                :args search-by-id-args
                :resolve (fn [context args field-selection _]

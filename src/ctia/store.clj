@@ -115,12 +115,12 @@
   (delete-investigation [this id ident])
   (list-investigations [this filtermap ident params]))
 
-(defprotocol IScratchpadStore
-  (read-scratchpad [this id ident params])
-  (create-scratchpads [this new-scratchpads ident params])
-  (update-scratchpad [this id scratchpad ident])
-  (delete-scratchpad [this id ident])
-  (list-scratchpads [this filtermap ident params]))
+(defprotocol ICasebookStore
+  (read-casebook [this id ident params])
+  (create-casebooks [this new-casebooks ident params])
+  (update-casebook [this id casebook ident])
+  (delete-casebook [this id ident])
+  (list-casebooks [this filtermap ident params]))
 
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this query filtermap ident params]))
@@ -142,7 +142,7 @@
                    :tool []
                    :event []
                    :investigation []
-                   :scratchpad []})
+                   :casebook []})
 
 (defonce stores (atom empty-stores))
 

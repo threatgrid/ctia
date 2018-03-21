@@ -75,8 +75,8 @@
                          :short_description
                          :created_at])))
 
-(def scratchpad-sort-fields
-  (apply s/enum sorting/scratchpad-sort-fields))
+(def casebook-sort-fields
+  (apply s/enum sorting/casebook-sort-fields))
 
 ;; Paging related values and code
 
@@ -401,27 +401,27 @@
   (st/merge PagingParams
             RelationshipFieldsParam))
 
-;; scratchpad
+;; casebook
 
-(s/defschema ScratchpadFieldsParam
-  {(s/optional-key :fields) [scratchpad-sort-fields]})
+(s/defschema CasebookFieldsParam
+  {(s/optional-key :fields) [casebook-sort-fields]})
 
-(s/defschema ScratchpadSearchParams
+(s/defschema CasebookSearchParams
   (st/merge
    PagingParams
    BaseEntityFilterParams
    SourcableEntityFilterParams
-   ScratchpadFieldsParam
+   CasebookFieldsParam
    {:query s/Str
     (s/optional-key :texts.text) s/Str
-    (s/optional-key :sort_by) scratchpad-sort-fields}))
+    (s/optional-key :sort_by) casebook-sort-fields}))
 
-(def ScratchpadGetParams ScratchpadFieldsParam)
+(def CasebookGetParams CasebookFieldsParam)
 
-(s/defschema ScratchpadByExternalIdQueryParams
+(s/defschema CasebookByExternalIdQueryParams
   (st/merge
    PagingParams
-   ScratchpadFieldsParam))
+   CasebookFieldsParam))
 
 ;; sighting
 

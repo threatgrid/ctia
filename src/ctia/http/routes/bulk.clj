@@ -17,7 +17,7 @@
              [judgement :as jud-ent]
              [malware :as malware-ent]
              [relationship :as rel-ent]
-             [scratchpad :as scr-ent]
+             [casebook :as scr-ent]
              [sighting :as sig-ent]
              [tool :as tool-ent]]
             [ctia.flows.crud :as flows]
@@ -48,7 +48,7 @@
     :judgement      ent/realize-judgement
     :malware        ent/realize-malware
     :relationship   ent/realize-relationship
-    :scratchpad     ent/realize-scratchpad
+    :casebook       ent/realize-casebook
     :sighting       ent/realize-sighting
     :tool           ent/realize-tool))
 
@@ -70,7 +70,7 @@
         :judgement      create-judgements
         :malware        create-malwares
         :relationship   create-relationships
-        :scratchpad     create-scratchpads
+        :casebook       create-casebooks
         :sighting       create-sightings
         :tool           create-tools)
     % (auth/ident->map auth-identity) params))
@@ -93,7 +93,7 @@
         :judgement      read-judgement
         :malware        read-malware
         :relationship   read-relationship
-        :scratchpad     read-scratchpad
+        :casebook       read-casebook
         :sighting       read-sighting
         :tool           read-tool)
     % (auth/ident->map auth-identity) params))
@@ -115,7 +115,7 @@
     :judgement      jud-ent/with-long-id
     :malware        malware-ent/with-long-id
     :relationship   rel-ent/with-long-id
-    :scratchpad     scr-ent/with-long-id
+    :casebook       scr-ent/with-long-id
     :sighting       sig-ent/with-long-id
     :tool           tool-ent/with-long-id))
 
@@ -248,7 +248,7 @@
                                  :create-judgement
                                  :create-malware
                                  :create-relationship
-                                 :create-scratchpad
+                                 :create-casebook
                                  :create-sighting
                                  :create-tool}
                  (if (> (bulk-size bulk)
@@ -272,7 +272,7 @@
                                {judgements      :- [Reference] []}
                                {malwares        :- [Reference] []}
                                {relationships   :- [Reference] []}
-                               {scratchpads     :- [Reference] []}
+                               {casebooks     :- [Reference] []}
                                {sightings       :- [Reference] []}
                                {tools           :- [Reference] []}]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -289,7 +289,7 @@
                                 :read-judgement
                                 :read-malware
                                 :read-relationship
-                                :read-scratchpad
+                                :read-casebook
                                 :read-sighting
                                 :read-tool}
                 :identity auth-identity
@@ -307,7 +307,7 @@
                                              :judgements      judgements
                                              :malwares        malwares
                                              :relationships   relationships
-                                             :scratchpads     scratchpads
+                                             :casebooks       casebooks
                                              :sightings       sightings
                                              :tools           tools}))]
                   (if (> (bulk-size bulk) (get-bulk-max-size))

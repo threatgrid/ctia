@@ -23,7 +23,7 @@
              [judgement :refer [NewJudgement] :as csj]
              [malware :refer [NewMalware]]
              [relationship :refer [NewRelationship]]
-             [scratchpad :refer [NewScratchpad]]
+             [casebook :refer [NewCasebook]]
              [sighting :refer [NewSighting]]
              [tool :refer [NewTool]]]
             [flanders
@@ -79,9 +79,9 @@
          [NewRelationship "max-new-relationship"]
          [NewSighting "max-new-sighting"]
          [NewTool "max-new-tool"]
-         ;; TODO enable again once scratchpad/bundle/data_table
+         ;; TODO enable again once casebook/bundle/data_table
          ;;does not trigger StackOverFlow Exception
-         ;;[NewScratchpad "max-new-scratchpad"]
+         ;;[NewCasebook "max-new-casebook"]
          ]]
   (fs/->spec (fu/require-all entity)
              kw-ns))
@@ -144,6 +144,6 @@
                  (spec-gen "max-new-tool")))
 
 ;; TODO: uncomment that when we figure out why generative tests fail on data-table
-#_(def api-for-scratchpad-routes
-    (api-for-route 'scratchpad
-                   (spec-gen "max-new-scratchpad")))
+#_(def api-for-casebook-routes
+    (api-for-route 'casebook
+                   (spec-gen "max-new-casebook")))

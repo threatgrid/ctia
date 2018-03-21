@@ -581,8 +581,8 @@
   {:properties {:type token
                 :text text}})
 
-(def scratchpad-mapping
-  {"scratchpad"
+(def casebook-mapping
+  {"casebook"
    {:dynamic false
     :properties
     (merge
@@ -688,4 +688,4 @@
    :tool tool-mapping
    :event event-mapping
    :investigation investigation-mapping
-   :scratchpad scratchpad-mapping})
+   :casebook casebook-mapping})

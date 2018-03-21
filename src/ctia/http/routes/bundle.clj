@@ -48,6 +48,7 @@
     :actor          list-actors
     :attack-pattern list-attack-patterns
     :campaign       list-campaigns
+    :casebook       list-casebooks
     :coa            list-coas
     :data-table     list-data-tables
     :exploit-target list-exploit-targets

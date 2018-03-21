@@ -56,7 +56,7 @@
                       "ctia.store.judgement" "es"
                       "ctia.store.malware" "es"
                       "ctia.store.relationship" "es"
-                      "ctia.store.scratchpad" "es"
+                      "ctia.store.casebook" "es"
                       "ctia.store.sighting" "es"
                       "ctia.store.tool" "es"]
     (t)))
