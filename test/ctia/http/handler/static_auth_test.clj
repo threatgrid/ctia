@@ -3,7 +3,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
-             [core :as helpers :refer [post get]]
+             [core :as helpers :refer [post get with-properties]]
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [ctim.domain.id :as id]))
@@ -47,7 +47,7 @@
                            :confidence "Low"
                            :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                         :end_time "2016-03-11T00:00:00.000-00:00"}})]
-          (is (= 401 status)))
+          (is (= 403 status)))
 
         (let [{status :status}
               (post "ctia/judgement"
@@ -61,7 +61,7 @@
                            :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                         :end_time "2016-03-11T00:00:00.000-00:00"}}
                     :headers {"Authorization" "bloodbending"})]
-          (is (= 401 status))))
+          (is (= 403 status))))
 
       (testing "GET /ctia/judgement"
         (let [{status :status
@@ -85,13 +85,13 @@
                 :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
                              :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
                get-judgement)))
-
-        (testing "succeeds with any key"
+        (testing "fails with any key"
           (let [{status :status}
                 (get (str "ctia/judgement/" (:short-id judgement-id))
                      :headers {"Authorization" "bloodbending"})]
-            (is (= 200 status)))
+            (is (= 403 status)))
 
           (let [{status :status}
                 (get (str "ctia/judgement/" (:short-id judgement-id)))]
-            (is (= 200 status))))))))
+            (is (= 403 status))))))))
+

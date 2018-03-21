@@ -22,7 +22,7 @@
                    :url "http://localhost:8080/foo"
                    :jwt {:sub "subject name"
                          (sut/iroh-claim "org/id") "organization-id"}
-                   :identity #ctia.auth.jwt.Identity {:jwt {:sub "subject name"
+                   :identity #ctia.auth.jwt.JWTIdentity {:jwt {:sub "subject name"
                                                             "https://schemas.cisco.com/iroh/identity/claims/org/id" "organization-id"}}
                    :groups ["organization-id"]
                    :login  "subject name"}
