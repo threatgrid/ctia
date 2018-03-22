@@ -27,6 +27,7 @@ cache:
     directories:
     - $HOME/bin
     - $HOME/.m2
+    - $HOME/.cache/pip
 jdk:
     # https://github.com/travis-ci/travis-ci/issues/5227
     - oraclejdk8
