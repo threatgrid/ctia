@@ -35,7 +35,6 @@ function build-and-publish-package {
     ARTIFACTS_BUCKET="372070498991-test-saltstack"
   fi
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
-  pip install --upgrade pip
   pip install --upgrade --user awscli
   export PATH=$PATH:$HOME/.local/bin
   export AWS_ACCESS_KEY_ID=$DEB_ACCESS_KEY
