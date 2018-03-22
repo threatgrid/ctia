@@ -12,6 +12,7 @@
              [core :refer [StoredActor
                            StoredAttackPattern
                            StoredCampaign
+                           StoredCasebook
                            StoredCOA
                            StoredDataTable
                            StoredExploitTarget
@@ -35,6 +36,7 @@
   {:actor StoredActor
    :attack-pattern StoredAttackPattern
    :campaign StoredCampaign
+   :casebook StoredCasebook
    :coa StoredCOA
    :data-table StoredDataTable
    :event s/Any
