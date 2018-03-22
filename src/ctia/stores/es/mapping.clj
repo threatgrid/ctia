@@ -620,16 +620,19 @@
 
 (def event-mapping
   {"event"
-   {:dynamic_templates dynamic-templates
+   {:dynamic false
     :properties
     {:owner token
      :groups token
      :timestamp ts
-     :entity {:type "object"}
+     :entity {:enabled false
+              :type "object"}
      :id token
-     :http-params {:type "object"}
+     :http-params {:enabled false
+                   :type "object"}
      :type token
-     :fields {:type "object"}
+     :fields {:enabled false
+              :type "object"}
      :judgement_id token}}})
 
 (def store-settings

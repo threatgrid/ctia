@@ -140,4 +140,29 @@
                       with-long-id
                       ent/un-store
                       ok)
-                  (not-found)))))
+                  (not-found)))
+
+           (DELETE "/:id" []
+                   :no-doc true
+                   :path-params [id :- s/Str]
+                   :summary "Deletes an Indicator"
+                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                   :capabilities :delete-indicator
+                   :identity identity
+                   :identity-map identity-map
+                   (if (flows/delete-flow
+                        :get-fn #(read-store :indicator
+                                             read-indicator
+                                             %
+                                             identity-map
+                                             {})
+                        :delete-fn #(write-store :indicator
+                                                 delete-indicator
+                                                 %
+                                                 identity-map)
+                        :entity-type :indicator
+                        :entity-id id
+                        :identity identity)
+                     (no-content)
+                     (not-found)))
+           ))

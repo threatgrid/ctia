@@ -72,6 +72,8 @@
   IRelationshipStore
   (create-relationships [_ new-relationships ident params]
     (rel/handle-create state new-relationships ident params))
+  (update-relationship [_ id new-relationship ident]
+    (rel/handle-update state id new-relationship ident))
   (read-relationship [_ id ident params]
     (rel/handle-read state id ident params))
   (delete-relationship [_ id ident]

@@ -639,4 +639,13 @@
                 "Only one sighting matches to the query")
             (is (= (:sighting-1 datamap)
                    (first (get-in data [:sightings :nodes])))
-                "The sighting matches the search query")))))))
+                "The sighting matches the search query"))))
+      (testing "Relationships without selection of target_ref"
+        (let [{:keys [data errors status]}
+              (gh/query (slurp "test/data/relationship.graphql")
+                        {:id sighting-1-id}
+                        "RelationshipsWithoutTargetRefQueryTest")]
+          (is (= 200 status))
+          (is (empty? errors) "No errors")
+          (is (= "indicator" (get-in data [:sighting :relationships :nodes 0
+                                           :target_entity :type]))))))))

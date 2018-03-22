@@ -77,10 +77,10 @@
 
 (def examples
   {:actors (n-doc actor-minimal fixtures-nb)
-   :attack-patterns (n-doc attack-pattern-minimal fixtures-nb)
+   :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
    :campaigns (n-doc campaign-minimal fixtures-nb)
    :coas (n-doc coa-minimal fixtures-nb)
-   :exploit-targets (n-doc exploit-target-minimal fixtures-nb)
+   :exploit_targets (n-doc exploit-target-minimal fixtures-nb)
    :incidents (n-doc incident-minimal fixtures-nb)
    :indicators (n-doc indicator-minimal fixtures-nb)
    :investigations (n-doc investigation-minimal fixtures-nb)

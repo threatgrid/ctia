@@ -6,7 +6,7 @@
             [ctia.properties :refer [properties]]
             [ctia.schemas.bulk :refer [Bulk]]
             [ctia.schemas.core :refer [NewBundle TempIDs]]
-            [ctia.store :refer :all]
+            [ctia.store :refer [list-fn read-store]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
             [schema-tools.core :as st]
@@ -14,7 +14,8 @@
             [clojure.string :as str]
             [clojure.set :as set]
             [clojure.tools.logging :as log]
-            [ctia.domain.entities :as ent]
+            [ctia.domain.entities :as ent
+             :refer [with-long-id-fn]]
             [clojure.string :as string]))
 
 (s/defschema EntityImportResult
@@ -41,25 +42,33 @@
 (s/defschema BundleImportResult
   {:results [EntityImportResult]})
 
-(defn list-fn
-  "Returns the list function for a given entity type"
-  [entity-type]
-  (case entity-type
-    :actor          list-actors
-    :attack-pattern list-attack-patterns
-    :campaign       list-campaigns
-    :casebook       list-casebooks
-    :coa            list-coas
-    :data-table     list-data-tables
-    :exploit-target list-exploit-targets
-    :feedback       list-feedback
-    :incident       list-incidents
-    :indicator      list-indicators
-    :judgement      list-judgements
-    :malware        list-malwares
-    :relationship   list-relationships
-    :sighting       list-sightings
-    :tool           list-tools))
+(def bundle-entity-keys #{:actors
+                          :attack_patterns
+                          :campaigns
+                          :coas
+                          :data_tables
+                          :exploit_targets
+                          :feedbacks
+                          :incidents
+                          :investigations
+                          :indicators
+                          :judgements
+                          :malwares
+                          :relationships
+                          :casebooks
+                          :sightings
+                          :tools})
+
+(defn entity-type-from-bundle-key
+  "Converts a bundle entity key to an entity type
+   Ex: :attack_patterns -> :attack-pattern"
+  [bundle-key]
+  (bulk/entity-type-from-bulk-key bundle-key))
+
+(defn bulk-key
+  "Converts a bundle key to a bulk key"
+  [bundle-key]
+  bundle-key)
 
 (defn transient-id?
   [id]
@@ -174,11 +183,9 @@
               [original_id id]))
        (into {})))
 
-(def entities-keys (map :k (keys Bulk)))
-
 (defn map-kv
-  "Apply a function to all entity collections within a map
-  of entities indexed by entity type."
+  "Returns a map where values are the result of applying
+   f to each key and value."
   [f m]
   (into {}
         (map (fn [[k v]]
@@ -203,7 +210,7 @@
    entity-type
    find-by-external-id]
   (if-let [old-entities (find-by-external-id external_id)]
-    (let [with-long-id-fn (bulk/with-long-id-fn entity-type)
+    (let [with-long-id-fn (with-long-id-fn entity-type)
           old-entity (some-> old-entities
                              first
                              :entity
@@ -250,7 +257,7 @@
    external-key-prefixes
    auth-identity]
   (map-kv (fn [k v]
-            (let [entity-type (singular k)]
+            (let [entity-type (entity-type-from-bundle-key k)]
               (-> v
                   (init-import-data entity-type external-key-prefixes)
                   (with-existing-entities entity-type auth-identity))))
@@ -262,15 +269,25 @@
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
+(s/defn with-bulk-keys
+  "Renames all map keys from bundle to bulk format
+   (ex: attack_patterns -> attack-patterns)"
+  [m]
+  (->> m
+       (map (fn [[k v]]
+              [(bulk-key k) v]))
+       (into {})))
+
 (s/defn prepare-bulk
   "Creates the bulk data structure with all entities to create."
   [bundle-import-data :- BundleImportData]
-  (map-kv (fn [k v]
-            (->> v
-                 (filter create?)
-                 (remove nil?)
-                 (map :new-entity)))
-          bundle-import-data))
+  (->> bundle-import-data
+       (map-kv (fn [k v]
+                 (->> v
+                      (filter create?)
+                      (remove nil?)
+                      (map :new-entity))))
+       with-bulk-keys))
 
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
@@ -288,7 +305,7 @@
                                      :result "error")
                         (not error) (assoc :id entity-bulk-result
                                            :result "created")))
-                    submitted (get bulk-result k))
+                    submitted (get bulk-result (bulk-key k)))
                not-submitted)))
           bundle-import-data))
 
@@ -307,7 +324,7 @@
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)]
-  (let [bundle-entities (select-keys bundle entities-keys)
+  (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
                                            auth-identity)

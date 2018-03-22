@@ -11,6 +11,23 @@
             default-tlp
             determine-disposition-id
             disposition-map]]
+   [ctia.domain.entities
+    [actor :as act-ent]
+    [attack-pattern :as attack-ent]
+    [campaign :as cam-ent]
+    [coa :as coa-ent]
+    [exploit-target :as ept-ent]
+    [data-table :as dt-ent]
+    [feedback :as fbk-ent]
+    [incident :as inc-ent]
+    [indicator :as ind-ent]
+    [investigation :as inv-ent]
+    [judgement :as jud-ent]
+    [malware :as malware-ent]
+    [relationship :as rel-ent]
+    [casebook :as scr-ent]
+    [sighting :as sig-ent]
+    [tool :as tool-ent]]
    [ctia.schemas.core
     :as ctia-schemas
     :refer [NewActor
@@ -57,6 +74,19 @@
       (contains? schema (s/required-key k))
       (contains? schema k)))
 
+(defn make-valid-time
+  "make a valid-time object from either in this order:
+  the newest value, the previous value or the default value"
+  [prev-valid-time new-valid-time now]
+  {:valid_time {:start_time
+                (or (:start_time new-valid-time)
+                    (:start_time prev-valid-time)
+                    now)
+                :end_time
+                (or (:end_time new-valid-time)
+                    (:end_time prev-valid-time)
+                    time/default-expire-date)}})
+
 (defn default-realize-fn [type-name Model StoredModel]
   (s/fn default-realize :- StoredModel
     ([new-object :- Model
@@ -83,11 +113,9 @@
                :tlp (:tlp new-object
                           (:tlp prev-object (properties-default-tlp)))}
               (when (contains-key? Model :valid_time)
-                {:valid_time (or (:valid_time prev-object)
-                                 {:end_time (or (get-in new-object [:valid_time :end_time])
-                                                time/default-expire-date)
-                                  :start_time (or (get-in new-object [:valid_time :start_time])
-                                                  now)})}))))))
+                (make-valid-time (:valid_time prev-object)
+                                 (:valid_time new-object)
+                                 now)))))))
 
 (def realize-actor
   (default-realize-fn "actor" NewActor StoredActor))
@@ -134,24 +162,20 @@
 (def realize-casebook
   (default-realize-fn "casebook" NewCasebook StoredCasebook))
 
-(s/defn realize-relationship :- StoredRelationship
-  [{:keys [source_ref target_ref]
-    :as new-relationship} :- NewRelationship
-   id :- s/Str
-   tempids :- (s/maybe TempIDs)
-   owner :- s/Str
-   groups :- [s/Str]]
+(def relationship-default-realize
+  (default-realize-fn "relationship" NewRelationship StoredRelationship))
 
-  (assoc new-relationship
-         :id id
-         :type "relationship"
+(s/defn realize-relationship
+  :- StoredRelationship
+  [{:keys [source_ref
+           target_ref]
+    :as new-entity}
+   id
+   tempids
+   & rest-args]
+  (assoc (apply relationship-default-realize new-entity id tempids rest-args)
          :source_ref (get tempids source_ref source_ref)
-         :target_ref (get tempids target_ref target_ref)
-         :created (time/now)
-         :owner owner
-         :groups groups
-         :tlp (:tlp new-relationship (properties-default-tlp))
-         :schema_version schema-version))
+         :target_ref (get tempids target_ref target_ref)))
 
 (s/defn realize-judgement :- StoredJudgement
   [new-judgement :- NewJudgement
@@ -242,3 +266,57 @@
         (map (fn [[k v]]
                [k (un-store-all v)])
              m)))
+
+(def realize-fn
+  {:actor          realize-actor
+   :attack-pattern realize-attack-pattern
+   :campaign       realize-campaign
+   :coa            realize-coa
+   :data-table     realize-data-table
+   :exploit-target realize-exploit-target
+   :feedback       realize-feedback
+   :incident       realize-incident
+   :indicator      realize-indicator
+   :investigation  realize-investigation
+   :judgement      realize-judgement
+   :malware        realize-malware
+   :relationship   realize-relationship
+   :casebook       realize-casebook
+   :sighting       realize-sighting
+   :tool           realize-tool})
+
+(def page-with-long-id-fn
+  {:actor          act-ent/page-with-long-id
+   :attack-pattern attack-ent/page-with-long-id
+   :campaign       cam-ent/page-with-long-id
+   :coa            coa-ent/page-with-long-id
+   :data-table     dt-ent/page-with-long-id
+   :exploit-target ept-ent/page-with-long-id
+   :feedback       fbk-ent/page-with-long-id
+   :incident       inc-ent/page-with-long-id
+   :indicator      ind-ent/page-with-long-id
+   :investigation  inv-ent/page-with-long-id
+   :judgement      jud-ent/page-with-long-id
+   :malware        malware-ent/page-with-long-id
+   :relationship   rel-ent/page-with-long-id
+   :casebook       scr-ent/page-with-long-id
+   :sighting       sig-ent/page-with-long-id
+   :tool           tool-ent/page-with-long-id})
+
+(def with-long-id-fn
+  {:actor          act-ent/with-long-id
+   :attack-pattern attack-ent/with-long-id
+   :campaign       cam-ent/with-long-id
+   :coa            coa-ent/with-long-id
+   :data-table     dt-ent/with-long-id
+   :exploit-target ept-ent/with-long-id
+   :feedback       fbk-ent/with-long-id
+   :incident       inc-ent/with-long-id
+   :indicator      ind-ent/with-long-id
+   :investigation  inv-ent/with-long-id
+   :judgement      jud-ent/with-long-id
+   :malware        malware-ent/with-long-id
+   :relationship   rel-ent/with-long-id
+   :casebook       scr-ent/with-long-id
+   :sighting       sig-ent/with-long-id
+   :tool           tool-ent/with-long-id})

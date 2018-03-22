@@ -28,4 +28,15 @@
   (testing "GET /ctia/version"
     (let [response (get "ctia/version")]
       (is (= 200 (:status response)))
-      (is (= schema-version (get-in response [:parsed-body :version]))))))
+      (is (= schema-version (get-in response [:parsed-body :ctim-version]))))))
+
+
+(deftest-for-each-store test-version-headers
+  (testing "GET /ctia/version"
+    (let [{headers :headers
+           :as response} (get "ctia/version")]
+      (is (= 200 (:status response)))
+      (is (every? (set (keys headers))
+                  ["X-Ctia-Version"
+                   "X-Ctia-Config"
+                   "X-Ctim-Version"])))))

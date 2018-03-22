@@ -2,122 +2,54 @@
   (:require [compojure.api.sweet :refer :all]
             [clojure.tools.logging :as log]
             [ctia.auth :as auth]
-            [ctia.domain.entities :as ent]
-            [ctia.domain.entities
-             [actor :as act-ent]
-             [attack-pattern :as attack-ent]
-             [campaign :as cam-ent]
-             [coa :as coa-ent]
-             [exploit-target :as ept-ent]
-             [data-table :as dt-ent]
-             [feedback :as fbk-ent]
-             [incident :as inc-ent]
-             [indicator :as ind-ent]
-             [investigation :as inv-ent]
-             [judgement :as jud-ent]
-             [malware :as malware-ent]
-             [relationship :as rel-ent]
-             [casebook :as scr-ent]
-             [sighting :as sig-ent]
-             [tool :as tool-ent]]
+            [ctia.domain.entities :as ent
+             :refer [with-long-id-fn realize-fn]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as common]
             [ctia.lib.keyword :refer [singular]]
             [ctia.schemas.bulk :refer [Bulk BulkRefs EntityError NewBulk]]
             [ctia.properties :refer [properties]]
-            [ctia.store :refer :all]
+            [ctia.store :as store
+             :refer [write-store read-store]]
             [ctia.schemas.core :refer [Reference]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]
             [clojure.set :as set]))
 
-(defn realize-fn
-  "return the realize function provided an entity type key"
+(defn bulk-key
+  "Returns the bulk key for a given entity type"
+  [entity-type]
+  (case entity-type
+    :attack-pattern :attack_patterns
+    :data-table :data_tables
+    :exploit-target :exploit_targets
+    (-> (name entity-type)
+        (str "s")
+        keyword)))
+
+(defn entity-type-from-bulk-key
+  "Converts a bulk entity key to an entity type
+   Ex: :attack_patterns -> :attack-pattern"
   [k]
   (case k
-    :actor          ent/realize-actor
-    :attack-pattern ent/realize-attack-pattern
-    :campaign       ent/realize-campaign
-    :coa            ent/realize-coa
-    :data-table     ent/realize-data-table
-    :exploit-target ent/realize-exploit-target
-    :feedback       ent/realize-feedback
-    :incident       ent/realize-incident
-    :investigation  ent/realize-investigation
-    :indicator      ent/realize-indicator
-    :judgement      ent/realize-judgement
-    :malware        ent/realize-malware
-    :relationship   ent/realize-relationship
-    :casebook       ent/realize-casebook
-    :sighting       ent/realize-sighting
-    :tool           ent/realize-tool))
+    :attack_patterns :attack-pattern
+    :exploit_targets :exploit-target
+    :data_tables :data-table
+    (singular k)))
 
 (defn create-fn
   "return the create function provided an entity type key"
   [k auth-identity params]
   #(write-store
-    k (case k
-        :actor          create-actors
-        :attack-pattern create-attack-patterns
-        :campaign       create-campaigns
-        :coa            create-coas
-        :data-table     create-data-tables
-        :exploit-target create-exploit-targets
-        :feedback       create-feedbacks
-        :incident       create-incidents
-        :indicator      create-indicators
-        :investigation  create-investigations
-        :judgement      create-judgements
-        :malware        create-malwares
-        :relationship   create-relationships
-        :casebook       create-casebooks
-        :sighting       create-sightings
-        :tool           create-tools)
+    k (get store/create-fn k)
     % (auth/ident->map auth-identity) params))
 
 (defn read-fn
   "return the create function provided an entity type key"
   [k auth-identity params]
   #(read-store
-    k (case k
-        :actor          read-actor
-        :attack-pattern read-attack-pattern
-        :campaign       read-campaign
-        :coa            read-coa
-        :data-table     read-data-table
-        :exploit-target read-exploit-target
-        :feedback       read-feedback
-        :incident       read-incident
-        :indicator      read-indicator
-        :investigation  read-investigation
-        :judgement      read-judgement
-        :malware        read-malware
-        :relationship   read-relationship
-        :casebook       read-casebook
-        :sighting       read-sighting
-        :tool           read-tool)
+    k (get store/read-fn k)
     % (auth/ident->map auth-identity) params))
-
-(defn with-long-id-fn
-  "return the with-long-id function provided an entity type key"
-  [k]
-  (case k
-    :actor          act-ent/with-long-id
-    :attack-pattern attack-ent/with-long-id
-    :campaign       cam-ent/with-long-id
-    :coa            coa-ent/with-long-id
-    :data-table     dt-ent/with-long-id
-    :exploit-target ept-ent/with-long-id
-    :feedback       fbk-ent/with-long-id
-    :incident       inc-ent/with-long-id
-    :indicator      ind-ent/with-long-id
-    :investigation  inv-ent/with-long-id
-    :judgement      jud-ent/with-long-id
-    :malware        malware-ent/with-long-id
-    :relationship   rel-ent/with-long-id
-    :casebook       scr-ent/with-long-id
-    :sighting       sig-ent/with-long-id
-    :tool           tool-ent/with-long-id))
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
@@ -159,7 +91,7 @@
   (->> bulk
        (pmap (fn [[entity-type entities]]
                [entity-type
-                (apply func entities (singular entity-type) args)]))
+                (apply func entities (entity-type-from-bulk-key entity-type) args)]))
        (into {})))
 
 (defn merge-tempids
@@ -260,11 +192,11 @@
                 :return (s/maybe Bulk)
                 :summary "GET many entities at once"
                 :query-params [{actors          :- [Reference] []}
-                               {attack-patterns :- [Reference] []}
+                               {attack_patterns :- [Reference] []}
                                {campaigns       :- [Reference] []}
                                {coas            :- [Reference] []}
-                               {data-tables     :- [Reference] []}
-                               {exploit-targets :- [Reference] []}
+                               {data_tables     :- [Reference] []}
+                               {exploit_targets :- [Reference] []}
                                {feedbacks       :- [Reference] []}
                                {incidents       :- [Reference] []}
                                {indicators      :- [Reference] []}
@@ -295,11 +227,11 @@
                 :identity auth-identity
                 (let [bulk (into {} (remove (comp empty? second)
                                             {:actors          actors
-                                             :attack-patterns attack-patterns
+                                             :attack_patterns attack_patterns
                                              :campaigns       campaigns
                                              :coas            coas
-                                             :data-tables     data-tables
-                                             :exploit-targets exploit-targets
+                                             :data_tables     data_tables
+                                             :exploit_targets exploit_targets
                                              :feedbacks       feedbacks
                                              :incidents       incidents
                                              :investigations  investigations

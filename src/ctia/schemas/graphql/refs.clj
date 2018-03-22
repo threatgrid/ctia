@@ -1,6 +1,11 @@
 (ns ctia.schemas.graphql.refs
   (:require [ctia.schemas.graphql.helpers :as g]))
 
+;;---- Attack Pattern
+(def attack-pattern-type-name "AttackPattern")
+(def AttackPatternRef
+  (g/new-ref attack-pattern-type-name))
+
 ;;---- Indicator
 (def indicator-type-name "Indicator")
 (def IndicatorRef
@@ -10,6 +15,11 @@
 (def judgement-type-name "Judgement")
 (def JudgementRef
   (g/new-ref judgement-type-name))
+
+;;---- Malware
+(def malware-type-name "Malware")
+(def MalwareRef
+  (g/new-ref malware-type-name))
 
 ;;---- Observable
 (def observable-type-name "Observable")
@@ -33,3 +43,7 @@
 (def VerdictRef
   (g/new-ref verdict-type-name))
 
+;;---- Tool
+(def tool-type-name "Tool")
+(def ToolRef
+  (g/new-ref tool-type-name))

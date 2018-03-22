@@ -18,7 +18,9 @@
           refs/judgement-type-name refs/JudgementRef
           refs/sighting-type-name refs/SightingRef
           refs/verdict-type-name refs/VerdictRef
-          })]
+          refs/attack-pattern-type-name refs/AttackPatternRef
+          refs/malware-type-name refs/MalwareRef
+          refs/tool-type-name refs/ToolRef})]
     (g/new-object
      name
      description

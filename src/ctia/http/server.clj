@@ -36,17 +36,16 @@
            access-control-allow-origin
            access-control-allow-methods
            jwt]
-    :or {access-control-allow-methods "get,post,put,delete"}}]
+    :or {access-control-allow-methods "get,post,put,patch,delete"}}]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler)
-
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag")
+                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version")
 
          true auth/wrap-authentication
 

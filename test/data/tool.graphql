@@ -1,0 +1,91 @@
+query ToolQueryTest($id: String!, $relationship_type: String = "variant-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
+  tool(id: $id) {
+    ...toolFields
+    relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...relationshipBaseFields
+        target_entity {
+          ...toolFields
+        }
+        source_entity {
+          ...toolFields
+        }
+      }
+      edges {
+        node {
+          ...relationshipBaseFields
+          target_entity {
+            ...toolFields
+          }
+          source_entity {
+            ...toolFields
+          }
+        }
+      }
+    }
+  }
+}
+
+query ToolFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
+  tool(id: $id) {
+    feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+      totalCount
+      pageInfo {
+        ...pageInfoFields
+      }
+      nodes {
+        ...feedbackFields
+      }
+      edges {
+        node {
+          ...feedbackFields
+        }
+      }
+    }
+  }
+}
+
+query ToolsQueryTest($query: String, $after: String, $first: Int, $sort_field:ToolOrderField = ID, $sort_direction: OrderDirection = asc) {
+  tools(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...toolFields
+    }
+    edges {
+      node {
+        ...toolFields
+      }
+    }
+  }
+}
+
+fragment toolFields on Tool {
+  id
+  type
+  schema_version
+  revision
+  external_ids
+  external_references {
+    ...externalReferenceFields
+  }
+  timestamp
+  language
+  tlp
+  source
+  source_uri
+  name
+  labels
+  description
+  kill_chain_phases {
+    ...killChainPhaseFields
+  }
+  tool_version
+  x_mitre_aliases
+}

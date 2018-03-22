@@ -7,6 +7,7 @@
             [compojure.route :as rt]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
+             [version :refer [wrap-version]]
              [auth :as auth]
              [cache-control :refer [wrap-cache-control]]
              [unknown :as unk]]
@@ -123,6 +124,7 @@
 
        (middleware [wrap-not-modified
                     wrap-cache-control
+                    wrap-version
                     ;; always last
                     (metrics/wrap-metrics "ctia" routes/get-routes)]
 
