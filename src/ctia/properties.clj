@@ -56,7 +56,8 @@
                       "ctia.auth.threatgrid.whoami-url" s/Str
                       "ctia.auth.static.secret" s/Str
                       "ctia.auth.static.name" s/Str
-                      "ctia.auth.static.group" s/Str})
+                      "ctia.auth.static.group" s/Str
+                      "ctia.auth.static.readonly-for-anonymous" s/Bool})
 
    (st/required-keys {"ctia.http.enabled" s/Bool
                       "ctia.http.port" s/Int

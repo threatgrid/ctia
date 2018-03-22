@@ -1,5 +1,5 @@
 (ns ctia.auth.jwt
-  (:require [ctia.auth :as auth]
+  (:require [ctia.auth :as auth :refer [IIdentity]]
             [ctia.properties :as prop]
             [clj-momo.lib.set :refer [as-set]]
             [clojure.set :as set]))
@@ -8,7 +8,6 @@
   (set/difference auth/all-capabilities
                   #{:specify-id
                     :developer}))
-
 
 (def claim-prefix
   (get-in @prop/properties [:ctia :http :jwt :claim-prefix]
@@ -34,8 +33,8 @@
   [keyword-name]
   (str claim-prefix "/" keyword-name))
 
-(defrecord Identity [jwt]
-  auth/IIdentity
+(defrecord JWTIdentity [jwt]
+  IIdentity
   (authenticated? [_]
     true)
   (login [_]
@@ -53,7 +52,7 @@
   (fn [request]
     (handler
      (if-let [jwt (:jwt request)]
-       (let [identity (->Identity jwt)]
+       (let [identity (->JWTIdentity jwt)]
          (assoc request
                 :identity identity
                 :login    (auth/login identity)
