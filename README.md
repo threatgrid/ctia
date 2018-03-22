@@ -305,7 +305,7 @@ or from source with leiningen:
 | migration task | target CTIA versions          | sample command                                                                                     |
 |----------------|-------------------------------|----------------------------------------------------------------------------------------------------|
 |         0.4.16 | All versions before 1.0.0-rc1 | `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores 0.4.16 0.4.16 200 true` |
-|         0.4.27 | All versions brefore 1.1.0    | `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores 0.4.27 0.4.26 200 true` |
+|         0.4.28 | All versions brefore 1.1.0    | `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores 0.4.28 0.4.28 200 true` |
 
 
 ## License
