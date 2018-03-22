@@ -35,8 +35,11 @@ function build-and-publish-package {
     ARTIFACTS_BUCKET="372070498991-test-saltstack"
   fi
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
+  pip install --upgrade pip
   pip install --upgrade --user awscli
   export PATH=$PATH:$HOME/.local/bin
+  export AWS_ACCESS_KEY_ID=$DEB_ACCESS_KEY
+  export AWS_SECRET_ACCESS_KEY=$DEB_SECRET_KEY
   aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME}
 }
 
