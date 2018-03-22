@@ -275,7 +275,6 @@
                               ok)))
 
            (DELETE "/:id" []
-                   :no-doc true
                    :path-params [id :- s/Str]
                    :summary "Deletes an Casebook"
                    :header-params [{Authorization :- (s/maybe s/Str) nil}]
