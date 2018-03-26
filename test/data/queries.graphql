@@ -271,30 +271,30 @@ fragment investigationFields on Investigation {
   source
 }
 
-query ScratchpadQueryTest($id: String!) {
-  scratchpad(id: $id) {
-    ...scratchpadFields
+query CasebookQueryTest($id: String!) {
+  casebook(id: $id) {
+    ...casebookFields
   }
 }
 
-query ScratchpadsQueryTest($query: String, $after: String, $first: Int, $sort_field:ScratchpadOrderField = ID, $sort_direction: OrderDirection = asc) {
-  scratchpads(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+query CasebooksQueryTest($query: String, $after: String, $first: Int, $sort_field:CasebookOrderField = ID, $sort_direction: OrderDirection = asc) {
+  casebooks(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
     totalCount
     pageInfo {
       ...pageInfoFields
     }
     nodes {
-      ...scratchpadFields
+      ...casebookFields
     }
     edges {
       node {
-        ...scratchpadFields
+        ...casebookFields
       }
     }
   }
 }
 
-fragment scratchpadFields on Scratchpad {
+fragment casebookFields on Casebook {
   id
   type
   schema_version

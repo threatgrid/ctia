@@ -11,9 +11,9 @@
              [investigation :as investigation
               :refer [InvestigationType
                       InvestigationConnectionType]]
-             [scratchpad :as scratchpad
-              :refer [ScratchpadType
-                      ScratchpadConnectionType]]
+             [casebook :as casebook
+              :refer [CasebookType
+                      CasebookConnectionType]]
              [judgement :as judgement
               :refer [JudgementType
                       JudgementConnectionType]]
@@ -96,14 +96,14 @@
                  :args {:type {:type (g/non-null Scalars/GraphQLString)}
                         :value {:type (g/non-null Scalars/GraphQLString)}}
                  :resolve (fn [_ args _ _] args)}
-    :scratchpad {:type ScratchpadType
-                 :args search-by-id-args
-                 :resolve (res/entity-by-id-resolver :scratchpad)}
-    :scratchpads {:type ScratchpadConnectionType
-                  :args (merge common/lucene-query-arguments
-                               scratchpad/scratchpad-order-arg
-                               p/connection-arguments)
-                  :resolve (res/search-entity-resolver :scratchpad)}
+    :casebook {:type CasebookType
+               :args search-by-id-args
+               :resolve (res/entity-by-id-resolver :casebook)}
+    :casebooks {:type CasebookConnectionType
+                :args (merge common/lucene-query-arguments
+                             casebook/casebook-order-arg
+                             p/connection-arguments)
+                :resolve (res/search-entity-resolver :casebook)}
     :sighting {:type SightingType
                :args search-by-id-args
                :resolve (res/entity-by-id-resolver :sighting)}

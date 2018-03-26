@@ -18,7 +18,7 @@
 ;;   valid, and update the exclusions/comments accordingly
 ;; - Maybe you can just delete the dep! (doesn't hurt to check)
 
-(defproject ctia "1.0.0-rc1"
+(defproject ctia "1.1.0"
   :description "Cisco Threat Intelligence API"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
@@ -44,7 +44,7 @@
                   :exclusions [prismatic/plumbing
                                potemkin
                                com.andrewmcveigh/cljs-time]]
-                 [threatgrid/ctim "0.4.26"
+                 [threatgrid/ctim "0.4.28"
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava]]

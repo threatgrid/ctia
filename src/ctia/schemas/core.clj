@@ -17,7 +17,7 @@
     [judgement :as js]
     [malware :as malware]
     [relationship :as rels]
-    [scratchpad :as scr]
+    [casebook :as scr]
     [sighting :as ss]
     [tool :as tool]
     [verdict :as vs]
@@ -497,53 +497,53 @@
   "bundle")
 
 
-;; Scratchpad
+;; Casebook
 
 
-(def-acl-schema Scratchpad
+(def-acl-schema Casebook
   (fu/replace-either-with-any
-   scr/Scratchpad)
-  "scratchpad")
+   scr/Casebook)
+  "casebook")
 
-(def-acl-schema PartialScratchpad
+(def-acl-schema PartialCasebook
   (fu/replace-either-with-any
-   (fu/optionalize-all scr/Scratchpad))
-  "partial-scratchpad")
+   (fu/optionalize-all scr/Casebook))
+  "partial-casebook")
 
-(sc/defschema PartialScratchpadList
-  [PartialScratchpad])
+(sc/defschema PartialCasebookList
+  [PartialCasebook])
 
-(def-acl-schema NewScratchpad
+(def-acl-schema NewCasebook
   (fu/replace-either-with-any
-   scr/NewScratchpad)
-  "new-scratchpad")
+   scr/NewCasebook)
+  "new-casebook")
 
-(def-acl-schema PartialNewScratchpad
+(def-acl-schema PartialNewCasebook
   (fu/replace-either-with-any
-   (fu/optionalize-all scr/NewScratchpad))
-  "new-scratchpad")
+   (fu/optionalize-all scr/NewCasebook))
+  "new-casebook")
 
-(def-stored-schema StoredScratchpad
+(def-stored-schema StoredCasebook
   (fu/replace-either-with-any
-   scr/StoredScratchpad)
-  "stored-scratchpad")
+   scr/StoredCasebook)
+  "stored-casebook")
 
-(def-stored-schema PartialStoredScratchpad
+(def-stored-schema PartialStoredCasebook
   (fu/replace-either-with-any
-   (fu/optionalize-all scr/StoredScratchpad))
-  "partial-stored-scratchpad")
+   (fu/optionalize-all scr/StoredCasebook))
+  "partial-stored-casebook")
 
-(sc/defschema ScratchpadObservablesUpdate
+(sc/defschema CasebookObservablesUpdate
   (st/merge
    {:operation (sc/enum :add :remove :replace)}
-   (st/select-keys Scratchpad [:observables])))
+   (st/select-keys Casebook [:observables])))
 
-(sc/defschema ScratchpadTextsUpdate
+(sc/defschema CasebookTextsUpdate
   (st/merge
    {:operation (sc/enum :add :remove :replace)}
-   (st/select-keys Scratchpad [:texts])))
+   (st/select-keys Casebook [:texts])))
 
-(sc/defschema ScratchpadBundleUpdate
+(sc/defschema CasebookBundleUpdate
   {:operation (sc/enum :add :remove :replace)
    :bundle (st/optional-keys Bundle)})
 
@@ -602,4 +602,4 @@
    :sighting StoredSighting
    :tool StoredTool
    :investigation StoredInvestigation
-   :scratchpad StoredScratchpad})
+   :casebook StoredCasebook})

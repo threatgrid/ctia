@@ -180,7 +180,7 @@
                                  :create-judgement
                                  :create-malware
                                  :create-relationship
-                                 :create-scratchpad
+                                 :create-casebook
                                  :create-sighting
                                  :create-tool}
                  (if (> (bulk-size bulk)
@@ -204,7 +204,7 @@
                                {judgements      :- [Reference] []}
                                {malwares        :- [Reference] []}
                                {relationships   :- [Reference] []}
-                               {scratchpads     :- [Reference] []}
+                               {casebooks     :- [Reference] []}
                                {sightings       :- [Reference] []}
                                {tools           :- [Reference] []}]
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -221,7 +221,7 @@
                                 :read-judgement
                                 :read-malware
                                 :read-relationship
-                                :read-scratchpad
+                                :read-casebook
                                 :read-sighting
                                 :read-tool}
                 :identity auth-identity
@@ -239,7 +239,7 @@
                                              :judgements      judgements
                                              :malwares        malwares
                                              :relationships   relationships
-                                             :scratchpads     scratchpads
+                                             :casebooks       casebooks
                                              :sightings       sightings
                                              :tools           tools}))]
                   (if (> (bulk-size bulk) (get-bulk-max-size))

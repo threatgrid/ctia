@@ -23,7 +23,7 @@
     :judgements      [(s/maybe Judgement)]
     :malwares        [(s/maybe Malware)]
     :relationships   [(s/maybe Relationship)]
-    :scratchpads     [(s/maybe Scratchpad)]
+    :casebooks       [(s/maybe Casebook)]
     :sightings       [(s/maybe Sighting)]
     :tools           [(s/maybe Tool)]}))
 
@@ -42,7 +42,7 @@
     :judgements      [(s/maybe StoredJudgement)]
     :malwares        [(s/maybe StoredMalware)]
     :relationships   [(s/maybe StoredRelationship)]
-    :scratchpads     [(s/maybe StoredScratchpad)]
+    :casebooks       [(s/maybe StoredCasebook)]
     :sightings       [(s/maybe StoredSighting)]
     :tools           [(s/maybe StoredTool)]}))
 
@@ -61,7 +61,7 @@
     :judgements      [(s/maybe Reference)]
     :malwares        [(s/maybe Reference)]
     :relationships   [(s/maybe Reference)]
-    :scratchpads     [(s/maybe Reference)]
+    :casebooks       [(s/maybe Reference)]
     :sightings       [(s/maybe Reference)]
     :tools           [(s/maybe Reference)]
     :tempids         TempIDs}))
@@ -81,6 +81,6 @@
     :judgements      [NewJudgement]
     :malwares        [NewMalware]
     :relationships   [NewRelationship]
-    :scratchpads     [NewScratchpad]
+    :casebooks       [NewCasebook]
     :sightings       [NewSighting]
     :tools           [NewTool]}))

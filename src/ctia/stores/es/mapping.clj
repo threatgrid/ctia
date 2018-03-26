@@ -488,6 +488,7 @@
   {:dynamic "strict"
    :properties
    {:type token
+    :observed_time valid-time
     :os token
     :observables observable
     :properties_data_tables token}})
@@ -505,9 +506,12 @@
      {:observed_time valid-time
       :count {:type "long"}
       :sensor token
-      :target sighting-target
+      :targets sighting-target
       :reference token
       :confidence token
+      :severity token
+      :resolution token
+      :internal {:type "boolean"}
       :observables observable
       :observables_hash token
       :relations observed-relation})}})
@@ -577,8 +581,8 @@
   {:properties {:type token
                 :text text}})
 
-(def scratchpad-mapping
-  {"scratchpad"
+(def casebook-mapping
+  {"casebook"
    {:dynamic false
     :properties
     (merge
@@ -687,4 +691,4 @@
    :tool tool-mapping
    :event event-mapping
    :investigation investigation-mapping
-   :scratchpad scratchpad-mapping})
+   :casebook casebook-mapping})

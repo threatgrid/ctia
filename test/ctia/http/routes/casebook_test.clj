@@ -1,14 +1,14 @@
-(ns ctia.http.routes.scratchpad-test
+(ns ctia.http.routes.casebook-test
   (:refer-clojure :exclude [get])
   (:require
    [ctim.schemas.common
     :refer [ctim-schema-version]]
    [clojure.set :refer [subset?]]
-   [ctim.examples.scratchpads
-    :refer [new-scratchpad-minimal
-            new-scratchpad-maximal]]
+   [ctim.examples.casebooks
+    :refer [new-casebook-minimal
+            new-casebook-maximal]]
    [ctia.schemas.sorting
-    :refer [scratchpad-sort-fields]]
+    :refer [casebook-sort-fields]]
    [clj-momo.test-helpers
     [core :as mth]
     [http :refer [encode]]]
@@ -38,7 +38,7 @@
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
 
-(deftest-for-each-store test-scratchpad-routes
+(deftest-for-each-store test-casebook-routes
   (helpers/set-capabilities! "foouser"
                              ["foogroup"]
                              "user"
@@ -48,249 +48,249 @@
                                       "foogroup"
                                       "user")
 
-  (testing "POST /ctia/scratchpad"
-    (let [new-scratchpad (-> new-scratchpad-maximal
-                             (dissoc :id)
-                             (assoc :description "description"))
+  (testing "POST /ctia/casebook"
+    (let [new-casebook (-> new-casebook-maximal
+                           (dissoc :id)
+                           (assoc :description "description"))
           {status :status
-           scratchpad :parsed-body}
-          (post "ctia/scratchpad"
-                :body new-scratchpad
+           casebook :parsed-body}
+          (post "ctia/casebook"
+                :body new-casebook
                 :headers {"Authorization" "45c1f5e3f05d0"})
-          scratchpad-id
-          (id/long-id->id (:id scratchpad))
+          casebook-id
+          (id/long-id->id (:id casebook))
 
-          scratchpad-external-ids
-          (:external_ids scratchpad)]
+          casebook-external-ids
+          (:external_ids casebook)]
       (is (= 201 status))
       (is (deep=
-           (assoc new-scratchpad :id (id/long-id scratchpad-id)) scratchpad))
+           (assoc new-casebook :id (id/long-id casebook-id)) casebook))
 
-      (testing "the scratchpad ID has correct fields"
+      (testing "the casebook ID has correct fields"
         (let [show-props (get-http-show)]
-          (is (= (:hostname    scratchpad-id)      (:hostname    show-props)))
-          (is (= (:protocol    scratchpad-id)      (:protocol    show-props)))
-          (is (= (:port        scratchpad-id)      (:port        show-props)))
-          (is (= (:path-prefix scratchpad-id) (seq (:path-prefix show-props))))))
+          (is (= (:hostname    casebook-id)      (:hostname    show-props)))
+          (is (= (:protocol    casebook-id)      (:protocol    show-props)))
+          (is (= (:port        casebook-id)      (:port        show-props)))
+          (is (= (:path-prefix casebook-id) (seq (:path-prefix show-props))))))
 
-      (testing "GET /ctia/scratchpad/:id"
-        (let [response (get (str "ctia/scratchpad/" (:short-id scratchpad-id))
+      (testing "GET /ctia/casebook/:id"
+        (let [response (get (str "ctia/casebook/" (:short-id casebook-id))
                             :headers {"Authorization" "45c1f5e3f05d0"})
-              scratchpad (:parsed-body response)]
+              casebook (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               (assoc new-scratchpad :id (id/long-id scratchpad-id)) scratchpad))))
+               (assoc new-casebook :id (id/long-id casebook-id)) casebook))))
 
-      (test-query-string-search :scratchpad "description" :description)
+      (test-query-string-search :casebook "description" :description)
 
-      (testing "GET /ctia/scratchpad/external_id/:external_id"
-        (let [response (get (format "ctia/scratchpad/external_id/%s"
-                                    (encode (rand-nth scratchpad-external-ids)))
+      (testing "GET /ctia/casebook/external_id/:external_id"
+        (let [response (get (format "ctia/casebook/external_id/%s"
+                                    (encode (rand-nth casebook-external-ids)))
                             :headers {"Authorization" "45c1f5e3f05d0"})
-              scratchpads (:parsed-body response)]
+              casebooks (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
-               [(assoc scratchpad :id (id/long-id scratchpad-id))]
-               scratchpads))))
+               [(assoc casebook :id (id/long-id casebook-id))]
+               casebooks))))
 
-      (testing "PUT /ctia/scratchpad/:id"
-        (let [with-updates (assoc scratchpad
-                                  :title "modified scratchpad")
-              response (put (str "ctia/scratchpad/" (:short-id scratchpad-id))
+      (testing "PUT /ctia/casebook/:id"
+        (let [with-updates (assoc casebook
+                                  :title "modified casebook")
+              response (put (str "ctia/casebook/" (:short-id casebook-id))
                             :body with-updates
                             :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep=
                with-updates
-               updated-scratchpad))))
+               updated-casebook))))
 
-      (testing "PATCH /ctia/scratchpad/:id"
-        (let [updates {:title "patched scratchpad"}
-              response (patch (str "ctia/scratchpad/" (:short-id scratchpad-id))
+      (testing "PATCH /ctia/casebook/:id"
+        (let [updates {:title "patched casebook"}
+              response (patch (str "ctia/casebook/" (:short-id casebook-id))
                               :body updates
                               :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= "patched scratchpad"
-                 (:title updated-scratchpad)))
+          (is (= "patched casebook"
+                 (:title updated-casebook)))
 
-          (patch (str "ctia/scratchpad/" (:short-id scratchpad-id))
-                 :body {:title "scratchpad"}
+          (patch (str "ctia/casebook/" (:short-id casebook-id))
+                 :body {:title "casebook"}
                  :headers {"Authorization" "45c1f5e3f05d0"})))
       
       ;; -------- partial update operation tests ------------
 
       ;; observables
-      (testing "POST /ctia/scratchpad/:id/observables :add"
+      (testing "POST /ctia/casebook/:id/observables :add"
         (let [new-observables [{:type "ip" :value "42.42.42.42"}]
-              expected-entity (update scratchpad :observables concat new-observables)
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
+              expected-entity (update casebook :observables concat new-observables)
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/observables")
                              :body {:operation :add
                                     :observables new-observables}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (deep= expected-entity updated-scratchpad))))
+          (is (deep= expected-entity updated-casebook))))
 
-      (testing "POST /ctia/scratchpad/:id/observables :remove"
+      (testing "POST /ctia/casebook/:id/observables :remove"
         (let [deleted-observables [{:value "85:28:cb:6a:21:41" :type "mac_address"}
                                    {:value "42.42.42.42" :type "ip"}]
-              expected-entity (update scratchpad :observables #(remove (set deleted-observables) %))
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
+              expected-entity (update casebook :observables #(remove (set deleted-observables) %))
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/observables")
                              :body {:operation :remove
                                     :observables deleted-observables}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep= expected-entity
-                     updated-scratchpad))))
+                     updated-casebook))))
 
-      (testing "POST /ctia/scratchpad/:id/observables :replace"
+      (testing "POST /ctia/casebook/:id/observables :replace"
         (let [observables [{:value "42.42.42.42" :type "ip"}]
-              expected-entity (assoc scratchpad :observables observables)
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
+              expected-entity (assoc casebook :observables observables)
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/observables")
                              :body {:operation :replace
                                     :observables observables}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep= expected-entity
-                     updated-scratchpad))))
+                     updated-casebook))))
 
-      (testing "POST /ctia/scratchpad/:id/observables :replace"
-        (let [observables (:observables new-scratchpad-maximal)
-              expected-entity (assoc scratchpad :observables observables)
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/observables")
+      (testing "POST /ctia/casebook/:id/observables :replace"
+        (let [observables (:observables new-casebook-maximal)
+              expected-entity (assoc casebook :observables observables)
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/observables")
                              :body {:operation :replace
                                     :observables observables}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
           (is (deep= expected-entity
-                     updated-scratchpad))))
+                     updated-casebook))))
 
 
       ;; texts
-      (testing "POST /ctia/scratchpad/:id/texts :add"
+      (testing "POST /ctia/casebook/:id/texts :add"
         (let [new-texts [{:type "some" :text "text"}]
-              expected-entity (update scratchpad :texts concat new-texts)
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
+              expected-entity (update casebook :texts concat new-texts)
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/texts")
                              :body {:operation :add
                                     :texts new-texts}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
 
 
           (is (= 200 (:status response)))
-          (is (deep= expected-entity updated-scratchpad))))
+          (is (deep= expected-entity updated-casebook))))
 
-      (testing "POST /ctia/scratchpad/:id/texts :remove"
+      (testing "POST /ctia/casebook/:id/texts :remove"
         (let [deleted-texts [{:type "some" :text "text"}]
-              expected-entity (update scratchpad :texts #(remove (set deleted-texts) %))
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
+              expected-entity (update casebook :texts #(remove (set deleted-texts) %))
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/texts")
                              :body {:operation :remove
                                     :texts deleted-texts}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (deep= expected-entity updated-scratchpad))))
+          (is (deep= expected-entity updated-casebook))))
 
-      (testing "POST /ctia/scratchpad/:id/texts :replace"
+      (testing "POST /ctia/casebook/:id/texts :replace"
         (let [texts [{:type "text" :text "text"}]
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/texts")
                              :body {:operation :replace
                                     :texts texts}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= texts (:texts updated-scratchpad)))))
+          (is (= texts (:texts updated-casebook)))))
 
-      (testing "POST /ctia/scratchpad/:id/texts :replace"
-        (let [texts (:texts new-scratchpad-maximal)
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/texts")
+      (testing "POST /ctia/casebook/:id/texts :replace"
+        (let [texts (:texts new-casebook-maximal)
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/texts")
                              :body {:operation :replace
                                     :texts texts}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (= texts (:texts updated-scratchpad)))))
+          (is (= texts (:texts updated-casebook)))))
 
       ;; bundle
-      (testing "POST /ctia/scratchpad/:id/bundle :add"
+      (testing "POST /ctia/casebook/:id/bundle :add"
         (let [new-bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
                                                 :type "malware"
                                                 :schema_version ctim-schema-version
                                                 :name "TEST"
                                                 :labels ["malware"]}}}
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/bundle")
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
                              :body {:operation :add
                                     :bundle new-bundle-entities}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
 
           (is (= 200 (:status response)))
-          (is (not= (:malwares updated-scratchpad)
+          (is (not= (:malwares updated-casebook)
                     (:malwares new-bundle-entities)))
           (is (subset? (set (:malwares new-bundle-entities))
-                       (set (-> updated-scratchpad :bundle :malwares))))))
+                       (set (-> updated-casebook :bundle :malwares))))))
 
-      (testing "POST /ctia/scratchpad/:id/bundle :remove"
+      (testing "POST /ctia/casebook/:id/bundle :remove"
         (let [deleted-bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
                                                     :type "malware"
                                                     :schema_version ctim-schema-version
                                                     :name "TEST"
                                                     :labels ["malware"]}}}
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/bundle")
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
                              :body {:operation :remove
                                     :bundle deleted-bundle-entities}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (deep= (update scratchpad :bundle dissoc :malwares)
-                     (update updated-scratchpad :bundle dissoc :malwares)))
+          (is (deep= (update casebook :bundle dissoc :malwares)
+                     (update updated-casebook :bundle dissoc :malwares)))
           (is (not (subset? (set (:malwares deleted-bundle-entities))
-                            (set (-> updated-scratchpad :bundle :malwares)))))))
+                            (set (-> updated-casebook :bundle :malwares)))))))
 
-      (testing "POST /ctia/scratchpad/:id/bundle :replace"
+      (testing "POST /ctia/casebook/:id/bundle :replace"
         (let [bundle-entities {:malwares #{{:id "transient:616608f4-7658-49f1-8728-d9a3dde849d5"
                                             :type "malware"
                                             :schema_version ctim-schema-version
                                             :name "TEST"
                                             :labels ["malware"]}}}
-              response (post (str "ctia/scratchpad/" (:short-id scratchpad-id) "/bundle")
+              response (post (str "ctia/casebook/" (:short-id casebook-id) "/bundle")
                              :body {:operation :replace
                                     :bundle bundle-entities}
                              :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-scratchpad (:parsed-body response)]
+              updated-casebook (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (deep= (update scratchpad :bundle dissoc :malwares)
-                     (update updated-scratchpad :bundle dissoc :malwares)))
+          (is (deep= (update casebook :bundle dissoc :malwares)
+                     (update updated-casebook :bundle dissoc :malwares)))
           (is (= (:malwares bundle-entities)
-                 (-> updated-scratchpad :bundle :malwares)))))
+                 (-> updated-casebook :bundle :malwares)))))
 
 
-      (testing "DELETE /ctia/scratchpad/:id"
-        (let [response (delete (str "ctia/scratchpad/" (:short-id scratchpad-id))
+      (testing "DELETE /ctia/casebook/:id"
+        (let [response (delete (str "ctia/casebook/" (:short-id casebook-id))
                                :headers {"Authorization" "45c1f5e3f05d0"})]
           (is (= 204 (:status response)))
-          (let [response (get (str "ctia/scratchpad/" (:short-id scratchpad-id))
+          (let [response (get (str "ctia/casebook/" (:short-id casebook-id))
                               :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= 404 (:status response))))))))
 
 
-  (testing "POST invalid /ctia/scratchpad"
+  (testing "POST invalid /ctia/casebook"
     (let [{status :status
            body :body}
-          (post "ctia/scratchpad"
+          (post "ctia/casebook"
                 ;; This field has an invalid length
-                :body (assoc new-scratchpad-minimal
+                :body (assoc new-casebook-minimal
                              :title (clojure.string/join (repeatedly 1025 (constantly \0))))
                 :headers {"Authorization" "45c1f5e3f05d0"})]
       (is (= status 400))
       (is (re-find #"error.*in.*title" (str/lower-case body))))))
 
-(deftest-for-each-store test-scratchpad-pagination-field-selection
+(deftest-for-each-store test-casebook-pagination-field-selection
   (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                       "foouser"
@@ -299,8 +299,8 @@
 
   (let [posted-docs
         (doall (map #(:parsed-body
-                      (post "ctia/scratchpad"
-                            :body (-> new-scratchpad-maximal
+                      (post "ctia/casebook"
+                            :body (-> new-casebook-maximal
                                       (dissoc :id)
                                       (assoc :source (str "dotimes " %)
                                              :title "foo"))
@@ -308,18 +308,18 @@
                     (range 0 30)))]
 
     (pagination-test
-     "ctia/scratchpad/search?query=*"
+     "ctia/casebook/search?query=*"
      {"Authorization" "45c1f5e3f05d0"}
-     scratchpad-sort-fields)
+     casebook-sort-fields)
 
     (field-selection-tests
-     ["ctia/scratchpad/search?query=*"
+     ["ctia/casebook/search?query=*"
       (-> posted-docs first :id doc-id->rel-url)]
      {"Authorization" "45c1f5e3f05d0"}
-     scratchpad-sort-fields)))
+     casebook-sort-fields)))
 
-(deftest-for-each-store test-scratchpad-routes-access-control
-  (access-control-test "scratchpad"
-                       new-scratchpad-minimal
+(deftest-for-each-store test-casebook-routes-access-control
+  (access-control-test "casebook"
+                       new-casebook-minimal
                        true
                        true))

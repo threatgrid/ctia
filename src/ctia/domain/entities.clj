@@ -25,7 +25,7 @@
     [judgement :as jud-ent]
     [malware :as malware-ent]
     [relationship :as rel-ent]
-    [scratchpad :as scr-ent]
+    [casebook :as scr-ent]
     [sighting :as sig-ent]
     [tool :as tool-ent]]
    [ctia.schemas.core
@@ -54,8 +54,8 @@
             StoredJudgement
             NewMalware
             StoredMalware
-            NewScratchpad
-            StoredScratchpad
+            NewCasebook
+            StoredCasebook
             NewSighting
             StoredSighting
             NewTool
@@ -159,8 +159,8 @@
 (def realize-investigation
   (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
 
-(def realize-scratchpad
-  (default-realize-fn "scratchpad" NewScratchpad StoredScratchpad))
+(def realize-casebook
+  (default-realize-fn "casebook" NewCasebook StoredCasebook))
 
 (def relationship-default-realize
   (default-realize-fn "relationship" NewRelationship StoredRelationship))
@@ -281,7 +281,7 @@
    :judgement      realize-judgement
    :malware        realize-malware
    :relationship   realize-relationship
-   :scratchpad     realize-scratchpad
+   :casebook       realize-casebook
    :sighting       realize-sighting
    :tool           realize-tool})
 
@@ -299,7 +299,7 @@
    :judgement      jud-ent/page-with-long-id
    :malware        malware-ent/page-with-long-id
    :relationship   rel-ent/page-with-long-id
-   :scratchpad     scr-ent/page-with-long-id
+   :casebook       scr-ent/page-with-long-id
    :sighting       sig-ent/page-with-long-id
    :tool           tool-ent/page-with-long-id})
 
@@ -317,6 +317,6 @@
    :judgement      jud-ent/with-long-id
    :malware        malware-ent/with-long-id
    :relationship   rel-ent/with-long-id
-   :scratchpad     scr-ent/with-long-id
+   :casebook       scr-ent/with-long-id
    :sighting       sig-ent/with-long-id
    :tool           tool-ent/with-long-id})

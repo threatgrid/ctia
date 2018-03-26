@@ -116,12 +116,12 @@
   (delete-investigation [this id ident])
   (list-investigations [this filtermap ident params]))
 
-(defprotocol IScratchpadStore
-  (read-scratchpad [this id ident params])
-  (create-scratchpads [this new-scratchpads ident params])
-  (update-scratchpad [this id scratchpad ident])
-  (delete-scratchpad [this id ident])
-  (list-scratchpads [this filtermap ident params]))
+(defprotocol ICasebookStore
+  (read-casebook [this id ident params])
+  (create-casebooks [this new-casebooks ident params])
+  (update-casebook [this id casebook ident])
+  (delete-casebook [this id ident])
+  (list-casebooks [this filtermap ident params]))
 
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this query filtermap ident params]))
@@ -143,7 +143,7 @@
                    :tool []
                    :event []
                    :investigation []
-                   :scratchpad []})
+                   :casebook []})
 
 (defonce stores (atom empty-stores))
 
@@ -172,7 +172,7 @@
    :judgement      read-judgement
    :malware        read-malware
    :relationship   read-relationship
-   :scratchpad     read-scratchpad
+   :casebook       read-casebook
    :sighting       read-sighting
    :tool           read-tool})
 
@@ -191,7 +191,7 @@
    :judgement      create-judgements
    :malware        create-malwares
    :relationship   create-relationships
-   :scratchpad     create-scratchpads
+   :casebook       create-casebooks
    :sighting       create-sightings
    :tool           create-tools})
 
@@ -209,6 +209,6 @@
    :judgement      list-judgements
    :malware        list-malwares
    :relationship   list-relationships
-   :scratchpad     list-scratchpads
+   :casebook       list-casebooks
    :sighting       list-sightings
    :tool           list-tools})

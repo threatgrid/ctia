@@ -145,7 +145,7 @@
           describable-entity-sort-fields
           sourcable-entity-sort-fields))
 
-(def scratchpad-sort-fields
+(def casebook-sort-fields
   (concat default-entity-sort-fields
           describable-entity-sort-fields
           sourcable-entity-sort-fields))

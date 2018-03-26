@@ -55,7 +55,7 @@
                           :judgements
                           :malwares
                           :relationships
-                          :scratchpads
+                          :casebooks
                           :sightings
                           :tools})
 
