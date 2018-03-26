@@ -39,7 +39,7 @@ function build-and-publish-package {
   export PATH=$PATH:$HOME/.local/bin
   export AWS_ACCESS_KEY_ID=$DEB_ACCESS_KEY
   export AWS_SECRET_ACCESS_KEY=$DEB_SECRET_KEY
-  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME}
+  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME} --sse aws:kms
 }
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
