@@ -57,11 +57,11 @@
 
 (def available-migrations
   {:__test (map #(assoc % :groups ["migration-test"]))
-   :0.4.16 (comp add-groups
-                 fix-end-time
-                 (append-version "0.4.16"))
-   :0.4.28 (comp pluralize-target
-                 target-observed_time
+   :0.4.16 (comp (append-version "0.4.16")
                  add-groups
+                 fix-end-time)
+   :0.4.28 (comp (append-version "0.4.28")
                  fix-end-time
-                 (append-version "0.4.28"))})
+                 add-groups
+                 target-observed_time
+                 pluralize-target)})
