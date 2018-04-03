@@ -46,7 +46,7 @@
 
 (def actor-mapping
   {"actor"
-   {:dynamic "strict"
+   {:dynamic false
     :include_in_all false
     :properties
     (merge

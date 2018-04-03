@@ -44,7 +44,7 @@
 
 (def incident-mapping
   {"incident"
-   {:dynamic "strict"
+   {:dynamic false
     :include_in_all false
     :properties
     (merge

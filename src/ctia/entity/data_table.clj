@@ -72,7 +72,7 @@
 
 (def data-table-mapping
   {"data-table"
-   {:dynamic "strict"
+   {:dynamic false
     :include_in_all false
     :properties
     (merge

@@ -292,7 +292,7 @@
     :modifiers modifier-type}})
 
 (def observed-relation
-  {:dynamic "strict"
+  {:dynamic false
    :properties
    {:id token
     :timestamp ts
@@ -306,7 +306,7 @@
     :related observable}})
 
 (def sighting-target
-  {:dynamic "strict"
+  {:dynamic false
    :properties
    {:type token
     :observed_time valid-time

@@ -74,7 +74,7 @@
 
 (def indicator-mapping
   {"indicator"
-   {:dynamic "strict"
+   {:dynamic false
     :include_in_all false
     :properties
     (merge
