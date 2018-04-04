@@ -4,10 +4,19 @@
             [clj-momo.lib.set :refer [as-set]]
             [clojure.set :as set]))
 
-(def ^:private write-capabilities
+(def casebook-capabilities
+  #{:create-casebook
+    :read-casebook
+    :list-casebooks
+    :delete-casebook
+    :search-casebook})
+
+(def ^:private ctia-capabilities
   (set/difference auth/all-capabilities
-                  #{:specify-id
-                    :developer}))
+                  (set/union
+                   casebook-capabilities
+                   #{:specify-id
+                     :developer})))
 
 (def claim-prefix
   (get-in @prop/properties [:ctia :http :jwt :claim-prefix]
@@ -42,7 +51,10 @@
   (groups [_]
     (remove nil? [(get jwt (iroh-claim "org/id"))]))
   (allowed-capabilities [_]
-    write-capabilities)
+    (let [scopes (set (get jwt (iroh-claim "scopes")))
+          ctia-caps (if (contains? scopes "ctia") ctia-capabilities #{})
+          casebook-caps (if (contains? scopes "casebook") casebook-capabilities #{})]
+      (set/union ctia-caps casebook-caps)))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
                  (auth/allowed-capabilities this))))
