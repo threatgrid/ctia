@@ -1,29 +1,19 @@
 (ns ctia.http.routes.incident-test
-  (:refer-clojure :exclude [get])
-  (:require [ctim.examples.incidents
-             :refer [new-incident-maximal]]
-            [ctia.schemas.sorting
-             :refer [incident-sort-fields]]
-            [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
-            [clojure
-             [string :as str]
-             [test :refer [is join-fixtures testing use-fixtures]]]
-            [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [join-fixtures use-fixtures]]
+            [ctia.schemas.sorting :refer [incident-sort-fields]]
             [ctia.test-helpers
-             [http :refer [doc-id->rel-url]]
-             [search :refer [test-query-string-search]]
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put fake-long-id]]
+             [core :as helpers :refer [post-entity-bulk]]
+             [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
-             [pagination :refer [pagination-test]]
              [field-selection :refer [field-selection-tests]]
+             [http :refer [doc-id->rel-url]]
+             [pagination :refer [pagination-test]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]
-            [ctim.examples.incidents :as ex]))
+            [ctim.examples.incidents :refer [new-incident-minimal
+                                             new-incident-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -35,201 +25,10 @@
   (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
   (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
 
-  (testing "POST /ctia/incident"
-    (let [{status :status
-           incident :parsed-body}
-          (post "ctia/incident"
-                :body {:external_ids ["http://ex.tld/ctia/incident/incident-123"
-                                      "http://ex.tld/ctia/incident/incident-456"]
-                       :title "incident"
-                       :description "description"
-                       :confidence "High"
-                       :categories ["Denial of Service"
-                                    "Improper Usage"]
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                       :related_indicators [{:confidence "High"
-                                             :source "source"
-                                             :relationship "relationship"
-                                             :indicator_id (fake-long-id 'indicator 123)}]
-                       :related_incidents [{:incident_id (fake-long-id 'incident 123)}
-                                           {:incident_id (fake-long-id 'incident 789)}]}
-                :headers {"Authorization" "45c1f5e3f05d0"})
-          incident-id (id/long-id->id (:id incident))
-          incident-external-ids (:external_ids incident)]
-      (is (= 201 status))
-      (is (deep=
-           {:id (id/long-id incident-id)
-            :external_ids ["http://ex.tld/ctia/incident/incident-123"
-                           "http://ex.tld/ctia/incident/incident-456"]
-            :type "incident"
-            :title "incident"
-            :description "description"
-            :tlp "green"
-            :schema_version schema-version
-            :confidence "High"
-            :categories ["Denial of Service"
-                         "Improper Usage"]
-            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-            :related_indicators [{:confidence "High"
-                                  :source "source"
-                                  :relationship "relationship"
-                                  :indicator_id (fake-long-id 'indicator 123)}]
-
-            :related_incidents [{:incident_id (fake-long-id 'incident 123)}
-                                {:incident_id (fake-long-id 'incident 789)}]}
-           incident))
-
-      (testing "the incident ID has correct fields"
-        (let [show-props (get-http-show)]
-          (is (= (:hostname    incident-id)      (:hostname    show-props)))
-          (is (= (:protocol    incident-id)      (:protocol    show-props)))
-          (is (= (:port        incident-id)      (:port        show-props)))
-          (is (= (:path-prefix incident-id) (seq (:path-prefix show-props))))))
-
-      (testing "GET /ctia/incident/external_id/:external_id"
-        (let [response (get (format "ctia/incident/external_id/%s"
-                                    (encode (rand-nth incident-external-ids)))
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-              incidents (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               [{:id (id/long-id incident-id)
-                 :external_ids ["http://ex.tld/ctia/incident/incident-123"
-                                "http://ex.tld/ctia/incident/incident-456"]
-                 :type "incident"
-                 :title "incident"
-                 :description "description"
-                 :tlp "green"
-                 :schema_version schema-version
-                 :confidence "High"
-                 :categories ["Denial of Service"
-                              "Improper Usage"]
-                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                 :related_indicators [{:confidence "High"
-                                       :source "source"
-                                       :relationship "relationship"
-                                       :indicator_id (fake-long-id 'indicator 123)}]
-
-                 :related_incidents [{:incident_id (fake-long-id 'incident 123)}
-                                     {:incident_id (fake-long-id 'incident 789)}]}]
-               incidents))))
-
-      (test-query-string-search :incident "description" :description)
-
-      (testing "GET /ctia/incident/:id"
-        (let [response (get (str "ctia/incident/" (:short-id incident-id))
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-              incident (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               {:id (id/long-id incident-id)
-                :external_ids ["http://ex.tld/ctia/incident/incident-123"
-                               "http://ex.tld/ctia/incident/incident-456"]
-                :type "incident"
-                :title "incident"
-                :description "description"
-                :tlp "green"
-                :schema_version schema-version
-                :confidence "High"
-                :categories ["Denial of Service"
-                             "Improper Usage"]
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :related_indicators [{:confidence "High"
-                                      :source "source"
-                                      :relationship "relationship"
-                                      :indicator_id (fake-long-id 'indicator 123)}]
-                :related_incidents [{:incident_id (fake-long-id 'incident 123)}
-                                    {:incident_id (fake-long-id 'incident 789)}]}
-               incident))))
-
-      (testing "PUT /ctia/incident/:id"
-        (let [{status :status
-               updated-incident :parsed-body}
-              (put (str "ctia/incident/" (:short-id incident-id))
-                   :body {:external_ids ["http://ex.tld/ctia/incident/incident-123"
-                                         "http://ex.tld/ctia/incident/incident-456"]
-                          :title "updated incident"
-                          :description "updated description"
-                          :tlp "green"
-                          :confidence "Low"
-                          :categories ["Denial of Service"
-                                       "Improper Usage"]
-                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                          :related_indicators [{:confidence "High"
-                                                :source "another source"
-                                                :relationship "relationship"
-                                                :indicator_id (fake-long-id 'indicator 234)}]
-                          :related_incidents [{:incident_id (fake-long-id 'incident 123)}
-                                              {:incident_id (fake-long-id 'incident 789)}]}
-                   :headers {"Authorization" "45c1f5e3f05d0"})]
-          (is (= 200 status))
-          (is (deep=
-               {:external_ids ["http://ex.tld/ctia/incident/incident-123"
-                               "http://ex.tld/ctia/incident/incident-456"]
-                :type "incident"
-                :id (id/long-id incident-id)
-                :title "updated incident"
-                :description "updated description"
-                :tlp "green"
-                :schema_version schema-version
-                :confidence "Low"
-                :categories ["Denial of Service"
-                             "Improper Usage"]
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}
-                :related_indicators [{:confidence "High"
-                                      :source "another source"
-                                      :relationship "relationship"
-                                      :indicator_id (fake-long-id 'indicator 234)}]
-                :related_incidents [{:incident_id (fake-long-id 'incident 123)}
-                                    {:incident_id (fake-long-id 'incident 789)}]}
-               updated-incident))))
-
-      (testing "PUT invalid /ctia/incident/:id"
-        (let [{status :status
-               body :body}
-              (put (str "ctia/incident/" (:short-id incident-id))
-                   :body {:external_ids ["http://ex.tld/ctia/incident/incident-123"
-                                         "http://ex.tld/ctia/incident/incident-456"]
-                          ;; This field has an invalid length
-                          :title (apply str (repeatedly 1025 (constantly \0)))
-                          :description "updated description"
-                          :tlp "green"
-                          :confidence "Low"
-                          :categories ["Denial of Service"
-                                       "Improper Usage"]
-                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}
-                          :related_indicators [{:confidence "High"
-                                                :source "another source"
-                                                :relationship "relationship"
-                                                :indicator_id (fake-long-id 'indicator 234)}]
-                          :related_incidents [{:incident_id (fake-long-id 'incident 123)}
-                                              {:incident_id (fake-long-id 'incident 789)}]}
-                   :headers {"Authorization" "45c1f5e3f05d0"})]
-          (is (= status 400))
-          (is (re-find #"error.*in.*title" (str/lower-case body)))))
-
-      (testing "DELETE /ctia/incident/:id"
-        (let [response (delete (str "ctia/incident/" (:short-id incident-id))
-                               :headers {"Authorization" "45c1f5e3f05d0"})]
-          (is (= 204 (:status response)))
-          (let [response (get (str "ctia/incident/" (:id incident))
-                              :headers {"Authorization" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response))))))))
-
-  (testing "POST invalid /ctia/incident"
-    (let [{status :status
-           body :body}
-          (post "ctia/incident"
-                :body (assoc ex/new-incident-minimal
-                             ;; This field has an invalid length
-                             :title (clojure.string/join (repeatedly 1025 (constantly \0))))
-                :headers {"Authorization" "45c1f5e3f05d0"})]
-      (is (= status 400))
-      (is (re-find #"error.*in.*title" (str/lower-case body))))))
+  (entity-crud-test
+   {:entity "incident"
+    :example new-incident-maximal
+    :headers {:Authorization "45c1f5e3f05d0"}}))
 
 (deftest-for-each-store test-incident-pagination-field-selection
   (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -237,16 +36,11 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-
-  (let [posted-docs
-        (doall (map #(:parsed-body
-                      (post "ctia/incident"
-                            :body (-> new-incident-maximal
-                                      (dissoc :id)
-                                      (assoc :source (str "dotimes " %)))
-                            :headers {"Authorization" "45c1f5e3f05d0"}))
-                    (range 0 30)))]
-
+  (let [ids (post-entity-bulk
+             (assoc new-incident-maximal :title "foo")
+             :incidents
+             30
+             {"Authorization" "45c1f5e3f05d0"})]
     (pagination-test
      "ctia/incident/search?query=*"
      {"Authorization" "45c1f5e3f05d0"}
@@ -254,12 +48,12 @@
 
     (field-selection-tests
      ["ctia/incident/search?query=*"
-      (-> posted-docs first :id doc-id->rel-url)]
+      (doc-id->rel-url (first ids))]
      {"Authorization" "45c1f5e3f05d0"}
      incident-sort-fields)))
 
 (deftest-for-each-store test-incident-routes-access-control
   (access-control-test "incident"
-                       ex/new-incident-minimal
+                       new-incident-minimal
                        true
                        true))

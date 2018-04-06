@@ -1,29 +1,19 @@
 (ns ctia.http.routes.tool-test
-  (:refer-clojure :exclude [get])
-  (:require [ctim.examples.tools
-             :refer [new-tool-maximal]]
-            [ctia.schemas.sorting
-             :refer [tool-sort-fields]]
-            [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
-            [clojure
-             [string :as str]
-             [test :refer [is join-fixtures testing use-fixtures]]]
-            [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [join-fixtures use-fixtures]]
+            [ctia.schemas.sorting :refer [tool-sort-fields]]
             [ctia.test-helpers
-             [http :refer [doc-id->rel-url]]
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post put]]
+             [core :as helpers :refer [post-entity-bulk]]
+             [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
-             [pagination :refer [pagination-test]]
              [field-selection :refer [field-selection-tests]]
-             [search :refer [test-query-string-search]]
+             [http :refer [doc-id->rel-url]]
+             [pagination :refer [pagination-test]]
              [store :refer [deftest-for-each-store]]]
-            [ctim.domain.id :as id]
-            [ctim.examples.tools :as ex]))
+            [ctim.examples.tools :refer [new-tool-maximal
+                                         new-tool-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -41,135 +31,12 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-
-  (testing "POST /ctia/tool"
-    (let [{status :status
-           tool :parsed-body}
-          (post "ctia/tool"
-                :body {:external_ids ["http://ex.tld/ctia/tool/tool-123"
-                                      "http://ex.tld/ctia/tool/tool-456"]
-                       :name "tool"
-                       :description "description"
-                       :labels ["tool"]}
-                :headers {"Authorization" "45c1f5e3f05d0"})
-
-          tool-id
-          (id/long-id->id (:id tool))
-
-          tool-external-ids
-          (:external_ids tool)]
-      (is (= 201 status))
-      (is (deep=
-           {:external_ids ["http://ex.tld/ctia/tool/tool-123"
-                           "http://ex.tld/ctia/tool/tool-456"]
-            :type "tool"
-            :name "tool"
-            :description "description"
-            :labels ["tool"]
-            :schema_version schema-version
-            :tlp "green"}
-           (dissoc tool
-                   :id)))
-
-      (testing "the tool ID has correct fields"
-        (let [show-props (get-http-show)]
-          (is (= (:hostname    tool-id)      (:hostname    show-props)))
-          (is (= (:protocol    tool-id)      (:protocol    show-props)))
-          (is (= (:port        tool-id)      (:port        show-props)))
-          (is (= (:path-prefix tool-id) (seq (:path-prefix show-props))))))
-
-      (testing "GET /ctia/tool/:id"
-        (let [response (get (str "ctia/tool/" (:short-id tool-id))
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-              tool (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               {:id (id/long-id tool-id)
-                :external_ids ["http://ex.tld/ctia/tool/tool-123"
-                               "http://ex.tld/ctia/tool/tool-456"]
-                :type "tool"
-                :name "tool"
-                :description "description"
-                :labels ["tool"]
-                :schema_version schema-version
-                :tlp "green"}
-               tool))))
-
-      (test-query-string-search :tool "description" :description)
-
-      (testing "GET /ctia/tool/external_id/:external_id"
-        (let [response (get (format "ctia/tool/external_id/%s"
-                                    (encode (rand-nth tool-external-ids)))
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-              tools (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               [{:id (id/long-id tool-id)
-                 :external_ids ["http://ex.tld/ctia/tool/tool-123"
-                                "http://ex.tld/ctia/tool/tool-456"]
-                 :type "tool"
-                 :name "tool"
-                 :description "description"
-                 :labels ["tool"]
-                 :schema_version schema-version
-                 :tlp "green"}]
-               tools))))
-
-      (testing "PUT /ctia/tool/:id"
-        (let [response (put (str "ctia/tool/" (:short-id tool-id))
-                            :body {:external_ids ["http://ex.tld/ctia/tool/tool-123"
-                                                  "http://ex.tld/ctia/tool/tool-456"]
-                                   :name "modified tool"
-                                   :description "modified description"
-                                   :labels ["modified label"]}
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-              updated-tool (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               {:id (id/long-id tool-id)
-                :external_ids ["http://ex.tld/ctia/tool/tool-123"
-                               "http://ex.tld/ctia/tool/tool-456"]
-                :type "tool"
-                :name "modified tool"
-                :description "modified description"
-                :labels ["modified label"]
-                :schema_version schema-version
-                :tlp "green"}
-               updated-tool))))
-
-      (testing "PUT invalid /ctia/tool/:id"
-        (let [{status :status
-               body :body}
-              (put (str "ctia/tool/" (:short-id tool-id))
-                   :body {:external_ids ["http://ex.tld/ctia/tool/tool-123"
-                                         "http://ex.tld/ctia/tool/tool-456"]
-                          ;; This field has an invalid length
-                          :name (apply str (repeatedly 1025 (constantly \0)))
-                          :description "updated description"
-                          :labels ["modified label"]
-                          :type "tool"}
-                   :headers {"Authorization" "45c1f5e3f05d0"})]
-          (is (= status 400))
-          (is (re-find #"error.*in.*name" (str/lower-case body)))))
-
-      (testing "DELETE /ctia/tool/:id"
-        (let [response (delete (str "ctia/tool/" (:short-id tool-id))
-                               :headers {"Authorization" "45c1f5e3f05d0"})]
-          (is (= 204 (:status response)))
-          (let [response (get (str "ctia/tool/" (:short-id tool-id))
-                              :headers {"Authorization" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response))))))))
-
-  (testing "POST invalid /ctia/tool"
-    (let [{status :status
-           body :body}
-          (post "ctia/tool"
-                :body (assoc ex/new-tool-minimal
-                             ;; This field has an invalid length
-                             :name (clojure.string/join (repeatedly 1025 (constantly \0))))
-                :headers {"Authorization" "45c1f5e3f05d0"})]
-      (is (= status 400))
-      (is (re-find #"error.*in.*name" (str/lower-case body))))))
+  (entity-crud-test
+   {:entity "tool"
+    :example new-tool-maximal
+    :invalid-test-field :name
+    :update-field :description
+    :headers {:Authorization "45c1f5e3f05d0"}}))
 
 (deftest-for-each-store test-tool-pagination-field-selection
   (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -177,15 +44,11 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-
-  (let [posted-docs
-        (doall (map #(:parsed-body
-                      (post "ctia/tool"
-                            :body (-> new-tool-maximal
-                                      (dissoc :id)
-                                      (assoc :description (str "dotimes " %)))
-                            :headers {"Authorization" "45c1f5e3f05d0"}))
-                    (range 0 30)))]
+  (let [ids (post-entity-bulk
+             new-tool-maximal
+             :tools
+             30
+             {"Authorization" "45c1f5e3f05d0"})]
     (pagination-test
      "ctia/tool/search?query=*"
      {"Authorization" "45c1f5e3f05d0"}
@@ -193,12 +56,12 @@
 
     (field-selection-tests
      ["ctia/tool/search?query=*"
-      (-> posted-docs first :id doc-id->rel-url)]
+      (doc-id->rel-url (first ids))]
      {"Authorization" "45c1f5e3f05d0"}
      tool-sort-fields)))
 
 (deftest-for-each-store test-tool-routes-access-control
   (access-control-test "tool"
-                       ex/new-tool-minimal
+                       new-tool-minimal
                        true
                        true))

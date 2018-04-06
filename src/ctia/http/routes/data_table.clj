@@ -8,6 +8,7 @@
     :refer [created
             paginated-ok
             PagingParams
+            DataTableSearchParams
             DataTableGetParams
             DataTableByExternalIdQueryParams]]
    [ctia.store :refer :all]

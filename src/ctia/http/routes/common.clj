@@ -227,6 +227,15 @@
 (s/defschema DataTableFieldsParam
   {(s/optional-key :fields) [datatable-sort-fields]})
 
+(s/defschema DataTableSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   DataTableFieldsParam
+   {:query s/Str
+    (s/optional-key :sort_by) datatable-sort-fields}))
+
 (def DataTableGetParams DataTableFieldsParam)
 
 (s/defschema DataTableByExternalIdQueryParams

@@ -1,0 +1,135 @@
+(ns ctia.test-helpers.crud
+  (:refer-clojure :exclude [get])
+  (:require [clj-momo.test-helpers.http :refer [encode]]
+            [clojure
+             [string :as str]
+             [test :refer [is testing]]]
+            [ctia.properties :refer [get-http-show]]
+            [ctia.test-helpers
+             [core :as helpers :refer [delete get post put]]
+             [search :refer [test-query-string-search]]]
+            [ctim.domain.id :as id]))
+
+(defn entity-crud-test
+  [{:keys [entity
+           example
+           headers
+           update-field
+           search-field
+           invalid-tests?
+           invalid-test-field
+           update-tests?
+           search-tests?
+           additional-tests]
+    :or {invalid-tests? true
+         invalid-test-field :title
+         update-field :title
+         search-field :description
+         update-tests? true
+         search-tests? true}}]
+
+  (testing (str "POST /ctia/" entity)
+    (let [new-record (dissoc example :id)
+          {status :status
+           record :parsed-body}
+          (post (str "ctia/" entity)
+                :body new-record
+                :headers headers)
+          record-id
+          (id/long-id->id (:id record))
+          record-external-ids
+          (:external_ids record)]
+      (is (= 201 status))
+      (is (deep=
+           (assoc new-record :id (id/long-id record-id)) record))
+
+      (testing (format "the %s ID has correct fields" entity)
+        (let [show-props (get-http-show)]
+          (is (= (:hostname record-id)    (:hostname show-props)))
+          (is (= (:protocol record-id)    (:protocol show-props)))
+          (is (= (:port record-id)        (:port show-props)))
+          (is (= (:path-prefix record-id) (seq (:path-prefix show-props))))))
+
+      (testing (format "GET /ctia/%s/:id" entity)
+        (let [response (get (format "ctia/%s/%s" entity (:short-id record-id))
+                            :headers headers)
+              actor (:parsed-body response)]
+          (is (= 200 (:status response)))
+
+          (let [expected (assoc new-record :id (id/long-id record-id))]
+            (is (deep=
+                 expected
+                 record)))))
+
+      (when search-tests?
+        (test-query-string-search search-field
+                                  (name search-field)
+                                  search-field ))
+
+      (testing (format "GET /ctia/%s/external_id/:external_id" entity)
+        (let [response (get (format "ctia/%s/external_id/%s"
+                                    entity (encode (rand-nth record-external-ids)))
+                            :headers headers)
+              records (:parsed-body response)]
+          (is (= 200 (:status response)))
+          (is (deep=
+               [(assoc record :id (id/long-id record-id))]
+               records))))
+
+      (testing (format "PUT /ctia/%s/:id" entity)
+        (let [with-updates (assoc record
+                                  update-field "modified")
+              response (put (format "ctia/%s/%s" entity (:short-id record-id))
+                            :body with-updates
+                            :headers headers)
+              updated-record (:parsed-body response)]
+
+          (when update-tests?
+            (is (= 200 (:status response)))
+            (is (deep=
+                 with-updates
+                 updated-record)))
+
+          ;; execute entity custom tests before deleting the fixture
+          (testing "additional tests"
+            (when additional-tests
+              (additional-tests record-id
+                                (if update-tests?
+                                  updated-record
+                                  record))))))
+
+      (when invalid-tests?
+        (testing (format "PUT invalid /ctia/%s/:id" entity)
+          (let [{status :status
+                 body :body}
+                (put (format "ctia/%s/%s" entity (:short-id record-id))
+                     :body (assoc record invalid-test-field (str/join
+                                                             (repeatedly 1025 (constantly \0))))
+                     :headers {"Authorization" "45c1f5e3f05d0"})]
+            (is (= status 400))
+            (is (re-find (re-pattern
+                          (str "error.*in.*"
+                               (name invalid-test-field)))
+                         (str/lower-case body))))))
+
+      (testing (format "DELETE /ctia/%s/:id" entity)
+        (let [response (delete (format "ctia/%s/%s" entity (:short-id record-id))
+                               :headers headers)]
+          (is (= 204 (:status response)))
+          (let [response (get (format "ctia/%s/%s" entity (:short-id record-id))
+                              :headers headers)]
+            (is (= 404 (:status response)))))))
+
+    (when invalid-tests?
+      (testing (format "POST invalid /ctia/%s" entity)
+        (let [{status :status
+               body :body}
+              (post (str "ctia/" entity)
+                    ;; This field has an invalid length
+                    :body (assoc example
+                                 invalid-test-field (str/join (repeatedly 1025 (constantly \0))))
+                    :headers headers)]
+          (is (= status 400))
+          (is (re-find (re-pattern
+                        (str "error.*in.*" (name invalid-test-field)))
+                       (str/lower-case body))))))))

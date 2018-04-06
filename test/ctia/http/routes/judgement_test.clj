@@ -1,36 +1,139 @@
 (ns ctia.http.routes.judgement-test
   (:refer-clojure :exclude [get])
-  (:require [ctim.examples.judgements
-             :refer [new-judgement-maximal]]
-            [ctia.schemas.sorting
-             :refer [judgement-sort-fields]]
-            [clj-momo.lib.clj-time.core :as time]
-            [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
-            [clojure
-             [string :as str]
-             [test :refer [is join-fixtures testing use-fixtures]]]
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show]]
+            ctia.properties
+            [ctia.schemas.sorting :refer [judgement-sort-fields]]
             [ctia.test-helpers
-             [http :refer [doc-id->rel-url]]
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [delete get post]]
+             [core :as helpers :refer [get post]]
+             [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
-             [pagination :refer [pagination-test]]
              [field-selection :refer [field-selection-tests]]
+             [http :refer [doc-id->rel-url]]
+             [pagination :refer [pagination-test]]
              [store :refer [deftest-for-each-store]]]
             [ctim.domain.id :as id]
-            [ctim.examples.judgements :as ex]
-            [clj-momo.lib.clj-time.core :as time]))
+            [ctim.examples.judgements :as ex :refer [new-judgement-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
+
+(def new-judgement
+  (merge new-judgement-maximal
+         {:observable {:value "1.2.3.4"
+                       :type "ip"}
+          :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                         "http://ex.tld/ctia/judgement/judgement-456"]
+          :disposition 2
+          :disposition_name "Malicious"
+          :source "test"
+          :priority 100
+          :severity "High"
+          :confidence "Low"
+          :reason "This is a bad IP address that talked to some evil servers"}))
+
+(defn additional-tests [judgement-id judgement]
+  (testing "GET /ctia/judgement/search"
+    ;; only when ES store
+    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
+      (let [term "observable.value:\"1.2.3.4\""
+            response (get (str "ctia/judgement/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term})]
+        (is (= 200 (:status response)))
+        (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+            "IP quoted term works"))
+
+      (let [term "1.2.3.4"
+            response (get (str "ctia/judgement/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term})]
+        (is (= 200 (:status response)))
+        (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+            "IP unquoted, all term works"))
+
+      (let [term "Evil Servers"
+            response (get (str "ctia/judgement/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term})]
+        (is (= 200 (:status response)))
+        (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+            "Full text search, mixed case, _all term works"))
+
+      (let [term "disposition_name:Malicious"
+            response (get (str "ctia/judgement/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term})]
+        (is (= 200 (:status response)))
+        (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+            "uppercase term works"))
+
+      (let [term "disposition_name:malicious"
+            response (get (str "ctia/judgement/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term})]
+        (is (= 200 (:status response)))
+        (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
+            "lowercase quoted term works"))
+
+      (let [term "disposition_name:Malicious"
+            response (get (str "ctia/judgement/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term
+                                         "tlp" "red"})]
+        (is (= 200 (:status response)))
+        (is (empty? (:parsed-body response))
+            "filters are applied, and discriminate"))
+
+      (let [term "disposition_name:Malicious"
+            response (get (str "ctia/judgement/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term
+                                         "tlp" "green"})]
+        (is (= 200 (:status response)))
+        (is (= 1  (count (:parsed-body response)))
+            "filters are applied, and match properly"))))
+
+  (testing "GET /ctia/judgement/:id authentication failures"
+    (testing "no Authorization"
+      (let [{body :parsed-body status :status}
+            (get (str "ctia/judgement/" (:short-id judgement-id)))]
+        (is (= 403 status))
+        (is (= {:message "Only authenticated users allowed"} body))))
+
+    (testing "unknown Authorization"
+      (let [{body :parsed-body status :status}
+            (get (str "ctia/judgement/" (:short-id judgement-id))
+                 :headers {"Authorization" "1111111111111"})]
+        (is (= 403 status))
+        (is (= {:message "Only authenticated users allowed"} body))))
+
+    (testing "doesn't have read capability"
+      (let [{body :parsed-body status :status}
+            (get (str "ctia/judgement/" (:short-id judgement-id))
+                 :headers {"Authorization" "2222222222222"})]
+        (is (= 401 status))
+        (is (= {:message "Missing capability",
+                :capabilities :read-judgement,
+                :owner "baruser"}
+               body))))
+
+    (testing "doesn't have list by external id capability"
+      (let [{body :parsed-body status :status}
+            (get  "ctia/judgement/external_id/123"
+                  :headers {"Authorization" "2222222222222"})]
+        (is (= 401 status))
+        (is (= {:message "Missing capability",
+                :capabilities #{:read-judgement :external-id},
+                :owner "baruser"}
+               body))))))
 
 (deftest-for-each-store test-judgement-routes
   (helpers/set-capabilities! "foouser" ["foogroupi"] "user" all-capabilities)
@@ -44,231 +147,14 @@
                                       "bargroup"
                                       "user")
 
-  (testing "POST /ctia/judgement"
-    (let [{judgement :parsed-body
-           status :status}
-          (post "ctia/judgement"
-                :body {:observable {:value "1.2.3.4"
-                                    :type "ip"}
-                       :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                                      "http://ex.tld/ctia/judgement/judgement-456"]
-                       :disposition 2
-                       :source "test"
-                       :priority 100
-                       :severity "High"
-                       :confidence "Low"
-                       :reason "This is a bad IP address that talked to some evil servers"
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                :headers {"Authorization" "45c1f5e3f05d0"})
-          judgement-id (id/long-id->id (:id judgement))
-          judgement-external-ids (:external_ids judgement)]
-      (is (= 201 status))
-      (is (deep=
-           {:id (id/long-id judgement-id)
-            :type "judgement"
-            :observable {:value "1.2.3.4"
-                         :type "ip"}
-            :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                           "http://ex.tld/ctia/judgement/judgement-456"]
-            :disposition 2
-            :disposition_name "Malicious"
-            :priority 100
-            :severity "High"
-            :confidence "Low"
-            :source "test"
-            :tlp "green"
-            :schema_version schema-version
-            :reason "This is a bad IP address that talked to some evil servers"
-            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-           judgement))
-
-
-      ;; CLB: Convert to ue the est macro, but since Judgmements ar enot describably, it's a bit hard
-      ;;(test-query-string-search :judgement "Malicious")
-
-      (testing "GET /ctia/judgement/search"
-        ;; only when ES store
-        (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
-          (let [term "observable.value:\"1.2.3.4\""
-                response (get (str "ctia/judgement/search")
-                              :headers {"Authorization" "45c1f5e3f05d0"}
-                              :query-params {"query" term})]
-            (is (= 200 (:status response)))
-            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
-                "IP quoted term works"))
-
-          (let [term "1.2.3.4"
-                response (get (str "ctia/judgement/search")
-                              :headers {"Authorization" "45c1f5e3f05d0"}
-                              :query-params {"query" term})]
-            (is (= 200 (:status response)))
-            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
-                "IP unquoted, all term works"))
-
-          (let [term "Evil Servers"
-                response (get (str "ctia/judgement/search")
-                              :headers {"Authorization" "45c1f5e3f05d0"}
-                              :query-params {"query" term})]
-            (is (= 200 (:status response)))
-            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
-                "Full text search, mixed case, _all term works"))
-
-          (let [term "disposition_name:Malicious"
-                response (get (str "ctia/judgement/search")
-                              :headers {"Authorization" "45c1f5e3f05d0"}
-                              :query-params {"query" term})]
-            (is (= 200 (:status response)))
-            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
-                "uppercase term works"))
-
-          (let [term "disposition_name:malicious"
-                response (get (str "ctia/judgement/search")
-                              :headers {"Authorization" "45c1f5e3f05d0"}
-                              :query-params {"query" term})]
-            (is (= 200 (:status response)))
-            (is (= "Malicious" (first (map :disposition_name (:parsed-body response))))
-                "lowercase quoted term works"))
-
-          (let [term "disposition_name:Malicious"
-                response (get (str "ctia/judgement/search")
-                              :headers {"Authorization" "45c1f5e3f05d0"}
-                              :query-params {"query" term
-                                             "tlp" "red"})]
-            (is (= 200 (:status response)))
-            (is (empty? (:parsed-body response))
-                "filters are applied, and discriminate"))
-
-          (let [term "disposition_name:Malicious"
-                response (get (str "ctia/judgement/search")
-                              :headers {"Authorization" "45c1f5e3f05d0"}
-                              :query-params {"query" term
-                                             "tlp" "green"})]
-            (is (= 200 (:status response)))
-            (is (= 1  (count (:parsed-body response)))
-                "filters are applied, and match properly"))))
-
-      (testing "the judgement ID has correct fields"
-        (let [show-props (get-http-show)]
-          (is (= (:hostname    judgement-id)      (:hostname    show-props)))
-          (is (= (:protocol    judgement-id)      (:protocol    show-props)))
-          (is (= (:port        judgement-id)      (:port        show-props)))
-          (is (= (:path-prefix judgement-id) (seq (:path-prefix show-props))))))
-
-      (testing "GET /ctia/judgement/:id"
-        (let [response (get (str "ctia/judgement/" (:short-id judgement-id))
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-              judgement (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               {:id (id/long-id judgement-id)
-                :type "judgement"
-                :observable {:value "1.2.3.4"
-                             :type "ip"}
-                :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                               "http://ex.tld/ctia/judgement/judgement-456"]
-                :disposition 2
-                :disposition_name "Malicious"
-                :priority 100
-                :severity "High"
-                :confidence "Low"
-                :source "test"
-                :tlp "green"
-                :schema_version schema-version
-                :reason "This is a bad IP address that talked to some evil servers"
-                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-               judgement))))
-      (testing "GET /ctia/judgement/external_id/:external_id"
-        (let [response (get (format "ctia/judgement/external_id/%s"
-                                    (encode (rand-nth judgement-external-ids)))
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-              judgements (:parsed-body response)]
-          (is (= 200 (:status response)))
-          (is (deep=
-               [{:id (id/long-id judgement-id)
-                 :type "judgement"
-                 :observable {:value "1.2.3.4"
-                              :type "ip"}
-                 :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                                "http://ex.tld/ctia/judgement/judgement-456"]
-                 :disposition 2
-                 :disposition_name "Malicious"
-                 :priority 100
-                 :severity "High"
-                 :confidence "Low"
-                 :source "test"
-                 :tlp "green"
-                 :schema_version schema-version
-                 :reason "This is a bad IP address that talked to some evil servers"
-                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}}]
-               judgements))))
-
-      (testing "GET /ctia/judgement/:id authentication failures"
-        (testing "no Authorization"
-          (let [{body :parsed-body status :status}
-                (get (str "ctia/judgement/" (:short-id judgement-id)))]
-            (is (= 403 status))
-            (is (= {:message "Only authenticated users allowed"} body))))
-
-        (testing "unknown Authorization"
-          (let [{body :parsed-body status :status}
-                (get (str "ctia/judgement/" (:short-id judgement-id))
-                     :headers {"Authorization" "1111111111111"})]
-            (is (= 403 status))
-            (is (= {:message "Only authenticated users allowed"} body))))
-
-        (testing "doesn't have read capability"
-          (let [{body :parsed-body status :status}
-                (get (str "ctia/judgement/" (:short-id judgement-id))
-                     :headers {"Authorization" "2222222222222"})]
-            (is (= 401 status))
-            (is (= {:message "Missing capability",
-                    :capabilities :read-judgement,
-                    :owner "baruser"}
-                   body))))
-
-        (testing "doesn't have list by external id capability"
-          (let [{body :parsed-body status :status}
-                (get  "ctia/judgement/external_id/123"
-                      :headers {"Authorization" "2222222222222"})]
-            (is (= 401 status))
-            (is (= {:message "Missing capability",
-                    :capabilities #{:read-judgement :external-id},
-                    :owner "baruser"}
-                   body)))))
-
-      (testing "DELETE /ctia/judgement/:id"
-        (let [temp-judgement (:parsed-body
-                              (post "ctia/judgement"
-                                    :body {:observable {:value "9.8.7.6"
-                                                        :type "ip"}
-                                           :disposition 3
-                                           :source "test"
-                                           :priority 100
-                                           :severity "High"
-                                           :confidence "Low"
-                                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                                    :headers {"Authorization" "45c1f5e3f05d0"}))
-              temp-judgement-id (id/long-id->id (:id temp-judgement))
-              response (delete (str "ctia/judgement/" (:short-id temp-judgement-id))
-                               :headers {"Authorization" "45c1f5e3f05d0"})]
-          (is (= 204 (:status response)))
-          (let [response (get (str "ctia/judgement/" (:short-id temp-judgement-id))
-                              :headers {"Authorization" "45c1f5e3f05d0"})]
-            (is (= 404 (:status response))))))))
-
-  (testing "POST invalid /ctia/judgement"
-    (let [{status :status
-           body :body}
-          (post "ctia/judgement"
-                :body (assoc ex/new-judgement-minimal
-                             ;; This field has an invalid length
-                             :reason (apply str (repeatedly 1025 (constantly \0))))
-                :headers {"Authorization" "45c1f5e3f05d0"})]
-      (is (= status 400))
-      (is (re-find #"error.*in.*reason" (str/lower-case body))))))
+  (entity-crud-test
+   {:entity "judgement"
+    :example new-judgement
+    :update-tests? false
+    :invalid-tests? false
+    :search-tests? false
+    :additional-tests additional-tests
+    :headers {:Authorization "45c1f5e3f05d0"}}))
 
 (deftest-for-each-store test-judgement-with-jwt-routes
   (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)

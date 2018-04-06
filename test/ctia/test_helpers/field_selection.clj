@@ -19,8 +19,9 @@
       first
       keyword))
 
-(defn field-selection-test [route headers fields]
+(defn field-selection-test
   "all field selection related tests for given routes and fields"
+  [route headers fields]
   (testing (str "field selection tests for: " route)
     (doseq [field (testable-fields fields)]
       (let [{:keys [status parsed-body]}

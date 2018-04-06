@@ -42,6 +42,7 @@
     :create-data-table
     :read-data-table
     :delete-data-table
+    :search-data-table
 
     ;; Exploit-Target
     :create-exploit-target

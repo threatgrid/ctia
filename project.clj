@@ -114,7 +114,8 @@
   :test-selectors {:es-store :es-store
                    :disabled :disabled
                    :default #(not (or (:disabled %)
-                                      (:sleepy %)))
+                                      (:sleepy %)
+                                      (:generative %)))
                    :integration #(or (:es-store %)
                                      (:integration %)
                                      (:es-aliased-index %))
