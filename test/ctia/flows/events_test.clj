@@ -1,13 +1,14 @@
 (ns ctia.flows.events-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.string :as str]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.store :as store]
-            [ctim.domain.id :as id]
             [ctia.test-helpers
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
-             [es :as es-helpers]]))
+             [es :as es-helpers]]
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 

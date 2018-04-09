@@ -2,20 +2,20 @@
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.clj-time.core :as time]
             [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             ctia.properties
             [ctia.schemas.sorting :refer [judgement-sort-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post]]
+             [core :as helpers :refer [get post post-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [deftest-for-each-store]]]
+             [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
             [ctim.examples.judgements :as ex :refer [new-judgement-maximal]]))
 
@@ -135,61 +135,65 @@
                 :owner "baruser"}
                body))))))
 
-(deftest-for-each-store test-judgement-routes
-  (helpers/set-capabilities! "foouser" ["foogroupi"] "user" all-capabilities)
-  (helpers/set-capabilities! "baruser"  ["bargroup"] "user" #{})
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-  (whoami-helpers/set-whoami-response "2222222222222"
-                                      "baruser"
-                                      "bargroup"
-                                      "user")
+(deftest test-judgement-routes
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroupi"] "user" all-capabilities)
+     (helpers/set-capabilities! "baruser"  ["bargroup"] "user" #{})
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (whoami-helpers/set-whoami-response "2222222222222"
+                                         "baruser"
+                                         "bargroup"
+                                         "user")
 
-  (entity-crud-test
-   {:entity "judgement"
-    :example new-judgement
-    :update-tests? false
-    :invalid-tests? false
-    :search-tests? false
-    :additional-tests additional-tests
-    :headers {:Authorization "45c1f5e3f05d0"}}))
+     (entity-crud-test
+      {:entity "judgement"
+       :example new-judgement
+       :update-tests? false
+       :invalid-tests? false
+       :search-tests? false
+       :additional-tests additional-tests
+       :headers {:Authorization "45c1f5e3f05d0"}}))))
 
-(deftest-for-each-store test-judgement-with-jwt-routes
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-  (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
+(deftest test-judgement-with-jwt-routes
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+     (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
 
-  (testing "POST /ctia/judgement"
-    (let [{judgement :parsed-body
-           status :status}
-          (post "ctia/judgement"
-                :body {:observable {:value "1.2.3.4"
-                                    :type "ip"}
-                       :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                                      "http://ex.tld/ctia/judgement/judgement-456"]
-                       :disposition 2
-                       :source "test"
-                       :priority 100
-                       :severity "High"
-                       :confidence "Low"
-                       :reason "This is a bad IP address that talked to some evil servers"
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                :headers {"Authorization" "45c1f5e3f05d0"})
-          judgement-id (id/long-id->id (:id judgement))
-          judgement-external-ids (:external_ids judgement)]
+     (testing "POST /ctia/judgement"
+       (let [{judgement :parsed-body
+              status :status}
+             (post "ctia/judgement"
+                   :body {:observable {:value "1.2.3.4"
+                                       :type "ip"}
+                          :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
+                                         "http://ex.tld/ctia/judgement/judgement-456"]
+                          :disposition 2
+                          :source "test"
+                          :priority 100
+                          :severity "High"
+                          :confidence "Low"
+                          :reason "This is a bad IP address that talked to some evil servers"
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             judgement-id (id/long-id->id (:id judgement))
+             judgement-external-ids (:external_ids judgement)]
 
-      (is (= 201 status))
+         (is (= 201 status))
 
-      (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
-        (let [{status :status
-               judgement :parsed-body
-               :as response}
-              (get (str "ctia/judgement/" (:short-id judgement-id))
-                   :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
-          (is (= 401 (:status response)))))
+         (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
+           (let [{status :status
+                  judgement :parsed-body
+                  :as response}
+                 (get (str "ctia/judgement/" (:short-id judgement-id))
+                      :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
+             (is (= 401 (:status response)))))
 
       (testing "GET /ctia/judgement/:id with JWT Authorization header"
         (with-redefs [time/now (constantly (time/date-time 2017 02 16 0 0 0))]
@@ -219,105 +223,108 @@
                                  :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                    judgement))))))))
 
-(deftest-for-each-store test-judgement-routes-for-dispositon-determination
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
+(deftest test-judgement-routes-for-dispositon-determination
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
 
-  (testing "POST a judgement with dispositon (id)"
-    (let [{status :status
-           judgement :parsed-body}
-          (post "ctia/judgement"
-                :body {:observable {:value "1.2.3.4"
-                                    :type "ip"}
-                       :disposition 2
-                       :source "test"
-                       :priority 100
-                       :severity "High"
-                       :confidence "Low"
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                :headers {"Authorization" "45c1f5e3f05d0"})]
-      (is (= 201 status))
-      (is (deep=
-           {:type "judgement"
-            :observable {:value "1.2.3.4"
-                         :type "ip"}
-            :disposition 2
-            :disposition_name "Malicious"
-            :source "test"
-            :priority 100
-            :severity "High"
-            :confidence "Low"
-            :tlp "green"
-            :schema_version schema-version
-            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-           (dissoc judgement
-                   :id)))))
+     (testing "POST a judgement with dispositon (id)"
+       (let [{status :status
+              judgement :parsed-body}
+             (post "ctia/judgement"
+                   :body {:observable {:value "1.2.3.4"
+                                       :type "ip"}
+                          :disposition 2
+                          :source "test"
+                          :priority 100
+                          :severity "High"
+                          :confidence "Low"
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 201 status))
+         (is (deep=
+              {:type "judgement"
+               :observable {:value "1.2.3.4"
+                            :type "ip"}
+               :disposition 2
+               :disposition_name "Malicious"
+               :source "test"
+               :priority 100
+               :severity "High"
+               :confidence "Low"
+               :tlp "green"
+               :schema_version schema-version
+               :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+              (dissoc judgement
+                      :id)))))
 
-  (testing "POST a judgement with disposition_name"
-    (let [{status :status
-           judgement :parsed-body}
-          (post "ctia/judgement"
-                :body {:observable {:value "1.2.3.4"
-                                    :type "ip"}
-                       :disposition_name "Malicious"
-                       :source "test"
-                       :priority 100
-                       :severity "High"
-                       :confidence "Low"
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                :headers {"Authorization" "45c1f5e3f05d0"})]
-      (is (= 201 status))
-      (is (deep=
-           {:type "judgement"
-            :observable {:value "1.2.3.4"
-                         :type "ip"}
-            :disposition 2
-            :disposition_name "Malicious"
-            :source "test"
-            :priority 100
-            :severity "High"
-            :confidence "Low"
-            :tlp "green"
-            :schema_version schema-version
-            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-           (dissoc judgement
-                   :id)))))
+     (testing "POST a judgement with disposition_name"
+       (let [{status :status
+              judgement :parsed-body}
+             (post "ctia/judgement"
+                   :body {:observable {:value "1.2.3.4"
+                                       :type "ip"}
+                          :disposition_name "Malicious"
+                          :source "test"
+                          :priority 100
+                          :severity "High"
+                          :confidence "Low"
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 201 status))
+         (is (deep=
+              {:type "judgement"
+               :observable {:value "1.2.3.4"
+                            :type "ip"}
+               :disposition 2
+               :disposition_name "Malicious"
+               :source "test"
+               :priority 100
+               :severity "High"
+               :confidence "Low"
+               :tlp "green"
+               :schema_version schema-version
+               :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+              (dissoc judgement
+                      :id)))))
 
-  (testing "POST a judgement without disposition"
-    (let [{status :status
-           judgement :parsed-body}
-          (post "ctia/judgement"
-                :body {:observable {:value "1.2.3.4"
-                                    :type "ip"}
-                       :source "test"
-                       :priority 100
-                       :severity "High"
-                       :confidence "Low"
-                       :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
-                :headers {"Authorization" "45c1f5e3f05d0"})]
-      (is (= 201 status))
-      (is (deep=
-           {:type "judgement"
-            :observable {:value "1.2.3.4"
-                         :type "ip"}
-            :disposition 5
-            :disposition_name "Unknown"
-            :source "test"
-            :priority 100
-            :severity "High"
-            :confidence "Low"
-            :tlp "green"
-            :schema_version schema-version
-            :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                         :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-           (dissoc judgement
-                   :id)))))
+     (testing "POST a judgement without disposition"
+       (let [{status :status
+              judgement :parsed-body}
+             (post "ctia/judgement"
+                   :body {:observable {:value "1.2.3.4"
+                                       :type "ip"}
+                          :source "test"
+                          :priority 100
+                          :severity "High"
+                          :confidence "Low"
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 201 status))
+         (is (deep=
+              {:type "judgement"
+               :observable {:value "1.2.3.4"
+                            :type "ip"}
+               :disposition 5
+               :disposition_name "Unknown"
+               :source "test"
+               :priority 100
+               :severity "High"
+               :confidence "Low"
+               :tlp "green"
+               :schema_version schema-version
+               :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+              (dissoc judgement
+                      :id)))))
 
+<<<<<<< HEAD
   (testing "POST a judgement with mismatching disposition/disposition_name"
     (let [{status :status
            judgement :parsed-body}
@@ -345,36 +352,70 @@
                         :confidence "Low"
                         :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
            judgement)))))
+=======
+     (testing "POST a judgement with mismatching disposition/disposition_name"
+       (let [{status :status
+              judgement :parsed-body}
+             (post "ctia/judgement"
+                   :body {:observable {:value "1.2.3.4"
+                                       :type "ip"}
+                          :disposition 1
+                          :disposition_name "Unknown"
+                          :source "test"
+                          :priority 100
+                          :severity "High"
+                          :confidence "Low"
+                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                   :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 400 status))
+         (is (deep=
+              {:error "Mismatching :dispostion and dispositon_name for judgement",
+               :judgement {:observable {:value "1.2.3.4"
+                                        :type "ip"}
+                           :disposition 1
+                           :disposition_name "Unknown"
+                           :source "test"
+                           :priority 100
+                           :severity "High"
+                           :confidence "Low"
+                           :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
+              judgement)))))))
+>>>>>>> remove deftest-for-each-store
 
-(deftest-for-each-store test-judgement-pagination-field-selection
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
 
-  (let [posted-docs
-        (doall (map #(:parsed-body
-                      (post "ctia/judgement"
-                            :body (-> new-judgement-maximal
-                                      (dissoc :id)
-                                      (assoc :source (str "dotimes " %)
-                                             :observable {:value "1.2.3.4", :type "ip"}))
-                            :headers {"Authorization" "45c1f5e3f05d0"}))
-                    (range 0 30)))]
-    (pagination-test
-     "ctia/ip/1.2.3.4/judgements"
-     {"Authorization" "45c1f5e3f05d0"}
-     [:id :disposition :priority :severity :confidence])
+(deftest test-judgement-pagination-field-selection
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
 
-    (field-selection-tests
-     ["ctia/ip/1.2.3.4/judgements"
-      (-> posted-docs first :id doc-id->rel-url)]
-     {"Authorization" "45c1f5e3f05d0"}
-     judgement-sort-fields)))
+     (let [new-judgement
+           (assoc new-judgement-maximal
+                  :observable
+                  {:value "1.2.3.4", :type "ip"})
+           ids (post-entity-bulk
+                new-judgement
+                :judgements
+                30
+                {"Authorization" "45c1f5e3f05d0"})]
+       (pagination-test
+        "ctia/ip/1.2.3.4/judgements"
+        {"Authorization" "45c1f5e3f05d0"}
+        [:id :disposition :priority :severity :confidence])
 
-(deftest-for-each-store test-judgement-routes-access-control
-  (access-control-test "judgement"
-                       ex/new-judgement-minimal
-                       false
-                       true))
+       (field-selection-tests
+        ["ctia/ip/1.2.3.4/judgements"
+         (doc-id->rel-url (first ids))]
+        {"Authorization" "45c1f5e3f05d0"}
+        judgement-sort-fields)))))
+
+(deftest test-judgement-routes-access-control
+  (test-for-each-store
+   (fn []
+     (access-control-test "judgement"
+                          ex/new-judgement-minimal
+                          false
+                          true))))

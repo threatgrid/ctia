@@ -1,32 +1,27 @@
 (ns ctia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.lib
-             [net :as net]
-             [time :as time]]
+  (:require [clj-momo.lib.net :as net]
             [clj-momo.test-helpers
              [core :as mth]
              [http :as mthh]]
-            [clojure.string :as str]
+            [clojure
+             [string :as str]
+             [walk :refer [prewalk]]]
             [clojure.spec.alpha :as cs]
             [clojure.test.check.generators :as gen]
             [ctia
              [auth :as auth]
              [init :as init]
              [properties :refer [properties PropertiesSchema]]
+             [shutdown :as shutdown]
              [store :as store]]
-            [clojure.walk :refer [prewalk]]
             [ctia.auth.allow-all :as aa]
             [ctia.flows.crud :as crud]
-            [ctia.flows.hooks :as hooks]
-            [ctia.http.server :as http-server]
-            [ctia.shutdown :as shutdown]
             [ctim.domain.id :as id]
             [ctim.generators.common :as cgc]
             [flanders
              [spec :as fs]
-             [utils :as fu]]
-            [schema.core :as schema])
-  (:import java.net.ServerSocket))
+             [utils :as fu]]))
 
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
@@ -94,8 +89,8 @@
     (f)))
 
 (defn fixture-ctia
-  ([test] (fixture-ctia test true))
-  ([test enable-http?]
+  ([t] (fixture-ctia t true))
+  ([t enable-http?]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
    (let [http-port
@@ -107,12 +102,12 @@
                        "ctia.http.show.port" http-port]
        (try
          (init/start-ctia! :join? false)
-         (test)
+         (t)
          (finally
            (shutdown/shutdown-ctia!)))))))
 
-(defn fixture-ctia-fast [test]
-  (fixture-ctia test false))
+(defn fixture-ctia-fast [t]
+  (fixture-ctia t false))
 
 ;; TODO - Convert this to a properties fixture
 (defn fixture-allow-all-auth [f]

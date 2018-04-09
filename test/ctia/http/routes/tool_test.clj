@@ -1,6 +1,6 @@
 (ns ctia.http.routes.tool-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [join-fixtures use-fixtures]]
+            [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.schemas.sorting :refer [tool-sort-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
@@ -11,7 +11,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [deftest-for-each-store]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.tools :refer [new-tool-maximal
                                          new-tool-minimal]]))
 
@@ -22,46 +22,52 @@
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
 
-(deftest-for-each-store test-tool-routes
-  (helpers/set-capabilities! "foouser"
-                             ["foogroup"]
-                             "user"
-                             all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-  (entity-crud-test
-   {:entity "tool"
-    :example new-tool-maximal
-    :invalid-test-field :name
-    :update-field :description
-    :headers {:Authorization "45c1f5e3f05d0"}}))
+(deftest test-tool-routes
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser"
+                                ["foogroup"]
+                                "user"
+                                all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (entity-crud-test
+      {:entity "tool"
+       :example new-tool-maximal
+       :invalid-test-field :name
+       :update-field :description
+       :headers {:Authorization "45c1f5e3f05d0"}}))))
 
-(deftest-for-each-store test-tool-pagination-field-selection
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-  (let [ids (post-entity-bulk
-             new-tool-maximal
-             :tools
-             30
-             {"Authorization" "45c1f5e3f05d0"})]
-    (pagination-test
-     "ctia/tool/search?query=*"
-     {"Authorization" "45c1f5e3f05d0"}
-     tool-sort-fields)
+(deftest test-tool-pagination-field-selection
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [ids (post-entity-bulk
+                new-tool-maximal
+                :tools
+                30
+                {"Authorization" "45c1f5e3f05d0"})]
+       (pagination-test
+        "ctia/tool/search?query=*"
+        {"Authorization" "45c1f5e3f05d0"}
+        tool-sort-fields)
 
-    (field-selection-tests
-     ["ctia/tool/search?query=*"
-      (doc-id->rel-url (first ids))]
-     {"Authorization" "45c1f5e3f05d0"}
-     tool-sort-fields)))
+       (field-selection-tests
+        ["ctia/tool/search?query=*"
+         (doc-id->rel-url (first ids))]
+        {"Authorization" "45c1f5e3f05d0"}
+        tool-sort-fields)))))
 
-(deftest-for-each-store test-tool-routes-access-control
-  (access-control-test "tool"
-                       new-tool-minimal
-                       true
-                       true))
+(deftest test-tool-routes-access-control
+  (test-for-each-store
+   (fn []
+     (access-control-test "tool"
+                          new-tool-minimal
+                          true
+                          true))))

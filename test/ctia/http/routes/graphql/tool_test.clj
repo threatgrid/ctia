@@ -1,18 +1,14 @@
 (ns ctia.http.routes.graphql.tool-test
-  (:require [clj-momo.test-helpers
-             [core :as mth]
-             [http :refer [encode]]]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
-            [ctia.test-helpers.graphql :as gh]
-            [ctim.examples
-             [tools :refer [new-tool-maximal]]]
-            [clj-momo.test-helpers.core :as mth]
-            [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-            [ctia.test-helpers.store :refer [deftest-for-each-store]]
-            [ctia.test-helpers.auth :refer [all-capabilities]]
+  (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.schemas.sorting :as sort-fields]
-            [ctia.schemas.graphql.helpers :as g]))
+            [ctia.test-helpers
+             [auth :refer [all-capabilities]]
+             [core :as helpers]
+             [fake-whoami-service :as whoami-helpers]
+             [graphql :as gh]
+             [store :refer [test-for-each-store]]]
+            [ctim.examples.tools :refer [new-tool-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -50,104 +46,106 @@
      :tool-2 entity-2
      :tool-3 entity-3}))
 
-(deftest-for-each-store tool-queries-test
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-  (let [datamap (init-graph-data)
-        tool-1-id (get-in datamap [:tool-1 :id])
-        tool-2-id (get-in datamap [:tool-2 :id])
-        tool-3-id (get-in datamap [:tool-3 :id])
-        graphql-queries (str (slurp "test/data/tool.graphql")
-                             (slurp "test/data/fragments.graphql"))]
+(deftest tool-queries-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [datamap (init-graph-data)
+           tool-1-id (get-in datamap [:tool-1 :id])
+           tool-2-id (get-in datamap [:tool-2 :id])
+           tool-3-id (get-in datamap [:tool-3 :id])
+           graphql-queries (str (slurp "test/data/tool.graphql")
+                                (slurp "test/data/fragments.graphql"))]
 
-    (testing "tool query"
-      (let [{:keys [data errors status]}
-            (gh/query graphql-queries
-                      {:id (get-in datamap [:tool-1 :id])}
-                      "ToolQueryTest")]
-        (is (= 200 status))
-        (is (empty? errors) "No errors")
+       (testing "tool query"
+         (let [{:keys [data errors status]}
+               (gh/query graphql-queries
+                         {:id (get-in datamap [:tool-1 :id])}
+                         "ToolQueryTest")]
+           (is (= 200 status))
+           (is (empty? errors) "No errors")
 
-        (testing "the tool"
-          (is (= (:tool-1 datamap)
-                 (-> (:tool data)
-                     (dissoc :relationships)))))
+           (testing "the tool"
+             (is (= (:tool-1 datamap)
+                    (-> (:tool data)
+                        (dissoc :relationships)))))
 
-        (testing "relationships connection"
-          (gh/connection-test "ToolQueryTest"
-                              graphql-queries
-                              {:id tool-1-id
-                               :relationship_type "variant-of"}
-                              [:tool :relationships]
-                              [{:relationship_type "variant-of"
-                                :target_ref tool-2-id
-                                :source_ref tool-1-id
-                                :source_entity (:tool-1 datamap)
-                                :target_entity (:tool-2 datamap)}
-                               {:relationship_type "variant-of"
-                                :target_ref tool-3-id
-                                :source_ref tool-1-id
-                                :source_entity (:tool-1 datamap)
-                                :target_entity (:tool-3 datamap)}])
+           (testing "relationships connection"
+             (gh/connection-test "ToolQueryTest"
+                                 graphql-queries
+                                 {:id tool-1-id
+                                  :relationship_type "variant-of"}
+                                 [:tool :relationships]
+                                 [{:relationship_type "variant-of"
+                                   :target_ref tool-2-id
+                                   :source_ref tool-1-id
+                                   :source_entity (:tool-1 datamap)
+                                   :target_entity (:tool-2 datamap)}
+                                  {:relationship_type "variant-of"
+                                   :target_ref tool-3-id
+                                   :source_ref tool-1-id
+                                   :source_entity (:tool-1 datamap)
+                                   :target_entity (:tool-3 datamap)}])
 
-          (testing "sorting"
-            (gh/connection-sort-test
-             "ToolQueryTest"
-             graphql-queries
-             {:id tool-1-id}
-             [:tool :relationships]
-             sort-fields/relationship-sort-fields)))
+             (testing "sorting"
+               (gh/connection-sort-test
+                "ToolQueryTest"
+                graphql-queries
+                {:id tool-1-id}
+                [:tool :relationships]
+                sort-fields/relationship-sort-fields)))
 
-        (testing "feedbacks connection"
-          (gh/connection-test "ToolFeedbacksQueryTest"
-                              graphql-queries
-                              {:id tool-1-id}
-                              [:tool :feedbacks]
-                              [(gh/feedback-1 tool-1-id)
-                               (gh/feedback-2 tool-1-id)])
+           (testing "feedbacks connection"
+             (gh/connection-test "ToolFeedbacksQueryTest"
+                                 graphql-queries
+                                 {:id tool-1-id}
+                                 [:tool :feedbacks]
+                                 [(gh/feedback-1 tool-1-id)
+                                  (gh/feedback-2 tool-1-id)])
 
-          (testing "sorting"
-            (gh/connection-sort-test
-             "ToolFeedbacksQueryTest"
-             graphql-queries
-             {:id tool-1-id}
-             [:tool :feedbacks]
-             sort-fields/feedback-sort-fields))))
-      (testing "tools query"
-        (testing "tools connection"
-          (gh/connection-test "ToolsQueryTest"
-                              graphql-queries
-                              {"query" "*"}
-                              [:tools]
-                              [(:tool-1 datamap)
-                               (:tool-2 datamap)
-                               (:tool-3 datamap)])
+             (testing "sorting"
+               (gh/connection-sort-test
+                "ToolFeedbacksQueryTest"
+                graphql-queries
+                {:id tool-1-id}
+                [:tool :feedbacks]
+                sort-fields/feedback-sort-fields))))
+         (testing "tools query"
+           (testing "tools connection"
+             (gh/connection-test "ToolsQueryTest"
+                                 graphql-queries
+                                 {"query" "*"}
+                                 [:tools]
+                                 [(:tool-1 datamap)
+                                  (:tool-2 datamap)
+                                  (:tool-3 datamap)])
 
-          (testing "sorting"
-            (gh/connection-sort-test
-             "ToolsQueryTest"
-             graphql-queries
-             {:query "*"}
-             [:tools]
-             sort-fields/tool-sort-fields)))
+             (testing "sorting"
+               (gh/connection-sort-test
+                "ToolsQueryTest"
+                graphql-queries
+                {:query "*"}
+                [:tools]
+                sort-fields/tool-sort-fields)))
 
-        (testing "query argument"
-          (let [{:keys [data errors status]}
-                (gh/query graphql-queries
-                          {:query (format "name:\"%s\""
-                                          (get-in
-                                           datamap
-                                           [:tool-1 :name]))}
-                          "ToolsQueryTest")]
-            (is (= 200 status))
-            (is (empty? errors) "No errors")
-            (is (= 1 (get-in data [:tools :totalCount]))
-                "Only one tool matches to the query")
-            (is (= (:tool-1 datamap)
-                   (first (get-in data [:tools :nodes])))
-                "The tool matches the search query")))))))
+           (testing "query argument"
+             (let [{:keys [data errors status]}
+                   (gh/query graphql-queries
+                             {:query (format "name:\"%s\""
+                                             (get-in
+                                              datamap
+                                              [:tool-1 :name]))}
+                             "ToolsQueryTest")]
+               (is (= 200 status))
+               (is (empty? errors) "No errors")
+               (is (= 1 (get-in data [:tools :totalCount]))
+                   "Only one tool matches to the query")
+               (is (= (:tool-1 datamap)
+                      (first (get-in data [:tools :nodes])))
+                   "The tool matches the search query")))))))))
 
 
