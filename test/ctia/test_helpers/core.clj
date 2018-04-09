@@ -98,9 +98,10 @@
   ([test enable-http?]
    ;; Start CTIA
    ;; This starts the server on an available port (if enabled)
-   (let [http-port (if enable-http?
-                     (net/available-port)
-                     3000)]
+   (let [http-port
+         (if enable-http?
+           (net/available-port)
+           3000)]
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
@@ -150,6 +151,18 @@
 
 (def post
   (mthh/with-port-fn get-http-port mthh/post))
+
+(defn post-entity-bulk [example plural x headers]
+  (let [new-records
+        (for [x (range 0 x)]
+          (-> example
+              (assoc :source (str "dotimes " x))
+              (dissoc :id)))]
+    (-> (post "ctia/bulk"
+              :body {plural new-records}
+              :headers headers)
+        :parsed-body
+        plural)))
 
 (def delete
   (mthh/with-port-fn get-http-port mthh/delete))

@@ -116,6 +116,7 @@
                       "ctia.metrics.riemann.interval" s/Int
 
                       "ctia.store.external-key-prefixes" s/Str
+                      "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
 
                       "ctia.store.es.event.slicing.strategy"

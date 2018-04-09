@@ -117,6 +117,13 @@
        (map (fn [[_ v]] (:tempids v)))
        (reduce into {})))
 
+(defn bulk-refresh? []
+  (get-in
+   @properties [:ctia
+                :store
+                :bulk-refresh]
+   "false"))
+
 (defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
    transient IDs can be used. They are automatically converted into
@@ -126,7 +133,7 @@
    2. Creates Relationships with mapping between transient and real IDs"
   ([bulk login] (create-bulk bulk {} login {}))
   ([bulk tempids login {:keys [refresh] :as params
-                        :or {refresh "false"}}]
+                        :or {refresh (bulk-refresh?)}}]
    (let [new-entities (gen-bulk-from-fn
                        create-entities
                        (dissoc bulk :relationships)

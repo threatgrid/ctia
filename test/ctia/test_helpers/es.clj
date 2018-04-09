@@ -12,6 +12,11 @@
              [store :as es-store]]
             [ctia.test-helpers.core :as h]))
 
+(defn refresh-indices [entity]
+  (let [{:keys [type host port]}
+        (es-init/get-store-properties entity)]
+    (http/post (format "http://%s:%s/_refresh" host port))))
+
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
@@ -58,7 +63,8 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.casebook" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.tool" "es"]
+                      "ctia.store.tool" "es"
+                      "ctia.store.bulk-refresh" "true"]
     (t)))
 
 (defn fixture-properties:es-hook [t]

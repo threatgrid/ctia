@@ -3,15 +3,17 @@
   (:require [clojure.test :refer [is join-fixtures testing use-fixtures]]
             [ctia.test-helpers [core :as helpers :refer [get]]]))
 
-(defn total->limit [total offset]
+(defn total->limit
   "make a limit from a full list total and offset"
+  [total offset]
   (-> (/ total 2)
       Math/ceil
       Math/round
       (- offset)))
 
-(defn limit-test [route headers]
+(defn limit-test
   "test a list route with limit query param"
+  [route headers]
   (headers (str route " with a limit")
            (let [{full-status :status
                   full-res :parsed-body
@@ -35,9 +37,9 @@
              (is (= (clojure.core/get limited-headers "X-Total-Hits")
                     (clojure.core/get full-headers "X-Total-Hits"))))))
 
-(defn offset-test [route headers]
+(defn offset-test
   "test a list route with offset and limit query params"
-
+  [route headers]
   (testing (str route " with limit and offset")
     (let [offset 1
           {full-status :status
@@ -74,9 +76,9 @@
                clojure.walk/keywordize-keys
                (select-keys [:X-Total-Hits :X-Previous :X-Next])))))))
 
-(defn sort-test [route headers sort-fields]
+(defn sort-test
   "test a list route with all sort options"
-
+  [route headers sort-fields]
   (testing (str route " with sort")
     (doall (map (fn [field]
                   (let [manually-sorted (->> (get route :headers headers)
@@ -96,8 +98,9 @@
                          route-sorted) field)))
                 sort-fields))))
 
-(defn edge-cases-test [route headers]
+(defn edge-cases-test
   "miscellaneous test which may expose small caveats"
+  [route headers]
 
   (testing (str route " with invalid offset")
     (let [total (-> (get route :headers headers) :parsed-body count)
@@ -124,16 +127,18 @@
       (is (= 200 status))
       (is (deep= body [])))))
 
-(defn pagination-test [route headers sort-fields]
+(defn pagination-test
   "all pagination related tests for a list route"
+  [route headers sort-fields]
   (testing (str "pagination tests for: " route)
     (do (limit-test route headers)
         (offset-test route headers)
         (sort-test route headers sort-fields)
         (edge-cases-test route headers))))
 
-(defn pagination-test-no-sort [route headers sort-fields]
+(defn pagination-test-no-sort
   "all pagination related tests for a list route"
+  [route headers sort-fields]
   (testing (str "paginations tests for: " route)
     (do (limit-test route headers)
         (offset-test route headers))))

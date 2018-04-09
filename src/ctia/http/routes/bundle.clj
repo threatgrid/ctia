@@ -318,7 +318,7 @@
 
 (defn bulk-params []
   {:refresh
-   (get-in @properties [:ctia :store :bundle-refresh] false)})
+   (get-in @properties [:ctia :store :bundle-refresh] "false")})
 
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
