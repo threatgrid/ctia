@@ -11,32 +11,34 @@
              [auth :as auth]
              [cache-control :refer [wrap-cache-control]]
              [unknown :as unk]]
-            [ctia.http.routes
-             [actor :refer [actor-routes]]
-             [attack-pattern :refer [attack-pattern-routes]]
-             [bulk :refer [bulk-routes]]
-             [bundle :refer [bundle-routes]]
-             [campaign :refer [campaign-routes]]
-             [coa :refer [coa-routes]]
-             [data-table :refer [data-table-routes]]
-             [documentation :refer [documentation-routes]]
-             [exploit-target :refer [exploit-target-routes]]
-             [feedback :refer [feedback-routes]]
-             [incident :refer [incident-routes]]
-             [indicator :refer [indicator-routes]]
-             [investigation :refer [investigation-routes]]
-             [judgement :refer [judgement-routes]]
-             [malware :refer [malware-routes]]
-             [metrics :refer [metrics-routes]]
-             [observable :refer [observable-routes]]
-             [properties :refer [properties-routes]]
-             [relationship :refer [relationship-routes]]
-             [casebook :refer [casebook-routes]]
-             [sighting :refer [sighting-routes]]
-             [tool :refer [tool-routes]]
-             [graphql :refer [graphql-routes
-                              graphql-ui-routes]]
-             [version :refer [version-routes]]]
+
+            [ctia.actor.routes :refer [actor-routes]]
+
+            #_(comment
+                [ctia.attack-pattern.routes :refer [attack-pattern-routes] ]
+                [ctia.bulk.routes :refer [bulk-routes]]
+                [ctia.bundle.routes :refer [bundle-routes]]
+                [ctia.campaign.routes :refer [campaign-routes]]
+                [ctia.coa.routes :refer [coa-routes]]
+                [ctia.data-table.routes :refer [data-table-routes]]
+                [ctia.documentation.routes :refer [documentation-routes]]
+                [ctia.exploit-target.routes :refer [exploit-target-routes]]
+                [ctia.feedback.routes :refer [feedback-routes]]
+                [ctia.incident.routes :refer [incident-routes]]
+                [ctia.indicator.routes :refer [indicator-routes]]
+                [ctia.investigation.routes :refer [investigation-routes]]
+                [ctia.judgement.routes :refer [judgement-routes]]
+                [ctia.malware.routes :refer [malware-routes]]
+                [ctia.metrics.routes :refer [metrics-routes]]
+                [ctia.observable.routes :refer [observable-routes]]
+                [ctia.properties.routes :refer [properties-routes]]
+                [ctia.relationship.routes :refer [relationship-routes]]
+                [ctia.casebook.routes :refer [casebook-routes]]
+                [ctia.sighting.routes :refer [sighting-routes]]
+                [ctia.tool.routes :refer [tool-routes]]
+                [ctia.graphql.routes :refer [graphql-routes
+                                             graphql-ui-routes]]
+                [ctia.version.routes :refer [version-routes]])
             [ctia.properties :refer [properties]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]))
@@ -128,31 +130,32 @@
                     ;; always last
                     (metrics/wrap-metrics "ctia" routes/get-routes)]
 
-                   documentation-routes
-                   (graphql-ui-routes)
+                   ;;documentation-routes
+                   ;;(graphql-ui-routes)
                    (context "/ctia" []
                             actor-routes
-                            attack-pattern-routes
-                            bulk-routes
-                            bundle-routes
-                            campaign-routes
-                            coa-routes
-                            data-table-routes
-                            exploit-target-routes
-                            feedback-routes
-                            incident-routes
-                            indicator-routes
-                            investigation-routes
-                            judgement-routes
-                            malware-routes
-                            metrics-routes
-                            observable-routes
-                            properties-routes
-                            sighting-routes
-                            casebook-routes
-                            tool-routes
-                            relationship-routes
-                            graphql-routes
-                            version-routes))
+                            #_(comment
+                                attack-pattern-routes
+                                bulk-routes
+                                bundle-routes
+                                campaign-routes
+                                coa-routes
+                                data-table-routes
+                                exploit-target-routes
+                                feedback-routes
+                                incident-routes
+                                indicator-routes
+                                investigation-routes
+                                judgement-routes
+                                malware-routes
+                                metrics-routes
+                                observable-routes
+                                properties-routes
+                                sighting-routes
+                                casebook-routes
+                                tool-routes
+                                relationship-routes
+                                graphql-routes
+                                version-routes)))
        (undocumented
         (rt/not-found (ok (unk/err-html))))))

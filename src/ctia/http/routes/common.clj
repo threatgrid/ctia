@@ -1,8 +1,8 @@
 (ns ctia.http.routes.common
   (:require
+   [ctia.schemas.sorting :as sorting]
    [clojure.string :as str]
    [clj-http.headers :refer [canonicalize]]
-   [ctia.schemas.sorting :as sorting]
    [ring.util.http-status :refer [ok]]
    [ring.util.http-response :as http-res]
    [schema.core :as s]
@@ -43,8 +43,7 @@
 (def sighting-sort-fields
   (apply s/enum sorting/sighting-sort-fields))
 
-(def actor-sort-fields
-  (apply s/enum sorting/actor-sort-fields))
+
 
 (def campaign-sort-fields
   (apply s/enum sorting/campaign-sort-fields))
@@ -143,32 +142,6 @@
 (s/defschema SourcableEntityFilterParams
   {(s/optional-key :source) s/Str})
 
-
-;; actor
-
-(s/defschema ActorFieldsParam
-  {(s/optional-key :fields) [actor-sort-fields]})
-
-(s/defschema ActorSearchParams
-  (st/merge
-   PagingParams
-   BaseEntityFilterParams
-   SourcableEntityFilterParams
-   ActorFieldsParam
-   {:query s/Str
-    (s/optional-key :actor_type) s/Str
-    (s/optional-key :motivation) s/Str
-    (s/optional-key :sophistication) s/Str
-    (s/optional-key :intended_effect) s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :sort_by)  actor-sort-fields}))
-
-(def ActorGetParams ActorFieldsParam)
-
-(s/defschema ActorByExternalIdQueryParams
-  (st/merge
-   PagingParams
-   ActorFieldsParam))
 
 ;; campaign
 

@@ -11,23 +11,6 @@
             default-tlp
             determine-disposition-id
             disposition-map]]
-   [ctia.domain.entities
-    [actor :as act-ent]
-    [attack-pattern :as attack-ent]
-    [campaign :as cam-ent]
-    [coa :as coa-ent]
-    [exploit-target :as ept-ent]
-    [data-table :as dt-ent]
-    [feedback :as fbk-ent]
-    [incident :as inc-ent]
-    [indicator :as ind-ent]
-    [investigation :as inv-ent]
-    [judgement :as jud-ent]
-    [malware :as malware-ent]
-    [relationship :as rel-ent]
-    [casebook :as scr-ent]
-    [sighting :as sig-ent]
-    [tool :as tool-ent]]
    [ctia.schemas.core
     :as ctia-schemas
     :refer [NewActor
@@ -116,6 +99,15 @@
                 (make-valid-time (:valid_time prev-object)
                                  (:valid_time new-object)
                                  now)))))))
+
+(defn short-id->long-id [entity]
+  (id/factory:short-id->long-id entity get-http-show))
+
+(defn with-long-id [entity]
+  (update entity :id short-id->long-id))
+
+(defn page-with-long-id [m]
+  (update m :data (partial map with-long-id)))
 
 (def realize-actor
   (default-realize-fn "actor" NewActor StoredActor))
@@ -284,39 +276,3 @@
    :casebook       realize-casebook
    :sighting       realize-sighting
    :tool           realize-tool})
-
-(def page-with-long-id-fn
-  {:actor          act-ent/page-with-long-id
-   :attack-pattern attack-ent/page-with-long-id
-   :campaign       cam-ent/page-with-long-id
-   :coa            coa-ent/page-with-long-id
-   :data-table     dt-ent/page-with-long-id
-   :exploit-target ept-ent/page-with-long-id
-   :feedback       fbk-ent/page-with-long-id
-   :incident       inc-ent/page-with-long-id
-   :indicator      ind-ent/page-with-long-id
-   :investigation  inv-ent/page-with-long-id
-   :judgement      jud-ent/page-with-long-id
-   :malware        malware-ent/page-with-long-id
-   :relationship   rel-ent/page-with-long-id
-   :casebook       scr-ent/page-with-long-id
-   :sighting       sig-ent/page-with-long-id
-   :tool           tool-ent/page-with-long-id})
-
-(def with-long-id-fn
-  {:actor          act-ent/with-long-id
-   :attack-pattern attack-ent/with-long-id
-   :campaign       cam-ent/with-long-id
-   :coa            coa-ent/with-long-id
-   :data-table     dt-ent/with-long-id
-   :exploit-target ept-ent/with-long-id
-   :feedback       fbk-ent/with-long-id
-   :incident       inc-ent/with-long-id
-   :indicator      ind-ent/with-long-id
-   :investigation  inv-ent/with-long-id
-   :judgement      jud-ent/with-long-id
-   :malware        malware-ent/with-long-id
-   :relationship   rel-ent/with-long-id
-   :casebook       scr-ent/with-long-id
-   :sighting       sig-ent/with-long-id
-   :tool           tool-ent/with-long-id})

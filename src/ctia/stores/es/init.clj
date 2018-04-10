@@ -9,7 +9,30 @@
     [mapping :refer [store-mappings store-settings]]
     [store :as es-store]]
    [schema.core :as s]
-   [schema-tools.core :as st]))
+   [schema-tools.core :as st]
+   [ctim.schemas.actor :as actor]
+   [ctim.schemas.attack-pattern :as attack]
+   [ctim.schemas.campaign :as campaign]
+   [ctim.schemas.coa :as coa]
+
+   [ctia.actor.store.es :refer [->ActorStore]]
+   [ctia.attack-pattern.store.es :refer [->AttackPatternStore]]
+   [ctia.campaign.store.es :refer [->CampaignStore]]
+   [ctia.coa.store.es :refer [->COAStore]]
+   [ctia.data-table.store.es :refer [->DataTableStore]]
+   [ctia.event.store.es :refer [->EventStore]]
+   [ctia.exploit-target.store.es :refer [->ExploitTargetStore]]
+   [ctia.feedback.store.es :refer [->FeedbackStore]]
+   [ctia.identity.store.es :refer [->IdentityStore]]
+   [ctia.incident.store.es :refer [->IncidentStore]]
+   [ctia.indicator.store.es :refer [->IndicatorStore]]
+   [ctia.investigation.store.es :refer [->InvestigationStore]]
+   [ctia.judgement.store.es :refer [->JudgementStore]]
+   [ctia.malware.store.es :refer [->MalwareStore]]
+   [ctia.relationship.store.es :refer [->RelationshipStore]]
+   [ctia.casebook.store.es :refer [->CasebookStore]]
+   [ctia.sighting.store.es :refer [->SightingStore]]
+   [ctia.tool.store.es :refer [->ToolStore]]))
 
 
 (s/defschema StoreProperties
@@ -64,24 +87,24 @@
         store-constructor)))
 
 (def ^:private factories
-  {:actor          (make-factory es-store/->ActorStore)
-   :attack-pattern (make-factory es-store/->AttackPatternStore)
-   :campaign       (make-factory es-store/->CampaignStore)
-   :coa            (make-factory es-store/->COAStore)
-   :data-table     (make-factory es-store/->DataTableStore)
-   :event          (make-factory es-store/->EventStore)
-   :exploit-target (make-factory es-store/->ExploitTargetStore)
-   :feedback       (make-factory es-store/->FeedbackStore)
-   :identity       (make-factory es-store/->IdentityStore)
-   :incident       (make-factory es-store/->IncidentStore)
-   :indicator      (make-factory es-store/->IndicatorStore)
-   :investigation  (make-factory es-store/->InvestigationStore)
-   :judgement      (make-factory es-store/->JudgementStore)
-   :malware        (make-factory es-store/->MalwareStore)
-   :relationship   (make-factory es-store/->RelationshipStore)
-   :casebook     (make-factory es-store/->CasebookStore)
-   :sighting       (make-factory es-store/->SightingStore)
-   :tool           (make-factory es-store/->ToolStore)})
+  {:actor          (make-factory ->ActorStore)
+   :attack-pattern (make-factory ->AttackPatternStore)
+   :campaign       (make-factory ->CampaignStore)
+   :coa            (make-factory ->COAStore)
+   :data-table     (make-factory ->DataTableStore)
+   :event          (make-factory ->EventStore)
+   :exploit-target (make-factory ->ExploitTargetStore)
+   :feedback       (make-factory ->FeedbackStore)
+   :identity       (make-factory ->IdentityStore)
+   :incident       (make-factory ->IncidentStore)
+   :indicator      (make-factory ->IndicatorStore)
+   :investigation  (make-factory ->InvestigationStore)
+   :judgement      (make-factory ->JudgementStore)
+   :malware        (make-factory ->MalwareStore)
+   :relationship   (make-factory ->RelationshipStore)
+   :casebook       (make-factory ->CasebookStore)
+   :sighting       (make-factory ->SightingStore)
+   :tool           (make-factory ->ToolStore)})
 
 (defn init-store! [store-kw]
   (when-let [factory (get factories store-kw)]
