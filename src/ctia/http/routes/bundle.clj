@@ -338,6 +338,12 @@
                 (with-bulk-result bundle-import-data)
                 build-response))))
 
+(def bundle-max-size bulk/get-bulk-max-size)
+
+(defn bundle-size
+  [bundle]
+  (bulk/bulk-size (select-keys bundle bundle-entity-keys)))
+
 (defroutes bundle-routes
   (context "/bundle" []
            :tags ["Bundle"]
@@ -366,7 +372,7 @@
                                  :create-sighting
                                  :create-tool
                                  :import-bundle}
-                 (if (> (bulk/bulk-size bundle)
-                        (bulk/get-bulk-max-size))
-                   (bad-request (str "Bundle max nb of entities: " (bulk/get-bulk-max-size)))
+                 (if (> (bundle-size bundle)
+                        (bundle-max-size))
+                   (bad-request (str "Bundle max nb of entities: " (bundle-max-size)))
                    (ok (import-bundle bundle external-key-prefixes auth-identity))))))

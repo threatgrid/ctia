@@ -40,11 +40,11 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/flanders "0.1.16"
+                 [threatgrid/flanders "0.1.17"
                   :exclusions [prismatic/plumbing
                                potemkin
                                com.andrewmcveigh/cljs-time]]
-                 [threatgrid/ctim "0.4.28"
+                 [threatgrid/ctim "0.4.29-SNAPSHOT"
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava]]

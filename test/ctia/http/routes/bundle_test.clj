@@ -12,7 +12,7 @@
             [ctia.store :refer [stores]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post deep-dissoc]]
+             [core :as helpers :refer [get post deep-dissoc-entity-ids]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [deftest-for-each-store]]]
             [clojure.set :as set]
@@ -187,7 +187,8 @@
                            indicators
                            sightings)]
     (testing "Import bundle with all entity types"
-      (let [new-bundle (deep-dissoc bundle-maximal :id)
+      (let [new-bundle (-> bundle-maximal
+                           deep-dissoc-entity-ids)
             response (post "ctia/bundle/import"
                            :body new-bundle
                            :headers {"Authorization" "45c1f5e3f05d0"})

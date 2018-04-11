@@ -300,6 +300,9 @@ fragment casebookFields on Casebook {
   schema_version
   revision
   external_ids
+  external_references {
+    ...externalReferenceFields
+  }
   timestamp
   language
   title
@@ -313,6 +316,13 @@ fragment casebookFields on Casebook {
   }
 }
 
+fragment externalReferenceFields on ExternalReference {
+  source_name
+  external_id
+  url
+  description
+  hashes
+}
 
 fragment relationshipBaseFields on Relationship {
   relationship_type
