@@ -1,20 +1,19 @@
-(ns ctia.http.routes.bulk
-  (:require [compojure.api.sweet :refer :all]
-            [clojure.tools.logging :as log]
-            [ctia.auth :as auth]
-            [ctia.domain.entities :as ent
-             :refer [with-long-id-fn realize-fn]]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes.common :as common]
-            [ctia.lib.keyword :refer [singular]]
-            [ctia.schemas.bulk :refer [Bulk BulkRefs EntityError NewBulk]]
-            [ctia.properties :refer [properties]]
-            [ctia.store :as store
-             :refer [write-store read-store]]
-            [ctia.schemas.core :refer [Reference]]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [clojure.set :as set]))
+(ns ctia.bulk.routes
+  (:require
+   [compojure.api.sweet :refer :all]
+   [clojure.tools.logging :as log]
+   [ctia
+    [auth :as auth]
+    [properties :refer [properties]]
+    [store :as store :refer [read-store write-store]]]
+   [ctia.bulk.schemas :refer [Bulk BulkRefs NewBulk]]
+   [ctia.domain.entities :as ent :refer [realize-fn with-long-id]]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common :as common]
+   [ctia.lib.keyword :refer [singular]]
+   [ctia.schemas.core :refer [Reference]]
+   [ring.util.http-response :refer :all]
+   [schema.core :as s]))
 
 (defn bulk-key
   "Returns the bulk key for a given entity type"
@@ -41,38 +40,36 @@
   "return the create function provided an entity type key"
   [k auth-identity params]
   #(write-store
-    k (get store/create-fn k)
+    k store/create
     % (auth/ident->map auth-identity) params))
 
 (defn read-fn
   "return the create function provided an entity type key"
   [k auth-identity params]
   #(read-store
-    k (get store/read-fn k)
+    k store/read
     % (auth/ident->map auth-identity) params))
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
   [new-entities entity-type tempids auth-identity params]
   (when (seq new-entities)
-    (let [with-long-id (with-long-id-fn entity-type)]
-      (update (flows/create-flow
-               :entity-type entity-type
-               :realize-fn (realize-fn entity-type)
-               :store-fn (create-fn entity-type auth-identity params)
-               :long-id-fn with-long-id
-               :enveloped-result? true
-               :identity auth-identity
-               :entities new-entities
-               :tempids tempids)
-              :data (partial map (fn [{:keys [error id] :as result}]
-                                   (if error result id)))))))
+    (update (flows/create-flow
+             :entity-type entity-type
+             :realize-fn (realize-fn entity-type)
+             :store-fn (create-fn entity-type auth-identity params)
+             :long-id-fn with-long-id
+             :enveloped-result? true
+             :identity auth-identity
+             :entities new-entities
+             :tempids tempids)
+            :data (partial map (fn [{:keys [error id] :as result}]
+                                 (if error result id))))))
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity]
-  (let [read-entity (read-fn entity-type auth-identity {})
-        with-long-id (with-long-id-fn entity-type)]
+  (let [read-entity (read-fn  entity-type auth-identity {})]
     (map (fn [id] (try (with-long-id
                          (read-entity id))
                        (catch Exception e
@@ -166,91 +163,89 @@
   (get-in @properties [:ctia :http :bulk :max-size]))
 
 (defroutes bulk-routes
-  (context "/bulk" []
-           :tags ["Bulk"]
-           (POST "/" []
-                 :return BulkRefs
-                 :body [bulk NewBulk {:description "a new Bulk object"}]
-                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                 :summary "POST many new entities using a single HTTP call"
-                 :identity login
-                 :capabilities #{:create-actor
-                                 :create-attack-pattern
-                                 :create-campaign
-                                 :create-coa
-                                 :create-data-table
-                                 :create-exploit-target
-                                 :create-feedback
-                                 :create-incident
-                                 :create-investigation
-                                 :create-indicator
-                                 :create-judgement
-                                 :create-malware
-                                 :create-relationship
-                                 :create-casebook
-                                 :create-sighting
-                                 :create-tool}
-                 (if (> (bulk-size bulk)
-                        (get-bulk-max-size))
-                   (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-                   (common/created (create-bulk bulk login))))
+  (POST "/" []
+        :return BulkRefs
+        :body [bulk NewBulk {:description "a new Bulk object"}]
+        :header-params [{Authorization :- (s/maybe s/Str) nil}]
+        :summary "POST many new entities using a single HTTP call"
+        :identity login
+        :capabilities #{:create-actor
+                        :create-attack-pattern
+                        :create-campaign
+                        :create-coa
+                        :create-data-table
+                        :create-exploit-target
+                        :create-feedback
+                        :create-incident
+                        :create-investigation
+                        :create-indicator
+                        :create-judgement
+                        :create-malware
+                        :create-relationship
+                        :create-casebook
+                        :create-sighting
+                        :create-tool}
+        (if (> (bulk-size bulk)
+               (get-bulk-max-size))
+          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+          (common/created (create-bulk bulk login))))
 
-           (GET "/" []
-                :return (s/maybe Bulk)
-                :summary "GET many entities at once"
-                :query-params [{actors          :- [Reference] []}
-                               {attack_patterns :- [Reference] []}
-                               {campaigns       :- [Reference] []}
-                               {coas            :- [Reference] []}
-                               {data_tables     :- [Reference] []}
-                               {exploit_targets :- [Reference] []}
-                               {feedbacks       :- [Reference] []}
-                               {incidents       :- [Reference] []}
-                               {indicators      :- [Reference] []}
-                               {investigations  :- [Reference] []}
-                               {judgements      :- [Reference] []}
-                               {malwares        :- [Reference] []}
-                               {relationships   :- [Reference] []}
-                               {casebooks     :- [Reference] []}
-                               {sightings       :- [Reference] []}
-                               {tools           :- [Reference] []}]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :capabilities #{:read-actor
-                                :read-attack-pattern
-                                :read-campaign
-                                :read-coa
-                                :read-data-table
-                                :read-exploit-target
-                                :read-feedback
-                                :read-incident
-                                :read-indicator
-                                :read-investigation
-                                :read-judgement
-                                :read-malware
-                                :read-relationship
-                                :read-casebook
-                                :read-sighting
-                                :read-tool}
-                :identity auth-identity
-                (let [bulk (into {} (remove (comp empty? second)
-                                            {:actors          actors
-                                             :attack_patterns attack_patterns
-                                             :campaigns       campaigns
-                                             :coas            coas
-                                             :data_tables     data_tables
-                                             :exploit_targets exploit_targets
-                                             :feedbacks       feedbacks
-                                             :incidents       incidents
-                                             :investigations  investigations
-                                             :indicators      indicators
-                                             :judgements      judgements
-                                             :malwares        malwares
-                                             :relationships   relationships
-                                             :casebooks       casebooks
-                                             :sightings       sightings
-                                             :tools           tools}))]
-                  (if (> (bulk-size bulk) (get-bulk-max-size))
-                    (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-                    (-> (gen-bulk-from-fn read-entities bulk auth-identity)
-                        ent/un-store-map
-                        ok))))))
+  (GET "/" []
+       :return (s/maybe Bulk)
+       :summary "GET many entities at once"
+       :query-params [{actors          :- [Reference] []}
+                      {attack_patterns :- [Reference] []}
+                      {campaigns       :- [Reference] []}
+                      {coas            :- [Reference] []}
+                      {data_tables     :- [Reference] []}
+                      {exploit_targets :- [Reference] []}
+                      {feedbacks       :- [Reference] []}
+                      {incidents       :- [Reference] []}
+                      {indicators      :- [Reference] []}
+                      {investigations  :- [Reference] []}
+                      {judgements      :- [Reference] []}
+                      {malwares        :- [Reference] []}
+                      {relationships   :- [Reference] []}
+                      {casebooks     :- [Reference] []}
+                      {sightings       :- [Reference] []}
+                      {tools           :- [Reference] []}]
+       :header-params [{Authorization :- (s/maybe s/Str) nil}]
+       :capabilities #{:read-actor
+                       :read-attack-pattern
+                       :read-campaign
+                       :read-coa
+                       :read-data-table
+                       :read-exploit-target
+                       :read-feedback
+                       :read-incident
+                       :read-indicator
+                       :read-investigation
+                       :read-judgement
+                       :read-malware
+                       :read-relationship
+                       :read-casebook
+                       :read-sighting
+                       :read-tool}
+       :identity auth-identity
+       (let [bulk (into {} (remove (comp empty? second)
+                                   {:actors          actors
+                                    :attack_patterns attack_patterns
+                                    :campaigns       campaigns
+                                    :coas            coas
+                                    :data_tables     data_tables
+                                    :exploit_targets exploit_targets
+                                    :feedbacks       feedbacks
+                                    :incidents       incidents
+                                    :investigations  investigations
+                                    :indicators      indicators
+                                    :judgements      judgements
+                                    :malwares        malwares
+                                    :relationships   relationships
+                                    :casebooks       casebooks
+                                    :sightings       sightings
+                                    :tools           tools}))]
+         (if (> (bulk-size bulk) (get-bulk-max-size))
+           (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+           (-> (gen-bulk-from-fn read-entities bulk auth-identity)
+               ent/un-store-map
+               ok)))))

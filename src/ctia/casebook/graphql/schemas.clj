@@ -1,4 +1,4 @@
-(ns ctia.schemas.graphql.casebook
+(ns ctia.casebook.graphql.schemas
   (:require
    [flanders.utils :as fu]
    [ctia.schemas.graphql

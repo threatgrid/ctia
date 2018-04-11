@@ -1,13 +1,13 @@
-(ns ctia.schemas.graphql.sighting
+(ns ctia.sighting.graphql.schemas
   (:require
    [flanders.utils :as fu]
+   [ctia.feedback.graphql.schemas :as feedback]
+   [ctia.relationship.graphql.schemas :as relationship]
    [ctia.schemas.graphql
-    [feedback :as feedback]
     [flanders :as flanders]
     [helpers :as g]
     [pagination :as pagination]
     [refs :as refs]
-    [relationship :as relationship]
     [sorting :as sorting]]
    [ctia.schemas.sorting :as sort-fields]
    [ctim.schemas.sighting :as ctim-sighting]))

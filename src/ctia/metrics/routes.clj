@@ -1,16 +1,17 @@
-(ns ctia.http.routes.metrics
-  (:import (com.codahale.metrics Gauge Timer
-                                 Counter Histogram Meter))
-  (:require [compojure.api.sweet :refer :all]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [metrics.gauges :as gauges]
-            [metrics.meters :as meters]
-            [metrics.histograms :as histograms]
-            [metrics.counters :as counters]
-            [metrics.timers :as timers]
-            [metrics.core :refer [default-registry]]
-            [metrics.utils :refer [all-metrics]]))
+(ns ctia.metrics.routes
+  (:require
+   [compojure.api.sweet :refer :all]
+   [metrics
+    [core :refer [default-registry]]
+    [counters :as counters]
+    [gauges :as gauges]
+    [histograms :as histograms]
+    [meters :as meters]
+    [timers :as timers]
+    [utils :refer [all-metrics]]]
+   [ring.util.http-response :refer :all]
+   [schema.core :as s])
+  (:import [com.codahale.metrics Counter Gauge Histogram Meter Timer]))
 
 (defprotocol RenderableMetric
   (render-to-basic [metric]

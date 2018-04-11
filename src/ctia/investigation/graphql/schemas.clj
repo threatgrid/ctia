@@ -1,4 +1,4 @@
-(ns ctia.schemas.graphql.investigation
+(ns ctia.investigation.graphql.schemas
   (:require
    [flanders.utils :as fu]
    [ctia.schemas.graphql

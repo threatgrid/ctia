@@ -1,39 +1,29 @@
 (ns ctia.stores.es.init
-  (:require
-   [clj-momo.lib.es
-    [conn :refer [connect]]
-    [index :as es-index]
-    [schemas :refer [ESConnState]]]
-   [ctia.properties :refer [properties]]
-   [ctia.stores.es
-    [mapping :refer [store-mappings store-settings]]
-    [store :as es-store]]
-   [schema.core :as s]
-   [schema-tools.core :as st]
-   [ctim.schemas.actor :as actor]
-   [ctim.schemas.attack-pattern :as attack]
-   [ctim.schemas.campaign :as campaign]
-   [ctim.schemas.coa :as coa]
-
-   [ctia.actor.store.es :refer [->ActorStore]]
-   [ctia.attack-pattern.store.es :refer [->AttackPatternStore]]
-   [ctia.campaign.store.es :refer [->CampaignStore]]
-   [ctia.coa.store.es :refer [->COAStore]]
-   [ctia.data-table.store.es :refer [->DataTableStore]]
-   [ctia.event.store.es :refer [->EventStore]]
-   [ctia.exploit-target.store.es :refer [->ExploitTargetStore]]
-   [ctia.feedback.store.es :refer [->FeedbackStore]]
-   [ctia.identity.store.es :refer [->IdentityStore]]
-   [ctia.incident.store.es :refer [->IncidentStore]]
-   [ctia.indicator.store.es :refer [->IndicatorStore]]
-   [ctia.investigation.store.es :refer [->InvestigationStore]]
-   [ctia.judgement.store.es :refer [->JudgementStore]]
-   [ctia.malware.store.es :refer [->MalwareStore]]
-   [ctia.relationship.store.es :refer [->RelationshipStore]]
-   [ctia.casebook.store.es :refer [->CasebookStore]]
-   [ctia.sighting.store.es :refer [->SightingStore]]
-   [ctia.tool.store.es :refer [->ToolStore]]))
-
+  (:require [clj-momo.lib.es
+             [conn :refer [connect]]
+             [index :as es-index]
+             [schemas :refer [ESConnState]]]
+            [ctia.actor.store.es :refer [->ActorStore]]
+            [ctia.attack-pattern.store.es :refer [->AttackPatternStore]]
+            [ctia.campaign.store.es :refer [->CampaignStore]]
+            [ctia.casebook.store.es :refer [->CasebookStore]]
+            [ctia.coa.store.es :refer [->COAStore]]
+            [ctia.data-table.store.es :refer [->DataTableStore]]
+            [ctia.event.store.es :refer [->EventStore]]
+            [ctia.exploit-target.store.es :refer [->ExploitTargetStore]]
+            [ctia.feedback.store.es :refer [->FeedbackStore]]
+            [ctia.identity.store.es :refer [->IdentityStore]]
+            [ctia.incident.store.es :refer [->IncidentStore]]
+            [ctia.indicator.store.es :refer [->IndicatorStore]]
+            [ctia.investigation.store.es :refer [->InvestigationStore]]
+            [ctia.judgement.store.es :refer [->JudgementStore]]
+            [ctia.malware.store.es :refer [->MalwareStore]]
+            [ctia.properties :refer [properties]]
+            [ctia.relationship.store.es :refer [->RelationshipStore]]
+            [ctia.sighting.store.es :refer [->SightingStore]]
+            [ctia.stores.es.mapping :refer [store-mappings store-settings]]
+            [ctia.tool.store.es :refer [->ToolStore]]
+            [schema.core :as s]))
 
 (s/defschema StoreProperties
   {:entity s/Keyword

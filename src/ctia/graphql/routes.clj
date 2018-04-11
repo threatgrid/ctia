@@ -1,4 +1,4 @@
-(ns ctia.http.routes.graphql
+(ns ctia.graphql.routes
   (:require [clojure.tools.logging :as log]
             [compojure.api
              [core :as c]

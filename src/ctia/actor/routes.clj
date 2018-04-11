@@ -1,28 +1,13 @@
 (ns ctia.actor.routes
-  (:require
-   [ctia.http.routes.crud :refer [entity-crud-routes]]
-   [ctia.http.routes.common
-    :refer [PagingParams
-            BaseEntityFilterParams
-            SourcableEntityFilterParams]]
-   [ctia.schemas.sorting :as sorting]
-   [compojure.api.sweet :refer :all]
-   [ctia.domain.entities
-    :refer [realize-actor
-            with-long-id
-            page-with-long-id]]
-   [ctia.flows.crud :as flows]
-   [ctia.http.routes.common
-    :refer [created
-            search-options
-            filter-map-search-options
-            paginated-ok]]
-   [ctia.store :refer :all]
-   [ctia.schemas.core
-    :refer [NewActor Actor PartialActor PartialActorList]]
-   [ring.util.http-response :refer [no-content not-found ok]]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+  (:require [ctia.domain.entities :refer [realize-actor]]
+            [ctia.http.routes
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [crud :refer [entity-crud-routes]]]
+            [ctia.schemas
+             [core :refer [Actor NewActor PartialActor PartialActorList]]
+             [sorting :as sorting]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (def actor-sort-fields
   (apply s/enum sorting/actor-sort-fields))

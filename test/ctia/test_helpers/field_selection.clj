@@ -1,7 +1,7 @@
 (ns ctia.test-helpers.field-selection
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is testing]]
-            [ctia.test-helpers [core :as helpers :refer [get]]]))
+            [ctia.test-helpers.core :as helpers :refer [get]]))
 
 (def default-fields
   #{:id

@@ -1,151 +1,59 @@
-(ns ctia.http.routes.coa
-  (:require [compojure.api.sweet :refer :all]
-            [ctia.domain.entities :as ent]
-            [ctia.domain.entities.coa :refer [with-long-id page-with-long-id]]
-            [ctia.flows.crud :as flows]
-            [ctia.store :refer :all]
-            [ctia.http.routes.common
-             :refer [created
-                     paginated-ok
-                     search-options
-                     filter-map-search-options
-                     PagingParams
-                     COAGetParams
-                     COASearchParams
-                     COAByExternalIdQueryParams]]
-            [ctia.schemas.core
-             :refer [NewCOA COA PartialCOA PartialCOAList]]
-            [ring.util.http-response :refer [ok no-content not-found]]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+(ns ctia.coa.routes
+  (:require [ctia.http.routes
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [crud :refer [entity-crud-routes]]]
+            [ctia.domain.entities :refer [realize-coa]]
+            [ctia.schemas
+             [core :refer [COA NewCOA PartialCOA PartialCOAList]]
+             [sorting :as sorting]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
-(defroutes coa-routes
-  (context "/coa" []
-           :tags ["COA"]
-           (POST "/" []
-                 :return COA
-                 :body [coa NewCOA {:description "a new COA"}]
-                 :summary "Adds a new COA"
-                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                 :capabilities :create-coa
-                 :identity identity
-                 :identity-map identity-map
-                 (-> (flows/create-flow :realize-fn ent/realize-coa
-                                        :store-fn #(write-store :coa
-                                                                create-coas
-                                                                %
-                                                                identity-map
-                                                                {})
-                                        :long-id-fn with-long-id
-                                        :entity-type :coa
-                                        :identity identity
-                                        :entities [coa]
-                                        :spec :new-coa/map)
-                     first
-                     ent/un-store
-                     created))
+(def coa-sort-fields
+  (apply s/enum sorting/coa-sort-fields))
 
-           (PUT "/:id" []
-                :return COA
-                :body [coa NewCOA {:description "an updated COA"}]
-                :summary "Updates a COA"
-                :path-params [id :- s/Str]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :capabilities :create-coa
-                :identity identity
-                :identity-map identity-map
-                (-> (flows/update-flow :get-fn #(read-store :coa
-                                                            read-coa
-                                                            %
-                                                            identity-map
-                                                            {})
-                                       :realize-fn ent/realize-coa
-                                       :update-fn #(write-store :coa
-                                                                update-coa
-                                                                (:id %)
-                                                                %
-                                                                identity-map)
-                                       :long-id-fn with-long-id
-                                       :entity-type :coa
-                                       :entity-id id
-                                       :identity identity
-                                       :entity coa
-                                       :spec :new-coa/map)
-                    ent/un-store
-                    ok))
+(s/defschema COAFieldsParam
+  {(s/optional-key :fields) [coa-sort-fields]})
 
-           (GET "/external_id/:external_id" []
-                :return PartialCOAList
-                :query [q COAByExternalIdQueryParams]
-                :path-params [external_id :- s/Str]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :summary "List COAs by external id"
-                :capabilities #{:read-coa :external-id}
-                :identity identity
-                :identity-map identity-map
-                (-> (read-store :coa
-                                list-coas
-                                {:external_ids external_id}
-                                identity-map
-                                q)
-                    page-with-long-id
-                    ent/un-store-page
-                    paginated-ok))
+(s/defschema COASearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   COAFieldsParam
+   {:query s/Str
+    (s/optional-key :stage) s/Str
+    (s/optional-key :coa_type) s/Str
+    (s/optional-key :impact) s/Str
+    (s/optional-key :objective) s/Str
+    (s/optional-key :cost) s/Str
+    (s/optional-key :efficacy) s/Str
+    (s/optional-key :structured_coa_type) s/Str
+    (s/optional-key :sort_by) coa-sort-fields}))
 
-           (GET "/search" []
-                :return PartialCOAList
-                :summary "Search for a Course of Action using a Lucene/ES query string"
-                :query [params COASearchParams]
-                :capabilities #{:read-coa :search-coa}
-                :identity identity
-                :identity-map identity-map
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                (-> (query-string-search-store
-                     :coa
-                     query-string-search
-                     (:query params)
-                     (apply dissoc params filter-map-search-options)
-                     identity-map
-                     (select-keys params search-options))
-                    page-with-long-id
-                    ent/un-store-page
-                    paginated-ok))
+(def COAGetParams COAFieldsParam)
 
-           (GET "/:id" []
-                :return (s/maybe PartialCOA)
-                :summary "Gets a COA by ID"
-                :path-params [id :- s/Str]
-                :query [params COAGetParams]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :capabilities :read-coa
-                :identity identity
-                :identity-map identity-map
-                (if-let [coa (read-store :coa (fn [s] (read-coa s id identity-map params)))]
-                  (-> coa
-                      with-long-id
-                      ent/un-store
-                      ok)
-                  (not-found)))
+(s/defschema COAByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   COAFieldsParam))
 
-           (DELETE "/:id" []
-                   :no-doc true
-                   :path-params [id :- s/Str]
-                   :summary "Deletes a COA"
-                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                   :capabilities :delete-coa
-                   :identity identity
-                   :identity-map identity-map
-                   (if (flows/delete-flow :get-fn #(read-store :coa
-                                                               read-coa
-                                                               %
-                                                               identity-map
-                                                               {})
-                                          :delete-fn #(write-store :coa
-                                                                   delete-coa
-                                                                   %
-                                                                   identity-map)
-                                          :entity-type :coa
-                                          :entity-id id
-                                          :identity identity)
-                     (no-content)
-                     (not-found)))))
+(def coa-routes
+  (entity-crud-routes
+   {:entity :coa
+    :new-schema NewCOA
+    :entity-schema COA
+    :get-schema PartialCOA
+    :get-params COAGetParams
+    :list-schema PartialCOAList
+    :search-schema PartialCOAList
+    :external-id-q-params COAByExternalIdQueryParams
+    :search-q-params COASearchParams
+    :new-spec :new-coa/map
+    :realize-fn realize-coa
+    :get-capabilities :read-coa
+    :post-capabilities :create-coa
+    :put-capabilities :create-coa
+    :delete-capabilities :delete-coa
+    :search-capabilities :search-coa
+    :external-id-capabilities #{:read-coa :external-id}}))

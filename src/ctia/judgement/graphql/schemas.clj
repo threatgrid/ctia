@@ -1,16 +1,15 @@
-(ns ctia.schemas.graphql.judgement
-  (:require
-   [flanders.utils :as fu]
-   [ctia.schemas.graphql
-    [feedback :as feedback]
-    [flanders :as f]
-    [helpers :as g]
-    [pagination :as pagination]
-    [refs :as refs]
-    [relationship :as relationship]
-    [sorting :as sorting]]
-   [ctia.schemas.sorting :as sort-fields]
-   [ctim.schemas.judgement :as ctim-judgement-schema]))
+(ns ctia.judgement.graphql.schemas
+  (:require [ctia.feedback.graphql.schemas :as feedback]
+            [ctia.relationship.graphql.schemas :as relationship]
+            [ctia.schemas.graphql
+             [flanders :as f]
+             [helpers :as g]
+             [pagination :as pagination]
+             [refs :as refs]
+             [sorting :as sorting]]
+            [ctia.schemas.sorting :as sort-fields]
+            [ctim.schemas.judgement :as ctim-judgement-schema]
+            [flanders.utils :as fu]))
 
 (def JudgementType
   (let [{:keys [fields name description]}

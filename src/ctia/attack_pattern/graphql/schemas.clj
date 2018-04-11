@@ -1,13 +1,13 @@
-(ns ctia.schemas.graphql.attack-pattern
+(ns ctia.attack-pattern.graphql.schemas
   (:require
    [flanders.utils :as fu]
+   [ctia.feedback.graphql.schemas :as feedback]
+   [ctia.relationship.graphql.schemas :as relationship]
    [ctia.schemas.graphql
-    [feedback :as feedback]
     [flanders :as flanders]
     [helpers :as g]
     [pagination :as pagination]
     [refs :as refs]
-    [relationship :as relationship]
     [sorting :as sorting]]
    [ctia.schemas.sorting :as sort-fields]
    [ctim.schemas.attack-pattern :as ctim-attack-pattern]))

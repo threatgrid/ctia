@@ -1,13 +1,11 @@
-(ns ctia.http.routes.documentation
+(ns ctia.documentation.routes
   (:require
    [compojure.api.sweet :refer :all]
-   [ring.util.http-response :refer :all]
-   [markdown.core :refer [md-to-html-string]]
-   [hiccup.core :as h]
-   [hiccup.page :as page]
-   [ring.util.mime-type :refer [ext-mime-type]]
+   [clojure.core.memoize :as memo]
    [clojure.java.io :as io]
-   [clojure.core.memoize :as memo]))
+   [hiccup.page :as page]
+   [markdown.core :refer [md-to-html-string]]
+   [ring.util.mime-type :refer [ext-mime-type]]))
 
 ;; set request cache ttl
 (def cache-ttl-ms (* 1000 5))
@@ -33,14 +31,16 @@
                (map page/include-css additional-css)
                (map page/include-js additional-js)])
 
-(defn get-file-content [path]
+(defn get-file-content
   "read a file from resources, returns nil on any failure"
+  [path]
   (try (slurp (io/resource
                path))
        (catch Throwable e nil)))
 
-(defn decorate-markdown [html-body]
+(defn decorate-markdown
   "decorate an html converted markdown file with css and js"
+  [html-body]
   (page/html5
    head-tpl
    [:body
@@ -49,28 +49,32 @@
            :class page-class}
      html-body]]))
 
-(defn render-markdown [file]
+(defn render-markdown
   "render a mardown file into an html webpage"
+  [file]
   {:status 200
    :headers {"Content-Type" "text/html"}
    :body (-> file
              md-to-html-string
              decorate-markdown)})
 
-(defn render-default [file type]
+(defn render-default
   "default render for unknown file types"
+  [file type]
   {:status 200
    :headers {"Content-Type" type}
    :body file})
 
-(defn render [file type]
+(defn render
   "render a file by type"
+  [file type]
   (condp = type
     "text/markdown" (render-markdown file)
     (render-default file type)))
 
-(defn render-request [path-info]
+(defn render-request
   "read the requested file from resources, render it if needed"
+  [path-info]
   (let [file-path (subs path-info 1)
         file-content (get-file-content file-path)
         file-type (ext-mime-type file-path mime-overrides)]

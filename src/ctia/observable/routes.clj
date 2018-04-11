@@ -1,32 +1,27 @@
-(ns ctia.http.routes.observable
-  (:require
-   [compojure.api.sweet :refer :all]
-   [ctia.domain.entities :as entities]
-   [ctia.domain.entities
-    [judgement :as judgement]
-    [sighting :as sighting]]
-   [ctia.http.routes.common
-    :refer [paginated-ok
-            PagingParams
-            JudgementsByObservableQueryParams
-            SightingsByObservableQueryParams]]
-   [ctia.lib.pagination :as pag]
-   [ctia.properties :refer [properties]]
-   [ctia.schemas.core :refer [Indicator
-                              Judgement
-                              PartialJudgementList
-                              PartialSightingList
-                              ObservableTypeIdentifier
-                              Reference
-                              Sighting
-                              Verdict]]
-   [ctia.store :refer :all]
-   [ctim.domain.id :as id]
-   [ctim.schemas.indicator :as csi]
-   [ring.util.http-response :refer [ok not-found]]
-   [schema-tools.core :as st]
-   [schema.core :as s]
-   [clojure.tools.logging :as log]))
+(ns ctia.observable.routes
+  (:refer-clojure :exclude [read list identity update])
+  (:require [ctia
+             [properties :refer [properties]]
+             [store :refer :all]]
+            [compojure.api.sweet :refer :all]
+            [ctia.domain.entities :refer [short-id->long-id
+                                          un-store-page
+                                          page-with-long-id]]
+            [ctia.http.routes.common :refer [paginated-ok PagingParams]]
+            [ctia.judgement.routes :refer [JudgementsByObservableQueryParams]]
+            [ctia.lib.pagination :as pag]
+            [ctia.schemas.core
+             :refer
+             [ObservableTypeIdentifier
+              PartialJudgementList
+              PartialSightingList
+              Reference
+              Verdict]]
+            [ctia.sighting.routes :refer [SightingsByObservableQueryParams]]
+            [ctim.domain.id :as id]
+            [ring.util.http-response :refer [not-found ok]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (s/defschema RefsByObservableQueryParams
   (st/dissoc PagingParams :sort_by :sort_order))
@@ -48,7 +43,7 @@
                                {:type observable_type
                                 :value observable_value}
                                identity-map)
-                   (update :judgement_id judgement/short-id->long-id)
+                   (clojure.core/update :judgement_id short-id->long-id)
                    ok)
            (not-found)))
 
@@ -69,8 +64,8 @@
                         :value observable_value}
                        identity-map
                        params)
-           judgement/page-with-long-id
-           entities/un-store-page
+           page-with-long-id
+           un-store-page
            paginated-ok))
 
   (GET "/:observable_type/:observable_value/judgements/indicators" []
@@ -100,7 +95,7 @@
                                  (map id/long-id))
               relationships (:data (read-store
                                     :relationship
-                                    list-relationships
+                                    list
                                     {:source_ref judgement-ids}
                                     identity-map
                                     {:fields [:target_ref]}))
@@ -132,8 +127,8 @@
                          :value observable_value}]
                        identity-map
                        params)
-           sighting/page-with-long-id
-           entities/un-store-page
+           page-with-long-id
+           un-store-page
            paginated-ok))
 
   (GET "/:observable_type/:observable_value/sightings/indicators" []
@@ -162,7 +157,7 @@
                                 (map id/long-id))
               relationships (:data (read-store
                                     :relationship
-                                    list-relationships
+                                    list
                                     {:source_ref sighting-ids}
                                     identity-map
                                     {:fields [:target_ref]}))
@@ -203,7 +198,7 @@
                                 (map id/long-id))
               relationships (:data (read-store
                                     :relationship
-                                    list-relationships
+                                    list
                                     {:source_ref sighting-ids}
                                     identity-map
                                     {:fields [:target_ref]}))

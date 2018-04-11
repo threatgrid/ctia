@@ -1,4 +1,4 @@
-(ns ctia.http.routes.version
+(ns ctia.version.routes
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.schemas.core :refer [VersionInfo]]

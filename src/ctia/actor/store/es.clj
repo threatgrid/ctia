@@ -1,10 +1,7 @@
 (ns ctia.actor.store.es
-  (:require
-   [ctia.store :refer [IStore
-                       IQueryStringSearchableStore]]
-   [ctia.stores.es.crud :as crud]
-   [ctia.schemas.core
-    :refer [StoredActor PartialStoredActor]]))
+  (:require [ctia.schemas.core :refer [PartialStoredActor StoredActor]]
+            [ctia.store :refer [IQueryStringSearchableStore IStore]]
+            [ctia.stores.es.crud :as crud]))
 
 (def handle-create (crud/handle-create :actor StoredActor))
 (def handle-read (crud/handle-read :actor PartialStoredActor))

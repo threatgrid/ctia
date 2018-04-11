@@ -1,14 +1,13 @@
 (ns ctia.sighting.store.es
-  (:require
-   [ctia.store :refer [IStore
-                       IQueryStringSearchableStore
-                       ISightingStore]]
-   [clj-momo.lib.es.schemas :refer [ESConnState]]
-   [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.core :refer [Observable StoredSighting PartialStoredSighting]]
-   [ctia.stores.es.crud :as crud]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+  (:require [clj-momo.lib.es.schemas :refer [ESConnState]]
+            [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.schemas.core
+             :refer
+             [Observable PartialStoredSighting StoredSighting]]
+            [ctia.store :refer [IQueryStringSearchableStore ISightingStore IStore]]
+            [ctia.stores.es.crud :as crud]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (s/defschema ESStoredSighting
   (st/assoc StoredSighting :observables_hash [s/Str]))

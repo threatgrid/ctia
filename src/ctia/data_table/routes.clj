@@ -1,108 +1,50 @@
-(ns ctia.http.routes.data-table
-  (:require
-   [compojure.api.sweet :refer :all]
-   [ctia.domain.entities :as ent]
-   [ctia.domain.entities.data-table :refer [with-long-id page-with-long-id]]
-   [ctia.flows.crud :as flows]
-   [ctia.http.routes.common
-    :refer [created
-            paginated-ok
-            PagingParams
-            DataTableSearchParams
-            DataTableGetParams
-            DataTableByExternalIdQueryParams]]
-   [ctia.store :refer :all]
-   [ctia.schemas.core
-    :refer [NewDataTable DataTable PartialDataTable PartialDataTableList]]
-   [ring.util.http-response :refer [no-content not-found ok]]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+(ns ctia.data-table.routes
+  (:require [ctia.domain.entities :refer [realize-data-table]]
+            [ctia.http.routes
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [crud :refer [entity-crud-routes]]]
+            [ctia.schemas
+             [core :refer [DataTable NewDataTable PartialDataTable PartialDataTableList]]
+             [sorting :as sorting]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
-(defroutes data-table-routes
-  (context "/data-table" []
-           :tags ["DataTable"]
-           (POST "/" []
-                 :return DataTable
-                 :body [data-table NewDataTable {:description "a new Data Table"}]
-                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                 :summary "Adds a new Data Table"
-                 :capabilities :create-data-table
-                 :identity identity
-                 :identity-map identity-map
-                 (-> (flows/create-flow
-                      :entity-type :data-table
-                      :realize-fn ent/realize-data-table
-                      :store-fn #(write-store :data-table
-                                              create-data-tables
-                                              %
-                                              identity-map
-                                              {})
-                      :long-id-fn with-long-id
-                      :entity-type :data-table
-                      :identity identity
-                      :entities [data-table])
-                     first
-                     ent/un-store
-                     created))
+(def datatable-sort-fields
+  (apply s/enum sorting/default-entity-sort-fields))
 
-           (GET "/external_id/:external_id" []
-                :return PartialDataTableList
-                :query [q DataTableByExternalIdQueryParams]
-                :path-params [external_id :- s/Str]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :summary "List data-tables by external id"
-                :capabilities #{:read-data-table :external-id}
-                :identity identity
-                :identity-map identity-map
-                (-> (read-store :data-table
-                                list-data-tables
-                                {:external_ids external_id}
-                                identity-map
-                                q)
-                    page-with-long-id
-                    ent/un-store-page
-                    paginated-ok))
+(s/defschema DataTableFieldsParam
+  {(s/optional-key :fields) [datatable-sort-fields]})
 
-           (GET "/:id" []
-                :return (s/maybe PartialDataTable)
-                :summary "Gets a Data Table by ID"
-                :path-params [id :- s/Str]
-                :query [params DataTableGetParams]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :capabilities :read-data-table
-                :identity identity
-                :identity-map identity-map
-                (if-let [data-table (read-store :data-table
-                                                read-data-table
-                                                id
-                                                identity-map
-                                                params)]
-                  (-> data-table
-                      with-long-id
-                      ent/un-store
-                      ok)
-                  (not-found)))
+(s/defschema DataTableSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   DataTableFieldsParam
+   {:query s/Str
+    (s/optional-key :sort_by) datatable-sort-fields}))
 
-           (DELETE "/:id" []
-                   :no-doc true
-                   :path-params [id :- s/Str]
-                   :summary "Deletes a Data Table"
-                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                   :capabilities :delete-data-table
-                   :identity identity
-                   :identity-map identity-map
-                   (if (flows/delete-flow
-                        :get-fn #(read-store :data-table
-                                             read-data-table
-                                             %
-                                             identity-map
-                                             {})
-                        :delete-fn #(write-store :data-table
-                                                 delete-data-table
-                                                 %
-                                                 identity-map)
-                        :entity-type :data-table
-                        :entity-id id
-                        :identity identity)
-                     (no-content)
-                     (not-found)))))
+(def DataTableGetParams DataTableFieldsParam)
+
+(s/defschema DataTableByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   DataTableFieldsParam))
+
+(def data-table-routes
+  (entity-crud-routes
+   {:entity :data-table
+    :new-schema NewDataTable
+    :entity-schema DataTable
+    :get-schema PartialDataTable
+    :get-params DataTableGetParams
+    :list-schema PartialDataTableList
+    :external-id-q-params DataTableByExternalIdQueryParams
+    :search-q-params DataTableSearchParams
+    :realize-fn realize-data-table
+    :get-capabilities :read-data-table
+    :post-capabilities :create-data-table
+    :delete-capabilities :delete-data-table
+    :external-id-capabilities #{:read-data-table :external-id}
+    :can-update? false
+    :can-search? false}))

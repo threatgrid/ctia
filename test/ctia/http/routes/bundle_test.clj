@@ -7,7 +7,7 @@
             [clojure
              [set :as set]
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
-            [ctia.http.routes.bundle :as sut]
+            [ctia.bundle.routes :as sut]
             [ctia.store :refer [stores]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]

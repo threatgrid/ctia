@@ -1,4 +1,4 @@
-(ns ctia.schemas.graphql.verdict
+(ns ctia.verdict.graphql.schemas
   (:require
    [flanders.utils :as fu]
    [ctia.schemas.graphql

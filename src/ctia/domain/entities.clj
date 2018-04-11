@@ -100,14 +100,14 @@
                                  (:valid_time new-object)
                                  now)))))))
 
-(defn short-id->long-id [entity]
-  (id/factory:short-id->long-id entity get-http-show))
+(defn short-id->long-id [id]
+  (id/short-id->long-id id get-http-show))
 
 (defn with-long-id [entity]
   (update entity :id short-id->long-id))
 
 (defn page-with-long-id [m]
-  (update m :data (partial map with-long-id)))
+  (update m :data #(map with-long-id %)))
 
 (def realize-actor
   (default-realize-fn "actor" NewActor StoredActor))

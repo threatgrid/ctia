@@ -1,4 +1,4 @@
-(ns ctia.schemas.graphql.relationship
+(ns ctia.relationship.graphql.schemas
   (:require
    [flanders.utils :as fu]
    [clojure.tools.logging :as log]

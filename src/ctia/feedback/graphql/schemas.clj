@@ -1,4 +1,4 @@
-(ns ctia.schemas.graphql.feedback
+(ns ctia.feedback.graphql.schemas
   (:require
    [flanders.utils :as fu]
    [ctia.schemas.graphql

@@ -1,15 +1,16 @@
-(ns ctia.schemas.graphql.observable
+(ns ctia.observable.graphql.schemas
+  (:refer-clojure :exclude [update])
   (:require
    [flanders.utils :as fu]
-   [ctia.domain.entities.judgement :as ctim-judgement-entity]
+   [ctia.domain.entities :as ctim-entities]
+   [ctia.judgement.graphql.schemas :as judgement]
+   [ctia.sighting.graphql.schemas :as sighting]
+   [ctia.verdict.graphql.schemas :as verdict]
    [ctia.schemas.graphql
     [flanders :as f]
     [helpers :as g]
-    [judgement :as judgement]
     [pagination :as pagination]
-    [resolvers :as resolvers]
-    [sighting :as sighting]
-    [verdict :as verdict]]
+    [resolvers :as resolvers]]
    [ctia.store :refer :all]
    [ctim.schemas.common :as ctim-common-schema]))
 
@@ -21,7 +22,7 @@
                       calculate-verdict
                       {:type observable-type :value observable-value}
                       ident)
-          (update :judgement_id ctim-judgement-entity/short-id->long-id)))
+          (clojure.core/update :judgement_id ctim-entities/short-id->long-id)))
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType

@@ -1,4 +1,4 @@
-(ns ctia.schemas.bulk
+(ns ctia.bulk.schemas
   (:require
    [schema.core :as s]
    [schema-tools.core :as st]

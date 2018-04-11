@@ -1,22 +1,22 @@
-(ns ctia.http.routes.bundle
-  (:require [compojure.api.sweet :refer :all]
-            [ctia.auth :as auth]
-            [ctia.http.routes.bulk :as bulk]
-            [ctia.lib.keyword :refer [singular]]
-            [ctia.properties :refer [properties]]
-            [ctia.schemas.bulk :refer [Bulk]]
-            [ctia.schemas.core :refer [NewBundle TempIDs]]
-            [ctia.store :refer [list-fn read-store]]
-            [ring.util.http-response :refer :all]
-            [schema.core :as s]
-            [schema-tools.core :as st]
-            [ctim.domain.id :as id]
-            [clojure.string :as str]
-            [clojure.set :as set]
-            [clojure.tools.logging :as log]
-            [ctia.domain.entities :as ent
-             :refer [with-long-id-fn]]
-            [clojure.string :as string]))
+(ns ctia.bundle.routes
+  (:refer-clojure :exclude [identity])
+  (:require
+   [compojure.api.sweet :refer :all]
+   [clojure
+    [set :as set]
+    [string :as string]]
+   [clojure.tools.logging :as log]
+   [ctia
+    [auth :as auth]
+    [properties :refer [properties]]
+    [store :refer [list-fn read-store]]]
+   [ctia.bulk.routes :as bulk]
+   [ctia.domain.entities :as ent :refer [with-long-id]]
+   [ctia.schemas.core :refer [NewBundle TempIDs]]
+   [ctim.domain.id :as id]
+   [ring.util.http-response :refer :all]
+   [schema-tools.core :as st]
+   [schema.core :as s]))
 
 (s/defschema EntityImportResult
   (st/optional-keys
@@ -42,22 +42,23 @@
 (s/defschema BundleImportResult
   {:results [EntityImportResult]})
 
-(def bundle-entity-keys #{:actors
-                          :attack_patterns
-                          :campaigns
-                          :coas
-                          :data_tables
-                          :exploit_targets
-                          :feedbacks
-                          :incidents
-                          :investigations
-                          :indicators
-                          :judgements
-                          :malwares
-                          :relationships
-                          :casebooks
-                          :sightings
-                          :tools})
+(def bundle-entity-keys
+  #{:actors
+    :attack_patterns
+    :campaigns
+    :coas
+    :data_tables
+    :exploit_targets
+    :feedbacks
+    :incidents
+    :investigations
+    :indicators
+    :judgements
+    :malwares
+    :relationships
+    :casebooks
+    :sightings
+    :tools})
 
 (defn entity-type-from-bundle-key
   "Converts a bundle entity key to an entity type
@@ -83,8 +84,7 @@
 (s/defn prefixed-external-ids :- [s/Str]
   "Returns all external IDs prefixed by the given key-prefix."
   [key-prefix external-ids]
-  (->> external-ids
-       (filter #(str/starts-with? % key-prefix))))
+  (filter #(string/starts-with? % key-prefix) external-ids))
 
 (s/defn valid-external-id :- (s/maybe s/Str)
   "Returns the external ID that can be used to check whether an entity has
@@ -116,7 +116,7 @@
                                   [:ctia :store :external-key-prefixes]
                                   default-external-key-prefixes)))
         external_id (valid-external-id external_ids key-prefixes)]
-    (when (not external_id)
+    (when-not external_id
       (log/warnf "No valid external ID has been provided (id:%s)" id))
     (cond-> {:new-entity entity
              :type entity-type}
@@ -148,7 +148,7 @@
       (debug (format "Results for %s:" (pr-str external-ids))
              (all-pages
               (fn [paging]
-                (read-store entity-type (list-fn entity-type)
+                (read-store entity-type list-fn
                             {:external_ids external-ids}
                             (auth/ident->map auth-identity)
                             paging))))
@@ -210,11 +210,10 @@
    entity-type
    find-by-external-id]
   (if-let [old-entities (find-by-external-id external_id)]
-    (let [with-long-id-fn (with-long-id-fn entity-type)
-          old-entity (some-> old-entities
+    (let [old-entity (some-> old-entities
                              first
                              :entity
-                             with-long-id-fn
+                             with-long-id
                              ent/un-store)
           num-old-entities (count old-entities)]
       (cond-> entity-data
@@ -238,10 +237,10 @@
   "Add existing entities to the import data map."
   [import-data entity-type identity-map]
   (let [entities-by-external-id
-        (-> (find-by-external-ids import-data
-                                  entity-type
-                                  identity-map)
-            by-external-id)
+        (by-external-id
+         (find-by-external-ids import-data
+                               entity-type
+                               identity-map))
         find-by-external-id-fn (fn [external_id]
                                  (when external_id
                                    (get entities-by-external-id

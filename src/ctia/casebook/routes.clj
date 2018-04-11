@@ -1,111 +1,69 @@
-(ns ctia.http.routes.casebook
+(ns ctia.casebook.routes
+  (:refer-clojure :exclude [read update identity])
   (:require
+   [ctia.store :refer [read update delete]]
    [compojure.api.sweet :refer :all]
-   [ctia.domain.entities :as ent]
-   [ctia.domain.entities.casebook
-    :refer
-    [page-with-long-id with-long-id]]
+   [ctia.domain.entities
+    :refer [realize-casebook
+            un-store
+            with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common
-    :refer
-    [created
-     filter-map-search-options
-     paginated-ok
-     CasebookByExternalIdQueryParams
-     CasebookGetParams
-     CasebookSearchParams
-     search-options]]
-   [ctia.schemas.core
-    :refer
-    [Observable
-     NewCasebook
-     PartialNewCasebook
-     PartialCasebook
-     PartialCasebookList
-     Casebook
-     CasebookObservablesUpdate
-     CasebookTextsUpdate
-     CasebookBundleUpdate]]
-   [ctia.store :refer :all]
-   [ring.util.http-response :refer [no-content not-found ok]]
+   [ctia.http.routes
+    [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+    [crud :refer [entity-crud-routes]]]
+   [ctia.schemas
+    [core :refer [Casebook CasebookBundleUpdate CasebookObservablesUpdate CasebookTextsUpdate NewCasebook PartialCasebook PartialCasebookList]]
+    [sorting :as sorting]]
+   [ctia.store :refer [write-store read-store]]
+   [ring.util.http-response :refer [ok]]
+   [schema-tools.core :as st]
    [schema.core :as s]))
 
-(defroutes casebook-routes
-  (context "/casebook" []
-           :tags ["Casebook"]
-           (POST "/" []
-                 :return Casebook
-                 :body [casebook NewCasebook {:description "a new Casebook"}]
-                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                 :summary "Adds a new Casebook"
-                 :capabilities :create-casebook
-                 :identity identity
-                 :identity-map identity-map
-                 (-> (flows/create-flow
-                      :entity-type :casebook
-                      :realize-fn ent/realize-casebook
-                      :store-fn #(write-store :casebook
-                                              create-casebooks
-                                              %
-                                              identity-map
-                                              {})
-                      :long-id-fn with-long-id
-                      :entity-type :casebook
-                      :identity identity
-                      :entities [casebook]
-                      :spec :new-casebook/map)
-                     first
-                     ent/un-store
-                     created))
+(def casebook-sort-fields
+  (apply s/enum sorting/casebook-sort-fields))
 
-           (PUT "/:id" []
-                :return Casebook
-                :body [casebook NewCasebook {:description "an updated Casebook"}]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :summary "Updates an Casebook"
-                :path-params [id :- s/Str]
-                :capabilities :create-casebook
-                :identity identity
-                :identity-map identity-map
-                (-> (flows/update-flow
-                     :get-fn #(read-store :casebook
-                                          read-casebook
-                                          %
-                                          identity-map
-                                          {})
-                     :realize-fn ent/realize-casebook
-                     :update-fn #(write-store :casebook
-                                              update-casebook
-                                              (:id %)
-                                              %
-                                              identity-map)
-                     :long-id-fn with-long-id
-                     :entity-type :casebook
-                     :entity-id id
-                     :identity identity
-                     :entity casebook
-                     :spec :new-casebook/map)
-                    ent/un-store
-                    ok))
+(s/defschema CasebookFieldsParam
+  {(s/optional-key :fields) [casebook-sort-fields]})
 
-           (PATCH "/:id" []
+(s/defschema CasebookSearchParams
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   CasebookFieldsParam
+   {:query s/Str
+    (s/optional-key :texts.text) s/Str
+    (s/optional-key :sort_by) casebook-sort-fields}))
+
+(def CasebookGetParams CasebookFieldsParam)
+
+(s/defschema CasebookByExternalIdQueryParams
+  (st/merge
+   PagingParams
+   CasebookFieldsParam))
+
+(def casebook-operation-routes
+  (routes
+   (context "/:id/observables" []
+            (POST "/" []
                   :return Casebook
-                  :body [partial-casebook PartialNewCasebook {:description "a Casebook partial update"}]
-                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                  :summary "Partially Update a Casebook"
+                  :body [operation CasebookObservablesUpdate
+                         {:description "A casebook Observables operation"}]
                   :path-params [id :- s/Str]
+                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                  :summary "Edit Observables on a casebook"
                   :capabilities :create-casebook
                   :identity identity
                   :identity-map identity-map
                   (-> (flows/patch-flow
                        :get-fn #(read-store :casebook
-                                            read-casebook
+                                            read
                                             %
                                             identity-map
                                             {})
-                       :realize-fn ent/realize-casebook
+                       :realize-fn realize-casebook
                        :update-fn #(write-store :casebook
-                                                update-casebook
+                                                update
                                                 (:id %)
                                                 %
                                                 identity-map)
@@ -113,186 +71,96 @@
                        :entity-type :casebook
                        :entity-id id
                        :identity identity
-                       :patch-operation :replace
-                       :partial-entity partial-casebook
+                       :patch-operation (:operation operation)
+                       :partial-entity {:observables (:observables operation)}
                        :spec :new-casebook/map)
-                      ent/un-store
-                      ok))
+                      un-store
+                      ok)))
 
-           (GET "/external_id/:external_id" []
-                :return PartialCasebookList
-                :query [q CasebookByExternalIdQueryParams]
-                :path-params [external_id :- s/Str]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :summary "List casebooks by external id"
-                :capabilities #{:read-casebook :external-id}
-                :identity identity
-                :identity-map identity-map
-                (-> (read-store :casebook list-casebooks
-                                {:external_ids external_id}
-                                identity-map
-                                q)
-                    page-with-long-id
-                    ent/un-store-page
-                    paginated-ok))
+   (context "/:id/texts" []
+            (POST "/" []
+                  :return Casebook
+                  :body [operation CasebookTextsUpdate
+                         {:description "A casebook Texts operation"}]
+                  :path-params [id :- s/Str]
+                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                  :summary "Edit Texts on a casebook"
+                  :capabilities :create-casebook
+                  :identity identity
+                  :identity-map identity-map
+                  (-> (flows/patch-flow
+                       :get-fn #(read-store :casebook
+                                            read
+                                            %
+                                            identity-map
+                                            {})
+                       :realize-fn realize-casebook
+                       :update-fn #(write-store :casebook
+                                                update
+                                                (:id %)
+                                                %
+                                                identity-map)
+                       :long-id-fn with-long-id
+                       :entity-type :casebook
+                       :entity-id id
+                       :identity identity
+                       :patch-operation (:operation operation)
+                       :partial-entity {:texts (:texts operation)}
+                       :spec :new-casebook/map)
+                      un-store
+                      ok)))
 
-           (GET "/search" []
-                :return PartialCasebookList
-                :summary "Search for an Casebook using a Lucene/ES query string"
-                :query [params CasebookSearchParams]
-                :capabilities #{:read-casebook :search-casebook}
-                :identity identity
-                :identity-map identity-map
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                (-> (query-string-search-store
-                     :casebook
-                     query-string-search
-                     (:query params)
-                     (apply dissoc params filter-map-search-options)
-                     identity-map
-                     (select-keys params search-options))
-                    page-with-long-id
-                    ent/un-store-page
-                    paginated-ok))
+   (context "/:id/bundle" []
+            (POST "/" []
+                  :return Casebook
+                  :body [operation CasebookBundleUpdate
+                         {:description "A casebook Bundle operation"}]
+                  :path-params [id :- s/Str]
+                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                  :summary "Edit a Bundle on a casebook"
+                  :capabilities :create-casebook
+                  :identity identity
+                  :identity-map identity-map
+                  (-> (flows/patch-flow
+                       :get-fn #(read-store :casebook
+                                            read
+                                            %
+                                            identity-map
+                                            {})
+                       :realize-fn realize-casebook
+                       :update-fn #(write-store :casebook
+                                                update
+                                                (:id %)
+                                                %
+                                                identity-map)
+                       :long-id-fn with-long-id
+                       :entity-type :casebook
+                       :entity-id id
+                       :identity identity
+                       :patch-operation (:operation operation)
+                       :partial-entity {:bundle (:bundle operation)}
+                       :spec :new-casebook/map)
+                      un-store
+                      ok)))))
 
-           (GET "/:id" []
-                :return (s/maybe PartialCasebook)
-                :summary "Gets an Casebook by ID"
-                :path-params [id :- s/Str]
-                :query [params CasebookGetParams]
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :capabilities :read-casebook
-                :identity identity
-                :identity-map identity-map
-                (if-let [casebook (read-store :casebook
-                                              read-casebook
-                                              id
-                                              identity-map
-                                              params)]
-                  (-> casebook
-                      with-long-id
-                      ent/un-store
-                      ok)
-                  (not-found)))
-
-           (context "/:id/observables" []
-                    (POST "/" []
-                          :return Casebook
-                          :body [operation CasebookObservablesUpdate
-                                 {:description "A casebook Observables operation"}]
-                          :path-params [id :- s/Str]
-                          :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                          :summary "Edit Observables on a casebook"
-                          :capabilities :create-casebook
-                          :identity identity
-                          :identity-map identity-map
-                          (-> (flows/patch-flow
-                               :get-fn #(read-store :casebook
-                                                    read-casebook
-                                                    %
-                                                    identity-map
-                                                    {})
-                               :realize-fn ent/realize-casebook
-                               :update-fn #(write-store :casebook
-                                                        update-casebook
-                                                        (:id %)
-                                                        %
-                                                        identity-map)
-                               :long-id-fn with-long-id
-                               :entity-type :casebook
-                               :entity-id id
-                               :identity identity
-                               :patch-operation (:operation operation)
-                               :partial-entity {:observables (:observables operation)}
-                               :spec :new-casebook/map)
-                              ent/un-store
-                              ok)))
-
-           (context "/:id/texts" []
-                    (POST "/" []
-                          :return Casebook
-                          :body [operation CasebookTextsUpdate
-                                 {:description "A casebook Texts operation"}]
-                          :path-params [id :- s/Str]
-                          :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                          :summary "Edit Texts on a casebook"
-                          :capabilities :create-casebook
-                          :identity identity
-                          :identity-map identity-map
-                          (-> (flows/patch-flow
-                               :get-fn #(read-store :casebook
-                                                    read-casebook
-                                                    %
-                                                    identity-map
-                                                    {})
-                               :realize-fn ent/realize-casebook
-                               :update-fn #(write-store :casebook
-                                                        update-casebook
-                                                        (:id %)
-                                                        %
-                                                        identity-map)
-                               :long-id-fn with-long-id
-                               :entity-type :casebook
-                               :entity-id id
-                               :identity identity
-                               :patch-operation (:operation operation)
-                               :partial-entity {:texts (:texts operation)}
-                               :spec :new-casebook/map)
-                              ent/un-store
-                              ok)))
-
-           (context "/:id/bundle" []
-                    (POST "/" []
-                          :return Casebook
-                          :body [operation CasebookBundleUpdate
-                                 {:description "A casebook Bundle operation"}]
-                          :path-params [id :- s/Str]
-                          :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                          :summary "Edit a Bundle on a casebook"
-                          :capabilities :create-casebook
-                          :identity identity
-                          :identity-map identity-map
-                          (-> (flows/patch-flow
-                               :get-fn #(read-store :casebook
-                                                    read-casebook
-                                                    %
-                                                    identity-map
-                                                    {})
-                               :realize-fn ent/realize-casebook
-                               :update-fn #(write-store :casebook
-                                                        update-casebook
-                                                        (:id %)
-                                                        %
-                                                        identity-map)
-                               :long-id-fn with-long-id
-                               :entity-type :casebook
-                               :entity-id id
-                               :identity identity
-                               :patch-operation (:operation operation)
-                               :partial-entity {:bundle (:bundle operation)}
-                               :spec :new-casebook/map)
-                              ent/un-store
-                              ok)))
-
-           (DELETE "/:id" []
-                   :path-params [id :- s/Str]
-                   :summary "Deletes an Casebook"
-                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                   :capabilities :delete-casebook
-                   :identity identity
-                   :identity-map identity-map
-                   (if (flows/delete-flow
-                        :get-fn #(read-store :casebook
-                                             read-casebook
-                                             %
-                                             identity-map
-                                             {})
-                        :delete-fn #(write-store :casebook
-                                                 delete-casebook
-                                                 %
-                                                 identity-map)
-                        :entity-type :casebook
-                        :entity-id id
-                        :identity identity)
-                     (no-content)
-                     (not-found)))))
+(def casebook-routes
+  (entity-crud-routes
+   {:api-tags ["Casebook"]
+    :entity :casebook
+    :new-schema NewCasebook
+    :entity-schema Casebook
+    :get-schema PartialCasebook
+    :get-params CasebookGetParams
+    :list-schema PartialCasebookList
+    :search-schema PartialCasebookList
+    :external-id-q-params CasebookByExternalIdQueryParams
+    :search-q-params CasebookSearchParams
+    :new-spec :new-casebook/map
+    :realize-fn realize-casebook
+    :get-capabilities :read-casebook
+    :post-capabilities :create-casebook
+    :put-capabilities :create-casebook
+    :delete-capabilities :delete-casebook
+    :search-capabilities :search-casebook
+    :external-id-capabilities #{:read-casebook :external-id}
+    :hide-delete? false}))

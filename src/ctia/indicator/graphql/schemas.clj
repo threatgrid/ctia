@@ -1,16 +1,15 @@
-(ns ctia.schemas.graphql.indicator
-  (:require
-   [flanders.utils :as fu]
-   [ctia.schemas.graphql
-    [feedback :as feedback]
-    [flanders :as f]
-    [helpers :as g]
-    [pagination :as pagination]
-    [refs :as refs]
-    [relationship :as relationship]
-    [sorting :as sorting]]
-   [ctia.schemas.sorting :as sort-fields]
-   [ctim.schemas.indicator :as ctim-indicator-schema]))
+(ns ctia.indicator.graphql.schemas
+  (:require [ctia.feedback.graphql.schemas :as feedback]
+            [ctia.relationship.graphql.schemas :as relationship]
+            [ctia.schemas.graphql
+             [flanders :as f]
+             [helpers :as g]
+             [pagination :as pagination]
+             [refs :as refs]
+             [sorting :as sorting]]
+            [ctia.schemas.sorting :as sort-fields]
+            [ctim.schemas.indicator :as ctim-indicator-schema]
+            [flanders.utils :as fu]))
 
 (def IndicatorType
   (let [{:keys [fields name description]}
