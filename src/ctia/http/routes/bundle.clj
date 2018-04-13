@@ -372,7 +372,8 @@
                                  :create-sighting
                                  :create-tool
                                  :import-bundle}
-                 (if (> (bundle-size bundle)
-                        (bundle-max-size))
-                   (bad-request (str "Bundle max nb of entities: " (bundle-max-size)))
-                   (ok (import-bundle bundle external-key-prefixes auth-identity))))))
+                 (let [max-size (bundle-max-size)]
+                   (if (> (bundle-size bundle)
+                          max-size)
+                     (bad-request (str "Bundle max nb of entities: " max-size))
+                     (ok (import-bundle bundle external-key-prefixes auth-identity)))))))

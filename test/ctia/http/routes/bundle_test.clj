@@ -187,8 +187,7 @@
                            indicators
                            sightings)]
     (testing "Import bundle with all entity types"
-      (let [new-bundle (-> bundle-maximal
-                           deep-dissoc-entity-ids)
+      (let [new-bundle (deep-dissoc-entity-ids bundle-maximal)
             response (post "ctia/bundle/import"
                            :body new-bundle
                            :headers {"Authorization" "45c1f5e3f05d0"})
