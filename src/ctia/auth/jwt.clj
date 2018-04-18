@@ -11,7 +11,7 @@
 
 (def casebook-root-scope
   (get-in @prop/properties [:ctia :auth :casebook :scope]
-          "private-intel"))
+          "casebook"))
 
 (def entities
   #{:actor
@@ -58,7 +58,7 @@
                         (get prefixes access)))))
        unionize))
 
-(defn gen-entity-capabilites
+(defn gen-entity-capabilities
   "given a scope representation whose root scope is enttit-root-scope generate
   capabilities"
   [scope-repr]
@@ -66,7 +66,7 @@
     2 (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
                                                 (:access scope-repr))
     1 (->> entities
-           (map #(gen-capabilities-for-entity-and-access % (:access scope-repr)))
+           (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize)
     #{}))
 
@@ -76,13 +76,13 @@
   [scope-repr]
   (gen-capabilities-for-entity-and-accesses :casebook (:access scope-repr)))
 
-(defn scope-to-capability
+(defn scope-to-capabilities
   "given a scope generate capabilities"
   [scope]
   (let [scope-repr (mid/to-scope-repr scope)]
-    (case (first (:path scope-repr))
+    (condp = (first (:path scope-repr))
       entity-root-scope   (gen-entity-capabilities scope-repr)
-      casebook-root-scope (gen-casebook-capabilities scope)
+      casebook-root-scope (gen-casebook-capabilities scope-repr)
       #{})))
 
 (defn scopes-to-capabilities
