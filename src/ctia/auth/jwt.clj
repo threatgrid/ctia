@@ -1,36 +1,96 @@
 (ns ctia.auth.jwt
   (:require [ctia.auth :as auth :refer [IIdentity]]
             [ctia.properties :as prop]
+            [ring-jwt-middleware.core :as mid]
             [clj-momo.lib.set :refer [as-set]]
             [clojure.set :as set]))
-
-(def casebook-capabilities
-  #{:create-casebook
-    :read-casebook
-    :list-casebooks
-    :delete-casebook
-    :search-casebook})
 
 (def entity-root-scope
   (get-in @prop/properties [:ctia :auth :entities :scope]
           "private-intel"))
 
-(def is-global?
-  (= entity-root-scope "global-intel"))
+(def casebook-root-scope
+  (get-in @prop/properties [:ctia :auth :casebook :scope]
+          "private-intel"))
+
+(def entities
+  #{:actor
+    :attack-pattern
+    :campaign
+    :coa
+    :data-table
+    :exploit-target
+    :feedback
+    :incident
+    :indicator
+    :investigation
+    :judgement
+    :malware
+    :relationship
+    :sightings
+    :tool
+    :verdict})
+
+(def prefixes
+  {:read #{:read :search :list}
+   :write #{:create :delete}})
 
 (def ^:private read-only-ctia-capabilities
   (:user auth/default-capabilities))
 
-(def ^:private ctia-capabilities
-  (set/difference auth/all-capabilities
-                  (set/union
-                   casebook-capabilities
-                   #{:specify-id
-                     :developer})))
-
 (def claim-prefix
   (get-in @prop/properties [:ctia :http :jwt :claim-prefix]
           "https://schemas.cisco.com/iroh/identity/claims"))
+
+(defn unionize
+  "Given a seq of set make the union of all of them"
+  [sets]
+  (reduce set/union #{} sets))
+
+(defn gen-capabilities-for-entity-and-accesses
+  "Given an entity and a set of access (:read or :write) generate a set of
+  capabilities"
+  [entity-name accesses]
+  (->> accesses
+       (map (fn [access]
+              (set (map (fn [prefix]
+                          (keyword (str (name prefix) "-" (name entity-name))))
+                        (get prefixes access)))))
+       unionize))
+
+(defn gen-entity-capabilites
+  "given a scope representation whose root scope is enttit-root-scope generate
+  capabilities"
+  [scope-repr]
+  (case (count (:path scope-repr))
+    2 (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
+                                                (:access scope-repr))
+    1 (->> entities
+           (map #(gen-capabilities-for-entity-and-access % (:access scope-repr)))
+           unionize)
+    #{}))
+
+(defn gen-casebook-capabilities
+  "given a scope representation whose root-scope is casebook generate
+  capabilities"
+  [scope-repr]
+  (gen-capabilities-for-entity-and-accesses :casebook (:access scope-repr)))
+
+(defn scope-to-capability
+  "given a scope generate capabilities"
+  [scope]
+  (let [scope-repr (mid/to-scope-repr scope)]
+    (case (first (:path scope-repr))
+      entity-root-scope   (gen-entity-capabilities scope-repr)
+      casebook-root-scope (gen-casebook-capabilities scope)
+      #{})))
+
+(defn scopes-to-capabilities
+  "given a seq of scopes generate a set of capabilities"
+  [scopes]
+  (->> scopes
+       (map scope-to-capabilities)
+       unionize))
 
 (defn iroh-claim
   "JWT specific claims for iroh are URIs
@@ -61,19 +121,8 @@
   (groups [_]
     (remove nil? [(get jwt (iroh-claim "org/id"))]))
   (allowed-capabilities [_]
-    (let [scopes (set (get jwt (iroh-claim "scopes")))
-          ctia-caps (if (contains? scopes entity-root-scope)
-                      (if is-global?
-                        read-only-ctia-capabilities
-                        ctia-capabilities)
-                      #{})
-          casebook-caps
-          (if (and (not is-global?) ;; casebook should only be accessible in
-                   ;; private instances
-                   (contains? scopes "casebook"))
-            casebook-capabilities
-            #{})]
-      (set/union ctia-caps casebook-caps)))
+    (let [scopes (set (get jwt (iroh-claim "scopes")))]
+      (scopes-to-capabilities scopes)))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
                  (auth/allowed-capabilities this))))
