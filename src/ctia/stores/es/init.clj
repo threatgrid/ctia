@@ -1,29 +1,13 @@
 (ns ctia.stores.es.init
-  (:require [clj-momo.lib.es
-             [conn :refer [connect]]
-             [index :as es-index]
-             [schemas :refer [ESConnState]]]
-            [ctia.actor.store.es :refer [->ActorStore]]
-            [ctia.attack-pattern.store.es :refer [->AttackPatternStore]]
-            [ctia.campaign.store.es :refer [->CampaignStore]]
-            [ctia.casebook.store.es :refer [->CasebookStore]]
-            [ctia.coa.store.es :refer [->COAStore]]
-            [ctia.data-table.store.es :refer [->DataTableStore]]
-            [ctia.event.store.es :refer [->EventStore]]
-            [ctia.exploit-target.store.es :refer [->ExploitTargetStore]]
-            [ctia.feedback.store.es :refer [->FeedbackStore]]
-            [ctia.identity.store.es :refer [->IdentityStore]]
-            [ctia.incident.store.es :refer [->IncidentStore]]
-            [ctia.indicator.store.es :refer [->IndicatorStore]]
-            [ctia.investigation.store.es :refer [->InvestigationStore]]
-            [ctia.judgement.store.es :refer [->JudgementStore]]
-            [ctia.malware.store.es :refer [->MalwareStore]]
-            [ctia.properties :refer [properties]]
-            [ctia.relationship.store.es :refer [->RelationshipStore]]
-            [ctia.sighting.store.es :refer [->SightingStore]]
-            [ctia.stores.es.mapping :refer [store-mappings store-settings]]
-            [ctia.tool.store.es :refer [->ToolStore]]
-            [schema.core :as s]))
+  (:require
+   [ctia.properties :refer [properties]]
+   [ctia.stores.es.mapping :refer [store-settings]]
+   [clj-momo.lib.es
+    [conn :refer [connect]]
+    [index :as es-index]
+    [schemas :refer [ESConnState]]]
+   [ctia.entity.entities :refer [entities]]
+   [schema.core :as s]))
 
 (s/defschema StoreProperties
   {:entity s/Keyword
@@ -32,6 +16,10 @@
    :replicas s/Num
    s/Keyword s/Any})
 
+(def store-mappings
+  (apply merge {}
+         (map (fn [[_ {:keys [entity es-store-mapping]}]]
+                {entity es-store-mapping}) entities)))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
@@ -77,24 +65,8 @@
         store-constructor)))
 
 (def ^:private factories
-  {:actor          (make-factory ->ActorStore)
-   :attack-pattern (make-factory ->AttackPatternStore)
-   :campaign       (make-factory ->CampaignStore)
-   :coa            (make-factory ->COAStore)
-   :data-table     (make-factory ->DataTableStore)
-   :event          (make-factory ->EventStore)
-   :exploit-target (make-factory ->ExploitTargetStore)
-   :feedback       (make-factory ->FeedbackStore)
-   :identity       (make-factory ->IdentityStore)
-   :incident       (make-factory ->IncidentStore)
-   :indicator      (make-factory ->IndicatorStore)
-   :investigation  (make-factory ->InvestigationStore)
-   :judgement      (make-factory ->JudgementStore)
-   :malware        (make-factory ->MalwareStore)
-   :relationship   (make-factory ->RelationshipStore)
-   :casebook       (make-factory ->CasebookStore)
-   :sighting       (make-factory ->SightingStore)
-   :tool           (make-factory ->ToolStore)})
+  (mapv (fn [{:keys [entity es-store]}]
+          (make-factory es-store)) entities))
 
 (defn init-store! [store-kw]
   (when-let [factory (get factories store-kw)]

@@ -1,38 +1,38 @@
 (ns ctia.schemas.graphql
-  (:require
-   [ctia.attack-pattern.graphql.schemas
-    :as attack-pattern
-    :refer [AttackPatternType
-            AttackPatternConnectionType]]
-   [ctia.indicator.graphql.schemas :as indicator
-    :refer [IndicatorType
-            IndicatorConnectionType]]
-   [ctia.investigation.graphql.schemas :as investigation
-    :refer [InvestigationType
-            InvestigationConnectionType]]
-   [ctia.casebook.graphql.schemas :as casebook
-    :refer [CasebookType
-            CasebookConnectionType]]
-   [ctia.judgement.graphql.schemas :as judgement
-    :refer [JudgementType
-            JudgementConnectionType]]
-   [ctia.malware.graphql.schemas :as malware
-    :refer [MalwareType
-            MalwareConnectionType]]
-   [ctia.observable.graphql.schemas :as observable
-    :refer [ObservableType]]
-   [ctia.sighting.graphql.schemas :as sighting
-    :refer [SightingType
-            SightingConnectionType]]
-   [ctia.tool.graphql.schemas :as tool
-    :refer [ToolType
-            ToolConnectionType]]
-   [ctia.schemas.graphql
-    [common :as common]
-    [helpers :as g]
-    [resolvers :as res]]
-   [schema.core :as s]
-   [ctia.schemas.graphql.pagination :as p])
+  (:require [ctia.entity
+             [attack-pattern :as attack-pattern
+              :refer [AttackPatternConnectionType
+                      AttackPatternType]]
+             [casebook :as casebook
+              :refer [CasebookConnectionType
+                      CasebookType]]
+             [indicator :as indicator
+              :refer [IndicatorConnectionType
+                      IndicatorType]]
+             [investigation :as investigation
+              :refer [InvestigationConnectionType
+                      InvestigationType]]
+             [malware :as malware
+              :refer [MalwareConnectionType
+                      MalwareType]]]
+            [ctia.entity.judgement
+             :as judgement
+             :refer [JudgementConnectionType
+                     JudgementType]]
+            [ctia.entity.sighting.graphql-schemas
+             :as sighting
+             :refer [SightingConnectionType
+                     SightingType]]
+            [ctia.observable.graphql.schemas :as observable
+             :refer [ObservableType]]
+            [ctia.schemas.graphql
+             [common :as common]
+             [helpers :as g]
+             [pagination :as p]
+             [resolvers :as res]]
+            [ctia.entity.tool.graphql-schemas :as tool
+             :refer [ToolConnectionType ToolType]]
+            [schema.core :as s])
   (:import graphql.Scalars))
 
 ;; TODO

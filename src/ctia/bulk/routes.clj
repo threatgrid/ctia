@@ -7,7 +7,8 @@
     [properties :refer [properties]]
     [store :as store :refer [read-store write-store]]]
    [ctia.bulk.schemas :refer [Bulk BulkRefs NewBulk]]
-   [ctia.domain.entities :as ent :refer [realize-fn with-long-id]]
+   [ctia.domain.entities :as ent :refer [with-long-id]]
+   [ctia.entity.entities :refer [entities]]
    [ctia.flows.crud :as flows]
    [ctia.http.routes.common :as common]
    [ctia.lib.keyword :refer [singular]]
@@ -56,7 +57,7 @@
   (when (seq new-entities)
     (update (flows/create-flow
              :entity-type entity-type
-             :realize-fn (realize-fn entity-type)
+             :realize-fn (-> entities entity-type :realize-fn)
              :store-fn (create-fn entity-type auth-identity params)
              :long-id-fn with-long-id
              :enveloped-result? true
@@ -206,7 +207,7 @@
                       {judgements      :- [Reference] []}
                       {malwares        :- [Reference] []}
                       {relationships   :- [Reference] []}
-                      {casebooks     :- [Reference] []}
+                      {casebooks       :- [Reference] []}
                       {sightings       :- [Reference] []}
                       {tools           :- [Reference] []}]
        :header-params [{Authorization :- (s/maybe s/Str) nil}]

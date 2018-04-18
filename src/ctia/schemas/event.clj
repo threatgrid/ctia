@@ -1,6 +1,7 @@
 (ns ctia.schemas.event
-  (:require [ctia.schemas.core :refer [stored-schema-lookup]]
-            [ctim.events.schemas :refer :all]
+  (:require [ctim.events.schemas :refer [CreateEvent
+                                         UpdateEvent
+                                         DeleteEvent]]
             [schema.core :as s]
             [schema-tools.core :as st]))
 
@@ -9,6 +10,11 @@
    :entity {:type s/Str
             s/Keyword s/Any}
    s/Keyword s/Any})
+
+(def stored-schema-lookup
+  (apply merge {}
+         (mapv (fn [{:keys [entity stored-schema]}]
+                 {entity stored-schema}) entities)))
 
 (s/defn schema-for-event
   "Returns an event schema, based on an instance of an event.  The

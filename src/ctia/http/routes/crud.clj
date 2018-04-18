@@ -1,17 +1,22 @@
 (ns ctia.http.routes.crud
   (:refer-clojure :exclude [identity list read update])
-  (:require [clojure.string :refer [capitalize]]
-            [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
-            [ctia.domain.entities
-             :refer
-             [page-with-long-id un-store un-store-page with-long-id]]
-            [ctia.flows.crud :as flows]
-            [ctia.http.routes.common
-             :refer
-             [created filter-map-search-options paginated-ok search-options]]
-            [ctia.store :refer :all]
-            [ring.util.http-response :refer [no-content not-found ok]]
-            [schema.core :as s]))
+  (:require
+   [clojure.string :refer [capitalize]]
+   [ctia.http.middleware.auth :refer :all]
+   [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
+   [ctia.domain.entities
+    :refer
+    [page-with-long-id
+     un-store
+     un-store-page
+     with-long-id]]
+   [ctia.flows.crud :as flows]
+   [ctia.http.routes.common
+    :refer
+    [created filter-map-search-options paginated-ok search-options]]
+   [ctia.store :refer :all]
+   [ring.util.http-response :refer [no-content not-found ok]]
+   [schema.core :as s]))
 
 (defn entity-crud-routes
   [{:keys [entity

@@ -1,47 +1,36 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
-            [ctia.http.middleware.auth :refer :all]
+            [ctia.entity.entities :refer [entities]]
             [compojure.api
              [core :refer [middleware]]
-             [routes :as routes]
-             [sweet :refer  [api context undocumented]]]
+             [routes :as api-routes]
+             [sweet :refer  [routes api context undocumented]]]
             [compojure.route :as rt]
-            [ctia.actor.routes :refer [actor-routes]]
-            [ctia.attack-pattern.routes :refer [attack-pattern-routes]]
-            [ctia.bulk.routes :refer [bulk-routes]]
             [ctia.bundle.routes :refer [bundle-routes]]
-            [ctia.campaign.routes :refer [campaign-routes]]
-            [ctia.casebook.routes
-             :refer
-             [casebook-operation-routes casebook-routes]]
-            [ctia.coa.routes :refer [coa-routes]]
-            [ctia.data-table.routes :refer [data-table-routes]]
+            [ctia.bulk.routes :refer [bulk-routes]]
             [ctia.documentation.routes :refer [documentation-routes]]
-            [ctia.exploit-target.routes :refer [exploit-target-routes]]
-            [ctia.feedback.routes :refer [feedback-by-entity-route feedback-routes]]
             [ctia.graphql.routes :refer [graphql-ui-routes
                                          graphql-routes]]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
+             [auth :refer :all]
              [cache-control :refer [wrap-cache-control]]
              [unknown :as unk]
              [version :refer [wrap-version]]]
-            [ctia.incident.routes :refer [incident-routes]]
-            [ctia.indicator.routes :refer [indicator-routes]]
-            [ctia.investigation.routes :refer [investigation-routes]]
-            [ctia.judgement.routes :refer [judgement-routes]]
-            [ctia.malware.routes :refer [malware-routes]]
             [ctia.metrics.routes :refer [metrics-routes]]
             [ctia.observable.routes :refer [observable-routes]]
             [ctia.properties :refer [properties]]
             [ctia.properties.routes :refer [properties-routes]]
-            [ctia.relationship.routes :refer [relationship-routes]]
-            [ctia.sighting.routes :refer [sighting-routes]]
-            [ctia.tool.routes :refer [tool-routes]]
             [ctia.version.routes :refer [version-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]))
 
+(defmacro compose-routes
+  [entities]
+  `(do ~@(for [[_ entity] entities]
+           `(context ~(:route-context entity) []
+                     :tags ~(:tags entity)
+                     ~(:routes ~entity))))) 
 (def api-description
   "A Threat Intelligence API service
 
@@ -76,6 +65,7 @@
   Malicious disposition, and so on down to Unknown.
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
+
 
 (defn api-handler []
   (api {:exceptions
@@ -127,68 +117,20 @@
                     wrap-cache-control
                     wrap-version
                     ;; always last
-                    (metrics/wrap-metrics "ctia" routes/get-routes)]
+                    (metrics/wrap-metrics "ctia" api-routes/get-routes)]
                    documentation-routes
                    (graphql-ui-routes)
-                   (context "/ctia" []
-                            (context "/actor" []
-                                     :tags ["Actor"]
-                                     actor-routes)
-                            (context "/attack-pattern" []
-                                     :tags ["Attack Pattern"]
-                                     attack-pattern-routes)
-                            (context "/bulk" []
-                                     :tags ["Bulk"]
-                                     bulk-routes)
-                            bundle-routes
-                            (context "/campaign" []
-                                     :tags ["Campaign"]
-                                     campaign-routes)
-                            (context "/casebook" []
-                                     :tags ["Casebook"]
-                                     casebook-routes
-                                     casebook-operation-routes)
-                            (context "/coa" []
-                                     :tags ["COA"]
-                                     coa-routes)
-                            (context "/data-table" []
-                                     :tags ["DataTable"]
-                                     data-table-routes)
-                            (context "/exploit-target" []
-                                     :tags ["ExploitTarget"]
-                                     exploit-target-routes)
-                            (context "/feedback" []
-                                     :tags ["Feedback"]
-                                     feedback-routes
-                                     feedback-by-entity-route)
-                            (context "/incident" []
-                                     :tags ["Incident"]
-                                     incident-routes)
-                            (context "/indicator" []
-                                     :tags ["Indicator"]
-                                     indicator-routes)
-                            (context "/investigation" []
-                                     :tags ["Investigation"]
-                                     investigation-routes)
-                            (context "/judgement" []
-                                     :tags ["Judgement"]
-                                     judgement-routes)
-                            (context "/malware" []
-                                     :tags ["Malware"]
-                                     malware-routes)
-                            (context "/relationship" []
-                                     :tags ["Relationship"]
-                                     relationship-routes)
-                            (context "/sighting" []
-                                     :tags ["Sighting"]
-                                     sighting-routes)
-                            (context "/tool" []
-                                     :tags ["Tool"]
-                                     tool-routes)
-                            observable-routes
-                            metrics-routes
-                            properties-routes
-                            graphql-routes
-                            version-routes))
+                   (context
+                    "/ctia" []
+                    bundle-routes
+                    observable-routes
+                    metrics-routes
+                    properties-routes
+                    graphql-routes
+                    version-routes
+                    (context
+                     "/bulk" []
+                     :tags ["Bulk"]
+                     bulk-routes)))
        (undocumented
         (rt/not-found (ok (unk/err-html))))))
