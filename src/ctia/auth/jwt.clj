@@ -11,6 +11,16 @@
     :delete-casebook
     :search-casebook})
 
+(def entity-root-scope
+  (get-in @prop/properties [:ctia :auth :entities :scope]
+          "private-intel"))
+
+(def is-global?
+  (= entity-root-scope "global-intel"))
+
+(def ^:private read-only-ctia-capabilities
+  (:user auth/default-capabilities))
+
 (def ^:private ctia-capabilities
   (set/difference auth/all-capabilities
                   (set/union
@@ -52,8 +62,17 @@
     (remove nil? [(get jwt (iroh-claim "org/id"))]))
   (allowed-capabilities [_]
     (let [scopes (set (get jwt (iroh-claim "scopes")))
-          ctia-caps (if (contains? scopes "ctia") ctia-capabilities #{})
-          casebook-caps (if (contains? scopes "casebook") casebook-capabilities #{})]
+          ctia-caps (if (contains? scopes entity-root-scope)
+                      (if is-global?
+                        read-only-ctia-capabilities
+                        ctia-capabilities)
+                      #{})
+          casebook-caps
+          (if (and (not is-global?) ;; casebook should only be accessible in
+                   ;; private instances
+                   (contains? scopes "casebook"))
+            casebook-capabilities
+            #{})]
       (set/union ctia-caps casebook-caps)))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
