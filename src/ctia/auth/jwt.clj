@@ -27,7 +27,7 @@
     :judgement
     :malware
     :relationship
-    :sightings
+    :sighting
     :tool
     :verdict})
 
@@ -45,26 +45,26 @@
 (defn unionize
   "Given a seq of set make the union of all of them"
   [sets]
-  (reduce set/union #{} sets))
+  (apply set/union sets))
 
 (defn gen-capabilities-for-entity-and-accesses
   "Given an entity and a set of access (:read or :write) generate a set of
   capabilities"
   [entity-name accesses]
-  (->> accesses
-       (map (fn [access]
-              (set (map (fn [prefix]
-                          (keyword (str (name prefix) "-" (name entity-name))))
-                        (get prefixes access)))))
-       unionize))
+  (set (for [access accesses
+             prefix (get prefixes access)]
+         (keyword (str (name prefix) "-" (name entity-name)
+                       (if (= :list prefix) "s" ""))))))
 
 (defn gen-entity-capabilities
-  "given a scope representation whose root scope is enttit-root-scope generate
+  "given a scope representation whose root scope is entity-root-scope generate
   capabilities"
   [scope-repr]
   (case (count (:path scope-repr))
+    ;; example: ["private-intel" "sighting"] (for private-intel/sighting scope)
     2 (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
                                                 (:access scope-repr))
+    ;; typically: ["private-intel"]
     1 (->> entities
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize)
