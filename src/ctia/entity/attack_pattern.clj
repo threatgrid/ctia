@@ -147,9 +147,9 @@
 
 (def attack-pattern-entity
   {:route-context "/attack-pattern"
-   :tags ["AttackPattern"]
+   :tags ["Attack Pattern"]
    :entity :attack-pattern
-   :plural :attack-patterns
+   :plural :attack_patterns
    :schema AttackPattern
    :partial-schema PartialAttackPattern
    :partial-list-schema PartialAttackPatternList

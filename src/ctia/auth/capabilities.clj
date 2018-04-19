@@ -10,7 +10,7 @@
            :specify-id
            :external-id
            :import-bundle}
-         (map (fn [_ entity]
+         (map (fn [[_ entity]]
                 (:capabilities entity)) entities)))
 
 (def default-capabilities

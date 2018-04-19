@@ -25,12 +25,16 @@
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]))
 
-(defmacro compose-routes
+(defmacro entity-routes
   [entities]
-  `(do ~@(for [[_ entity] entities]
-           `(context ~(:route-context entity) []
-                     :tags ~(:tags entity)
-                     ~(:routes ~entity))))) 
+  `(do
+     (compojure.api.sweet/routes
+      ~@(for [entity (vals (eval entities))]
+          `(context
+            ~(:route-context entity) []
+            :tags ~(:tags entity)
+            (:routes (~(:entity entity) entities)))))))
+
 (def api-description
   "A Threat Intelligence API service
 
@@ -122,6 +126,7 @@
                    (graphql-ui-routes)
                    (context
                     "/ctia" []
+                    (entity-routes entities)
                     bundle-routes
                     observable-routes
                     metrics-routes
