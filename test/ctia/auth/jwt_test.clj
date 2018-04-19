@@ -1,6 +1,8 @@
 (ns ctia.auth.jwt-test
   (:require [ctia.auth.jwt :as sut]
-            [clojure.test :as t :refer [deftest is]]))
+            [ctia.auth :as auth]
+            [clojure.test :as t :refer [deftest is]]
+            [clojure.set :as set]))
 
 (deftest wrap-jwt-to-ctia-auth-test
   (let [handler (fn [r]
@@ -29,3 +31,37 @@
             :status 200}
            response-jwt))))
 
+
+(deftest scopes-to-capapbilities-test
+  (is (= "private-intel" sut/entity-root-scope)
+      "entity root scope default value is private-intel")
+  (is (= "casebook" sut/casebook-root-scope)
+      "casebook root scope default value is casebook")
+  (is (= #{:search-casebook :create-casebook :list-casebooks :read-casebook
+           :delete-casebook}
+         (sut/scope-to-capabilities sut/casebook-root-scope))
+      "Check the casebook capabilities from the casebook scope")
+  (is  (= #{:developer :specify-id :external-id :import-bundle}
+          (set/difference auth/all-capabilities
+                          (sut/scopes-to-capabilities #{sut/entity-root-scope
+                                                        sut/casebook-root-scope})))
+       "with all scopes you should have most capabilities except some very
+       specific ones")
+  (is (= #{:read-sighting :list-sightings :search-sighting :create-sighting
+           :delete-sighting}
+         (sut/scopes-to-capabilities
+          #{(str sut/entity-root-scope "/sighting")}))
+      "Scopes can be limited to some entity")
+  (is (= #{:create-sighting :delete-sighting}
+         (sut/scopes-to-capabilities
+          #{(str sut/entity-root-scope "/sighting:write")}))
+      "Scopes can be limited to some entity and for write-only")
+  (is (= #{:read-sighting :list-sightings :search-sighting}
+         (sut/scopes-to-capabilities
+          #{(str sut/entity-root-scope "/sighting:read")}))
+      "Scopes can be limited to some entity and for read-only")
+  (is (= #{:search-casebook :read-sighting :list-sightings :search-sighting
+           :list-casebooks :read-casebook}
+         (sut/scopes-to-capabilities #{(str sut/entity-root-scope "/sighting:read")
+                                       (str sut/casebook-root-scope ":read")}))
+      "Scopes can compose"))
