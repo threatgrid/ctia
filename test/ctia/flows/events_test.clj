@@ -98,12 +98,11 @@
           (doseq [event events]
             (is (str/starts-with? (:id event) "event-"))
             (is (instance? java.util.Date (:timestamp event)))))
-
         (is (= [{:owner "Unknown"
                  :groups ["Administrators"]
                  :entity {:valid_time
-                          {:start_time #inst "2016-02-11T00:40:48.212Z"
-                           :end_time #inst "2525-01-01T00:00:00.000Z"}
+                          {:start_time "2016-02-11T00:40:48.212Z"
+                           :end_time "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -121,8 +120,8 @@
                 {:owner "Unknown"
                  :groups ["Administrators"]
                  :entity {:valid_time
-                          {:start_time #inst "2016-02-11T00:40:48.212Z"
-                           :end_time #inst "2525-01-01T00:00:00.000Z"}
+                          {:start_time "2016-02-11T00:40:48.212Z"
+                           :end_time "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -140,8 +139,8 @@
                 {:owner "Unknown"
                  :groups ["Administrators"]
                  :entity {:valid_time
-                          {:start_time #inst "2016-02-11T00:40:48.212Z"
-                           :end_time #inst "2525-01-01T00:00:00.000Z"}
+                          {:start_time "2016-02-11T00:40:48.212Z"
+                           :end_time "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -157,5 +156,5 @@
                           :groups ["Administrators"]}
                  :type "CreatedModel"}]
                (->> events
-                    (map #(dissoc % :http-params :id :timestamp))
+                    (map #(dissoc % :http-params :id :timestamp :created))
                     (map #(update % :entity dissoc :created)))))))))

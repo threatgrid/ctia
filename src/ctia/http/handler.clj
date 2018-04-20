@@ -2,6 +2,7 @@
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.casebook :refer [casebook-operation-routes]]
+            [ctia.entity.feedback :refer [feedback-by-entity-route]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -132,6 +133,9 @@
                     (context "/casebook" []
                              :tags ["Casebook"]
                              casebook-operation-routes)
+                    (context "/feedback" []
+                             :tags ["Feedback"]
+                             feedback-by-entity-route)
                     (context
                      "/bulk" []
                      :tags ["Bulk"]

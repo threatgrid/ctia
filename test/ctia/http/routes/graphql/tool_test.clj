@@ -97,7 +97,7 @@
                 graphql-queries
                 {:id tool-1-id}
                 [:tool :relationships]
-                ctia.entity.relationship/relationship-sort-fields)))
+                ctia.entity.relationship.schemas/relationship-fields)))
 
            (testing "feedbacks connection"
              (gh/connection-test "ToolFeedbacksQueryTest"
@@ -113,7 +113,7 @@
                 graphql-queries
                 {:id tool-1-id}
                 [:tool :feedbacks]
-                ctia.entity.feedback/feedback-sort-fields))))
+                ctia.entity.feedback.schemas/feedback-fields))))
          (testing "tools query"
            (testing "tools connection"
              (gh/connection-test "ToolsQueryTest"
@@ -130,7 +130,7 @@
                 graphql-queries
                 {:query "*"}
                 [:tools]
-                ctia.entity.tool/tool-sort-fields)))
+                ctia.entity.tool.schemas/tool-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}

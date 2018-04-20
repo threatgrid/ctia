@@ -97,7 +97,7 @@
                 graphql-queries
                 {:id attack-pattern-1-id}
                 [:attack_pattern :relationships]
-                ctia.entity.relationship/relationship-sort-fields)))
+                ctia.entity.relationship.schemas/relationship-fields)))
 
            (testing "feedbacks connection"
              (gh/connection-test "AttackPatternFeedbacksQueryTest"
@@ -113,7 +113,7 @@
                 graphql-queries
                 {:id attack-pattern-1-id}
                 [:attack_pattern :feedbacks]
-                ctia.entity.feedback/feedback-sort-fields))))
+                ctia.entity.feedback.schemas/feedback-fields))))
          (testing "attack_patterns query"
            (testing "attack_patterns connection"
              (gh/connection-test "AttackPatternsQueryTest"
@@ -130,7 +130,7 @@
                 graphql-queries
                 {:query "*"}
                 [:attack_patterns]
-                ctia.entity.attack-pattern/attack-pattern-sort-fields)))
+                ctia.entity.attack-pattern/attack-pattern-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}

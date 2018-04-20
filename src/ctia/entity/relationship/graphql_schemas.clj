@@ -7,7 +7,8 @@
              [helpers :as g]
              [pagination :as p]
              [refs :as refs]
-             [resolvers :as res :refer [entity-by-id search-relationships]]
+             [resolvers :as res :refer [entity-by-id
+                                        search-relationships]]
              [sorting :as sorting]]
             [ctim.domain.id :as id]
             [ctim.schemas

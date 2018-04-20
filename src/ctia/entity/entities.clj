@@ -1,24 +1,26 @@
 (ns ctia.entity.entities
   (:refer-clojure :exclude [identity])
-  (:require [ctia.entity
-             [actor :refer [actor-entity]]
-             [attack-pattern :refer [attack-pattern-entity]]
-             [campaign :refer [campaign-entity]]
-             [casebook :refer [casebook-entity]]
-             [coa :refer [coa-entity]]
-             [data-table :refer [data-table-entity]]
-             [exploit-target :refer [exploit-target-entity]]
-             [feedback :refer [feedback-entity]]
-             [incident :refer [incident-entity]]
-             [indicator :refer [indicator-entity]]
-             [investigation :refer [investigation-entity]]
-             [judgement :refer [judgement-entity]]
-             [malware :refer [malware-entity]]
-             [relationship :refer [relationship-entity]]
-             [sighting :refer [sighting-entity]]
-             [tool :refer [tool-entity]]
-             [identity :refer [identity-entity]]
-             [event :refer [event-entity]]]))
+  (:require
+   ;; !!! Order Matters !!!
+   [ctia.entity
+    [attack-pattern :refer [attack-pattern-entity]]
+    [indicator :refer [indicator-entity]]
+    [investigation :refer [investigation-entity]]
+    [casebook :refer [casebook-entity]]
+    [judgement :refer [judgement-entity]]
+    [malware :refer [malware-entity]]
+    [sighting :refer [sighting-entity]]
+    [tool :refer [tool-entity]]
+    [actor :refer [actor-entity]]
+    [campaign :refer [campaign-entity]]
+    [coa :refer [coa-entity]]
+    [data-table :refer [data-table-entity]]
+    [exploit-target :refer [exploit-target-entity]]
+    [feedback :refer [feedback-entity]]
+    [incident :refer [incident-entity]]
+    [relationship :refer [relationship-entity]]
+    [identity :refer [identity-entity]]
+    [event :refer [event-entity]]]))
 
 (def entities
   {:actor actor-entity
