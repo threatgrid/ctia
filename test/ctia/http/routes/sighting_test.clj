@@ -1,8 +1,7 @@
 (ns ctia.http.routes.sighting-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [join-fixtures use-fixtures]]
-            [ctia.schemas.sorting :refer [sighting-sort-fields]]
+            [clojure.test :refer [deftest join-fixtures use-fixtures]]
+            [ctia.entity.sighting.schemas :refer [sighting-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -12,7 +11,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [api-key doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [deftest-for-each-store]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.sightings
              :refer
              [new-sighting-maximal new-sighting-minimal]]))
@@ -32,43 +31,48 @@
        ["http://ex.tld/ctia/sighting/sighting-123"
         "http://ex.tld/ctia/sighting/sighting-345"])))
 
-(deftest-for-each-store test-sighting-routes
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response api-key
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-  (entity-crud-test
-   {:entity "sighting"
-    :example new-sighting-maximal
-    :headers {:Authorization "45c1f5e3f05d0"}}))
+(deftest test-sighting-routes
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response api-key
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (entity-crud-test
+      {:entity "sighting"
+       :example new-sighting-maximal
+       :headers {:Authorization "45c1f5e3f05d0"}}))))
 
-(deftest-for-each-store test-sighting-pagination-field-selection
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
+(deftest test-sighting-pagination-field-selection
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [ids (post-entity-bulk
+                new-sighting-maximal
+                :sightings
+                30
+                {"Authorization" "45c1f5e3f05d0"})]
 
-  (let [ids (post-entity-bulk
-             new-sighting-maximal
-             :sightings
-             30
-             {"Authorization" "45c1f5e3f05d0"})]
+       (pagination-test
+        "ctia/sighting/search?query=*"
+        {"Authorization" "45c1f5e3f05d0"}
+        sighting-fields)
 
-    (pagination-test
-     "ctia/sighting/search?query=*"
-     {"Authorization" "45c1f5e3f05d0"}
-     sighting-sort-fields)
+       (field-selection-tests
+        ["ctia/sighting/search?query=*"
+         (doc-id->rel-url (first ids))]
+        {"Authorization" "45c1f5e3f05d0"}
+        sighting-fields)))))
 
-    (field-selection-tests
-     ["ctia/sighting/search?query=*"
-      (doc-id->rel-url (first ids))]
-     {"Authorization" "45c1f5e3f05d0"}
-     sighting-sort-fields)))
-
-(deftest-for-each-store test-sighting-routes-access-control
-  (access-control-test "sighting"
-                       new-sighting-minimal
-                       true
-                       true))
+(deftest test-sighting-routes-access-control
+  (test-for-each-store
+   (fn []
+     (access-control-test "sighting"
+                          new-sighting-minimal
+                          true
+                          true))))

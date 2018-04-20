@@ -1,7 +1,7 @@
 (ns ctia.http.routes.coa-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [join-fixtures use-fixtures]]
-            [ctia.schemas.sorting :refer [coa-sort-fields]]
+            [clojure.test :refer [deftest join-fixtures use-fixtures]]
+            [ctia.entity.coa :refer [coa-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -11,7 +11,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [deftest-for-each-store]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.coas :refer [new-coa-maximal new-coa-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -20,42 +20,46 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(deftest-for-each-store test-coa-routes
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
+(deftest test-coa-routes
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (entity-crud-test {:entity "coa"
+                        :example new-coa-maximal
+                        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
-  (entity-crud-test {:entity "coa"
-                     :example new-coa-maximal
-                     :headers {:Authorization "45c1f5e3f05d0"}}))
+(deftest test-coa-pagination-field-selection
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [ids (post-entity-bulk
+                new-coa-maximal
+                :coas
+                30
+                {"Authorization" "45c1f5e3f05d0"})]
+       (pagination-test
+        "ctia/coa/search?query=*"
+        {"Authorization" "45c1f5e3f05d0"}
+        coa-fields)
 
-(deftest-for-each-store test-coa-pagination-field-selection
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
+       (field-selection-tests
+        ["ctia/coa/search?query=*"
+         (doc-id->rel-url (first ids))]
+        {"Authorization" "45c1f5e3f05d0"}
+        coa-fields)))))
 
-  (let [ids (post-entity-bulk
-             new-coa-maximal
-             :coas
-             30
-             {"Authorization" "45c1f5e3f05d0"})]
-    (pagination-test
-     "ctia/coa/search?query=*"
-     {"Authorization" "45c1f5e3f05d0"}
-     coa-sort-fields)
-
-    (field-selection-tests
-     ["ctia/coa/search?query=*"
-      (doc-id->rel-url (first ids))]
-     {"Authorization" "45c1f5e3f05d0"}
-     coa-sort-fields)))
-
-(deftest-for-each-store test-coa-routes-access-control
-  (access-control-test "coa"
-                       new-coa-minimal
-                       true
-                       true))
+(deftest test-coa-routes-access-control
+  (test-for-each-store
+   (fn []
+     (access-control-test "coa"
+                          new-coa-minimal
+                          true
+                          true))))

@@ -1,13 +1,14 @@
 (ns ctia.flows.events-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.string :as str]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure
+             [string :as str]
+             [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.store :as store]
-            [ctim.domain.id :as id]
             [ctia.test-helpers
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
-             [es :as es-helpers]]))
+             [es :as es-helpers]]
+            [ctim.domain.id :as id]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 
@@ -97,12 +98,11 @@
           (doseq [event events]
             (is (str/starts-with? (:id event) "event-"))
             (is (instance? java.util.Date (:timestamp event)))))
-
         (is (= [{:owner "Unknown"
                  :groups ["Administrators"]
                  :entity {:valid_time
-                          {:start_time #inst "2016-02-11T00:40:48.212Z"
-                           :end_time #inst "2525-01-01T00:00:00.000Z"}
+                          {:start_time "2016-02-11T00:40:48.212Z"
+                           :end_time "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -120,8 +120,8 @@
                 {:owner "Unknown"
                  :groups ["Administrators"]
                  :entity {:valid_time
-                          {:start_time #inst "2016-02-11T00:40:48.212Z"
-                           :end_time #inst "2525-01-01T00:00:00.000Z"}
+                          {:start_time "2016-02-11T00:40:48.212Z"
+                           :end_time "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -139,8 +139,8 @@
                 {:owner "Unknown"
                  :groups ["Administrators"]
                  :entity {:valid_time
-                          {:start_time #inst "2016-02-11T00:40:48.212Z"
-                           :end_time #inst "2525-01-01T00:00:00.000Z"}
+                          {:start_time "2016-02-11T00:40:48.212Z"
+                           :end_time "2525-01-01T00:00:00.000Z"}
                           :observable {:value "1.2.3.4" :type "ip"},
                           :type "judgement"
                           :source "source"
@@ -156,5 +156,5 @@
                           :groups ["Administrators"]}
                  :type "CreatedModel"}]
                (->> events
-                    (map #(dissoc % :http-params :id :timestamp))
+                    (map #(dissoc % :http-params :id :timestamp :created))
                     (map #(update % :entity dissoc :created)))))))))

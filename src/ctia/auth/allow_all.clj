@@ -1,5 +1,6 @@
 (ns ctia.auth.allow-all
   (:require [clj-momo.lib.set :refer [as-set]]
+            [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.auth
              :refer [IIdentity IAuth]
              :as auth]))
@@ -13,7 +14,7 @@
   (groups [_]
     [auth/admingroup])
   (allowed-capabilities [_]
-    auth/all-capabilities)
+    all-capabilities)
   (capable? [_ _]
     true))
 

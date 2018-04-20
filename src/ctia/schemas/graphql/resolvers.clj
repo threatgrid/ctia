@@ -1,6 +1,8 @@
 (ns ctia.schemas.graphql.resolvers
   (:require [clojure.tools.logging :as log]
-            [ctia.domain.entities :as ctim-entities]
+            [ctia.domain.entities
+             :refer
+             [page-with-long-id un-store un-store-page with-long-id]]
             [ctia.schemas.core :as ctia-schemas]
             [ctia.schemas.graphql.pagination :as pagination]
             [ctia.store :refer :all]
@@ -37,7 +39,7 @@
              ident
              params)
             with-long-id-fn
-            ctim-entities/un-store-page
+            un-store-page
             (pagination/result->connection-response paging-params))))
 
 (defn search-entity-resolver
@@ -49,7 +51,7 @@
                    args
                    (:ident context)
                    field-selection
-                   (ctim-entities/page-with-long-id-fn entity-type-kw))))
+                   page-with-long-id)))
 
 (s/defn entity-by-id
   [entity-type-kw :- s/Keyword
@@ -60,14 +62,13 @@
               entity-type-kw
               id
               field-selection)
-  (let [with-long-id-fn (ctim-entities/with-long-id-fn entity-type-kw)]
-    (some-> (read-store entity-type-kw
-                        (read-fn entity-type-kw)
-                        id
-                        ident
-                        {:fields (concat default-fields field-selection)})
-            with-long-id-fn
-            ctim-entities/un-store)))
+  (some-> (read-store entity-type-kw
+                      read-fn
+                      id
+                      ident
+                      {:fields (concat default-fields field-selection)})
+          with-long-id
+          un-store))
 
 (defn entity-by-id-resolver
   [entity-type-kw]
@@ -87,16 +88,14 @@
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
-                                        (concat default-fields field-selection)))
-        page-with-long-id-fn (ctim-entities/page-with-long-id-fn :feedback)]
+                                        (concat default-fields field-selection)))]
     (log/debug "Search feedback for entity id: " entity-id)
     (some-> (read-store :feedback
-                        list-feedback
+                        list-records
                         {:entity_id entity-id}
                         (:ident context)
                         params)
-            page-with-long-id-fn
-            ctim-entities/un-store-page
+            un-store-page
             (pagination/result->connection-response paging-params))))
 
 ;;---- Judgement
@@ -109,15 +108,14 @@
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
-                                        (concat default-fields field-selection)))
-        page-with-long-id-fn (ctim-entities/page-with-long-id-fn :judgement)]
+                                        (concat default-fields field-selection)))]
     (some-> (read-store :judgement
                         list-judgements-by-observable
                         observable
                         (:ident context)
                         params)
-            page-with-long-id-fn
-            ctim-entities/un-store
+            page-with-long-id
+            un-store
             (pagination/result->connection-response paging-params))))
 
 ;;---- Sighting
@@ -130,15 +128,14 @@
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
-                                        (concat default-fields field-selection)))
-        page-with-long-id-fn (ctim-entities/page-with-long-id-fn :sighting)]
+                                        (concat default-fields field-selection)))]
     (some-> (read-store :sighting
                         list-sightings-by-observables
                         [observable]
                         (:ident context)
                         params)
-            page-with-long-id-fn
-            ctim-entities/un-store
+            page-with-long-id
+            un-store
             (pagination/result->connection-response paging-params))))
 
 ;;---- Relationship
@@ -155,4 +152,4 @@
                    args
                    (:ident context)
                    (concat field-selection [:target_ref :source_ref])
-                   (ctim-entities/page-with-long-id-fn :sighting))))
+                   page-with-long-id)))

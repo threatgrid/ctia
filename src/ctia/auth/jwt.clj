@@ -1,9 +1,14 @@
 (ns ctia.auth.jwt
-  (:require [ctia.auth :as auth :refer [IIdentity]]
-            [ctia.properties :as prop]
-            [ring-jwt-middleware.core :as mid]
-            [clj-momo.lib.set :refer [as-set]]
-            [clojure.set :as set]))
+  (:refer-clojure :exclude [identity])
+  (:require
+   [ctia.auth.capabilities :refer [all-capabilities
+                                   default-capabilities]]
+   [ring-jwt-middleware.core :as mid]
+   [clj-momo.lib.set :refer [as-set]]
+   [clojure.set :as set]
+   [ctia
+    [auth :as auth :refer [IIdentity]]
+    [properties :as prop]]))
 
 (def entity-root-scope
   (get-in @prop/properties [:ctia :auth :entities :scope]
@@ -36,7 +41,7 @@
    :write #{:create :delete}})
 
 (def ^:private read-only-ctia-capabilities
-  (:user auth/default-capabilities))
+  (:user default-capabilities))
 
 (def claim-prefix
   (get-in @prop/properties [:ctia :http :jwt :claim-prefix]

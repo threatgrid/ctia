@@ -1,35 +1,38 @@
 (ns ctia.schemas.graphql
-  (:require [ctia.schemas.graphql
-             [common :as common]
-             [helpers :as g]
-             [attack-pattern :as attack-pattern
-              :refer [AttackPatternType
-                      AttackPatternConnectionType]]
-             [indicator :as indicator
-              :refer [IndicatorType
-                      IndicatorConnectionType]]
-             [investigation :as investigation
-              :refer [InvestigationType
-                      InvestigationConnectionType]]
-             [casebook :as casebook
-              :refer [CasebookType
-                      CasebookConnectionType]]
-             [judgement :as judgement
-              :refer [JudgementType
-                      JudgementConnectionType]]
-             [malware :as malware
-              :refer [MalwareType
-                      MalwareConnectionType]]
-             [observable :refer [ObservableType]]
-             [resolvers :as res]
-             [sighting :as sighting
-              :refer [SightingType
-                      SightingConnectionType]]
-             [tool :as tool
-              :refer [ToolType
-                      ToolConnectionType]]]
-            [schema.core :as s]
-            [ctia.schemas.graphql.pagination :as p])
+  (:require
+   [ctia.schemas.graphql
+    [common :as common]
+    [helpers :as g]
+    [pagination :as p]
+    [resolvers :as res]]
+   [ctia.entity.attack-pattern :as attack-pattern
+    :refer [AttackPatternConnectionType
+            AttackPatternType]]
+   [ctia.entity.indicator :as indicator
+    :refer [IndicatorConnectionType
+            IndicatorType]]
+   [ctia.entity.investigation :as investigation
+    :refer [InvestigationConnectionType
+            InvestigationType]]
+   [ctia.entity.casebook :as casebook
+    :refer [CasebookConnectionType
+            CasebookType]]
+   [ctia.entity.judgement
+    :as judgement
+    :refer [JudgementConnectionType
+            JudgementType]]
+   [ctia.entity.malware :as malware
+    :refer [MalwareConnectionType
+            MalwareType]]
+   [ctia.observable.graphql.schemas :as observable
+    :refer [ObservableType]]
+   [ctia.entity.sighting.graphql-schemas
+    :as sighting
+    :refer [SightingConnectionType
+            SightingType]]
+   [ctia.entity.tool.graphql-schemas :as tool
+    :refer [ToolConnectionType ToolType]]
+   [schema.core :as s])
   (:import graphql.Scalars))
 
 ;; TODO

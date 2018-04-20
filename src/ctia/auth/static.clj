@@ -3,16 +3,15 @@
             [clojure
              [set :as set]
              [string :as str]]
-            [ctia
-             [auth :refer [IIdentity IAuth] :as auth]
-             [properties :as p]]))
+            [ctia.auth :as auth :refer [IAuth IIdentity]]
+            [ctia.auth.capabilities :refer [all-capabilities]]))
 
 (def ^:private write-capabilities
-  (set/difference auth/all-capabilities
+  (set/difference all-capabilities
                   #{:specify-id}))
 
 (def ^:private read-only-capabilities
-  (set/difference (->> auth/all-capabilities
+  (set/difference (->> all-capabilities
                        (remove (fn [cap]
                                  (some #(str/starts-with? (name cap) %)
                                        ["create" "delete"])))

@@ -3,8 +3,8 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure
              [set :refer [subset?]]
-             [test :refer [is join-fixtures testing use-fixtures]]]
-            [ctia.schemas.sorting :refer [casebook-sort-fields]]
+             [test :refer [deftest is join-fixtures testing use-fixtures]]]
+            [ctia.entity.casebook :refer [casebook-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -14,7 +14,7 @@
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [deftest-for-each-store]]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.casebooks
              :refer
              [new-casebook-maximal new-casebook-minimal]]
@@ -177,47 +177,53 @@
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
 
-(deftest-for-each-store test-casebook-routes
-  (helpers/set-capabilities! "foouser"
-                             ["foogroup"]
-                             "user"
-                             all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
+(deftest test-casebook-routes
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser"
+                                ["foogroup"]
+                                "user"
+                                all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
 
-  (entity-crud-test {:entity "casebook"
-                     :example new-casebook-maximal
-                     :headers {:Authorization "45c1f5e3f05d0"}
-                     :additional-tests partial-operations-tests}))
+     (entity-crud-test {:entity "casebook"
+                        :example new-casebook-maximal
+                        :headers {:Authorization "45c1f5e3f05d0"}
+                        :additional-tests partial-operations-tests}))))
 
-(deftest-for-each-store test-casebook-pagination-field-selection
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
+(deftest test-casebook-pagination-field-selection
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
 
-  (let [ids (post-entity-bulk
-             (assoc new-casebook-maximal :title "foo")
-             :casebooks
-             30
-             {"Authorization" "45c1f5e3f05d0"})]
+     (let [ids (post-entity-bulk
+                (assoc new-casebook-maximal :title "foo")
+                :casebooks
+                30
+                {"Authorization" "45c1f5e3f05d0"})]
 
-    (pagination-test
-     "ctia/casebook/search?query=*"
-     {"Authorization" "45c1f5e3f05d0"}
-     casebook-sort-fields)
+       (pagination-test
+        "ctia/casebook/search?query=*"
+        {"Authorization" "45c1f5e3f05d0"}
+        casebook-fields)
 
-    (field-selection-tests
-     ["ctia/casebook/search?query=*"
-      (doc-id->rel-url (first ids))]
-     {"Authorization" "45c1f5e3f05d0"}
-     casebook-sort-fields)))
+       (field-selection-tests
+        ["ctia/casebook/search?query=*"
+         (doc-id->rel-url (first ids))]
+        {"Authorization" "45c1f5e3f05d0"}
+        casebook-fields)))))
 
-(deftest-for-each-store test-casebook-routes-access-control
-  (access-control-test "casebook"
-                       new-casebook-minimal
-                       true
-                       true))
+(deftest test-casebook-routes-access-control
+  (test-for-each-store
+   (fn []
+     (access-control-test "casebook"
+                          new-casebook-minimal
+                          true
+                          true))))
