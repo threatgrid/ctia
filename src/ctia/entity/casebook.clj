@@ -15,7 +15,7 @@
              [pagination :as pagination]
              [sorting :as graphql-sorting]
              [refs :as refs]]
-            [ctia.store :refer [read read-store update write-store]]
+            [ctia.store :refer :all]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]

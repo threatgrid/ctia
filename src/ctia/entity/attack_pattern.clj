@@ -6,6 +6,7 @@
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
+            [ctia.store :refer :all]
             [ctia.schemas
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting :as sorting]]

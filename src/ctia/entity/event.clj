@@ -1,15 +1,33 @@
-(ns ctia.event.store.es
+(ns ctia.entity.event
+  (:refer-clojure :exclude [update])
   (:require
+   [ctia.stores.es.mapping :as em]
    [ctia.store :refer [IEventStore]]
    [clj-momo.lib.es
     [document :as d]
     [schemas :refer [ESConnState SliceProperties]]
     [slice :refer [get-slice-props]]]
    [ctia.lib.pagination :refer [list-response-schema]]
-   [ctia.schemas.event :as ctia-event-schemas]
    [ctia.stores.es.crud :as crud]
    [ctim.events.schemas :as event-schemas]
    [schema.core :as s]))
+
+(def event-mapping
+  {"event"
+   {:dynamic false
+    :properties
+    {:owner em/token
+     :groups em/token
+     :timestamp em/ts
+     :entity {:enabled false
+              :type "object"}
+     :id em/token
+     :http-params {:enabled false
+                   :type "object"}
+     :type em/token
+     :fields {:enabled false
+              :type "object"}
+     :judgement_id em/token}}})
 
 (s/defschema UpdateMap
   "a map converted from an Update Triple for ES Compat"
@@ -78,20 +96,15 @@
 
 (def ^:private handle-list-raw (crud/handle-find :event event-schemas/Event))
 
-(defn coerce-event! [event]
-  ((crud/coerce-to-fn (ctia-event-schemas/schema-for-event event))
-   event))
-
 (s/defn handle-list :- (list-response-schema event-schemas/Event)
   [state :- ESConnState
    filter-map :- {s/Any s/Any}
    ident
    params]
-  (update (handle-list-raw state
-                           filter-map
-                           ident
-                           params)
-          :data #(map coerce-event! %)))
+  (handle-list-raw state
+                   filter-map
+                   ident
+                   params))
 
 (defrecord EventStore [state]
   IEventStore
@@ -99,3 +112,11 @@
     (handle-create state new-events))
   (list-events [this filter-map ident params]
     (handle-list state filter-map ident params)))
+
+(def event-entity
+  {:no-api? true
+   :no-bulk? true
+   :entity :event
+   :plural :events
+   :es-store ->EventStore
+   :es-mapping event-mapping})

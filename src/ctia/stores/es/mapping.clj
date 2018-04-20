@@ -326,23 +326,6 @@
                           :match_mapping_type "string"
                           :mapping token}}])
 
-(def event-mapping
-  {"event"
-   {:dynamic false
-    :properties
-    {:owner token
-     :groups token
-     :timestamp ts
-     :entity {:enabled false
-              :type "object"}
-     :id token
-     :http-params {:enabled false
-                   :type "object"}
-     :type token
-     :fields {:enabled false
-              :type "object"}
-     :judgement_id token}}})
-
 (def store-settings
   {:number_of_replicas 1
    :number_of_shards 1

@@ -36,8 +36,8 @@
   (fu/optionalize-all js/StoredJudgement)
   "partial-stored-judgement")
 
-(s/defn realize-judgement :- js/StoredJudgement
-  [new-judgement :- js/NewJudgement
+(s/defn realize-judgement :- StoredJudgement
+  [new-judgement :- NewJudgement
    id :- s/Str
    tempids :- (s/maybe TempIDs)
    owner :- s/Str

@@ -1,7 +1,7 @@
 (ns ctia.http.routes.graphql-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.schemas.sorting :as sort-fields]
+            [ctia.schemas.sorting :as fields]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
@@ -300,7 +300,7 @@
                   {:type "ip"
                    :value "1.2.3.4"}
                   [:observable :judgements]
-                  ctia.entity.judgement/judgement-sort-fields)))))
+                  ctia.entity.judgement.schemas/judgement-fields)))))
 
          (testing "judgement query"
            (let [{:keys [data errors status]}
@@ -337,7 +337,7 @@
                   graphql-queries
                   {:id judgement-1-id}
                   [:judgement :relationships]
-                  ctia.entity.relationship/relationship-sort-fields)))
+                  ctia.entity.relationship/relationship-fields)))
 
              (testing "feedbacks connection"
                (gh/connection-test "JudgementFeedbacksQueryTest"
@@ -353,7 +353,7 @@
                   graphql-queries
                   {:id judgement-1-id}
                   [:judgement :feedbacks]
-                  ctia.entity.feedback/feedback-sort-fields)))))
+                  ctia.entity.feedback.schemas/feedback-fields)))))
 
          (testing "judgements query"
            (testing "judgements connection"
@@ -371,7 +371,7 @@
                 graphql-queries
                 {:query "*"}
                 [:judgements]
-                ctia.entity.judgement/judgement-sort-fields)))
+                ctia.entity.judgement.schemas/judgement-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}
@@ -420,7 +420,7 @@
                   graphql-queries
                   {:id indicator-1-id}
                   [:indicator :relationships]
-                  ctia.entity.relationship/relationship-sort-fields)))
+                  ctia.entity.relationship/relationship-fields)))
 
              (testing "feedbacks connection"
                (gh/connection-test "IndicatorFeedbacksQueryTest"
@@ -436,7 +436,7 @@
                   graphql-queries
                   {:id indicator-1-id}
                   [:indicator :feedbacks]
-                  ctia.entity.feedback/feedback-sort-fields)))))
+                  ctia.entity.feedback.schemas/feedback-fields)))))
 
          (testing "indicators query"
            (testing "indicators connection"
@@ -454,7 +454,7 @@
                 graphql-queries
                 {:query "*"}
                 [:indicators]
-                ctia.entity.indicator/indicator-sort-fields)))
+                ctia.entity.indicator/indicator-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}
@@ -497,7 +497,7 @@
                 graphql-queries
                 {:query "*"}
                 [:investigations]
-                ctia.entity.investigation/investigation-sort-fields)))
+                ctia.entity.investigation/investigation-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}
@@ -541,7 +541,7 @@
                 graphql-queries
                 {:query "*"}
                 [:casebooks]
-                ctia.entity.casebook/casebook-sort-fields)))
+                ctia.entity.casebook/casebook-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}
@@ -592,7 +592,7 @@
                   graphql-queries
                   {:id sighting-1-id}
                   [:sighting :relationships]
-                  ctia.entity.relationship/relationship-sort-fields)))
+                  ctia.entity.relationship/relationship-fields)))
 
              (testing "feedbacks connection"
                (gh/connection-test "SightingFeedbacksQueryTest"
@@ -608,7 +608,7 @@
                   graphql-queries
                   {:id sighting-1-id}
                   [:sighting :feedbacks]
-                  ctia.entity.feedback/feedback-sort-fields)))))
+                  ctia.entity.feedback.schemas/feedback-fields)))))
 
          (testing "sightings query"
 
@@ -626,7 +626,7 @@
                 graphql-queries
                 {:query "*"}
                 [:sightings]
-                ctia.entity.sighting/sighting-sort-fields)))
+                ctia.entity.sighting.schemas/sighting-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}

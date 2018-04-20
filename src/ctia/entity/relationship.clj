@@ -1,5 +1,6 @@
 (ns ctia.entity.relationship
   (:require [ctia.entity.relationship.schemas :as rs]
+            [ctia.store :refer :all]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]

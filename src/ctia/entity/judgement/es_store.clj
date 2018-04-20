@@ -1,6 +1,7 @@
 (ns ctia.entity.judgement.es-store
   (:require [clj-momo.lib.es.document :refer [search-docs update-doc]]
             [clj-momo.lib.time :as time]
+            [ctia.store :refer :all]
             [ctia.domain.access-control :refer [allow-write?]]
             [ctia.entity.judgement.schemas
              :refer
@@ -17,7 +18,9 @@
              [coerce :as c]
              [core :as s]]))
 
-(def judgement-mapping
+(def judgement-mapping "judgement")
+
+(def judgement-mapping-def
   {"judgement"
    {:dynamic "strict"
     :include_in_all false

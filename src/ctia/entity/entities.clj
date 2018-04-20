@@ -17,7 +17,8 @@
              [relationship :refer [relationship-entity]]
              [sighting :refer [sighting-entity]]
              [tool :refer [tool-entity]]
-             [identity :refer [identity-entity]]]))
+             [identity :refer [identity-entity]]
+             [event :refer [event-entity]]]))
 
 (def entities
   {:actor actor-entity
@@ -36,4 +37,6 @@
    :relationship relationship-entity
    :sighting sighting-entity
    :tool tool-entity
-   :identity identity-entity})
+
+   :identity identity-entity
+   :event event-entity})

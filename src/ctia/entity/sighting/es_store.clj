@@ -1,4 +1,5 @@
 (ns ctia.entity.sighting.es-store
+  (:refer-clojure :exclude [list update read])
   (:require [clj-momo.lib.es.schemas :refer [ESConnState]]
             [ctia.entity.sighting.schemas
              :refer

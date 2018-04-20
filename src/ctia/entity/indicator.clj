@@ -190,7 +190,7 @@
 (def indicator-entity
   {:route-context "/indicator"
    :tags ["Indicator"]
-   :entity :indicators
+   :entity :indicator
    :plural :indicators
    :schema Indicator
    :partial-schema PartialIndicator

@@ -1,6 +1,7 @@
 (ns ctia.entity.actor
   (:require
    [flanders.utils :as fu]
+   [ctia.store :refer :all]
    [ctia.domain.entities :refer [default-realize-fn]]
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams

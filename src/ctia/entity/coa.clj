@@ -6,6 +6,7 @@
             [ctia.schemas
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting :refer [default-entity-sort-fields]]]
+            [ctia.store :refer :all]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]

@@ -124,6 +124,6 @@
    :partial-stored-schema js/PartialStoredJudgement
    :realize-fn js/realize-judgement
    :es-store j-store/->JudgementStore
-   :es-mapping j-store/judgement-mapping
+   :es-mapping j-store/judgement-mapping-def
    :routes judgement-routes
    :capabilities capabilities})
