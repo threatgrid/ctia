@@ -1,5 +1,4 @@
 (ns ctia.observable.routes
-  (:refer-clojure :exclude [read list identity update])
   (:require
    [compojure.api.sweet :refer :all]
    [ctia
@@ -93,7 +92,7 @@
                                  (map id/long-id))
               relationships (:data (read-store
                                     :relationship
-                                    list
+                                    list-records
                                     {:source_ref judgement-ids}
                                     identity-map
                                     {:fields [:target_ref]}))
@@ -155,7 +154,7 @@
                                 (map id/long-id))
               relationships (:data (read-store
                                     :relationship
-                                    list
+                                    list-records
                                     {:source_ref sighting-ids}
                                     identity-map
                                     {:fields [:target_ref]}))
@@ -196,7 +195,7 @@
                                 (map id/long-id))
               relationships (:data (read-store
                                     :relationship
-                                    list
+                                    list-records
                                     {:source_ref sighting-ids}
                                     identity-map
                                     {:fields [:target_ref]}))

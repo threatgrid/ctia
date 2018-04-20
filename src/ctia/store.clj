@@ -1,15 +1,13 @@
 (ns ctia.store
-  (:refer-clojure
-   :exclude [read list update])
   (:require
    [clojure.tools.logging :as log]))
 
 (defprotocol IStore
-  (create [this new-records ident params])
-  (read [this id ident params])
-  (update [this id record ident])
-  (delete [this id ident])
-  (list [this filtermap ident params]))
+  (create-record [this new-records ident params])
+  (read-record [this id ident params])
+  (update-record [this id record ident])
+  (delete-record [this id ident])
+  (list-records [this filtermap ident params]))
 
 (defprotocol IJudgementStore
   (calculate-verdict [this observable ident])
@@ -63,6 +61,6 @@
   (log/debug "query-string-search-store args: " store read-fn args)
   (apply read-fn (first (get @stores store)) args))
 
-(def read-fn read)
-(def create-fn create)
-(def list-fn list)
+(def read-fn read-record)
+(def create-fn create-record)
+(def list-fn list-records)

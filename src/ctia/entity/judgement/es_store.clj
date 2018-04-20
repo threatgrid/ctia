@@ -120,13 +120,13 @@
 
 (defrecord JudgementStore [state]
   IStore
-  (create [_ new-judgements ident params]
+  (create-record [_ new-judgements ident params]
     (handle-create state new-judgements ident params))
-  (read [_ id ident params]
+  (read-record [_ id ident params]
     (handle-read state id ident params))
-  (delete [_ id ident]
+  (delete-record [_ id ident]
     (handle-delete state id ident))
-  (list [_ filter-map ident params]
+  (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
 
   IJudgementStore

@@ -1,5 +1,4 @@
 (ns ctia.entity.feedback
-  (:refer-clojure :exclude [identity list update read])
   (:require [compojure.api.sweet :refer [GET]]
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
             [ctia.store :refer :all]
@@ -65,7 +64,7 @@
        :identity identity
        :identity-map identity-map
        (-> (read-store :feedback
-                       list
+                       list-records
                        (select-keys params [:entity_id])
                        identity-map
                        (dissoc params :entity_id))

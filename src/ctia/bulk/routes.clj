@@ -41,14 +41,14 @@
   "return the create function provided an entity type key"
   [k auth-identity params]
   #(write-store
-    k store/create
+    k store/create-record
     % (auth/ident->map auth-identity) params))
 
 (defn read-fn
   "return the create function provided an entity type key"
   [k auth-identity params]
   #(read-store
-    k store/read
+    k store/read-record
     % (auth/ident->map auth-identity) params))
 
 (defn create-entities

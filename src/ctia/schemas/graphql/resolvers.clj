@@ -1,5 +1,4 @@
 (ns ctia.schemas.graphql.resolvers
-  (:refer-clojure :exclude [list read update])
   (:require [clojure.tools.logging :as log]
             [ctia.domain.entities
              :refer
@@ -92,7 +91,7 @@
                                         (concat default-fields field-selection)))]
     (log/debug "Search feedback for entity id: " entity-id)
     (some-> (read-store :feedback
-                        list
+                        list-records
                         {:entity_id entity-id}
                         (:ident context)
                         params)

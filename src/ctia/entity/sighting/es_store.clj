@@ -1,5 +1,4 @@
 (ns ctia.entity.sighting.es-store
-  (:refer-clojure :exclude [list update read])
   (:require [clj-momo.lib.es.schemas :refer [ESConnState]]
             [ctia.entity.sighting.schemas
              :refer
@@ -149,15 +148,15 @@
 
 (defrecord SightingStore [state]
   IStore
-  (read [_ id ident params]
+  (read-record [_ id ident params]
     (handle-read state id ident params))
-  (create [_ new-sightings ident params]
+  (create-record [_ new-sightings ident params]
     (handle-create state new-sightings ident params))
-  (update [_ id sighting ident]
+  (update-record [_ id sighting ident]
     (handle-update state id sighting ident))
-  (delete [_ id ident]
+  (delete-record [_ id ident]
     (handle-delete state id ident))
-  (list [_ filter-map ident params]
+  (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
   ISightingStore
   (list-sightings-by-observables [_ observables ident params]

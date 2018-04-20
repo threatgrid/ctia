@@ -1,5 +1,4 @@
 (ns ctia.http.routes.crud
-  (:refer-clojure :exclude [identity list read update])
   (:require
    [clojure.string :refer [capitalize]]
    [ctia.http.middleware.auth :refer :all]
@@ -58,7 +57,7 @@
                 :entity-type entity
                 :realize-fn realize-fn
                 :store-fn #(write-store entity
-                                        create
+                                        create-record
                                         %
                                         identity-map
                                         {})
@@ -82,13 +81,13 @@
             :identity-map identity-map
             (-> (flows/update-flow
                  :get-fn #(read-store entity
-                                      read
+                                      read-record
                                       %
                                       identity-map
                                       {})
                  :realize-fn realize-fn
                  :update-fn #(write-store entity
-                                          update
+                                          update-record
                                           (:id %)
                                           %
                                           identity-map)
@@ -110,7 +109,8 @@
           :capabilities external-id-capabilities
           :identity identity
           :identity-map identity-map
-          (-> (read-store entity list
+          (-> (read-store entity
+                          list-records
                           {:external_ids external_id}
                           identity-map
                           q)
@@ -148,7 +148,7 @@
           :identity identity
           :identity-map identity-map
           (if-let [rec (read-store entity
-                                   read
+                                   read-record
                                    id
                                    identity-map
                                    params)]
@@ -168,12 +168,12 @@
              :identity-map identity-map
              (if (flows/delete-flow
                   :get-fn #(read-store entity
-                                       read
+                                       read-record
                                        %
                                        identity-map
                                        {})
                   :delete-fn #(write-store entity
-                                           delete
+                                           delete-record
                                            %
                                            identity-map)
                   :entity-type entity

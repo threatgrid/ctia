@@ -1,5 +1,4 @@
 (ns ctia.entity.casebook
-  (:refer-clojure :exclude [read update identity])
   (:require [compojure.api.sweet :refer [context POST routes]]
             [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
             [ctia.flows.crud :as flows]
@@ -141,13 +140,13 @@
                   :identity-map identity-map
                   (-> (flows/patch-flow
                        :get-fn #(read-store :casebook
-                                            read
+                                            read-record
                                             %
                                             identity-map
                                             {})
                        :realize-fn realize-casebook
                        :update-fn #(write-store :casebook
-                                                update
+                                                update-record
                                                 (:id %)
                                                 %
                                                 identity-map)
@@ -174,13 +173,13 @@
                   :identity-map identity-map
                   (-> (flows/patch-flow
                        :get-fn #(read-store :casebook
-                                            read
+                                            read-record
                                             %
                                             identity-map
                                             {})
                        :realize-fn realize-casebook
                        :update-fn #(write-store :casebook
-                                                update
+                                                update-record
                                                 (:id %)
                                                 %
                                                 identity-map)
@@ -207,13 +206,13 @@
                   :identity-map identity-map
                   (-> (flows/patch-flow
                        :get-fn #(read-store :casebook
-                                            read
+                                            read-record
                                             %
                                             identity-map
                                             {})
                        :realize-fn realize-casebook
                        :update-fn #(write-store :casebook
-                                                update
+                                                update-record
                                                 (:id %)
                                                 %
                                                 identity-map)

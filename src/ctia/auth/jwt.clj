@@ -1,6 +1,8 @@
 (ns ctia.auth.jwt
+  (:refer-clojure :exclude [identity])
   (:require
-   [ctia.auth.capabilities :refer [all-capabilities]]
+   [ctia.auth.capabilities :refer [all-capabilities
+                                   default-capabilities]]
    [ring-jwt-middleware.core :as mid]
    [clj-momo.lib.set :refer [as-set]]
    [clojure.set :as set]
@@ -39,14 +41,7 @@
    :write #{:create :delete}})
 
 (def ^:private read-only-ctia-capabilities
-  (:user auth/default-capabilities))
-
-(def ^:private ctia-capabilities
-  (set/difference all-capabilities
-                  (set/union
-                   casebook-capabilities
-                   #{:specify-id
-                     :developer})))
+  (:user default-capabilities))
 
 (def claim-prefix
   (get-in @prop/properties [:ctia :http :jwt :claim-prefix]

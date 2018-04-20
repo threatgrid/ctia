@@ -1,5 +1,4 @@
 (ns ctia.entity.event
-  (:refer-clojure :exclude [update])
   (:require
    [ctia.stores.es.mapping :as em]
    [ctia.store :refer [IEventStore]]

@@ -1,5 +1,4 @@
 (ns ctia.stores.es.store
-  (:refer-clojure :exclude [read update list create delete])
   (:require [clj-momo.lib.es.index :as es-index]
             [ctia.store :refer :all]
             [ctia.stores.es.crud :as crud]))
@@ -15,15 +14,15 @@
    partial-stored-schema]
   `(defrecord ~store-name [~(symbol "state")]
      IStore
-     (~(symbol "read") [_# id# ident# params#]
+     (~(symbol "read-record") [_# id# ident# params#]
       ((crud/handle-read ~entity ~partial-stored-schema) ~(symbol "state")  id# ident# params#))
-     (~(symbol "create") [_# new-actors# ident# params#]
+     (~(symbol "create-record") [_# new-actors# ident# params#]
       ((crud/handle-create ~entity ~stored-schema) ~(symbol "state") new-actors# ident# params#))
-     (~(symbol "update") [_# id# actor# ident#]
+     (~(symbol "update-record") [_# id# actor# ident#]
       ((crud/handle-update ~entity ~stored-schema) ~(symbol "state") id# actor# ident#))
-     (~(symbol "delete") [_# id# ident#]
+     (~(symbol "delete-record") [_# id# ident#]
       ((crud/handle-delete ~entity ~stored-schema) ~(symbol "state") id# ident#))
-     (~(symbol "list") [_# filter-map# ident# params#]
+     (~(symbol "list-records") [_# filter-map# ident# params#]
       ((crud/handle-find ~entity ~partial-stored-schema) ~(symbol "state") filter-map# ident# params#))
      IQueryStringSearchableStore
      (~(symbol "query-string-search") [_# query# filtermap# ident# params#]
