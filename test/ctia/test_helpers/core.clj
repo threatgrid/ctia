@@ -240,10 +240,12 @@
      (with-redefs [clojure.tools.logging/log* patched-log#]
        ~@body)))
 
-(defn deep-dissoc
-  "Dissoc a key in the given map recursively"
-  [m k]
-  (prewalk #(if (map? %)
-              (dissoc % k)
+(defn deep-dissoc-entity-ids
+  "Dissoc all entity ID in the given map recursively"
+  [m]
+  (prewalk #(if (and (map? %)
+                     ;; Do not remove the id of a nested openc2 coa
+                     (not= (:type %) "structured_coa"))
+              (dissoc % :id)
               %)
            m))
