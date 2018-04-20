@@ -1,7 +1,7 @@
 (ns ctia.http.routes.relationship-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.schemas.sorting :refer [relationship-sort-fields]]
+            [ctia.entity.relationship :refer [relationship-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -44,14 +44,15 @@
                                          "user")
 
      (testing "POST /cita/relationship"
-       (let [new-relationship (-> new-relationship-maximal
-                                  (assoc
-                                   :source_ref "http://example.com/"
-                                   :target_ref "http://example.com/"
-                                   :external_ids
-                                   ["http://ex.tld/ctia/relationship/relationship-123"
-                                    "http://ex.tld/ctia/relationship/relationship-456"])
-                                  (dissoc :id))
+       (let [new-relationship
+             (-> new-relationship-maximal
+                 (assoc
+                  :source_ref "http://example.com/"
+                  :target_ref "http://example.com/"
+                  :external_ids
+                  ["http://ex.tld/ctia/relationship/relationship-123"
+                   "http://ex.tld/ctia/relationship/relationship-456"])
+                 (dissoc :id))
              {status :status
               {error :error} :parsed-body}
              (post "ctia/relationship"
@@ -89,12 +90,12 @@
        (pagination-test
         "ctia/relationship/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        relationship-sort-fields)
+        relationship-fields)
        (field-selection-tests
         ["ctia/relationship/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        relationship-sort-fields)))))
+        relationship-fields)))))
 
 (deftest test-relationship-routes-access-control
   (test-for-each-store

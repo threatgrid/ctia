@@ -75,12 +75,6 @@
 
 (def-es-store AttackPatternStore :attack-pattern StoredAttackPattern PartialStoredAttackPattern)
 
-(def capabilities
-  #{:create-attack-pattern
-    :read-attack-pattern
-    :delete-attack-pattern
-    :search-attack-pattern})
-
 (s/defschema AttackPatternFieldsParam
   {(s/optional-key :fields) [attack-pattern-sort-fields]})
 
@@ -144,6 +138,12 @@
 
 (def AttackPatternConnectionType
   (pagination/new-connection AttackPatternType))
+
+(def capabilities
+  #{:create-attack-pattern
+    :read-attack-pattern
+    :delete-attack-pattern
+    :search-attack-pattern})
 
 (def attack-pattern-entity
   {:route-context "/attack-pattern"

@@ -1,5 +1,6 @@
-(ns ctia.identity.store.es
+(ns ctia.entity.identity
   (:require
+   [ctia.stores.es.mapping :as em]
    [ctia.store :refer [IIdentityStore]]
    [clj-momo.lib.es.document
     :refer [create-doc delete-doc get-doc]]
@@ -52,6 +53,17 @@
               login
               true))
 
+(def identity-mapping
+  {"identity"
+   {:dynamic false
+    :include_in_all false
+    :properties
+    {:id em/all_token
+     :role em/token
+     :capabilities em/token
+     :login em/token
+     :groups em/token}}})
+
 (defrecord IdentityStore [state]
   IIdentityStore
   (read-identity [_ login]
@@ -60,3 +72,11 @@
     (handle-create state new-identity))
   (delete-identity [_ org-id role]
     (handle-delete state org-id)))
+
+(def identity-entity
+  {:no-api? true
+   :no-bulk? true
+   :entity :identity
+   :plural :identities
+   :es-store ->IdentityStore
+   :es-mapping identity-mapping})

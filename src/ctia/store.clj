@@ -1,7 +1,8 @@
 (ns ctia.store
   (:refer-clojure
    :exclude [read list update])
-  (:require [clojure.tools.logging :as log]))
+  (:require
+   [clojure.tools.logging :as log]))
 
 (defprotocol IStore
   (create [this new-records ident params])
@@ -30,24 +31,25 @@
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this query filtermap ident params]))
 
-(def empty-stores {:judgement []
-                   :indicator []
-                   :feedback []
-                   :campaign []
-                   :actor []
-                   :coa []
-                   :data-table []
-                   :exploit-target []
-                   :sighting []
-                   :incident []
-                   :relationship []
-                   :identity []
-                   :attack-pattern []
-                   :malware []
-                   :tool []
-                   :event []
-                   :investigation []
-                   :casebook []})
+(def empty-stores
+  {:judgement []
+   :indicator []
+   :feedback []
+   :campaign []
+   :actor []
+   :coa []
+   :data-table []
+   :exploit-target []
+   :sighting []
+   :incident []
+   :relationship []
+   :identity []
+   :attack-pattern []
+   :malware []
+   :tool []
+   :event []
+   :investigation []
+   :casebook []})
 
 (defonce stores (atom empty-stores))
 

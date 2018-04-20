@@ -1,7 +1,7 @@
 (ns ctia.http.routes.actor-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.schemas.sorting :refer [actor-sort-fields]]
+            [ctia.entity.actor :refer [actor-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -46,22 +46,22 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-
      (let [ids (post-entity-bulk
                 (assoc new-actor-maximal :title "foo")
                 :actors
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
+
        (field-selection-tests
         ["ctia/actor/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        actor-sort-fields))
+        actor-fields))
 
      (pagination-test
       "ctia/actor/search?query=*"
       {"Authorization" "45c1f5e3f05d0"}
-      actor-sort-fields))))
+      actor-fields))))
 
 (deftest test-actor-routes-access-control
   (test-for-each-store

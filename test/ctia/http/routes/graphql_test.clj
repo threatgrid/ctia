@@ -300,7 +300,7 @@
                   {:type "ip"
                    :value "1.2.3.4"}
                   [:observable :judgements]
-                  sort-fields/judgement-sort-fields)))))
+                  ctia.entity.judgement/judgement-sort-fields)))))
 
          (testing "judgement query"
            (let [{:keys [data errors status]}
@@ -337,7 +337,7 @@
                   graphql-queries
                   {:id judgement-1-id}
                   [:judgement :relationships]
-                  sort-fields/relationship-sort-fields)))
+                  ctia.entity.relationship/relationship-sort-fields)))
 
              (testing "feedbacks connection"
                (gh/connection-test "JudgementFeedbacksQueryTest"
@@ -353,7 +353,7 @@
                   graphql-queries
                   {:id judgement-1-id}
                   [:judgement :feedbacks]
-                  sort-fields/feedback-sort-fields)))))
+                  ctia.entity.feedback/feedback-sort-fields)))))
 
          (testing "judgements query"
            (testing "judgements connection"
@@ -371,7 +371,7 @@
                 graphql-queries
                 {:query "*"}
                 [:judgements]
-                sort-fields/judgement-sort-fields)))
+                ctia.entity.judgement/judgement-sort-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}
@@ -420,7 +420,7 @@
                   graphql-queries
                   {:id indicator-1-id}
                   [:indicator :relationships]
-                  sort-fields/relationship-sort-fields)))
+                  ctia.entity.relationship/relationship-sort-fields)))
 
              (testing "feedbacks connection"
                (gh/connection-test "IndicatorFeedbacksQueryTest"
@@ -436,7 +436,7 @@
                   graphql-queries
                   {:id indicator-1-id}
                   [:indicator :feedbacks]
-                  sort-fields/feedback-sort-fields)))))
+                  ctia.entity.feedback/feedback-sort-fields)))))
 
          (testing "indicators query"
            (testing "indicators connection"
@@ -454,7 +454,7 @@
                 graphql-queries
                 {:query "*"}
                 [:indicators]
-                sort-fields/indicator-sort-fields)))
+                ctia.entity.indicator/indicator-sort-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}
@@ -497,7 +497,7 @@
                 graphql-queries
                 {:query "*"}
                 [:investigations]
-                sort-fields/investigation-sort-fields)))
+                ctia.entity.investigation/investigation-sort-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}
@@ -541,7 +541,7 @@
                 graphql-queries
                 {:query "*"}
                 [:casebooks]
-                sort-fields/casebook-sort-fields)))
+                ctia.entity.casebook/casebook-sort-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}
@@ -592,7 +592,7 @@
                   graphql-queries
                   {:id sighting-1-id}
                   [:sighting :relationships]
-                  sort-fields/relationship-sort-fields)))
+                  ctia.entity.relationship/relationship-sort-fields)))
 
              (testing "feedbacks connection"
                (gh/connection-test "SightingFeedbacksQueryTest"
@@ -608,7 +608,7 @@
                   graphql-queries
                   {:id sighting-1-id}
                   [:sighting :feedbacks]
-                  sort-fields/feedback-sort-fields)))))
+                  ctia.entity.feedback/feedback-sort-fields)))))
 
          (testing "sightings query"
 
@@ -626,7 +626,7 @@
                 graphql-queries
                 {:query "*"}
                 [:sightings]
-                sort-fields/sighting-sort-fields)))
+                ctia.entity.sighting/sighting-sort-fields)))
 
            (testing "query argument"
              (let [{:keys [data errors status]}

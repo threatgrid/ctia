@@ -1,6 +1,7 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [ctia.entity.entities :refer [entities]]
+            [ctia.entity.casebook :refer [casebook-operation-routes]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -24,16 +25,6 @@
             [ctia.version.routes :refer [version-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]))
-
-(defmacro entity-routes
-  [entities]
-  `(do
-     (compojure.api.sweet/routes
-      ~@(for [entity (vals (eval entities))]
-          `(context
-            ~(:route-context entity) []
-            :tags ~(:tags entity)
-            (:routes (~(:entity entity) entities)))))))
 
 (def api-description
   "A Threat Intelligence API service
@@ -70,6 +61,17 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
+
+(defmacro entity-routes
+  [entities]
+  `(do
+     (compojure.api.sweet/routes
+      ~@(for [entity (remove :no-api?
+                             (vals (eval entities)))]
+          `(context
+            ~(:route-context entity) []
+            :tags ~(:tags entity)
+            (:routes (~(:entity entity) entities)))))))
 
 (defn api-handler []
   (api {:exceptions
@@ -127,15 +129,18 @@
                    (context
                     "/ctia" []
                     (entity-routes entities)
+                    (context "/casebook" []
+                             :tags ["Casebook"]
+                             casebook-operation-routes)
+                    (context
+                     "/bulk" []
+                     :tags ["Bulk"]
+                     bulk-routes)
                     bundle-routes
                     observable-routes
                     metrics-routes
                     properties-routes
                     graphql-routes
-                    version-routes
-                    (context
-                     "/bulk" []
-                     :tags ["Bulk"]
-                     bulk-routes)))
+                    version-routes))
        (undocumented
         (rt/not-found (ok (unk/err-html))))))

@@ -291,17 +291,6 @@
     :actuator actuator-type
     :modifiers modifier-type}})
 
-(def identity-mapping
-  {"identity"
-   {:dynamic "strict"
-    :include_in_all false
-    :properties
-    {:id all_token
-     :role token
-     :capabilities token
-     :login token
-     :groups token}}})
-
 (def observed-relation
   {:dynamic "strict"
    :properties

@@ -1,7 +1,7 @@
 (ns ctia.http.routes.incident-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.schemas.sorting :refer [incident-sort-fields]]
+            [ctia.entity.incident :refer [incident-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -48,13 +48,13 @@
        (pagination-test
         "ctia/incident/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        incident-sort-fields)
+        incident-fields)
 
        (field-selection-tests
         ["ctia/incident/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        incident-sort-fields)))))
+        incident-fields)))))
 
 (deftest test-incident-routes-access-control
   (test-for-each-store

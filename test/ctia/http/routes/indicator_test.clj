@@ -1,7 +1,7 @@
 (ns ctia.http.routes.indicator-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.auth :as auth]
+            [ctia.auth.capabilities :as caps]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [core :as helpers]
@@ -21,7 +21,7 @@
 (deftest test-indicator-routes
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" caps/all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"

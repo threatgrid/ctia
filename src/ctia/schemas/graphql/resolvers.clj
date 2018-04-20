@@ -1,4 +1,5 @@
 (ns ctia.schemas.graphql.resolvers
+  (:refer-clojure :exclude [list read update])
   (:require [clojure.tools.logging :as log]
             [ctia.domain.entities
              :refer

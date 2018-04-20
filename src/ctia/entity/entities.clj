@@ -1,4 +1,5 @@
 (ns ctia.entity.entities
+  (:refer-clojure :exclude [identity])
   (:require [ctia.entity
              [actor :refer [actor-entity]]
              [attack-pattern :refer [attack-pattern-entity]]
@@ -12,9 +13,11 @@
              [indicator :refer [indicator-entity]]
              [investigation :refer [investigation-entity]]
              [judgement :refer [judgement-entity]]
+             [malware :refer [malware-entity]]
              [relationship :refer [relationship-entity]]
              [sighting :refer [sighting-entity]]
-             [tool :refer [tool-entity]]]))
+             [tool :refer [tool-entity]]
+             [identity :refer [identity-entity]]]))
 
 (def entities
   {:actor actor-entity
@@ -29,6 +32,8 @@
    :indicator indicator-entity
    :investigation investigation-entity
    :judgement judgement-entity
+   :malware malware-entity
    :relationship relationship-entity
    :sighting sighting-entity
-   :tool tool-entity})
+   :tool tool-entity
+   :identity identity-entity})

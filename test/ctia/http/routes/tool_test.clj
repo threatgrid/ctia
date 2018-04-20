@@ -1,7 +1,7 @@
 (ns ctia.http.routes.tool-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.schemas.sorting :refer [tool-sort-fields]]
+            [ctia.entity.tool.schemas :refer [tool-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -56,13 +56,13 @@
        (pagination-test
         "ctia/tool/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        tool-sort-fields)
+        tool-fields)
 
        (field-selection-tests
         ["ctia/tool/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        tool-sort-fields)))))
+        tool-fields)))))
 
 (deftest test-tool-routes-access-control
   (test-for-each-store

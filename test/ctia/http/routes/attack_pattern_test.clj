@@ -1,7 +1,7 @@
 (ns ctia.http.routes.attack-pattern-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.schemas.sorting :refer [attack-pattern-sort-fields]]
+            [ctia.entity.attack-pattern :refer [attack-pattern-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -58,13 +58,13 @@
        (pagination-test
         "ctia/attack-pattern/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        attack-pattern-sort-fields)
+        attack-pattern-fields)
 
        (field-selection-tests
         ["ctia/attack-pattern/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        attack-pattern-sort-fields)))))
+        attack-pattern-fields)))))
 
 (deftest attack-pattern-routes-access-control
   (test-for-each-store

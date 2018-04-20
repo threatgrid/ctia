@@ -1,7 +1,7 @@
 (ns ctia.http.routes.sighting-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.schemas.sorting :refer [sighting-sort-fields]]
+            [ctia.entity.sighting.schemas :refer [sighting-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -61,13 +61,13 @@
        (pagination-test
         "ctia/sighting/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        sighting-sort-fields)
+        sighting-fields)
 
        (field-selection-tests
         ["ctia/sighting/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        sighting-sort-fields)))))
+        sighting-fields)))))
 
 (deftest test-sighting-routes-access-control
   (test-for-each-store

@@ -4,7 +4,7 @@
             [clojure
              [set :refer [subset?]]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
-            [ctia.schemas.sorting :refer [casebook-sort-fields]]
+            [ctia.entity.casebook :refer [casebook-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -212,13 +212,13 @@
        (pagination-test
         "ctia/casebook/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        casebook-sort-fields)
+        casebook-fields)
 
        (field-selection-tests
         ["ctia/casebook/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        casebook-sort-fields)))))
+        casebook-fields)))))
 
 (deftest test-casebook-routes-access-control
   (test-for-each-store
