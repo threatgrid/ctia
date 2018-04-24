@@ -169,7 +169,7 @@
         :body [bulk NewBulk {:description "a new Bulk object"}]
         :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :summary "POST many new entities using a single HTTP call"
-        :identity login
+        :user-id login
         :capabilities #{:create-actor
                         :create-attack-pattern
                         :create-campaign
@@ -227,7 +227,7 @@
                        :read-casebook
                        :read-sighting
                        :read-tool}
-       :identity auth-identity
+       :user-id auth-identity
        (let [bulk (into {} (remove (comp empty? second)
                                    {:actors          actors
                                     :attack_patterns attack_patterns

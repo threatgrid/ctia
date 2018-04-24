@@ -1,6 +1,6 @@
 (ns ctia.auth.jwt-test
   (:require [ctia.auth.jwt :as sut]
-            [ctia.auth :as auth]
+            [ctia.auth.capabilities :as caps]
             [clojure.test :as t :refer [deftest is]]
             [clojure.set :as set]))
 
@@ -42,7 +42,7 @@
          (sut/scope-to-capabilities sut/casebook-root-scope))
       "Check the casebook capabilities from the casebook scope")
   (is  (= #{:developer :specify-id :external-id :import-bundle}
-          (set/difference auth/all-capabilities
+          (set/difference caps/all-capabilities
                           (sut/scopes-to-capabilities #{sut/entity-root-scope
                                                         sut/casebook-root-scope})))
        "with all scopes you should have most capabilities except some very

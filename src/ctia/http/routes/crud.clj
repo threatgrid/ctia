@@ -51,7 +51,7 @@
            :header-params [{Authorization :- (s/maybe s/Str) nil}]
            :summary (format "Adds a new %s" capitalized)
            :capabilities post-capabilities
-           :identity identity
+           :user-id identity
            :identity-map identity-map
            (-> (flows/create-flow
                 :entity-type entity
@@ -77,7 +77,7 @@
             :summary (format "Updates an %s" capitalized)
             :path-params [id :- s/Str]
             :capabilities put-capabilities
-            :identity identity
+            :user-id identity
             :identity-map identity-map
             (-> (flows/update-flow
                  :get-fn #(read-store entity
@@ -107,7 +107,7 @@
           :header-params [{Authorization :- (s/maybe s/Str) nil}]
           :summary (format "List %s by external id" capitalized)
           :capabilities external-id-capabilities
-          :identity identity
+          :user-id identity
           :identity-map identity-map
           (-> (read-store entity
                           list-records
@@ -124,7 +124,7 @@
             :summary (format "Search for a %s using a Lucene/ES query string" capitalized)
             :query [params search-q-params]
             :capabilities search-capabilities
-            :identity identity
+            :user-id identity
             :identity-map identity-map
             :header-params [{Authorization :- (s/maybe s/Str) nil}]
             (-> (query-string-search-store
@@ -145,7 +145,7 @@
           :query [params get-params]
           :header-params [{Authorization :- (s/maybe s/Str) nil}]
           :capabilities get-capabilities
-          :identity identity
+          :user-id identity
           :identity-map identity-map
           (if-let [rec (read-store entity
                                    read-record
@@ -164,7 +164,7 @@
              :summary (format "Deletes a %s" capitalized)
              :header-params [{Authorization :- (s/maybe s/Str) nil}]
              :capabilities delete-capabilities
-             :identity identity
+             :user-id identity
              :identity-map identity-map
              (if (flows/delete-flow
                   :get-fn #(read-store entity

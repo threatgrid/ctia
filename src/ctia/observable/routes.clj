@@ -33,7 +33,7 @@
                      "observable.")
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :read-verdict
-       :identity identity
+       :user-id identity
        :identity-map identity-map
        (or (some-> (read-store :judgement
                                calculate-verdict
@@ -53,7 +53,7 @@
        :summary "Returns the Judgements associated with the specified observable."
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :list-judgements
-       :identity identity
+       :user-id identity
        :identity-map identity-map
        (-> (read-store :judgement
                        list-judgements-by-observable
@@ -75,7 +75,7 @@
                      "specified observable based on Judgement relationships.")
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-judgements :list-relationships}
-       :identity identity
+       :user-id identity
        :identity-map identity-map
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
@@ -114,7 +114,7 @@
                      observable_value :- s/Str]
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :list-sightings
-       :identity identity
+       :user-id identity
        :identity-map identity-map
        :return PartialSightingList
        :summary "Returns Sightings associated with the specified observable."
@@ -138,7 +138,7 @@
                      "specified observable based on Sighting relationships.")
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-sightings :list-relationships}
-       :identity identity
+       :user-id identity
        :identity-map identity-map
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])
@@ -179,7 +179,7 @@
                      "specified observable based on Sighting relationships")
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:list-sightings :list-relationships}
-       :identity identity
+       :user-id identity
        :identity-map identity-map
        (paginated-ok
         (let [http-show (get-in @properties [:ctia :http :show])

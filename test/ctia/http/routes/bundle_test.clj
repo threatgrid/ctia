@@ -169,6 +169,7 @@
        (map (fn [[k v]] [k (count v)]))
        (into {})))
 
+
 (deftest bundle-import-test
   (test-for-each-store
    (fn []
@@ -176,139 +177,139 @@
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
-                                         "user"))
-   (let [indicators [(mk-indicator 0)
-                     (mk-indicator 1)]
-         sightings [(mk-sighting 0)
-                    (mk-sighting 1)]
-         relationships (map (fn [idx indicator sighting]
-                              (mk-relationship idx indicator
-                                               sighting "indicates"))
-                            (range)
-                            indicators
-                            sightings)]
-     (testing "Import bundle with all entity types"
-       (let [new-bundle (deep-dissoc-entity-ids bundle-maximal)
-             response (post "ctia/bundle/import"
-                            :body new-bundle
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-result (:parsed-body response)]
-         (is (= 200 (:status response)))
-         (is (= (count-bundle-entities new-bundle)
-                (count-bundle-result-entities (:results bundle-result)
-                                              "created"))
-             "All entities are created")))
-     (testing "Create"
-       (let [bundle {:type "bundle"
-                     :source "source"
-                     :indicators (set indicators)
-                     :sightings (set sightings)
-                     :relationships (set relationships)}
-             response (post "ctia/bundle/import"
-                            :body bundle
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-result (:parsed-body response)]
-         (is (= 200 (:status response)))
+                                         "user")
+     (let [indicators [(mk-indicator 0)
+                       (mk-indicator 1)]
+           sightings [(mk-sighting 0)
+                      (mk-sighting 1)]
+           relationships (map (fn [idx indicator sighting]
+                                (mk-relationship idx indicator
+                                                 sighting "indicates"))
+                              (range)
+                              indicators
+                              sightings)]
+       (testing "Import bundle with all entity types"
+         (let [new-bundle (deep-dissoc-entity-ids bundle-maximal)
+               response (post "ctia/bundle/import"
+                              :body new-bundle
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= (count-bundle-entities new-bundle)
+                  (count-bundle-result-entities (:results bundle-result)
+                                                "created"))
+               "All entities are created")))
+       (testing "Create"
+         (let [bundle {:type "bundle"
+                       :source "source"
+                       :indicators (set indicators)
+                       :sightings (set sightings)
+                       :relationships (set relationships)}
+               response (post "ctia/bundle/import"
+                              :body bundle
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result (:parsed-body response)]
+           (is (= 200 (:status response)))
 
-         (is (every? #(= "created" %)
-                     (map :result (:results bundle-result)))
-             "All entities are created")
+           (is (every? #(= "created" %)
+                       (map :result (:results bundle-result)))
+               "All entities are created")
 
-         (doseq [entity (concat indicators
-                                sightings
-                                (map #(resolve-ids bundle-result %)
-                                     relationships))]
-           (validate-entity-record
-            (find-result-by-original-id bundle-result (:id entity))
-            entity))))
-     (testing "Update"
-       (let [bundle
-             {:type "bundle"
-              :source "source"
-              :indicators (set (map with-modified-description indicators))
-              :sightings (set (map with-modified-description sightings))
-              :relationships (set (map with-modified-description relationships))}
-             response (post "ctia/bundle/import"
-                            :body bundle
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-result (:parsed-body response)]
-         (is (= 200 (:status response)))
+           (doseq [entity (concat indicators
+                                  sightings
+                                  (map #(resolve-ids bundle-result %)
+                                       relationships))]
+             (validate-entity-record
+              (find-result-by-original-id bundle-result (:id entity))
+              entity))))
+       (testing "Update"
+         (let [bundle
+               {:type "bundle"
+                :source "source"
+                :indicators (set (map with-modified-description indicators))
+                :sightings (set (map with-modified-description sightings))
+                :relationships (set (map with-modified-description relationships))}
+               response (post "ctia/bundle/import"
+                              :body bundle
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result (:parsed-body response)]
+           (is (= 200 (:status response)))
 
-         (is (pos? (count (:results bundle-result))))
+           (is (pos? (count (:results bundle-result))))
 
-         (is (every? #(= "exists" %)
-                     (map :result (:results bundle-result)))
-             "All existing entities are not updated")
+           (is (every? #(= "exists" %)
+                       (map :result (:results bundle-result)))
+               "All existing entities are not updated")
 
-         (doseq [entity (concat indicators
-                                sightings
-                                (map #(resolve-ids bundle-result %)
-                                     relationships))]
-           (validate-entity-record
-            (find-result-by-original-id bundle-result (:id entity))
-            entity))))
-     (testing "Custom external prefix keys"
-       (let [bundle {:type "bundle"
-                     :source "source"
-                     :indicators (hash-set
-                                  (assoc (first indicators)
-                                         :external_ids
-                                         ["custom-2"]))}
-             response-create (post "ctia/bundle/import"
-                                   :query-params {"external-key-prefixes" "custom-"}
-                                   :body bundle
-                                   :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-result-create (:parsed-body response-create)
-             response-update (post "ctia/bundle/import"
-                                   :query-params {"external-key-prefixes" "custom-"}
-                                   :body bundle
-                                   :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-result-update (:parsed-body response-update)]
-         (is (= 200 (:status response-create)))
-         (is (= 200 (:status response-update)))
+           (doseq [entity (concat indicators
+                                  sightings
+                                  (map #(resolve-ids bundle-result %)
+                                       relationships))]
+             (validate-entity-record
+              (find-result-by-original-id bundle-result (:id entity))
+              entity))))
+       (testing "Custom external prefix keys"
+         (let [bundle {:type "bundle"
+                       :source "source"
+                       :indicators (hash-set
+                                    (assoc (first indicators)
+                                           :external_ids
+                                           ["custom-2"]))}
+               response-create (post "ctia/bundle/import"
+                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :body bundle
+                                     :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result-create (:parsed-body response-create)
+               response-update (post "ctia/bundle/import"
+                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :body bundle
+                                     :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result-update (:parsed-body response-update)]
+           (is (= 200 (:status response-create)))
+           (is (= 200 (:status response-update)))
 
-         (is (pos? (count (:results bundle-result-create))))
-         (is (pos? (count (:results bundle-result-update))))
+           (is (pos? (count (:results bundle-result-create))))
+           (is (pos? (count (:results bundle-result-update))))
 
-         (is (every? #(= "created" %)
-                     (map :result (:results bundle-result-create)))
-             "All new entities are created")
-         (is (every? #(= "exists" %)
-                     (map :result (:results bundle-result-update)))
-             "All existing entities are not updated")))
-     (testing "Partial results with errors"
-       (let [indicator-store-state (-> @stores :indicator first :state)
-             indexname (:index indicator-store-state)]
-         (es-index/close! (:conn indicator-store-state) indexname))
+           (is (every? #(= "created" %)
+                       (map :result (:results bundle-result-create)))
+               "All new entities are created")
+           (is (every? #(= "exists" %)
+                       (map :result (:results bundle-result-update)))
+               "All existing entities are not updated")))
+       (testing "Partial results with errors"
+         (let [indicator-store-state (-> @stores :indicator first :state)
+               indexname (:index indicator-store-state)]
+           (es-index/close! (:conn indicator-store-state) indexname))
 
-       (let [bundle {:type "bundle"
-                     :source "source"
-                     :sightings [(mk-sighting 10)
-                                 (mk-sighting 11)]
-                     ;; Remove external_ids to avoid errors
-                     ;; coming from the search operation
-                     :indicators [(dissoc (mk-indicator 10)
-                                          :external_ids)]}
-             response-create (post "ctia/bundle/import"
-                                   :body bundle
-                                   :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-result-create (:parsed-body response-create)]
-         (is (= 200 (:status response-create)))
-         (is (every? #(= "created" %)
-                     (->> (:results bundle-result-create)
-                          (filter #(= "sighting" %))
-                          (map :result)))
-             "All valid entities are created")
-         (doseq [entity (:sightings bundle)]
-           (validate-entity-record
-            (find-result-by-original-id bundle-result-create (:id entity))
-            entity))
-         (let [indicators (filter
-                           #(= :indicator (:type %))
-                           (:results bundle-result-create))]
-           (is (not (empty? indicators))
-               "The result collection for indicators is not empty")
-           (is (every? #(contains? % :error) indicators))))))))
+         (let [bundle {:type "bundle"
+                       :source "source"
+                       :sightings [(mk-sighting 10)
+                                   (mk-sighting 11)]
+                       ;; Remove external_ids to avoid errors
+                       ;; coming from the search operation
+                       :indicators [(dissoc (mk-indicator 10)
+                                            :external_ids)]}
+               response-create (post "ctia/bundle/import"
+                                     :body bundle
+                                     :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result-create (:parsed-body response-create)]
+           (is (= 200 (:status response-create)))
+           (is (every? #(= "created" %)
+                       (->> (:results bundle-result-create)
+                            (filter #(= "sighting" %))
+                            (map :result)))
+               "All valid entities are created")
+           (doseq [entity (:sightings bundle)]
+             (validate-entity-record
+              (find-result-by-original-id bundle-result-create (:id entity))
+              entity))
+           (let [indicators (filter
+                             #(= :indicator (:type %))
+                             (:results bundle-result-create))]
+             (is (not (empty? indicators))
+                 "The result collection for indicators is not empty")
+             (is (every? #(contains? % :error) indicators)))))))))
 
 (deftest find-by-external-ids-test
   (test-for-each-store
