@@ -113,10 +113,9 @@
     :as fm} :- FlowMap]
   (let [newtempids
         (->> entities
-             (map (fn [{:keys [id]}]
-                    (when (and id (re-matches id/transient-id-re id))
-                      [id (make-id entity-type)])))
-             (remove nil?)
+             (keep (fn [{:keys [id]}]
+                     (when (and id (re-matches id/transient-id-re id))
+                       [id (make-id entity-type)])))
              (into {}))]
     (update fm :tempids (fnil into {}) newtempids)))
 
@@ -268,10 +267,9 @@
   "Converts IDs in the tempids mapping table from short to long format"
   [tempids short-to-long-map]
   (->> tempids
-       (map (fn [[tempid short-id]]
-              (when-let [long-id (get short-to-long-map short-id)]
-                [tempid long-id])))
-       (remove nil?)
+       (keep (fn [[tempid short-id]]
+               (when-let [long-id (get short-to-long-map short-id)]
+                 [tempid long-id])))
        (into {})))
 
 (s/defn ^:private apply-long-id-fn :- FlowMap

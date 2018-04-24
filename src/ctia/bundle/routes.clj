@@ -140,7 +140,7 @@
 
 (defn find-by-external-ids
   [import-data entity-type auth-identity]
-  (let [external-ids (remove nil? (map :external_id import-data))]
+  (let [external-ids (keep :external_id import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
                 (pr-str external-ids))

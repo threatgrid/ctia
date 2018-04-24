@@ -10,9 +10,8 @@
            :specify-id
            :external-id
            :import-bundle}
-         (remove nil?
-                 (map (fn [[_ entity]]
-                        (:capabilities entity)) entities))))
+         (keep (fn [[_ entity]]
+                 (:capabilities entity)) entities)))
 
 (def default-capabilities
   {:user
