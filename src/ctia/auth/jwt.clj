@@ -67,12 +67,19 @@
   [scope-repr]
   (case (count (:path scope-repr))
     ;; example: ["private-intel" "sighting"] (for private-intel/sighting scope)
-    2 (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
-                                                (:access scope-repr))
+    2 (condp = (second (:path scope-repr))
+        "import-bundle" (if (contains? (:access scope-repr) :write)
+                          #{:import-bundle}
+                          #{})
+        (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
+                                                  (:access scope-repr)))
     ;; typically: ["private-intel"]
     1 (->> entities
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
-           unionize)
+           unionize
+           (set/union (if (contains? (:access scope-repr) :write)
+                        #{:import-bundle}
+                        #{})))
     #{}))
 
 (defn gen-casebook-capabilities

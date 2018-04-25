@@ -41,12 +41,22 @@
            :delete-casebook}
          (sut/scope-to-capabilities sut/casebook-root-scope))
       "Check the casebook capabilities from the casebook scope")
-  (is  (= #{:developer :specify-id :external-id :import-bundle}
+  (is  (= #{:developer :specify-id :external-id}
           (set/difference caps/all-capabilities
                           (sut/scopes-to-capabilities #{sut/entity-root-scope
                                                         sut/casebook-root-scope})))
        "with all scopes you should have most capabilities except some very
        specific ones")
+  (is (= #{:import-bundle}
+         (sut/scopes-to-capabilities
+          #{(str sut/entity-root-scope "/import-bundle")})))
+  (is (= #{}
+         (sut/scopes-to-capabilities
+          #{(str sut/entity-root-scope "/import-bundle:read")})))
+  (is (contains? (sut/scopes-to-capabilities #{(str sut/entity-root-scope ":write")})
+                 :import-bundle))
+  (is (not (contains? (sut/scopes-to-capabilities #{(str sut/entity-root-scope ":read")})
+                      :import-bundle)))
   (is (= #{:read-sighting :list-sightings :search-sighting :create-sighting
            :delete-sighting}
          (sut/scopes-to-capabilities
