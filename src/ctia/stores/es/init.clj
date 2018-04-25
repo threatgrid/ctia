@@ -1,16 +1,13 @@
 (ns ctia.stores.es.init
   (:require
+   [ctia.properties :refer [properties]]
+   [ctia.stores.es.mapping :refer [store-settings]]
    [clj-momo.lib.es
     [conn :refer [connect]]
     [index :as es-index]
     [schemas :refer [ESConnState]]]
-   [ctia.properties :refer [properties]]
-   [ctia.stores.es
-    [mapping :refer [store-mappings store-settings]]
-    [store :as es-store]]
-   [schema.core :as s]
-   [schema-tools.core :as st]))
-
+   [ctia.entity.entities :refer [entities]]
+   [schema.core :as s]))
 
 (s/defschema StoreProperties
   {:entity s/Keyword
@@ -19,6 +16,10 @@
    :replicas s/Num
    s/Keyword s/Any})
 
+(def store-mappings
+  (apply merge {}
+         (map (fn [[_ {:keys [entity es-mapping]}]]
+                {entity es-mapping}) entities)))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
@@ -64,24 +65,9 @@
         store-constructor)))
 
 (def ^:private factories
-  {:actor          (make-factory es-store/->ActorStore)
-   :attack-pattern (make-factory es-store/->AttackPatternStore)
-   :campaign       (make-factory es-store/->CampaignStore)
-   :coa            (make-factory es-store/->COAStore)
-   :data-table     (make-factory es-store/->DataTableStore)
-   :event          (make-factory es-store/->EventStore)
-   :exploit-target (make-factory es-store/->ExploitTargetStore)
-   :feedback       (make-factory es-store/->FeedbackStore)
-   :identity       (make-factory es-store/->IdentityStore)
-   :incident       (make-factory es-store/->IncidentStore)
-   :indicator      (make-factory es-store/->IndicatorStore)
-   :investigation  (make-factory es-store/->InvestigationStore)
-   :judgement      (make-factory es-store/->JudgementStore)
-   :malware        (make-factory es-store/->MalwareStore)
-   :relationship   (make-factory es-store/->RelationshipStore)
-   :casebook     (make-factory es-store/->CasebookStore)
-   :sighting       (make-factory es-store/->SightingStore)
-   :tool           (make-factory es-store/->ToolStore)})
+  (apply merge {}
+         (map (fn [[_ {:keys [entity es-store]}]]
+                {entity (make-factory es-store)}) entities)))
 
 (defn init-store! [store-kw]
   (when-let [factory (get factories store-kw)]

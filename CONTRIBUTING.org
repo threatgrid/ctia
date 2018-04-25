@@ -1,0 +1,194 @@
+#+Title: Contributing
+
+*  Introduction
+
+This document introduce how to minimize the friction between contributors.
+It is mainly written for developpers.
+
+* Coding Style
+
+** Syntax
+
+The code should follow the following guidelines:
+
+https://github.com/bbatsov/clojure-style-guide
+
+Mainly it states that the syntax should be the one provided by default with emacs.
+Most (every) developer use emacs right now to contribute.
+
+** Guidelines
+
+The motivations for these guidelines are code readability and also management of
+code complexity:
+
+- Select meaningful names for functions and variables. Avoid acronyms that
+  aren't commonly known.
+- Prefer rewriting code to make it clear over adding comments. If that cannot be
+  achieved, add comments.
+- Limit the number of functions invoked in a single line of code to five.
+- Limit the nested depth of a function definition to four. In order to achieve
+  this it may be necessary to introduce local variables to hold intermediate
+  results or extract code into additional function definitions.
+- Only use anonymous functions for short function definitions that fit
+  comfortably on a single line. Otherwise create a private, named function.
+- Do not write anonymous functions that have arguments that are anonymous
+  functions.
+- Make an effort to limit the depth of the code. Mainly, you should reach a lib
+  or core function as soon as possible while following the functions of a
+  namespace. Other member of the team should not need to open more than three
+  namespaces at a time to reach all the functions necessary to understand your
+  code.
+- Do not use loop/recur unless you can't use reduce. Do not use reduce unless
+  you can't use a combination/threading of functions.
+- Never use ~defmacro~ unless you really can't use a function and every other
+  member of the team couldn't find a better way.
+- Never use ~defmethod~.
+- Only use ~defprotocol~ for declaring TK services. Never use it unless you
+  can't do otherwise. Most of the time using ~case~ and/or ~cond~ will be preferable.
+- Try to avoid the use of ~core.async~ there is certainly an easier, simpler and
+  less bug prone way to do what you intend to.
+
+** Backward Compatibility
+
+We work in a production environment.
+Once a code is in production, people are using in some way, we can't break it.
+
+Try to make your code upgrade proof.
+Inspired from (Spec-ulation talk of Rich Hickey
+https://www.youtube.com/watch?v=oyLBGkS5ICk).
+Ask yourself the questions:
+
+- "Will we be able to upgrade without downtime?"
+- "Will it be easy to put that new code in production without breaking the service?"
+- "Will that change imply to run a data migration in production?"
+- "Will that change break the workflow of any client?"
+- "How easy will it be to upgrade the configuration?"
+- "What will occur if the 3rd party change slightly their data format?".
+
+For example: notice that adding new fields to the configuration is not as
+expensive as modifying it or removing a key, because it will force that the
+deploiement of the conf and of the code to be synchronized. While if you can add
+new fields, you can upgrade the configuration before upgrading the code in
+production without any downtime.
+
+- For most spec/schemas, make them as permissive as possible.
+  For example ~(defschema Conf {:port s/Int})~ is not as permissive as
+  as ~(defschema Conf {:port s/Int s/Any s/Any})~.
+  Because if the configuration change we would be able to add new fields
+  to the configuration without breaking the running version.
+- Only add new fields, new values.
+  Because modifying the type of a value or removing a field will
+  break between different version of the code.
+  #+BEGIN_SRC
+  OK:     (s/enum :a :b) => (s/enum :a :b :c)
+  NOT OK: (s/enum :a :b :c) => (s/enum :a :b)
+
+  OK:     {:a s/Int} => {:a s/Int :b s/Bool}
+  NOT OK: {:a s/Int} => {:a s/Bool}
+  #+END_SRC
+
+
+* Git / Deploiement Workflow
+
+In our team, GitHub is currently used both as a developer tool and as a task
+management tool. This document only focus about the developer tool aspect.
+
+** Git / Github
+
+Our workflow is close to the Gitlab flow (see:
+https://about.gitlab.com/2014/09/29/gitlab-flow/)
+
+*** Init your env
+
+1. Clone the iroh repo in github
+2. Your master branch should be the one from your own repository (cloned from threatgrid one)
+3. The repository is generally named ~tg~ (or ~motherboard~)
+4. You should sync your master branch with ~tg~ time to time with the ~git synctg~ alias
+   #+BEGIN_SRC
+   [alias]
+	   synctg = "!oldbr=`git rev-parse --abbrev-ref HEAD` ; git checkout master && git fetch --all && git rebase tg/master && git push ; git checkout $oldbr"
+   #+END_SRC
+
+You can (should) also add the repository of other contributors to your remote repos.
+
+#+BEGIN_SRC
+> git remote -v
+gbuisson	git@github.com:gbuisson/iroh.git (fetch)
+gbuisson	git@github.com:gbuisson/iroh.git (push)
+msprunck	git@github.com:msprunck/iroh.git (fetch)
+msprunck	git@github.com:msprunck/iroh.git (push)
+origin	git@github.com:YOU/iroh.git (fetch)
+origin	git@github.com:YOU/iroh.git (push)
+tg	git@github.com:threatgrid/iroh.git (fetch)
+tg	git@github.com:threatgrid/iroh.git (push)
+yogsototh	git@github.com:yogsototh/iroh.git (fetch)
+yogsototh	git@github.com:yogsototh/iroh.git (push)
+#+END_SRC
+
+You can test everything is working correctly by doing:
+
+#+BEGIN_SRC
+> docker-compose -f containers/dev/docker-compose.yml up -d
+> lein test
+> lein run
+#+END_SRC
+
+
+*** Adding a new feature / fixing an issue
+
+1. You should have an open issue in github with number ~#XXX~.
+2. ~git checkout -b issue-XXX-issue-short-description~
+3. work... ~git commit~ many times
+4. Optionally you can clean up your git log history with ~git rebase -i master~, or ~git synctg~
+5. Test locally ~./build/compile.sh && ./build/run-tests.sh && lein tk~
+6. ~git push -u~ will push and create the branch on github
+7. Open a PR. In the PR reference the issue by writing (~Close #XXX~ or
+   ~Connects to #XXX~). If the issue also depend from an Epic please reference
+   it as well ~Connects to Epic #EEE~).
+8. Make changes according to PR feedbacks
+9. Either use the =Squash & Merge button= in github or manually rebase. Please
+   take the time to write a good commit message. For example be inspired by
+   https://chris.beams.io/posts/git-commit/
+
+*** Deploiement
+
+This part doesn't concern contributor external to the core team.
+
+We currently have three environments.
+
+
+| Integration (INT) | https://intel.int.iroh.site          | master    |
+| Integration (INT) | https://private.intel.int.iroh.site  | master    |
+| TEST              | https://intel.test.iroh.site         | rel-X.X.X |
+| TEST              | https://private.intel.test.iroh.site | rel-X.X.X |
+| PROD              | https://intel.amp.cisco.com          | rel-X.X.X |
+| PROD              | https://private.intel.amp.cisco.com  | rel-X.X.X |
+
+There could be two cases:
+
+**** Classical: all features from INT to go up to PROD
+
+That's the easiest case. QA works on TEST environment and file bugs.
+
+If a bug is found by QA. Make the PR for Int, and tag it (with a github label,
+not git tags) with the release version accordingly.
+
+**** Release Workflow: some feature won't go up from INT to PROD
+
+In that case, a branch will be created that won't contains some commits of master.
+
+If a bug is found by QA. Make the PR from the rel-X.X.X branch.
+
+And also you should (most of the time) use the same branch to make another PR
+directly from INT or manually cherry-pick the PR from rel-X.X.X to INT. That
+work of bringing back a fix from release down to INT SHOULD NOT be done by QA.
+
+We should NEVER make any commit goes down.
+Only from INT to TEST and from TEST to PROD or directly from TEST to PROD.
+This is why it is your duty not to forget to make two PRs, one to fix TEST the
+over one to fix INT.
+
+**** Configuration Modification
+
+Any change that need a configuration change must be handled in the ~tenzin~
+repository. The detail about how to do that are out of the scope of this document.

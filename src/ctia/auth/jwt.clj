@@ -1,9 +1,14 @@
 (ns ctia.auth.jwt
-  (:require [ctia.auth :as auth :refer [IIdentity]]
-            [ctia.properties :as prop]
-            [ring-jwt-middleware.core :as mid]
-            [clj-momo.lib.set :refer [as-set]]
-            [clojure.set :as set]))
+  (:refer-clojure :exclude [identity])
+  (:require
+   [ctia.auth.capabilities :refer [all-capabilities
+                                   default-capabilities]]
+   [ring-jwt-middleware.core :as mid]
+   [clj-momo.lib.set :refer [as-set]]
+   [clojure.set :as set]
+   [ctia
+    [auth :as auth :refer [IIdentity]]
+    [properties :as prop]]))
 
 (def entity-root-scope
   (get-in @prop/properties [:ctia :auth :entities :scope]
@@ -36,7 +41,7 @@
    :write #{:create :delete}})
 
 (def ^:private read-only-ctia-capabilities
-  (:user auth/default-capabilities))
+  (:user default-capabilities))
 
 (def claim-prefix
   (get-in @prop/properties [:ctia :http :jwt :claim-prefix]
@@ -62,12 +67,19 @@
   [scope-repr]
   (case (count (:path scope-repr))
     ;; example: ["private-intel" "sighting"] (for private-intel/sighting scope)
-    2 (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
-                                                (:access scope-repr))
+    2 (condp = (second (:path scope-repr))
+        "import-bundle" (if (contains? (:access scope-repr) :write)
+                          #{:import-bundle}
+                          #{})
+        (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
+                                                  (:access scope-repr)))
     ;; typically: ["private-intel"]
     1 (->> entities
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
-           unionize)
+           unionize
+           (set/union (if (contains? (:access scope-repr) :write)
+                        #{:import-bundle}
+                        #{})))
     #{}))
 
 (defn gen-casebook-capabilities

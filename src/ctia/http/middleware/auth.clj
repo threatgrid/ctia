@@ -63,7 +63,7 @@
   (update acc :lets into
           [bind-to `(:groups ~'+compojure-api-request+)]))
 
-(defmethod meta/restructure-param :identity [_ bind-to acc]
+(defmethod meta/restructure-param :auth-identity [_ bind-to acc]
   (update acc :lets into
           [bind-to `(:identity ~'+compojure-api-request+)]))
 

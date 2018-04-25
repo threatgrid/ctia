@@ -84,15 +84,13 @@
                   (let [manually-sorted (->> (get route :headers headers)
                                              :parsed-body
                                              (sort-by field)
-                                             (map field)
-                                             (remove nil?))
+                                             (keep field))
                         route-sorted (->> (get route
                                                :headers headers
                                                :query-params {:sort_by (name field)
                                                               :sort_order "asc"})
                                           :parsed-body
-                                          (map field)
-                                          (remove nil?))]
+                                          (keep field))]
                     (is (deep=
                          manually-sorted
                          route-sorted) field)))

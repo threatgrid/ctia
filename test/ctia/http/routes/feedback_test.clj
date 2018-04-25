@@ -1,14 +1,14 @@
 (ns ctia.http.routes.feedback-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [is join-fixtures testing use-fixtures]]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get]]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [deftest-for-each-store]]]
+             [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]))
 
 (def new-feedback
@@ -39,25 +39,27 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(deftest-for-each-store test-feedback-routes
-  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-  (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
+(deftest test-feedback-routes
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
 
-  (whoami-helpers/set-whoami-response "2222222222222"
-                                      "baruser"
-                                      "bargroup"
-                                      "user")
+     (whoami-helpers/set-whoami-response "2222222222222"
+                                         "baruser"
+                                         "bargroup"
+                                         "user")
 
-  (entity-crud-test
-   {:entity "feedback"
-    :example new-feedback
-    :update-tests? false
-    :invalid-tests? false
-    :search-tests? false
-    :additional-tests feedback-by-entity-id-test
-    :headers {:Authorization "45c1f5e3f05d0"}}))
+     (entity-crud-test
+      {:entity "feedback"
+       :example new-feedback
+       :update-tests? false
+       :invalid-tests? false
+       :search-tests? false
+       :additional-tests feedback-by-entity-id-test
+       :headers {:Authorization "45c1f5e3f05d0"}}))))
 

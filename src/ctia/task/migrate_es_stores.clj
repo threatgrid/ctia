@@ -8,23 +8,8 @@
              [init :refer [init-store-service! log-properties]]
              [properties :as p]
              [store :refer [stores]]]
-            [ctia.schemas
-             [core :refer [StoredActor
-                           StoredAttackPattern
-                           StoredCampaign
-                           StoredCasebook
-                           StoredCOA
-                           StoredDataTable
-                           StoredExploitTarget
-                           StoredFeedback
-                           StoredIncident
-                           StoredIndicator
-                           StoredJudgement
-                           StoredMalware
-                           StoredRelationship
-                           StoredSighting
-                           StoredTool]]
-             [identity :refer [Identity]]]
+            [ctia.entity.entities :refer [entities]]
+            [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.task.migrations :refer [available-migrations]]
             [schema-tools.core :as st]
@@ -33,24 +18,11 @@
 (def default-batch-size 100)
 
 (def all-types
-  {:actor StoredActor
-   :attack-pattern StoredAttackPattern
-   :campaign StoredCampaign
-   :casebook StoredCasebook
-   :coa StoredCOA
-   :data-table StoredDataTable
-   :event s/Any
-   :exploit-target StoredExploitTarget
-   :feedback StoredFeedback
-   :incident StoredIncident
-   :indicator StoredIndicator
-   :identity (st/merge {s/Any s/Any} Identity)
-   :judgement StoredJudgement
-   :malware StoredMalware
-   :relationship StoredRelationship
-   :sighting (st/merge StoredSighting
-                       {(s/optional-key :observables_hash) s/Any})
-   :tool StoredTool})
+  (assoc (apply merge {}
+                (map (fn [[_ {:keys [entity stored-schema]}]]
+                       {entity stored-schema}) entities))
+         :sighting (st/merge StoredSighting
+                             {(s/optional-key :observables_hash) s/Any})))
 
 (defn type->schema [type]
   (if-let [schema (get all-types type)]
