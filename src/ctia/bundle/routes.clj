@@ -355,7 +355,7 @@
                    nil}]
                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "POST many new entities using a single HTTP call"
-                 :user-id auth-identity
+                 :auth-identity auth-identity
                  :capabilities #{:create-actor
                                  :create-attack-pattern
                                  :create-campaign

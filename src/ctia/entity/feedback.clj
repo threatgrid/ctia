@@ -61,7 +61,7 @@
        :summary "Search Feedback"
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :read-feedback
-       :user-id identity
+       :auth-identity identity
        :identity-map identity-map
        (-> (read-store :feedback
                        list-records

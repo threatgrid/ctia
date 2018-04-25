@@ -136,7 +136,7 @@
                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                   :summary "Edit Observables on a casebook"
                   :capabilities :create-casebook
-                  :user-id identity
+                  :auth-identity identity
                   :identity-map identity-map
                   (-> (flows/patch-flow
                        :get-fn #(read-store :casebook
@@ -169,7 +169,7 @@
                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                   :summary "Edit Texts on a casebook"
                   :capabilities :create-casebook
-                  :user-id identity
+                  :auth-identity identity
                   :identity-map identity-map
                   (-> (flows/patch-flow
                        :get-fn #(read-store :casebook
@@ -202,7 +202,7 @@
                   :header-params [{Authorization :- (s/maybe s/Str) nil}]
                   :summary "Edit a Bundle on a casebook"
                   :capabilities :create-casebook
-                  :user-id identity
+                  :auth-identity identity
                   :identity-map identity-map
                   (-> (flows/patch-flow
                        :get-fn #(read-store :casebook
