@@ -16,7 +16,7 @@
 
 (def feedback-mapping
   {"feedback"
-   {:dynamic "strict"
+   {:dynamic false
     :include_in_all false
     :properties
     (merge

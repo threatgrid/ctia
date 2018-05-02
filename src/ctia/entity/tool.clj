@@ -12,7 +12,7 @@
 
 (def tool-mapping
   {"tool"
-   {:dynamic "strict"
+   {:dynamic false
     :include_in_all false
     :properties
     (merge

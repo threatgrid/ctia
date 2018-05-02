@@ -59,7 +59,7 @@
 
 (def attack-pattern-mapping
   {"attack-pattern"
-   {:dynamic "strict"
+   {:dynamic false
     :include_in_all false
     :properties
     (merge
