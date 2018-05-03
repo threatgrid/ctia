@@ -152,7 +152,8 @@
      (entity-crud-test
       {:entity "judgement"
        :example new-judgement
-       :update-tests? false
+       :update-tests? true
+       :update-field :source
        :invalid-tests? false
        :search-tests? false
        :additional-tests additional-tests
@@ -414,5 +415,5 @@
    (fn []
      (access-control-test "judgement"
                           ex/new-judgement-minimal
-                          false
+                          true
                           true))))

@@ -76,17 +76,19 @@
     :realize-fn js/realize-judgement
     :get-capabilities :read-judgement
     :post-capabilities :create-judgement
+    :put-capabilities #{:create-judgement :developer}
     :delete-capabilities :delete-judgement
     :search-capabilities :search-judgement
     :external-id-capabilities #{:read-judgement :external-id}
-    :can-update? false}))
+    :can-update? true}))
 
 (def capabilities
   #{:create-judgement
     :read-judgement
     :list-judgements
     :delete-judgement
-    :search-judgement})
+    :search-judgement
+    :developer})
 
 (def JudgementType
   (let [{:keys [fields name description]}

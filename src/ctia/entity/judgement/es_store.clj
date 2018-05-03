@@ -45,6 +45,7 @@
               sc/json-schema-coercion-matcher))
 
 (def handle-create (crud/handle-create :judgement StoredJudgement))
+(def handle-update (crud/handle-update :judgement StoredJudgement))
 (def handle-read (crud/handle-read :judgement PartialStoredJudgement))
 (def handle-delete (crud/handle-delete :judgement PartialStoredJudgement))
 (def handle-list (crud/handle-find :judgement PartialStoredJudgement))
@@ -126,6 +127,8 @@
     (handle-read state id ident params))
   (delete-record [_ id ident]
     (handle-delete state id ident))
+  (update-record [_ id judgement ident]
+    (handle-update state id judgement ident))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
 
