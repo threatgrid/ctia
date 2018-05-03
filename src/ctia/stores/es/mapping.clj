@@ -134,15 +134,12 @@
 
 (def incident-time
   {:properties
-   {:first_malicious_action ts
-    :initial_compromise ts
-    :first_data_exfiltration ts
-    :incident_discovery ts
-    :incident_opened ts
-    :containment_achieved ts
-    :restoration_achieved ts
-    :incident_reported ts
-    :incident_closed ts}})
+   {:opened ts
+    :discovered ts
+    :reported ts
+    :remediated ts
+    :closed ts
+    :rejected ts}})
 
 (def non-public-data-compromised
   {:properties

@@ -95,6 +95,8 @@
                (post "ctia/incident"
                      :body {:id (id/long-id incident-1-id)
                             :confidence "High"
+                            :status "Open"
+                            :incident_time {:opened #inst "2016-02-11T00:40:48.212-00:00"}
                             :external_ids ["incident-1"]}
                      :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 201 status))))
@@ -105,6 +107,8 @@
                (post "ctia/incident"
                      :body {:id (id/long-id incident-2-id)
                             :confidence "High"
+                            :status "Open"
+                            :incident_time {:opened #inst "2016-02-11T00:40:48.212-00:00"}
                             :external_ids ["incident-2"]}
                      :headers {"Authorization" "45c1f5e3f05d0"})]
            (is (= 201 status))))

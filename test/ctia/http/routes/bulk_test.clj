@@ -19,7 +19,8 @@
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [ctim.examples.incidents :refer [new-incident-maximal]]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -83,11 +84,10 @@
    :reason "false positive"})
 
 (defn mk-new-incident [n]
-  {:title (str "incident-" n)
-   :description (str "description: incident-" n)
-   :confidence "Low"
-   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
+  (-> new-incident-maximal
+      (dissoc :id :schema_version :tlp :type)
+      (into {:title (str "incident-" n)
+             :description (str "description: incident-" n)})))
 
 (defn mk-new-indicator [n]
   {:title (str "indicator-" n)

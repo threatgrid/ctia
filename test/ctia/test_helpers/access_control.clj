@@ -244,9 +244,15 @@
               :headers {"Authorization" "player-3-token"})]
 
     (testing "green test setup is successful"
-      (is (= 201 (:status player-1-entity-post)))
-      (is (= 201 (:status player-2-entity-post)))
-      (is (= 201 (:status player-3-entity-post))))
+      (is (= 201 (:status player-1-entity-post))
+          (str "HTTP status should be 201 "
+               (pr-str player-1-entity-post)))
+      (is (= 201 (:status player-2-entity-post))
+          (str "HTTP status should be 201 "
+               (pr-str player-2-entity-post)))
+      (is (= 201 (:status player-3-entity-post))
+          (str "HTTP status should be 201 "
+               (pr-str player-3-entity-post))))
 
     (crud-access-control-test entity
                               can-update?

@@ -64,4 +64,5 @@
                  fix-end-time
                  add-groups
                  target-observed_time
-                 pluralize-target)})
+                 pluralize-target)
+   :1.0.0 (comp (append-version "1.0.0"))})
