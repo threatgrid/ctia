@@ -8,7 +8,7 @@
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post post-entity-bulk]]
+             [core :as helpers :refer [post patch post-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
@@ -21,6 +21,22 @@
             [ctim.schemas.common :refer [ctim-schema-version]]))
 
 (defn partial-operations-tests [casebook-id casebook]
+  ;; patch
+  (testing "PATCH /ctia/casebook/:id"
+    (let [teardown {:description (:description casebook)}
+          change {:description "updated"}
+          expected-entity (merge casebook change)
+          response (patch (str "ctia/casebook/" (:short-id casebook-id))
+                          :body change
+                          :headers {"Authorization" "45c1f5e3f05d0"})
+          updated-casebook (:parsed-body response)]
+      (is (= 200 (:status response)))
+      (is (deep= expected-entity updated-casebook))
+
+      (patch (str "ctia/casebook/" (:short-id casebook-id))
+             :body teardown
+             :headers {"Authorization" "45c1f5e3f05d0"})))
+
   ;; observables
   (testing "POST /ctia/casebook/:id/observables :add"
     (let [new-observables [{:type "ip" :value "42.42.42.42"}]
