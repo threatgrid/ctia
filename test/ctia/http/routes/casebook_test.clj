@@ -1,24 +1,26 @@
 (ns ctia.http.routes.casebook-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure
-             [set :refer [subset?]]
-             [test :refer [deftest is join-fixtures testing use-fixtures]]]
-            [ctia.entity.casebook :refer [casebook-fields]]
-            [ctia.test-helpers
-             [access-control :refer [access-control-test]]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post patch post-entity-bulk]]
-             [crud :refer [entity-crud-test]]
-             [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
-            [ctim.examples.casebooks
-             :refer
-             [new-casebook-maximal new-casebook-minimal]]
-            [ctim.schemas.common :refer [ctim-schema-version]]))
+  (:require
+   [ctia.domain.entities :refer [schema-version]]
+   [clj-momo.test-helpers.core :as mth]
+   [clojure
+    [set :refer [subset?]]
+    [test :refer [deftest is join-fixtures testing use-fixtures]]]
+   [ctia.entity.casebook :refer [casebook-fields]]
+   [ctia.test-helpers
+    [access-control :refer [access-control-test]]
+    [auth :refer [all-capabilities]]
+    [core :as helpers :refer [post put patch post-entity-bulk]]
+    [crud :refer [entity-crud-test]]
+    [fake-whoami-service :as whoami-helpers]
+    [field-selection :refer [field-selection-tests]]
+    [http :refer [doc-id->rel-url]]
+    [pagination :refer [pagination-test]]
+    [store :refer [test-for-each-store]]]
+   [ctim.examples.casebooks
+    :refer
+    [new-casebook-maximal new-casebook-minimal]]
+   [ctim.schemas.common :refer [ctim-schema-version]]))
 
 (defn partial-operations-tests [casebook-id casebook]
   ;; patch
@@ -183,7 +185,33 @@
       (is (deep= (update casebook :bundle dissoc :malwares)
                  (update updated-casebook :bundle dissoc :malwares)))
       (is (= (:malwares bundle-entities)
-             (-> updated-casebook :bundle :malwares))))))
+             (-> updated-casebook :bundle :malwares)))))
+
+  (testing "schema_version changes with PATCH"
+    (testing "Test setup: PATCH /ctia/casebook/:id redefing schema_version"
+      (let [fake-schema-version "0.0.42"
+            expected-entity (assoc casebook :schema_version fake-schema-version)
+            response (with-redefs [schema-version fake-schema-version]
+                       (put (str "ctia/casebook/" (:short-id casebook-id))
+                            :body casebook
+                            :headers {"Authorization" "45c1f5e3f05d0"}))
+            updated-casebook (:parsed-body response)]
+        (is (= 200 (:status response)))
+        (is (deep= expected-entity updated-casebook))
+
+        (testing "Adding an observable should work and update the schema_version"
+          (testing "POST /ctia/casebook/:id/observables :add"
+            (let [new-observables [{:type "ip" :value "42.42.42.43"}]
+                  expected-entity (-> updated-casebook
+                                      (update :observables concat new-observables)
+                                      (assoc :schema_version schema-version))
+                  response (post (str "ctia/casebook/" (:short-id casebook-id) "/observables")
+                                 :body {:operation :add
+                                        :observables new-observables}
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+                  final-casebook (:parsed-body response)]
+              (is (= 200 (:status response)))
+              (is (deep= expected-entity final-casebook)))))))))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
