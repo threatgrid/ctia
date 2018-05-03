@@ -1,5 +1,5 @@
 (ns ctia.entity.casebook
-  (:require [compojure.api.sweet :refer [context POST routes]]
+  (:require [compojure.api.sweet :refer [context POST PATCH routes]]
             [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes
@@ -127,6 +127,36 @@
 
 (def casebook-operation-routes
   (routes
+   (PATCH "/:id" []
+          :return Casebook
+          :body [partial-casebook PartialNewCasebook {:description "a Casebook partial update"}]
+          :header-params [{Authorization :- (s/maybe s/Str) nil}]
+          :summary "Partially Update a Casebook"
+          :path-params [id :- s/Str]
+          :capabilities :create-casebook
+          :auth-identity identity
+          :identity-map identity-map
+          (-> (flows/patch-flow
+               :get-fn #(read-store :casebook
+                                    read-record
+                                    %
+                                    identity-map
+                                    {})
+               :realize-fn realize-casebook
+               :update-fn #(write-store :casebook
+                                        update-record
+                                        (:id %)
+                                        %
+                                        identity-map)
+               :long-id-fn with-long-id
+               :entity-type :casebook
+               :entity-id id
+               :identity identity
+               :patch-operation :replace
+               :partial-entity partial-casebook
+               :spec :new-casebook/map)
+              un-store
+              ok))
    (context "/:id/observables" []
             (POST "/" []
                   :return Casebook
