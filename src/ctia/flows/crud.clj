@@ -349,7 +349,7 @@
                                     prev-entity
                                     partial-entity)
                    un-store
-                   (dissoc :id))]
+                   (dissoc :id :schema_version))]
     (assoc fm :entities [entity])))
 
 (defn create-flow
@@ -370,7 +370,7 @@
              enveloped-result?]}]
   (-> {:flow-type :create
        :entity-type entity-type
-       :entities entities
+       :entities (map #(dissoc % :schema_version) entities)
        :tempids tempids
        :identity identity
        :long-id-fn long-id-fn
@@ -410,7 +410,8 @@
   (let [prev-entity (get-fn entity-id)]
     (-> {:flow-type :update
          :entity-type entity-type
-         :entities [entity]
+         :entities [(dissoc entity
+                            :schema_version)]
          :prev-entity prev-entity
          :identity identity
          :long-id-fn long-id-fn
