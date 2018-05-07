@@ -487,7 +487,7 @@
   (let [entity (get-fn entity-id)]
     (-> {:flow-type :delete
          :entity-type entity-type
-         :entities [entity]
+         :entities (remove nil? [entity])
          :prev-entity entity
          :identity identity
          :store-fn delete-fn
