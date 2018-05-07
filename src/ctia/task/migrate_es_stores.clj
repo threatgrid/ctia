@@ -27,7 +27,7 @@
 (defn type->schema [type]
   (if-let [schema (get all-types type)]
     schema
-    (do (log/warn "missing schema definition for: %s" type)
+    (do (log/warnf "missing schema definition for: %s" type)
         s/Any)))
 
 (defn compose-migrations
@@ -107,7 +107,7 @@
 (defn store-batch
   "store a batch of documents using a bulk operation"
   [{:keys [conn indexname mapping type]} batch]
-  (log/infof "%s - storing %s records"
+  (log/debugf "%s - storing %s records"
              type
              (count batch))
   (let [prepared-docs
@@ -262,7 +262,16 @@
 
     (doseq [[sk sr] target-stores]
       (log/infof "checking store: %s" sk)
-      (check-store sr batch-size))))
+      (try
+        (check-store sr batch-size)
+        (catch Exception e
+          (if-let [errors (some->> (ex-data e) :error (remove nil?))]
+            (log/errorf (str "The store %s is invalid, value cannot be coerced "
+                             "to match schema, errors: %s")
+                        sk
+                        (pr-str errors))
+            (log/errorf e "Invalid store %s" sr)))))))
+
 (defn -main
   "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>"
   [prefix migrations batch-size confirm?]
@@ -272,12 +281,15 @@
     (assert migrations "Please provide a csv migration list argument")
     (assert batch-size "Please specify a batch size")
     (log/info "migrating all ES Stores")
-    (setup)
-    (migrate-store-indexes prefix
-                           (map keyword (string/split migrations #","))
-                           batch-size
-                           confirm?)
-    (when confirm?
-      (check-store-indexes batch-size prefix))
-    (log/info "migration complete")
+    (try
+      (setup)
+      (migrate-store-indexes prefix
+                             (map keyword (string/split migrations #","))
+                             batch-size
+                             confirm?)
+      (when confirm?
+        (check-store-indexes batch-size prefix))
+      (log/info "migration complete")
+      (catch Exception e
+        (log/error e "Unexpected error during migration")))
     (System/exit 0)))

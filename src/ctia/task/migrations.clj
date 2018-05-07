@@ -123,7 +123,7 @@
            ("judgement"
             "verdict") (rename-judgement-observable-type doc old new)
            "casebook" (rename-casebook-observable-types doc old new)
-           identity))))
+           doc))))
 
 ;;--- Simplify incident model
 
