@@ -104,6 +104,8 @@
      {}
      params)))
 
+(def bulk-max-size (* 5 1024 1024)) ;; 5Mo
+
 (defn store-batch
   "store a batch of documents using a bulk operation"
   [{:keys [conn indexname mapping type]} batch]
@@ -116,10 +118,12 @@
                      :_index indexname
                      :_type mapping)
              batch)]
+
     (es-doc/bulk-create-doc
      conn
      prepared-docs
-     "false")))
+     "false"
+     bulk-max-size)))
 
 (defn create-target-store
   "create the target store, pushing its template"
@@ -291,5 +295,6 @@
         (check-store-indexes batch-size prefix))
       (log/info "migration complete")
       (catch Exception e
-        (log/error e "Unexpected error during migration")))
+        (log/error e "Unexpected error during migration")
+        (System/exit -1)))
     (System/exit 0)))
