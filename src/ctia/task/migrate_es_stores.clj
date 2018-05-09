@@ -1,5 +1,6 @@
 (ns ctia.task.migrate-es-stores
   (:require [clj-momo.lib.es
+             [conn :as conn]
              [document :as es-doc]
              [index :as es-index]]
             [clojure.string :as string]
@@ -16,6 +17,7 @@
             [schema.core :as s]))
 
 (def default-batch-size 100)
+(def timeout (* 5 60000))
 
 (def all-types
   (assoc (apply merge {}
@@ -53,11 +55,14 @@
 
 (defn store->map
   "transform a store record
-   into a properties map for easier manipulation"
+   into a properties map for easier manipulation,
+   override the cm to use the custom timeout "
   [store]
   (let [store-state (-> store first :state)
         entity-type (-> store-state :props :entity name)]
-    {:conn (:conn store-state)
+    {:conn (assoc (:conn store-state)
+                  :cm (conn/make-connection-manager
+                       {:timeout timeout}))
      :indexname (:index store-state)
      :mapping entity-type
      :type entity-type
@@ -108,8 +113,8 @@
   "store a batch of documents using a bulk operation"
   [{:keys [conn indexname mapping type]} batch]
   (log/debugf "%s - storing %s records"
-             type
-             (count batch))
+              type
+              (count batch))
   (let [prepared-docs
         (map #(assoc %
                      :_id (:id %)

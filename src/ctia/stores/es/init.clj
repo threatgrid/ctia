@@ -24,7 +24,8 @@
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
    connection manager and dedicated store index properties"
-  [{:keys [entity indexname shards replicas] :as props} :- StoreProperties]
+  [{:keys [entity indexname shards replicas]
+    :as props} :- StoreProperties]
 
   (let [settings {:number_of_shards shards
                   :number_of_replicas replicas}]
