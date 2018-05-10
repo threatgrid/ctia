@@ -30,9 +30,9 @@ function build-and-publish-package {
   
   # Upload the jar directly to the artifacts S3 bucket
   if [ "${PKG_TYPE}" == "int" ]; then
-    ARTIFACTS_BUCKET="372070498991-int-saltstack"
+    ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
   elif [ "${PKG_TYPE}" == "rel" ]; then
-    ARTIFACTS_BUCKET="372070498991-test-saltstack"
+    ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
   fi
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
   pip install --upgrade --user awscli
