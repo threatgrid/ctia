@@ -257,6 +257,21 @@
                      (:type target-store)
                      checked-count))))))
 
+(defn check-store-index
+  [[sk sr :as store] batch-size]
+  (try
+    (log/infof "checking store: %s" sk)
+    (check-store sr batch-size)
+    (catch Exception e
+      (if-let [errors (some->> (ex-data e) :error (remove nil?))]
+        (let [message (format (str "The store %s is invalid, value cannot be coerced "
+                                   "to match schema, errors: %s")
+                              sk
+                              (pr-str errors))]
+          (log/error message)
+          message)
+        (throw e)))))
+
 (defn check-store-indexes
   "check all new es store indexes"
   [batch-size prefix]
@@ -268,18 +283,7 @@
 
     (log/infof "checking stores: %s" (keys current-stores))
     (log/infof "set batch size: %s" batch-size)
-
-    (doseq [[sk sr] target-stores]
-      (log/infof "checking store: %s" sk)
-      (try
-        (check-store sr batch-size)
-        (catch Exception e
-          (if-let [errors (some->> (ex-data e) :error (remove nil?))]
-            (log/errorf (str "The store %s is invalid, value cannot be coerced "
-                             "to match schema, errors: %s")
-                        sk
-                        (pr-str errors))
-            (log/errorf e "Invalid store %s" sr)))))))
+    (keep #(check-store-index % batch-size) target-stores)))
 
 (defn -main
   "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>"
@@ -297,7 +301,10 @@
                              batch-size
                              confirm?)
       (when confirm?
-        (check-store-indexes batch-size prefix))
+        (when-let [errors (seq (check-store-indexes batch-size prefix))]
+          (log/errorf "Schema errors during migration: %s"
+                      (pr-str errors))
+          (System/exit -1)))
       (log/info "migration complete")
       (catch Exception e
         (log/error e "Unexpected error during migration")
