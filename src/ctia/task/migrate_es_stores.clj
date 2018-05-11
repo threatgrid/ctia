@@ -264,8 +264,8 @@
     (check-store sr batch-size)
     (catch Exception e
       (if-let [errors (some->> (ex-data e) :error (remove nil?))]
-        (let [message (format (str "The store %s is invalid, value cannot be coerced "
-                                   "to match schema, errors: %s")
+        (let [message (format (str "The store %s is invalid, certainly a coercion issue "
+                                   "errors: %s")
                               sk
                               (pr-str errors))]
           (log/error message)
