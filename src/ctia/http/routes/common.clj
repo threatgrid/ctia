@@ -2,6 +2,7 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clojure.string :as str]
             [ctia.schemas.sorting :as sorting]
+            [cemerick.url :refer [url-encode]]
             [ring.swagger.schema :refer [describe]]
             [ring.util
              [http-response :as http-res]
@@ -12,7 +13,8 @@
                      :sort_order
                      :offset
                      :limit
-                     :fields])
+                     :fields
+                     :search_after])
 
 (def filter-map-search-options
   (conj search-options :query))
@@ -23,6 +25,7 @@
                                        "Sort results on a field")
    (s/optional-key :sort_order) (describe (s/enum :asc :desc) "Sort direction")
    (s/optional-key :offset) (describe Long "Pagination Offset")
+   (s/optional-key :search_after) (describe [s/Str] "Pagination stateless cursor")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
 (def paging-param-keys
@@ -50,6 +53,20 @@
                             (map->paging-header-value v)
                             (str v))}) headers)))
 
+(defn make-x-next-url
+  [{:keys [limit
+           offset
+           search_after]
+    :as x-next}]
+  (when x-next
+    (cond-> ""
+      limit (str "limit=" limit)
+      offset (str "&offset=" offset)
+      search_after
+      (str (clojure.string/join "&"
+                                (map (fn [s] (str "&search_after=" (url-encode s)))
+                                     search_after))))))
+
 (defn paginated-ok
   "returns a 200 with the supplied response
    and its metas as headers"
@@ -57,20 +74,19 @@
     :or {data []
          paging {}}}]
 
-  {:status ok
-   :body data
-   :headers (map->paging-headers paging)})
+  (let [x-next-url (make-x-next-url (:next paging))
+        headers (map->paging-headers
+                 (cond-> paging
+                   x-next-url (assoc :next x-next-url)))]
+    {:status ok
+     :body data
+     :headers headers}))
 
 (defn created
   "set a created response, using the id as the location header,
    and the full resource as body"
   [{:keys [id] :as resource}]
   (http-res/created id resource))
-
-;; These are the filter params, per entity.  We place them here since
-;; they are used across entity routes.  For example, the
-;; `ctia/indicator:ID/sightings/search` handler needs to know how to
-;; filter Sightings.
 
 (s/defschema BaseEntityFilterParams
   {(s/optional-key :id) s/Str

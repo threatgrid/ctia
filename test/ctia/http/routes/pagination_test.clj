@@ -7,7 +7,8 @@
             [ctia.test-helpers
              [core :as helpers :refer [url-id]]
              [http :refer [assert-post]]
-             [pagination :refer [pagination-test pagination-test-no-sort]]
+             [pagination :refer [pagination-test
+                                 pagination-test-no-sort]]
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]))
 
@@ -80,8 +81,7 @@
 
        (testing "sightings/indicators by observable"
          (pagination-test-no-sort (str route-pref "/sightings/indicators")
-                                  {"Authorization" "45c1f5e3f05d0"}
-                                  []))
+                                  {"Authorization" "45c1f5e3f05d0"}))
 
        (testing "judgements by observable"
          (pagination-test (str route-pref "/judgements")
@@ -95,5 +95,4 @@
 
        (testing "judgements/indicators by observable"
          (pagination-test-no-sort (str route-pref "/judgements/indicators")
-                                  {"Authorization" "45c1f5e3f05d0"}
-                                  []))))))
+                                  {"Authorization" "45c1f5e3f05d0"}))))))

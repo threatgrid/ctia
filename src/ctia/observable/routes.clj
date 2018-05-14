@@ -13,7 +13,7 @@
    [ctia.entity.judgement.schemas :refer [PartialJudgementList]]
    [ctia.entity.sighting.schemas :refer [PartialSightingList]]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
-   [ctia.lib.pagination :as pag]
+   [clj-momo.lib.es.pagination :as pag]
    [ctia.schemas.core :refer [ObservableTypeIdentifier Reference Verdict]]
    [ctim.domain.id :as id]
    [ring.util.http-response :refer [not-found ok]]
@@ -105,6 +105,8 @@
               (pag/paginate params)
               (pag/response (:offset params)
                             (:limit params)
+                            nil
+                            nil
                             (count indicator-ids))))))
 
   (GET "/:observable_type/:observable_value/sightings" []
@@ -167,6 +169,8 @@
               (pag/paginate params)
               (pag/response (:offset params)
                             (:limit params)
+                            nil
+                            nil
                             (count indicator-ids))))))
 
   (GET "/:observable_type/:observable_value/sightings/incidents" []
@@ -208,4 +212,6 @@
               (pag/paginate params)
               (pag/response (:offset params)
                             (:limit params)
+                            nil
+                            nil
                             (count incident-ids)))))))

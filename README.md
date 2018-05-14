@@ -309,6 +309,40 @@ or from source with leiningen:
 |          1.0.0 | 1.1.0                         | `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores 1.0.0 1.0.0 200 true`   |
 
 
+#### API
+
+##### List Pagination
+
+HTTP routes providing a list use a default limit of 100 records.
+An API client can change this parameter up to 10 0000 records.
+
+when a limit is applied to the response, pagination headers are returned:
+
+| header     | description                                                                    | example                                        |
+|------------|--------------------------------------------------------------------------------|------------------------------------------------|
+| X-TOTAL    | total number of hits in the data store                                         | 5000                                           |
+| X-OFFSET   | the current pagination offset                                                  | 200                                            |
+| X-NEXT     | ready made parameters to fetch the next results page                           | limit=100&offset=100&search_after=foo          |
+| X-PREVIOUS | ready made parameters to fetch the previous results page                       | limit=100&offset=0                             |
+| X-SORT     | the sort parameter for use with `search_after`, the id of the last result page | ["actor-77b01a42-6d2b-4081-8fd0-c887bf54140c"] |
+|            |                                                                                |                                                |
+
+
+To easily scroll through all results of a list, just iterate, appending `X-Next` to your base query URL.
+if no `X-Next` header is present, you have reached the last page.
+
+##### Offset Pagination
+
+To be used for simple matters, when the result window is inferior to 10 000 (`offset` + `limit`)
+use a combination of `offset` and `limit` parameters to paginate results.
+
+
+#### Stateless Cursor Pagination
+
+To be used when the result window is superior to `10 000`, allows to easily loop across all pages of a query response.
+use `limit` and `offset` along with `search_after` filled with the value from the `X-Sort` response header to get the next page.
+
+
 ## License
 
 Copyright © 2015-2016 Cisco Systems

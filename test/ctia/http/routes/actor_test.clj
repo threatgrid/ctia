@@ -49,7 +49,7 @@
      (let [ids (post-entity-bulk
                 (assoc new-actor-maximal :title "foo")
                 :actors
-                30
+                345
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection-tests
