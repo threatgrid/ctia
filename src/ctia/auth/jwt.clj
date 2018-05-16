@@ -10,11 +10,11 @@
     [auth :as auth :refer [IIdentity]]
     [properties :as prop]]))
 
-(def entity-root-scope
+(defn entity-root-scope []
   (get-in @prop/properties [:ctia :auth :entities :scope]
           "private-intel"))
 
-(def casebook-root-scope
+(defn casebook-root-scope []
   (get-in @prop/properties [:ctia :auth :casebook :scope]
           "casebook"))
 
@@ -93,8 +93,8 @@
   [scope]
   (let [scope-repr (mid/to-scope-repr scope)]
     (condp = (first (:path scope-repr))
-      entity-root-scope   (gen-entity-capabilities scope-repr)
-      casebook-root-scope (gen-casebook-capabilities scope-repr)
+      (entity-root-scope)   (gen-entity-capabilities scope-repr)
+      (casebook-root-scope) (gen-casebook-capabilities scope-repr)
       #{})))
 
 (defn scopes-to-capabilities
