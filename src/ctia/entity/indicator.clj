@@ -7,8 +7,8 @@
     [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
     [crud :refer [entity-crud-routes]]]
    [ctia.schemas
-    [core :refer [ACLEntity
-                  ACLStoredEntity]]
+    [core :refer [CTIAEntity
+                  CTIAStoredEntity]]
     [sorting :as sorting]]
    [ctia.schemas.graphql
     [sorting :as graphql-sorting]
@@ -28,7 +28,7 @@
    [schema.core :as s]))
 
 (s/defschema Indicator
-  (st/merge ACLEntity
+  (st/merge CTIAEntity
             (f-schema/->schema
              (fu/replace-either-with-any
               ins/Indicator))))
@@ -36,7 +36,7 @@
 (f-spec/->spec ins/Indicator "indicator")
 
 (s/defschema PartialIndicator
-  (st/merge ACLEntity
+  (st/merge CTIAEntity
             (f-schema/->schema
              (fu/optionalize-all
               (fu/replace-either-with-any
@@ -50,7 +50,7 @@
    (f-schema/->schema
     (fu/replace-either-with-any
      ins/NewIndicator))
-   ACLEntity))
+   CTIAEntity))
 
 (f-spec/->spec ins/NewIndicator "new-indicator")
 
@@ -58,7 +58,7 @@
   (st/merge (f-schema/->schema
              (fu/replace-either-with-any
               ins/StoredIndicator))
-            ACLStoredEntity))
+            CTIAStoredEntity))
 
 (f-spec/->spec ins/StoredIndicator "stored-indicator")
 
@@ -67,7 +67,7 @@
              (fu/optionalize-all
               (fu/replace-either-with-any
                ins/StoredIndicator)))
-            ACLStoredEntity))
+            CTIAStoredEntity))
 
 (def realize-indicator
   (default-realize-fn "indicator" NewIndicator StoredIndicator))

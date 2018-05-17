@@ -5,7 +5,7 @@
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
-             [core :refer [ACLEntity ACLStoredEntity]]
+             [core :refer [CTIAEntity CTIAStoredEntity]]
              [sorting :as sorting]]
             [ctia.schemas.graphql
              [sorting :as graphql-sorting]
@@ -25,14 +25,14 @@
 
 (s/defschema Investigation
   (st/merge (f-schema/->schema inv/Investigation)
-            ACLEntity
+            CTIAEntity
             {s/Keyword s/Any}))
 
 (f-spec/->spec inv/Investigation "investigation")
 
 (s/defschema PartialInvestigation
   (st/merge (f-schema/->schema (fu/optionalize-all inv/Investigation))
-            ACLEntity
+            CTIAEntity
             {s/Keyword s/Any}))
 
 (s/defschema PartialInvestigationList
@@ -40,21 +40,21 @@
 
 (s/defschema NewInvestigation
   (st/merge (f-schema/->schema inv/NewInvestigation)
-            ACLEntity
+            CTIAEntity
             {s/Keyword s/Any}))
 
 (f-spec/->spec inv/NewInvestigation "new-investigation")
 
 (s/defschema StoredInvestigation
   (st/merge (f-schema/->schema inv/StoredInvestigation)
-            ACLStoredEntity
+            CTIAStoredEntity
             {s/Keyword s/Any}))
 
 (f-spec/->spec inv/StoredInvestigation "stored-investigation")
 
 (s/defschema PartialStoredInvestigation
   (st/merge (f-schema/->schema (fu/optionalize-all inv/StoredInvestigation))
-            ACLStoredEntity
+            CTIAStoredEntity
             {s/Keyword s/Any}))
 
 (def realize-investigation
