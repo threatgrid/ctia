@@ -1,14 +1,16 @@
 (ns ctia.test-helpers.crud
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.test-helpers.http :refer [encode]]
-            [clojure
-             [string :as str]
-             [test :refer [is testing]]]
-            [ctia.properties :refer [get-http-show]]
-            [ctia.test-helpers
-             [core :as helpers :refer [delete get post put]]
-             [search :refer [test-query-string-search]]]
-            [ctim.domain.id :as id]))
+  (:require
+   [ctia.domain.entities :refer [schema-version]]
+   [clj-momo.test-helpers.http :refer [encode]]
+   [clojure
+    [string :as str]
+    [test :refer [is testing]]]
+   [ctia.properties :refer [get-http-show]]
+   [ctia.test-helpers
+    [core :as helpers :refer [delete get post put]]
+    [search :refer [test-query-string-search]]]
+   [ctim.domain.id :as id]))
 
 (defn entity-crud-test
   [{:keys [entity
@@ -27,7 +29,6 @@
          search-field :description
          update-tests? true
          search-tests? true}}]
-
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
           {status :status
@@ -126,6 +127,32 @@
             (is (= 404 (:status response)))))))
 
     (when invalid-tests?
+      (testing (format "POST invalid /ctia/%s :schema_version should be ignored" entity)
+        (let [{status :status
+               record :parsed-body}
+              (post (str "ctia/" entity)
+                    ;; This record has an outdated schema_version
+                    :body (-> example
+                              (dissoc :id)
+                              (assoc :schema_version "0.4.2"))
+                    :headers headers)]
+          (is (= status 201))
+          (is (= (:schema_version record)
+                 schema-version))
+
+          (when update-tests?
+            (let [id (id/long-id->id (:id record))
+                  {status :status
+                   updated-record :parsed-body}
+                  (put (format "ctia/%s/%s" entity (:short-id id))
+                       ;; This update has an outdated schema_version
+                       :body (-> record
+                                 (assoc :schema_version "0.4.2"))
+                       :headers headers)]
+              (is (= status 200))
+              (is (= (:schema_version updated-record)
+                     schema-version))))))
+
       (testing (format "POST invalid /ctia/%s" entity)
         (let [{status :status
                body :body}
