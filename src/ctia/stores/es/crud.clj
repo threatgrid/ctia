@@ -89,15 +89,15 @@
        ident
        {:keys [refresh] :as params}]
       (try
-        (->> (bulk-create-doc (:conn state)
+        (map #(build-create-result % coerce!)
+             (bulk-create-doc (:conn state)
                               (map #(assoc %
                                            :_id (:id %)
                                            :_index (:index state)
                                            :_type (name mapping))
                                    models)
                               (or refresh
-                                  (get-in state [:props :refresh] false)))
-             (map #(build-create-result % coerce!)))
+                                  (get-in state [:props :refresh] false))))
         (catch Exception e
           (throw
            (if-let [ex-data (ex-data e)]

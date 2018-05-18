@@ -53,6 +53,7 @@
                     "ctia.http.show.path-prefix"      ""
                     "ctia.http.jwt.enabled"           true
                     "ctia.http.jwt.public-key-path"   "resources/cert/ctia-jwt.pub"
+                    "ctia.http.bulk.max-size"         30000
                     "ctia.nrepl.enabled"              false
                     "ctia.hook.redis.enabled"         false
                     "ctia.hook.redis.channel-name"    "events-test"
@@ -155,7 +156,8 @@
               (dissoc :id)))]
     (-> (post "ctia/bulk"
               :body {plural new-records}
-              :headers headers)
+              :headers headers
+              :socket-timeout (* 5 60000))
         :parsed-body
         plural)))
 

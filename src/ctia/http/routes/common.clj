@@ -2,8 +2,10 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clojure.string :as str]
             [ctia.schemas.sorting :as sorting]
+            [cemerick.url :refer [url-encode]]
             [ring.swagger.schema :refer [describe]]
             [ring.util
+             [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
             [schema.core :as s]))
@@ -12,7 +14,8 @@
                      :sort_order
                      :offset
                      :limit
-                     :fields])
+                     :fields
+                     :search_after])
 
 (def filter-map-search-options
   (conj search-options :query))
@@ -23,6 +26,7 @@
                                        "Sort results on a field")
    (s/optional-key :sort_order) (describe (s/enum :asc :desc) "Sort direction")
    (s/optional-key :offset) (describe Long "Pagination Offset")
+   (s/optional-key :search_after) (describe [s/Str] "Pagination stateless cursor")
    (s/optional-key :limit) (describe Long "Pagination Limit")})
 
 (def paging-param-keys
@@ -47,7 +51,7 @@
                                canonicalize)
 
                           (if (map? v)
-                            (map->paging-header-value v)
+                            (codec/form-encode v)
                             (str v))}) headers)))
 
 (defn paginated-ok
@@ -56,7 +60,6 @@
   [{:keys [data paging]
     :or {data []
          paging {}}}]
-
   {:status ok
    :body data
    :headers (map->paging-headers paging)})
@@ -66,11 +69,6 @@
    and the full resource as body"
   [{:keys [id] :as resource}]
   (http-res/created id resource))
-
-;; These are the filter params, per entity.  We place them here since
-;; they are used across entity routes.  For example, the
-;; `ctia/indicator:ID/sightings/search` handler needs to know how to
-;; filter Sightings.
 
 (s/defschema BaseEntityFilterParams
   {(s/optional-key :id) s/Str
