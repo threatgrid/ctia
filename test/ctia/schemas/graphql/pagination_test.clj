@@ -88,7 +88,9 @@
 (defn gen-result
   [{:keys [offset limit]} hits]
   (let [data (range offset (+ offset limit))]
-    (pag/response data offset limit nil nil hits)))
+    (pag/response data {:offset offset
+                        :limit limit
+                        :hits hits})))
 
 (deftest result->connection-response
   (testing "Forwards paging"

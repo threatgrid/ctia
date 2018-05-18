@@ -103,11 +103,9 @@
                                  set)]
           (-> indicator-ids
               (pag/paginate params)
-              (pag/response (:offset params)
-                            (:limit params)
-                            nil
-                            nil
-                            (count indicator-ids))))))
+              (pag/response {:offset (:offset params)
+                             :limit (:limit params)
+                             :hits (count indicator-ids)})))))
 
   (GET "/:observable_type/:observable_value/sightings" []
        :tags ["Sighting"]
@@ -167,11 +165,9 @@
                                  set)]
           (-> indicator-ids
               (pag/paginate params)
-              (pag/response (:offset params)
-                            (:limit params)
-                            nil
-                            nil
-                            (count indicator-ids))))))
+              (pag/response {:offset (:offset params)
+                             :limit (:limit params)
+                             :hits (count indicator-ids)})))))
 
   (GET "/:observable_type/:observable_value/sightings/incidents" []
        :tags ["Incident"]
@@ -210,8 +206,6 @@
                                 set)]
           (-> incident-ids
               (pag/paginate params)
-              (pag/response (:offset params)
-                            (:limit params)
-                            nil
-                            nil
-                            (count incident-ids)))))))
+              (pag/response {:offset (:offset params)
+                             :limit (:limit params)
+                             :hits (count incident-ids)}))))))
