@@ -5,6 +5,7 @@
             [cemerick.url :refer [url-encode]]
             [ring.swagger.schema :refer [describe]]
             [ring.util
+             [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
             [schema.core :as s]))
@@ -50,22 +51,8 @@
                                canonicalize)
 
                           (if (map? v)
-                            (map->paging-header-value v)
+                            (codec/form-encode v)
                             (str v))}) headers)))
-
-(defn make-x-next-url
-  [{:keys [limit
-           offset
-           search_after]
-    :as x-next}]
-  (when x-next
-    (cond-> ""
-      limit (str "limit=" limit)
-      offset (str "&offset=" offset)
-      search_after
-      (str (clojure.string/join "&"
-                                (map (fn [s] (str "&search_after=" (url-encode s)))
-                                     search_after))))))
 
 (defn paginated-ok
   "returns a 200 with the supplied response
@@ -73,14 +60,9 @@
   [{:keys [data paging]
     :or {data []
          paging {}}}]
-
-  (let [x-next-url (make-x-next-url (:next paging))
-        headers (map->paging-headers
-                 (cond-> paging
-                   x-next-url (assoc :next x-next-url)))]
-    {:status ok
-     :body data
-     :headers headers}))
+  {:status ok
+   :body data
+   :headers (map->paging-headers paging)})
 
 (defn created
   "set a created response, using the id as the location header,
