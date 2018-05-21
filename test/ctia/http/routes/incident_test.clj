@@ -29,6 +29,7 @@
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
      (entity-crud-test
       {:entity "incident"
+       :patch-tests? true
        :example new-incident-maximal
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
