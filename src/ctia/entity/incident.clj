@@ -35,6 +35,10 @@
   is/StoredIncident
   "stored-incident")
 
+(def-stored-schema PartialNewIncident
+  (fu/optionalize-all is/NewIncident)
+  "partial-new-incident")
+
 (def-stored-schema PartialStoredIncident
   (fu/optionalize-all is/StoredIncident)
   "partial-stored-incident")
@@ -112,13 +116,16 @@
     :get-params IncidentGetParams
     :list-schema PartialIncidentList
     :search-schema PartialIncidentList
+    :patch-schema PartialNewIncident
     :external-id-q-params IncidentByExternalIdQueryParams
     :search-q-params IncidentSearchParams
     :new-spec :new-incident/map
+    :can-patch? true
     :realize-fn realize-incident
     :get-capabilities :read-incident
     :post-capabilities :create-incident
     :put-capabilities :create-incident
+    :patch-capabilities :create-incident
     :delete-capabilities :delete-incident
     :search-capabilities :search-incident
     :external-id-capabilities #{:read-incident :external-id}}))

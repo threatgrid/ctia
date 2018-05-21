@@ -23,22 +23,6 @@
    [ctim.schemas.common :refer [ctim-schema-version]]))
 
 (defn partial-operations-tests [casebook-id casebook]
-  ;; patch
-  (testing "PATCH /ctia/casebook/:id"
-    (let [teardown {:description (:description casebook)}
-          change {:description "updated"}
-          expected-entity (merge casebook change)
-          response (patch (str "ctia/casebook/" (:short-id casebook-id))
-                          :body change
-                          :headers {"Authorization" "45c1f5e3f05d0"})
-          updated-casebook (:parsed-body response)]
-      (is (= 200 (:status response)))
-      (is (deep= expected-entity updated-casebook))
-
-      (patch (str "ctia/casebook/" (:short-id casebook-id))
-             :body teardown
-             :headers {"Authorization" "45c1f5e3f05d0"})))
-
   ;; observables
   (testing "POST /ctia/casebook/:id/observables :add"
     (let [new-observables [{:type "ip" :value "42.42.42.42"}]
@@ -236,6 +220,7 @@
      (entity-crud-test {:entity "casebook"
                         :example new-casebook-maximal
                         :headers {:Authorization "45c1f5e3f05d0"}
+                        :patch-tests? true
                         :additional-tests partial-operations-tests}))))
 
 (deftest test-casebook-pagination-field-selection

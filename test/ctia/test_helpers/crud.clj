@@ -8,7 +8,7 @@
     [test :refer [is testing]]]
    [ctia.properties :refer [get-http-show]]
    [ctia.test-helpers
-    [core :as helpers :refer [delete get post put]]
+    [core :as helpers :refer [delete get post put patch]]
     [search :refer [test-query-string-search]]]
    [ctim.domain.id :as id]))
 
@@ -21,6 +21,7 @@
            invalid-tests?
            invalid-test-field
            update-tests?
+           patch-tests?
            search-tests?
            additional-tests]
     :or {invalid-tests? true
@@ -28,6 +29,7 @@
          update-field :title
          search-field :description
          update-tests? true
+         patch-tests? false
          search-tests? true}}]
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
@@ -76,6 +78,18 @@
           (is (deep=
                [(assoc record :id (id/long-id record-id))]
                records))))
+
+      (testing (format "PATCH /ctia/%s/:id" entity)
+        (let [updates {update-field "patch"}
+              response (patch (format "ctia/%s/%s" entity (:short-id record-id))
+                              :body updates
+                              :headers headers)
+              updated-record (:parsed-body response)]
+          (when patch-tests?
+            (is (= 200 (:status response)))
+            (is (deep=
+                 (merge record updates)
+                 updated-record)))))
 
       (testing (format "PUT /ctia/%s/:id" entity)
         (let [with-updates (assoc record

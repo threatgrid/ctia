@@ -2,7 +2,7 @@
   (:require
    [clojure.string :refer [capitalize]]
    [ctia.http.middleware.auth :refer :all]
-   [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
+   [compojure.api.sweet :refer [DELETE GET POST PUT PATCH routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id
@@ -25,6 +25,7 @@
            get-params
            list-schema
            search-schema
+           patch-schema
            external-id-q-params
            search-q-params
            new-spec
@@ -32,14 +33,17 @@
            get-capabilities
            post-capabilities
            put-capabilities
+           patch-capabilities
            delete-capabilities
            search-capabilities
            external-id-capabilities
            hide-delete?
            can-update?
+           can-patch?
            can-search?]
     :or {hide-delete? true
          can-update? true
+         can-patch? false
          can-search? true}}]
 
   (let [entity-str (name entity)
@@ -99,7 +103,37 @@
                  :spec new-spec)
                 un-store
                 ok)))
-
+     (when can-patch?
+       (PATCH "/:id" []
+              :return entity-schema
+              :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
+              :header-params [{Authorization :- (s/maybe s/Str) nil}]
+              :summary (format "Partially Update %s" capitalized)
+              :path-params [id :- s/Str]
+              :capabilities patch-capabilities
+              :auth-identity identity
+              :identity-map identity-map
+              (-> (flows/patch-flow
+                   :get-fn #(read-store entity
+                                        read-record
+                                        %
+                                        identity-map
+                                        {})
+                   :realize-fn realize-fn
+                   :update-fn #(write-store entity
+                                            update-record
+                                            (:id %)
+                                            %
+                                            identity-map)
+                   :long-id-fn with-long-id
+                   :entity-type entity
+                   :entity-id id
+                   :identity identity
+                   :patch-operation :replace
+                   :partial-entity partial-update
+                   :spec new-spec)
+                  un-store
+                  ok)))
      (GET "/external_id/:external_id" []
           :return list-schema
           :query [q external-id-q-params]
