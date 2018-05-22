@@ -83,26 +83,28 @@
             :capabilities put-capabilities
             :auth-identity identity
             :identity-map identity-map
-            (-> (flows/update-flow
-                 :get-fn #(read-store entity
-                                      read-record
-                                      %
-                                      identity-map
-                                      {})
-                 :realize-fn realize-fn
-                 :update-fn #(write-store entity
-                                          update-record
-                                          (:id %)
-                                          %
-                                          identity-map)
-                 :long-id-fn with-long-id
-                 :entity-type entity
-                 :entity-id id
-                 :identity identity
-                 :entity entity-update
-                 :spec new-spec)
-                un-store
-                ok)))
+            (if-let [updated-rec
+                     (-> (flows/update-flow
+                          :get-fn #(read-store entity
+                                               read-record
+                                               %
+                                               identity-map
+                                               {})
+                          :realize-fn realize-fn
+                          :update-fn #(write-store entity
+                                                   update-record
+                                                   (:id %)
+                                                   %
+                                                   identity-map)
+                          :long-id-fn with-long-id
+                          :entity-type entity
+                          :entity-id id
+                          :identity identity
+                          :entity entity-update
+                          :spec new-spec)
+                         un-store)]
+              (ok updated-rec)
+              (not-found))))
      (when can-patch?
        (PATCH "/:id" []
               :return entity-schema
@@ -113,27 +115,29 @@
               :capabilities patch-capabilities
               :auth-identity identity
               :identity-map identity-map
-              (-> (flows/patch-flow
-                   :get-fn #(read-store entity
-                                        read-record
-                                        %
-                                        identity-map
-                                        {})
-                   :realize-fn realize-fn
-                   :update-fn #(write-store entity
-                                            update-record
-                                            (:id %)
-                                            %
-                                            identity-map)
-                   :long-id-fn with-long-id
-                   :entity-type entity
-                   :entity-id id
-                   :identity identity
-                   :patch-operation :replace
-                   :partial-entity partial-update
-                   :spec new-spec)
-                  un-store
-                  ok)))
+              (if-let [updated-rec
+                       (-> (flows/patch-flow
+                            :get-fn #(read-store entity
+                                                 read-record
+                                                 %
+                                                 identity-map
+                                                 {})
+                            :realize-fn realize-fn
+                            :update-fn #(write-store entity
+                                                     update-record
+                                                     (:id %)
+                                                     %
+                                                     identity-map)
+                            :long-id-fn with-long-id
+                            :entity-type entity
+                            :entity-id id
+                            :identity identity
+                            :patch-operation :replace
+                            :partial-entity partial-update
+                            :spec new-spec)
+                           un-store)]
+                (ok updated-rec)
+                (not-found))))
      (GET "/external_id/:external_id" []
           :return list-schema
           :query [q external-id-q-params]
