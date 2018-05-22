@@ -408,27 +408,28 @@
              long-id-fn
              spec]}]
   (let [prev-entity (get-fn entity-id)]
-    (-> {:flow-type :update
-         :entity-type entity-type
-         :entities [(dissoc entity
-                            :schema_version)]
-         :prev-entity prev-entity
-         :identity identity
-         :long-id-fn long-id-fn
-         :realize-fn realize-fn
-         :spec spec
-         :store-fn update-fn
-         :create-event-fn to-update-event}
-        validate-entities
-        realize-entities
-        apply-before-hooks
-        apply-store-fn
-        apply-long-id-fn
-        create-events
-        write-events
-        apply-event-hooks
-        apply-after-hooks
-        make-result)))
+    (when prev-entity
+      (-> {:flow-type :update
+           :entity-type entity-type
+           :entities [(dissoc entity
+                              :schema_version)]
+           :prev-entity prev-entity
+           :identity identity
+           :long-id-fn long-id-fn
+           :realize-fn realize-fn
+           :spec spec
+           :store-fn update-fn
+           :create-event-fn to-update-event}
+          validate-entities
+          realize-entities
+          apply-before-hooks
+          apply-store-fn
+          apply-long-id-fn
+          create-events
+          write-events
+          apply-event-hooks
+          apply-after-hooks
+          make-result))))
 
 (defn patch-flow
   "This function centralizes the patch workflow.
@@ -447,34 +448,34 @@
              long-id-fn
              spec]}]
   (let [prev-entity (get-fn entity-id)]
-    (-> {:flow-type :update
-         :entity-type entity-type
-         :entities []
-         :prev-entity prev-entity
-         :partial-entity partial-entity
-         :patch-operation patch-operation
-         :identity identity
-         :long-id-fn long-id-fn
-         :realize-fn realize-fn
-         :spec spec
-         :store-fn update-fn
-         :create-event-fn to-update-event}
-        patch-entities
-        validate-entities
-        realize-entities
-        apply-before-hooks
-        apply-store-fn
-        apply-long-id-fn
-        create-events
-        write-events
-        apply-event-hooks
-        apply-after-hooks
-        make-result)))
+    (when prev-entity
+      (-> {:flow-type :update
+           :entity-type entity-type
+           :entities []
+           :prev-entity prev-entity
+           :partial-entity partial-entity
+           :patch-operation patch-operation
+           :identity identity
+           :long-id-fn long-id-fn
+           :realize-fn realize-fn
+           :spec spec
+           :store-fn update-fn
+           :create-event-fn to-update-event}
+          patch-entities
+          validate-entities
+          realize-entities
+          apply-before-hooks
+          apply-store-fn
+          apply-long-id-fn
+          create-events
+          write-events
+          apply-event-hooks
+          apply-after-hooks
+          make-result))))
 
 (defn delete-flow
   "This function centralize the deletion workflow.
   It is helpful to easily add new hooks name
-
   To be noted:
     - the flow get the entity from the store to be used by hooks.
     - `:before-delete` hooks can modify the entity stored.

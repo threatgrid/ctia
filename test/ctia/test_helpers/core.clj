@@ -125,6 +125,13 @@
                       "ctia.auth.static.group" name]
       (f))))
 
+(defn fixture-with-fixed-time [time f]
+  (with-redefs [clj-momo.lib.clj-time.core/now
+                (fn [] time)
+                clj-momo.lib.clj-time.core/internal-now
+                (fn [] (clj-momo.lib.clj-time.coerce/to-date time))]
+    (f)))
+
 (defn set-capabilities!
   [login groups role caps]
   (store/write-store :identity store/create-identity {:login login

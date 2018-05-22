@@ -1,11 +1,15 @@
 (ns ctia.http.routes.incident-test
-  (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest join-fixtures use-fixtures]]
+  (:refer-clojure :exclude [get])
+  (:require [clj-momo.lib.clj-time
+             [coerce :as tc]
+             [core :as t]]
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.entity.incident :refer [incident-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post-entity-bulk]]
+             [core :as helpers :refer [patch post post-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
@@ -22,6 +26,58 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+(defn partial-operations-tests [incident-id incident]
+  (let [fixed-now (t/now)]
+    (helpers/fixture-with-fixed-time
+     fixed-now
+     (fn []
+       (testing "Incident status update: test setup"
+         (let [new-status {:status "Open"}
+               response (patch (str "ctia/incident/" (:short-id incident-id))
+                               :body {:incident_time {}}
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))))
+
+       (testing "POST /ctia/incident/:id/status Open"
+         (let [new-status {:status "Open"}
+               response (post (str "ctia/incident/" (:short-id incident-id) "/status")
+                              :body new-status
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Open" (:status updated-incident)))
+           (is (get-in updated-incident [:incident_time :opened]))
+
+           (is (= (get-in updated-incident [:incident_time :opened])
+                  (tc/to-date fixed-now)))))
+
+       (testing "POST /ctia/incident/:id/status Closed"
+         (let [new-status {:status "Closed"}
+               response (post (str "ctia/incident/" (:short-id incident-id) "/status")
+                              :body new-status
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Closed" (:status updated-incident)))
+           (is (get-in updated-incident [:incident_time :closed]))
+
+           (is (= (get-in updated-incident [:incident_time :closed])
+                  (tc/to-date fixed-now)))))
+
+       (testing "POST /ctia/incident/:id/status Containment Achieved"
+         (let [new-status {:status "Containment Achieved"}
+               response (post (str "ctia/incident/" (:short-id incident-id) "/status")
+                              :body new-status
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+               updated-incident (:parsed-body response)]
+           (is (= 200 (:status response)))
+           (is (= "Containment Achieved" (:status updated-incident)))
+           (is (get-in updated-incident [:incident_time :remediated]))
+
+           (is (= (get-in updated-incident [:incident_time :remediated])
+                  (tc/to-date fixed-now)))))))))
+
 (deftest test-incident-routes
   (test-for-each-store
    (fn []
@@ -31,7 +87,8 @@
       {:entity "incident"
        :patch-tests? true
        :example new-incident-maximal
-       :headers {:Authorization "45c1f5e3f05d0"}}))))
+       :headers {:Authorization "45c1f5e3f05d0"}
+       :additional-tests partial-operations-tests}))))
 
 (deftest test-incident-pagination-field-selection
   (test-for-each-store

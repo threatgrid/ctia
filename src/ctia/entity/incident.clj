@@ -1,5 +1,10 @@
 (ns ctia.entity.incident
   (:require
+   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
+   [ctia.flows.crud :as flows]
+   [ring.util.http-response :refer [ok not-found]]
+   [clj-momo.lib.clj-time.core :as time]
+   [compojure.api.sweet :refer [context POST routes]]
    [ctia.domain.entities :refer [default-realize-fn]]
    [ctia.store :refer :all]
    [ctia.http.routes
@@ -12,6 +17,8 @@
     [mapping :as em]
     [store :refer [def-es-store]]]
    [ctim.schemas.incident :as is]
+   [ctim.schemas.vocabularies :as vocs]
+   [flanders.schema :as fs]
    [flanders.utils :as fu]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -45,6 +52,65 @@
 
 (def realize-incident
   (default-realize-fn "incident" NewIncident StoredIncident))
+
+(s/defschema IncidentStatus
+  (fs/->schema vocs/Status))
+
+(s/defschema IncidentStatusUpdate
+  {:status IncidentStatus})
+
+(defn make-status-update
+  [{:keys [status]}]
+  (let [t (time/internal-now)
+        verb (case status
+               "New" nil
+               "Stalled" nil
+               ("Containment Achieved"
+                "Restoration Achieved") :remediated
+               "Open" :opened
+               "Rejected" :rejected
+               "Closed" :closed
+               "Incident Reported" :reported
+               nil)]
+    (cond-> {:status status}
+      verb (assoc :incident_time {verb t}))))
+
+(def incident-operation-routes
+  (routes
+   (POST "/:id/status" []
+         :return Incident
+         :body [update IncidentStatusUpdate
+                {:description "an Incident Status Update"}]
+         :header-params [{Authorization :- (s/maybe s/Str) nil}]
+         :summary "Update an Incident Status"
+         :path-params [id :- s/Str]
+         :capabilities :create-incident
+         :auth-identity identity
+         :identity-map identity-map
+         (let [status-update (make-status-update update)]
+           (if-let [updated
+                    (-> (flows/patch-flow
+                         :get-fn #(read-store :incident
+                                              read-record
+                                              %
+                                              identity-map
+                                              {})
+                         :realize-fn realize-incident
+                         :update-fn #(write-store :incident
+                                                  update-record
+                                                  (:id %)
+                                                  %
+                                                  identity-map)
+                         :long-id-fn with-long-id
+                         :entity-type :incident
+                         :entity-id id
+                         :identity identity
+                         :patch-operation :replace
+                         :partial-entity status-update
+                         :spec :new-incident/map)
+                        un-store)]
+             (ok updated)
+             (not-found))))))
 
 (def incident-mapping
   {"incident"
@@ -151,4 +217,5 @@
    :es-store ->IncidentStore
    :es-mapping incident-mapping
    :routes incident-routes
-   :capabilities capabilities})
+   :capabilities capabilities
+   :additional-routes incident-operation-routes})
