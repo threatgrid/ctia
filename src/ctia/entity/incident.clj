@@ -1,6 +1,9 @@
 (ns ctia.entity.incident
   (:require
-   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
+   [ctia.domain.entities :refer [default-realize-fn
+                                 un-store
+                                 with-long-id
+                                 short-id->long-id]]
    [ctia.flows.crud :as flows]
    [ring.util.http-response :refer [ok not-found]]
    [clj-momo.lib.clj-time.core :as time]
@@ -22,6 +25,8 @@
    [flanders.utils :as fu]
    [schema-tools.core :as st]
    [schema.core :as s]))
+
+(def incident-bundle-default-limit 1000)
 
 (def-acl-schema Incident
   is/Incident
@@ -75,6 +80,19 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
+#_(defn get-incident-entities-bundle
+    "fetch all incident related entities, assemble them into a Bundle"
+    [incident-id
+     identity-map
+     include_related_entities
+     limit]
+    (let [relationships
+          (read-store :relationship list-records
+                      {:target_ref (short-id->long-id incident-id)}
+                      identity-map
+                      {:limit limit})]
+      relationships))
+
 (def incident-operation-routes
   (routes
    (POST "/:id/status" []
@@ -89,28 +107,58 @@
          :identity-map identity-map
          (let [status-update (make-status-update update)]
            (if-let [updated
-                    (-> (flows/patch-flow
-                         :get-fn #(read-store :incident
-                                              read-record
-                                              %
-                                              identity-map
-                                              {})
-                         :realize-fn realize-incident
-                         :update-fn #(write-store :incident
-                                                  update-record
-                                                  (:id %)
-                                                  %
-                                                  identity-map)
-                         :long-id-fn with-long-id
-                         :entity-type :incident
-                         :entity-id id
-                         :identity identity
-                         :patch-operation :replace
-                         :partial-entity status-update
-                         :spec :new-incident/map)
-                        un-store)]
+                    (un-store
+                     (flows/patch-flow
+                      :get-fn #(read-store :incident
+                                           read-record
+                                           %
+                                           identity-map
+                                           {})
+                      :realize-fn realize-incident
+                      :update-fn #(write-store :incident
+                                               update-record
+                                               (:id %)
+                                               %
+                                               identity-map)
+                      :long-id-fn with-long-id
+                      :entity-type :incident
+                      :entity-id id
+                      :identity identity
+                      :patch-operation :replace
+                      :partial-entity status-update
+                      :spec :new-incident/map))]
              (ok updated)
-             (not-found))))))
+             (not-found))))
+
+   #_(GET "/:id/export" []
+          :return Bundle
+          :header-params [{Authorization :- (s/maybe s/Str) nil}]
+          :summary "Get an Incident related entities as a Bundle"
+          :query-params [{limit :- s/Num incident-bundle-default-limit}
+                         {include_related_entities :- s/Bool false}]
+          :path-params [id :- s/Str]
+          :capabilities #{:read-actor
+                          :read-attack-pattern
+                          :read-campaign
+                          :read-coa
+                          :read-data-table
+                          :read-exploit-target
+                          :read-feedback
+                          :read-incident
+                          :read-indicator
+                          :read-investigation
+                          :read-judgement
+                          :read-malware
+                          :read-relationship
+                          :read-casebook
+                          :read-sighting
+                          :read-tool}
+          :auth-identity identity
+          :identity-map identity-map
+          (get-incident-entities-bundle id
+                                        identity-map
+                                        limit
+                                        include_related_entities))))
 
 (def incident-mapping
   {"incident"

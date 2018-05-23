@@ -1,4 +1,4 @@
-(ns ctia.http.routes.relationship-test
+(ns ctia.entity.relationship-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.entity.relationship :refer [relationship-fields]]

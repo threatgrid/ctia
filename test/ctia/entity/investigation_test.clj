@@ -1,7 +1,7 @@
-(ns ctia.http.routes.malware-test
+(ns ctia.entity.investigation-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.entity.malware :refer [malware-fields]]
+            [ctia.entity.investigation :refer [investigation-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -12,9 +12,9 @@
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store]]]
-            [ctim.examples.malwares
+            [ctim.examples.investigations
              :refer
-             [new-malware-maximal new-malware-minimal]]))
+             [new-investigation-maximal new-investigation-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -23,7 +23,7 @@
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
 
-(deftest test-malware-routes
+(deftest test-investigation-routes
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser"
@@ -35,15 +35,13 @@
                                          "foogroup"
                                          "user")
      (entity-crud-test
-      {:entity "malware"
-       :example new-malware-maximal
-       ;; TODO seems like we forgot to add restrictions on ctim
+      {:entity "investigation"
+       :example new-investigation-maximal
+       :update-tests? false
        :invalid-tests? false
-       :update-field :description
-       :search-field :title
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
-(deftest test-malware-pagination-field-selection
+(deftest test-investigation-pagination-field-selection
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -51,27 +49,26 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-
      (let [ids (post-entity-bulk
-                new-malware-maximal
-                :malwares
+                (assoc new-investigation-maximal :title "foo")
+                :investigations
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
-        "ctia/malware/search?query=*"
+        "ctia/investigation/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        malware-fields)
+        investigation-fields)
 
        (field-selection-tests
-        ["ctia/malware/search?query=*"
+        ["ctia/investigation/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        malware-fields)))))
+        investigation-fields)))))
 
-(deftest test-malware-routes-access-control
+(deftest test-investigation-routes-access-control
   (test-for-each-store
    (fn []
-     (access-control-test "malware"
-                          new-malware-minimal
-                          true
+     (access-control-test "investigation"
+                          new-investigation-minimal
+                          false
                           true))))

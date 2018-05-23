@@ -1,4 +1,4 @@
-(ns ctia.http.routes.attack-pattern-test
+(ns ctia.entity.attack-pattern-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.entity.attack-pattern :refer [attack-pattern-fields]]

@@ -11,7 +11,7 @@
             [ctia
              [properties :refer [get-http-show]]
              [store :refer [stores]]]
-            [ctia.bulk.routes
+            [ctia.bulk.core
              :refer
              [bulk-size gen-bulk-from-fn get-bulk-max-size]]
             [ctia.test-helpers
