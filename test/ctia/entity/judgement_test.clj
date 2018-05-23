@@ -1,4 +1,4 @@
-(ns ctia.http.routes.judgement-test
+(ns ctia.entity.judgement-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.clj-time.core :as time]
             [clj-momo.test-helpers.core :as mth]

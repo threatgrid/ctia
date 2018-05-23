@@ -1,4 +1,4 @@
-(ns ctia.http.routes.incident-test
+(ns ctia.entity.incident-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.clj-time
              [coerce :as tc]
@@ -32,8 +32,7 @@
      fixed-now
      (fn []
        (testing "Incident status update: test setup"
-         (let [new-status {:status "Open"}
-               response (patch (str "ctia/incident/" (:short-id incident-id))
+         (let [response (patch (str "ctia/incident/" (:short-id incident-id))
                                :body {:incident_time {}}
                                :headers {"Authorization" "45c1f5e3f05d0"})
                updated-incident (:parsed-body response)]

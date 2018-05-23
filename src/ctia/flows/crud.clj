@@ -307,9 +307,10 @@
     (set? orig-coll) (set new-coll)
     :else new-coll))
 
-(defn add-colls [& args]
+(defn add-colls
   "given many collections as argument
    concat them keeping the first argument type"
+  [& args]
   (let [new-coll
         (->> args
              (map #(or % []))

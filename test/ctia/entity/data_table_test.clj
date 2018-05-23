@@ -1,4 +1,4 @@
-(ns ctia.http.routes.data-table-test
+(ns ctia.entity.data-table-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.test-helpers

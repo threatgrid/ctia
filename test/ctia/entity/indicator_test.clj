@@ -1,4 +1,4 @@
-(ns ctia.http.routes.indicator-test
+(ns ctia.entity.indicator-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.auth.capabilities :as caps]

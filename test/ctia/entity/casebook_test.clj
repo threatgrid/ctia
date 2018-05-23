@@ -1,4 +1,4 @@
-(ns ctia.http.routes.casebook-test
+(ns ctia.entity.casebook-test
   (:refer-clojure :exclude [get])
   (:require
    [ctia.domain.entities :refer [schema-version]]

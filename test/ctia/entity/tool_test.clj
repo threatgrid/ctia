@@ -1,7 +1,7 @@
-(ns ctia.http.routes.campaign-test
+(ns ctia.entity.tool-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.entity.campaign :refer [campaign-fields]]
+            [ctia.entity.tool.schemas :refer [tool-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -12,15 +12,35 @@
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store]]]
-            [ctim.examples.campaigns :as ex :refer [new-campaign-maximal]]))
+            [ctim.examples.tools :refer [new-tool-maximal
+                                         new-tool-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
+(use-fixtures :each
+  whoami-helpers/fixture-reset-state)
 
-(deftest test-campaign-routes
+(deftest test-tool-routes
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser"
+                                ["foogroup"]
+                                "user"
+                                all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (entity-crud-test
+      {:entity "tool"
+       :example new-tool-maximal
+       :invalid-test-field :name
+       :update-field :description
+       :headers {:Authorization "45c1f5e3f05d0"}}))))
+
+(deftest test-tool-pagination-field-selection
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -28,40 +48,26 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-
-     (entity-crud-test {:entity "campaign"
-                        :example (assoc new-campaign-maximal :tlp "green")
-                        :headers {:Authorization "45c1f5e3f05d0"}}))))
-
-(deftest test-campaign-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
      (let [ids (post-entity-bulk
-                (assoc new-campaign-maximal :title "foo")
-                :campaigns
+                new-tool-maximal
+                :tools
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
        (pagination-test
-        "ctia/campaign/search?query=*"
+        "ctia/tool/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        campaign-fields)
+        tool-fields)
 
        (field-selection-tests
-        ["ctia/campaign/search?query=*"
+        ["ctia/tool/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        campaign-fields)))))
+        tool-fields)))))
 
-(deftest test-campaign-routes-access-control
+(deftest test-tool-routes-access-control
   (test-for-each-store
    (fn []
-     (access-control-test "campaign"
-                          ex/new-campaign-minimal
+     (access-control-test "tool"
+                          new-tool-minimal
                           true
                           true))))

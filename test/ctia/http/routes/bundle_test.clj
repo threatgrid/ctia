@@ -7,6 +7,7 @@
             [clojure
              [set :as set]
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
+            [ctia.bundle.core :as core]
             [ctia.bundle.routes :as sut]
             [ctia.store :refer [stores]]
             [ctia.test-helpers
@@ -23,7 +24,7 @@
     (t)))
 
 (defn fixture-find-by-external-ids-limit [t]
-  (with-redefs [sut/find-by-external-ids-limit 5]
+  (with-redefs [core/find-by-external-ids-limit 5]
     (t)))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -75,10 +76,10 @@
 
 (deftest valid-external-id-test
   (is (= "ctia-1"
-         (sut/valid-external-id ["invalid-1" "invalid-2"  "ctia-1"]
-                                ["ctia-" "cisco-"])))
-  (is (nil? (sut/valid-external-id ["invalid-1" "invalid-2"  "ctia-1" "cisco-1"]
-                                   ["ctia-" "cisco-"]))))
+         (core/valid-external-id ["invalid-1" "invalid-2"  "ctia-1"]
+                                 ["ctia-" "cisco-"])))
+  (is (nil? (core/valid-external-id ["invalid-1" "invalid-2"  "ctia-1" "cisco-1"]
+                                    ["ctia-" "cisco-"]))))
 
 (defn validate-entity-record
   [{:keys [id original_id action external_id]
@@ -151,9 +152,9 @@
    {:attack-pattern 1
     :indicator 2}"
   [bundle]
-  (->> (select-keys bundle sut/bundle-entity-keys)
+  (->> (select-keys bundle core/bundle-entity-keys)
        (map (fn [[k v]]
-              [(sut/entity-type-from-bundle-key k) (count v)]))
+              [(core/entity-type-from-bundle-key k) (count v)]))
        (into {})))
 
 (defn count-bundle-result-entities
@@ -320,7 +321,7 @@
                                          "foogroup"
                                          "user")
      (let [;; See fixture-find-by-external-ids-limit
-           nb-entities (+ sut/find-by-external-ids-limit 5)
+           nb-entities (+ core/find-by-external-ids-limit 5)
            bundle {:type "bundle"
                    :source "source"
                    :indicators (set (map mk-indicator (range nb-entities)))}

@@ -1,4 +1,4 @@
-(ns ctia.http.routes.feedback-test
+(ns ctia.entity.feedback-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
