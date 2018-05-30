@@ -347,3 +347,40 @@
        (is (every? #(= "exists" %)
                    (map :result (:results bundle-result-update)))
            "All existing entities are not updated")))))
+
+(deftest bundle-export-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [indicators [(mk-indicator 0)
+                       (mk-indicator 1)]
+           sightings [(mk-sighting 0)
+                      (mk-sighting 1)]
+           relationships (map (fn [idx indicator sighting]
+                                (mk-relationship idx indicator
+                                                 sighting "indicates"))
+                              (range)
+                              indicators
+                              sightings)
+           new-bundle {:type "bundle"
+                       :source "source"
+                       :indicators (set indicators)
+                       :sightings (set sightings)
+                       :relationships (set relationships)}
+           bundle-res (:parsed-body (post "ctia/bundle/import"
+                                          :body new-bundle
+                                          :headers {"Authorization" "45c1f5e3f05d0"}))
+           sighting-id (some->> bundle-res
+                                :results
+                                (group-by :type)
+                                :sighting
+                                first
+                                :id)]
+       (get "ctia/bundle/export"
+            :query-params {:entity_id sighting-id}
+
+            :headers {"Authorization" "45c1f5e3f05d0"})))))

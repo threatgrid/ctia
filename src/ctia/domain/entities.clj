@@ -70,6 +70,22 @@
 
 (def ->long-id (id/factory:short-id+type->long-id get-http-show))
 
+(defn long-id->entity-type [id-str]
+  (:type (id/long-id->id id-str)))
+
+(defn short-id->entity-type [id-str]
+  (when-let [short-id (id/short-id->long-id
+                       id-str
+                       (get-http-show))]
+    (:type (id/long-id->id short-id))))
+
+(defn id->entity-type
+  "Extract the entity type from an id"
+  [id-str]
+  (if (id/short-id? id-str)
+    (short-id->entity-type id-str)
+    (long-id->entity-type id-str)))
+
 (defn un-store [m]
   (dissoc m
           :created

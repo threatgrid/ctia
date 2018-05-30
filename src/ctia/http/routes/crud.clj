@@ -178,7 +178,7 @@
 
      (GET "/:id" []
           :return (s/maybe get-schema)
-          :summary (format "Gets a %s by ID" entity)
+          :summary (format "Gets a %s by ID" entity-str)
           :path-params [id :- s/Str]
           :query [params get-params]
           :header-params [{Authorization :- (s/maybe s/Str) nil}]

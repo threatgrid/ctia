@@ -3,17 +3,53 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.bundle
-    [core :refer [bundle-size
-                  bundle-max-size
-                  import-bundle]]
+    [core :refer [bundle-max-size
+                  bundle-size
+                  import-bundle
+                  export-bundle]]
     [schemas :refer [BundleImportResult]]]
-   [ctia.schemas.core :refer [NewBundle]]
+   [ctia.schemas.core :refer [Bundle NewBundle]]
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
+
+(s/defschema BundleExportQuery
+  {:entity_id s/Str
+   (s/optional-key :include_related_entities) s/Bool})
 
 (defroutes bundle-routes
   (context "/bundle" []
            :tags ["Bundle"]
+           (GET "/export" []
+                :return Bundle
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                :query [q BundleExportQuery]
+                :summary "Export a record with its local relationships"
+                :capabilities #{:read-actor
+                                :read-attack-pattern
+                                :read-campaign
+                                :read-coa
+                                :read-exploit-target
+                                :read-feedback
+                                :read-incident
+                                :read-indicator
+                                :list-indicators
+                                :read-judgement
+                                :list-judgements
+                                :read-malware
+                                :read-relationship
+                                :list-relationships
+                                :read-sighting
+                                :list-sightings
+                                :read-tool
+                                :read-verdict}
+                :auth-identity identity
+                :identity-map identity-map
+                (ok (export-bundle
+                     (:entity_id q)
+                     identity-map
+                     identity
+                     (select-keys q [:include_related_entities]))))
+
            (POST "/import" []
                  :return BundleImportResult
                  :body [bundle NewBundle {:description "a Bundle to import"}]

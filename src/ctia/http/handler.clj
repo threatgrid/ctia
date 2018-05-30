@@ -2,7 +2,7 @@
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.casebook :refer [casebook-operation-routes]]
-            [ctia.entity.incident :refer [incident-operation-routes]]
+            [ctia.entity.incident :refer [incident-additional-routes]]
             [ctia.entity.feedback :refer [feedback-by-entity-route]]
             [compojure.api
              [core :refer [middleware]]
@@ -99,7 +99,7 @@
 
                          :tags [{:name "Actor" :description "Actor operations"}
                                 {:name "Attack Pattern" :description "Attack Pattern operations"}
-                                {:name "Bundle" :description "Bundle import (Beta)"}
+                                {:name "Bundle" :description "Bundle operations (Beta)"}
                                 {:name "Campaign" :description "Campaign operations"}
                                 {:name "COA" :description "COA operations"}
                                 {:name "DataTable" :description "DataTable operations"}
@@ -131,15 +131,6 @@
                    (context
                     "/ctia" []
                     (entity-routes entities)
-                    (context "/casebook" []
-                             :tags ["Casebook"]
-                             casebook-operation-routes)
-                    (context "/incident" []
-                             :tags ["Incident"]
-                             incident-operation-routes)
-                    (context "/feedback" []
-                             :tags ["Feedback"]
-                             feedback-by-entity-route)
                     (context
                      "/bulk" []
                      :tags ["Bulk"]

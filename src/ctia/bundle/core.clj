@@ -7,33 +7,37 @@
             [ctia
              [auth :as auth]
              [properties :refer [properties]]
-             [store :refer [list-fn read-store]]]
+             [store :refer [read-fn list-fn read-store]]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.schemas
              :refer
              [BundleImportData BundleImportResult EntityImportData]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
-            [ctia.schemas.core :refer [NewBundle TempIDs]]
+            [ctia.schemas.core
+             :refer [NewBundle TempIDs]]
             [ctim.domain.id :as id]
             [schema.core :as s]))
 
+(def bundle-mapping
+  {:actor :actors
+   :attack_pattern :attack_patterns
+   :campaign :campaigns
+   :coa :coas
+   :data_table :data_tables
+   :exploit_target :exploit_targets
+   :feedback :feedbacks
+   :incident :incidents
+   :investigation :investigations
+   :indicator :indicators
+   :judgement :judgements
+   :malware :malwares
+   :relationship :relationships
+   :casebook :casebooks
+   :sighting :sightings
+   :tool :tools})
+
 (def bundle-entity-keys
-  #{:actors
-    :attack_patterns
-    :campaigns
-    :coas
-    :data_tables
-    :exploit_targets
-    :feedbacks
-    :incidents
-    :investigations
-    :indicators
-    :judgements
-    :malwares
-    :relationships
-    :casebooks
-    :sightings
-    :tools})
+  (set (vals bundle-mapping)))
 
 (defn entity-type-from-bundle-key
   "Converts a bundle entity key to an entity type
@@ -317,3 +321,76 @@
 (defn bundle-size
   [bundle]
   (bulk/bulk-size (select-keys bundle bundle-entity-keys)))
+
+(defn bulk-keys->bundle-keys [bulk]
+  (apply merge
+         (map (fn [[k v]]
+                (when-let [bundle-key (get bundle-mapping (keyword k))]
+                  {bundle-key v})) bulk)))
+
+(defn fetch-relationship-targets
+  "given relationships, fetch all related objects"
+  [relationships identity-map]
+  (let [all-ids
+        (apply set/union
+               (map (fn [{:keys [target_ref
+                                 source_ref]}]
+                      #{target_ref source_ref})
+                    relationships))
+        by-type (group-by
+                 #(ent/long-id->entity-type %)
+                 all-ids)]
+    (bulk-keys->bundle-keys
+     (bulk/fetch-bulk by-type identity-map))))
+
+(defn fetch-entity-rels
+  "given an entity id, fetch all related relationship"
+  [id identity-map]
+  (let [entity-type (ent/id->entity-type id)
+        params [{:source_ref id}
+                {:target_ref id}]
+        rel-lists
+        (map #(some->
+               (read-store :relationship
+                           list-fn
+                           %
+                           identity-map
+                           {})
+               :data
+               ent/un-store-all
+               set)
+             params)]
+    (apply set/union rel-lists)))
+
+(defn fetch-record
+  "Fetch a record by ID guessing its type"
+  [id identity-map]
+  (when-let [entity-type (ent/id->entity-type id)]
+    (read-store (keyword entity-type)
+                read-fn
+                id
+                identity-map
+                {})))
+
+(def empty-bundle
+  {:id (id/make-transient-id "bundle")
+   :type "bundle"
+   :source "ctia"
+   :valid_time {}})
+
+(defn export-bundle
+  "Given an entity id, export it along
+   with its relationship as a Bundle"
+  [id
+   identity-map
+   ident
+   {:keys [include_related_entities]
+    :or {include_related_entities true}}]
+  (if-let [record (fetch-record id identity-map)]
+    (let [relationships (fetch-entity-rels id identity-map)]
+      (cond-> empty-bundle
+        (seq relationships) (assoc :relationships relationships)
+        (and (seq relationships)
+             include_related_entities) (into (fetch-relationship-targets
+                                              relationships ident))))
+    empty-bundle))
