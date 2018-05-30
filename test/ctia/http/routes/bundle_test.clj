@@ -19,21 +19,23 @@
             [ctim.examples.bundles :refer [bundle-maximal]]))
 
 (defn fixture-properties:small-max-bulk-size [t]
-  ;; Note: These properties may be overwritten by ENV variables
-  (helpers/with-properties ["ctia.http.bulk.max-size" 100]
+  (helpers/with-properties ["ctia.http.bulk.max-size" 1000]
     (t)))
 
 (defn fixture-find-by-external-ids-limit [t]
   (with-redefs [core/find-by-external-ids-limit 5]
     (t)))
 
-(use-fixtures :once (join-fixtures [mth/fixture-schema-validation
-                                    helpers/fixture-properties:clean
-                                    fixture-properties:small-max-bulk-size
-                                    fixture-find-by-external-ids-limit
-                                    whoami-helpers/fixture-server]))
+(use-fixtures :once
+  (join-fixtures
+   [mth/fixture-schema-validation
+    helpers/fixture-properties:clean
+    fixture-properties:small-max-bulk-size
+    fixture-find-by-external-ids-limit
+    whoami-helpers/fixture-server]))
 
-(use-fixtures :each whoami-helpers/fixture-reset-state)
+(use-fixtures :each
+  whoami-helpers/fixture-reset-state)
 
 (defn mk-sighting
   [n]
@@ -348,6 +350,36 @@
                    (map :result (:results bundle-result-update)))
            "All existing entities are not updated")))))
 
+
+(def bundle-fixture-1
+  (let [indicators [(mk-indicator 0)
+                    (mk-indicator 1)]
+        sightings [(mk-sighting 0)]
+        relationships (map (fn [idx indicator]
+                             (mk-relationship idx indicator
+                                              (first sightings) "indicates"))
+                           (range)
+                           indicators)]
+    {:type "bundle"
+     :source "source"
+     :indicators (set indicators)
+     :sightings (set sightings)
+     :relationships (set relationships)}))
+
+(def bundle-fixture-2
+  (let [indicators (map mk-indicator (range 2 402))
+        sightings [(mk-sighting 1)]
+        relationships (map (fn [idx indicator]
+                             (mk-relationship idx indicator
+                                              (first sightings) "indicates"))
+                           (range 100 1000)
+                           indicators)]
+    {:type "bundle"
+     :source "source"
+     :indicators (set indicators)
+     :sightings (set sightings)
+     :relationships (set relationships)}))
+
 (deftest bundle-export-test
   (test-for-each-store
    (fn []
@@ -356,31 +388,41 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [indicators [(mk-indicator 0)
-                       (mk-indicator 1)]
-           sightings [(mk-sighting 0)
-                      (mk-sighting 1)]
-           relationships (map (fn [idx indicator sighting]
-                                (mk-relationship idx indicator
-                                                 sighting "indicates"))
-                              (range)
-                              indicators
-                              sightings)
-           new-bundle {:type "bundle"
-                       :source "source"
-                       :indicators (set indicators)
-                       :sightings (set sightings)
-                       :relationships (set relationships)}
-           bundle-res (:parsed-body (post "ctia/bundle/import"
-                                          :body new-bundle
-                                          :headers {"Authorization" "45c1f5e3f05d0"}))
-           sighting-id (some->> bundle-res
-                                :results
-                                (group-by :type)
-                                :sighting
-                                first
-                                :id)]
-       (get "ctia/bundle/export"
-            :query-params {:entity_id sighting-id}
+     (let [bundle-res-1
+           (:parsed-body (post "ctia/bundle/import"
+                               :body bundle-fixture-1
+                               :headers {"Authorization" "45c1f5e3f05d0"}))
+           bundle-res-2
+           (:parsed-body (post "ctia/bundle/import"
+                               :body bundle-fixture-2
+                               :headers {"Authorization" "45c1f5e3f05d0"}))
+           sighting-id-1
+           (some->> bundle-res-1
+                    :results
+                    (group-by :type)
+                    :sighting
+                    first
+                    :id)
+           sighting-id-2
+           (some->> bundle-res-2
+                    :results
+                    (group-by :type)
+                    :sighting
+                    first
+                    :id)
+           bundle-get-res-1
+           (:parsed-body
+            (get "ctia/bundle/export"
+                 :query-params {:ids sighting-id-1}
+                 :headers {"Authorization" "45c1f5e3f05d0"}))
 
-            :headers {"Authorization" "45c1f5e3f05d0"})))))
+           bundle-get-res-2
+           (:parsed-body
+            (get "ctia/bundle/export"
+                 :query-params {:ids sighting-id-2}
+                 :headers {"Authorization" "45c1f5e3f05d0"}))]
+       (is (= 1 (count (:sightings bundle-get-res-1))))
+       (is (= 2 (count (:indicators bundle-get-res-1))))
+
+       (is (= 1 (count (:sightings bundle-get-res-2))))
+       (is (= 400 (count (:indicators bundle-get-res-2))))))))

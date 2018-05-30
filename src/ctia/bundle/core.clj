@@ -1,22 +1,26 @@
 (ns ctia.bundle.core
   (:refer-clojure :exclude [identity])
-  (:require [clojure
-             [set :as set]
-             [string :as string]]
-            [clojure.tools.logging :as log]
-            [ctia
-             [auth :as auth]
-             [properties :refer [properties]]
-             [store :refer [read-fn list-fn read-store]]]
-            [ctia.bulk.core :as bulk]
-            [ctia.bundle.schemas
-             :refer
-             [BundleImportData BundleImportResult EntityImportData]]
-            [ctia.domain.entities :as ent :refer [with-long-id]]
-            [ctia.schemas.core
-             :refer [NewBundle TempIDs]]
-            [ctim.domain.id :as id]
-            [schema.core :as s]))
+  (:require
+   [clj-momo.lib.map :refer [deep-merge-with]]
+   [ctia.lib.collection :as coll]
+   [clojure
+    [set :as set]
+    [string :as string]]
+   [clojure.tools.logging :as log]
+   [ctia
+    [auth :as auth]
+    [properties :refer [properties]]
+    [store :refer [read-fn list-fn read-store]]]
+   [ctia.bulk.core :as bulk]
+   [ctia.bundle.schemas
+    :refer
+    [BundleImportData BundleImportResult EntityImportData]]
+   [ctia.domain.entities :as ent :refer [with-long-id]]
+   [ctia.schemas.core
+    :refer [NewBundle TempIDs]]
+   [ctim.domain.id :as id]
+   [schema.core :as s]
+   [ctia.lib.collection :as coll]))
 
 (def bundle-mapping
   {:actor :actors
@@ -247,7 +251,7 @@
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
-(s/defn with-bulk-keys
+(defn with-bulk-keys
   "Renames all map keys from bundle to bulk format
    (ex: attack_patterns -> attack-patterns)"
   [m]
@@ -320,12 +324,16 @@
 
 (defn bundle-size
   [bundle]
-  (bulk/bulk-size (select-keys bundle bundle-entity-keys)))
+  (bulk/bulk-size (select-keys bundle
+                               bundle-entity-keys)))
+
+(defn bulk-key->bundle-key [k]
+  (get bundle-mapping k))
 
 (defn bulk-keys->bundle-keys [bulk]
   (apply merge
          (map (fn [[k v]]
-                (when-let [bundle-key (get bundle-mapping (keyword k))]
+                (when-let [bundle-key (bulk-key->bundle-key (keyword k))]
                   {bundle-key v})) bulk)))
 
 (defn fetch-relationship-targets
@@ -337,29 +345,48 @@
                                  source_ref]}]
                       #{target_ref source_ref})
                     relationships))
-        by-type (group-by
-                 #(ent/long-id->entity-type %)
-                 all-ids)]
+        by-type (dissoc (group-by
+                         #(ent/long-id->entity-type %)
+                         all-ids) nil)]
     (bulk-keys->bundle-keys
      (bulk/fetch-bulk by-type identity-map))))
 
-(defn fetch-entity-rels
+(def list-limit 100)
+
+(defn list-all-pages
+  [entity
+   filters
+   identity-map
+   params]
+  (loop [query-params params
+         results []]
+    (let [{:keys [data
+                  paging]}
+          (read-store entity
+                      list-fn
+                      filters
+                      identity-map
+                      query-params)]
+      (if-let [next-params (:next paging)]
+        (recur next-params (concat results data))
+        (concat results data)))))
+
+(defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id identity-map]
   (let [entity-type (ent/id->entity-type id)
-        params [{:source_ref id}
-                {:target_ref id}]
+        filters [{:source_ref id}
+                 {:target_ref id}]
         rel-lists
-        (map #(some->
-               (read-store :relationship
-                           list-fn
+        (map
+         #(some->
+           (list-all-pages :relationship
                            %
                            identity-map
-                           {})
-               :data
-               ent/un-store-all
-               set)
-             params)]
+                           {:limit list-limit})
+           ent/un-store-all
+           set)
+         filters)]
     (apply set/union rel-lists)))
 
 (defn fetch-record
@@ -378,7 +405,7 @@
    :source "ctia"
    :valid_time {}})
 
-(defn export-bundle
+(defn export-entity-bundle
   "Given an entity id, export it along
    with its relationship as a Bundle"
   [id
@@ -387,10 +414,31 @@
    {:keys [include_related_entities]
     :or {include_related_entities true}}]
   (if-let [record (fetch-record id identity-map)]
-    (let [relationships (fetch-entity-rels id identity-map)]
+    (let [relationships (fetch-entity-relationships id identity-map)]
       (cond-> empty-bundle
-        (seq relationships) (assoc :relationships relationships)
+        record
+        (assoc (-> (:type record)
+                   keyword
+                   bulk-key->bundle-key)
+               #{(-> record
+                     ent/un-store
+                     ent/with-long-id)})
+
+        (seq relationships)
+        (assoc :relationships
+               (set (map ent/with-long-id relationships)))
+
         (and (seq relationships)
-             include_related_entities) (into (fetch-relationship-targets
-                                              relationships ident))))
+             include_related_entities)
+        (->> (deep-merge-with coll/add-colls
+                              (fetch-relationship-targets
+                               relationships ident)))))
     empty-bundle))
+
+(defn export-bundle
+  [ids
+   identity-map
+   ident
+   params]
+  (reduce  #(deep-merge-with coll/add-colls %1 %2)
+           (map #(export-entity-bundle % identity-map ident params) ids)))

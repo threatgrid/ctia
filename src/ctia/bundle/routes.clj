@@ -13,7 +13,7 @@
    [schema.core :as s]))
 
 (s/defschema BundleExportQuery
-  {:entity_id s/Str
+  {:ids [s/Str]
    (s/optional-key :include_related_entities) s/Bool})
 
 (defroutes bundle-routes
@@ -45,7 +45,7 @@
                 :auth-identity identity
                 :identity-map identity-map
                 (ok (export-bundle
-                     (:entity_id q)
+                     (:ids q)
                      identity-map
                      identity
                      (select-keys q [:include_related_entities]))))

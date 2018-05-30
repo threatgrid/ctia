@@ -14,6 +14,7 @@
             [ctia.flows.hooks :as h]
             [ctia.schemas.core :refer [TempIDs]]
             [ctim.domain.id :as id]
+            [ctia.lib.collection :as coll]
             [ctim.events.obj-to-event
              :refer
              [to-create-event
@@ -298,43 +299,6 @@
     :delete (first results)
     :update (first entities)))
 
-(defn recast
-  "given a source collection and the target one,
-   cast target the same as source"
-  [orig-coll new-coll]
-  (cond
-    (vector? orig-coll) (vec new-coll)
-    (set? orig-coll) (set new-coll)
-    :else new-coll))
-
-(defn add-colls
-  "given many collections as argument
-   concat them keeping the first argument type"
-  [& args]
-  (let [new-coll
-        (->> args
-             (map #(or % []))
-             (reduce into))]
-    (recast (first args) new-coll)))
-
-(defn remove-colls
-  "given many collections as argument
-   remove items on a from b successively"
-  [& args]
-  (let [new-coll
-        (reduce
-         (fn [a b]
-           (remove (or (set b) #{})
-                   (or a []))) args)]
-    (recast (first args) new-coll)))
-
-(defn replace-colls
-  "given many collections as argument
-   replace a from b successively"
-  [& args]
-  (let [new-coll (last args)]
-    (recast (first args) new-coll)))
-
 (s/defn patch-entities :- FlowMap
   [{:keys [prev-entity
            partial-entity
@@ -342,10 +306,10 @@
     :as fm} :- FlowMap]
 
   (let [patch-fn (case patch-operation
-                   :add add-colls
-                   :remove remove-colls
-                   :replace replace-colls
-                   replace-colls)
+                   :add coll/add-colls
+                   :remove coll/remove-colls
+                   :replace coll/replace-colls
+                   coll/replace-colls)
         entity (-> (deep-merge-with patch-fn
                                     prev-entity
                                     partial-entity)

@@ -83,7 +83,9 @@
   (->> bulk
        (pmap (fn [[entity-type entities]]
                [entity-type
-                (apply func entities (entity-type-from-bulk-key entity-type) args)]))
+                (apply func
+                       entities
+                       (entity-type-from-bulk-key entity-type) args)]))
        (into {})))
 
 (defn merge-tempids
