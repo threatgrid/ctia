@@ -2,7 +2,6 @@
   (:refer-clojure :exclude [identity])
   (:require
    [clj-momo.lib.map :refer [deep-merge-with]]
-   [ctia.lib.collection :as coll]
    [clojure
     [set :as set]
     [string :as string]]
@@ -10,38 +9,22 @@
    [ctia
     [auth :as auth]
     [properties :refer [properties]]
-    [store :refer [read-fn list-fn read-store]]]
+    [store :refer [list-fn read-fn read-store]]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
     :refer
     [BundleImportData BundleImportResult EntityImportData]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.schemas.core
-    :refer [NewBundle TempIDs]]
+   [ctia.lib.collection :as coll]
+   [ctia.schemas.core :refer [NewBundle TempIDs]]
    [ctim.domain.id :as id]
-   [schema.core :as s]
-   [ctia.lib.collection :as coll]))
+   [schema.core :as s]))
 
 (def find-by-external-ids-limit 1000)
-(def list-limit 100)
+(def list-limit find-by-external-ids-limit)
 
 (def bundle-entity-keys
-  #{:investigations
-    :tools
-    :indicators
-    :attack_patterns
-    :feedbacks
-    :campaigns
-    :actors
-    :data_tables
-    :judgements
-    :malwares
-    :incidents
-    :sightings
-    :relationships
-    :casebooks
-    :coas
-    :exploit_targets})
+  (set (vals bulk/bulk-entity-mapping)))
 
 (defn transient-id?
   [id]
@@ -368,11 +351,7 @@
                 identity-map
                 {})))
 
-(def empty-bundle
-  {:type "bundle"
-   :source "ctia"})
-
-(defn export-entity-bundle
+(defn export-entities
   "Given an entity id, export it along
    with its relationship as a Bundle"
   [id
@@ -382,7 +361,7 @@
     :or {include_related_entities true}}]
   (if-let [record (fetch-record id identity-map)]
     (let [relationships (fetch-entity-relationships id identity-map)]
-      (cond-> empty-bundle
+      (cond-> {}
         record
         (assoc (-> (:type record)
                    keyword
@@ -401,12 +380,17 @@
                               (fetch-relationship-targets
                                relationships
                                ident)))))
-    empty-bundle))
+    {}))
+
+(def empty-bundle
+  {:type "bundle"
+   :source "ctia"})
 
 (defn export-bundle
   [ids
    identity-map
    ident
    params]
-  (reduce  #(deep-merge-with coll/add-colls %1 %2)
-           (map #(export-entity-bundle % identity-map ident params) ids)))
+  (into empty-bundle
+        (reduce #(deep-merge-with coll/add-colls %1 %2)
+                (map #(export-entities % identity-map ident params) ids))))

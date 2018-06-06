@@ -1,17 +1,14 @@
 (ns ctia.bulk.core
-  (:require
-   [clojure.set :as set]
-   [clojure.tools.logging :as log]
-   [ctia
-    [auth :as auth]
-    [properties :refer [properties]]
-    [store :as store :refer [read-store write-store]]]
-   [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.entity.entities :refer [entities]]
-   [ctia.flows.crud :as flows]
-   [ctia.lib.keyword :refer [singular]]
-   [ring.util.http-response :refer :all]
-   [ctia.bulk.core :as bulk]))
+  (:require [clojure.set :as set]
+            [clojure.tools.logging :as log]
+            [ctia
+             [auth :as auth]
+             [properties :refer [properties]]
+             [store :as store :refer [read-store write-store]]]
+            [ctia.domain.entities :as ent :refer [with-long-id]]
+            [ctia.entity.entities :refer [entities]]
+            [ctia.flows.crud :as flows]
+            [ring.util.http-response :refer :all]))
 
 (def bulk-entity-mapping
   (into {}

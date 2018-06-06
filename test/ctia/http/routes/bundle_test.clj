@@ -418,9 +418,18 @@
            (:parsed-body
             (get "ctia/bundle/export"
                  :query-params {:ids sighting-id-2}
+                 :headers {"Authorization" "45c1f5e3f05d0"}))
+           bundle-get-res-3
+           (:parsed-body
+            (get "ctia/bundle/export"
+                 :query-params {:ids [sighting-id-1
+                                      sighting-id-2]}
                  :headers {"Authorization" "45c1f5e3f05d0"}))]
        (is (= 1 (count (:sightings bundle-get-res-1))))
        (is (= 2 (count (:indicators bundle-get-res-1))))
 
        (is (= 1 (count (:sightings bundle-get-res-2))))
-       (is (= 400 (count (:indicators bundle-get-res-2))))))))
+       (is (= 400 (count (:indicators bundle-get-res-2))))
+
+       (is (= 2 (count (:sightings bundle-get-res-3))))
+       (is (= 402 (count (:indicators bundle-get-res-3))))))))
