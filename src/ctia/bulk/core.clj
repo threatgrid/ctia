@@ -1,35 +1,34 @@
 (ns ctia.bulk.core
-  (:require [clojure.tools.logging :as log]
-            [ctia
-             [auth :as auth]
-             [properties :refer [properties]]
-             [store :as store :refer [read-store write-store]]]
-            [ctia.domain.entities :as ent :refer [with-long-id]]
-            [ctia.entity.entities :refer [entities]]
-            [ctia.flows.crud :as flows]
-            [ctia.lib.keyword :refer [singular]]
-            [ring.util.http-response :refer :all]))
+  (:require
+   [clojure.set :as set]
+   [clojure.tools.logging :as log]
+   [ctia
+    [auth :as auth]
+    [properties :refer [properties]]
+    [store :as store :refer [read-store write-store]]]
+   [ctia.domain.entities :as ent :refer [with-long-id]]
+   [ctia.entity.entities :refer [entities]]
+   [ctia.flows.crud :as flows]
+   [ctia.lib.keyword :refer [singular]]
+   [ring.util.http-response :refer :all]
+   [ctia.bulk.core :as bulk]))
+
+(def bulk-entity-mapping
+  (into {}
+        (map (fn [{:keys [entity plural]}]
+               {entity plural}) (vals entities))))
 
 (defn bulk-key
-  "Returns the bulk key for a given entity type"
+  "Converts a bulk entity key to an entity type
+   Ex: :attack_pattern -> :attack-patterns"
   [entity-type]
-  (case entity-type
-    :attack-pattern :attack_patterns
-    :data-table :data_tables
-    :exploit-target :exploit_targets
-    (-> (name entity-type)
-        (str "s")
-        keyword)))
+  (get bulk-entity-mapping entity-type))
 
 (defn entity-type-from-bulk-key
   "Converts a bulk entity key to an entity type
    Ex: :attack_patterns -> :attack-pattern"
   [k]
-  (case k
-    :attack_patterns :attack-pattern
-    :exploit_targets :exploit-target
-    :data_tables :data-table
-    (singular k)))
+  (get (set/map-invert bulk-entity-mapping) k))
 
 (defn create-fn
   "return the create function provided an entity type key"
@@ -64,7 +63,7 @@
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity]
-  (let [read-entity (read-fn  entity-type auth-identity {})]
+  (let [read-entity (read-fn entity-type auth-identity {})]
     (map (fn [id] (try (with-long-id
                          (read-entity id))
                        (catch Exception e
@@ -81,11 +80,12 @@
   "
   [func bulk & args]
   (->> bulk
-       (pmap (fn [[entity-type entities]]
-               [entity-type
-                (apply func
-                       entities
-                       (entity-type-from-bulk-key entity-type) args)]))
+       (pmap (fn [[bulk-key entities]]
+               (let [entity-type (entity-type-from-bulk-key bulk-key)]
+                 [bulk-key
+                  (apply func
+                         entities
+                         entity-type args)])))
        (into {})))
 
 (defn merge-tempids

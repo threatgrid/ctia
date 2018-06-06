@@ -7,12 +7,12 @@
             [clojure
              [set :as set]
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
+            [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
-            [ctia.bundle.routes :as sut]
             [ctia.store :refer [stores]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post deep-dissoc-entity-ids]]
+             [core :as helpers :refer [deep-dissoc-entity-ids get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
@@ -156,7 +156,7 @@
   [bundle]
   (->> (select-keys bundle core/bundle-entity-keys)
        (map (fn [[k v]]
-              [(core/entity-type-from-bundle-key k) (count v)]))
+              [(bulk/entity-type-from-bulk-key k) (count v)]))
        (into {})))
 
 (defn count-bundle-result-entities
@@ -337,7 +337,6 @@
            bundle-result-update (:parsed-body response-update)]
        (is (= 200 (:status response-create)))
        (is (= 200 (:status response-update)))
-
        (is (= nb-entities
               (count (:results bundle-result-create))))
        (is (= nb-entities
@@ -415,7 +414,6 @@
             (get "ctia/bundle/export"
                  :query-params {:ids sighting-id-1}
                  :headers {"Authorization" "45c1f5e3f05d0"}))
-
            bundle-get-res-2
            (:parsed-body
             (get "ctia/bundle/export"
