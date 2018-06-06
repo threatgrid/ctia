@@ -18,8 +18,11 @@
         (map (fn [{:keys [entity plural]}]
                {entity plural}) (vals entities))))
 
+(def inverted-bulk-entity-mapping
+  (set/map-invert bulk-entity-mapping))
+
 (defn bulk-key
-  "Converts a bulk entity key to an entity type
+  "Converts an entity type to a bulk key
    Ex: :attack_pattern -> :attack-patterns"
   [entity-type]
   (get bulk-entity-mapping entity-type))
@@ -28,7 +31,7 @@
   "Converts a bulk entity key to an entity type
    Ex: :attack_patterns -> :attack-pattern"
   [k]
-  (get (set/map-invert bulk-entity-mapping) k))
+  (get inverted-bulk-entity-mapping k))
 
 (defn create-fn
   "return the create function provided an entity type key"

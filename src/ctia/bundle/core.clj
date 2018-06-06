@@ -344,8 +344,7 @@
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id identity-map]
-  (let [entity-type (ent/id->entity-type id)
-        filters [{:source_ref id}
+  (let [filters [{:source_ref id}
                  {:target_ref id}]
         rel-lists
         (map
@@ -370,10 +369,8 @@
                 {})))
 
 (def empty-bundle
-  {:id (id/make-transient-id "bundle")
-   :type "bundle"
-   :source "ctia"
-   :valid_time {}})
+  {:type "bundle"
+   :source "ctia"})
 
 (defn export-entity-bundle
   "Given an entity id, export it along

@@ -20,7 +20,7 @@
   (context "/bundle" []
            :tags ["Bundle"]
            (GET "/export" []
-                :return Bundle
+                :return NewBundle
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :query [q BundleExportQuery]
                 :summary "Export a record with its local relationships"
