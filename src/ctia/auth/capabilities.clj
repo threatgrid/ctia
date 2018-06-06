@@ -1,24 +1,13 @@
 (ns ctia.auth.capabilities
-  (:require [clojure.set :as set]))
+  (:require
+   [ctia.entity.entities :refer [entities]]
+   [clojure.set :as set]))
 
-(def entities
-  #{:actor
-    :attack-pattern
-    :campaign
-    :casebook
-    :coa
-    :data-table
-    :exploit-target
-    :feedback
-    :incident
-    :indicator
-    :investigation
-    :judgement
-    :malware
-    :relationship
-    :sighting
-    :tool
-    :verdict})
+(def all-entities
+  (set (conj (keys entities) :verdict)))
+
+(def entities-no-casebook
+  (set (remove #{:casebook} all-entities)))
 
 (def prefixes
   {:read #{:read :search :list}
@@ -36,17 +25,30 @@
 (def all-entity-capabilities
   (apply set/union
          (map #(gen-capabilities-for-entity-and-accesses
-                % (keys prefixes)) entities)))
+                % (keys prefixes)) all-entities)))
+
+(def all-entity-no-casebook-capabilities
+  (apply set/union
+         (map #(gen-capabilities-for-entity-and-accesses
+                % (keys prefixes)) entities-no-casebook)))
+
+(def misc-capabilities
+  #{:read-verdict
+    ;; Other
+    :developer
+    :specify-id
+    :external-id
+    :import-bundle})
 
 (def all-capabilities
   (set/union
-   #{:read-verdict
-     ;; Other
-     :developer
-     :specify-id
-     :external-id
-     :import-bundle}
+   misc-capabilities
    all-entity-capabilities))
+
+(def all-capabilities-no-casebook
+  (set/union
+   misc-capabilities
+   all-entity-no-casebook-capabilities))
 
 (def default-capabilities
   {:user

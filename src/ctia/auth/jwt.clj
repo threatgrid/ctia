@@ -3,7 +3,7 @@
   (:require
    [ctia.auth.capabilities
     :refer [default-capabilities
-            entities
+            entities-no-casebook
             gen-capabilities-for-entity-and-accesses]]
    [ring-jwt-middleware.core :as mid]
    [clj-momo.lib.set :refer [as-set]]
@@ -45,7 +45,7 @@
         (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
                                                   (:access scope-repr)))
     ;; typically: ["private-intel"]
-    1 (->> entities
+    1 (->> entities-no-casebook
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize
            (set/union (if (contains? (:access scope-repr) :write)
