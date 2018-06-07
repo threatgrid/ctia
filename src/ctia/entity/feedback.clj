@@ -91,7 +91,7 @@
      :realize-fn fs/realize-feedback
      :get-capabilities :read-feedback
      :post-capabilities :create-feedback
-     :put-capabilities :create-feedbacl
+     :put-capabilities :create-feedback
      :delete-capabilities :delete-feedback
      :external-id-capabilities #{:read-feedback :external-id}
      :can-update? false})))

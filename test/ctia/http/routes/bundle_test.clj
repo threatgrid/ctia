@@ -446,6 +446,4 @@
 
        (is (= 2 (count (:sightings bundle-get-res-4))))
        (is (nil? (:indicators bundle-get-res-4)))
-       (is (= 402 (count (:relationships bundle-get-res-4))))
-
-       ))))
+       (is (= 402 (count (:relationships bundle-get-res-4))))))))

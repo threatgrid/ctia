@@ -80,9 +80,9 @@
   "
   [func bulk & args]
   (->> bulk
-       (pmap (fn [[bulk-key entities]]
-               (let [entity-type (entity-type-from-bulk-key bulk-key)]
-                 [bulk-key
+       (pmap (fn [[bulk-k entities]]
+               (let [entity-type (entity-type-from-bulk-key bulk-k)]
+                 [bulk-k
                   (apply func
                          entities
                          entity-type args)])))
