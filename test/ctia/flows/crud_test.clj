@@ -1,31 +1,17 @@
 (ns ctia.flows.crud-test
   (:require [ctia.flows.crud :as sut]
+            [ctia.lib.collection :as coll]
             [clj-momo.test-helpers
              [core :as mth]]
             [clj-momo.lib.map :refer [deep-merge-with]]
             [clojure.test :refer [deftest testing is]]))
-
-(deftest add-colls-test
-  (let [input [#{:a :b} [:c :d] nil [:e]]]
-    (is (deep= #{:a :b :c :d :e}
-               (apply sut/add-colls input)))))
-
-(deftest remove-colls-test
-  (let [input [[:a :b :c :d :e] #{:c :d} [:e] nil]]
-    (is (deep= [:a :b]
-               (apply sut/remove-colls input)))))
-
-(deftest replace-colls-test
-  (let [input [#{:a :b} [:c :d] nil [:e :f]]]
-    (is (deep= #{:e :f}
-               (apply sut/replace-colls input)))))
 
 (deftest deep-merge-with-add-colls-test
   (let [fixture {:foo {:bar ["one" "two" "three"]
                        :lorem ["ipsum" "dolor"]}}]
     (is (deep= {:foo {:bar ["one" "two" "three" "four"]
                       :lorem ["ipsum" "dolor"]}}
-               (deep-merge-with sut/add-colls
+               (deep-merge-with coll/add-colls
                                 fixture
                                 {:foo {:bar ["four"]}})))))
 
@@ -34,7 +20,7 @@
                        :lorem ["ipsum" "dolor"]}}]
     (is (deep= {:foo {:bar #{"one" "three"}
                       :lorem ["ipsum" "dolor"]}}
-               (deep-merge-with sut/remove-colls
+               (deep-merge-with coll/remove-colls
                                 fixture
                                 {:foo {:bar ["two"]}})))))
 
@@ -43,6 +29,6 @@
                        :lorem ["ipsum" "dolor"]}}]
     (is (deep= {:foo {:bar {:foo {:bar ["else"]}}
                       :lorem ["ipsum" "dolor"]}}
-               (deep-merge-with sut/replace-colls
+               (deep-merge-with coll/replace-colls
                                 fixture
                                 {:foo  {:bar {:foo {:bar #{"else"}}}}})))))

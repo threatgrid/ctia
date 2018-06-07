@@ -1,8 +1,10 @@
 (ns ctia.auth.jwt
   (:refer-clojure :exclude [identity])
   (:require
-   [ctia.auth.capabilities :refer [all-capabilities
-                                   default-capabilities]]
+   [ctia.auth.capabilities
+    :refer [default-capabilities
+            entities-no-casebook
+            gen-capabilities-for-entity-and-accesses]]
    [ring-jwt-middleware.core :as mid]
    [clj-momo.lib.set :refer [as-set]]
    [clojure.set :as set]
@@ -18,28 +20,6 @@
   (get-in @prop/properties [:ctia :auth :casebook :scope]
           "casebook"))
 
-(def entities
-  #{:actor
-    :attack-pattern
-    :campaign
-    :coa
-    :data-table
-    :exploit-target
-    :feedback
-    :incident
-    :indicator
-    :investigation
-    :judgement
-    :malware
-    :relationship
-    :sighting
-    :tool
-    :verdict})
-
-(def prefixes
-  {:read #{:read :search :list}
-   :write #{:create :delete}})
-
 (def ^:private read-only-ctia-capabilities
   (:user default-capabilities))
 
@@ -51,15 +31,6 @@
   "Given a seq of set make the union of all of them"
   [sets]
   (apply set/union sets))
-
-(defn gen-capabilities-for-entity-and-accesses
-  "Given an entity and a set of access (:read or :write) generate a set of
-  capabilities"
-  [entity-name accesses]
-  (set (for [access accesses
-             prefix (get prefixes access)]
-         (keyword (str (name prefix) "-" (name entity-name)
-                       (if (= :list prefix) "s" ""))))))
 
 (defn gen-entity-capabilities
   "given a scope representation whose root scope is entity-root-scope generate
@@ -74,7 +45,7 @@
         (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
                                                   (:access scope-repr)))
     ;; typically: ["private-intel"]
-    1 (->> entities
+    1 (->> entities-no-casebook
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize
            (set/union (if (contains? (:access scope-repr) :write)

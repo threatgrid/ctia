@@ -1,5 +1,5 @@
 (ns ctia.entity.feedback
-  (:require [compojure.api.sweet :refer [GET]]
+  (:require [compojure.api.sweet :refer [GET routes]]
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
             [ctia.store :refer :all]
             [ctia.entity.feedback.schemas :as fs]
@@ -78,21 +78,23 @@
     :delete-feedback})
 
 (def feedback-routes
-  (entity-crud-routes
-   {:entity :feedback
-    :new-schema fs/NewFeedback
-    :entity-schema fs/Feedback
-    :get-schema fs/PartialFeedback
-    :get-params FeedbackGetParams
-    :list-schema fs/PartialFeedbackList
-    :external-id-q-params FeedbackByExternalIdQueryParams
-    :realize-fn fs/realize-feedback
-    :get-capabilities :read-feedback
-    :post-capabilities :create-feedback
-    :put-capabilities :create-feedbacl
-    :delete-capabilities :delete-feedback
-    :external-id-capabilities #{:read-feedback :external-id}
-    :can-update? false}))
+  (routes
+   feedback-by-entity-route
+   (entity-crud-routes
+    {:entity :feedback
+     :new-schema fs/NewFeedback
+     :entity-schema fs/Feedback
+     :get-schema fs/PartialFeedback
+     :get-params FeedbackGetParams
+     :list-schema fs/PartialFeedbackList
+     :external-id-q-params FeedbackByExternalIdQueryParams
+     :realize-fn fs/realize-feedback
+     :get-capabilities :read-feedback
+     :post-capabilities :create-feedback
+     :put-capabilities :create-feedback
+     :delete-capabilities :delete-feedback
+     :external-id-capabilities #{:read-feedback :external-id}
+     :can-update? false})))
 
 (def feedback-entity
   {:route-context "/feedback"

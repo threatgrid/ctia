@@ -3,17 +3,69 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia.bundle
-    [core :refer [bundle-size
-                  bundle-max-size
-                  import-bundle]]
+    [core :refer [bundle-max-size
+                  bundle-size
+                  import-bundle
+                  export-bundle]]
     [schemas :refer [BundleImportResult]]]
-   [ctia.schemas.core :refer [NewBundle]]
+   [ctia.schemas.core :refer [Bundle NewBundle]]
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
+
+(s/defschema BundleExportQuery
+  {:ids [s/Str]
+   (s/optional-key :include_related_entities) s/Bool})
 
 (defroutes bundle-routes
   (context "/bundle" []
            :tags ["Bundle"]
+           (GET "/export" []
+                :return NewBundle
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                :query [q BundleExportQuery]
+                :summary "Export a record with its local relationships"
+                :capabilities
+                #{:list-campaigns
+                  :read-actor
+                  :read-malware
+                  :read-exploit-target
+                  :read-attack-pattern
+                  :read-judgement
+                  :read-sighting
+                  :list-sightings
+                  :list-relationships
+                  :read-coa
+                  :read-indicator
+                  :list-exploit-targets
+                  :list-judgements
+                  :list-tools
+                  :list-indicators
+                  :read-feedback
+                  :list-verdicts
+                  :list-casebooks
+                  :list-feedbacks
+                  :list-malwares
+                  :list-data-tables
+                  :list-incidents
+                  :read-campaign
+                  :list-attack-patterns
+                  :read-relationship
+                  :list-actors
+                  :read-investigation
+                  :read-incident
+                  :list-coas
+                  :read-tool
+                  :read-casebook
+                  :list-investigations
+                  :read-data-table}
+                :auth-identity identity
+                :identity-map identity-map
+                (ok (export-bundle
+                     (:ids q)
+                     identity-map
+                     identity
+                     (select-keys q [:include_related_entities]))))
+
            (POST "/import" []
                  :return BundleImportResult
                  :body [bundle NewBundle {:description "a Bundle to import"}]

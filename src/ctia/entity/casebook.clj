@@ -285,26 +285,28 @@
   (pagination/new-connection CasebookType))
 
 (def casebook-routes
-  (entity-crud-routes
-   {:api-tags ["Casebook"]
-    :entity :casebook
-    :new-schema NewCasebook
-    :entity-schema Casebook
-    :get-schema PartialCasebook
-    :get-params CasebookGetParams
-    :list-schema PartialCasebookList
-    :search-schema PartialCasebookList
-    :external-id-q-params CasebookByExternalIdQueryParams
-    :search-q-params CasebookSearchParams
-    :new-spec :new-casebook/map
-    :realize-fn realize-casebook
-    :get-capabilities :read-casebook
-    :post-capabilities :create-casebook
-    :put-capabilities :create-casebook
-    :delete-capabilities :delete-casebook
-    :search-capabilities :search-casebook
-    :external-id-capabilities #{:read-casebook :external-id}
-    :hide-delete? false}))
+  (routes
+   casebook-operation-routes
+   (entity-crud-routes
+    {:api-tags ["Casebook"]
+     :entity :casebook
+     :new-schema NewCasebook
+     :entity-schema Casebook
+     :get-schema PartialCasebook
+     :get-params CasebookGetParams
+     :list-schema PartialCasebookList
+     :search-schema PartialCasebookList
+     :external-id-q-params CasebookByExternalIdQueryParams
+     :search-q-params CasebookSearchParams
+     :new-spec :new-casebook/map
+     :realize-fn realize-casebook
+     :get-capabilities :read-casebook
+     :post-capabilities :create-casebook
+     :put-capabilities :create-casebook
+     :delete-capabilities :delete-casebook
+     :search-capabilities :search-casebook
+     :external-id-capabilities #{:read-casebook :external-id}
+     :hide-delete? false})))
 
 (def casebook-entity
   {:route-context "/casebook"

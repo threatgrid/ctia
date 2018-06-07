@@ -80,20 +80,7 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-#_(defn get-incident-entities-bundle
-    "fetch all incident related entities, assemble them into a Bundle"
-    [incident-id
-     identity-map
-     include_related_entities
-     limit]
-    (let [relationships
-          (read-store :relationship list-records
-                      {:target_ref (short-id->long-id incident-id)}
-                      identity-map
-                      {:limit limit})]
-      relationships))
-
-(def incident-operation-routes
+(def incident-additional-routes
   (routes
    (POST "/:id/status" []
          :return Incident
@@ -128,37 +115,7 @@
                       :partial-entity status-update
                       :spec :new-incident/map))]
              (ok updated)
-             (not-found))))
-
-   #_(GET "/:id/export" []
-          :return Bundle
-          :header-params [{Authorization :- (s/maybe s/Str) nil}]
-          :summary "Get an Incident related entities as a Bundle"
-          :query-params [{limit :- s/Num incident-bundle-default-limit}
-                         {include_related_entities :- s/Bool false}]
-          :path-params [id :- s/Str]
-          :capabilities #{:read-actor
-                          :read-attack-pattern
-                          :read-campaign
-                          :read-coa
-                          :read-data-table
-                          :read-exploit-target
-                          :read-feedback
-                          :read-incident
-                          :read-indicator
-                          :read-investigation
-                          :read-judgement
-                          :read-malware
-                          :read-relationship
-                          :read-casebook
-                          :read-sighting
-                          :read-tool}
-          :auth-identity identity
-          :identity-map identity-map
-          (get-incident-entities-bundle id
-                                        identity-map
-                                        limit
-                                        include_related_entities))))
+             (not-found))))))
 
 (def incident-mapping
   {"incident"
@@ -222,27 +179,29 @@
    IncidentFieldsParam))
 
 (def incident-routes
-  (entity-crud-routes
-   {:entity :incident
-    :new-schema NewIncident
-    :entity-schema Incident
-    :get-schema PartialIncident
-    :get-params IncidentGetParams
-    :list-schema PartialIncidentList
-    :search-schema PartialIncidentList
-    :patch-schema PartialNewIncident
-    :external-id-q-params IncidentByExternalIdQueryParams
-    :search-q-params IncidentSearchParams
-    :new-spec :new-incident/map
-    :can-patch? true
-    :realize-fn realize-incident
-    :get-capabilities :read-incident
-    :post-capabilities :create-incident
-    :put-capabilities :create-incident
-    :patch-capabilities :create-incident
-    :delete-capabilities :delete-incident
-    :search-capabilities :search-incident
-    :external-id-capabilities #{:read-incident :external-id}}))
+  (routes
+   incident-additional-routes
+   (entity-crud-routes
+    {:entity :incident
+     :new-schema NewIncident
+     :entity-schema Incident
+     :get-schema PartialIncident
+     :get-params IncidentGetParams
+     :list-schema PartialIncidentList
+     :search-schema PartialIncidentList
+     :patch-schema PartialNewIncident
+     :external-id-q-params IncidentByExternalIdQueryParams
+     :search-q-params IncidentSearchParams
+     :new-spec :new-incident/map
+     :can-patch? true
+     :realize-fn realize-incident
+     :get-capabilities :read-incident
+     :post-capabilities :create-incident
+     :put-capabilities :create-incident
+     :patch-capabilities :create-incident
+     :delete-capabilities :delete-incident
+     :search-capabilities :search-incident
+     :external-id-capabilities #{:read-incident :external-id}})))
 
 (def capabilities
   #{:create-incident
@@ -265,5 +224,4 @@
    :es-store ->IncidentStore
    :es-mapping incident-mapping
    :routes incident-routes
-   :capabilities capabilities
-   :additional-routes incident-operation-routes})
+   :capabilities capabilities})
