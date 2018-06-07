@@ -48,9 +48,14 @@
       "with all scopes you should have most capabilities except some very
        specific ones")
 
-  (is (= #{:developer :specify-id :external-id}
-         (set/difference caps/all-capabilities-no-casebook
-                         (sut/scopes-to-capabilities #{(sut/entity-root-scope)})))
+  (is (= #{:search-casebook
+           :list-casebooks
+           :create-casebook
+           :read-casebook
+           :delete-casebook}
+         (set/difference
+          (sut/scopes-to-capabilities #{(sut/casebook-root-scope)})
+          (sut/scopes-to-capabilities #{(sut/entity-root-scope)})))
       "entity scope don't provide casebook")
 
   (is (= #{:import-bundle}
