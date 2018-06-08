@@ -1,4 +1,4 @@
-(ns ctia.http.routes.bundle-test
+(ns ctia.bundle.routes-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.es.index :as es-index]
             [clj-momo.test-helpers

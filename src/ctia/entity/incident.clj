@@ -1,28 +1,26 @@
 (ns ctia.entity.incident
   (:require
-   [ctia.domain.entities :refer [default-realize-fn
-                                 un-store
-                                 with-long-id
-                                 short-id->long-id]]
-   [ctia.flows.crud :as flows]
-   [ring.util.http-response :refer [ok not-found]]
    [clj-momo.lib.clj-time.core :as time]
-   [compojure.api.sweet :refer [context POST routes]]
-   [ctia.domain.entities :refer [default-realize-fn]]
-   [ctia.store :refer :all]
+   [compojure.api.sweet :refer [POST routes]]
+   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
+   [ctia.flows.crud :as flows]
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
     [crud :refer [entity-crud-routes]]]
    [ctia.schemas
-    [core :refer [def-acl-schema def-stored-schema]]
+    [core :refer [def-acl-schema def-stored-schema Reference]]
     [sorting :refer [default-entity-sort-fields describable-entity-sort-fields sourcable-entity-sort-fields]]]
+   [ctia.store :refer :all]
    [ctia.stores.es
     [mapping :as em]
     [store :refer [def-es-store]]]
-   [ctim.schemas.incident :as is]
-   [ctim.schemas.vocabularies :as vocs]
-   [flanders.schema :as fs]
-   [flanders.utils :as fu]
+   [ctim.schemas
+    [incident :as is]
+    [vocabularies :as vocs]]
+   [flanders
+    [schema :as fs]
+    [utils :as fu]]
+   [ring.util.http-response :refer [not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
 

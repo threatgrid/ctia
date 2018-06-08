@@ -11,6 +11,7 @@
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
             [ctia.bulk.routes :refer [bulk-routes]]
+            [ctia.link.routes :refer [incident-casebook-link-route]]
             [ctia.documentation.routes :refer [documentation-routes]]
             [ctia.graphql.routes :refer [graphql-ui-routes
                                          graphql-routes]]
@@ -135,6 +136,10 @@
                      "/bulk" []
                      :tags ["Bulk"]
                      bulk-routes)
+                    (context
+                     "/incident" []
+                     :tags ["Incident"]
+                     incident-casebook-link-route)
                     bundle-routes
                     observable-routes
                     metrics-routes
