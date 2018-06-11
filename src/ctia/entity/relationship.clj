@@ -16,7 +16,7 @@
              [mapping :as em]
              [store :refer [def-es-store]]]
             [ctim.domain.id :refer [long-id->id short-id->long-id]]
-            [ring.util.http-response :refer [not-found]]
+            [ring.util.http-response :refer [not-found bad-request]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -83,9 +83,10 @@
         :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :summary "Link an Incident to a Casebook"
         :path-params [id :- s/Str]
-        :capabilities #{:create-incident
-                        :create-relationship
-                        :read-casebook}
+        :capabilities #{:read-incident
+                        :read-casebook
+                        :read-relationship
+                        :create-relationship}
         :auth-identity identity
         :identity-map identity-map
         (let [incident (read-store :incident
@@ -106,7 +107,7 @@
             (not incident)
             (not-found)
             (not casebook)
-            (not-found)
+            (bad-request {:error "Invalid Casebook id"})
             :else
             (let [{:keys [tlp casebook_id]
                    :or {tlp "amber"}} link-req
