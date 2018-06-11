@@ -1,13 +1,22 @@
 (ns ctia.entity.relationship
-  (:require [ctia.entity.relationship.schemas :as rs]
-            [ctia.store :refer :all]
+  (:require [compojure.api.sweet :refer [POST]]
+            [ctia
+             [properties :refer [get-http-show]]
+             [store :refer :all]]
+            [ctia.domain.entities :refer [un-store with-long-id]]
+            [ctia.entity.relationship.schemas :as rs]
+            [ctia.flows.crud :as flows]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [common :refer [BaseEntityFilterParams created PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
-            [ctia.schemas.sorting :as sorting]
+            [ctia.schemas
+             [core :refer [Reference TLP]]
+             [sorting :as sorting]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
+            [ctim.domain.id :refer [long-id->id short-id->long-id]]
+            [ring.util.http-response :refer [not-found bad-request]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -61,6 +70,70 @@
 (s/defschema RelationshipByExternalIdQueryParams
   (st/merge PagingParams
             RelationshipFieldsParam))
+
+(s/defschema IncidentCasebookLinkRequest
+  {:casebook_id Reference
+   (s/optional-key :tlp) TLP})
+
+(def incident-casebook-link-route
+  (POST "/:id/link" []
+        :return rs/Relationship
+        :body [link-req IncidentCasebookLinkRequest
+               {:description "an Incident Link request"}]
+        :header-params [{Authorization :- (s/maybe s/Str) nil}]
+        :summary "Link an Incident to a Casebook"
+        :path-params [id :- s/Str]
+        :capabilities #{:read-incident
+                        :read-casebook
+                        :read-relationship
+                        :create-relationship}
+        :auth-identity identity
+        :identity-map identity-map
+        (let [incident (read-store :incident
+                                   read-record
+                                   id
+                                   identity-map
+                                   {})
+              casebook (read-store :casebook
+                                   read-record
+                                   (-> link-req
+                                       :casebook_id
+                                       long-id->id
+                                       :short-id)
+                                   identity-map
+                                   {})]
+
+          (cond
+            (not incident)
+            (not-found)
+            (not casebook)
+            (bad-request {:error "Invalid Casebook id"})
+            :else
+            (let [{:keys [tlp casebook_id]
+                   :or {tlp "amber"}} link-req
+                  new-relationship
+                  {:source_ref casebook_id
+                   :target_ref (short-id->long-id id
+                                                  get-http-show)
+                   :relationship_type "related-to"
+                   :tlp tlp}
+                  stored-relationship
+                  (-> (flows/create-flow
+                       :entity-type :relationship
+                       :realize-fn rs/realize-relationship
+                       :store-fn #(write-store :relationship
+                                               create-record
+                                               %
+                                               identity-map
+                                               {})
+                       :long-id-fn with-long-id
+                       :entity-type :relationship
+                       :identity identity
+                       :entities [new-relationship]
+                       :spec :new-relationship/map)
+                      first
+                      un-store)]
+              (created stored-relationship))))))
 
 (def relationship-routes
   (entity-crud-routes
