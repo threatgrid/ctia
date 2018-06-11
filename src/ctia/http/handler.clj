@@ -4,6 +4,7 @@
             [ctia.entity.casebook :refer [casebook-operation-routes]]
             [ctia.entity.incident :refer [incident-additional-routes]]
             [ctia.entity.feedback :refer [feedback-by-entity-route]]
+            [ctia.entity.relationship :refer [incident-casebook-link-route]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -11,7 +12,6 @@
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
             [ctia.bulk.routes :refer [bulk-routes]]
-            [ctia.link.routes :refer [incident-casebook-link-route]]
             [ctia.documentation.routes :refer [documentation-routes]]
             [ctia.graphql.routes :refer [graphql-ui-routes
                                          graphql-routes]]
