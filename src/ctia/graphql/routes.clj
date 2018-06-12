@@ -31,6 +31,40 @@
         :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :body [body gql/RelayGraphQLQuery {:description "a Relay compatible GraphQL body"}]
         :summary "EXPERIMENTAL: Executes a Relay compatible GraphQL query"
+        :capabilities
+        #{:list-campaigns
+          :read-actor
+          :read-malware
+          :read-exploit-target
+          :read-attack-pattern
+          :read-judgement
+          :read-sighting
+                  :list-sightings
+          :list-relationships
+          :read-coa
+          :read-indicator
+          :list-exploit-targets
+          :list-judgements
+          :list-tools
+          :list-indicators
+          :read-feedback
+          :list-verdicts
+          :list-casebooks
+          :list-feedbacks
+          :list-malwares
+          :list-data-tables
+          :list-incidents
+          :read-campaign
+          :list-attack-patterns
+          :read-relationship
+          :list-actors
+          :read-investigation
+          :read-incident
+          :list-coas
+          :read-tool
+          :read-casebook
+          :list-investigations
+          :read-data-table}
         :identity-map identity-map
         (let [request-context {:ident identity-map}
               {:keys [query operationName variables]} body]
