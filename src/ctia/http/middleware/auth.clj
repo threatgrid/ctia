@@ -32,6 +32,14 @@
 (defn wrap-authentication [handler]
   (testable-wrap-authentication handler @auth-service))
 
+(defn wrap-authenticated [handler]
+  (fn [request]
+    (let [auth-identity (:identity request)]
+      (if (and (not (nil? auth-identity))
+               (auth/authenticated? auth-identity))
+        (handler request)
+        (http-response/forbidden! {:message "Only authenticated users allowed"})))))
+
 (defn require-capability! [required-capability id]
   (if required-capability
     (cond

@@ -130,25 +130,32 @@
                    (graphql-ui-routes)
                    (context
                     "/ctia" []
-                    (entity-routes entities)
-                    (context "/casebook" []
-                             :tags ["Casebook"]
-                             casebook-operation-routes)
-                    (context "/incident" []
-                             :tags ["Incident"]
-                             incident-operation-routes)
-                    (context "/feedback" []
-                             :tags ["Feedback"]
-                             feedback-by-entity-route)
-                    (context
-                     "/bulk" []
-                     :tags ["Bulk"]
-                     bulk-routes)
-                    bundle-routes
-                    observable-routes
-                    metrics-routes
-                    properties-routes
-                    graphql-routes
-                    version-routes))
+                    ;; The order is important here for version-routes
+                    ;; must be before the middleware fn
+                    version-routes
+                    (middleware [wrap-authenticated]
+                                (entity-routes entities)
+                                (context "/casebook" []
+                                         :tags ["Casebook"]
+                                         casebook-operation-routes)
+                                (context "/incident" []
+                                         :tags ["Incident"]
+                                         incident-operation-routes)
+                                (context "/feedback" []
+                                         :tags ["Feedback"]
+                                         feedback-by-entity-route)
+                                (context
+                                 "/bulk" []
+                                 :tags ["Bulk"]
+                                 bulk-routes)
+                                (context
+                                 "/incident" []
+                                 :tags ["Incident"]
+                                 incident-casebook-link-route)
+                                bundle-routes
+                                observable-routes
+                                metrics-routes
+                                properties-routes
+                                graphql-routes)))
        (undocumented
         (rt/not-found (ok (unk/err-html))))))
