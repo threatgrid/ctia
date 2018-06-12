@@ -39,7 +39,7 @@
           :read-attack-pattern
           :read-judgement
           :read-sighting
-                  :list-sightings
+          :list-sightings
           :list-relationships
           :read-coa
           :read-indicator
