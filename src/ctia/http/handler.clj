@@ -148,10 +148,6 @@
                                  "/bulk" []
                                  :tags ["Bulk"]
                                  bulk-routes)
-                                (context
-                                 "/incident" []
-                                 :tags ["Incident"]
-                                 incident-casebook-link-route)
                                 bundle-routes
                                 observable-routes
                                 metrics-routes
