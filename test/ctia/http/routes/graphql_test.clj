@@ -226,6 +226,9 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
+     (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+     (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
+
      (let [datamap (initialize-graphql-data)
            indicator-1-id (get-in datamap [:indicator-1 :id])
            indicator-2-id (get-in datamap [:indicator-2 :id])
@@ -256,7 +259,14 @@
              (is (= 400 status))
              (is (= errors
                     ["ValidationError{validationErrorType=FieldUndefined, message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined, locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]))))
-
+         (testing "unauthorized access without capabilities"
+           (let [{:keys [status]}
+                 (helpers/post "ctia/graphql"
+                               :body {:query ""
+                                      :variables {}
+                                      :operationName ""}
+                               :headers {"Authorization" "2222222222222"})]
+             (is (= 401 status))))
          (testing "observable query"
            (let [{:keys [data errors status]}
                  (gh/query graphql-queries
@@ -650,3 +660,4 @@
              (is (empty? errors) "No errors")
              (is (= "indicator" (get-in data [:sighting :relationships :nodes 0
                                               :target_entity :type]))))))))))
+
