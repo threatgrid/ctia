@@ -59,7 +59,8 @@
                     "ctia.hook.redis.channel-name"    "events-test"
                     "ctia.metrics.riemann.enabled"    false
                     "ctia.metrics.console.enabled"    false
-                    "ctia.metrics.jmx.enabled"        false]
+                    "ctia.metrics.jmx.enabled"        false
+                    "ctia.migration.optimizations"    false]
     ;; run tests
     (f)))
 
@@ -154,6 +155,14 @@
 
 (def post
   (mthh/with-port-fn get-http-port mthh/post))
+
+(defn post-bulk [examples]
+  (let [{status :status
+         bulk-res :parsed-body}
+        (post "ctia/bulk"
+              :body examples
+              :socket-timeout (* 5 60000)
+              :headers {"Authorization" "45c1f5e3f05d0"})]))
 
 (defn post-entity-bulk [example plural x headers]
   (let [new-records

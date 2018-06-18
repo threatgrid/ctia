@@ -48,7 +48,7 @@
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava]]
-                 [threatgrid/clj-momo "0.2.23"]
+                 [threatgrid/clj-momo "0.2.24-SNAPSHOT"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
@@ -168,11 +168,14 @@
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
                                  [lein-bikeshed "0.3.0"]]}}
   :perforate {:environments [{:name :actor
-                              :namespaces [ctia.http.routes.actor-bench]}
+                              :namespaces [ctia.entity.actor-bench]}
                              {:name :campaign
-                              :namespaces [ctia.http.routes.campaign-bench]}
+                              :namespaces [ctia.entity.campaign-bench]}
                              {:name :bulk
-                              :namespaces [ctia.http.routes.bulk-bench]}]}
+                              :namespaces [ctia.bulk.routes-bench]}
+                             {:name :migration
+                              :namespaces [ctia.tasks.migrate-es-stores-bench]}
+                             ]}
   :plugins [[lein-shell "0.5.0"]
             [perforate "0.3.4"]]
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]

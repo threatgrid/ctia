@@ -8,7 +8,7 @@
             [ctia.task.migrate-es-stores :as sut]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post with-atom-logger]]
+             [core :as helpers :refer [post post-bulk with-atom-logger]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :refer [make-transient-id]]
@@ -40,14 +40,6 @@
   whoami-helpers/fixture-reset-state)
 
 (def fixtures-nb 100)
-
-(defn post-bulk [examples]
-  (let [{status :status
-         bulk-res :parsed-body}
-        (post "ctia/bulk"
-              :body examples
-              :headers {"Authorization" "45c1f5e3f05d0"})]
-    (is (= 201 status))))
 
 (defn randomize [doc]
   (assoc doc
