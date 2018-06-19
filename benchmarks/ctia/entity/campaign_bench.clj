@@ -19,12 +19,9 @@
   :cleanup (fn [_] cleanup-ctia!))
 
 (defn play [fixture]
-  (let [{:keys [status parsed_body]}
-        (post "ctia/campaign"
-              :body fixture
-              :headers {"Authorization" "45c1f5e3f05d0"})]
-    (if (= 201 status)
-      (prn "play-big: " status))))
+  (post "ctia/campaign"
+        :body fixture
+        :headers {"Authorization" "45c1f5e3f05d0"}))
 
 (defcase create-campaign :big-campaign-es-store
   [_] (play big-campaign))

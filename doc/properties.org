@@ -257,3 +257,12 @@ one can set defaults for all ES stores using =default= as entity
 | ctia.store.es.[entity].refresh   | control when changes made by this request are made visible to search | string          |
 | ctia.store.es.[entity].replicas  | how many replicas to setup at index creation                         | number          |
 | ctia.store.es.[entity].shards    | how many shards to setup at index creation                           | number          |
+
+** Migration
+
+ES Migration related settings
+
+| Property                     | Description                                                                                                | Possible values |
+|------------------------------+------------------------------------------------------------------------------------------------------------+-----------------|
+| ctia.migration.optimizations | Speed up the migration process disabling indexing and replicas while migrating,                            |boolean          |
+|                              | settings are reverted to their actual values when the process is complete, this should be considered safe. |                 |
