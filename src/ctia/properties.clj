@@ -30,6 +30,7 @@
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str
    (str "ctia.store.es." store ".refresh") Refresh
+   (str "ctia.store.es." store ".refresh_interval")  s/Str
    (str "ctia.store.es." store ".replicas") s/Num
    (str "ctia.store.es." store ".shards") s/Num
    (str "ctia.store.es." store ".timeout") s/Num})
@@ -81,6 +82,8 @@
                       "ctia.http.show.path-prefix" s/Str
                       "ctia.http.show.port" s/Int
                       "ctia.http.bulk.max-size" s/Int})
+
+   (st/optional-keys {"ctia.migration.optimizations" s/Bool})
 
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.nrepl.enabled" s/Bool

@@ -1,4 +1,4 @@
-(ns ctia.http.routes.bulk-bench
+(ns ctia.bulk.routes-bench
   "Benchmark could be launched by `lein bench bulk`"
   (:require [ctia.test-helpers
              [benchmark :refer [cleanup-ctia!

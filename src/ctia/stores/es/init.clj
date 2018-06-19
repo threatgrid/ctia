@@ -26,7 +26,6 @@
    connection manager and dedicated store index properties"
   [{:keys [entity indexname shards replicas]
     :as props} :- StoreProperties]
-
   (let [settings {:number_of_shards shards
                   :number_of_replicas replicas}]
     {:index indexname
@@ -40,7 +39,8 @@
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
   [properties :- StoreProperties]
-  (let [{:keys [conn index config] :as conn-state} (init-store-conn properties)]
+  (let [{:keys [conn index config] :as conn-state}
+        (init-store-conn properties)]
     (es-index/create-template! conn index config)
     conn-state))
 

@@ -7,7 +7,7 @@
             [clojure.tools.logging :as log]
             [ctia
              [init :refer [init-store-service! log-properties]]
-             [properties :as p]
+             [properties :as p :refer [properties]]
              [store :refer [stores]]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
@@ -18,6 +18,10 @@
 
 (def default-batch-size 100)
 (def timeout (* 5 60000))
+
+(defn optimizations-enabled? []
+  (get-in @properties
+          [:ctia :migration :optimizations]))
 
 (def all-types
   (assoc (apply merge {}
@@ -94,7 +98,9 @@
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"
-  [{:keys [conn indexname mapping]} batch-size offset sort-keys]
+  [{:keys [conn
+           indexname
+           mapping]} batch-size offset sort-keys]
   (let [params
         (merge
          {:offset (or offset 0)
@@ -130,32 +136,53 @@
      "false"
      bulk-max-size)))
 
+(def optimized-settings
+  {:index
+   {:number_of_replicas 0
+    :refresh_interval -1}})
+
+
+(defn make-target-index-settings [settings]
+  (if (optimizations-enabled?)
+    (merge
+     {:index settings}
+     optimized-settings)
+    settings))
+
 (defn create-target-store
   "create the target store, pushing its template"
   [target-store]
-  (let [wildcard (:indexname target-store)]
+  (let [wildcard (:indexname target-store)
+        settings (get-in target-store [:config :settings])
+        index-settings (make-target-index-settings
+                        settings)]
     (log/infof "%s - purging indexes: %s"
                (:type target-store)
                wildcard)
     (es-index/delete!
      (:conn target-store)
-     wildcard))
-  (log/infof "%s - creating index template: %s"
-             (:type target-store)
-             (:indexname target-store))
-  (log/infof "%s - creating index: %s"
-             (:type target-store)
-             (:indexname target-store))
+     wildcard)
+    (log/infof "%s - creating index template: %s"
+               (:type target-store)
+               (:indexname target-store))
+    (log/infof "%s - creating index: %s"
+               (:type target-store)
+               (:indexname target-store))
 
-  (es-index/create-template!
-   (:conn target-store)
-   (:indexname target-store)
-   (:config target-store))
+    (es-index/create-template!
+     (:conn target-store)
+     (:indexname target-store)
+     (:config target-store))
 
-  (es-index/create!
-   (:conn target-store)
-   (:indexname target-store)
-   (:settings target-store)))
+    (es-index/create!
+     (:conn target-store)
+     (:indexname target-store)
+     index-settings)))
+
+(defn revert-optimizations-settings [settings]
+  {:index (dissoc settings
+                  :number_of_shards
+                  :analysis)})
 
 (defn migrate-store
   "migrate a single store"
@@ -183,7 +210,7 @@
                        offset
                        sort-keys)
           next (:next paging)
-          offset (:offset next)
+          offset (:offset next 0)
           search_after (:sort paging)
           migrated (transduce migrations conj data)
           migrated-count (+ migrated-count
@@ -197,10 +224,23 @@
                    (:type current-store)
                    migrated-count))
       (if next
-        (recur offset search_after migrated-count)
-        (log/infof "%s - finished migrating %s documents"
-                   (:type current-store)
-                   migrated-count)))))
+        (recur offset
+               search_after
+               migrated-count)
+        (do (log/infof "%s - finished migrating %s documents"
+                       (:type current-store)
+                       migrated-count)
+
+            (when (optimizations-enabled?)
+              (log/infof "%s - update index settings" (:type current-store))
+              (es-index/update-settings! (:conn target-store)
+                                         (:indexname target-store)
+                                         (revert-optimizations-settings
+                                          (get-in target-store [:config :settings])))
+
+              (log/infof "%s - trigger refresh" (:type current-store))
+              (es-index/refresh! (:conn target-store)
+                                 (:indexname target-store))))))))
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
@@ -246,7 +286,7 @@
                          offset
                          sort-keys)
             next (:next paging)
-            offset (:offset next)
+            offset (:offset next 0)
             search_after (:sort paging)
             checked (coerce! data)
             checked-count (+ checked-count
@@ -285,28 +325,40 @@
     (log/infof "set batch size: %s" batch-size)
     (keep #(check-store-index % batch-size) target-stores)))
 
+(defn exit [error?]
+  (if error?
+    (System/exit -1)
+    (System/exit 0)))
+
+(defn run-migration
+  [prefix migrations batch-size confirm?]
+  (assert prefix "Please provide an indexname prefix for target store creation")
+  (assert migrations "Please provide a csv migration list argument")
+  (assert batch-size "Please specify a batch size")
+  (log/info "migrating all ES Stores")
+  (try
+    (setup)
+    (log/infof "optimizations enabled: %s"
+               (optimizations-enabled?))
+    (migrate-store-indexes prefix
+                           migrations
+                           batch-size
+                           confirm?)
+    (when confirm?
+      (when-let [errors (seq (check-store-indexes batch-size prefix))]
+        (log/errorf "Schema errors during migration: %s"
+                    (pr-str errors))
+        (exit true)))
+    (log/info "migration complete")
+    (catch Exception e
+      (log/error e "Unexpected error during migration")
+      (exit true)))
+  (exit false))
+
 (defn -main
   "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>"
   [prefix migrations batch-size confirm?]
   (let [confirm? (or (boolean (read-string confirm?)) false)
-        batch-size (read-string batch-size)]
-    (assert prefix "Please provide an indexname prefix for target store creation")
-    (assert migrations "Please provide a csv migration list argument")
-    (assert batch-size "Please specify a batch size")
-    (log/info "migrating all ES Stores")
-    (try
-      (setup)
-      (migrate-store-indexes prefix
-                             (map keyword (string/split migrations #","))
-                             batch-size
-                             confirm?)
-      (when confirm?
-        (when-let [errors (seq (check-store-indexes batch-size prefix))]
-          (log/errorf "Schema errors during migration: %s"
-                      (pr-str errors))
-          (System/exit -1)))
-      (log/info "migration complete")
-      (catch Exception e
-        (log/error e "Unexpected error during migration")
-        (System/exit -1)))
-    (System/exit 0)))
+        batch-size (read-string batch-size)
+        migrations (map keyword (string/split migrations #","))]
+    (run-migration prefix migrations batch-size confirm?)))

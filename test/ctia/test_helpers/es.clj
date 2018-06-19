@@ -17,12 +17,15 @@
         (es-init/get-store-properties entity)]
     (http/post (format "http://%s:%s/_refresh" host port))))
 
+(defn delete-store-indexes []
+  (doseq [store-impls (vals @store/stores)
+          {:keys [state]} store-impls]
+    (es-store/delete-state-indexes state)))
+
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
-  (doseq [store-impls (vals @store/stores)
-          {:keys [state]} store-impls]
-    (es-store/delete-state-indexes state))
+  (delete-store-indexes)
   (t))
 
 (defn purge-event-indexes []
@@ -43,6 +46,7 @@
   (h/with-properties ["ctia.store.es.default.shards" 1
                       "ctia.store.es.default.replicas" 1
                       "ctia.store.es.default.refresh" "true"
+                      "ctia.store.es.default.refresh_interval" "1s"
                       "ctia.store.es.default.port" "9200"
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.actor.indexname" "ctia_actor"
