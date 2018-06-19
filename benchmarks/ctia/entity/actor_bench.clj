@@ -21,7 +21,6 @@
               :body fixture
               :headers {"Authorization" "45c1f5e3f05d0"})]
     (if (= 201 status)
-      (delete (str "ctia/actor" (:id parsed_body)))
       (prn "play-big: " status))))
 
 (defcase create-actor :big-actor-es-store
