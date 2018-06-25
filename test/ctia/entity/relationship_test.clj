@@ -127,6 +127,20 @@
              (post "ctia/incident"
                    :body new-incident-minimal
                    :headers {"Authorization" "45c1f5e3f05d0"})
+
+             {wrong-incident-status :status
+              wrong-incident-response :body}
+             (post (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" "/link")
+                   :body {:casebook_id (:id casebook-body)}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+
+             {wrong-casebook-status :status
+              wrong-casebook-response :body}
+             (post (str "ctia/incident/" (-> (:id incident-body)
+                                             long-id->id
+                                             :short-id) "/link")
+                   :body {:casebook_id ":"}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
              {link-status :status
               link-response :parsed-body}
              (post (str "ctia/incident/" (-> (:id incident-body)
@@ -140,6 +154,15 @@
                                                 long-id->id
                                                 :short-id))
                   :headers {"Authorization" "45c1f5e3f05d0"})]
+
+         (is (= 404 wrong-incident-status))
+         (is (= {:error "Invalid Incident id"}
+                (read-string wrong-incident-response)))
+
+         (is (= 400 wrong-casebook-status))
+         (is (= {:error "Invalid Casebook id"}
+                (read-string wrong-casebook-response)))
+
          (is (= 201 casebook-status))
          (is (= 201 incident-status))
          (is (= 201 link-status))

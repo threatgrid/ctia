@@ -94,18 +94,22 @@
                                    id
                                    identity-map
                                    {})
-              casebook (read-store :casebook
-                                   read-record
-                                   (-> link-req
-                                       :casebook_id
-                                       long-id->id
-                                       :short-id)
-                                   identity-map
-                                   {})]
-
+              casebook-id (-> link-req
+                              :casebook_id
+                              long-id->id
+                              :short-id)
+              casebook (when casebook-id
+                         (read-store :casebook
+                                     read-record
+                                     casebook-id
+                                     identity-map
+                                     {}))
+              target-ref (short-id->long-id id
+                                            get-http-show)]
           (cond
-            (not incident)
-            (not-found)
+            (or (not incident)
+                (not target-ref))
+            (not-found {:error "Invalid Incident id"})
             (not casebook)
             (bad-request {:error "Invalid Casebook id"})
             :else
@@ -113,8 +117,7 @@
                    :or {tlp "amber"}} link-req
                   new-relationship
                   {:source_ref casebook_id
-                   :target_ref (short-id->long-id id
-                                                  get-http-show)
+                   :target_ref target-ref
                    :relationship_type "related-to"
                    :tlp tlp}
                   stored-relationship
