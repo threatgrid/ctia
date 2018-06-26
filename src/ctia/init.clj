@@ -6,6 +6,7 @@
              [riemann :as riemann]
              [jmx :as jmx]
              [console :as console]]
+            [ctia.lib.utils :as utils]
             [ctia
              [auth :as auth]
              [events :as e]
@@ -55,13 +56,13 @@
 (defn log-properties []
   (log/debug (with-out-str
                (do (newline)
-                   (clojure.pprint/pprint
+                   (utils/safe-pprint
                     (mp/debug-properties-by-source p/PropertiesSchema
                                                    p/files)))))
 
   (log/info (with-out-str
               (do (newline)
-                  (clojure.pprint/pprint @p/properties)))))
+                  (utils/safe-pprint @p/properties)))))
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
   [& {:keys [join?]}]
