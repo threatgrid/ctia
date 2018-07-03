@@ -1,7 +1,8 @@
 (ns ctia.auth.capabilities
   (:require
    [ctia.entity.entities :refer [entities]]
-   [clojure.set :as set]))
+   [clojure.set :as set]
+   [clojure.string :as string]))
 
 (def all-entities
   (set (conj (keys entities) :verdict)))
@@ -45,10 +46,41 @@
    misc-capabilities
    all-entity-capabilities))
 
+
 (def all-capabilities-no-casebook
   (set/union
    misc-capabilities
    all-entity-no-casebook-capabilities))
+
+
+(comment
+
+  ;; A nice to have feature to help provide a list of meaningful scopes in the
+  ;; documentation
+  ;; It shouldn't be part of the real code so let's keep it in a comment.
+  ;;
+  ;; Typically it was used to provide the full list of scopes here:
+  ;;
+  ;; https://github.com/threatgrid/iroh-ui/issues/492#issuecomment-402153118
+
+  (defn cap-to-scope
+    [k]
+    (let [[loc p] (string/split (name k) #"-" 2)
+          suff (if (#{"list" "search" "read"} loc)
+                 ":read"
+                 ":write")
+          n (if (= "list" loc)
+              (subs p 0 (dec (count p)))
+              p)]
+      (if n
+        (str "private-intel/" n suff)
+        (str "private-intel/" loc))))
+
+  (sort (set/union
+         #{"casebook:read" "casebook:write"}
+         (set (map cap-to-scope all-capabilities-no-casebook))))
+
+  )
 
 (def default-capabilities
   {:user
