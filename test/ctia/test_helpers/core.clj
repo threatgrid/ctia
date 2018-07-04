@@ -64,6 +64,12 @@
     ;; run tests
     (f)))
 
+(defn fixture-properties:cors [f]
+  (with-properties
+    ["ctia.http.access-control-allow-origin" ".*cisco.com.*"
+     "ctia.http.access-control-allow-methods" "get,post,put,patch,delete"]
+    (f)))
+
 (defn fixture-properties:events-logging [f]
   ;; Set properties to enable events file logging
   (with-properties ["ctia.events.log" "true"]
