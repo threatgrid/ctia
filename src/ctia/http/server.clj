@@ -40,13 +40,6 @@
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler)
-         access-control-allow-origin
-         (wrap-cors :access-control-allow-origin
-                    (allow-origin-regexps access-control-allow-origin)
-                    :access-control-allow-methods
-                    (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version")
-
          true auth/wrap-authentication
 
          (:enabled jwt)
@@ -59,6 +52,13 @@
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
+
+         access-control-allow-origin
+         (wrap-cors :access-control-allow-origin
+                    (allow-origin-regexps access-control-allow-origin)
+                    :access-control-allow-methods
+                    (str->set-of-keywords access-control-allow-methods)
+                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version")
 
          true wrap-params
 
