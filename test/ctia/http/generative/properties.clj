@@ -16,7 +16,6 @@
              [attack-pattern :refer [NewAttackPattern]]
              [campaign :refer [NewCampaign]]
              [coa :refer [NewCOA]]
-             [exploit-target :refer [NewExploitTarget]]
              [feedback :refer [NewFeedback]]
              [incident :refer [NewIncident]]
              [indicator :refer [NewIndicator]]
@@ -70,7 +69,6 @@
          [NewAttackPattern "max-new-attack-pattern"]
          [NewCampaign "max-new-campaign"]
          [NewCOA "max-new-coa"]
-         [NewExploitTarget "max-new-exploit-target"]
          [NewFeedback "max-new-feedback"]
          [NewIncident "max-new-incident"]
          [NewIndicator "max-new-indicator"]
@@ -105,10 +103,6 @@
 (def api-for-coa-routes
   (api-for-route 'coa
                  (spec-gen "max-new-coa")))
-
-(def api-for-exploit-target-routes
-  (api-for-route 'exploit-target
-                 (spec-gen "max-new-exploit-target")))
 
 (def api-for-indicator-routes
   (api-for-route 'indicator

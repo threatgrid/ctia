@@ -17,7 +17,6 @@
              [attack-patterns :refer [attack-pattern-minimal]]
              [campaigns :refer [campaign-minimal]]
              [coas :refer [coa-minimal]]
-             [exploit-targets :refer [exploit-target-minimal]]
              [incidents :refer [incident-minimal]]
              [indicators :refer [indicator-minimal]]
              [investigations :refer [investigation-minimal]]
@@ -72,7 +71,6 @@
    :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
    :campaigns (n-doc campaign-minimal fixtures-nb)
    :coas (n-doc coa-minimal fixtures-nb)
-   :exploit_targets (n-doc exploit-target-minimal fixtures-nb)
    :incidents (n-doc incident-minimal fixtures-nb)
    :indicators (n-doc indicator-minimal fixtures-nb)
    :investigations (n-doc investigation-minimal fixtures-nb)
@@ -120,7 +118,6 @@
             (is (clojure.set/subset?
                  ["campaign - finished migrating 100 documents"
                   "indicator - finished migrating 100 documents"
-                  "exploit-target - finished migrating 100 documents"
                   "event - finished migrating 1400 documents"
                   "actor - finished migrating 100 documents"
                   "relationship - finished migrating 100 documents"
@@ -144,7 +141,6 @@
                         data-table
                         relationship
                         judgement
-                        exploit-target
                         investigation
                         coa
                         tool
@@ -162,7 +158,6 @@
                 expected-indices
                 (->> {relationship fixtures-nb
                       judgement fixtures-nb
-                      exploit-target fixtures-nb
                       coa fixtures-nb
                       attack-pattern fixtures-nb
                       malware fixtures-nb

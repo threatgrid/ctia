@@ -21,7 +21,6 @@
                         :create-campaign
                         :create-coa
                         :create-data-table
-                        :create-exploit-target
                         :create-feedback
                         :create-incident
                         :create-investigation
@@ -45,7 +44,6 @@
                       {campaigns       :- [Reference] []}
                       {coas            :- [Reference] []}
                       {data_tables     :- [Reference] []}
-                      {exploit_targets :- [Reference] []}
                       {feedbacks       :- [Reference] []}
                       {incidents       :- [Reference] []}
                       {indicators      :- [Reference] []}
@@ -62,7 +60,6 @@
                        :read-campaign
                        :read-coa
                        :read-data-table
-                       :read-exploit-target
                        :read-feedback
                        :read-incident
                        :read-indicator
@@ -79,7 +76,6 @@
                            :campaigns       campaigns
                            :coas            coas
                            :data_tables     data_tables
-                           :exploit_targets exploit_targets
                            :feedbacks       feedbacks
                            :incidents       incidents
                            :investigations  investigations

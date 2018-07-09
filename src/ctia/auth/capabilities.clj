@@ -88,7 +88,6 @@
      :read-attack-pattern
      :read-campaign
      :read-coa
-     :read-exploit-target
      :read-feedback
      :read-incident
      :read-indicator

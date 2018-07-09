@@ -30,9 +30,6 @@
 (defspec ^:generative api-for-coa-routes-es-store
   prop/api-for-coa-routes)
 
-(defspec ^:generative api-for-exploit-target-routes-es-store
-  prop/api-for-exploit-target-routes)
-
 (defspec ^:generative api-for-feedback-routes-es-store
   prop/api-for-feedback-routes)
 

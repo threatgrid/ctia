@@ -35,7 +35,6 @@
         #{:list-campaigns
           :read-actor
           :read-malware
-          :read-exploit-target
           :read-attack-pattern
           :read-judgement
           :read-sighting
@@ -43,7 +42,6 @@
           :list-relationships
           :read-coa
           :read-indicator
-          :list-exploit-targets
           :list-judgements
           :list-tools
           :list-indicators

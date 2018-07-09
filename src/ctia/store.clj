@@ -37,7 +37,6 @@
    :actor []
    :coa []
    :data-table []
-   :exploit-target []
    :sighting []
    :incident []
    :relationship []

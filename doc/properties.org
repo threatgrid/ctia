@@ -224,7 +224,6 @@
   =coa=
   =event=
   =data-table=
-  =exploit-target=
   =feedback=
   =identity=
   =incident=

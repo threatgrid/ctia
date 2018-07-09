@@ -56,7 +56,6 @@
                       "ctia.store.coa" "es"
                       "ctia.store.data-table" "es"
                       "ctia.store.event" "es"
-                      "ctia.store.exploit-target" "es"
                       "ctia.store.feedback" "es"
                       "ctia.store.identity" "es"
                       "ctia.store.incident" "es"
