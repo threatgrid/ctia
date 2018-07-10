@@ -39,7 +39,7 @@
     (g/new-object name description [] (into fields
                                             related-judgement-fields))))
 
-(s/defn ref->entity-type :- s/Keyword
+(s/defn ref->entity-type :- (s/maybe s/Keyword)
   "Extracts the entity type from the Reference"
   [ref :- s/Str]
   (some-> ref
@@ -69,25 +69,26 @@
 
 (def relation-fields
   (merge
-   (g/non-nulls
-    {:source_entity {:type Entity
-                     :resolve (fn [context args field-selection src]
-                                (log/debug "Source resolver" args src)
-                                (let [ref (:source_ref src)
-                                      entity-type (ref->entity-type ref)]
-                                  (entity-by-id entity-type
-                                                ref
-                                                (:ident context)
-                                                field-selection)))}
-     :target_entity {:type Entity
-                     :resolve (fn [context args field-selection src]
-                                (log/debug "Target resolver" args src)
-                                (let [ref (:target_ref src)
-                                      entity-type (ref->entity-type ref)]
-                                  (entity-by-id entity-type
-                                                ref
-                                                (:ident context)
-                                                field-selection)))}})))
+   {:source_entity {:type Entity
+                    :resolve (fn [context args field-selection src]
+                               (log/debug "Source resolver" args src)
+                               (let [ref (:source_ref src)
+                                     entity-type (ref->entity-type ref)]
+                                 (when entity-type
+                                   (entity-by-id entity-type
+                                                 ref
+                                                 (:ident context)
+                                                 field-selection))))}
+    :target_entity {:type Entity
+                    :resolve (fn [context args field-selection src]
+                               (log/debug "Target resolver" args src)
+                               (let [ref (:target_ref src)
+                                     entity-type (ref->entity-type ref)]
+                                 (when entity-type
+                                   (entity-by-id entity-type
+                                                 ref
+                                                 (:ident context)
+                                                 field-selection))))}}))
 
 (def RelationshipType
   (let [{:keys [fields name description]}

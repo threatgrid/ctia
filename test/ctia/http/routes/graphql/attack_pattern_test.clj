@@ -42,6 +42,10 @@
                       {:relationship_type "variant-of"
                        :target_ref (:id ap3)
                        :source_ref (:id ap1)})
+    (gh/create-object "relationship"
+                      {:relationship_type "variant-of"
+                       :target_ref "transient:123"
+                       :source_ref (:id ap1)})
     {:attack-pattern-1 ap1
      :attack-pattern-2 ap2
      :attack-pattern-3 ap3}))
@@ -89,7 +93,12 @@
                                    :target_ref attack-pattern-3-id
                                    :source_ref attack-pattern-1-id
                                    :source_entity (:attack-pattern-1 datamap)
-                                   :target_entity (:attack-pattern-3 datamap)}])
+                                   :target_entity (:attack-pattern-3 datamap)}
+                                  {:relationship_type "variant-of"
+                                   :target_ref "transient:123"
+                                   :source_ref attack-pattern-1-id
+                                   :source_entity (:attack-pattern-1 datamap)
+                                   :target_entity nil}])
 
              (testing "sorting"
                (gh/connection-sort-test
