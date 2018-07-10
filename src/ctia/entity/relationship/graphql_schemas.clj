@@ -68,27 +68,26 @@
     refs/ToolRef]))
 
 (def relation-fields
-  (merge
-   {:source_entity {:type Entity
-                    :resolve (fn [context args field-selection src]
-                               (log/debug "Source resolver" args src)
-                               (let [ref (:source_ref src)
-                                     entity-type (ref->entity-type ref)]
-                                 (when entity-type
-                                   (entity-by-id entity-type
-                                                 ref
-                                                 (:ident context)
-                                                 field-selection))))}
-    :target_entity {:type Entity
-                    :resolve (fn [context args field-selection src]
-                               (log/debug "Target resolver" args src)
-                               (let [ref (:target_ref src)
-                                     entity-type (ref->entity-type ref)]
-                                 (when entity-type
-                                   (entity-by-id entity-type
-                                                 ref
-                                                 (:ident context)
-                                                 field-selection))))}}))
+  {:source_entity {:type Entity
+                   :resolve (fn [context args field-selection src]
+                              (log/debug "Source resolver" args src)
+                              (let [ref (:source_ref src)
+                                    entity-type (ref->entity-type ref)]
+                                (when entity-type
+                                  (entity-by-id entity-type
+                                                ref
+                                                (:ident context)
+                                                field-selection))))}
+   :target_entity {:type Entity
+                   :resolve (fn [context args field-selection src]
+                              (log/debug "Target resolver" args src)
+                              (let [ref (:target_ref src)
+                                    entity-type (ref->entity-type ref)]
+                                (when entity-type
+                                  (entity-by-id entity-type
+                                                ref
+                                                (:ident context)
+                                                field-selection))))}})
 
 (def RelationshipType
   (let [{:keys [fields name description]}
