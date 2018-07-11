@@ -13,7 +13,11 @@
 (def bulk-entity-mapping
   (into {}
         (map (fn [{:keys [entity plural]}]
-               {entity plural}) (vals entities))))
+               {entity (-> plural
+                           name
+                           (clojure.string/replace #"-" "_")
+                           keyword)})
+             (vals entities))))
 
 (def inverted-bulk-entity-mapping
   (set/map-invert bulk-entity-mapping))

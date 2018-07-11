@@ -19,7 +19,8 @@
     [incident :refer [incident-entity]]
     [relationship :refer [relationship-entity]]
     [identity :refer [identity-entity]]
-    [event :refer [event-entity]]]))
+    [event :refer [event-entity]]
+    [weakness :refer [weakness-entity]]]))
 
 (def entities
   {:actor actor-entity
@@ -37,6 +38,7 @@
    :relationship relationship-entity
    :sighting sighting-entity
    :tool tool-entity
+   :weakness weakness-entity
 
    :identity identity-entity
    :event event-entity})

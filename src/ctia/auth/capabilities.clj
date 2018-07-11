@@ -1,14 +1,18 @@
 (ns ctia.auth.capabilities
   (:require
-   [ctia.entity.entities :refer [entities]]
+   [ctia.entity.entities
+    :refer [entities]]
    [clojure.set :as set]
    [clojure.string :as string]))
 
 (def all-entities
-  (set (conj (keys entities) :verdict)))
+  (assoc entities
+         :verdict
+         {:plural :verdicts
+          :entity :verdict}))
 
 (def entities-no-casebook
-  (set (remove #{:casebook} all-entities)))
+  (dissoc all-entities :casebook))
 
 (def prefixes
   {:read #{:read :search :list}
@@ -17,21 +21,26 @@
 (defn gen-capabilities-for-entity-and-accesses
   "Given an entity and a set of access (:read or :write) generate a set of
   capabilities"
-  [entity-name accesses]
+  [{:keys [entity plural]}
+   accesses]
   (set (for [access accesses
              prefix (get prefixes access)]
-         (keyword (str (name prefix) "-" (name entity-name)
-                       (if (= :list prefix) "s" ""))))))
+         (keyword (str (name prefix) "-"
+                       (if (= :list prefix)
+                         (name plural)
+                         (name entity)))))))
 
 (def all-entity-capabilities
   (apply set/union
          (map #(gen-capabilities-for-entity-and-accesses
-                % (keys prefixes)) all-entities)))
+                % (keys prefixes))
+              (vals all-entities))))
 
 (def all-entity-no-casebook-capabilities
   (apply set/union
          (map #(gen-capabilities-for-entity-and-accesses
-                % (keys prefixes)) entities-no-casebook)))
+                % (keys prefixes))
+              (vals entities-no-casebook))))
 
 (def misc-capabilities
   #{:read-verdict
@@ -78,9 +87,7 @@
 
   (sort (set/union
          #{"casebook:read" "casebook:write"}
-         (set (map cap-to-scope all-capabilities-no-casebook))))
-
-  )
+         (set (map cap-to-scope all-capabilities-no-casebook)))))
 
 (def default-capabilities
   {:user
@@ -100,6 +107,8 @@
      :read-sighting
      :list-sightings
      :read-tool
-     :read-verdict}
+     :read-verdict
+     :read-weakness
+     :list-weaknesses}
    :admin
    all-capabilities})

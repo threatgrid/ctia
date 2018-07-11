@@ -115,7 +115,7 @@
   {:route-context "/data-table"
    :tags ["DataTable"]
    :entity :data-table
-   :plural :data_tables
+   :plural :data-tables
    :schema DataTable
    :partial-schema PartialDataTable
    :partial-list-schema PartialDataTableList

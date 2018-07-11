@@ -44,7 +44,7 @@
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.store.es.default.shards" 1
-                      "ctia.store.es.default.replicas" 1
+                      "ctia.store.es.default.replicas" 0
                       "ctia.store.es.default.refresh" "true"
                       "ctia.store.es.default.refresh_interval" "1s"
                       "ctia.store.es.default.port" "9200"
@@ -67,6 +67,7 @@
                       "ctia.store.casebook" "es"
                       "ctia.store.sighting" "es"
                       "ctia.store.tool" "es"
+                      "ctia.store.weakness" "es"
                       "ctia.store.bulk-refresh" "true"]
     (t)))
 

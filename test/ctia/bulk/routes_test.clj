@@ -263,7 +263,7 @@
                         :relationships (map mk-new-relationship (range nb))
                         :sightings (map mk-new-sighting (range nb))
                         :tools (map mk-new-tool (range nb))}
-           new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 5)))
+           new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 5 7)))
                              :attack_patterns (map mk-new-attack-pattern (range nb))
                              :campaigns (map mk-new-campaign (range nb))
                              :coas (map mk-new-coa (range nb))

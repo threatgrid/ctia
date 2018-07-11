@@ -30,7 +30,8 @@
                         :create-relationship
                         :create-casebook
                         :create-sighting
-                        :create-tool}
+                        :create-tool
+                        :create-weakness}
         (if (> (bulk-size bulk)
                (get-bulk-max-size))
           (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
@@ -53,7 +54,8 @@
                       {relationships   :- [Reference] []}
                       {casebooks       :- [Reference] []}
                       {sightings       :- [Reference] []}
-                      {tools           :- [Reference] []}]
+                      {tools           :- [Reference] []}
+                      {weaknesses      :- [Reference] []}]
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:read-actor
                        :read-attack-pattern
@@ -69,7 +71,8 @@
                        :read-relationship
                        :read-casebook
                        :read-sighting
-                       :read-tool}
+                       :read-tool
+                       :read-weakness}
        :auth-identity auth-identity
        (let [entities-map {:actors          actors
                            :attack_patterns attack_patterns
@@ -85,5 +88,6 @@
                            :relationships   relationships
                            :casebooks       casebooks
                            :sightings       sightings
-                           :tools           tools}]
+                           :tools           tools
+                           :weaknesses      weaknesses}]
          (ok (fetch-bulk entities-map auth-identity)))))

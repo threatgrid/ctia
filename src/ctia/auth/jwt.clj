@@ -4,6 +4,7 @@
    [ctia.auth.capabilities
     :refer [default-capabilities
             entities-no-casebook
+            all-entities
             gen-capabilities-for-entity-and-accesses]]
    [ring-jwt-middleware.core :as mid]
    [clj-momo.lib.set :refer [as-set]]
@@ -42,10 +43,17 @@
         "import-bundle" (if (contains? (:access scope-repr) :write)
                           #{:import-bundle}
                           #{})
-        (gen-capabilities-for-entity-and-accesses (second (:path scope-repr))
-                                                  (:access scope-repr)))
+        (let [entity (get all-entities
+                          (-> scope-repr
+                              :path
+                              second
+                              keyword))]
+          (gen-capabilities-for-entity-and-accesses
+           entity
+           (:access scope-repr))))
     ;; typically: ["private-intel"]
     1 (->> entities-no-casebook
+           vals
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize
            (set/union (if (contains? (:access scope-repr) :write)
@@ -57,7 +65,9 @@
   "given a scope representation whose root-scope is casebook generate
   capabilities"
   [scope-repr]
-  (gen-capabilities-for-entity-and-accesses :casebook (:access scope-repr)))
+  (gen-capabilities-for-entity-and-accesses
+   (:casebook all-entities)
+   (:access scope-repr)))
 
 (defn scope-to-capabilities
   "given a scope generate capabilities"

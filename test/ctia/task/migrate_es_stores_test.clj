@@ -25,7 +25,8 @@
              [relationships :refer [relationship-minimal]]
              [casebooks :refer [casebook-minimal]]
              [sightings :refer [sighting-minimal]]
-             [tools :refer [tool-minimal]]]))
+             [tools :refer [tool-minimal]]
+             [weaknesses :refer [weakness-minimal]]]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -79,7 +80,8 @@
    :relationships (n-doc relationship-minimal fixtures-nb)
    :casebooks (n-doc casebook-minimal fixtures-nb)
    :sightings (n-doc sighting-minimal fixtures-nb)
-   :tools (n-doc tool-minimal fixtures-nb)})
+   :tools (n-doc tool-minimal fixtures-nb)
+   :weaknesses (n-doc weakness-minimal fixtures-nb)})
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -132,7 +134,8 @@
                   "sighting - finished migrating 100 documents"
                   "attack-pattern - finished migrating 100 documents"
                   "malware - finished migrating 100 documents"
-                  "tool - finished migrating 100 documents"]
+                  "tool - finished migrating 100 documents"
+                  "weakness - finished migrating 100 documents"]
                  messages))))
 
         (testing "shall produce new indices

@@ -150,7 +150,7 @@
   {:route-context "/attack-pattern"
    :tags ["Attack Pattern"]
    :entity :attack-pattern
-   :plural :attack_patterns
+   :plural :attack-patterns
    :schema AttackPattern
    :partial-schema PartialAttackPattern
    :partial-list-schema PartialAttackPatternList
