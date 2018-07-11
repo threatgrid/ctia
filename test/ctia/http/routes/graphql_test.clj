@@ -144,6 +144,19 @@
       (assoc :title "bar")
       (dissoc :id)))
 
+
+(def weakness-1
+  {"description" "The software receives input from an upstream component, but it does not neutralize or incorrectly neutralizes code syntax before using the input in a dynamic evaluation call (e.g. \"eval\")."
+   "tlp" "white"
+   "title" "foo"
+   "source" "cisco"})
+
+(def weakness-2
+  {"description" "The software receives input from an upstream component, but it does not neutralize or incorrectly neutralizes code syntax before using the input in a dynamic evaluation call (e.g. \"eval\"). 42"
+   "tlp" "white"
+   "title" "bar"
+   "source" "test"})
+
 (defn feedback-1 [entity_id]
   {:feedback -1
    :reason "False positive"
@@ -153,6 +166,7 @@
   {:feedback 0
    :reason "Unknown"
    :entity_id entity_id})
+
 
 (defn initialize-graphql-data []
   (let [i1  (gh/create-object "indicator" indicator-1)
@@ -166,7 +180,9 @@
         sc1 (gh/create-object "casebook" casebook-1)
         sc2 (gh/create-object "casebook" casebook-2)
         s1  (gh/create-object "sighting" sighting-1)
-        s2  (gh/create-object "sighting" sighting-2)]
+        s2  (gh/create-object "sighting" sighting-2)
+        w1  (gh/create-object "weakness" weakness-1)
+        w2  (gh/create-object "weakness" weakness-2)]
     (gh/create-object "feedback" (feedback-1 (:id i1)))
     (gh/create-object "feedback" (feedback-2 (:id i1)))
     (gh/create-object "feedback" (feedback-1 (:id j1)))
@@ -216,7 +232,9 @@
      :casebook-1 sc1
      :casebook-2 sc2
      :sighting-1 s1
-     :sighting-2 s2}))
+     :sighting-2 s2
+     :weakness-1 w1
+     :weakness-2 w2}))
 
 (deftest test-graphql-route
   (test-for-each-store
@@ -241,6 +259,8 @@
            judgement-2-id (get-in datamap [:judgement-2 :id])
            judgement-3-id (get-in datamap [:judgement-3 :id])
            sighting-1-id (get-in datamap [:sighting-1 :id])
+           weakness-1-id (get-in datamap [:weakness-1 :id])
+           weakness-2-id (get-in datamap [:weakness-2 :id])
            graphql-queries (slurp "test/data/queries.graphql")]
 
        (testing "POST /ctia/graphql"
@@ -509,6 +529,8 @@
                 [:investigations]
                 ctia.entity.investigation/investigation-fields)))
 
+
+
            (testing "query argument"
              (let [{:keys [data errors status]}
                    (gh/query graphql-queries
@@ -521,7 +543,54 @@
                (is (= [(:investigation-1 datamap)]
                       (get-in data [:investigations :nodes]))
                    "The investigation matches the search query"))))
+
+
                                         ;-----------------------
+
+         (testing "weakness query"
+           (let [{:keys [data errors status]}
+                 (gh/query graphql-queries
+                           {:id weakness-1-id}
+                           "WeaknessQueryTest")]
+
+             (is (= 200 status))
+             (is (empty? errors) "No errors")
+
+             (testing "the weakness"
+               (is (= (:weakness-1 datamap)
+                      (:weakness data))))))
+
+         (testing "weaknesses query"
+           (testing "weaknesses connection"
+             (gh/connection-test "WeaknessesQueryTest"
+                                 graphql-queries
+                                 {"query" "*"}
+                                 [:weaknesses]
+                                 [(:weakness-1 datamap)
+                                  (:weakness-2 datamap)])
+
+             (testing "sorting"
+               (gh/connection-sort-test
+                "WeaknessesQueryTest"
+                graphql-queries
+                {:query "*"}
+                [:weaknesses]
+                ctia.entity.weakness/weakness-fields)))
+
+           (testing "query argument"
+             (let [{:keys [data errors status]}
+                   (gh/query graphql-queries
+                             {:query "source:\"cisco\""}
+                             "WeaknessesQueryTest")]
+               (is (= 200 status))
+               (is (empty? errors) "No errors")
+               (is (= 1 (get-in data [:weaknesses :totalCount]))
+                   "Only one weakness matches to the query")
+               (is (= [(:weakness-1 datamap)]
+                      (get-in data [:weaknesses :nodes]))
+                   "The weakness matches the search query"))))
+
+                                        ;------------------
 
          (testing "casebook query"
            (let [{:keys [data errors status]}

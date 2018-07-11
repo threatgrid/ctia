@@ -4,6 +4,11 @@
    [ctia.entity.weakness.mapping :refer [weakness-mapping]]
    [ctia.store :refer :all]
    [ctia.domain.entities :refer [default-realize-fn]]
+   [ctia.schemas.graphql
+    [sorting :as graphql-sorting]
+    [flanders :as flanders]
+    [helpers :as g]
+    [pagination :as pagination]]
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams
                     PagingParams
@@ -86,6 +91,28 @@
   (st/merge
    PagingParams
    WeaknessFieldsParam))
+
+(def WeaknessType
+  (let [{:keys [fields name description]}
+        (flanders/->graphql
+         (fu/optionalize-all ws/Weakness)
+         {})]
+    (g/new-object
+     name
+     description
+     []
+     fields)))
+
+(def weakness-order-arg
+  (graphql-sorting/order-by-arg
+   "WeaknessOrder"
+   "Weaknesses"
+   (into {}
+         (map (juxt graphql-sorting/sorting-kw->enum-name name)
+              weakness-fields))))
+
+(def WeaknessConnectionType
+  (pagination/new-connection WeaknessType))
 
 (def weakness-routes
   (entity-crud-routes

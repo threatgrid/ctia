@@ -271,6 +271,39 @@ fragment investigationFields on Investigation {
   source
 }
 
+query WeaknessQueryTest($id: String!) {
+  weakness(id: $id) {
+    ...weaknessFields
+  }
+}
+
+query WeaknessesQueryTest($query: String, $after: String, $first: Int, $sort_field:WeaknessOrderField = ID, $sort_direction: OrderDirection = asc) {
+  weaknesses(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...weaknessFields
+    }
+    edges {
+      node {
+        ...weaknessFields
+      }
+    }
+  }
+}
+
+fragment weaknessFields on Weakness {
+  id
+  type
+  schema_version
+  title
+  tlp
+  source
+  description
+}
+
 query CasebookQueryTest($id: String!) {
   casebook(id: $id) {
     ...casebookFields

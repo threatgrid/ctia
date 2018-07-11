@@ -32,6 +32,8 @@
             SightingType]]
    [ctia.entity.tool.graphql-schemas :as tool
     :refer [ToolConnectionType ToolType]]
+   [ctia.entity.weakness :as weakness
+    :refer [WeaknessConnectionType WeaknessType]]
    [schema.core :as s])
   (:import graphql.Scalars))
 
@@ -122,7 +124,15 @@
             :args (merge common/lucene-query-arguments
                          tool/tool-order-arg
                          p/connection-arguments)
-            :resolve (res/search-entity-resolver :tool)}}))
+            :resolve (res/search-entity-resolver :tool)}
+    :weakness {:type WeaknessType
+               :args search-by-id-args
+               :resolve (res/entity-by-id-resolver :weakness)}
+    :weaknesses {:type WeaknessConnectionType
+                 :args (merge common/lucene-query-arguments
+                              weakness/weakness-order-arg
+                              p/connection-arguments)
+                 :resolve (res/search-entity-resolver :weakness)}}))
 
 (def schema (g/new-schema QueryType))
 (def graphql (g/new-graphql schema))
