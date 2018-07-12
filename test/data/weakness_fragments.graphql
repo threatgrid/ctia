@@ -1,0 +1,93 @@
+fragment relationshipBaseFields on Relationship {
+  relationship_type
+  target_ref
+  source_ref
+}
+
+fragment pageInfoFields on PageInfo {
+  hasNextPage
+  hasPreviousPage
+  startCursor
+  endCursor
+}
+
+fragment externalReferenceFields on ExternalReference {
+  source_name
+  external_id
+  url
+  description
+  hashes
+}
+
+fragment feedbackFields on Feedback {
+  feedback
+  entity_id
+  reason
+}
+
+fragment languageFields on Language {
+  name
+  class
+  prevalence
+}
+
+fragment operatingSystemFields on OperatingSystem {
+  name
+  version
+  cpe_id
+  class
+  prevalence
+}
+
+fragment architectureFields on Architecture {
+  name
+  class
+  prevalence
+}
+
+fragment paradigmFields on Paradigm {
+  name
+  prevalence
+}
+
+fragment technologyFields on Technology {
+  name
+  prevalence
+}
+
+fragment alternateTermFields on AlternateTerm {
+  term
+  description
+}
+
+fragment modeOfIntroductionFields on ModeOfIntroduction {
+  phase
+  note
+}
+
+fragment detectionMethodFields on DetectionMethod {
+  method
+  description
+  effectiveness
+  effectiveness_notes
+}
+
+fragment commonConsequenceFields on Consequence {
+  scopes
+  impacts
+  note
+  likelihood
+}
+
+fragment potentialMitigationFields on Mitigation {
+  phases
+  description
+  strategy
+  effectiveness
+  effectiveness_notes
+}
+
+fragment noteFields on Note {
+  type
+  note
+}

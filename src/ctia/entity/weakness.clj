@@ -1,6 +1,8 @@
 (ns ctia.entity.weakness
   (:require
    [flanders.utils :as fu]
+   [ctia.entity.feedback.graphql-schemas :as feedback]
+   [ctia.entity.relationship.graphql-schemas :as relationship]
    [ctia.entity.weakness.mapping :refer [weakness-mapping]]
    [ctia.store :refer :all]
    [ctia.domain.entities :refer [default-realize-fn]]
@@ -52,7 +54,8 @@
 (def-es-store WeaknessStore :weakness StoredWeakness PartialStoredWeakness)
 
 (def weakness-fields
-  (concat sorting/default-entity-sort-fields
+  (concat sorting/base-entity-sort-fields
+          sorting/sourcable-entity-sort-fields
           [:detection_methods.method
            :background_details
            :architectures.name
@@ -101,7 +104,9 @@
      name
      description
      []
-     fields)))
+     (merge fields
+            feedback/feedback-connection-field
+            relationship/relatable-entity-fields))))
 
 (def weakness-order-arg
   (graphql-sorting/order-by-arg

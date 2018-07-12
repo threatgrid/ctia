@@ -3,6 +3,7 @@
   (:require
    ;; !!! Order Matters !!!
    [ctia.entity
+    [weakness :refer [weakness-entity]]
     [attack-pattern :refer [attack-pattern-entity]]
     [indicator :refer [indicator-entity]]
     [investigation :refer [investigation-entity]]
@@ -19,8 +20,7 @@
     [incident :refer [incident-entity]]
     [relationship :refer [relationship-entity]]
     [identity :refer [identity-entity]]
-    [event :refer [event-entity]]
-    [weakness :refer [weakness-entity]]]))
+    [event :refer [event-entity]]]))
 
 (def entities
   {:actor actor-entity
