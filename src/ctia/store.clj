@@ -47,6 +47,7 @@
    :event []
    :investigation []
    :casebook []
+   :vulnerability []
    :weakness []})
 
 (defonce stores (atom empty-stores))

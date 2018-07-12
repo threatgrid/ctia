@@ -4,6 +4,7 @@
    ;; !!! Order Matters !!!
    [ctia.entity
     [weakness :refer [weakness-entity]]
+    [vulnerability :refer [vulnerability-entity]]
     [attack-pattern :refer [attack-pattern-entity]]
     [indicator :refer [indicator-entity]]
     [investigation :refer [investigation-entity]]
@@ -38,6 +39,7 @@
    :relationship relationship-entity
    :sighting sighting-entity
    :tool tool-entity
+   :vulnerability vulnerability-entity
    :weakness weakness-entity
 
    :identity identity-entity

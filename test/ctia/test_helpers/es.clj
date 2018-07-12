@@ -67,6 +67,7 @@
                       "ctia.store.casebook" "es"
                       "ctia.store.sighting" "es"
                       "ctia.store.tool" "es"
+                      "ctia.store.vulnerability" "es"
                       "ctia.store.weakness" "es"
                       "ctia.store.bulk-refresh" "true"]
     (t)))

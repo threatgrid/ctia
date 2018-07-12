@@ -26,6 +26,7 @@
              [casebooks :refer [casebook-minimal]]
              [sightings :refer [sighting-minimal]]
              [tools :refer [tool-minimal]]
+             [vulnerabilities :refer [vulnerability-minimal]]
              [weaknesses :refer [weakness-minimal]]]))
 
 (use-fixtures :once
@@ -81,6 +82,7 @@
    :casebooks (n-doc casebook-minimal fixtures-nb)
    :sightings (n-doc sighting-minimal fixtures-nb)
    :tools (n-doc tool-minimal fixtures-nb)
+   :vulnerabilities (n-doc vulnerability-minimal fixtures-nb)
    :weaknesses (n-doc weakness-minimal fixtures-nb)})
 
 (deftest prefixed-index-test
@@ -135,6 +137,7 @@
                   "attack-pattern - finished migrating 100 documents"
                   "malware - finished migrating 100 documents"
                   "tool - finished migrating 100 documents"
+                  "vulnerability - finished migrating 100 documents"
                   "weakness - finished migrating 100 documents"]
                  messages))))
 
@@ -155,7 +158,9 @@
                         campaign
                         sighting
                         casebook
-                        actor]
+                        actor
+                        vulnerability
+                        weakness]
                  :as es-props}
                 (get-in @props/properties [:ctia :store :es])
                 expected-indices
@@ -173,7 +178,9 @@
                       campaign fixtures-nb
                       casebook fixtures-nb
                       sighting fixtures-nb
-                      actor fixtures-nb}
+                      actor fixtures-nb
+                      vulnerability fixtures-nb
+                      weakness fixtures-nb}
                      (map (fn [[k v]]
                             {(str  "v0.0.0_" (:indexname k)) v}))
                      (into {})
