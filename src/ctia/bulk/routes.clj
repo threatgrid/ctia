@@ -31,6 +31,7 @@
                         :create-casebook
                         :create-sighting
                         :create-tool
+                        :create-vulnerability
                         :create-weakness}
         (if (> (bulk-size bulk)
                (get-bulk-max-size))
@@ -55,7 +56,8 @@
                       {casebooks       :- [Reference] []}
                       {sightings       :- [Reference] []}
                       {tools           :- [Reference] []}
-                      {weaknesses      :- [Reference] []}]
+                      {weaknesses      :- [Reference] []}
+                      {vulnerabilities :- [Reference] []}]
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:read-actor
                        :read-attack-pattern
@@ -72,22 +74,24 @@
                        :read-casebook
                        :read-sighting
                        :read-tool
+                       :read-vulnerability
                        :read-weakness}
        :auth-identity auth-identity
-       (let [entities-map {:actors          actors
-                           :attack_patterns attack_patterns
-                           :campaigns       campaigns
-                           :coas            coas
-                           :data_tables     data_tables
-                           :feedbacks       feedbacks
-                           :incidents       incidents
-                           :investigations  investigations
-                           :indicators      indicators
-                           :judgements      judgements
-                           :malwares        malwares
-                           :relationships   relationships
-                           :casebooks       casebooks
-                           :sightings       sightings
-                           :tools           tools
-                           :weaknesses      weaknesses}]
+       (let [entities-map {:actors           actors
+                           :attack_patterns  attack_patterns
+                           :campaigns        campaigns
+                           :coas             coas
+                           :data_tables      data_tables
+                           :feedbacks        feedbacks
+                           :incidents        incidents
+                           :investigations   investigations
+                           :indicators       indicators
+                           :judgements       judgements
+                           :malwares         malwares
+                           :relationships    relationships
+                           :casebooks        casebooks
+                           :sightings        sightings
+                           :tools            tools
+                           :vulnerabilities  vulnerabilities
+                           :weaknesses       weaknesses}]
          (ok (fetch-bulk entities-map auth-identity)))))

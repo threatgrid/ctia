@@ -122,7 +122,7 @@
             (is (clojure.set/subset?
                  ["campaign - finished migrating 100 documents"
                   "indicator - finished migrating 100 documents"
-                  "event - finished migrating 1400 documents"
+                  "event - finished migrating 1500 documents"
                   "actor - finished migrating 100 documents"
                   "relationship - finished migrating 100 documents"
                   "incident - finished migrating 100 documents"

@@ -4,8 +4,7 @@
              [core :as c]
              [sweet :refer :all]]
             [ctia.properties :refer [properties]]
-            [ctia.schemas
-             [graphql :as gql]]
+            [ctia.graphql.schemas :as gql]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]
             [ring.util.http-response :refer :all]
@@ -60,7 +59,11 @@
           :list-coas
           :read-tool
           :list-investigations
-          :read-data-table}
+          :read-data-table
+          :list-weaknesses
+          :read-weakness
+          :list-vulnerabilities
+          :read-vulnerability}
         :identity-map identity-map
         (let [request-context {:ident identity-map}
               {:keys [query operationName variables]} body]

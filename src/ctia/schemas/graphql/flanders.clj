@@ -105,7 +105,7 @@
 
   NumberType
   (->graphql' [{:keys [description]} _ _]
-    {:type Scalars/GraphQLString
+    {:type Scalars/GraphQLFloat
      :description description})
 
   StringType

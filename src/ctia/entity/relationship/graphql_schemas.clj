@@ -19,6 +19,7 @@
              [relationship :as ctim-rel]
              [sighting :as ctim-sig]
              [tool :as ctim-tool]
+             [vulnerability :as ctim-vul]
              [weakness :as ctim-weak]]
             [flanders.utils :as fu]
             [schema.core :as s])
@@ -61,6 +62,7 @@
        ctim-ind/type-identifier (g/get-type schema refs/indicator-type-name)
        ctim-sig/type-identifier (g/get-type schema refs/sighting-type-name)
        ctim-tool/type-identifier (g/get-type schema refs/tool-type-name)
+       ctim-vul/type-identifier (g/get-type schema refs/vulnerability-type-name)
        ctim-weak/type-identifier (g/get-type schema refs/weakness-type-name)))
    [refs/AttackPatternRef
     refs/JudgementRef
@@ -68,6 +70,7 @@
     refs/IndicatorRef
     refs/SightingRef
     refs/ToolRef
+    refs/VulnerabilityRef
     refs/WeaknessRef]))
 
 (def relation-fields

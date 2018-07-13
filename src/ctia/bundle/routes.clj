@@ -55,7 +55,11 @@
                   :read-tool
                   :read-casebook
                   :list-investigations
-                  :read-data-table}
+                  :read-data-table
+                  :read-weakness
+                  :list-weaknesses
+                  :read-vulnerability
+                  :list-vulnerabilities}
                 :auth-identity identity
                 :identity-map identity-map
                 (ok (export-bundle
@@ -87,6 +91,8 @@
                                  :create-relationship
                                  :create-sighting
                                  :create-tool
+                                 :create-weakness
+                                 :create-vulnerability
                                  :import-bundle}
                  (let [max-size (bundle-max-size)]
                    (if (> (bundle-size bundle)
