@@ -24,7 +24,9 @@
              [relationship :refer [NewRelationship]]
              [casebook :refer [NewCasebook]]
              [sighting :refer [NewSighting]]
-             [tool :refer [NewTool]]]
+             [tool :refer [NewTool]]
+             [vulnerability :refer [NewVulnerability]]
+             [weakness :refer [NewWeakness]]]
             [flanders
              [spec :as fs]
              [utils :as fu]]))
@@ -77,6 +79,8 @@
          [NewRelationship "max-new-relationship"]
          [NewSighting "max-new-sighting"]
          [NewTool "max-new-tool"]
+         [NewVulnerability "max-new-vulnerability"]
+         [NewWeakness "max-new-weakness"]
          ;; TODO enable again once casebook/bundle/data_table
          ;;does not trigger StackOverFlow Exception
          ;;[NewCasebook "max-new-casebook"]
@@ -136,6 +140,14 @@
 (def api-for-tool-routes
   (api-for-route 'tool
                  (spec-gen "max-new-tool")))
+
+(def api-for-vulnerability-routes
+  (api-for-route 'vulnerability
+                 (spec-gen "max-new-vulnerability")))
+
+(def api-for-weakness-routes
+  (api-for-route 'weakness
+                 (spec-gen "max-new-weakness")))
 
 ;; TODO: uncomment that when we figure out why generative tests fail on data-table
 #_(def api-for-casebook-routes
