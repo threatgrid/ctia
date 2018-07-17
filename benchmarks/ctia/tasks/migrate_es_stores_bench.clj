@@ -13,7 +13,6 @@
              [campaigns :refer [campaign-maximal]]
              [casebooks :refer [casebook-maximal]]
              [coas :refer [coa-maximal]]
-             [exploit-targets :refer [exploit-target-maximal]]
              [incidents :refer [incident-maximal]]
              [indicators :refer [indicator-maximal]]
              [investigations :refer [investigation-maximal]]
@@ -36,7 +35,6 @@
    :attack_patterns (n-doc attack-pattern-maximal fixtures-nb)
    :campaigns (n-doc campaign-maximal fixtures-nb)
    :coas (n-doc coa-maximal fixtures-nb)
-   :exploit_targets (n-doc exploit-target-maximal fixtures-nb)
    :incidents (n-doc incident-maximal fixtures-nb)
    :indicators (n-doc indicator-maximal fixtures-nb)
    :investigations (n-doc investigation-maximal fixtures-nb)

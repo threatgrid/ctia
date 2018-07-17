@@ -104,8 +104,10 @@
       nil))
 
   NumberType
-  (->graphql' [{:keys [description]} _ _]
-    {:type Scalars/GraphQLString
+  (->graphql' [{:keys [description float?]} _ _]
+    {:type (if-not float?
+             Scalars/GraphQLInt
+             Scalars/GraphQLFloat)
      :description description})
 
   StringType

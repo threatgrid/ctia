@@ -3,6 +3,8 @@
   (:require
    ;; !!! Order Matters !!!
    [ctia.entity
+    [weakness :refer [weakness-entity]]
+    [vulnerability :refer [vulnerability-entity]]
     [attack-pattern :refer [attack-pattern-entity]]
     [indicator :refer [indicator-entity]]
     [investigation :refer [investigation-entity]]
@@ -15,7 +17,6 @@
     [campaign :refer [campaign-entity]]
     [coa :refer [coa-entity]]
     [data-table :refer [data-table-entity]]
-    [exploit-target :refer [exploit-target-entity]]
     [feedback :refer [feedback-entity]]
     [incident :refer [incident-entity]]
     [relationship :refer [relationship-entity]]
@@ -29,7 +30,6 @@
    :casebook casebook-entity
    :coa coa-entity
    :data-table data-table-entity
-   :exploit-target exploit-target-entity
    :feedback feedback-entity
    :incident incident-entity
    :indicator indicator-entity
@@ -39,6 +39,8 @@
    :relationship relationship-entity
    :sighting sighting-entity
    :tool tool-entity
+   :vulnerability vulnerability-entity
+   :weakness weakness-entity
 
    :identity identity-entity
    :event event-entity})

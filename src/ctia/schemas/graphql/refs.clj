@@ -43,6 +43,16 @@
 (def VerdictRef
   (g/new-ref verdict-type-name))
 
+;;---- Vulnerability
+(def vulnerability-type-name "Vulnerability")
+(def VulnerabilityRef
+  (g/new-ref vulnerability-type-name))
+
+;;---- Weakness
+(def weakness-type-name "Weakness")
+(def WeaknessRef
+  (g/new-ref weakness-type-name))
+
 ;;---- Tool
 (def tool-type-name "Tool")
 (def ToolRef

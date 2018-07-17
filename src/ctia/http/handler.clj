@@ -105,7 +105,6 @@
                                 {:name "COA" :description "COA operations"}
                                 {:name "DataTable" :description "DataTable operations"}
                                 {:name "Events" :description "Events operations"}
-                                {:name "ExploitTarget" :description "ExploitTarget operations"}
                                 {:name "Feedback" :description "Feedback operations"}
                                 {:name "GraphQL" :description "GraphQL operations"}
                                 {:name "Incident" :description "Incident operations"}

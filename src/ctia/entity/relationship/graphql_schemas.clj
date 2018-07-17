@@ -18,7 +18,9 @@
              [malware :as ctim-malw]
              [relationship :as ctim-rel]
              [sighting :as ctim-sig]
-             [tool :as ctim-tool]]
+             [tool :as ctim-tool]
+             [vulnerability :as ctim-vul]
+             [weakness :as ctim-weak]]
             [flanders.utils :as fu]
             [schema.core :as s])
   (:import graphql.Scalars))
@@ -59,13 +61,17 @@
        ctim-malw/type-identifier (g/get-type schema refs/malware-type-name)
        ctim-ind/type-identifier (g/get-type schema refs/indicator-type-name)
        ctim-sig/type-identifier (g/get-type schema refs/sighting-type-name)
-       ctim-tool/type-identifier (g/get-type schema refs/tool-type-name)))
+       ctim-tool/type-identifier (g/get-type schema refs/tool-type-name)
+       ctim-vul/type-identifier (g/get-type schema refs/vulnerability-type-name)
+       ctim-weak/type-identifier (g/get-type schema refs/weakness-type-name)))
    [refs/AttackPatternRef
     refs/JudgementRef
     refs/MalwareRef
     refs/IndicatorRef
     refs/SightingRef
-    refs/ToolRef]))
+    refs/ToolRef
+    refs/VulnerabilityRef
+    refs/WeaknessRef]))
 
 (def relation-fields
   {:source_entity {:type Entity

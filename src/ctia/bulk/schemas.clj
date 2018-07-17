@@ -16,7 +16,11 @@
                  (if (keyword? sch)
                    [(s/maybe (get entity sch))]
                    sch)]
-             {plural bulk-schema})))
+             {(-> plural
+                  name
+                  (clojure.string/replace #"-" "_")
+                  keyword)
+              bulk-schema})))
         (apply merge {}))))
 
 (s/defschema EntityError

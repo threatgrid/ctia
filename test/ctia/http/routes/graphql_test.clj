@@ -154,6 +154,7 @@
    :reason "Unknown"
    :entity_id entity_id})
 
+
 (defn initialize-graphql-data []
   (let [i1  (gh/create-object "indicator" indicator-1)
         i2  (gh/create-object "indicator" indicator-2)
@@ -509,6 +510,8 @@
                 [:investigations]
                 ctia.entity.investigation/investigation-fields)))
 
+
+
            (testing "query argument"
              (let [{:keys [data errors status]}
                    (gh/query graphql-queries
@@ -521,7 +524,8 @@
                (is (= [(:investigation-1 datamap)]
                       (get-in data [:investigations :nodes]))
                    "The investigation matches the search query"))))
-                                        ;-----------------------
+
+                                        ;------------------
 
          (testing "casebook query"
            (let [{:keys [data errors status]}

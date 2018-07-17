@@ -6,7 +6,6 @@
   (is (= :actor (singular :actors)))
   (is (= :campaign (singular :campaigns)))
   (is (= :coa (singular :coas)))
-  (is (= :exploit-target (singular :exploit-targets)))
   (is (= :feedback (singular :feedbacks)))
   (is (= :incident (singular :incidents)))
   (is (= :indicator (singular :indicators)))

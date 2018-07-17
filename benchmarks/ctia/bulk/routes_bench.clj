@@ -21,7 +21,6 @@
   {:actors (tcg/sample (gen/gen-entity :new-actor) n)
    :campaigns (tcg/sample (gen/gen-entity :new-campaign) n)
    :coas (tcg/sample (gen/gen-entity :new-coa) n)
-   :exploit-targets (tcg/sample (gen/gen-entity :new-exploit-target) n)
    :feedbacks (tcg/sample (gen/gen-entity :new-feedback) n)
    :incidents (tcg/sample (gen/gen-entity :new-incident) n)
    :indicators (tcg/sample (gen/gen-entity :new-indicator) n)

@@ -72,12 +72,6 @@
    :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
 
-(defn mk-new-exploit-target [n]
-  {:title (str "exploit-target-" n)
-   :description (str "description: exploit-target-" n)
-   :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
-
 (defn mk-new-feedback [n]
   {:entity_id (str "judgement-" n)
    :feedback -1
@@ -185,7 +179,6 @@
                        :campaigns (map mk-new-campaign (range nb))
                        :coas (map mk-new-coa (range nb))
                        :data_tables (map mk-new-data-table (range nb))
-                       :exploit_targets (map mk-new-exploit-target (range nb))
                        :feedbacks (map mk-new-feedback (range nb))
                        :incidents (map mk-new-incident (range nb))
                        :indicators (map mk-new-indicator (range nb))
@@ -234,7 +227,6 @@
                   :campaigns (map mk-new-campaign (range nb))
                   :coas (map mk-new-coa (range nb))
                   :data_tables (map mk-new-data-table (range nb))
-                  :exploit_targets (map mk-new-exploit-target (range nb))
                   :feedbacks (map mk-new-feedback (range nb))
                   :incidents (map mk-new-incident (range nb))
                   :indicators (map mk-new-indicator (range nb))
@@ -263,7 +255,6 @@
                         :campaigns (map mk-new-campaign (range nb))
                         :coas (map mk-new-coa (range nb))
                         :data_tables (map mk-new-data-table (range nb))
-                        :exploit_targets (map mk-new-exploit-target (range nb))
                         :feedbacks (map mk-new-feedback (range nb))
                         :incidents (map mk-new-incident (range nb))
                         :indicators (map mk-new-indicator (range nb))
@@ -272,12 +263,11 @@
                         :relationships (map mk-new-relationship (range nb))
                         :sightings (map mk-new-sighting (range nb))
                         :tools (map mk-new-tool (range nb))}
-           new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 5)))
+           new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 5 7)))
                              :attack_patterns (map mk-new-attack-pattern (range nb))
                              :campaigns (map mk-new-campaign (range nb))
                              :coas (map mk-new-coa (range nb))
                              :data_tables (map mk-new-data-table (range nb))
-                             :exploit_targets (map mk-new-exploit-target (range nb))
                              :feedbacks (map mk-new-feedback (range nb))
                              :incidents (map mk-new-incident (range nb))
                              :indicators (map mk-new-indicator (range nb))

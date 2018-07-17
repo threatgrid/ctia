@@ -10,8 +10,8 @@
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
             [ctia.store :refer [stores]]
+            [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
-             [auth :refer [all-capabilities]]
              [core :as helpers :refer [deep-dissoc-entity-ids get post]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]

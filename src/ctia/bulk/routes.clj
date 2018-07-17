@@ -21,7 +21,6 @@
                         :create-campaign
                         :create-coa
                         :create-data-table
-                        :create-exploit-target
                         :create-feedback
                         :create-incident
                         :create-investigation
@@ -31,7 +30,9 @@
                         :create-relationship
                         :create-casebook
                         :create-sighting
-                        :create-tool}
+                        :create-tool
+                        :create-vulnerability
+                        :create-weakness}
         (if (> (bulk-size bulk)
                (get-bulk-max-size))
           (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
@@ -45,7 +46,6 @@
                       {campaigns       :- [Reference] []}
                       {coas            :- [Reference] []}
                       {data_tables     :- [Reference] []}
-                      {exploit_targets :- [Reference] []}
                       {feedbacks       :- [Reference] []}
                       {incidents       :- [Reference] []}
                       {indicators      :- [Reference] []}
@@ -55,14 +55,15 @@
                       {relationships   :- [Reference] []}
                       {casebooks       :- [Reference] []}
                       {sightings       :- [Reference] []}
-                      {tools           :- [Reference] []}]
+                      {tools           :- [Reference] []}
+                      {weaknesses      :- [Reference] []}
+                      {vulnerabilities :- [Reference] []}]
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:read-actor
                        :read-attack-pattern
                        :read-campaign
                        :read-coa
                        :read-data-table
-                       :read-exploit-target
                        :read-feedback
                        :read-incident
                        :read-indicator
@@ -72,22 +73,25 @@
                        :read-relationship
                        :read-casebook
                        :read-sighting
-                       :read-tool}
+                       :read-tool
+                       :read-vulnerability
+                       :read-weakness}
        :auth-identity auth-identity
-       (let [entities-map {:actors          actors
-                           :attack_patterns attack_patterns
-                           :campaigns       campaigns
-                           :coas            coas
-                           :data_tables     data_tables
-                           :exploit_targets exploit_targets
-                           :feedbacks       feedbacks
-                           :incidents       incidents
-                           :investigations  investigations
-                           :indicators      indicators
-                           :judgements      judgements
-                           :malwares        malwares
-                           :relationships   relationships
-                           :casebooks       casebooks
-                           :sightings       sightings
-                           :tools           tools}]
+       (let [entities-map {:actors           actors
+                           :attack_patterns  attack_patterns
+                           :campaigns        campaigns
+                           :coas             coas
+                           :data_tables      data_tables
+                           :feedbacks        feedbacks
+                           :incidents        incidents
+                           :investigations   investigations
+                           :indicators       indicators
+                           :judgements       judgements
+                           :malwares         malwares
+                           :relationships    relationships
+                           :casebooks        casebooks
+                           :sightings        sightings
+                           :tools            tools
+                           :vulnerabilities  vulnerabilities
+                           :weaknesses       weaknesses}]
          (ok (fetch-bulk entities-map auth-identity)))))

@@ -28,7 +28,6 @@
                 #{:list-campaigns
                   :read-actor
                   :read-malware
-                  :read-exploit-target
                   :read-attack-pattern
                   :read-judgement
                   :read-sighting
@@ -36,7 +35,6 @@
                   :list-relationships
                   :read-coa
                   :read-indicator
-                  :list-exploit-targets
                   :list-judgements
                   :list-tools
                   :list-indicators
@@ -57,7 +55,11 @@
                   :read-tool
                   :read-casebook
                   :list-investigations
-                  :read-data-table}
+                  :read-data-table
+                  :read-weakness
+                  :list-weaknesses
+                  :read-vulnerability
+                  :list-vulnerabilities}
                 :auth-identity identity
                 :identity-map identity-map
                 (ok (export-bundle
@@ -81,7 +83,6 @@
                                  :create-campaign
                                  :create-coa
                                  :create-data-table
-                                 :create-exploit-target
                                  :create-feedback
                                  :create-incident
                                  :create-indicator
@@ -90,6 +91,8 @@
                                  :create-relationship
                                  :create-sighting
                                  :create-tool
+                                 :create-weakness
+                                 :create-vulnerability
                                  :import-bundle}
                  (let [max-size (bundle-max-size)]
                    (if (> (bundle-size bundle)

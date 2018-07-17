@@ -17,7 +17,6 @@
              [attack-patterns :refer [attack-pattern-minimal]]
              [campaigns :refer [campaign-minimal]]
              [coas :refer [coa-minimal]]
-             [exploit-targets :refer [exploit-target-minimal]]
              [incidents :refer [incident-minimal]]
              [indicators :refer [indicator-minimal]]
              [investigations :refer [investigation-minimal]]
@@ -26,7 +25,9 @@
              [relationships :refer [relationship-minimal]]
              [casebooks :refer [casebook-minimal]]
              [sightings :refer [sighting-minimal]]
-             [tools :refer [tool-minimal]]]))
+             [tools :refer [tool-minimal]]
+             [vulnerabilities :refer [vulnerability-minimal]]
+             [weaknesses :refer [weakness-minimal]]]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -72,7 +73,6 @@
    :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
    :campaigns (n-doc campaign-minimal fixtures-nb)
    :coas (n-doc coa-minimal fixtures-nb)
-   :exploit_targets (n-doc exploit-target-minimal fixtures-nb)
    :incidents (n-doc incident-minimal fixtures-nb)
    :indicators (n-doc indicator-minimal fixtures-nb)
    :investigations (n-doc investigation-minimal fixtures-nb)
@@ -81,7 +81,9 @@
    :relationships (n-doc relationship-minimal fixtures-nb)
    :casebooks (n-doc casebook-minimal fixtures-nb)
    :sightings (n-doc sighting-minimal fixtures-nb)
-   :tools (n-doc tool-minimal fixtures-nb)})
+   :tools (n-doc tool-minimal fixtures-nb)
+   :vulnerabilities (n-doc vulnerability-minimal fixtures-nb)
+   :weaknesses (n-doc weakness-minimal fixtures-nb)})
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -120,8 +122,7 @@
             (is (clojure.set/subset?
                  ["campaign - finished migrating 100 documents"
                   "indicator - finished migrating 100 documents"
-                  "exploit-target - finished migrating 100 documents"
-                  "event - finished migrating 1400 documents"
+                  "event - finished migrating 1500 documents"
                   "actor - finished migrating 100 documents"
                   "relationship - finished migrating 100 documents"
                   "incident - finished migrating 100 documents"
@@ -135,7 +136,9 @@
                   "sighting - finished migrating 100 documents"
                   "attack-pattern - finished migrating 100 documents"
                   "malware - finished migrating 100 documents"
-                  "tool - finished migrating 100 documents"]
+                  "tool - finished migrating 100 documents"
+                  "vulnerability - finished migrating 100 documents"
+                  "weakness - finished migrating 100 documents"]
                  messages))))
 
         (testing "shall produce new indices
@@ -144,7 +147,6 @@
                         data-table
                         relationship
                         judgement
-                        exploit-target
                         investigation
                         coa
                         tool
@@ -156,13 +158,14 @@
                         campaign
                         sighting
                         casebook
-                        actor]
+                        actor
+                        vulnerability
+                        weakness]
                  :as es-props}
                 (get-in @props/properties [:ctia :store :es])
                 expected-indices
                 (->> {relationship fixtures-nb
                       judgement fixtures-nb
-                      exploit-target fixtures-nb
                       coa fixtures-nb
                       attack-pattern fixtures-nb
                       malware fixtures-nb
@@ -175,7 +178,9 @@
                       campaign fixtures-nb
                       casebook fixtures-nb
                       sighting fixtures-nb
-                      actor fixtures-nb}
+                      actor fixtures-nb
+                      vulnerability fixtures-nb
+                      weakness fixtures-nb}
                      (map (fn [[k v]]
                             {(str  "v0.0.0_" (:indexname k)) v}))
                      (into {})

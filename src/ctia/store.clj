@@ -37,7 +37,6 @@
    :actor []
    :coa []
    :data-table []
-   :exploit-target []
    :sighting []
    :incident []
    :relationship []
@@ -47,7 +46,9 @@
    :tool []
    :event []
    :investigation []
-   :casebook []})
+   :casebook []
+   :vulnerability []
+   :weakness []})
 
 (defonce stores (atom empty-stores))
 
