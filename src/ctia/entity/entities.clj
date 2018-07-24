@@ -2,6 +2,8 @@
   (:refer-clojure :exclude [identity])
   (:require
    ;; !!! Order Matters !!!
+   [clojure.tools.logging :as log]
+   [ctia.schemas.core :refer [Entity]]
    [ctia.entity
     [weakness :refer [weakness-entity]]
     [vulnerability :refer [vulnerability-entity]]
@@ -21,7 +23,8 @@
     [incident :refer [incident-entity]]
     [relationship :refer [relationship-entity]]
     [identity :refer [identity-entity]]
-    [event :refer [event-entity]]]))
+    [event :refer [event-entity]]]
+   [schema.core :as s]))
 
 (def entities
   {:actor actor-entity
@@ -44,3 +47,22 @@
 
    :identity identity-entity
    :event event-entity})
+
+(defn validate-entities []
+  (doseq [[entity entity-map] entities]
+    (try
+      (s/validate Entity entity-map)
+      (catch Exception e
+        (if-let [errors (some->> (ex-data e)
+                                 :error
+                                 (remove nil?))]
+          (let [message
+                (format (str "%s definition is invalid, "
+                             "errors: %s")
+                        entity
+                        (pr-str errors))]
+            (log/error message)
+            message)
+          (throw e))))))
+
+(validate-entities)
