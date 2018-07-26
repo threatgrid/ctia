@@ -23,14 +23,14 @@
 (def timeout (* 5 60000))
 
 (def all-types
-  (assoc (apply merge {}
-                (map (fn [[_ {:keys [entity stored-schema]}]]
-                       {entity stored-schema}) entities))
+  (assoc (into {}
+               (map (fn [[_ {:keys [entity stored-schema]}]]
+                      {entity stored-schema}) entities))
          :sighting (st/merge StoredSighting
                              {(s/optional-key :observables_hash) s/Any})))
 
-(defn type->schema [type]
-  (if-let [schema (get all-types type)]
+(defn type->schema [entity-type]
+  (if-let [schema (get all-types entity-type)]
     schema
     (do (log/warnf "missing schema definition for: %s" type)
         s/Any)))
@@ -54,13 +54,7 @@
           :limit batch-size}
          (when sort-keys
            {:search_after sort-keys}))]
-    (es-doc/search-docs
-     conn
-     indexname
-     mapping
-     nil
-     {}
-     params)))
+    (es-doc/search-docs conn indexname mapping nil {} params)))
 
 (defn check-store
   "check a single store"
@@ -90,9 +84,10 @@
             next (:next paging)
             offset (:offset next 0)
             search_after (:sort paging)
-            checked (coerce! data)
             checked-count (+ checked-count
-                             (count checked))]
+                             (count data))]
+        (coerce! data)
+
         (if next
           (recur offset search_after checked-count)
           (log/infof "%s - finished checking %s documents"

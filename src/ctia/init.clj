@@ -1,29 +1,31 @@
 (ns ctia.init
-  (:require [clj-momo.properties :as mp]
-            [clojure.tools.nrepl.server :as nrepl-server]
-            [clojure.tools.logging :as log]
-            [ctia.lib.metrics
-             [riemann :as riemann]
-             [jmx :as jmx]
-             [console :as console]]
-            [ctia.lib.utils :as utils]
-            [ctia
-             [auth :as auth]
-             [events :as e]
-             [logging :as event-logging]
-             [properties :as p]
-             [store :as store]]
-            [ctia.auth
-             [allow-all :as allow-all]
-             [static :as static-auth]
-             [threatgrid :as threatgrid]]
-            [ctia.version :as version]
-            [ctia.flows.hooks :as h]
-            [ctia.http.server :as http-server]
-            [ctia.shutdown :as shutdown]
-            [ctia.stores.es
-             [init :as es-init]
-             [store :as es-store]]))
+  (:require
+   [ctia.entity.entities :refer [validate-entities]]
+   [clj-momo.properties :as mp]
+   [clojure.tools.nrepl.server :as nrepl-server]
+   [clojure.tools.logging :as log]
+   [ctia.lib.metrics
+    [riemann :as riemann]
+    [jmx :as jmx]
+    [console :as console]]
+   [ctia.lib.utils :as utils]
+   [ctia
+    [auth :as auth]
+    [events :as e]
+    [logging :as event-logging]
+    [properties :as p]
+    [store :as store]]
+   [ctia.auth
+    [allow-all :as allow-all]
+    [static :as static-auth]
+    [threatgrid :as threatgrid]]
+   [ctia.version :as version]
+   [ctia.flows.hooks :as h]
+   [ctia.http.server :as http-server]
+   [ctia.shutdown :as shutdown]
+   [ctia.stores.es
+    [init :as es-init]
+    [store :as es-store]]))
 
 (defn init-auth-service! []
   (let [{auth-service-type :type :as auth} (get-in @p/properties [:ctia :auth])]
@@ -77,6 +79,7 @@
   (p/init!)
 
   (log-properties)
+  (validate-entities)
 
   ;; events init
   (e/init!)

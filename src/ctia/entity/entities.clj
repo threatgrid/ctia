@@ -64,5 +64,3 @@
             (log/error message)
             message)
           (throw e))))))
-
-(validate-entities)
