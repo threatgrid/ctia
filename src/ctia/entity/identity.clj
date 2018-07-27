@@ -4,10 +4,23 @@
    [ctia.store :refer [IIdentityStore]]
    [clj-momo.lib.es.document
     :refer [create-doc delete-doc get-doc]]
-   [ctia.schemas.identity :refer [Identity]]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
+
+(def Role s/Str)
+(def Login s/Str)
+(def Group s/Str)
+
+(s/defschema Identity
+  {:role Role
+   :groups [Group]
+   :capabilities #{s/Keyword}
+   :login s/Str})
 
 (def ^{:private true} mapping "identity")
+
+(s/defschema PartialIdentity
+  (st/optional-keys Identity))
 
 (defn capabilities->capabilities-set
   "transform a vec of capabilities from es
@@ -26,7 +39,6 @@
         realized (assoc new-identity :id id)
         transformed (update-in realized [:capabilities]
                                capabilities-set->capabilities)
-
         res (create-doc (:conn state)
                         (:index state)
                         mapping
@@ -74,7 +86,13 @@
     (handle-delete state org-id)))
 
 (def identity-entity
-  {:no-api? true
+  {:schema Identity
+   :stored-schema Identity
+   :partial-schema PartialIdentity
+   :partial-stored-schema PartialIdentity
+   :partial-list-schema [PartialIdentity]
+   :new-schema Identity
+   :no-api? true
    :no-bulk? true
    :entity :identity
    :plural :identities

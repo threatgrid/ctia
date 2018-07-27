@@ -14,6 +14,27 @@
    [schema.core :as sc :refer [Bool Str]]
    [schema.core :as s]))
 
+(sc/defschema Entity
+  (st/merge
+   {:entity sc/Keyword
+    :plural sc/Keyword
+    :schema (sc/protocol sc/Schema)
+    :partial-schema (sc/protocol sc/Schema)
+    :partial-list-schema (sc/protocol sc/Schema)
+    :new-schema (sc/protocol sc/Schema)
+    :stored-schema (sc/protocol sc/Schema)
+    :partial-stored-schema (sc/protocol sc/Schema)
+    :es-store sc/Any
+    :es-mapping {sc/Any sc/Any}}
+   (st/optional-keys
+    {:route-context sc/Str
+     :routes sc/Any
+     :tags [sc/Str]
+     :capabilities #{sc/Keyword}
+     :no-bulk? sc/Bool
+     :no-api? sc/Bool
+     :realize-fn sc/Any})))
+
 (sc/defschema OpenCTIMSchemaVersion
   {(sc/optional-key :schema_version) s/Str})
 

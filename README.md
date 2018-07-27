@@ -309,6 +309,26 @@ or from source with leiningen:
 |          1.0.0 | 1.1.0                         | `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores 1.0.0 1.0.0 200 true`   |
 
 
+### Store Checks
+ 
+ There is a dedicated task to check all stores of a configured CTIA instance.
+ this task will run through all configured stores and validate each document in bulk.
+  
+ Launch the task with:
+ 
+`java -cp ctia.jar:resources:. clojure.main -m ctia.task.check-es-stores <batch-size>`
+
+or from source with leiningen:
+
+`lein run -m ctia.task.check-es-stores <batch-size>`
+
+#### Task arguments
+
+| argument   | description                            | example |
+|------------|----------------------------------------|---------|
+| batch-size | how many documents to validate at once |    1000 |
+
+
 #### API
 
 ##### List Pagination

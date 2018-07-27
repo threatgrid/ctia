@@ -59,7 +59,6 @@
   (apply read-fn (first (get @stores store)) args))
 
 (defn query-string-search-store [store read-fn & args]
-  (log/debug "query-string-search-store args: " store read-fn args)
   (apply read-fn (first (get @stores store)) args))
 
 (def read-fn read-record)

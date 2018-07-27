@@ -113,7 +113,13 @@
     (handle-list state filter-map ident params)))
 
 (def event-entity
-  {:no-api? true
+  {:schema {s/Any s/Any}
+   :new-schema {s/Any s/Any}
+   :stored-schema {s/Any s/Any}
+   :partial-schema {s/Any s/Any}
+   :partial-stored-schema {s/Any s/Any}
+   :partial-list-schema {s/Any s/Any}
+   :no-api? true
    :no-bulk? true
    :entity :event
    :plural :events

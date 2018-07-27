@@ -3,6 +3,8 @@
              [conn :as conn]
              [document :as es-doc]
              [index :as es-index]]
+            [ctia.stores.es.store :refer [store->map]]
+            [ctia.stores.es.crud :refer [coerce-to-fn]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
             [ctia
@@ -21,7 +23,9 @@
 
 (defn optimizations-enabled? []
   (get-in @properties
-          [:ctia :migration :optimizations]))
+          [:ctia
+           :migration
+           :optimizations]))
 
 (def all-types
   (assoc (apply merge {}
@@ -49,7 +53,7 @@
 
 (defn prefixed-index [index prefix]
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
-    (str "v" prefix "_" version-trimmed)))
+    (format "v%s_%s" prefix version-trimmed)))
 
 (defn source-store-map->target-store-map
   "transform a source store map into a target map,
@@ -57,28 +61,16 @@
   [store prefix]
   (update store :indexname #(prefixed-index % prefix)))
 
-(defn store->map
-  "transform a store record
-   into a properties map for easier manipulation,
-   override the cm to use the custom timeout "
-  [store]
-  (let [store-state (-> store first :state)
-        entity-type (-> store-state :props :entity name)]
-    {:conn (assoc (:conn store-state)
-                  :cm (conn/make-connection-manager
-                       {:timeout timeout}))
-     :indexname (:index store-state)
-     :mapping entity-type
-     :type entity-type
-     :settings (-> store-state :props :settings)
-     :config (:config store-state)}))
-
 (defn stores->maps
   "transform store records to maps"
   [stores]
   (into {}
-        (map (fn [[sk sr]]
-               {sk (store->map sr)}) stores)))
+        (map (fn [[store-key store-record]]
+               {store-key
+                (store->map store-record
+                            {:cm (conn/make-connection-manager
+                                  {:timeout timeout})})})
+             stores)))
 
 (defn source-store-maps->target-store-maps
   "transform target store records to maps"
@@ -100,7 +92,10 @@
   "fetch a batch of documents from an es index"
   [{:keys [conn
            indexname
-           mapping]} batch-size offset sort-keys]
+           mapping]}
+   batch-size
+   offset
+   sort-keys]
   (let [params
         (merge
          {:offset (or offset 0)
@@ -178,7 +173,8 @@
      (:indexname target-store)
      index-settings)))
 
-(defn revert-optimizations-settings [settings]
+(defn revert-optimizations-settings
+  [settings]
   {:index (dissoc settings
                   :number_of_shards
                   :analysis)})
@@ -194,52 +190,65 @@
     (create-target-store target-store))
   (let [store-size (-> (fetch-batch current-store 1 0 nil)
                        :paging
-                       :total-hits)]
+                       :total-hits)
+        store-schema (type->schema (keyword (:type target-store)))
+        coerce! (coerce-to-fn [store-schema])]
     (log/infof "%s - store size: %s records"
                (:type current-store)
-               store-size))
+               store-size)
 
-  (loop [offset 0
-         sort-keys nil
-         migrated-count 0]
-    (let [{:keys [data paging]
-           :as batch}
-          (fetch-batch current-store
-                       batch-size
-                       offset
-                       sort-keys)
-          next (:next paging)
-          offset (:offset next 0)
-          search_after (:sort paging)
-          migrated (transduce migrations conj data)
-          migrated-count (+ migrated-count
-                            (count migrated))]
+    (loop [offset 0
+           sort-keys nil
+           migrated-count 0]
+      (let [{:keys [data paging]
+             :as batch}
+            (fetch-batch current-store
+                         batch-size
+                         offset
+                         sort-keys)
+            next (:next paging)
+            offset (:offset next 0)
+            search_after (:sort paging)
+            migrated (transduce migrations conj data)
+            migrated-count (+ migrated-count
+                              (count migrated))]
 
-      (when (seq migrated)
-        (when confirm?
-          (store-batch target-store migrated))
+        (when (seq migrated)
+          (try (coerce! migrated)
+               (catch Exception e
+                 (if-let [errors (some->> (ex-data e) :error (remove nil?))]
+                   (let [message
+                         (format (str "Invalid batch, certainly a coercion issue "
+                                      "errors: %s")
+                                 (pr-str errors))]
+                     (log/error message)
+                     message)
+                   (throw e))))
 
-        (log/infof "%s - migrated: %s documents"
-                   (:type current-store)
-                   migrated-count))
-      (if next
-        (recur offset
-               search_after
-               migrated-count)
-        (do (log/infof "%s - finished migrating %s documents"
-                       (:type current-store)
-                       migrated-count)
+          (when confirm?
+            (store-batch target-store migrated))
 
-            (when (optimizations-enabled?)
-              (log/infof "%s - update index settings" (:type current-store))
-              (es-index/update-settings! (:conn target-store)
-                                         (:indexname target-store)
-                                         (revert-optimizations-settings
-                                          (get-in target-store [:config :settings])))
+          (log/infof "%s - migrated: %s documents"
+                     (:type current-store)
+                     migrated-count))
+        (if next
+          (recur offset
+                 search_after
+                 migrated-count)
+          (do (log/infof "%s - finished migrating %s documents"
+                         (:type current-store)
+                         migrated-count)
 
-              (log/infof "%s - trigger refresh" (:type current-store))
-              (es-index/refresh! (:conn target-store)
-                                 (:indexname target-store))))))))
+              (when (optimizations-enabled?)
+                (log/infof "%s - update index settings" (:type current-store))
+                (es-index/update-settings! (:conn target-store)
+                                           (:indexname target-store)
+                                           (revert-optimizations-settings
+                                            (get-in target-store [:config :settings])))
+
+                (log/infof "%s - trigger refresh" (:type current-store))
+                (es-index/refresh! (:conn target-store)
+                                   (:indexname target-store)))))))))
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
@@ -303,10 +312,11 @@
     (check-store sr batch-size)
     (catch Exception e
       (if-let [errors (some->> (ex-data e) :error (remove nil?))]
-        (let [message (format (str "The store %s is invalid, certainly a coercion issue "
-                                   "errors: %s")
-                              sk
-                              (pr-str errors))]
+        (let [message
+              (format (str "The store %s is invalid, certainly a coercion issue "
+                           "errors: %s")
+                      sk
+                      (pr-str errors))]
           (log/error message)
           message)
         (throw e)))))
