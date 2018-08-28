@@ -21,7 +21,9 @@
    [schema.core :as s]))
 
 (s/defschema RefsByObservableQueryParams
-  (st/dissoc PagingParams :sort_by :sort_order))
+  (st/assoc PagingParams
+            (s/optional-key :sort_by)
+            (describe (s/enum :id) "Sort result on a field")))
 
 (defroutes observable-routes
   (GET "/:observable_type/:observable_value/verdict" []

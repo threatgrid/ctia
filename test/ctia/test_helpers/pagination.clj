@@ -78,7 +78,8 @@
            full-headers :headers}
           (get route
                :headers headers
-               :query-params {:limit 10000})
+               :query-params {:limit 10000
+                              :sort_by "id"})
 
           total (count full-res)
           limit (total->limit total offset)
@@ -98,7 +99,8 @@
            limited-headers :headers} (get route
                                           :headers headers
                                           :query-params {:limit limit
-                                                         :offset offset})
+                                                         :offset offset
+                                                         :sort_by "id"})
           prev-offset (- offset limit)]
 
       (is (= 200 full-status limited-status))

@@ -178,6 +178,14 @@
         (throw (ex-info "You are not allowed to delete this document"
                         {:type :access-control-error}))))))
 
+(def default-sort-field :_doc)
+
+(defn with-default-sort-field
+  [params]
+  (if (contains? params :sort_by)
+    params
+    (assoc params :sort_by default-sort-field)))
+
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [mapping Model]
@@ -194,7 +202,9 @@
                              (name mapping)
                              (find-restriction-query-part ident)
                              filter-map
-                             (make-es-read-params params)))
+                             (-> params
+                                 with-default-sort-field
+                                 make-es-read-params)))
        :data access-control-filter-list ident))))
 
 (defn handle-query-string-search
@@ -215,5 +225,7 @@
                              {:bool {:must [(find-restriction-query-part ident)
                                             {:query_string {:query query}}]}}
                              filter-map
-                             (make-es-read-params params)))
+                             (-> params
+                                 with-default-sort-field
+                                 make-es-read-params)))
        :data access-control-filter-list ident))))
