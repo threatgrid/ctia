@@ -16,7 +16,6 @@
   "A mapping for free text, or markdown, fields.  They will be
   analyzed and treated like prose."
   {:type "text"
-   :fielddata true
    :analyzer "text_analyzer"
    :search_quote_analyzer "text_analyzer"
    :search_analyzer "search_analyzer"})
@@ -28,19 +27,12 @@
 (def token
   "A mapping for fields whose value should be treated like a symbol.
   They will not be analyzed, and they will be lowercased."
-  {:type "text"
-   ;; TODO use token and disable fielddata once token analyzer is supported
-   :fielddata true
-   :analyzer "token_analyzer"
-   :search_analyzer "token_analyzer"})
+  {:type "keyword"
+   :normalizer "lowercase_normalizer"})
 
 (def all_token
   "The same as the `token` mapping, but will be included in the _all field"
-  {:type "text"
-   :fielddata true
-   :analyzer "token_analyzer"
-   :search_analyzer "token_analyzer"
-   :include_in_all true})
+  (assoc token :include_in_all true))
 
 (def external-reference
   {:properties
@@ -219,27 +211,6 @@
    {:action_entry coa-requested
     :journal_entry token}})
 
-(def vulnerability
-  {:properties
-   {:title (merge all_text
-                  {:fields {:whole all_token}})
-    :description all_text
-    :is_known {:type "boolean"}
-    :is_public_acknowledged {:type "boolean"}
-    :short_description all_text
-    :cve_id token
-    :osvdb_id token
-    :source token
-    :discovered_datetime ts
-    :published_datetime ts
-    :affected_software token
-    :references token}})
-
-(def weakness
-  {:properties
-   {:description all_text
-    :cwe_id token}})
-
 (def configuration
   {:properties
    {:description all_text
@@ -328,7 +299,12 @@
   {:number_of_replicas 1
    :number_of_shards 1
    :analysis
-   {:filter
+   {:normalizer
+    {:lowercase_normalizer
+     {:type "custom"
+      :char_filter []
+      :filter ["lowercase"]}}
+    :filter
     {:token_len {:max 255
                  :min 0
                  :type "length"}

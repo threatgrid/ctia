@@ -12,6 +12,7 @@
             [schema
              [coerce :as c]
              [core :as s]]
+            [clojure.string :as string]
             [schema-tools.core :as st]
             [clojure.set :as set]))
 
@@ -190,6 +191,51 @@
    {:all-of {s/Any s/Any}
     :one-of {s/Any s/Any}}))
 
+(def sort-fields-mapping
+  "Mapping table for all fields which needs to be renamed
+   for the sorting. Instead of using fielddata we can have
+   a text field for full text searches, and an unanalysed keyword
+   field with doc_values enabled for sorting"
+  {"title" "title.whole"})
+
+(defn parse-sort-by
+  "Parses the sort_by parameter
+   Ex:
+   \"title:ASC,revision:DESC\"
+   ->
+   [[\"title\" \"ASC\"] [\"revision\" \"DESC\"]]"
+  [sort-by]
+  (map
+   (fn [field]
+     (let [[x y] (string/split field #":")]
+       (if y [x y] [x])))
+   (string/split (name sort-by) #",")))
+
+(defn format-sort-by
+  "Format to the sort-by format
+   Ex:
+   [[\"title\" \"ASC\"] [\"revision\" \"DESC\"]]
+   ->
+   \"title:ASC,revision:DESC\""
+  [sort-fields]
+  (->> sort-fields
+       (map (fn [field]
+              (string/join ":" field)))
+       (string/join ",")))
+
+(defn rename-sort-fields
+  "Renames sort fields based on the content of the `sort-fields-mapping` table."
+  [{:keys [sort_by] :as params}]
+  (if-let [updated-sort-by
+           (some->> sort_by
+                    parse-sort-by
+                    (map (fn [[field-name :as field]]
+                           (assoc field 0
+                                  (get sort-fields-mapping field-name field-name))))
+                    format-sort-by)]
+    (assoc params :sort_by updated-sort-by)
+    params))
+
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [mapping Model]
@@ -231,12 +277,13 @@
        params]
       (update
        (coerce! (d/search-docs (:conn state)
-                               (:index state)
-                               (name mapping)
-                               {:bool {:must [(find-restriction-query-part ident)
-                                              {:query_string {:query query}}]}}
-                               filter-map
-                               (-> params
-                                   with-default-sort-field
+                             (:index state)
+                             (name mapping)
+                             {:bool {:must [(find-restriction-query-part ident)
+                                            {:query_string {:query query}}]}}
+                             filter-map
+                             (-> params
+                                 rename-sort-fields
+                                 with-default-sort-field
                                  make-es-read-params)))
        :data access-control-filter-list ident))))
