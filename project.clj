@@ -48,7 +48,7 @@
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava]]
-                 [threatgrid/clj-momo "0.2.27"]
+                 [threatgrid/clj-momo "0.2.28"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
