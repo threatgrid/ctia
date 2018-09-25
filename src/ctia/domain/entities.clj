@@ -90,8 +90,9 @@
   (dissoc m
           :created
           :modified
-          :owner
-          :groups))
+          ;;:owner
+          ;;:groups
+          ))
 
 (defn un-store-all [x]
   (if (sequential? x)

@@ -10,13 +10,14 @@
     [crud :refer [entity-crud-routes]]]
    [ctia.schemas
     [core :refer [def-acl-schema def-stored-schema]]
-    [sorting :refer [default-entity-sort-fields]]]
+    [sorting
+     :refer [default-entity-sort-fields]
+     :as sorting]]
    [ctia.stores.es.store :refer [def-es-store]]
    [ctim.schemas.actor :as as]
    [schema-tools.core :as st]
    [schema.core :as s]
-   [ctia.stores.es.mapping :as em]
-   [ctia.schemas.sorting :as sorting]))
+   [ctia.stores.es.mapping :as em]))
 
 (def-acl-schema Actor
   as/Actor

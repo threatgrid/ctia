@@ -21,13 +21,13 @@
     :schema (sc/protocol sc/Schema)
     :partial-schema (sc/protocol sc/Schema)
     :partial-list-schema (sc/protocol sc/Schema)
-    :new-schema (sc/protocol sc/Schema)
     :stored-schema (sc/protocol sc/Schema)
     :partial-stored-schema (sc/protocol sc/Schema)
     :es-store sc/Any
     :es-mapping {sc/Any sc/Any}}
    (st/optional-keys
-    {:route-context sc/Str
+    {:new-schema (sc/protocol sc/Schema)
+     :route-context sc/Str
      :routes sc/Any
      :tags [sc/Str]
      :capabilities #{sc/Keyword}
@@ -42,7 +42,9 @@
   (st/merge
    OpenCTIMSchemaVersion
    (st/optional-keys
-    {:authorized_users [Str]
+    {:owner Str
+     :groups [Str]
+     :authorized_users [Str]
      :authorized_groups [Str]})))
 
 (sc/defschema CTIAStoredEntity

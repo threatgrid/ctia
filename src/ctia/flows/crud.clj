@@ -15,7 +15,7 @@
             [ctia.schemas.core :refer [TempIDs]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
-            [ctim.events.obj-to-event
+            [ctia.entity.event.obj-to-event
              :refer
              [to-create-event
               to-delete-event
