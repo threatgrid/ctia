@@ -27,15 +27,16 @@
     {:owner em/token
      :groups em/token
      :timestamp em/ts
-     :entity {:enabled false
-              :type "object"}
+     :entity {:type "object"
+              :properties {:id em/token
+                           :source_ref em/token
+                           :target_ref em/token}}
      :id em/token
      :http-params {:enabled false
                    :type "object"}
      :type em/token
      :fields {:enabled false
-              :type "object"}
-     :judgement_id em/token}}})
+              :type "object"}}}})
 
 (def event-fields
   [:owner

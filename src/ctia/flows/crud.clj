@@ -449,6 +449,7 @@
              get-fn
              delete-fn
              entity-id
+             long-id-fn
              identity]}]
   (let [entity (get-fn entity-id)]
     (-> {:flow-type :delete
@@ -456,10 +457,12 @@
          :entities (remove nil? [entity])
          :prev-entity entity
          :identity identity
+         :long-id-fn long-id-fn
          :store-fn delete-fn
          :create-event-fn to-delete-event}
         apply-before-hooks
         apply-store-fn
+        apply-long-id-fn
         create-events
         write-events
         apply-event-hooks

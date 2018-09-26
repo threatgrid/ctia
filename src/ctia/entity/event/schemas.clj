@@ -4,9 +4,9 @@
             [schema.core :as s]
             [schema-tools.core :as st]))
 
-(def CreateEventType :CreatedRecord)
-(def UpdateEventType :UpdatedRecord)
-(def DeleteEventType :DeletedRecord)
+(def CreateEventType :record-created)
+(def UpdateEventType :record-updated)
+(def DeleteEventType :record-deleted)
 
 (def event-types
   [CreateEventType
@@ -16,7 +16,8 @@
 (s/defschema Update
   {:field s/Keyword
    :action s/Str
-   :change {s/Any s/Any}})
+   :change {:before s/Any
+            :after s/Any}})
 
 (s/defschema Event
   (st/merge

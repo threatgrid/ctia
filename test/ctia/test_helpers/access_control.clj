@@ -89,12 +89,12 @@
              :headers {"Authorization" "player-3-token"})
 
         {player-2-1-entity-overwrite-status :status
-         player-2-1-entity-overwrite-body :body}
+         player-2-1-entity-overwrite-body :parsed-body}
         (put (format "ctia/%s/%s"
-                      entity
-                      (:short-id player-1-entity-id))
-              :body (dissoc player-1-entity :id)
-              :headers {"Authorization" "player-2-token"})
+                     entity
+                     (:short-id player-1-entity-id))
+             :body (dissoc player-1-entity :id)
+             :headers {"Authorization" "player-2-token"})
 
         {player-2-1-entity-delete-status :status}
         (delete (format "ctia/%s/%s" entity (:short-id player-1-entity-id))
@@ -108,7 +108,7 @@
              :headers {"Authorization" "player-2-token"})
 
         {player-2-3-entity-overwrite-status :status
-         player-2-3-entity-overwrite-body :body}
+         player-2-3-entity-overwrite-body :parsed-body}
         (put  (format "ctia/%s/%s"
                       entity
                       (:short-id player-3-entity-id))

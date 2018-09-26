@@ -90,6 +90,7 @@
             "Unexpected timeout waiting for subscriptions")
         (is (= [{:owner "Unknown"
                  :groups ["Administrators"]
+                 :type "event"
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -106,9 +107,10 @@
                           :confidence "Low"
                           :owner "Unknown"
                           :groups ["Administrators"]}
-                 :type "CreatedModel"}
+                 :event_type :record-created}
                 {:owner "Unknown"
                  :groups ["Administrators"]
+                 :type "event"
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -125,9 +127,10 @@
                           :confidence "Low"
                           :owner "Unknown"
                           :groups ["Administrators"]}
-                 :type "CreatedModel"}
+                 :event_type :record-created}
                 {:owner "Unknown"
                  :groups ["Administrators"]
+                 :type "event"
                  :entity {:valid_time
                           {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}
@@ -144,7 +147,7 @@
                           :confidence "Low"
                           :owner "Unknown"
                           :groups ["Administrators"]}
-                 :type "CreatedModel"}]
+                 :event_type :record-created}]
                (->> @results
                     (map #(dissoc % :timestamp :http-params :id))
                     (map #(update % :entity dissoc :created)))))

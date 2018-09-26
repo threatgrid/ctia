@@ -100,6 +100,7 @@
             (is (instance? java.util.Date (:timestamp event)))))
         (is (= [{:owner "Unknown"
                  :groups ["Administrators"]
+                 :type "event"
                  :entity {:valid_time
                           {:start_time "2016-02-11T00:40:48.212Z"
                            :end_time "2525-01-01T00:00:00.000Z"}
@@ -116,9 +117,10 @@
                           :confidence "Low"
                           :owner "Unknown"
                           :groups ["Administrators"]}
-                 :type "CreatedModel"}
+                 :event_type :record-created}
                 {:owner "Unknown"
                  :groups ["Administrators"]
+                 :type "event"
                  :entity {:valid_time
                           {:start_time "2016-02-11T00:40:48.212Z"
                            :end_time "2525-01-01T00:00:00.000Z"}
@@ -135,9 +137,10 @@
                           :confidence "Low"
                           :owner "Unknown"
                           :groups ["Administrators"]}
-                 :type "CreatedModel"}
+                 :event_type :record-created}
                 {:owner "Unknown"
                  :groups ["Administrators"]
+                 :type "event"
                  :entity {:valid_time
                           {:start_time "2016-02-11T00:40:48.212Z"
                            :end_time "2525-01-01T00:00:00.000Z"}
@@ -154,7 +157,7 @@
                           :confidence "Low"
                           :owner "Unknown"
                           :groups ["Administrators"]}
-                 :type "CreatedModel"}]
+                 :event_type :record-created}]
                (->> events
                     (map #(dissoc % :http-params :id :timestamp :created))
                     (map #(update % :entity dissoc :created)))))))))

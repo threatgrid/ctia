@@ -59,7 +59,7 @@
 (def ^:private handle-list-raw
   (crud/handle-find :event Event))
 
-(s/defn handle-list :- [Event]
+(s/defn handle-list
   [state :- ESConnState
    filter-map :- {s/Any s/Any}
    ident

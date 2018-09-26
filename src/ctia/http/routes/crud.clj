@@ -218,6 +218,7 @@
                                            %
                                            identity-map)
                   :entity-type entity
+                  :long-id-fn with-long-id
                   :entity-id id
                   :identity identity)
                (no-content)

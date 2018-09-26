@@ -218,8 +218,9 @@
                (catch Exception e
                  (if-let [errors (some->> (ex-data e) :error (remove nil?))]
                    (let [message
-                         (format (str "Invalid batch, certainly a coercion issue "
+                         (format (str "%s - Invalid batch, certainly a coercion issue "
                                       "errors: %s")
+                                 (pr-str (:type current-store))
                                  (pr-str errors))]
                      (log/error message)
                      message)

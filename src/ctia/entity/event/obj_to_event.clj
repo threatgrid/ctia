@@ -1,6 +1,8 @@
 (ns ctia.entity.event.obj-to-event
   (:require [ctia.entity.event.schemas :as vs]
+            [ctia.domain.entities :refer [with-long-id]]
             [clojure.data :refer [diff]]
+            [clj-momo.lib.time :as time]
             [clj-momo.lib.clj-time.core :as t]
             [schema.core :as s]))
 
@@ -20,24 +22,27 @@
 (s/defn diff-to-list-of-changes :- [vs/Update]
   "Given the output of a `diff` between maps return a list
   of edit distance operation under the form of an Update map"
-  [[diff-before diff-after _]]
-  (concat
-   (map (fn [k]
-          (if (contains? diff-after k)
-            {:field k
-             :action "modifed"
-             :change {(get diff-before k)
-                      (get diff-after k)}}
-            {:field k
-             :action "deleted"
-             :change {}}))
-        (keys diff-before))
-   (map (fn [k]
-          {:field k
-           :action "added"
-           :change {}})
-        (remove #(contains? diff-before %)
-                (keys diff-after)))))
+  [[diff-after diff-before _]]
+  (filter
+   (fn [{:keys [change]}]
+     (seq change))
+   (concat
+    (map (fn [k]
+           (if (contains? diff-after k)
+             {:field k
+              :action "modifed"
+              :change {:before (get diff-before k)
+                       :after (get diff-after k)}}
+             {:field k
+              :action "deleted"
+              :change {}}))
+         (keys diff-before))
+    (map (fn [k]
+           {:field k
+            :action "added"
+            :change {}})
+         (remove #(contains? diff-before %)
+                 (keys diff-after))))))
 
 
 (s/defn to-update-event :- vs/Event
@@ -48,16 +53,20 @@
 
   ([object prev-object]
    (to-update-event object prev-object (:id object)))
-  ([object prev-object id]
+  ([object
+    prev-object
+    event-id]
    {:owner (:owner object)
     :groups (:groups object)
     :entity object
     :timestamp (t/internal-now)
-    :id id
+    :id event-id
     :type "event"
     :event_type vs/UpdateEventType
     :fields (diff-to-list-of-changes
-             (diff object prev-object))}))
+             (diff object (assoc
+                           prev-object
+                           :id (:id object))))}))
 
 (s/defn to-delete-event :- vs/Event
   "transform an object (generally a `StoredObject`) to its corresponding `Event`"
