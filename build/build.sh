@@ -28,8 +28,6 @@ function build-and-publish-package {
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
   pip install --upgrade --user awscli
   export PATH=$PATH:$HOME/.local/bin
-  export AWS_ACCESS_KEY_ID=$DEB_ACCESS_KEY
-  export AWS_SECRET_ACCESS_KEY=$DEB_SECRET_KEY
   aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME} --sse aws:kms --sse-kms-key-id alias/kms-s3
 }
 
