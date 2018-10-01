@@ -19,8 +19,8 @@ env:
       - CTIA_HOOK_ES_PORT=9200
       - CTIA_HOOK_ES_INDEXNAME=elasticsearch
       - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
-      - secure: "Mb9ZqaR3swyk9DONS0dF2MnvvfVHZztKgKuiySUe0dW4SyTZeiJ7g8aKCw/fnX4FgN4mwTelsX118rbVuqG3oEoTynkOA7+h8j1HMG+bZPZfgneQP8v+qJ0kqcp7cO820RpJM8l6vDEU1IxUIvxOI7Tgy0sUAg0qr75LEDjRp9pH/Rccwd1wlCPY55Qv07yxYW+VwCiUR8OSUFBY38fm68SZWzKFM2QwxBgHDwpaJ2VuJtIch8QT2tMtGS8l6Np4YC3r4mFTq6smkeZ+t4fglcIVcAFx+HwtyRqRAioCuuARl6SxF0trvggkHrvMHhFWO33F7tAWpXg3iUo/k+lH9o3dwFoNXx4LAhs4Q081vfeTeUEjHZRLx4QuWZ+9+aAvuVBc/Q4wSGw0INaYxcQv84V3jvbUkXTUZzgPgLEeRebaROvW/HWdBQ+rAi5OZDMsyq9g6odj05qfjjeYN0q+n3Z2TQgHg2fyfSmL4MGNFQLIVqB89WLWsllc9m8bErrZRKAz0+hMXRnCOSQq7ThJA/ets5PKqcNOe93A28E+ExicMq1EFM86tskJB3fHVhZsoJdS5JZwUFFnYY/pGqcADI4vfII0KE1hnZLFO07yG2nPF2NnJa/z1gpUwxfURQoBqc/vX2JMqwnyj7s9HkA9CBH/Kx0xGR3KGF722/fBwLY="
-      - secure: "gSL3aw4LaBJJjw0GUbzsajFI7wU4Pk7haKXKfj+xthkeGD0a3XnB2yr+DnZfPRpSEo4SyQZl2NGSwg/9J2BduGA51v6jsFfmGIVdafLkOfZpRU7YP7EeUuPyyGNMt6DZ/D6j4z6aVqMLUqJpWylrmc+i40oMZRe4Omt2bO43OC6eF1U77hNeir0BMyhTnU2WmtXGaHpsqc0ImMheyKMWk5pkvc9xmd4+h/zeP1+hKyS5eKZKF0+3XXfDGR3QL2E3qXm0+HwHpNn9Pb8lZ+mzin/iCFsZ7s6HNfzyzT5bKXE/9Msl73+povKUoSWcYZljja4/EsJmOgIPpqn/XyogLqOKp8yHoZ5IQJ6KwGA8MZ7l/JIGutNjUgz6R/1P+79gsvyQsg6qTRMWZsmKxkC9eLhI+nyFNIE/gP/LD0MSEL/FHQKsnhSbAw3vaIW5oSPZyl/4+5J0fINAm3eCtICMZjRkEBXqTAs+DPeruv29OBsrdJoXoZMRef86PEL7QQpZM5EujagndeUgi3Rt0RGOA0wgGNe7Hu2XA9vEV79ICkzhKCAuXrCw7Wv1wyDpzLgraJGQFoA9JZKsWjGm8vK9xUvFc77/1vwNfBBMrnV7YprLxWYpR0lzfzYGNrcDjlcvSyy6FJ/B/IhPRN7BDJ3/LdNS8BjnUXN0XU2mYmgCv3M="
+      - secure: "IJO+KVA76qqN5YpAVoL13wsbw3yB5WfRDs7cjP9OzuVlahaGysgyRj0osRCbao6eckx21dceKkIx2zGMoaemPBrfPh/6FvrQxSaPgcy7T+cxkfh81uXM4COFKtx9WZs45doTYwcusHRtfQdHGb/LKkxZO0CUjtUDMol5yBx5Orj73755Sg9LSaASgSOUcPo4N+KzI2sYnWSA9SdzyJkhAf7V/7Yc/HG4JUEwccND7k36iek8kbSpTbDFi18zN1RaYwHiz6v3hYfDr9QPjORIdmfrAkioiijeOQt1XFXR/rNS120tTi7keXFTd+wWPDe1oJ4liCz7HS7VOpM9UTDPIXFny6xSdo8pOdHEetNf56UUNcH2gMXufuYFwWn0F2gwBlWpwE4qkRZYz4oa4yGk8EF+pY7rMlRcpxg9ztL4s0Fsp3Z+F6HKGF+Y/wXsV8cBwYPjT+oDGqRouvj/VQ+Usd+Anvbq/vecR7Id3O7v92l0Z2gUi3dwt5HIFyOfot/KfLVBeqZIftGz7ZvFMXQ2tUaZfkDX0FrD10deworq9U/a2Ez2gZxqq5/zLahXnfDhJ6IPa9lJjuoHhnQqZ+BkuVEfMXmAE6XXqKeT1K5gWIo1sOdLcRUkb1J50TcL9yV9Tnx8P1YjNhfrwcH8JWrCmGGReW+dQLrQuxCGVu7FrtA="
+      - secure: "ZWlv6LsFbL3RP4WS/H/iqK0Unm229thTs2ivyLXA0Yza+FVVLKyxHIrgvtne9BQEZsWw/WDulQmvGijqWinCTt37+Q3YRnGonGp5C24+d8OAJ/GyYWln48d5VH2FoBRZCsuxfrQe36qB8y+3uZsayiOFDCFyNAJhzJwmfCfzRsFratgGrDQP4Eu0wRuCgPrWrLakmuCV0WQ5NcZ1wVIimvz+8PqT2Qp9Ip9oy5jGrl/E34FkptUGhll6xHizr4YBfA19zPB3qjGIKFdV+MCbM+LvxL7x8tEPFtc/8QFdp5o7lHKUDA85C76ENH6HKq7jO9qnzyhj6EgCGcTyHgLwtf65T4r01yEE0cvFORXQ4f6me9UOojc56XZQrZ677jb7NW6iNzXX4abYeCmPBDQ1vb4hC+q+qFWyy0TIfur33pRN+7VuKxOXVx7VzQRsWidcZxujl0ySJfTlp31RmZjROYzTA9qnQWxqRUDkjVXOnZnDaA8lZ4nVeiw5LS+ChFTDewDVsJ7oG7Wm0BHkGOlec4B22dBu41zIYxmaV67+Zz5ddOu8ohzvUyhVv5nshQ56nQTT0SvPvFwYvYyA2cicnXpieE2HV67HZ+Sbw3gaaQm5vw4bXbFnrgg/tikN856KT+MVOl7SFuSw8zl0UGQbfwtW6ai20f4NsgDZ+xl/A5U="
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -50,8 +50,6 @@ before_install:
 install:
     - source $HOME/.rvm/scripts/rvm
     - rvm use 2.2
-    - gem install deb-s3
-    - which deb-s3
 
 before_script:
     - $COMPOSE_BIN -f containers/test/docker-compose.yml up -d> $COMPOSE_LOG
@@ -62,7 +60,7 @@ services:
     - docker
 
 script:
-  - ./build/run-tests.sh && ./build/debian-package.sh
+  - ./build/run-tests.sh && ./build/build.sh
 
 notifications:
   email: false
