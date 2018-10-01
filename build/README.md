@@ -1,35 +1,5 @@
-# CTIA Debian Package Build
+# CTIA Package Build
 
-Resources for automatically building debian packages for
-CTIA in Travis-CI.
+The CTIA package build uses `lein uberjar` to create a new *.jar* package. The generated package is uploaded to a specific S3 bucket and Tenzin automation tools are triggered to deploy it. If the commit happens on the `master` branch, the package is automatically deployed to *INT*. If the commit happens in a branch that follows the semantic versioning (Ex.: v1.0), it will be automatically deployed to *TEST*.
 
-## Contents of Build Directory
-
-This `build` directory contains a package template used
-to construct a debian package in Travis-CI, as well as
-scripts for assembling and publishing the debian package
-to S3.
-
-The scripts include `run-tests.sh`, which can be called
-by `travis.yml` to run tests, and `debian-package.sh`,
-which will assemble new packages on merges to the
-`master` branch, as well as release branches (which
-conform to the `rel-YYYYmmdd` naming pattern).  No
-other branch builds or PR builds will result in the
-creation of a new debian package.
-
-### Debian Package Template
-```
-$ tree
-.
-└── package
-    └── deb
-        ├── DEBIAN
-        │   └── control
-        ├── etc
-        │   └── init.d
-        │       └── ctia
-        └── srv
-            └── ctia
-                └── start.sh
-```
+*PROD* deployments are manually triggered on release days or when applying patches and use the packages stored on the *TEST* S3 bucket.
