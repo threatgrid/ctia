@@ -27,7 +27,7 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (defn partial-operations-tests [incident-id incident]
-  (let [fixed-now (t/now)]
+  (let [fixed-now (t/internal-now)]
     (helpers/fixture-with-fixed-time
      fixed-now
      (fn []

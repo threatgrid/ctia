@@ -1,27 +1,29 @@
 (ns ctia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.lib.net :as net]
-            [clj-momo.test-helpers
-             [core :as mth]
-             [http :as mthh]]
-            [clojure
-             [string :as str]
-             [walk :refer [prewalk]]]
-            [clojure.spec.alpha :as cs]
-            [clojure.test.check.generators :as gen]
-            [ctia
-             [auth :as auth]
-             [init :as init]
-             [properties :refer [properties PropertiesSchema]]
-             [shutdown :as shutdown]
-             [store :as store]]
-            [ctia.auth.allow-all :as aa]
-            [ctia.flows.crud :as crud]
-            [ctim.domain.id :as id]
-            [ctim.generators.common :as cgc]
-            [flanders
-             [spec :as fs]
-             [utils :as fu]]))
+  (:require
+   [ctia.flows.crud :as crud]
+   [clj-momo.lib.net :as net]
+   [clj-momo.test-helpers
+    [core :as mth]
+    [http :as mthh]]
+   [clojure
+    [string :as str]
+    [walk :refer [prewalk]]]
+   [clojure.spec.alpha :as cs]
+   [clojure.test.check.generators :as gen]
+   [ctia
+    [auth :as auth]
+    [init :as init]
+    [properties :refer [properties PropertiesSchema]]
+    [shutdown :as shutdown]
+    [store :as store]]
+   [ctia.auth.allow-all :as aa]
+   [ctia.flows.crud :as crud]
+   [ctim.domain.id :as id]
+   [ctim.generators.common :as cgc]
+   [flanders
+    [spec :as fs]
+    [utils :as fu]]))
 
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
@@ -134,6 +136,8 @@
 
 (defn fixture-with-fixed-time [time f]
   (with-redefs [clj-momo.lib.clj-time.core/now
+                (fn [] time)
+                clj-momo.lib.time/now
                 (fn [] time)
                 clj-momo.lib.clj-time.core/internal-now
                 (fn [] (clj-momo.lib.clj-time.coerce/to-date time))]
@@ -268,3 +272,14 @@
               (dissoc % :id)
               %)
            m))
+
+(defn with-sequential-uuid [f]
+  (let [uuid-counter-start 111111111111
+        uuid-counter (atom uuid-counter-start)]
+    (with-redefs [crud/gen-random-uuid
+                  (fn []
+                    (swap! uuid-counter inc)
+                    (str "00000000-0000-0000-0000-" @uuid-counter))]
+      (f)
+      (reset! uuid-counter
+              uuid-counter-start))))

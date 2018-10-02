@@ -26,6 +26,7 @@
     :properties
     {:owner em/token
      :groups em/token
+     :tlp em/token
      :timestamp em/ts
      :entity {:type "object"
               :properties {:id em/token

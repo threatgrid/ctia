@@ -1,8 +1,9 @@
 (ns ctia.entity.event.schemas
-  (:require [ctim.schemas.verdict :as v]
-            [flanders.schema :as fs]
-            [schema.core :as s]
-            [schema-tools.core :as st]))
+  (:require
+   [ctia.schemas.core :refer [TLP]]
+   [flanders.schema :as fs]
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (def CreateEventType :record-created)
 (def UpdateEventType :record-updated)
@@ -23,6 +24,7 @@
   (st/merge
    {:owner s/Str
     :groups [s/Str]
+    :tlp TLP
     :timestamp s/Inst
     :entity {s/Any s/Any}
     :id s/Str

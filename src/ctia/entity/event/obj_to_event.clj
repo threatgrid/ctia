@@ -17,6 +17,7 @@
     :timestamp (t/internal-now)
     :id id
     :type "event"
+    :tlp (:tlp object)
     :event_type vs/CreateEventType}))
 
 (s/defn diff-to-list-of-changes :- [vs/Update]
@@ -62,6 +63,7 @@
     :timestamp (t/internal-now)
     :id event-id
     :type "event"
+    :tlp (:tlp object)
     :event_type vs/UpdateEventType
     :fields (diff-to-list-of-changes
              (diff object (assoc
@@ -79,4 +81,5 @@
     :timestamp (t/internal-now)
     :id id
     :type "event"
+    :tlp (:tlp object)
     :event_type vs/DeleteEventType}))

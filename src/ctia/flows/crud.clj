@@ -68,9 +68,12 @@
                    :entity entity}))))
       (id/str->short-id id))))
 
+(defn gen-random-uuid []
+  (UUID/randomUUID))
+
 (defn make-id
   [entity-type]
-  (str (name entity-type) "-" (UUID/randomUUID)))
+  (str (name entity-type) "-" (gen-random-uuid)))
 
 (s/defn ^:private find-entity-id :- s/Str
   [{:keys [identity entity-type prev-entity tempids]} :- FlowMap
