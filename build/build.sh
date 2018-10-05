@@ -11,34 +11,23 @@ function build-and-publish-package {
   PKG_TYPE=$1
 
   echo "Building new $PKG_TYPE package"
-  DEB_BUCKET=debian-packages.iroh.amp.cisco.com
   lein uberjar
-  mkdir ./target/pkg
-  cp -rf ./build/package/deb ./target/pkg/
-  cp ./target/ctia.jar target/pkg/deb/srv/ctia/ctia.jar
   BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}"
   echo $BUILD_NAME
   echo "Build: $BUILD_NAME" > ./target/pkg/deb/srv/ctia/BUILD
   echo "Commit: ${TRAVIS_COMMIT}" >> ./target/pkg/deb/srv/ctia/BUILD
   echo "Version: $BUILD_NAME" >> ./target/pkg/deb/DEBIAN/control
-  cat ./target/pkg/deb/srv/ctia/BUILD
-  cat ./target/pkg/deb/DEBIAN/control
-  # Build the debian package
-  dpkg-deb -Z gzip -b ./target/pkg/deb ./target/pkg/ctia-$BUILD_NAME.deb
 
-  deb-s3 upload  --preserve-versions --access-key-id $DEB_ACCESS_KEY --secret-access-key $DEB_SECRET_KEY --bucket $DEB_BUCKET --arch amd64 --codename ctia --component $PKG_TYPE ./target/pkg/ctia-$BUILD_NAME.deb
-  
   # Upload the jar directly to the artifacts S3 bucket
   if [ "${PKG_TYPE}" == "int" ]; then
     ARTIFACTS_BUCKET="372070498991-us-east-1-int-saltstack"
   elif [ "${PKG_TYPE}" == "rel" ]; then
     ARTIFACTS_BUCKET="372070498991-us-east-1-test-saltstack"
   fi
+
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
   pip install --upgrade --user awscli
   export PATH=$PATH:$HOME/.local/bin
-  export AWS_ACCESS_KEY_ID=$DEB_ACCESS_KEY
-  export AWS_SECRET_ACCESS_KEY=$DEB_SECRET_KEY
   aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME} --sse aws:kms --sse-kms-key-id alias/kms-s3
 }
 
