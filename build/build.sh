@@ -14,9 +14,9 @@ function build-and-publish-package {
   lein uberjar
   BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}"
   echo $BUILD_NAME
-  echo "Build: $BUILD_NAME" > ./target/pkg/deb/srv/ctia/BUILD
-  echo "Commit: ${TRAVIS_COMMIT}" >> ./target/pkg/deb/srv/ctia/BUILD
-  echo "Version: $BUILD_NAME" >> ./target/pkg/deb/DEBIAN/control
+  echo "Build: $BUILD_NAME"
+  echo "Commit: ${TRAVIS_COMMIT}"
+  echo "Version: $BUILD_NAME"
 
   # Upload the jar directly to the artifacts S3 bucket
   if [ "${PKG_TYPE}" == "int" ]; then
