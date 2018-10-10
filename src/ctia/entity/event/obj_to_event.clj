@@ -8,17 +8,15 @@
 
 (s/defn to-create-event :- vs/Event
   "Create a CreateEvent from a StoredX object"
-  ([object]
-   (to-create-event object (:id object)))
-  ([object id]
-   {:owner (:owner object)
-    :groups (:groups object)
-    :entity object
-    :timestamp (t/internal-now)
-    :id id
-    :type "event"
-    :tlp (:tlp object)
-    :event_type vs/CreateEventType}))
+  [object id]
+  {:owner (:owner object)
+   :groups (:groups object)
+   :entity object
+   :timestamp (t/internal-now)
+   :id id
+   :type "event"
+   :tlp (:tlp object)
+   :event_type vs/CreateEventType})
 
 (s/defn diff-to-list-of-changes :- [vs/Update]
   "Given the output of a `diff` between maps return a list
@@ -51,35 +49,28 @@
    The two arguments `object` and `prev-object` should have the same schema.
    The fields should contains enough information to retrieve all informations.
    But the complete object is given for simplicity."
-
-  ([object prev-object]
-   (to-update-event object prev-object (:id object)))
-  ([object
-    prev-object
-    event-id]
-   {:owner (:owner object)
-    :groups (:groups object)
-    :entity object
-    :timestamp (t/internal-now)
-    :id event-id
-    :type "event"
-    :tlp (:tlp object)
-    :event_type vs/UpdateEventType
-    :fields (diff-to-list-of-changes
-             (diff object (assoc
-                           prev-object
-                           :id (:id object))))}))
+  [object prev-object event-id]
+  {:owner (:owner object)
+   :groups (:groups object)
+   :entity object
+   :timestamp (t/internal-now)
+   :id event-id
+   :type "event"
+   :tlp (:tlp object)
+   :event_type vs/UpdateEventType
+   :fields (diff-to-list-of-changes
+            (diff object (assoc
+                          prev-object
+                          :id (:id object))))})
 
 (s/defn to-delete-event :- vs/Event
   "transform an object (generally a `StoredObject`) to its corresponding `Event`"
-  ([object]
-   (to-delete-event object (:id object)))
-  ([object id]
-   {:owner (:owner object)
-    :groups (:groups object)
-    :entity object
-    :timestamp (t/internal-now)
-    :id id
-    :type "event"
-    :tlp (:tlp object)
-    :event_type vs/DeleteEventType}))
+  [object id]
+  {:owner (:owner object)
+   :groups (:groups object)
+   :entity object
+   :timestamp (t/internal-now)
+   :id id
+   :type "event"
+   :tlp (:tlp object)
+   :event_type vs/DeleteEventType})
