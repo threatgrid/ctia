@@ -30,9 +30,10 @@
 
 (defn append-version
   "append the version field only
-   if the document is not a user"
+   if the document is not a user or an event"
   [version]
-  (map #(if-not (seq (:capabilities %))
+  (map #(if-not (or (= (:type %) "event")
+                    (seq (:capabilities %)))
           (assoc % :schema_version version)
           %)))
 

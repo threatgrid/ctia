@@ -14,8 +14,8 @@
                   :as entity}]]
            (let [bulk-schema
                  (if (keyword? sch)
-                   [(s/maybe (get entity sch))]
-                   sch)]
+                   [(s/maybe
+                     (get entity sch))] sch)]
              {(-> plural
                   name
                   (clojure.string/replace #"-" "_")

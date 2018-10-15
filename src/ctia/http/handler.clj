@@ -104,7 +104,7 @@
                                 {:name "Campaign" :description "Campaign operations"}
                                 {:name "COA" :description "COA operations"}
                                 {:name "DataTable" :description "DataTable operations"}
-                                {:name "Events" :description "Events operations"}
+                                {:name "Event" :description "Events operations"}
                                 {:name "Feedback" :description "Feedback operations"}
                                 {:name "GraphQL" :description "GraphQL operations"}
                                 {:name "Incident" :description "Incident operations"}

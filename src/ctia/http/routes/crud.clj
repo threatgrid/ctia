@@ -38,10 +38,12 @@
            search-capabilities
            external-id-capabilities
            hide-delete?
+           can-post?
            can-update?
            can-patch?
            can-search?]
     :or {hide-delete? true
+         can-post? true
          can-update? true
          can-patch? false
          can-search? true}}]
@@ -49,30 +51,31 @@
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)]
     (routes
-     (POST "/" []
-           :return entity-schema
-           :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
-           :header-params [{Authorization :- (s/maybe s/Str) nil}]
-           :summary (format "Adds a new %s" capitalized)
-           :capabilities post-capabilities
-           :auth-identity identity
-           :identity-map identity-map
-           (-> (flows/create-flow
-                :entity-type entity
-                :realize-fn realize-fn
-                :store-fn #(write-store entity
-                                        create-record
-                                        %
-                                        identity-map
-                                        {})
-                :long-id-fn with-long-id
-                :entity-type entity
-                :identity identity
-                :entities [new-entity]
-                :spec new-spec)
-               first
-               un-store
-               created))
+     (when can-post?
+       (POST "/" []
+             :return entity-schema
+             :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
+             :header-params [{Authorization :- (s/maybe s/Str) nil}]
+             :summary (format "Adds a new %s" capitalized)
+             :capabilities post-capabilities
+             :auth-identity identity
+             :identity-map identity-map
+             (-> (flows/create-flow
+                  :entity-type entity
+                  :realize-fn realize-fn
+                  :store-fn #(write-store entity
+                                          create-record
+                                          %
+                                          identity-map
+                                          {})
+                  :long-id-fn with-long-id
+                  :entity-type entity
+                  :identity identity
+                  :entities [new-entity]
+                  :spec new-spec)
+                 first
+                 un-store
+                 created)))
      (when can-update?
        (PUT "/:id" []
             :return entity-schema
@@ -215,6 +218,7 @@
                                            %
                                            identity-map)
                   :entity-type entity
+                  :long-id-fn with-long-id
                   :entity-id id
                   :identity identity)
                (no-content)

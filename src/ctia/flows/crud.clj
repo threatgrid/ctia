@@ -15,7 +15,7 @@
             [ctia.schemas.core :refer [TempIDs]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
-            [ctim.events.obj-to-event
+            [ctia.entity.event.obj-to-event
              :refer
              [to-create-event
               to-delete-event
@@ -68,9 +68,12 @@
                    :entity entity}))))
       (id/str->short-id id))))
 
+(defn gen-random-uuid []
+  (UUID/randomUUID))
+
 (defn make-id
   [entity-type]
-  (str (name entity-type) "-" (UUID/randomUUID)))
+  (str (name entity-type) "-" (gen-random-uuid)))
 
 (s/defn ^:private find-entity-id :- s/Str
   [{:keys [identity entity-type prev-entity tempids]} :- FlowMap
@@ -449,6 +452,7 @@
              get-fn
              delete-fn
              entity-id
+             long-id-fn
              identity]}]
   (let [entity (get-fn entity-id)]
     (-> {:flow-type :delete
@@ -456,10 +460,12 @@
          :entities (remove nil? [entity])
          :prev-entity entity
          :identity identity
+         :long-id-fn long-id-fn
          :store-fn delete-fn
          :create-event-fn to-delete-event}
         apply-before-hooks
         apply-store-fn
+        apply-long-id-fn
         create-events
         write-events
         apply-event-hooks
