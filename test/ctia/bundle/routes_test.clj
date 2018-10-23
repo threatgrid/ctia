@@ -251,6 +251,32 @@
              (validate-entity-record
               (find-result-by-original-id bundle-result (:id entity))
               entity))))
+       (testing "Update and create"
+         (let [indicator (mk-indicator 2000)
+               sighting (first sightings)
+               relationship (mk-relationship 2000
+                                             indicator
+                                             sighting
+                                             "indicates")
+               bundle
+               {:type "bundle"
+                :source "source"
+                :indicators [indicator]
+                :sightings [sighting]
+                :relationships [relationship]}
+               response (post "ctia/bundle/import"
+                              :body bundle
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result (:parsed-body response)]
+           (is (= 200 (:status response)))
+
+           (is (pos? (count (:results bundle-result))))
+
+           (doseq [entity [indicator sighting
+                           (resolve-ids bundle-result relationship)]]
+             (validate-entity-record
+              (find-result-by-original-id bundle-result (:id entity))
+              entity))))
        (testing "Custom external prefix keys"
          (let [bundle {:type "bundle"
                        :source "source"
