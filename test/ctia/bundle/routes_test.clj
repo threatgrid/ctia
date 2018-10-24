@@ -277,6 +277,23 @@
              (validate-entity-record
               (find-result-by-original-id bundle-result (:id entity))
               entity))))
+       (testing "Bundle with missing entities"
+         (let [relationship (mk-relationship 2001
+                                             (mk-indicator 2001)
+                                             (first sightings)
+                                             "indicates")
+               bundle {:type "bundle"
+                       :source "source"
+                       :relationships [relationship]}
+               response-create (post "ctia/bundle/import"
+                                     :query-params {"external-key-prefixes" "custom-"}
+                                     :body bundle
+                                     :headers {"Authorization" "45c1f5e3f05d0"})
+               bundle-result-create (:parsed-body response-create)]
+           (is (= 500 (:status response-create))
+               (str "A relationship cannot be created if the source and the "
+                    "target entities referenced by a transient ID are not "
+                    "included in the bundle."))))
        (testing "Custom external prefix keys"
          (let [bundle {:type "bundle"
                        :source "source"

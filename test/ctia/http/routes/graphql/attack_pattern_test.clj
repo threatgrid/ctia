@@ -16,6 +16,8 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+  (def external-ref "http://external.com/ctia/attack-pattern/attack-pattern-ab053333-2ad2-41d0-a445-31e9b9c38caf")
+
 (defn init-graph-data []
   (let [ap1 (gh/create-object
              "attack-pattern"
@@ -44,7 +46,7 @@
                        :source_ref (:id ap1)})
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
-                       :target_ref "transient:123"
+                       :target_ref external-ref
                        :source_ref (:id ap1)})
     {:attack-pattern-1 ap1
      :attack-pattern-2 ap2
@@ -95,7 +97,7 @@
                                    :source_entity (:attack-pattern-1 datamap)
                                    :target_entity (:attack-pattern-3 datamap)}
                                   {:relationship_type "variant-of"
-                                   :target_ref "transient:123"
+                                   :target_ref external-ref
                                    :source_ref attack-pattern-1-id
                                    :source_entity (:attack-pattern-1 datamap)
                                    :target_entity nil}])

@@ -8,7 +8,8 @@
    [ctia.schemas
     [core :refer [def-acl-schema
                   def-stored-schema]]
-    [sorting :as sorting]]))
+    [sorting :as sorting]]
+   [clojure.string :as string]))
 
 (def-acl-schema Relationship
   rels/Relationship
@@ -52,7 +53,12 @@
    id
    tempids
    & rest-args]
-  (assoc (apply relationship-default-realize new-entity id tempids rest-args)
-         :source_ref (get tempids source_ref source_ref)
-         :target_ref (get tempids target_ref target_ref)))
-
+  (let [e (assoc (apply relationship-default-realize new-entity id tempids rest-args)
+                 :source_ref (get tempids source_ref source_ref)
+                 :target_ref (get tempids target_ref target_ref))]
+    (when (or
+         (string/starts-with? (:source_ref e) "transient:")
+         (string/starts-with? (:target_ref e) "transient:"))
+      (throw (Exception. (str "A relationship cannot be created if a source "
+                              "or a target ref is still a transient ID"))))
+    e))
