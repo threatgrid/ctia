@@ -2,6 +2,7 @@
   "This namespace handle all necessary flows for creating, updating
   and deleting entities."
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
+            [clojure.set :refer [index]]
             [clojure.spec.alpha :as cs]
             [clojure.tools.logging :as log]
             [ctia
@@ -129,7 +130,8 @@
            identity
            tempids
            prev-entity
-           realize-fn] :as fm} :- FlowMap]
+           realize-fn
+           enveloped-result?] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)]
     (assoc fm
@@ -137,25 +139,30 @@
            (doall
             (for [entity entities
                   :let [entity-id (find-entity-id fm entity)]]
-              (case flow-type
-                :create (realize-fn entity
-                                    entity-id
-                                    tempids
-                                    login
-                                    groups)
-                :update (if prev-entity
-                          (realize-fn entity
-                                      entity-id
-                                      tempids
-                                      login
-                                      groups
-                                      prev-entity)
-                          (realize-fn entity
-                                      entity-id
-                                      tempids
-                                      login
-                                      groups))
-                :delete entity))))))
+              (let [result
+                    (case flow-type
+                      :create (realize-fn entity
+                                          entity-id
+                                          tempids
+                                          login
+                                          groups)
+                      :update (if prev-entity
+                                (realize-fn entity
+                                            entity-id
+                                            tempids
+                                            login
+                                            groups
+                                            prev-entity)
+                                (realize-fn entity
+                                            entity-id
+                                            tempids
+                                            login
+                                            groups))
+                      :delete entity)]
+                (if (and (contains? result :error)
+                         (not enveloped-result?))
+                  (http-response/bad-request! result)
+                  result)))))))
 
 (s/defn ^:private apply-before-hooks :- FlowMap
   [{:keys [entities flow-type prev-entity] :as fm} :- FlowMap]
@@ -215,6 +222,23 @@
            :events
            (store/write-store :event store/create-events events))
     fm))
+
+(s/defn preserve-errors :- FlowMap
+  "Preserve errors and the order of entities after applying
+   f to the provided flow map"
+  [{:keys [entities enveloped-result?] :as fm} :- FlowMap
+   f]
+  (if enveloped-result?
+    (let [{result-entities :entities :as result} (f fm)
+          entities-by-id (index result-entities [:id])
+          new-entities
+          (mapv (fn [{:keys [id] :as entity}]
+                  (if-let [result-entity (first (get entities-by-id {:id id}))]
+                    result-entity
+                    entity))
+                entities)]
+      (assoc result :entities new-entities))
+    (f fm)))
 
 (s/defn apply-create-store-fn
   [{:keys [entities store-fn enveloped-result? tempids] :as fm} :- FlowMap]
@@ -351,7 +375,7 @@
       create-ids-from-transient
       realize-entities
       apply-before-hooks
-      apply-store-fn
+      (preserve-errors apply-store-fn)
       apply-long-id-fn
       create-events
       write-events
