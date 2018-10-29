@@ -138,7 +138,8 @@
                        tempids
                        login
                        {:refresh refresh})
-         entities-tempids (merge-tempids new-entities)
+         entities-tempids (into tempids
+                                (merge-tempids new-entities))
          new-relationships (gen-bulk-from-fn
                             create-entities
                             (select-keys bulk [:relationships])

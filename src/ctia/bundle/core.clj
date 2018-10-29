@@ -263,6 +263,16 @@
   {:refresh
    (get-in @properties [:ctia :store :bundle-refresh] "false")})
 
+(defn log-errors
+  [response]
+  (let [errors (->> response
+                    :results
+                    (map :error)
+                    seq)]
+    (doseq [error errors]
+      (log/warn error)))
+  response)
+
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
@@ -279,7 +289,8 @@
     (debug "Import bundle response"
            (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params))
                 (with-bulk-result bundle-import-data)
-                build-response))))
+                build-response
+                log-errors))))
 
 (def bundle-max-size bulk/get-bulk-max-size)
 
