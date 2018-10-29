@@ -73,9 +73,10 @@
   [exception-data models coerce-fn]
   (let [{{:keys [errors items]}
          :es-http-res-body} exception-data]
-    {:data (map (fn [{:keys [error] :as item} model]
+    {:data (map (fn [{:keys [error _id] :as item} model]
                   (if error
-                    {:error error}
+                    {:error error
+                     :id _id}
                     (build-create-result model coerce-fn)))
                 (remove-es-actions items) models)}))
 

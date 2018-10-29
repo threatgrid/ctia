@@ -8,7 +8,9 @@
    [ctia.schemas
     [core :refer [def-acl-schema
                   def-stored-schema]]
-    [sorting :as sorting]]))
+    [sorting :as sorting]]
+   [ctia.flows.schemas :refer [with-error]]
+   [clojure.string :as string]))
 
 (def-acl-schema Relationship
   rels/Relationship
@@ -45,14 +47,21 @@
            :target_ref]))
 
 (s/defn realize-relationship
-  :- StoredRelationship
+  :- (with-error StoredRelationship)
   [{:keys [source_ref
            target_ref]
     :as new-entity}
    id
    tempids
    & rest-args]
-  (assoc (apply relationship-default-realize new-entity id tempids rest-args)
-         :source_ref (get tempids source_ref source_ref)
-         :target_ref (get tempids target_ref target_ref)))
-
+  (let [e (assoc (apply relationship-default-realize new-entity id tempids rest-args)
+                 :source_ref (get tempids source_ref source_ref)
+                 :target_ref (get tempids target_ref target_ref))]
+    (if (or (string/starts-with? (:source_ref e) "transient:")
+            (string/starts-with? (:target_ref e) "transient:"))
+      {:id id
+       :error (str "A relationship cannot be created if a source "
+                   "or a target ref is still a transient ID "
+                   "(The source or target entity is probably not "
+                   "provided in the bundle)")}
+      e)))

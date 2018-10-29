@@ -3,7 +3,8 @@
             [clojure.test :as t :refer [is testing deftest]]))
 
 (deftest partial-results-test
-  (is (= {:data [{:error "Exception"}
+  (is (= {:data [{:error "Exception"
+                  :id "123"}
                  {:id "124"}]}
          (sut/partial-results
           {:es-http-res-body
