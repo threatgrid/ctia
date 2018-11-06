@@ -749,7 +749,7 @@
 
     (is (= 400 status-disallowed-tlp))
     (is (= "Invalid document TLP white, allowed TLPs are: amber,red"
-           (:error body-disallowed-tlp)))))
+           (:message body-disallowed-tlp)))))
 
 (defn access-control-test
   [entity

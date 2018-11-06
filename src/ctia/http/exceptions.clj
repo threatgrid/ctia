@@ -62,6 +62,28 @@
     :message (.getMessage e)
     :class (.getName (class e))}))
 
+(defn spec-validation-error-handler
+  "Handle spec validation error"
+  [^Exception e data request]
+  (logging/log! :info e (ex-message e))
+  (bad-request
+   (let [entity (:entity (ex-data e))]
+     {:type "Invalid Entity Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
+(defn invalid-tlp-error-handler
+  "Handle access control error"
+  [^Exception e data request]
+  (logging/log! :info e (ex-message e))
+  (bad-request
+   (let [entity (:entity (ex-data e))]
+     {:type "Invalid TLP Error"
+      :message (.getMessage e)
+      :entity entity
+      :class (.getName (class e))})))
+
 (defn default-error-handler
   "Handle default error"
   [^Exception e data request]

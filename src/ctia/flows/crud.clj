@@ -95,19 +95,19 @@
 
 (s/defn ^:private validate-entities :- FlowMap
   [{:keys [spec entities] :as fm} :- FlowMap]
-  (when spec
-    (doseq [entity entities]
+  (doseq [entity entities]
+    (when spec
       (when-not (cs/valid? spec entity)
-        (throw (http-response/bad-request!
-                {:error (cs/explain-str spec entity)
-                 :entity entity})))
-      (when-let [entity-tlp (:tlp entity)]
-        (when-not (allowed-tlp? entity-tlp)
-          (throw (http-response/bad-request!
-                  {:error (format "Invalid document TLP %s, allowed TLPs are: %s"
-                                  entity-tlp
-                                  (clojure.string/join "," (allowed-tlps)))
-                   :entity entity}))))))
+        (throw (ex-info (cs/explain-str spec entity)
+                        {:type :spec-validation-error
+                         :entity entity}))))
+    (when-let [entity-tlp (:tlp entity)]
+      (when-not (allowed-tlp? entity-tlp)
+        (throw (ex-info (format "Invalid document TLP %s, allowed TLPs are: %s"
+                                entity-tlp
+                                (clojure.string/join "," (allowed-tlps)))
+                        {:type :invalid-tlp-error
+                         :entity entity})))))
   fm)
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
