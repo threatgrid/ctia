@@ -499,3 +499,32 @@
        (is (= 2 (count (:sightings bundle-get-res-4))))
        (is (nil? (:indicators bundle-get-res-4)))
        (is (= 402 (count (:relationships bundle-get-res-4))))))))
+
+(defn with-tlp-property-setting [tlp f]
+  (with-redefs [ctia.properties/properties
+                (-> (deref ctia.properties/properties)
+                    (assoc-in [:ctia :access-control :min-tlp] tlp)
+                    (assoc-in [:ctia :access-control :default-tlp] tlp)
+                    atom)]
+    (f)))
+
+(deftest bundle-tlp-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+
+     (testing "entities TLP settings are validated"
+       (let [sighting (assoc (mk-sighting 1) :tlp "white")
+             new-bundle
+             {:type "bundle"
+              :source "source"
+              :sightings #{sighting}}]
+
+         (with-tlp-property-setting "amber"
+           #(is (= 400 (:status (post "ctia/bundle/import"
+                                      :body new-bundle
+                                      :headers {"Authorization" "45c1f5e3f05d0"}))))))))))

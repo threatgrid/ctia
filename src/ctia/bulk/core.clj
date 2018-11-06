@@ -83,14 +83,17 @@
   ~~~~
   "
   [func bulk & args]
-  (->> bulk
-       (pmap (fn [[bulk-k entities]]
-               (let [entity-type (entity-type-from-bulk-key bulk-k)]
-                 [bulk-k
-                  (apply func
-                         entities
-                         entity-type args)])))
-       (into {})))
+  (try
+    (->> bulk
+         (pmap (fn [[bulk-k entities]]
+                 (let [entity-type (entity-type-from-bulk-key bulk-k)]
+                   [bulk-k
+                    (apply func
+                           entities
+                           entity-type args)])))
+         (into {}))
+    (catch java.util.concurrent.ExecutionException e
+      (throw (.getCause e)))))
 
 (defn merge-tempids
   "Merges tempids from all entities
