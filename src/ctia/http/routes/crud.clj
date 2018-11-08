@@ -41,12 +41,14 @@
            can-post?
            can-update?
            can-patch?
-           can-search?]
+           can-search?
+           can-get-by-external-id?]
     :or {hide-delete? true
          can-post? true
          can-update? true
          can-patch? false
-         can-search? true}}]
+         can-search? true
+         can-get-by-external-id? true}}]
 
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)]
@@ -141,23 +143,24 @@
                            un-store)]
                 (ok updated-rec)
                 (not-found))))
-     (GET "/external_id/:external_id" []
-          :return list-schema
-          :query [q external-id-q-params]
-          :path-params [external_id :- s/Str]
-          :header-params [{Authorization :- (s/maybe s/Str) nil}]
-          :summary (format "List %s by external id" capitalized)
-          :capabilities external-id-capabilities
-          :auth-identity identity
-          :identity-map identity-map
-          (-> (read-store entity
-                          list-records
-                          {:external_ids external_id}
-                          identity-map
-                          q)
-              page-with-long-id
-              un-store-page
-              paginated-ok))
+     (when can-get-by-external-id?
+       (GET "/external_id/:external_id" []
+            :return list-schema
+            :query [q external-id-q-params]
+            :path-params [external_id :- s/Str]
+            :header-params [{Authorization :- (s/maybe s/Str) nil}]
+            :summary (format "List %s by external id" capitalized)
+            :capabilities external-id-capabilities
+            :auth-identity identity
+            :identity-map identity-map
+            (-> (read-store entity
+                            list-records
+                            {:external_ids external_id}
+                            identity-map
+                            q)
+                page-with-long-id
+                un-store-page
+                paginated-ok)))
 
      (when can-search?
        (GET "/search" []

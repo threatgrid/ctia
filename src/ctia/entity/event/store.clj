@@ -1,5 +1,7 @@
 (ns ctia.entity.event.store
   (:require
+   [ctia.entity.event.schemas :refer [PartialEvent]]
+   [ctia.stores.es.crud :as es-crud]
    [ctia.store :refer :all]
    [ctia.entity.event.crud
     :refer [handle-list
@@ -10,6 +12,9 @@
    [ctia.store :refer [IEventStore]]))
 
 (defrecord EventStore [state]
+  IStore
+  (read-record [_ id ident params]
+    ((es-crud/handle-read "event" PartialEvent) state id ident params))
   IEventStore
   (create-events [this new-events]
     (handle-create state new-events))
