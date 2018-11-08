@@ -77,6 +77,7 @@
     :can-update? false
     :can-patch? false
     :can-post? false
+    :can-get-by-external-id? false
     :search-capabilities :search-event}))
 
 (def event-entity
