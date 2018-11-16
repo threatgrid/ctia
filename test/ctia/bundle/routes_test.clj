@@ -1,6 +1,7 @@
 (ns ctia.bundle.routes-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.lib.es.index :as es-index]
+  (:require [ctim.schemas.common :refer [ctim-schema-version]]
+            [clj-momo.lib.es.index :as es-index]
             [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
@@ -44,6 +45,7 @@
    :description (str "description: sighting-" n)
    :timestamp #inst "2016-02-11T00:40:48.212-00:00"
    :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
+   :schema_version "1.0.0"
    :count 1
    :source "source"
    :sensor "endpoint.sensor"
@@ -54,6 +56,8 @@
   {:id (id/make-transient-id nil)
    :external_ids [(str "ctia-indicator-" n)]
    :title (str "indicator-" n)
+   ;; simulate an outdated schema version -- should be ignored by the importer
+   :schema_version "0.4.2"
    :description (str "description: indicator-" n)
    :producer "producer"
    :indicator_type ["C2" "IP Watchlist"]
@@ -71,6 +75,7 @@
    :timestamp #inst "2016-02-11T00:40:48.212-00:00"
    :language "language"
    :source "source"
+   :schema_version "1.1.1"
    :source_uri "http://example.com"
    :relationship_type relation-type
    :source_ref (:id source)
@@ -90,8 +95,8 @@
     :as result}
    original-entity]
   (testing (str "Entity " external_id)
-      (is (= (:id original-entity) original_id)
-          "The orignal ID is in the result")
+    (is (= (:id original-entity) original_id)
+        "The orignal ID is in the result")
     (is (contains? (set (:external_ids original-entity))
                    external_id)
         "The external ID is in the result")
@@ -112,8 +117,10 @@
                                     (encode id))
                             :headers {"Authorization" "45c1f5e3f05d0"})
               entity (:parsed-body response)]
-          (is (= (select-keys entity (keys original-entity))
-                 (assoc original-entity :id id))))))))
+          (is (= (assoc original-entity
+                        :id id
+                        :schema_version ctim-schema-version)
+                 (select-keys entity (keys original-entity)))))))))
 
 (defn find-result-by-original-id
   "Find an entity result in the bundle result with its original ID"

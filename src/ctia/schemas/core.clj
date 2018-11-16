@@ -1,5 +1,6 @@
 (ns ctia.schemas.core
   (:require
+   [ctia.schemas.utils :as csutils]
    [ctim.schemas
     [verdict :as vs]
     [bundle :as bundle]
@@ -11,6 +12,7 @@
     [spec :as f-spec]
     [utils :as fu]]
    [schema-tools.core :as st]
+   [schema-tools.walk :as sw]
    [schema.core :as sc :refer [Bool Str]]
    [schema.core :as s]))
 
@@ -58,17 +60,19 @@
 (defmacro def-stored-schema [name-sym ddl spec-kw-ns]
   `(do
      (sc/defschema ~name-sym
-       (st/merge
-        (f-schema/->schema ~ddl)
-        CTIAStoredEntity))
+       (csutils/recursive-open-schema-version
+        (st/merge
+         (f-schema/->schema ~ddl)
+         CTIAStoredEntity)))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
 
 (defmacro def-acl-schema [name-sym ddl spec-kw-ns]
   `(do
      (sc/defschema ~name-sym
-       (st/merge
-        (f-schema/->schema ~ddl)
-        CTIAEntity))
+       (csutils/recursive-open-schema-version
+        (st/merge
+         (f-schema/->schema ~ddl)
+         CTIAEntity)))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
 
 ;; verdict
@@ -79,13 +83,19 @@
 
 ;; Bundle
 
-(def-acl-schema NewBundle
+(def-acl-schema CTIMNewBundle
   bundle/NewBundle
   "new-bundle")
 
-(def-acl-schema Bundle
+(def-acl-schema CTIMBundle
   bundle/Bundle
   "bundle")
+
+(sc/defschema NewBundle
+  (csutils/recursive-open-schema-version CTIMNewBundle))
+
+(sc/defschema Bundle
+  (csutils/recursive-open-schema-version CTIMBundle))
 
 ;; common
 
