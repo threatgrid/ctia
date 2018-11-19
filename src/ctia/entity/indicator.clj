@@ -28,10 +28,11 @@
    [schema.core :as s]))
 
 (s/defschema Indicator
-  (st/merge CTIAEntity
-            (f-schema/->schema
-             (fu/replace-either-with-any
-              ins/Indicator))))
+  (st/merge
+   (f-schema/->schema
+    (fu/replace-either-with-any
+     ins/Indicator))
+   CTIAEntity))
 
 (f-spec/->spec ins/Indicator "indicator")
 
