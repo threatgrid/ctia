@@ -1,65 +1,60 @@
 (ns ctia.schemas.core
-  (:require
-   [ctia.schemas.utils :as csutils]
-   [ctim.schemas
-    [verdict :as vs]
-    [bundle :as bundle]
-    [common :as cos]
-    [vocabularies :as vocs]]
-   [flanders
-    [core :as flanders]
-    [schema :as f-schema]
-    [spec :as f-spec]
-    [utils :as fu]]
-   [schema-tools.core :as st]
-   [schema-tools.walk :as sw]
-   [schema.core :as sc :refer [Bool Str]]
-   [schema.core :as s]))
+  (:require [ctia.schemas.utils :as csutils]
+            [ctim.schemas
+             [bundle :as bundle]
+             [common :as cos]
+             [verdict :as vs]
+             [vocabularies :as vocs]]
+            [flanders
+             [schema :as f-schema]
+             [spec :as f-spec]]
+            [schema-tools.core :as st]
+            [schema.core :as s :refer [Bool Str]]))
 
-(sc/defschema Entity
+(s/defschema Entity
   (st/merge
-   {:entity sc/Keyword
-    :plural sc/Keyword
-    :schema (sc/protocol sc/Schema)
-    :partial-schema (sc/protocol sc/Schema)
-    :partial-list-schema (sc/protocol sc/Schema)
-    :stored-schema (sc/protocol sc/Schema)
-    :partial-stored-schema (sc/protocol sc/Schema)
-    :es-store sc/Any
-    :es-mapping {sc/Any sc/Any}}
+   {:entity s/Keyword
+    :plural s/Keyword
+    :schema (s/protocol s/Schema)
+    :partial-schema (s/protocol s/Schema)
+    :partial-list-schema (s/protocol s/Schema)
+    :stored-schema (s/protocol s/Schema)
+    :partial-stored-schema (s/protocol s/Schema)
+    :es-store s/Any
+    :es-mapping {s/Any s/Any}}
    (st/optional-keys
-    {:new-schema (sc/protocol sc/Schema)
-     :route-context sc/Str
-     :routes sc/Any
-     :tags [sc/Str]
-     :capabilities #{sc/Keyword}
-     :no-bulk? sc/Bool
-     :no-api? sc/Bool
-     :realize-fn sc/Any})))
+    {:new-schema (s/protocol s/Schema)
+     :route-context s/Str
+     :routes s/Any
+     :tags [s/Str]
+     :capabilities #{s/Keyword}
+     :no-bulk? s/Bool
+     :no-api? s/Bool
+     :realize-fn s/Any})))
 
-(sc/defschema OpenCTIMSchemaVersion
-  {(sc/optional-key :schema_version) s/Str})
+(s/defschema OpenCTIMSchemaVersion
+  {(s/optional-key :schema_version) s/Str})
 
-(sc/defschema CTIAEntity
+(s/defschema CTIAEntity
   (st/merge
    OpenCTIMSchemaVersion
    (st/optional-keys
     {:authorized_users [Str]
      :authorized_groups [Str]})))
 
-(sc/defschema CTIAStoredEntity
+(s/defschema CTIAStoredEntity
   (st/merge CTIAEntity
-            {(sc/optional-key :groups) [Str]}))
+            {(s/optional-key :groups) [Str]}))
 
 (defmacro defschema [name-sym ddl spec-kw-ns]
   `(do
-     (sc/defschema ~name-sym
+     (s/defschema ~name-sym
        (f-schema/->schema ~ddl))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
 
 (defmacro def-stored-schema [name-sym ddl spec-kw-ns]
   `(do
-     (sc/defschema ~name-sym
+     (s/defschema ~name-sym
        (csutils/recursive-open-schema-version
         (st/merge
          (f-schema/->schema ~ddl)
@@ -68,7 +63,7 @@
 
 (defmacro def-acl-schema [name-sym ddl spec-kw-ns]
   `(do
-     (sc/defschema ~name-sym
+     (s/defschema ~name-sym
        (csutils/recursive-open-schema-version
         (st/merge
          (f-schema/->schema ~ddl)
@@ -91,15 +86,15 @@
   bundle/Bundle
   "bundle")
 
-(sc/defschema NewBundle
+(s/defschema NewBundle
   (csutils/recursive-open-schema-version CTIMNewBundle))
 
-(sc/defschema Bundle
+(s/defschema Bundle
   (csutils/recursive-open-schema-version CTIMBundle))
 
 ;; common
 
-(sc/defschema TLP
+(s/defschema TLP
   (f-schema/->schema
    cos/TLP))
 
@@ -115,13 +110,13 @@
   cos/ID
   "common.id")
 
-(def TransientID sc/Str)
+(def TransientID s/Str)
 
-(sc/defschema TempIDs
+(s/defschema TempIDs
   "Mapping table between transient and permanent IDs"
   {TransientID ID})
 
-(sc/defschema VersionInfo
+(s/defschema VersionInfo
   "Version information for a specific instance of CTIA"
   {:base Str
    :ctim-version Str
