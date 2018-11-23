@@ -40,7 +40,6 @@
                   :list-indicators
                   :read-feedback
                   :list-verdicts
-                  :list-casebooks
                   :list-feedbacks
                   :list-malwares
                   :list-data-tables
@@ -53,7 +52,6 @@
                   :read-incident
                   :list-coas
                   :read-tool
-                  :read-casebook
                   :list-investigations
                   :read-data-table
                   :read-weakness

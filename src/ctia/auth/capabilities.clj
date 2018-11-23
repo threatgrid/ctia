@@ -109,6 +109,7 @@
      :read-tool
      :read-verdict
      :read-weakness
-     :list-weaknesses}
+     :list-weaknesses
+     :import-bundle}
    :admin
    all-capabilities})
