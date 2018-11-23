@@ -86,11 +86,15 @@
   bundle/Bundle
   "bundle")
 
+
+;; Casebooks should be considered fully separate from CTIM
 (s/defschema NewBundle
-  (csutils/recursive-open-schema-version CTIMNewBundle))
+  (st/dissoc
+   (csutils/recursive-open-schema-version CTIMNewBundle) :casebooks))
 
 (s/defschema Bundle
-  (csutils/recursive-open-schema-version CTIMBundle))
+  (st/dissoc
+   (csutils/recursive-open-schema-version CTIMBundle) :casebooks))
 
 ;; common
 
