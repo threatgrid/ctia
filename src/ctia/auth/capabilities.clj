@@ -110,6 +110,7 @@
      :read-verdict
      :read-weakness
      :list-weaknesses
-     :import-bundle}
+     :import-bundle
+     :external-id}
    :admin
    all-capabilities})
