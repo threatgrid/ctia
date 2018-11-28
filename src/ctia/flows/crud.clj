@@ -223,20 +223,25 @@
            (store/write-store :event store/create-events events))
     fm))
 
+(s/defn remove-errors :- FlowMap
+  "Remove all entities with an error from the given FlowMap"
+  [fm :- FlowMap]
+  (update fm :entities #(filter (complement :error) %)))
+
 (s/defn preserve-errors :- FlowMap
   "Preserve errors and the order of entities after applying
    f to the provided flow map"
   [{:keys [entities enveloped-result?] :as fm} :- FlowMap
    f]
   (if enveloped-result?
-    (let [{result-entities :entities :as result} (f fm)
+    (let [{result-entities :entities :as result} (f (remove-errors fm))
           entities-by-id (index result-entities [:id])
-          new-entities
-          (mapv (fn [{:keys [id] :as entity}]
-                  (if-let [result-entity (first (get entities-by-id {:id id}))]
-                    result-entity
-                    entity))
-                entities)]
+          result-entity-fn (fn [id] (first (get entities-by-id {:id id})))
+          new-entities (keep (fn [{:keys [id] :as entity}]
+                               (if (:error entity)
+                                 entity
+                                 (result-entity-fn id)))
+                             entities)]
       (assoc result :entities new-entities))
     (f fm)))
 

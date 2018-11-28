@@ -32,3 +32,35 @@
                (deep-merge-with coll/replace-colls
                                 fixture
                                 {:foo  {:bar {:foo {:bar #{"else"}}}}})))))
+
+(deftest preserve-errors-test
+  (testing "with enveloped result"
+    (let [f (fn [_]
+              {:entities
+               [{:id "4"}
+                {:id "2"}]
+               :enveloped-result? true})
+          entities [{:id "1"}
+                    {:id "2"}
+                    {:id "3"
+                     :error "msg"}
+                    {:id "4"}]]
+      (is (= {:entities
+              [{:id "2"}
+               {:id "3"
+                :error "msg"}
+               {:id "4"}]
+              :enveloped-result? true}
+             (sut/preserve-errors {:entities entities
+                                   :enveloped-result? true}
+                                  f)))))
+  (testing "without enveloped result"
+    (is (= {:entities
+            [{:id "1"
+              :title "title"}]}
+           (sut/preserve-errors
+            {:entities [{:id "1"}]}
+            (fn [_]
+              {:entities
+               [{:id "1"
+                 :title "title"}]}))))))
