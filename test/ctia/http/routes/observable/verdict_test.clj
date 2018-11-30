@@ -72,10 +72,13 @@
 
 
      (testing "a verdict that doesn't exist is a 404"
-       (let [{status :status}
+       (let [{status :status
+              parsed-body :body}
              (get "ctia/ip/10.0.0.42/verdict"
                   :headers {"Authorization" "45c1f5e3f05d0"})]
-         (is (= 404 status))))
+         (is (= 404 status))
+         (is (= "{:message \"no verdict currently available for the supplied observable\"}"
+                parsed-body))))
 
      (testing "test setup: create a judgement (4)"
        ;; Loses a tie because of its timestamp being later

@@ -44,7 +44,7 @@
                                identity-map)
                    (clojure.core/update :judgement_id short-id->long-id)
                    ok)
-           (not-found)))
+           (not-found {:message "no verdict currently available for the supplied observable"})))
 
   (GET "/:observable_type/:observable_value/judgements" []
        :tags ["Judgement"]
