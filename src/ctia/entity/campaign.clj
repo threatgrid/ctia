@@ -5,6 +5,7 @@
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
+             [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting :as sorting :refer [default-entity-sort-fields]]]
             [ctia.stores.es
@@ -30,13 +31,10 @@
   cs/NewCampaign
   "new-campaign")
 
-(def-stored-schema StoredCampaign
-  cs/StoredCampaign
-  "stored-campaign")
+(def-stored-schema StoredCampaign Campaign)
 
-(def-stored-schema PartialStoredCampaign
-  (fu/optionalize-all cs/StoredCampaign)
-  "partial-stored-campaign")
+(s/defschema PartialStoredCampaign
+  (csu/optional-keys-schema StoredCampaign))
 
 (def campaign-fields
   (concat default-entity-sort-fields

@@ -16,7 +16,6 @@
    [ctia.stores.es
     [crud :as crud]
     [mapping :as em]]
-   [ctim.events.schemas :as event-schemas]
    [schema-tools.core :as st]
    [schema.core :as s]))
 

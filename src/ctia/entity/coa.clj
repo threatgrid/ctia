@@ -4,6 +4,7 @@
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
+             [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting :refer [default-entity-sort-fields]]]
             [ctia.store :refer :all]
@@ -30,13 +31,10 @@
   coas/NewCOA
   "new-coa")
 
-(def-stored-schema StoredCOA
-  coas/StoredCOA
-  "stored-coa")
+(def-stored-schema StoredCOA COA)
 
-(def-stored-schema PartialStoredCOA
-  (fu/optionalize-all coas/StoredCOA)
-  "partial-stored-coa")
+(s/defschema PartialStoredCOA
+  (csu/optional-keys-schema StoredCOA))
 
 (def realize-coa
   (default-realize-fn "coa" NewCOA StoredCOA))

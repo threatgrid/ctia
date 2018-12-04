@@ -4,10 +4,12 @@
              [access-control :refer [properties-default-tlp]]
              [entities :refer [schema-version]]]
             [ctia.schemas
+             [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema TempIDs]]
              [sorting :as sorting]]
             [ctim.schemas.sighting :as ss]
             [flanders.utils :as fu]
+            [schema-tools.core :as st]
             [schema.core :as s]))
 
 (def-acl-schema NewSighting
@@ -25,13 +27,10 @@
 (s/defschema PartialSightingList
   [PartialSighting])
 
-(def-stored-schema StoredSighting
-  ss/StoredSighting
-  "stored-sighting")
+(def-stored-schema StoredSighting Sighting)
 
-(def-stored-schema PartialStoredSighting
-  (fu/optionalize-all ss/StoredSighting)
-  "partial-stored-sighting")
+(s/defschema PartialStoredSighting
+  (csu/optional-keys-schema StoredSighting))
 
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting :- NewSighting

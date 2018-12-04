@@ -47,7 +47,6 @@
                                                        (sut/casebook-root-scope)})))
       "with all scopes you should have most capabilities except some very
        specific ones")
-
   (is (= #{:search-casebook
            :list-casebooks
            :create-casebook

@@ -9,6 +9,7 @@
                     SourcableEntityFilterParams]]
     [crud :refer [entity-crud-routes]]]
    [ctia.schemas
+    [utils :as csu]
     [core :refer [def-acl-schema def-stored-schema]]
     [sorting :refer [default-entity-sort-fields]]]
    [ctia.stores.es.store :refer [def-es-store]]
@@ -33,13 +34,10 @@
   as/NewActor
   "new-actor")
 
-(def-stored-schema StoredActor
-  as/StoredActor
-  "stored-actor")
+(def-stored-schema StoredActor Actor)
 
-(def-stored-schema PartialStoredActor
-  (fu/optionalize-all as/StoredActor)
-  "partial-stored-actor")
+(s/defschema PartialStoredActor
+  (csu/optional-keys-schema StoredActor))
 
 (def realize-actor
   (default-realize-fn "actor" NewActor StoredActor))

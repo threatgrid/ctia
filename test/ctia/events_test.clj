@@ -1,12 +1,18 @@
 (ns ctia.events-test
-  (:require [ctia.events :as e]
-            [ctia.lib.async :as la]
-            [ctia.test-helpers.core :as helpers]
-            [ctia.test-helpers.es :as es-helpers]
-            [ctim.events.obj-to-event :as o2e]
-            [clojure.test :as t :refer :all]
-            [clojure.core.async :refer [poll! chan tap <!!]]
-            [schema.test :as st]))
+  (:require
+   [clojure.test :refer [deftest
+                         is
+                         testing
+                         use-fixtures
+                         join-fixtures]]
+   [clojure.core.async :refer [<!! chan poll! tap]]
+   [ctia.entity.event.obj-to-event :as o2e]
+   [ctia.events :as e]
+   [ctia.lib.async :as la]
+   [ctia.test-helpers
+    [core :as helpers]
+    [es :as es-helpers]]
+   [schema.test :as st]))
 
 (use-fixtures :once st/validate-schemas)
 
@@ -23,18 +29,24 @@
       (e/send-event ec (o2e/to-create-event
                         {:owner "tester"
                          :id "test-1"
+                         :tlp "white"
                          :type :test
-                         :data 1}))
+                         :data 1}
+                        "test-1"))
       (e/send-event ec (o2e/to-create-event
                         {:owner "tester"
                          :id "test-2"
+                         :tlp "white"
                          :type :test
-                         :data 2}))
+                         :data 2}
+                        "test-2"))
       (e/send-event ec (o2e/to-create-event
                         {:owner "tester"
                          :id "test-3"
+                         :tlp "white"
                          :type :test
-                         :data 3}))
+                         :data 3}
+                        "test-3"))
       (is (= 1 (-> (<!! output) :entity :data)))
       (is (= 2 (-> (<!! output) :entity :data)))
       (is (= 3 (-> (<!! output) :entity :data)))
@@ -49,13 +61,17 @@
     (e/send-event (o2e/to-create-event
                    {:owner "tester"
                     :id "test-1"
+                    :tlp "white"
                     :type :test
-                    :data 1}))
+                    :data 1}
+                   "test-1"))
     (e/send-event (o2e/to-create-event
                    {:owner "teseter"
                     :id "test-2"
+                    :tlp "white"
                     :type :test
-                    :data 2}))
+                    :data 2}
+                   "test-2"))
     (is (= 1 (-> (<!! output) :entity :data)))
     (is (= 2 (-> (<!! output) :entity :data)))
     (is (nil? (poll! output)))))
