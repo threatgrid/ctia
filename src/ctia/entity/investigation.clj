@@ -54,7 +54,7 @@
   (csu/optional-keys-schema StoredInvestigation))
 
 (def realize-investigation
-(default-realize-fn "investigation" NewInvestigation StoredInvestigation))
+  (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
 
 (def investigation-mapping
 {"investigation"
@@ -67,8 +67,8 @@
    em/stored-entity-mapping)}})
 
 (def-es-store InvestigationStore :investigation
-StoredInvestigation
-PartialStoredInvestigation)
+  StoredInvestigation
+  PartialStoredInvestigation)
 
 (def investigation-fields
 (concat sorting/default-entity-sort-fields
@@ -76,15 +76,15 @@ PartialStoredInvestigation)
         sorting/sourcable-entity-sort-fields))
 
 (def investigation-sort-fields
-(apply s/enum investigation-fields))
+  (apply s/enum investigation-fields))
 
 (def investigation-select-fields
-(apply s/enum (concat investigation-fields
-                      [:description
-                       :type
-                       :search-txt
-                       :short_description
-                       :created_at])))
+  (apply s/enum (concat investigation-fields
+                        [:description
+                         :type
+                         :search-txt
+                         :short_description
+                         :created_at])))
 
 (s/defschema InvestigationFieldsParam
 {(s/optional-key :fields) [investigation-select-fields]})
