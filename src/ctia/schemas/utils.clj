@@ -19,8 +19,9 @@
    s))
 
 
-;; fns below are backported
+;; fns below are backported from schema-tools master
 ;; from https://github.com/metosin/schema-tools/blob/master/src/schema_tools/core.cljc#L266
+;; TODO those can be removed once we use 0.10.6
 
 (defn- explicit-key [k] (if (s/specific-key? k) (s/explicit-schema-key k) k))
 

@@ -44,7 +44,6 @@
       (let [scrubbed (-> (str sb)
                          (str/replace #"#inst \"[^\"]*\"" "#inst \"\"")
                          (str/replace #":id event[^,]*" ":id event"))
-            _ (prn scrubbed)
             expected
             "event: {:owner tester, :groups [foo], :entity {:owner tester, :groups [foo], :id test-1, :type :test, :tlp green, :data 1}, :timestamp #inst \"\", :id test-1, :type event, :tlp green, :event_type :record-created}\nevent: {:owner tester, :groups [foo], :entity {:owner tester, :groups [foo], :id test-2, :type :test, :tlp green, :data 2}, :timestamp #inst \"\", :id test-2, :type event, :tlp green, :event_type :record-created}\n"]
         (is (= expected scrubbed))))))

@@ -57,23 +57,23 @@
   (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
 
 (def investigation-mapping
-{"investigation"
- {:dynamic false
-  :properties
-  (merge
-   em/base-entity-mapping
-   em/describable-entity-mapping
-   em/sourcable-entity-mapping
-   em/stored-entity-mapping)}})
+  {"investigation"
+   {:dynamic false
+    :properties
+    (merge
+     em/base-entity-mapping
+     em/describable-entity-mapping
+     em/sourcable-entity-mapping
+     em/stored-entity-mapping)}})
 
 (def-es-store InvestigationStore :investigation
   StoredInvestigation
   PartialStoredInvestigation)
 
 (def investigation-fields
-(concat sorting/default-entity-sort-fields
-        sorting/describable-entity-sort-fields
-        sorting/sourcable-entity-sort-fields))
+  (concat sorting/default-entity-sort-fields
+          sorting/describable-entity-sort-fields
+          sorting/sourcable-entity-sort-fields))
 
 (def investigation-sort-fields
   (apply s/enum investigation-fields))
@@ -87,86 +87,86 @@
                          :created_at])))
 
 (s/defschema InvestigationFieldsParam
-{(s/optional-key :fields) [investigation-select-fields]})
+  {(s/optional-key :fields) [investigation-select-fields]})
 
 (s/defschema InvestigationSearchParams
-(st/merge
- PagingParams
- BaseEntityFilterParams
- SourcableEntityFilterParams
- InvestigationFieldsParam
- {:query s/Str}
- {s/Keyword s/Any}))
+  (st/merge
+   PagingParams
+   BaseEntityFilterParams
+   SourcableEntityFilterParams
+   InvestigationFieldsParam
+   {:query s/Str}
+   {s/Keyword s/Any}))
 
 (def InvestigationGetParams InvestigationFieldsParam)
 
 (s/defschema InvestigationsByExternalIdQueryParams
-(st/merge
- InvestigationFieldsParam
- PagingParams))
+  (st/merge
+   InvestigationFieldsParam
+   PagingParams))
 
 (def InvestigationType
-(let [{:keys [fields name description]}
-      (flanders/->graphql
-       (fu/optionalize-all inv/Investigation)
-       {})]
-  (g/new-object
-   name
-   description
-   []
-   fields)))
+  (let [{:keys [fields name description]}
+        (flanders/->graphql
+         (fu/optionalize-all inv/Investigation)
+         {})]
+    (g/new-object
+     name
+     description
+     []
+     fields)))
 
 (def investigation-order-arg
-(graphql-sorting/order-by-arg
- "InvestigationOrder"
- "investigations"
- (into {}
-       (map (juxt graphql-sorting/sorting-kw->enum-name name)
-            investigation-fields))))
+  (graphql-sorting/order-by-arg
+   "InvestigationOrder"
+   "investigations"
+   (into {}
+         (map (juxt graphql-sorting/sorting-kw->enum-name name)
+              investigation-fields))))
 
 (def InvestigationConnectionType
-(pagination/new-connection InvestigationType))
+  (pagination/new-connection InvestigationType))
 
 (def investigation-routes
-(entity-crud-routes
- {:entity :investigation
-  :new-schema NewInvestigation
-  :entity-schema Investigation
-  :get-schema PartialInvestigation
-  :get-params InvestigationGetParams
-  :list-schema PartialInvestigationList
-  :search-schema PartialInvestigationList
-  :external-id-q-params InvestigationsByExternalIdQueryParams
-  :search-q-params InvestigationSearchParams
-  :new-spec :new-investigation/map
-  :realize-fn realize-investigation
-  :get-capabilities :read-investigation
-  :post-capabilities :create-investigation
-  :put-capabilities :create-investigation
-  :delete-capabilities :delete-investigation
-  :search-capabilities :search-investigation
-  :external-id-capabilities #{:read-investigation :external-id}}))
+  (entity-crud-routes
+   {:entity :investigation
+    :new-schema NewInvestigation
+    :entity-schema Investigation
+    :get-schema PartialInvestigation
+    :get-params InvestigationGetParams
+    :list-schema PartialInvestigationList
+    :search-schema PartialInvestigationList
+    :external-id-q-params InvestigationsByExternalIdQueryParams
+    :search-q-params InvestigationSearchParams
+    :new-spec :new-investigation/map
+    :realize-fn realize-investigation
+    :get-capabilities :read-investigation
+    :post-capabilities :create-investigation
+    :put-capabilities :create-investigation
+    :delete-capabilities :delete-investigation
+    :search-capabilities :search-investigation
+    :external-id-capabilities #{:read-investigation :external-id}}))
 
 (def capabilities
-#{:read-investigation
-  :list-investigations
-  :create-investigation
-  :search-investigation
-  :delete-investigation})
+  #{:read-investigation
+    :list-investigations
+    :create-investigation
+    :search-investigation
+    :delete-investigation})
 
 (def investigation-entity
-{:route-context "/investigation"
- :tags ["Investigation"]
- :entity :investigation
- :plural :investigations
- :schema Investigation
- :partial-schema PartialInvestigation
- :partial-list-schema PartialInvestigationList
- :new-schema NewInvestigation
- :stored-schema StoredInvestigation
- :partial-stored-schema PartialStoredInvestigation
- :realize-fn realize-investigation
- :es-store ->InvestigationStore
- :es-mapping investigation-mapping
- :routes investigation-routes
- :capabilities capabilities})
+  {:route-context "/investigation"
+   :tags ["Investigation"]
+   :entity :investigation
+   :plural :investigations
+   :schema Investigation
+   :partial-schema PartialInvestigation
+   :partial-list-schema PartialInvestigationList
+   :new-schema NewInvestigation
+   :stored-schema StoredInvestigation
+   :partial-stored-schema PartialStoredInvestigation
+   :realize-fn realize-investigation
+   :es-store ->InvestigationStore
+   :es-mapping investigation-mapping
+   :routes investigation-routes
+   :capabilities capabilities})
