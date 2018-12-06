@@ -4,10 +4,12 @@
              [access-control :refer [properties-default-tlp]]
              [entities :refer [schema-version]]]
             [ctia.schemas
+             [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema TempIDs]]
              [sorting :as sorting]]
             [ctim.schemas.feedback :as feedbacks]
             [flanders.utils :as fu]
+            [schema-tools.core :as st]
             [schema.core :as s]))
 
 (def-acl-schema Feedback
@@ -25,13 +27,10 @@
   feedbacks/NewFeedback
   "new-feedback")
 
-(def-stored-schema StoredFeedback
-  feedbacks/StoredFeedback
-  "stored-feedback")
+(def-stored-schema StoredFeedback Feedback)
 
-(def-stored-schema PartialStoredFeedback
-  (fu/optionalize-all feedbacks/StoredFeedback)
-  "partial-stored-feedback")
+(s/defschema PartialStoredFeedback
+  (csu/optional-keys-schema StoredFeedback))
 
 (s/defn realize-feedback :- StoredFeedback
   [new-feedback :- NewFeedback

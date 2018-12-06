@@ -6,6 +6,7 @@
    [ctim.schemas.relationship :as rels]
    [schema.core :as s]
    [ctia.schemas
+    [utils :as csu]
     [core :refer [def-acl-schema
                   def-stored-schema]]
     [sorting :as sorting]]
@@ -27,13 +28,10 @@
   rels/NewRelationship
   "new-relationship")
 
-(def-stored-schema StoredRelationship
-  rels/StoredRelationship
-  "stored-relationship")
+(def-stored-schema StoredRelationship Relationship)
 
-(def-stored-schema PartialStoredRelationship
-  (fu/optionalize-all rels/StoredRelationship)
-  "partial-stored-relationship")
+(s/defschema PartialStoredRelationship
+  (csu/optional-keys-schema StoredRelationship))
 
 (def relationship-default-realize
   (default-realize-fn "relationship" NewRelationship StoredRelationship))

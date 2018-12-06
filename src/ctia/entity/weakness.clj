@@ -17,6 +17,7 @@
                     SourcableEntityFilterParams]]
     [crud :refer [entity-crud-routes]]]
    [ctia.schemas
+    [utils :as csu]
     [core :refer [def-acl-schema def-stored-schema]]
     [sorting :refer [default-entity-sort-fields]]]
    [ctia.stores.es.store :refer [def-es-store]]
@@ -40,13 +41,10 @@
   ws/NewWeakness
   "new-weakness")
 
-(def-stored-schema StoredWeakness
-  ws/StoredWeakness
-  "stored-weakness")
+(def-stored-schema StoredWeakness Weakness)
 
-(def-stored-schema PartialStoredWeakness
-  (fu/optionalize-all ws/StoredWeakness)
-  "partial-stored-weakness")
+(s/defschema PartialStoredWeakness
+  (csu/optional-keys-schema StoredWeakness))
 
 (def realize-weakness
   (default-realize-fn "weakness" NewWeakness StoredWeakness))

@@ -5,7 +5,10 @@
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
-             [core :refer [CTIAEntity CTIAStoredEntity]]
+             [utils :as csu]
+             [core :refer [def-stored-schema
+                           CTIAEntity
+                           CTIAStoredEntity]]
              [sorting :as sorting]]
             [ctia.schemas.graphql
              [sorting :as graphql-sorting]
@@ -45,17 +48,10 @@
 
 (f-spec/->spec inv/NewInvestigation "new-investigation")
 
-(s/defschema StoredInvestigation
-  (st/merge (f-schema/->schema inv/StoredInvestigation)
-            CTIAStoredEntity
-            {s/Keyword s/Any}))
-
-(f-spec/->spec inv/StoredInvestigation "stored-investigation")
+(def-stored-schema StoredInvestigation Investigation)
 
 (s/defschema PartialStoredInvestigation
-  (st/merge (f-schema/->schema (fu/optionalize-all inv/StoredInvestigation))
-            CTIAStoredEntity
-            {s/Keyword s/Any}))
+  (csu/optional-keys-schema StoredInvestigation))
 
 (def realize-investigation
   (default-realize-fn "investigation" NewInvestigation StoredInvestigation))

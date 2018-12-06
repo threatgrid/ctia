@@ -4,6 +4,7 @@
              [access-control :refer [properties-default-tlp]]
              [entities :refer [schema-version make-valid-time]]]
             [ctia.schemas
+             [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema TempIDs]]
              [sorting :as sorting]]
             [ctim.schemas
@@ -11,7 +12,9 @@
              [judgement :as js]]
             [flanders.utils :as fu]
             [ring.util.http-response :as http-response]
-            [schema.core :as s]))
+            [schema-tools.core :as st]
+            [schema.core :as s]
+            [ctim.schemas.incident :as is]))
 
 (def-acl-schema Judgement
   js/Judgement
@@ -29,12 +32,10 @@
   "new-judgement")
 
 (def-stored-schema StoredJudgement
-  js/StoredJudgement
-  "stored-judgement")
+  Judgement)
 
-(def-stored-schema PartialStoredJudgement
-  (fu/optionalize-all js/StoredJudgement)
-  "partial-stored-judgement")
+(s/defschema PartialStoredJudgement
+  (csu/optional-keys-schema StoredJudgement))
 
 (s/defn realize-judgement :- StoredJudgement
   ([new-judgement :- NewJudgement

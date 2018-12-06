@@ -4,6 +4,7 @@
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
+             [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting :refer [default-entity-sort-fields]]]
             [ctia.store :refer :all]
@@ -34,16 +35,10 @@
    ds/NewDataTable)
   "new-data-table")
 
-(def-stored-schema StoredDataTable
-  (fu/replace-either-with-any
-   ds/StoredDataTable)
-  "stored-data-table")
+(def-stored-schema StoredDataTable DataTable)
 
-(def-stored-schema PartialStoredDataTable
-  (fu/optionalize-all
-   (fu/replace-either-with-any
-    ds/StoredDataTable))
-  "partial-stored-data-table")
+(s/defschema PartialStoredDataTable
+  (csu/optional-keys-schema StoredDataTable))
 
 (def realize-data-table
   (default-realize-fn "data-table" NewDataTable StoredDataTable))

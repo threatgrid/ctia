@@ -7,7 +7,9 @@
     [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
     [crud :refer [entity-crud-routes]]]
    [ctia.schemas
-    [core :refer [CTIAEntity
+    [utils :as csu]
+    [core :refer [def-stored-schema
+                  CTIAEntity
                   CTIAStoredEntity]]
     [sorting :as sorting]]
    [ctia.schemas.graphql
@@ -55,20 +57,10 @@
 
 (f-spec/->spec ins/NewIndicator "new-indicator")
 
-(s/defschema StoredIndicator
-  (st/merge (f-schema/->schema
-             (fu/replace-either-with-any
-              ins/StoredIndicator))
-            CTIAStoredEntity))
-
-(f-spec/->spec ins/StoredIndicator "stored-indicator")
+(def-stored-schema StoredIndicator Indicator)
 
 (s/defschema PartialStoredIndicator
-  (st/merge (f-schema/->schema
-             (fu/optionalize-all
-              (fu/replace-either-with-any
-               ins/StoredIndicator)))
-            CTIAStoredEntity))
+  (csu/optional-keys-schema StoredIndicator))
 
 (def realize-indicator
   (default-realize-fn "indicator" NewIndicator StoredIndicator))

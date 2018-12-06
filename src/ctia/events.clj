@@ -2,7 +2,7 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.lib.async :as la]
             [ctia.shutdown :as shutdown]
-            [ctim.events.schemas :as es]
+            [ctia.entity.event.schemas :as es]
             [ctim.schemas.common :as c]
             [clojure.core.async :as a :refer [go-loop alt! chan tap]]
             [schema.core :as s :refer [=>]]
@@ -13,9 +13,6 @@
 (def shutdown-max-wait-ms (* 1000 60 60))
 
 (defonce central-channel (atom nil))
-
-(def ModelEvent (st/merge es/ModelEventBase
-                          {s/Any s/Any}))
 
 (s/defn shutdown! :- s/Num
   "Close the central-channel, waiting up to max-wait-ms for the buffer

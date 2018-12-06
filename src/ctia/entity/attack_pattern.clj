@@ -8,6 +8,7 @@
              [crud :refer [entity-crud-routes]]]
             [ctia.store :refer :all]
             [ctia.schemas
+             [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting :as sorting]]
             [ctia.schemas.graphql
@@ -38,13 +39,10 @@
   attack/NewAttackPattern
   "new-attack-pattern")
 
-(def-stored-schema StoredAttackPattern
-  attack/StoredAttackPattern
-  "stored-attack-pattern")
+(def-stored-schema StoredAttackPattern AttackPattern)
 
-(def-stored-schema PartialStoredAttackPattern
-  (fu/optionalize-all attack/StoredAttackPattern)
-  "partial-stored-attack-pattern")
+(s/defschema PartialStoredAttackPattern
+  (csu/optional-keys-schema StoredAttackPattern))
 
 (def realize-attack-pattern
   (default-realize-fn "attack-pattern" NewAttackPattern StoredAttackPattern))

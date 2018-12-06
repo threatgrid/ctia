@@ -8,6 +8,7 @@
     [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
     [crud :refer [entity-crud-routes]]]
    [ctia.schemas
+    [utils :as csu]
     [core :refer [def-acl-schema def-stored-schema Reference]]
     [sorting :refer [default-entity-sort-fields describable-entity-sort-fields sourcable-entity-sort-fields]]]
    [ctia.store :refer :all]
@@ -42,16 +43,13 @@
   "new-incident")
 
 (def-stored-schema StoredIncident
-  is/StoredIncident
-  "stored-incident")
+  Incident)
 
-(def-stored-schema PartialNewIncident
-  (fu/optionalize-all is/NewIncident)
-  "partial-new-incident")
+(s/defschema PartialNewIncident
+  (csu/optional-keys-schema NewIncident))
 
-(def-stored-schema PartialStoredIncident
-  (fu/optionalize-all is/StoredIncident)
-  "partial-stored-incident")
+(s/defschema PartialStoredIncident
+  (csu/optional-keys-schema StoredIncident))
 
 (def realize-incident
   (default-realize-fn "incident" NewIncident StoredIncident))

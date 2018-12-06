@@ -1,14 +1,14 @@
 (ns ctia.flows.hooks.event-hooks
   (:require [clojure.tools.logging :as log])
   (:require
-    [ctia.events :as events]
-    [ctia.flows.hook-protocol :refer [Hook]]
-    [ctia.lib.redis :as lr]
-    [ctia.properties :refer [properties]]
-    [ctim.events.schemas :refer [CreateEventType
-                                 DeleteEventType]]
-    [redismq.core :as rmq]
-    [schema.core :as s]))
+   [ctia.events :as events]
+   [ctia.flows.hook-protocol :refer [Hook]]
+   [ctia.lib.redis :as lr]
+   [ctia.properties :refer [properties]]
+   [ctia.entity.event.schemas :refer [CreateEventType
+                                      DeleteEventType]]
+   [redismq.core :as rmq]
+   [schema.core :as s]))
 
 (defrecord RedisEventPublisher [conn publish-channel-name]
   Hook

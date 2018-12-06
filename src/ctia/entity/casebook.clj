@@ -6,6 +6,7 @@
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
+             [utils :as csu]
              [core :refer [Bundle def-acl-schema def-stored-schema]]
              [sorting :as sorting]]
             [ctia.schemas.graphql
@@ -47,15 +48,10 @@
    (fu/optionalize-all cs/NewCasebook))
   "new-casebook")
 
-(def-stored-schema StoredCasebook
-  (fu/replace-either-with-any
-   cs/StoredCasebook)
-  "stored-casebook")
+(def-stored-schema StoredCasebook Casebook)
 
-(def-stored-schema PartialStoredCasebook
-  (fu/replace-either-with-any
-   (fu/optionalize-all cs/StoredCasebook))
-  "partial-stored-casebook")
+(s/defschema PartialStoredCasebook
+  (csu/optional-keys-schema StoredCasebook))
 
 (def realize-casebook
   (default-realize-fn "casebook" NewCasebook StoredCasebook))

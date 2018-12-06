@@ -11,6 +11,13 @@
             [schema-tools.core :as st]
             [schema.core :as s :refer [Bool Str]]))
 
+(def base-stored-entity-entries
+  {:id s/Str
+   :owner s/Str
+   :groups [s/Str]
+   :created java.util.Date
+   (s/optional-key :modified) java.util.Date})
+
 (s/defschema Entity
   (st/merge
    {:entity s/Keyword
@@ -44,7 +51,7 @@
 
 (s/defschema CTIAStoredEntity
   (st/merge CTIAEntity
-            {(s/optional-key :groups) [Str]}))
+            base-stored-entity-entries))
 
 (defmacro defschema [name-sym ddl spec-kw-ns]
   `(do
@@ -52,14 +59,14 @@
        (f-schema/->schema ~ddl))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
 
-(defmacro def-stored-schema [name-sym ddl spec-kw-ns]
+(defmacro def-stored-schema
+  [name-sym sch]
   `(do
      (s/defschema ~name-sym
        (csutils/recursive-open-schema-version
         (st/merge
-         (f-schema/->schema ~ddl)
-         CTIAStoredEntity)))
-     (f-spec/->spec ~ddl ~spec-kw-ns)))
+         ~sch
+         CTIAStoredEntity)))))
 
 (defmacro def-acl-schema [name-sym ddl spec-kw-ns]
   `(do
