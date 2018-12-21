@@ -1,6 +1,6 @@
 (ns ctia.flows.hooks.event-hooks
-  (:require [clojure.tools.logging :as log])
   (:require
+   [clojure.tools.logging :as log]
    [ctia.events :as events]
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
@@ -17,9 +17,12 @@
   (destroy [_]
     :nothing)
   (handle [_ event _]
-    (lr/publish conn
-                publish-channel-name
-                event)
+    (try
+      (lr/publish conn
+                  publish-channel-name
+                  event)
+      (catch Exception e
+        (log/error e "Unable to push an event to Redis")))
     event))
 
 (defn redis-event-publisher []
@@ -35,7 +38,10 @@
   (destroy [_]
     :nothing)
   (handle [self event _]
-    (rmq/enqueue (get self :queue) event)
+    (try
+      (rmq/enqueue (get self :queue) event)
+      (catch Exception e
+        (log/error e "Unable to push an event to Redis")))
     event))
 
 (defn redismq-publisher []
@@ -59,7 +65,10 @@
   (destroy [_]
     :nothing)
   (handle [_ event _]
-    (events/send-event event)
+    (try
+      (events/send-event event)
+      (catch Exception e
+        (log/error e "Unable to push an event to Redis")))
     event))
 
 (defn- judgement?
