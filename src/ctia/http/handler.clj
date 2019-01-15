@@ -26,6 +26,7 @@
             [ctia.properties :refer [properties]]
             [ctia.properties.routes :refer [properties-routes]]
             [ctia.version.routes :refer [version-routes]]
+            [ctia.status.routes :refer [status-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.util.http-response :refer [ok]]))
 
@@ -121,6 +122,7 @@
                                 {:name "Metrics", :description "Performance Statistics"}
                                 {:name "Tool", :description "Tool operations"}
                                 {:name "Verdict", :description "Verdict operations"}
+                                {:name "Status", :description "Status Information"}
                                 {:name "Version", :description "Version Information"}]}}}
 
        (middleware [wrap-not-modified
@@ -137,6 +139,7 @@
                     version-routes
                     (middleware [wrap-authenticated]
                                 (entity-routes entities)
+                                status-routes
                                 (context
                                  "/bulk" []
                                  :tags ["Bulk"]

@@ -127,6 +127,10 @@
   "Mapping table between transient and permanent IDs"
   {TransientID ID})
 
+(s/defschema StatusInfo
+  "Status information for a specific instance of CTIA"
+  {:status s/Str})
+
 (s/defschema VersionInfo
   "Version information for a specific instance of CTIA"
   {:base Str
