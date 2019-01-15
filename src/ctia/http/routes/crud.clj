@@ -43,7 +43,7 @@
            can-patch?
            can-search?
            can-get-by-external-id?]
-    :or {hide-delete? true
+    :or {hide-delete? false
          can-post? true
          can-update? true
          can-patch? false
