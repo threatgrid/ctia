@@ -14,6 +14,7 @@
 
 (s/defschema BundleExportQuery
   {:ids [s/Str]
+   (s/optional-key :related_to) [(s/enum :source_ref :target_ref)]
    (s/optional-key :include_related_entities) s/Bool})
 
 (defroutes bundle-routes
@@ -64,7 +65,7 @@
                      (:ids q)
                      identity-map
                      identity
-                     (select-keys q [:include_related_entities]))))
+                     (select-keys q [:include_related_entities :related_to]))))
 
            (POST "/import" []
                  :return BundleImportResult
