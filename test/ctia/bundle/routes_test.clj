@@ -499,17 +499,17 @@
                                 :related_to ["target_ref" "source_ref"]}
                  :headers {"Authorization" "45c1f5e3f05d0"}))
 
-           indicator-id
+           indicator-ids
            (some->> bundle-res-2
                     :results
                     (group-by :type)
                     :indicator
-                    first
-                    :id)
+                    (take 3)
+                    (map :id))
            bundle-from-source
            (:parsed-body
             (get "ctia/bundle/export"
-                 :query-params {:ids [indicator-id]
+                 :query-params {:ids indicator-ids
                                 :related_to ["source_ref"]}
                  :headers {"Authorization" "45c1f5e3f05d0"}))
            bundle-from-target
@@ -535,19 +535,24 @@
        (is (nil? (:indicators bundle-get-res-4)))
        (is (= 402 (count (:relationships bundle-get-res-4))))
 
-       (is (= bundle-get-res-3 bundle-get-res-5))
+       (testing "relationships should be joined only on attributes specified by related_to values"
 
-       (is (= indicator-id (-> bundle-from-source
-                               :indicators
-                               first
-                               :id)))
-       (is (= sighting-id-2 (-> bundle-from-source
-                               :sightings
-                               first
-                               :id)))
-       (is (= 400 (count (:relationships bundle-from-target))))
-       (is (every? #(= sighting-id-2 (:target_ref %))
-                   (:relationships bundle-from-target)))))))
+         (is (= bundle-get-res-3 bundle-get-res-5)
+             "default related_to value should be [:source_ref :target_ref]")
+
+         (is (= (set indicator-ids) (->> bundle-from-source
+                                   :indicators
+                                   (map :id)
+                                   set)))
+         (is (= #{sighting-id-2} (->> bundle-from-source
+                                      :sightings
+                                      (map :id)
+                                      set)))
+         (is (= 3 (count (:relationships bundle-from-source))))
+
+         (is (= 400 (count (:relationships bundle-from-target))))
+         (is (every? #(= sighting-id-2 (:target_ref %))
+                     (:relationships bundle-from-target))))))))
 
 (defn with-tlp-property-setting [tlp f]
   (with-redefs [ctia.properties/properties
