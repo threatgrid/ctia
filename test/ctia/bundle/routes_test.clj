@@ -499,18 +499,23 @@
                                 :related_to ["target_ref" "source_ref"]}
                  :headers {"Authorization" "45c1f5e3f05d0"}))
 
+           indicator-id
+           (some->> bundle-res-2
+                    :results
+                    (group-by :type)
+                    :indicator
+                    first
+                    :id)
            bundle-from-source
            (:parsed-body
             (get "ctia/bundle/export"
-                 :query-params {:ids [sighting-id-1
-                                      sighting-id-2]
+                 :query-params {:ids [indicator-id]
                                 :related_to ["source_ref"]}
                  :headers {"Authorization" "45c1f5e3f05d0"}))
            bundle-from-target
            (:parsed-body
             (get "ctia/bundle/export"
-                 :query-params {:ids [sighting-id-1
-                                      sighting-id-2]
+                 :query-params {:ids [sighting-id-2]
                                 :related_to ["target_ref"]}
                  :headers {"Authorization" "45c1f5e3f05d0"}))]
 
@@ -530,17 +535,18 @@
        (is (nil? (:indicators bundle-get-res-4)))
        (is (= 402 (count (:relationships bundle-get-res-4))))
 
-       (is (= (count (:sightings bundle-get-res-3))
-              (count (:sightings bundle-get-res-5))))
-       (is (= (count (:relationships bundle-get-res-3))
-              (count (:relationships bundle-get-res-5))))
-       (is (= (count (:indicators bundle-get-res-3))
-              (count (:indicators bundle-get-res-5))))
+       (is (= bundle-get-res-3 bundle-get-res-5))
 
-       (is (empty? (:relationships bundle-from-source)))
-
-       (is (every? #(contains? #{sighting-id-1 sighting-id-2}
-                               (:target_ref %))
+       (is (= indicator-id (-> bundle-from-source
+                               :indicators
+                               first
+                               :id)))
+       (is (= sighting-id-2 (-> bundle-from-source
+                               :sightings
+                               first
+                               :id)))
+       (is (= 400 (count (:relationships bundle-from-target))))
+       (is (every? #(= sighting-id-2 (:target_ref %))
                    (:relationships bundle-from-target)))))))
 
 (defn with-tlp-property-setting [tlp f]
