@@ -490,7 +490,30 @@
                  :query-params {:ids [sighting-id-1
                                       sighting-id-2]
                                 :include_related_entities false}
+                 :headers {"Authorization" "45c1f5e3f05d0"}))
+           bundle-get-res-5
+           (:parsed-body
+            (get "ctia/bundle/export"
+                 :query-params {:ids [sighting-id-1
+                                      sighting-id-2]
+                                :related_to ["target_ref" "source_ref"]}
+                 :headers {"Authorization" "45c1f5e3f05d0"}))
+
+           bundle-from-source
+           (:parsed-body
+            (get "ctia/bundle/export"
+                 :query-params {:ids [sighting-id-1
+                                      sighting-id-2]
+                                :related_to ["source_ref"]}
+                 :headers {"Authorization" "45c1f5e3f05d0"}))
+           bundle-from-target
+           (:parsed-body
+            (get "ctia/bundle/export"
+                 :query-params {:ids [sighting-id-1
+                                      sighting-id-2]
+                                :related_to ["target_ref"]}
                  :headers {"Authorization" "45c1f5e3f05d0"}))]
+
        (is (= 1 (count (:sightings bundle-get-res-1))))
        (is (= 2 (count (:relationships bundle-get-res-1))))
        (is (= 2 (count (:indicators bundle-get-res-1))))
@@ -505,7 +528,20 @@
 
        (is (= 2 (count (:sightings bundle-get-res-4))))
        (is (nil? (:indicators bundle-get-res-4)))
-       (is (= 402 (count (:relationships bundle-get-res-4))))))))
+       (is (= 402 (count (:relationships bundle-get-res-4))))
+
+       (is (= (count (:sightings bundle-get-res-3))
+              (count (:sightings bundle-get-res-5))))
+       (is (= (count (:relationships bundle-get-res-3))
+              (count (:relationships bundle-get-res-5))))
+       (is (= (count (:indicators bundle-get-res-3))
+              (count (:indicators bundle-get-res-5))))
+
+       (is (empty? (:relationships bundle-from-source)))
+
+       (is (every? #(contains? #{sighting-id-1 sighting-id-2}
+                               (:target_ref %))
+                   (:relationships bundle-from-target)))))))
 
 (defn with-tlp-property-setting [tlp f]
   (with-redefs [ctia.properties/properties
