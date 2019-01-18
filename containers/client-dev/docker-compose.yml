@@ -1,0 +1,31 @@
+version: "2"
+services:
+  ctia:
+    image: ctia:latest
+    volumes:
+      - ./ctia/config/ctia.properties:/usr/src/app/resources/ctia.properties
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis-client-dev
+      - elasticsearch-client-dev
+
+  redis-client-dev:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  elasticsearch-client-dev:
+    image: elasticsearch:5.1
+    environment:
+      ES_NETWORK_HOST: 0.0.0.0
+      ES_NODE_MASTER: "true"
+      ES_CLUSTER_NAME: elasticsearch
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
