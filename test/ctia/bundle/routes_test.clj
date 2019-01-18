@@ -17,7 +17,8 @@
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
-            [ctim.examples.bundles :refer [bundle-maximal]]))
+            [ctim.examples.bundles :refer [bundle-maximal]]
+            [clojure.pprint :refer [pprint]]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000]
@@ -565,6 +566,12 @@
               indicator-id-3] (->> (:indicator by-type)
                                    (sort-by :external_id)
                                    (map :id))
+             [relationship-id-1
+              relationship-id-2
+              relationship-id-3
+              relationship-id-4] (->> (:relationship by-type)
+                                      (sort-by :external_id)
+                                      (map :id))
              bundle-from-source
              (:parsed-body
               (get "ctia/bundle/export"
@@ -584,6 +591,11 @@
                                   :related_to ["target_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))]
 
+         (is (= #{relationship-id-1
+                  relationship-id-2} (->> bundle-from-source
+                                          :relationships
+                                          (map :id)
+                                          set)))
          (is (= #{indicator-id-1
                   indicator-id-2} (->> bundle-from-source
                                        :indicators
@@ -598,11 +610,21 @@
                                        :indicators
                                        (map :id)
                                        set)))
+         (is (= #{relationship-id-1
+                  relationship-id-3} (->> bundle-from-target-1
+                                          :relationships
+                                          (map :id)
+                                          set)))
          (is (= #{sighting-id-1
                   sighting-id-2} (->> bundle-from-target-1
                                       :sightings
                                       (map :id)
                                       set)))
+
+         (is (= #{relationship-id-2} (->> bundle-from-target-2
+                                          :relationships
+                                          (map :id)
+                                          set)))
          (is (= #{indicator-id-2} (->> bundle-from-target-2
                                        :indicators
                                        (map :id)
