@@ -17,8 +17,7 @@
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
-            [ctim.examples.bundles :refer [bundle-maximal]]
-            [clojure.pprint :refer [pprint]]))
+            [ctim.examples.bundles :refer [bundle-maximal]]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000]
@@ -550,7 +549,6 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-
      (testing "testing related_to filter: relationships should be joined only on attributes specified by related_to values (source_ref and/or target_ref)"
        (let [bundle-res
              (:parsed-body (post "ctia/bundle/import"
