@@ -17,20 +17,19 @@ If your docker host OS is Linux,
 Elasticsearch 5x bootstrap checks the maximum map count configuration,
 tune it accordingly with `sudo sysctl -w vm.max_map_count=262144`
 
-To build and run the containers with docker-compose, install docker and docker compose.  Then type:
+To build and run the containers with docker-compose, install docker and docker compose. Then, `cd` to your the `ctia` directory (at the top of this repo) and run the following commands to build the CTIA jar, the CTIA docker container, and then to start the services via `docker-compose`:
 
-    $ sudo docker-compose up
 
 ```
 ~/path-to/ctia$ lein clean
 
 ~/path-to/ctia$ lein uberjar
-Compiling 1 source files to /home/saintx/dev/ctia/target/classes
+Compiling 1 source files to ~/path-to/ctia/target/classes
 Compiling ctia.main
 2019-01-18 19:25:25,858 INFO (main) [org.eclipse.jetty.util.log] - Logging initialized @32445ms
 Compiling ctia.main
-Created /home/saintx/dev/ctia/target/ctia-1.1.0.jar
-Created /home/saintx/dev/ctia/target/ctia.jar
+Created ~/path-to/ctia/target/ctia-1.1.0.jar
+Created ~/path-to/ctia/target/ctia.jar
 
 ~/path-to/ctia$ cd containers/client-dev/
 
