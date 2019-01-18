@@ -521,6 +521,27 @@
              "default related_to value should be [:source_ref :target_ref]"))))))
 
 
+(def bundle-related-fixture
+  (let [indicator-1 (mk-indicator 1)
+        indicator-2 (mk-indicator 2)
+        indicator-3 (mk-indicator 3)
+        sighting-1 (mk-sighting 1)
+        sighting-2 (mk-sighting 2)
+        relationship-1 (mk-relationship 1 sighting-1 indicator-1 "member-of")
+        relationship-2 (mk-relationship 2 sighting-1 indicator-2 "member-of")
+        relationship-3 (mk-relationship 3 sighting-2 indicator-1 "member-of")
+        relationship-4 (mk-relationship 4 sighting-2 indicator-3 "member-of")]
+    {:type "bundle"
+     :source "source"
+     :indicators #{indicator-1
+                   indicator-2
+                   indicator-3}
+     :sightings #{sighting-1 sighting-2}
+     :relationships #{relationship-1
+                      relationship-2
+                      relationship-3
+                      relationship-4}}))
+
 (deftest bundle-export-related-to-test
   (test-for-each-store
    (fn []
@@ -531,28 +552,9 @@
                                          "user")
 
      (testing "testing related_to filter: relationships should be joined only on attributes specified by related_to values (source_ref and/or target_ref)"
-       (let [indicator-1 (mk-indicator 1)
-             indicator-2 (mk-indicator 2)
-             indicator-3 (mk-indicator 3)
-             sighting-1 (mk-sighting 1)
-             sighting-2 (mk-sighting 2)
-             relationship-1 (mk-relationship 1 sighting-1 indicator-1 "member-of")
-             relationship-2 (mk-relationship 2 sighting-1 indicator-2 "member-of")
-             relationship-3 (mk-relationship 3 sighting-2 indicator-1 "member-of")
-             relationship-4 (mk-relationship 4 sighting-2 indicator-3 "member-of")
-             bundle-fixture {:type "bundle"
-                             :source "source"
-                             :indicators #{indicator-1
-                                           indicator-2
-                                           indicator-3}
-                             :sightings #{sighting-1 sighting-2}
-                             :relationships #{relationship-1
-                                              relationship-2
-                                              relationship-3
-                                              relationship-4}}
-             bundle-res
+       (let [bundle-res
              (:parsed-body (post "ctia/bundle/import"
-                                 :body bundle-fixture
+                                 :body bundle-related-fixture
                                  :headers {"Authorization" "45c1f5e3f05d0"}))
 
              by-type (->> bundle-res :results (group-by :type))
