@@ -337,9 +337,8 @@
 
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
-  [id identity-map]
-  (let [filters [{:source_ref id}
-                 {:target_ref id}]
+  [id identity-map related-to]
+  (let [filters (map #(hash-map % id) (set related-to))
         rel-lists
         (map
          #(some->
@@ -368,10 +367,11 @@
   [id
    identity-map
    ident
-   {:keys [include_related_entities]
-    :or {include_related_entities true}}]
+   {:keys [include_related_entities related_to]
+    :or {include_related_entities true
+         related_to #{:source_ref :target_ref}}}]
   (if-let [record (fetch-record id identity-map)]
-    (let [relationships (fetch-entity-relationships id identity-map)]
+    (let [relationships (fetch-entity-relationships id identity-map related_to)]
       (cond-> {}
         record
         (assoc (-> (:type record)

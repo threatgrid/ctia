@@ -446,66 +446,193 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [bundle-res-1
-           (:parsed-body (post "ctia/bundle/import"
-                               :body bundle-fixture-1
-                               :headers {"Authorization" "45c1f5e3f05d0"}))
-           bundle-res-2
-           (:parsed-body (post "ctia/bundle/import"
-                               :body bundle-fixture-2
-                               :headers {"Authorization" "45c1f5e3f05d0"}))
-           sighting-id-1
-           (some->> bundle-res-1
-                    :results
-                    (group-by :type)
-                    :sighting
-                    first
-                    :id)
-           sighting-id-2
-           (some->> bundle-res-2
-                    :results
-                    (group-by :type)
-                    :sighting
-                    first
-                    :id)
-           bundle-get-res-1
-           (:parsed-body
-            (get "ctia/bundle/export"
-                 :query-params {:ids sighting-id-1}
-                 :headers {"Authorization" "45c1f5e3f05d0"}))
-           bundle-get-res-2
-           (:parsed-body
-            (get "ctia/bundle/export"
-                 :query-params {:ids sighting-id-2}
-                 :headers {"Authorization" "45c1f5e3f05d0"}))
-           bundle-get-res-3
-           (:parsed-body
-            (get "ctia/bundle/export"
-                 :query-params {:ids [sighting-id-1
-                                      sighting-id-2]}
-                 :headers {"Authorization" "45c1f5e3f05d0"}))
-           bundle-get-res-4
-           (:parsed-body
-            (get "ctia/bundle/export"
-                 :query-params {:ids [sighting-id-1
-                                      sighting-id-2]
-                                :include_related_entities false}
-                 :headers {"Authorization" "45c1f5e3f05d0"}))]
-       (is (= 1 (count (:sightings bundle-get-res-1))))
-       (is (= 2 (count (:relationships bundle-get-res-1))))
-       (is (= 2 (count (:indicators bundle-get-res-1))))
+     (testing "filtering on entities ids"
+       (let [bundle-res-1
+             (:parsed-body (post "ctia/bundle/import"
+                                 :body bundle-fixture-1
+                                 :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-res-2
+             (:parsed-body (post "ctia/bundle/import"
+                                 :body bundle-fixture-2
+                                 :headers {"Authorization" "45c1f5e3f05d0"}))
+             sighting-id-1
+             (some->> bundle-res-1
+                      :results
+                      (group-by :type)
+                      :sighting
+                      first
+                      :id)
+             sighting-id-2
+             (some->> bundle-res-2
+                      :results
+                      (group-by :type)
+                      :sighting
+                      first
+                      :id)
+             bundle-get-res-1
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids sighting-id-1}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-get-res-2
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids sighting-id-2}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-get-res-3
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [sighting-id-1
+                                        sighting-id-2]}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-get-res-4
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [sighting-id-1
+                                        sighting-id-2]
+                                  :include_related_entities false}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-get-res-5
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [sighting-id-1
+                                        sighting-id-2]
+                                  :related_to ["target_ref" "source_ref"]}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))]
 
-       (is (= 1 (count (:sightings bundle-get-res-2))))
-       (is (= 400 (count (:relationships bundle-get-res-2))))
-       (is (= 400 (count (:indicators bundle-get-res-2))))
+         (is (= 1 (count (:sightings bundle-get-res-1))))
+         (is (= 2 (count (:relationships bundle-get-res-1))))
+         (is (= 2 (count (:indicators bundle-get-res-1))))
 
-       (is (= 2 (count (:sightings bundle-get-res-3))))
-       (is (= 402 (count (:relationships bundle-get-res-3))))
-       (is (= 402 (count (:indicators bundle-get-res-3))))
+         (is (= 1 (count (:sightings bundle-get-res-2))))
+         (is (= 400 (count (:relationships bundle-get-res-2))))
+         (is (= 400 (count (:indicators bundle-get-res-2))))
 
-       (is (= 2 (count (:sightings bundle-get-res-4))))
-       (is (nil? (:indicators bundle-get-res-4)))
-       (is (= 402 (count (:relationships bundle-get-res-4))))))))
+         (is (= 2 (count (:sightings bundle-get-res-3))))
+         (is (= 402 (count (:relationships bundle-get-res-3))))
+         (is (= 402 (count (:indicators bundle-get-res-3))))
+
+         (is (= 2 (count (:sightings bundle-get-res-4))))
+         (is (nil? (:indicators bundle-get-res-4)))
+         (is (= 402 (count (:relationships bundle-get-res-4))))
+
+         (is (= bundle-get-res-3 bundle-get-res-5)
+             "default related_to value should be [:source_ref :target_ref]"))))))
+
+
+(def bundle-related-fixture
+  (let [indicator-1 (mk-indicator 1)
+        indicator-2 (mk-indicator 2)
+        indicator-3 (mk-indicator 3)
+        sighting-1 (mk-sighting 1)
+        sighting-2 (mk-sighting 2)
+        relationship-1 (mk-relationship 1 sighting-1 indicator-1 "member-of")
+        relationship-2 (mk-relationship 2 sighting-1 indicator-2 "member-of")
+        relationship-3 (mk-relationship 3 sighting-2 indicator-1 "member-of")
+        relationship-4 (mk-relationship 4 sighting-2 indicator-3 "member-of")]
+    {:type "bundle"
+     :source "source"
+     :indicators #{indicator-1
+                   indicator-2
+                   indicator-3}
+     :sightings #{sighting-1 sighting-2}
+     :relationships #{relationship-1
+                      relationship-2
+                      relationship-3
+                      relationship-4}}))
+
+(deftest bundle-export-related-to-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (testing "testing related_to filter: relationships should be joined only on attributes specified by related_to values (source_ref and/or target_ref)"
+       (let [bundle-res
+             (:parsed-body (post "ctia/bundle/import"
+                                 :body bundle-related-fixture
+                                 :headers {"Authorization" "45c1f5e3f05d0"}))
+
+             by-type (->> bundle-res :results (group-by :type))
+
+             [sighting-id-1
+              sighting-id-2] (->> (:sighting by-type)
+                                  (sort-by :external_id)
+                                  (map :id))
+             [indicator-id-1
+              indicator-id-2
+              indicator-id-3] (->> (:indicator by-type)
+                                   (sort-by :external_id)
+                                   (map :id))
+             [relationship-id-1
+              relationship-id-2
+              relationship-id-3
+              relationship-id-4] (->> (:relationship by-type)
+                                      (sort-by :external_id)
+                                      (map :id))
+             bundle-from-source
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [sighting-id-1]
+                                  :related_to ["source_ref"]}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-from-target-1
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [indicator-id-1]
+                                  :related_to ["target_ref"]}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-from-target-2
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [indicator-id-2]
+                                  :related_to ["target_ref"]}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))]
+
+         (is (= #{relationship-id-1
+                  relationship-id-2} (->> bundle-from-source
+                                          :relationships
+                                          (map :id)
+                                          set)))
+         (is (= #{indicator-id-1
+                  indicator-id-2} (->> bundle-from-source
+                                       :indicators
+                                       (map :id)
+                                       set)))
+         (is (= #{sighting-id-1} (->> bundle-from-source
+                                      :sightings
+                                      (map :id)
+                                      set)))
+
+         (is (= #{indicator-id-1} (->> bundle-from-target-1
+                                       :indicators
+                                       (map :id)
+                                       set)))
+         (is (= #{relationship-id-1
+                  relationship-id-3} (->> bundle-from-target-1
+                                          :relationships
+                                          (map :id)
+                                          set)))
+         (is (= #{sighting-id-1
+                  sighting-id-2} (->> bundle-from-target-1
+                                      :sightings
+                                      (map :id)
+                                      set)))
+
+         (is (= #{relationship-id-2} (->> bundle-from-target-2
+                                          :relationships
+                                          (map :id)
+                                          set)))
+         (is (= #{indicator-id-2} (->> bundle-from-target-2
+                                       :indicators
+                                       (map :id)
+                                       set)))
+         (is (= #{sighting-id-1} (->> bundle-from-target-2
+                                      :sightings
+                                      (map :id)
+                                      set))))))))
 
 (defn with-tlp-property-setting [tlp f]
   (with-redefs [ctia.properties/properties
