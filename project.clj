@@ -67,9 +67,6 @@
                  [yogsototh/clj-jwt "0.2.1"]
                  [threatgrid/ring-jwt-middleware "0.0.7" :exclusions [metosin/ring-http-response riemann-clojure-client joda-time clj-time com.google.code.findbugs/jsr305 com.andrewmcveigh/cljs-time]]
 
-                 ;; nREPL server
-                 [org.clojure/tools.nrepl "0.2.13"]
-
                  ;; clients
                  [clj-http "3.7.0" :exclusions [commons-codec]]
                  [com.taoensso/carmine "2.17.0"]

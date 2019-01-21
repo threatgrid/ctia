@@ -119,16 +119,6 @@
 | ctia.events.log | enable CTIA Event log | =true= =false= |
 
 
-** nRepl
-
-  setup clojure nrepl support, for development
-
-| Property           | Description                      | Possible values |
-|--------------------+----------------------------------+-----------------|
-| ctia.nrepl.enabled | enable CTIA nrepl                | =true= =false=  |
-| ctia.nrepl.port    | set the port to access the nrepl | number          |
-
-
 ** Hooks
 
 *** RedisMQ

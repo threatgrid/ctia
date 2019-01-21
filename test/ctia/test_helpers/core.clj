@@ -56,7 +56,6 @@
                     "ctia.http.jwt.enabled"           true
                     "ctia.http.jwt.public-key-path"   "resources/cert/ctia-jwt.pub"
                     "ctia.http.bulk.max-size"         30000
-                    "ctia.nrepl.enabled"              false
                     "ctia.hook.redis.enabled"         false
                     "ctia.hook.redis.channel-name"    "events-test"
                     "ctia.metrics.riemann.enabled"    false
