@@ -4,7 +4,7 @@
 
 A Pragmatic, Operationalized Threat Intel Service and Data Model
 
-For full documentation see [doc/index.md](doc/index.md)
+For full documentation see [doc/index.md](doc/)
 
 We also think the [Use Cases](doc/use_cases.md) document is a good
 starting point.
