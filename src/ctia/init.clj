@@ -2,7 +2,6 @@
   (:require
    [ctia.entity.entities :refer [validate-entities]]
    [clj-momo.properties :as mp]
-   [clojure.tools.nrepl.server :as nrepl-server]
    [clojure.tools.logging :as log]
    [ctia.lib.metrics
     [riemann :as riemann]
@@ -99,12 +98,6 @@
   ;; hooks init
   (h/init!)
 
-  ;; Start nREPL server
-  (let [{nrepl-port :port
-         nrepl-enabled? :enabled} (get-in @p/properties [:ctia :nrepl])]
-    (when (and nrepl-enabled? nrepl-port)
-      (log/info (str "Starting nREPL server on port " nrepl-port))
-      (nrepl-server/start-server :port nrepl-port)))
   ;; Start HTTP server
   (let [{http-port :port
          enabled? :enabled} (get-in @p/properties [:ctia :http])]

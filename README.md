@@ -69,10 +69,6 @@ Running from a cloned repository:
 
 `lein run`
 
-If you like, you can cider-connect to the NREPL listener that it
-starts by default.  Be sure NOT to run the service this way in
-production, unless you ensure access to the NREPL port is restricted.
-
 ### Packaging and running as standalone jar
 
 This is the proper way to run this in production.

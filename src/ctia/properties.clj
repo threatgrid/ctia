@@ -86,7 +86,6 @@
    (st/optional-keys {"ctia.migration.optimizations" s/Bool})
 
    (st/required-keys {"ctia.events.enabled" s/Bool
-                      "ctia.nrepl.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool
                       "ctia.hook.redismq.enabled" s/Bool})
 
@@ -94,7 +93,6 @@
                       "ctia.access-control.default-tlp" TLP})
 
    (st/optional-keys {"ctia.events.log" s/Bool
-                      "ctia.nrepl.port" s/Int
                       "ctia.hook.redis.host" s/Str
                       "ctia.hook.redis.port" s/Int
                       "ctia.hook.redis.channel-name" s/Str
