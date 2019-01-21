@@ -17,6 +17,13 @@ If your docker host OS is Linux,
 Elasticsearch 5x bootstrap checks the maximum map count configuration,
 tune it accordingly with `sudo sysctl -w vm.max_map_count=262144`
 
+
+To run the latest containers from Docker HUB simply invoke docker-compose with this configuration:
+
+``` bash
+~/path-to/ctia/containers/client-dev$ docker-compose up
+```
+
 To build and run the containers with docker-compose, install docker and docker compose. Then, `cd` to your the `ctia` directory (at the top of this repo) and run the following commands to build the CTIA jar, the CTIA docker container, and then to start the services via `docker-compose`:
 
 
@@ -41,7 +48,7 @@ Step 1/6 : FROM clojure:alpine
 ...
 Successfully tagged ctia:latest
 
-~/path-to/ctia/containers/client-dev$ sudo docker-compose up
+~/path-to/ctia/containers/client-dev$ docker-compose up
 ```
 
 ## URI Endpoints
