@@ -1,7 +1,8 @@
 version: "2"
 services:
   ctia:
-    image: ctia:latest
+    #image: ctia:latest
+    image: ciscoctr/ctia:latest
     volumes:
       - ./ctia/config/ctia.properties:/usr/src/app/resources/ctia.properties
     build:
