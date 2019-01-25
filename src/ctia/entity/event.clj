@@ -2,6 +2,10 @@
   (:require
    [ctia.entity.event.store
     :refer [->EventStore]]
+   [compojure.api.sweet :refer [GET routes]]
+   [ring.util.http-response :refer [ok]]
+   [schema-tools.core :as st]
+   [schema.core :as s]
    [clj-momo.lib.es
     [document :as d]
     [schemas :refer [ESConnState SliceProperties]]
@@ -16,8 +20,9 @@
    [ctia.stores.es
     [crud :as crud]
     [mapping :as em]]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+   [ctia.store :refer [read-store list-events list-all-pages]]
+   [ctia.domain.entities :as ent]
+   [clojure.set :as set]))
 
 (def event-mapping
   {"event"
@@ -60,24 +65,55 @@
    BaseEntityFilterParams
    EventFieldsParam))
 
+(s/defschema EventTimelineParams
+  (st/merge
+   PagingParams))
+
 (def EventGetParams EventFieldsParam)
 
+(defn fetch-related-events [_id identity-map q]
+  (mapcat #(some-> (list-all-pages :event
+                                   list-events
+                                   {% _id}
+                                   identity-map
+                                   q)
+                   ent/un-store-all
+                   set)
+          [:entity.id :entity.source_ref :entity.target_ref]))
+
+(def event-history-routes
+  (routes
+   (GET "/history/:entity_id" []
+        :return PartialEventList
+        :query [q EventTimelineParams]
+        :path-params [entity_id :- s/Str]
+        :header-params [{Authorization :- (s/maybe s/Str) nil}]
+        :summary "Timeline history of an entity"
+        :capabilities :search-event
+        :auth-identity identity
+        :identity-map identity-map
+        (let [res (fetch-related-events entity_id identity-map q)
+              sorted (sort-by :timestamp res)]
+          (ok res)))))
+
 (def event-routes
-  (entity-crud-routes
-   {:tags ["Event"]
-    :entity :event
-    :entity-schema Event
-    :get-schema PartialEvent
-    :get-params EventGetParams
-    :list-schema PartialEventList
-    :search-schema PartialEventList
-    :search-q-params EventSearchParams
-    :get-capabilities :read-event
-    :can-update? false
-    :can-patch? false
-    :can-post? false
-    :can-get-by-external-id? false
-    :search-capabilities :search-event}))
+  (routes
+   event-history-routes
+   (entity-crud-routes
+    {:tags ["Event"]
+     :entity :event
+     :entity-schema Event
+     :get-schema PartialEvent
+     :get-params EventGetParams
+     :list-schema PartialEventList
+     :search-schema PartialEventList
+     :search-q-params EventSearchParams
+     :get-capabilities :read-event
+     :can-update? false
+     :can-patch? false
+     :can-post? false
+     :can-get-by-external-id? false
+     :search-capabilities :search-event})))
 
 (def event-entity
   {:route-context "/event"
