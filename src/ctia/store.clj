@@ -65,3 +65,23 @@
 (def read-fn read-record)
 (def create-fn create-record)
 (def list-fn list-records)
+
+
+(defn list-all-pages
+  [entity
+   list-fn
+   filters
+   identity-map
+   params]
+  (loop [query-params params
+         results []]
+    (let [{:keys [data
+                  paging]}
+          (read-store entity
+                      list-fn
+                      filters
+                      identity-map
+                      query-params)]
+      (if-let [next-params (:next paging)]
+        (recur next-params (concat results data))
+        (concat results data)))))

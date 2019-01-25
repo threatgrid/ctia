@@ -9,7 +9,7 @@
    [ctia
     [auth :as auth]
     [properties :refer [properties]]
-    [store :refer [list-fn read-fn read-store]]]
+    [store :refer [list-fn read-fn read-store list-all-pages]]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
     :refer
@@ -317,24 +317,6 @@
                                    (keyword k)) v}) by-type))]
     (bulk/fetch-bulk by-bulk-key identity-map)))
 
-(defn list-all-pages
-  [entity
-   filters
-   identity-map
-   params]
-  (loop [query-params params
-         results []]
-    (let [{:keys [data
-                  paging]}
-          (read-store entity
-                      list-fn
-                      filters
-                      identity-map
-                      query-params)]
-      (if-let [next-params (:next paging)]
-        (recur next-params (concat results data))
-        (concat results data)))))
-
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id identity-map related-to]
@@ -343,6 +325,7 @@
         (map
          #(some->
            (list-all-pages :relationship
+                           list-fn
                            %
                            identity-map
                            {:limit list-limit})
