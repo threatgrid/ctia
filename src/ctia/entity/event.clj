@@ -72,7 +72,6 @@
 
 (def EventGetParams EventFieldsParam)
 
-
 (defn same-bucket? [event1 event2]
   (let [[e1 e2] (sort (map :timestamp [event1 event2]))
         e2 (t/minus e2 (t/seconds 5))]
