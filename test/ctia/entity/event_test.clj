@@ -8,8 +8,10 @@
     [test :refer [is testing]]]
    [clj-momo.lib.time :as time]
    [clj-momo.test-helpers.core :as mth]
+   [clj-momo.lib.clj-time.core :as t]
    [clojure.test :refer [deftest join-fixtures use-fixtures]]
    [ctim.domain.id :as id]
+   [ctia.entity.event :as ev]
    [ctia.test-helpers
     [auth :refer [all-capabilities]]
     [core :as helpers
@@ -248,3 +250,43 @@
                              :type "event",
                              :event_type :record-deleted}]
                            results)))))))))))))
+
+
+(defn generate-bucket [from n fn-unit]
+  (map #(t/plus from (fn-unit %)) (range n)))
+
+
+(deftest same-bucket?-test
+  (testing "same-bucket"
+    (let [t1 (t/internal-now)
+          t2 (t/plus t1 (t/seconds 1))
+          t3 (t/plus t1 (t/days 1))
+          event1 {:timestamp t1}
+          event2 {:timestamp t2}
+          event3 {:timestamp t3}]
+      (is (true? (ev/same-bucket? event1 event2)))
+      (is (true? (ev/same-bucket? event2 event1)))
+      (is (false? (ev/same-bucket? event1 event3)))
+      (is (false? (ev/same-bucket? event3 event1))))))
+
+(deftest bucketize-events-test
+  (testing "bucketize function should group events in near same time"
+    (let [now (t/internal-now)
+          one-hour-ago (t/minus now (t/hours 1))
+          two-hours-ago (t/minus now (t/hours 2))
+          one-month-ago (t/minus now (t/months 1))
+
+          every-sec (generate-bucket now 3 t/seconds)
+          every-milli (generate-bucket one-hour-ago 10 t/millis)
+          every-min (generate-bucket two-hours-ago 4 t/minutes)
+          every-day (generate-bucket one-month-ago 3 t/days)
+
+          events (->> (concat every-sec every-min every-day every-milli)
+                      shuffle
+                      (map #(hash-map :timestamp %)))
+          timeline (ev/bucketize-events events ev/same-bucket?)]
+      (is (< (count timeline) (count events)))
+      (is (= (+ (count every-min) (count every-day) 2)
+             (count timeline)))
+      (is (= (count every-sec) (count (first timeline))))
+      (is (= (count every-milli) (count (second timeline)))))))

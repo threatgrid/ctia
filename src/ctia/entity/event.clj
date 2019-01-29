@@ -6,6 +6,7 @@
    [ring.util.http-response :refer [ok]]
    [schema-tools.core :as st]
    [schema.core :as s]
+   [clj-momo.lib.clj-time.core :as t]
    [clj-momo.lib.es
     [document :as d]
     [schemas :refer [ESConnState SliceProperties]]
@@ -71,6 +72,30 @@
 
 (def EventGetParams EventFieldsParam)
 
+
+(defn same-bucket? [event1 event2]
+  (let [[e1 e2] (sort (map :timestamp [event1 event2]))
+        e2 (t/minus e2 (t/seconds 5))]
+    (t/before? e2 e1)))
+
+
+(defn append-event [comp timeline new]
+  (let [previous (first timeline)]
+    (cond
+      (and (seq? previous)
+           (same-bucket? (first previous) new))
+      (cons (cons new previous)
+            (rest timeline))
+      (and (map? previous)
+           (same-bucket? previous new))
+      (cons (list new previous) (rest timeline))
+      :else (cons new timeline))))
+
+(defn bucketize-events
+  [events comp]
+  (let [events (sort-by :timestamp events)]
+    (reduce (partial append-event comp) [] events)))
+
 (defn fetch-related-events [_id identity-map q]
   (mapcat #(some-> (list-all-pages :event
                                    list-events
@@ -84,7 +109,7 @@
 (def event-history-routes
   (routes
    (GET "/history/:entity_id" []
-        :return PartialEventList
+        :return s/Any;PartialEventList
         :query [q EventTimelineParams]
         :path-params [entity_id :- s/Str]
         :header-params [{Authorization :- (s/maybe s/Str) nil}]
@@ -93,8 +118,8 @@
         :auth-identity identity
         :identity-map identity-map
         (let [res (fetch-related-events entity_id identity-map q)
-              sorted (sort-by :timestamp res)]
-          (ok res)))))
+              timeline (bucketize-events res same-bucket?)]
+          (ok timeline)))))
 
 (def event-routes
   (routes
