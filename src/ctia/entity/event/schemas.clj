@@ -37,4 +37,10 @@
   (st/optional-keys Event))
 
 (s/defschema PartialEventList
-  [Event])
+  [PartialEvent])
+
+(s/defschema EventBucket
+  {:count s/Int
+   :from s/Inst
+   :to s/Inst
+   :events PartialEventList})

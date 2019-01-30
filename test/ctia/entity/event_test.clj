@@ -256,18 +256,31 @@
   (map #(t/plus from (fn-unit %)) (range n)))
 
 
-(deftest same-bucket?-test
-  (testing "same-bucket"
-    (let [t1 (t/internal-now)
-          t2 (t/plus t1 (t/seconds 1))
-          t3 (t/plus t1 (t/days 1))
-          event1 {:timestamp t1}
-          event2 {:timestamp t2}
-          event3 {:timestamp t3}]
-      (is (true? (ev/same-bucket? event1 event2)))
-      (is (true? (ev/same-bucket? event2 event1)))
-      (is (false? (ev/same-bucket? event1 event3)))
-      (is (false? (ev/same-bucket? event3 event1))))))
+(deftest bucket-operations-test
+  (let [t1 (t/internal-now)
+        t2 (t/plus t1 (t/seconds 1))
+        t3 (t/plus t1 (t/seconds 2))
+        t4 (t/plus t1 (t/days 1))
+        event1 {:timestamp t1}
+        event2 {:timestamp t2}
+        event3 {:timestamp t3}
+        event4 {:timestamp t4}
+
+        bucket1 (ev/init-bucket event1)
+        bucket2 (ev/bucket-append bucket1 event2)]
+    (testing "init-bucket should properly initialize a bucket from an event"
+      (is (= (:from bucket1) (:to bucket1) (:timestamp event1)))
+      (is (= 1 (:count bucket1))))
+    (testing "bucket-append should properly append an event to a bucket"
+      (is (= (:from bucket2) (:timestamp event1)))
+      (is (= (:to bucket2) (:timestamp event2)))
+      (is (= #{event1 event2} (set (:events bucket2))))
+      (is (= 2 (:count bucket2))))
+    (testing "same-bucket? shoud properly assert that an event is part of a bucket or not"
+      (is (true? (ev/same-bucket? bucket1 event3)))
+      (is (true? (ev/same-bucket? bucket2 event3)))
+      (is (false? (ev/same-bucket? bucket1 event4)))
+      (is (false? (ev/same-bucket? bucket2 event4))))))
 
 (deftest bucketize-events-test
   (testing "bucketize function should group events in near same time"
@@ -288,5 +301,5 @@
       (is (< (count timeline) (count events)))
       (is (= (+ (count every-min) (count every-day) 2)
              (count timeline)))
-      (is (= (count every-sec) (count (first timeline))))
-      (is (= (count every-milli) (count (second timeline)))))))
+      (is (= (count every-sec) (count (-> timeline first :events))))
+      (is (= (count every-milli) (count (-> timeline second :events)))))))

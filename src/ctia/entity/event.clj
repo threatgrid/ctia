@@ -12,7 +12,7 @@
     [schemas :refer [ESConnState SliceProperties]]
     [slice :refer [get-slice-props]]]
    [ctia.entity.event.schemas
-    :refer [Event PartialEvent PartialEventList]]
+    :refer [Event PartialEvent PartialEventList EventBucket]]
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams PagingParams]]
     [crud :refer [entity-crud-routes]]]
@@ -23,6 +23,7 @@
     [mapping :as em]]
    [ctia.store :refer [read-store list-events list-all-pages]]
    [ctia.domain.entities :as ent]
+   [ctia.properties :refer [properties]]
    [clojure.set :as set]))
 
 (def event-mapping
@@ -72,28 +73,45 @@
 
 (def EventGetParams EventFieldsParam)
 
-(defn same-bucket? [event1 event2]
-  (let [[e1 e2] (sort (map :timestamp [event1 event2]))
-        e2 (t/minus e2 (t/seconds 5))]
-    (t/before? e2 e1)))
 
 
-(defn append-event [comp timeline new]
+(defn same-bucket? [bucket event]
+  (let [max-seconds (get-in @properties [:ctia :events :timeline :max-seconds] 5)
+        from        (t/minus (:from bucket) (t/seconds max-seconds))
+        to          (t/plus (:to bucket) (t/seconds max-seconds))]
+    (and (t/before? from (:timestamp event))
+         (t/before? (:timestamp event) to))))
+
+(defn init-bucket [event]
+  {:count 1
+   :from (:timestamp event)
+   :to (:timestamp event)
+   :events (list event)})
+
+(defn min-ts [t1 t2]
+  (if (t/before? t1 t2) t1 t2))
+
+(defn max-ts [t1 t2]
+  (if (t/before? t1 t2) t2 t1))
+
+(defn bucket-append [bucket event]
+  (-> (update bucket :count inc)
+      (update :from min-ts (:timestamp event))
+      (update :to max-ts (:timestamp event))
+      (update :events conj event)))
+
+(defn timeline-append [comp timeline event]
   (let [previous (first timeline)]
-    (cond
-      (and (seq? previous)
-           (same-bucket? (first previous) new))
-      (cons (cons new previous)
-            (rest timeline))
-      (and (map? previous)
-           (same-bucket? previous new))
-      (cons (list new previous) (rest timeline))
-      :else (cons new timeline))))
+    (if (and (map? previous)
+             (same-bucket? previous event))
+        (cons (bucket-append previous event)
+              (rest timeline))
+        (cons (init-bucket event) timeline))))
 
 (defn bucketize-events
   [events comp]
   (let [events (sort-by :timestamp events)]
-    (reduce (partial append-event comp) [] events)))
+    (reduce (partial timeline-append comp) [] events)))
 
 (defn fetch-related-events [_id identity-map q]
   (mapcat #(some-> (list-all-pages :event
@@ -108,15 +126,14 @@
 (def event-history-routes
   (routes
    (GET "/history/:entity_id" []
-        :return s/Any;PartialEventList
-        :query [q EventTimelineParams]
+        :return [EventBucket]
         :path-params [entity_id :- s/Str]
         :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :summary "Timeline history of an entity"
         :capabilities :search-event
         :auth-identity identity
         :identity-map identity-map
-        (let [res (fetch-related-events entity_id identity-map q)
+        (let [res (fetch-related-events entity_id identity-map {})
               timeline (bucketize-events res same-bucket?)]
           (ok timeline)))))
 
