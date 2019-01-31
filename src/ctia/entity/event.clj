@@ -67,13 +67,7 @@
    BaseEntityFilterParams
    EventFieldsParam))
 
-(s/defschema EventTimelineParams
-  (st/merge
-   PagingParams))
-
 (def EventGetParams EventFieldsParam)
-
-
 
 (defn same-bucket? [bucket event]
   (let [max-seconds (get-in @properties [:ctia :events :timeline :max-seconds] 5)
