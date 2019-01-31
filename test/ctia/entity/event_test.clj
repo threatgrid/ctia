@@ -252,8 +252,11 @@
                            results)))))))))))))
 
 
-(defn generate-bucket [from n fn-unit]
-  (map #(t/plus from (fn-unit %)) (range n)))
+(defn generate-events [owner event_type from n fn-unit]
+  (->> (map #(t/plus from (fn-unit %)) (range n))
+       (map #(hash-map :timestamp %
+                       :owner owner
+                       :event_type event_type))))
 
 
 (deftest bucket-operations-test
@@ -261,10 +264,11 @@
         t2 (t/plus t1 (t/seconds 1))
         t3 (t/plus t1 (t/seconds 2))
         t4 (t/plus t1 (t/days 1))
-        event1 {:timestamp t1}
-        event2 {:timestamp t2}
-        event3 {:timestamp t3}
-        event4 {:timestamp t4}
+        event1 {:timestamp t1 :owner "Smith" :event_type :record_created}
+        event2 {:timestamp t2 :owner "Smith" :event_type :record_updated}
+        event3 {:timestamp t3 :owner "Smith" :event_type :record_updated}
+        event4 {:timestamp t4 :owner "Doe" :event_type :record_updated}
+        event5 {:timestamp t1 :owner "Doe" :event_type :record_updated}
 
         bucket1 (ev/init-bucket event1)
         bucket2 (ev/bucket-append bucket1 event2)]
@@ -280,26 +284,28 @@
       (is (true? (ev/same-bucket? bucket1 event3)))
       (is (true? (ev/same-bucket? bucket2 event3)))
       (is (false? (ev/same-bucket? bucket1 event4)))
-      (is (false? (ev/same-bucket? bucket2 event4))))))
+      (is (false? (ev/same-bucket? bucket2 event4)))
+      (is (false? (ev/same-bucket? bucket2 event5))))))
 
 (deftest bucketize-events-test
-  (testing "bucketize function should group events in near same time"
-    (let [now (t/internal-now)
-          one-hour-ago (t/minus now (t/hours 1))
-          two-hours-ago (t/minus now (t/hours 2))
-          one-month-ago (t/minus now (t/months 1))
+  (let [now (t/internal-now)
+        one-hour-ago (t/minus now (t/hours 1))
+        two-hours-ago (t/minus now (t/hours 2))
+        one-month-ago (t/minus now (t/months 1))
 
-          every-sec (generate-bucket now 3 t/seconds)
-          every-milli (generate-bucket one-hour-ago 10 t/millis)
-          every-min (generate-bucket two-hours-ago 4 t/minutes)
-          every-day (generate-bucket one-month-ago 3 t/days)
+        every-sec (concat (generate-events "Doe" "created" now 1 t/seconds)
+                          (generate-events "Doe" "updated" now 2 t/seconds))
+        every-milli-1 (generate-events "Smith" "updated" one-hour-ago 10 t/millis)
+        every-milli-2 (generate-events "Doe" "updaetd" one-hour-ago 20 t/millis)
+        every-min (generate-events "Smith" "updated" two-hours-ago 4 t/minutes)
+        every-day (generate-events "Doe" "updated" one-month-ago 3 t/days)
 
-          events (->> (concat every-sec every-min every-day every-milli)
-                      shuffle
-                      (map #(hash-map :timestamp %)))
-          timeline (ev/bucketize-events events ev/same-bucket?)]
+        events (->> (concat every-sec every-min every-day every-milli-1 every-milli-2)
+                    shuffle)
+        timeline (ev/bucketize-events events ev/same-bucket?)]
+    (testing "bucketize function should group events in near same time from same owner"
       (is (< (count timeline) (count events)))
-      (is (= (+ (count every-min) (count every-day) 2)
+      (is (= (+ (count every-min) (count every-day) 3)
              (count timeline)))
       (is (= (count every-sec) (count (-> timeline first :events))))
-      (is (= (count every-milli) (count (-> timeline second :events)))))))
+      (is (= (count every-milli-2) (count (-> timeline second :events)))))))

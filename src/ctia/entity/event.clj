@@ -79,11 +79,13 @@
   (let [max-seconds (get-in @properties [:ctia :events :timeline :max-seconds] 5)
         from        (t/minus (:from bucket) (t/seconds max-seconds))
         to          (t/plus (:to bucket) (t/seconds max-seconds))]
-    (and (t/before? from (:timestamp event))
+    (and (= (:owner bucket) (:owner event))
+         (t/before? from (:timestamp event))
          (t/before? (:timestamp event) to))))
 
 (defn init-bucket [event]
   {:count 1
+   :owner (:owner event)
    :from (:timestamp event)
    :to (:timestamp event)
    :events (list event)})
@@ -110,8 +112,9 @@
 
 (defn bucketize-events
   [events comp]
-  (let [events (sort-by :timestamp events)]
-    (reduce (partial timeline-append comp) [] events)))
+  (let [events (sort-by (juxt :owner :timestamp :event_type) events)
+        buckets (reduce (partial timeline-append comp) [] events)]
+    (reverse (sort-by :from buckets))))
 
 (defn fetch-related-events [_id identity-map q]
   (mapcat #(some-> (list-all-pages :event
