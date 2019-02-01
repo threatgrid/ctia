@@ -320,19 +320,15 @@
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id identity-map related-to]
-  (let [filters (map #(hash-map % id) (set related-to))
-        rel-lists
-        (map
-         #(some->
-           (list-all-pages :relationship
-                           list-fn
-                           %
-                           identity-map
-                           {:limit list-limit})
-           ent/un-store-all
-           set)
-         filters)]
-    (apply set/union rel-lists)))
+  (let [should-map (->> (map #(hash-map % id) (set related-to))
+                        (apply merge))]
+    (some-> (list-all-pages :relationship
+                            list-fn
+                            {}
+                            should-map
+                            identity-map
+                            {:limit list-limit})
+            ent/un-store-all)))
 
 (defn fetch-record
   "Fetch a record by ID guessing its type"

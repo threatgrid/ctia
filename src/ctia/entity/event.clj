@@ -21,7 +21,7 @@
    [ctia.stores.es
     [crud :as crud]
     [mapping :as em]]
-   [ctia.store :refer [read-store list-events list-all-pages]]
+   [ctia.store :refer [read-store timeline-events list-all-pages]]
    [ctia.domain.entities :as ent]
    [ctia.properties :refer [properties]]
    [clojure.set :as set]))
@@ -69,6 +69,8 @@
 
 (def EventGetParams EventFieldsParam)
 
+(def EventTimelineParams PagingParams)
+
 (defn same-bucket? [bucket event]
   (let [max-seconds (get-in @properties [:ctia :events :timeline :max-seconds] 5)
         from        (t/minus (:from bucket) (t/seconds max-seconds))
@@ -99,7 +101,7 @@
 (defn timeline-append [comp timeline event]
   (let [previous (first timeline)]
     (if (and (map? previous)
-             (same-bucket? previous event))
+             (comp previous event))
         (cons (bucket-append previous event)
               (rest timeline))
         (cons (init-bucket event) timeline))))
@@ -111,26 +113,31 @@
     (reverse (sort-by :from buckets))))
 
 (defn fetch-related-events [_id identity-map q]
-  (mapcat #(some-> (list-all-pages :event
-                                   list-events
-                                   {% _id}
-                                   identity-map
-                                   q)
-                   ent/un-store-all
-                   set)
-          [:entity.id :entity.source_ref :entity.target_ref]))
+  (let [should {:entity.id _id
+                :entity.source_ref _id
+                :entity.target_ref _id}]
+    (some-> (list-all-pages :event
+                            timeline-events
+                            {}
+                            should
+                            identity-map
+                            q)
+            ent/un-store-all)))
 
 (def event-history-routes
   (routes
    (GET "/history/:entity_id" []
         :return [EventBucket]
+        :query [q EventTimelineParams]
         :path-params [entity_id :- s/Str]
         :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :summary "Timeline history of an entity"
         :capabilities :search-event
         :auth-identity identity
         :identity-map identity-map
-        (let [res (fetch-related-events entity_id identity-map {})
+        (let [res (fetch-related-events entity_id
+                                        identity-map
+                                        (into q {:sort_by :timestamp :sort_order :desc}))
               timeline (bucketize-events res same-bucket?)]
           (ok timeline)))))
 

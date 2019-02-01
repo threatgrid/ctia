@@ -6,6 +6,7 @@
                       get-doc
                       search-docs
                       update-doc]]
+             [query :as q]
              [schemas :refer [ESConnState]]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.domain.access-control
@@ -187,6 +188,7 @@
     params
     (assoc params :sort_by default-sort-field)))
 
+
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [mapping Model]
@@ -195,18 +197,26 @@
     (s/fn :- response-schema
       [state :- ESConnState
        filter-map :- {s/Any s/Any}
+       should-map :- {s/Any s/Any}
        ident
        params]
+      (let [should-terms (map (fn [[k v]]
+                                (let [t-key (if (sequential? k) k [k])]
+                                  [t-key v]))
+                              should-map)
+            should-filters (q/nested-terms should-terms)
+            query {:bool {:must [(find-restriction-query-part ident)]
+                          :should should-filters}}]
       (update
        (coerce! (search-docs (:conn state)
                              (:index state)
                              (name mapping)
-                             (find-restriction-query-part ident)
+                             query
                              filter-map
                              (-> params
                                  with-default-sort-field
                                  make-es-read-params)))
-       :data access-control-filter-list ident))))
+       :data access-control-filter-list ident)))))
 
 (defn handle-query-string-search
   "Generate an ES query string handler using some mapping and schema"

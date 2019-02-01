@@ -156,8 +156,8 @@
     (handle-update state id sighting ident))
   (delete-record [_ id ident]
     (handle-delete state id ident))
-  (list-records [_ filter-map ident params]
-    (handle-list state filter-map ident params))
+  (list-records [_ filter-map should-map ident params]
+    (handle-list state filter-map should-map ident params))
   ISightingStore
   (list-sightings-by-observables [_ observables ident params]
     (handle-list-by-observables state observables ident params))

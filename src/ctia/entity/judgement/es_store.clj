@@ -129,8 +129,8 @@
     (handle-delete state id ident))
   (update-record [_ id judgement ident]
     (handle-update state id judgement ident))
-  (list-records [_ filter-map ident params]
-    (handle-list state filter-map ident params))
+  (list-records [_ filter-map should-map ident params]
+    (handle-list state filter-map should-map ident params))
 
   IJudgementStore
   (add-indicator-to-judgement [_ judgement-id indicator-rel ident]

@@ -7,7 +7,7 @@
   (read-record [this id ident params])
   (update-record [this id record ident])
   (delete-record [this id ident])
-  (list-records [this filtermap ident params]))
+  (list-records [this filtermap shouldmap ident params]))
 
 (defprotocol IJudgementStore
   (calculate-verdict [this observable ident])
@@ -25,7 +25,8 @@
 (defprotocol IEventStore
   (read-event [this id ident params])
   (create-events [this new-events])
-  (list-events [this filtermap ident params]))
+  (list-events [this filtermap shouldmap ident params])
+  (timeline-events [this filtermap shouldmap ident params]))
 
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this query filtermap ident params]))
@@ -66,11 +67,11 @@
 (def create-fn create-record)
 (def list-fn list-records)
 
-
 (defn list-all-pages
   [entity
    list-fn
    filters
+   should
    identity-map
    params]
   (loop [query-params params
@@ -80,6 +81,7 @@
           (read-store entity
                       list-fn
                       filters
+                      should
                       identity-map
                       query-params)]
       (if-let [next-params (:next paging)]

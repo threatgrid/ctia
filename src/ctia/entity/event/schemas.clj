@@ -43,4 +43,5 @@
   {:count s/Int
    :from s/Inst
    :to s/Inst
+   :owner s/Str
    :events PartialEventList})
