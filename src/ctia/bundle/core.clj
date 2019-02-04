@@ -103,6 +103,7 @@
               (fn [paging]
                 (read-store entity-type list-fn
                             {:external_ids external-ids}
+                            {}
                             (auth/ident->map auth-identity)
                             paging))))
       [])))

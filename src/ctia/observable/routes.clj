@@ -96,6 +96,7 @@
                                     :relationship
                                     list-records
                                     {:source_ref judgement-ids}
+                                    {}
                                     identity-map
                                     {:fields [:target_ref]}))
               indicator-ids (->> (map :target_ref relationships)
@@ -158,6 +159,7 @@
                                     :relationship
                                     list-records
                                     {:source_ref sighting-ids}
+                                    {}
                                     identity-map
                                     {:fields [:target_ref]}))
               indicator-ids (->> (map :target_ref relationships)
@@ -199,6 +201,7 @@
                                     :relationship
                                     list-records
                                     {:source_ref sighting-ids}
+                                    {}
                                     identity-map
                                     {:fields [:target_ref]}))
               incident-ids (->> (map :target_ref relationships)

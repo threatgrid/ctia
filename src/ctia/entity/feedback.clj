@@ -66,6 +66,7 @@
        (-> (read-store :feedback
                        list-records
                        (select-keys params [:entity_id])
+                       {}
                        identity-map
                        (dissoc params :entity_id))
            page-with-long-id

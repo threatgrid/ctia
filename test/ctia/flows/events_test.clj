@@ -89,6 +89,7 @@
       (let [events (:data (store/read-store :event
                                             store/list-events
                                             {:owner "Unknown"}
+                                            {}
                                             {:login "Unknown"
                                              :groups ["Administrators"]}
                                             {:sort_by :timestamp

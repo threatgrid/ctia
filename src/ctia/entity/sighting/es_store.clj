@@ -127,9 +127,9 @@
              #(map es-partial-stored-sighting->partial-stored-sighting (es-coerce! %))))
 
 (s/defn handle-list :- PartialStoredSightingList
-  [state filter-map ident params]
+  [state filter-map should-map ident params]
   (es-paginated-list->paginated-list
-   (list-fn state filter-map ident params)))
+   (list-fn state filter-map should-map ident params)))
 
 (s/defn handle-query-string-search-sightings
   :- PartialStoredSightingList
@@ -143,6 +143,7 @@
   (handle-list state
                {:observables_hash
                 (obs->hashes observables)}
+               {}
                ident
                params))
 
