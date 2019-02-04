@@ -71,7 +71,9 @@
 
 (def EventTimelineParams PagingParams)
 
-(defn same-bucket? [bucket event]
+(s/defn same-bucket? :- s/Bool
+  [bucket :- EventBucket
+   event :- Event]
   (let [max-seconds (get-in @properties [:ctia :events :timeline :max-seconds] 5)
         from        (t/minus (:from bucket) (t/seconds max-seconds))
         to          (t/plus (:to bucket) (t/seconds max-seconds))]
@@ -79,7 +81,8 @@
          (t/before? from (:timestamp event))
          (t/before? (:timestamp event) to))))
 
-(defn init-bucket [event]
+(s/defn init-bucket :- EventBucket
+  [event :- Event]
   {:count 1
    :owner (:owner event)
    :from (:timestamp event)
@@ -92,24 +95,28 @@
 (defn max-ts [t1 t2]
   (if (t/before? t1 t2) t2 t1))
 
-(defn bucket-append [bucket event]
+(s/defn bucket-append :- EventBucket
+  [bucket :- EventBucket
+   event :- Event]
   (-> (update bucket :count inc)
       (update :from min-ts (:timestamp event))
       (update :to max-ts (:timestamp event))
       (update :events conj event)))
 
-(defn timeline-append [comp timeline event]
+(s/defn timeline-append :- [EventBucket]
+  [timeline :- [EventBucket]
+   event :- Event]
   (let [previous (first timeline)]
     (if (and (map? previous)
-             (comp previous event))
+             (same-bucket? previous event))
         (cons (bucket-append previous event)
               (rest timeline))
         (cons (init-bucket event) timeline))))
 
-(defn bucketize-events
-  [events comp]
+(s/defn bucketize-events :- [EventBucket]
+  [events :- [Event]]
   (let [events (sort-by (juxt :owner :timestamp :event_type) events)
-        buckets (reduce (partial timeline-append comp) [] events)]
+        buckets (reduce timeline-append [] events)]
     (reverse (sort-by :from buckets))))
 
 (defn fetch-related-events [_id identity-map q]
@@ -137,7 +144,7 @@
         (let [res (fetch-related-events entity_id
                                         identity-map
                                         (into q {:sort_by :timestamp :sort_order :desc}))
-              timeline (bucketize-events res same-bucket?)]
+              timeline (bucketize-events)]
           (ok timeline)))))
 
 (def event-routes

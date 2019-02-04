@@ -251,12 +251,19 @@
                              :event_type :record-deleted}]
                            results)))))))))))))
 
+(defn get-event [owner event_type timestamp]
+  {:owner owner
+   :event_type event_type
+   :timestamp timestamp
+   :type "event"
+   :groups ["a group"]
+   :tlp "green"
+   :entity {}
+   :id "an id"})
 
 (defn generate-events [owner event_type from n fn-unit]
   (->> (map #(t/plus from (fn-unit %)) (range n))
-       (map #(hash-map :timestamp %
-                       :owner owner
-                       :event_type event_type))))
+       (map (partial get-event owner event_type))))
 
 
 (deftest bucket-operations-test
@@ -264,12 +271,12 @@
         t2 (t/plus t1 (t/seconds 1))
         t3 (t/plus t1 (t/seconds 2))
         t4 (t/plus t1 (t/days 1))
-        event1 {:timestamp t1 :owner "Smith" :event_type :record_created}
-        event2 {:timestamp t2 :owner "Smith" :event_type :record_updated}
-        event3 {:timestamp t3 :owner "Smith" :event_type :record_updated}
-        event4 {:timestamp t4 :owner "Doe" :event_type :record_updated}
-        event5 {:timestamp t1 :owner "Doe" :event_type :record_updated}
-
+        event1 (get-event "Smith" :record-created t1)
+        event2 (get-event "Smith" :record-updated t2)
+        event3 (get-event "Smith" :record-updated t3)
+        event4 (get-event "Doe" :record-updated t4)
+        event5 (get-event "Doe" :record-updated t1)
+        _ (println event1)
         bucket1 (ev/init-bucket event1)
         bucket2 (ev/bucket-append bucket1 event2)]
     (testing "init-bucket should properly initialize a bucket from an event"
@@ -293,16 +300,16 @@
         two-hours-ago (t/minus now (t/hours 2))
         one-month-ago (t/minus now (t/months 1))
 
-        every-sec (concat (generate-events "Doe" "created" now 1 t/seconds)
-                          (generate-events "Doe" "updated" now 2 t/seconds))
-        every-milli-1 (generate-events "Smith" "updated" one-hour-ago 10 t/millis)
-        every-milli-2 (generate-events "Doe" "updaetd" one-hour-ago 20 t/millis)
-        every-min (generate-events "Smith" "updated" two-hours-ago 4 t/minutes)
-        every-day (generate-events "Doe" "updated" one-month-ago 3 t/days)
+        every-sec (concat (generate-events "Doe" :record-created now 1 t/seconds)
+                          (generate-events "Doe" :record-updated now 2 t/seconds))
+        every-milli-1 (generate-events "Smith" :record-updated one-hour-ago 10 t/millis)
+        every-milli-2 (generate-events "Doe" :record-updated one-hour-ago 20 t/millis)
+        every-min (generate-events "Smith" :record-updated two-hours-ago 4 t/minutes)
+        every-day (generate-events "Doe" :record-updated one-month-ago 3 t/days)
 
         events (->> (concat every-sec every-min every-day every-milli-1 every-milli-2)
                     shuffle)
-        timeline (ev/bucketize-events events ev/same-bucket?)]
+        timeline (ev/bucketize-events events)]
     (testing "bucketize function should group events in near same time from same owner"
       (is (< (count timeline) (count events)))
       (is (= (+ (count every-min) (count every-day) 3)
