@@ -170,6 +170,7 @@
    :tags ["Relationship"]
    :entity :relationship
    :plural :relationships
+   :new-spec :new-relationship/map
    :schema rs/Relationship
    :partial-schema rs/PartialRelationship
    :partial-list-schema rs/PartialRelationshipList

@@ -148,6 +148,7 @@
    :tags ["Weakness"]
    :entity :weakness
    :plural :weaknesses
+   :new-spec :new-weakness/map
    :schema Weakness
    :partial-schema PartialWeakness
    :partial-list-schema PartialWeaknessList

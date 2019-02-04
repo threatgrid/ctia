@@ -133,6 +133,7 @@
    :tags ["COA"]
    :entity :coa
    :plural :coas
+   :new-spec :new-coa/map
    :schema COA
    :partial-schema PartialCOA
    :partial-list-schema PartialCOAList

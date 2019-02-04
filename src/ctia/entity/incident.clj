@@ -210,6 +210,7 @@
    :tags ["Incident"]
    :entity :incident
    :plural :incidents
+   :new-spec :new-incident/map
    :schema Incident
    :partial-schema PartialIncident
    :partial-list-schema PartialIncidentList

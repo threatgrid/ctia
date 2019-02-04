@@ -99,14 +99,16 @@
     (when spec
       (when-not (cs/valid? spec entity)
         (throw (ex-info (cs/explain-str spec entity)
-                        {:type :spec-validation-error
+                        {:error "Entity validation Error"
+                         :type :spec-validation-error
                          :entity entity}))))
     (when-let [entity-tlp (:tlp entity)]
       (when-not (allowed-tlp? entity-tlp)
         (throw (ex-info (format "Invalid document TLP %s, allowed TLPs are: %s"
                                 entity-tlp
                                 (clojure.string/join "," (allowed-tlps)))
-                        {:type :invalid-tlp-error
+                        {:error "Entity Access Control validation Error"
+                         :type :invalid-tlp-error
                          :entity entity})))))
   fm)
 
@@ -371,8 +373,8 @@
        :tempids tempids
        :identity identity
        :long-id-fn long-id-fn
-       :realize-fn realize-fn
        :spec spec
+       :realize-fn realize-fn
        :store-fn store-fn
        :create-event-fn to-create-event
        :enveloped-result? enveloped-result?}

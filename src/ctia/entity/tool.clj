@@ -89,6 +89,7 @@
    :tags ["Tool"]
    :entity :tool
    :plural :tools
+   :new-spec :new-tool/map
    :schema ts/Tool
    :partial-schema ts/PartialTool
    :partial-list-schema ts/PartialToolList
