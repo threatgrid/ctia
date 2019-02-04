@@ -1,29 +1,40 @@
 (ns ctia.entity.incident
-  (:require
-   [clj-momo.lib.clj-time.core :as time]
-   [compojure.api.sweet :refer [POST routes]]
-   [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
-   [ctia.flows.crud :as flows]
-   [ctia.http.routes
-    [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-    [crud :refer [entity-crud-routes]]]
-   [ctia.schemas
-    [utils :as csu]
-    [core :refer [def-acl-schema def-stored-schema Reference]]
-    [sorting :refer [default-entity-sort-fields describable-entity-sort-fields sourcable-entity-sort-fields]]]
-   [ctia.store :refer :all]
-   [ctia.stores.es
-    [mapping :as em]
-    [store :refer [def-es-store]]]
-   [ctim.schemas
-    [incident :as is]
-    [vocabularies :as vocs]]
-   [flanders
-    [schema :as fs]
-    [utils :as fu]]
-   [ring.util.http-response :refer [not-found ok]]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [compojure.api.sweet :refer [POST routes]]
+            [ctia.domain.entities
+             :refer [default-realize-fn un-store with-long-id]]
+            [ctia.entity.feedback.graphql-schemas :as feedback]
+            [ctia.entity.relationship.graphql-schemas :as relationship-graphql]
+            [ctia.flows.crud :as flows]
+            [ctia.http.routes
+             [common
+              :refer [BaseEntityFilterParams PagingParams
+                      SourcableEntityFilterParams]]
+             [crud :refer [entity-crud-routes]]]
+            [ctia.schemas
+             [core :refer [def-acl-schema def-stored-schema]]
+             [sorting
+              :refer [default-entity-sort-fields describable-entity-sort-fields
+                      sourcable-entity-sort-fields]]
+             [utils :as csu]]
+            [ctia.schemas.graphql
+             [flanders :as flanders]
+             [helpers :as g]
+             [pagination :as pagination]
+             [sorting :as graphql-sorting]]
+            [ctia.store :refer :all]
+            [ctia.stores.es
+             [mapping :as em]
+             [store :refer [def-es-store]]]
+            [ctim.schemas
+             [incident :as is]
+             [vocabularies :as vocs]]
+            [flanders
+             [schema :as fs]
+             [utils :as fu]]
+            [ring.util.http-response :refer [not-found ok]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (def incident-bundle-default-limit 1000)
 
@@ -198,6 +209,30 @@
      :delete-capabilities :delete-incident
      :search-capabilities :search-incident
      :external-id-capabilities #{:read-incident :external-id}})))
+
+(def IncidentType
+  (let [{:keys [fields name description]}
+        (flanders/->graphql
+         (fu/optionalize-all is/Incident)
+         {})]
+    (g/new-object
+     name
+     description
+     []
+     (merge fields
+            feedback/feedback-connection-field
+            relationship-graphql/relatable-entity-fields))))
+
+(def incident-order-arg
+  (graphql-sorting/order-by-arg
+   "IncidentOrder"
+   "incidents"
+   (into {}
+         (map (juxt graphql-sorting/sorting-kw->enum-name name)
+              incident-fields))))
+
+(def IncidentConnectionType
+  (pagination/new-connection IncidentType))
 
 (def capabilities
   #{:create-incident

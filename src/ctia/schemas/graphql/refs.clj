@@ -6,6 +6,11 @@
 (def AttackPatternRef
   (g/new-ref attack-pattern-type-name))
 
+;;---- Incident
+(def incident-type-name "Incident")
+(def IncidentRef
+  (g/new-ref incident-type-name))
+
 ;;---- Indicator
 (def indicator-type-name "Indicator")
 (def IndicatorRef
