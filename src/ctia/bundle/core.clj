@@ -102,8 +102,7 @@
              (all-pages
               (fn [paging]
                 (read-store entity-type list-fn
-                            {:external_ids external-ids}
-                            {}
+                            {:all-of {:external_ids external-ids}}
                             (auth/ident->map auth-identity)
                             paging))))
       [])))
@@ -321,12 +320,11 @@
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id identity-map related-to]
-  (let [should-map (->> (map #(hash-map % id) (set related-to))
-                        (apply merge))]
+  (let [filters (->> (map #(hash-map % id) (set related-to))
+                     (apply merge))]
     (some-> (list-all-pages :relationship
                             list-fn
-                            {}
-                            should-map
+                            {:one-of filters}
                             identity-map
                             {:limit list-limit})
             ent/un-store-all)))

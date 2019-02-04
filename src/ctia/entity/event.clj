@@ -21,7 +21,7 @@
    [ctia.stores.es
     [crud :as crud]
     [mapping :as em]]
-   [ctia.store :refer [read-store timeline-events list-all-pages]]
+   [ctia.store :refer [read-store list-events list-all-pages]]
    [ctia.domain.entities :as ent]
    [ctia.properties :refer [properties]]
    [clojure.set :as set]))
@@ -113,13 +113,12 @@
     (reverse (sort-by :from buckets))))
 
 (defn fetch-related-events [_id identity-map q]
-  (let [should {:entity.id _id
-                :entity.source_ref _id
-                :entity.target_ref _id}]
+  (let [filters {:entity.id _id
+                 :entity.source_ref _id
+                 :entity.target_ref _id}]
     (some-> (list-all-pages :event
-                            timeline-events
-                            {}
-                            should
+                            list-events
+                            {:one-of filters}
                             identity-map
                             q)
             ent/un-store-all)))

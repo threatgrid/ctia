@@ -17,6 +17,7 @@
             [schema
              [coerce :as c]
              [core :as s]]
+            [schema-tools.core :as st]
             [clojure.set :as set]))
 
 (defn make-es-read-params
@@ -189,6 +190,11 @@
     (assoc params :sort_by default-sort-field)))
 
 
+(s/defschema FilterSchema
+  (st/optional-keys
+   {:all-of {s/Any s/Any}
+    :one-of {s/Any s/Any}}))
+
 (defn handle-find
   "Generate an ES find/list handler using some mapping and schema"
   [mapping Model]
@@ -196,14 +202,15 @@
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [state :- ESConnState
-       filter-map :- {s/Any s/Any}
-       should-map :- {s/Any s/Any}
+       filters :- FilterSchema
        ident
        params]
-      (let [should-terms (map (fn [[k v]]
+      (let [{:keys [all-of one-of]
+             :or {all-of {} one-of {}}} filters
+            should-terms (map (fn [[k v]]
                                 (let [t-key (if (sequential? k) k [k])]
                                   [t-key v]))
-                              should-map)
+                              one-of)
             should-filters (q/nested-terms should-terms)
             query {:bool {:must [(find-restriction-query-part ident)]
                           :should should-filters}}]
@@ -212,7 +219,7 @@
                              (:index state)
                              (name mapping)
                              query
-                             filter-map
+                             all-of
                              (-> params
                                  with-default-sort-field
                                  make-es-read-params)))

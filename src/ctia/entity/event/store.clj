@@ -16,10 +16,8 @@
   IEventStore
   (create-events [this new-events]
     (handle-create state new-events))
-  (list-events [this filter-map should-map ident params]
-    (handle-list state filter-map should-map ident params))
-  (timeline-events [this filter-map should-map ident params]
-    (handle-list state filter-map should-map ident params))
+  (list-events [this filter-map ident params]
+    (handle-list state filter-map ident params))
 
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap ident params]

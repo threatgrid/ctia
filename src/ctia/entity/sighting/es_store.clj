@@ -127,9 +127,9 @@
              #(map es-partial-stored-sighting->partial-stored-sighting (es-coerce! %))))
 
 (s/defn handle-list :- PartialStoredSightingList
-  [state filter-map should-map ident params]
+  [state filter-map ident params]
   (es-paginated-list->paginated-list
-   (list-fn state filter-map should-map ident params)))
+   (list-fn state filter-map ident params)))
 
 (s/defn handle-query-string-search-sightings
   :- PartialStoredSightingList
@@ -141,9 +141,8 @@
   :- PartialStoredSightingList
   [state observables :- [Observable] ident params]
   (handle-list state
-               {:observables_hash
-                (obs->hashes observables)}
-               {}
+               {:all-of {:observables_hash
+                         (obs->hashes observables)}}
                ident
                params))
 
@@ -157,8 +156,8 @@
     (handle-update state id sighting ident))
   (delete-record [_ id ident]
     (handle-delete state id ident))
-  (list-records [_ filter-map should-map ident params]
-    (handle-list state filter-map should-map ident params))
+  (list-records [_ filter-map ident params]
+    (handle-list state filter-map ident params))
   ISightingStore
   (list-sightings-by-observables [_ observables ident params]
     (handle-list-by-observables state observables ident params))

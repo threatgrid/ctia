@@ -23,8 +23,8 @@
       ((crud/handle-update ~entity ~stored-schema) ~(symbol "state") id# actor# ident#))
      (~(symbol "delete-record") [_# id# ident#]
       ((crud/handle-delete ~entity ~stored-schema) ~(symbol "state") id# ident#))
-     (~(symbol "list-records") [_# filter-map# should-map# ident# params#]
-      ((crud/handle-find ~entity ~partial-stored-schema) ~(symbol "state") filter-map# should-map# ident# params#))
+     (~(symbol "list-records") [_# filter-map# ident# params#]
+      ((crud/handle-find ~entity ~partial-stored-schema) ~(symbol "state") filter-map# ident# params#))
      IQueryStringSearchableStore
      (~(symbol "query-string-search") [_# query# filtermap# ident# params#]
       ((crud/handle-query-string-search ~entity

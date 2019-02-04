@@ -61,13 +61,11 @@
 
 (s/defn handle-list
   [state :- ESConnState
-   filter-map :- {s/Any s/Any}
-   should-map :- {s/Any s/Any}
+   filter-map :- crud/FilterSchema
    ident
    params]
   (handle-list-fn state
                   filter-map
-                  should-map
                   ident
                   params))
 
