@@ -83,34 +83,43 @@
       (get tempids (:id entity))
       (when-let [entity-id (find-checked-id entity)]
         (when-not (auth/capable? identity :specify-id)
-          (throw (http-response/bad-request!
-                  {:error "Missing capability to specify entity ID"
-                   :entity entity})))
+          {:error "Missing capability to specify entity ID"
+           :entity entity})
         (if (id/valid-short-id? entity-id)
           entity-id
-          (throw (http-response/bad-request!
-                  {:error (format "Invalid entity ID: %s" entity-id)
-                   :entity entity}))))
+          {:error (format "Invalid entity ID: %s" entity-id)
+           :entity entity}))
       (make-id entity-type)))
+
+(defn check-spec [spec entity]
+  (if (and spec
+           (not (cs/valid? spec entity)))
+    {:msg (cs/explain-str spec entity)
+     :error "Entity validation Error"
+     :type :spec-validation-error
+     :entity entity}
+    entity))
+
+(defn tlp-check
+  [{:keys [tlp] :as entity}]
+  (cond
+    (not (seq tlp)) entity
+    (not (allowed-tlp? tlp))
+    {:msg (format "Invalid document TLP %s, allowed TLPs are: %s"
+                  tlp
+                  (clojure.string/join "," (allowed-tlps)))
+     :error "Entity Access Control validation Error"
+     :type :invalid-tlp-error
+     :entity entity}
+    :else entity))
 
 (s/defn ^:private validate-entities :- FlowMap
   [{:keys [spec entities] :as fm} :- FlowMap]
-  (doseq [entity entities]
-    (when spec
-      (when-not (cs/valid? spec entity)
-        (throw (ex-info (cs/explain-str spec entity)
-                        {:error "Entity validation Error"
-                         :type :spec-validation-error
-                         :entity entity}))))
-    (when-let [entity-tlp (:tlp entity)]
-      (when-not (allowed-tlp? entity-tlp)
-        (throw (ex-info (format "Invalid document TLP %s, allowed TLPs are: %s"
-                                entity-tlp
-                                (clojure.string/join "," (allowed-tlps)))
-                        {:error "Entity Access Control validation Error"
-                         :type :invalid-tlp-error
-                         :entity entity})))))
-  fm)
+  (assoc fm :entities
+         (map (fn [entity]
+                (->> entity
+                     (check-spec spec)
+                     (tlp-check))) entities)))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
@@ -141,30 +150,37 @@
            (doall
             (for [entity entities
                   :let [entity-id (find-entity-id fm entity)]]
-              (let [result
-                    (case flow-type
-                      :create (realize-fn entity
-                                          entity-id
-                                          tempids
-                                          login
-                                          groups)
-                      :update (if prev-entity
-                                (realize-fn entity
+              (cond
+                (:error entity) entity
+                (:error entity-id) entity-id
+                :else (case flow-type
+                        :create (realize-fn entity
                                             entity-id
                                             tempids
                                             login
-                                            groups
-                                            prev-entity)
-                                (realize-fn entity
-                                            entity-id
-                                            tempids
-                                            login
-                                            groups))
-                      :delete entity)]
-                (if (and (contains? result :error)
-                         (not enveloped-result?))
-                  (http-response/bad-request! result)
-                  result)))))))
+                                            groups)
+                        :update (if prev-entity
+                                  (realize-fn entity
+                                              entity-id
+                                              tempids
+                                              login
+                                              groups
+                                              prev-entity)
+                                  (realize-fn entity
+                                              entity-id
+                                              tempids
+                                              login
+                                              groups))
+                        :delete entity)))))))
+
+(s/defn ^:private throw-validation-error
+  [{:keys [entities enveloped-result?] :as fm} :- FlowMap]
+  (let [errors (filter :error entities)]
+    (if (and (seq errors)
+             (not enveloped-result?))
+      (throw (ex-info (:msg (first errors))
+                      (first errors)))
+      fm)))
 
 (s/defn ^:private apply-before-hooks :- FlowMap
   [{:keys [entities flow-type prev-entity] :as fm} :- FlowMap]
@@ -268,8 +284,7 @@
     :create (apply-create-store-fn fm)
 
     :delete
-    (assoc fm
-           :results
+    (assoc fm :results
            (doall
             (for [{entity-id :id} entities]
               (store-fn entity-id))))
@@ -381,6 +396,7 @@
       validate-entities
       create-ids-from-transient
       realize-entities
+      throw-validation-error
       apply-before-hooks
       (preserve-errors apply-store-fn)
       apply-long-id-fn
@@ -421,6 +437,7 @@
            :create-event-fn to-update-event}
           validate-entities
           realize-entities
+          throw-validation-error
           apply-before-hooks
           apply-store-fn
           apply-long-id-fn
@@ -463,6 +480,7 @@
           patch-entities
           validate-entities
           realize-entities
+          throw-validation-error
           apply-before-hooks
           apply-store-fn
           apply-long-id-fn

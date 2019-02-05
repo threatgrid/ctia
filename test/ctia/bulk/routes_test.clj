@@ -393,7 +393,22 @@
            (post "ctia/bulk"
                  :body {:vulnerabilities [vulnerability]}
                  :headers {"Authorization" "45c1f5e3f05d0"})]
-       (is (= 400 status-create) "The bulk create should be unsuccessfull")))))
+
+       (is (= 201 status-create) "The bulk create status should be 201")
+       (is (= {:vulnerabilities
+               '({:msg
+                  "In: [:impact :cvss_v2 :vector_string] val: \"CLEARLY INVALID STRING\" fails spec: :new-vulnerability.impact.cvss_v2/vector_string at: [:impact :cvss_v2 :vector_string] predicate: :clojure.spec.alpha/unknown\n",
+                  :error "Entity validation Error",
+                  :type :spec-validation-error,
+                  :entity
+                  {:description "Improper Neutralization of Directives",
+                   :id "transient:vulnerability1",
+                   :impact
+                   {:cvss_v2
+                    {:base_severity "Low",
+                     :base_score 1,
+                     :vector_string "CLEARLY INVALID STRING"}}}})} bulk-ids)
+           "The bulk create status should report errors")))))
 
 (deftest bulk-error-test
   (test-for-each-store
