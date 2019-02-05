@@ -185,6 +185,7 @@
    :tags ["Indicator"]
    :entity :indicator
    :plural :indicators
+   :new-spec :new-indicator/map
    :schema Indicator
    :partial-schema PartialIndicator
    :partial-list-schema PartialIndicatorList

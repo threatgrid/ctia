@@ -22,6 +22,7 @@
   (st/merge
    {:entity s/Keyword
     :plural s/Keyword
+    :new-spec (s/either s/Keyword s/Any)
     :schema (s/protocol s/Schema)
     :partial-schema (s/protocol s/Schema)
     :partial-list-schema (s/protocol s/Schema)

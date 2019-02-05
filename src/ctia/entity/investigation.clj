@@ -159,6 +159,7 @@
    :tags ["Investigation"]
    :entity :investigation
    :plural :investigations
+   :new-spec :new-investigation/map
    :schema Investigation
    :partial-schema PartialInvestigation
    :partial-list-schema PartialInvestigationList

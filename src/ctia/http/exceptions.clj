@@ -58,7 +58,8 @@
   [^Exception e data request]
   (logging/log! :info e (ex-message e))
   (unauthorized
-   {:type "Access Control Error"
+   {:error "Access Control validation Client Error"
+    :type "Access Control Error"
     :message (.getMessage e)
     :class (.getName (class e))}))
 
@@ -68,7 +69,8 @@
   (logging/log! :info e (ex-message e))
   (bad-request
    (let [entity (:entity (ex-data e))]
-     {:type "Invalid Entity Error"
+     {:error "Spec Validation Client Error"
+      :type "Invalid Entity Error"
       :message (.getMessage e)
       :entity entity
       :class (.getName (class e))})))

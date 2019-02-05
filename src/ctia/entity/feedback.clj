@@ -94,6 +94,7 @@
      :put-capabilities :create-feedback
      :delete-capabilities :delete-feedback
      :external-id-capabilities #{:read-feedback :external-id}
+     :spec :new-feedback/map
      :can-update? false})))
 
 (def feedback-entity
@@ -101,6 +102,7 @@
    :tags ["Feedback"]
    :entity :feedback
    :plural :feedbacks
+   :new-spec :new-feedback/map
    :schema fs/Feedback
    :partial-schema fs/PartialFeedback
    :partial-list-schema fs/PartialFeedbackList

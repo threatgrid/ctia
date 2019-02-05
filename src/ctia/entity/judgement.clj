@@ -118,6 +118,7 @@
    :tags ["Judgement"]
    :entity :judgement
    :plural :judgements
+   :new-spec :new-judgement/map
    :schema js/Judgement
    :partial-schema js/PartialJudgement
    :partial-list-schema js/PartialJudgementList

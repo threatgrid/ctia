@@ -310,6 +310,7 @@
    :tags ["Casebook"]
    :entity :casebook
    :plural :casebooks
+   :new-spec :new-casebook/map
    :schema Casebook
    :partial-schema PartialCasebook
    :partial-list-schema PartialCasebookList

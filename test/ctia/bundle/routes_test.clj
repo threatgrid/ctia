@@ -659,6 +659,8 @@
               :sightings #{sighting}}]
 
          (with-tlp-property-setting "amber"
-           #(is (= 400 (:status (post "ctia/bundle/import"
-                                      :body new-bundle
-                                      :headers {"Authorization" "45c1f5e3f05d0"}))))))))))
+           #(let [res (post "ctia/bundle/import"
+                            :body new-bundle
+                            :headers {"Authorization" "45c1f5e3f05d0"})]
+              (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error)))
+              (is (= 200 (:status res))))))))))

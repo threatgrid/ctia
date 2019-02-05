@@ -76,6 +76,7 @@
    :tags ["Sighting"]
    :entity :sighting
    :plural :sightings
+   :new-spec :new-sighting/map
    :schema ss/Sighting
    :partial-schema ss/PartialSighting
    :partial-list-schema ss/PartialSightingList

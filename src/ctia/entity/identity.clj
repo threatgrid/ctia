@@ -86,7 +86,8 @@
     (handle-delete state org-id)))
 
 (def identity-entity
-  {:schema Identity
+  {:new-spec map?
+   :schema Identity
    :stored-schema Identity
    :partial-schema PartialIdentity
    :partial-stored-schema PartialIdentity

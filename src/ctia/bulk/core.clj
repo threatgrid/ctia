@@ -60,7 +60,8 @@
              :enveloped-result? true
              :identity auth-identity
              :entities new-entities
-             :tempids tempids)
+             :tempids tempids
+             :spec (-> entities entity-type :new-spec))
             :data (partial map (fn [{:keys [error id] :as result}]
                                  (if error result id))))))
 

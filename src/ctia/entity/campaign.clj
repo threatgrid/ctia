@@ -126,6 +126,7 @@
    :tags ["Campaign"]
    :entity :campaign
    :plural :campaigns
+   :new-spec :new-campaign/map
    :schema Campaign
    :partial-schema PartialCampaign
    :partial-list-schema PartialCampaignList

@@ -131,6 +131,7 @@
    :tags ["Actor"]
    :entity :actor
    :plural :actors
+   :new-spec :new-actor/map
    :schema Actor
    :partial-schema PartialActor
    :partial-list-schema PartialActorList

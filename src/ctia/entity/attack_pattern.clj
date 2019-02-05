@@ -149,6 +149,7 @@
    :tags ["Attack Pattern"]
    :entity :attack-pattern
    :plural :attack-patterns
+   :new-spec :new-attack-pattern/map
    :schema AttackPattern
    :partial-schema PartialAttackPattern
    :partial-list-schema PartialAttackPatternList
