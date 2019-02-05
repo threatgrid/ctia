@@ -1,6 +1,6 @@
-query ToolQueryTest($id: String!, $relationship_type: String = "variant-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
-  tool(id: $id) {
-    ...toolFields
+query IncidentQueryTest($id: String!, $relationship_type: String = "variant-of", $first: Int, $after: String, $sort_field: RelationshipOrderField = ID, $sort_direction: OrderDirection = asc) {
+  incident(id: $id) {
+    ...incidentFields
     relationships(relationship_type: $relationship_type first: $first after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
@@ -9,20 +9,20 @@ query ToolQueryTest($id: String!, $relationship_type: String = "variant-of", $fi
       nodes {
         ...relationshipBaseFields
         target_entity {
-          ...toolFields
+          ...incidentFields
         }
         source_entity {
-          ...toolFields
+          ...incidentFields
         }
       }
       edges {
         node {
           ...relationshipBaseFields
           target_entity {
-            ...toolFields
+            ...incidentFields
           }
           source_entity {
-            ...toolFields
+            ...incidentFields
           }
         }
       }
@@ -30,8 +30,8 @@ query ToolQueryTest($id: String!, $relationship_type: String = "variant-of", $fi
   }
 }
 
-query ToolFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
-  tool(id: $id) {
+query IncidentFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_field: FeedbackOrderField = ID, $sort_direction: OrderDirection = asc) {
+  incident(id: $id) {
     feedbacks(first: $first, after: $after, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
       totalCount
       pageInfo {
@@ -49,29 +49,33 @@ query ToolFeedbacksQueryTest($id: String!, $first: Int, $after: String, $sort_fi
   }
 }
 
-query ToolsQueryTest($query: String, $after: String, $first: Int, $sort_field:ToolOrderField = ID, $sort_direction: OrderDirection = asc) {
-  tools(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+query IncidentsQueryTest($query: String, $after: String, $first: Int, $sort_field:IncidentOrderField = ID, $sort_direction: OrderDirection = asc) {
+  incidents(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
     totalCount
     pageInfo {
       ...pageInfoFields
     }
     nodes {
-      ...toolFields
+      ...incidentFields
     }
     edges {
       node {
-        ...toolFields
+        ...incidentFields
       }
     }
   }
 }
 
-fragment killChainPhaseFields on KillChainPhase {
-  kill_chain_name
-  phase_name
+fragment incidentTimeFields on IncidentTime {
+  opened
+  discovered
+  reported
+  remediated
+  closed
+  rejected
 }
 
-fragment toolFields on Tool {
+fragment incidentFields on Incident {
   id
   type
   schema_version
@@ -85,12 +89,15 @@ fragment toolFields on Tool {
   tlp
   source
   source_uri
-  name
-  labels
+  title
   description
-  kill_chain_phases {
-    ...killChainPhaseFields
+  short_description
+  confidence
+  status
+  incident_time {
+    ...incidentTimeFields
   }
-  tool_version
-  x_mitre_aliases
+  categories
+  discovery_method
+  intended_effect
 }

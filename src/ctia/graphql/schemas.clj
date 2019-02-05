@@ -8,6 +8,9 @@
    [ctia.entity.attack-pattern :as attack-pattern
     :refer [AttackPatternConnectionType
             AttackPatternType]]
+   [ctia.entity.incident :as incident
+    :refer [IncidentConnectionType
+            IncidentType]]
    [ctia.entity.indicator :as indicator
     :refer [IndicatorConnectionType
             IndicatorType]]
@@ -67,6 +70,14 @@
                                    attack-pattern/attack-pattern-order-arg
                                    p/connection-arguments)
                       :resolve (res/search-entity-resolver :attack-pattern)}
+    :incident {:type IncidentType
+                :args search-by-id-args
+                :resolve (res/entity-by-id-resolver :incident)}
+    :incidents {:type IncidentConnectionType
+                 :args (merge common/lucene-query-arguments
+                              incident/incident-order-arg
+                              p/connection-arguments)
+                 :resolve (res/search-entity-resolver :incident)}
     :indicator {:type IndicatorType
                 :args search-by-id-args
                 :resolve (res/entity-by-id-resolver :indicator)}

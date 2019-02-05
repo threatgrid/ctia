@@ -13,6 +13,7 @@
             [ctim.domain.id :as id]
             [ctim.schemas
              [attack-pattern :as ctim-ap]
+             [incident :as ctim-inc]
              [indicator :as ctim-ind]
              [judgement :as ctim-j]
              [malware :as ctim-malw]
@@ -59,6 +60,7 @@
        ctim-ap/type-identifier (g/get-type schema refs/attack-pattern-type-name)
        ctim-j/type-identifier (g/get-type schema refs/judgement-type-name)
        ctim-malw/type-identifier (g/get-type schema refs/malware-type-name)
+       ctim-inc/type-identifier (g/get-type schema refs/incident-type-name)
        ctim-ind/type-identifier (g/get-type schema refs/indicator-type-name)
        ctim-sig/type-identifier (g/get-type schema refs/sighting-type-name)
        ctim-tool/type-identifier (g/get-type schema refs/tool-type-name)
@@ -67,6 +69,7 @@
    [refs/AttackPatternRef
     refs/JudgementRef
     refs/MalwareRef
+    refs/IncidentRef
     refs/IndicatorRef
     refs/SightingRef
     refs/ToolRef

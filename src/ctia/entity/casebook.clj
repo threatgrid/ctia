@@ -257,6 +257,7 @@
         (flanders/->graphql
          (fu/optionalize-all cs/Casebook)
          {refs/observable-type-name refs/ObservableTypeRef
+          refs/incident-type-name refs/IncidentRef
           refs/judgement-type-name refs/JudgementRef
           refs/sighting-type-name refs/SightingRef
           refs/verdict-type-name refs/VerdictRef

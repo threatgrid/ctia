@@ -66,6 +66,11 @@ query AttackPatternsQueryTest($query: String, $after: String, $first: Int, $sort
   }
 }
 
+fragment killChainPhaseFields on KillChainPhase {
+  kill_chain_name
+  phase_name
+}
+
 fragment attackPatternFields on AttackPattern {
   id
   type
