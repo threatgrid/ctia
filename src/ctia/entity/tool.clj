@@ -82,7 +82,7 @@
     :put-capabilities :create-tool
     :delete-capabilities :delete-tool
     :search-capabilities :search-tool
-    :external-id-capabilities #{:read-tool :external-id}}))
+    :external-id-capabilities :read-tool}))
 
 (def tool-entity
   {:route-context "/tool"

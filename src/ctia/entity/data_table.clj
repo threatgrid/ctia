@@ -103,7 +103,7 @@
     :get-capabilities :read-data-table
     :post-capabilities :create-data-table
     :delete-capabilities :delete-data-table
-    :external-id-capabilities #{:read-data-table :external-id}
+    :external-id-capabilities :read-data-table
     :can-update? false
     :can-search? false}))
 

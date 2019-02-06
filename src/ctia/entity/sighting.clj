@@ -61,8 +61,7 @@
     :post-capabilities :create-sighting
     :put-capabilities :create-sighting
     :delete-capabilities :delete-sighting
-    :search-capabilities :search-sighting
-    :external-id-capabilities #{:read-sighting :external-id}}))
+    :search-capabilities :search-sighting}))
 
 (def capabilities
   #{:create-sighting

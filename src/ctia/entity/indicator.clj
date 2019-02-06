@@ -149,7 +149,7 @@
     :put-capabilities :create-indicator
     :delete-capabilities :delete-indicator
     :search-capabilities :search-indicator
-    :external-id-capabilities #{:read-indicator :external-id}}))
+    :external-id-capabilities :read-indicator}))
 
 (def capabilities
   #{:read-indicator

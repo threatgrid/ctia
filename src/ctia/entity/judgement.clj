@@ -79,7 +79,7 @@
     :put-capabilities #{:create-judgement :developer}
     :delete-capabilities :delete-judgement
     :search-capabilities :search-judgement
-    :external-id-capabilities #{:read-judgement :external-id}
+    :external-id-capabilities :read-judgement
     :can-update? true}))
 
 (def capabilities
