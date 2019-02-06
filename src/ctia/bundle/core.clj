@@ -267,8 +267,7 @@
   [response]
   (let [errors (->> response
                     :results
-                    (map :error)
-                    seq)]
+                    (keep :error))]
     (doseq [error errors]
       (log/warn error)))
   response)
@@ -300,23 +299,6 @@
    (select-keys bundle
                 bundle-entity-keys)))
 
-(defn fetch-relationship-targets
-  "given relationships, fetch all related objects"
-  [relationships identity-map]
-  (let [all-ids
-        (apply set/union
-               (map (fn [{:keys [target_ref
-                                 source_ref]}]
-                      #{target_ref source_ref})
-                    relationships))
-        by-type (dissoc (group-by
-                         #(ent/long-id->entity-type %) all-ids) nil)
-        by-bulk-key (into {}
-                          (map (fn [[k v]]
-                                 {(bulk/bulk-key
-                                   (keyword k)) v}) by-type))]
-    (bulk/fetch-bulk by-bulk-key identity-map)))
-
 (defn list-all-pages
   [entity
    filters
@@ -334,6 +316,36 @@
       (if-let [next-params (:next paging)]
         (recur next-params (concat results data))
         (concat results data)))))
+
+(defn local-entity?
+  "Returns true if this entity'ID is hosted by this CTIA instance,
+   false otherwise"
+  [id]
+  (if (seq id)
+    (if (id/long-id? id)
+      (let [id-rec (id/long-id->id id)
+            this-host (get-in @properties [:ctia :http :show :hostname])]
+        (= (:hostname id-rec) this-host))
+      true)
+    false))
+
+(defn fetch-relationship-targets
+  "given relationships, fetch all related objects"
+  [relationships identity-map]
+  (let [all-ids (->> relationships
+                     (map (fn [{:keys [target_ref source_ref]}]
+                            [target_ref source_ref]))
+                     flatten
+                     set
+                     (filter local-entity?)
+                     set)
+        by-type (dissoc (group-by
+                         #(ent/long-id->entity-type %) all-ids) nil)
+        by-bulk-key (into {}
+                          (map (fn [[k v]]
+                                 {(bulk/bulk-key
+                                   (keyword k)) v}) by-type))]
+    (bulk/fetch-bulk by-bulk-key identity-map)))
 
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"

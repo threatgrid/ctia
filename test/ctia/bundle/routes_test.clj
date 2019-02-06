@@ -519,6 +519,47 @@
          (is (= bundle-get-res-3 bundle-get-res-5)
              "default related_to value should be [:source_ref :target_ref]"))))))
 
+(deftest bundle-export-with-unreachable-external-entity
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [sighting-1 (mk-sighting 1)
+           sighting-1-id (:id sighting-1)
+           indicator-1 (mk-indicator 1)
+           relationship-1 (mk-relationship 1 sighting-1 indicator-1 "member-of")
+           relationship-2
+           {:type "relationship"
+            :source_ref (:id sighting-1)
+            :relationship_type "indicates"
+            :target_ref "http://unknown.site/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"}
+           bundle {:type "bundle"
+                   :source "source"
+                   :sightings #{sighting-1}
+                   :indicators #{indicator-1}
+                   :relationships #{relationship-1 relationship-2}}
+           bundle-import (post "ctia/bundle/import"
+                               :body bundle
+                               :headers {"Authorization" "45c1f5e3f05d0"})
+           id-map (some->> bundle-import
+                           :parsed-body
+                           :results
+                           (map (fn [{:keys [original_id id]}]
+                                  [original_id id]))
+                           (into {}))
+           sighting-1-final-id (clojure.core/get id-map sighting-1-id)
+           bundle-export (get "ctia/bundle/export"
+                              :query-params {:ids [sighting-1-final-id]}
+                              :headers {"Authorization" "45c1f5e3f05d0"})
+           bundle-export-body (:parsed-body bundle-export)]
+        (is (= 200 (:status bundle-import)) "Import request status should be 200")
+        (is (= 200 (:status bundle-export)) "Export request status should be 200")
+        (is (= 1 (count (:indicators bundle-export-body))))
+        (is (= 2 (count (:relationships bundle-export-body))))
+        (is (= 1 (count (:sightings bundle-export-body))))))))
 
 (def bundle-related-fixture
   (let [indicator-1 (mk-indicator 1)
