@@ -125,16 +125,6 @@
         (is (= {:message "Missing capability",
                 :capabilities :read-judgement,
                 :owner "baruser"}
-               body))))
-
-    (testing "doesn't have list by external id capability"
-      (let [{body :parsed-body status :status}
-            (get  "ctia/judgement/external_id/123"
-                  :headers {"Authorization" "2222222222222"})]
-        (is (= 401 status))
-        (is (= {:message "Missing capability",
-                :capabilities #{:read-judgement :external-id},
-                :owner "baruser"}
                body))))))
 
 (deftest test-judgement-routes

@@ -41,7 +41,7 @@
            :delete-casebook}
          (sut/scope-to-capabilities (sut/casebook-root-scope)))
       "Check the casebook capabilities from the casebook scope")
-  (is (= #{:developer :specify-id :external-id}
+  (is (= #{:developer :specify-id}
          (set/difference caps/all-capabilities
                          (sut/scopes-to-capabilities #{(sut/entity-root-scope)
                                                        (sut/casebook-root-scope)})))

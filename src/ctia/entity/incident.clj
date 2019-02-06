@@ -208,7 +208,7 @@
      :patch-capabilities :create-incident
      :delete-capabilities :delete-incident
      :search-capabilities :search-incident
-     :external-id-capabilities #{:read-incident :external-id}})))
+     :external-id-capabilities :read-incident})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

@@ -302,7 +302,7 @@
      :put-capabilities :create-casebook
      :delete-capabilities :delete-casebook
      :search-capabilities :search-casebook
-     :external-id-capabilities #{:read-casebook :external-id}
+     :external-id-capabilities :read-casebook
      :hide-delete? false})))
 
 (def casebook-entity

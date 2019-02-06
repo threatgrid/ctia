@@ -135,7 +135,7 @@
     :put-capabilities :create-weakness
     :delete-capabilities :delete-weakness
     :search-capabilities :search-weakness
-    :external-id-capabilities #{:read-weakness :external-id}}))
+    :external-id-capabilities :read-weakness}))
 
 (def capabilities
   #{:create-weakness

@@ -93,7 +93,7 @@
      :post-capabilities :create-feedback
      :put-capabilities :create-feedback
      :delete-capabilities :delete-feedback
-     :external-id-capabilities #{:read-feedback :external-id}
+     :external-id-capabilities :read-feedback
      :spec :new-feedback/map
      :can-update? false})))
 

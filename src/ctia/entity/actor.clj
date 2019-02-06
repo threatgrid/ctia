@@ -118,7 +118,7 @@
     :put-capabilities :create-actor
     :delete-capabilities :delete-actor
     :search-capabilities :search-actor
-    :external-id-capabilities #{:read-actor :external-id}}))
+    :external-id-capabilities :read-actor}))
 
 (def capabilities
   #{:create-actor

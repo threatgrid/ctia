@@ -47,7 +47,6 @@
     ;; Other
     :developer
     :specify-id
-    :external-id
     :import-bundle})
 
 (def all-capabilities
@@ -55,12 +54,10 @@
    misc-capabilities
    all-entity-capabilities))
 
-
 (def all-capabilities-no-casebook
   (set/union
    misc-capabilities
    all-entity-no-casebook-capabilities))
-
 
 (comment
 
@@ -110,7 +107,6 @@
      :read-verdict
      :read-weakness
      :list-weaknesses
-     :import-bundle
-     :external-id}
+     :import-bundle}
    :admin
    all-capabilities})

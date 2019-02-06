@@ -120,7 +120,7 @@
     :put-capabilities :create-coa
     :delete-capabilities :delete-coa
     :search-capabilities :search-coa
-    :external-id-capabilities #{:read-coa :external-id}}))
+    :external-id-capabilities :read-coa}))
 
 (def capabilities
   #{:create-coa

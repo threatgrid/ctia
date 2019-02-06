@@ -156,7 +156,7 @@
     :put-capabilities :create-relationship
     :delete-capabilities :delete-relationship
     :search-capabilities :search-relationship
-    :external-id-capabilities #{:read-relationship :external-id}}))
+    :external-id-capabilities :read-relationship}))
 
 (def capabilities
   #{:create-relationship

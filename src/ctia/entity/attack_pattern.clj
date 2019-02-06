@@ -112,7 +112,7 @@
     :put-capabilities :create-attack-pattern
     :delete-capabilities :delete-attack-pattern
     :search-capabilities :search-attack-pattern
-    :external-id-capabilities #{:read-attack-pattern :external-id}}))
+    :external-id-capabilities :read-attack-pattern}))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}
