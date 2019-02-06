@@ -18,7 +18,6 @@
     (handle-create state new-events))
   (list-events [this filter-map ident params]
     (handle-list state filter-map ident params))
-
   IQueryStringSearchableStore
   (query-string-search [_ query filtermap ident params]
     (handle-event-query-string-search
