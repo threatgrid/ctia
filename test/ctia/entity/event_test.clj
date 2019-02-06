@@ -276,7 +276,6 @@
         event3 (get-event "Smith" :record-updated t3)
         event4 (get-event "Doe" :record-updated t4)
         event5 (get-event "Doe" :record-updated t1)
-        _ (println event1)
         bucket1 (ev/init-bucket event1)
         bucket2 (ev/bucket-append bucket1 event2)]
     (testing "init-bucket should properly initialize a bucket from an event"

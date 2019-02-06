@@ -89,18 +89,12 @@
    :to (:timestamp event)
    :events (list event)})
 
-(defn min-ts [t1 t2]
-  (if (t/before? t1 t2) t1 t2))
-
-(defn max-ts [t1 t2]
-  (if (t/before? t1 t2) t2 t1))
-
 (s/defn bucket-append :- EventBucket
   [bucket :- EventBucket
    event :- Event]
   (-> (update bucket :count inc)
-      (update :from min-ts (:timestamp event))
-      (update :to max-ts (:timestamp event))
+      (update :from t/earliest (:timestamp event))
+      (update :to t/latest (:timestamp event))
       (update :events conj event)))
 
 (s/defn timeline-append :- [EventBucket]
