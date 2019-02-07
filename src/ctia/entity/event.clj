@@ -161,7 +161,8 @@
      :search-capabilities :search-event})))
 
 (def event-entity
-  {:route-context "/event"
+  {:new-spec map?
+   :route-context "/event"
    :tags ["Event"]
    :schema Event
    :stored-schema Event

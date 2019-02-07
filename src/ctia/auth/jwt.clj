@@ -21,9 +21,6 @@
   (get-in @prop/properties [:ctia :auth :casebook :scope]
           "casebook"))
 
-(def ^:private read-only-ctia-capabilities
-  (:user default-capabilities))
-
 (def claim-prefix
   (get-in @prop/properties [:ctia :http :jwt :claim-prefix]
           "https://schemas.cisco.com/iroh/identity/claims"))

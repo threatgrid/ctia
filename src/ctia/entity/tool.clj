@@ -82,13 +82,14 @@
     :put-capabilities :create-tool
     :delete-capabilities :delete-tool
     :search-capabilities :search-tool
-    :external-id-capabilities #{:read-tool :external-id}}))
+    :external-id-capabilities :read-tool}))
 
 (def tool-entity
   {:route-context "/tool"
    :tags ["Tool"]
    :entity :tool
    :plural :tools
+   :new-spec :new-tool/map
    :schema ts/Tool
    :partial-schema ts/PartialTool
    :partial-list-schema ts/PartialToolList

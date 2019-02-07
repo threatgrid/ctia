@@ -156,7 +156,7 @@
     :put-capabilities :create-relationship
     :delete-capabilities :delete-relationship
     :search-capabilities :search-relationship
-    :external-id-capabilities #{:read-relationship :external-id}}))
+    :external-id-capabilities :read-relationship}))
 
 (def capabilities
   #{:create-relationship
@@ -170,6 +170,7 @@
    :tags ["Relationship"]
    :entity :relationship
    :plural :relationships
+   :new-spec :new-relationship/map
    :schema rs/Relationship
    :partial-schema rs/PartialRelationship
    :partial-list-schema rs/PartialRelationshipList

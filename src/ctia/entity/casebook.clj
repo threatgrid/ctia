@@ -257,6 +257,7 @@
         (flanders/->graphql
          (fu/optionalize-all cs/Casebook)
          {refs/observable-type-name refs/ObservableTypeRef
+          refs/incident-type-name refs/IncidentRef
           refs/judgement-type-name refs/JudgementRef
           refs/sighting-type-name refs/SightingRef
           refs/verdict-type-name refs/VerdictRef
@@ -301,7 +302,7 @@
      :put-capabilities :create-casebook
      :delete-capabilities :delete-casebook
      :search-capabilities :search-casebook
-     :external-id-capabilities #{:read-casebook :external-id}
+     :external-id-capabilities :read-casebook
      :hide-delete? false})))
 
 (def casebook-entity
@@ -309,6 +310,7 @@
    :tags ["Casebook"]
    :entity :casebook
    :plural :casebooks
+   :new-spec :new-casebook/map
    :schema Casebook
    :partial-schema PartialCasebook
    :partial-list-schema PartialCasebookList

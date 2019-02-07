@@ -29,7 +29,7 @@
     (map (fn [k]
            (if (contains? diff-after k)
              {:field k
-              :action "modifed"
+              :action "modified"
               :change {:before (get diff-before k)
                        :after (get diff-after k)}}
              {:field k

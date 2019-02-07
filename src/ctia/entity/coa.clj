@@ -120,7 +120,7 @@
     :put-capabilities :create-coa
     :delete-capabilities :delete-coa
     :search-capabilities :search-coa
-    :external-id-capabilities #{:read-coa :external-id}}))
+    :external-id-capabilities :read-coa}))
 
 (def capabilities
   #{:create-coa
@@ -133,6 +133,7 @@
    :tags ["COA"]
    :entity :coa
    :plural :coas
+   :new-spec :new-coa/map
    :schema COA
    :partial-schema PartialCOA
    :partial-list-schema PartialCOAList

@@ -91,6 +91,7 @@
 (def data-table-routes
   (entity-crud-routes
    {:entity :data-table
+    :new-spec :new-data-table/map
     :new-schema NewDataTable
     :entity-schema DataTable
     :get-schema PartialDataTable
@@ -102,7 +103,7 @@
     :get-capabilities :read-data-table
     :post-capabilities :create-data-table
     :delete-capabilities :delete-data-table
-    :external-id-capabilities #{:read-data-table :external-id}
+    :external-id-capabilities :read-data-table
     :can-update? false
     :can-search? false}))
 
@@ -111,6 +112,7 @@
    :tags ["DataTable"]
    :entity :data-table
    :plural :data-tables
+   :new-spec :new-data-table/map
    :schema DataTable
    :partial-schema PartialDataTable
    :partial-list-schema PartialDataTableList

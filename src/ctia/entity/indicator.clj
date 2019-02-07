@@ -149,7 +149,7 @@
     :put-capabilities :create-indicator
     :delete-capabilities :delete-indicator
     :search-capabilities :search-indicator
-    :external-id-capabilities #{:read-indicator :external-id}}))
+    :external-id-capabilities :read-indicator}))
 
 (def capabilities
   #{:read-indicator
@@ -185,6 +185,7 @@
    :tags ["Indicator"]
    :entity :indicator
    :plural :indicators
+   :new-spec :new-indicator/map
    :schema Indicator
    :partial-schema PartialIndicator
    :partial-list-schema PartialIndicatorList

@@ -113,7 +113,7 @@
     :put-capabilities :create-campaign
     :delete-capabilities :delete-campaign
     :search-capabilities :search-campaign
-    :external-id-capabilities #{:read-campaign :external-id}}))
+    :external-id-capabilities :read-campaign}))
 
 (def capabilities
   #{:create-campaign
@@ -126,6 +126,7 @@
    :tags ["Campaign"]
    :entity :campaign
    :plural :campaigns
+   :new-spec :new-campaign/map
    :schema Campaign
    :partial-schema PartialCampaign
    :partial-list-schema PartialCampaignList

@@ -11,11 +11,6 @@ fragment pageInfoFields on PageInfo {
   endCursor
 }
 
-fragment killChainPhaseFields on KillChainPhase {
-  kill_chain_name
-  phase_name
-}
-
 fragment externalReferenceFields on ExternalReference {
   source_name
   external_id

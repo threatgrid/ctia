@@ -267,8 +267,7 @@
   [response]
   (let [errors (->> response
                     :results
-                    (map :error)
-                    seq)]
+                    (keep :error))]
     (doseq [error errors]
       (log/warn error)))
   response)
@@ -300,15 +299,28 @@
    (select-keys bundle
                 bundle-entity-keys)))
 
+(defn local-entity?
+  "Returns true if this entity'ID is hosted by this CTIA instance,
+   false otherwise"
+  [id]
+  (if (seq id)
+    (if (id/long-id? id)
+      (let [id-rec (id/long-id->id id)
+            this-host (get-in @properties [:ctia :http :show :hostname])]
+        (= (:hostname id-rec) this-host))
+      true)
+    false))
+
 (defn fetch-relationship-targets
   "given relationships, fetch all related objects"
   [relationships identity-map]
-  (let [all-ids
-        (apply set/union
-               (map (fn [{:keys [target_ref
-                                 source_ref]}]
-                      #{target_ref source_ref})
-                    relationships))
+  (let [all-ids (->> relationships
+                     (map (fn [{:keys [target_ref source_ref]}]
+                            [target_ref source_ref]))
+                     flatten
+                     set
+                     (filter local-entity?)
+                     set)
         by-type (dissoc (group-by
                          #(ent/long-id->entity-type %) all-ids) nil)
         by-bulk-key (into {}

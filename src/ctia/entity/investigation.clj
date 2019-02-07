@@ -145,7 +145,7 @@
     :put-capabilities :create-investigation
     :delete-capabilities :delete-investigation
     :search-capabilities :search-investigation
-    :external-id-capabilities #{:read-investigation :external-id}}))
+    :external-id-capabilities :read-investigation}))
 
 (def capabilities
   #{:read-investigation
@@ -159,6 +159,7 @@
    :tags ["Investigation"]
    :entity :investigation
    :plural :investigations
+   :new-spec :new-investigation/map
    :schema Investigation
    :partial-schema PartialInvestigation
    :partial-list-schema PartialInvestigationList

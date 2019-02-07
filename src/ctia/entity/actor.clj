@@ -118,7 +118,7 @@
     :put-capabilities :create-actor
     :delete-capabilities :delete-actor
     :search-capabilities :search-actor
-    :external-id-capabilities #{:read-actor :external-id}}))
+    :external-id-capabilities :read-actor}))
 
 (def capabilities
   #{:create-actor
@@ -131,6 +131,7 @@
    :tags ["Actor"]
    :entity :actor
    :plural :actors
+   :new-spec :new-actor/map
    :schema Actor
    :partial-schema PartialActor
    :partial-list-schema PartialActorList

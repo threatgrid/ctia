@@ -195,12 +195,12 @@
                              :event_type :record-updated,
                              :fields
                              [{:field :modified,
-                               :action "modifed",
+                               :action "modified",
                                :change
                                {:before "2042-01-01T00:00:00.000Z",
                                 :after "2042-01-02T00:00:00.000Z"}}
                               {:field :description,
-                               :action "modifed",
+                               :action "modified",
                                :change
                                {:before "my description",
                                 :after "changed description"}}]}

@@ -135,7 +135,7 @@
     :put-capabilities :create-weakness
     :delete-capabilities :delete-weakness
     :search-capabilities :search-weakness
-    :external-id-capabilities #{:read-weakness :external-id}}))
+    :external-id-capabilities :read-weakness}))
 
 (def capabilities
   #{:create-weakness
@@ -148,6 +148,7 @@
    :tags ["Weakness"]
    :entity :weakness
    :plural :weaknesses
+   :new-spec :new-weakness/map
    :schema Weakness
    :partial-schema PartialWeakness
    :partial-list-schema PartialWeaknessList
