@@ -190,12 +190,12 @@
    
    Setup Riemann metrics reporting
 
-| Property                      | Description                      | Possible values |
-|-------------------------------+----------------------------------+-----------------|
-| ctia.metrics.riemann.enabled  | enable riemann metrics reporting | boolean         |
-| ctia.metrics.riemann.host     | riemann instance host            | string          |
-| ctia.metrics.riemann.port     | riemann instance port            | number          |
-| ctia.metrics.riemann.interval | how often to push metrics        | seconds         |
+| Property                            | Description                      | Possible values |
+|-------------------------------------+----------------------------------+-----------------|
+| ctia.metrics.riemann.enabled        | enable riemann metrics reporting | boolean         |
+| ctia.metrics.riemann.host           | riemann instance host            | string          |
+| ctia.metrics.riemann.port           | riemann instance port            | number          |
+| ctia.metrics.riemann.interval-in-ms | how often to push metrics        | milliseconds    |
 
 
 ** Store

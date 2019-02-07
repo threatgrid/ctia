@@ -117,7 +117,7 @@
                       "ctia.metrics.riemann.enabled" s/Bool
                       "ctia.metrics.riemann.host" s/Str
                       "ctia.metrics.riemann.port" s/Int
-                      "ctia.metrics.riemann.interval" s/Int
+                      "ctia.metrics.riemann.interval-in-ms" s/Int
 
                       "ctia.store.external-key-prefixes" s/Str
                       "ctia.store.bulk-refresh" Refresh
