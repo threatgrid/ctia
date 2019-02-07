@@ -138,7 +138,7 @@
         (let [res (fetch-related-events entity_id
                                         identity-map
                                         (into q {:sort_by :timestamp :sort_order :desc}))
-              timeline (bucketize-events)]
+              timeline (bucketize-events res)]
           (ok timeline)))))
 
 (def event-routes
