@@ -93,7 +93,7 @@
                       "ctia.access-control.default-tlp" TLP})
 
    (st/optional-keys {"ctia.events.log" s/Bool
-                      "ctia.events.timeline.max-seconds" s/Int
+                      "ctia.http.events.timeline.max-seconds" s/Int
                       "ctia.hook.redis.host" s/Str
                       "ctia.hook.redis.port" s/Int
                       "ctia.hook.redis.channel-name" s/Str
