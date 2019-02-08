@@ -204,7 +204,6 @@
              :or {all-of {} one-of {}}} filters
             filter-val (conj (q/prepare-terms all-of)
                              (find-restriction-query-part ident))
-                             ;(find-restriction-query-part ident))
             bool-params (merge {:filter filter-val}
                                (when (not-empty one-of)
                                  {:should (q/prepare-terms one-of)
