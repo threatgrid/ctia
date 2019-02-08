@@ -130,7 +130,7 @@
 
 (s/defschema StatusInfo
   "Status information for a specific instance of CTIA"
-  {:status s/Str})
+  {:status (s/enum :ok :error :unknow)})
 
 (s/defschema VersionInfo
   "Version information for a specific instance of CTIA"
