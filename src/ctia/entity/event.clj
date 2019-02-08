@@ -100,11 +100,11 @@
 (s/defn timeline-append :- [EventBucket]
   [timeline :- [EventBucket]
    event :- Event]
-  (let [previous (first timeline)]
+  (let [[previous & remaining] timeline]
     (if (and (map? previous)
              (same-bucket? previous event))
         (cons (bucket-append previous event)
-              (rest timeline))
+              remaining)
         (cons (init-bucket event) timeline))))
 
 (s/defn bucketize-events :- [EventBucket]

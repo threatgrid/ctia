@@ -122,7 +122,36 @@
                                     (-> (:id incident)
                                         id/long-id->id
                                         :short-id))
-                            :headers {"Authorization" "user1"})]
+                            :headers {"Authorization" "user1"})
+                    uri-timeline-incident-user1
+                    (->> (:id incident)
+                         url-encode
+                         (str "ctia/event/history/"))
+                    uri-timeline-incident-user3
+                    (->> (:id incident-user-3)
+                         url-encode
+                         (str "ctia/event/history/"))
+                    {timeline1-body :parsed-body
+                    timeline1-status :status}
+                    (get uri-timeline-incident-user1
+                         :headers {"Authorization" "user1"})
+                    {timeline2-body :parsed-body
+                     timeline2-status :status}
+                    (get uri-timeline-incident-user1
+                         :headers {"Authorization" "user2"})
+                    {timeline3-body :parsed-body
+                     timeline3-status :status}
+                    (get uri-timeline-incident-user1
+                         :headers {"Authorization" "user3"})
+                    {timeline4-body :parsed-body
+                     timeline4-status :status}
+                    (get uri-timeline-incident-user3
+                         :headers {"Authorization" "user1"})
+                    {timeline5-body :parsed-body
+                     timeline5-status :status}
+                    (get uri-timeline-incident-user3
+                         :headers {"Authorization" "user3"})
+                    ]
 
                 (is (= 201 incident-status))
                 (is (= 201 incident-user-3-status))
@@ -130,8 +159,27 @@
                 (is (= 201 casebook-status))
                 (is (= 201 incident-casebook-link-status))
                 (is (= 204 incident-delete-status))
+                (is (= 200 timeline1-status))
+                (is (= 200 timeline2-status))
+                (is (= 200 timeline3-status))
+                (is (= 200 timeline4-status))
+                (is (= 200 timeline5-status))
+
+                (testing "event timeline should contain all actions by user, with respect to their visibility"
+
+                  (is (= '(1 3) (map :count timeline1-body)))
+                  (is (every? #(= "user1" (:owner %))
+                              timeline1-body))
+                  (is (every? #(= "user1" (:owner %))
+                              timeline2-body))
+                  (is (empty? timeline3-body))
+                  (is (empty? timeline4-body))
+                  (is (every? #(= "user3" (:owner %))
+                              timeline5-body))
+                  (is (= '(1) (map :count timeline5-body))))
 
                 (testing "should be able to list all related incident events filtered with Access control"
+
                   (let [q (url-encode
                            (format "entity.id:\"%s\" OR entity.source_ref:\"%s\" OR entity.target_ref:\"%s\""
                                    (:id incident)
