@@ -95,7 +95,7 @@
                                ring/ring-core
                                cheshire
                                metosin/ring-http-response]]
-                 [com.graphql-java/graphql-java "6.0"
+                 [com.graphql-java/graphql-java "9.4"
                   :exclusions [org.slf4j/slf4j-api]]]
 
   :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)

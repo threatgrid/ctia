@@ -258,8 +258,9 @@
                            {}
                            "TestQuery")]
              (is (= 400 status))
+             (clojure.pprint/pprint errors)
              (is (= errors
-                    ["ValidationError{validationErrorType=FieldUndefined, message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined, locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}"]))))
+                    '("ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}")))))
          (testing "unauthorized access without capabilities"
            (let [{:keys [status]}
                  (helpers/post "ctia/graphql"
