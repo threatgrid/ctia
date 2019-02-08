@@ -214,7 +214,6 @@
                            (:index state)
                            (name mapping)
                            (q/bool bool-params)
-                           ;(q/bool {:filter filter-val})
                            (-> params
                                with-default-sort-field
                                make-es-read-params)))
