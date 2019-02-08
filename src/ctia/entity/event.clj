@@ -2,12 +2,17 @@
   (:require
    [ctia.entity.event.store
     :refer [->EventStore]]
+   [compojure.api.sweet :refer [GET routes]]
+   [ring.util.http-response :refer [ok]]
+   [schema-tools.core :as st]
+   [schema.core :as s]
+   [clj-momo.lib.clj-time.core :as t]
    [clj-momo.lib.es
     [document :as d]
     [schemas :refer [ESConnState SliceProperties]]
     [slice :refer [get-slice-props]]]
    [ctia.entity.event.schemas
-    :refer [Event PartialEvent PartialEventList]]
+    :refer [Event PartialEvent PartialEventList EventBucket]]
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams PagingParams]]
     [crud :refer [entity-crud-routes]]]
@@ -16,8 +21,10 @@
    [ctia.stores.es
     [crud :as crud]
     [mapping :as em]]
-   [schema-tools.core :as st]
-   [schema.core :as s]))
+   [ctia.store :refer [read-store list-events list-all-pages]]
+   [ctia.domain.entities :as ent]
+   [ctia.properties :refer [properties]]
+   [clojure.set :as set]))
 
 (def event-mapping
   {"event"
@@ -62,22 +69,96 @@
 
 (def EventGetParams EventFieldsParam)
 
+(def EventTimelineParams PagingParams)
+
+(s/defn same-bucket? :- s/Bool
+  [bucket :- EventBucket
+   event :- Event]
+  (let [max-seconds (get-in @properties [:ctia :http :events :timeline :max-seconds] 5)
+        from        (t/minus (:from bucket) (t/seconds max-seconds))
+        to          (t/plus (:to bucket) (t/seconds max-seconds))]
+    (and (= (:owner bucket) (:owner event))
+         (t/before? from (:timestamp event))
+         (t/before? (:timestamp event) to))))
+
+(s/defn init-bucket :- EventBucket
+  [event :- Event]
+  {:count 1
+   :owner (:owner event)
+   :from (:timestamp event)
+   :to (:timestamp event)
+   :events (list event)})
+
+(s/defn bucket-append :- EventBucket
+  [bucket :- EventBucket
+   event :- Event]
+  (-> (update bucket :count inc)
+      (update :from t/earliest (:timestamp event))
+      (update :to t/latest (:timestamp event))
+      (update :events conj event)))
+
+(s/defn timeline-append :- [EventBucket]
+  [timeline :- [EventBucket]
+   event :- Event]
+  (let [[previous & remaining] timeline]
+    (if (and (map? previous)
+             (same-bucket? previous event))
+        (cons (bucket-append previous event)
+              remaining)
+        (cons (init-bucket event) timeline))))
+
+(s/defn bucketize-events :- [EventBucket]
+  [events :- [Event]]
+  (let [events (sort-by (juxt :owner :timestamp :event_type) events)
+        buckets (reduce timeline-append [] events)]
+    (reverse (sort-by :from buckets))))
+
+(defn fetch-related-events [_id identity-map q]
+  (let [filters {:entity.id _id
+                 :entity.source_ref _id
+                 :entity.target_ref _id}]
+    (some-> (list-all-pages :event
+                            list-events
+                            {:one-of filters}
+                            identity-map
+                            q)
+            ent/un-store-all)))
+
+(def event-history-routes
+  (routes
+   (GET "/history/:entity_id" []
+        :return [EventBucket]
+        :query [q EventTimelineParams]
+        :path-params [entity_id :- s/Str]
+        :header-params [{Authorization :- (s/maybe s/Str) nil}]
+        :summary "Timeline history of an entity"
+        :capabilities :search-event
+        :auth-identity identity
+        :identity-map identity-map
+        (let [res (fetch-related-events entity_id
+                                        identity-map
+                                        (into q {:sort_by :timestamp :sort_order :desc}))
+              timeline (bucketize-events res)]
+          (ok timeline)))))
+
 (def event-routes
-  (entity-crud-routes
-   {:tags ["Event"]
-    :entity :event
-    :entity-schema Event
-    :get-schema PartialEvent
-    :get-params EventGetParams
-    :list-schema PartialEventList
-    :search-schema PartialEventList
-    :search-q-params EventSearchParams
-    :get-capabilities :read-event
-    :can-update? false
-    :can-patch? false
-    :can-post? false
-    :can-get-by-external-id? false
-    :search-capabilities :search-event}))
+  (routes
+   event-history-routes
+   (entity-crud-routes
+    {:tags ["Event"]
+     :entity :event
+     :entity-schema Event
+     :get-schema PartialEvent
+     :get-params EventGetParams
+     :list-schema PartialEventList
+     :search-schema PartialEventList
+     :search-q-params EventSearchParams
+     :get-capabilities :read-event
+     :can-update? false
+     :can-patch? false
+     :can-post? false
+     :can-get-by-external-id? false
+     :search-capabilities :search-event})))
 
 (def event-entity
   {:new-spec map?

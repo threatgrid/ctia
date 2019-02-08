@@ -56,18 +56,19 @@
     (produce state events))
   events)
 
-(def ^:private handle-list-raw
+(def ^:private handle-list-fn
   (crud/handle-find :event Event))
 
 (s/defn handle-list
   [state :- ESConnState
-   filter-map :- {s/Any s/Any}
+   filter-map :- crud/FilterSchema
    ident
    params]
-  (handle-list-raw state
-                   filter-map
-                   ident
-                   params))
+  (handle-list-fn state
+                  filter-map
+                  ident
+                  params))
+
 
 (def handle-event-query-string-search
   (crud/handle-query-string-search

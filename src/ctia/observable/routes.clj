@@ -95,7 +95,7 @@
               relationships (:data (read-store
                                     :relationship
                                     list-records
-                                    {:source_ref judgement-ids}
+                                    {:all-of {:source_ref judgement-ids}}
                                     identity-map
                                     {:fields [:target_ref]}))
               indicator-ids (->> (map :target_ref relationships)
@@ -157,7 +157,7 @@
               relationships (:data (read-store
                                     :relationship
                                     list-records
-                                    {:source_ref sighting-ids}
+                                    {:all-of {:source_ref sighting-ids}}
                                     identity-map
                                     {:fields [:target_ref]}))
               indicator-ids (->> (map :target_ref relationships)
@@ -198,7 +198,7 @@
               relationships (:data (read-store
                                     :relationship
                                     list-records
-                                    {:source_ref sighting-ids}
+                                    {:all-of {:source_ref sighting-ids}}
                                     identity-map
                                     {:fields [:target_ref]}))
               incident-ids (->> (map :target_ref relationships)
