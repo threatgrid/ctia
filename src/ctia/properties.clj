@@ -54,6 +54,9 @@
   (st/merge
    StorePropertiesSchema
    (st/required-keys {"ctia.auth.type" s/Keyword})
+
+
+
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
                       "ctia.auth.entities.scope" s/Str
                       "ctia.auth.casebook.scope" s/Str
@@ -69,6 +72,17 @@
                       "ctia.http.access-control-allow-methods" s/Str
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
+
+   (st/optional-keys {"ctia.http.swagger.oauth2.enabled" s/Bool
+                      "ctia.http.swagger.oauth2.key" s/Str
+                      "ctia.http.swagger.oauth2.scopes" s/Str
+                      "ctia.http.swagger.oauth2.authorization-url" s/Str
+                      "ctia.http.swagger.oauth2.token-url" s/Str
+                      "ctia.http.swagger.oauth2.refresh-url" s/Str
+                      "ctia.http.swagger.oauth2.flow" s/Str
+                      "ctia.http.swagger.oauth2.client-id" s/Str
+                      "ctia.http.swagger.oauth2.app-name" s/Str
+                      "ctia.http.swagger.oauth2.realm" s/Str})
 
    (st/optional-keys {"ctia.http.jwt.enabled" s/Bool
                       "ctia.http.jwt.public-key-path" s/Str
@@ -137,6 +151,9 @@
 
 (defn get-http-show []
   (get-in @properties [:ctia :http :show]))
+
+(defn get-http-swagger []
+  (get-in @properties [:ctia :http :swagger]))
 
 (defn get-access-control []
   (get-in @properties [:ctia :access-control]))
