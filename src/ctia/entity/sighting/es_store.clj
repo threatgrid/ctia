@@ -141,8 +141,8 @@
   :- PartialStoredSightingList
   [state observables :- [Observable] ident params]
   (handle-list state
-               {:observables_hash
-                (obs->hashes observables)}
+               {:all-of {:observables_hash
+                         (obs->hashes observables)}}
                ident
                params))
 

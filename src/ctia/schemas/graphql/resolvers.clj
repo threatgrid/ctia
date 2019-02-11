@@ -92,7 +92,7 @@
     (log/debug "Search feedback for entity id: " entity-id)
     (some-> (read-store :feedback
                         list-records
-                        {:entity_id entity-id}
+                        {:all-of {:entity_id entity-id}}
                         (:ident context)
                         params)
             un-store-page

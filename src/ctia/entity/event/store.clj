@@ -7,8 +7,6 @@
     :refer [handle-list
             handle-create
             handle-event-query-string-search]]
-   [ctia.stores.es.crud
-    :refer [handle-query-string-search]]
    [ctia.store :refer [IEventStore]]))
 
 (defrecord EventStore [state]

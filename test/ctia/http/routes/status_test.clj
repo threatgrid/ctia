@@ -25,4 +25,4 @@
      (testing "GET /ctia/status"
        (let [response (get "ctia/status" :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 200 (:status response)))
-         (is (= {:status "ok"} (:parsed-body response))))))))
+         (is (= {:status :ok} (:parsed-body response))))))))

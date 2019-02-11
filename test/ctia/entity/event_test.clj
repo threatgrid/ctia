@@ -8,8 +8,10 @@
     [test :refer [is testing]]]
    [clj-momo.lib.time :as time]
    [clj-momo.test-helpers.core :as mth]
+   [clj-momo.lib.clj-time.core :as t]
    [clojure.test :refer [deftest join-fixtures use-fixtures]]
    [ctim.domain.id :as id]
+   [ctia.entity.event :as ev]
    [ctia.test-helpers
     [auth :refer [all-capabilities]]
     [core :as helpers
@@ -120,7 +122,36 @@
                                     (-> (:id incident)
                                         id/long-id->id
                                         :short-id))
-                            :headers {"Authorization" "user1"})]
+                            :headers {"Authorization" "user1"})
+                    uri-timeline-incident-user1
+                    (->> (:id incident)
+                         url-encode
+                         (str "ctia/event/history/"))
+                    uri-timeline-incident-user3
+                    (->> (:id incident-user-3)
+                         url-encode
+                         (str "ctia/event/history/"))
+                    {timeline1-body :parsed-body
+                    timeline1-status :status}
+                    (get uri-timeline-incident-user1
+                         :headers {"Authorization" "user1"})
+                    {timeline2-body :parsed-body
+                     timeline2-status :status}
+                    (get uri-timeline-incident-user1
+                         :headers {"Authorization" "user2"})
+                    {timeline3-body :parsed-body
+                     timeline3-status :status}
+                    (get uri-timeline-incident-user1
+                         :headers {"Authorization" "user3"})
+                    {timeline4-body :parsed-body
+                     timeline4-status :status}
+                    (get uri-timeline-incident-user3
+                         :headers {"Authorization" "user1"})
+                    {timeline5-body :parsed-body
+                     timeline5-status :status}
+                    (get uri-timeline-incident-user3
+                         :headers {"Authorization" "user3"})
+                    ]
 
                 (is (= 201 incident-status))
                 (is (= 201 incident-user-3-status))
@@ -128,8 +159,27 @@
                 (is (= 201 casebook-status))
                 (is (= 201 incident-casebook-link-status))
                 (is (= 204 incident-delete-status))
+                (is (= 200 timeline1-status))
+                (is (= 200 timeline2-status))
+                (is (= 200 timeline3-status))
+                (is (= 200 timeline4-status))
+                (is (= 200 timeline5-status))
+
+                (testing "event timeline should contain all actions by user, with respect to their visibility"
+
+                  (is (= '(1 3) (map :count timeline1-body)))
+                  (is (every? #(= "user1" (:owner %))
+                              timeline1-body))
+                  (is (every? #(= "user1" (:owner %))
+                              timeline2-body))
+                  (is (empty? timeline3-body))
+                  (is (empty? timeline4-body))
+                  (is (every? #(= "user3" (:owner %))
+                              timeline5-body))
+                  (is (= '(1) (map :count timeline5-body))))
 
                 (testing "should be able to list all related incident events filtered with Access control"
+
                   (let [q (url-encode
                            (format "entity.id:\"%s\" OR entity.source_ref:\"%s\" OR entity.target_ref:\"%s\""
                                    (:id incident)
@@ -248,3 +298,68 @@
                              :type "event",
                              :event_type :record-deleted}]
                            results)))))))))))))
+
+(defn get-event [owner event_type timestamp]
+  {:owner owner
+   :event_type event_type
+   :timestamp timestamp
+   :type "event"
+   :groups ["a group"]
+   :tlp "green"
+   :entity {}
+   :id "an id"})
+
+(defn generate-events [owner event_type from n fn-unit]
+  (->> (map #(t/plus from (fn-unit %)) (range n))
+       (map (partial get-event owner event_type))))
+
+
+(deftest bucket-operations-test
+  (let [t1 (t/internal-now)
+        t2 (t/plus t1 (t/seconds 1))
+        t3 (t/plus t1 (t/seconds 2))
+        t4 (t/plus t1 (t/days 1))
+        event1 (get-event "Smith" :record-created t1)
+        event2 (get-event "Smith" :record-updated t2)
+        event3 (get-event "Smith" :record-updated t3)
+        event4 (get-event "Doe" :record-updated t4)
+        event5 (get-event "Doe" :record-updated t1)
+        bucket1 (ev/init-bucket event1)
+        bucket2 (ev/bucket-append bucket1 event2)]
+    (testing "init-bucket should properly initialize a bucket from an event"
+      (is (= (:from bucket1) (:to bucket1) (:timestamp event1)))
+      (is (= 1 (:count bucket1))))
+    (testing "bucket-append should properly append an event to a bucket"
+      (is (= (:from bucket2) (:timestamp event1)))
+      (is (= (:to bucket2) (:timestamp event2)))
+      (is (= #{event1 event2} (set (:events bucket2))))
+      (is (= 2 (:count bucket2))))
+    (testing "same-bucket? shoud properly assert that an event is part of a bucket or not"
+      (is (true? (ev/same-bucket? bucket1 event3)))
+      (is (true? (ev/same-bucket? bucket2 event3)))
+      (is (false? (ev/same-bucket? bucket1 event4)))
+      (is (false? (ev/same-bucket? bucket2 event4)))
+      (is (false? (ev/same-bucket? bucket2 event5))))))
+
+(deftest bucketize-events-test
+  (let [now (t/internal-now)
+        one-hour-ago (t/minus now (t/hours 1))
+        two-hours-ago (t/minus now (t/hours 2))
+        one-month-ago (t/minus now (t/months 1))
+
+        every-sec (concat (generate-events "Doe" :record-created now 1 t/seconds)
+                          (generate-events "Doe" :record-updated now 2 t/seconds))
+        every-milli-1 (generate-events "Smith" :record-updated one-hour-ago 10 t/millis)
+        every-milli-2 (generate-events "Doe" :record-updated one-hour-ago 20 t/millis)
+        every-min (generate-events "Smith" :record-updated two-hours-ago 4 t/minutes)
+        every-day (generate-events "Doe" :record-updated one-month-ago 3 t/days)
+
+        events (->> (concat every-sec every-min every-day every-milli-1 every-milli-2)
+                    shuffle)
+        timeline (ev/bucketize-events events)]
+    (testing "bucketize function should group events in near same time from same owner"
+      (is (< (count timeline) (count events)))
+      (is (= (+ (count every-min) (count every-day) 3)
+             (count timeline)))
+      (is (= (count every-sec) (count (-> timeline first :events))))
+      (is (= (count every-milli-2) (count (-> timeline second :events)))))))

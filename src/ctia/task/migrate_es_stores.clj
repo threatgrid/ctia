@@ -102,13 +102,12 @@
           :limit batch-size}
          (when sort-keys
            {:search_after sort-keys}))]
-    (es-doc/search-docs
-     conn
-     indexname
-     mapping
-     nil
-     {}
-     params)))
+    (es-doc/search-docs conn
+                        indexname
+                        mapping
+                        nil
+                        {}
+                        params)))
 
 (def bulk-max-size (* 5 1024 1024)) ;; 5Mo
 

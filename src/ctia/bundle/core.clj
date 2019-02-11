@@ -9,7 +9,7 @@
    [ctia
     [auth :as auth]
     [properties :refer [properties]]
-    [store :refer [list-fn read-fn read-store]]]
+    [store :refer [list-fn read-fn read-store list-all-pages]]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
     :refer
@@ -102,7 +102,7 @@
              (all-pages
               (fn [paging]
                 (read-store entity-type list-fn
-                            {:external_ids external-ids}
+                            {:all-of {:external_ids external-ids}}
                             (auth/ident->map auth-identity)
                             paging))))
       [])))
@@ -299,24 +299,6 @@
    (select-keys bundle
                 bundle-entity-keys)))
 
-(defn list-all-pages
-  [entity
-   filters
-   identity-map
-   params]
-  (loop [query-params params
-         results []]
-    (let [{:keys [data
-                  paging]}
-          (read-store entity
-                      list-fn
-                      filters
-                      identity-map
-                      query-params)]
-      (if-let [next-params (:next paging)]
-        (recur next-params (concat results data))
-        (concat results data)))))
-
 (defn local-entity?
   "Returns true if this entity'ID is hosted by this CTIA instance,
    false otherwise"
@@ -350,18 +332,14 @@
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id identity-map related-to]
-  (let [filters (map #(hash-map % id) (set related-to))
-        rel-lists
-        (map
-         #(some->
-           (list-all-pages :relationship
-                           %
-                           identity-map
-                           {:limit list-limit})
-           ent/un-store-all
-           set)
-         filters)]
-    (apply set/union rel-lists)))
+  (let [filters (->> (map #(hash-map % id) (set related-to))
+                     (apply merge))]
+    (some-> (list-all-pages :relationship
+                            list-fn
+                            {:one-of filters}
+                            identity-map
+                            {:limit list-limit})
+            ent/un-store-all)))
 
 (defn fetch-record
   "Fetch a record by ID guessing its type"

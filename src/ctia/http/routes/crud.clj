@@ -154,7 +154,7 @@
             :identity-map identity-map
             (-> (read-store entity
                             list-records
-                            {:external_ids external_id}
+                            {:all-of {:external_ids external_id}}
                             identity-map
                             q)
                 page-with-long-id
