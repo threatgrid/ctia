@@ -74,7 +74,7 @@
                       "ctia.http.max-threads" s/Int})
 
    (st/optional-keys {"ctia.http.swagger.oauth2.enabled" s/Bool
-                      "ctia.http.swagger.oauth2.key" s/Str
+                      "ctia.http.swagger.oauth2.entry-key" s/Str
                       "ctia.http.swagger.oauth2.scopes" s/Str
                       "ctia.http.swagger.oauth2.authorization-url" s/Str
                       "ctia.http.swagger.oauth2.token-url" s/Str

@@ -123,7 +123,7 @@
            flow
            realm
            scopes
-           key]}]
+           entry-key]}]
   (let [scope-map
         (when scopes
           (into {}
@@ -139,8 +139,8 @@
                    :appName app-name
                    :realm realm})
         (update-in [:data :security] concat
-                   [{key scopes}])
-        (update-in [:data :securityDefinitions] assoc key
+                   [{entry-key scopes}])
+        (update-in [:data :securityDefinitions] assoc entry-key
                    {:type "oauth2"
                     :scopes scope-map
                     :authorizationUrl authorization-url

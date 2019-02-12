@@ -101,6 +101,25 @@
 | ctia.http.show.port        | set the exposed http port                     | number          |
 
 
+
+*** Swagger
+
+   Configure CTIA Swagger UI Interface
+
+| Property                                   | Description                                                                          | Possible values |
+|--------------------------------------------+--------------------------------------------------------------------------------------+-----------------|
+| ctia.http.swagger.oauth2.enabled           | Enable OAuth2 Security Definition in the Swagger UI Interface                        | =true= =false=  |
+| ctia.http.swagger.oauth2.entry-key         | Set the securiryDefinition entry key for OAuth2                                      | string          |
+| ctia.http.swagger.oauth2.scopes            | Define scopes and their description as csv, entry description is delimited by a pipe | string          |
+| ctia.http.swagger.oauth2.authorization-url | Set OAuth2 Authorization url                                                         | string          |
+| ctia.http.swagger.oauth2.token-url         | Set OAuth2 Token url                                                                 | string          |
+| ctia.http.swagger.oauth2.refresh-url       | Set OAuth2 token refresh url                                                         | string          |
+| ctia.http.swagger.oauth2.flow              | Set OAuth2 Flow                                                                      | string          |
+| ctia.http.swagger.oauth2.client-id         | Configure OAuth2 Client ID                                                           | string          |
+| ctia.http.swagger.oauth2.app-name          | Configure OAuth2 App name                                                            | string          |
+| ctia.http.swagger.oauth2.realm             | Configure Oauth2 Realm                                                               | string          |
+
+
 *** Bulk
 
    Set limits for entity bulk operations
