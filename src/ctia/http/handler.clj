@@ -23,7 +23,8 @@
              [version :refer [wrap-version]]]
             [ctia.metrics.routes :refer [metrics-routes]]
             [ctia.observable.routes :refer [observable-routes]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [properties
+                                     get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
             [ctia.version.routes :refer [version-routes]]
             [ctia.status.routes :refer [status-routes]]
@@ -77,81 +78,129 @@
             :tags ~(:tags entity)
             (:routes (~(:entity entity) entities)))))))
 
+(def exception-handlers
+  {:compojure.api.exception/request-parsing ex/request-parsing-handler
+   :compojure.api.exception/request-validation ex/request-validation-handler
+   :compojure.api.exception/response-validation ex/response-validation-handler
+   :clj-momo.lib.es.conn/es-query-parsing-error ex/es-query-parsing-error-handler
+   :access-control-error ex/access-control-error-handler
+   :invalid-tlp-error ex/invalid-tlp-error-handler
+   :spec-validation-error ex/spec-validation-error-handler
+   :compojure.api.exception/default ex/default-error-handler})
+
+(def api-tags
+  [{:name "Actor" :description "Actor operations"}
+   {:name "Attack Pattern" :description "Attack Pattern operations"}
+   {:name "Bundle" :description "Bundle operations"}
+   {:name "Campaign" :description "Campaign operations"}
+   {:name "COA" :description "COA operations"}
+   {:name "DataTable" :description "DataTable operations"}
+   {:name "Event" :description "Events operations"}
+   {:name "Feedback" :description "Feedback operations"}
+   {:name "GraphQL" :description "GraphQL operations"}
+   {:name "Incident" :description "Incident operations"}
+   {:name "Indicator", :description "Indicator operations"}
+   {:name "Judgement", :description "Judgement operations"}
+   {:name "Malware", :description "Malware operations"}
+   {:name "Relationship", :description "Relationship operations"}
+   {:name "Properties", :description "Properties operations"}
+   {:name "Casebook", :description "Casebook operations"}
+   {:name "Sighting", :description "Sighting operations"}
+   {:name "Bulk", :description "Bulk operations"}
+   {:name "Metrics", :description "Performance Statistics"}
+   {:name "Tool", :description "Tool operations"}
+   {:name "Verdict", :description "Verdict operations"}
+   {:name "Status", :description "Status Information"}
+   {:name "Version", :description "Version Information"}])
+
+(defn apply-oauth2-swagger-conf
+  [swagger-base-conf
+   {:keys [client-id
+           app-name
+           authorization-url
+           token-url
+           refresh-url
+           flow
+           realm
+           scopes
+           entry-key]}]
+  (let [scope-map
+        (when scopes
+          (into {}
+                (-> scopes
+                    (clojure.string/split #",")
+                    (->> (map #(clojure.string/split % #"\|"))))))
+        scopes
+        (keys scope-map)]
+
+    (-> swagger-base-conf
+        (assoc-in [:options :ui :oauth2]
+                  {:clientId client-id
+                   :appName app-name
+                   :realm realm})
+        (update-in [:data :security] concat
+                   [{entry-key scopes}])
+        (update-in [:data :securityDefinitions] assoc entry-key
+                   {:type "oauth2"
+                    :scopes scope-map
+                    :authorizationUrl authorization-url
+                    :tokenUrl token-url
+                    :flow flow}))))
+
 (defn api-handler []
-  (api {:exceptions
-        {:handlers
-         {:compojure.api.exception/request-parsing ex/request-parsing-handler
-          :compojure.api.exception/request-validation ex/request-validation-handler
-          :compojure.api.exception/response-validation ex/response-validation-handler
-          :clj-momo.lib.es.conn/es-query-parsing-error ex/es-query-parsing-error-handler
-          :access-control-error ex/access-control-error-handler
-          :invalid-tlp-error ex/invalid-tlp-error-handler
-          :spec-validation-error ex/spec-validation-error-handler
-          :compojure.api.exception/default ex/default-error-handler}}
-        :swagger {:ui "/"
-                  :spec "/swagger.json"
-                  :options {:ui {:jwtLocalStorageKey
-                                 (get-in @properties
-                                         [:ctia :http :jwt :local-storage-key])}}
-                  :data {:info {:title "CTIA"
-                                :license {:name "All Rights Reserved",
-                                          :url ""}
-                                :contact {:name "Cisco Security Business Group -- Advanced Threat "
-                                          :url "http://github.com/threatgrid/ctia"
-                                          :email "cisco-intel-api-support@cisco.com"}
-                                :description api-description}
+  (let [{:keys [oauth2]
+         :as swagger-properties}
+        (get-http-swagger)]
+    (api {:exceptions {:handlers exception-handlers}
+          :swagger
+          (cond-> {:ui "/"
+                   :spec "/swagger.json"
+                   :options {:ui {:jwtLocalStorageKey
+                                  (get-in @properties
+                                          [:ctia :http :jwt :local-storage-key])}}
+                   :data {:info {:title "CTIA"
+                                 :license {:name "All Rights Reserved",
+                                           :url ""}
+                                 :contact {:name "Cisco Security Business Group -- Advanced Threat "
+                                           :url "http://github.com/threatgrid/ctia"
+                                           :email "cisco-intel-api-support@cisco.com"}
+                                 :description api-description}
+                          :security [{"JWT" []}]
+                          :securityDefinitions {"JWT" {:type "apiKey"
+                                                       :in "header"
+                                                       :name "Authorization"}}
+                          :tags api-tags}}
+            (:enabled oauth2)
+            (apply-oauth2-swagger-conf
+             oauth2))}
 
-                         :tags [{:name "Actor" :description "Actor operations"}
-                                {:name "Attack Pattern" :description "Attack Pattern operations"}
-                                {:name "Bundle" :description "Bundle operations (Beta)"}
-                                {:name "Campaign" :description "Campaign operations"}
-                                {:name "COA" :description "COA operations"}
-                                {:name "DataTable" :description "DataTable operations"}
-                                {:name "Event" :description "Events operations"}
-                                {:name "Feedback" :description "Feedback operations"}
-                                {:name "GraphQL" :description "GraphQL operations"}
-                                {:name "Incident" :description "Incident operations"}
-                                {:name "Indicator", :description "Indicator operations"}
-                                {:name "Judgement", :description "Judgement operations"}
-                                {:name "Malware", :description "Malware operations"}
-                                {:name "Relationship", :description "Relationship operations"}
-                                {:name "Properties", :description "Properties operations"}
-                                {:name "Casebook", :description "Casebook operations"}
-                                {:name "Sighting", :description "Sighting operations"}
-                                {:name "Bulk", :description "Bulk operations"}
-                                {:name "Metrics", :description "Performance Statistics"}
-                                {:name "Tool", :description "Tool operations"}
-                                {:name "Verdict", :description "Verdict operations"}
-                                {:name "Status", :description "Status Information"}
-                                {:name "Version", :description "Version Information"}]}}}
-
-       (middleware [wrap-not-modified
-                    wrap-cache-control
-                    wrap-version
-                    ;; always last
-                    (metrics/wrap-metrics "ctia" api-routes/get-routes)]
-                   documentation-routes
-                   (graphql-ui-routes)
-                   (context
-                    "/ctia" []
-                    ;; The order is important here for version-routes
-                    ;; must be before the middleware fn
-                    version-routes
-                    (middleware [wrap-authenticated]
-                                (entity-routes entities)
-                                status-routes
-                                (context
-                                 "/bulk" []
-                                 :tags ["Bulk"]
-                                 bulk-routes)
-                                (context
-                                 "/incident" []
-                                 :tags ["Incident"]
-                                 incident-casebook-link-route)
-                                bundle-routes
-                                observable-routes
-                                metrics-routes
-                                properties-routes
-                                graphql-routes)))
-       (undocumented
-        (rt/not-found (ok (unk/err-html))))))
+         (middleware [wrap-not-modified
+                      wrap-cache-control
+                      wrap-version
+                      ;; always last
+                      (metrics/wrap-metrics "ctia" api-routes/get-routes)]
+                     documentation-routes
+                     (graphql-ui-routes)
+                     (context
+                      "/ctia" []
+                      ;; The order is important here for version-routes
+                      ;; must be before the middleware fn
+                      version-routes
+                      (middleware [wrap-authenticated]
+                                  (entity-routes entities)
+                                  status-routes
+                                  (context
+                                   "/bulk" []
+                                   :tags ["Bulk"]
+                                   bulk-routes)
+                                  (context
+                                   "/incident" []
+                                   :tags ["Incident"]
+                                   incident-casebook-link-route)
+                                  bundle-routes
+                                  observable-routes
+                                  metrics-routes
+                                  properties-routes
+                                  graphql-routes)))
+         (undocumented
+          (rt/not-found (ok (unk/err-html)))))))
