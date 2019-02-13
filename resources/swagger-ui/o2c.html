@@ -14,13 +14,12 @@
  // uncomment here to debug
  // console.log(JSON.stringify(qp));
 
+ var win = window;
+
  if (window.opener.swaggerUiAuth.tokenUrl) {
-     window.opener.processOAuthCode(qp);
-     //https://github.com/swagger-api/swagger-ui/blob/52f3b6d50ec727a8f4d8ddd06388a7edb5d4f97e/dist/lib/swagger-oauth.js#L251
-     setTimeout(window.close, 5000);
+     window.opener.processOAuthCode(qp, win.close);
  }
  else {
-     window.opener.onOAuthComplete(qp);
-     window.close();
+     window.opener.onOAuthComplete(qp, null, win.close);
  }
 </script>
