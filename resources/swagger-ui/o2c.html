@@ -13,9 +13,13 @@
 
  // uncomment here to debug
  // console.log(JSON.stringify(qp));
- if (window.opener.swaggerUiAuth.tokenUrl)
-     window.opener.processOAuthCode(qp);
- else
-     window.opener.onOAuthComplete(qp);
 
+ var win = window;
+
+ if (window.opener.swaggerUiAuth.tokenUrl) {
+     window.opener.processOAuthCode(qp, win.close);
+ }
+ else {
+     window.opener.onOAuthComplete(qp, null, win.close);
+ }
 </script>
