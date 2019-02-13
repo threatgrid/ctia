@@ -1,3 +1,5 @@
+<div id="output"></div>
+
 <script>
  var qp = null;
  if(window.location.hash && window.location.hash !== "#_=_") {
@@ -12,7 +14,12 @@
  ):{}
 
  // uncomment here to debug
- // console.log(JSON.stringify(qp));
+ //console.log(JSON.stringify(qp));
+
+ if(qp.error) {
+     var error_string =  decodeURIComponent(qp.error_description).replace(/\+/g, " ", true);
+     document.getElementById("output").innerHTML = "<pre>" + error_string + "</pre>";
+ };
 
  var win = window;
 
@@ -22,4 +29,4 @@
  else {
      window.opener.onOAuthComplete(qp, null, win.close);
  }
-</script>
+        </script>
