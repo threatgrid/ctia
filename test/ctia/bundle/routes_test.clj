@@ -20,7 +20,8 @@
             [ctim.examples.bundles :refer [bundle-maximal]]))
 
 (defn fixture-properties:small-max-bulk-size [t]
-  (helpers/with-properties ["ctia.http.bulk.max-size" 1000]
+  (helpers/with-properties ["ctia.http.bulk.max-size" 1000
+                            "ctia.http.bundle.max-relationships" 500]
     (t)))
 
 (defn fixture-find-by-external-ids-limit [t]
@@ -581,6 +582,45 @@
                       relationship-2
                       relationship-3
                       relationship-4}}))
+
+
+(def fixture-many-relationships
+  (let [indicators (map mk-indicator (range 300))
+        sightings (map #(mk-sighting %) (range 1))
+        relationships (mapcat
+                       (fn [idx indicator]
+                         (keep-indexed #(mk-relationship (* %1 idx) indicator %2 "indicates")
+                                       sightings))
+                       (range)
+                       (concat indicators indicators))]
+    {:type "bundle"
+     :source "source"
+     :indicators (set indicators)
+     :sightings (set sightings)
+     :relationships (set relationships)}))
+
+(deftest bundle-max-relationships-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (testing "testing max number of retrieved relationships"
+       (let [imported-bundle (post "ctia/bundle/import"
+                                   :body fixture-many-relationships
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
+             sighting-ids (->> (-> imported-bundle :parsed-body :results)
+                               (filter #(= (:type %) :sighting))
+                               (map :id))
+             exported-bundle
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids sighting-ids}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))]
+         (is (= 500 (count (:relationships exported-bundle)))))))))
+
 
 (deftest bundle-export-related-to-test
   (test-for-each-store
