@@ -19,7 +19,7 @@
             [ctim.domain.id :as id]
             [ctim.examples.bundles :refer [bundle-maximal]]))
 
-(defn fixture-properties:small-max-bulk-size [t]
+(defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
                             "ctia.http.bundle.max-relationships" 500]
     (t)))
@@ -32,7 +32,7 @@
   (join-fixtures
    [mth/fixture-schema-validation
     helpers/fixture-properties:clean
-    fixture-properties:small-max-bulk-size
+    fixture-properties
     fixture-find-by-external-ids-limit
     whoami-helpers/fixture-server]))
 
@@ -586,17 +586,16 @@
 
 (def fixture-many-relationships
   (let [indicators (map mk-indicator (range 300))
-        sightings (map #(mk-sighting %) (range 1))
-        relationships (mapcat
+        sighting (mk-sighting 0)
+        relationships (map
                        (fn [idx indicator]
-                         (keep-indexed #(mk-relationship (* %1 idx) indicator %2 "indicates")
-                                       sightings))
+                         (mk-relationship idx indicator sighting "indicates"))
                        (range)
                        (concat indicators indicators))]
     {:type "bundle"
      :source "source"
      :indicators (set indicators)
-     :sightings (set sightings)
+     :sightings #{sighting}
      :relationships (set relationships)}))
 
 (deftest bundle-max-relationships-test
