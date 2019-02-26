@@ -705,3 +705,23 @@
                             :headers {"Authorization" "45c1f5e3f05d0"})]
               (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error)))
               (is (= 200 (:status res))))))))))
+
+(deftest bundle-acl-fields-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+
+     (testing "Bundle export allows acl fields"
+       (let [sighting (assoc (mk-sighting 1) :authorized_users ["foo"])
+             post-res (post "ctia/sighting"
+                            :body sighting
+                            :headers {"Authorization" "45c1f5e3f05d0"})
+             sighting-id (-> post-res :parsed-body :id)
+             bundle-get-res (get "ctia/bundle/export"
+                                 :query-params {:ids [sighting-id]}
+                                 :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 200 (:status bundle-get-res))))))))
