@@ -158,7 +158,8 @@
      :can-patch? false
      :can-post? false
      :can-get-by-external-id? false
-     :search-capabilities :search-event})))
+     :search-capabilities :search-event
+     :delete-capabilities #{:delete-event :developer}})))
 
 (def event-entity
   {:new-spec map?
