@@ -59,7 +59,9 @@
                   :read-weakness
                   :list-weaknesses
                   :read-vulnerability
-                  :list-vulnerabilities}
+                  :list-vulnerabilities
+                  :read-casebook
+                  :list-casebooks}
                 :auth-identity identity
                 :identity-map identity-map
                 (ok (export-bundle
