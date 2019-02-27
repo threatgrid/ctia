@@ -64,6 +64,15 @@
    :valid_time {:start_time #inst "2016-05-11T00:40:48.212-00:00"
                 :end_time #inst "2016-07-11T00:40:48.212-00:00"}})
 
+(defn mk-casebook []
+  {:id (id/make-transient-id nil)})
+
+(defn mk-incident []
+  {:id (id/make-transient-id nil)
+   :incident_time {:opened #inst "2016-02-11T00:40:48.212-00:00"}
+   :status "Open"
+   :confidence "High"})
+
 (defn mk-relationship
   [n source target relation-type]
   {:id (id/make-transient-id nil)
@@ -725,3 +734,37 @@
                                  :query-params {:ids [sighting-id]}
                                  :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 200 (:status bundle-get-res))))))))
+
+(deftest bundle-export-casebook-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+
+     (testing "Bundle export should include casebooks"
+       (let [casebook (mk-casebook)
+             incident (mk-incident)
+             casebook-post-res (post "ctia/casebook"
+                                     :body casebook
+                                     :headers {"Authorization" "45c1f5e3f05d0"})
+             incident-post-res (post "ctia/incident"
+                                     :body incident
+                                     :headers {"Authorization" "45c1f5e3f05d0"})
+             incident-id (-> incident-post-res :parsed-body :id)
+             casebook-id (-> casebook-post-res :parsed-body :id)
+             incident-short-id (id/str->short-id incident-id)
+             link-res (post (str "/ctia/incident/" incident-short-id "/link")
+                            :body {:casebook_id casebook-id
+                                   :tlp "white"}
+                            :headers {"Authorization" "45c1f5e3f05d0"})
+             bundle-get-res (get "ctia/bundle/export"
+                                 :query-params {:ids [incident-id]}
+                                 :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 201 (:status casebook-post-res)))
+         (is (= 201 (:status incident-post-res)))
+         (is (= 201 (:status link-res)))
+         (is (= 200 (:status bundle-get-res)))
+         (is seq (-> bundle-get-res :parsed-body :casebooks)))))))
