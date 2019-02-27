@@ -502,10 +502,10 @@
                    :headers {"Authorization" "45c1f5e3f05d0"}))
              bundle-post-res
              (:parsed-body
-              (get "ctia/bundle/export"
-                   :query-params {:ids [sighting-id-1
-                                        sighting-id-2]
-                                  :related_to ["target_ref" "source_ref"]}
+              (post "ctia/bundle/export"
+                   :body {:ids [sighting-id-1
+                                sighting-id-2]
+                          :related_to ["target_ref" "source_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))]
 
          (is (= 1 (count (:sightings bundle-get-res-1))))
