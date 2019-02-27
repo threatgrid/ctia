@@ -499,6 +499,13 @@
                    :query-params {:ids [sighting-id-1
                                         sighting-id-2]
                                   :related_to ["target_ref" "source_ref"]}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-post-res
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [sighting-id-1
+                                        sighting-id-2]
+                                  :related_to ["target_ref" "source_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))]
 
          (is (= 1 (count (:sightings bundle-get-res-1))))
@@ -518,7 +525,9 @@
          (is (= 402 (count (:relationships bundle-get-res-4))))
 
          (is (= bundle-get-res-3 bundle-get-res-5)
-             "default related_to value should be [:source_ref :target_ref]"))))))
+             "default related_to value should be [:source_ref :target_ref]")
+         (is (= bundle-get-res-5 bundle-post-res)
+             "POST and GET bundle/export routes must return the same results"))))))
 
 (deftest bundle-export-with-unreachable-external-entity
   (test-for-each-store
