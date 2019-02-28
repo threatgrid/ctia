@@ -57,6 +57,7 @@
        (POST "/" []
              :return entity-schema
              :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
+             :header-params [{Authorization :- (s/maybe s/Str) nil}]
              :summary (format "Adds a new %s" capitalized)
              :capabilities post-capabilities
              :auth-identity identity
