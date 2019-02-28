@@ -333,7 +333,7 @@
   [id identity-map related-to]
   (let [filters (->> (map #(hash-map % id) (set related-to))
                      (apply merge))
-        max-relationships (get-in @properties [:ctia :http :bundle :max-relationships] 1000)]
+        max-relationships (get-in @properties [:ctia :http :bundle :export :max-relationships] 1000)]
     (some-> (:data (read-store :relationship
                                list-fn
                                {:one-of filters}

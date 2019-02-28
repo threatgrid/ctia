@@ -96,7 +96,7 @@
                       "ctia.http.show.path-prefix" s/Str
                       "ctia.http.show.port" s/Int
                       "ctia.http.bulk.max-size" s/Int
-                      "ctia.http.bundle.max-relationships" s/Int})
+                      "ctia.http.bundle.export.max-relationships" s/Int})
 
    (st/optional-keys {"ctia.migration.optimizations" s/Bool})
 

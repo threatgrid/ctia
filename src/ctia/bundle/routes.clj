@@ -12,10 +12,16 @@
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
 
-(s/defschema BundleExportQuery
-  {:ids [s/Str]
-   (s/optional-key :related_to) [(s/enum :source_ref :target_ref)]
+(s/defschema BundleExportOptions
+  {(s/optional-key :related_to) [(s/enum :source_ref :target_ref)]
    (s/optional-key :include_related_entities) s/Bool})
+
+(s/defschema BundleExportIds
+  {:ids [s/Str]})
+
+(s/defschema BundleExportQuery
+  (merge BundleExportIds
+         BundleExportOptions))
 
 (def export-capabilities
   #{:list-campaigns
@@ -72,13 +78,14 @@
            (POST "/export" []
                 :return NewBundle
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
-                :body [q BundleExportQuery]
+                :query [q BundleExportOptions]
+                :body [b BundleExportIds]
                 :summary "Export a record with its local relationships"
                 :capabilities export-capabilities
                 :auth-identity identity
                 :identity-map identity-map
                 (ok (export-bundle
-                     (:ids q)
+                     (:ids b)
                      identity-map
                      identity
                      (select-keys q [:include_related_entities :related_to]))))
