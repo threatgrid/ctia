@@ -21,7 +21,7 @@
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
-                            "ctia.http.bundle.max-relationships" 500]
+                            "ctia.http.bundle.export.max-relationships" 500]
     (t)))
 
 (defn fixture-find-by-external-ids-limit [t]
@@ -504,8 +504,8 @@
              (:parsed-body
               (post "ctia/bundle/export"
                    :body {:ids [sighting-id-1
-                                sighting-id-2]
-                          :related_to ["target_ref" "source_ref"]}
+                                sighting-id-2]}
+                   :query-params {:related_to ["target_ref" "source_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))]
 
          (is (= 1 (count (:sightings bundle-get-res-1))))
