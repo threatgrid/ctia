@@ -7,7 +7,8 @@
                   bundle-size
                   import-bundle
                   export-bundle]]
-    [schemas :refer [BundleImportResult]]]
+    [schemas :refer [BundleImportResult
+                     NewBundleExport]]]
    [ctia.schemas.core :refer [Bundle NewBundle]]
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
@@ -50,13 +51,15 @@
     :read-weakness
     :list-weaknesses
     :read-vulnerability
-    :list-vulnerabilities})
+    :list-vulnerabilities
+    :read-casebook
+    :list-casebooks})
 
 (defroutes bundle-routes
   (context "/bundle" []
            :tags ["Bundle"]
            (GET "/export" []
-                :return NewBundle
+                :return NewBundleExport
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :query [q BundleExportQuery]
                 :summary "Export a record with its local relationships"

@@ -11,9 +11,6 @@
          {:plural :verdicts
           :entity :verdict}))
 
-(def entities-no-casebook
-  (dissoc all-entities :casebook))
-
 (def prefixes
   {:read #{:read :search :list}
    :write #{:create :delete}})
@@ -36,12 +33,6 @@
                 % (keys prefixes))
               (vals all-entities))))
 
-(def all-entity-no-casebook-capabilities
-  (apply set/union
-         (map #(gen-capabilities-for-entity-and-accesses
-                % (keys prefixes))
-              (vals entities-no-casebook))))
-
 (def misc-capabilities
   #{:read-verdict
     ;; Other
@@ -53,11 +44,6 @@
   (set/union
    misc-capabilities
    all-entity-capabilities))
-
-(def all-capabilities-no-casebook
-  (set/union
-   misc-capabilities
-   all-entity-no-casebook-capabilities))
 
 (comment
 
@@ -83,8 +69,7 @@
         (str "private-intel/" loc))))
 
   (sort (set/union
-         #{"casebook:read" "casebook:write"}
-         (set (map cap-to-scope all-capabilities-no-casebook)))))
+         (set (map cap-to-scope all-capabilities)))))
 
 (def default-capabilities
   {:user

@@ -1,5 +1,6 @@
 (ns ctia.bundle.schemas
   (:require [schema.core :as s]
+            [ctia.schemas.core :as csc]
             [schema-tools.core :as st]))
 
 (s/defschema EntityImportResult
@@ -25,3 +26,6 @@
 
 (s/defschema BundleImportResult
   {:results [EntityImportResult]})
+
+(s/defschema NewBundleExport
+  (st/open-schema csc/NewBundle))

@@ -3,7 +3,6 @@
   (:require
    [ctia.auth.capabilities
     :refer [default-capabilities
-            entities-no-casebook
             all-entities
             gen-capabilities-for-entity-and-accesses]]
    [ring-jwt-middleware.core :as mid]
@@ -49,7 +48,7 @@
            entity
            (:access scope-repr))))
     ;; typically: ["private-intel"]
-    1 (->> entities-no-casebook
+    1 (->> all-entities
            vals
            (map #(gen-capabilities-for-entity-and-accesses % (:access scope-repr)))
            unionize

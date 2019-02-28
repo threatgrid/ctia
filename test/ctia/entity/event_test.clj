@@ -132,7 +132,7 @@
                          url-encode
                          (str "ctia/event/history/"))
                     {timeline1-body :parsed-body
-                    timeline1-status :status}
+                     timeline1-status :status}
                     (get uri-timeline-incident-user1
                          :headers {"Authorization" "user1"})
                     {timeline2-body :parsed-body

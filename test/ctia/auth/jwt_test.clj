@@ -47,15 +47,11 @@
                                                        (sut/casebook-root-scope)})))
       "with all scopes you should have most capabilities except some very
        specific ones")
-  (is (= #{:search-casebook
-           :list-casebooks
-           :create-casebook
-           :read-casebook
-           :delete-casebook}
-         (set/difference
-          (sut/scopes-to-capabilities #{(sut/casebook-root-scope)})
-          (sut/scopes-to-capabilities #{(sut/entity-root-scope)})))
-      "entity scope don't provide casebook")
+
+  (is (clojure.set/subset?
+       (sut/scopes-to-capabilities #{(sut/casebook-root-scope)})
+       (sut/scopes-to-capabilities #{(sut/entity-root-scope)}))
+      "casebook capabilities are a subset of all entity caps")
 
   (is (= #{:import-bundle}
          (sut/scopes-to-capabilities
