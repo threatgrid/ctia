@@ -128,14 +128,22 @@
 |----------------------------+-------------------------------------------------------------------------------+-----------------|
 | ctia.http.bulk.max-size    | Set the maximum number of entities one can post using a single bulk operation | number          |
 
+*** Bundle
+
+   Set limits for entity bulk operations
+
+| Property                                  | Description                              | Possible values |
+|-------------------------------------------+------------------------------------------+-----------------|
+| ctia.http.bundle.export.max-relationships | maximum number of exported relationships | number          |
 
 ** Events
 
   Event related configuration
 
-| Property        | Description           | Possible values |
-|-----------------+-----------------------+-----------------|
-| ctia.events.log | enable CTIA Event log | =true= =false= |
+| Property                         | Description                                         | Possible values |
+|----------------------------------+-----------------------------------------------------+-----------------|
+| ctia.events.log                  | enable CTIA Event log                               | =true= =false=  |
+| ctia.events.timeline.max-seconds | max seconds between 2 consecutive events in buckets | number          |
 
 
 ** Hooks

@@ -13,10 +13,53 @@
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
 
-(s/defschema BundleExportQuery
-  {:ids [s/Str]
-   (s/optional-key :related_to) [(s/enum :source_ref :target_ref)]
+(s/defschema BundleExportOptions
+  {(s/optional-key :related_to) [(s/enum :source_ref :target_ref)]
    (s/optional-key :include_related_entities) s/Bool})
+
+(s/defschema BundleExportIds
+  {:ids [s/Str]})
+
+(s/defschema BundleExportQuery
+  (merge BundleExportIds
+         BundleExportOptions))
+
+(def export-capabilities
+  #{:list-campaigns
+    :read-actor
+    :read-malware
+    :read-attack-pattern
+    :read-judgement
+    :read-sighting
+    :list-sightings
+    :list-relationships
+    :read-coa
+    :read-indicator
+    :list-judgements
+    :list-tools
+    :list-indicators
+    :read-feedback
+    :list-verdicts
+    :list-feedbacks
+    :list-malwares
+    :list-data-tables
+    :list-incidents
+    :read-campaign
+    :list-attack-patterns
+    :read-relationship
+    :list-actors
+    :read-investigation
+    :read-incident
+    :list-coas
+    :read-tool
+    :list-investigations
+    :read-data-table
+    :read-weakness
+    :list-weaknesses
+    :read-vulnerability
+    :list-vulnerabilities
+    :read-casebook
+    :list-casebooks})
 
 (defroutes bundle-routes
   (context "/bundle" []
@@ -26,46 +69,26 @@
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :query [q BundleExportQuery]
                 :summary "Export a record with its local relationships"
-                :capabilities
-                #{:list-campaigns
-                  :read-actor
-                  :read-malware
-                  :read-attack-pattern
-                  :read-judgement
-                  :read-sighting
-                  :list-sightings
-                  :list-relationships
-                  :read-coa
-                  :read-indicator
-                  :list-judgements
-                  :list-tools
-                  :list-indicators
-                  :read-feedback
-                  :list-verdicts
-                  :list-feedbacks
-                  :list-malwares
-                  :list-data-tables
-                  :list-incidents
-                  :read-campaign
-                  :list-attack-patterns
-                  :read-relationship
-                  :list-actors
-                  :read-investigation
-                  :read-incident
-                  :list-coas
-                  :read-tool
-                  :list-investigations
-                  :read-data-table
-                  :read-weakness
-                  :list-weaknesses
-                  :read-vulnerability
-                  :list-vulnerabilities
-                  :read-casebook
-                  :list-casebooks}
+                :capabilities export-capabilities
                 :auth-identity identity
                 :identity-map identity-map
                 (ok (export-bundle
                      (:ids q)
+                     identity-map
+                     identity
+                     (select-keys q [:include_related_entities :related_to]))))
+
+           (POST "/export" []
+                :return NewBundle
+                :header-params [{Authorization :- (s/maybe s/Str) nil}]
+                :query [q BundleExportOptions]
+                :body [b BundleExportIds]
+                :summary "Export a record with its local relationships"
+                :capabilities export-capabilities
+                :auth-identity identity
+                :identity-map identity-map
+                (ok (export-bundle
+                     (:ids b)
                      identity-map
                      identity
                      (select-keys q [:include_related_entities :related_to]))))
