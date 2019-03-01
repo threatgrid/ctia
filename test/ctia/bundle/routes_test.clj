@@ -382,6 +382,34 @@
                  "The result collection for indicators is not empty")
              (is (every? #(contains? % :error) indicators)))))))))
 
+(deftest bundle-import-errors-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [bundle {:source "foo"
+                   :indicators [(assoc (mk-indicator 1)
+                                       :valid_time
+                                       {:start_time #inst "2042-05-11T00:40:48.212-00:00"
+                                        :end_time #inst "4242-07-11T00:40:48.212-00:00"})]}
+           response-create (post "ctia/bundle/import"
+                                 :body bundle
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+           bundle-result-create (:parsed-body response-create)]
+
+       (is (= 200 (:status response-create)))
+       (is (= {:results
+               [{:original_id (:id (-> bundle :indicators first)),
+                 :result "error",
+                 :type :indicator,
+                 :external_id "ctia-indicator-1",
+                 :error "Entity validation Error",
+                 :msg "In: [:valid_time :end_time] val: #inst \"4242-07-11T00:40:48.212-00:00\" fails spec: :new-indicator.valid_time/end_time at: [:valid_time :end_time] predicate: (inst-in-range? #inst \"1970-01-01T00:00:00.000-00:00\" #inst \"2525-01-01T00:01:00.000-00:00\" %)\n"}]}
+              (:parsed-body response-create)))))))
+
 (deftest find-by-external-ids-test
   (test-for-each-store
    (fn []

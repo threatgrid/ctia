@@ -242,10 +242,11 @@
               (concat
                ;; Only submitted entities are processed
                (map (fn [entity-import-data
-                         {:keys [error] :as entity-bulk-result}]
+                         {:keys [error msg] :as entity-bulk-result}]
                       (cond-> entity-import-data
                         error (assoc :error error
                                      :result "error")
+                        msg (assoc :msg msg)
                         (not error) (assoc :id entity-bulk-result
                                            :result "created")))
                     submitted (get bulk-result k))
@@ -267,7 +268,7 @@
   [response]
   (let [errors (->> response
                     :results
-                    (keep :error))]
+                    (filter :error))]
     (doseq [error errors]
       (log/warn error)))
   response)
