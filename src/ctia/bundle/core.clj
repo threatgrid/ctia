@@ -268,7 +268,7 @@
   [response]
   (let [errors (->> response
                     :results
-                    (keep :error))]
+                    (filter :error))]
     (doseq [error errors]
       (log/warn error)))
   response)

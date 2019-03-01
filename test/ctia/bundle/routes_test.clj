@@ -393,7 +393,7 @@
 
        (is (= 200 (:status response-create)))
        (is (= {:results
-               [{:original_id "transient:19a79c0c-4236-45dd-bc18-e90064affd68",
+               [{:original_id (:id (-> bundle :indicators first)),
                  :result "error",
                  :type :indicator,
                  :external_id "ctia-indicator-1",
