@@ -10,7 +10,8 @@
     :result (s/enum "error" "created" "exists")
     :type s/Keyword
     :external_id s/Str
-    :error s/Any}))
+    :error s/Any
+    :msg s/Str}))
 
 (s/defschema EntityImportData
   "Data structure used to keep a link between
