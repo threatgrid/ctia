@@ -21,7 +21,6 @@
    [schema.core :as s]))
 
 (def find-by-external-ids-limit 1000)
-(def list-limit find-by-external-ids-limit)
 
 (def bundle-entity-keys
   (set (vals bulk/bulk-entity-mapping)))
@@ -334,12 +333,13 @@
   "given an entity id, fetch all related relationship"
   [id identity-map related-to]
   (let [filters (->> (map #(hash-map % id) (set related-to))
-                     (apply merge))]
-    (some-> (list-all-pages :relationship
-                            list-fn
-                            {:one-of filters}
-                            identity-map
-                            {:limit list-limit})
+                     (apply merge))
+        max-relationships (get-in @properties [:ctia :http :bundle :export :max-relationships] 1000)]
+    (some-> (:data (read-store :relationship
+                               list-fn
+                               {:one-of filters}
+                               identity-map
+                               {:limit max-relationships}))
             ent/un-store-all)))
 
 (defn fetch-record

@@ -19,8 +19,9 @@
             [ctim.domain.id :as id]
             [ctim.examples.bundles :refer [bundle-maximal]]))
 
-(defn fixture-properties:small-max-bulk-size [t]
-  (helpers/with-properties ["ctia.http.bulk.max-size" 1000]
+(defn fixture-properties [t]
+  (helpers/with-properties ["ctia.http.bulk.max-size" 1000
+                            "ctia.http.bundle.export.max-relationships" 500]
     (t)))
 
 (defn fixture-find-by-external-ids-limit [t]
@@ -31,7 +32,7 @@
   (join-fixtures
    [mth/fixture-schema-validation
     helpers/fixture-properties:clean
-    fixture-properties:small-max-bulk-size
+    fixture-properties
     fixture-find-by-external-ids-limit
     whoami-helpers/fixture-server]))
 
@@ -535,6 +536,13 @@
                    :query-params {:ids [sighting-id-1
                                         sighting-id-2]
                                   :related_to ["target_ref" "source_ref"]}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-post-res
+             (:parsed-body
+              (post "ctia/bundle/export"
+                   :body {:ids [sighting-id-1
+                                sighting-id-2]}
+                   :query-params {:related_to ["target_ref" "source_ref"]}
                    :headers {"Authorization" "45c1f5e3f05d0"}))]
 
          (is (= 1 (count (:sightings bundle-get-res-1))))
@@ -554,7 +562,9 @@
          (is (= 402 (count (:relationships bundle-get-res-4))))
 
          (is (= bundle-get-res-3 bundle-get-res-5)
-             "default related_to value should be [:source_ref :target_ref]"))))))
+             "default related_to value should be [:source_ref :target_ref]")
+         (is (= bundle-get-res-5 bundle-post-res)
+             "POST and GET bundle/export routes must return the same results"))))))
 
 (deftest bundle-export-with-unreachable-external-entity
   (test-for-each-store
@@ -618,6 +628,44 @@
                       relationship-2
                       relationship-3
                       relationship-4}}))
+
+
+(def fixture-many-relationships
+  (let [indicators (map mk-indicator (range 300))
+        sighting (mk-sighting 0)
+        relationships (map
+                       (fn [idx indicator]
+                         (mk-relationship idx indicator sighting "indicates"))
+                       (range)
+                       (concat indicators indicators))]
+    {:type "bundle"
+     :source "source"
+     :indicators (set indicators)
+     :sightings #{sighting}
+     :relationships (set relationships)}))
+
+(deftest bundle-max-relationships-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (testing "testing max number of retrieved relationships"
+       (let [imported-bundle (post "ctia/bundle/import"
+                                   :body fixture-many-relationships
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
+             sighting-ids (->> (-> imported-bundle :parsed-body :results)
+                               (filter #(= (:type %) :sighting))
+                               (map :id))
+             exported-bundle
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids sighting-ids}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))]
+         (is (= 500 (count (:relationships exported-bundle)))))))))
+
 
 (deftest bundle-export-related-to-test
   (test-for-each-store
