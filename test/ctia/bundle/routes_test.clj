@@ -822,7 +822,12 @@
              bundle-get-res (get "ctia/bundle/export"
                                  :query-params {:ids [sighting-id
                                                       judgement-id]}
-                                 :headers {"Authorization" "45c1f5e3f05d0"})]
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+             bundle-post-res (post "ctia/bundle/export"
+                                   :body {:ids [sighting-id
+                                                judgement-id]}
+                                   :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 200 (:status bundle-post-res)))
          (is (= 200 (:status bundle-get-res))))))))
 
 (deftest bundle-export-casebook-test
