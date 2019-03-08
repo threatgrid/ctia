@@ -11,8 +11,7 @@
 
 (defprotocol IJudgementStore
   (calculate-verdict [this observable ident])
-  (list-judgements-by-observable [this observable ident params])
-  (add-indicator-to-judgement [this judgement-id indicator-relationship ident]))
+  (list-judgements-by-observable [this observable ident params]))
 
 (defprotocol ISightingStore
   (list-sightings-by-observables [this observable ident params]))
