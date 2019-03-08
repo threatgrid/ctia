@@ -79,7 +79,7 @@
                      (select-keys q [:include_related_entities :related_to]))))
 
            (POST "/export" []
-                :return NewBundle
+                :return NewBundleExport
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :query [q BundleExportOptions]
                 :body [b BundleExportIds]
