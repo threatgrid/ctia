@@ -34,24 +34,21 @@
   (logging/log! :error e (ex-message e))
   (ex/response-validation-handler e data request))
 
-(defn es-ex-message
+(defn es-ex-data
   [e data request]
-  (str
-   "- message: "(.getMessage e)
-   "\n- stack trace:\n" (->> (.getStackTrace e)
-                           (map str)
-                           (clojure.string/join "\n\t"))
+  (into
+   {:message (.getMessage e)
+    :stacktrace (->> (.getStackTrace e)
+                     (mapv str))
+    :request request
+    :data data}
    (when (instance? ExceptionInfo e)
-     (str "\n- Meta: " (pr-str (ex-data e))))
-   (when request
-     (str "\n- request: " (pr-str request)))
-   (when data
-     (str "\n- data: " (pr-str data)))))
+     {:ex-data (ex-data e)})))
 
 (defn es-query-parsing-error-handler
   "Handle ES query parsing error"
   [^Exception e data request]
-  (logging/log! :error e (es-ex-message e data request))
+  (logging/log! :error e (es-ex-data e data request))
   (let [es-message (some-> e
                            ex-data
                            :es-http-res
