@@ -35,8 +35,10 @@
            port
            access-control-allow-origin
            access-control-allow-methods
-           jwt]
-    :or {access-control-allow-methods "get,post,put,patch,delete"}}]
+           jwt
+           send-server-version]
+    :or {access-control-allow-methods "get,post,put,patch,delete"
+         send-server-version false}}]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler)
@@ -66,7 +68,8 @@
        {:port port
         :min-threads min-threads
         :max-threads max-threads
-        :join? false})
+        :join? false
+        :send-server-version? send-server-version})
     (.setStopAtShutdown true)
     (.setStopTimeout (* 1000 10))))
 

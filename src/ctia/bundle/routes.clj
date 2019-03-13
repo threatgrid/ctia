@@ -68,7 +68,7 @@
                 :return NewBundleExport
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :query [q BundleExportQuery]
-                :summary "Export a record with its local relationships"
+                :summary "Export records with their local relationships. Ids are URIs (with port if precised)."
                 :capabilities export-capabilities
                 :auth-identity identity
                 :identity-map identity-map
@@ -79,11 +79,11 @@
                      (select-keys q [:include_related_entities :related_to]))))
 
            (POST "/export" []
-                :return NewBundle
+                :return NewBundleExport
                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :query [q BundleExportOptions]
                 :body [b BundleExportIds]
-                :summary "Export a record with its local relationships"
+                :summary "Export records with their local relationships. Ids are URIs (with port if precised)."
                 :capabilities export-capabilities
                 :auth-identity identity
                 :identity-map identity-map
