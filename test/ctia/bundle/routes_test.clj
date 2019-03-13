@@ -567,53 +567,54 @@
              "POST and GET bundle/export routes must return the same results"))))))
 
 (deftest bundle-export-with-unreachable-entities
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (let [sighting-1 (mk-sighting 1)
-           indicator-1 (mk-indicator 1)
-           indicator-2 (mk-indicator 2)
-           relationship-1 (mk-relationship 1 sighting-1 indicator-1 "member-of")
-           relationship-2 (mk-relationship 2 sighting-1 indicator-2 "member-of")
-           relationship-3 ;;relationship to external entity
-           {:type "relationship"
-            :source_ref (:id sighting-1)
-            :relationship_type "indicates"
-            :target_ref "http://unknown.site/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"}
-           bundle {:type "bundle"
-                   :source "source"
-                   :sightings #{sighting-1}
-                   :indicators #{indicator-1 indicator-2}
-                   :relationships #{relationship-1 relationship-2 relationship-3}}
-           bundle-import (post "ctia/bundle/import"
-                               :body bundle
-                               :headers {"Authorization" "45c1f5e3f05d0"})
-           id-map (some->> bundle-import
-                           :parsed-body
-                           :results
-                           (map (fn [{:keys [original_id id]}]
-                                  [original_id id]))
-                           (into {}))
-           indicator-1-final-id (clojure.core/get id-map (:id indicator-1))
-           indicator-2-final-id (clojure.core/get id-map (:id indicator-2))
-           sighting-1-final-id (clojure.core/get id-map (:id sighting-1))
-           delete-indicator (delete (format "ctia/indicator/%s" (id/str->short-id indicator-1-final-id))
-                                    :headers {"Authorization" "45c1f5e3f05d0"})
-           bundle-export (get "ctia/bundle/export"
-                              :query-params {:ids [sighting-1-final-id]}
-                              :headers {"Authorization" "45c1f5e3f05d0"})
-           bundle-export-body (:parsed-body bundle-export)]
-        (is (= 200 (:status bundle-import)) "Import request status should be 200")
-        (is (= 200 (:status bundle-export)) "Export request status should be 200")
-        (is (= 204 (:status delete-indicator)) "Delete indicator request status should be 204")
-        (is (= (list indicator-2-final-id) (->> (:indicators bundle-export-body)
-                                                (map :id))))
-        (is (= 3 (count (:relationships bundle-export-body))))
-        (is (= 1 (count (:sightings bundle-export-body))))))))
+  (testing "external and deleted entities in fetched relationships should be ignored"
+    (test-for-each-store
+     (fn []
+       (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+       (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                           "foouser"
+                                           "foogroup"
+                                           "user")
+       (let [sighting-1 (mk-sighting 1)
+             indicator-1 (mk-indicator 1)
+             indicator-2 (mk-indicator 2)
+             relationship-1 (mk-relationship 1 sighting-1 indicator-1 "member-of")
+             relationship-2 (mk-relationship 2 sighting-1 indicator-2 "member-of")
+             relationship-3 ;;relationship to external entity
+             {:type "relationship"
+              :source_ref (:id sighting-1)
+              :relationship_type "indicates"
+              :target_ref "http://unknown.site/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"}
+             bundle {:type "bundle"
+                     :source "source"
+                     :sightings #{sighting-1}
+                     :indicators #{indicator-1 indicator-2}
+                     :relationships #{relationship-1 relationship-2 relationship-3}}
+             bundle-import (post "ctia/bundle/import"
+                                 :body bundle
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+             id-map (some->> bundle-import
+                             :parsed-body
+                             :results
+                             (map (fn [{:keys [original_id id]}]
+                                    [original_id id]))
+                             (into {}))
+             indicator-1-final-id (clojure.core/get id-map (:id indicator-1))
+             indicator-2-final-id (clojure.core/get id-map (:id indicator-2))
+             sighting-1-final-id (clojure.core/get id-map (:id sighting-1))
+             delete-indicator (delete (format "ctia/indicator/%s" (id/str->short-id indicator-1-final-id))
+                                      :headers {"Authorization" "45c1f5e3f05d0"})
+             bundle-export (get "ctia/bundle/export"
+                                :query-params {:ids [sighting-1-final-id]}
+                                :headers {"Authorization" "45c1f5e3f05d0"})
+             bundle-export-body (:parsed-body bundle-export)]
+         (is (= 200 (:status bundle-import)) "Import request status should be 200")
+         (is (= 200 (:status bundle-export)) "Export request status should be 200")
+         (is (= 204 (:status delete-indicator)) "Delete indicator request status should be 204")
+         (is (= (list indicator-2-final-id) (->> (:indicators bundle-export-body)
+                                                 (map :id))))
+         (is (= 3 (count (:relationships bundle-export-body))))
+         (is (= 1 (count (:sightings bundle-export-body)))))))))
 
 (def bundle-related-fixture
   (let [indicator-1 (mk-indicator 1)
