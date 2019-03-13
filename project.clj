@@ -2,7 +2,7 @@
 (def compojure-api-version "1.1.11")
 (def schema-tools-version "0.9.1")
 (def schema-version "1.1.7")
-
+(def jetty-server-version "9.4.15.v20190215")
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
 ;;   conflicts.  Do not change this in master.
@@ -56,10 +56,19 @@
                                com.andrewmcveigh/cljs-time
                                org.clojure/core.memoize
                                org.clojure/tools.reader]]
-                 [ring/ring-jetty-adapter "1.6.3"]
-                 [ring/ring-devel "1.6.3"]
+                 [org.eclipse.jetty/jetty-server ~jetty-server-version]
+                 [ring/ring-jetty-adapter "1.7.1"
+                  :exclusions [commons-io
+                               clj-time
+                               com.andrewmcveigh/cljs-time
+                               org.eclipse.jetty/jetty-server]]
+                 [ring/ring-devel "1.7.1"
+                  :exclusions [joda-time
+                               commons-io
+                               clj-time
+                               com.andrewmcveigh/cljs-time]]
                  [ring-cors "0.1.11"]
-                 [ring/ring-codec "1.1.0"
+                 [ring/ring-codec "1.1.1"
                   ;; Exclusions:
                   ;; - ring-codec 1.0.1 is not using the latest commons-codec
                   ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)

@@ -74,6 +74,14 @@
    :status "Open"
    :confidence "High"})
 
+(defn mk-judgement []
+  {:observable {:type "ip",
+                :value "10.0.0.1"}
+   :source "source"
+   :priority 99
+   :confidence "High"
+   :severity "Medium"})
+
 (defn mk-relationship
   [n source target relation-type]
   {:id (id/make-transient-id nil)
@@ -540,10 +548,10 @@
              bundle-post-res
              (:parsed-body
               (post "ctia/bundle/export"
-                   :body {:ids [sighting-id-1
-                                sighting-id-2]}
-                   :query-params {:related_to ["target_ref" "source_ref"]}
-                   :headers {"Authorization" "45c1f5e3f05d0"}))]
+                    :body {:ids [sighting-id-1
+                                 sighting-id-2]}
+                    :query-params {:related_to ["target_ref" "source_ref"]}
+                    :headers {"Authorization" "45c1f5e3f05d0"}))]
 
          (is (= 1 (count (:sightings bundle-get-res-1))))
          (is (= 2 (count (:relationships bundle-get-res-1))))
@@ -809,13 +817,24 @@
 
      (testing "Bundle export allows acl fields"
        (let [sighting (assoc (mk-sighting 1) :authorized_users ["foo"])
-             post-res (post "ctia/sighting"
-                            :body sighting
-                            :headers {"Authorization" "45c1f5e3f05d0"})
-             sighting-id (-> post-res :parsed-body :id)
+             judgement (assoc (mk-judgement) :authorized_users ["foo"])
+             judgement-post-res (post "ctia/judgement"
+                                      :body judgement
+                                      :headers {"Authorization" "45c1f5e3f05d0"})
+             sighting-post-res (post "ctia/sighting"
+                                     :body sighting
+                                     :headers {"Authorization" "45c1f5e3f05d0"})
+             sighting-id (-> sighting-post-res :parsed-body :id)
+             judgement-id (-> judgement-post-res :parsed-body :id)
              bundle-get-res (get "ctia/bundle/export"
-                                 :query-params {:ids [sighting-id]}
-                                 :headers {"Authorization" "45c1f5e3f05d0"})]
+                                 :query-params {:ids [sighting-id
+                                                      judgement-id]}
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+             bundle-post-res (post "ctia/bundle/export"
+                                   :body {:ids [sighting-id
+                                                judgement-id]}
+                                   :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= 200 (:status bundle-post-res)))
          (is (= 200 (:status bundle-get-res))))))))
 
 (deftest bundle-export-casebook-test

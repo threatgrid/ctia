@@ -73,6 +73,8 @@
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
 
+   (st/optional-keys {"ctia.http.send-server-version" s/Bool})
+
    (st/optional-keys {"ctia.http.swagger.oauth2.enabled" s/Bool
                       "ctia.http.swagger.oauth2.entry-key" s/Str
                       "ctia.http.swagger.oauth2.scopes" s/Str
