@@ -265,8 +265,7 @@
 
 (s/defn apply-create-store-fn
   [{:keys [entities store-fn enveloped-result? tempids] :as fm} :- FlowMap]
-  (if (empty? entities)
-    fm
+  (if (seq entities)
     (try
       (assoc fm
              :entities
@@ -278,7 +277,8 @@
           (if-let [{:keys [data]} (ex-data e)]
             (assoc fm :entities data)
             (throw e))
-          (throw e))))))
+          (throw e))))
+    fm))
 
 (s/defn ^:private apply-store-fn :- FlowMap
   [{:keys [entities flow-type store-fn] :as fm} :- FlowMap]

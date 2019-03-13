@@ -36,14 +36,11 @@
 
 (defn es-ex-data
   [e data request]
-  (into
-   {:message (.getMessage e)
-    :stacktrace (->> (.getStackTrace e)
-                     (mapv str))
-    :request request
-    :data data}
-   (when (instance? ExceptionInfo e)
-     {:ex-data (ex-data e)})))
+  (let [exception-data (ex-data e)]
+    (cond-> {:request request
+             :data data}
+      exception-data
+      (assoc :ex-data exception-data))))
 
 (defn es-query-parsing-error-handler
   "Handle ES query parsing error"

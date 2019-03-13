@@ -12,3 +12,6 @@
     true "indicator-56067199-47c0-4294-8957-13d6b265bdc4"
     true "http://localhost:57254/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"))
 
+(deftest clean-bundle-test
+  (is (= {:b '(1 2 3) :d '(1 3)}
+         (sut/clean-bundle {:a '(nil) :b '(1 2 3) :c '() :d '(1 nil 3)}))))
