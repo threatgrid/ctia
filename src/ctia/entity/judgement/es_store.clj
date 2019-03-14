@@ -1,5 +1,5 @@
 (ns ctia.entity.judgement.es-store
-  (:require [clj-momo.lib.es.document :refer [search-docs update-doc]]
+  (:require [clj-momo.lib.es.document :refer [search-docs]]
             [clj-momo.lib.time :as time]
             [ctia.store :refer :all]
             [ctia.domain.access-control :refer [allow-write?]]
@@ -50,25 +50,6 @@
 (def handle-delete (crud/handle-delete :judgement PartialStoredJudgement))
 (def handle-list (crud/handle-find :judgement PartialStoredJudgement))
 (def handle-query-string-search (crud/handle-query-string-search :judgement PartialStoredJudgement))
-
-(defn handle-add-indicator-to
-  "add an indicator relation to a judgement"
-  [state judgement-id indicator-rel ident]
-  (let [judgement (handle-read state judgement-id ident {})
-        indicator-rels (:indicators judgement)
-        updated-rels (conj indicator-rels indicator-rel)
-        updated {:indicators (set updated-rels)}]
-    (if (allow-write? judgement ident)
-      (do (update-doc (:conn state)
-                      (:index state)
-                      judgement-mapping
-                      judgement-id
-                      updated
-                      (get-in state [:props :refresh] false))
-          indicator-rel)
-      (throw (ex-info "You are not allowed to update this document"
-                      {:type :access-control-error})))))
-
 
 (defn list-active-by-observable
   [state observable ident]
@@ -133,8 +114,6 @@
     (handle-list state filter-map ident params))
 
   IJudgementStore
-  (add-indicator-to-judgement [_ judgement-id indicator-rel ident]
-    (handle-add-indicator-to state judgement-id indicator-rel ident))
   (list-judgements-by-observable [this observable ident params]
     (handle-list state {:all-of {[:observable :type]  (:type observable)
                                  [:observable :value] (:value observable)}} ident params))

@@ -8,7 +8,6 @@
    [schema.core :as s]
    [clj-momo.lib.clj-time.core :as t]
    [clj-momo.lib.es
-    [document :as d]
     [schemas :refer [ESConnState SliceProperties]]
     [slice :refer [get-slice-props]]]
    [ctia.entity.event.schemas

@@ -34,10 +34,18 @@
   (logging/log! :error e (ex-message e))
   (ex/response-validation-handler e data request))
 
+(defn es-ex-data
+  [e data request]
+  (let [exception-data (ex-data e)]
+    (cond-> {:request request
+             :data data}
+      exception-data
+      (assoc :ex-data exception-data))))
+
 (defn es-query-parsing-error-handler
   "Handle ES query parsing error"
   [^Exception e data request]
-  (logging/log! :warn e (ex-message e))
+  (logging/log! :error e (es-ex-data e data request))
   (let [es-message (some-> e
                            ex-data
                            :es-http-res

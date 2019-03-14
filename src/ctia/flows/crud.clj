@@ -119,7 +119,7 @@
          (map (fn [entity]
                 (->> entity
                      (check-spec spec)
-                     (tlp-check))) entities)))
+                     tlp-check)) entities)))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
@@ -265,30 +265,30 @@
 
 (s/defn apply-create-store-fn
   [{:keys [entities store-fn enveloped-result? tempids] :as fm} :- FlowMap]
-  (try
-    (assoc fm
-           :entities
-           (store-fn entities))
-    (catch Exception e
-      (if enveloped-result?
-        ;; Set partial results with errors if the enveloped-results format
-        ;; is used, otherwise throw an exception
-        (if-let [{:keys [data]} (ex-data e)]
-          (assoc fm :entities data)
-          (throw e))
-        (throw e)))))
+  (if (seq entities)
+    (try
+      (assoc fm
+             :entities
+             (store-fn entities))
+      (catch Exception e
+        (if enveloped-result?
+          ;; Set partial results with errors if the enveloped-results format
+          ;; is used, otherwise throw an exception
+          (if-let [{:keys [data]} (ex-data e)]
+            (assoc fm :entities data)
+            (throw e))
+          (throw e))))
+    fm))
 
 (s/defn ^:private apply-store-fn :- FlowMap
   [{:keys [entities flow-type store-fn] :as fm} :- FlowMap]
   (case flow-type
     :create (apply-create-store-fn fm)
-
     :delete
     (assoc fm :results
            (doall
             (for [{entity-id :id} entities]
               (store-fn entity-id))))
-
     :update
     (assoc fm
            :entities
