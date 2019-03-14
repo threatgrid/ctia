@@ -37,3 +37,7 @@
   (let [new-coll (last args)]
     (recast (first args) new-coll)))
 
+(defn fmap [f m]
+  (into {}
+        (for [[k v] m]
+          [k (f v)])))

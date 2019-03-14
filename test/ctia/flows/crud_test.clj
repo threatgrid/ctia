@@ -64,3 +64,23 @@
               {:entities
                [{:id "1"
                  :title "title"}]}))))))
+
+(deftest apply-create-store-fn-test
+  (let [store-fn-create (partial map #(assoc % :applied-store-create true))
+        flow-base {:entity-type :indicator
+                   :identity :whatever
+                   :create-event-fn identity
+                   :flow-type :create
+                   :store-fn store-fn-create}
+        flow-empty-entities (assoc flow-base :entities '())
+        flow-with-entities (assoc flow-base
+                                  :entities '({:type :fake
+                                               :id 1}
+                                              {:type :fake
+                                               :id 2}))]
+    (is (= flow-empty-entities
+           (sut/apply-create-store-fn flow-empty-entities))
+        "when entities are empty, apply-create-store-fn should not apply store-fn")
+    (is (every? #(:applied-store-create %)
+                (:entities (sut/apply-create-store-fn flow-with-entities)))
+        "store-fn shall be applied to every entities")))

@@ -10,6 +10,7 @@
     [auth :as auth]
     [properties :refer [properties]]
     [store :refer [list-fn read-fn read-store list-all-pages]]]
+   [ctia.lib.collection :refer [fmap]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
     :refer
@@ -311,6 +312,12 @@
       true)
     false))
 
+(defn clean-bundle
+  [bundle]
+  (->> (fmap #(remove nil? %) bundle)
+       (filter (comp seq second))
+       (into {})))
+
 (defn fetch-relationship-targets
   "given relationships, fetch all related objects"
   [relationships identity-map]
@@ -326,8 +333,9 @@
         by-bulk-key (into {}
                           (map (fn [[k v]]
                                  {(bulk/bulk-key
-                                   (keyword k)) v}) by-type))]
-    (bulk/fetch-bulk by-bulk-key identity-map)))
+                                   (keyword k)) v}) by-type))
+        fetched (bulk/fetch-bulk by-bulk-key identity-map)]
+    (clean-bundle fetched)))
 
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
