@@ -95,13 +95,21 @@
            mapping]}
    batch-size
    offset
-   sort-keys]
-  (let [params
+   sort-order
+   search_after]
+  (let [sort-by (conj (case mapping
+                        "event" [{"timestamp" sort-order}]
+                        "identity" []
+                        [{"modified" sort-order}])
+                      {"_uid" sort-order})
+        params
         (merge
          {:offset (or offset 0)
           :limit batch-size}
-         (when sort-keys
-           {:search_after sort-keys}))]
+         (when sort-order
+           {:sort sort-by})
+         (when search_after
+           {:search_after search_after}))]
     (es-doc/search-docs conn
                         indexname
                         mapping
@@ -178,16 +186,29 @@
                   :number_of_shards
                   :analysis)})
 
+(defn restart-params
+  [target-store]
+  (let [{:keys [data paging] :as res} (fetch-batch target-store 1 0 "desc" nil)]
+    (clojure.pprint/pprint res)
+    {:search_after (:sort paging)
+     :migration-count (:total-hits paging)}))
+
 (defn migrate-store
   "migrate a single store"
   [current-store
    target-store
    migrations
    batch-size
-   confirm?]
+   confirm?
+   restart?]
   (when confirm?
+    ;; TODO if restart?, test if exists before
     (create-target-store target-store))
-  (let [store-size (-> (fetch-batch current-store 1 0 nil)
+  (let [{:keys [search_after migrated-count]
+         :or {search_after nil
+              migrated-count 0}} (when restart?
+                                   (restart-params target-store))
+        store-size (-> (fetch-batch current-store 1 0 nil nil)
                        :paging
                        :total-hits)
         store-schema (type->schema (keyword (:type target-store)))
@@ -197,14 +218,15 @@
                store-size)
 
     (loop [offset 0
-           sort-keys nil
-           migrated-count 0]
+           search_after search_after
+           migrated-count migrated-count]
       (let [{:keys [data paging]
              :as batch}
             (fetch-batch current-store
                          batch-size
                          offset
-                         sort-keys)
+                         "asc"
+                         search_after)
             next (:next paging)
             offset (:offset next 0)
             search_after (:sort paging)
@@ -252,7 +274,7 @@
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
-  [prefix migrations batch-size confirm?]
+  [prefix migrations batch-size confirm? restart?]
   (let [current-stores (stores->maps @stores)
         target-stores
         (source-store-maps->target-store-maps current-stores
@@ -269,7 +291,8 @@
                      (sk target-stores)
                      migrations
                      batch-size
-                     confirm?))))
+                     confirm?
+                     restart?))))
 
 (defn check-store
   "check a single store"
@@ -277,7 +300,7 @@
    batch-size]
   (let [store-schema (type->schema (keyword (:type target-store)))
         coerce! (coerce-to-fn [store-schema])
-        store-size (-> (fetch-batch target-store 1 0 nil)
+        store-size (-> (fetch-batch target-store 1 0 nil nil)
                        :paging
                        :total-hits)]
     (log/infof "%s - store size: %s records"
@@ -292,6 +315,7 @@
             (fetch-batch target-store
                          batch-size
                          offset
+                         nil
                          sort-keys)
             next (:next paging)
             offset (:offset next 0)
@@ -340,7 +364,7 @@
     (System/exit 0)))
 
 (defn run-migration
-  [prefix migrations batch-size confirm?]
+  [prefix migrations batch-size confirm? restart?]
   (assert prefix "Please provide an indexname prefix for target store creation")
   (assert migrations "Please provide a csv migration list argument")
   (assert batch-size "Please specify a batch size")
@@ -352,7 +376,8 @@
     (migrate-store-indexes prefix
                            migrations
                            batch-size
-                           confirm?)
+                           confirm?
+                           restart?)
     (when confirm?
       (when-let [errors (seq (check-store-indexes batch-size prefix))]
         (log/errorf "Schema errors during migration: %s"
@@ -365,9 +390,9 @@
   (exit false))
 
 (defn -main
-  "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>"
-  [prefix migrations batch-size confirm?]
+  "invoke with lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?> <restart?>"
+  [prefix migrations batch-size confirm? restart?]
   (let [confirm? (or (boolean (read-string confirm?)) false)
         batch-size (read-string batch-size)
         migrations (map keyword (string/split migrations #","))]
-    (run-migration prefix migrations batch-size confirm?)))
+    (run-migration prefix migrations batch-size confirm? restart?)))

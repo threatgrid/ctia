@@ -107,6 +107,7 @@
       (sut/migrate-store-indexes "0.0.0"
                                  [:0.4.16]
                                  10
+                                 false
                                  false))
     (testing "migrate es indexes"
       (let [logger (atom [])]
@@ -114,7 +115,8 @@
           (sut/migrate-store-indexes "0.0.0"
                                      [:__test]
                                      10
-                                     true))
+                                     true
+                                     false))
 
         (testing "shall produce valid logs"
           (let [messages (set @logger)]
