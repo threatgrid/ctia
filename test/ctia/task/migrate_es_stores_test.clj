@@ -11,6 +11,7 @@
              [core :as helpers :refer [post post-bulk with-atom-logger]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
+            [ctia.store :refer [stores]]
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [actors :refer [actor-minimal]]
@@ -106,6 +107,7 @@
     (testing "simulate migrate es indexes"
       (sut/migrate-store-indexes "0.0.0"
                                  [:0.4.16]
+                                 (keys @stores)
                                  10
                                  false
                                  false))
@@ -114,6 +116,7 @@
         (with-atom-logger logger
           (sut/migrate-store-indexes "0.0.0"
                                      [:__test]
+                                     (keys @stores)
                                      10
                                      true
                                      false))
