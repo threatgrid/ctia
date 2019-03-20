@@ -26,7 +26,7 @@
   {:base "/ctia"
    :ctim-version schema-version
    :beta true
-   :ctia-build (st/replace (current-version) #"\n" "")
+   :ctia-build (st/replace (current-version) #"\s\n" "")
    :ctia-config (current-config-hash)
    :ctia-supported_features []})
 
