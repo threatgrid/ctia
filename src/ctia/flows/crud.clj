@@ -62,11 +62,11 @@
             this-host (get-in @properties [:ctia :http :show :hostname])]
         (if (= (:hostname id-rec) this-host)
           (:short-id id-rec)
-          (throw (http-response/bad-request!
-                  {:error "Invalid hostname in ID"
-                   :id id
-                   :this-host this-host
-                   :entity entity}))))
+          (http-response/bad-request!
+           {:error "Invalid hostname in ID"
+            :id id
+            :this-host this-host
+            :entity entity})))
       (id/str->short-id id))))
 
 (defn gen-random-uuid []
@@ -77,14 +77,16 @@
   (str (name entity-type) "-" (gen-random-uuid)))
 
 (s/defn ^:private find-entity-id :- s/Str
-  [{:keys [identity entity-type prev-entity tempids]} :- FlowMap
+  [{identity-obj :identity
+    :keys [entity-type prev-entity tempids]} :- FlowMap
    entity :- {s/Keyword s/Any}]
   (or (find-id prev-entity)
       (get tempids (:id entity))
       (when-let [entity-id (find-checked-id entity)]
-        (when-not (auth/capable? identity :specify-id)
-          {:error "Missing capability to specify entity ID"
-           :entity entity})
+        (when-not (auth/capable? identity-obj :specify-id)
+          (http-response/unauthorized!
+           {:error "Missing capability to specify entity ID"
+            :entity entity}))
         (if (id/valid-short-id? entity-id)
           entity-id
           {:error (format "Invalid entity ID: %s" entity-id)
