@@ -1,13 +1,16 @@
 (ns ctia.task.migrate-es-stores
   (:require [clojure.tools.cli :refer [parse-opts]]
+            [clj-momo.lib.time :as time]
             [clj-momo.lib.es
              [conn :as conn]
              [document :as es-doc]
              [index :as es-index]]
+            [ctia.lib.collection :refer [fmap]]
             [ctia.stores.es.store :refer [store->map]]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [ctia.properties :refer [properties]]
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :as p :refer [properties]]
@@ -17,10 +20,108 @@
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.task.migrations :refer [available-migrations]]
             [schema-tools.core :as st]
+            [ctia.stores.es.mapping :as em]
             [schema.core :as s]))
 
 (def default-batch-size 100)
 (def timeout (* 5 60000))
+
+(defn store-mapping
+  [[k store]]
+  {k {:type "object"
+      :properties {:source {:type "object"
+                            :properties
+                            {:index em/token
+                             :total {:type "long"}}}
+                   :target {:type "object"
+                            :properties
+                            {:index em/token
+                             :migrated {:type "long"}}}
+                   :started em/ts
+                   :completed em/ts}}})
+
+(def migration-mapping
+  {"migration"
+   {:dynamic false
+    :properties
+    {:id em/token
+     :timestamp em/ts
+     :stores {:type "object"
+              :properties (->> (map store-mapping @stores)
+                               (apply merge))}}}})
+
+(def migration-store
+  {:entity :migration
+   :indexname (get-in @properties [:ctia :migration :es :indexname])
+   :shards 1
+   :replicas 1})
+
+(s/defschema MigratedStore
+  {:source {:index s/Str
+            :total s/Int}
+   :target {:index s/Str
+            :migrated s/Int}
+   (s/optional-key :started) s/Inst
+   (s/optional-key :completed) s/Inst})
+
+(s/defschema MigrationSchema
+  {:id s/Str
+   :created java.util.Date
+   :stores {s/Keyword MigratedStore}})
+
+(defn store-size
+  [{:keys [conn indexname mapping]}]
+  (es-doc/count-docs conn indexname mapping))
+
+(defn prefixed-index [index prefix]
+  (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
+    (format "v%s_%s" prefix version-trimmed)))
+
+(defn stores->maps
+  "transform store records to maps"
+  [stores]
+  (into {}
+        (map (fn [[store-key store-record]]
+               {store-key
+                (store->map store-record
+                            {:cm (conn/make-connection-manager
+                                  {:timeout timeout})})})
+             stores)))
+
+(defn source-store-map->target-store-map
+  "transform a source store map into a target map,
+  essentially updating indexname"
+  [store prefix]
+  (update store :indexname #(prefixed-index % prefix)))
+
+(defn source-store-maps->target-store-maps
+  "transform target store records to maps"
+  [current-stores prefix]
+  (into {}
+        (map (fn [[sk sr]]
+               {sk (source-store-map->target-store-map sr prefix)})
+             current-stores)))
+
+(defn init-migration-store
+  [source target]
+  {:source {:index (:indexname source)
+            :total (or (store-size source) 0)}
+   :target {:index (:indexname target)
+            :migrated 0}})
+
+(s/defn init-migration :- MigrationSchema
+  [id :- s/Str
+   source-stores
+   target-stores]
+  (let [now (time/now)
+        migration-id (or id (str "migration-" (str (java.util.UUID/randomUUID))))
+        migration-stores (map (fn [[k v]]
+                                {k (init-migration-store v (k target-stores))})
+                              source-stores)
+        migration {:id migration-id
+                   :created now
+                   :stores (apply merge migration-stores)}]
+    migration))
 
 (defn optimizations-enabled? []
   (get-in @properties
@@ -52,35 +153,6 @@
       (do (log/warn "target migration not found, copying data")
           (map identity)))))
 
-(defn prefixed-index [index prefix]
-  (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
-    (format "v%s_%s" prefix version-trimmed)))
-
-(defn source-store-map->target-store-map
-  "transform a source store map into a target map,
-  essentially updating indexname"
-  [store prefix]
-  (update store :indexname #(prefixed-index % prefix)))
-
-(defn stores->maps
-  "transform store records to maps"
-  [stores]
-  (into {}
-        (map (fn [[store-key store-record]]
-               {store-key
-                (store->map store-record
-                            {:cm (conn/make-connection-manager
-                                  {:timeout timeout})})})
-             stores)))
-
-(defn source-store-maps->target-store-maps
-  "transform target store records to maps"
-  [current-stores prefix]
-  (into {}
-        (map (fn [[sk sr]]
-               {sk (source-store-map->target-store-map sr prefix)})
-             current-stores)))
-
 (defn setup
   "init properties, start CTIA and its store service"
   []
@@ -88,35 +160,6 @@
   (p/init!)
   (log-properties)
   (init-store-service!))
-
-(defn fetch-batch
-  "fetch a batch of documents from an es index"
-  [{:keys [conn
-           indexname
-           mapping]}
-   batch-size
-   offset
-   sort-order
-   search_after]
-  (let [sort-by (conj (case mapping
-                        "event" [{"timestamp" sort-order}]
-                        "identity" []
-                        [{"modified" sort-order}])
-                      {"_uid" sort-order})
-        params
-        (merge
-         {:offset (or offset 0)
-          :limit batch-size}
-         (when sort-order
-           {:sort sort-by})
-         (when search_after
-           {:search_after search_after}))]
-    (es-doc/search-docs conn
-                        indexname
-                        mapping
-                        nil
-                        {}
-                        params)))
 
 (def bulk-max-size (* 5 1024 1024)) ;; 5Mo
 
@@ -187,6 +230,35 @@
                   :number_of_shards
                   :analysis)})
 
+(defn fetch-batch
+  "fetch a batch of documents from an es index"
+  [{:keys [conn
+           indexname
+           mapping]}
+   batch-size
+   offset
+   sort-order
+   search_after]
+  (let [sort-by (conj (case mapping
+                        "event" [{"timestamp" sort-order}]
+                        "identity" []
+                        [{"modified" sort-order}])
+                      {"_uid" sort-order})
+        params
+        (merge
+         {:offset (or offset 0)
+          :limit batch-size}
+         (when sort-order
+           {:sort sort-by})
+         (when search_after
+           {:search_after search_after}))]
+    (es-doc/search-docs conn
+                        indexname
+                        mapping
+                        nil
+                        {}
+                        params)))
+
 (defn restart-params
   [target-store]
   (let [{:keys [data paging] :as res} (fetch-batch target-store 1 0 "desc" nil)]
@@ -211,16 +283,13 @@
          :or {search_after nil
               migrated-count 0}} (when restart?
                                    (restart-params target-store))
-        store-size (-> (fetch-batch current-store 1 0 nil nil)
-                       :paging
-                       :total-hits)
+        current-store-size (store-size current-store)
         store-schema (type->schema (keyword (:type target-store)))
         coerce! (coerce-to-fn [store-schema])]
 
-    (println (:indexname target-store) "===> SIZE " "=====" migrated-count)
     (log/infof "%s - store size: %s records"
                (:type current-store)
-               store-size)
+               current-store-size)
 
     (loop [offset 0
            search_after search_after
@@ -290,6 +359,7 @@
     (log/infof "migrating stores: %s" (keys current-stores))
     (log/infof "set batch size: %s" batch-size)
 
+    (clojure.pprint/pprint (init-migration "test" current-stores target-stores))
     (doseq [[sk sr] current-stores]
       (log/infof "migrating store: %s" sk)
       (migrate-store sr
@@ -305,12 +375,10 @@
    batch-size]
   (let [store-schema (type->schema (keyword (:type target-store)))
         coerce! (coerce-to-fn [store-schema])
-        store-size (-> (fetch-batch target-store 1 0 nil nil)
-                       :paging
-                       :total-hits)]
+        target-store-size (store-size store-size)]
     (log/infof "%s - store size: %s records"
                (:type target-store)
-               store-size)
+               target-store-size)
 
     (loop [offset 0
            sort-keys nil
@@ -368,6 +436,8 @@
     (System/exit -1)
     (System/exit 0)))
 
+
+
 (defn run-migration
   [prefix migrations store-keys batch-size confirm? restart?]
   (assert prefix "Please provide an indexname prefix for target store creation")
@@ -402,8 +472,8 @@
 ]
    ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"
     :parse-fn #(map keyword (string/split % #","))]
-   ["-b" "--batch-size SIZE" "migration batch size"
-    :default 100
+   ["-b" "--batch-size SIZE" "migVration batch size"
+    :default default-batch-size
     :parse-fn read-string
     :validate [#(< 0 %) "batch-size must be a positive number"]]
    ["-s" "--stores STORES" "comma separated list of stores to migrate"
@@ -424,6 +494,7 @@
       (println summary)
       (System/exit 0))
     (clojure.pprint/pprint options)
+    ;;(clojure.pprint/pprint migration-mapping)
     (run-migration (:prefix options)
                    (:migrations options)
                    (:stores options)

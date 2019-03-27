@@ -101,6 +101,7 @@
                       "ctia.http.bundle.export.max-relationships" s/Int})
 
    (st/optional-keys {"ctia.migration.optimizations" s/Bool})
+   (st/optional-keys {"ctia.migration.es.indexname" s/Bool})
 
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool
