@@ -61,7 +61,7 @@
                     "ctia.metrics.riemann.enabled"    false
                     "ctia.metrics.console.enabled"    false
                     "ctia.metrics.jmx.enabled"        false
-                    "ctia.migration.optimizations"    false]
+                    "ctia.migration.es.indexname"     "ctia_migration"]
     ;; run tests
     (f)))
 

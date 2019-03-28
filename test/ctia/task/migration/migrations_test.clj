@@ -1,7 +1,7 @@
-(ns ctia.task.migrations-test
+(ns ctia.task.migration.migrations-test
   (:require [clojure.test :refer [deftest is]]
             [ctia.entity.incident :refer [StoredIncident]]
-            [ctia.task.migrations :as sut]
+            [ctia.task.migration.migrations :as sut]
             [schema.core :as s]))
 
 (deftest add-groups-test

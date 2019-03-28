@@ -1,11 +1,11 @@
-(ns ctia.task.migrate-es-stores-test
+(ns ctia.task.migration.migrate-es-stores-test
   (:require [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
             [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
             [ctia.properties :as props]
-            [ctia.task.migrate-es-stores :as sut]
+            [ctia.task.migration.migrate-es-stores :as sut]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post post-bulk with-atom-logger]]
@@ -85,12 +85,6 @@
    :tools (n-doc tool-minimal fixtures-nb)
    :vulnerabilities (n-doc vulnerability-minimal fixtures-nb)
    :weaknesses (n-doc weakness-minimal fixtures-nb)})
-
-(deftest prefixed-index-test
-  (is (= "v0.4.2_ctia_actor"
-         (sut/prefixed-index "ctia_actor" "0.4.2")))
-  (is (= "v0.4.2_ctia_actor"
-         (sut/prefixed-index "v0.4.1_ctia_actor" "0.4.2"))))
 
 (deftest test-migrate-store-indexes
   (helpers/set-capabilities! "foouser"

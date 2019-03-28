@@ -1,4 +1,4 @@
-(ns ctia.task.migrations
+(ns ctia.task.migration.migrations
   (:require [clj-momo.lib.clj-time
              [coerce :as time-coerce]
              [core :as time-core]]
