@@ -268,7 +268,7 @@
                                       :variables {}
                                       :operationName ""}
                                :headers {"Authorization" "2222222222222"})]
-             (is (= 401 status))))
+             (is (= 403 status))))
          (testing "observable query"
            (let [{:keys [data errors status]}
                  (gh/query graphql-queries

@@ -7,7 +7,7 @@
             [compojure.api.impl.logging :as logging]
             [ring.util.http-response :refer [internal-server-error
                                              bad-request
-                                             unauthorized]]
+                                             forbidden]]
             [clojure.data.json :as json]))
 
 (defn ex-message [^Exception e]
@@ -65,7 +65,7 @@
   "Handle access control error"
   [^Exception e data request]
   (logging/log! :info e (ex-message e))
-  (unauthorized
+  (forbidden
    {:error "Access Control validation Client Error"
     :type "Access Control Error"
     :message (.getMessage e)
