@@ -107,24 +107,29 @@
     (testing "no Authorization"
       (let [{body :parsed-body status :status}
             (get (str "ctia/judgement/" (:short-id judgement-id)))]
-        (is (= 403 status))
-        (is (= {:message "Only authenticated users allowed"} body))))
+        (is (= 401 status))
+        (is (= {:message "Only authenticated users allowed"
+                :error :not_authenticated}
+               body))))
 
     (testing "unknown Authorization"
       (let [{body :parsed-body status :status}
             (get (str "ctia/judgement/" (:short-id judgement-id))
                  :headers {"Authorization" "1111111111111"})]
-        (is (= 403 status))
-        (is (= {:message "Only authenticated users allowed"} body))))
+        (is (= 401 status))
+        (is (= {:message "Only authenticated users allowed"
+                :error :not_authenticated}
+               body))))
 
     (testing "doesn't have read capability"
       (let [{body :parsed-body status :status}
             (get (str "ctia/judgement/" (:short-id judgement-id))
                  :headers {"Authorization" "2222222222222"})]
-        (is (= 401 status))
+        (is (= 403 status))
         (is (= {:message "Missing capability",
                 :capabilities :read-judgement,
-                :owner "baruser"}
+                :owner "baruser"
+                :error :missing_capability}
                body))))))
 
 (deftest test-judgement-routes
@@ -239,8 +244,7 @@
                                 :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                          :headers {"Authorization" (str "Bearer " jwt-token)
                                    "origin" "http://external.cisco.com"})]
-               (is (or (= 401 (:status response))
-                       (= 403 (:status response)))
+               (is (= 403 (:status response))
                    "Normal users shouldn't be allowed to set the ids during creation.")))))))))
 
 (deftest cors-test
