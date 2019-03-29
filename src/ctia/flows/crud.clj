@@ -84,7 +84,7 @@
       (get tempids (:id entity))
       (when-let [entity-id (find-checked-id entity)]
         (when-not (auth/capable? identity-obj :specify-id)
-          (http-response/unauthorized!
+          (http-response/forbidden!
            {:error "Missing capability to specify entity ID"
             :entity entity}))
         (if (id/valid-short-id? entity-id)

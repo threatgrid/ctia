@@ -38,19 +38,24 @@
       (if (and (not (nil? auth-identity))
                (auth/authenticated? auth-identity))
         (handler request)
-        (http-response/forbidden! {:message "Only authenticated users allowed"})))))
+        (http-response/unauthorized!
+         {:error :not_authenticated
+          :message "Only authenticated users allowed"})))))
 
 (defn require-capability! [required-capability id]
   (if required-capability
     (cond
       (or (nil? id)
           (not (auth/authenticated? id)))
-      (http-response/forbidden! {:message "Only authenticated users allowed"})
+      (http-response/unauthorized!
+       {:error :not_authenticated
+        :message "Only authenticated users allowed"})
 
       (not (auth/capable? id required-capability))
-      (http-response/unauthorized! {:message "Missing capability"
-                                    :capabilities required-capability
-                                    :owner (auth/login id)}))))
+      (http-response/forbidden! {:message "Missing capability"
+                                 :error :missing_capability
+                                 :capabilities required-capability
+                                 :owner (auth/login id)}))))
 
 ;; Create a compojure-api meta-data handler for capability-based
 ;; security. The :identity field must by on the request object
