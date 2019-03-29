@@ -56,23 +56,24 @@
 
 (defn migrate-store
   "migrate a single store"
-  [current-store
-   target-store
+  [{:keys [source target]}
    migrations
    batch-size
    confirm?
    restart?]
-  (mst/create-target-store! target-store confirm? restart?)
-  (let [{:keys [search_after migrated-count]
+  (let [source-store (:store source)
+        target-store (:store target)
+        _ (mst/create-target-store! target-store confirm? restart?)
+        {:keys [search_after migrated-count]
          :or {search_after nil
               migrated-count 0}} (when restart?
                                    (restart-params target-store))
-        current-store-size (mst/store-size current-store)
+        current-store-size (mst/store-size source-store)
         store-schema (type->schema (keyword (:type target-store)))
         coerce! (coerce-to-fn [store-schema])]
 
     (log/infof "%s - store size: %s records"
-               (:type current-store)
+               (:type source-store)
                current-store-size)
 
     (loop [offset 0
@@ -80,7 +81,7 @@
            migrated-count migrated-count]
       (let [{:keys [data paging]
              :as batch}
-            (mst/fetch-batch current-store
+            (mst/fetch-batch source-store
                          batch-size
                          offset
                          "asc"
@@ -99,7 +100,7 @@
                    (let [message
                          (format (str "%s - Invalid batch, certainly a coercion issue "
                                       "errors: %s")
-                                 (pr-str (:type current-store))
+                                 (pr-str (:type source-store))
                                  (pr-str errors))]
                      (log/error message)
                      message)
@@ -109,36 +110,32 @@
             (mst/store-batch target-store migrated))
 
           (log/infof "%s - migrated: %s documents"
-                     (:type current-store)
+                     (:type source-store)
                      migrated-count))
         (if next
           (recur offset
                  search_after
                  migrated-count)
           (do (log/infof "%s - finished migrating %s documents"
-                         (:type current-store)
+                         (:type source-store)
                          migrated-count)
-              (mst/finalize-migration! current-store target-store)
+              (mst/finalize-migration! source-store target-store)
 ))))))
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
   [prefix migrations store-keys batch-size confirm? restart?]
-  (let [current-stores (mst/stores->maps (select-keys @stores store-keys))
-        target-stores
-        (mst/source-store-maps->target-store-maps current-stores
-                                              prefix)
+  (let [migration-state (mst/init-migration "test" prefix store-keys)
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
 
-    (log/infof "migrating stores: %s" (keys current-stores))
+    (log/infof "migrating stores: %s" store-keys)
     (log/infof "set batch size: %s" batch-size)
 
-    (mst/init-migration "test" current-stores target-stores)
-    (doseq [[sk sr] current-stores]
-      (log/infof "migrating store: %s" sk)
-      (migrate-store sr
-                     (sk target-stores)
+    (doseq [store-state (:stores migration-state)]
+      (println "store-state ==> " store-state)
+      (log/infof "migrating store: %s" (:type store-state))
+      (migrate-store store-state
                      migrations
                      batch-size
                      confirm?

@@ -2,14 +2,17 @@
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [schema.core :as s]
+            [schema-tools.core :as st]
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es
+             [schemas :refer [ESConn]]
              [conn :as conn]
              [document :as es-doc]
              [index :as es-index]]
             [ctia.stores.es
+             [init :refer [init-store-conn init-es-conn! get-store-properties]]
              [mapping :as em]
-             [store :refer [store->map]]]
+             [store :refer [StoreMap store->map]]]
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :refer [properties]]
@@ -17,73 +20,85 @@
 
 (def timeout (* 5 60000))
 
-(defn store-mapping
-  [[k store]]
-  {k {:type "object"
-      :properties {:source {:type "object"
-                            :properties
-                            {:index em/token
-                             :total {:type "long"}}}
-                   :target {:type "object"
-                            :properties
-                            {:index em/token
-                             :migrated {:type "long"}}}
-                   :started em/ts
-                   :completed em/ts}}})
+(def token-mapping
+  (dissoc em/token :fielddata))
 
-(def migration-mapping
+(def migration-mappings
   {"migration"
    {:dynamic false
     :properties
-    {:id em/token
+    {:id token-mapping
      :timestamp em/ts
-     :stores {:type "object"
-              :properties (->> (map store-mapping @stores)
-                               (apply merge))}}}})
+     :stores {:type "nested"
+              :properties {:type token-mapping
+                           :source {:type "object"
+                                    :properties
+                                    {:index token-mapping
+                                     :total {:type "long"}}}
+                           :target {:type "object"
+                                    :properties
+                                    {:index token-mapping
+                                     :migrated {:type "long"}}}
+                           :started em/ts
+                           :completed em/ts}}}}})
 
-(def migration-store
-  {:entity :migration
-   :indexname (get-in @properties [:ctia :migration :es :indexname])
-   :shards 1
-   :replicas 1})
+(defn migration-store-properties
+  []
+  (-> (get-store-properties :migration)
+      (merge
+       {:shards 1
+        :replicas 1
+        :refresh true
+        :mappings migration-mappings})))
 
 (s/defschema MigratedStore
-  {:source {:index s/Str
-            :total s/Int}
+  {:type s/Keyword
+   :source {:index s/Str
+            :total s/Int
+            :store StoreMap}
    :target {:index s/Str
-            :migrated s/Int}
+            :migrated s/Int
+            :store StoreMap}
    (s/optional-key :started) s/Inst
    (s/optional-key :completed) s/Inst})
 
 (s/defschema MigrationSchema
   {:id s/Str
    :created java.util.Date
-   :stores {s/Keyword MigratedStore}})
+   :stores [MigratedStore]})
 
 (defn store-size
   [{:keys [conn indexname mapping]}]
   (es-doc/count-docs conn indexname mapping))
 
 (defn init-migration-store
-  [source target]
-  {:source {:index (:indexname source)
-            :total (or (store-size source) 0)}
+  [entity-type source target]
+  {:type entity-type
+   :source {:index (:indexname source)
+            :total (or (store-size source) 0)
+            :store source}
    :target {:index (:indexname target)
-            :migrated 0}})
+            :migrated 0
+            :store target}})
 
-(s/defn init-migration :- MigrationSchema
-  [id :- s/Str
-   source-stores
-   target-stores]
-  (let [now (time/now)
-        migration-id (or id (str "migration-" (str (java.util.UUID/randomUUID))))
-        migration-stores (map (fn [[k v]]
-                                {k (init-migration-store v (k target-stores))})
-                              source-stores)
-        migration {:id migration-id
-                   :created now
-                   :stores (apply merge migration-stores)}]
-    migration))
+(s/defn wo-storemaps
+  [{:keys [stores] :as migration} :- MigrationSchema]
+  (assoc migration
+         :stores
+         (map #(-> (update-in % [:source] dissoc :store)
+                   (update-in [:target] dissoc :store))
+              stores)))
+
+(s/defn store-migration
+  [migration :- MigrationSchema
+   conn :- ESConn]
+  (let [prepared (wo-storemaps migration)
+        {:keys [indexname entity]} (migration-store-properties)]
+    (es-doc/create-doc conn
+                       indexname
+                       (name entity)
+                       prepared
+                       "true")))
 
 (defn prefixed-index [index prefix]
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
@@ -109,11 +124,33 @@
 
 (defn source-store-maps->target-store-maps
   "transform target store records to maps"
-  [current-stores prefix]
+  [source-stores prefix]
   (into {}
         (map (fn [[sk sr]]
                {sk (source-store-map->target-store-map sr prefix)})
-             current-stores)))
+             source-stores)))
+
+(s/defn init-migration :- MigrationSchema
+  [id :- (s/maybe s/Str)
+   prefix :- s/Str
+   store-keys :- [s/Keyword]]
+
+  (let [source-stores (stores->maps (select-keys @stores store-keys))
+        target-stores
+        (source-store-maps->target-store-maps source-stores
+                                              prefix)
+        migration-properties (migration-store-properties)
+        now (time/now)
+        migration-id (or id (str "migration-" (str (java.util.UUID/randomUUID))))
+        migration-stores (map (fn [[k v]]
+                                (init-migration-store k v (k target-stores)))
+                              source-stores)
+        migration {:id migration-id
+                   :created now
+                   :stores migration-stores}
+        es-conn-state (init-es-conn! migration-properties)]
+    (store-migration migration (:conn es-conn-state))
+    migration))
 
 (def bulk-max-size (* 5 1024 1024)) ;; 5Mo
 

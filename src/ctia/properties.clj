@@ -40,7 +40,7 @@
   (let [configurable-stores (map name (keys @store/stores))
         store-names (conj configurable-stores "default")]
     (st/optional-keys
-     (reduce merge {}
+     (reduce merge {"ctia.store.es.migration.indexname" s/Str}
              (map (fn [s] (merge (default-store-properties s)
                                  (es-store-impl-properties s)))
                   store-names)))))
@@ -99,8 +99,6 @@
                       "ctia.http.show.port" s/Int
                       "ctia.http.bulk.max-size" s/Int
                       "ctia.http.bundle.export.max-relationships" s/Int})
-
-   (st/optional-keys {"ctia.migration.es.indexname" s/Bool})
 
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool

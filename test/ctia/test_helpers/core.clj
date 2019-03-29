@@ -60,8 +60,7 @@
                     "ctia.hook.redis.channel-name"    "events-test"
                     "ctia.metrics.riemann.enabled"    false
                     "ctia.metrics.console.enabled"    false
-                    "ctia.metrics.jmx.enabled"        false
-                    "ctia.migration.es.indexname"     "ctia_migration"]
+                    "ctia.metrics.jmx.enabled"        false]
     ;; run tests
     (f)))
 
