@@ -3,8 +3,6 @@
             [clojure.string :as string]
             [clojure.tools.logging :as log]
             [ctia
-             [init :refer [init-store-service! log-properties]]
-             [properties :refer [init!]]
              [store :refer [stores]]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
@@ -40,35 +38,17 @@
       (do (log/warn "target migration not found, copying data")
           (map identity)))))
 
-(defn setup
-  "init properties, start CTIA and its store service"
-  []
-  (log/info "starting CTIA Stores...")
-  (init!)
-  (log-properties)
-  (init-store-service!))
-
-(defn restart-params
-  [target-store]
-  (let [{:keys [data paging] :as res} (mst/fetch-batch target-store 1 0 "desc" nil)]
-    {:search_after (:sort paging)
-     :migration-count (:total-hits paging)}))
-
 (defn migrate-store
   "migrate a single store"
-  [{:keys [source target]}
+  [{:keys [source target] :as migration-state}
    migrations
    batch-size
-   confirm?
-   restart?]
-  (let [source-store (:store source)
-        target-store (:store target)
-        _ (mst/create-target-store! target-store confirm? restart?)
-        {:keys [search_after migrated-count]
-         :or {search_after nil
-              migrated-count 0}} (when restart?
-                                   (restart-params target-store))
-        current-store-size (mst/store-size source-store)
+   confirm?]
+  (let [{source-store :store
+         search_after :search_after
+         current-store-size :total} source
+        {target-store :store
+         migrated-count :migrated} target
         store-schema (type->schema (keyword (:type target-store)))
         coerce! (coerce-to-fn [store-schema])]
 
@@ -119,13 +99,17 @@
           (do (log/infof "%s - finished migrating %s documents"
                          (:type source-store)
                          migrated-count)
-              (mst/finalize-migration! source-store target-store)
+              (when confirm?
+                (mst/finalize-migration! source-store target-store))
 ))))))
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
-  [prefix migrations store-keys batch-size confirm? restart?]
-  (let [migration-state (mst/init-migration "test" prefix store-keys)
+  [migration-id prefix migrations store-keys batch-size confirm? restart?]
+  (let [migration-state (if restart?
+                          (mst/restart-migration migration-id
+                                                 @mst/migration-conn-state)
+                          (mst/init-migration migration-id prefix store-keys confirm?))
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
 
@@ -133,13 +117,11 @@
     (log/infof "set batch size: %s" batch-size)
 
     (doseq [store-state (:stores migration-state)]
-      (println "store-state ==> " store-state)
       (log/infof "migrating store: %s" (:type store-state))
       (migrate-store store-state
                      migrations
                      batch-size
-                     confirm?
-                     restart?))))
+                     confirm?))))
 
 (defn check-store
   "check a single store"
@@ -209,14 +191,15 @@
     (System/exit 0)))
 
 (defn run-migration
-  [prefix migrations store-keys batch-size confirm? restart?]
+  [migration-id prefix migrations store-keys batch-size confirm? restart?]
   (assert prefix "Please provide an indexname prefix for target store creation")
   (assert migrations "Please provide a csv migration list argument")
   (assert batch-size "Please specify a batch size")
   (log/info "migrating all ES Stores")
   (try
-    (setup)
-    (migrate-store-indexes prefix
+    (mst/setup)
+    (migrate-store-indexes migration-id
+                           prefix
                            migrations
                            store-keys
                            batch-size
@@ -235,9 +218,9 @@
 
 (def cli-options
   ;; An option with a required argument
-  [["-p" "--prefix PREFIX" "prefix of the target size"
-    :required true
-]
+  [["--i" "--id ID" "migration ID to create or restart"
+    :default (str "migration-" (java.util.UUID/randomUUID))]
+   ["-p" "--prefix PREFIX" "prefix of the target size"]
    ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"
     :parse-fn #(map keyword (string/split % #","))]
    ["-b" "--batch-size SIZE" "migVration batch size"
@@ -252,7 +235,14 @@
    ["-h" "--help"]])
 
 (defn -main [& args]
-  (let [{:keys [options errors summary]} (parse-opts args cli-options)]
+  (let [{:keys [options errors summary]} (parse-opts args cli-options)
+        {:keys [migration-id
+                prefix
+                migrations
+                stores
+                batch-size
+                confirm
+                restart]} options]
     (when errors
       (binding  [*out* *err*]
         (println (clojure.string/join "\n" errors))
@@ -262,10 +252,10 @@
       (println summary)
       (System/exit 0))
     (clojure.pprint/pprint options)
-    ;;(clojure.pprint/pprint migration-mapping)
-    (run-migration (:prefix options)
-                   (:migrations options)
-                   (:stores options)
-                   (:batch-size options)
-                   (:confirm options)
-                   (:restart options))))
+    (run-migration migration-id
+                   prefix
+                   migrations
+                   stores
+                   batch-size
+                   confirm
+                   restart)))

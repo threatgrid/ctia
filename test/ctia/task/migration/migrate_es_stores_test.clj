@@ -87,6 +87,7 @@
    :weaknesses (n-doc weakness-minimal fixtures-nb)})
 
 (deftest test-migrate-store-indexes
+  ;; TODO clean data
   (helpers/set-capabilities! "foouser"
                              ["foogroup"]
                              "user"
@@ -99,21 +100,23 @@
   (testing "migrate ES Stores test setup"
     (post-bulk examples)
     (testing "simulate migrate es indexes"
-      (sut/migrate-store-indexes "0.0.0"
+      (sut/migrate-store-indexes "test-1"
+                                 "0.0.0"
                                  [:0.4.16]
                                  (keys @stores)
                                  10
                                  false
-                                 false))
+                                 nil))
     (testing "migrate es indexes"
       (let [logger (atom [])]
         (with-atom-logger logger
-          (sut/migrate-store-indexes "0.0.0"
+          (sut/migrate-store-indexes "test2"
+                                     "0.0.0"
                                      [:__test]
                                      (keys @stores)
                                      10
                                      true
-                                     false))
+                                     nil))
 
         (testing "shall produce valid logs"
           (let [messages (set @logger)]
