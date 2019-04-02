@@ -5,7 +5,7 @@
             [schema-tools.core :as st]
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es
-             [schemas :refer [ESConn ESConnState]]
+             [schemas :refer [ESConn]]
              [conn :as conn]
              [document :as es-doc]
              [index :as es-index]]
@@ -21,7 +21,7 @@
 
 (def timeout (* 5 60000))
 
-(def migration-conn-state (atom nil))
+(def migration-es-conn (atom nil))
 
 (def token-mapping
   (dissoc em/token :fielddata))
@@ -216,7 +216,7 @@
   "create the target store, pushing its template"
   [{:keys [conn indexname config] entity-type :type :as target-store}]
   (when (es-index/index-exists? conn indexname)
-    (log/warnf "tried to create target store %s, but it already exists. Recreating it" indexname))
+    (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
   (let [index-settings (target-index-settings (:settings config))]
     (log/infof "%s - purging indexes: %s" entity-type indexname)
     (es-index/delete! conn indexname)
@@ -255,9 +255,9 @@
    {source :source
     target :target :as raw-store} :- MigratedStore]
   (let [source-store (store->map (get @stores entity-type))
-        target-store (update source-store :indexname (:index target))]
+        target-store (assoc source-store :indexname (:index target))]
     (-> (assoc-in raw-store [:source :store] source-store)
-        (assoc-in [:source :store] target-store))))
+        (assoc-in [:target :store] target-store))))
 
 (s/defn with-search-after :- MigratedStore
   [raw-store :- MigratedStore]
@@ -277,12 +277,15 @@
   [migration-id :- s/Str
    es-conn :- ESConn]
   (let [{:keys [indexname entity]} (migration-store-properties)
-        migration-raw (es-doc/get-doc es-conn indexname entity migration-id nil)]
+        migration-raw (es-doc/get-doc es-conn
+                                      indexname
+                                      (name entity)
+                                      migration-id
+                                      nil)]
+    (println "migration raw" migration-raw)
     (when-not migration-raw
       (log/errorf "migration not found: %s" migration-id)
       (throw (ex-info "migration not found" {:id migration-id})))
-    (->> (:store migration-raw)
-         (map (fn [[k v]])))
     (update migration-raw :stores enrich-stores)))
 
 (s/defn update-migration-store
@@ -299,8 +302,12 @@
                        partial-doc
                        "true")))
 
-(defn finalize-migration!
-  [source-store target-store]
+(s/defn finalize-migration! :- s/Any
+  [migration-id :- s/Str
+   store-key :- s/Keyword
+   source-store :- StoreMap
+   target-store :- StoreMap
+   es-conn :- ESConn]
   (log/infof "%s - update index settings" (:type source-store))
   (es-index/update-settings! (:conn target-store)
                              (:indexname target-store)
@@ -308,7 +315,11 @@
                               (get-in target-store [:config :settings])))
   (log/infof "%s - trigger refresh" (:type source-store))
   (es-index/refresh! (:conn target-store)
-                     (:indexname target-store)))
+                     (:indexname target-store))
+  (update-migration-store migration-id
+                          store-key
+                          {:completed (time/now)}
+                          es-conn))
 
 (defn setup!
   "init properties, start CTIA and its store service"
@@ -319,4 +330,5 @@
   (init-store-service!)
   (->> (migration-store-properties)
        init-store-conn
-       (reset! migration-conn-state)))
+       :conn
+       (reset! migration-es-conn)))

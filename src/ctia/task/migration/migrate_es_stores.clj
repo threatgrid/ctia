@@ -46,7 +46,7 @@
    migrations
    batch-size
    confirm?]
-  (let [{:keys [id stores]} migration-state
+  (let [{stores :stores migration-id :id} migration-state
         {:keys [source target started]} (get stores entity-type)
         {source-store :store
          search_after :search_after
@@ -76,11 +76,11 @@
             migrated (transduce migrations conj data)
             migrated-count (+ migrated-count
                               (count migrated))]
-        (when-not started
-          (mst/update-migration-store id
+        (when (and confirm? (not started))
+          (mst/update-migration-store migration-id
                                       entity-type
                                       {:started (time/now)}
-                                      (:conn @mst/migration-conn-state)))
+                                      @mst/migration-es-conn))
 
         (when (seq migrated)
           (try (coerce! migrated)
@@ -96,10 +96,10 @@
                    (throw e))))
           (when confirm?
             (mst/store-batch target-store migrated)
-            (mst/update-migration-store id
+            (mst/update-migration-store migration-id
                                         entity-type
                                         {:target {:migrated migrated-count}}
-                                        (:conn @mst/migration-conn-state)))
+                                        @mst/migration-es-conn))
 
           (log/infof "%s - migrated: %s documents"
                      (:type source-store)
@@ -112,15 +112,18 @@
                          (:type source-store)
                          migrated-count)
               (when confirm?
-                (mst/finalize-migration! source-store target-store))
-))))))
+                (mst/finalize-migration! migration-id
+                                         entity-type
+                                         source-store
+                                         target-store
+                                         @mst/migration-es-conn))))))))
 
 (defn migrate-store-indexes
   "migrate all es store indexes"
   [migration-id prefix migrations store-keys batch-size confirm? restart?]
   (let [migration-state (if restart?
                           (mst/restart-migration migration-id
-                                                 (:conn @mst/migration-conn-state))
+                                                 @mst/migration-es-conn)
                           (mst/init-migration migration-id prefix store-keys confirm?))
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
@@ -231,7 +234,7 @@
 
 (def cli-options
   ;; An option with a required argument
-  [["--i" "--id ID" "migration ID to create or restart"
+  [["-i" "--id ID" "migration ID to create or restart"
     :default (str "migration-" (java.util.UUID/randomUUID))]
    ["-p" "--prefix PREFIX" "prefix of the target size"]
    ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"
@@ -249,7 +252,7 @@
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)
-        {:keys [migration-id
+        {:keys [id
                 prefix
                 migrations
                 stores
@@ -265,7 +268,7 @@
       (println summary)
       (System/exit 0))
     (clojure.pprint/pprint options)
-    (run-migration migration-id
+    (run-migration id
                    prefix
                    migrations
                    stores
