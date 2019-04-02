@@ -117,7 +117,8 @@
                        indexname
                        (name entity)
                        prepared
-                       "true")))
+                       "true"))
+  migration)
 
 (defn prefixed-index [index prefix]
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
@@ -260,16 +261,22 @@
         (assoc-in [:target :store] target-store))))
 
 (s/defn with-search-after :- MigratedStore
-  [raw-store :- MigratedStore]
-  (let [target-store (get-in raw-store [:target :store])
+  [raw-with-stores :- MigratedStore]
+  (let [target-store (get-in raw-with-stores [:target :store])
         {:keys [data paging] :as res} (fetch-batch target-store 1 0 "desc" nil)]
-    (assoc-in raw-store [:source :search_after] (:sort paging))))
+    (assoc-in raw-with-stores [:source :search_after] (:sort paging))))
+
+(s/defn update-source-size :- MigratedStore
+  [raw-with-stores :- MigratedStore]
+  (let [source-size (store-size (get-in raw-with-stores [:source :store]))]
+    (assoc-in raw-with-stores [:source :total] source-size)))
 
 (s/defn enrich-stores :- {s/Keyword MigratedStore}
   [stores :- {s/Keyword MigratedStore}]
   (->> (map (fn [[store-key raw]]
               {store-key (-> (with-store-map store-key raw)
-                             with-search-after)})
+                             with-search-after
+                             update-source-size)})
             stores)
        (apply merge)))
 
@@ -286,7 +293,8 @@
     (when-not migration-raw
       (log/errorf "migration not found: %s" migration-id)
       (throw (ex-info "migration not found" {:id migration-id})))
-    (update migration-raw :stores enrich-stores)))
+    (-> (update migration-raw :stores enrich-stores)
+        (store-migration es-conn))))
 
 (s/defn update-migration-store
   [migration-id :- s/Str
