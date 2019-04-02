@@ -2,6 +2,7 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [clj-momo.lib.time :as time]
             [ctia
              [store :refer [stores]]]
             [ctia.entity.entities :refer [entities]]
@@ -40,13 +41,16 @@
 
 (defn migrate-store
   "migrate a single store"
-  [{:keys [source target] :as migration-state}
+  [migration-state
+   entity-type
    migrations
    batch-size
    confirm?]
-  (let [{source-store :store
+  (let [{:keys [id stores]} migration-state
+        {:keys [source target started]} (get stores entity-type)
+        {source-store :store
          search_after :search_after
-         current-store-size :total} source
+         source-store-size :total} source
         {target-store :store
          migrated-count :migrated} target
         store-schema (type->schema (keyword (:type target-store)))
@@ -54,7 +58,7 @@
 
     (log/infof "%s - store size: %s records"
                (:type source-store)
-               current-store-size)
+               source-store-size)
 
     (loop [offset 0
            search_after search_after
@@ -62,16 +66,21 @@
       (let [{:keys [data paging]
              :as batch}
             (mst/fetch-batch source-store
-                         batch-size
-                         offset
-                         "asc"
-                         search_after)
+                             batch-size
+                             offset
+                             "asc"
+                             search_after)
             next (:next paging)
             offset (:offset next 0)
             search_after (:sort paging)
             migrated (transduce migrations conj data)
             migrated-count (+ migrated-count
                               (count migrated))]
+        (when-not started
+          (mst/update-migration-store id
+                                      entity-type
+                                      {:started (time/now)}
+                                      (:conn @mst/migration-conn-state)))
 
         (when (seq migrated)
           (try (coerce! migrated)
@@ -85,9 +94,12 @@
                      (log/error message)
                      message)
                    (throw e))))
-
           (when confirm?
-            (mst/store-batch target-store migrated))
+            (mst/store-batch target-store migrated)
+            (mst/update-migration-store id
+                                        entity-type
+                                        {:target {:migrated migrated-count}}
+                                        (:conn @mst/migration-conn-state)))
 
           (log/infof "%s - migrated: %s documents"
                      (:type source-store)
@@ -108,7 +120,7 @@
   [migration-id prefix migrations store-keys batch-size confirm? restart?]
   (let [migration-state (if restart?
                           (mst/restart-migration migration-id
-                                                 @mst/migration-conn-state)
+                                                 (:conn @mst/migration-conn-state))
                           (mst/init-migration migration-id prefix store-keys confirm?))
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
@@ -116,9 +128,10 @@
     (log/infof "migrating stores: %s" store-keys)
     (log/infof "set batch size: %s" batch-size)
 
-    (doseq [store-state (:stores migration-state)]
-      (log/infof "migrating store: %s" (:type store-state))
-      (migrate-store store-state
+    (doseq [entity-type (keys (:stores migration-state))]
+      (log/infof "migrating store: %s" entity-type)
+      (migrate-store migration-state
+                     entity-type
                      migrations
                      batch-size
                      confirm?))))
@@ -197,7 +210,7 @@
   (assert batch-size "Please specify a batch size")
   (log/info "migrating all ES Stores")
   (try
-    (mst/setup)
+    (mst/setup!)
     (migrate-store-indexes migration-id
                            prefix
                            migrations

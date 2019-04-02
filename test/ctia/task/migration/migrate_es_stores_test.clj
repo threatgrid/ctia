@@ -6,6 +6,7 @@
              [walk :refer [keywordize-keys]]]
             [ctia.properties :as props]
             [ctia.task.migration.migrate-es-stores :as sut]
+            [ctia.task.migration.store :refer [setup!]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post post-bulk with-atom-logger]]
@@ -96,7 +97,7 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-
+  (setup!)
   (testing "migrate ES Stores test setup"
     (post-bulk examples)
     (testing "simulate migrate es indexes"
@@ -106,11 +107,13 @@
                                  (keys @stores)
                                  10
                                  false
-                                 nil))
+                                 nil)
+      ;; TODO check does nothing was created
+      )
     (testing "migrate es indexes"
       (let [logger (atom [])]
         (with-atom-logger logger
-          (sut/migrate-store-indexes "test2"
+          (sut/migrate-store-indexes "test-2"
                                      "0.0.0"
                                      [:__test]
                                      (keys @stores)
