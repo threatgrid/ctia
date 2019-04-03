@@ -42,7 +42,7 @@
 (s/defn handle-deletes
   [{:keys [created stores]} :- mst/MigrationSchema
    store-keys :- [s/Keyword]
-   confirm? :- [s/Bool]]
+   confirm? :- s/Bool]
   (let [deletes (mst/fetch-deletes store-keys created)]
     (doseq [[entity-type entities] deletes]
       (log/infof "Handling %s deleted %s during migration"

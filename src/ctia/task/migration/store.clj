@@ -211,7 +211,7 @@
    search_after :- (s/maybe [s/Any])]
   (query-fetch-batch nil store batch-size offset sort-order search_after))
 
-(s/defn fetch-deletes :- [s/Str]
+(s/defn fetch-deletes :- (s/maybe {s/Any s/Any})
   "retrieves delete events for given entity types and since given date"
   [entity-types :- [s/Keyword]
    since :- s/Inst]
