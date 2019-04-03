@@ -5,10 +5,11 @@
             [schema-tools.core :as st]
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es
-             [schemas :refer [ESConn]]
+             [schemas :refer [ESConn ESQuery]]
              [conn :as conn]
              [document :as es-doc]
              [index :as es-index]]
+            [ctim.domain.id :refer [long-id->id]]
             [ctia.stores.es
              [init :refer [init-store-conn init-es-conn! get-store-properties]]
              [mapping :as em]
@@ -173,15 +174,14 @@
      "false"
      bulk-max-size)))
 
-(defn fetch-batch
-  "fetch a batch of documents from an es index"
-  [{:keys [conn
-           indexname
-           mapping]}
-   batch-size
-   offset
-   sort-order
-   search_after]
+(s/defn query-fetch-batch :- {s/Any s/Any}
+  "fetch a batch of documents from an es index and a query"
+  [query :- (s/maybe ESQuery)
+   {:keys [conn indexname mapping]} :- StoreMap
+   batch-size :- s/Int
+   offset :- s/Int
+   sort-order :- (s/maybe s/Str)
+   search_after :- (s/maybe [s/Any])]
   (let [sort-by (conj (case mapping
                         "event" [{"timestamp" sort-order}]
                         "identity" []
@@ -198,9 +198,56 @@
     (es-doc/search-docs conn
                         indexname
                         mapping
-                        nil
+                        query
                         {}
                         params)))
+
+(s/defn fetch-batch :- {s/Any s/Any}
+  "fetch a batch of documents from an es index"
+  [store :- StoreMap
+   batch-size :- s/Int
+   offset :- s/Int
+   sort-order :- (s/maybe s/Str)
+   search_after :- (s/maybe [s/Any])]
+  (query-fetch-batch nil store batch-size offset sort-order search_after))
+
+(s/defn fetch-deletes :- [s/Str]
+  "retrieves delete events for given entity types and since given date"
+  [entity-types :- [s/Keyword]
+   since :- s/Inst]
+  ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
+  (let [query {:range {:timestamp {:gte since}}}
+        event-store (store->map (:event @stores))
+        filter-events (fn [{:keys [event_type entity]}]
+                        (and (= event_type "record-deleted")
+                             (contains? (set entity-types)
+                                        (-> entity :type keyword))))]
+    (loop [search_after nil
+           deleted []]
+      (let [{:keys [data paging]} (query-fetch-batch query
+                                                     event-store
+                                                     1000
+                                                     0
+                                                     "asc"
+                                                     search_after)
+            {:keys [search_after next]} paging
+            deleted (->> (filter filter-events data)
+                         (map :entity)
+                         (map #(update % :type keyword))
+                         (concat deleted))]
+        (if next
+          (recur search_after deleted)
+          (group-by :type deleted))))))
+
+(s/defn batch-delete
+  "delete a batch of documents given their ids"
+  [{:keys [conn indexname]
+    entity-type :type :as store} :- StoreMap
+   ids :- [s/Str]]
+  ;; TODO need a bulk delete in clj-momo
+  ;; still ok since there is few deletes
+  (doseq [id (map (comp :short-id long-id->id) ids)]
+    (es-doc/delete-doc conn indexname entity-type id "true")))
 
 (defn target-index-settings [settings]
   {:index (into settings

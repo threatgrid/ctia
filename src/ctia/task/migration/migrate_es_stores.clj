@@ -39,6 +39,19 @@
       (do (log/warn "target migration not found, copying data")
           (map identity)))))
 
+(s/defn handle-deletes
+  [{:keys [created stores]} :- mst/MigrationSchema
+   store-keys :- [s/Keyword]
+   confirm? :- [s/Bool]]
+  (let [deletes (mst/fetch-deletes store-keys created)]
+    (doseq [[entity-type entities] deletes]
+      (log/infof "Handling %s deleted %s during migration"
+                 (count entities)
+                 (name entity-type))
+      (when confirm?
+        (mst/batch-delete (get-in stores [entity-type :target :store])
+                          (map :id entities))))))
+
 (defn migrate-store
   "migrate a single store"
   [migration-state
@@ -60,18 +73,14 @@
                (:type source-store)
                source-store-size)
 
-    (loop [offset 0
-           search_after search_after
+    (loop [search_after search_after
            migrated-count migrated-count]
-      (let [{:keys [data paging]
-             :as batch}
-            (mst/fetch-batch source-store
-                             batch-size
-                             offset
-                             "asc"
-                             search_after)
+      (let [{:keys [data paging]} (mst/fetch-batch source-store
+                                                   batch-size
+                                                   0
+                                                   "asc"
+                                                   search_after)
             next (:next paging)
-            offset (:offset next 0)
             search_after (:sort paging)
             migrated (transduce migrations conj data)
             migrated-count (+ migrated-count
@@ -105,9 +114,7 @@
                      (:type source-store)
                      migrated-count))
         (if next
-          (recur offset
-                 search_after
-                 migrated-count)
+          (recur search_after migrated-count)
           (do (log/infof "%s - finished migrating %s documents"
                          (:type source-store)
                          migrated-count)
@@ -137,7 +144,8 @@
                      entity-type
                      migrations
                      batch-size
-                     confirm?))))
+                     confirm?))
+    (handle-deletes migration-state store-keys confirm?)))
 
 (defn check-store
   "check a single store"
