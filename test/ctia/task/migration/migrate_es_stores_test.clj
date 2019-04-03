@@ -1,17 +1,25 @@
 (ns ctia.task.migration.migrate-es-stores-test
-  (:require [clj-http.client :as client]
-            [clj-momo.test-helpers.core :as mth]
-            [clojure
+  (:require [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
+
+            [schema.core :as s]
+            [clj-http.client :as client]
+            [clj-momo.test-helpers.core :as mth]
+            [clj-momo.lib.es
+             [conn :refer [connect]]
+             [document :as es-doc]
+             [index :as es-index]]
+
             [ctia.properties :as props]
             [ctia.task.migration.migrate-es-stores :as sut]
-            [ctia.task.migration.store :refer [setup!]]
+            [ctia.task.migration.store :refer [setup! prefixed-index]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post post-bulk with-atom-logger]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
+            [ctia.stores.es.store :refer [store->map]]
             [ctia.store :refer [stores]]
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
@@ -70,6 +78,12 @@
          (into {})
          keywordize-keys)))
 
+(defn index-exists?
+  [store prefix]
+  (let [{:keys [conn indexname]} (store->map store {})]
+    (es-index/index-exists? conn
+                            (prefixed-index indexname prefix))))
+
 (def examples
   {:actors (n-doc actor-minimal fixtures-nb)
    :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
@@ -87,6 +101,12 @@
    :vulnerabilities (n-doc vulnerability-minimal fixtures-nb)
    :weaknesses (n-doc weakness-minimal fixtures-nb)})
 
+(setup!)
+(def es-props (get-in @props/properties [:ctia :store :es]))
+(def es-conn (connect (:default es-props)))
+(def migration-index (get-in es-props [:migration :indexname]))
+
+
 (deftest test-migrate-store-indexes
   ;; TODO clean data
   (helpers/set-capabilities! "foouser"
@@ -97,19 +117,24 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-  (setup!)
   (testing "migrate ES Stores test setup"
     (post-bulk examples)
-    (testing "simulate migrate es indexes"
+    (testing "simulate migrate es indexes shall not create any document"
       (sut/migrate-store-indexes "test-1"
                                  "0.0.0"
                                  [:0.4.16]
                                  (keys @stores)
                                  10
                                  false
-                                 nil)
-      ;; TODO check does nothing was created
-      )
+                                 false)
+
+      (doseq [store (vals @stores)]
+        (is (not (index-exists? store "0.0.0"))))
+      (is (nil? (seq (es-doc/get-doc es-conn
+                                     (get-in es-props [:migration :indexname])
+                                     "migration"
+                                     "test-1"
+                                     {})))))
     (testing "migrate es indexes"
       (let [logger (atom [])]
         (with-atom-logger logger
@@ -119,8 +144,24 @@
                                      (keys @stores)
                                      10
                                      true
-                                     nil))
-
+                                     false))
+        (testing "shall generate a proper migration test"
+          (let [migration-state (es-doc/get-doc es-conn
+                                                migration-index
+                                                "migration"
+                                                "test-2"
+                                                {})]
+            (is (= (set (keys @stores))
+                   (set (keys (:stores migration-state)))))
+            (doseq [{:keys [source target]} (-> migration-state
+                                                :stores
+                                                vals
+                                                seq)]
+              (is (= (:total source)
+                     (:migrated target)))
+              (is (int? (:total source)))
+              (is (= (:index target)
+                     (prefixed-index (:index source) "0.0.0"))))))
         (testing "shall produce valid logs"
           (let [messages (set @logger)]
             (is (contains? messages "set batch size: 10"))
@@ -213,3 +254,5 @@
                               (map #(get-in % [:_source :groups])))]
                 (is (every? #(= ["migration-test"] %)
                             hits))))))))))
+;; clean
+(es-index/delete! es-conn "v0.0.0*")

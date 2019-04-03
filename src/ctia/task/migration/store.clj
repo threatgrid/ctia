@@ -51,8 +51,7 @@
               :properties (->> (map store-mapping @stores)
                                (apply merge))}}}})
 
-(defn migration-store-properties
-  []
+(defn migration-store-properties []
   (-> (get-store-properties :migration)
       (merge
        {:shards 1

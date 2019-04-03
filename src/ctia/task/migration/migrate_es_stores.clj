@@ -125,9 +125,15 @@
                                          target-store
                                          @mst/migration-es-conn))))))))
 
-(defn migrate-store-indexes
+(s/defn migrate-store-indexes
   "migrate all es store indexes"
-  [migration-id prefix migrations store-keys batch-size confirm? restart?]
+  [migration-id :- s/Str
+   prefix :- s/Str
+   migrations :- [s/Any]
+   store-keys :- [s/Keyword]
+   batch-size :- s/Int
+   confirm? :- s/Bool
+   restart? :- s/Bool]
   (let [migration-state (if restart?
                           (mst/restart-migration migration-id
                                                  @mst/migration-es-conn)
