@@ -12,32 +12,17 @@
              [index :as es-index]]
 
             [ctia.properties :as props]
-            [ctia.task.migration.migrate-es-stores :as sut]
-            [ctia.task.migration.store :refer [setup! prefixed-index]]
+            [ctia.task.migration
+             [fixtures :refer [examples example-types fixtures-nb]]
+             [migrate-es-stores :as sut]
+             [store :refer [setup! prefixed-index]]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post post-bulk with-atom-logger]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.stores.es.store :refer [store->map]]
-            [ctia.store :refer [stores]]
-            [ctim.domain.id :refer [make-transient-id]]
-            [ctim.examples
-             [actors :refer [actor-minimal]]
-             [attack-patterns :refer [attack-pattern-minimal]]
-             [campaigns :refer [campaign-minimal]]
-             [coas :refer [coa-minimal]]
-             [incidents :refer [incident-minimal]]
-             [indicators :refer [indicator-minimal]]
-             [investigations :refer [investigation-minimal]]
-             [judgements :refer [judgement-minimal]]
-             [malwares :refer [malware-minimal]]
-             [relationships :refer [relationship-minimal]]
-             [casebooks :refer [casebook-minimal]]
-             [sightings :refer [sighting-minimal]]
-             [tools :refer [tool-minimal]]
-             [vulnerabilities :refer [vulnerability-minimal]]
-             [weaknesses :refer [weakness-minimal]]]))
+            [ctia.store :refer [stores]]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -49,15 +34,6 @@
 
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
-
-(def fixtures-nb 100)
-
-(defn randomize [doc]
-  (assoc doc
-         :id (make-transient-id "_")))
-
-(defn n-doc [fixture nb]
-  (map randomize (repeat nb fixture)))
 
 (defn refresh-indices [host port]
   (client/post (format "http://%s:%s/_refresh" host port)))
@@ -84,28 +60,10 @@
     (es-index/index-exists? conn
                             (prefixed-index indexname prefix))))
 
-(def examples
-  {:actors (n-doc actor-minimal fixtures-nb)
-   :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
-   :campaigns (n-doc campaign-minimal fixtures-nb)
-   :coas (n-doc coa-minimal fixtures-nb)
-   :incidents (n-doc incident-minimal fixtures-nb)
-   :indicators (n-doc indicator-minimal fixtures-nb)
-   :investigations (n-doc investigation-minimal fixtures-nb)
-   :judgements (n-doc judgement-minimal fixtures-nb)
-   :malwares (n-doc malware-minimal fixtures-nb)
-   :relationships (n-doc relationship-minimal fixtures-nb)
-   :casebooks (n-doc casebook-minimal fixtures-nb)
-   :sightings (n-doc sighting-minimal fixtures-nb)
-   :tools (n-doc tool-minimal fixtures-nb)
-   :vulnerabilities (n-doc vulnerability-minimal fixtures-nb)
-   :weaknesses (n-doc weakness-minimal fixtures-nb)})
-
 (setup!)
 (def es-props (get-in @props/properties [:ctia :store :es]))
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
-
 
 (deftest test-migrate-store-indexes
   ;; TODO clean data
@@ -145,7 +103,7 @@
                                      10
                                      true
                                      false))
-        (testing "shall generate a proper migration test"
+        (testing "shall generate a proper migration state"
           (let [migration-state (es-doc/get-doc es-conn
                                                 migration-index
                                                 "migration"
@@ -153,15 +111,22 @@
                                                 {})]
             (is (= (set (keys @stores))
                    (set (keys (:stores migration-state)))))
-            (doseq [{:keys [source target]} (-> migration-state
-                                                :stores
-                                                vals
-                                                seq)]
-              (is (= (:total source)
-                     (:migrated target)))
-              (is (int? (:total source)))
-              (is (= (:index target)
-                     (prefixed-index (:index source) "0.0.0"))))))
+            (doseq [[entity-type migrated-store] (:stores migration-state)]
+              (let [{:keys [source target started completed]} migrated-store
+                     source-size
+                    (cond
+                      (= :identity entity-type) 1
+                      (= :event entity-type) (* fixtures-nb (count examples))
+                      (contains? example-types (keyword entity-type)) fixtures-nb
+                      :else 0)]
+                (is (= source-size (:total source)))
+                (is (not (nil? started)))
+                (is (not (nil? completed)))
+                (is (= (:total source)
+                       (:migrated target)))
+                (is (int? (:total source)))
+                (is (= (:index target)
+                       (prefixed-index (:index source) "0.0.0")))))))
         (testing "shall produce valid logs"
           (let [messages (set @logger)]
             (is (contains? messages "set batch size: 10"))
@@ -253,6 +218,7 @@
                               :hits
                               (map #(get-in % [:_source :groups])))]
                 (is (every? #(= ["migration-test"] %)
-                            hits))))))))))
-;; clean
-(es-index/delete! es-conn "v0.0.0*")
+                            hits))))))))
+    ;; clean
+    (es-index/delete! es-conn "v0.0.0*")
+    (es-doc/delete-doc es-conn migration-index "migration" "test-2" "true")))
