@@ -222,6 +222,7 @@
 
 (defn run-migration
   [migration-id prefix migrations store-keys batch-size confirm? restart?]
+  ;; TODO when restart is true, it shall works only from migration-id
   (assert prefix "Please provide an indexname prefix for target store creation")
   (assert migrations "Please provide a csv migration list argument")
   (assert batch-size "Please specify a batch size")

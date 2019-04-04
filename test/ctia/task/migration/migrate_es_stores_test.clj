@@ -219,6 +219,21 @@
                               (map #(get-in % [:_source :groups])))]
                 (is (every? #(= ["migration-test"] %)
                             hits))))))))
-    ;; clean
+    ;;TODO test restart
+    ;;insert/modify/delete documents
+    ;; run migrate with restart true
+    ;; check that modifications are taken into account in targets
+    ;; (sut/migrate-store-indexes "test-2"
+    ;;                            "0.0.0"
+    ;;                            [:__test]
+    ;;                            (keys @stores)
+    ;;                            10
+    ;;                            true
+    ;;                            true))
+
+
+
+    ;; TODO delete inserted examples / events, or remove indexes
     (es-index/delete! es-conn "v0.0.0*")
     (es-doc/delete-doc es-conn migration-index "migration" "test-2" "true")))
+
