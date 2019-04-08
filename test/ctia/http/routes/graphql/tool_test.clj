@@ -32,16 +32,18 @@
                   (-> new-tool-maximal
                       (assoc :name "Tool 3")
                       (dissoc :id)))]
-    (gh/create-object "feedback" (gh/feedback-1 (:id entity-1)))
-    (gh/create-object "feedback" (gh/feedback-2 (:id entity-1)))
+    (gh/create-object "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
+    (gh/create-object "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
                        :target_ref (:id entity-2)
-                       :source_ref (:id entity-1)})
+                       :source_ref (:id entity-1)
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"})
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
                        :target_ref (:id entity-3)
-                       :source_ref (:id entity-1)})
+                       :source_ref (:id entity-1)
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"})
     {:tool-1 entity-1
      :tool-2 entity-2
      :tool-3 entity-3}))
@@ -83,11 +85,13 @@
                                  [{:relationship_type "variant-of"
                                    :target_ref tool-2-id
                                    :source_ref tool-1-id
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
                                    :source_entity (:tool-1 datamap)
                                    :target_entity (:tool-2 datamap)}
                                   {:relationship_type "variant-of"
                                    :target_ref tool-3-id
                                    :source_ref tool-1-id
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
                                    :source_entity (:tool-1 datamap)
                                    :target_entity (:tool-3 datamap)}])
 
@@ -104,8 +108,8 @@
                                  graphql-queries
                                  {:id tool-1-id}
                                  [:tool :feedbacks]
-                                 [(gh/feedback-1 tool-1-id)
-                                  (gh/feedback-2 tool-1-id)])
+                                 [(gh/feedback-1 tool-1-id #inst "2042-01-01T00:00:00.000Z" )
+                                  (gh/feedback-2 tool-1-id #inst "2042-01-01T00:00:00.000Z")])
 
              (testing "sorting"
                (gh/connection-sort-test

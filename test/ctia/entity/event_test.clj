@@ -207,6 +207,7 @@
                               :type "incident",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-01T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
@@ -229,6 +230,7 @@
                               :type "incident",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-02T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
@@ -263,6 +265,7 @@
                               :type "relationship",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-01T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
                               :source_ref
                               "http://localhost:3001/ctia/casebook/casebook-00000000-0000-0000-0000-111111111117",
                               :id
@@ -285,6 +288,7 @@
                               :type "incident",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-02T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id

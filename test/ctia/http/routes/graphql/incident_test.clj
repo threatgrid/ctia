@@ -34,18 +34,21 @@
              (-> new-incident-maximal
                  (assoc :title "Incident 3")
                  (dissoc :id)))]
-    (gh/create-object "feedback" (gh/feedback-1 (:id ap1)))
-    (gh/create-object "feedback" (gh/feedback-2 (:id ap1)))
+    (gh/create-object "feedback" (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
+    (gh/create-object "feedback" (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id ap2)
                        :source_ref (:id ap1)})
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id ap3)
                        :source_ref (:id ap1)})
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref external-ref
                        :source_ref (:id ap1)})
     {:incident-1 ap1
@@ -90,17 +93,20 @@
                                    :target_ref incident-2-id
                                    :source_ref incident-1-id
                                    :source_entity (:incident-1 datamap)
-                                   :target_entity (:incident-2 datamap)}
+                                   :target_entity (:incident-2 datamap)
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"}
                                   {:relationship_type "variant-of"
                                    :target_ref incident-3-id
                                    :source_ref incident-1-id
                                    :source_entity (:incident-1 datamap)
-                                   :target_entity (:incident-3 datamap)}
+                                   :target_entity (:incident-3 datamap)
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"}
                                   {:relationship_type "variant-of"
                                    :target_ref external-ref
                                    :source_ref incident-1-id
                                    :source_entity (:incident-1 datamap)
-                                   :target_entity nil}])
+                                   :target_entity nil
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"}])
 
              (testing "sorting"
                (gh/connection-sort-test
@@ -115,8 +121,8 @@
                                  graphql-queries
                                  {:id incident-1-id}
                                  [:incident :feedbacks]
-                                 [(gh/feedback-1 incident-1-id)
-                                  (gh/feedback-2 incident-1-id)])
+                                 [(gh/feedback-1 incident-1-id #inst "2042-01-01T00:00:00.000Z")
+                                  (gh/feedback-2 incident-1-id #inst "2042-01-01T00:00:00.000Z")])
 
              (testing "sorting"
                (gh/connection-sort-test

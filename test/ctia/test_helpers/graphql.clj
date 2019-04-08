@@ -19,14 +19,16 @@
                                  (pr-str obj)))))
     body))
 
-(defn feedback-1 [entity_id]
+(defn feedback-1 [entity_id ts]
   {:feedback -1
    :reason "False positive"
+   :timestamp ts
    :entity_id entity_id})
 
-(defn feedback-2 [entity_id]
+(defn feedback-2 [entity_id ts]
   {:feedback 0
    :reason "Unknown"
+   :timestamp ts
    :entity_id entity_id})
 
 (defn query
