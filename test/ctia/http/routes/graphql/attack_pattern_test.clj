@@ -34,18 +34,21 @@
              (-> new-attack-pattern-maximal
                  (assoc :name "Attack Pattern 3")
                  (dissoc :id)))]
-    (gh/create-object "feedback" (gh/feedback-1 (:id ap1)))
-    (gh/create-object "feedback" (gh/feedback-2 (:id ap1)))
+    (gh/create-object "feedback" (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
+    (gh/create-object "feedback" (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id ap2)
                        :source_ref (:id ap1)})
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id ap3)
                        :source_ref (:id ap1)})
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref external-ref
                        :source_ref (:id ap1)})
     {:attack-pattern-1 ap1
@@ -89,16 +92,19 @@
                                  [{:relationship_type "variant-of"
                                    :target_ref attack-pattern-2-id
                                    :source_ref attack-pattern-1-id
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
                                    :source_entity (:attack-pattern-1 datamap)
                                    :target_entity (:attack-pattern-2 datamap)}
                                   {:relationship_type "variant-of"
                                    :target_ref attack-pattern-3-id
                                    :source_ref attack-pattern-1-id
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
                                    :source_entity (:attack-pattern-1 datamap)
                                    :target_entity (:attack-pattern-3 datamap)}
                                   {:relationship_type "variant-of"
                                    :target_ref external-ref
                                    :source_ref attack-pattern-1-id
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
                                    :source_entity (:attack-pattern-1 datamap)
                                    :target_entity nil}])
 
@@ -115,8 +121,8 @@
                                  graphql-queries
                                  {:id attack-pattern-1-id}
                                  [:attack_pattern :feedbacks]
-                                 [(gh/feedback-1 attack-pattern-1-id)
-                                  (gh/feedback-2 attack-pattern-1-id)])
+                                 [(gh/feedback-1 attack-pattern-1-id #inst "2042-01-01T00:00:00.000Z")
+                                  (gh/feedback-2 attack-pattern-1-id #inst "2042-01-01T00:00:00.000Z")])
 
              (testing "sorting"
                (gh/connection-sort-test

@@ -1,5 +1,6 @@
 fragment relationshipBaseFields on Relationship {
   relationship_type
+  timestamp
   target_ref
   source_ref
 }
@@ -21,6 +22,7 @@ fragment externalReferenceFields on ExternalReference {
 
 fragment feedbackFields on Feedback {
   feedback
+  timestamp
   entity_id
   reason
 }
