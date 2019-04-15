@@ -25,7 +25,6 @@
      {:observed_time em/valid-time
       :count {:type "long"}
       :sensor em/token
-      :sensor_coordinates em/sighting-sensor
       :targets em/sighting-target
       :reference em/token
       :confidence em/token
