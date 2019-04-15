@@ -1,6 +1,7 @@
 (ns ctia.task.migration.store-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
 
+            [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.es
              [conn :refer [connect]]
              [document :as es-doc]
@@ -10,11 +11,25 @@
              [relationships :refer [relationship-minimal]]
              [tools :refer [tool-minimal]]]
 
-            [ctia.test-helpers.core :refer [post-bulk]]
+            [ctia.test-helpers
+             [core :as helpers :refer [post-bulk]]
+             [es :as es-helpers]
+             [fake-whoami-service :as whoami-helpers]]
             [ctia.task.migration
              [fixtures :refer [examples fixtures-nb]]
              [store :as sut]]
             [ctia.properties :as props]))
+
+(use-fixtures :once
+  (join-fixtures [mth/fixture-schema-validation
+                  helpers/fixture-properties:clean
+                  es-helpers/fixture-properties:es-store
+                  helpers/fixture-ctia
+                  whoami-helpers/fixture-server
+                  es-helpers/fixture-delete-store-indexes]))
+
+(use-fixtures :each
+  whoami-helpers/fixture-reset-state)
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
