@@ -1,6 +1,7 @@
 (ns ctia.task.migration.store
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [ring.swagger.coerce :as sc]
             [schema.core :as s]
             [schema-tools.core :as st]
             [clj-momo.lib.time :as time]
@@ -11,6 +12,7 @@
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
             [ctia.stores.es
+             [crud :refer [coerce-to-fn]]
              [init :refer [init-store-conn init-es-conn! get-store-properties]]
              [mapping :as em]
              [store :refer [StoreMap] :as es-store]]
@@ -63,10 +65,10 @@
   {:source {:index s/Str
             :total s/Int
             (s/optional-key :search_after) s/Any
-            :store StoreMap}
+            (s/optional-key :store) StoreMap}
    :target {:index s/Str
             :migrated s/Int
-            :store StoreMap}
+            (s/optional-key :store) StoreMap}
    (s/optional-key :started) s/Inst
    (s/optional-key :completed) s/Inst})
 
@@ -89,12 +91,13 @@
 
 (defn store-size
   [{:keys [conn indexname mapping]}]
-  (es-doc/count-docs conn indexname mapping))
+  (or (es-doc/count-docs conn indexname mapping)
+      0))
 
 (defn init-migration-store
   [source target]
   {:source {:index (:indexname source)
-            :total (or (store-size source) 0)
+            :total (store-size source)
             :store source}
    :target {:index (:indexname target)
             :migrated 0
@@ -326,7 +329,7 @@
             stores)
        (apply merge)))
 
-(s/defn restart-migration :- MigrationSchema
+(s/defn get-migration :- MigrationSchema
   [migration-id :- s/Str
    es-conn :- ESConn]
   (let [{:keys [indexname entity]} (migration-store-properties)
@@ -334,12 +337,13 @@
                                       indexname
                                       (name entity)
                                       migration-id
-                                      nil)]
-    (println "migration raw" migration-raw)
+                                      nil)
+        coerce (coerce-to-fn MigrationSchema)]
     (when-not migration-raw
       (log/errorf "migration not found: %s" migration-id)
       (throw (ex-info "migration not found" {:id migration-id})))
-    (-> (update migration-raw :stores enrich-stores)
+    (-> (coerce migration-raw)
+        (update :stores enrich-stores)
         (store-migration es-conn))))
 
 (s/defn update-migration-store

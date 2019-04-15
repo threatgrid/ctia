@@ -10,15 +10,16 @@
              [conn :refer [connect]]
              [document :as es-doc]
              [index :as es-index]]
+            [ctim.domain.id :refer [long-id->id]]
 
             [ctia.properties :as props]
             [ctia.task.migration
-             [fixtures :refer [examples example-types fixtures-nb]]
+             [fixtures :refer [examples example-types fixtures-nb randomize]]
              [migrate-es-stores :as sut]
-             [store :refer [setup! prefixed-index]]]
+             [store :refer [setup! prefixed-index get-migration fetch-batch]]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post post-bulk with-atom-logger]]
+             [core :as helpers :refer [post put delete post-bulk with-atom-logger]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.stores.es.store :refer [store->map]]
@@ -75,8 +76,9 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
+
+  (post-bulk examples)
   (testing "migrate ES Stores test setup"
-    (post-bulk examples)
     (testing "simulate migrate es indexes shall not create any document"
       (sut/migrate-store-indexes "test-1"
                                  "0.0.0"
@@ -92,148 +94,178 @@
                                      (get-in es-props [:migration :indexname])
                                      "migration"
                                      "test-1"
-                                     {})))))
-    (testing "migrate es indexes"
-      (let [logger (atom [])]
-        (with-atom-logger logger
-          (sut/migrate-store-indexes "test-2"
-                                     "0.0.0"
-                                     [:__test]
-                                     (keys @stores)
-                                     10
-                                     true
-                                     false))
-        (testing "shall generate a proper migration state"
-          (let [migration-state (es-doc/get-doc es-conn
-                                                migration-index
-                                                "migration"
-                                                "test-2"
-                                                {})]
-            (is (= (set (keys @stores))
-                   (set (keys (:stores migration-state)))))
-            (doseq [[entity-type migrated-store] (:stores migration-state)]
-              (let [{:keys [source target started completed]} migrated-store
-                     source-size
-                    (cond
-                      (= :identity entity-type) 1
-                      (= :event entity-type) (* fixtures-nb (count examples))
-                      (contains? example-types (keyword entity-type)) fixtures-nb
-                      :else 0)]
-                (is (= source-size (:total source)))
-                (is (not (nil? started)))
-                (is (not (nil? completed)))
-                (is (= (:total source)
-                       (:migrated target)))
-                (is (int? (:total source)))
-                (is (= (:index target)
-                       (prefixed-index (:index source) "0.0.0")))))))
-        (testing "shall produce valid logs"
-          (let [messages (set @logger)]
-            (is (contains? messages "set batch size: 10"))
-            (is (clojure.set/subset?
-                 ["campaign - finished migrating 100 documents"
-                  "indicator - finished migrating 100 documents"
-                  "event - finished migrating 1500 documents"
-                  "actor - finished migrating 100 documents"
-                  "relationship - finished migrating 100 documents"
-                  "incident - finished migrating 100 documents"
-                  "investigation - finished migrating 100 documents"
-                  "coa - finished migrating 100 documents"
-                  "identity - finished migrating 1 documents"
-                  "judgement - finished migrating 100 documents"
-                  "data-table - finished migrating 0 documents"
-                  "feedback - finished migrating 0 documents"
-                  "casebook - finished migrating 100 documents"
-                  "sighting - finished migrating 100 documents"
-                  "attack-pattern - finished migrating 100 documents"
-                  "malware - finished migrating 100 documents"
-                  "tool - finished migrating 100 documents"
-                  "vulnerability - finished migrating 100 documents"
-                  "weakness - finished migrating 100 documents"]
-                 messages))))
+                                     {}))))))
+  (testing "migrate es indexes"
+    (let [logger (atom [])]
+      (with-atom-logger logger
+        (sut/migrate-store-indexes "test-2"
+                                   "0.0.0"
+                                   [:__test]
+                                   (keys @stores)
+                                   10
+                                   true
+                                   false))
+      (testing "shall generate a proper migration state"
+        (let [migration-state (es-doc/get-doc es-conn
+                                              migration-index
+                                              "migration"
+                                              "test-2"
+                                              {})]
+          (is (= (set (keys @stores))
+                 (set (keys (:stores migration-state)))))
+          (doseq [[entity-type migrated-store] (:stores migration-state)]
+            (let [{:keys [source target started completed]} migrated-store
+                  source-size
+                  (cond
+                    (= :identity entity-type) 1
+                    (= :event entity-type) (* fixtures-nb (count examples))
+                    (contains? example-types (keyword entity-type)) fixtures-nb
+                    :else 0)]
+              (is (= source-size (:total source)))
+              (is (not (nil? started)))
+              (is (not (nil? completed)))
+              (is (= (:total source)
+                     (:migrated target)))
+              (is (int? (:total source)))
+              (is (= (:index target)
+                     (prefixed-index (:index source) "0.0.0")))))))
+      (testing "shall produce valid logs"
+        (let [messages (set @logger)]
+          (is (contains? messages "set batch size: 10"))
+          (is (clojure.set/subset?
+               ["campaign - finished migrating 100 documents"
+                "indicator - finished migrating 100 documents"
+                "event - finished migrating 1500 documents"
+                "actor - finished migrating 100 documents"
+                "relationship - finished migrating 100 documents"
+                "incident - finished migrating 100 documents"
+                "investigation - finished migrating 100 documents"
+                "coa - finished migrating 100 documents"
+                "identity - finished migrating 1 documents"
+                "judgement - finished migrating 100 documents"
+                "data-table - finished migrating 0 documents"
+                "feedback - finished migrating 0 documents"
+                "casebook - finished migrating 100 documents"
+                "sighting - finished migrating 100 documents"
+                "attack-pattern - finished migrating 100 documents"
+                "malware - finished migrating 100 documents"
+                "tool - finished migrating 100 documents"
+                "vulnerability - finished migrating 100 documents"
+                "weakness - finished migrating 100 documents"]
+               messages))))
 
-        (testing "shall produce new indices
+      (testing "shall produce new indices
                   with enough documents and the right transforms"
-          (let [{:keys [default
-                        data-table
-                        relationship
-                        judgement
-                        investigation
-                        coa
-                        tool
-                        attack-pattern
-                        malware
-                        incident
-                        event
-                        indicator
-                        campaign
-                        sighting
-                        casebook
-                        actor
-                        vulnerability
-                        weakness]
-                 :as es-props}
-                (get-in @props/properties [:ctia :store :es])
-                expected-indices
-                (->> {relationship fixtures-nb
-                      judgement fixtures-nb
-                      coa fixtures-nb
-                      attack-pattern fixtures-nb
-                      malware fixtures-nb
-                      tool fixtures-nb
-                      incident fixtures-nb
-                      event (* (count (keys examples))
-                               fixtures-nb)
-                      indicator fixtures-nb
-                      investigation fixtures-nb
-                      campaign fixtures-nb
-                      casebook fixtures-nb
-                      sighting fixtures-nb
-                      actor fixtures-nb
-                      vulnerability fixtures-nb
-                      weakness fixtures-nb}
-                     (map (fn [[k v]]
-                            {(str  "v0.0.0_" (:indexname k)) v}))
-                     (into {})
-                     keywordize-keys)
-                refreshes (refresh-indices (:host default)
-                                           (:port default))
-                formatted-cat-indices (get-cat-indices (:host default)
-                                                       (:port default))]
-            (is (= expected-indices
-                   (select-keys formatted-cat-indices
-                                (keys expected-indices))))
+        (let [{:keys [default
+                      data-table
+                      relationship
+                      judgement
+                      investigation
+                      coa
+                      tool
+                      attack-pattern
+                      malware
+                      incident
+                      event
+                      indicator
+                      campaign
+                      sighting
+                      casebook
+                      actor
+                      vulnerability
+                      weakness]
+               :as es-props}
+              (get-in @props/properties [:ctia :store :es])
+              expected-indices
+              (->> {relationship fixtures-nb
+                    judgement fixtures-nb
+                    coa fixtures-nb
+                    attack-pattern fixtures-nb
+                    malware fixtures-nb
+                    tool fixtures-nb
+                    incident fixtures-nb
+                    event (* (count (keys examples))
+                             fixtures-nb)
+                    indicator fixtures-nb
+                    investigation fixtures-nb
+                    campaign fixtures-nb
+                    casebook fixtures-nb
+                    sighting fixtures-nb
+                    actor fixtures-nb
+                    vulnerability fixtures-nb
+                    weakness fixtures-nb}
+                   (map (fn [[k v]]
+                          {(str  "v0.0.0_" (:indexname k)) v}))
+                   (into {})
+                   keywordize-keys)
+              refreshes (refresh-indices (:host default)
+                                         (:port default))
+              formatted-cat-indices (get-cat-indices (:host default)
+                                                     (:port default))]
+          (is (= expected-indices
+                 (select-keys formatted-cat-indices
+                              (keys expected-indices))))
 
-            (doseq [[index _]
-                    expected-indices]
-              (let [search-url (format "http://%s:%s/%s/_search"
-                                       (:host default)
-                                       (:port default)
-                                       (name index))
-                    {:keys [body]
-                     :as search-res}
-                    (client/get search-url {:as :json})
-                    hits (->> body
-                              :hits
-                              :hits
-                              (map #(get-in % [:_source :groups])))]
-                (is (every? #(= ["migration-test"] %)
-                            hits))))))))
-    ;;TODO test restart
-    ;;insert/modify/delete documents
-    ;; run migrate with restart true
-    ;; check that modifications are taken into account in targets
-    ;; (sut/migrate-store-indexes "test-2"
-    ;;                            "0.0.0"
-    ;;                            [:__test]
-    ;;                            (keys @stores)
-    ;;                            10
-    ;;                            true
-    ;;                            true))
+          (doseq [[index _]
+                  expected-indices]
+            (let [search-url (format "http://%s:%s/%s/_search"
+                                     (:host default)
+                                     (:port default)
+                                     (name index))
+                  {:keys [body]
+                   :as search-res}
+                  (client/get search-url {:as :json})
+                  hits (->> body
+                            :hits
+                            :hits
+                            (map #(get-in % [:_source :groups])))]
+              (is (every? #(= ["migration-test"] %)
+                          hits))))))
+    (testing "restart migration shall properly handle inserts, updates and deletes"
+      (let [new-malwares (->> (:malwares examples)
+                              (take 3)
+                              (map randomize)
+                              (map #(assoc % :description "INSERTED"))
+                              (hash-map :malwares))
+            [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
+                                                  :query-params {:limit 2 :query "*"}
+                                                  :headers {"Authorization" "45c1f5e3f05d0"}))
+            inserted-malwares (map ())
+            sighting1-id (-> sighting1 :id long-id->id :short-id)
+            sighting2-id (-> sighting2 :id long-id->id :short-id)]
+        (post-bulk new-malwares)
+        (put (format "ctia/sighting/%s" sighting1-id)
+             :body (-> (dissoc sighting1 :id)
+                       (assoc :description "UPDATED"))
+             :headers {"Authorization" "45c1f5e3f05d0"})
+        (delete (format "ctia/sighting/%s" sighting2-id)
+                :headers {"Authorization" "45c1f5e3f05d0"})
+        (sut/migrate-store-indexes "test-2"
+                                   "0.0.0"
+                                   [:__test]
+                                   (keys @stores)
+                                   10
+                                   true
+                                   true)
+        (let [migration-state (get-migration "test-2" es-conn)
+              malware-migration (get-in migration-state [:stores :malware])
+              sighting-migration (get-in migration-state [:stores :sighting])
+              malware-target-store (get-in malware-migration [:target :store])
+              {last-target-malwares :data} (fetch-batch malware-target-store 3 0 "desc" nil)
+              {:keys [conn indexname mapping]} (get-in sighting-migration [:target :store])
+              updated-sighting (es-doc/get-doc conn indexname mapping sighting1-id nil)
+              get-deleted-sighting-res (es-doc/get-doc conn indexname mapping sighting2-id nil)
+              ]
+          (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
+              "inserted malwares must found in target malware store")
 
+          (is (= "UPDATED" (:description updated-sighting))
+              "updated document must be updated in target stores")
 
+          (is (nil? get-deleted-sighting-res)
+              "deleted document must not be in target stores"))))))
 
-    ;; TODO delete inserted examples / events, or remove indexes
-    (es-index/delete! es-conn "v0.0.0*")
-    (es-doc/delete-doc es-conn migration-index "migration" "test-2" "true")))
+  (es-index/delete! es-conn "ctia_*")
+  (es-index/delete! es-conn "v0.0.0*")
+  (es-doc/delete-doc es-conn migration-index "migration" "test-2" "true"))
 

@@ -135,8 +135,7 @@
    confirm? :- s/Bool
    restart? :- s/Bool]
   (let [migration-state (if restart?
-                          (mst/restart-migration migration-id
-                                                 @mst/migration-es-conn)
+                          (mst/get-migration migration-id @mst/migration-es-conn)
                           (mst/init-migration migration-id prefix store-keys confirm?))
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
