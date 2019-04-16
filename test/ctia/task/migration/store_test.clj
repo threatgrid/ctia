@@ -51,39 +51,58 @@
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
 
-(deftest init-migration-test
+(deftest init-get-migration-test
+  (post-bulk examples)
+  (Thread/sleep 1000) ; ensure index refresh
   (testing "init-migration should properly create new migration state from selected types"
-    (post-bulk examples)
-    (Thread/sleep 1000) ; ensure index refresh
     (let [prefix "0.0.0"
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
-          {:keys [id created stores]} (sut/init-migration migration-id-1
-                                                          prefix
-                                                          entity-types
-                                                          false)]
-      (is (= id migration-id-1))
-      (is (= (set (keys stores))
-             (set entity-types)))
-      (doseq [entity-type entity-types]
-        ;(println entity-type)
-        (let [{:keys [source target started completed]} (get stores entity-type)]
-          ;(println source)
-          (is (nil? started))
-          (is (nil? completed))
-          (is (= 0 (:migrated target)))
-          (is (= fixtures-nb (:total source)))
-          (is (nil? (:started source)))
-          (is (nil? (:completed target)))
-          (is (= entity-type
-                 (keyword (get-in source [:store :type]))))
-          (is (= entity-type
-                 (keyword (get-in target [:store :type]))))
-          (is (= (:index source)
-                 (get-in source [:store :indexname])))
-          (is (= (:index target)
-                 (get-in target [:store :indexname]))))))
-    (es-index/delete! es-conn "ctia_*")))
+          migration-id-2 "migration-2"
+          fake-migration (sut/init-migration migration-id-1
+                                             prefix
+                                             entity-types
+                                             false)
+          real-migration-from-init (sut/init-migration migration-id-2
+                                                       prefix
+                                                       entity-types
+                                                       true)
+          check-state (fn [{:keys [id created stores]} migration-id message]
+                        (testing message
+                          (is (= id migration-id))
+                          (is (= (set (keys stores))
+                                 (set entity-types)))
+                          (doseq [entity-type entity-types]
+                                        ;(println entity-type)
+                            (let [{:keys [source target started completed]} (get stores entity-type)]
+                                        ;(println source)
+                              (is (nil? started))
+                              (is (nil? completed))
+                              (is (= 0 (:migrated target)))
+                              (is (= fixtures-nb (:total source)))
+                              (is (nil? (:started source)))
+                              (is (nil? (:completed target)))
+                              (is (= entity-type
+                                     (keyword (get-in source [:store :type]))))
+                              (is (= entity-type
+                                     (keyword (get-in target [:store :type]))))
+                              (is (= (:index source)
+                                     (get-in source [:store :indexname])))
+                              (is (= (:index target)
+                                     (get-in target [:store :indexname])))))))]
+      (check-state fake-migration
+                   migration-id-1
+                   "init-migration without confirmation shall return a proper migration state")
+      (check-state real-migration-from-init
+                   migration-id-2
+                   "init-migration with confirmation shall return a proper migration state")
+      (check-state (sut/get-migration migration-id-2 es-conn)
+                   migration-id-2
+                   "init-migration shall store confirmed migration, and get-migration should properly retrieved from store")
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (sut/get-migration migration-id-1 es-conn))
+          "migration-id-1 was not confirmed it should not exist and thuss get-migration must raise a proper exception")))
+    (es-index/delete! es-conn "ctia_*"))
 
 
 ;; TODO test others ns functions
