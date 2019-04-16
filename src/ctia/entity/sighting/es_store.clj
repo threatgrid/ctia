@@ -31,6 +31,7 @@
       :confidence em/token
       :severity em/token
       :resolution em/token
+      :data em/embedded-data-table
       :internal {:type "boolean"}
       :observables em/observable
       :observables_hash em/token

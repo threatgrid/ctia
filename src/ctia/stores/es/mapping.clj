@@ -318,6 +318,13 @@
     :os token
     :observables observable}})
 
+(def embedded-data-table
+  {:dynamic false
+   :properties
+   {:row_count {:type "long"}
+    :columns {:enabled false}
+    :rows {:enabled false}}})
+
 (def texts
   {:properties {:type token
                 :text text}})
