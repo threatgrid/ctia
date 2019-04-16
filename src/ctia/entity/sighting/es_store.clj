@@ -25,11 +25,13 @@
      {:observed_time em/valid-time
       :count {:type "long"}
       :sensor em/token
+      :sensor_coordinates em/sighting-sensor
       :targets em/sighting-target
       :reference em/token
       :confidence em/token
       :severity em/token
       :resolution em/token
+      :data em/embedded-data-table
       :internal {:type "boolean"}
       :observables em/observable
       :observables_hash em/token

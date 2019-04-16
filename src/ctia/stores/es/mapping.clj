@@ -309,8 +309,21 @@
    {:type token
     :observed_time valid-time
     :os token
-    :observables observable
-    :properties_data_tables token}})
+    :observables observable}})
+
+(def sighting-sensor
+  {:dynamic false
+   :properties
+   {:type token
+    :os token
+    :observables observable}})
+
+(def embedded-data-table
+  {:dynamic false
+   :properties
+   {:row_count {:type "long"}
+    :columns {:enabled false}
+    :rows {:enabled false}}})
 
 (def texts
   {:properties {:type token
