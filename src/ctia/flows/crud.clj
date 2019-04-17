@@ -180,8 +180,12 @@
   (let [errors (filter :error entities)]
     (if (and (seq errors)
              (not enveloped-result?))
-      (throw (ex-info (:msg (first errors))
-                      (first errors)))
+      (let [{:keys [msg error] :as full-error} (first errors)]
+        (throw
+         (ex-info (or msg error)
+                  ;; short-id is only used for the enveloped-result
+                  ;; it should not be exposed
+                  (dissoc full-error :id))))
       fm)))
 
 (s/defn ^:private apply-before-hooks :- FlowMap

@@ -24,6 +24,7 @@
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
                        :disposition 2
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :source "test"
                        :priority 100
                        :severity "High"
@@ -77,6 +78,7 @@
                 :disposition 2
                 :disposition_name "Malicious"
                 :source "test"
+                :timestamp #inst "2042-01-01T00:00:00.000Z"
                 :tlp "green"
                 :schema_version schema-version
                 :priority 100

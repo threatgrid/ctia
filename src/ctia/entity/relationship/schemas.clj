@@ -61,5 +61,6 @@
        :error (str "A relationship cannot be created if a source "
                    "or a target ref is still a transient ID "
                    "(The source or target entity is probably not "
-                   "provided in the bundle)")}
+                   "provided in the bundle)")
+       :type :realize-entity-error}
       e)))

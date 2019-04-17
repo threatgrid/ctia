@@ -2,7 +2,7 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.domain
              [access-control :refer [properties-default-tlp]]
-             [entities :refer [schema-version make-valid-time]]]
+             [entities :refer [default-realize-fn]]]
             [ctia.schemas
              [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema TempIDs]]
@@ -14,7 +14,8 @@
             [ring.util.http-response :as http-response]
             [schema-tools.core :as st]
             [schema.core :as s]
-            [ctim.schemas.incident :as is]))
+            [ctim.schemas.incident :as is]
+            [ctia.flows.schemas :refer [with-error]]))
 
 (def-acl-schema Judgement
   js/Judgement
@@ -37,42 +38,29 @@
 (s/defschema PartialStoredJudgement
   (csu/optional-keys-schema StoredJudgement))
 
-(s/defn realize-judgement :- StoredJudgement
-  ([new-judgement :- NewJudgement
-    id :- s/Str
-    tempids :- (s/maybe TempIDs)
-    owner :- s/Str
-    groups :- [s/Str]]
+(def judgement-default-realize
+  (default-realize-fn "judgement" NewJudgement StoredJudgement))
+
+(s/defn realize-judgement :- (with-error StoredJudgement)
+  ([new-judgement id tempids owner groups]
    (realize-judgement new-judgement id tempids owner groups nil))
-  ([new-judgement :- NewJudgement
-    id :- s/Str
-    tempids :- (s/maybe TempIDs)
-    owner :- s/Str
-    groups :- [s/Str]
-    prev-object :- (s/maybe StoredJudgement)]
-   (let [now (time/now)
-         disposition (try
-                       (determine-disposition-id new-judgement)
-                       (catch clojure.lang.ExceptionInfo _
-                         (throw
-                          (http-response/bad-request!
-                           {:error "Mismatching :dispostion and dispositon_name for judgement"
-                            :judgement new-judgement}))))
-         disposition_name (get disposition-map disposition)]
-     (merge new-judgement
-            {:id id
-             :type "judgement"
-             :disposition disposition
-             :disposition_name disposition_name
-             :owner (or (:owner prev-object) owner)
-             :groups (or (:groups prev-object) groups)
-             :created (or (:created prev-object) now)
-             :tlp (:tlp new-judgement
-                        (:tlp prev-object (properties-default-tlp)))
-             :schema_version schema-version}
-            (make-valid-time (:valid_time prev-object)
-                             (:valid_time new-judgement)
-                             now)))))
+  ([new-judgement id tempids owner groups prev-judgement]
+   (let [{:keys [error] :as disposition}
+         (try
+           (determine-disposition-id new-judgement)
+           (catch clojure.lang.ExceptionInfo e
+             {:error "Mismatching :dispostion and dispositon_name for judgement"
+              :id id
+              :type :realize-entity-error
+              :judgement new-judgement}))]
+     (if-not error
+       (let [disposition-name (get disposition-map disposition)]
+         (judgement-default-realize
+          (assoc new-judgement
+                 :disposition disposition
+                 :disposition_name disposition-name)
+          id tempids owner groups prev-judgement))
+       disposition))))
 
 (def judgement-fields
   (concat sorting/base-entity-sort-fields
