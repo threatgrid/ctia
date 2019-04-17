@@ -103,12 +103,12 @@
             :migrated 0
             :store target}})
 
-(s/defn wo-storemaps
+(s/defn wo-storemaps :- MigrationSchema
   [{:keys [stores] :as migration} :- MigrationSchema]
   (assoc migration
          :stores
-         (fmap #(-> (update-in % [:source] dissoc :store)
-                    (update-in [:target] dissoc :store))
+         (fmap #(-> (update % :source dissoc :store)
+                    (update :target dissoc :store))
                stores)))
 
 (s/defn store-migration
@@ -170,11 +170,10 @@
                      :_type mapping)
              batch)]
 
-    (es-doc/bulk-create-doc
-     conn
-     prepared-docs
-     "false"
-     bulk-max-size)))
+    (es-doc/bulk-create-doc conn
+                            prepared-docs
+                            "false"
+                            bulk-max-size)))
 
 (s/defn query-fetch-batch :- {s/Any s/Any}
   "fetch a batch of documents from an es index and a query"

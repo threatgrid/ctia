@@ -51,9 +51,154 @@
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
 
+(deftest wo-storemaps-test
+  (let [fake-migration (sut/init-migration "migration-id-1"
+                                           "0.0.0"
+                                           [:tool :sighting :malware]
+                                           false)
+        wo-stores (sut/wo-storemaps fake-migration)]
+    (is (nil? (get-in wo-stores [:source :store])))
+    (is (nil? (get-in wo-stores [:target :store])))))
+
+(deftest store-batch-store-size-test
+  (let [indexname "test_index"
+        store {:conn es-conn
+               :indexname indexname
+               :mapping "test_mapping"}
+        nb-docs-1 10
+        nb-docs-2 20
+        sample-docs-1 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+                                      :batch 1
+                                      :value %)
+                           (range nb-docs-1))
+        sample-docs-2 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+                                      :batch 2
+                                      :value %)
+                           (range nb-docs-2))]
+    (testing "store-batch and store-size"
+      (sut/store-batch store sample-docs-1)
+      (is (= 0 (sut/store-size store))
+          "store-batch shall not refresh the index")
+      (es-index/refresh! es-conn indexname)
+      (sut/store-batch store sample-docs-2)
+      (is (= nb-docs-1 (sut/store-size store))
+          "store-size shall return the number of first batch docs")
+      (es-index/refresh! es-conn indexname)
+      (is (= (+ nb-docs-1 nb-docs-2) (sut/store-size store))
+          "store size shall return the proper number of documents after second refresh")
+      (es-index/delete! es-conn indexname))))
+
+(deftest query-fetch-batch-test
+  (testing "query-fetch-batch should property fetch and sort events on timestamp"
+    (let [indexname "test_event"
+          event-store {:conn es-conn
+                       :indexname indexname
+                       :mapping "event"
+                       :type "event"
+                       :settings {}
+                       :config {}}
+          event-batch-1 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+                                        :batch 1
+                                        :timestamp %
+                                        :modified (rand-int 50))
+                             (range 50))
+          event-batch-2 (map #(hash-map :id (str (java.util.UUID/randomUUID))
+                                        :batch 2
+                                        :timestamp %
+                                        :modified (rand-int 50))
+                             (range 50 90))]
+
+      (sut/store-batch event-store event-batch-1)
+      (sut/store-batch event-store event-batch-2)
+      (es-index/refresh! es-conn indexname)
+      (let [{fetched-no-query :data} (sut/fetch-batch event-store 80 0 nil nil)
+            {fetched-batch-1 :data} (sut/query-fetch-batch {:term {:batch 1}}
+                                                           event-store
+                                                           80
+                                                           0
+                                                           nil
+                                                           nil)
+            {fetched-batch-2 :data} (sut/query-fetch-batch {:term {:batch 2}}
+                                                           event-store
+                                                           80
+                                                           0
+                                                           nil
+                                                           nil)
+
+            {fetched-events-1 :data} (sut/fetch-batch event-store
+                                                      5
+                                                      0
+                                                      "asc"
+                                                      nil)
+            {fetched-events-2 :data :as res} (sut/fetch-batch event-store
+                                                              5
+                                                              5
+                                                              "asc"
+                                                              nil)
+            search_after (get-in res [:paging :next :search_after])
+            {fetched-events-3 :data
+             search_after-3 :search_after} (sut/fetch-batch event-store
+                                                            100
+                                                            0
+                                                            "asc"
+                                                            search_after)
+            {fetched-events-4 :data} (sut/fetch-batch event-store
+                                                      100
+                                                      0
+                                                      "desc"
+                                                      nil)]
+        (is (= 80 (count fetched-no-query)) "limit was not properly handled")
+        (is (= 50 (count fetched-batch-1)) "query was not propertly handled on batch 1")
+        (is (= 40 (count fetched-batch-2)) "query was not propertly handled on batch 2")
+        (is (= 80 (count fetched-events-3)) "search_after was not properly handled")
+        (is (apply < (map :timestamp (concat fetched-events-1
+                                             fetched-events-2
+                                             fetched-events-3)))
+            "offset and asc orders should be properly applied, events must be sorted on timestamp")
+        (is (apply > (map :timestamp fetched-events-4))
+            "desc sort was not properly applied"))))
+
+  (testing "query-fetch-batch should properly sort entities on modified field"
+    (let [indexname "test_index"
+          tool-store {:conn es-conn
+                      :indexname indexname
+                      :mapping "tool"
+                      :type "tool"
+                      :settings {}
+                      :config {}}
+          tool-batch (map #(hash-map :id (str "tool-" %)
+                                     :timestamp (rand-int 100)
+                                     :modified %)
+                          (range 100))
+          malware-store {:conn es-conn
+                         :indexname indexname
+                         :mapping "malware"
+                         :type "malware"
+                         :settings {}
+                         :config {}}
+          malware-batch (map #(hash-map :id (str "malware-" %)
+                                        :timestamp (rand-int 100)
+                                        :modified %)
+                             (range 100))
+          ]
+      (sut/store-batch tool-store tool-batch)
+      (sut/store-batch malware-store malware-batch)
+      (es-index/refresh! es-conn indexname)
+      (let [{fetched-tool-asc :data} (sut/fetch-batch tool-store 80 0 "asc" nil)
+            {fetched-tool-desc :data} (sut/fetch-batch tool-store 80 0 "desc" nil)
+            {fetched-malware-asc :data} (sut/fetch-batch malware-store 80 0 "asc" nil)
+            {fetched-malware-desc :data} (sut/fetch-batch malware-store 80 0 "desc" nil)]
+        (is (apply < (map :modified (concat fetched-tool-asc))))
+        (is (apply > (map :modified (concat fetched-tool-desc))))
+        (is (apply < (map :modified (concat fetched-malware-asc))))
+        (is (apply > (map :modified (concat fetched-malware-desc)))))))
+
+  (es-index/delete! es-conn "test_*"))
+
+
 (deftest init-get-migration-test
   (post-bulk examples)
-  (Thread/sleep 1000) ; ensure index refresh
+  (Thread/sleep 1000) ; ensure indices refresh
   (testing "init-migration should properly create new migration state from selected types"
     (let [prefix "0.0.0"
           entity-types [:tool :malware :relationship]
@@ -101,10 +246,15 @@
                    "init-migration shall store confirmed migration, and get-migration should properly retrieved from store")
       (is (thrown? clojure.lang.ExceptionInfo
                    (sut/get-migration migration-id-1 es-conn))
-          "migration-id-1 was not confirmed it should not exist and thuss get-migration must raise a proper exception")))
+          "migration-id-1 was not confirmed it should not exist and thuss get-migration must raise a proper exception")
+
+      (testing "stored document shall not contains object stores in source and target"
+        (let [{:keys [stores]} (es-doc/get-doc es-conn
+                                              "ctia_migration"
+                                              "migration"
+                                              migration-id-2
+                                              {})]
+          (doseq [store stores]
+                  (is (nil? (get-in store [:source :store])))
+                  (is (nil? (get-in store [:target :store]))))))))
     (es-index/delete! es-conn "ctia_*"))
-
-
-;; TODO test others ns functions
-;; note that this ns is already partially tested in migrate-es-stores-test
-;; however it should more deeply test different functions

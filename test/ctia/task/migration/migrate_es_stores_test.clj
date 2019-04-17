@@ -254,8 +254,7 @@
               {last-target-malwares :data} (fetch-batch malware-target-store 3 0 "desc" nil)
               {:keys [conn indexname mapping]} (get-in sighting-migration [:target :store])
               updated-sighting (es-doc/get-doc conn indexname mapping sighting1-id nil)
-              get-deleted-sighting-res (es-doc/get-doc conn indexname mapping sighting2-id nil)
-              ]
+              get-deleted-sighting-res (es-doc/get-doc conn indexname mapping sighting2-id nil)]
           (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
               "inserted malwares must found in target malware store")
 
