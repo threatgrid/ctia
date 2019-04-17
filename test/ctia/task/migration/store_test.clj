@@ -2,23 +2,26 @@
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
 
             [clj-momo.test-helpers.core :as mth]
+            [clj-momo.lib.time :as time]
             [clj-momo.lib.es
              [conn :refer [connect]]
              [document :as es-doc]
              [index :as es-index]]
+            [ctim.domain.id :refer [long-id->id]]
             [ctim.examples
              [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
              [tools :refer [tool-minimal]]]
 
             [ctia.test-helpers
-             [core :as helpers :refer [post-bulk]]
+             [core :as helpers :refer [post-bulk delete]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.task.migration
              [fixtures :refer [examples fixtures-nb]]
              [store :as sut]]
-            [ctia.properties :as props]))
+            [ctia.properties :as props]
+            [ctia.store :as st]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -179,8 +182,7 @@
           malware-batch (map #(hash-map :id (str "malware-" %)
                                         :timestamp (rand-int 100)
                                         :modified %)
-                             (range 100))
-          ]
+                             (range 100))]
       (sut/store-batch tool-store tool-batch)
       (sut/store-batch malware-store malware-batch)
       (es-index/refresh! es-conn indexname)
@@ -194,6 +196,47 @@
         (is (apply > (map :modified (concat fetched-malware-desc)))))))
 
   (es-index/delete! es-conn "test_*"))
+
+(deftest fetch-deletes-test
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+  (post-bulk examples)
+  (Thread/sleep 1000) ;; ensure indices refresh
+  (let [[sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
+                                                         :query-params {:limit 2 :query "*"}
+                                                         :headers {"Authorization" "45c1f5e3f05d0"}))
+        [tool1 tool2] (:parsed-body (helpers/get "ctia/tool/search"
+                                                 :query-params {:limit 2 :query "*"}
+                                                 :headers {"Authorization" "45c1f5e3f05d0"}))
+        [malware1] (:parsed-body (helpers/get "ctia/malware/search"
+                                              :query-params {:limit 1 :query "*"}
+                                              :headers {"Authorization" "45c1f5e3f05d0"}))
+        sighting1-id (-> sighting1 :id long-id->id :short-id)
+        sighting2-id (-> sighting2 :id long-id->id :short-id)
+        tool1-id (-> tool1 :id long-id->id :short-id)
+        tool2-id (-> tool2 :id long-id->id :short-id)
+        malware1-id (-> malware1 :id long-id->id :short-id)
+        _ (delete (format "ctia/sighting/%s" sighting1-id)
+                  :headers {"Authorization" "45c1f5e3f05d0"})
+        _ (Thread/sleep 1)
+        since (time/now)
+        _ (delete (format "ctia/sighting/%s" sighting2-id)
+                  :headers {"Authorization" "45c1f5e3f05d0"})
+        _ (delete (format "ctia/tool/%s" tool1-id)
+                  :headers {"Authorization" "45c1f5e3f05d0"})
+        _ (delete (format "ctia/tool/%s" tool2-id)
+                  :headers {"Authorization" "45c1f5e3f05d0"})
+        _ (delete (format "ctia/tool/%s" malware1-id)
+                  :headers {"Authorization" "45c1f5e3f05d0"})
+        {:keys [sighting tool malware]} (sut/fetch-deletes [:sighting :tool] since)]
+    (is (= #{(:id tool1) (:id tool2)} (set (map :id tool)))
+        "fetch-deletes shall return tool1 and tool2 that were deleted after since")
+    (is (= #{(:id sighting2)} (set (map :id sighting)))
+        "fetch-deletes shall return only entites that were deleted after since")
+    (is (nil? malware) "fetch-deletes shall only retrieve entity types given as parameter"))
+  (es-index/delete! es-conn "ctia_*"))
 
 
 (deftest init-get-migration-test
@@ -257,4 +300,5 @@
           (doseq [store stores]
                   (is (nil? (get-in store [:source :store])))
                   (is (nil? (get-in store [:target :store]))))))))
-    (es-index/delete! es-conn "ctia_*"))
+  (es-index/delete! es-conn "v0.0.0*")
+  (es-index/delete! es-conn "ctia_*"))
