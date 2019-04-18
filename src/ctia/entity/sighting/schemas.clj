@@ -38,15 +38,19 @@
 (s/defn realize-sighting :- StoredSighting
   ([new-sighting id tempids owner groups]
    (realize-sighting new-sighting id tempids owner groups nil))
-  ([new-sighting id tempids owner groups prev-sighting]
-   (let [now (time/now)]
-     (sighting-default-realize
-      (assoc new-sighting
-             :count (:count new-sighting
-                            (:count prev-sighting 1))
-             :confidence (:confidence new-sighting
-                                      (:confidence prev-sighting "Unknown")))
-      id tempids owner groups prev-sighting))))
+  ([new-sighting :- NewSighting
+    id :- s/Str
+    tempids :- (s/maybe TempIDs)
+    owner :- s/Str
+    groups :- [s/Str]
+    prev-sighting :- (s/maybe StoredSighting)]
+   (sighting-default-realize
+    (assoc new-sighting
+           :count (:count new-sighting
+                          (:count prev-sighting 1))
+           :confidence (:confidence new-sighting
+                                    (:confidence prev-sighting "Unknown")))
+    id tempids owner groups prev-sighting)))
 
 (def sighting-fields
   (concat sorting/default-entity-sort-fields

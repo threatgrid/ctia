@@ -44,12 +44,17 @@
 (s/defn realize-judgement :- (with-error StoredJudgement)
   ([new-judgement id tempids owner groups]
    (realize-judgement new-judgement id tempids owner groups nil))
-  ([new-judgement id tempids owner groups prev-judgement]
+  ([new-judgement :- NewJudgement
+    id :- s/Str
+    tempids :- (s/maybe TempIDs)
+    owner :- s/Str
+    groups :- [s/Str]
+    prev-judgement :- (s/maybe StoredJudgement)]
    (let [{:keys [error] :as disposition}
          (try
            (determine-disposition-id new-judgement)
            (catch clojure.lang.ExceptionInfo e
-             {:error "Mismatching :dispostion and dispositon_name for judgement"
+             {:error "Mismatching disposition and dispositon_name for judgement"
               :id id
               :type :realize-entity-error
               :judgement new-judgement}))]

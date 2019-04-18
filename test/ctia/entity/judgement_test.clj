@@ -491,7 +491,7 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
          (is (=
-              {:error "Mismatching :dispostion and dispositon_name for judgement",
+              {:error "Mismatching disposition and dispositon_name for judgement",
                :judgement {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 1
@@ -519,7 +519,7 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
          (is (deep=
-              {:error "Mismatching :dispostion and dispositon_name for judgement",
+              {:error "Mismatching disposition and dispositon_name for judgement",
                :judgement {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 1
