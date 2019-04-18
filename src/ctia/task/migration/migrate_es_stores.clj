@@ -16,11 +16,13 @@
 (def default-batch-size 100)
 
 (def all-types
-  (assoc (apply merge {}
-                (map (fn [[_ {:keys [entity stored-schema]}]]
-                       {entity stored-schema}) entities))
+  (assoc (->> (vals entities)
+              (map (fn [{:keys [entity stored-schema]}]
+                     {entity stored-schema}))
+              (into {}))
          :sighting (st/merge StoredSighting
-                             {(s/optional-key :observables_hash) s/Any})))
+                             {(s/optional-key :observables_hash)
+                              s/Any})))
 
 (defn type->schema [type]
   (if-let [schema (get all-types type)]
@@ -52,6 +54,19 @@
         (mst/batch-delete (get-in stores [entity-type :target :store])
                           (map :id entities))))))
 
+(defn append-coerced
+  [coercer coerced entity]
+  (try
+    (->> (coercer entity)
+         (update coerced :data conj))
+    (catch Exception e
+      (update coerced :errors conj entity))))
+
+(defn list-coerce-fn
+  [Model]
+  (let [coercer (coerce-to-fn Model)]
+    #(reduce (partial append-coerced coercer) {} %)))
+
 (defn migrate-store
   "migrate a single store"
   [migration-state
@@ -67,7 +82,7 @@
         {target-store :store
          migrated-count :migrated} target
         store-schema (type->schema (keyword (:type target-store)))
-        coerce! (coerce-to-fn [store-schema])]
+        list-coerce (list-coerce-fn store-schema)]
 
     (log/infof "%s - store size: %s records"
                (:type source-store)
@@ -90,21 +105,15 @@
                                       entity-type
                                       {:started (time/now)}
                                       @mst/migration-es-conn))
-
-        (when (seq migrated)
-          (try (coerce! migrated)
-               (catch Exception e
-                 (if-let [errors (some->> (ex-data e) :error (remove nil?))]
-                   (let [message
-                         (format (str "%s - Invalid batch, certainly a coercion issue "
-                                      "errors: %s")
-                                 (pr-str (:type source-store))
-                                 (pr-str errors))]
-                     (log/error message)
-                     message)
-                   (throw e))))
+        (let [{:keys [data errors]} (list-coerce migrated)]
+          (doseq [entity errors]
+            (let [message
+                  (format "%s - Cannot migrate entity: %s"
+                          (pr-str (:type source-store))
+                          (pr-str entity))]
+              (log/error message)))
           (when confirm?
-            (mst/store-batch target-store migrated)
+            (when (seq data) (mst/store-batch target-store data))
             (mst/update-migration-store migration-id
                                         entity-type
                                         {:target {:migrated migrated-count}}
@@ -154,10 +163,9 @@
 
 (defn check-store
   "check a single store"
-  [target-store
-   batch-size]
+  [target-store batch-size]
   (let [store-schema (type->schema (keyword (:type target-store)))
-        coerce! (coerce-to-fn [store-schema])
+        list-coerce (list-coerce-fn store-schema)
         target-store-size (mst/store-size target-store)]
     (log/infof "%s - store size: %s records"
                (:type target-store)
@@ -165,7 +173,8 @@
 
     (loop [offset 0
            sort-keys nil
-           checked-count 0]
+           checked-count 0
+           invalids []]
       (let [{:keys [data paging]
              :as batch}
             (mst/fetch-batch target-store
@@ -176,30 +185,19 @@
             next (:next paging)
             offset (:offset next 0)
             search_after (:sort paging)
-            checked (coerce! data)
+            {:keys [errors]} (list-coerce data)
             checked-count (+ checked-count
-                             (count checked))]
+                             (count data))]
         (if next
-          (recur offset search_after checked-count)
-          (log/infof "%s - finished checking %s documents"
-                     (:type target-store)
-                     checked-count))))))
-
-(defn check-store-index
-  [[sk sr :as store] batch-size]
-  (try
-    (log/infof "checking store: %s" sk)
-    (check-store sr batch-size)
-    (catch Exception e
-      (if-let [errors (some->> (ex-data e) :error (remove nil?))]
-        (let [message
-              (format (str "The store %s is invalid, certainly a coercion issue "
-                           "errors: %s")
-                      sk
-                      (pr-str errors))]
-          (log/error message)
-          message)
-        (throw e)))))
+          (recur offset search_after checked-count (concat invalids errors))
+          (do
+            (log/infof "%s - finished checking %s documents"
+                       (:type target-store)
+                       checked-count)
+            (when (seq errors)
+              (log/warnf "%s - errors were detected: %s"
+                         (:type target-store)
+                         (pr-str errors)))))))))
 
 (defn check-store-indexes
   "check all new es store indexes"
@@ -212,7 +210,9 @@
 
     (log/infof "checking stores: %s" (keys current-stores))
     (log/infof "set batch size: %s" batch-size)
-    (keep #(check-store-index % batch-size) target-stores)))
+    (doseq [[sk sr] target-stores]
+      (log/infof "checking store: %s" sk)
+      (check-store sr batch-size))))
 
 (defn exit [error?]
   (if error?
@@ -237,10 +237,8 @@
                            confirm?
                            restart?)
     (when confirm?
-      (when-let [errors (seq (check-store-indexes store-keys batch-size prefix))]
-        (log/errorf "Schema errors during migration: %s"
-                    (pr-str errors))
-        (exit true)))
+      (check-store-indexes store-keys batch-size prefix)
+      (exit true))
     (log/info "migration complete")
     (catch Exception e
       (log/error e "Unexpected error during migration")
@@ -249,7 +247,7 @@
 
 (def cli-options
   ;; An option with a required argument
-  [["-i" "--id ID" "migration ID to create or restart"
+  [["-i" "--id ID" "The idID of the migration state to create or restar"
     :default (str "migration-" (java.util.UUID/randomUUID))]
    ["-p" "--prefix PREFIX" "prefix of the target size"]
    ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"

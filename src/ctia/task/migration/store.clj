@@ -51,7 +51,7 @@
      :timestamp em/ts
      :stores {:type "object"
               :properties (->> (map store-mapping @stores)
-                               (apply merge))}}}})
+                               (into {}))}}}})
 
 (defn migration-store-properties []
   (-> (get-store-properties :migration)
@@ -285,10 +285,10 @@
         (source-store-maps->target-store-maps source-stores prefix)
         migration-properties (migration-store-properties)
         now (time/now)
-        migration-stores (apply merge
-                                (map (fn [[k v]]
-                                       {k (init-migration-store v (k target-stores))})
-                                     source-stores))
+        migration-stores (into {}
+                               (map (fn [[k v]]
+                                      {k (init-migration-store v (k target-stores))})
+                                    source-stores))
         migration {:id migration-id
                    :created now
                    :stores migration-stores}
@@ -326,7 +326,7 @@
                              with-search-after
                              update-source-size)})
             stores)
-       (apply merge)))
+       (into {})))
 
 (s/defn get-migration :- MigrationSchema
   [migration-id :- s/Str

@@ -273,26 +273,39 @@ Response of the bundle API endpoint:
  
  - After the migration task completes, you will need to edit your properties, changing each store index to the new one and restart CTIA.
  
- - In case of failure, you can relaunch the task at will, it should fully recreate the new indices.
+ - In case of failure, you have 2 solutions:
+   - you can relaunch the task at will, it should fully recreate the new indices.
+   - you can restart this migration with `--restart` parameter 
  
- - make sure the resulting indices from your prefix configuration don't match existing ones as they will be deleted.
+ - make sure the resulting indices from your prefix configuration don't match existing ones as they will be deleted (unless the migration is restarted)
  
  Launch the task with:
  
-`java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>`
+`java -cp ctia.jar:resources:. clojure.main -m ctia.task.migration.migrate-es-stores <options>`
 
-or from source with leiningen:
+or from source
 
-`lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>`
+`lein run -m ctia.task.migration.migrate-es-stores <options>`
 
 #### Task arguments
+|argument                     | description                                       | example 
+|-----------------------------|---------------------------------------------------|---------------|
+| -i, --id ID                 | id of the migration state to create or restart    | migration-1   | 
+| -p, --prefix PREFIX         | prefix of the newly created indices               | 1.1.0         |
+| -m, --migrations MIGRATIONS | a comma separated list of migration ids to apply  | 0.4.28,1.0.0  |
+| -b, --batch-size SIZE       | migration batch size                              | 1000          |
+| -s, --stores STORES         | comma separated list of stores to migrate         | tool,malware  |
+| -c, --confirm               | really do the migration?                          |               |
+| -r, --restart               | restart ongoing migration?                        |               |
+| -h, --help                  | prints usage                                      |               |
 
-| argument   | description                                                                                     | example       |
-|------------|-------------------------------------------------------------------------------------------------|---------------|
-| prefix     | a prefix string for the newly create indexes, it will be wrapped with `v<prefix>_`              | 0.4.16        |
-| migrations | a migrations task list to run                                                                   | 0.4.16,0.4.17 |
-| batch-size | how many documents to fetch and and convert at once                                             | 1000          |
-| confirm?   | setting this to false will not write anything to the ES data store and simulate transforms only | true          |
+#### Examples
+
+- apply migration 0.4.28 and 1.0.0, use prefix 1.1.0 for newly created indices, only for stores tool and malware, with batches of size 1000, and assign migration-1 as id for the migration state:
+    `lein run -m ctia.task.migration.migrate-es-stores -m 0.4.28,1.0.0 -p 1.1.0 -s tool,malware -b 1000 -i migration-1 -c`
+- The previous command completed, you restart your CTIA instance on new indices, but you want to handle writes between the end of your migration and your restart of CTIA. Restart previous migration with`--restart` or '-r':
+    `lein run -m ctia.task.migration.migrate-es-stores -m 0.4.28,1.0.0 -p 1.1.0 -s tool,malware -b 1000 -i migration-1 -c --restart`
+- the migration failed, you corrected the issue that made it fail, you can restart it with `--restart` (or '-c') parameter (same command as above). 
 
 
 #### Available migrations
