@@ -50,22 +50,22 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-judgement :- (s/maybe StoredJudgement)]
-   (let [{:keys [error] :as disposition}
-         (try
-           (determine-disposition-id new-judgement)
-           (catch clojure.lang.ExceptionInfo e
-             {:error "Mismatching disposition and dispositon_name for judgement"
-              :id id
-              :type :realize-entity-error
-              :judgement new-judgement}))]
-     (if-not error
-       (let [disposition-name (get disposition-map disposition)]
-         (judgement-default-realize
-          (assoc new-judgement
-                 :disposition disposition
-                 :disposition_name disposition-name)
-          id tempids owner groups prev-judgement))
-       disposition))))
+   (try
+     (let [disposition (determine-disposition-id new-judgement)
+           disposition-name (get disposition-map disposition)]
+       (judgement-default-realize
+        (assoc new-judgement
+               :disposition disposition
+               :disposition_name disposition-name)
+        id tempids owner groups prev-judgement))
+     (catch clojure.lang.ExceptionInfo e
+       (let [{error-type :type} (ex-data e)]
+         (if (= error-type :ctim.schemas.common/disposition-missing)
+           {:error "Mismatching disposition and dispositon_name for judgement"
+            :id id
+            :type :realize-entity-error
+            :judgement new-judgement}
+           (throw e)))))))
 
 (def judgement-fields
   (concat sorting/base-entity-sort-fields
