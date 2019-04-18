@@ -152,8 +152,8 @@
                           :groups ["Administrators"]}
                  :event_type :record-created}]
                (->> @results
-                    (map #(dissoc % :timestamp :http-params :id))
-                    (map #(update % :entity dissoc :created)))))
+                    (map #(dissoc % :timestamp :http-params :id :modified))
+                    (map #(update % :entity dissoc :created :modified :timestamp)))))
 
         (testing "variable event fields have correct type"
           (doseq [event @results]

@@ -94,6 +94,14 @@
       :entity entity
       :class (.getName (class e))})))
 
+(defn realize-entity-error-handler
+  "Handle error at the realize step"
+  [^Exception e data request]
+  (logging/log! :info e (ex-message e))
+  (bad-request
+   (let [data (ex-data e)]
+     (dissoc data :type))))
+
 (defn default-error-handler
   "Handle default error"
   [^Exception e data request]

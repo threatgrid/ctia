@@ -2,7 +2,7 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.domain
              [access-control :refer [properties-default-tlp]]
-             [entities :refer [schema-version]]]
+             [entities :refer [default-realize-fn]]]
             [ctia.schemas
              [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema TempIDs]]
@@ -32,20 +32,8 @@
 (s/defschema PartialStoredFeedback
   (csu/optional-keys-schema StoredFeedback))
 
-(s/defn realize-feedback :- StoredFeedback
-  [new-feedback :- NewFeedback
-   id :- s/Str
-   tempids :- (s/maybe TempIDs)
-   owner :- s/Str
-   groups :- [s/Str]]
-  (assoc new-feedback
-         :id id
-         :type "feedback"
-         :created (time/now)
-         :owner owner
-         :groups groups
-         :tlp (:tlp new-feedback (properties-default-tlp))
-         :schema_version schema-version))
+(def realize-feedback
+  (default-realize-fn "feedback" NewFeedback StoredFeedback))
 
 (def feedback-fields
   (concat sorting/base-entity-sort-fields

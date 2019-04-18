@@ -176,6 +176,7 @@
                           :disposition 2
                           :source "test"
                           :priority 100
+                          :timestamp #inst "2042-01-01T00:00:00.000Z"
                           :severity "High"
                           :confidence "Low"
                           :reason "This is a bad IP address that talked to some evil servers"
@@ -213,6 +214,7 @@
                        :disposition 2
                        :disposition_name "Malicious"
                        :priority 100
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :severity "High"
                        :confidence "Low"
                        :source "test"
@@ -266,6 +268,7 @@
                           :disposition 2
                           :source "test"
                           :priority 100
+                          :timestamp #inst "2042-01-01T00:00:00.000Z"
                           :severity "High"
                           :confidence "Low"
                           :reason "This is a bad IP address that talked to some evil servers"
@@ -280,6 +283,7 @@
                                           :disposition 2
                                           :source "test"
                                           :priority 100
+                                          :timestamp #inst "2042-01-01T00:00:00.000Z"
                                           :severity "High"
                                           :confidence "Low"
                                           :reason "This is a bad IP address that talked to some evil servers"
@@ -344,6 +348,7 @@
                        :disposition 2
                        :disposition_name "Malicious"
                        :priority 100
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :severity "High"
                        :confidence "Low"
                        :source "test"
@@ -381,6 +386,7 @@
                           :disposition 2
                           :source "test"
                           :priority 100
+                          :timestamp #inst "2042-01-01T00:00:00.000Z"
                           :severity "High"
                           :confidence "Low"
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
@@ -394,6 +400,7 @@
                :disposition_name "Malicious"
                :source "test"
                :priority 100
+               :timestamp #inst "2042-01-01T00:00:00.000Z"
                :severity "High"
                :confidence "Low"
                :tlp "green"
@@ -412,6 +419,7 @@
                           :disposition_name "Malicious"
                           :source "test"
                           :priority 100
+                          :timestamp #inst "2042-01-01T00:00:00.000Z"
                           :severity "High"
                           :confidence "Low"
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
@@ -425,6 +433,7 @@
                :disposition_name "Malicious"
                :source "test"
                :priority 100
+               :timestamp #inst "2042-01-01T00:00:00.000Z"
                :severity "High"
                :confidence "Low"
                :tlp "green"
@@ -442,6 +451,7 @@
                                        :type "ip"}
                           :source "test"
                           :priority 100
+                          :timestamp #inst "2042-01-01T00:00:00.000Z"
                           :severity "High"
                           :confidence "Low"
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
@@ -455,6 +465,7 @@
                :disposition_name "Unknown"
                :source "test"
                :priority 100
+               :timestamp #inst "2042-01-01T00:00:00.000Z"
                :severity "High"
                :confidence "Low"
                :tlp "green"
@@ -480,7 +491,7 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
          (is (=
-              {:error "Mismatching :dispostion and dispositon_name for judgement",
+              {:error "Mismatching disposition and dispositon_name for judgement",
                :judgement {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 1
@@ -508,7 +519,7 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
          (is (deep=
-              {:error "Mismatching :dispostion and dispositon_name for judgement",
+              {:error "Mismatching disposition and dispositon_name for judgement",
                :judgement {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 1
