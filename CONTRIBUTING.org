@@ -53,9 +53,6 @@ code complexity:
   can't do otherwise. Most of the time using ~case~ and/or ~cond~ will be preferable.
 - Try to avoid the use of ~core.async~ there is certainly an easier, simpler and
   less bug prone way to do what you intend to.
-- A TK service is a service, it should have an internal state that is initialized.
-  If this is not the case, this is certainly a library. More details here:
-  https://github.com/puppetlabs/trapperkeeper/blob/master/documentation/Trapperkeeper-Best-Practices.md
 
 ** Backward Compatibility
 
