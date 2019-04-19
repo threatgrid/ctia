@@ -1,9 +1,15 @@
 #+Title: Contributing
 
-*  Introduction
+* Introduction
 
 This document introduce how to minimize the friction between contributors.
 It is mainly written for developpers.
+
+So if you are a new developper in our team, welcome! Please read carrefully do
+not hesitate to reach out if you want to discuss something about this document.
+
+- coding style
+- git / deploiement workflow
 
 * Coding Style
 
@@ -100,30 +106,16 @@ https://about.gitlab.com/2014/09/29/gitlab-flow/)
 
 *** Init your env
 
-1. Clone the iroh repo in github
-2. Your master branch should be the one from your own repository (cloned from threatgrid one)
-3. The repository is generally named ~tg~ (or ~motherboard~)
-4. You should sync your master branch with ~tg~ time to time with the ~git synctg~ alias
-   #+BEGIN_SRC
-   [alias]
-	   synctg = "!oldbr=`git rev-parse --abbrev-ref HEAD` ; git checkout master && git fetch --all && git rebase tg/master && git push ; git checkout $oldbr"
-   #+END_SRC
+1) Clone the ctia repo in github to have your own clone say (where =johndoe= is your nick):
+   =https://github.com/johndoe/ctia=.
+2) Add a =tg= remote for the main =threatgrid/ctia= repository:
+   =git remote add tg https://github.com/threatgrid/ctia=
+3) =./init-local-git-config.sh=
 
-You can (should) also add the repository of other contributors to your remote repos.
+You shall now have:
 
-#+BEGIN_SRC
-> git remote -v
-gbuisson	git@github.com:gbuisson/iroh.git (fetch)
-gbuisson	git@github.com:gbuisson/iroh.git (push)
-msprunck	git@github.com:msprunck/iroh.git (fetch)
-msprunck	git@github.com:msprunck/iroh.git (push)
-origin	git@github.com:YOU/iroh.git (fetch)
-origin	git@github.com:YOU/iroh.git (push)
-tg	git@github.com:threatgrid/iroh.git (fetch)
-tg	git@github.com:threatgrid/iroh.git (push)
-yogsototh	git@github.com:yogsototh/iroh.git (fetch)
-yogsototh	git@github.com:yogsototh/iroh.git (push)
-#+END_SRC
+- a default git commit template
+- an alias: =git synctg= that shall sync your =origin/master= with the =threatgrid/master= correctly.
 
 You can test everything is working correctly by doing:
 
@@ -133,29 +125,25 @@ You can test everything is working correctly by doing:
 > lein run
 #+END_SRC
 
-
 *** Adding a new feature / fixing an issue
 
 1. You should have an open issue in github with number ~#XXX~.
 2. ~git checkout -b issue-XXX-issue-short-description~
-3. work... ~git commit~ many times
-4. Optionally you can clean up your git log history with ~git rebase -i master~, or ~git synctg~
+3. work... make a some ~git commit~;
+   the first time do not use the =-m= option, then for all other commits,
+   you shall use a =git commit -m= with short messages (<50 char is best).
+4. Optionally clean up your git log history by doing a
+   ~git synctg~ and then a ~git rebase -i master~.
+   Do not remove the first commit message with the Release block.
 5. Test locally ~./build/compile.sh && ./build/run-tests.sh && lein tk~
 6. ~git push -u~ will push and create the branch on github
-7. Open a PR. In the PR reference the issue by writing (~Close #XXX~ or
-   ~Connects to #XXX~). If the issue also depend from an Epic please reference
-   it as well ~Connects to Epic #EEE~).
+7. Open a PR. In the PR reference the issue, follow the instructions of the template.
 8. Make changes according to PR feedbacks
-9. Either use the =Squash & Merge button= in github or manually rebase. Please
-   take the time to write a good commit message. For example be inspired by
-   https://chris.beams.io/posts/git-commit/
+9. Either use the =Squash & Merge button= in github or manually rebase.
 
 *** Deploiement
 
-This part doesn't concern contributor external to the core team.
-
 We currently have three environments.
-
 
 | Integration (INT) | https://intel.int.iroh.site          | master    |
 | Integration (INT) | https://private.intel.int.iroh.site  | master    |
