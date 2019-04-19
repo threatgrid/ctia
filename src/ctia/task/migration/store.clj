@@ -61,26 +61,27 @@
         :refresh true
         :mappings migration-mapping})))
 
+(s/defschema SourceState
+  {:index s/Str
+   :total s/Int
+   (s/optional-key :search_after) s/Any
+   (s/optional-key :store) StoreMap})
+
+(s/defschema TargetState
+  {:index s/Str
+   :migrated s/Int
+   (s/optional-key :store) StoreMap})
+
 (s/defschema MigratedStore
-  {:source {:index s/Str
-            :total s/Int
-            (s/optional-key :search_after) s/Any
-            (s/optional-key :store) StoreMap}
-   :target {:index s/Str
-            :migrated s/Int
-            (s/optional-key :store) StoreMap}
+  {:source SourceState
+   :target TargetState
    (s/optional-key :started) s/Inst
    (s/optional-key :completed) s/Inst})
 
 (s/defschema PartialMigratedStore
   (st/optional-keys
-   {:source (st/optional-keys {:index s/Str
-                               :total s/Int
-                               :search_after s/Any
-                               :store StoreMap})
-    :target (st/optional-keys {:index s/Str
-                               :migrated s/Int
-                               :store StoreMap})
+   {:source (st/optional-keys SourceState)
+    :target (st/optional-keys TargetState)
     (s/optional-key :started) s/Inst
     (s/optional-key :completed) s/Inst}))
 

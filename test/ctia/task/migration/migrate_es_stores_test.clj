@@ -66,6 +66,62 @@
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
 
+
+
+(deftest migration-with-malformed-docs
+  (helpers/set-capabilities! "foouser"
+                             ["foogroup"]
+                             "user"
+                             all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+  (testing "migration with malformed documents in store"
+    (let [store-types [:malware :tool :incident]
+          logger (atom [])
+          bad-doc {:id 1
+                   :hey "I"
+                   :am "a"
+                   :bad "document"}]
+      ;; insert proper documents
+      (post-bulk examples)
+      ;; insert malformed documents
+      (doseq [store-type store-types]
+        (es-doc/create-doc es-conn
+                           (get-in es-props [store-type :indexname])
+                           (name store-type)
+                           bad-doc
+                           "true"))
+      (with-atom-logger logger
+        (sut/migrate-store-indexes "test-3"
+                                   "0.0.1"
+                                   [:__test]
+                                   store-types
+                                   10
+                                   true
+                                   false))
+      (let [messages (set @logger)
+            migration-state (es-doc/get-doc es-conn
+                                            migration-index
+                                            "migration"
+                                            "test-3"
+                                            {})]
+        (doseq [store-type store-types]
+          (let [migrated-store (get-in migration-state [:stores store-type])
+                {:keys [source target]} migrated-store]
+            (is (= (inc fixtures-nb) (:total source)))
+            (is (= fixtures-nb (:migrated target))))
+          (is (some #(clojure.string/starts-with? % (format "%s - Cannot migrate entity: {"
+                                                            (name store-type)))
+                    messages)
+              (format "malformed %s was not logged" store-type))))))
+
+  (es-index/delete! es-conn "ctia_*")
+  (es-index/delete! es-conn "v0.0.1*")
+  (es-doc/delete-doc es-conn migration-index "migration" "test-3" "true"))
+
+
 (deftest test-migrate-store-indexes
   ;; TODO clean data
   (helpers/set-capabilities! "foouser"
@@ -76,7 +132,7 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-
+  ;; insert proper documents
   (post-bulk examples)
   (testing "migrate ES Stores test setup"
     (testing "simulate migrate es indexes shall not create any document"
@@ -124,8 +180,7 @@
               (is (= source-size (:total source)))
               (is (not (nil? started)))
               (is (not (nil? completed)))
-              (is (= (:total source)
-                     (:migrated target)))
+              (is (>= (:total source) (:migrated target)))
               (is (int? (:total source)))
               (is (= (:index target)
                      (prefixed-index (:index source) "0.0.0")))))))
@@ -141,7 +196,7 @@
                 "incident - finished migrating 100 documents"
                 "investigation - finished migrating 100 documents"
                 "coa - finished migrating 100 documents"
-                "identity - finished migrating 1 documents"
+                "identity - finished migrating 0 documents"
                 "judgement - finished migrating 100 documents"
                 "data-table - finished migrating 0 documents"
                 "feedback - finished migrating 0 documents"

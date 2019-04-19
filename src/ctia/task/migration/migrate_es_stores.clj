@@ -98,30 +98,29 @@
             next (:next paging)
             search_after (:sort paging)
             migrated (transduce migrations conj data)
-            migrated-count (+ migrated-count
-                              (count migrated))]
+            {:keys [data errors]} (list-coerce migrated)
+            migrated-count (+ migrated-count (count data))]
         (when (and confirm? (not started))
           (mst/update-migration-store migration-id
                                       entity-type
                                       {:started (time/now)}
                                       @mst/migration-es-conn))
-        (let [{:keys [data errors]} (list-coerce migrated)]
-          (doseq [entity errors]
-            (let [message
-                  (format "%s - Cannot migrate entity: %s"
-                          (pr-str (:type source-store))
-                          (pr-str entity))]
-              (log/error message)))
-          (when confirm?
-            (when (seq data) (mst/store-batch target-store data))
-            (mst/update-migration-store migration-id
-                                        entity-type
-                                        {:target {:migrated migrated-count}}
-                                        @mst/migration-es-conn))
+        (doseq [entity errors]
+          (let [message
+                (format "%s - Cannot migrate entity: %s"
+                        (:type source-store)
+                        (pr-str entity))]
+            (log/error message)))
+        (when confirm?
+          (when (seq data) (mst/store-batch target-store data))
+          (mst/update-migration-store migration-id
+                                      entity-type
+                                      {:target {:migrated migrated-count}}
+                                      @mst/migration-es-conn))
 
-          (log/infof "%s - migrated: %s documents"
-                     (:type source-store)
-                     migrated-count))
+        (log/infof "%s - migrated: %s documents"
+                   (:type source-store)
+                   migrated-count)
         (if next
           (recur search_after migrated-count)
           (do (log/infof "%s - finished migrating %s documents"
