@@ -13,14 +13,16 @@
              [relationships :refer [relationship-minimal]]
              [tools :refer [tool-minimal]]]
 
+            [ctia.properties :as props]
+            [ctia.store :refer [stores]]
+            [ctia.stores.es.store :refer [store->map]]
             [ctia.test-helpers
              [core :as helpers :refer [post-bulk delete]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.task.migration
-             [fixtures :refer [examples fixtures-nb]]
+             [fixtures :as fixt]
              [store :as sut]]
-            [ctia.properties :as props]
             [ctia.store :as st]))
 
 (use-fixtures :once
@@ -53,6 +55,14 @@
 (def es-props (get-in @props/properties [:ctia :store :es]))
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
+
+(def fixtures-nb 100)
+(def examples (fixt/bundle fixtures-nb false))
+
+(defn refresh-all-stores []
+  (doseq [{:keys [conn indexname]} (map #(store->map % {})
+                                        (vals @stores))]
+    (es-index/refresh! conn indexname)))
 
 (deftest wo-storemaps-test
   (let [fake-migration (sut/init-migration "migration-id-1"
@@ -203,7 +213,7 @@
                                       "foogroup"
                                       "user")
   (post-bulk examples)
-  (Thread/sleep 1000) ;; ensure indices refresh
+  (refresh-all-stores) ;; ensure indices refresh
   (let [[sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
                                                          :query-params {:limit 2 :query "*"}
                                                          :headers {"Authorization" "45c1f5e3f05d0"}))
@@ -220,7 +230,7 @@
         malware1-id (-> malware1 :id long-id->id :short-id)
         _ (delete (format "ctia/sighting/%s" sighting1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        _ (Thread/sleep 1)
+        _ (refresh-all-stores)
         since (time/now)
         _ (delete (format "ctia/sighting/%s" sighting2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
@@ -241,7 +251,7 @@
 
 (deftest init-get-migration-test
   (post-bulk examples)
-  (Thread/sleep 1000) ; ensure indices refresh
+  (refresh-all-stores) ; ensure indices refresh
   (testing "init-migration should properly create new migration state from selected types"
     (let [prefix "0.0.0"
           entity-types [:tool :malware :relationship]

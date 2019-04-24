@@ -14,7 +14,7 @@
 
             [ctia.properties :as props]
             [ctia.task.migration
-             [fixtures :refer [examples example-types fixtures-nb randomize]]
+             [fixtures :as fixt]
              [migrate-es-stores :as sut]
              [store :refer [setup! prefixed-index get-migration fetch-batch]]]
             [ctia.test-helpers
@@ -66,6 +66,12 @@
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
 
+(def fixtures-nb 100)
+(def minimal-examples (fixt/bundle fixtures-nb false))
+(def example-types
+  (->> (vals minimal-examples)
+       (map #(-> % first :type keyword))
+       set))
 
 
 (deftest migration-with-malformed-docs
@@ -85,7 +91,7 @@
                    :am "a"
                    :bad "document"}]
       ;; insert proper documents
-      (post-bulk examples)
+      (post-bulk minimal-examples)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-doc/create-doc es-conn
@@ -133,7 +139,7 @@
                                       "foogroup"
                                       "user")
   ;; insert proper documents
-  (post-bulk examples)
+  (post-bulk minimal-examples)
   (testing "migrate ES Stores test setup"
     (testing "simulate migrate es indexes shall not create any document"
       (sut/migrate-store-indexes "test-1"
@@ -174,7 +180,7 @@
                   source-size
                   (cond
                     (= :identity entity-type) 1
-                    (= :event entity-type) (* fixtures-nb (count examples))
+                    (= :event entity-type) (* fixtures-nb (count minimal-examples))
                     (contains? example-types (keyword entity-type)) fixtures-nb
                     :else 0)]
               (is (= source-size (:total source)))
@@ -239,7 +245,7 @@
                     malware fixtures-nb
                     tool fixtures-nb
                     incident fixtures-nb
-                    event (* (count (keys examples))
+                    event (* (count (keys minimal-examples))
                              fixtures-nb)
                     indicator fixtures-nb
                     investigation fixtures-nb
@@ -277,9 +283,7 @@
               (is (every? #(= ["migration-test"] %)
                           hits))))))
     (testing "restart migration shall properly handle inserts, updates and deletes"
-      (let [new-malwares (->> (:malwares examples)
-                              (take 3)
-                              (map randomize)
+      (let [new-malwares (->> (fixt/n-examples :malware 3 false)
                               (map #(assoc % :description "INSERTED"))
                               (hash-map :malwares))
             [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
@@ -323,3 +327,53 @@
   (es-index/delete! es-conn "v0.0.0*")
   (es-doc/delete-doc es-conn migration-index "migration" "test-2" "true"))
 
+
+
+
+(defn load-test-fn
+  [maximal?]
+  ;; insert 100000 docs per entity-type
+  (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
+    (post-bulk bundle))
+  (doseq [batch-size [100 1000 3000 6000 10000]]
+    (let [total-docs (* (count example-types) 20000)
+          _ (println (format "===== migrating %s documents with batch size %s"
+                             total-docs
+                             batch-size))
+          migration-id (format "test-load-%s" batch-size)
+          prefix (format "test_load_%s" batch-size)
+          start (System/currentTimeMillis)
+          _ (sut/migrate-store-indexes migration-id
+                                       prefix
+                                       [:__test]
+                                       (into [] example-types)
+                                       batch-size
+                                       true
+                                       false)
+          end (System/currentTimeMillis)
+          total (/ (- end start) 1000)
+          doc-per-sec (/ total-docs total)
+          migration-state (es-doc/get-doc es-conn
+                                          migration-index
+                                          "migration"
+                                          migration-id
+                                          {})]
+      (println "total: " (float total))
+      (println "documents per seconds: " (float doc-per-sec))
+      (doseq [[k state] (:stores migration-state)]
+        (is (= 20000
+               (get-in state [:source :total])
+               (get-in state [:target :migrated]))))
+      (es-index/delete! es-conn (format "v%s*" prefix))
+      (es-doc/delete-doc es-conn migration-index "migration" migration-id "true")))
+  (es-index/delete! es-conn "ctia_*"))
+
+;;(deftest ^:integration minimal-load-test
+;;  (testing "load testing with minimal entities"
+;;    (println "load testing with minimal entities")
+;;    (load-test-fn false)))
+;;
+;;(deftest ^:integration maximal-load-test
+;;  (testing "load testing with maximal entities"
+;;    (println "load testing with maximal entities")
+;;    (load-test-fn true)))

@@ -31,7 +31,7 @@
         s/Any)))
 
 (defn compose-migrations
-  "compose migrations from a list of keywords"
+  "compose migration transformations from a list of keywords"
   [migration-keys]
   (let [migrations
         (vals (select-keys available-migrations
@@ -88,15 +88,15 @@
                (:type source-store)
                source-store-size)
 
-    (loop [search_after search_after
+    (loop [current-search-after search_after
            migrated-count migrated-count]
       (let [{:keys [data paging]} (mst/fetch-batch source-store
                                                    batch-size
                                                    0
                                                    "asc"
-                                                   search_after)
+                                                   current-search-after)
             next (:next paging)
-            search_after (:sort paging)
+            new-search-after (:sort paging)
             migrated (transduce migrations conj data)
             {:keys [data errors]} (list-coerce migrated)
             migrated-count (+ migrated-count (count data))]
@@ -122,7 +122,7 @@
                    (:type source-store)
                    migrated-count)
         (if next
-          (recur search_after migrated-count)
+          (recur new-search-after migrated-count)
           (do (log/infof "%s - finished migrating %s documents"
                          (:type source-store)
                          migrated-count)
@@ -246,12 +246,12 @@
 
 (def cli-options
   ;; An option with a required argument
-  [["-i" "--id ID" "The idID of the migration state to create or restar"
+  [["-i" "--id ID" "The ID of the migration state to create or restar"
     :default (str "migration-" (java.util.UUID/randomUUID))]
-   ["-p" "--prefix PREFIX" "prefix of the target size"]
+   ["-p" "--prefix PREFIX" "prefix of the newly created indices"]
    ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"
     :parse-fn #(map keyword (string/split % #","))]
-   ["-b" "--batch-size SIZE" "migVration batch size"
+   ["-b" "--batch-size SIZE" "number of migrated documents per batch"
     :default default-batch-size
     :parse-fn read-string
     :validate [#(< 0 %) "batch-size must be a positive number"]]

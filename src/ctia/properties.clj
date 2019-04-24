@@ -40,7 +40,7 @@
   (let [configurable-stores (map name (keys @store/stores))
         store-names (conj configurable-stores "default")]
     (st/optional-keys
-     (reduce merge {"ctia.store.es.migration.indexname" s/Str}
+     (reduce merge {}
              (map (fn [s] (merge (default-store-properties s)
                                  (es-store-impl-properties s)))
                   store-names)))))
@@ -139,6 +139,7 @@
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
 
+                      "ctia.store.es.migration.indexname" s/Str
                       "ctia.store.es.event.slicing.strategy"
                       (s/maybe (s/enum :aliased-index))
                       "ctia.store.es.event.slicing.granularity"
