@@ -214,11 +214,13 @@
                                       "user")
   (post-bulk examples)
   (refresh-all-stores) ;; ensure indices refresh
-  (let [[sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
+  (let [total-examples (->> (map count (vals examples))
+                            (apply +))
+        [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
                                                          :query-params {:limit 2 :query "*"}
                                                          :headers {"Authorization" "45c1f5e3f05d0"}))
-        [tool1 tool2] (:parsed-body (helpers/get "ctia/tool/search"
-                                                 :query-params {:limit 2 :query "*"}
+        [tool1 tool2 tool3] (:parsed-body (helpers/get "ctia/tool/search"
+                                                 :query-params {:limit 3 :query "*"}
                                                  :headers {"Authorization" "45c1f5e3f05d0"}))
         [malware1] (:parsed-body (helpers/get "ctia/malware/search"
                                               :query-params {:limit 1 :query "*"}
@@ -227,6 +229,7 @@
         sighting2-id (-> sighting2 :id long-id->id :short-id)
         tool1-id (-> tool1 :id long-id->id :short-id)
         tool2-id (-> tool2 :id long-id->id :short-id)
+        tool3-id (-> tool3 :id long-id->id :short-id)
         malware1-id (-> malware1 :id long-id->id :short-id)
         _ (delete (format "ctia/sighting/%s" sighting1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
@@ -238,14 +241,32 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" tool2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
+        _ (delete (format "ctia/tool/%s" tool3-id)
+                  :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" malware1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        {:keys [sighting tool malware]} (sut/fetch-deletes [:sighting :tool] since)]
-    (is (= #{(:id tool1) (:id tool2)} (set (map :id tool)))
-        "fetch-deletes shall return tool1 and tool2 that were deleted after since")
-    (is (= #{(:id sighting2)} (set (map :id sighting)))
-        "fetch-deletes shall return only entites that were deleted after since")
-    (is (nil? malware) "fetch-deletes shall only retrieve entity types given as parameter"))
+        {data1 :data paging1 :paging} (sut/fetch-deletes [:sighting :tool] since 3 nil)
+        {data2 :data paging2 :paging} (sut/fetch-deletes [:sighting :tool]
+                                                         since
+                                                         2
+                                                         (:sort paging1))]
+    (is (nil? (:next paging2)))
+    (is (= #{(:id tool1) (:id tool2)} (->> (:tool data1)
+                                           (map :id)
+                                           set))
+        "fetch-deletes first batch shall return tool1 and tool2 that were deleted after since")
+    (is (= #{(:id sighting2)} (->> (:sighting data1)
+                                   (map :id)
+                                   set))
+        "fetch-deletes shall return only the sighting that was deleted after since parameter")
+    (is (= #{(:id tool3)} (->> (:tool data2)
+                               (map :id)
+                               set))
+        "fetch-deletes second batch shall return tool3 that was deleted after since")
+    (is (nil? (:sighting data2))
+        "fetch-deletes shall not return any more sightings in the second batch")
+    (is (nil? (:malware data1)) "fetch-deletes shall only retrieve entity types given as parameter")
+    (is (nil? (:malware data2)) "fetch-deletes shall only retrieve entity types given as parameter"))
   (es-index/delete! es-conn "ctia_*"))
 
 

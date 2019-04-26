@@ -73,7 +73,6 @@
        (map #(-> % first :type keyword))
        set))
 
-
 (deftest migration-with-malformed-docs
   (helpers/set-capabilities! "foouser"
                              ["foogroup"]
@@ -286,24 +285,25 @@
       (let [new-malwares (->> (fixt/n-examples :malware 3 false)
                               (map #(assoc % :description "INSERTED"))
                               (hash-map :malwares))
-            [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
-                                                  :query-params {:limit 2 :query "*"}
+            [sighting1 & sightings] (:parsed-body (helpers/get "ctia/sighting/search"
+                                                  :query-params {:limit 10 :query "*"}
                                                   :headers {"Authorization" "45c1f5e3f05d0"}))
-            inserted-malwares (map ())
             sighting1-id (-> sighting1 :id long-id->id :short-id)
-            sighting2-id (-> sighting2 :id long-id->id :short-id)]
+            sighting-ids (map #(-> % :id long-id->id :short-id)
+                               sightings)]
         (post-bulk new-malwares)
         (put (format "ctia/sighting/%s" sighting1-id)
              :body (-> (dissoc sighting1 :id)
                        (assoc :description "UPDATED"))
              :headers {"Authorization" "45c1f5e3f05d0"})
-        (delete (format "ctia/sighting/%s" sighting2-id)
-                :headers {"Authorization" "45c1f5e3f05d0"})
+        (doseq [sighting-id sighting-ids]
+          (delete (format "ctia/sighting/%s" sighting-id)
+                  :headers {"Authorization" "45c1f5e3f05d0"}))
         (sut/migrate-store-indexes "test-2"
                                    "0.0.0"
                                    [:__test]
                                    (keys @stores)
-                                   10
+                                   2 ;; small batch to check proper delete paging
                                    true
                                    true)
         (let [migration-state (get-migration "test-2" es-conn)
@@ -313,14 +313,15 @@
               {last-target-malwares :data} (fetch-batch malware-target-store 3 0 "desc" nil)
               {:keys [conn indexname mapping]} (get-in sighting-migration [:target :store])
               updated-sighting (es-doc/get-doc conn indexname mapping sighting1-id nil)
-              get-deleted-sighting-res (es-doc/get-doc conn indexname mapping sighting2-id nil)]
+              get-deleted-sightings (map #(es-doc/get-doc conn indexname mapping % nil)
+                                         sighting-ids)]
           (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
               "inserted malwares must found in target malware store")
 
           (is (= "UPDATED" (:description updated-sighting))
               "updated document must be updated in target stores")
-
-          (is (nil? get-deleted-sighting-res)
+          (is (= (repeat (count sighting-ids) nil)
+                 get-deleted-sightings)
               "deleted document must not be in target stores"))))))
 
   (es-index/delete! es-conn "ctia_*")
@@ -372,7 +373,7 @@
 ;;  (testing "load testing with minimal entities"
 ;;    (println "load testing with minimal entities")
 ;;    (load-test-fn false)))
-;;
+
 ;;(deftest ^:integration maximal-load-test
 ;;  (testing "load testing with maximal entities"
 ;;    (println "load testing with maximal entities")

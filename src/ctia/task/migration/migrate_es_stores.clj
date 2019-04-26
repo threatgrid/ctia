@@ -44,15 +44,20 @@
 (s/defn handle-deletes
   [{:keys [created stores]} :- mst/MigrationSchema
    store-keys :- [s/Keyword]
+   batch-size :- s/Int
    confirm? :- s/Bool]
-  (let [deletes (mst/fetch-deletes store-keys created)]
-    (doseq [[entity-type entities] deletes]
-      (log/infof "Handling %s deleted %s during migration"
-                 (count entities)
-                 (name entity-type))
-      (when confirm?
-        (mst/batch-delete (get-in stores [entity-type :target :store])
-                          (map :id entities))))))
+  (loop [search_after nil]
+    (let [{:keys [data paging]} (mst/fetch-deletes store-keys created batch-size search_after)
+          {new-search-after :sort next :next} paging]
+      (doseq [[entity-type entities] data]
+        (log/infof "Handling %s deleted %s during migration"
+                   (count entities)
+                   (name entity-type))
+        (when confirm?
+          (mst/batch-delete (get-in stores [entity-type :target :store])
+                            (map :id entities))))
+      (when next
+        (recur new-search-after)))))
 
 (defn append-coerced
   [coercer coerced entity]
@@ -88,6 +93,10 @@
                (:type source-store)
                source-store-size)
 
+    (when (and confirm? (not started))
+      (mst/update-migration-store migration-id
+                                  entity-type
+                                  {:started (time/now)}))
     (loop [current-search-after search_after
            migrated-count migrated-count]
       (let [{:keys [data paging]} (mst/fetch-batch source-store
@@ -100,11 +109,6 @@
             migrated (transduce migrations conj data)
             {:keys [data errors]} (list-coerce migrated)
             migrated-count (+ migrated-count (count data))]
-        (when (and confirm? (not started))
-          (mst/update-migration-store migration-id
-                                      entity-type
-                                      {:started (time/now)}
-                                      @mst/migration-es-conn))
         (doseq [entity errors]
           (let [message
                 (format "%s - Cannot migrate entity: %s"
@@ -134,10 +138,10 @@
                                          @mst/migration-es-conn))))))))
 
 (s/defn migrate-store-indexes
-  "migrate all es store indexes"
+  "migrate the selected es store indexes"
   [migration-id :- s/Str
    prefix :- s/Str
-   migrations :- [s/Any]
+   migrations :- [s/Keyword]
    store-keys :- [s/Keyword]
    batch-size :- s/Int
    confirm? :- s/Bool
@@ -158,7 +162,7 @@
                      migrations
                      batch-size
                      confirm?))
-    (handle-deletes migration-state store-keys confirm?)))
+    (handle-deletes migration-state store-keys batch-size confirm?)))
 
 (defn check-store
   "check a single store"
@@ -220,7 +224,7 @@
 
 (defn run-migration
   [migration-id prefix migrations store-keys batch-size confirm? restart?]
-  (assert migration-id "Please provide an indexname prefix for target store creation")
+  (assert migration-id "Please provide an unique ID for this migration process")
   (when-not restart?
     (assert prefix "Please provide an indexname prefix for target store creation"))
   (assert batch-size "Please specify a batch size")

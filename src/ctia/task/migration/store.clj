@@ -54,17 +54,16 @@
                                (into {}))}}}})
 
 (defn migration-store-properties []
-  (-> (get-store-properties :migration)
-      (merge
-       {:shards 1
-        :replicas 1
-        :refresh true
-        :mappings migration-mapping})))
+  (into (get-store-properties :migration)
+        {:shards 1
+         :replicas 1
+         :refresh true
+         :mappings migration-mapping}))
 
 (s/defschema SourceState
   {:index s/Str
    :total s/Int
-   (s/optional-key :search_after) s/Any
+   (s/optional-key :search_after) [s/Any]
    (s/optional-key :store) StoreMap})
 
 (s/defschema TargetState
@@ -216,7 +215,9 @@
 (s/defn fetch-deletes :- (s/maybe {s/Any s/Any})
   "retrieves delete events for given entity types and since given date"
   [entity-types :- [s/Keyword]
-   since :- s/Inst]
+   since :- s/Inst
+   batch-size :- s/Int
+   search_after :- (s/maybe [s/Any])]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
         event-store (store->map (:event @stores))
@@ -224,22 +225,17 @@
                         (and (= event_type "record-deleted")
                              (contains? (set entity-types)
                                         (-> entity :type keyword))))]
-    (loop [search_after nil
-           deleted []]
       (let [{:keys [data paging]} (query-fetch-batch query
                                                      event-store
-                                                     1000
+                                                     batch-size
                                                      0
                                                      "asc"
                                                      search_after)
-            {:keys [search_after next]} paging
             deleted (->> (filter filter-events data)
                          (map :entity)
-                         (map #(update % :type keyword))
-                         (concat deleted))]
-        (if next
-          (recur search_after deleted)
-          (group-by :type deleted))))))
+                         (map #(update % :type keyword)))]
+        {:data (group-by :type deleted)
+         :paging paging})))
 
 (s/defn batch-delete
   "delete a batch of documents given their ids"
@@ -276,6 +272,8 @@
     (es-index/create! conn indexname index-settings)))
 
 (s/defn init-migration :- MigrationSchema
+  "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
+when confirm? is true, it stores this state and creates the target indices."
   [migration-id :- s/Str
    prefix :- s/Str
    store-keys :- [s/Keyword]
@@ -286,10 +284,10 @@
         (source-store-maps->target-store-maps source-stores prefix)
         migration-properties (migration-store-properties)
         now (time/now)
-        migration-stores (into {}
-                               (map (fn [[k v]]
-                                      {k (init-migration-store v (k target-stores))})
-                                    source-stores))
+        migration-stores (->> source-stores
+                              (map (fn [[k v]]
+                                     {k (init-migration-store v (k target-stores))}))
+                              (into {}))
         migration {:id migration-id
                    :created now
                    :stores migration-stores}
@@ -347,18 +345,22 @@
         (store-migration es-conn))))
 
 (s/defn update-migration-store
-  [migration-id :- s/Str
-   store-key :- s/Keyword
-   migrated-doc :- PartialMigratedStore
-   es-conn :- ESConn]
-  (let [partial-doc {:stores {store-key migrated-doc}}
-        {:keys [indexname entity]} (migration-store-properties)]
-    (es-doc/update-doc es-conn
-                       indexname
-                       (name entity)
-                       migration-id
-                       partial-doc
-                       "true")))
+  ([migration-id :- s/Str
+    store-key :- s/Keyword
+    migrated-doc :- PartialMigratedStore]
+   (update-migration-store migration-id store-key migrated-doc @migration-es-conn))
+  ([migration-id :- s/Str
+    store-key :- s/Keyword
+    migrated-doc :- PartialMigratedStore
+    es-conn :- ESConn]
+   (let [partial-doc {:stores {store-key migrated-doc}}
+         {:keys [indexname entity]} (migration-store-properties)]
+     (es-doc/update-doc es-conn
+                        indexname
+                        (name entity)
+                        migration-id
+                        partial-doc
+                        "true"))))
 
 (s/defn finalize-migration! :- s/Any
   [migration-id :- s/Str
