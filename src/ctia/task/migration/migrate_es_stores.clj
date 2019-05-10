@@ -11,9 +11,11 @@
             [ctia.task.migration.migrations :refer [available-migrations]]
             [ctia.task.migration.store :as mst]
             [schema-tools.core :as st]
+            [clojure.core.async :as async :refer [chan <!! >!! <! close! go go-loop]]
             [schema.core :as s]))
 
 (def default-batch-size 100)
+(def default-nb-threads 30)
 
 (def all-types
   (assoc (->> (vals entities)
@@ -79,15 +81,18 @@
    migrations
    batch-size
    confirm?]
+  (log/infof "migrating store: %s" entity-type)
   (let [{stores :stores migration-id :id} migration-state
         {:keys [source target started]} (get stores entity-type)
         {source-store :store
          search_after :search_after
          source-store-size :total} source
         {target-store :store
-         migrated-count :migrated} target
+         migrated-count-state :migrated} target
         store-schema (type->schema (keyword (:type target-store)))
-        list-coerce (list-coerce-fn store-schema)]
+        list-coerce (list-coerce-fn store-schema)
+        data-chan (chan default-nb-threads)
+        batches (atom 0)]
 
     (log/infof "%s - store size: %s records"
                (:type source-store)
@@ -97,18 +102,23 @@
       (mst/update-migration-store migration-id
                                   entity-type
                                   {:started (time/now)}))
-    (loop [current-search-after search_after
-           migrated-count migrated-count]
+    (go-loop [current-search-after search_after]
+      (swap! batches inc)
       (let [{:keys [data paging]} (mst/fetch-batch source-store
                                                    batch-size
                                                    0
                                                    "asc"
                                                    current-search-after)
-            next (:next paging)
-            new-search-after (:sort paging)
-            migrated (transduce migrations conj data)
+            next (:next paging)]
+        (>!! data-chan data)
+        (if next
+          (recur  (:sort paging))
+          (close! data-chan))))
+    (loop [migrated-count migrated-count-state]
+      (let [documents (<!! (go (<! data-chan)))
+            migrated (transduce migrations conj documents)
             {:keys [data errors]} (list-coerce migrated)
-            migrated-count (+ migrated-count (count data))]
+            new-migrated-count (+ migrated-count (count data))]
         (doseq [entity errors]
           (let [message
                 (format "%s - Cannot migrate entity: %s"
@@ -119,17 +129,17 @@
           (when (seq data) (mst/store-batch target-store data))
           (mst/update-migration-store migration-id
                                       entity-type
-                                      {:target {:migrated migrated-count}}
+                                      {:target {:migrated new-migrated-count}}
                                       @mst/migration-es-conn))
-
         (log/infof "%s - migrated: %s documents"
                    (:type source-store)
-                   migrated-count)
-        (if next
-          (recur new-search-after migrated-count)
+                   new-migrated-count)
+        (swap! batches dec)
+        (if (< 0 @batches)
+          (recur new-migrated-count)
           (do (log/infof "%s - finished migrating %s documents"
                          (:type source-store)
-                         migrated-count)
+                         new-migrated-count)
               (when confirm?
                 (mst/finalize-migration! migration-id
                                          entity-type
@@ -156,7 +166,6 @@
     (log/infof "set batch size: %s" batch-size)
 
     (doseq [entity-type (keys (:stores migration-state))]
-      (log/infof "migrating store: %s" entity-type)
       (migrate-store migration-state
                      entity-type
                      migrations

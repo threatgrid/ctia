@@ -307,27 +307,24 @@ when confirm? is true, it stores this state and creates the target indices."
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))
 
-(s/defn with-search-after :- MigratedStore
-  [raw-with-stores :- MigratedStore]
-  (let [target-store (get-in raw-with-stores [:target :store])
-        {:keys [data paging] :as res} (fetch-batch target-store 1 0 "desc" nil)]
-    (assoc-in raw-with-stores [:source :search_after] (:sort paging))))
-
 (s/defn update-source-size :- MigratedStore
   [raw-with-stores :- MigratedStore]
   (let [source-size (store-size (get-in raw-with-stores [:source :store]))]
     (assoc-in raw-with-stores [:source :total] source-size)))
 
 (s/defn enrich-stores :- {s/Keyword MigratedStore}
+  "enriches  migrated stores with source and target store map data,
+   updates source size"
   [stores :- {s/Keyword MigratedStore}]
   (->> (map (fn [[store-key raw]]
               {store-key (-> (with-store-map store-key raw)
-                             with-search-after
                              update-source-size)})
             stores)
        (into {})))
 
 (s/defn get-migration :- MigrationSchema
+  "get migration data from it id. Updates source information,
+   and add necessary store data for migration (indices, connections, etc.)"
   [migration-id :- s/Str
    es-conn :- ESConn]
   (let [{:keys [indexname entity]} (migration-store-properties)
@@ -363,6 +360,9 @@ when confirm? is true, it stores this state and creates the target indices."
                         "true"))))
 
 (s/defn finalize-migration! :- s/Any
+  "reverts optimization settings of target index with configured settings.
+   refresh target index.
+   update migration state with completed field."
   [migration-id :- s/Str
    store-key :- s/Keyword
    source-store :- StoreMap

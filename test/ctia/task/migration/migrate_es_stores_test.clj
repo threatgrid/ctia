@@ -333,7 +333,7 @@
 
 (defn load-test-fn
   [maximal?]
-  ;; insert 100000 docs per entity-type
+  ;; insert 20000 docs per entity-type
   (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
     (post-bulk bundle))
   (doseq [batch-size [100 1000 3000 6000 10000]]

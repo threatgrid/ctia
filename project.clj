@@ -48,8 +48,7 @@
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava]]
-                 ;; TODO deploy clj-momo 0.2.31 and update version
-                 [threatgrid/clj-momo "0.2.31-SNAPSHOT"]
+                 [threatgrid/clj-momo "0.2.31"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
