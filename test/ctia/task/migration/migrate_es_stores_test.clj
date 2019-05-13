@@ -104,6 +104,7 @@
                                    [:__test]
                                    store-types
                                    10
+                                   30
                                    true
                                    false))
       (let [messages (set @logger)
@@ -146,6 +147,7 @@
                                  [:0.4.16]
                                  (keys @stores)
                                  10
+                                 30
                                  false
                                  false)
 
@@ -164,6 +166,7 @@
                                    [:__test]
                                    (keys @stores)
                                    10
+                                   30
                                    true
                                    false))
       (testing "shall generate a proper migration state"
@@ -304,6 +307,7 @@
                                    [:__test]
                                    (keys @stores)
                                    2 ;; small batch to check proper delete paging
+                                   10
                                    true
                                    true)
         (let [migration-state (get-migration "test-2" es-conn)
@@ -349,6 +353,7 @@
                                        [:__test]
                                        (into [] example-types)
                                        batch-size
+                                       30
                                        true
                                        false)
           end (System/currentTimeMillis)

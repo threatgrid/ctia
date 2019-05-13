@@ -15,7 +15,7 @@
             [schema.core :as s]))
 
 (def default-batch-size 100)
-(def default-nb-threads 30)
+(def default-buffer-size 30)
 
 (def all-types
   (assoc (->> (vals entities)
@@ -80,6 +80,7 @@
    entity-type
    migrations
    batch-size
+   buffer-size
    confirm?]
   (log/infof "migrating store: %s" entity-type)
   (let [{stores :stores migration-id :id} migration-state
@@ -91,7 +92,7 @@
          migrated-count-state :migrated} target
         store-schema (type->schema (keyword (:type target-store)))
         list-coerce (list-coerce-fn store-schema)
-        data-chan (chan default-nb-threads)
+        data-chan (chan buffer-size)
         batches (atom 0)]
 
     (log/infof "%s - store size: %s records"
@@ -102,7 +103,9 @@
       (mst/update-migration-store migration-id
                                   entity-type
                                   {:started (time/now)}))
+
     (go-loop [current-search-after search_after]
+      ;; async go loop that reads batches from source and produces them in chan
       (swap! batches inc)
       (let [{:keys [data paging]} (mst/fetch-batch source-store
                                                    batch-size
@@ -114,7 +117,9 @@
         (if next
           (recur  (:sort paging))
           (close! data-chan))))
+
     (loop [migrated-count migrated-count-state]
+      ;; sync loop that consumes batches in chan and migrates them to target
       (let [documents (<!! (go (<! data-chan)))
             migrated (transduce migrations conj documents)
             {:keys [data errors]} (list-coerce migrated)
@@ -154,6 +159,7 @@
    migrations :- [s/Keyword]
    store-keys :- [s/Keyword]
    batch-size :- s/Int
+   buffer-size :- s/Int
    confirm? :- s/Bool
    restart? :- s/Bool]
   (let [migration-state (if restart?
@@ -170,6 +176,7 @@
                      entity-type
                      migrations
                      batch-size
+                     buffer-size
                      confirm?))
     (handle-deletes migration-state store-keys batch-size confirm?)))
 
@@ -268,6 +275,10 @@
     :default default-batch-size
     :parse-fn read-string
     :validate [#(< 0 %) "batch-size must be a positive number"]]
+   ["" "--buffer-size SIZE" "max number of batches in buffer between source and target"
+    :default default-buffer-size
+    :parse-fn read-string
+    :validate [#(< 0 %) "buffer-size must be a positive number"]]
    ["-s" "--stores STORES" "comma separated list of stores to migrate"
     :default (-> (keys @stores) set (disj :identity))
     :parse-fn #(map keyword (string/split % #","))]
@@ -282,6 +293,7 @@
                 migrations
                 stores
                 batch-size
+                buffer-size
                 confirm
                 restart]} options]
     (when errors
@@ -298,5 +310,6 @@
                    migrations
                    stores
                    batch-size
+                   buffer-size
                    confirm
                    restart)))

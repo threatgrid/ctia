@@ -293,7 +293,8 @@ or from source
 | -i, --id ID                 | id of the migration state to create or restart    | migration-1   | 
 | -p, --prefix PREFIX         | prefix of the newly created indices               | 1.1.0         |
 | -m, --migrations MIGRATIONS | a comma separated list of migration ids to apply  | 0.4.28,1.0.0  |
-| -b, --batch-size SIZE       | number of migrated documents per batch                            | 1000          |
+| -b, --batch-size SIZE       | number of migrated documents per batch            | 1000          |
+|   , --buffer-size SIZE      | max batches in buffer between source and target   | 10            |
 | -s, --stores STORES         | comma separated list of stores to migrate         | tool,malware  |
 | -c, --confirm               | really do the migration?                          |               |
 | -r, --restart               | restart ongoing migration?                        |               |
