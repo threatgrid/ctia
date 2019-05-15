@@ -23,7 +23,7 @@
              [store :refer [stores]]]))
 
 (def timeout (* 5 60000))
-
+(def es-max-retry 3)
 (def migration-es-conn (atom nil))
 
 (def token-mapping
@@ -89,9 +89,20 @@
    :created java.util.Date
    :stores {s/Keyword MigratedStore}})
 
+(defn retry
+  [retries f & args]
+  (let [res (try {:value (apply f args)}
+                 (catch Exception e
+                   (if (zero? retries)
+                     (throw e)
+                     {:exception e})))]
+    (if (:exception res)
+      (recur (dec retries) f args)
+      (:value res))))
+
 (defn store-size
   [{:keys [conn indexname mapping]}]
-  (or (es-doc/count-docs conn indexname mapping)
+  (or (retry es-max-retry es-doc/count-docs conn indexname mapping)
       0))
 
 (defn init-migration-store
@@ -116,11 +127,12 @@
    conn :- ESConn]
   (let [prepared (wo-storemaps migration)
         {:keys [indexname entity]} (migration-store-properties)]
-    (es-doc/create-doc conn
-                       indexname
-                       (name entity)
-                       prepared
-                       "true"))
+    (retry es-max-retry
+           es-doc/create-doc conn
+           indexname
+           (name entity)
+           prepared
+           "true"))
   migration)
 
 (defn prefixed-index [index prefix]
@@ -170,10 +182,11 @@
                      :_type mapping)
              batch)]
 
-    (es-doc/bulk-create-doc conn
-                            prepared-docs
-                            "false"
-                            bulk-max-size)))
+    (retry es-max-retry
+           es-doc/bulk-create-doc conn
+           prepared-docs
+           "false"
+           bulk-max-size)))
 
 (s/defn query-fetch-batch :- {s/Any s/Any}
   "fetch a batch of documents from an es index and a query"
@@ -186,7 +199,8 @@
   (let [sort-by (conj (case mapping
                         "event" [{"timestamp" sort-order}]
                         "identity" []
-                        [{"modified" sort-order}])
+                        [{"modified" sort-order}
+                         {"created" sort-order}])
                       {"_uid" sort-order})
         params
         (merge
@@ -196,12 +210,13 @@
            {:sort sort-by})
          (when search_after
            {:search_after search_after}))]
-    (es-doc/search-docs conn
-                        indexname
-                        mapping
-                        query
-                        {}
-                        params)))
+    (retry es-max-retry
+           es-doc/search-docs conn
+           indexname
+           mapping
+           query
+           {}
+           params)))
 
 (s/defn fetch-batch :- {s/Any s/Any}
   "fetch a batch of documents from an es index"
@@ -245,7 +260,7 @@
   ;; TODO need a bulk delete in clj-momo
   ;; still ok since there is few deletes
   (doseq [id (map (comp :short-id long-id->id) ids)]
-    (es-doc/delete-doc conn indexname entity-type id "true")))
+    (retry es-max-retry es-doc/delete-doc conn indexname entity-type id "true")))
 
 (defn target-index-settings [settings]
   {:index (into settings
@@ -261,15 +276,15 @@
 (defn create-target-store!
   "create the target store, pushing its template"
   [{:keys [conn indexname config] entity-type :type :as target-store}]
-  (when (es-index/index-exists? conn indexname)
+  (when (retry es-max-retry es-index/index-exists? conn indexname)
     (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
   (let [index-settings (target-index-settings (:settings config))]
     (log/infof "%s - purging indexes: %s" entity-type indexname)
-    (es-index/delete! conn indexname)
+    (retry es-max-retry es-index/delete! conn indexname)
     (log/infof "%s - creating index template: %s" entity-type indexname)
     (log/infof "%s - creating index: %s" entity-type indexname)
-    (es-index/create-template! conn indexname config)
-    (es-index/create! conn indexname index-settings)))
+    (retry es-max-retry es-index/create-template! conn indexname config)
+    (retry es-max-retry es-index/create! conn indexname index-settings)))
 
 (s/defn init-migration :- MigrationSchema
   "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
@@ -328,11 +343,13 @@ when confirm? is true, it stores this state and creates the target indices."
   [migration-id :- s/Str
    es-conn :- ESConn]
   (let [{:keys [indexname entity]} (migration-store-properties)
-        migration-raw (es-doc/get-doc es-conn
-                                      indexname
-                                      (name entity)
-                                      migration-id
-                                      nil)
+        migration-raw (retry es-max-retry
+                             es-doc/get-doc
+                             es-conn
+                             indexname
+                             (name entity)
+                             migration-id
+                             nil)
         coerce (coerce-to-fn MigrationSchema)]
     (when-not migration-raw
       (log/errorf "migration not found: %s" migration-id)
@@ -352,12 +369,14 @@ when confirm? is true, it stores this state and creates the target indices."
     es-conn :- ESConn]
    (let [partial-doc {:stores {store-key migrated-doc}}
          {:keys [indexname entity]} (migration-store-properties)]
-     (es-doc/update-doc es-conn
-                        indexname
-                        (name entity)
-                        migration-id
-                        partial-doc
-                        "true"))))
+     (retry es-max-retry
+            es-doc/update-doc
+            es-conn
+            indexname
+            (name entity)
+            migration-id
+            partial-doc
+            "true"))))
 
 (s/defn finalize-migration! :- s/Any
   "reverts optimization settings of target index with configured settings.
@@ -369,13 +388,14 @@ when confirm? is true, it stores this state and creates the target indices."
    target-store :- StoreMap
    es-conn :- ESConn]
   (log/infof "%s - update index settings" (:type source-store))
-  (es-index/update-settings! (:conn target-store)
-                             (:indexname target-store)
-                             (revert-optimizations-settings
-                              (get-in target-store [:config :settings])))
+  (retry es-max-retry
+         es-index/update-settings!
+         (:conn target-store)
+         (:indexname target-store)
+         (revert-optimizations-settings
+          (get-in target-store [:config :settings])))
   (log/infof "%s - trigger refresh" (:type source-store))
-  (es-index/refresh! (:conn target-store)
-                     (:indexname target-store))
+  (retry es-max-retry es-index/refresh! (:conn target-store) (:indexname target-store))
   (update-migration-store migration-id
                           store-key
                           {:completed (time/now)}

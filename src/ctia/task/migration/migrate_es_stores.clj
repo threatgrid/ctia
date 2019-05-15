@@ -112,15 +112,17 @@
                                                    0
                                                    "asc"
                                                    current-search-after)
-            next (:next paging)]
-        (>!! data-chan data)
+            next (:next paging)
+            next-search-after (:sort paging)]
+        (>!! data-chan {:documents data
+                        :search_after next-search-after})
         (if next
-          (recur  (:sort paging))
+          (recur  next-search-after)
           (close! data-chan))))
 
     (loop [migrated-count migrated-count-state]
       ;; sync loop that consumes batches in chan and migrates them to target
-      (let [documents (<!! (go (<! data-chan)))
+      (let [{:keys [documents search_after]} (<!! (go (<! data-chan)))
             migrated (transduce migrations conj documents)
             {:keys [data errors]} (list-coerce migrated)
             new-migrated-count (+ migrated-count (count data))]
@@ -134,7 +136,9 @@
           (when (seq data) (mst/store-batch target-store data))
           (mst/update-migration-store migration-id
                                       entity-type
-                                      {:target {:migrated new-migrated-count}}
+                                      (into {:target {:migrated new-migrated-count}}
+                                            (when search_after
+                                              {:source {:search_after search_after}}))
                                       @mst/migration-es-conn))
         (log/infof "%s - migrated: %s documents"
                    (:type source-store)
@@ -239,7 +243,7 @@
     (System/exit 0)))
 
 (defn run-migration
-  [migration-id prefix migrations store-keys batch-size confirm? restart?]
+  [migration-id prefix migrations store-keys batch-size buffer-size confirm? restart?]
   (assert migration-id "Please provide an unique ID for this migration process")
   (when-not restart?
     (assert prefix "Please provide an indexname prefix for target store creation"))
@@ -253,6 +257,7 @@
                            migrations
                            store-keys
                            batch-size
+                           buffer-size
                            confirm?
                            restart?)
     (when confirm?

@@ -34,7 +34,6 @@
               :mappings (get store-mappings entity mappings)}
      :conn (connect props)}))
 
-
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"

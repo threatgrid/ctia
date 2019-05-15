@@ -27,6 +27,7 @@
 (defn es-store-impl-properties [store]
   {(str "ctia.store.es." store ".host") s/Str
    (str "ctia.store.es." store ".port") s/Int
+   (str "ctia.store.es." store ".transport") s/Keyword
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str
    (str "ctia.store.es." store ".refresh") Refresh
