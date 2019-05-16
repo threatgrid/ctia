@@ -150,7 +150,8 @@
            doc))))
 
 (def available-migrations
-  {:__test (map #(assoc % :groups ["migration-test"]))
+  {:identity identity
+   :__test (map #(assoc % :groups ["migration-test"]))
    :0.4.16 (comp (append-version "0.4.16")
                  add-groups
                  fix-end-time)

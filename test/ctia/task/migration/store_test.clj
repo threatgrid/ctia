@@ -181,7 +181,8 @@
                       :config {}}
           tool-batch (map #(hash-map :id (str "tool-" %)
                                      :timestamp (rand-int 100)
-                                     :modified %)
+                                     :modified %
+                                     :created %)
                           (range 100))
           malware-store {:conn es-conn
                          :indexname indexname
@@ -191,7 +192,8 @@
                          :config {}}
           malware-batch (map #(hash-map :id (str "malware-" %)
                                         :timestamp (rand-int 100)
-                                        :modified %)
+                                        :modified %
+                                        :created %)
                              (range 100))]
       (sut/store-batch tool-store tool-batch)
       (sut/store-batch malware-store malware-batch)
