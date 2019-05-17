@@ -36,7 +36,7 @@ Post the sighting with the indicator ID.
 
 ## Incident Responder
 
-### 2.1 As an incident responder, I would like to know what malware is asociated with an IP
+### 2.1 As an incident responder, I would like to know what malware is associated with an IP
 
 For each jugement object returned by:
 
@@ -46,7 +46,7 @@ Extract the IDs from the 'indicated_TTP.ttp_id' fields and
 
     curl http://ctiahost/ctia/ttp/ID
 
-### 2.2 As an incident responder, I would like to know what campaigns are asociated with an IP
+### 2.2 As an incident responder, I would like to know what campaigns are associated with an IP
 
 For each jugement object returned by:
 
@@ -56,7 +56,7 @@ Extract the IDs from the 'related_campaigns.campaign_id' fields and
 
     curl http://ctiahost/ctia/campaigns/ID
 
-### 2.3 As an incident responder, I would like to know what suggested COAs are asociated with an IP
+### 2.3 As an incident responder, I would like to know what suggested COAs are associated with an IP
 
 For each indicator object returned by:
 
@@ -92,7 +92,7 @@ The later the phase of the kill chain the more critical the incident is and need
 Examples: 
 An email-id known to be sending spam emails could be mapped under "Reconaissance"
 User visiting a URL known to be serving malicious advertisements could be mapped under "Delivery"
-A registery deleted known to done by malware file could be mapped under "Exploit"
+A registry deleted known to done by malware file could be mapped under "Exploit"
 A suspicious file visiting an unknown IP address could be mapped under "Command and Control" 
 A dropbox link known to be used for uploading exfiltrated files could be "Action on Objectives"
 

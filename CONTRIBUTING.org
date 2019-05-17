@@ -2,10 +2,10 @@
 
 * Introduction
 
-This document introduce how to minimize the friction between contributors.
-It is mainly written for developpers.
+This document introduces how to minimize the friction between contributors.
+It is mainly written for developers.
 
-So if you are a new developper in our team, welcome! Please read carrefully do
+So if you are a new developer in our team, welcome! Please read carefully do
 not hesitate to reach out if you want to discuss something about this document.
 
 - coding style

@@ -361,7 +361,7 @@
            {:keys [target_ref source_ref]} (first relationships)
            stored-tool-1 (get-entity tools target_ref)
            stored-tool-2 (get-entity tools source_ref)]
-       (is (= 201 status-create) "The bulk create should be successfull")
+       (is (= 201 status-create) "The bulk create should be successful")
        (is (= 200 status-get) "All entities should be retrieved")
        (is (= (:name tool1) (:name stored-tool-1))
            "The target ref should be the ID of the stored entity")
@@ -452,7 +452,7 @@
            (get (str "ctia/bulk?"
                      query-string)
                 :headers {"Authorization" "45c1f5e3f05d0"})]
-       (is (= 201 status-create) "The bulk create should be successfull")
+       (is (= 201 status-create) "The bulk create should be successful")
        (is (= 200 status-get) "All valid entities should be retrieved")
        (is (not (empty? (:tools bulk-ids))))
        (is (every? #(contains? % :error) (:tools bulk-ids)))

@@ -127,7 +127,7 @@
                                (name invalid-test-field)))
                          (str/lower-case body))))))
 
-      (testing (format "DELETE non-existant /ctia/%s/:id" entity)
+      (testing (format "DELETE non-existent /ctia/%s/:id" entity)
         (let [response (delete (format "ctia/%s/%s-42424242" entity entity )
                                :headers headers)]
           (is (= 404 (:status response)))))

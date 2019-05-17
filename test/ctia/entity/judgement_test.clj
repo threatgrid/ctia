@@ -368,7 +368,7 @@
                                     "Access-Control-Allow-Methods"]))
                    "Should returns the CORS headers even using JWT")))))))))
 
-(deftest test-judgement-routes-for-dispositon-determination
+(deftest test-judgement-routes-for-disposition-determination
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -377,7 +377,7 @@
                                          "foogroup"
                                          "user")
 
-     (testing "POST a judgement with dispositon (id)"
+     (testing "POST a judgement with disposition (id)"
        (let [{status :status
               judgement :parsed-body}
              (post "ctia/judgement"
@@ -491,7 +491,7 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
          (is (=
-              {:error "Mismatching disposition and dispositon_name for judgement",
+              {:error "Mismatching disposition and disposition_name for judgement",
                :judgement {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 1
@@ -519,7 +519,7 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
          (is (deep=
-              {:error "Mismatching disposition and dispositon_name for judgement",
+              {:error "Mismatching disposition and disposition_name for judgement",
                :judgement {:observable {:value "1.2.3.4"
                                         :type "ip"}
                            :disposition 1
