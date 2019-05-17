@@ -219,27 +219,6 @@
    {:action_entry coa-requested
     :journal_entry token}})
 
-(def vulnerability
-  {:properties
-   {:title (merge all_text
-                  {:fields {:whole all_token}})
-    :description all_text
-    :is_known {:type "boolean"}
-    :is_public_acknowledged {:type "boolean"}
-    :short_description all_text
-    :cve_id token
-    :osvdb_id token
-    :source token
-    :discovered_datetime ts
-    :published_datetime ts
-    :affected_software token
-    :references token}})
-
-(def weakness
-  {:properties
-   {:description all_text
-    :cwe_id token}})
-
 (def configuration
   {:properties
    {:description all_text
@@ -346,20 +325,22 @@
                  :min 0
                  :type "length"}
      :english_stop {:type "stop"
-                    :stopwords "_english_"}}
+                    :stopwords "_english_"}
+     :english_possessive_stemmer {:type "stemmer"
+                                  :language "possessive_english"}}
     :analyzer
     {:default_search ;; same as text_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_stop"]}
+      :filter ["lowercase" "english_possessive_stemmer" "english_stop"]}
      :text_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase"]}
+      :filter ["lowercase" "english_possessive_stemmer"]}
      :search_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_stop"]}
+      :filter ["lowercase" "english_possessive_stemmer" "english_stop"]}
      :token_analyzer
      {:filter ["token_len" "lowercase"]
       :tokenizer "keyword"

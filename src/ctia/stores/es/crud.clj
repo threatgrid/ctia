@@ -234,7 +234,8 @@
                                (:index state)
                                (name mapping)
                                {:bool {:must [(find-restriction-query-part ident)
-                                              {:query_string {:query query}}]}}
+                                              {:query_string {:default_operator "AND"
+                                                              :query query}}]}}
                                filter-map
                                (-> params
                                    with-default-sort-field
