@@ -329,7 +329,7 @@
      :english_possessive_stemmer {:type "stemmer"
                                   :language "possessive_english"}}
     :analyzer
-    {:default_search ;; same as text_analyzer
+    {:default ;; same as text_analyzer
      {:type "custom"
       :tokenizer "standard"
       :filter ["lowercase" "english_possessive_stemmer" "english_stop"]}
