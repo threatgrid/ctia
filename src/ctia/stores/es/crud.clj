@@ -232,15 +232,17 @@
        filter-map :- (s/maybe {s/Any s/Any})
        ident
        params]
-      (update
-       (coerce! (d/search-docs conn
-                               index
-                               (name mapping)
-                               {:bool {:must [(find-restriction-query-part ident)
-                                              {:query_string {:default_operator default_operator
-                                                              :query query}}]}}
-                               filter-map
-                               (-> params
-                                   with-default-sort-field
-                                 make-es-read-params)))
-       :data access-control-filter-list ident))))
+      (let [query_string (into {:query query}
+                               (when default_operator
+                                 {:default_operator default_operator}))]
+        (update
+         (coerce! (d/search-docs conn
+                                 index
+                                 (name mapping)
+                                 {:bool {:must [(find-restriction-query-part ident)
+                                                {:query_string query_string}]}}
+                                 filter-map
+                                 (-> params
+                                     with-default-sort-field
+                                     make-es-read-params)))
+         :data access-control-filter-list ident)))))
