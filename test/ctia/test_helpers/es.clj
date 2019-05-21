@@ -49,6 +49,7 @@
                       "ctia.store.es.default.refresh_interval" "1s"
                       "ctia.store.es.default.port" "9200"
                       "ctia.store.es.default.indexname" "test_ctia"
+                      "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.actor" "es"
                       "ctia.store.attack-pattern" "es"
