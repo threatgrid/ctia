@@ -66,13 +66,23 @@
                                      :body unmatched-entity
                                      :headers {"Authorization" "45c1f5e3f05d0"})
                              (repeatedly 2)
-                             (map (comp :id :parsed-body)))]
+                             (map (comp :id :parsed-body))
+                             set)
+          default_operator (or (get-in @properties [:ctia :store :es (keyword entity) :default_operator])
+                               (get-in @properties [:ctia :store :es :default :default_operator])
+                               "AND")]
 
-      (is (empty? (search-ids search-uri (format "%s %s"
-                                      "word"
-                                      (unique-word "unmatched"))))
-          "AND is default operator, it must match all words!")
-
+      (if (= "AND" default_operator)
+        (is (empty? (search-ids search-uri (format "%s %s"
+                                                   "word"
+                                                   (unique-word "unmatched"))))
+            (format "AND is default_operator for %s, it must match all words!"
+                    entity))
+        (is (seq (search-ids search-uri (format "%s %s"
+                                                "word"
+                                                (unique-word "unmatched"))))
+            (format "OR is default_operator for %s, it must match all words!"
+                    entity)))
 
       (testing "all field should match simple query"
         (let [{:keys [status parsed-body]} (is (search search-uri "word"))]
@@ -111,10 +121,17 @@
 
         (with-redefs [log* (fn [& _] nil)]
           (is (= 400 (:status (search search-uri url-word)))
-              "the following characters are reserved in lucene queries [+ - = && || > < ! ( ) { } [ ] ^ \" ~ * ? : \\ /], thus queries that do not escape them should fail")
-          )
-        (is (= matched-ids found-ids-1 found-ids-2)
-            "escaping reserved characters or surrounding with parenthesis should avoid parsing errors")
+              "the following characters are reserved in lucene queries [+ - = && || > < ! ( ) { } [ ] ^ \" ~ * ? : \\ /], thus queries that do not escape them should fail"))
+
+        (is (= matched-ids found-ids-2)
+            "surrounding with parenthesis should avoid parsing errors and forces to have all words in exact order without interleaved word")
+        (if (= "AND" default_operator)
+          (is (= matched-ids found-ids-1)
+              "escaping reserved characters should avoid parsing errors and preserve behavior of AND")
+          (is (clojure.set/subset? (clojure.set/union matched-ids unmatched-ids)
+                                   found-ids-1)
+              ;; OR could match other test documents matching "http"
+              "escaping reserved characters should avoid parsing errors and preserve behavior of OR"))
         (is (= matched-ids found-ids-3)
             "tokenization of :description field should split urls on characters like \\/ \\: and thus enable search on url components"))
 
