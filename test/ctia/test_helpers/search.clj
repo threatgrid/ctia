@@ -32,7 +32,6 @@
         (map :id)
         set)))
 
-
 (defn test-describable-search [entity example]
   (let [search-uri (format "ctia/%s/search" entity)]
     ;; only when ES store
@@ -172,7 +171,6 @@
           (is (= 200 status))
           (is (= 1 (count parsed-body))
               "filters are applied, and match properly")))))
-
 
 (defn test-query-string-search
   [entity query query-field example]
