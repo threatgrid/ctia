@@ -75,8 +75,6 @@
                                (get-in @properties [:ctia :store :es :default :default_operator])
                                "AND")]
 
-      (println matched-text)
-
       (if (= "AND" default_operator)
         (is (empty? (search-ids search-uri (format "%s %s"
                                                    "word"

@@ -329,7 +329,8 @@
      :ctia_stemmer {:type "word_delimiter"
                     :generate_number_parts false
                     :preserve_original true
-                    :split_on_numerics false}
+                    :split_on_numerics false
+                    :stem_english_possessive true}
      :english_possessive_stemmer {:type "stemmer"
                                   :language "possessive_english"}
      :english_stemmer {:type "stemmer"
