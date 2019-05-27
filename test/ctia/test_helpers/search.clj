@@ -40,12 +40,16 @@
           base-possessive-word (unique-word "possessive")
           possessive-word (str base-possessive-word "'s")
           base-possessive-word (clojure.string/replace possessive-word "'s" "")
-          url-word (unique-word "http://www.cisco.com/")
-          matched-text (format "a %s word with, %s word, %s"
+          base-domain (unique-word "cisco")
+          domain-word (format "www.%s.com" base-domain)
+          url-word (unique-word (format "http://%s/" domain-word))
+          ip "127.0.0.1"
+          matched-text (format "a %s word with, %s word, %s, %s j2ee"
                                capital-word
                                possessive-word
-                               url-word)
-          unmatched-text "thiswillnotbe matchedbyourtest queriesandprobablyunique "
+                               url-word
+                               ip)
+          unmatched-text "thiswillnotbe matchedbyourtest queriesandprobablyunique"
           matched-entity (-> (assoc example
                                     :description matched-text)
                              (dissoc :id))
@@ -70,6 +74,8 @@
           default_operator (or (get-in @properties [:ctia :store :es (keyword entity) :default_operator])
                                (get-in @properties [:ctia :store :es :default :default_operator])
                                "AND")]
+
+      (println matched-text)
 
       (if (= "AND" default_operator)
         (is (empty? (search-ids search-uri (format "%s %s"
@@ -114,25 +120,42 @@
       ;; test search on url
       (let [escaped-url (-> (clojure.string/replace url-word "/" "\\/")
                             (clojure.string/replace ":" "\\:"))
-            found-ids-1  (search-ids search-uri escaped-url)
-            found-ids-2 (search-ids search-uri (format "\"%s\"" url-word))
-            found-ids-3 (search-ids search-uri "description:www.cisco.com")]
+            found-ids-escaped (search-ids search-uri escaped-url)]
 
         (with-redefs [log* (fn [& _] nil)]
           (is (= 400 (:status (search search-uri url-word)))
               "the following characters are reserved in lucene queries [+ - = && || > < ! ( ) { } [ ] ^ \" ~ * ? : \\ /], thus queries that do not escape them should fail"))
 
-        (is (= matched-ids found-ids-2)
+        (is (= matched-ids
+               (search-ids search-uri (format "\"%s\"" url-word)))
             "surrounding with parenthesis should avoid parsing errors and forces to have all words in exact order without interleaved word")
         (if (= "AND" default_operator)
-          (is (= matched-ids found-ids-1)
+          (is (= matched-ids found-ids-escaped)
               "escaping reserved characters should avoid parsing errors and preserve behavior of AND")
           (is (clojure.set/subset? (clojure.set/union matched-ids unmatched-ids)
-                                   found-ids-1)
+                                   found-ids-escaped)
               ;; OR could match other test documents matching "http"
               "escaping reserved characters should avoid parsing errors and preserve behavior of OR"))
-        (is (= matched-ids found-ids-3)
-            "tokenization of :description field should split urls on characters like \\/ \\: and thus enable search on url components"))
+        (is (= matched-ids
+               (search-ids search-uri (str "description:" domain-word)))
+            "tokenization of :description field should split urls on characters like \\/ \\: and thus enables search on url components")
+        (is (= matched-ids
+               (search-ids search-uri (str "description:" base-domain))
+               (search-ids search-uri base-domain))
+            "word delimiter filtering of :description should split tokens on \\. and thus enables search on domain components"))
+
+      ;; test number fitering
+      (is (= matched-ids
+             (search-ids search-uri "description:127.0.0.1")
+             (search-ids search-uri "127.0.0.1"))
+          "word delimiter filtering should preserve ips")
+      (is (empty? (search-ids search-uri "127"))
+          "word delimiter filtering should preserve ips")
+      (testing "word delimiter filtering should not split words on numbers"
+        (is (= matched-ids
+               (search-ids search-uri "description:j2ee")
+               (search-ids search-uri "j2ee")))
+        (is (empty? (search-ids search-uri "j OR ee"))))
 
       ;; clean
       (doseq [_id (concat matched-ids unmatched-ids)]

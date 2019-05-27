@@ -326,21 +326,38 @@
                  :type "length"}
      :english_stop {:type "stop"
                     :stopwords "_english_"}
+     :ctia_stemmer {:type "word_delimiter"
+                    :generate_number_parts false
+                    :preserve_original true
+                    :split_on_numerics false}
      :english_possessive_stemmer {:type "stemmer"
-                                  :language "possessive_english"}}
+                                  :language "possessive_english"}
+     :english_stemmer {:type "stemmer"
+                       :language "english"}}
     :analyzer
     {:default ;; same as text_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_possessive_stemmer" "english_stop"]}
+      :filter ["lowercase"
+               "english_possessive_stemmer"
+               "english_stemmer"
+               "ctia_stemmer"
+               "english_stop"]}
      :text_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_possessive_stemmer"]}
+      :filter ["lowercase"
+               "english_possessive_stemmer"
+               "english_stemmer"
+               "ctia_stemmer"]}
      :search_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_possessive_stemmer" "english_stop"]}
+      :filter ["lowercase"
+               "english_possessive_stemmer"
+               "english_stemmer"
+               "ctia_stemmer"
+               "english_stop"]}
      :token_analyzer
      {:filter ["token_len" "lowercase"]
       :tokenizer "keyword"
