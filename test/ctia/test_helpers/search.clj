@@ -37,14 +37,14 @@
     ;; only when ES store
     (let [;; generate matched and unmatched terms / entities
           capital-word (unique-word "CAPITAL")
-          base-possessive-word (unique-word "possessive")
+          base-possessive-word "possessive"
           possessive-word (str base-possessive-word "'s")
           base-possessive-word (clojure.string/replace possessive-word "'s" "")
           base-domain (unique-word "cisco")
           domain-word (format "www.%s.com" base-domain)
           url-word (unique-word (format "http://%s/" domain-word))
           ip "127.0.0.1"
-          matched-text (format "a %s countries, %s words, %s, %s j2ee"
+          matched-text (format "a %s countries, %s words, %s, %s j2ee, property of attack"
                                capital-word
                                possessive-word
                                url-word
@@ -109,16 +109,29 @@
         (is (empty? (search-ids search-uri "we")))
         (is (empty? (search-ids search-uri "wor"))))
 
-      (testing "possessive filter should be properly applied on describable fields"
-        (let [all-ids-1 (search-ids search-uri possessive-word)
-              all-ids-2 (search-ids search-uri base-possessive-word)
-              description-ids-1 (search-ids search-uri (format "description:(%s)" possessive-word))
-              description-ids-2 (search-ids search-uri (format "description:(%s)" base-possessive-word))]
-          (is (= matched-ids
-                 all-ids-1
-                 all-ids-2
-                 description-ids-1
-                 description-ids-2))))
+      ;; test stop word filtering
+      (is (= matched-ids (search-ids search-uri "the word"))
+          "\"the\" is not in text but should be filtered out from query as a stop word")
+      (is (= matched-ids
+             (search-ids search-uri "\"property that attack\""))
+          "\"of\" and \"an\" should be filtered out from query and indexed text as stop words, but these filtering preserve positions of tokens")
+      (is (empty? (search-ids search-uri "\"property attack\""))
+          "filtering out stop words preserves tokens positions, thus \"property\" that not precede \"attack\" with distance 1 as expected in query \"property attack\"")
+      ;; test possessive filtering
+      (let [all-ids-1 (search-ids search-uri possessive-word)
+            all-ids-2 (search-ids search-uri base-possessive-word)
+            description-ids-1 (search-ids search-uri (format "description:(%s)" possessive-word))
+            description-ids-2 (search-ids search-uri (format "description:(%s)" base-possessive-word))]
+        (is (= matched-ids
+               all-ids-1
+               all-ids-2
+               description-ids-1
+               description-ids-2)
+            "possessive filter should be properly applied on describable fields")
+
+        (is (= matched-ids
+               (search-ids search-uri (str possessive-word " words")))
+            "possessive filter should be applied before stop word filter to remove s"))
 
       ;; test search on url
       (let [escaped-url (-> (clojure.string/replace url-word "/" "\\/")
