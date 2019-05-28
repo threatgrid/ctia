@@ -44,7 +44,7 @@
           domain-word (format "www.%s.com" base-domain)
           url-word (unique-word (format "http://%s/" domain-word))
           ip "127.0.0.1"
-          matched-text (format "a %s word with, %s word, %s, %s j2ee"
+          matched-text (format "a %s countries, %s words, %s, %s j2ee"
                                capital-word
                                possessive-word
                                url-word
@@ -96,13 +96,18 @@
         (let [all-upper-ids (search-ids search-uri capital-word)
               all-lower-ids (search-ids search-uri (clojure.string/lower-case capital-word))
               description-upper-ids (search-ids search-uri (format "description:(%s)" capital-word))
-              description-lower-ids (search-ids search-uri (format "description:(%s)" capital-word))
-              ]
+              description-lower-ids (search-ids search-uri (format "description:(%s)" capital-word))]
           (is (= matched-ids
                  all-upper-ids
                  all-lower-ids
                  description-upper-ids
                  description-lower-ids))))
+
+      (testing "plural/single analysis should be properly applied on describable fields"
+        (is (= matched-ids (search-ids search-uri "word words wordS")))
+        (is (= matched-ids (search-ids search-uri "country countries countri")))
+        (is (empty? (search-ids search-uri "we")))
+        (is (empty? (search-ids search-uri "wor"))))
 
       (testing "possessive filter should be properly applied on describable fields"
         (let [all-ids-1 (search-ids search-uri possessive-word)

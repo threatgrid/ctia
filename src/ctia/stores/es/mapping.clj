@@ -330,7 +330,7 @@
                     :generate_number_parts false
                     :preserve_original true
                     :split_on_numerics false
-                    :stem_english_possessive true}
+                    :split_on_case_change false}
      :english_possessive_stemmer {:type "stemmer"
                                   :language "possessive_english"}
      :english_stemmer {:type "stemmer"
@@ -340,25 +340,26 @@
      {:type "custom"
       :tokenizer "standard"
       :filter ["lowercase"
-               "english_possessive_stemmer"
-               "english_stemmer"
+               "english_stop"
                "ctia_stemmer"
-               "english_stop"]}
+               "english_possessive_stemmer"
+               "english_stemmer"]}
      :text_analyzer
      {:type "custom"
       :tokenizer "standard"
       :filter ["lowercase"
+               "english_stop"
+               "ctia_stemmer"
                "english_possessive_stemmer"
-               "english_stemmer"
-               "ctia_stemmer"]}
+               "english_stemmer"]}
      :search_analyzer
      {:type "custom"
       :tokenizer "standard"
       :filter ["lowercase"
-               "english_possessive_stemmer"
-               "english_stemmer"
+               "english_stop"
                "ctia_stemmer"
-               "english_stop"]}
+               "english_possessive_stemmer"
+               "english_stemmer"]}
      :token_analyzer
      {:filter ["token_len" "lowercase"]
       :tokenizer "keyword"
