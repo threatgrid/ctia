@@ -1,4 +1,4 @@
-(ns ctia.task.migrations
+(ns ctia.task.migration.migrations
   (:require [clj-momo.lib.clj-time
              [coerce :as time-coerce]
              [core :as time-core]]
@@ -150,7 +150,8 @@
            doc))))
 
 (def available-migrations
-  {:__test (map #(assoc % :groups ["migration-test"]))
+  {:identity identity
+   :__test (map #(assoc % :groups ["migration-test"]))
    :0.4.16 (comp (append-version "0.4.16")
                  add-groups
                  fix-end-time)

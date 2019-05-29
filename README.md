@@ -263,46 +263,8 @@ Response of the bundle API endpoint:
 |`:error`       |Error message|
 
 ### Store Migrations
- 
- There is a dedicated task to migrate data from prior versions of CTIA.
- this task will run through all configured stores, transform and copy data to new Elasticsearch indices.
- 
- - This task doesn't alter the existing indices, you should delete them after a successful migration.
 
- - As the migration task copies indexes, make sure you have enough disk space before launching it.
- 
- - After the migration task completes, you will need to edit your properties, changing each store index to the new one and restart CTIA.
- 
- - In case of failure, you can relaunch the task at will, it should fully recreate the new indices.
- 
- - make sure the resulting indices from your prefix configuration don't match existing ones as they will be deleted.
- 
- Launch the task with:
- 
-`java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>`
-
-or from source with leiningen:
-
-`lein run -m ctia.task.migrate-es-stores <prefix> <migrations> <batch-size> <confirm?>`
-
-#### Task arguments
-
-| argument   | description                                                                                     | example       |
-|------------|-------------------------------------------------------------------------------------------------|---------------|
-| prefix     | a prefix string for the newly create indexes, it will be wrapped with `v<prefix>_`              | 0.4.16        |
-| migrations | a migrations task list to run                                                                   | 0.4.16,0.4.17 |
-| batch-size | how many documents to fetch and and convert at once                                             | 1000          |
-| confirm?   | setting this to false will not write anything to the ES data store and simulate transforms only | true          |
-
-
-#### Available migrations
-
-| migration task | target CTIA versions          | sample command                                                                                     |
-|----------------|-------------------------------|----------------------------------------------------------------------------------------------------|
-|         0.4.16 | All versions before 1.0.0-rc1 | `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores 0.4.16 0.4.16 200 true` |
-|         0.4.28 | All versions before 1.1.0     | `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores 0.4.28 0.4.28 200 true` |
-|          1.0.0 | 1.1.0                         | `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores 1.0.0 1.0.0 200 true`   |
-
+see [Migration procedure](migration.md)
 
 ### Store Checks
  
