@@ -112,11 +112,10 @@
       ;; test stop word filtering
       (is (= matched-ids (search-ids search-uri "the word"))
           "\"the\" is not in text but should be filtered out from query as a stop word")
-      (is (= matched-ids
-             (search-ids search-uri "\"property that attack\""))
-          "\"of\" and \"an\" should be filtered out from query and indexed text as stop words, but these filtering preserve positions of tokens")
+      (is (empty? (search-ids search-uri "description:\"property that attack\""))
+          "search_quote analyzer in describabble fields shall preserve stop words")
       (is (empty? (search-ids search-uri "\"property attack\""))
-          "filtering out stop words preserves tokens positions, thus \"property\" that not precede \"attack\" with distance 1 as expected in query \"property attack\"")
+          "filtering out stop words preserves tokens positions, thus \"property\" that does not precede \"attack\" with distance 1 as expected in query \"property attack\"")
       ;; test possessive filtering
       (let [all-ids-1 (search-ids search-uri possessive-word)
             all-ids-2 (search-ids search-uri base-possessive-word)

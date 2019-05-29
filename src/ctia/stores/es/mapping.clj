@@ -351,7 +351,6 @@
       :tokenizer "standard"
       :filter ["lowercase"
                "ctia_stemmer"
-               "english_stop"
                "english_stemmer"]}
      :search_analyzer
      {:type "custom"
