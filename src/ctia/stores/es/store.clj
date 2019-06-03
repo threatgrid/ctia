@@ -1,6 +1,10 @@
 (ns ctia.stores.es.store
-  (:require [clj-momo.lib.es.index :as es-index]
-            [clj-momo.lib.es.conn :as conn]
+  (:require [schema.core :as s]
+            [schema-tools.core :as st]
+            [clj-momo.lib.es
+             [index :as es-index]
+             [conn :as conn]
+             [schemas :refer [ESConn]]]
             [ctia.store :refer :all]
             [ctia.stores.es.crud :as crud]))
 
@@ -30,7 +34,15 @@
       ((crud/handle-query-string-search ~entity
                                         ~partial-stored-schema) ~(symbol "state") query# filtermap# ident# params#))))
 
-(defn store->map
+(s/defschema StoreMap
+  {:conn ESConn
+   :indexname s/Str
+   :mapping s/Str
+   :type s/Str
+   :settings s/Any
+   :config s/Any})
+
+(s/defn store->map :- StoreMap
   "transform a store record
    into a properties map for easier manipulation,
    override the cm to use the custom timeout "

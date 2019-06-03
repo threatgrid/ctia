@@ -34,7 +34,7 @@
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "0.5.9"]
                  [org.clojure/tools.logging "0.4.0"]
-                 [org.clojure/tools.cli "0.3.5"]
+                 [org.clojure/tools.cli "0.4.1"]
                  [pandect "0.6.1"]
 
                  ;; Schemas
@@ -48,7 +48,7 @@
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava]]
-                 [threatgrid/clj-momo "0.2.30"]
+                 [threatgrid/clj-momo "0.2.31"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version

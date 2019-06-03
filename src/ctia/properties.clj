@@ -27,6 +27,7 @@
 (defn es-store-impl-properties [store]
   {(str "ctia.store.es." store ".host") s/Str
    (str "ctia.store.es." store ".port") s/Int
+   (str "ctia.store.es." store ".transport") s/Keyword
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str
    (str "ctia.store.es." store ".refresh") Refresh
@@ -101,8 +102,6 @@
                       "ctia.http.bulk.max-size" s/Int
                       "ctia.http.bundle.export.max-relationships" s/Int})
 
-   (st/optional-keys {"ctia.migration.optimizations" s/Bool})
-
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool
                       "ctia.hook.redismq.enabled" s/Bool})
@@ -142,6 +141,7 @@
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
 
+                      "ctia.store.es.migration.indexname" s/Str
                       "ctia.store.es.event.slicing.strategy"
                       (s/maybe (s/enum :aliased-index))
                       "ctia.store.es.event.slicing.granularity"

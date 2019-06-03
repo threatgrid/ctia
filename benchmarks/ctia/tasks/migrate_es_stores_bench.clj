@@ -77,7 +77,7 @@
   [_] (run-migrate-es-stores))
 
 (defcase migrate-store-indexes :optimizations_disabled
-  [_] (with-properties ["ctia.migration.optimizations" false]
+  [_] (with-properties ["ctia.migration.es/indexname" "ctia_migration"]
         (run-migrate-es-stores)))
 
 
