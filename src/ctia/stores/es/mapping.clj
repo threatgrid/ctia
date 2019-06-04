@@ -219,27 +219,6 @@
    {:action_entry coa-requested
     :journal_entry token}})
 
-(def vulnerability
-  {:properties
-   {:title (merge all_text
-                  {:fields {:whole all_token}})
-    :description all_text
-    :is_known {:type "boolean"}
-    :is_public_acknowledged {:type "boolean"}
-    :short_description all_text
-    :cve_id token
-    :osvdb_id token
-    :source token
-    :discovered_datetime ts
-    :published_datetime ts
-    :affected_software token
-    :references token}})
-
-(def weakness
-  {:properties
-   {:description all_text
-    :cwe_id token}})
-
 (def configuration
   {:properties
    {:description all_text
@@ -346,20 +325,40 @@
                  :min 0
                  :type "length"}
      :english_stop {:type "stop"
-                    :stopwords "_english_"}}
+                    :stopwords "_english_"}
+     ;; word_delimiter filter enables to improve tokenization https://www.elastic.co/guide/en/elasticsearch/reference/5.6/analysis-word-delimiter-tokenfilter.html
+     ;; standard tokenization do not split www.domain.com, which is done here to enable search on 'domain', but we avoid splitting on numbers in words like j2ee
+     ;; it also removes english possessive
+     :ctia_stemmer {:type "word_delimiter"
+                    :generate_number_parts false
+                    :preserve_original true
+                    :split_on_numerics false
+                    :split_on_case_change false
+                    :stem_english_possessive true}
+     :english_stemmer {:type "stemmer"
+                       :language "english"}}
+    ;; when applying filters, order matters
     :analyzer
-    {:default_search ;; same as text_analyzer
+    {:default ;; same as text_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_stop"]}
+      :filter ["lowercase"
+               "ctia_stemmer"
+               "english_stop"
+               "english_stemmer"]}
      :text_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase"]}
+      :filter ["lowercase"
+               "ctia_stemmer"
+               "english_stemmer"]}
      :search_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_stop"]}
+      :filter ["lowercase"
+               "ctia_stemmer"
+               "english_stop"
+               "english_stemmer"]}
      :token_analyzer
      {:filter ["token_len" "lowercase"]
       :tokenizer "keyword"

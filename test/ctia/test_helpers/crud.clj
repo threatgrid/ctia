@@ -65,9 +65,10 @@
                  record)))))
 
       (when search-tests?
-        (test-query-string-search search-field
+        (test-query-string-search entity
                                   (name search-field)
-                                  search-field ))
+                                  search-field
+                                  example))
 
       (testing (format "GET /ctia/%s/external_id/:external_id" entity)
         (let [response (get (format "ctia/%s/external_id/%s"

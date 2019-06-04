@@ -34,6 +34,7 @@
    (str "ctia.store.es." store ".refresh_interval")  s/Str
    (str "ctia.store.es." store ".replicas") s/Num
    (str "ctia.store.es." store ".shards") s/Num
+   (str "ctia.store.es." store ".default_operator") (s/enum "OR" "AND")
    (str "ctia.store.es." store ".timeout") s/Num})
 
 (s/defschema StorePropertiesSchema
