@@ -78,6 +78,23 @@
                     (build-create-result model coerce-fn)))
                 (remove-es-actions items) models)}))
 
+(s/defn get-doc-with-index :- (s/maybe s/Str)
+  "given an indexname which could be an alias pointing to multiple indices,
+  it returns the real index in which is the document with given _id,
+  if it exists, nil otherwise"
+  [state :- ESConnState
+   mapping :- s/Keyword
+   _id :- s/Str
+   params]
+  (let [ids-query (q/ids [(ensure-document-id _id)])
+        res (d/query (:conn state)
+                     (:index state)
+                     (name mapping)
+                     ids-query
+                     (make-es-read-params params)
+                     true)]
+    (-> res :data first)))
+
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
@@ -92,7 +109,7 @@
              (d/bulk-create-doc (:conn state)
                                 (map #(assoc %
                                              :_id (:id %)
-                                             :_index (:index state)
+                                             :_index (-> state :props :write-alias)
                                              :_type (name mapping))
                                      models)
                                 (or refresh
@@ -114,16 +131,11 @@
        id :- s/Str
        realized :- Model
        ident]
-      (let [current-doc
-            (d/get-doc (:conn state)
-                       (:index state)
-                       (name mapping)
-                       (ensure-document-id id)
-                       {})]
-
+      (when-let [{index :_index current-doc :_source}
+                 (get-doc-with-index state mapping id {})]
         (if (allow-write? current-doc ident)
           (coerce! (d/update-doc (:conn state)
-                                 (:index state)
+                                 index
                                  (name mapping)
                                  (ensure-document-id id)
                                  realized
@@ -140,11 +152,12 @@
        id :- s/Str
        ident
        params]
-      (when-let [doc (coerce! (d/get-doc (:conn state)
-                                         (:index state)
-                                         (name mapping)
-                                         (ensure-document-id id)
-                                         (make-es-read-params params)))]
+      (when-let [doc (-> (get-doc-with-index state
+                                             mapping
+                                             id
+                                             (make-es-read-params params))
+                         :_source
+                         coerce!)]
         (if (allow-read? doc ident)
           doc
           (throw (ex-info "You are not allowed to read this document"
@@ -162,20 +175,17 @@
     [state :- ESConnState
      id :- s/Str
      ident]
-    (if-let [doc (d/get-doc (:conn state)
-                            (:index state)
-                            (name mapping)
-                            (ensure-document-id id)
-                            {})]
-      (if (allow-write? doc ident)
-        (d/delete-doc (:conn state)
-                      (:index state)
-                      (name mapping)
-                      (ensure-document-id id)
-                      (get-in state [:props :refresh] false))
+    (when-let [{index :_index doc :_source}
+               (get-doc-with-index state mapping id {})]
+        (if (allow-write? doc ident)
+          (d/delete-doc (:conn state)
+                        index
+                        (name mapping)
+                        (ensure-document-id id)
+                        (get-in state [:props :refresh] false))
 
-        (throw (ex-info "You are not allowed to delete this document"
-                        {:type :access-control-error}))))))
+          (throw (ex-info "You are not allowed to delete this document"
+                          {:type :access-control-error}))))))
 
 (def default-sort-field :_doc)
 

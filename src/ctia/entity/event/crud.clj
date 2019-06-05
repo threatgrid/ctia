@@ -49,7 +49,6 @@
   "produce an event to ES"
   [state :- ESConnState
    events :- [Event]]
-
   (if (-> state :slicing :strategy)
     (let [slice-props (get-slice-props (:timestamp (first events)) state)]
       (produce state slice-props events))
