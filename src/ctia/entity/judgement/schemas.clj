@@ -80,4 +80,11 @@
            :observable.type
            :observable.value]))
 
+(def judgement-sort-fields
+  (concat judgement-fields
+          ["valid_time.start_time,timestamp"]))
 
+(def judgements-by-observable-sort-fields
+  (map name (conj judgement-fields
+                  "disposition:asc,valid_time.start_time:desc"
+                  "disposition:asc,valid_time.start_time:desc,timestamp:desc")))
