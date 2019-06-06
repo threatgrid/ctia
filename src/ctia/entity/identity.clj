@@ -34,16 +34,17 @@
   [caps]
   (vec (map name caps)))
 
-(defn handle-create [state new-identity]
+(defn handle-create
+  [{:keys [conn props]} new-identity]
   (let [id (:login new-identity)
         realized (assoc new-identity :id id)
         transformed (update-in realized [:capabilities]
                                capabilities-set->capabilities)
-        res (create-doc (:conn state)
-                        (:index state)
+        res (create-doc conn
+                        (:write-alias props)
                         mapping
                         transformed
-                        (get-in state [:props :refresh] false))]
+                        (:refresh props "false"))]
     (-> res
         (update-in [:capabilities] capabilities->capabilities-set)
         (dissoc :id))))

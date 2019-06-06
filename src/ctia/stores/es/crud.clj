@@ -113,7 +113,7 @@
                                              :_type (name mapping))
                                      models)
                                 (or refresh
-                                    (get-in state [:props :refresh] false))))
+                                    (get-in state [:props :refresh] "false"))))
         (catch Exception e
           (throw
            (if-let [ex-data (ex-data e)]
@@ -139,7 +139,7 @@
                                  (name mapping)
                                  (ensure-document-id id)
                                  realized
-                                 (get-in state [:props :refresh] false)))
+                                 (get-in state [:props :refresh] "false")))
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
 

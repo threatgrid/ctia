@@ -50,6 +50,7 @@
                       "ctia.store.es.default.port" "9200"
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.default.default_operator" "AND"
+                      "ctia.store.es.default.aliased" false
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.migration.indexname" "ctia_migration"

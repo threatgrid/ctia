@@ -25,19 +25,20 @@
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
    connection manager and dedicated store index properties"
-  [{:keys [entity indexname shards replicas mappings write-suffix]
+  [{:keys [entity indexname shards replicas mappings aliased]
+    :or {aliased false}
     :as props} :- StoreProperties]
   (let [write-alias (str indexname
-                         (when write-suffix "-")
-                         write-suffix)
+                         (when aliased "-write"))
         settings {:number_of_shards shards
                   :number_of_replicas replicas}]
     {:index indexname
-     :props {assoc props :write-alias write-alias}
-     :config {:settings (merge store-settings settings)
-              :mappings (get store-mappings entity mappings)
-              :aliases (assoc {indexname {}}
-                              write-alias {})}
+     :props (assoc props :write-alias write-alias)
+     :config (into {:settings (merge store-settings settings)
+                    :mappings (get store-mappings entity mappings)}
+                   (when aliased
+                     {:aliases (assoc {indexname {}}
+                                      write-alias {})}))
      :conn (connect props)}))
 
 (s/defn init-es-conn! :- ESConnState
@@ -45,10 +46,9 @@
    put the index template, return an ESConnState"
   [properties :- StoreProperties]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties)
-        template-name (str index "*")]
-    (es-index/create-template! conn template-name config)
-    (when-not (seq (es-index/get conn template-name))
+        (init-store-conn properties)]
+    (es-index/create-template! conn index config)
+    (when-not (seq (es-index/get conn (str index "*")))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn (str index "-000001") {}))
     conn-state))

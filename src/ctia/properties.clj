@@ -35,7 +35,7 @@
    (str "ctia.store.es." store ".replicas") s/Num
    (str "ctia.store.es." store ".shards") s/Num
    (str "ctia.store.es." store ".rollover.max_docs") s/Num
-   (str "ctia.store.es." store ".write-suffix")  s/Str
+   (str "ctia.store.es." store ".aliased")  s/Bool
    (str "ctia.store.es." store ".default_operator") (s/enum "OR" "AND")
    (str "ctia.store.es." store ".timeout") s/Num})
 
@@ -144,8 +144,6 @@
                       "ctia.store.bundle-refresh" Refresh
 
                       "ctia.store.es.migration.indexname" s/Str
-                      "ctia.store.es.event.slicing.strategy"
-                      (s/maybe (s/enum :aliased-index))
                       "ctia.store.es.event.slicing.granularity"
                       (s/enum :minute :hour :day :week :month :year)})))
 
