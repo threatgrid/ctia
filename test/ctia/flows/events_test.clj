@@ -14,15 +14,7 @@
 
 (deftest-for-each-fixture test-flow-event-creation
 
-  {:es-aliased-index (join-fixtures [test-helpers/fixture-properties:clean
-                                     es-helpers/fixture-properties:es-store
-                                     test-helpers/fixture-properties:events-aliased-index
-                                     test-helpers/fixture-ctia
-                                     test-helpers/fixture-allow-all-auth
-                                     es-helpers/fixture-purge-event-indexes
-                                     es-helpers/fixture-delete-store-indexes])
-
-   :es-simple-index (join-fixtures [test-helpers/fixture-properties:clean
+  {:es-simple-index (join-fixtures [test-helpers/fixture-properties:clean
                                     es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:events-enabled
                                     test-helpers/fixture-ctia

@@ -78,7 +78,7 @@
                     (build-create-result model coerce-fn)))
                 (remove-es-actions items) models)}))
 
-(s/defn get-doc-with-index :- (s/maybe s/Str)
+(s/defn get-doc-with-index
   "given an indexname which could be an alias pointing to multiple indices,
   it returns the real index in which is the document with given _id,
   if it exists, nil otherwise"

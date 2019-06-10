@@ -359,10 +359,10 @@
                "All existing entities are not updated")))
        (testing "Partial results with errors"
          (let [indicator-store-state (-> @stores :indicator first :state)
-               indexname (:index indicator-store-state)]
-           (es-index/close! (:conn indicator-store-state) indexname))
-
-         (let [bundle {:type "bundle"
+               indexname (:index indicator-store-state)
+               ;; close indicator index to produce ES errors on that store
+               _ (es-index/close! (:conn indicator-store-state) indexname)
+               bundle {:type "bundle"
                        :source "source"
                        :sightings [(mk-sighting 10)
                                    (mk-sighting 11)]
@@ -389,7 +389,10 @@
                              (:results bundle-result-create))]
              (is (not (empty? indicators))
                  "The result collection for indicators is not empty")
-             (is (every? #(contains? % :error) indicators)))))))))
+             (is (every? #(contains? % :error) indicators)))
+           ;; reopen index to enable cleaning
+           (es-index/open! (:conn indicator-store-state) indexname)
+           ))))))
 
 (deftest bundle-import-errors-test
   (test-for-each-store

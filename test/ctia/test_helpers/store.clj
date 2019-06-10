@@ -8,8 +8,7 @@
   {:es-store
    (join-fixtures [es-helpers/fixture-properties:es-store
                    helpers/fixture-ctia
-                   ;; es-helpers/fixture-delete-store-indexes
-                   ])})
+                   es-helpers/fixture-delete-store-indexes])})
 
 (defn test-for-each-store [t]
   (doseq [[store-key fixtures] store-fixtures]

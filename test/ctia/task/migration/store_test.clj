@@ -62,7 +62,7 @@
 (defn refresh-all-stores []
   (doseq [{:keys [conn indexname]} (map #(store->map % {})
                                         (vals @stores))]
-    (es-index/refresh! conn indexname)))
+    (es-index/refresh! conn)))
 
 (deftest wo-storemaps-test
   (let [fake-migration (sut/init-migration "migration-id-1"

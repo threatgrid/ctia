@@ -47,7 +47,6 @@
   [properties :- StoreProperties]
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties)]
-    (es-index/create-template! conn index config)
     (when-not (seq (es-index/get conn (str index "*")))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn (str index "-000001") {}))

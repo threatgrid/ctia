@@ -17,29 +17,44 @@
         (es-init/get-store-properties entity)]
     (http/post (format "http://%s:%s/_refresh" host port))))
 
-(defn delete-store-indexes []
+(defn delete-store-indexes [restore-conn?]
   (doseq [store-impls (vals @store/stores)
           {:keys [state]} store-impls]
-    (es-store/delete-state-indexes state)))
+    (es-store/delete-state-indexes state)
+    (when restore-conn?
+      (es-init/init-es-conn!
+       (es-init/get-store-properties (get-in state [:props :entity]))))))
 
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
-  (delete-store-indexes)
-  (t))
+  (delete-store-indexes true)
+  (t)
+  (delete-store-indexes false))
 
-(defn purge-event-indexes []
+(defn purge-index [entity]
   (let [{:keys [conn index]} (es-init/init-store-conn
-                              (es-init/get-store-properties :event))]
+                              (es-init/get-store-properties entity))]
     (when conn
       (es-index/delete! conn (str index "*")))))
 
 (defn fixture-purge-event-indexes
   "walk through all producers and delete their index"
   [t]
-  (purge-event-indexes)
+  (purge-index :event)
   (t)
-  (purge-event-indexes))
+  (purge-index :event))
+
+(defn purge-indexes []
+  (doseq [entity (keys @store/stores)]
+    (purge-index entity)))
+
+(defn fixture-purge-indexes
+  "walk through all producers and delete their index"
+  [t]
+  (purge-indexes)
+  (t)
+  (purge-indexes))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -50,7 +65,7 @@
                       "ctia.store.es.default.port" "9200"
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.default.default_operator" "AND"
-                      "ctia.store.es.default.aliased" false
+                      "ctia.store.es.default.aliased" true
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.migration.indexname" "ctia_migration"
