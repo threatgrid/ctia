@@ -47,7 +47,8 @@
                  [threatgrid/ctim "1.0.11"
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
-                               com.google.guava/guava]]
+                               com.google.guava/guava
+                               org.clojure/tools.reader]]
                  [threatgrid/clj-momo "0.2.31"]
 
                  ;; Web server
@@ -78,8 +79,7 @@
 
                  ;; clients
                  [clj-http "3.7.0" :exclusions [commons-codec]]
-                 [com.taoensso/carmine "2.19.1"
-                  :exclusions [org.clojure/tools.reader]]
+                 [com.taoensso/carmine "2.19.1"]
 
                  ;; Metrics
                  [metrics-clojure "2.10.0"]
@@ -96,8 +96,7 @@
                  [hiccup "2.0.0-alpha1"]
 
                  ;; Hooks
-                 [threatgrid/redismq "0.1.1"
-                  :exclusions [org.clojure/tools.reader]]
+                 [threatgrid/redismq "0.1.1"]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]
