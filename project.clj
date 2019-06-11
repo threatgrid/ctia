@@ -79,8 +79,7 @@
                  ;; clients
                  [clj-http "3.7.0" :exclusions [commons-codec]]
                  [com.taoensso/carmine "2.19.1"
-                  :exclusions [com.andrewmcveigh/cljs-time
-                               org.clojure/tools.reader]]
+                  :exclusions [org.clojure/tools.reader]]
 
                  ;; Metrics
                  [metrics-clojure "2.10.0"]
@@ -98,7 +97,7 @@
 
                  ;; Hooks
                  [threatgrid/redismq "0.1.1"
-                  :exclusions [com.taoensso/carmine]]
+                  :exclusions [org.clojure/tools.reader]]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]
