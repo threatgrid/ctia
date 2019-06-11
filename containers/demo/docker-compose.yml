@@ -16,7 +16,7 @@ services:
       - kibana
       - elasticsearch
   redis:
-    image: redis
+    image: redis:5.0.5
     ports:
       - "6379:6379"
 
