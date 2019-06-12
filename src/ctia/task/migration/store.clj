@@ -156,7 +156,11 @@
   "transform a source store map into a target map,
   essentially updating indexname"
   [store prefix]
-  (update store :indexname #(prefixed-index % prefix)))
+  (let [aliases (->> (get-in store [:config :aliases])
+                     (map (fn [[k v]] {(prefixed-index k prefix) v}))
+                     (into {}))]
+    (-> (assoc-in store [:config :aliases] aliases)
+        (update :indexname #(prefixed-index % prefix)))))
 
 
 (defn source-store-maps->target-store-maps
@@ -280,11 +284,11 @@
     (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
   (let [index-settings (target-index-settings (:settings config))]
     (log/infof "%s - purging indexes: %s" entity-type indexname)
-    (retry es-max-retry es-index/delete! conn indexname)
+    (retry es-max-retry es-index/delete! conn (str indexname "*"))
     (log/infof "%s - creating index template: %s" entity-type indexname)
     (log/infof "%s - creating index: %s" entity-type indexname)
     (retry es-max-retry es-index/create-template! conn indexname config)
-    (retry es-max-retry es-index/create! conn indexname index-settings)))
+    (retry es-max-retry es-index/create! conn (str indexname "-000001") index-settings)))
 
 (s/defn init-migration :- MigrationSchema
   "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
@@ -349,7 +353,7 @@ when confirm? is true, it stores this state and creates the target indices."
                              indexname
                              (name entity)
                              migration-id
-                             nil)
+                             {})
         coerce (coerce-to-fn MigrationSchema)]
     (when-not migration-raw
       (log/errorf "migration not found: %s" migration-id)

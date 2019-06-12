@@ -1,6 +1,5 @@
 (ns ctia.task.migration.store-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
-
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es
@@ -12,7 +11,6 @@
              [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
              [tools :refer [tool-minimal]]]
-
             [ctia.properties :as props]
             [ctia.store :refer [stores]]
             [ctia.stores.es.store :refer [store->map]]
@@ -27,14 +25,10 @@
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
-                  helpers/fixture-properties:clean
-                  es-helpers/fixture-properties:es-store
-                  helpers/fixture-ctia
                   whoami-helpers/fixture-server
-                  es-helpers/fixture-delete-store-indexes]))
-
-(use-fixtures :each
-  whoami-helpers/fixture-reset-state)
+                  whoami-helpers/fixture-reset-state
+                  helpers/fixture-properties:clean
+                  es-helpers/fixture-properties:es-store]))
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -55,6 +49,18 @@
 (def es-props (get-in @props/properties [:ctia :store :es]))
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
+
+(defn fixture-clean-migration [t]
+  (t)
+  (es-index/delete! es-conn "v0.0.0*")
+  (es-index/delete! es-conn (str migration-index "*")))
+
+(use-fixtures :each
+  (join-fixtures [
+                  helpers/fixture-ctia
+                  es-helpers/fixture-delete-store-indexes
+                  fixture-clean-migration
+                  ]))
 
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
@@ -268,14 +274,13 @@
     (is (nil? (:sighting data2))
         "fetch-deletes shall not return any more sightings in the second batch")
     (is (nil? (:malware data1)) "fetch-deletes shall only retrieve entity types given as parameter")
-    (is (nil? (:malware data2)) "fetch-deletes shall only retrieve entity types given as parameter"))
-  (es-index/delete! es-conn "ctia_*"))
+    (is (nil? (:malware data2)) "fetch-deletes shall only retrieve entity types given as parameter")))
 
 
 (deftest init-get-migration-test
   (post-bulk examples)
   (refresh-all-stores) ; ensure indices refresh
-  (testing "init-migration should properly create new migration state from selected types"
+  (testing "init-migration should properly create new migration state from selected types."
     (let [prefix "0.0.0"
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
@@ -294,9 +299,7 @@
                           (is (= (set (keys stores))
                                  (set entity-types)))
                           (doseq [entity-type entity-types]
-                                        ;(println entity-type)
                             (let [{:keys [source target started completed]} (get stores entity-type)]
-                                        ;(println source)
                               (is (nil? started))
                               (is (nil? completed))
                               (is (= 0 (:migrated target)))
@@ -319,10 +322,10 @@
                    "init-migration with confirmation shall return a proper migration state")
       (check-state (sut/get-migration migration-id-2 es-conn)
                    migration-id-2
-                   "init-migration shall store confirmed migration, and get-migration should properly retrieved from store")
+                   "init-migration shall store confirmed migration, and get-migration should be properly retrieved from store")
       (is (thrown? clojure.lang.ExceptionInfo
                    (sut/get-migration migration-id-1 es-conn))
-          "migration-id-1 was not confirmed it should not exist and thuss get-migration must raise a proper exception")
+          "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
 
       (testing "stored document shall not contains object stores in source and target"
         (let [{:keys [stores]} (es-doc/get-doc es-conn
@@ -332,6 +335,4 @@
                                               {})]
           (doseq [store stores]
                   (is (nil? (get-in store [:source :store])))
-                  (is (nil? (get-in store [:target :store]))))))))
-  (es-index/delete! es-conn "v0.0.0*")
-  (es-index/delete! es-conn "ctia_*"))
+                  (is (nil? (get-in store [:target :store])))))))))
