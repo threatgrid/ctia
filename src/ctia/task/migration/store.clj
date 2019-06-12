@@ -58,6 +58,7 @@
         {:shards 1
          :replicas 1
          :refresh true
+         :aliased false
          :mappings migration-mapping}))
 
 (s/defschema SourceState
@@ -175,14 +176,14 @@
 
 (defn store-batch
   "store a batch of documents using a bulk operation"
-  [{:keys [conn indexname mapping type]} batch]
+  [{:keys [conn props mapping type]} batch]
   (log/debugf "%s - storing %s records"
               type
               (count batch))
   (let [prepared-docs
         (map #(assoc %
                      :_id (:id %)
-                     :_index indexname
+                     :_index (:write-alias props)
                      :_type mapping)
              batch)]
 

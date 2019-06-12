@@ -83,6 +83,7 @@
   (let [indexname "test_index"
         store {:conn es-conn
                :indexname indexname
+               :props {:write-alias indexname}
                :mapping "test_mapping"}
         nb-docs-1 10
         nb-docs-2 20
@@ -112,6 +113,7 @@
     (let [indexname "test_event"
           event-store {:conn es-conn
                        :indexname indexname
+                       :props {:write-alias indexname}
                        :mapping "event"
                        :type "event"
                        :settings {}
@@ -181,6 +183,7 @@
     (let [indexname "test_index"
           tool-store {:conn es-conn
                       :indexname indexname
+                      :props {:write-alias indexname}
                       :mapping "tool"
                       :type "tool"
                       :settings {}
@@ -193,6 +196,7 @@
           malware-store {:conn es-conn
                          :indexname indexname
                          :mapping "malware"
+                         :props {:write-alias indexname}
                          :type "malware"
                          :settings {}
                          :config {}}
