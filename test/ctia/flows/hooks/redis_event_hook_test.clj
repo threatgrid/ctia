@@ -25,8 +25,9 @@
   (testing "Events are published to redis"
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
-          {:keys [timeout-ms channel-name host port] :as redis-config} (get-in @properties [:ctia :hook :redis])
-          listener (lr/subscribe-to-messages (lr/server-connection host port timeout-ms)
+          {:keys [channel-name] :as redis-config}
+          (get-in @properties [:ctia :hook :redis])
+          listener (lr/subscribe-to-messages (lr/server-connection redis-config)
                                              channel-name
                                              (fn test-events-pubsub-fn [ev]
                                                (swap! results conj ev)

@@ -152,24 +152,29 @@
 
    setup pushing events to redisMQ
 
-| Property                     | Description                          | Possible values |
-|------------------------------+--------------------------------------+-----------------|
-| ctia.hook.redismq.queue-name | set the queue name                   | string          |
-| ctia.hook.redismq.port       | set the port of the redisMQ instance | number          |
-| ctia.hook.redismq.timeout-ms | event pushing timeout                | number          |
-| ctia.hook.redismq.max-depth  |                                      | number          |
+| Property                     | Description                               | Possible values |
+|------------------------------+-------------------------------------------+-----------------|
+| ctia.hook.redismq.queue-name | set the queue name                        | string          |
+| ctia.hook.redismq.port       | set the host of the redisMQ instance      | number          |
+| ctia.hook.redismq.port       | set the port of the redisMQ instance      | number          |
+| ctia.hook.redismq.ssl        | Enable SSL connection to the Redis server | boolean         |
+| ctia.hook.redismq.password   | Password used for Redis authentication    | string          |
+| ctia.hook.redismq.timeout-ms | event pushing timeout                     | number          |
+| ctia.hook.redismq.max-depth  |                                           | number          |
 
 
 *** Redis
 
    setup pushing events to a channel on a redis instance
 
-| Property                     | Description                           | Possible values |
-|------------------------------+---------------------------------------+-----------------|
-| ctia.hook.redis.host         | set the redis instance host           | string          |
-| ctia.hook.redis.port         | set the redis instace port            | number          |
-| ctia.hook.redis.timeout-ms   | event pushing timeout                 | number          |
-| ctia.hook.redis.channel-name | the chan where events shall be pushed | string          |
+| Property                     | Description                               | Possible values |
+|------------------------------+-------------------------------------------+-----------------|
+| ctia.hook.redis.host         | set the redis instance host               | string          |
+| ctia.hook.redis.port         | set the redis instace port                | number          |
+| ctia.hook.redis.ssl          | Enable SSL connection to the Redis server | boolean         |
+| ctia.hook.redis.password     | Password used for Redis authentication    | string          |
+| ctia.hook.redis.timeout-ms   | event pushing timeout                     | number          |
+| ctia.hook.redis.channel-name | the chan where events shall be pushed     | string          |
 
 
 *** Generic
