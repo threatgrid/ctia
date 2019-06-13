@@ -26,9 +26,9 @@
     event))
 
 (defn redis-event-publisher []
-  (let [{:keys [channel-name timeout-ms host port] :as redis-config}
+  (let [{:keys [channel-name] :as redis-config}
         (get-in @properties [:ctia :hook :redis])]
-    (->RedisEventPublisher (lr/server-connection host port timeout-ms)
+    (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
 
 (defrecord RedisMQPublisher [queue]
@@ -45,16 +45,16 @@
     event))
 
 (defn redismq-publisher []
-  (let [{:keys [queue-name host port timeout-ms max-depth enabled]
+  (let [{:keys [queue-name host port timeout-ms max-depth enabled
+                password ssl]
          :as config
          :or {queue-name "ctim-event-queue"
               host "localhost"
               port 6379}}
-        (get-in @properties [:ctia :hook :redismq])]
+        (get-in @properties [:ctia :hook :redismq])
+        conn-spec (lr/redis-conf->conn-spec config)]
     (->RedisMQPublisher (rmq/make-queue queue-name
-                                        {:host host
-                                         :port port
-                                         :timeout-ms timeout-ms}
+                                        conn-spec
                                         {:max-depth max-depth}))))
 
 (defrecord ChannelEventPublisher []

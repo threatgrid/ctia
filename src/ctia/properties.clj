@@ -113,12 +113,16 @@
                       "ctia.http.events.timeline.max-seconds" s/Int
                       "ctia.hook.redis.host" s/Str
                       "ctia.hook.redis.port" s/Int
+                      "ctia.hook.redis.ssl" s/Bool
+                      "ctia.hook.redis.password" s/Str
                       "ctia.hook.redis.channel-name" s/Str
                       "ctia.hook.redis.timeout-ms" s/Int
 
                       "ctia.hook.redismq.queue-name" s/Str
                       "ctia.hook.redismq.host" s/Str
                       "ctia.hook.redismq.port" s/Int
+                      "ctia.hook.redismq.ssl" s/Bool
+                      "ctia.hook.redismq.password" s/Str
                       "ctia.hook.redismq.timeout-ms" s/Int
                       "ctia.hook.redismq.max-depth" s/Int
 
