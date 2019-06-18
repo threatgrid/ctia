@@ -32,6 +32,8 @@
     :read-judgement
     :read-sighting
     :list-sightings
+    :read-identity-assertion
+    :list-identity-assertions
     :list-relationships
     :read-coa
     :read-indicator
@@ -115,6 +117,7 @@
                                  :create-malware
                                  :create-relationship
                                  :create-sighting
+                                 :create-identity-assertion
                                  :create-tool
                                  :create-weakness
                                  :create-vulnerability

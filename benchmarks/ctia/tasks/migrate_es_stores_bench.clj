@@ -20,6 +20,7 @@
              [malwares :refer [malware-maximal]]
              [relationships :refer [relationship-maximal]]
              [sightings :refer [sighting-maximal]]
+             [identity-assertions :refer [identity-assertion-maximal]]
              [tools :refer [tool-maximal]]]
             [perforate.core :refer [defcase defgoal]]))
 
@@ -43,6 +44,7 @@
    :relationships (n-doc relationship-maximal fixtures-nb)
    :casebooks (n-doc casebook-maximal fixtures-nb)
    :sightings (n-doc sighting-maximal fixtures-nb)
+   ;;:identity_assertions (n-doc identity-assertion-maximal fixtures-nb)
    :tools (n-doc tool-maximal fixtures-nb)})
 
 (defn post-fixtures []

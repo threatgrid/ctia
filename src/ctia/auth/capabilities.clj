@@ -88,6 +88,8 @@
      :list-relationships
      :read-sighting
      :list-sightings
+     :read-identity-assertion
+     :list-identity-assertions
      :read-tool
      :read-verdict
      :read-weakness

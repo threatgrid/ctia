@@ -141,6 +141,14 @@
    :sensor "endpoint.sensor"
    :confidence "High"})
 
+(defn mk-new-identity-assertion [n]
+{:id (str "transient:identity-aasertion-" n)
+ :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+ :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
+ :identity {:type "endpoint" :os "Windows 95" :observables [{:type "ip" :value "100.213.110.122"}] :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}}
+ :assertions [{:name "tag" :value "foo"}]
+ :source "source"})
+
 (defn mk-new-tool [n]
   {:id (str "transient:tool-" n)
    :name (str "tool-" n)
@@ -204,6 +212,7 @@
                                                                  (-> judgements (nth %) :id))
                                            (range nb))
                        :sightings (map mk-new-sighting (range nb))
+                       ;;:identity-assertions (map mk-new-identity-assertion (range nb))
                        :tools (map mk-new-tool (range nb))}
              response (post "ctia/bulk"
                             :body new-bulk
@@ -256,6 +265,7 @@
                                                             (-> judgements (nth %) :id))
                                       (range nb))
                   :sightings (map mk-new-sighting (range nb))
+                  ;;:identity-assertions (map mk-new-identity-assertion (range nb))
                   :tools (map mk-new-tool (range nb))}]
     (is (= (bulk-size new-bulk)
            (* nb (count new-bulk))))))
@@ -290,9 +300,11 @@
                                               (-> judgements (nth %) :id))
                                             (range nb))
                         :sightings (map mk-new-sighting (range nb))
+                        ;;:identity_assertions (map mk-new-identity-assertion (range nb))
                         :tools (map mk-new-tool (range nb))}
            incidents (map mk-new-incident (range nb))
            sightings (map mk-new-sighting (range nb))
+           ;;identity_assertions (map mk-new-identity-assertion (range nb))
            new-too-big-bulk {:actors (map mk-new-actor (range (+ nb 5 7)))
                              :attack_patterns (map mk-new-attack-pattern (range nb))
                              :campaigns (map mk-new-campaign (range nb))
@@ -309,6 +321,7 @@
                                                    (-> sightings (nth %) :id))
                                                  (range nb))
                              :sightings sightings
+                             ;;:identity_assertions identity_assertions
                              :tools (map mk-new-tool (range nb))}
            {status-ok :status
             response :body
@@ -432,6 +445,9 @@
            sighting (assoc (mk-new-sighting 1)
                            :id
                            (id/make-transient-id nil))
+          ;  identity-assertion (assoc (mk-new-identity-assertion 1)
+          ;                            :id
+          ;                            (id/make-transient-id nil))
            vulnerability (assoc-in (mk-new-vulnerability 1)
                                    [:impact :cvss_v2]
                                    {:base_severity "Low"

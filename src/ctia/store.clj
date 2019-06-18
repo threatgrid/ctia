@@ -38,6 +38,7 @@
    :coa []
    :data-table []
    :sighting []
+   :identity-assertion []
    :incident []
    :relationship []
    :identity []

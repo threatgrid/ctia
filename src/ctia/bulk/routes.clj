@@ -30,6 +30,7 @@
                         :create-relationship
                         :create-casebook
                         :create-sighting
+                        :create-identity-assertion
                         :create-tool
                         :create-vulnerability
                         :create-weakness}
@@ -41,23 +42,24 @@
   (GET "/" []
        :return (s/maybe Bulk)
        :summary "GET many entities at once"
-       :query-params [{actors          :- [Reference] []}
-                      {attack_patterns :- [Reference] []}
-                      {campaigns       :- [Reference] []}
-                      {coas            :- [Reference] []}
-                      {data_tables     :- [Reference] []}
-                      {feedbacks       :- [Reference] []}
-                      {incidents       :- [Reference] []}
-                      {indicators      :- [Reference] []}
-                      {investigations  :- [Reference] []}
-                      {judgements      :- [Reference] []}
-                      {malwares        :- [Reference] []}
-                      {relationships   :- [Reference] []}
-                      {casebooks       :- [Reference] []}
-                      {sightings       :- [Reference] []}
-                      {tools           :- [Reference] []}
-                      {weaknesses      :- [Reference] []}
-                      {vulnerabilities :- [Reference] []}]
+       :query-params [{actors              :- [Reference] []}
+                      {attack_patterns     :- [Reference] []}
+                      {campaigns           :- [Reference] []}
+                      {coas                :- [Reference] []}
+                      {data_tables         :- [Reference] []}
+                      {feedbacks           :- [Reference] []}
+                      {incidents           :- [Reference] []}
+                      {indicators          :- [Reference] []}
+                      {investigations      :- [Reference] []}
+                      {judgements          :- [Reference] []}
+                      {malwares            :- [Reference] []}
+                      {relationships       :- [Reference] []}
+                      {casebooks           :- [Reference] []}
+                      {sightings           :- [Reference] []}
+                      {identity_assertions :- [Reference] []}
+                      {tools               :- [Reference] []}
+                      {weaknesses          :- [Reference] []}
+                      {vulnerabilities     :- [Reference] []}]
        :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:read-actor
                        :read-attack-pattern
@@ -73,25 +75,27 @@
                        :read-relationship
                        :read-casebook
                        :read-sighting
+                       :read-identity-assertion
                        :read-tool
                        :read-vulnerability
                        :read-weakness}
        :auth-identity auth-identity
        (let [entities-map {:actors           actors
                            :attack_patterns  attack_patterns
-                           :campaigns        campaigns
-                           :coas             coas
-                           :data_tables      data_tables
-                           :feedbacks        feedbacks
-                           :incidents        incidents
-                           :investigations   investigations
-                           :indicators       indicators
-                           :judgements       judgements
-                           :malwares         malwares
-                           :relationships    relationships
-                           :casebooks        casebooks
-                           :sightings        sightings
-                           :tools            tools
-                           :vulnerabilities  vulnerabilities
-                           :weaknesses       weaknesses}]
+                           :campaigns           campaigns
+                           :coas                coas
+                           :data_tables         data_tables
+                           :feedbacks           feedbacks
+                           :incidents           incidents
+                           :investigations      investigations
+                           :indicators          indicators
+                           :judgements          judgements
+                           :malwares            malwares
+                           :relationships       relationships
+                           :casebooks           casebooks
+                           :sightings           sightings
+                           :identity_assertions identity_assertions
+                           :tools               tools
+                           :vulnerabilities     vulnerabilities
+                           :weaknesses          weaknesses}]
          (ok (fetch-bulk entities-map auth-identity)))))

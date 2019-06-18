@@ -256,6 +256,7 @@
   =relationship=
   =scratchpad=
   =sighting=
+  =identity-assertion=
   =tool=
 
 

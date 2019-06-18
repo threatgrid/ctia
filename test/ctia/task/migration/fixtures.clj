@@ -13,6 +13,7 @@
              [relationships :refer [relationship-maximal relationship-minimal]]
              [casebooks :refer [casebook-maximal casebook-minimal]]
              [sightings :refer [sighting-maximal sighting-minimal]]
+             [identity-assertions :refer [identity-assertion-maximal identity-assertion-minimal]]
              [tools :refer [tool-maximal tool-minimal]]
              [vulnerabilities :refer [vulnerability-maximal vulnerability-minimal]]
              [weaknesses :refer [weakness-maximal weakness-minimal]]]))
@@ -39,6 +40,7 @@
     :relationship (n-doc (if maximal? relationship-maximal relationship-minimal) nb)
     :casebook (n-doc (if maximal? casebook-maximal casebook-minimal) nb)
     :sighting (n-doc (if maximal? sighting-maximal sighting-minimal) nb)
+    ;;:identity-assertion (n-doc (if maximal? identity-assertion-maximal identity-assertion-minimal) nb)
     :tool (n-doc (if maximal? tool-maximal tool-minimal) nb)
     :vulnerability (n-doc (if maximal? vulnerability-maximal vulnerability-minimal) nb)
     :weakness (n-doc (if maximal? weakness-maximal weakness-minimal) nb)))
@@ -57,6 +59,7 @@
    :relationships (n-examples :relationship fixtures-nb maximal?)
    :casebooks (n-examples :casebook fixtures-nb maximal?)
    :sightings (n-examples :sighting fixtures-nb maximal?)
+   ;;:identity_assertions (n-examples :identity-assertion fixtures-nb maximal?)
    :tools (n-examples :tool fixtures-nb maximal?)
    :vulnerabilities (n-examples :vulnerability fixtures-nb maximal?)
    :weaknesses (n-examples :weakness fixtures-nb maximal?)})

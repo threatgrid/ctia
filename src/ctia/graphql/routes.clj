@@ -38,6 +38,8 @@
           :read-judgement
           :read-sighting
           :list-sightings
+          :read-identity-assertion
+          :list-identity-assertions
           :list-relationships
           :read-coa
           :read-indicator

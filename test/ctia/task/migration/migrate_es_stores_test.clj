@@ -210,6 +210,7 @@
                 "feedback - finished migrating 0 documents"
                 "casebook - finished migrating 100 documents"
                 "sighting - finished migrating 100 documents"
+                "identity-assertion - finished migrating 0 documents"
                 "attack-pattern - finished migrating 100 documents"
                 "malware - finished migrating 100 documents"
                 "tool - finished migrating 100 documents"
@@ -233,6 +234,7 @@
                       indicator
                       campaign
                       sighting
+                      identity-assertion
                       casebook
                       actor
                       vulnerability
@@ -254,6 +256,7 @@
                     campaign fixtures-nb
                     casebook fixtures-nb
                     sighting fixtures-nb
+                    ;;identity-assertion fixtures-nb
                     actor fixtures-nb
                     vulnerability fixtures-nb
                     weakness fixtures-nb}
