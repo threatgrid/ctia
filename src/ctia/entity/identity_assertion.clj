@@ -58,8 +58,8 @@
   (concat sorting/base-entity-sort-fields
           [:valid_time.start_time
            :valid_time.end_time
-           :identity-assertion.assertions.name
-           :identity-assertion.assertions.value
+           :assertions.name
+           :assertions.value
            :identity.observables.type
            :identity.observables.value]))
 
