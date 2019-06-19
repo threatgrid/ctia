@@ -119,8 +119,7 @@
     :value all_token}})
 
 (def assertion
-  {:type "object"
-   :properties
+  {:properties
    {:name all_text
     :value all_text}})
 
@@ -302,11 +301,6 @@
    {:type token
     :os token
     :observables observable}})
-
-(def identity-assertion
-  {:dynamic false
-   :properties 
-   {:assertions assertion}})
 
 (def embedded-data-table
   {:dynamic false
