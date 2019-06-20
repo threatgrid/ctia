@@ -1,11 +1,12 @@
 (ns ctia.entity.identity
-  (:require
-   [ctia.stores.es.mapping :as em]
-   [ctia.store :refer [IIdentityStore]]
-   [clj-momo.lib.es.document
-    :refer [create-doc delete-doc get-doc]]
-   [schema.core :as s]
-   [schema-tools.core :as st]))
+  (:require [schema.core :as s]
+            [schema-tools.core :as st]
+            [clj-momo.lib.es.document :refer [create-doc get-doc delete-doc]]
+
+            [ctia.store :refer [IIdentityStore]]
+            [ctia.stores.es
+             [crud :as crud]
+             [mapping :as em]]))
 
 (def Role s/Str)
 (def Login s/Str)
@@ -50,21 +51,31 @@
         (dissoc :id))))
 
 (s/defn handle-read :- (s/maybe Identity)
-  [state :- s/Any login :- s/Str]
-  (some-> (get-doc (:conn state)
-                   (:index state)
-                   mapping
-                   login
-                   {})
+  [state :- s/Any
+   login :- s/Str]
+  ;;(some-> (get-doc (:conn state)
+  ;;                 (:index state)
+  ;;                 mapping
+  ;;                 login
+  ;;                 {})
+  (some-> (crud/get-doc-with-index state :identity login {})
+          :_source
           (update-in [:capabilities] capabilities->capabilities-set)
           (dissoc :id)))
 
 (defn handle-delete [state login]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              login
-              true))
+  ;;(delete-doc (:conn state)
+  ;;            (:index state)
+  ;;            mapping
+  ;;            login
+  ;;            true))
+  (when-let [{index :_index}
+             (crud/get-doc-with-index state :identity login {})]
+    (delete-doc (:conn state)
+                index
+                mapping
+                login
+                true)))
 
 (def identity-mapping
   {"identity"

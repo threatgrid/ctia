@@ -20,7 +20,8 @@
 (def store-mappings
   (apply merge {}
          (map (fn [[_ {:keys [entity es-mapping]}]]
-                {entity es-mapping}) entities)))
+                {entity es-mapping})
+              entities)))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
@@ -77,7 +78,8 @@
 (def ^:private factories
   (apply merge {}
          (map (fn [[_ {:keys [entity es-store]}]]
-                {entity (make-factory es-store)}) entities)))
+                {entity (make-factory es-store)})
+              entities)))
 
 (defn init-store! [store-kw]
   (when-let [factory (get factories store-kw)]
