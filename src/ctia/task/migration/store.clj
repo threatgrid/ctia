@@ -88,6 +88,7 @@
 (s/defschema MigrationSchema
   {:id s/Str
    :created java.util.Date
+   :prefix s/Str
    :stores {s/Keyword MigratedStore}})
 
 (defn retry
@@ -157,11 +158,13 @@
   "transform a source store map into a target map,
   essentially updating indexname"
   [store prefix]
-  (let [aliases (->> (get-in store [:config :aliases])
-                     (map (fn [[k v]] {(prefixed-index k prefix) v}))
+  (let [prefixer #(prefixed-index % prefix)
+        aliases (->> (get-in store [:config :aliases])
+                     (map (fn [[k v]] {(prefixer k) v}))
                      (into {}))]
     (-> (assoc-in store [:config :aliases] aliases)
-        (update :indexname #(prefixed-index % prefix)))))
+        (update-in [:props :write-alias] prefixer)
+        (update :indexname prefixer))))
 
 
 (defn source-store-maps->target-store-maps
@@ -176,7 +179,7 @@
 
 (defn store-batch
   "store a batch of documents using a bulk operation"
-  [{:keys [conn props mapping type]} batch]
+  [{:keys [conn props mapping type config]} batch]
   (log/debugf "%s - storing %s records"
               type
               (count batch))
@@ -186,7 +189,6 @@
                      :_index (:write-alias props)
                      :_type mapping)
              batch)]
-
     (retry es-max-retry
            es-doc/bulk-create-doc conn
            prepared-docs
@@ -259,13 +261,19 @@
 
 (s/defn batch-delete
   "delete a batch of documents given their ids"
-  [{:keys [conn indexname]
+  [{:keys [conn props]
     entity-type :type :as store} :- StoreMap
    ids :- [s/Str]]
   ;; TODO need a bulk delete in clj-momo
   ;; still ok since there is few deletes
   (doseq [id (map (comp :short-id long-id->id) ids)]
-    (retry es-max-retry es-doc/delete-doc conn indexname entity-type id "true")))
+    (retry es-max-retry
+           es-doc/delete-doc
+           conn
+           (:write-alias props)
+           entity-type
+           id
+           "true")))
 
 (defn target-index-settings [settings]
   {:index (into settings
@@ -309,6 +317,7 @@ when confirm? is true, it stores this state and creates the target indices."
                                      {k (init-migration-store v (k target-stores))}))
                               (into {}))
         migration {:id migration-id
+                   :prefix prefix
                    :created now
                    :stores migration-stores}
         es-conn-state (init-es-conn! migration-properties)]
@@ -320,10 +329,11 @@ when confirm? is true, it stores this state and creates the target indices."
 
 (s/defn with-store-map :- MigratedStore
   [entity-type :- s/Keyword
+   prefix :- s/Str
    {source :source
     target :target :as raw-store} :- MigratedStore]
   (let [source-store (store->map (get @stores entity-type))
-        target-store (assoc source-store :indexname (:index target))]
+        target-store (source-store-map->target-store-map source-store prefix)]
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))
 
@@ -335,9 +345,10 @@ when confirm? is true, it stores this state and creates the target indices."
 (s/defn enrich-stores :- {s/Keyword MigratedStore}
   "enriches  migrated stores with source and target store map data,
    updates source size"
-  [stores :- {s/Keyword MigratedStore}]
+  [stores :- {s/Keyword MigratedStore}
+   prefix :- s/Str]
   (->> (map (fn [[store-key raw]]
-              {store-key (-> (with-store-map store-key raw)
+              {store-key (-> (with-store-map store-key prefix raw)
                              update-source-size)})
             stores)
        (into {})))
@@ -348,19 +359,19 @@ when confirm? is true, it stores this state and creates the target indices."
   [migration-id :- s/Str
    es-conn :- ESConn]
   (let [{:keys [indexname entity]} (migration-store-properties)
-        migration-raw (retry es-max-retry
-                             es-doc/get-doc
-                             es-conn
-                             indexname
-                             (name entity)
-                             migration-id
-                             {})
+        {:keys [prefix] :as migration-raw} (retry es-max-retry
+                                                  es-doc/get-doc
+                                                  es-conn
+                                                  indexname
+                                                  (name entity)
+                                                  migration-id
+                                                  {})
         coerce (coerce-to-fn MigrationSchema)]
     (when-not migration-raw
       (log/errorf "migration not found: %s" migration-id)
       (throw (ex-info "migration not found" {:id migration-id})))
     (-> (coerce migration-raw)
-        (update :stores enrich-stores)
+        (update :stores enrich-stores prefix)
         (store-migration es-conn))))
 
 (s/defn update-migration-store

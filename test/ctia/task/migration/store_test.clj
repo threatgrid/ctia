@@ -23,13 +23,6 @@
              [store :as sut]]
             [ctia.store :as st]))
 
-(use-fixtures :once
-  (join-fixtures [mth/fixture-schema-validation
-                  whoami-helpers/fixture-server
-                  whoami-helpers/fixture-reset-state
-                  helpers/fixture-properties:clean
-                  es-helpers/fixture-properties:es-store]))
-
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
          (sut/prefixed-index "ctia_actor" "0.4.2")))
@@ -45,7 +38,50 @@
                   :refresh_interval -1}}
          (sut/target-index-settings {}))))
 
-(sut/setup!)
+(deftest wo-storemaps-test
+  (let [fake-migration (sut/init-migration "migration-id-1"
+                                           "0.0.0"
+                                           [:tool :sighting :malware]
+                                           false)
+        wo-stores (sut/wo-storemaps fake-migration)]
+    (is (nil? (get-in wo-stores [:source :store])))
+    (is (nil? (get-in wo-stores [:target :store])))))
+
+(deftest source-store-maps->target-store-maps-test
+  (let [malware-source-store {:indexname "ctia-malware"
+                              :mapping :malware
+                              :config {:aliases {"ctia-malware" {}
+                                                 "ctia-malware-write" {}}}
+                              :props {:write-alias "ctia-malware-write"}}
+        sighting-source-store {:indexname "ctia-sighting"
+                               :mapping :sighting
+                               :config {:aliases {"ctia-sighting" {}
+                                                  "ctia-sighting-write" {}}}
+                               :props {:write-alias "ctia-sighting-write"}}
+        malware-target-store  {:indexname "v0.0.0_ctia-malware"
+                               :mapping :malware
+                               :config {:aliases {"v0.0.0_ctia-malware" {}
+                                                  "v0.0.0_ctia-malware-write" {}}}
+                               :props {:write-alias "v0.0.0_ctia-malware-write"}}
+        sighting-target-store  {:indexname "v0.0.0_ctia-sighting"
+                                :mapping :sighting
+                                :config {:aliases {"v0.0.0_ctia-sighting" {}
+                                                   "v0.0.0_ctia-sighting-write" {}}}
+                                :props {:write-alias "v0.0.0_ctia-sighting-write"}}]
+    (is (= {:malware malware-target-store
+            :sighting sighting-target-store}
+           (sut/source-store-maps->target-store-maps {:malware malware-source-store
+                                                      :sighting sighting-source-store}
+           "0.0.0")))))
+
+(use-fixtures :once
+  (join-fixtures [mth/fixture-schema-validation
+                  whoami-helpers/fixture-server
+                  whoami-helpers/fixture-reset-state
+                  helpers/fixture-properties:clean
+                  es-helpers/fixture-properties:es-store]))
+
+(props/init!)
 (def es-props (get-in @props/properties [:ctia :store :es]))
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
@@ -56,28 +92,13 @@
   (es-index/delete! es-conn (str migration-index "*")))
 
 (use-fixtures :each
-  (join-fixtures [
-                  helpers/fixture-ctia
+  (join-fixtures [helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes
-                  fixture-clean-migration
-                  ]))
+                  fixture-clean-migration]))
 
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
 
-(defn refresh-all-stores []
-  (doseq [{:keys [conn indexname]} (map #(store->map % {})
-                                        (vals @stores))]
-    (es-index/refresh! conn)))
-
-(deftest wo-storemaps-test
-  (let [fake-migration (sut/init-migration "migration-id-1"
-                                           "0.0.0"
-                                           [:tool :sighting :malware]
-                                           false)
-        wo-stores (sut/wo-storemaps fake-migration)]
-    (is (nil? (get-in wo-stores [:source :store])))
-    (is (nil? (get-in wo-stores [:target :store])))))
 
 (deftest store-batch-store-size-test
   (let [indexname "test_index"
@@ -225,7 +246,7 @@
                                       "foogroup"
                                       "user")
   (post-bulk examples)
-  (refresh-all-stores) ;; ensure indices refresh
+  (es-index/refresh! es-conn) ;; ensure indices refresh
   (let [total-examples (->> (map count (vals examples))
                             (apply +))
         [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
@@ -245,7 +266,7 @@
         malware1-id (-> malware1 :id long-id->id :short-id)
         _ (delete (format "ctia/sighting/%s" sighting1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        _ (refresh-all-stores)
+        _ (es-index/refresh! es-conn)
         since (time/now)
         _ (delete (format "ctia/sighting/%s" sighting2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
@@ -283,7 +304,7 @@
 
 (deftest init-get-migration-test
   (post-bulk examples)
-  (refresh-all-stores) ; ensure indices refresh
+  (es-index/refresh! es-conn) ; ensure indices refresh
   (testing "init-migration should properly create new migration state from selected types."
     (let [prefix "0.0.0"
           entity-types [:tool :malware :relationship]

@@ -27,17 +27,27 @@
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
-                  helpers/fixture-properties:clean
-                  es-helpers/fixture-properties:es-store
-                  helpers/fixture-ctia
                   whoami-helpers/fixture-server
-                  es-helpers/fixture-delete-store-indexes]))
+                  whoami-helpers/fixture-reset-state
+                  helpers/fixture-properties:clean
+                  es-helpers/fixture-properties:es-store]))
+
+(setup!) ;; init migration conn and properties
+(def es-props (get-in @props/properties [:ctia :store :es]))
+(def es-conn (connect (:default es-props)))
+(def migration-index (get-in es-props [:migration :indexname]))
+(println "es-conn " es-conn)
+
+(defn fixture-clean-migration [t]
+  (t)
+  (es-index/delete! es-conn "v0.0.0*")
+  (es-index/delete! es-conn (str migration-index "*")))
 
 (use-fixtures :each
-  whoami-helpers/fixture-reset-state)
-
-(defn refresh-indices [host port]
-  (client/post (format "http://%s:%s/_refresh" host port)))
+  (join-fixtures [helpers/fixture-ctia
+                  es-helpers/fixture-delete-store-indexes
+                  fixture-clean-migration
+                  ]))
 
 (defn make-cat-indices-url [host port]
   (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
@@ -60,11 +70,6 @@
   (let [{:keys [conn indexname]} (store->map store {})]
     (es-index/index-exists? conn
                             (prefixed-index indexname prefix))))
-
-(setup!)
-(def es-props (get-in @props/properties [:ctia :store :es]))
-(def es-conn (connect (:default es-props)))
-(def migration-index (get-in es-props [:migration :indexname]))
 
 (def fixtures-nb 100)
 (def minimal-examples (fixt/bundle fixtures-nb false))
@@ -121,11 +126,7 @@
           (is (some #(clojure.string/starts-with? % (format "%s - Cannot migrate entity: {"
                                                             (name store-type)))
                     messages)
-              (format "malformed %s was not logged" store-type))))))
-
-  (es-index/delete! es-conn "ctia_*")
-  (es-index/delete! es-conn "v0.0.1*")
-  (es-doc/delete-doc es-conn migration-index "migration" "test-3" "true"))
+              (format "malformed %s was not logged" store-type)))))))
 
 
 (deftest test-migrate-store-indexes
@@ -258,13 +259,13 @@
                     vulnerability fixtures-nb
                     weakness fixtures-nb}
                    (map (fn [[k v]]
-                          {(str  "v0.0.0_" (:indexname k)) v}))
+                          {(format  "v0.0.0_%s-000001" (:indexname k)) v}))
                    (into {})
                    keywordize-keys)
-              refreshes (refresh-indices (:host default)
-                                         (:port default))
+              _ (es-index/refresh! es-conn)
               formatted-cat-indices (get-cat-indices (:host default)
                                                      (:port default))]
+          (println "formatted-cat-indices: " formatted-cat-indices)
           (is (= expected-indices
                  (select-keys formatted-cat-indices
                               (keys expected-indices))))
@@ -320,7 +321,7 @@
               get-deleted-sightings (map #(es-doc/get-doc conn indexname mapping % nil)
                                          sighting-ids)]
           (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
-              "inserted malwares must found in target malware store")
+              "inserted malwares must be found in target malware store")
 
           (is (= "UPDATED" (:description updated-sighting))
               "updated document must be updated in target stores")
@@ -328,8 +329,6 @@
                  get-deleted-sightings)
               "deleted document must not be in target stores"))))))
 
-  (es-index/delete! es-conn "ctia_*")
-  (es-index/delete! es-conn "v0.0.0*")
   (es-doc/delete-doc es-conn migration-index "migration" "test-2" "true"))
 
 

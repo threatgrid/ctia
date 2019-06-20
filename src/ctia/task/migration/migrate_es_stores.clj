@@ -2,17 +2,18 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
+            [clojure.core.async :as async :refer [chan <!! >!! <! close! go go-loop]]
+
+            [schema-tools.core :as st]
+            [schema.core :as s]
             [clj-momo.lib.time :as time]
-            [ctia
-             [store :refer [stores]]]
+
+            [ctia.store :refer [stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.stores.es.crud :refer [coerce-to-fn]]
             [ctia.task.migration.migrations :refer [available-migrations]]
-            [ctia.task.migration.store :as mst]
-            [schema-tools.core :as st]
-            [clojure.core.async :as async :refer [chan <!! >!! <! close! go go-loop]]
-            [schema.core :as s]))
+            [ctia.task.migration.store :as mst]))
 
 (def default-batch-size 100)
 (def default-buffer-size 30)
@@ -126,6 +127,8 @@
             migrated (transduce migrations conj documents)
             {:keys [data errors]} (list-coerce migrated)
             new-migrated-count (+ migrated-count (count data))]
+        ;;(println "pull data ==> : " (count data))
+        ;;(println "errors  ==>" (count errors))
         (doseq [entity errors]
           (let [message
                 (format "%s - Cannot migrate entity: %s"
