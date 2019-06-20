@@ -3,9 +3,9 @@
 
 (defonce shutdown-hooks (ref {:registered? false :hooks {}}))
 
-(defn register-hook! [key f]
+(defn register-hook! [k f]
   (dosync
-   (alter shutdown-hooks assoc-in [:hooks key] f)))
+   (alter shutdown-hooks assoc-in [:hooks k] f)))
 
 (defn shutdown-ctia!
   "Sequentially executes shutdown hooks.
@@ -13,10 +13,14 @@
    hooks, and then executes each hook in a try...catch.  Since this may
    be called at shutdown time, we avoid using the agent-send-off pool."
   []
-  (doseq [[name hook] (dosync
-                       (let [removed-hooks (:hooks @shutdown-hooks)]
-                         (alter shutdown-hooks assoc :hooks {})
-                         removed-hooks))]
+
+  (log/warn (with-out-str (clojure.pprint/pprint @shutdown-hooks)))
+
+  (doseq [[name hook]
+          (dosync
+           (let [removed-hooks (:hooks @shutdown-hooks)]
+             (alter shutdown-hooks assoc :hooks {})
+             removed-hooks))]
     (try
       (hook)
       (catch Exception excep

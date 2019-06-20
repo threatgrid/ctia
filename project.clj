@@ -98,6 +98,17 @@
                  ;; Hooks
                  [threatgrid/redismq "0.1.1"]
 
+                 [zookeeper-clj "0.9.3"]
+                 [org.onyxplatform/onyx-kafka "0.14.5.0"
+                  :exclusions [org.clojure/clojure
+                               com.andrewmcveigh/cljs-time
+                               com.stuartsierra/component
+                               io.netty/netty
+                               org.slf4j/slf4j-log4j12
+                               org.apache.zookeeper/zookeeper
+                               com.google.guava/guava
+                               org.clojure/core.async]]
+
                  ;; GraphQL
                  [base64-clj "0.1.1"]
                  [threatgrid/ring-graphql-ui "0.1.1"

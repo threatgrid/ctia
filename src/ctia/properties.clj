@@ -109,6 +109,16 @@
    (st/required-keys {"ctia.access-control.min-tlp" TLP
                       "ctia.access-control.default-tlp" TLP})
 
+   (st/optional-keys {"ctia.hook.kafka.enabled" s/Bool
+                      "ctia.hook.kafka.request-size" s/Num
+                      "ctia.hook.kafka.zk.session-timeout" s/Int
+                      "ctia.hook.kafka.zk.connection-timeout" s/Int
+                      "ctia.hook.kafka.zk.connection-retry-timeout" s/Int
+                      "ctia.hook.kafka.zk.address" s/Str
+                      "ctia.hook.kafka.topic.name" s/Str
+                      "ctia.hook.kafka.topic.num-partitions" s/Int
+                      "ctia.hook.kafka.topic.replication-factor" s/Int})
+
    (st/optional-keys {"ctia.events.log" s/Bool
                       "ctia.http.events.timeline.max-seconds" s/Int
                       "ctia.hook.redis.host" s/Str

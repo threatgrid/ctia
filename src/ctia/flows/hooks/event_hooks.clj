@@ -5,10 +5,30 @@
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
    [ctia.properties :refer [properties]]
+   [ctia.shutdown :as shutdown]
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
    [redismq.core :as rmq]
+   [onyx.kafka.helpers :as okh]
+   [onyx.plugin.kafka :as opk]
+   [cheshire.core :refer [generate-string]]
    [schema.core :as s]))
+
+(defrecord KafkaEventPublisher [producer topic]
+  Hook
+  (init [_]
+    :nothing)
+  (destroy [_]
+    (log/warn "shutting down Kafka producer")
+    (.close producer 5000))
+  (handle [_ event _]
+    (okh/send-sync! producer
+                    (:name topic)
+                    nil
+                    (.getBytes (:id event))
+                    (.getBytes (generate-string event)))
+    :nothing
+    event))
 
 (defrecord RedisEventPublisher [conn publish-channel-name]
   Hook
@@ -30,6 +50,39 @@
         (get-in @properties [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
+
+(defn kafka-event-publisher []
+  (let [producer-opts {}
+        {:keys [request-size]}
+        (get-in @properties [:ctia :hook :kafka])
+        {:keys [session-timeout
+                connection-timeout
+                operation-retry-timeout
+                address] :as zk-config}
+        (get-in @properties [:ctia :hook :kafka :zk])
+        brokers (opk/find-brokers {:kafka/zookeeper address})
+        kafka-config (merge {"bootstrap.servers" brokers
+                             "max.request.size" request-size}
+                            producer-opts)
+        {:keys [name
+                num-partitions
+                replication-factor] :as kafka-topic-config}
+        (get-in @properties [:ctia :hook :kafka :topic])]
+
+    (log/info "Creating Kafka topic")
+
+    (try
+      (okh/create-topic! address
+                         name
+                         num-partitions
+                         replication-factor)
+      (catch org.apache.kafka.common.errors.TopicExistsException e nil))
+
+    (->KafkaEventPublisher
+     (okh/build-producer kafka-config
+                         (okh/byte-array-serializer)
+                         (okh/byte-array-serializer))
+     kafka-topic-config)))
 
 (defrecord RedisMQPublisher [queue]
   Hook
@@ -86,8 +139,13 @@
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
   [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
   (let [{{redis? :enabled} :redis
-         {redismq? :enabled} :redismq}
-        (get-in @properties [:ctia :hook])]
-    (cond-> hooks-m
-      redis?   (update :event #(conj % (redis-event-publisher)))
-      redismq? (update :event #(conj % (redismq-publisher))))))
+         {redismq? :enabled} :redismq
+         {kafka? :enabled} :kafka}
+        (get-in @properties [:ctia :hook])
+        all-hooks (cond-> hooks-m
+                    redis?   (update :event #(conj % (redis-event-publisher)))
+                    redismq? (update :event #(conj % (redismq-publisher)))
+                    kafka?   (update :event #(conj % (kafka-event-publisher))))]
+    (doseq [[k hr] all-hooks]
+      (shutdown/register-hook! k #(.destroy hr)))
+    all-hooks))
