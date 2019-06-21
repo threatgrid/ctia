@@ -53,22 +53,12 @@
 (s/defn handle-read :- (s/maybe Identity)
   [state :- s/Any
    login :- s/Str]
-  ;;(some-> (get-doc (:conn state)
-  ;;                 (:index state)
-  ;;                 mapping
-  ;;                 login
-  ;;                 {})
   (some-> (crud/get-doc-with-index state :identity login {})
           :_source
           (update-in [:capabilities] capabilities->capabilities-set)
           (dissoc :id)))
 
 (defn handle-delete [state login]
-  ;;(delete-doc (:conn state)
-  ;;            (:index state)
-  ;;            mapping
-  ;;            login
-  ;;            true))
   (when-let [{index :_index}
              (crud/get-doc-with-index state :identity login {})]
     (delete-doc (:conn state)

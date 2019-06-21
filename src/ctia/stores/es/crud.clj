@@ -1,11 +1,13 @@
 (ns ctia.stores.es.crud
   (:require [clojure.set :as set]
+            [clojure.tools.logging :as log]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
              [core :as s]]
             [schema-tools.core :as st]
             [clj-momo.lib.es
+             [index :as es-index]
              [document :as d]
              [query :as q]
              [schemas :refer [ESConnState]]]
@@ -95,6 +97,16 @@
                      true)]
     (-> res :data first)))
 
+(defn rollover
+  [{conn :conn
+    {:keys [write-alias aliased]
+     conditions :rollover} :props}]
+  (when aliased
+    (let [{rolledover? :rolledover :as response}
+          (es-index/rollover! conn write-alias conditions)]
+      (when rolledover?
+        (log/info "rolledover: " (pr-str response))))))
+
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
@@ -114,6 +126,7 @@
                                      models)
                                 (or refresh
                                     (get-in state [:props :refresh] "false"))))
+        (rollover state)
         (catch Exception e
           (throw
            (if-let [ex-data (ex-data e)]

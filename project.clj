@@ -47,7 +47,8 @@
                  [threatgrid/ctim "1.0.11"
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
-                               com.google.guava/guava]]
+                               com.google.guava/guava
+                               org.clojure/tools.reader]]
                  [threatgrid/clj-momo "0.2.32-SNAPSHOT"]
 
                  ;; Web server
