@@ -12,7 +12,6 @@
 
 (defn shutdown-ctia!
   []
-  (log/warn (:hooks @shutdown-hooks))
   (doseq [[name hook] (:hooks @shutdown-hooks)]
     (try
       (hook)

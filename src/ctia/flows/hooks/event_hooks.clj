@@ -4,6 +4,7 @@
    [ctia.events :as events]
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
+   [ctia.lib.kafka :as lk]
    [ctia.properties :refer [properties]]
    [ctia.shutdown :as shutdown]
    [ctia.entity.event.schemas :refer [CreateEventType
@@ -52,36 +53,17 @@
                            channel-name)))
 
 (defn kafka-event-publisher []
-  (let [producer-opts {}
-        {:keys [request-size]}
-        (get-in @properties [:ctia :hook :kafka])
-        {:keys [session-timeout
-                connection-timeout
-                operation-retry-timeout
-                address] :as zk-config}
-        (get-in @properties [:ctia :hook :kafka :zk])
-        brokers (opk/find-brokers {:kafka/zookeeper address})
-        kafka-config (merge {"bootstrap.servers" brokers
-                             "max.request.size" request-size}
-                            producer-opts)
-        {:keys [name
-                num-partitions
-                replication-factor] :as kafka-topic-config}
+  (let [kafka-topic-config
         (get-in @properties [:ctia :hook :kafka :topic])]
 
-    (log/info "Creating Kafka topic")
-
+    (log/warn "Setting up Kafka topic")
     (try
-      (okh/create-topic! address
-                         name
-                         num-partitions
-                         replication-factor)
-      (catch org.apache.kafka.common.errors.TopicExistsException e nil))
+      (lk/create-topic)
+      (catch org.apache.kafka.common.errors.TopicExistsException e
+        (log/warn "Kafka Topic already exists")))
 
     (->KafkaEventPublisher
-     (okh/build-producer kafka-config
-                         (okh/byte-array-serializer)
-                         (okh/byte-array-serializer))
+     (lk/build-producer)
      kafka-topic-config)))
 
 (defrecord RedisMQPublisher [queue]
