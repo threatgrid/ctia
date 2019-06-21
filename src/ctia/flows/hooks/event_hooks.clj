@@ -20,7 +20,7 @@
     :nothing)
   (destroy [_]
     (log/warn "shutting down Kafka producer")
-    (.close producer 5000))
+    (.close producer))
   (handle [_ event _]
     (okh/send-sync! producer
                     (:name topic)
@@ -142,10 +142,9 @@
          {redismq? :enabled} :redismq
          {kafka? :enabled} :kafka}
         (get-in @properties [:ctia :hook])
-        all-hooks (cond-> hooks-m
-                    redis?   (update :event #(conj % (redis-event-publisher)))
-                    redismq? (update :event #(conj % (redismq-publisher)))
-                    kafka?   (update :event #(conj % (kafka-event-publisher))))]
-    (doseq [[k hr] all-hooks]
-      (shutdown/register-hook! k #(.destroy hr)))
-    all-hooks))
+        all-event-hooks
+        (cond-> {}
+          redis?   (assoc :redis (redis-event-publisher))
+          redismq? (assoc :redismq (redismq-publisher))
+          kafka?   (assoc :kafka (kafka-event-publisher)))]
+    (update hooks-m :event concat (vals all-event-hooks))))
