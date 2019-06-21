@@ -49,8 +49,10 @@
       (let [first-res (get-actor actor-id nil)
             etag (get-in first-res [:headers "ETag"])
             second-res (get-actor actor-id {"If-none-match" etag})]
-
         (is (= 200 (:status first-res)))
         (is (not (nil? etag)))
         (is (= 304 (:status second-res)))
-        (is (nil? (:parsed-body second-res)))))))
+        (is (nil? (:parsed-body second-res)))
+        (is (and (= (first etag) \")
+                 (= (last etag) \"))
+            "Etag is quoted")))))
