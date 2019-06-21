@@ -9,10 +9,12 @@
   (= (:status response) 200))
 
 (defn calculate-etag [accept body]
-  (case (class body)
-    String (sha1 (str accept ":" body))
-    File (str (.lastModified body) "-" (.length body))
-    (sha1 (.getBytes (str accept ":" (pr-str body)) "UTF-8"))))
+  (let [etagc
+        (case (class body)
+          String (sha1 (str accept ":" body))
+          File (str (.lastModified body) "-" (.length body))
+          (sha1 (.getBytes (str accept ":" (pr-str body)) "UTF-8")))]
+    (str \" etagc \")))
 
 (defn update-headers
   [headers etag body]
