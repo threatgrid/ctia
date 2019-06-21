@@ -106,7 +106,8 @@
     :put-capabilities :create-identity-assertion
     :delete-capabilities :delete-identity-assertion
     :search-capabilities :search-identity-assertion
-    :external-id-capabilities :read-identity-assertion}))
+    :external-id-capabilities :read-identity-assertion
+    :hide-entity? true}))
 
 (def capabilities
   #{:create-identity-assertion

@@ -38,12 +38,14 @@
            search-capabilities
            external-id-capabilities
            hide-delete?
+           hide-entity?
            can-post?
            can-update?
            can-patch?
            can-search?
            can-get-by-external-id?]
     :or {hide-delete? false
+         hide-entity? false
          can-post? true
          can-update? true
          can-patch? false
@@ -62,6 +64,7 @@
              :capabilities post-capabilities
              :auth-identity identity
              :identity-map identity-map
+             :no-doc hide-entity?
              (-> (flows/create-flow
                   :entity-type entity
                   :realize-fn realize-fn
@@ -88,6 +91,7 @@
             :capabilities put-capabilities
             :auth-identity identity
             :identity-map identity-map
+            :no-doc hide-entity?
             (if-let [updated-rec
                      (-> (flows/update-flow
                           :get-fn #(read-store entity
@@ -120,6 +124,7 @@
               :capabilities patch-capabilities
               :auth-identity identity
               :identity-map identity-map
+              :no-doc hide-entity?
               (if-let [updated-rec
                        (-> (flows/patch-flow
                             :get-fn #(read-store entity
@@ -153,6 +158,7 @@
             :capabilities external-id-capabilities
             :auth-identity identity
             :identity-map identity-map
+            :no-doc hide-entity?
             (-> (read-store entity
                             list-records
                             {:all-of {:external_ids external_id}}
@@ -171,6 +177,7 @@
             :auth-identity identity
             :identity-map identity-map
             :header-params [{Authorization :- (s/maybe s/Str) nil}]
+            :no-doc hide-entity?
             (-> (query-string-search-store
                  entity
                  query-string-search
@@ -191,6 +198,7 @@
           :capabilities get-capabilities
           :auth-identity identity
           :identity-map identity-map
+          :no-doc hide-entity?
           (if-let [rec (read-store entity
                                    read-record
                                    id
@@ -203,7 +211,7 @@
             (not-found)))
 
      (DELETE "/:id" []
-             :no-doc hide-delete?
+             :no-doc (or hide-delete? hide-entity?)
              :path-params [id :- s/Str]
              :summary (format "Deletes a %s" capitalized)
              :header-params [{Authorization :- (s/maybe s/Str) nil}]
