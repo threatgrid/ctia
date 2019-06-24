@@ -5,7 +5,9 @@
              [schemas :as js]]
             [ctia.entity.relationship.graphql-schemas :as relationship]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [common :refer [BaseEntityFilterParams
+                             PagingParams
+                             SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas.graphql
              [flanders :as f]
@@ -18,21 +20,29 @@
             [schema-tools.core :as st]
             [schema.core :as s]))
 
-(def judgements-by-observable-sort-fields
-  (apply s/enum (map name (conj js/judgement-fields
-                                "disposition:asc,valid_time.start_time:desc"))))
+(def judgement-fields
+  (apply s/enum
+         (map name js/judgement-fields)))
 
 (def judgement-sort-fields
-  (apply s/enum js/judgement-fields))
+  (apply s/enum
+         (map name js/judgement-sort-fields)))
+
+(def judgements-by-observable-sort-fields
+  (apply s/enum
+         (map name
+              (concat js/judgements-by-observable-sort-fields
+                      js/judgement-sort-fields))))
 
 (s/defschema JudgementFieldsParam
-  {(s/optional-key :fields) [judgement-sort-fields]})
+  {(s/optional-key :fields) [judgement-fields]})
 
 (s/defschema JudgementsByObservableQueryParams
   (st/merge
    PagingParams
    JudgementFieldsParam
-   {(s/optional-key :sort_by) judgements-by-observable-sort-fields}))
+   {(s/optional-key :sort_by)
+    judgements-by-observable-sort-fields}))
 
 (s/defschema JudgementSearchParams
   (st/merge
@@ -46,7 +56,7 @@
     (s/optional-key :priority) s/Int
     (s/optional-key :severity) s/Str
     (s/optional-key :confidence) s/Str
-    (s/optional-key :sort_by)  judgement-sort-fields}))
+    (s/optional-key :sort_by) judgement-sort-fields}))
 
 (def JudgementGetParams JudgementFieldsParam)
 

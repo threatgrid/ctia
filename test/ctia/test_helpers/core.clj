@@ -170,7 +170,8 @@
         (post "ctia/bulk"
               :body examples
               :socket-timeout (* 5 60000)
-              :headers {"Authorization" "45c1f5e3f05d0"})]))
+              :headers {"Authorization" "45c1f5e3f05d0"})]
+    bulk-res))
 
 (defn post-entity-bulk [example plural x headers]
   (let [new-records

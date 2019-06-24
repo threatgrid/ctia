@@ -9,10 +9,13 @@
             [schema.core :as s]))
 
 (def sighting-sort-fields
-  (apply s/enum ss/sighting-fields))
+  (apply s/enum (map name ss/sighting-sort-fields)))
+
+(def sighting-fields
+  (apply s/enum (map name ss/sighting-fields)))
 
 (s/defschema SightingFieldsParam
-  {(s/optional-key :fields) [sighting-sort-fields]})
+  {(s/optional-key :fields) [sighting-fields]})
 
 (s/defschema SightingSearchParams
   (st/merge
@@ -24,18 +27,13 @@
     (s/optional-key :sensor) s/Str
     (s/optional-key :observables.value) s/Str
     (s/optional-key :observables.type) s/Str
-    (s/optional-key :sort_by)  sighting-sort-fields}))
+    (s/optional-key :sort_by) sighting-sort-fields}))
 
 (s/defschema SightingsByObservableQueryParams
   (st/merge
    PagingParams
    SightingFieldsParam
-   {(s/optional-key :sort_by)
-    (s/enum
-     :id
-     :timestamp
-     :confidence
-     :observed_time.start_time)}))
+   {(s/optional-key :sort_by) sighting-sort-fields}))
 
 (def SightingGetParams SightingFieldsParam)
 

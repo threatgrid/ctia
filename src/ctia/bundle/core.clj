@@ -347,7 +347,9 @@
                                list-fn
                                {:one-of filters}
                                identity-map
-                               {:limit max-relationships}))
+                               {:limit max-relationships
+                                :sort_by "timestamp"
+                                :sort_order "desc"}))
             ent/un-store-all)))
 
 (defn fetch-record

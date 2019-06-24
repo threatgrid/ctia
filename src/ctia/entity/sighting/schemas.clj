@@ -59,3 +59,7 @@
            :confidence
            :count
            :sensor]))
+
+(def sighting-sort-fields
+  (conj sighting-fields
+        "observed_time.start_time,timestamp"))

@@ -5,7 +5,8 @@
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             ctia.properties
-            [ctia.entity.judgement.schemas :refer [judgement-fields]]
+            [ctia.entity.judgement.schemas
+             :refer [judgement-fields judgement-sort-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -552,7 +553,7 @@
        (pagination-test
         "ctia/ip/1.2.3.4/judgements"
         {"Authorization" "45c1f5e3f05d0"}
-        [:id :disposition :priority :severity :confidence])
+        judgement-sort-fields)
 
        (field-selection-tests
         ["ctia/ip/1.2.3.4/judgements"
