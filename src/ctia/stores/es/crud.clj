@@ -98,15 +98,16 @@
                      true)]
     (-> res :data first)))
 
-(defn rollover
+(s/defn rollover
   [{conn :conn
     {:keys [write-alias aliased]
-     conditions :rollover} :props}]
+     conditions :rollover} :props} :- ESConnState]
   (when aliased
-    (let [{rolledover? :rolledover :as response}
+    (let [{rolledover? :rolled_over :as response}
           (es-index/rollover! conn write-alias conditions)]
       (when rolledover?
-        (log/info "rolledover: " (pr-str response))))))
+        (log/info "rolled over: " (pr-str response)))
+      response)))
 
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"

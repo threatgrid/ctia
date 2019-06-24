@@ -36,7 +36,6 @@
 (def es-props (get-in @props/properties [:ctia :store :es]))
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
-(println "es-conn " es-conn)
 
 (defn fixture-clean-migration [t]
   (t)
@@ -44,10 +43,9 @@
   (es-index/delete! es-conn (str migration-index "*")))
 
 (use-fixtures :each
-  (join-fixtures [helpers/fixture-ctia
-                  es-helpers/fixture-delete-store-indexes
-                  fixture-clean-migration
-                  ]))
+ (join-fixtures [helpers/fixture-ctia
+                 es-helpers/fixture-delete-store-indexes
+                 fixture-clean-migration]))
 
 (defn make-cat-indices-url [host port]
   (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
@@ -99,13 +97,13 @@
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-doc/create-doc es-conn
-                           (get-in es-props [store-type :indexname])
+                           (str (get-in es-props [store-type :indexname]) "-write")
                            (name store-type)
                            bad-doc
                            "true"))
       (with-atom-logger logger
         (sut/migrate-store-indexes "test-3"
-                                   "0.0.1"
+                                   "0.0.0"
                                    [:__test]
                                    store-types
                                    10
@@ -265,7 +263,6 @@
               _ (es-index/refresh! es-conn)
               formatted-cat-indices (get-cat-indices (:host default)
                                                      (:port default))]
-          (println "formatted-cat-indices: " formatted-cat-indices)
           (is (= expected-indices
                  (select-keys formatted-cat-indices
                               (keys expected-indices))))
