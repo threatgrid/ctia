@@ -3,14 +3,20 @@
 
 ;; Connections
 
+(defn redis-conf->conn-spec
+  [{:keys [host port timeout-ms password ssl]}]
+  (cond-> {:host host
+           :port port
+           :timeout-ms timeout-ms}
+    password (assoc :password password)
+    ssl (assoc :ssl-fn :default)))
+
 (defn server-connection
   "Build the server config"
-  [host port timeout-ms]
+  [{:keys [host port] :as redis-config}]
   (assert (and host port) "Redis has been de-configured")
   {:pool {}
-   :spec {:host host
-          :port port
-          :timeout-ms timeout-ms}})
+   :spec (redis-conf->conn-spec redis-config)})
 
 ;; Pub/Sub
 

@@ -1,11 +1,13 @@
 (ns ctia.entity.sighting-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.entity.sighting.schemas :refer [sighting-fields]]
+            [ctia.entity.sighting.schemas :refer [sighting-sort-fields
+                                                  sighting-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post-entity-bulk]]
+             [core :as helpers :refer [post-entity-bulk
+                                       post-bulk]]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
@@ -56,12 +58,27 @@
                 new-sighting-maximal
                 :sightings
                 30
-                {"Authorization" "45c1f5e3f05d0"})]
+                {"Authorization" "45c1f5e3f05d0"})
 
+           sample (dissoc new-sighting-maximal :id)
+           first-sighting (-> sample
+                              (assoc-in [:observed_time :start_time]
+                                        #inst "2016-01-01T01:01:01.000Z"))
+           second-sighting (-> sample
+                               (assoc-in [:observed_time :start_time]
+                                         #inst "2016-01-02T01:01:01.000Z"))
+           third-sighting (-> sample
+                              (assoc :timestamp
+                                     #inst "2016-01-03T01:01:01.000Z")
+                              (assoc-in [:observed_time :start_time]
+                                        #inst "2016-01-02T01:01:01.000Z"))
+           custom-samples (post-bulk {:sightings [first-sighting
+                                                  second-sighting
+                                                  third-sighting]})]
        (pagination-test
         "ctia/sighting/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        sighting-fields)
+        sighting-sort-fields)
 
        (field-selection-tests
         ["ctia/sighting/search?query=*"

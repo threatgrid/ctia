@@ -122,34 +122,47 @@
                clojure.walk/keywordize-keys
                (select-keys [:X-Total-Hits :X-Previous :X-Next])))))))
 
+(defn sort-field->sort-fn
+  "Given a CTIA sort parameter, generate a sorting function to by used
+   with sort-by, dealing with multi-sort as well as nested keys field sort"
+  [sort-fields]
+  (let [kws (map keyword
+                 (clojure.string/split (name sort-fields) #","))
+        nested-trans (map (fn [kw]
+                            (if (clojure.string/includes? kw ".")
+                              (apply comp
+                                     (reverse
+                                      (map keyword
+                                           (clojure.string/split
+                                            (name kw) #"\."))))
+                              kw)) kws)]
+    (apply juxt nested-trans)))
+
 (defn sort-test
   "test a list route with all sort options"
   [route headers sort-fields]
   (testing (str route " with sort")
-    (doall (map (fn [field]
-                  (let [manually-sorted (->> (get route
-                                                  :headers headers
-                                                  :query-params {:limit 10000})
-                                             :parsed-body
-                                             (sort-by field)
-                                             (keep field))
-                        route-sorted (->> (get route
-                                               :headers headers
-                                               :query-params {:sort_by (name field)
-                                                              :sort_order "asc"
-                                                              :limit 10000})
+    (doseq [field sort-fields]
+      (let [sort-fn (sort-field->sort-fn field)
+            manually-sorted (->> (get route
+                                      :headers headers
+                                      :query-params {:limit 10000})
+                                 :parsed-body
+                                 (sort-by sort-fn))
+            route-sorted (->> (get route
+                                   :headers headers
+                                   :query-params {:sort_by (name field)
+                                                  :sort_order "asc"
+                                                  :limit 10000})
 
-                                          :parsed-body
-                                          (keep field))]
-                    (is (deep=
-                         manually-sorted
-                         route-sorted) field)))
-                sort-fields))))
+                              :parsed-body)]
+        (is (deep=
+             manually-sorted
+             route-sorted) field)))))
 
 (defn edge-cases-test
   "miscellaneous test which may expose small caveats"
   [route headers]
-
   (testing (str route " with invalid offset")
     (let [total (-> (get route
                          :headers headers
@@ -163,7 +176,6 @@
                                        :offset (+ total 1)})
                    :parsed-body)]
       (is (deep= [] res))))
-
 
   (testing (str route " with invalid limit")
     (let [total (-> (get route
