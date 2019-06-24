@@ -391,8 +391,7 @@
                  "The result collection for indicators is not empty")
              (is (every? #(contains? % :error) indicators)))
            ;; reopen index to enable cleaning
-           (es-index/open! (:conn indicator-store-state) indexname)
-           ))))))
+           (es-index/open! (:conn indicator-store-state) indexname)))))))
 
 (deftest bundle-import-errors-test
   (test-for-each-store

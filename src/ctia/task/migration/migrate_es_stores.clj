@@ -127,8 +127,6 @@
             migrated (transduce migrations conj documents)
             {:keys [data errors]} (list-coerce migrated)
             new-migrated-count (+ migrated-count (count data))]
-        ;;(println "pull data ==> : " (count data))
-        ;;(println "errors  ==>" (count errors))
         (doseq [entity errors]
           (let [message
                 (format "%s - Cannot migrate entity: %s"

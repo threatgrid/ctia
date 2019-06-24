@@ -2,7 +2,6 @@
   (:require [schema.core :as s]
             [schema-tools.core :as st]
             [clj-momo.lib.es.document :refer [create-doc get-doc delete-doc]]
-
             [ctia.store :refer [IIdentityStore]]
             [ctia.stores.es
              [crud :as crud]

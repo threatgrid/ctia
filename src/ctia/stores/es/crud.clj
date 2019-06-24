@@ -102,7 +102,7 @@
   [{conn :conn
     {:keys [write-alias aliased]
      conditions :rollover} :props} :- ESConnState]
-  (when aliased
+  (when (and aliased (seq conditions))
     (let [{rolledover? :rolled_over :as response}
           (es-index/rollover! conn write-alias conditions)]
       (when rolledover?

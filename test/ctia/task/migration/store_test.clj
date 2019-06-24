@@ -301,7 +301,6 @@
     (is (nil? (:malware data1)) "fetch-deletes shall only retrieve entity types given as parameter")
     (is (nil? (:malware data2)) "fetch-deletes shall only retrieve entity types given as parameter")))
 
-
 (deftest init-get-migration-test
   (post-bulk examples)
   (es-index/refresh! es-conn) ; ensure indices refresh
