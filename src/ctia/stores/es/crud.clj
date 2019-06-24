@@ -84,13 +84,14 @@
   "given an indexname which could be an alias pointing to multiple indices,
   it returns the real index in which is the document with given _id,
   if it exists, nil otherwise"
-  [state :- ESConnState
+  [{:keys [conn index]} :- ESConnState
    mapping :- s/Keyword
    _id :- s/Str
    params]
+
   (let [ids-query (q/ids [(ensure-document-id _id)])
-        res (d/query (:conn state)
-                     (:index state)
+        res (d/query conn
+                     index
                      (name mapping)
                      ids-query
                      (make-es-read-params params)
@@ -117,16 +118,18 @@
        ident
        {:keys [refresh] :as params}]
       (try
-        (map #(build-create-result % coerce!)
-             (d/bulk-create-doc (:conn state)
-                                (map #(assoc %
-                                             :_id (:id %)
-                                             :_index (-> state :props :write-alias)
-                                             :_type (name mapping))
-                                     models)
-                                (or refresh
-                                    (get-in state [:props :refresh] "false"))))
-        (rollover state)
+        (let [created
+              (map #(build-create-result % coerce!)
+                   (d/bulk-create-doc (:conn state)
+                                      (map #(assoc %
+                                                   :_id (:id %)
+                                                   :_index (-> state :props :write-alias)
+                                                   :_type (name mapping))
+                                           models)
+                                      (or refresh
+                                          (get-in state [:props :refresh] "false"))))]
+          (rollover state)
+          created)
         (catch Exception e
           (throw
            (if-let [ex-data (ex-data e)]
