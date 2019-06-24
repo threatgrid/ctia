@@ -1,23 +1,26 @@
 (ns ctia.shutdown
   (:require [clojure.tools.logging :as log]))
 
-(def shutdown-hooks-initial-state
-  {:registered? false
-   :hooks {}})
+(defonce shutdown-hooks (ref {:registered? false :hooks {}}))
 
-(defonce shutdown-hooks (atom shutdown-hooks-initial-state))
-
-(defn register-hook! [k f]
-  (swap! shutdown-hooks assoc-in [:hooks k] f))
+(defn register-hook! [key f]
+  (dosync
+   (alter shutdown-hooks assoc-in [:hooks key] f)))
 
 (defn shutdown-ctia!
+  "Sequentially executes shutdown hooks.
+   Empties the shutdown-hooks in a transaction, capturing the cleared
+   hooks, and then executes each hook in a try...catch.  Since this may
+   be called at shutdown time, we avoid using the agent-send-off pool."
   []
-  (doseq [[name hook] (:hooks @shutdown-hooks)]
+  (doseq [[name hook] (dosync
+                       (let [removed-hooks (:hooks @shutdown-hooks)]
+                         (alter shutdown-hooks assoc :hooks {})
+                         removed-hooks))]
     (try
       (hook)
-      (catch Exception e
-        (log/error e (format "Shutdown hook %s failed" name)))))
-  (reset! shutdown-hooks shutdown-hooks-initial-state))
+      (catch Exception excep
+        (log/error excep (format "Shutdown hook %s failed" name))))))
 
 (defn shutdown-ctia-and-agents! []
   (log/warn "shutting down CTIA")
@@ -26,8 +29,12 @@
   (shutdown-agents))
 
 (defn init! []
-  (let [t (Thread. shutdown-ctia-and-agents!)]
-    (when-not (:registered? @shutdown-hooks)
-      (.addShutdownHook
-       (Runtime/getRuntime) t)
-      (swap! shutdown-hooks assoc :registered? true))))
+  (let [side-effect-agent (agent nil)]
+    (dosync
+     (when-not (:registered? @shutdown-hooks)
+       (alter shutdown-hooks assoc :registered? true)
+       (send side-effect-agent
+             (fn [_]
+               (.addShutdownHook
+                (Runtime/getRuntime)
+                (Thread. shutdown-ctia-and-agents!))))))))

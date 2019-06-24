@@ -22,7 +22,8 @@
    [ctim.examples.incidents :refer [new-incident-minimal]]
    [ctim.examples.casebooks :refer [new-casebook-minimal]]
    [ctim.domain.id :as id]
-   [cemerick.url :refer [url-encode]]))
+   [cemerick.url :refer [url-encode]]
+   [ctia.test-helpers.es :as es-helpers]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -150,8 +151,7 @@
                     {timeline5-body :parsed-body
                      timeline5-status :status}
                     (get uri-timeline-incident-user3
-                         :headers {"Authorization" "user3"})
-                    ]
+                         :headers {"Authorization" "user3"})]
 
                 (is (= 201 incident-status))
                 (is (= 201 incident-user-3-status))
