@@ -5,7 +5,20 @@
   (:import kafka.admin.AdminUtils))
 
 (defn build-producer []
-  (let [producer-opts {}
+  (let [ssl-props (get-in @properties [:ctia :hook :kafka :ssl])
+        ssl-opts
+        {"security.protocol" "ssl"
+         "ssl.truststore.location"
+         (get-in ssl-props [:truststore :location])
+         "ssl.truststore.password"
+         (get-in ssl-props [:truststore :password])
+         "ssl.keystore.location"
+         (get-in ssl-props [:keystore :location])
+         "ssl.keystore.password"
+         (get-in ssl-props [:keystore :password])
+         "ssl.key.password"
+         (get-in ssl-props [:key :password])}
+        producer-opts {}
         {:keys [request-size]}
         (get-in @properties [:ctia :hook :kafka])
         {:keys [session-timeout
@@ -16,7 +29,7 @@
         brokers (opk/find-brokers {:kafka/zookeeper address})
         kafka-config (merge {"bootstrap.servers" brokers
                              "max.request.size" request-size}
-                            producer-opts)
+                            ssl-opts)
         {:keys [name
                 num-partitions
                 replication-factor] :as kafka-topic-config}
@@ -27,7 +40,19 @@
                         (okh/byte-array-serializer))))
 
 (defn build-consumer []
-  (let [consumer-opts {}
+  (let [ssl-props
+        (get-in @properties [:ctia :hook :kafka :ssl])
+        ssl-opts {"security.protocol" "ssl"
+                  "ssl.truststore.location"
+                  (get-in ssl-props [:truststore :location])
+                  "ssl.truststore.password"
+                  (get-in ssl-props [:truststore :password])
+                  "ssl.keystore.location"
+                  (get-in ssl-props [:keystore :location])
+                  "ssl.keystore.password"
+                  (get-in ssl-props [:keystore :password])
+                  "ssl.key.password"
+                  (get-in ssl-props [:key :password])}
         {:keys [request-size]}
         (get-in @properties [:ctia :hook :kafka])
         {:keys [session-timeout
@@ -38,7 +63,7 @@
         brokers (opk/find-brokers {:kafka/zookeeper address})
         kafka-config (merge {"bootstrap.servers" brokers
                              "group.id" "ctia"}
-                            consumer-opts)]
+                            ssl-opts)]
     (okh/build-consumer kafka-config
                         (okh/byte-array-deserializer)
                         (okh/byte-array-deserializer))))

@@ -81,11 +81,18 @@
 
 (defn fixture-properties:kafka-hook [f]
   (with-properties ["ctia.hook.kafka.enabled" true
+
+                    "ctia.hook.kafka.ssl.truststore.location" "containers/dev/truststore/kafka.truststore.jks"
+                    "ctia.hook.kafka.ssl.truststore.password" "Cisco42"
+                    "ctia.hook.kafka.ssl.keystore.location" "containers/dev/keystore/kafka.keystore.jks"
+                    "ctia.hook.kafka.ssl.keystore.password" "Cisco42"
+                    "ctia.hook.kafka.ssl.key.password" "Cisco42"
+
                     "ctia.hook.kafka.request-size" 307200
                     "ctia.hook.kafka.zk.session-timeout" 38400
                     "ctia.hook.kafka.zk.connection-timeout" 38400
                     "ctia.hook.kafka.zk.connection-retry-timeout" 38400
-                    "ctia.hook.kafka.zk.address" "127.0.0.1:2181"
+                    "ctia.hook.kafka.zk.address" "localhost:2181"
                     "ctia.hook.kafka.topic.name" "ctia-events"
                     "ctia.hook.kafka.topic.num-partitions" 1
                     "ctia.hook.kafka.topic.replication-factor" 1]
