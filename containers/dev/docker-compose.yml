@@ -35,20 +35,17 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: SSL://localhost:9092
       KAFKA_SSL_KEYSTORE_FILENAME: kafka.keystore.jks
-      KAFKA_SSL_KEYSTORE_CREDENTIALS: keystore_credentials
-      KAFKA_SSL_KEY_CREDENTIALS: key_credentials
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: credentials
+      KAFKA_SSL_KEY_CREDENTIALS: credentials
       KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.truststore.jks
-      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: truststore_credentials
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: credentials
       KAFKA_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: " "
       KAFKA_SSL_CLIENT_AUTH: requested
       KAFKA_SECURITY_INTER_BROKER_PROTOCOL: SSL
     ports:
       - "9092:9092"
-
     volumes:
       - ${PWD}/containers/dev/keystore/kafka.keystore.jks:/etc/kafka/secrets/kafka.keystore.jks:ro
       - ${PWD}/containers/dev/truststore/kafka.truststore.jks:/etc/kafka/secrets/kafka.truststore.jks:ro
-      - ${PWD}/containers/dev/key_credentials:/etc/kafka/secrets/key_credentials:ro
-      - ${PWD}/containers/dev/keystore_credentials:/etc/kafka/secrets/keystore_credentials:ro
-      - ${PWD}/containers/dev/truststore_credentials:/etc/kafka/secrets/truststore_credentials:ro
+      - ${PWD}/containers/dev/credentials:/etc/kafka/secrets/credentials:ro
       - /var/run/docker.sock:/var/run/docker.sock
