@@ -60,7 +60,7 @@
     (try
       (lk/create-topic)
       (catch org.apache.kafka.common.errors.TopicExistsException e
-        (log/warn "Kafka Topic already exists")))
+        (log/info "Kafka Topic already exists")))
 
     (->KafkaEventPublisher
      (lk/build-producer)
