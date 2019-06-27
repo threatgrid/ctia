@@ -4,7 +4,8 @@
    [ctia.properties :refer [properties]]
    [onyx.kafka.helpers :as okh]
    [onyx.plugin.kafka :as opk])
-  (:import kafka.admin.AdminUtils))
+  (:import kafka.admin.AdminUtils
+           kafka.admin.AdminClient))
 
 (defn decompress
   [v]
@@ -38,7 +39,6 @@
                 operation-retry-timeout
                 address] :as zk-config}
         (get-in @properties [:ctia :hook :kafka :zk])
-        _ (clojure.pprint/pprint compression-type)
         brokers (opk/find-brokers {:kafka/zookeeper address})
         kafka-config (cond-> {"bootstrap.servers" brokers
                               "max.request.size" request-size}
@@ -90,18 +90,14 @@
   (.stop consumer-thread))
 
 (defn create-topic []
-  (let [consumer (build-consumer)
-        {:keys [address]}
+  (let [{:keys [address]}
         (get-in @properties [:ctia :hook :kafka :zk])
         {:keys [name
                 num-partitions
                 replication-factor]}
         (get-in @properties [:ctia :hook :kafka :topic])
-        current-topics (-> (.listTopics consumer)
-                           keys
-                           vector)]
-    (log/debug (str "current topics: " (pr-str current-topics)))
-    (when-not (contains? current-topics name)
+        zk-utils (okh/make-zk-utils {:servers address} false)]
+    (when-not (AdminUtils/topicExists zk-utils name)
       (okh/create-topic! address
                          name
                          num-partitions

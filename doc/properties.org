@@ -162,6 +162,13 @@
 | ctia.hook.kafa.topic.name                  | The topic name to push messages to  | string          |
 | ctia.hook.kafa.topic.num-partitions        | Setup the topic partition countDown | string          |
 | ctia.hook.kafa.topic.replication-factor    | Setup the topic replication-factor  | string          |
+| ctia.hook.kafka.ssl.enabled                | Configure SSL Transport             | Boolean         |
+| ctia.hook.kafka.ssl.truststore.location    | SSL truststore location             | String          |
+| ctia.hook.kafka.ssl.truststore.password    | SSL truststore password             | string          |
+| ctia.hook.kafka.ssl.keystore.location      | SSL Keystore location               | String          |
+| ctia.hook.kafka.ssl.keystore.password      | SSL Keystore password               | String          |
+| ctia.hook.kafka.ssl.key.password           | SSL Key password                    | String          |
+| ctia.hook.kafka.compression.type           | Set compression type                | String          |
 
 
 *** RedisMQ
