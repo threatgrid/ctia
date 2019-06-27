@@ -10,6 +10,10 @@
   [v]
   (when v (String. v "UTF-8")))
 
+(defn ssl-enabled? []
+  (boolean (get-in @properties
+                   [:ctia :hook :kafka :ssl :enabled])))
+
 (defn make-ssl-opts []
   (let [ssl-props (get-in @properties [:ctia :hook :kafka :ssl])]
     {"security.protocol" "ssl"
@@ -25,26 +29,28 @@
      (get-in ssl-props [:key :password])}))
 
 (defn build-producer []
-  (let [ssl-opts (make-ssl-opts)
-        producer-opts {}
-        {:keys [request-size]}
+  (let [producer-opts {}
+        {:keys [request-size compression]}
         (get-in @properties [:ctia :hook :kafka])
+        compression-type (:type compression)
         {:keys [session-timeout
                 connection-timeout
                 operation-retry-timeout
                 address] :as zk-config}
         (get-in @properties [:ctia :hook :kafka :zk])
+        _ (clojure.pprint/pprint compression-type)
         brokers (opk/find-brokers {:kafka/zookeeper address})
-        kafka-config (merge {"bootstrap.servers" brokers
-                             "max.request.size" request-size}
-                            ssl-opts)]
+        kafka-config (cond-> {"bootstrap.servers" brokers
+                              "max.request.size" request-size}
+                       (ssl-enabled?) (merge (make-ssl-opts))
+                       compression-type (assoc "compression.type"
+                                               compression-type))]
     (okh/build-producer kafka-config
                         (okh/byte-array-serializer)
                         (okh/byte-array-serializer))))
 
 (defn build-consumer []
-  (let [ssl-opts (make-ssl-opts)
-        {:keys [request-size]}
+  (let [{:keys [request-size]}
         (get-in @properties [:ctia :hook :kafka])
         {:keys [session-timeout
                 connection-timeout
@@ -52,9 +58,9 @@
                 address] :as zk-config}
         (get-in @properties [:ctia :hook :kafka :zk])
         brokers (opk/find-brokers {:kafka/zookeeper address})
-        kafka-config (merge {"bootstrap.servers" brokers
-                             "group.id" "ctia"}
-                            ssl-opts)]
+        kafka-config (cond-> {"bootstrap.servers" brokers
+                              "group.id" "ctia"}
+                       (ssl-enabled?) (merge (make-ssl-opts)))]
     (okh/build-consumer kafka-config
                         (okh/byte-array-deserializer)
                         (okh/byte-array-deserializer))))

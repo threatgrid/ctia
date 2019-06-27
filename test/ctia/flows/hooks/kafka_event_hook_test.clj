@@ -15,12 +15,13 @@
 
 (use-fixtures :once mth/fixture-schema-validation)
 
-(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
-                                    es-helpers/fixture-properties:es-store
-                                    test-helpers/fixture-properties:kafka-hook
-                                    test-helpers/fixture-properties:events-enabled
-                                    test-helpers/fixture-ctia
-                                    test-helpers/fixture-allow-all-auth]))
+(use-fixtures :each
+  (join-fixtures [test-helpers/fixture-properties:clean
+                  es-helpers/fixture-properties:es-store
+                  test-helpers/fixture-properties:kafka-hook
+                  test-helpers/fixture-properties:events-enabled
+                  test-helpers/fixture-ctia
+                  test-helpers/fixture-allow-all-auth]))
 
 (deftest ^:integration test-events-topic
   (testing "Events are published to kafka topic"

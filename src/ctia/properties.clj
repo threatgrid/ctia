@@ -110,6 +110,8 @@
                       "ctia.access-control.default-tlp" TLP})
 
    (st/optional-keys {"ctia.hook.kafka.enabled" s/Bool
+                      "ctia.hook.kafka.compression.type" (s/enum "none" "gzip" "snappy" "lz4" "zstd")
+                      "ctia.hook.kafka.ssl.enabled" s/Bool
                       "ctia.hook.kafka.ssl.truststore.location" s/Str
                       "ctia.hook.kafka.ssl.truststore.password" s/Str
                       "ctia.hook.kafka.ssl.keystore.location" s/Str
