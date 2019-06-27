@@ -74,6 +74,24 @@
                                                       :sighting sighting-source-store}
            "0.0.0")))))
 
+(deftest rollover?-test
+  (is (false? (sut/rollover? false 10 10 10))
+      "rollover? should returned false when index is not aliased")
+  (testing "rollover? should return true when migrated doc exceed a multiple of max_docs with a maximum of batch-size, false otherwise"
+    (is (sut/rollover? true 100 10 101))
+    (is (sut/rollover? true 100 10 109))
+    (is (sut/rollover? true 100 10 110))
+    (is (sut/rollover? true 100 10 301))
+    (is (sut/rollover? true 100 10 309))
+    (is (sut/rollover? true 100 10 310))
+    (is (false? (sut/rollover? true 100 10 50)))
+    (is (false? (sut/rollover? true 100 10 99)))
+    (is (false? (sut/rollover? true 100 10 111)))
+    (is (false? (sut/rollover? true 100 10 150)))
+    (is (false? (sut/rollover? true 100 10 250)))
+    (is (false? (sut/rollover? true 100 10 299)))
+    (is (false? (sut/rollover? true 100 10 350)))))
+
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server

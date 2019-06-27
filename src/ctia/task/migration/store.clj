@@ -6,13 +6,14 @@
             [schema-tools.core :as st]
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es
-             [schemas :refer [ESConn ESQuery]]
+             [schemas :refer [ESConn ESQuery ESConnState]]
              [conn :as conn]
              [document :as es-doc]
+             [query :as es-query]
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
             [ctia.stores.es
-             [crud :refer [coerce-to-fn]]
+             [crud :as crud]
              [init :refer [init-store-conn init-es-conn! get-store-properties]]
              [mapping :as em]
              [store :refer [StoreMap] :as es-store]]
@@ -177,23 +178,68 @@
 
 (def bulk-max-size (* 5 1024 1024)) ;; 5Mo
 
+(s/defn store-map->es-conn-state :- ESConnState
+  [conn-state :- StoreMap]
+  (dissoc (clojure.set/rename-keys conn-state {:indexname :index})
+          :mapping :type :settings))
+
+
+(defn real-index-of
+  [{:keys [mapping] :as conn-state} id]
+  (-> (store-map->es-conn-state conn-state)
+      (crud/get-doc-with-index (keyword mapping) id {})
+      :_index))
+
+(defn write-alias
+  [{:keys [conn props mapping] :as conn-state}
+   {:keys [id created modified] :as doc}]
+  (if (or (= :event (keyword mapping))
+          (= created modified)
+          (nil? modified))
+    (:write-alias props)
+    (real-index-of conn-state id)))
+
+(s/defn rollover?
+  "do we need to rollover?"
+  [aliased? max_docs batch-size migrated-count]
+  (and aliased?
+       max_docs
+       (> migrated-count max_docs)
+       (<= (mod migrated-count max_docs)
+           batch-size)))
+
+(s/defn rollover
+  "Performs rollover if conditions are met.
+Rollover requires refresh so we cannot just call ES with condition since refresh is set to -1 for performance reasons"
+  [{conn :conn
+    {:keys [aliased write-alias]
+     {:keys [max_docs]} :rollover} :props
+    :as store-map} :- StoreMap
+   batch-size :- s/Int
+   migrated-count :- s/Int]
+  (when rollover?
+    (es-index/refresh! conn write-alias)
+    (crud/rollover (store-map->es-conn-state store-map))))
+
 (defn store-batch
   "store a batch of documents using a bulk operation"
-  [{:keys [conn props mapping type config]} batch]
+  [{:keys [conn mapping type] :as store-map}
+   batch]
   (log/debugf "%s - storing %s records"
-              type
+              mapping
               (count batch))
   (let [prepared-docs
         (map #(assoc %
                      :_id (:id %)
-                     :_index (:write-alias props)
+                     :_index (write-alias store-map %)
                      :_type mapping)
-             batch)]
-    (retry es-max-retry
-           es-doc/bulk-create-doc conn
-           prepared-docs
-           "false"
-           bulk-max-size)))
+             batch)
+        res (retry es-max-retry
+                   es-doc/bulk-create-doc conn
+                   prepared-docs
+                   "false"
+                   bulk-max-size)]
+    res))
 
 (s/defn query-fetch-batch :- {s/Any s/Any}
   "fetch a batch of documents from an es index and a query"
@@ -261,19 +307,21 @@
 
 (s/defn batch-delete
   "delete a batch of documents given their ids"
-  [{:keys [conn props]
+  [{:keys [conn indexname]
     entity-type :type :as store} :- StoreMap
    ids :- [s/Str]]
-  ;; TODO need a bulk delete in clj-momo
-  ;; still ok since there is few deletes
-  (doseq [id (map (comp :short-id long-id->id) ids)]
-    (retry es-max-retry
-           es-doc/delete-doc
-           conn
-           (:write-alias props)
-           entity-type
-           id
-           "true")))
+  (when (seq ids)
+    (es-index/refresh! conn indexname)
+    (doseq [ids (->> (map (comp :short-id long-id->id) ids)
+                     (partition-all 1000))]
+      (retry es-max-retry
+             es-doc/delete-by-query
+             conn
+             indexname
+             (name entity-type)
+             (es-query/ids ids)
+             true
+             "true"))))
 
 (defn target-index-settings [settings]
   {:index (into settings
@@ -366,7 +414,7 @@ when confirm? is true, it stores this state and creates the target indices."
                                                   (name entity)
                                                   migration-id
                                                   {})
-        coerce (coerce-to-fn MigrationSchema)]
+        coerce (crud/coerce-to-fn MigrationSchema)]
     (when-not migration-raw
       (log/errorf "migration not found: %s" migration-id)
       (throw (ex-info "migration not found" {:id migration-id})))

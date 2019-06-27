@@ -88,7 +88,6 @@
    mapping :- s/Keyword
    _id :- s/Str
    params]
-
   (let [ids-query (q/ids [(ensure-document-id _id)])
         res (d/query conn
                      index

@@ -135,6 +135,7 @@
             (log/error message)))
         (when confirm?
           (when (seq data) (mst/store-batch target-store data))
+          (mst/rollover target-store batch-size new-migrated-count)
           (mst/update-migration-store migration-id
                                       entity-type
                                       (into {:target {:migrated new-migrated-count}}
