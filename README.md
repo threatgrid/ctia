@@ -49,8 +49,7 @@ CTIA.
 
 You can jump to the [Developer](#Developer) section to see instructions
 on how to run elasticsearch and other optional supporting tools using
-Docker.  CTIA can use redis to store some of its objects (Verdicts)
-and also can send streams of events to Redis and Elasticsearch.
+Docker.  CTIA can use Kafka, Redis and ES to push stream of events.
 
 #### Purging ES Stores
 
@@ -89,7 +88,7 @@ includes all the dependencies you need to run Docker containers.
 
 **With Kafka and Zookeeper now part of the dev cluster, you will need
   to increase the memory you allocate to Docker.  You can do this thru
-  your Docker preferences.  This has been tested with an 8mb
+  your Docker preferences.  This has been tested with an 4GB
   allocation.**
 
 We  provide a  default `containers/dev/docker-compose.yml`  which will

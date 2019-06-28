@@ -13,18 +13,12 @@
 (def empty-hooks
   {:before-create (doc-list "`before-create` hooks are triggered on"
                             " create routes before the entity is saved in the DB.")
-
    :after-create (doc-list "`after-create` hooks are called after an entity was created.")
-
    :before-update (doc-list "`before-update` hooks are triggered on"
                             " update routes before the entity is saved in the DB.")
-
    :after-update (doc-list "`after-update` hooks are called after an entity was updated.")
-
    :before-delete (doc-list "`before-delete` hooks are called before an entity is deleted.")
-
    :after-delete (doc-list "`after-delete` hooks are called after an entity is deleted.")
-
    :event (doc-list "`event` hooks are called with an event during any CRUD activity.")})
 
 (defonce hooks (atom empty-hooks))

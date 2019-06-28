@@ -109,6 +109,21 @@
    (st/required-keys {"ctia.access-control.min-tlp" TLP
                       "ctia.access-control.default-tlp" TLP})
 
+   (st/optional-keys {"ctia.hook.kafka.enabled" s/Bool
+                      "ctia.hook.kafka.compression.type" (s/enum "none" "gzip" "snappy" "lz4" "zstd")
+                      "ctia.hook.kafka.ssl.enabled" s/Bool
+                      "ctia.hook.kafka.ssl.truststore.location" s/Str
+                      "ctia.hook.kafka.ssl.truststore.password" s/Str
+                      "ctia.hook.kafka.ssl.keystore.location" s/Str
+                      "ctia.hook.kafka.ssl.keystore.password" s/Str
+                      "ctia.hook.kafka.ssl.key.password" s/Str
+
+                      "ctia.hook.kafka.request-size" s/Num
+                      "ctia.hook.kafka.zk.address" s/Str
+                      "ctia.hook.kafka.topic.name" s/Str
+                      "ctia.hook.kafka.topic.num-partitions" s/Int
+                      "ctia.hook.kafka.topic.replication-factor" s/Int})
+
    (st/optional-keys {"ctia.events.log" s/Bool
                       "ctia.http.events.timeline.max-seconds" s/Int
                       "ctia.hook.redis.host" s/Str
