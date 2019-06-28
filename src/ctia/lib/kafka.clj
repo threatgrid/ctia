@@ -40,7 +40,7 @@
         brokers (opk/find-brokers {:kafka/zookeeper address})
         kafka-config (cond-> {"bootstrap.servers" brokers
                               "max.request.size" request-size}
-                       (ssl-enabled?) (merge (make-ssl-opts))
+                       (ssl-enabled?) (into (make-ssl-opts))
                        compression-type (assoc "compression.type"
                                                compression-type))]
     (okh/build-producer kafka-config
