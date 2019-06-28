@@ -27,10 +27,10 @@
   (testing "Events are published to kafka topic"
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
-          {:keys [channel-name] :as kafka-config}
-          (get-in @properties [:ctia :hook :kafka])
+          kafka-config (get-in @properties [:ctia :hook :kafka])
           consumer-map
           (lk/subscribe
+           kafka-config
            (fn test-events-kafka-topic-fn [ev]
              (let [v (:value ev)]
                (swap! results conj (parse-string v true))
@@ -97,7 +97,7 @@
             "Unexpected timeout waiting for events")
 
         (lk/stop-consumer consumer-map)
-        (lk/delete-topic)
+        (lk/delete-topic kafka-config)
 
         (is (= [{:owner "Unknown"
                  :groups ["Administrators"]

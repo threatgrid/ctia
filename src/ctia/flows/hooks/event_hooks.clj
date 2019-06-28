@@ -15,7 +15,7 @@
    [cheshire.core :refer [generate-string]]
    [schema.core :as s]))
 
-(defrecord KafkaEventPublisher [producer topic-name]
+(defrecord KafkaEventPublisher [producer kafka-config]
   Hook
   (init [_]
     :nothing)
@@ -24,7 +24,7 @@
     (.close producer))
   (handle [_ event _]
     (okh/send-sync! producer
-                    topic-name
+                    (get-in kafka-config [:topic :name])
                     nil
                     (.getBytes (:id event))
                     (.getBytes (generate-string event)))
@@ -53,18 +53,18 @@
                            channel-name)))
 
 (defn kafka-event-publisher []
-  (let [topic-name (get-in @properties
-                           [:ctia :hook :kafka :topic :name])]
+  (let [kafka-config (get-in @properties
+                             [:ctia :hook :kafka])]
 
-    (log/warn "Setting up Kafka topic")
+    (log/warn "Creating up Kafka topic")
     (try
-      (lk/create-topic)
+      (lk/create-topic kafka-config)
       (catch org.apache.kafka.common.errors.TopicExistsException e
-        (log/info "Kafka Topic already exists")))
+        (log/info "Kafka topic already exists")))
 
     (->KafkaEventPublisher
-     (lk/build-producer)
-     topic-name)))
+     (lk/build-producer kafka-config)
+     kafka-config)))
 
 (defrecord RedisMQPublisher [queue]
   Hook

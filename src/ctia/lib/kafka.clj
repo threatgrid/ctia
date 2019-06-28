@@ -29,16 +29,14 @@
      "ssl.key.password"
      (get-in ssl-props [:key :password])}))
 
-(defn build-producer []
+(defn build-producer [kafka-config]
   (let [producer-opts {}
-        {:keys [request-size compression]}
-        (get-in @properties [:ctia :hook :kafka])
+        {:keys [request-size compression]} kafka-config
         compression-type (:type compression)
         {:keys [session-timeout
                 connection-timeout
                 operation-retry-timeout
-                address] :as zk-config}
-        (get-in @properties [:ctia :hook :kafka :zk])
+                address] :as zk-config} (:zk kafka-config)
         brokers (opk/find-brokers {:kafka/zookeeper address})
         kafka-config (cond-> {"bootstrap.servers" brokers
                               "max.request.size" request-size}
@@ -49,14 +47,12 @@
                         (okh/byte-array-serializer)
                         (okh/byte-array-serializer))))
 
-(defn build-consumer []
-  (let [{:keys [request-size]}
-        (get-in @properties [:ctia :hook :kafka])
+(defn build-consumer [kafka-config]
+  (let [{:keys [request-size]} kafka-config
         {:keys [session-timeout
                 connection-timeout
                 operation-retry-timeout
-                address] :as zk-config}
-        (get-in @properties [:ctia :hook :kafka :zk])
+                address] :as zk-config} (:zk kafka-config)
         brokers (opk/find-brokers {:kafka/zookeeper address})
         kafka-config (cond-> {"bootstrap.servers" brokers
                               "group.id" "ctia"}
@@ -74,11 +70,18 @@
       (.commitSync consumer)
       (recur))))
 
-(defn subscribe [f timeout]
+(defn subscribe
+  "Given a handler function,
+   create a producer and start polling the requested topic
+   return a map with the KafkaConsumer and the wrapping thread"
+  [kafka-config handler timeout]
   (let [{:keys [name]}
-        (get-in @properties [:ctia :hook :kafka :topic])
-        consumer (build-consumer)
-        consumer-thread (Thread. #(poll consumer name f timeout))]
+        (:topic kafka-config)
+        consumer (build-consumer kafka-config)
+        consumer-thread (Thread. #(poll consumer
+                                        name
+                                        handler
+                                        timeout))]
     (.subscribe consumer [name])
     (.start consumer-thread)
     {:consumer consumer
@@ -89,13 +92,12 @@
            consumer-thread]}]
   (.stop consumer-thread))
 
-(defn create-topic []
-  (let [{:keys [address]}
-        (get-in @properties [:ctia :hook :kafka :zk])
+(defn create-topic [kafka-config]
+  (let [address (get-in kafka-config [:zk :address])
         {:keys [name
                 num-partitions
                 replication-factor]}
-        (get-in @properties [:ctia :hook :kafka :topic])
+        (:topic kafka-config)
         zk-utils (okh/make-zk-utils {:servers address} false)]
     (when-not (AdminUtils/topicExists zk-utils name)
       (okh/create-topic! address
@@ -103,17 +105,15 @@
                          num-partitions
                          replication-factor))))
 
-(defn kafka-delete-topic [zk-addr
-                          topic-name]
+(defn kafka-delete-topic [zk-addr topic-name]
   (with-open [zk-utils (okh/make-zk-utils {:servers zk-addr} false)]
     (AdminUtils/deleteTopic zk-utils
                             topic-name)))
 
-(defn delete-topic []
-  (let [{:keys [address]}
-        (get-in @properties [:ctia :hook :kafka :zk])
+(defn delete-topic [kafka-config]
+  (let [address (get-in kafka-config [:zk :address])
         {:keys [name
                 num-partitions
                 replication-factor]}
-        (get-in @properties [:ctia :hook :kafka :topic])]
+        (:topic kafka-config)]
     (kafka-delete-topic address name)))
