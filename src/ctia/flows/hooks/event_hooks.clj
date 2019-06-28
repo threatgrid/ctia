@@ -53,18 +53,18 @@
                            channel-name)))
 
 (defn kafka-event-publisher []
-  (let [kafka-config (get-in @properties
-                             [:ctia :hook :kafka])]
+  (let [kafka-props (get-in @properties
+                            [:ctia :hook :kafka])]
 
-    (log/warn "Creating up Kafka topic")
+    (log/warn "Ensure Kafka topic creation")
     (try
-      (lk/create-topic kafka-config)
+      (lk/create-topic kafka-props)
       (catch org.apache.kafka.common.errors.TopicExistsException e
         (log/info "Kafka topic already exists")))
 
     (->KafkaEventPublisher
-     (lk/build-producer kafka-config)
-     kafka-config)))
+     (lk/build-producer kafka-props)
+     kafka-props)))
 
 (defrecord RedisMQPublisher [queue]
   Hook

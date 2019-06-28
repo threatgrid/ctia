@@ -119,9 +119,6 @@
                       "ctia.hook.kafka.ssl.key.password" s/Str
 
                       "ctia.hook.kafka.request-size" s/Num
-                      "ctia.hook.kafka.zk.session-timeout" s/Int
-                      "ctia.hook.kafka.zk.connection-timeout" s/Int
-                      "ctia.hook.kafka.zk.connection-retry-timeout" s/Int
                       "ctia.hook.kafka.zk.address" s/Str
                       "ctia.hook.kafka.topic.name" s/Str
                       "ctia.hook.kafka.topic.num-partitions" s/Int

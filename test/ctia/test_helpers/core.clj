@@ -89,9 +89,6 @@
                     "ctia.hook.kafka.ssl.keystore.password" "Cisco42"
                     "ctia.hook.kafka.ssl.key.password" "Cisco42"
                     "ctia.hook.kafka.request-size" 307200
-                    "ctia.hook.kafka.zk.session-timeout" 38400
-                    "ctia.hook.kafka.zk.connection-timeout" 38400
-                    "ctia.hook.kafka.zk.connection-retry-timeout" 38400
                     "ctia.hook.kafka.zk.address" "localhost:2181"
                     "ctia.hook.kafka.topic.name" "ctia-events"
                     "ctia.hook.kafka.topic.num-partitions" 1

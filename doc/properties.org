@@ -155,9 +155,6 @@
 | Property                                   | Description                         | Possible values |
 |--------------------------------------------+-------------------------------------+-----------------|
 | ctia.hook.kafa.request-size                | set the Kafa max request size       | number          |
-| ctia.hook.kafa.zk.session-timeout          | Zookeeper session timeout           | number          |
-| ctia.hook.kafa.zk.connection-timeout       | Zookeeper connection timeout        | number          |
-| ctia.hook.kafa.zk.connection-retry-timeout | Zookeeper connection retry timeout  | number          |
 | ctia.hook.kafa.zk.address                  | Zookeeper address                   | string          |
 | ctia.hook.kafa.topic.name                  | The topic name to push messages to  | string          |
 | ctia.hook.kafa.topic.num-partitions        | Setup the topic partition countDown | string          |
