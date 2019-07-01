@@ -52,7 +52,13 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            {:pubkey-path (:public-key-path jwt)
+            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
+             (when-let [pubkey-for-issuer-map
+                        (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
+               (fn [{:keys [iss] :as claims}]
+                 (get pubkey-for-issuer-map iss)))
+             :error-handler auth-jwt/jwt-error-handler
+             :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))

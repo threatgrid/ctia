@@ -1,4 +1,10 @@
 #!/bin/bash
-openssl genrsa -out ctia-jwt.key 2048
-openssl req -out ctia-jwt.csr -key ctia-jwt.key -new -sha256
-openssl rsa -in ctia-jwt.key -pubout -out ctia-jwt.pub
+
+certname=${1:-ctia-jwt}
+
+echo "generating $certname.key"
+openssl genrsa -out $certname.key 2048
+echo "generating $certname.csr"
+openssl req -out $certname.csr -key $certname.key -new -sha256
+echo "generating $certname.pub"
+openssl rsa -in $certname.key -pubout -out $certname.pub
