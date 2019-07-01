@@ -45,9 +45,8 @@
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
-                 ;; es-helpers/fixture-delete-store-indexes
-                  ;; fixture-clean-migration
-                  ]))
+                  es-helpers/fixture-delete-store-indexes
+                  fixture-clean-migration]))
 
 (defn make-cat-indices-url [host port]
   (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
