@@ -81,9 +81,7 @@
                 (remove-es-actions items) models)}))
 
 (s/defn get-doc-with-index
-  "given an indexname which could be an alias pointing to multiple indices,
-  it returns the real index in which is the document with given _id,
-  if it exists, nil otherwise"
+  "Retrieves a document from a search \"ids\" query. It is used to perform a get query on an alias that points to multiple indices. It returns the document with full hits meta data including the real index in which is stored the document."
   [{:keys [conn index]} :- ESConnState
    mapping :- s/Keyword
    _id :- s/Str
@@ -98,6 +96,7 @@
     (-> res :data first)))
 
 (s/defn rollover
+  "Sends rollover query on a store if paramater aliased and rollover conditions are configured."
   [{conn :conn
     index :index
     {:keys [write-alias aliased]

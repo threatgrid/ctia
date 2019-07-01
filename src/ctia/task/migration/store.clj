@@ -179,18 +179,21 @@
 (def bulk-max-size (* 5 1024 1024)) ;; 5Mo
 
 (s/defn store-map->es-conn-state :- ESConnState
+  "Transforms a store map in ES lib conn state"
   [conn-state :- StoreMap]
   (dissoc (clojure.set/rename-keys conn-state {:indexname :index})
           :mapping :type :settings))
 
 
 (defn real-index-of
+  "Retrieves the real index of a document"
   [{:keys [mapping] :as conn-state} id]
   (-> (store-map->es-conn-state conn-state)
       (crud/get-doc-with-index (keyword mapping) id {})
       :_index))
 
 (defn write-alias
+  "Generates the index or alias on which a write operation should be performed."
   [{:keys [conn props mapping] :as conn-state}
    {:keys [id created modified] :as doc}]
   (if (or (= :event (keyword mapping))
@@ -324,6 +327,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
              "true"))))
 
 (defn target-index-config
+  "Generates the configuration of an index while migrating"
   [indexname config props]
   (-> (update config
               :settings
@@ -334,6 +338,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                        indexname {}})))
 
 (defn revert-optimizations-settings
+  "Revert configuration settings used for speeding up migration"
   [settings]
   (let [res (into {:refresh_interval "1s"}
                   (select-keys settings
