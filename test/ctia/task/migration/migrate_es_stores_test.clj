@@ -45,8 +45,9 @@
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
-                  es-helpers/fixture-delete-store-indexes
-                  fixture-clean-migration]))
+                 ;; es-helpers/fixture-delete-store-indexes
+                  ;; fixture-clean-migration
+                  ]))
 
 (defn make-cat-indices-url [host port]
   (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
@@ -291,11 +292,8 @@
                       weakness]
                :as es-props}
               (get-in @props/properties [:ctia :store :es])
-              expected-event-indices (->> (map (fn [i]
-                                                 {(format "v0.0.0_ctia_event-%06d" i) 50})
-                                               (range 1 (inc (* (count (keys minimal-examples))
-                                                                2))))
-                                          (into {}))
+              expected-event-indices {"v0.0.0_ctia_event-000001" 1000
+                                      "v0.0.0_ctia_event-000002" 500}
               expected-indices
               (->> #{relationship
                      judgement
@@ -315,8 +313,7 @@
                    (map (fn [k]
                           {(format  "v0.0.0_%s-000001" (:indexname k)) 50
                            (format  "v0.0.0_%s-000002" (:indexname k)) 50
-                           (format  "v0.0.0_%s-000003" (:indexname k)) 0
-                           }))
+                           (format  "v0.0.0_%s-000003" (:indexname k)) 0}))
                    (into expected-event-indices)
                    keywordize-keys)
               _ (es-index/refresh! es-conn)
@@ -397,9 +394,9 @@
 (defn load-test-fn
   [maximal?]
   ;; insert 20000 docs per entity-type
-  (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
-    (post-bulk bundle))
-  (doseq [batch-size [100 1000 3000 6000 10000]]
+  ;;(doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
+  ;;  (post-bulk bundle))
+  (doseq [batch-size [1000 3000 6000 10000]]
     (let [total-docs (* (count example-types) 20000)
           _ (println (format "===== migrating %s documents with batch size %s"
                              total-docs
@@ -433,10 +430,10 @@
       (es-doc/delete-doc es-conn migration-index "migration" migration-id "true")))
   (es-index/delete! es-conn "ctia_*"))
 
-;;(deftest ^:integration minimal-load-test
-;;  (testing "load testing with minimal entities"
-;;    (println "load testing with minimal entities")
-;;    (load-test-fn false)))
+(deftest ^:integration minimal-load-test
+  (testing "load testing with minimal entities"
+    (println "load testing with minimal entities")
+    (load-test-fn false)))
 
 ;;(deftest ^:integration maximal-load-test
 ;;  (testing "load testing with maximal entities"

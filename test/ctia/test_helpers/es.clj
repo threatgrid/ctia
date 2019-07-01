@@ -59,14 +59,15 @@
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
   (h/with-properties ["ctia.store.es.default.shards" 1
-                      "ctia.store.es.default.replicas" 0
+                      "ctia.store.es.default.replicas" 1
                       "ctia.store.es.default.refresh" "true"
                       "ctia.store.es.default.refresh_interval" "1s"
                       "ctia.store.es.default.port" "9200"
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.default.aliased" true
-                      "ctia.store.es.default.rollover.max_docs" 50
+                      "ctia.store.es.default.rollover.max_docs" 10000
+                      "ctia.store.es.event.rollover.max_docs" 10000
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.migration.indexname" "ctia_migration"

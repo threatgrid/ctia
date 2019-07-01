@@ -323,29 +323,35 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
              true
              "true"))))
 
-(defn target-index-settings [settings]
-  {:index (into settings
-                {:number_of_replicas 0
-                 :refresh_interval -1})})
+(defn target-index-config
+  [indexname config props]
+  (-> (update config
+              :settings
+              assoc
+              :number_of_replicas 0
+              :refresh_interval -1)
+      (assoc :aliases {(:write-alias props) {}
+                       indexname {}})))
 
 (defn revert-optimizations-settings
   [settings]
-  {:index (dissoc settings
-                  :number_of_shards
-                  :analysis)})
+  (let [res (into {:refresh_interval "1s"}
+                  (select-keys settings
+                               [:number_of_replicas :refresh_interval]))]
+    {:index res}))
 
 (defn create-target-store!
   "create the target store, pushing its template"
-  [{:keys [conn indexname config] entity-type :type :as target-store}]
+  [{:keys [conn indexname config props] entity-type :type :as target-store}]
   (when (retry es-max-retry es-index/index-exists? conn indexname)
     (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
-  (let [index-settings (target-index-settings (:settings config))]
+  (let [index-config (target-index-config indexname config props)]
     (log/infof "%s - purging indexes: %s" entity-type indexname)
     (retry es-max-retry es-index/delete! conn (str indexname "*"))
     (log/infof "%s - creating index template: %s" entity-type indexname)
     (log/infof "%s - creating index: %s" entity-type indexname)
-    (retry es-max-retry es-index/create-template! conn indexname config)
-    (retry es-max-retry es-index/create! conn (str indexname "-000001") index-settings)))
+    (retry es-max-retry es-index/create-template! conn indexname index-config)
+    (retry es-max-retry es-index/create! conn (str indexname "-000001") index-config)))
 
 (s/defn init-migration :- MigrationSchema
   "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
@@ -456,8 +462,7 @@ when confirm? is true, it stores this state and creates the target indices."
          es-index/update-settings!
          (:conn target-store)
          (:indexname target-store)
-         (revert-optimizations-settings
-          (get-in target-store [:config :settings])))
+         (revert-optimizations-settings (get-in target-store [:config :settings])))
   (log/infof "%s - trigger refresh" (:type source-store))
   (retry es-max-retry es-index/refresh! (:conn target-store) (:indexname target-store))
   (update-migration-store migration-id

@@ -99,19 +99,27 @@
 
 (s/defn rollover
   [{conn :conn
+    index :index
     {:keys [write-alias aliased]
      conditions :rollover} :props} :- ESConnState]
   (when (and aliased (seq conditions))
-    (let [{rolledover? :rolled_over :as response}
-          (es-index/rollover! conn write-alias conditions)]
-      (when rolledover?
-        (log/info "rolled over: " (pr-str response)))
-      response)))
+    (try
+      (let [{rolledover? :rolled_over :as response}
+            (es-index/rollover! conn write-alias conditions)]
+        (when rolledover?
+          (log/info "rolled over: " (pr-str response)))
+        response)
+
+      (catch clojure.lang.ExceptionInfo e
+        (log/warn "could not rollover, a concurrent rollover could be already running on that index"
+                  (pr-str (ex-data e)))))))
+
 
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))]
+  (let [coerce! (coerce-to-fn (s/maybe Model))
+        rollingover (atom false)]
     (s/fn :- (s/maybe [Model])
       [state :- ESConnState
        models :- [Model]
@@ -119,16 +127,19 @@
        {:keys [refresh] :as params}]
       (try
         (let [created
-              (map #(build-create-result % coerce!)
-                   (d/bulk-create-doc (:conn state)
-                                      (map #(assoc %
-                                                   :_id (:id %)
-                                                   :_index (-> state :props :write-alias)
-                                                   :_type (name mapping))
-                                           models)
-                                      (or refresh
-                                          (get-in state [:props :refresh] "false"))))]
-          (rollover state)
+              (mapv #(build-create-result % coerce!)
+                    (d/bulk-create-doc (:conn state)
+                                       (mapv #(assoc %
+                                                     :_id (:id %)
+                                                     :_index (-> state :props :write-alias)
+                                                     :_type (name mapping))
+                                            models)
+                                       (or refresh
+                                           (get-in state [:props :refresh] "false"))))]
+          (when (compare-and-set! rollingover false true)
+            ;; avoid concurrent rollover for given entity type
+            (rollover state)
+            (swap! rollingover not))
           created)
         (catch Exception e
           (throw

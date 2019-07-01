@@ -15,16 +15,17 @@
          :_id (:id event)
          :_index index))
 
+(def ^:private handle-create-fn
+  (crud/handle-create :event Event))
+
 (s/defn handle-create :- [Event]
   "produce an event to ES"
-  [{:keys [conn props]} :- ESConnState
+  [conn :- ESConnState
    events :- [Event]]
-  (document/bulk-create-doc
-   conn
-   (map #(attach-bulk-fields (:write-alias props) %)
-        events)
-   (:refresh props "false"))
-  events)
+  (handle-create-fn conn
+                    events
+                    {}
+                    {}))
 
 (def ^:private handle-list-fn
   (crud/handle-find :event Event))

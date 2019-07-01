@@ -35,11 +35,9 @@
                   :number_of_replicas replicas}]
     {:index indexname
      :props (assoc props :write-alias write-alias)
-     :config (into {:settings (merge store-settings settings)
-                    :mappings (get store-mappings entity mappings)}
-                   (when aliased
-                     {:aliases (assoc {indexname {}}
-                                      write-alias {})}))
+     :config {:settings (merge store-settings settings)
+              :mappings (get store-mappings entity mappings)
+              :aliases {indexname {}}}
      :conn (connect props)}))
 
 (s/defn init-es-conn! :- ESConnState
@@ -47,11 +45,14 @@
    put the index template, return an ESConnState"
   [properties :- StoreProperties]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties)]
+        (init-store-conn properties)
+        first-index-config (update config :aliases assoc (:write-alias props) {})]
     (es-index/create-template! conn index config)
     (when-not (seq (es-index/get conn (str index "*")))
       ;;https://github.com/elastic/elasticsearch/pull/34499
-      (es-index/create! conn (str index "-000001") {}))
+      (es-index/create! conn
+                        (str index "-000001")
+                        first-index-config))
     conn-state))
 
 

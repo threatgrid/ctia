@@ -29,14 +29,25 @@
   (is (= "v0.4.2_ctia_actor"
          (sut/prefixed-index "v0.4.1_ctia_actor" "0.4.2"))))
 
-(deftest target-index-settings-test
-  (is (= {:index {:number_of_replicas 0
-                  :refresh_interval -1
-                  :mapping {}}}
-         (sut/target-index-settings {:mapping {}})))
-  (is (= {:index {:number_of_replicas 0
-                  :refresh_interval -1}}
-         (sut/target-index-settings {}))))
+(deftest target-index-config-test
+  (is (= {:settings {:index {:number_of_replicas 0
+                             :refresh_interval -1}}
+          :aliases {"test_index" {}
+                    "test_index-write" {}}}
+         (sut/target-index-config "test_index"
+                                  {}
+                                  {:write-alias "test_index-write"})))
+  (is (= {:settings {:index {:number_of_replicas 0
+                             :refresh_interval -1
+                             :number_of_shards 3}}
+          :mappings {:a :b}
+          :aliases {"test_index" {}
+                    "test_index-write" {}}}
+         (sut/target-index-config "test_index"
+                                  {:settings {:index {:refresh_interval 2
+                                                      :number_of_shards 3}}
+                                   :mappings {:a :b}}
+                                  {:write-alias "test_index-write"}))))
 
 (deftest wo-storemaps-test
   (let [fake-migration (sut/init-migration "migration-id-1"
@@ -341,7 +352,18 @@
                           (is (= (set (keys stores))
                                  (set entity-types)))
                           (doseq [entity-type entity-types]
-                            (let [{:keys [source target started completed]} (get stores entity-type)]
+                            (let [{:keys [source target started completed]} (get stores entity-type)
+                                  created-indices (es-index/get es-conn (str (:index target) "*"))]
+                              (is (= "-1"  (-> (vals created-indices)
+                                             first
+                                             :settings
+                                             :index
+                                             :refresh_interval)))
+                              (is (= "0"  (-> (vals created-indices)
+                                             first
+                                             :settings
+                                             :index
+                                             :number_of_replicas)))
                               (is (nil? started))
                               (is (nil? completed))
                               (is (= 0 (:migrated target)))
@@ -361,7 +383,7 @@
                    "init-migration without confirmation shall return a proper migration state")
       (check-state real-migration-from-init
                    migration-id-2
-                   "init-migration with confirmation shall return a proper migration state")
+                   "init-migration with confirmation shall return a propr migration state")
       (check-state (sut/get-migration migration-id-2 es-conn)
                    migration-id-2
                    "init-migration shall store confirmed migration, and get-migration should be properly retrieved from store")

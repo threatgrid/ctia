@@ -15,7 +15,8 @@
     (is (= index "ctia_sighting"))
     (is (= (:write-alias props) "ctia_sighting"))
     (is (= "http://localhost:9200" (:uri conn)))
-    (is (nil? (:aliases config)))
+    (is (= #{"ctia_sighting"}
+           (-> config :aliases keys set)))
     (is (= 1 (get-in config [:settings :number_of_replicas])))
     (is (= 2 (get-in config [:settings :number_of_shards])))
     (is (= {} (select-keys (:mappings config) [:a :b]))))
@@ -33,8 +34,8 @@
     (is (= index "ctia_sighting"))
     (is (= (:write-alias props) "ctia_sighting-write"))
     (is (= "http://localhost:9200" (:uri conn)))
-    (is (= #{"ctia_sighting-write" "ctia_sighting"}
-           (-> config :aliases keys set)))
+    (is (= "ctia_sighting"
+           (-> config :aliases keys first)))
     (is (= 1 (get-in config [:settings :number_of_replicas])))
     (is (= 2 (get-in config [:settings :number_of_shards])))
     (is (= {} (select-keys (:mappings config) [:a :b])))))
