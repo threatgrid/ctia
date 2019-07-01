@@ -430,10 +430,10 @@
       (es-doc/delete-doc es-conn migration-index "migration" migration-id "true")))
   (es-index/delete! es-conn "ctia_*"))
 
-(deftest ^:integration minimal-load-test
-  (testing "load testing with minimal entities"
-    (println "load testing with minimal entities")
-    (load-test-fn false)))
+;;(deftest ^:integration minimal-load-test
+;;  (testing "load testing with minimal entities"
+;;    (println "load testing with minimal entities")
+;;    (load-test-fn false)))
 
 ;;(deftest ^:integration maximal-load-test
 ;;  (testing "load testing with maximal entities"

@@ -66,8 +66,8 @@
                       "ctia.store.es.default.indexname" "test_ctia"
                       "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.default.aliased" true
-                      "ctia.store.es.default.rollover.max_docs" 10000
-                      "ctia.store.es.event.rollover.max_docs" 10000
+                      "ctia.store.es.default.rollover.max_docs" 50
+                      "ctia.store.es.event.rollover.max_docs" 1000
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.migration.indexname" "ctia_migration"
