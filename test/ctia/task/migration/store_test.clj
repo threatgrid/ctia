@@ -30,22 +30,22 @@
          (sut/prefixed-index "v0.4.1_ctia_actor" "0.4.2"))))
 
 (deftest target-index-config-test
-  (is (= {:settings {:index {:number_of_replicas 0
-                             :refresh_interval -1}}
+  (is (= {:settings {:number_of_replicas 0
+                     :refresh_interval -1}
           :aliases {"test_index" {}
                     "test_index-write" {}}}
          (sut/target-index-config "test_index"
                                   {}
                                   {:write-alias "test_index-write"})))
-  (is (= {:settings {:index {:number_of_replicas 0
-                             :refresh_interval -1
-                             :number_of_shards 3}}
+  (is (= {:settings {:number_of_replicas 0
+                     :refresh_interval -1
+                     :number_of_shards 3}
           :mappings {:a :b}
           :aliases {"test_index" {}
                     "test_index-write" {}}}
          (sut/target-index-config "test_index"
-                                  {:settings {:index {:refresh_interval 2
-                                                      :number_of_shards 3}}
+                                  {:settings {:refresh_interval 2
+                                              :number_of_shards 3}
                                    :mappings {:a :b}}
                                   {:write-alias "test_index-write"}))))
 

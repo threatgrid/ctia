@@ -393,8 +393,8 @@
 (defn load-test-fn
   [maximal?]
   ;; insert 20000 docs per entity-type
-  ;;(doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
-  ;;  (post-bulk bundle))
+  (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
+    (post-bulk bundle))
   (doseq [batch-size [1000 3000 6000 10000]]
     (let [total-docs (* (count example-types) 20000)
           _ (println (format "===== migrating %s documents with batch size %s"
