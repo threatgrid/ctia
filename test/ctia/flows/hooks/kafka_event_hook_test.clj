@@ -37,7 +37,7 @@
                (.countDown finish-signal)))
            30000)
           ;; await rebalance
-          _ (Thread/sleep 5000)]
+          _ (Thread/sleep 10000)]
       (let [{{judgement-1-long-id :id} :parsed-body
              judgement-1-status :status
              :as judgement-1}
@@ -93,7 +93,7 @@
         (is (= 201 judgement-2-status))
         (is (= 201 judgement-3-status))
 
-        (is (.await finish-signal 5 TimeUnit/SECONDS)
+        (is (.await finish-signal 30 TimeUnit/SECONDS)
             "Unexpected timeout waiting for events")
 
         (lk/stop-consumer consumer-map)
