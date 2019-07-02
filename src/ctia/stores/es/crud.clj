@@ -91,8 +91,9 @@
                      index
                      (name mapping)
                      ids-query
-                     (make-es-read-params params)
-                     true)]
+                     (assoc (make-es-read-params params)
+                            :full-hits?
+                            true))]
     (-> res :data first)))
 
 (defn handle-create

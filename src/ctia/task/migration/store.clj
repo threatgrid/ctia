@@ -321,7 +321,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
       (retry es-max-retry
              es-doc/delete-by-query
              conn
-             indexname
+             [indexname]
              (name entity-type)
              (es-query/ids ids)
              true
