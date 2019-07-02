@@ -18,6 +18,7 @@
              [mapping :as em]
              [store :refer [StoreMap] :as es-store]]
             [ctia.lib.collection :refer [fmap]]
+            [ctia.task.rollover :refer [rollover-store]]
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :refer [properties init!]]
@@ -164,7 +165,7 @@
                      (map (fn [[k v]] {(prefixer k) v}))
                      (into {}))]
     (-> (assoc-in store [:config :aliases] aliases)
-        (update-in [:props :write-alias] prefixer)
+        (update-in [:props :write-index] prefixer)
         (update :indexname prefixer))))
 
 
@@ -192,14 +193,14 @@
       (crud/get-doc-with-index (keyword mapping) id {})
       :_index))
 
-(defn write-alias
+(defn write-index
   "Generates the index or alias on which a write operation should be performed."
   [{:keys [conn props mapping] :as conn-state}
    {:keys [id created modified] :as doc}]
   (if (or (= :event (keyword mapping))
           (= created modified)
           (nil? modified))
-    (:write-alias props)
+    (:write-index props)
     (real-index-of conn-state id)))
 
 (s/defn rollover?
@@ -215,14 +216,14 @@
   "Performs rollover if conditions are met.
 Rollover requires refresh so we cannot just call ES with condition since refresh is set to -1 for performance reasons"
   [{conn :conn
-    {:keys [aliased write-alias]
+    {:keys [aliased write-index]
      {:keys [max_docs]} :rollover} :props
     :as store-map} :- StoreMap
    batch-size :- s/Int
    migrated-count :- s/Int]
   (when rollover?
-    (es-index/refresh! conn write-alias)
-    (crud/rollover (store-map->es-conn-state store-map))))
+    (es-index/refresh! conn write-index)
+    (rollover-store (store-map->es-conn-state store-map))))
 
 (defn store-batch
   "store a batch of documents using a bulk operation"
@@ -234,7 +235,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
   (let [prepared-docs
         (map #(assoc %
                      :_id (:id %)
-                     :_index (write-alias store-map %)
+                     :_index (write-index store-map %)
                      :_type mapping)
              batch)
         res (retry es-max-retry
@@ -334,7 +335,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
               assoc
               :number_of_replicas 0
               :refresh_interval -1)
-      (assoc :aliases {(:write-alias props) {}
+      (assoc :aliases {(:write-index props) {}
                        indexname {}})))
 
 (defn revert-optimizations-settings

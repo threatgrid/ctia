@@ -15,12 +15,11 @@
             [ctia.store :refer [stores]]
             [ctia.stores.es.store :refer [store->map]]
             [ctia.test-helpers
+             [fixtures :as fixt]
              [core :as helpers :refer [post-bulk delete]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
-            [ctia.task.migration
-             [fixtures :as fixt]
-             [store :as sut]]
+            [ctia.task.migration.store :as sut]
             [ctia.store :as st]))
 
 (deftest prefixed-index-test
@@ -36,7 +35,7 @@
                     "test_index-write" {}}}
          (sut/target-index-config "test_index"
                                   {}
-                                  {:write-alias "test_index-write"})))
+                                  {:write-index "test_index-write"})))
   (is (= {:settings {:number_of_replicas 0
                      :refresh_interval -1
                      :number_of_shards 3}
@@ -47,7 +46,7 @@
                                   {:settings {:refresh_interval 2
                                               :number_of_shards 3}
                                    :mappings {:a :b}}
-                                  {:write-alias "test_index-write"}))))
+                                  {:write-index "test_index-write"}))))
 
 (deftest wo-storemaps-test
   (let [fake-migration (sut/init-migration "migration-id-1"
@@ -63,22 +62,22 @@
                               :mapping :malware
                               :config {:aliases {"ctia-malware" {}
                                                  "ctia-malware-write" {}}}
-                              :props {:write-alias "ctia-malware-write"}}
+                              :props {:write-index "ctia-malware-write"}}
         sighting-source-store {:indexname "ctia-sighting"
                                :mapping :sighting
                                :config {:aliases {"ctia-sighting" {}
                                                   "ctia-sighting-write" {}}}
-                               :props {:write-alias "ctia-sighting-write"}}
+                               :props {:write-index "ctia-sighting-write"}}
         malware-target-store  {:indexname "v0.0.0_ctia-malware"
                                :mapping :malware
                                :config {:aliases {"v0.0.0_ctia-malware" {}
                                                   "v0.0.0_ctia-malware-write" {}}}
-                               :props {:write-alias "v0.0.0_ctia-malware-write"}}
+                               :props {:write-index "v0.0.0_ctia-malware-write"}}
         sighting-target-store  {:indexname "v0.0.0_ctia-sighting"
                                 :mapping :sighting
                                 :config {:aliases {"v0.0.0_ctia-sighting" {}
                                                    "v0.0.0_ctia-sighting-write" {}}}
-                                :props {:write-alias "v0.0.0_ctia-sighting-write"}}]
+                                :props {:write-index "v0.0.0_ctia-sighting-write"}}]
     (is (= {:malware malware-target-store
             :sighting sighting-target-store}
            (sut/source-store-maps->target-store-maps {:malware malware-source-store
@@ -133,7 +132,7 @@
   (let [indexname "test_index"
         store {:conn es-conn
                :indexname indexname
-               :props {:write-alias indexname}
+               :props {:write-index indexname}
                :mapping "test_mapping"}
         nb-docs-1 10
         nb-docs-2 20
@@ -163,7 +162,7 @@
     (let [indexname "test_event"
           event-store {:conn es-conn
                        :indexname indexname
-                       :props {:write-alias indexname}
+                       :props {:write-index indexname}
                        :mapping "event"
                        :type "event"
                        :settings {}
@@ -233,7 +232,7 @@
     (let [indexname "test_index"
           tool-store {:conn es-conn
                       :indexname indexname
-                      :props {:write-alias indexname}
+                      :props {:write-index indexname}
                       :mapping "tool"
                       :type "tool"
                       :settings {}
@@ -246,7 +245,7 @@
           malware-store {:conn es-conn
                          :indexname indexname
                          :mapping "malware"
-                         :props {:write-alias indexname}
+                         :props {:write-index indexname}
                          :type "malware"
                          :settings {}
                          :config {}}

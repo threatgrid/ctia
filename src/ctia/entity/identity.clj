@@ -41,7 +41,7 @@
         transformed (update-in realized [:capabilities]
                                capabilities-set->capabilities)
         res (create-doc conn
-                        (:write-alias props)
+                        (:write-index props)
                         mapping
                         transformed
                         (:refresh props "false"))]

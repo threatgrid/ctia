@@ -15,10 +15,10 @@
 
             [ctia.properties :as props]
             [ctia.task.migration
-             [fixtures :as fixt]
              [migrate-es-stores :as sut]
              [store :refer [setup! prefixed-index get-migration fetch-batch]]]
             [ctia.test-helpers
+             [fixtures :as fixt]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post put delete post-bulk with-atom-logger]]
              [es :as es-helpers]

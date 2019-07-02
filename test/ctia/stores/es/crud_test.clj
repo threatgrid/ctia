@@ -4,6 +4,7 @@
             [clj-momo.lib.es.index :as es-index]
             [ctia.stores.es.crud :as sut]
             [ctia.stores.es.init :as init]
+            [ctia.task.rollover :refer [rollover-store]]
 
             [ctia.test-helpers
              [core :as helpers]
@@ -40,9 +41,17 @@
                   helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes]))
 
-(deftest rollover-crud-test
-  (let [ident {:groups ["group1"]}
-        props-aliased {:entity :sighting
+(def create-fn (sut/handle-create :sighting s/Any))
+(def update-fn (sut/handle-update :sighting s/Any))
+(def read-fn (sut/handle-read :sighting s/Any))
+(def delete-fn (sut/handle-delete :sighting s/Any))
+(def ident {:groups ["group1"]})
+(def base-sighting {:title "a sighting"
+                    :tlp "green"
+                    :groups ["group1"]})
+
+(deftest crud-aliased-test
+  (let [props-aliased {:entity :sighting
                        :indexname "ctia_sighting"
                        :host "localhost"
                        :port 9200
@@ -50,87 +59,92 @@
                        :rollover {:max_docs 3}
                        :refresh "true"}
         state-aliased (init/init-es-conn! props-aliased)
-        rollover-aliased (sut/rollover state-aliased)
-
-        props-not-aliased {:entity :sighting
-                           :indexname "ctia_sighting"
-                           :host "localhost"
-                           :port 9200}
-        state-not-aliased (update state-aliased :props dissoc :aliased)
-        rollover-not-aliased (sut/rollover state-not-aliased)
-
-        create-fn (sut/handle-create :sighting s/Any)
-        update-fn (sut/handle-update :sighting s/Any)
-        read-fn (sut/handle-read :sighting s/Any)
-        delete-fn (sut/handle-delete :sighting s/Any)
         count-index #(count (es-index/get (:conn state-aliased)
                                           (str (:index state-aliased) "*")))
         base-sighting {:title "a sighting"
                        :tlp "green"
                        :groups ["group1"]}]
-    (is (nil? rollover-not-aliased))
-    (is (seq rollover-aliased))
-    (is (false? (:rolled_over rollover-aliased)))
 
-    (create-fn state-not-aliased
-               (map #(assoc base-sighting
-                            :id (str "sighting-" %))
-                    (range 3))
-              ident
-               {})
-    (is (= 1 (count-index)) ;; total docs: 3
-        "rollover should not be triggered when :aliased property is set to false")
+    (testing "crud operation should properly handle aliased states before rollover"
+      (create-fn state-aliased
+                 (map #(assoc base-sighting
+                              :id (str "sighting-" %))
+                      (range 4))
+                 ident
+                 {})
+      (is (= 1 (count-index)))
+      (is (= '"sighting-1"
+             (:id (read-fn state-aliased "sighting-1" ident {}))))
+      (is (= "value1"
+             (:updated-field (update-fn state-aliased
+                                        "sighting-1"
+                                        (assoc base-sighting
+                                               :updated-field
+                                               "value1")
+                                        ident))))
+      (is (true? (delete-fn state-aliased
+                            "sighting-1"
+                            ident))))
 
-    (create-fn state-aliased
-               (repeat 1 {:title "a sighting"})
-               {}
-               {})
-    ;; total docs: 4
-    (is (= 2 (count-index))
-        "exceeding max_doc condition should trigger rollover when :aliased is set to false")
+    (rollover-store state-aliased)
+    (testing "crud operation should properly handle aliased states after rollover"
+      (create-fn state-aliased
+                 (map #(assoc base-sighting
+                              :id (str "sighting-" %))
+                      (range 4 7))
+                 ident
+                 {})
+      (is (= 2 (count-index)))
+      (is (= '"sighting-2"
+             (:id (read-fn state-aliased "sighting-2" ident {}))))
+      (is (= '"sighting-5"
+             (:id (read-fn state-aliased "sighting-5" ident {}))))
+      (is (= "value2"
+             (:updated-field (update-fn state-aliased
+                                        "sighting-2"
+                                        (assoc base-sighting
+                                               :updated-field
+                                               "value2")
+                                        ident))))
+      (is (= "value5"
+             (:updated-field (update-fn state-aliased
+                                        "sighting-5"
+                                        (assoc base-sighting
+                                               :updated-field
+                                               "value5")
+                                        ident))))
+      (is (true? (delete-fn state-aliased
+                            "sighting-2"
+                            ident)))
+      (is (true? (delete-fn state-aliased
+                            "sighting-5"
+                            ident))))))
 
-    (create-fn state-aliased
-               (repeat 1 {:title "a sighting"})
-               {}
-               {})
-    (is (= 2 (count-index)) ;; total docs in last index: 1
-        "not exceeding max_doc condition in current index, should not trigger rollover")
 
-    (create-fn state-aliased
-               (repeat 3 {:title "a sighting"})
-               {}
-               {})
-    (is (= 3 (count-index)) ;; total docs in last index: 3
-        "when index size is equal to max_doc condition it should trigger rollover when :aliased is set to false")
+(deftest crud-unaliased-test
+  (let [props-not-aliased {:entity :sighting
+                           :indexname "ctia_sighting"
+                           :host "localhost"
+                           :port 9200
+                           :refresh "true"}
+        state-not-aliased (init/init-es-conn! props-not-aliased)]
 
-    (is (= '"sighting-1"
-           (:id (read-fn state-aliased "sighting-1" ident {}))
-           (:id (read-fn state-not-aliased "sighting-1" ident {})))
-        "handle read should properly retrieve inserted documents with aliased and not aliased conf")
-
-    (is (= "value1"
-           (:updated-field (update-fn state-aliased
-                                      "sighting-1"
-                                      (assoc base-sighting
-                                             :updated-field
-                                             "value1")
-                                      ident)))
-        "handle update should properly update documents with aliases")
-    (is (= "value2"
-           (:updated-field (update-fn state-not-aliased
-                                      "sighting-1"
-                                      (assoc base-sighting
-                                             :updated-field
-                                             "value2")
-                                      ident)))
-        "handle update should properly update documents even with aliased property modified to false")
-
-    (is (true? (delete-fn state-aliased
-                          "sighting-1"
-                          ident))
-        "handle-delete should properly delete documents with aliases")
-
-    (is (true? (delete-fn state-not-aliased
-                          "sighting-2"
-                          ident))
-        "handle delete should properly delete documents even with aliased property modified to false")))
+    (testing "crud operation should properly handle not aliased states"
+      (create-fn state-not-aliased
+                 (map #(assoc base-sighting
+                              :id (str "sighting-" %))
+                      (range 4))
+                 ident
+                 {})
+      (is (= '"sighting-1"
+             (:id (read-fn state-not-aliased "sighting-1" ident {}))))
+      (is (= "value1"
+             (:updated-field (update-fn state-not-aliased
+                                        "sighting-1"
+                                        (assoc base-sighting
+                                               :updated-field
+                                               "value1")
+                                        ident))))
+      (is (true? (delete-fn state-not-aliased
+                            "sighting-1"
+                            ident))))))

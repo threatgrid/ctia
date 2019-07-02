@@ -95,51 +95,25 @@
                      true)]
     (-> res :data first)))
 
-(s/defn rollover
-  "Sends rollover query on a store if paramater aliased and rollover conditions are configured."
-  [{conn :conn
-    index :index
-    {:keys [write-alias aliased]
-     conditions :rollover} :props} :- ESConnState]
-  (when (and aliased (seq conditions))
-    (try
-      (let [{rolledover? :rolled_over :as response}
-            (es-index/rollover! conn write-alias conditions)]
-        (when rolledover?
-          (log/info "rolled over: " (pr-str response)))
-        response)
-
-      (catch clojure.lang.ExceptionInfo e
-        (log/warn "could not rollover, a concurrent rollover could be already running on that index"
-                  (pr-str (ex-data e)))))))
-
-
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
-  (let [coerce! (coerce-to-fn (s/maybe Model))
-        rollingover (atom false)]
+  (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe [Model])
-      [state :- ESConnState
+      [{:keys [index props] :as state} :- ESConnState
        models :- [Model]
        ident
        {:keys [refresh] :as params}]
       (try
-        (let [created
-              (mapv #(build-create-result % coerce!)
-                    (d/bulk-create-doc (:conn state)
-                                       (mapv #(assoc %
-                                                     :_id (:id %)
-                                                     :_index (-> state :props :write-alias)
-                                                     :_type (name mapping))
-                                            models)
-                                       (or refresh
-                                           (get-in state [:props :refresh] "false"))))]
-          (when (compare-and-set! rollingover false true)
-            ;; avoid concurrent rollover for given entity type
-            (rollover state)
-            (swap! rollingover not))
-          created)
+        (mapv #(build-create-result % coerce!)
+              (d/bulk-create-doc (:conn state)
+                                 (mapv #(assoc %
+                                               :_id (:id %)
+                                               :_index (:write-index props)
+                                               :_type (name mapping))
+                                       models)
+                                 (or refresh
+                                     (:refresh props "false"))))
         (catch Exception e
           (throw
            (if-let [ex-data (ex-data e)]

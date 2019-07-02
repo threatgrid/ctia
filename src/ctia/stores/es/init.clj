@@ -29,15 +29,17 @@
   [{:keys [entity indexname shards replicas mappings aliased]
     :or {aliased false}
     :as props} :- StoreProperties]
-  (let [write-alias (str indexname
+  (let [write-index (str indexname
                          (when aliased "-write"))
         settings {:number_of_shards shards
                   :number_of_replicas replicas}]
     {:index indexname
-     :props (assoc props :write-alias write-alias)
-     :config {:settings (merge store-settings settings)
-              :mappings (get store-mappings entity mappings)
-              :aliases {indexname {}}}
+     :props (assoc props :write-index write-index)
+     :config (into
+              {:settings (merge store-settings settings)
+               :mappings (get store-mappings entity mappings)}
+              (when aliased
+                {:aliases {indexname {}}}))
      :conn (connect props)}))
 
 (s/defn init-es-conn! :- ESConnState
@@ -45,14 +47,14 @@
    put the index template, return an ESConnState"
   [properties :- StoreProperties]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties)
-        first-index-config (update config :aliases assoc (:write-alias props) {})]
+        (init-store-conn properties)]
     (es-index/create-template! conn index config)
-    (when-not (seq (es-index/get conn (str index "*")))
+    (when (and (:aliased props)
+               (empty? (es-index/get conn (str index "*"))))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn
                         (str index "-000001")
-                        first-index-config))
+                        (update config :aliases assoc (:write-index props) {})))
     conn-state))
 
 
