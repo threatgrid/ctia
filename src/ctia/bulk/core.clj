@@ -69,11 +69,14 @@
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity]
   (let [read-entity (read-fn entity-type auth-identity {})]
-    (map (fn [id] (try (with-long-id
-                         (read-entity id))
-                       (catch Exception e
-                         (do (log/error (pr-str e))
-                             nil)))) ids)))
+    (map (fn [id]
+           (try
+             (if-let [entity (read-entity id)]
+               (with-long-id entity)
+               nil)
+             (catch Exception e
+               (do (log/error (pr-str e))
+                   nil)))) ids)))
 
 (defn gen-bulk-from-fn
   "Kind of fmap but adapted for bulk
