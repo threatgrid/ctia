@@ -320,7 +320,7 @@ use `limit` and `offset` along with `search_after` filled with the value from th
 
 #### Rate limit
 
-Request can be rate limited by enabling the middleware with the `ctia.http.rate-limit.enabled` property.
+Requests may be rate limited by enabling the middleware using the `ctia.http.rate-limit.enabled` property.
 
 It rate limits how many HTTP requests a CTIA group can make in an hour. The group is identified with the property :identity of the current Ring request.
 
