@@ -324,7 +324,7 @@ Requests may be rate limited by enabling the middleware using the `ctia.http.rat
 
 It rate limits how many HTTP requests a CTIA group can make in an hour. The group is identified with the property :identity of the current Ring request.
 
-When the rate limit is not reached, the header `X-Ratelimit-Group-Limit` is returned in the response:
+Before the rate limit is reached, the header `X-Ratelimit-Group-Limit` is returned in the response:
 
 ```
 HTTP/1.1 200 OK
