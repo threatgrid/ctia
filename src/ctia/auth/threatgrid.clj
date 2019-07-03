@@ -35,7 +35,9 @@
     capabilities)
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
-                 (auth/allowed-capabilities this))))
+                 (auth/allowed-capabilities this)))
+  (rate-limited? [_]
+    false))
 
 (defn make-whoami-fn [whoami-url]
   (fn [token]

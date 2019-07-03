@@ -1,16 +1,16 @@
 (ns ctia.auth.jwt
   (:refer-clojure :exclude [identity])
-  (:require
-   [ctia.auth.capabilities
-    :refer [default-capabilities
-            all-entities
-            gen-capabilities-for-entity-and-accesses]]
-   [ring-jwt-middleware.core :as mid]
-   [clj-momo.lib.set :refer [as-set]]
-   [clojure.set :as set]
-   [ctia
-    [auth :as auth :refer [IIdentity]]
-    [properties :as prop]]))
+  (:require [clj-momo.lib.set :refer [as-set]]
+            [clojure
+             [set :as set]
+             [string :as string]]
+            [ctia
+             [auth :as auth :refer [IIdentity]]
+             [properties :as prop]]
+            [ctia.auth.capabilities
+             :refer
+             [all-entities gen-capabilities-for-entity-and-accesses]]
+            [ring-jwt-middleware.core :as mid]))
 
 (defn entity-root-scope []
   (get-in @prop/properties [:ctia :auth :entities :scope]
@@ -101,7 +101,19 @@
   [keyword-name]
   (str claim-prefix "/" keyword-name))
 
-(defrecord JWTIdentity [jwt]
+(defn parse-unlimited-clientids
+  [clientids]
+  (string/split clientids #","))
+
+(defn unlimited-clientids
+  "Retrieves and parses unlimited clientids defined in the properties"
+  []
+  (some-> (get-in @prop/properties
+                  [:ctia :http :rate-limit :unlimited-clientids])
+          parse-unlimited-clientids
+          set))
+
+(defrecord JWTIdentity [jwt non-ratelimited-clientids]
   IIdentity
   (authenticated? [_]
     true)
@@ -114,16 +126,23 @@
       (scopes-to-capabilities scopes)))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
-                 (auth/allowed-capabilities this))))
+                 (auth/allowed-capabilities this)))
+  (rate-limited? [_]
+    (let [client-id (get jwt (iroh-claim "oauth/client/id"))
+          unlimited? (and client-id
+                          (contains? non-ratelimited-clientids
+                                     client-id))]
+      (not unlimited?))))
 
 (defn wrap-jwt-to-ctia-auth
   [handler]
-  (fn [request]
-    (handler
-     (if-let [jwt (:jwt request)]
-       (let [identity (->JWTIdentity jwt)]
-         (assoc request
-                :identity identity
-                :login    (auth/login identity)
-                :groups   (auth/groups identity)))
-       request))))
+  (let [non-ratelimited-clientids (unlimited-clientids)]
+    (fn [request]
+      (handler
+       (if-let [jwt (:jwt request)]
+         (let [identity (->JWTIdentity jwt non-ratelimited-clientids)]
+           (assoc request
+                  :identity identity
+                  :login    (auth/login identity)
+                  :groups   (auth/groups identity)))
+         request)))))

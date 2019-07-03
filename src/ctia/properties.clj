@@ -57,8 +57,6 @@
    StorePropertiesSchema
    (st/required-keys {"ctia.auth.type" s/Keyword})
 
-
-
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
                       "ctia.auth.entities.scope" s/Str
                       "ctia.auth.casebook.scope" s/Str
@@ -74,6 +72,18 @@
                       "ctia.http.access-control-allow-methods" s/Str
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
+
+   (st/optional-keys {"ctia.http.rate-limit.enabled" s/Bool
+                      "ctia.http.rate-limit.key-prefix" s/Str
+                      "ctia.http.rate-limit.unlimited-clientids" s/Str
+                      "ctia.http.rate-limit.default-group-limit" s/Int
+                      "ctia.http.rate-limit.custom-group-limits" s/Str
+                      "ctia.http.rate-limit.redis.host" s/Str
+                      "ctia.http.rate-limit.redis.port" s/Int
+                      "ctia.http.rate-limit.redis.ssl" s/Bool
+                      "ctia.http.rate-limit.redis.password" s/Str
+                      "ctia.http.rate-limit.redis.db" s/Str
+                      "ctia.http.rate-limit.redis.timeout-ms" s/Int})
 
    (st/optional-keys {"ctia.http.send-server-version" s/Bool})
 

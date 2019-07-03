@@ -6,7 +6,8 @@
   (login [this])
   (groups [this])
   (allowed-capabilities [this])
-  (capable? [this capabilities]))
+  (capable? [this capabilities])
+  (rate-limited? [this]))
 
 (defprotocol IAuth
   (identity-for-token [this token]))
@@ -30,6 +31,8 @@
   (allowed-capabilities [_]
     #{})
   (capable? [_ _]
+    false)
+  (rate-limited? [_]
     false))
 
 (def denied-identity-singleton (->DeniedIdentity))

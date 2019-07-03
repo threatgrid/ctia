@@ -16,7 +16,9 @@
   (allowed-capabilities [_]
     all-capabilities)
   (capable? [_ _]
-    true))
+    true)
+  (rate-limited? [_]
+    false))
 
 (def identity-singleton
   (->Identity))

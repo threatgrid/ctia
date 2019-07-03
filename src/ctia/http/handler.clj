@@ -17,6 +17,7 @@
                                          graphql-routes]]
             [ctia.http.exceptions :as ex]
             [ctia.http.middleware
+             [ratelimit :refer [wrap-rate-limit]]
              [auth :refer :all]
              [cache-control :refer [wrap-cache-control]]
              [unknown :as unk]
@@ -175,7 +176,8 @@
             (apply-oauth2-swagger-conf
              oauth2))}
 
-         (middleware [wrap-not-modified
+         (middleware [wrap-rate-limit
+                      wrap-not-modified
                       wrap-cache-control
                       wrap-version
                       ;; always last

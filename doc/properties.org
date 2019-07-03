@@ -88,6 +88,25 @@
 | ctia.http.jwt.local-storage-key | set JWT local storage key             | string (a full path) |
 
 
+*** Rate limit
+
+Rate limit related configuration
+
+| Property                                 | Descripiton                                                                                    | Possible values |
+|------------------------------------------+------------------------------------------------------------------------------------------------+-----------------|
+| ctia.http.rate-limit.enabled             | Enable rate limit                                                                              | =true= =false=  |
+| ctia.http.rate-limit.key-prefix          | The key prefix if the same redis DB is used for several applications                           | string          |
+| ctia.http.rate-limit.unlimited-clientids | List of clientids which are not rate limited as a csv                                          | string          |
+| ctia.http.rate-limit.default-group-limit | The default number of allowed requests per hour per group                                      | number          |
+| ctia.http.rate-limit.custom-group-limits | Define custom limits for groups as csv, the number of requests per hour is delimited by a pipe | string          |
+| ctia.http.rate-limit.redis.host          | Set the redis instance host                                                                    | string          |
+| ctia.http.rate-limit.redis.port          | Set the redis instance port                                                                    | number          |
+| ctia.http.rate-limit.redis.ssl           | Enable SSL connection to the Redis server                                                      | =true= =false=  |
+| ctia.http.rate-limit.redis.password      | Password used for Redis authentication                                                         | string          |
+| ctia.http.rate-limit.redis.db            | Set te redis instance db                                                                       | number          |
+| ctia.http.rate-limit.redis.timeout-ms    | Set redis timeout in milliseconds                                                              | number          |
+
+
 *** Show   
 
    Configure how CTIA is hosted,
