@@ -66,7 +66,8 @@
   "Given a handler function,
    create a producer and start polling the requested topic
    return a map with the KafkaConsumer and the wrapping thread"
-  [kafka-props handler timeout]
+  [kafka-props handler {:keys [timeout
+                               rebalance-listener]}]
   (let [{:keys [name]}
         (:topic kafka-props)
         consumer (build-consumer kafka-props)
@@ -74,7 +75,10 @@
                                         name
                                         handler
                                         timeout))]
-    (.subscribe consumer [name])
+    (if rebalance-listener
+      (.subscribe consumer [name] rebalance-listener)
+      (.subscribe consumer [name]))
+
     (.start consumer-thread)
     {:consumer consumer
      :consumer-thread consumer-thread}))

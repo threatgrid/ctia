@@ -8,10 +8,12 @@
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [cheshire.core :refer [parse-string]]
+
             [ctia.test-helpers
              [core :as test-helpers :refer [post]]
              [es :as es-helpers]])
-  (:import [java.util.concurrent CountDownLatch TimeUnit]))
+  (:import [java.util.concurrent CountDownLatch TimeUnit]
+           [org.apache.kafka.clients.consumer ConsumerRebalanceListener]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 
@@ -27,6 +29,7 @@
   (testing "Events are published to kafka topic"
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
+          rebalance-signal (CountDownLatch. 1)
           kafka-props (get-in @properties [:ctia :hook :kafka])
           consumer-map
           (lk/subscribe
@@ -35,9 +38,16 @@
              (let [v (:value ev)]
                (swap! results conj (parse-string v true))
                (.countDown finish-signal)))
-           30000)
-          ;; await rebalance
-          _ (Thread/sleep 10000)]
+           {:timeout 30000
+            :rebalance-listener
+            (reify ConsumerRebalanceListener
+              (onPartitionsRevoked [_ _]
+                true)
+              (onPartitionsAssigned [_ _]
+                (.countDown rebalance-signal)))})]
+
+      (.await rebalance-signal 30 TimeUnit/SECONDS)
+
       (let [{{judgement-1-long-id :id} :parsed-body
              judgement-1-status :status
              :as judgement-1}
