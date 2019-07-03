@@ -80,13 +80,14 @@
                     (build-create-result model coerce-fn)))
                 (remove-es-actions items) models)}))
 
-(s/defn get-doc-with-index
-  "Retrieves a document from a search \"ids\" query. It is used to perform a get query on an alias that points to multiple indices. It returns the document with full hits meta data including the real index in which is stored the document."
+
+(s/defn get-docs-with-indices
+  "Retrieves a documents from a search \"ids\" query. It enables to retrieves documents from an alias that points to multiple indices. It returns the documents with full hits meta data including the real index in which is stored the document."
   [{:keys [conn index]} :- ESConnState
    mapping :- s/Keyword
-   _id :- s/Str
+   ids :- [s/Str]
    params]
-  (let [ids-query (q/ids [(ensure-document-id _id)])
+  (let [ids-query (q/ids (map ensure-document-id ids))
         res (d/query conn
                      index
                      (name mapping)
@@ -94,7 +95,15 @@
                      (assoc (make-es-read-params params)
                             :full-hits?
                             true))]
-    (-> res :data first)))
+    (:data res)))
+
+(s/defn get-doc-with-index
+  "Retrieves a document from a search \"ids\" query. It is used to perform a get query on an alias that points to multiple indices. It returns the document with full hits meta data including the real index in which is stored the document."
+  [conn-state :- ESConnState
+   mapping :- s/Keyword
+   _id :- s/Str
+   params]
+  (first (get-docs-with-indices conn-state mapping [_id] params)))
 
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"

@@ -19,8 +19,8 @@
              [core :as helpers :refer [post-bulk delete]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
-            [ctia.task.migration.store :as sut]
-            [ctia.store :as st]))
+            [ctia.task.rollover :refer [rollover-stores]]
+            [ctia.task.migration.store :as sut]))
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -102,6 +102,19 @@
     (is (false? (sut/rollover? true 100 10 299)))
     (is (false? (sut/rollover? true 100 10 350)))))
 
+(deftest search-real-index?
+  (is (false? (sut/search-real-index? false
+                                      {:created "08-15-1953"
+                                       :modified "04-29-2019"})))
+  (is (false? (sut/search-real-index? true
+                                      {:created "08-15-1953"
+                                       :modified "08-15-1953"})))
+  (is (false? (sut/search-real-index? true
+                                      {:created "08-15-1953"})))
+  (is (true? (sut/search-real-index? true
+                                     {:created "08-15-1953"
+                                      :modified "04-29-2019"}))))
+
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server
@@ -127,6 +140,53 @@
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
 
+
+(deftest bulk-metas-test
+  ;; insert elements in different indices and check that we retrieve the right one
+  (let [sighting-store-map {:conn es-conn
+                            :indexname "ctia_sighting"
+                            :props {:write-index "ctia_sighting"}
+                            :mapping "sighting"
+                            :type "sighting"
+                            :settings {}
+                            :config {}}
+        post-bulk-res-1 (post-bulk examples)
+        _ (rollover-stores @stores)
+        post-bulk-res-2 (post-bulk examples)
+        malware-ids (->> (:malwares post-bulk-res-1)
+                         (map #(-> % long-id->id :short-id))
+                         (take 10))
+        sighting-ids-1 (->> (:sightings post-bulk-res-1)
+                             (map #(-> % long-id->id :short-id))
+                             (take 10))
+        sighting-ids-2 (->> (:sightings post-bulk-res-2)
+                             (map #(-> % long-id->id :short-id))
+                             (take 10))
+        _ (es-index/refresh! es-conn)
+        [malware-index-1 _] (->> (es-index/get es-conn "ctia_malware*")
+                                 keys
+                                 sort
+                                 (map name))
+        [sighting-index-1 sighting-index-2] (->> (es-index/get es-conn "ctia_sighting*")
+                                keys
+                                sort
+                                (map name))
+        bulk-metas-malware-res (sut/bulk-metas sighting-store-map malware-ids)
+        bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1)
+        bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2)]
+    (testing "bulk-metas should property return _id, _type, _index from a document id"
+        (doseq [[_id metas] bulk-metas-malware-res]
+          (is (= _id (:_id metas)))
+          (is (= "malware" (:_type metas)))
+          (is (= malware-index-1 (:_index metas))))
+        (doseq [[_id metas] bulk-metas-sighting-res-1]
+          (is (= _id (:_id metas)))
+          (is (= "sighting" (:_type metas)))
+          (is (= sighting-index-1 (:_index metas))))
+        (doseq [[_id metas] bulk-metas-sighting-res-2]
+          (is (= _id (:_id metas)))
+          (is (= "sighting" (:_type metas)))
+          (is (= sighting-index-2 (:_index metas)))))))
 
 (deftest store-batch-store-size-test
   (let [indexname "test_index"

@@ -12,6 +12,7 @@
              [query :as es-query]
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
+            [ctia.lib.collection :refer [fmap]]
             [ctia.stores.es
              [crud :as crud]
              [init :refer [init-store-conn init-es-conn! get-store-properties]]
@@ -185,23 +186,56 @@
   (dissoc (clojure.set/rename-keys conn-state {:indexname :index})
           :mapping :type :settings))
 
+(defn bulk-metas
+  "prepare bulk data for document ids"
+  [{:keys [mapping] :as store-map} ids]
+  (when (seq ids)
+    (-> (store-map->es-conn-state store-map)
+        (crud/get-docs-with-indices (keyword mapping) ids {})
+        (->> (map (fn [{:keys [_id] :as hit}]
+                    {_id (select-keys hit [:_id :_index :_type])}))
+             (into {})))))
 
-(defn real-index-of
-  "Retrieves the real index of a document"
-  [{:keys [mapping] :as conn-state} id]
-  (-> (store-map->es-conn-state conn-state)
-      (crud/get-doc-with-index (keyword mapping) id {})
-      :_index))
+(defn search-real-index?
+  "Given a mapping and a document specify if the document has been modified"
+  [aliased? {:keys [created modified]}]
+  (boolean (and aliased?
+                modified
+                (not= created modified))))
 
-(defn write-index
-  "Generates the index or alias on which a write operation should be performed."
-  [{:keys [conn props mapping] :as conn-state}
-   {:keys [id created modified] :as doc}]
-  (if (or (= :event (keyword mapping))
-          (= created modified)
-          (nil? modified))
-    (:write-index props)
-    (real-index-of conn-state id)))
+(defn prepare-docs
+  "Generates the _index, _id and _type meta data for bulk ops. In particular it determines in which indices modified documents need to be written."
+  [{:keys [conn mapping]
+    {:keys [aliased write-index]} :props
+    :as store-map}
+   docs]
+  (let [{modified true not-modified false} (group-by #(search-real-index? aliased %)
+                                                     docs)
+        prepared-not-modified (map #(assoc %
+                                           :_id (:id %)
+                                           :_index write-index
+                                           :_type mapping)
+                                   not-modified)
+        modified-by-ids (fmap first (group-by :id modified))
+        bulk-metas-res (->> (map :id modified)
+                            (bulk-metas store-map))
+        prepared-modified (->> bulk-metas-res
+                               (merge-with into modified-by-ids)
+                               vals)]
+    (concat prepared-modified prepared-not-modified)))
+
+(defn store-batch
+  "store a batch of documents using a bulk operation"
+  [{:keys [conn mapping type] :as store-map}
+   batch]
+  (log/debugf "%s - storing %s records"
+              mapping
+              (count batch))
+  (retry es-max-retry
+         es-doc/bulk-create-doc conn
+         (prepare-docs store-map batch)
+         "false"
+         bulk-max-size))
 
 (s/defn rollover?
   "do we need to rollover?"
@@ -224,26 +258,6 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
   (when rollover?
     (es-index/refresh! conn write-index)
     (rollover-store (store-map->es-conn-state store-map))))
-
-(defn store-batch
-  "store a batch of documents using a bulk operation"
-  [{:keys [conn mapping type] :as store-map}
-   batch]
-  (log/debugf "%s - storing %s records"
-              mapping
-              (count batch))
-  (let [prepared-docs
-        (map #(assoc %
-                     :_id (:id %)
-                     :_index (write-index store-map %)
-                     :_type mapping)
-             batch)
-        res (retry es-max-retry
-                   es-doc/bulk-create-doc conn
-                   prepared-docs
-                   "false"
-                   bulk-max-size)]
-    res))
 
 (s/defn query-fetch-batch :- {s/Any s/Any}
   "fetch a batch of documents from an es index and a query"

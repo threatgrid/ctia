@@ -11,8 +11,7 @@
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :refer [properties init!]]
-             [store :refer [stores]]]
-            ))
+             [store :refer [stores]]]))
 
 (s/defn rollover-store
   "Sends rollover query on a store if paramater aliased and rollover conditions are configured."

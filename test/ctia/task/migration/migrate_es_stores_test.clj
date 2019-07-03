@@ -14,6 +14,7 @@
             [ctim.domain.id :refer [long-id->id]]
 
             [ctia.properties :as props]
+            [ctia.task.rollover :refer [rollover-stores]]
             [ctia.task.migration
              [migrate-es-stores :as sut]
              [store :refer [setup! prefixed-index get-migration fetch-batch]]]
@@ -78,10 +79,12 @@
        set))
 
 (defn rollover-post-bulk
-  "post data in 2 parts to enable rollover on second post if conditions are met"
+  "post data in 2 parts and rollover"
   []
   (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-  (post-bulk (fixt/bundle (/ fixtures-nb 2) false)))
+  (rollover-stores @stores)
+  (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+  (rollover-stores @stores))
 
 
 (deftest migration-with-rollover
