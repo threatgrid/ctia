@@ -341,7 +341,7 @@ X-Ratelimit-Group-Limit: 8000
 
 If the rate limit is exceeded:
 
-- The client receives a response with the 429 HTTP status, a `retry-after` header and the JSON message `{"error": "Too Many Requests"}`. The retry-after header indicates the number of second to wait before making a new request.
+- The client receives a response with the 429 HTTP status, a `retry-after` header and the JSON message `{"error": "Too Many Requests"}`. The retry-after header indicates the number of seconds to wait before making a new request.
 
  ```
 HTTP/1.1 429 Too Many Requests
