@@ -62,7 +62,7 @@
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,X-RateLimit-GROUP-Remaining,X-RateLimit-GROUP-Limit")
+                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,X-RateLimit-GROUP-Limit")
 
          true wrap-params
 

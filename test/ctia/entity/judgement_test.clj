@@ -254,7 +254,7 @@
   {"Access-Control-Expose-Headers"
    (str "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
         "X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,"
-        "X-RateLimit-GROUP-Remaining,X-RateLimit-GROUP-Limit"),
+        "X-RateLimit-GROUP-Limit"),
    "Access-Control-Allow-Origin" "http://external.cisco.com",
    "Access-Control-Allow-Methods" "DELETE, GET, PATCH, POST, PUT"})
 
