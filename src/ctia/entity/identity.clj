@@ -1,7 +1,9 @@
 (ns ctia.entity.identity
   (:require [schema.core :as s]
             [schema-tools.core :as st]
-            [clj-momo.lib.es.document :refer [create-doc get-doc delete-doc]]
+            [clj-momo.lib.es
+             [schemas :refer [ESConnState]]
+             [document :refer [create-doc get-doc delete-doc]]]
             [ctia.store :refer [IIdentityStore]]
             [ctia.stores.es
              [crud :as crud]
@@ -34,8 +36,9 @@
   [caps]
   (vec (map name caps)))
 
-(defn handle-create
-  [{:keys [conn props]} new-identity]
+(s/defn handle-create :- Identity
+[{:keys [conn props]} :- ESConnState
+ new-identity :- Identity]
   (let [id (:login new-identity)
         realized (assoc new-identity :id id)
         transformed (update-in realized [:capabilities]
@@ -50,14 +53,16 @@
         (dissoc :id))))
 
 (s/defn handle-read :- (s/maybe Identity)
-  [state :- s/Any
+  [state :- ESConnState
    login :- s/Str]
   (some-> (crud/get-doc-with-index state :identity login {})
           :_source
           (update-in [:capabilities] capabilities->capabilities-set)
           (dissoc :id)))
 
-(defn handle-delete [state login]
+(s/defn handle-delete
+  [state :- ESConnState
+   login :- s/Str]
   (when-let [{index :_index}
              (crud/get-doc-with-index state :identity login {})]
     (delete-doc (:conn state)

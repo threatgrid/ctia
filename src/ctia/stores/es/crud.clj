@@ -115,15 +115,15 @@
        ident
        {:keys [refresh] :as params}]
       (try
-        (mapv #(build-create-result % coerce!)
-              (d/bulk-create-doc (:conn state)
-                                 (mapv #(assoc %
-                                               :_id (:id %)
-                                               :_index (:write-index props)
-                                               :_type (name mapping))
-                                       models)
-                                 (or refresh
-                                     (:refresh props "false"))))
+        (map #(build-create-result % coerce!)
+             (d/bulk-create-doc (:conn state)
+                                (map #(assoc %
+                                             :_id (:id %)
+                                             :_index (:write-index props)
+                                             :_type (name mapping))
+                                     models)
+                                (or refresh
+                                    (:refresh props "false"))))
         (catch Exception e
           (throw
            (if-let [ex-data (ex-data e)]
