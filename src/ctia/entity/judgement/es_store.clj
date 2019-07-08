@@ -37,7 +37,7 @@
       :confidence em/token
       :severity em/token
       :valid_time em/valid-time
-      :reason em/all_text
+      :reason em/sortable-all-text
       :reason_uri em/token})}})
 
 (def coerce-stored-judgement-list

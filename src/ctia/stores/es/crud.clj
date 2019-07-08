@@ -197,7 +197,8 @@
    for the sorting. Instead of using fielddata we can have
    a text field for full text searches, and an unanalysed keyword
    field with doc_values enabled for sorting"
-  {"title" "title.whole"})
+  {"title" "title.whole"
+   "reason" "reason.whole"})
 
 (defn parse-sort-by
   "Parses the sort_by parameter
@@ -261,6 +262,7 @@
                            (name mapping)
                            (q/bool bool-params)
                            (-> params
+                               rename-sort-fields
                                with-default-sort-field
                                make-es-read-params)))
          :data access-control-filter-list ident)))))

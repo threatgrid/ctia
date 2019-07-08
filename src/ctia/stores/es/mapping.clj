@@ -34,6 +34,10 @@
   "The same as the `token` mapping, but will be included in the _all field"
   (assoc token :include_in_all true))
 
+(def sortable-all-text
+  (assoc all_text
+         :fields {:whole all_token}))
+
 (def external-reference
   {:properties
    {:source_name token
@@ -54,8 +58,7 @@
    :tlp token})
 
 (def describable-entity-mapping
-  {:title (assoc all_text
-                 :fields {:whole all_token})
+  {:title sortable-all-text
    :short_description all_text
    :description all_text})
 
@@ -317,10 +320,7 @@
      {:type "custom"
       :char_filter []
       :filter ["lowercase"]}}
-   {:filter
-    {:token_len {:max 255
-                 :min 0
-                 :type "length"}
+    :filter {
      :english_stop {:type "stop"
                     :stopwords "_english_"}
      ;; word_delimiter filter enables to improve tokenization https://www.elastic.co/guide/en/elasticsearch/reference/5.6/analysis-word-delimiter-tokenfilter.html
