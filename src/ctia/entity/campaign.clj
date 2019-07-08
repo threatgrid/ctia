@@ -43,7 +43,6 @@
            :campaign_type
            :status
            :activity.date_time
-           :activity.description
            :confidence]))
 
 (def campaign-sort-fields
