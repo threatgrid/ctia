@@ -63,7 +63,7 @@
     (fn [request]
       (when-let [[group limit]
                  (some-> (:identity request)
-                         (auth/groups)
+                         auth/groups
                          (with-limit default-group-limit group-limits)
                          sort-group-limits
                          first)]
@@ -104,4 +104,4 @@
                   (throw e)))))))
       (do
         (log/warn "Rate limit is disabled")
-        (fn [request] (handler request))))))
+        handler))))
