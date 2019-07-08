@@ -249,6 +249,7 @@
      {:type "custom"
       :char_filter []
       :filter ["lowercase"]}}
+    :filter {
      :english_stop {:type "stop"
                     :stopwords "_english_"}
      ;; word_delimiter filter enables to improve tokenization https://www.elastic.co/guide/en/elasticsearch/reference/5.6/analysis-word-delimiter-tokenfilter.html
