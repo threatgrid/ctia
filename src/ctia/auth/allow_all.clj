@@ -17,8 +17,7 @@
     all-capabilities)
   (capable? [_ _]
     true)
-  (rate-limited? [_]
-    false))
+  (rate-limit-fn [_ _]))
 
 (def identity-singleton
   (->Identity))

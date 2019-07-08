@@ -58,25 +58,29 @@
 
 (s/defn ^:always-validate group-limit-fn :- LimitFunction
   "Builds the group limit function"
-  [{:keys [default-group-limit custom-group-limits]}]
-  (let [group-limits (parse-group-limits custom-group-limits)]
+  [conf]
+  (let [group-limits-conf (get-in conf [:limits :group])
+        group-limits (parse-group-limits (:customs group-limits-conf))]
     (fn [request]
       (when-let [[group limit]
                  (some-> (:identity request)
                          auth/groups
-                         (with-limit default-group-limit group-limits)
+                         (with-limit
+                           (:default group-limits-conf)
+                           group-limits)
                          sort-group-limits
                          first)]
         {:nb-request-per-hour limit
          :rate-limit-key group
          :name-in-headers "GROUP"}))))
 
-(s/defn with-rate-limited :- LimitFunction
+(s/defn with-identity-rate-limit-fn :- LimitFunction
   [limit-fn]
   (fn [request]
     (let [auth-identity (:identity request)]
-      (when (auth/rate-limited? auth-identity)
-        (limit-fn request)))))
+      (when-let [identity-limit-fn
+                 (auth/rate-limit-fn auth-identity limit-fn)]
+        (identity-limit-fn request)))))
 
 (defn wrap-rate-limit
   [handler]
@@ -88,7 +92,7 @@
              handler
              (do
                {:redis-conn (server-connection redis)
-                 :limit-fns [(with-rate-limited
+                 :limit-fns [(with-identity-rate-limit-fn
                                (group-limit-fn conf))]
                  :rate-limit-handler rate-limited-request-handler
                  :key-prefix key-prefix}))]

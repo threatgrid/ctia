@@ -75,9 +75,9 @@
 
    (st/optional-keys {"ctia.http.rate-limit.enabled" s/Bool
                       "ctia.http.rate-limit.key-prefix" s/Str
-                      "ctia.http.rate-limit.unlimited-clientids" s/Str
-                      "ctia.http.rate-limit.default-group-limit" s/Int
-                      "ctia.http.rate-limit.custom-group-limits" s/Str
+                      "ctia.http.rate-limit.unlimited.client-ids" s/Str
+                      "ctia.http.rate-limit.limits.group.default" s/Int
+                      "ctia.http.rate-limit.limits.group.customs" s/Str
                       "ctia.http.rate-limit.redis.host" s/Str
                       "ctia.http.rate-limit.redis.port" s/Int
                       "ctia.http.rate-limit.redis.ssl" s/Bool

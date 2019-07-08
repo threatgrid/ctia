@@ -20,7 +20,7 @@
   (groups [_] groups)
   (allowed-capabilities [_] #{})
   (capable? [_ _] true)
-  (rate-limited? [_] limited?))
+  (rate-limit-fn [_ limit-fn] (when limited? limit-fn)))
 
 (deftest with-limit-test
   (is (= [["tg:3" 10]
@@ -50,8 +50,8 @@
 
 (deftest group-limit-fn-test
   (let [limit-fn (sut/group-limit-fn
-                  {:default-group-limit 10
-                   :custom-group-limits "tg:1|20,tg:2|30"})]
+                  {:limits {:group {:default 10
+                                    :customs "tg:1|20,tg:2|30"}}})]
     (is (nil? (limit-fn {}))
         "The request shouldn't be limited if there is no identity in the request")
     (is (= {:nb-request-per-hour 10
@@ -64,11 +64,11 @@
            (limit-fn {:identity
                       (->FakeIdentity ["tg:3" "tg:2" "tg:1"] true)})))))
 
-(deftest with-rate-limited-test
-  (let [limit-fn (sut/with-rate-limited
+(deftest with-identity-rate-limit-fn
+  (let [limit-fn (sut/with-identity-rate-limit-fn
                    (sut/group-limit-fn
-                    {:default-group-limit 10
-                     :custom-group-limits "tg:1|20,tg:2|30"}))]
+                    {:limits {:group {:default 10
+                                      :customs "tg:1|20,tg:2|30"}}}))]
     (is (= {:nb-request-per-hour 30
             :rate-limit-key "tg:2"
             :name-in-headers "GROUP"}
@@ -104,7 +104,7 @@
                                        "Origin" "http://external.cisco.com"})]
       (testing "Group limit"
         (apply-fixtures
-         ["ctia.http.rate-limit.default-group-limit" 5
+         ["ctia.http.rate-limit.limits.group.default" 5
           "ctia.http.rate-limit.enabled" true]
          (fn []
            (let [response (call)]
@@ -120,32 +120,32 @@
                         (:body response)))))))))
       (testing "Custom group limits"
         (apply-fixtures
-         ["ctia.http.rate-limit.default-group-limit" 15
-          "ctia.http.rate-limit.custom-group-limits" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
+         ["ctia.http.rate-limit.limits.group.default" 15
+          "ctia.http.rate-limit.limits.group.customs" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
           "ctia.http.rate-limit.enabled" true]
          (fn []
            (let [response (call)]
              (is (= "4" (get-in response [:headers "X-RateLimit-GROUP-Limit"])))))))
       (testing "Unlimited client"
         (apply-fixtures
-         ["ctia.http.rate-limit.default-group-limit" 15
-          "ctia.http.rate-limit.custom-group-limits" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
-          "ctia.http.rate-limit.unlimited-clientids" "iroh-ui"
+         ["ctia.http.rate-limit.limits.group.default" 15
+          "ctia.http.rate-limit.limits.group.customs" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
+          "ctia.http.rate-limit.unlimited.client-ids" "iroh-ui"
           "ctia.http.rate-limit.enabled" true]
          (fn []
            (let [response (call)]
              (is (= 200 (:status response)))))))
       (testing "rate limit disabled"
         (apply-fixtures
-         ["ctia.http.rate-limit.default-group-limit" 15
-          "ctia.http.rate-limit.custom-group-limits" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
+         ["ctia.http.rate-limit.limits.group.default" 15
+          "ctia.http.rate-limit.limits.group.customs" "63489cf9-561c-4958-a13d-6d84b7ef09d4|4,tg:1|1"
           "ctia.http.rate-limit.enabled" false]
          (fn []
            (let [response (call)]
              (is (= 200 (:status response)))))))
       (testing "Error handling (wrong redis port)"
         (apply-fixtures
-         ["ctia.http.rate-limit.default-group-limit" 15
+         ["ctia.http.rate-limit.limits.group.default" 15
           "ctia.http.rate-limit.enabled" true
           "ctia.http.rate-limit.redis.port" 7887]
          (fn []

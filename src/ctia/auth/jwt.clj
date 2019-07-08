@@ -101,19 +101,21 @@
   [keyword-name]
   (str claim-prefix "/" keyword-name))
 
-(defn parse-unlimited-clientids
-  [clientids]
-  (string/split clientids #","))
-
 (defn unlimited-clientids
   "Retrieves and parses unlimited clientids defined in the properties"
   []
   (some-> (get-in @prop/properties
-                  [:ctia :http :rate-limit :unlimited-clientids])
-          parse-unlimited-clientids
+                  [:ctia :http :rate-limit :unlimited :client-ids])
+          (string/split #",")
           set))
 
-(defrecord JWTIdentity [jwt non-ratelimited-clientids]
+(defn parse-unlimited-props
+  []
+  (let [clientids (unlimited-clientids)]
+    (cond-> {}
+      (seq clientids) (assoc :clienids clientids))))
+
+(defrecord JWTIdentity [jwt unlimited-fn]
   IIdentity
   (authenticated? [_]
     true)
@@ -127,20 +129,24 @@
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
                  (auth/allowed-capabilities this)))
-  (rate-limited? [_]
-    (let [client-id (get jwt (iroh-claim "oauth/client/id"))
-          unlimited? (and client-id
-                          (contains? non-ratelimited-clientids
-                                     client-id))]
-      (not unlimited?))))
+  (rate-limit-fn [_ limit-fn]
+    (when (not (unlimited-fn jwt))
+      limit-fn)))
+
+(defn unlimited?
+  [unlimited-properties jwt]
+  (let [clientid (get jwt (iroh-claim "oauth/client/id"))
+        unlimited-clientids (get unlimited-properties :clientids)]
+    (contains? unlimited-clientids clientid)))
 
 (defn wrap-jwt-to-ctia-auth
   [handler]
-  (let [non-ratelimited-clientids (unlimited-clientids)]
+  (let [unlimited-properties (parse-unlimited-props)]
     (fn [request]
       (handler
        (if-let [jwt (:jwt request)]
-         (let [identity (->JWTIdentity jwt non-ratelimited-clientids)]
+         (let [identity
+               (->JWTIdentity jwt (partial unlimited? unlimited-properties))]
            (assoc request
                   :identity identity
                   :login    (auth/login identity)
