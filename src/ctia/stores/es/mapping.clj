@@ -16,7 +16,6 @@
   "A mapping for free text, or markdown, fields.  They will be
   analyzed and treated like prose."
   {:type "text"
-   :fielddata true
    :analyzer "text_analyzer"
    :search_quote_analyzer "text_analyzer"
    :search_analyzer "search_analyzer"})
@@ -28,19 +27,12 @@
 (def token
   "A mapping for fields whose value should be treated like a symbol.
   They will not be analyzed, and they will be lowercased."
-  {:type "text"
-   ;; TODO use token and disable fielddata once token analyzer is supported
-   :fielddata true
-   :analyzer "token_analyzer"
-   :search_analyzer "token_analyzer"})
+  {:type "keyword"
+   :normalizer "lowercase_normalizer"})
 
 (def all_token
   "The same as the `token` mapping, but will be included in the _all field"
-  {:type "text"
-   :fielddata true
-   :analyzer "token_analyzer"
-   :search_analyzer "token_analyzer"
-   :include_in_all true})
+  (assoc token :include_in_all true))
 
 (def external-reference
   {:properties
@@ -338,6 +330,11 @@
      :english_stemmer {:type "stemmer"
                        :language "english"}}
     ;; when applying filters, order matters
+   :normalizer
+    {:lowercase_normalizer
+     {:type "custom"
+      :char_filter []
+      :filter ["lowercase"]}}
     :analyzer
     {:default ;; same as text_analyzer
      {:type "custom"
@@ -358,8 +355,4 @@
       :filter ["lowercase"
                "ctia_stemmer"
                "english_stop"
-               "english_stemmer"]}
-     :token_analyzer
-     {:filter ["token_len" "lowercase"]
-      :tokenizer "keyword"
-      :type "custom"}}}})
+               "english_stemmer"]}}}})
