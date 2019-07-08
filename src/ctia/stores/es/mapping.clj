@@ -305,10 +305,7 @@
       :char_filter []
       :filter ["lowercase"]}}
     :filter
-    {:token_len {:max 255
-                 :min 0
-                 :type "length"}
-     :english_stop {:type "stop"
+    {:english_stop {:type "stop"
                     :stopwords "_english_"}}
     :analyzer
     {:default_search ;; same as text_analyzer
@@ -322,8 +319,4 @@
      :search_analyzer
      {:type "custom"
       :tokenizer "standard"
-      :filter ["lowercase" "english_stop"]}
-     :token_analyzer
-     {:filter ["token_len" "lowercase"]
-      :tokenizer "keyword"
-      :type "custom"}}}})
+      :filter ["lowercase" "english_stop"]}}}})
