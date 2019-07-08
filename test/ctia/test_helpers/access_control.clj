@@ -17,7 +17,7 @@
   (assoc entity :tlp "red"))
 
 (def allowed-statuses #{200 204})
-(def forbidden-statuses #{401})
+(def forbidden-statuses #{403})
 
 (defn same-ownership? [entity-1 entity-2]
   (and (= (:owner entity-1)

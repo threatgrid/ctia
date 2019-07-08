@@ -7,10 +7,10 @@
             [compojure.api.impl.logging :as logging]
             [ring.util.http-response :refer [internal-server-error
                                              bad-request
-                                             unauthorized]]
+                                             forbidden]]
             [clojure.data.json :as json]))
 
-(defn ex-message [^Exception e]
+(defn ex-message-and-data [^Exception e]
   (str
    (.getMessage e)
    (when (instance? ExceptionInfo e)
@@ -19,19 +19,19 @@
 (defn request-parsing-handler
   "Handle request parsing error"
   [^Exception e data request]
-  (logging/log! :error e (ex-message e))
+  (logging/log! :error e (ex-message-and-data e))
   (ex/request-parsing-handler e data request))
 
 (defn request-validation-handler
   "Handle response coercion error"
   [^Exception e data request]
-  (logging/log! :error e (ex-message e))
+  (logging/log! :error e (ex-message-and-data e))
   (ex/request-validation-handler e data request))
 
 (defn response-validation-handler
   "Handle request coercion error"
   [^Exception e data request]
-  (logging/log! :error e (ex-message e))
+  (logging/log! :error e (ex-message-and-data e))
   (ex/response-validation-handler e data request))
 
 (defn es-ex-data
@@ -64,8 +64,8 @@
 (defn access-control-error-handler
   "Handle access control error"
   [^Exception e data request]
-  (logging/log! :info e (ex-message e))
-  (unauthorized
+  (logging/log! :info e (ex-message-and-data e))
+  (forbidden
    {:error "Access Control validation Client Error"
     :type "Access Control Error"
     :message (.getMessage e)
@@ -74,7 +74,7 @@
 (defn spec-validation-error-handler
   "Handle spec validation error"
   [^Exception e data request]
-  (logging/log! :info e (ex-message e))
+  (logging/log! :info e (ex-message-and-data e))
   (bad-request
    (let [entity (:entity (ex-data e))]
      {:error "Spec Validation Client Error"
@@ -86,7 +86,7 @@
 (defn invalid-tlp-error-handler
   "Handle access control error"
   [^Exception e data request]
-  (logging/log! :info e (ex-message e))
+  (logging/log! :info e (ex-message-and-data e))
   (bad-request
    (let [entity (:entity (ex-data e))]
      {:type "Invalid TLP Error"
@@ -94,9 +94,17 @@
       :entity entity
       :class (.getName (class e))})))
 
+(defn realize-entity-error-handler
+  "Handle error at the realize step"
+  [^Exception e data request]
+  (logging/log! :info e (ex-message-and-data e))
+  (bad-request
+   (let [data (ex-data e)]
+     (dissoc data :type))))
+
 (defn default-error-handler
   "Handle default error"
   [^Exception e data request]
-  (logging/log! :error e (ex-message e))
+  (logging/log! :error e (ex-message-and-data e))
   (internal-server-error {:type "unknown-exception"
                           :class (.getName (class e))}))

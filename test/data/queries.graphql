@@ -233,6 +233,7 @@ fragment indicatorFields on Indicator {
   tlp
   producer
   description
+  timestamp
   indicator_type
   valid_time {
     ...validTimeFields
@@ -267,6 +268,7 @@ fragment investigationFields on Investigation {
   type
   schema_version
   title
+  timestamp
   tlp
   source
 }
@@ -326,6 +328,7 @@ fragment externalReferenceFields on ExternalReference {
 
 fragment relationshipBaseFields on Relationship {
   relationship_type
+  timestamp
   target_ref
   source_ref
 }
@@ -358,6 +361,7 @@ fragment judgementFields on Judgement {
   severity
   tlp
   priority
+  timestamp
 }
 
 fragment sightingFields on Sighting {
@@ -375,6 +379,7 @@ fragment sightingFields on Sighting {
   }
   sensor
   source
+  timestamp
   tlp
   source_uri
   relations {
@@ -423,6 +428,7 @@ fragment observableBaseFields on Observable {
 
 fragment feedbackFields on Feedback {
   feedback
+  timestamp
   entity_id
   reason
 }

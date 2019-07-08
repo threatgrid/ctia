@@ -32,14 +32,16 @@
                   (-> new-weakness-maximal
                       (assoc :title "Weakness 3")
                       (dissoc :id)))]
-    (gh/create-object "feedback" (gh/feedback-1 (:id entity-1)))
-    (gh/create-object "feedback" (gh/feedback-2 (:id entity-1)))
+    (gh/create-object "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
+    (gh/create-object "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
     (gh/create-object "relationship"
                       {:relationship_type "related-to"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id entity-2)
                        :source_ref (:id entity-1)})
     (gh/create-object "relationship"
                       {:relationship_type "related-to"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id entity-3)
                        :source_ref (:id entity-1)})
     {:weakness-1 entity-1
@@ -82,11 +84,13 @@
                                  [{:relationship_type "related-to"
                                    :target_ref weakness-2-id
                                    :source_ref weakness-1-id
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
                                    :source_entity (:weakness-1 datamap)
                                    :target_entity (:weakness-2 datamap)}
                                   {:relationship_type "related-to"
                                    :target_ref weakness-3-id
                                    :source_ref weakness-1-id
+                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
                                    :source_entity (:weakness-1 datamap)
                                    :target_entity (:weakness-3 datamap)}])
 
@@ -103,8 +107,8 @@
                                  graphql-queries
                                  {:id weakness-1-id}
                                  [:weakness :feedbacks]
-                                 [(gh/feedback-1 weakness-1-id)
-                                  (gh/feedback-2 weakness-1-id)])
+                                 [(gh/feedback-1 weakness-1-id #inst "2042-01-01T00:00:00.000Z")
+                                  (gh/feedback-2 weakness-1-id #inst "2042-01-01T00:00:00.000Z")])
 
              (testing "sorting"
                (gh/connection-sort-test

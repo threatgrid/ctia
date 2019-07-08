@@ -1,20 +1,21 @@
 (ns ctia.stores.es.crud
-  (:require [clj-momo.lib.es
-             [document :as d]
-             [query :as q]
-             [schemas :refer [ESConnState]]]
-            [ctia.lib.pagination :refer [list-response-schema]]
-            [ctia.domain.access-control
-             :refer [acl-fields allow-read? allow-write?]]
-            [ctia.stores.es.query
-             :refer [find-restriction-query-part]]
+  (:require [clojure.set :as set]
+            [clojure.string :as string]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
              [core :as s]]
-            [clojure.string :as string]
             [schema-tools.core :as st]
-            [clojure.set :as set]))
+            [clj-momo.lib.es
+             [document :as d]
+             [query :as q]
+             [schemas :refer [ESConnState]]]
+            [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.properties :refer [properties]]
+            [ctia.domain.access-control
+             :refer [acl-fields allow-read? allow-write?]]
+            [ctia.stores.es.query
+             :refer [find-restriction-query-part]]))
 
 (defn make-es-read-params
   "Prepare ES Params for read operations, setting the _source field
@@ -270,20 +271,25 @@
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
-      [state :- ESConnState
+      [{conn :conn
+        index :index
+        {:keys [default_operator]} :props} :- ESConnState
        query :- s/Str
        filter-map :- (s/maybe {s/Any s/Any})
        ident
        params]
-      (update
-       (coerce! (d/search-docs (:conn state)
-                             (:index state)
-                             (name mapping)
-                             {:bool {:must [(find-restriction-query-part ident)
-                                            {:query_string {:query query}}]}}
-                             filter-map
-                             (-> params
-                                 rename-sort-fields
-                                 with-default-sort-field
-                                 make-es-read-params)))
-       :data access-control-filter-list ident))))
+      (let [query_string (into {:query query}
+                               (when default_operator
+                                 {:default_operator default_operator}))]
+        (update
+         (coerce! (d/search-docs conn
+                                 index
+                                 (name mapping)
+                                 {:bool {:must [(find-restriction-query-part ident)
+                                                {:query_string query_string}]}}
+                                 filter-map
+                                 (-> params
+                                     rename-sort-fields
+                                     with-default-sort-field
+                                     make-es-read-params)))
+         :data access-control-filter-list ident)))))

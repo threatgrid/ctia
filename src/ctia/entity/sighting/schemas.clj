@@ -2,7 +2,7 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.domain
              [access-control :refer [properties-default-tlp]]
-             [entities :refer [schema-version]]]
+             [entities :refer [default-realize-fn]]]
             [ctia.schemas
              [utils :as csu]
              [core :refer [def-acl-schema def-stored-schema TempIDs]]
@@ -32,12 +32,11 @@
 (s/defschema PartialStoredSighting
   (csu/optional-keys-schema StoredSighting))
 
+(def sighting-default-realize
+  (default-realize-fn "sighting" NewSighting StoredSighting))
+
 (s/defn realize-sighting :- StoredSighting
-  ([new-sighting :- NewSighting
-    id :- s/Str
-    tempids :- (s/maybe TempIDs)
-    owner :- s/Str
-    groups :- [s/Str]]
+  ([new-sighting id tempids owner groups]
    (realize-sighting new-sighting id tempids owner groups nil))
   ([new-sighting :- NewSighting
     id :- s/Str
@@ -45,21 +44,13 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-sighting :- (s/maybe StoredSighting)]
-   (let [now (time/now)]
-     (assoc new-sighting
-            :id id
-            :type "sighting"
-            :owner (or (:owner prev-sighting) owner)
-            :groups (or (:groups prev-sighting) groups)
-            :count (:count new-sighting
-                           (:count prev-sighting 1))
-            :confidence (:confidence new-sighting
-                                     (:confidence prev-sighting "Unknown"))
-            :tlp (:tlp new-sighting
-                       (:tlp prev-sighting (properties-default-tlp)))
-            :schema_version schema-version
-            :created (or (:created prev-sighting) now)
-            :modified now))))
+   (sighting-default-realize
+    (assoc new-sighting
+           :count (:count new-sighting
+                          (:count prev-sighting 1))
+           :confidence (:confidence new-sighting
+                                    (:confidence prev-sighting "Unknown")))
+    id tempids owner groups prev-sighting)))
 
 (def sighting-fields
   (concat sorting/default-entity-sort-fields
@@ -68,3 +59,7 @@
            :confidence
            :count
            :sensor]))
+
+(def sighting-sort-fields
+  (conj sighting-fields
+        "observed_time.start_time,timestamp"))

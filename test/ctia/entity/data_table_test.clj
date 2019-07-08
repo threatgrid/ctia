@@ -22,6 +22,7 @@
                   "http://ex.tld/ctia/data-table/data-table-456"]
    :schema_version c/ctim-schema-version
    :tlp "green"
+   :timestamp #inst "2016-02-11T00:40:48.212-00:00"
    :columns [{:name "Column1"
               :type "string"}
              {:name "Column2"

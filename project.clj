@@ -1,4 +1,4 @@
-(def cheshire-version "5.8.0")
+(def cheshire-version "5.8.1")
 (def compojure-api-version "1.1.11")
 (def schema-tools-version "0.9.1")
 (def schema-version "1.1.7")
@@ -33,8 +33,8 @@
                  [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "0.5.9"]
-                 [org.clojure/tools.logging "0.4.0"]
-                 [org.clojure/tools.cli "0.3.5"]
+                 [org.clojure/tools.logging "0.4.1"]
+                 [org.clojure/tools.cli "0.4.1"]
                  [pandect "0.6.1"]
 
                  ;; Schemas
@@ -44,11 +44,12 @@
                   :exclusions [prismatic/plumbing
                                potemkin
                                com.andrewmcveigh/cljs-time]]
-                 [threatgrid/ctim "1.0.9"
+                 [threatgrid/ctim "1.0.11"
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
-                               com.google.guava/guava]]
-                 [threatgrid/clj-momo "0.2.30"]
+                               com.google.guava/guava
+                               org.clojure/tools.reader]]
+                 [threatgrid/clj-momo "0.2.31"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
@@ -74,11 +75,11 @@
                   ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)
                   :exclusions [commons-codec]]
                  [yogsototh/clj-jwt "0.2.1"]
-                 [threatgrid/ring-jwt-middleware "0.0.7" :exclusions [metosin/ring-http-response riemann-clojure-client joda-time clj-time com.google.code.findbugs/jsr305 com.andrewmcveigh/cljs-time]]
+                 [threatgrid/ring-jwt-middleware "0.0.10" :exclusions [metosin/compojure-api]]
 
                  ;; clients
                  [clj-http "3.7.0" :exclusions [commons-codec]]
-                 [com.taoensso/carmine "2.17.0"]
+                 [com.taoensso/carmine "2.19.1"]
 
                  ;; Metrics
                  [metrics-clojure "2.10.0"]
@@ -95,7 +96,18 @@
                  [hiccup "2.0.0-alpha1"]
 
                  ;; Hooks
-                 [threatgrid/redismq "0.1.0"]
+                 [threatgrid/redismq "0.1.1"]
+
+                 [zookeeper-clj "0.9.3"]
+                 [org.onyxplatform/onyx-kafka "0.14.5.0"
+                  :exclusions [org.clojure/clojure
+                               com.andrewmcveigh/cljs-time
+                               com.stuartsierra/component
+                               io.netty/netty
+                               org.slf4j/slf4j-log4j12
+                               org.apache.zookeeper/zookeeper
+                               com.google.guava/guava
+                               org.clojure/core.async]]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]

@@ -60,8 +60,7 @@
                     "ctia.hook.redis.channel-name"    "events-test"
                     "ctia.metrics.riemann.enabled"    false
                     "ctia.metrics.console.enabled"    false
-                    "ctia.metrics.jmx.enabled"        false
-                    "ctia.migration.optimizations"    false]
+                    "ctia.metrics.jmx.enabled"        false]
     ;; run tests
     (f)))
 
@@ -78,6 +77,22 @@
 
 (defn fixture-properties:redis-hook [f]
   (with-properties ["ctia.hook.redis.enabled" true]
+    (f)))
+
+(defn fixture-properties:kafka-hook [f]
+  (with-properties ["ctia.hook.kafka.enabled" true
+                    "ctia.hook.kafka.compression.type" "gzip"
+                    "ctia.hook.kafka.ssl.enabled" true
+                    "ctia.hook.kafka.ssl.truststore.location" "containers/dev/truststore/kafka.truststore.jks"
+                    "ctia.hook.kafka.ssl.truststore.password" "Cisco42"
+                    "ctia.hook.kafka.ssl.keystore.location" "containers/dev/keystore/kafka.keystore.jks"
+                    "ctia.hook.kafka.ssl.keystore.password" "Cisco42"
+                    "ctia.hook.kafka.ssl.key.password" "Cisco42"
+                    "ctia.hook.kafka.request-size" 307200
+                    "ctia.hook.kafka.zk.address" "localhost:2181"
+                    "ctia.hook.kafka.topic.name" "ctia-events"
+                    "ctia.hook.kafka.topic.num-partitions" 1
+                    "ctia.hook.kafka.topic.replication-factor" 1]
     (f)))
 
 (defn fixture-properties:events-enabled [f]
@@ -171,7 +186,8 @@
         (post "ctia/bulk"
               :body examples
               :socket-timeout (* 5 60000)
-              :headers {"Authorization" "45c1f5e3f05d0"})]))
+              :headers {"Authorization" "45c1f5e3f05d0"})]
+    bulk-res))
 
 (defn post-entity-bulk [example plural x headers]
   (let [new-records

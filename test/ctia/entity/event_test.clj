@@ -22,7 +22,8 @@
    [ctim.examples.incidents :refer [new-incident-minimal]]
    [ctim.examples.casebooks :refer [new-casebook-minimal]]
    [ctim.domain.id :as id]
-   [cemerick.url :refer [url-encode]]))
+   [cemerick.url :refer [url-encode]]
+   [ctia.test-helpers.es :as es-helpers]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -150,8 +151,7 @@
                     {timeline5-body :parsed-body
                      timeline5-status :status}
                     (get uri-timeline-incident-user3
-                         :headers {"Authorization" "user3"})
-                    ]
+                         :headers {"Authorization" "user3"})]
 
                 (is (= 201 incident-status))
                 (is (= 201 incident-user-3-status))
@@ -207,6 +207,7 @@
                               :type "incident",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-01T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
@@ -229,6 +230,7 @@
                               :type "incident",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-02T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id
@@ -263,6 +265,7 @@
                               :type "relationship",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-01T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
                               :source_ref
                               "http://localhost:3001/ctia/casebook/casebook-00000000-0000-0000-0000-111111111117",
                               :id
@@ -285,6 +288,7 @@
                               :type "incident",
                               :created "2042-01-01T00:00:00.000Z",
                               :modified "2042-01-02T00:00:00.000Z",
+                              :timestamp "2042-01-01T00:00:00.000Z",
                               :incident_time {:opened "2042-01-01T00:00:00.000Z"},
                               :status "Open",
                               :id

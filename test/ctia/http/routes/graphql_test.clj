@@ -29,6 +29,7 @@
    "priority" 100
    "severity" "High"
    "confidence" "Low"
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "reason" "This is a very bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
@@ -46,6 +47,7 @@
    "priority" 90
    "severity" "Medium"
    "confidence" "Medium"
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "reason" "This is a bad IP address that talked to some evil servers"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
@@ -63,6 +65,7 @@
    "priority" 80
    "severity" "None"
    "confidence" "High"
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "reason" "This is a clean IP address"
    "reason_uri" "https://panacea.threatgrid.com/somefeed"
    "valid_time" {"start_time" "2016-02-11T00:40:48.000Z"
@@ -72,6 +75,7 @@
   {"title" "Bad IP because someone said so"
    "tlp" "green"
    "producer" "someguy"
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "description" "We heard from this guy that this IP was not to be trusted"
    "indicator_type" ["C2" "IP Watchlist"]
    "valid_time" {"start_time" "2016-05-11T00:40:48.000Z"
@@ -81,6 +85,7 @@
   {"title" "Malware detected because someone said so"
    "tlp" "green"
    "producer" "someguy"
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "description" "We heard from this guy that a malware has been detected"
    "indicator_type" ["Malware Artifacts"]
    "valid_time" {"start_time" "2016-05-11T00:40:48.000Z"
@@ -90,6 +95,7 @@
   {"title" "Malware may modify files"
    "tlp" "green"
    "producer" "someguy"
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "description" "We heard from this guy that a malware may modify files"
    "indicator_type" ["Malware Artifacts"]
    "valid_time" {"start_time" "2016-05-11T00:40:48.000Z"
@@ -97,10 +103,12 @@
 
 (def investigation-1
   {"source" "foo"
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "title" "foo"})
 
 (def investigation-2
   {"source" "bar"
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "title" "foo"})
 
 (def sighting-1
@@ -110,6 +118,7 @@
    "observables" [{"type" "ip", "value" "194.87.217.88"}]
    "observed_time" {"start_time" "2017-03-19T00:46:50.000Z"
                     "end_time" "2017-03-20T00:00:00.000Z"}
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "sensor" "process.sandbox"
    "source" "test"
    "tlp" "white"
@@ -126,6 +135,7 @@
    "observables" [{"type" "ip", "value" "194.87.217.87"}]
    "observed_time" {"start_time" "2017-03-22T00:46:00.000Z"
                     "end_time" "2017-03-24T10:43:51.000Z"}
+   "timestamp" #inst "2042-01-01T00:00:00.000Z"
    "sensor" "process.sandbox"
    "source" "test"
    "tlp" "white"
@@ -136,22 +146,24 @@
                  "related" {"type" "ip", "value" "194.87.217.87"}}]})
 (def casebook-1
   (-> new-casebook-maximal
-      (assoc :title "foo")
+      (assoc :title "foo" :timestamp #inst "2042-01-01T00:00:00.000Z")
       (dissoc :id)))
 
 (def casebook-2
   (-> new-casebook-maximal
-      (assoc :title "bar")
+      (assoc :title "bar" :timestamp #inst "2042-01-01T00:00:00.000Z")
       (dissoc :id)))
 
 (defn feedback-1 [entity_id]
   {:feedback -1
    :reason "False positive"
+   :timestamp #inst "2042-01-01T00:00:00.000Z"
    :entity_id entity_id})
 
 (defn feedback-2 [entity_id]
   {:feedback 0
    :reason "Unknown"
+   :timestamp #inst "2042-01-01T00:00:00.000Z"
    :entity_id entity_id})
 
 
@@ -176,34 +188,42 @@
     (gh/create-object "feedback" (feedback-2 (:id s1)))
     (gh/create-object "relationship"
                       {:relationship_type "element-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i1)
                        :source_ref (:id j1)})
     (gh/create-object "relationship"
                       {:relationship_type "element-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i2)
                        :source_ref (:id j1)})
     (gh/create-object "relationship"
                       {:relationship_type "element-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i1)
                        :source_ref (:id j2)})
     (gh/create-object "relationship"
                       {:relationship_type "element-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i1)
                        :source_ref (:id j3)})
     (gh/create-object "relationship"
                       {:relationship_type "indicates"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i1)
                        :source_ref (:id s1)})
     (gh/create-object "relationship"
                       {:relationship_type "indicates"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i2)
                        :source_ref (:id s1)})
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i2)
                        :source_ref (:id i1)})
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :target_ref (:id i3)
                        :source_ref (:id i1)})
     {:indicator-1 i1
@@ -268,7 +288,7 @@
                                       :variables {}
                                       :operationName ""}
                                :headers {"Authorization" "2222222222222"})]
-             (is (= 401 status))))
+             (is (= 403 status))))
          (testing "observable query"
            (let [{:keys [data errors status]}
                  (gh/query graphql-queries
@@ -336,12 +356,14 @@
                                      :target_ref indicator-1-id
                                      :source_ref judgement-1-id
                                      :source_entity (:judgement-1 datamap)
-                                     :target_entity (:indicator-1 datamap)}
+                                     :target_entity (:indicator-1 datamap)
+                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}
                                     {:relationship_type "element-of"
                                      :target_ref indicator-2-id
                                      :source_ref judgement-1-id
                                      :source_entity (:judgement-1 datamap)
-                                     :target_entity (:indicator-2 datamap)}])
+                                     :target_entity (:indicator-2 datamap)
+                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}])
 
                (testing "sorting"
                  (gh/connection-sort-test
@@ -419,12 +441,14 @@
                                      :target_ref indicator-2-id
                                      :source_ref indicator-1-id
                                      :source_entity (:indicator-1 datamap)
-                                     :target_entity (:indicator-2 datamap)}
+                                     :target_entity (:indicator-2 datamap)
+                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}
                                     {:relationship_type "variant-of"
                                      :target_ref indicator-3-id
                                      :source_ref indicator-1-id
                                      :source_entity (:indicator-1 datamap)
-                                     :target_entity (:indicator-3 datamap)}])
+                                     :target_entity (:indicator-3 datamap)
+                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}])
 
                (testing "sorting"
                  (gh/connection-sort-test
@@ -594,12 +618,14 @@
                                      :target_ref indicator-1-id
                                      :source_ref sighting-1-id
                                      :source_entity (:sighting-1 datamap)
-                                     :target_entity (:indicator-1 datamap)}
+                                     :target_entity (:indicator-1 datamap)
+                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}
                                     {:relationship_type "indicates"
                                      :target_ref indicator-2-id
                                      :source_ref sighting-1-id
                                      :source_entity (:sighting-1 datamap)
-                                     :target_entity (:indicator-2 datamap)}])
+                                     :target_entity (:indicator-2 datamap)
+                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}])
 
                (testing "sorting"
                  (gh/connection-sort-test

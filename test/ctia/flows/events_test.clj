@@ -162,5 +162,5 @@
                           :groups ["Administrators"]}
                  :event_type :record-created}]
                (->> events
-                    (map #(dissoc % :http-params :id :timestamp :created))
-                    (map #(update % :entity dissoc :created)))))))))
+                    (map #(dissoc % :http-params :id :timestamp :created :modified))
+                    (map #(update % :entity dissoc :created :modified :timestamp)))))))))

@@ -27,12 +27,14 @@
 (defn es-store-impl-properties [store]
   {(str "ctia.store.es." store ".host") s/Str
    (str "ctia.store.es." store ".port") s/Int
+   (str "ctia.store.es." store ".transport") s/Keyword
    (str "ctia.store.es." store ".clustername") s/Str
    (str "ctia.store.es." store ".indexname") s/Str
    (str "ctia.store.es." store ".refresh") Refresh
    (str "ctia.store.es." store ".refresh_interval")  s/Str
    (str "ctia.store.es." store ".replicas") s/Num
    (str "ctia.store.es." store ".shards") s/Num
+   (str "ctia.store.es." store ".default_operator") (s/enum "OR" "AND")
    (str "ctia.store.es." store ".timeout") s/Num})
 
 (s/defschema StorePropertiesSchema
@@ -100,8 +102,6 @@
                       "ctia.http.bulk.max-size" s/Int
                       "ctia.http.bundle.export.max-relationships" s/Int})
 
-   (st/optional-keys {"ctia.migration.optimizations" s/Bool})
-
    (st/required-keys {"ctia.events.enabled" s/Bool
                       "ctia.hook.redis.enabled" s/Bool
                       "ctia.hook.redismq.enabled" s/Bool})
@@ -109,16 +109,35 @@
    (st/required-keys {"ctia.access-control.min-tlp" TLP
                       "ctia.access-control.default-tlp" TLP})
 
+   (st/optional-keys {"ctia.hook.kafka.enabled" s/Bool
+                      "ctia.hook.kafka.compression.type" (s/enum "none" "gzip" "snappy" "lz4" "zstd")
+                      "ctia.hook.kafka.ssl.enabled" s/Bool
+                      "ctia.hook.kafka.ssl.truststore.location" s/Str
+                      "ctia.hook.kafka.ssl.truststore.password" s/Str
+                      "ctia.hook.kafka.ssl.keystore.location" s/Str
+                      "ctia.hook.kafka.ssl.keystore.password" s/Str
+                      "ctia.hook.kafka.ssl.key.password" s/Str
+
+                      "ctia.hook.kafka.request-size" s/Num
+                      "ctia.hook.kafka.zk.address" s/Str
+                      "ctia.hook.kafka.topic.name" s/Str
+                      "ctia.hook.kafka.topic.num-partitions" s/Int
+                      "ctia.hook.kafka.topic.replication-factor" s/Int})
+
    (st/optional-keys {"ctia.events.log" s/Bool
                       "ctia.http.events.timeline.max-seconds" s/Int
                       "ctia.hook.redis.host" s/Str
                       "ctia.hook.redis.port" s/Int
+                      "ctia.hook.redis.ssl" s/Bool
+                      "ctia.hook.redis.password" s/Str
                       "ctia.hook.redis.channel-name" s/Str
                       "ctia.hook.redis.timeout-ms" s/Int
 
                       "ctia.hook.redismq.queue-name" s/Str
                       "ctia.hook.redismq.host" s/Str
                       "ctia.hook.redismq.port" s/Int
+                      "ctia.hook.redismq.ssl" s/Bool
+                      "ctia.hook.redismq.password" s/Str
                       "ctia.hook.redismq.timeout-ms" s/Int
                       "ctia.hook.redismq.max-depth" s/Int
 
@@ -141,6 +160,7 @@
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
 
+                      "ctia.store.es.migration.indexname" s/Str
                       "ctia.store.es.event.slicing.strategy"
                       (s/maybe (s/enum :aliased-index))
                       "ctia.store.es.event.slicing.granularity"

@@ -39,7 +39,7 @@
            new-sightings (->> (csg/sample (cs/gen :new-sighting/map) 5)
                               (map #(-> (assoc %
                                                :observables [observable])
-                                        (dissoc % :relations)))
+                                        (dissoc % :relations :data)))
                               (map #(assoc % :id (url-id :sighting))))
            route-pref (str "ctia/" (:type observable) "/" (:value observable))]
 

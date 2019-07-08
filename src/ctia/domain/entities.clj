@@ -52,6 +52,7 @@
                :schema_version schema-version
                :created (or (:created prev-object) now)
                :modified now
+               :timestamp (or (:timestamp new-object) now)
                :tlp (:tlp new-object
                           (:tlp prev-object (properties-default-tlp)))}
               (when (contains-key? Model :valid_time)

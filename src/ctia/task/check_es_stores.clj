@@ -15,7 +15,6 @@
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
-   [ctia.task.migrations :refer [available-migrations]]
    [schema-tools.core :as st]
    [schema.core :as s]))
 

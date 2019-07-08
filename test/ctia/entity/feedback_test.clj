@@ -19,6 +19,7 @@
                   "http://ex.tld/ctia/feedback/feedback-456"]
    :type "feedback"
    :reason "false positive"
+   :timestamp #inst "2042-01-01T00:00:00.000Z"
    :tlp "green"})
 
 (defn feedback-by-entity-id-test

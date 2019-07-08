@@ -24,6 +24,7 @@
                 :body {:observable {:value "1.2.3.4"
                                     :type "ip"}
                        :disposition 2
+                       :timestamp #inst "2042-01-01T00:00:00.000Z"
                        :source "test"
                        :priority 100
                        :severity "High"
@@ -47,7 +48,7 @@
                            :confidence "Low"
                            :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                         :end_time "2016-03-11T00:00:00.000-00:00"}})]
-          (is (= 403 status)))
+          (is (= 401 status)))
 
         (let [{status :status}
               (post "ctia/judgement"
@@ -61,7 +62,7 @@
                            :valid_time {:start_time "2016-02-11T00:00:00.000-00:00"
                                         :end_time "2016-03-11T00:00:00.000-00:00"}}
                     :headers {"Authorization" "bloodbending"})]
-          (is (= 403 status))))
+          (is (= 401 status))))
 
       (testing "GET /ctia/judgement"
         (let [{status :status
@@ -77,6 +78,7 @@
                 :disposition 2
                 :disposition_name "Malicious"
                 :source "test"
+                :timestamp #inst "2042-01-01T00:00:00.000Z"
                 :tlp "green"
                 :schema_version schema-version
                 :priority 100
@@ -89,9 +91,9 @@
           (let [{status :status}
                 (get (str "ctia/judgement/" (:short-id judgement-id))
                      :headers {"Authorization" "bloodbending"})]
-            (is (= 403 status)))
+            (is (= 401 status)))
 
           (let [{status :status}
                 (get (str "ctia/judgement/" (:short-id judgement-id)))]
-            (is (= 403 status))))))))
+            (is (= 401 status))))))))
 
