@@ -82,7 +82,7 @@
                       "ctia.http.rate-limit.redis.port" s/Int
                       "ctia.http.rate-limit.redis.ssl" s/Bool
                       "ctia.http.rate-limit.redis.password" s/Str
-                      "ctia.http.rate-limit.redis.db" s/Str
+                      "ctia.http.rate-limit.redis.db" s/Int
                       "ctia.http.rate-limit.redis.timeout-ms" s/Int})
 
    (st/optional-keys {"ctia.http.send-server-version" s/Bool})
