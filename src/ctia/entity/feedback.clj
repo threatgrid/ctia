@@ -1,7 +1,6 @@
 (ns ctia.entity.feedback
   (:require [compojure.api.sweet :refer [GET routes]]
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
-            [ctia.store :refer :all]
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes
              [common :refer [paginated-ok PagingParams]]
@@ -95,6 +94,7 @@
      :delete-capabilities :delete-feedback
      :external-id-capabilities :read-feedback
      :spec :new-feedback/map
+     :can-search? false
      :can-update? false})))
 
 (def feedback-entity
