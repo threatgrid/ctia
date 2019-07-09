@@ -2,7 +2,8 @@
   (:require [ctia.auth.jwt :as sut]
             [ctia.auth.capabilities :as caps]
             [clojure.test :as t :refer [deftest is]]
-            [clojure.set :as set]))
+            [clojure.set :as set])
+  (:import [ctia.auth.jwt JWTIdentity]))
 
 (deftest wrap-jwt-to-ctia-auth-test
   (let [handler (fn [r]
@@ -20,17 +21,17 @@
                    :url "http://localhost:8080/foo"}
             :status 200}
            response-no-jwt))
-    (is (= {:body {:body "foo"
-                   :url "http://localhost:8080/foo"
-                   :jwt {:sub "subject name"
-                         (sut/iroh-claim "org/id") "organization-id"}
-                   :identity #ctia.auth.jwt.JWTIdentity {:jwt {:sub "subject name"
-                                                            "https://schemas.cisco.com/iroh/identity/claims/org/id" "organization-id"}}
-                   :groups ["organization-id"]
-                   :login  "subject name"}
+    (is (= {:body
+            {:body "foo"
+             :url "http://localhost:8080/foo"
+             :jwt {:sub "subject name"
+                   (sut/iroh-claim "org/id") "organization-id"}
+             :groups ["organization-id"]
+             :login  "subject name"}
             :status 200}
-           response-jwt))))
-
+           (update response-jwt :body dissoc :identity)))
+    (is (instance? ctia.auth.jwt.JWTIdentity
+                   (get-in response-jwt [:body :identity])))))
 
 (deftest scopes-to-capapbilities-test
   (is (= "private-intel" (sut/entity-root-scope))

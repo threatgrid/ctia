@@ -250,6 +250,14 @@
                (is (= 403 (:status response))
                    "Normal users shouldn't be allowed to set the ids during creation.")))))))))
 
+(def expected-headers
+  {"Access-Control-Expose-Headers"
+   (str "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
+        "X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,"
+        "X-RateLimit-GROUP-Limit"),
+   "Access-Control-Allow-Origin" "http://external.cisco.com",
+   "Access-Control-Allow-Methods" "DELETE, GET, PATCH, POST, PUT"})
+
 (deftest cors-test
   (test-for-each-store
    (fn []
@@ -295,10 +303,7 @@
              judgement-external-ids (:external_ids judgement)]
 
          (is (= 201 status))
-         (is (= {"Access-Control-Expose-Headers"
-                 "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version",
-                 "Access-Control-Allow-Origin" "http://external.cisco.com",
-                 "Access-Control-Allow-Methods" "DELETE, GET, PATCH, POST, PUT"}
+         (is (= expected-headers
                 (select-keys (:headers resp)
                              ["Access-Control-Expose-Headers"
                               "Access-Control-Allow-Origin"
@@ -320,10 +325,7 @@
                       :headers {"Authorization" "Bearer 45c1f5e3f05d0"
                                 "Origin" "http://external.cisco.com"})]
              (is (= 401 (:status response)))
-             (is (= {"Access-Control-Expose-Headers"
-                     "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version",
-                     "Access-Control-Allow-Origin" "http://external.cisco.com",
-                     "Access-Control-Allow-Methods" "DELETE, GET, PATCH, POST, PUT"}
+             (is (= expected-headers
                     (select-keys (:headers response)
                                  ["Access-Control-Expose-Headers"
                                   "Access-Control-Allow-Origin"
@@ -359,10 +361,7 @@
                        :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                                     :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
                       judgement))
-               (is (= {"Access-Control-Expose-Headers"
-                       "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version",
-                       "Access-Control-Allow-Origin" "http://external.cisco.com",
-                       "Access-Control-Allow-Methods" "DELETE, GET, PATCH, POST, PUT"}
+               (is (= expected-headers
                       (select-keys (:headers response)
                                    ["Access-Control-Expose-Headers"
                                     "Access-Control-Allow-Origin"

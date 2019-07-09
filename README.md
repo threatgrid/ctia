@@ -318,6 +318,45 @@ use a combination of `offset` and `limit` parameters to paginate results.
 To be used when the result window is superior to `10 000`, allows to easily loop across all pages of a query response.
 use `limit` and `offset` along with `search_after` filled with the value from the `X-Sort` response header to get the next page.
 
+#### Rate limit
+
+Requests may be rate limited by enabling the middleware using the `ctia.http.rate-limit.enabled` property.
+
+It rate limits how many HTTP requests a CTIA group can make in an hour. The group is identified with the property :identity of the current Ring request.
+
+Before the rate limit is reached, the header `X-Ratelimit-Group-Limit` is returned in the response:
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=utf-8
+Date: Wed, 31 Oct 2018 14:05:30 GMT
+Server: Jetty(9.4.z-SNAPSHOT)
+Strict-Transport-Security: max-age=31536000; includeSubdomains
+Vary: Accept-Encoding, User-Agent
+X-Ctim-Version: 1.0.6
+X-Ctia-Config: b9b3477528d9616ed85221f2827bf1da443e8f00
+X-Ctia-Version: 70323eb3b72da558e7f056e418533402f65d335a
+X-Ratelimit-Group-Limit: 8000
+```
+
+If the rate limit is exceeded:
+
+- The client receives a response with the 429 HTTP status, a `retry-after` header and the JSON message `{"error": "Too Many Requests"}`. The retry-after header indicates the number of seconds to wait before making a new request.
+
+ ```
+HTTP/1.1 429 Too Many Requests
+Content-Length: 30
+Content-Type: application/json
+Date: Wed, 31 Oct 2018 14:05:30 GMT
+Retry-After: 3557
+Server: Jetty(9.4.z-SNAPSHOT)
+Strict-Transport-Security: max-age=31536000; includeSubdomains
+X-Ctim-Version: 1.0.6
+X-Ctia-Config: b9b3477528d9616ed85221f2827bf1da443e8f00
+X-Ctia-Version: 70323eb3b72da558e7f056e418533402f65d335a
+ ```
+
+- A message is logged with the :info level
 
 ## License
 

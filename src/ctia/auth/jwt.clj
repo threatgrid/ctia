@@ -1,16 +1,16 @@
 (ns ctia.auth.jwt
   (:refer-clojure :exclude [identity])
-  (:require
-   [ctia.auth.capabilities
-    :refer [default-capabilities
-            all-entities
-            gen-capabilities-for-entity-and-accesses]]
-   [ring-jwt-middleware.core :as mid]
-   [clj-momo.lib.set :refer [as-set]]
-   [clojure.set :as set]
-   [ctia
-    [auth :as auth :refer [IIdentity]]
-    [properties :as prop]]))
+  (:require [clj-momo.lib.set :refer [as-set]]
+            [clojure
+             [set :as set]
+             [string :as string]]
+            [ctia
+             [auth :as auth :refer [IIdentity]]
+             [properties :as prop]]
+            [ctia.auth.capabilities
+             :refer
+             [all-entities gen-capabilities-for-entity-and-accesses]]
+            [ring-jwt-middleware.core :as mid]))
 
 (defn entity-root-scope []
   (get-in @prop/properties [:ctia :auth :entities :scope]
@@ -101,7 +101,21 @@
   [keyword-name]
   (str claim-prefix "/" keyword-name))
 
-(defrecord JWTIdentity [jwt]
+(defn unlimited-clientids
+  "Retrieves and parses unlimited clientids defined in the properties"
+  []
+  (some-> (get-in @prop/properties
+                  [:ctia :http :rate-limit :unlimited :client-ids])
+          (string/split #",")
+          set))
+
+(defn parse-unlimited-props
+  []
+  (let [clientids (unlimited-clientids)]
+    (cond-> {}
+      (seq clientids) (assoc :clienids clientids))))
+
+(defrecord JWTIdentity [jwt unlimited-fn]
   IIdentity
   (authenticated? [_]
     true)
@@ -114,16 +128,27 @@
       (scopes-to-capabilities scopes)))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
-                 (auth/allowed-capabilities this))))
+                 (auth/allowed-capabilities this)))
+  (rate-limit-fn [_ limit-fn]
+    (when (not (unlimited-fn jwt))
+      limit-fn)))
+
+(defn unlimited?
+  [unlimited-properties jwt]
+  (let [clientid (get jwt (iroh-claim "oauth/client/id"))
+        unlimited-clientids (get unlimited-properties :clientids)]
+    (contains? unlimited-clientids clientid)))
 
 (defn wrap-jwt-to-ctia-auth
   [handler]
-  (fn [request]
-    (handler
-     (if-let [jwt (:jwt request)]
-       (let [identity (->JWTIdentity jwt)]
-         (assoc request
-                :identity identity
-                :login    (auth/login identity)
-                :groups   (auth/groups identity)))
-       request))))
+  (let [unlimited-properties (parse-unlimited-props)]
+    (fn [request]
+      (handler
+       (if-let [jwt (:jwt request)]
+         (let [identity
+               (->JWTIdentity jwt (partial unlimited? unlimited-properties))]
+           (assoc request
+                  :identity identity
+                  :login    (auth/login identity)
+                  :groups   (auth/groups identity)))
+         request)))))

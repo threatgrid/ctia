@@ -5,7 +5,9 @@
              [shutdown :as shutdown]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
-            [ctia.http.middleware.auth :as auth]
+            [ctia.http.middleware
+             [auth :as auth]
+             [ratelimit :refer [wrap-rate-limit]]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -60,7 +62,7 @@
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version")
+                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,X-RateLimit-GROUP-Limit")
 
          true wrap-params
 
