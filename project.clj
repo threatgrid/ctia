@@ -75,9 +75,15 @@
                   ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)
                   :exclusions [commons-codec]]
                  [yogsototh/clj-jwt "0.2.1"]
-                 [threatgrid/ring-jwt-middleware "0.0.10" :exclusions [metosin/compojure-api]]
                  [threatgrid/ring-turnstile-middleware "0.1.0"
                   :exclusions [metosin/schema-tools]]
+                 [threatgrid/ring-jwt-middleware "0.0.13"
+                  :exclusions [metosin/compojure-api]]
+                 [scopula "0.1.4"
+                  :exclusions [org.clojure/spec.alpha
+                               org.clojure/clojure
+                               org.clojure/core.specs.alpha
+                               com.andrewmcveigh/cljs-time]]
 
                  ;; clients
                  [clj-http "3.7.0" :exclusions [commons-codec]]

@@ -82,3 +82,33 @@
          (sut/scopes-to-capabilities #{(str (sut/entity-root-scope) "/sighting:read")
                                        (str (sut/casebook-root-scope) ":read")}))
       "Scopes can compose"))
+
+(deftest parse-jwt-pubkey-map-test
+  (is (= ["APP ONE"]
+         (keys
+          (sut/parse-jwt-pubkey-map "APP ONE=resources/cert/ctia-jwt.pub")))
+      "Should be able to parse and load the keys without exception when the keys exists")
+  (is (= ["APP ONE" "APP ONE TEST"]
+         (keys
+          (sut/parse-jwt-pubkey-map "APP ONE=resources/cert/ctia-jwt.pub,APP ONE TEST=resources/cert/ctia-jwt-2.pub")))
+      "Should be able to parse and load the keys without exception when the keys exists")
+
+  (is (= (str "Could not load JWT keys correctly."
+              " Please check ctia.http.jwt.jwt-pubkey-map config:"
+              " /bad.key (No such file or directory)")
+         (try
+           (sut/parse-jwt-pubkey-map "APP ONE=/bad.key")
+           (catch Exception e
+             (.getMessage e))))
+      "Should be able to parse and load the keys without exception when the keys exists")
+
+  (is (= (str "Wrong format for ctia.http.jwt.jwt-pubkey-map config."
+              " It should matches the following regex:"
+              " ^([^=,]*=[^,]*)(,[^=,]*=[^,]*)*$"
+              "\nExamples: \"APPNAME=/path/to/file.key\""
+              "\n          \"APPNAME=/path/to/file.key,OTHER=/other/path.key\"")
+         (try
+           (sut/parse-jwt-pubkey-map "APP ONE resources/cert/wrong-jwt.pub")
+           (catch Exception e
+             (.getMessage e))))
+      "Should returns a correct error message when failing to load the key"))
