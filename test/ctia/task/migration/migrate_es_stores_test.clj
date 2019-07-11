@@ -294,8 +294,10 @@
                       weakness]
                :as es-props}
               (get-in @props/properties [:ctia :store :es])
-              expected-event-indices {"v0.0.0_ctia_event-000001" 1000
-                                      "v0.0.0_ctia_event-000002" 500}
+              date (java.util.Date.)
+              index-date (.format (java.text.SimpleDateFormat. "yyyy.MM.dd") date)
+              expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date) 1000
+                                      (format "v0.0.0_ctia_event-%s-000002" index-date) 500}
               expected-indices
               (->> #{relationship
                      judgement
@@ -313,9 +315,9 @@
                      vulnerability
                      weakness}
                    (map (fn [k]
-                          {(format  "v0.0.0_%s-000001" (:indexname k)) 50
-                           (format  "v0.0.0_%s-000002" (:indexname k)) 50
-                           (format  "v0.0.0_%s-000003" (:indexname k)) 0}))
+                          {(format  "v0.0.0_%s-%s-000001" (:indexname k) index-date) 50
+                           (format  "v0.0.0_%s-%s-000002" (:indexname k) index-date) 50
+                           (format  "v0.0.0_%s-%s-000003" (:indexname k) index-date) 0}))
                    (into expected-event-indices)
                    keywordize-keys)
               _ (es-index/refresh! es-conn)
@@ -327,19 +329,11 @@
 
           (doseq [[index _]
                   expected-indices]
-            (let [search-url (format "http://%s:%s/%s/_search"
-                                     (:host default)
-                                     (:port default)
-                                     (name index))
-                  {:keys [body]
-                   :as search-res}
-                  (client/get search-url {:as :json})
-                  hits (->> body
-                            :hits
-                            :hits
-                            (map #(get-in % [:_source :groups])))]
+            (let [docs (->> (es-doc/search-docs es-conn (name index) nil nil nil {})
+                            :data
+                            (map :groups))]
               (is (every? #(= ["migration-test"] %)
-                          hits))))))
+                          docs))))))
     (testing "restart migration shall properly handle inserts, updates and deletes"
       (let [new-malwares (->> (fixt/n-examples :malware 3 false)
                               (map #(assoc % :description "INSERTED"))

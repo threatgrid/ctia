@@ -5,7 +5,6 @@
             [ctia.stores.es.crud :as sut]
             [ctia.stores.es.init :as init]
             [ctia.task.rollover :refer [rollover-store]]
-
             [ctia.test-helpers
              [core :as helpers]
              [es :as es-helpers]]))

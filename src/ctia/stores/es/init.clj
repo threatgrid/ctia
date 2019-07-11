@@ -53,7 +53,7 @@
                (empty? (es-index/get conn (str index "*"))))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn
-                        (str index "-000001")
+                        (format "<%s-{now/d}-000001>" index)
                         (update config :aliases assoc (:write-index props) {})))
     conn-state))
 

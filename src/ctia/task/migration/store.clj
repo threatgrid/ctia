@@ -371,7 +371,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (log/infof "%s - creating index template: %s" entity-type indexname)
     (log/infof "%s - creating index: %s" entity-type indexname)
     (retry es-max-retry es-index/create-template! conn indexname index-config)
-    (retry es-max-retry es-index/create! conn (str indexname "-000001") index-config)))
+    (retry es-max-retry es-index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
 
 (s/defn init-migration :- MigrationSchema
   "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
