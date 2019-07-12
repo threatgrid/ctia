@@ -68,7 +68,6 @@
 (def data-table-mapping
   {"data-table"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

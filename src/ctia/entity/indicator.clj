@@ -68,7 +68,6 @@
 (def indicator-mapping
   {"indicator"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

@@ -58,7 +58,6 @@
 (def attack-pattern-mapping
   {"attack-pattern"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

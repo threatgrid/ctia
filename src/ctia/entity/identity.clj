@@ -68,7 +68,6 @@
 (def identity-mapping
   {"identity"
    {:dynamic false
-    :include_in_all false
     :properties
     {:id em/all_token
      :role em/token

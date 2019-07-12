@@ -16,6 +16,7 @@
   "A mapping for free text, or markdown, fields.  They will be
   analyzed and treated like prose."
   {:type "text"
+   :include_in_all false
    :analyzer "text_analyzer"
    :search_quote_analyzer "text_analyzer"
    :search_analyzer "search_analyzer"})
@@ -28,6 +29,7 @@
   "A mapping for fields whose value should be treated like a symbol.
   They will not be analyzed, and they will be lowercased."
   {:type "keyword"
+   :include_in_all false
    :normalizer "lowercase_normalizer"})
 
 (def all_token

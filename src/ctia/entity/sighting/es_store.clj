@@ -15,7 +15,6 @@
 (def sighting-mapping
   {"sighting"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

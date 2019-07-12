@@ -23,7 +23,6 @@
 (def judgement-mapping-def
   {"judgement"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

@@ -42,7 +42,6 @@
 (def coa-mapping
   {"coa"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

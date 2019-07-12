@@ -67,7 +67,6 @@
 (def weakness-mapping
   {"weakness"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

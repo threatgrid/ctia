@@ -23,7 +23,6 @@
 (def relationship-mapping
   {"relationship"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping
