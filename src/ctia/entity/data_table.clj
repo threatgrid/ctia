@@ -75,7 +75,7 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:valid_time em/valid-time
-      :row_count {:type "long"}
+      :row_count em/_long
       :columns {:enabled false}
       :rows {:enabled false}})}})
 

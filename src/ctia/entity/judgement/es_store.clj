@@ -30,9 +30,9 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:observable em/observable
-      :disposition {:type "long"}
+      :disposition em/_long
       :disposition_name em/token
-      :priority {:type "long"}
+      :priority em/_long
       :confidence em/token
       :severity em/token
       :valid_time em/valid-time

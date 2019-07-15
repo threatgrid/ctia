@@ -10,6 +10,12 @@
   (let [indexname "test_mapping"
         doc-type "test_docs"
         mapping {:id sut/all_token
+                 :boolean sut/_boolean
+                 :float sut/_float
+                 :long sut/_long
+                 :integer sut/integer
+                 :table sut/embedded-data-table
+                 :timestamp sut/ts
                  :source sut/token
                  :token1 sut/token
                  :token2 sut/token
@@ -22,6 +28,12 @@
         es-conn (conn/connect {:host "localhost"
                                :port 9200})
         docs (map #(assoc {:id (str "doc" %)
+                           :boolean (even? %)
+                           :float (+ 100 %)
+                           :long (+ 200 %)
+                           :integer (+ 300 %)
+                           :table {:row_count %}
+                           :timestamp (format "2019-07-15T0%s:00:00.000-00:00" %)
                            :source "cisco"
                            :token1 "a lower token"
                            :token2 "an upper TOKEN"
@@ -139,7 +151,7 @@
         (is (= search-res-all-token-1 search-res-all-token-2))
         (is (nil? (-> search-res-all-token-3 :data seq)))))
 
-    (testing "text should be matched with exact values, and cannot be used for aggregating and sorting without a fielddata field"
+    (testing "text should be matched with analyzed values, and cannot be used for aggregating and sorting without a fielddata field"
       (let [search-res-text-1 (doc/search-docs es-conn
                                                indexname
                                                doc-type
@@ -189,10 +201,6 @@
                search-res-all-text))
         (is (nil? (-> search-res-text-3 :data seq)))
 
-        (is (= '("doc0" "doc1" "doc2")
-               (->> search-res-sortable-asc
-                    :data
-                    (map :id))))
         (is (thrown? clojure.lang.ExceptionInfo
                      (doc/search-docs es-conn
                                       indexname
@@ -201,8 +209,153 @@
                                       nil
                                       {:sort_by "sortable-all-text"
                                        :sort_order "asc"})))
+        (is (= '("doc0" "doc1" "doc2")
+               (->> search-res-sortable-asc
+                    :data
+                    (map :id))))
         (is (= '("doc2" "doc1" "doc0")
                (->> search-res-sortable-desc
                     :data
                     (map :id))))))
+    (testing "ts mapping should be a date type, not in _all field and sortable"
+      (let [search-res-all (doc/search-docs es-conn
+                                            indexname
+                                            doc-type
+                                            {:query_string {:query "2019"}}
+                                            nil
+                                            {})
+            search-res-range (doc/search-docs es-conn
+                                              indexname
+                                              doc-type
+                                              {:range {:timestamp
+                                                       {"gte" "2019-07-15T01:00:00.000-00:00"}}}
+                                              nil
+                                              {})
+            search-res-timestamp-asc (doc/search-docs es-conn
+                                                     indexname
+                                                     doc-type
+                                                     nil
+                                                     nil
+                                                     {:sort_by "timestamp"
+                                                      :sort_order "asc"})
+
+            search-res-timestamp-desc (doc/search-docs es-conn
+                                                      indexname
+                                                      doc-type
+                                                      nil
+                                                      nil
+                                                      {:sort_by "timestamp"
+                                                       :sort_order "desc"})]
+      (is (nil? (-> search-res-all :data seq)))
+
+      (is (= #{"doc1" "doc2"}
+             (->> search-res-range
+                  :data
+                  (map :id)
+                  set)))
+      (is (= '("doc0" "doc1" "doc2")
+             (->> search-res-timestamp-asc
+                  :data
+                  (map :id))))
+      (is (= '("doc2" "doc1" "doc0")
+             (->> search-res-timestamp-desc
+                  :data
+                  (map :id))))))
+
+
+    (testing "_float should not be included in _all"
+      (is (= "doc0"
+             (-> (doc/search-docs es-conn
+                                  indexname
+                                  doc-type
+                                  {"term" {"float" 100}}
+                                  nil
+                                  {})
+                 :data
+                 first
+                 :id)))
+      (is (nil? (-> (doc/search-docs es-conn
+                                     indexname
+                                     doc-type
+                                     {"query_string" {"query" "100"}}
+                                     nil
+                                     {})
+                    :data
+                    seq))))
+    (testing "_long should not be included in _all"
+      (is (= "doc0"
+             (-> (doc/search-docs es-conn
+                                  indexname
+                                  doc-type
+                                  {"term" {"long" 200}}
+                                  nil
+                                  {})
+                 :data
+                 first
+                 :id)))
+      (is (nil? (-> (doc/search-docs es-conn
+                                     indexname
+                                     doc-type
+                                     {"query_string" {"query" "200"}}
+                                     nil
+                                     {})
+                    :data
+                    seq))))
+    (testing "integer should not be included in _all"
+      (is (= "doc0"
+             (-> (doc/search-docs es-conn
+                                  indexname
+                                  doc-type
+                                  {"term" {"integer" 300}}
+                                  nil
+                                  {})
+                 :data
+                 first
+                 :id)))
+      (is (nil? (-> (doc/search-docs es-conn
+                                     indexname
+                                     doc-type
+                                     {"query_string" {"query" "300"}}
+                                     nil
+                                     {})
+                    :data
+                    seq))))
+    (testing "boolean should not be included in _all"
+      (is (= "doc1"
+             (-> (doc/search-docs es-conn
+                                  indexname
+                                  doc-type
+                                  {"term" {"boolean" false}}
+                                  nil
+                                  {})
+                 :data
+                 first
+                 :id)))
+      (is (nil? (-> (doc/search-docs es-conn
+                                     indexname
+                                     doc-type
+                                     {"query_string" {"query" "false OR true"}}
+                                     nil
+                                     {})
+                    :data
+                    seq))))
+    (testing "embedded data table should not be included in _all"
+      (is (= "doc0"
+             (-> (doc/search-docs es-conn
+                                  indexname
+                                  doc-type
+                                  {"term" {"table.row_count" 0}}
+                                  nil
+                                  {})
+                 :data
+                 first
+                 :id)))
+      (is (nil? (-> (doc/search-docs es-conn
+                                     indexname
+                                     doc-type
+                                     {"query_string" {"query" "0"}}
+                                     nil
+                                     {})
+                    :data
+                    seq))))
     (index/delete! es-conn indexname)))

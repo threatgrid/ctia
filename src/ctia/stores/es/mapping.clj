@@ -7,9 +7,26 @@
 ;; not that fields with the same name, nee to have the same mapping,
 ;; even in different entities.  That means
 
+(def _float
+  {:type "float"
+   :include_in_all false})
+
+(def _long
+  {:type "long"
+   :include_in_all false})
+
+(def _boolean
+  {:type "boolean"
+   :include_in_all false})
+
+(def integer
+  {:type "integer"
+   :include_in_all false})
+
 (def ts
   "A mapping for our timestamps, which should all be ISO8601 format"
   {:type "date"
+   :include_in_all false
    :format "date_time"})
 
 (def text
@@ -52,7 +69,8 @@
   {:id all_token
    :type token
    :schema_version token
-   :revision {:type "long"}
+   :revision {:type "long"
+              :include_in_all false}
    :external_ids all_token
    :external_references external-reference
    :timestamp ts
@@ -139,89 +157,6 @@
     :closed ts
     :rejected ts}})
 
-(def non-public-data-compromised
-  {:properties
-   {:security_compromise token
-    :data_encrypted {:type "boolean"}}})
-
-(def property-affected
-  {:properties
-   {:property token
-    :description_of_effect text
-    :type_of_availability_loss token
-    :duration_of_availability_loss token
-    :non_public_data_compromised non-public-data-compromised}})
-
-(def affected-asset
-  {:properties
-   {:type token
-    :description all_text
-    :ownership_class token
-    :management_class token
-    :location_class token
-    :property_affected property-affected
-    :identifying_observables observable}})
-
-(def direct-impact-summary
-  {:properties
-   {:asset_losses token
-    :business_mission_distruption token
-    :response_and_recovery_costs token}})
-
-(def indirect-impact-summary
-  {:properties
-   {:loss_of_competitive_advantage token
-    :brand_and_market_damage token
-    :increased_operating_costs token
-    :local_and_regulatory_costs token}})
-
-(def loss-estimation
-  {:properties
-   {:amount {:type "long"}
-    :iso_currency_code token}})
-
-(def total-loss-estimation
-  {:properties
-   {:initial_reported_total_loss_estimation loss-estimation
-    :actual_total_loss_estimation loss-estimation
-    :impact_qualification token
-    :effects token}})
-
-(def impact-assessment
-  {:properties
-   {:direct_impact_summary direct-impact-summary
-    :indirect_impact_summary indirect-impact-summary
-    :total_loss_estimation total-loss-estimation
-    :impact_qualification token
-    :effects token}})
-
-(def contributor
-  {:properties
-   {:role token
-    :name token
-    :email token
-    :phone token
-    :organization token
-    :date ts
-    :contribution_location token}})
-
-(def coa-requested
-  {:properties
-   {:time ts
-    :contributors contributor
-    :COA all_token}})
-
-(def history
-  {:properties
-   {:action_entry coa-requested
-    :journal_entry token}})
-
-(def configuration
-  {:properties
-   {:description all_text
-    :short_description all_text
-    :cce_id token}})
-
 (def action-type
   {:properties
    {:type token}})
@@ -296,6 +231,7 @@
 
 (def embedded-data-table
   {:dynamic false
+   :include_in_all false
    :properties
    {:row_count {:type "long"}
     :columns {:enabled false}
@@ -304,14 +240,6 @@
 (def texts
   {:properties {:type token
                 :text text}})
-
-(def dynamic-templates
-  [{:date_as_datetime {:match "*"
-                       :match_mapping_type "date"
-                       :mapping ts}}
-   {:string_not_analyzed {:match "*"
-                          :match_mapping_type "string"
-                          :mapping token}}])
 
 (def store-settings
   {:number_of_replicas 1
