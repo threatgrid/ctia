@@ -76,7 +76,7 @@
      em/stored-entity-mapping
      {:valid_time em/valid-time
       :producer em/token
-      :negate em/_boolean
+      :negate em/boolean-type
       :indicator_type em/token
       :alternate_ids em/token
       :tags em/all_token

@@ -7,19 +7,19 @@
 ;; not that fields with the same name, nee to have the same mapping,
 ;; even in different entities.  That means
 
-(def _float
+(def float-type
   {:type "float"
    :include_in_all false})
 
-(def _long
+(def long-type
   {:type "long"
    :include_in_all false})
 
-(def _boolean
+(def boolean-type
   {:type "boolean"
    :include_in_all false})
 
-(def integer
+(def integer-type
   {:type "integer"
    :include_in_all false})
 

@@ -22,7 +22,7 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:entity_id em/all_token
-      :feedback em/integer
+      :feedback em/integer-type
       :reason em/sortable-all-text})}})
 
 (def-es-store FeedbackStore :feedback fs/StoredFeedback fs/PartialStoredFeedback)

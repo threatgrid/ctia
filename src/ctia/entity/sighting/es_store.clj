@@ -22,7 +22,7 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:observed_time em/valid-time
-      :count em/_long
+      :count em/long-type
       :sensor em/token
       :sensor_coordinates em/sighting-sensor
       :targets em/sighting-target
@@ -31,7 +31,7 @@
       :severity em/token
       :resolution em/token
       :data em/embedded-data-table
-      :internal em/_boolean
+      :internal em/boolean-type
       :observables em/observable
       :observables_hash em/token
       :relations em/observed-relation})}})
