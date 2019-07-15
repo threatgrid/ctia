@@ -7,7 +7,6 @@
             [clojure.test :refer [deftest testing is]]))
 
 (deftest mapping-test
-
   (let [indexname "test_mapping"
         doc-type "test_docs"
         mapping {:id sut/all_token
@@ -22,8 +21,6 @@
                   :settings sut/store-settings}
         es-conn (conn/connect {:host "localhost"
                                :port 9200})
-        _ (index/delete! es-conn indexname)
-        _ (index/create! es-conn indexname settings)
         docs (map #(assoc {:id (str "doc" %)
                            :source "cisco"
                            :token1 "a lower token"
@@ -36,11 +33,11 @@
                           :_index indexname
                           :_type doc-type)
                   (range 3))
-        [doc0 doc1 doc2] docs
-        _ (doc/bulk-create-doc es-conn
-                               docs
-                               "true")
-        _ (index/refresh! es-conn indexname)]
+        [doc0 doc1 doc2] docs]
+    (index/delete! es-conn indexname)
+    (index/create! es-conn indexname settings)
+    (doc/bulk-create-doc es-conn docs "true")
+    (index/refresh! es-conn indexname)
     (testing "token should be matched with exact values, and can be directly used for aggregating and sorting on without fielddata"
       (let [search-res-doc0 (doc/search-docs es-conn
                                              indexname
@@ -204,8 +201,6 @@
                                       nil
                                       {:sort_by "sortable-all-text"
                                        :sort_order "asc"})))
-
-
         (is (= '("doc2" "doc1" "doc0")
                (->> search-res-sortable-desc
                     :data
