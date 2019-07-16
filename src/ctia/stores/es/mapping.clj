@@ -69,8 +69,7 @@
   {:id all_token
    :type token
    :schema_version token
-   :revision {:type "long"
-              :include_in_all false}
+   :revision long-type
    :external_ids all_token
    :external_references external-reference
    :timestamp ts
