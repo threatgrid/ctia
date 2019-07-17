@@ -262,9 +262,14 @@ Response of the bundle API endpoint:
 |`:external_id` |External ID used to identify the entity|
 |`:error`       |Error message|
 
-### Store Migrations
+### Elasticsearch Store management
 
-see [Migration procedure](migration.md)
+see [CTIA Elasticsearch Stores: managing big Indices](doc/es_stores.md)
+
+see [Migration procedure](doc/migration.md)
+
+see [CTIA Elasticsearch CRUD details](doc/es_stores.pdf)
+
 
 ### Store Checks
  
