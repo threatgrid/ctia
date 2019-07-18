@@ -8,7 +8,7 @@ For CRUD implementation details, see [slides](doc/es_stores.pdf).
 In the configuration, we can define if stores should use aliases or not. This can be defined per store or with a default behavior. Aliased store are highly recommended for large stores like sightings or relationships to ease Elasticsearch scaling.
 
 For instance we could set the `aliased` property to `false` by default and to `true` for large stores only
-```
+```properties
 ctia.store.es.default.aliased=false
 ctia.store.es.sighting.aliased=true
 ctia.store.es.relationship.aliased=true
@@ -17,7 +17,7 @@ ctia.store.es.event.aliased=true
 ```
 
 When `aliased` is set to true, it will not be considered unless one of `rollover` conditions are set, `max_docs` or `max_age`. Once again, this is configurable per store.
-```
+```properties
 ctia.store.es.default.rollover.max_docs=10000000
 ctia.store.es.default.rollover.max_age=6m
 ctia.store.es.event.rollover.max_docs=10000000
@@ -29,23 +29,23 @@ ctia.store.es.event.rollover.max_age=1w
 ## Unaliased stores: 1 store = 1 index
 
 - CTIA directly writes on configured index name
-```
+```properties
 ctia.store.es.event.indexname=ctia_event
 ctia.store.es.sighting.indexname=ctia_sighting
 ctia.store.es.relationship.indexname=ctia_relationship
 ...
 ```
-- At the Initialization, for each unaliased ES store, CTIA creates one template with proper index settings and type mapping. The index will be created with first document insertion, and configured from that template.
+- During the Initialization, for each unaliased ES store, CTIA creates one template with proper index settings and type mapping. The index will be created with first document insertion, and configured from that template.
 - CRUD operations and Search requests directly target the index.
 
-Elasticsearch search indices have a fixed number of shards. It's impossible to modifiy this number of shards without reindexing the corresponding index. This limits horizontal scaling when shards become to big. Unless you are sure about the fact that configured stores will not exceed 20Gb per shard (meaning you can plan that), we strongly discourage to use unaliased stores. Some stores that could remain small are for instance `malware` or `indicator`. You can configure the number of shards as follow:
+Elasticsearch search indices have a fixed number of [shards](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/_basic_concepts.html#getting-started-shards-and-replicas). It's impossible to modifiy this number of shards without reindexing the corresponding index. This limits horizontal scaling when shards become too big. Unless you are sure about the fact that configured stores will not exceed 20Gb per shard (meaning you can plan that), we strongly discourage to use unaliased stores. Some stores that could remain small are for instance `malware` or `indicator`. You can configure the number of shards as follow:
 ``
 ctia.store.es.default.shards=5
 
 ## Aliased stores: 1 store / n indices, read/write aliases
 We use aliases and _rollover API to ease horizontal scaling on very big stores: 
 - multiple indices, with read alias on all indices and write alias on most recent index. read alias is the store name, write alias is the store name suffixed by -write, index names are the store name suffixed by a number.
-- At Initialization CTIA generates a template with a read alias and the first index with the write and read aliases.
+- During the initialization CTIA generates a template with a read alias and the first index with the write and read aliases.
 - ES CRUD operations do not work on multiple indices:
     - GET is replaced by a _search request with an ids query on read alias
     - CREATE are done on the most recent index using write alias
@@ -56,7 +56,7 @@ We use aliases and _rollover API to ease horizontal scaling on very big stores:
 
 
 ### Rollover task
-Currently, CTIA uses Elasticsearch 5.6 which requires to manually request _rollover API. Since indices could be shared by multiple CTIA instances, we designed an external task that must be frequently launch to request _rollover with configured conditions. This task requires no parameter, it simply reads the conf and to detects stores and their rollover conditions. 
+CTIA currently supports Elasticsearch 5.x which requires to manually request `_rollover` API. Since indices could be shared by multiple CTIA instances, we designed an external task that must be launched frequently to request `_rollover` with configured conditions. This task requires no parameter, it simply reads from configuration, detects aliased stores and their rollover conditions. 
 You can launch that task with:
 `java -cp ctia.jar:resources:. clojure.main -m ctia.task.rollover`
 or from source:
