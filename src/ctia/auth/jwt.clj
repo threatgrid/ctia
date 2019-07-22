@@ -153,8 +153,8 @@
   [keyword-name]
   (str claim-prefix "/" keyword-name))
 
-(defn unlimited-clientids
-  "Retrieves and parses unlimited clientids defined in the properties"
+(defn unlimited-client-ids
+  "Retrieves and parses unlimited client-ids defined in the properties"
   []
   (some-> (get-in @prop/properties
                   [:ctia :http :rate-limit :unlimited :client-ids])
@@ -163,9 +163,9 @@
 
 (defn parse-unlimited-props
   []
-  (let [clientids (unlimited-clientids)]
+  (let [client-ids (unlimited-client-ids)]
     (cond-> {}
-      (seq clientids) (assoc :clienids clientids))))
+      (seq client-ids) (assoc :client-ids client-ids))))
 
 (defrecord JWTIdentity [jwt unlimited-fn]
   IIdentity
@@ -187,9 +187,9 @@
 
 (defn unlimited?
   [unlimited-properties jwt]
-  (let [clientid (get jwt (iroh-claim "oauth/client/id"))
-        unlimited-clientids (get unlimited-properties :clientids)]
-    (contains? unlimited-clientids clientid)))
+  (let [client-id (get jwt (iroh-claim "oauth/client/id"))
+        unlimited-client-ids (get unlimited-properties :client-ids)]
+    (contains? unlimited-client-ids client-id)))
 
 (defn wrap-jwt-to-ctia-auth
   [handler]
