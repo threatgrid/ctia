@@ -134,7 +134,8 @@
           "ctia.http.rate-limit.enabled" true]
          (fn []
            (let [response (call)]
-             (is (= 200 (:status response)))))))
+             (is (= 200 (:status response)))
+             (is (nil? (get-in response [:headers "X-RateLimit-GROUP-Limit"])))))))
       (testing "rate limit disabled"
         (apply-fixtures
          ["ctia.http.rate-limit.limits.group.default" 15
