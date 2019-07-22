@@ -318,14 +318,18 @@ Rate limit related configuration
 Set ES Store implementation settings, 
 one can set defaults for all ES stores using =default= as entity
 
-| Property                         | Description                                                          | Possible values |
-|----------------------------------+----------------------------------------------------------------------+-----------------|
-| ctia.store.es.[entity].host      | ES instance host                                                     | string          |
-| ctia.store.es.[entity].port      | ES instance port                                                     | port            |
-| ctia.store.es.[entity].indexname | ES index name to use                                                 | string          |
-| ctia.store.es.[entity].refresh   | control when changes made by this request are made visible to search | string          |
-| ctia.store.es.[entity].replicas  | how many replicas to setup at index creation                         | number          |
-| ctia.store.es.[entity].shards    | how many shards to setup at index creation                           | number          |
+| Property                                 | Description                                                          | Possible values |
+|------------------------------------------+----------------------------------------------------------------------+-----------------|
+| ctia.store.es.[entity].host              | ES instance host                                                     | string          |
+| ctia.store.es.[entity].port              | ES instance port                                                     | port            |
+| ctia.store.es.[entity].indexname         | ES index name to use                                                 | string          |
+| ctia.store.es.[entity].refresh           | control when changes made by this request are made visible to search | string          |
+| ctia.store.es.[entity].replicas          | how many replicas to setup at index creation                         | number          |
+| ctia.store.es.[entity].shards            | how many shards to setup at index creation                           | number          |
+| ctia.store.es.[entity].default_operator  | default operator for free text search                                | "AND" / "OR"    |
+| ctia.store.es.[entity].aliased           | should the index be aliased                                          | boolean         |
+| ctia.store.es.[entity].rollover.max_docs | trigger rollover when store size exceeds that value                  | integer         |
+| ctia.store.es.[entity].rollover.max_age  | trigger rollover when store age exceeds that period (ex: 2m, 1y)     | string          |
 
 ** Migration
 

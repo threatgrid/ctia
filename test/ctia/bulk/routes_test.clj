@@ -419,14 +419,10 @@
                                          "foogroup"
                                          "user")
 
-     (let [tool-store-state (-> @stores :tool first :state)
-           indexname (:index tool-store-state)]
-       (es-index/create! (:conn tool-store-state)
-                         indexname
-                         (-> tool-store-state :props :settings))
-       (es-index/close! (:conn tool-store-state) indexname))
-
-     (let [tools (->> [(mk-new-tool 1)
+     (let [{:keys [index conn]} (-> @stores :tool first :state)
+       ;; close tool index to produce ES errors on that store
+           _ (es-index/close! conn index)
+           tools (->> [(mk-new-tool 1)
                        (mk-new-tool 2)]
                       (map #(assoc % :id (id/make-transient-id nil))))
            sighting (assoc (mk-new-sighting 1)
@@ -458,4 +454,6 @@
        (is (every? #(contains? % :error) (:tools bulk-ids)))
        (is (every? #(contains? % :error) (:vulnerabilities bulk-ids)))
        (is (= (:description sighting)
-              (:description (first sightings))))))))
+              (:description (first sightings))))
+       ;; reopen index to enable cleaning
+       (es-index/open! conn index)))))

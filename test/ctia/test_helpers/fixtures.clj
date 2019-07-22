@@ -1,4 +1,4 @@
-(ns ctia.task.migration.fixtures
+(ns ctia.test-helpers.fixtures
   (:require [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [actors :refer [actor-maximal actor-minimal]]

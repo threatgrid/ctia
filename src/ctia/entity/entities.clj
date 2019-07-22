@@ -44,7 +44,6 @@
    :tool tool-entity
    :vulnerability vulnerability-entity
    :weakness weakness-entity
-
    :identity identity-entity
    :event event-entity})
 

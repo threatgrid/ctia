@@ -19,7 +19,7 @@
                             (store/create-identity store {:login "bar"
                                                           :groups ["foogroup"]
                                                           :capabilities #{:read-actor}
-                                                          :role :admin})))
+                                                          :role "admin"})))
        (is (nil? (store/read-store :identity
                                    (fn [store]
                                      (store/read-identity store "foo")))))))))
