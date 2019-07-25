@@ -270,7 +270,7 @@
                               allowed-statuses
                               forbidden-statuses
 
-                              "gpost"
+                              "external_ids:gpost"
                               [(:parsed-body player-1-entity-post)
                                (:parsed-body player-2-entity-post)
                                (:parsed-body player-3-entity-post)]
@@ -318,7 +318,7 @@
                                   allowed-statuses
                                   forbidden-statuses
 
-                                  "grepost"
+                                  "external_ids:grepost"
                                   [(:parsed-body player-1-entity-update)
                                    (:parsed-body player-2-entity-repost)
                                    (:parsed-body player-3-entity-repost)]
@@ -365,7 +365,7 @@
                                   allowed-statuses
                                   allowed-statuses
 
-                                  "grepost2"
+                                  "external_ids:grepost2"
 
                                   [(:parsed-body player-1-entity-update2)
                                    (:parsed-body player-2-entity-repost2)
@@ -456,7 +456,7 @@
                               forbidden-statuses
                               forbidden-statuses
 
-                              "apost"
+                              "external_ids:apost"
                               [(:parsed-body player-1-entity-post)]
 
                               [(:parsed-body player-2-entity-post)
@@ -500,7 +500,7 @@
                                   forbidden-statuses
                                   forbidden-statuses
 
-                                  "arepost"
+                                  "external_ids:arepost"
                                   [(:parsed-body player-1-entity-update)]
 
                                   [(:parsed-body player-1-entity-update)
@@ -544,7 +544,7 @@
                                   allowed-statuses
                                   allowed-statuses
 
-                                  "arepost2"
+                                  "external_ids:arepost2"
                                   [(:parsed-body player-1-entity-update2)]
 
                                   [(:parsed-body player-1-entity-update2)
@@ -634,7 +634,7 @@
                               forbidden-statuses
                               forbidden-statuses
 
-                              "rpost"
+                              "external_ids:rpost"
                               [(:parsed-body player-1-entity-post)]
 
                               [(:parsed-body player-2-entity-post)]
@@ -676,7 +676,7 @@
                                   forbidden-statuses
                                   forbidden-statuses
 
-                                  "rrepost"
+                                  "external_ids:rrepost"
                                   [(:parsed-body player-1-entity-update)]
 
                                   [(:parsed-body player-1-entity-update)
@@ -718,7 +718,7 @@
                                   allowed-statuses
                                   allowed-statuses
 
-                                  "rrepost2"
+                                  "external_ids:rrepost2"
                                   [(:parsed-body player-1-entity-update2)]
                                   [(:parsed-body player-1-entity-update2)
                                    (:parsed-body player-2-entity-repost2)]

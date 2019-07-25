@@ -30,8 +30,8 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:relationship_type em/token
-      :source_ref em/all_token
-      :target_ref em/all_token})}})
+      :source_ref em/token
+      :target_ref em/token})}})
 
 (def-es-store RelationshipStore
   :relationship

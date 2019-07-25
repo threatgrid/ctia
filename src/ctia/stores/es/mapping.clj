@@ -55,7 +55,7 @@
 
 (def sortable-all-text
   (assoc all_text
-         :fields {:whole all_token}))
+         :fields {:whole token}))
 
 (def external-reference
   {:properties
@@ -66,11 +66,11 @@
     :external_id token}})
 
 (def base-entity-mapping
-  {:id all_token
+  {:id token
    :type token
    :schema_version token
    :revision long-type
-   :external_ids all_token
+   :external_ids token
    :external_references external-reference
    :timestamp ts
    :language token
@@ -111,20 +111,20 @@
 (def related-indicators
   {:properties
    (assoc related
-          :indicator_id all_token)})
+          :indicator_id token)})
 
 (def related-coas
   {:properties
    (assoc related
-          :COA_id all_token)})
+          :COA_id token)})
 
 (def related-actors
   {:properties (assoc related
-                      :actor_id all_token)})
+                      :actor_id token)})
 
 (def related-incidents
   {:properties (assoc related
-                      :incident_id all_token)})
+                      :incident_id token)})
 
 (def observable
   {:type "object"

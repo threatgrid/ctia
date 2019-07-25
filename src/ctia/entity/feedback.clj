@@ -21,7 +21,7 @@
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:entity_id em/all_token
+     {:entity_id em/token
       :feedback em/integer-type
       :reason em/sortable-all-text})}})
 

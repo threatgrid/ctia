@@ -38,6 +38,7 @@
                            :source_ref em/token
                            :target_ref em/token}}
      :id em/token
+     :event_type em/token
      :http-params {:enabled false
                    :type "object"}
      :type em/token
