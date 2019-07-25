@@ -81,14 +81,43 @@
    Configure JWT authentication support,
    see: https://jwt.io/
 
-| Property                        | Description                           | Possible values      |
-|---------------------------------+---------------------------------------+----------------------|
-| ctia.http.jwt.enabled           | enable JWT auth support               | =true= =false=      |
-| ctia.http.jwt.public-key-path   | set the JWT key path                  | string (a full path) |
-| ctia.http.jwt.local-storage-key | set JWT local storage key             | string (a full path) |
+| Property                        | Description                                  | Possible values      |
+|---------------------------------+----------------------------------------------+----------------------|
+| ctia.http.jwt.enabled           | enable JWT auth support                      | =true= =false=       |
+| ctia.http.jwt.public-key-path   | set the JWT key path                         | string (a full path) |
+| ctia.http.jwt.local-storage-key | set JWT local storage key                    | string (a full path) |
+| ctia.http.jwt.public-key-map    | provide the JWT key path for each JWT issuer | string               |
+
+Example of format for supporting multiple JWTs:
+
+~APP-ONE=/etc/ctia/ctia-pub-key-1.pub,APP-TWO=/etc/ctia/ctia-pub-key-2.pub~
+
+This mean that when receiving a JWT, it will check the =iss= claim. If the claim
+is equal to =APP-ONE= CTIA will try to check the signature using the public key
+at the path =/etc/ctia/ctia-pub-key-1.pub=.
+If the claim is equal to =APP-TWO= then we check the signature using the public keys
+at the path =/etc/ctia/ctia-pub-key-2.pub=.
+
+*** Rate limit
+
+Rate limit related configuration
+
+| Property                                  | Descripiton                                                                                    | Possible values |
+|-------------------------------------------+------------------------------------------------------------------------------------------------+-----------------|
+| ctia.http.rate-limit.enabled              | Enable rate limit                                                                              | =true= =false=  |
+| ctia.http.rate-limit.key-prefix           | The key prefix if the same redis DB is used for several applications                           | string          |
+| ctia.http.rate-limit.unlimited.client-ids | List of clientids which are not rate limited as a csv                                          | string          |
+| ctia.http.rate-limit.limits.group.default | The default number of allowed requests per hour per group                                      | number          |
+| ctia.http.rate-limit.limits.group.customs | Define custom limits for groups as csv, the number of requests per hour is delimited by a pipe | string          |
+| ctia.http.rate-limit.redis.host           | Set the redis instance host                                                                    | string          |
+| ctia.http.rate-limit.redis.port           | Set the redis instance port                                                                    | number          |
+| ctia.http.rate-limit.redis.ssl            | Enable SSL connection to the Redis server                                                      | =true= =false=  |
+| ctia.http.rate-limit.redis.password       | Password used for Redis authentication                                                         | string          |
+| ctia.http.rate-limit.redis.db             | Set te redis instance db                                                                       | number          |
+| ctia.http.rate-limit.redis.timeout-ms     | Set redis timeout in milliseconds                                                              | number          |
 
 
-*** Show   
+*** Show
 
    Configure how CTIA is hosted,
    setting those values correctly is mandatory as it defines how entity ids are generated.
@@ -99,7 +128,6 @@
 | ctia.http.show.hostname    | set the hostname used to access this instance | string          |
 | ctia.http.show.path-prefix | set a path prefix if CTIA is not exposed at / | string          |
 | ctia.http.show.port        | set the exposed http port                     | number          |
-
 
 
 *** Swagger
@@ -290,14 +318,18 @@
 Set ES Store implementation settings, 
 one can set defaults for all ES stores using =default= as entity
 
-| Property                         | Description                                                          | Possible values |
-|----------------------------------+----------------------------------------------------------------------+-----------------|
-| ctia.store.es.[entity].host      | ES instance host                                                     | string          |
-| ctia.store.es.[entity].port      | ES instance port                                                     | port            |
-| ctia.store.es.[entity].indexname | ES index name to use                                                 | string          |
-| ctia.store.es.[entity].refresh   | control when changes made by this request are made visible to search | string          |
-| ctia.store.es.[entity].replicas  | how many replicas to setup at index creation                         | number          |
-| ctia.store.es.[entity].shards    | how many shards to setup at index creation                           | number          |
+| Property                                 | Description                                                          | Possible values |
+|------------------------------------------+----------------------------------------------------------------------+-----------------|
+| ctia.store.es.[entity].host              | ES instance host                                                     | string          |
+| ctia.store.es.[entity].port              | ES instance port                                                     | port            |
+| ctia.store.es.[entity].indexname         | ES index name to use                                                 | string          |
+| ctia.store.es.[entity].refresh           | control when changes made by this request are made visible to search | string          |
+| ctia.store.es.[entity].replicas          | how many replicas to setup at index creation                         | number          |
+| ctia.store.es.[entity].shards            | how many shards to setup at index creation                           | number          |
+| ctia.store.es.[entity].default_operator  | default operator for free text search                                | "AND" / "OR"    |
+| ctia.store.es.[entity].aliased           | should the index be aliased                                          | boolean         |
+| ctia.store.es.[entity].rollover.max_docs | trigger rollover when store size exceeds that value                  | integer         |
+| ctia.store.es.[entity].rollover.max_age  | trigger rollover when store age exceeds that period (ex: 2m, 1y)     | string          |
 
 ** Migration
 

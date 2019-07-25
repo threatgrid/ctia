@@ -1,6 +1,5 @@
 (ns ctia.task.migration.store-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
-
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es
@@ -12,29 +11,16 @@
              [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
              [tools :refer [tool-minimal]]]
-
             [ctia.properties :as props]
             [ctia.store :refer [stores]]
             [ctia.stores.es.store :refer [store->map]]
             [ctia.test-helpers
+             [fixtures :as fixt]
              [core :as helpers :refer [post-bulk delete]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
-            [ctia.task.migration
-             [fixtures :as fixt]
-             [store :as sut]]
-            [ctia.store :as st]))
-
-(use-fixtures :once
-  (join-fixtures [mth/fixture-schema-validation
-                  helpers/fixture-properties:clean
-                  es-helpers/fixture-properties:es-store
-                  helpers/fixture-ctia
-                  whoami-helpers/fixture-server
-                  es-helpers/fixture-delete-store-indexes]))
-
-(use-fixtures :each
-  whoami-helpers/fixture-reset-state)
+            [ctia.task.rollover :refer [rollover-stores]]
+            [ctia.task.migration.store :as sut]))
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -42,27 +28,25 @@
   (is (= "v0.4.2_ctia_actor"
          (sut/prefixed-index "v0.4.1_ctia_actor" "0.4.2"))))
 
-(deftest target-index-settings-test
-  (is (= {:index {:number_of_replicas 0
-                  :refresh_interval -1
-                  :mapping {}}}
-         (sut/target-index-settings {:mapping {}})))
-  (is (= {:index {:number_of_replicas 0
-                  :refresh_interval -1}}
-         (sut/target-index-settings {}))))
-
-(sut/setup!)
-(def es-props (get-in @props/properties [:ctia :store :es]))
-(def es-conn (connect (:default es-props)))
-(def migration-index (get-in es-props [:migration :indexname]))
-
-(def fixtures-nb 100)
-(def examples (fixt/bundle fixtures-nb false))
-
-(defn refresh-all-stores []
-  (doseq [{:keys [conn indexname]} (map #(store->map % {})
-                                        (vals @stores))]
-    (es-index/refresh! conn indexname)))
+(deftest target-index-config-test
+  (is (= {:settings {:number_of_replicas 0
+                     :refresh_interval -1}
+          :aliases {"test_index" {}
+                    "test_index-write" {}}}
+         (sut/target-index-config "test_index"
+                                  {}
+                                  {:write-index "test_index-write"})))
+  (is (= {:settings {:number_of_replicas 0
+                     :refresh_interval -1
+                     :number_of_shards 3}
+          :mappings {:a :b}
+          :aliases {"test_index" {}
+                    "test_index-write" {}}}
+         (sut/target-index-config "test_index"
+                                  {:settings {:refresh_interval 2
+                                              :number_of_shards 3}
+                                   :mappings {:a :b}}
+                                  {:write-index "test_index-write"}))))
 
 (deftest wo-storemaps-test
   (let [fake-migration (sut/init-migration "migration-id-1"
@@ -73,10 +57,142 @@
     (is (nil? (get-in wo-stores [:source :store])))
     (is (nil? (get-in wo-stores [:target :store])))))
 
+(deftest source-store-maps->target-store-maps-test
+  (let [malware-source-store {:indexname "ctia-malware"
+                              :mapping :malware
+                              :config {:aliases {"ctia-malware" {}
+                                                 "ctia-malware-write" {}}}
+                              :props {:write-index "ctia-malware-write"}}
+        sighting-source-store {:indexname "ctia-sighting"
+                               :mapping :sighting
+                               :config {:aliases {"ctia-sighting" {}
+                                                  "ctia-sighting-write" {}}}
+                               :props {:write-index "ctia-sighting-write"}}
+        malware-target-store  {:indexname "v0.0.0_ctia-malware"
+                               :mapping :malware
+                               :config {:aliases {"v0.0.0_ctia-malware" {}
+                                                  "v0.0.0_ctia-malware-write" {}}}
+                               :props {:write-index "v0.0.0_ctia-malware-write"}}
+        sighting-target-store  {:indexname "v0.0.0_ctia-sighting"
+                                :mapping :sighting
+                                :config {:aliases {"v0.0.0_ctia-sighting" {}
+                                                   "v0.0.0_ctia-sighting-write" {}}}
+                                :props {:write-index "v0.0.0_ctia-sighting-write"}}]
+    (is (= {:malware malware-target-store
+            :sighting sighting-target-store}
+           (sut/source-store-maps->target-store-maps {:malware malware-source-store
+                                                      :sighting sighting-source-store}
+           "0.0.0")))))
+
+(deftest rollover?-test
+  (is (false? (sut/rollover? false 10 10 10))
+      "rollover? should returned false when index is not aliased")
+  (testing "rollover? should return true when migrated doc exceed a multiple of max_docs with a maximum of batch-size, false otherwise"
+    (is (sut/rollover? true 100 10 101))
+    (is (sut/rollover? true 100 10 109))
+    (is (sut/rollover? true 100 10 110))
+    (is (sut/rollover? true 100 10 301))
+    (is (sut/rollover? true 100 10 309))
+    (is (sut/rollover? true 100 10 310))
+    (is (false? (sut/rollover? true 100 10 50)))
+    (is (false? (sut/rollover? true 100 10 99)))
+    (is (false? (sut/rollover? true 100 10 111)))
+    (is (false? (sut/rollover? true 100 10 150)))
+    (is (false? (sut/rollover? true 100 10 250)))
+    (is (false? (sut/rollover? true 100 10 299)))
+    (is (false? (sut/rollover? true 100 10 350)))))
+
+(deftest search-real-index?
+  (is (false? (sut/search-real-index? false
+                                      {:created "08-15-1953"
+                                       :modified "04-29-2019"})))
+  (is (false? (sut/search-real-index? true
+                                      {:created "08-15-1953"
+                                       :modified "08-15-1953"})))
+  (is (false? (sut/search-real-index? true
+                                      {:created "08-15-1953"})))
+  (is (true? (sut/search-real-index? true
+                                     {:created "08-15-1953"
+                                      :modified "04-29-2019"}))))
+
+(use-fixtures :once
+  (join-fixtures [mth/fixture-schema-validation
+                  whoami-helpers/fixture-server
+                  whoami-helpers/fixture-reset-state
+                  helpers/fixture-properties:clean
+                  es-helpers/fixture-properties:es-store]))
+
+(props/init!)
+(def es-props (get-in @props/properties [:ctia :store :es]))
+(def es-conn (connect (:default es-props)))
+(def migration-index (get-in es-props [:migration :indexname]))
+
+(defn fixture-clean-migration [t]
+  (t)
+  (es-index/delete! es-conn "v0.0.0*")
+  (es-index/delete! es-conn (str migration-index "*")))
+
+(use-fixtures :each
+  (join-fixtures [helpers/fixture-ctia
+                  es-helpers/fixture-delete-store-indexes
+                  fixture-clean-migration]))
+
+(def fixtures-nb 100)
+(def examples (fixt/bundle fixtures-nb false))
+
+
+(deftest bulk-metas-test
+  ;; insert elements in different indices and check that we retrieve the right one
+  (let [sighting-store-map {:conn es-conn
+                            :indexname "ctia_sighting"
+                            :props {:write-index "ctia_sighting"}
+                            :mapping "sighting"
+                            :type "sighting"
+                            :settings {}
+                            :config {}}
+        post-bulk-res-1 (post-bulk examples)
+        _ (rollover-stores @stores)
+        post-bulk-res-2 (post-bulk examples)
+        malware-ids (->> (:malwares post-bulk-res-1)
+                         (map #(-> % long-id->id :short-id))
+                         (take 10))
+        sighting-ids-1 (->> (:sightings post-bulk-res-1)
+                             (map #(-> % long-id->id :short-id))
+                             (take 10))
+        sighting-ids-2 (->> (:sightings post-bulk-res-2)
+                             (map #(-> % long-id->id :short-id))
+                             (take 10))
+        _ (es-index/refresh! es-conn)
+        [malware-index-1 _] (->> (es-index/get es-conn "ctia_malware*")
+                                 keys
+                                 sort
+                                 (map name))
+        [sighting-index-1 sighting-index-2] (->> (es-index/get es-conn "ctia_sighting*")
+                                keys
+                                sort
+                                (map name))
+        bulk-metas-malware-res (sut/bulk-metas sighting-store-map malware-ids)
+        bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1)
+        bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2)]
+    (testing "bulk-metas should property return _id, _type, _index from a document id"
+        (doseq [[_id metas] bulk-metas-malware-res]
+          (is (= _id (:_id metas)))
+          (is (= "malware" (:_type metas)))
+          (is (= malware-index-1 (:_index metas))))
+        (doseq [[_id metas] bulk-metas-sighting-res-1]
+          (is (= _id (:_id metas)))
+          (is (= "sighting" (:_type metas)))
+          (is (= sighting-index-1 (:_index metas))))
+        (doseq [[_id metas] bulk-metas-sighting-res-2]
+          (is (= _id (:_id metas)))
+          (is (= "sighting" (:_type metas)))
+          (is (= sighting-index-2 (:_index metas)))))))
+
 (deftest store-batch-store-size-test
   (let [indexname "test_index"
         store {:conn es-conn
                :indexname indexname
+               :props {:write-index indexname}
                :mapping "test_mapping"}
         nb-docs-1 10
         nb-docs-2 20
@@ -106,6 +222,7 @@
     (let [indexname "test_event"
           event-store {:conn es-conn
                        :indexname indexname
+                       :props {:write-index indexname}
                        :mapping "event"
                        :type "event"
                        :settings {}
@@ -175,6 +292,7 @@
     (let [indexname "test_index"
           tool-store {:conn es-conn
                       :indexname indexname
+                      :props {:write-index indexname}
                       :mapping "tool"
                       :type "tool"
                       :settings {}
@@ -187,6 +305,7 @@
           malware-store {:conn es-conn
                          :indexname indexname
                          :mapping "malware"
+                         :props {:write-index indexname}
                          :type "malware"
                          :settings {}
                          :config {}}
@@ -215,7 +334,7 @@
                                       "foogroup"
                                       "user")
   (post-bulk examples)
-  (refresh-all-stores) ;; ensure indices refresh
+  (es-index/refresh! es-conn) ;; ensure indices refresh
   (let [total-examples (->> (map count (vals examples))
                             (apply +))
         [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
@@ -235,7 +354,7 @@
         malware1-id (-> malware1 :id long-id->id :short-id)
         _ (delete (format "ctia/sighting/%s" sighting1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        _ (refresh-all-stores)
+        _ (es-index/refresh! es-conn)
         since (time/now)
         _ (delete (format "ctia/sighting/%s" sighting2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
@@ -268,14 +387,12 @@
     (is (nil? (:sighting data2))
         "fetch-deletes shall not return any more sightings in the second batch")
     (is (nil? (:malware data1)) "fetch-deletes shall only retrieve entity types given as parameter")
-    (is (nil? (:malware data2)) "fetch-deletes shall only retrieve entity types given as parameter"))
-  (es-index/delete! es-conn "ctia_*"))
-
+    (is (nil? (:malware data2)) "fetch-deletes shall only retrieve entity types given as parameter")))
 
 (deftest init-get-migration-test
   (post-bulk examples)
-  (refresh-all-stores) ; ensure indices refresh
-  (testing "init-migration should properly create new migration state from selected types"
+  (es-index/refresh! es-conn) ; ensure indices refresh
+  (testing "init-migration should properly create new migration state from selected types."
     (let [prefix "0.0.0"
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
@@ -294,9 +411,18 @@
                           (is (= (set (keys stores))
                                  (set entity-types)))
                           (doseq [entity-type entity-types]
-                                        ;(println entity-type)
-                            (let [{:keys [source target started completed]} (get stores entity-type)]
-                                        ;(println source)
+                            (let [{:keys [source target started completed]} (get stores entity-type)
+                                  created-indices (es-index/get es-conn (str (:index target) "*"))]
+                              (is (= "-1"  (-> (vals created-indices)
+                                             first
+                                             :settings
+                                             :index
+                                             :refresh_interval)))
+                              (is (= "0"  (-> (vals created-indices)
+                                             first
+                                             :settings
+                                             :index
+                                             :number_of_replicas)))
                               (is (nil? started))
                               (is (nil? completed))
                               (is (= 0 (:migrated target)))
@@ -316,13 +442,13 @@
                    "init-migration without confirmation shall return a proper migration state")
       (check-state real-migration-from-init
                    migration-id-2
-                   "init-migration with confirmation shall return a proper migration state")
+                   "init-migration with confirmation shall return a propr migration state")
       (check-state (sut/get-migration migration-id-2 es-conn)
                    migration-id-2
-                   "init-migration shall store confirmed migration, and get-migration should properly retrieved from store")
+                   "init-migration shall store confirmed migration, and get-migration should be properly retrieved from store")
       (is (thrown? clojure.lang.ExceptionInfo
                    (sut/get-migration migration-id-1 es-conn))
-          "migration-id-1 was not confirmed it should not exist and thuss get-migration must raise a proper exception")
+          "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
 
       (testing "stored document shall not contains object stores in source and target"
         (let [{:keys [stores]} (es-doc/get-doc es-conn
@@ -332,6 +458,4 @@
                                               {})]
           (doseq [store stores]
                   (is (nil? (get-in store [:source :store])))
-                  (is (nil? (get-in store [:target :store]))))))))
-  (es-index/delete! es-conn "v0.0.0*")
-  (es-index/delete! es-conn "ctia_*"))
+                  (is (nil? (get-in store [:target :store])))))))))

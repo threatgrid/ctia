@@ -14,33 +14,47 @@
    :indexname s/Str
    :shards s/Num
    :replicas s/Num
+   (s/optional-key :write-suffix) s/Str
    s/Keyword s/Any})
 
 (def store-mappings
   (apply merge {}
          (map (fn [[_ {:keys [entity es-mapping]}]]
-                {entity es-mapping}) entities)))
+                {entity es-mapping})
+              entities)))
 
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
    connection manager and dedicated store index properties"
-  [{:keys [entity indexname shards replicas mappings]
+  [{:keys [entity indexname shards replicas mappings aliased]
+    :or {aliased false}
     :as props} :- StoreProperties]
-  (let [settings {:number_of_shards shards
+  (let [write-index (str indexname
+                         (when aliased "-write"))
+        settings {:number_of_shards shards
                   :number_of_replicas replicas}]
     {:index indexname
-     :props props
-     :config {:settings (merge store-settings settings)
-              :mappings (get store-mappings entity mappings)}
+     :props (assoc props :write-index write-index)
+     :config (into
+              {:settings (merge store-settings settings)
+               :mappings (get store-mappings entity mappings)}
+              (when aliased
+                {:aliases {indexname {}}}))
      :conn (connect props)}))
 
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
   [properties :- StoreProperties]
-  (let [{:keys [conn index config] :as conn-state}
+  (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties)]
     (es-index/create-template! conn index config)
+    (when (and (:aliased props)
+               (empty? (es-index/get conn (str index "*"))))
+      ;;https://github.com/elastic/elasticsearch/pull/34499
+      (es-index/create! conn
+                        (format "<%s-{now/d}-000001>" index)
+                        (update config :aliases assoc (:write-index props) {})))
     conn-state))
 
 
@@ -67,7 +81,8 @@
 (def ^:private factories
   (apply merge {}
          (map (fn [[_ {:keys [entity es-store]}]]
-                {entity (make-factory es-store)}) entities)))
+                {entity (make-factory es-store)})
+              entities)))
 
 (defn init-store! [store-kw]
   (when-let [factory (get factories store-kw)]

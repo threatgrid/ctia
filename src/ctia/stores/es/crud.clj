@@ -1,12 +1,14 @@
 (ns ctia.stores.es.crud
   (:require [clojure.set :as set]
             [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
              [core :as s]]
             [schema-tools.core :as st]
             [clj-momo.lib.es
+             [index :as es-index]
              [document :as d]
              [query :as q]
              [schemas :refer [ESConnState]]]
@@ -79,12 +81,37 @@
                     (build-create-result model coerce-fn)))
                 (remove-es-actions items) models)}))
 
+
+(s/defn get-docs-with-indices
+  "Retrieves a documents from a search \"ids\" query. It enables to retrieves documents from an alias that points to multiple indices. It returns the documents with full hits meta data including the real index in which is stored the document."
+  [{:keys [conn index]} :- ESConnState
+   mapping :- s/Keyword
+   ids :- [s/Str]
+   params]
+  (let [ids-query (q/ids (map ensure-document-id ids))
+        res (d/query conn
+                     index
+                     (name mapping)
+                     ids-query
+                     (assoc (make-es-read-params params)
+                            :full-hits?
+                            true))]
+    (:data res)))
+
+(s/defn get-doc-with-index
+  "Retrieves a document from a search \"ids\" query. It is used to perform a get query on an alias that points to multiple indices. It returns the document with full hits meta data including the real index in which is stored the document."
+  [conn-state :- ESConnState
+   mapping :- s/Keyword
+   _id :- s/Str
+   params]
+  (first (get-docs-with-indices conn-state mapping [_id] params)))
+
 (defn handle-create
   "Generate an ES create handler using some mapping and schema"
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe [Model])
-      [state :- ESConnState
+      [{:keys [index props] :as state} :- ESConnState
        models :- [Model]
        ident
        {:keys [refresh] :as params}]
@@ -93,11 +120,11 @@
              (d/bulk-create-doc (:conn state)
                                 (map #(assoc %
                                              :_id (:id %)
-                                             :_index (:index state)
+                                             :_index (:write-index props)
                                              :_type (name mapping))
                                      models)
                                 (or refresh
-                                    (get-in state [:props :refresh] false))))
+                                    (:refresh props "false"))))
         (catch Exception e
           (throw
            (if-let [ex-data (ex-data e)]
@@ -115,20 +142,15 @@
        id :- s/Str
        realized :- Model
        ident]
-      (let [current-doc
-            (d/get-doc (:conn state)
-                       (:index state)
-                       (name mapping)
-                       (ensure-document-id id)
-                       {})]
-
+      (when-let [{index :_index current-doc :_source}
+                 (get-doc-with-index state mapping id {})]
         (if (allow-write? current-doc ident)
           (coerce! (d/update-doc (:conn state)
-                                 (:index state)
+                                 index
                                  (name mapping)
                                  (ensure-document-id id)
                                  realized
-                                 (get-in state [:props :refresh] false)))
+                                 (get-in state [:props :refresh] "false")))
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
 
@@ -141,11 +163,12 @@
        id :- s/Str
        ident
        params]
-      (when-let [doc (coerce! (d/get-doc (:conn state)
-                                         (:index state)
-                                         (name mapping)
-                                         (ensure-document-id id)
-                                         (make-es-read-params params)))]
+      (when-let [doc (-> (get-doc-with-index state
+                                             mapping
+                                             id
+                                             (make-es-read-params params))
+                         :_source
+                         coerce!)]
         (if (allow-read? doc ident)
           doc
           (throw (ex-info "You are not allowed to read this document"
@@ -163,20 +186,17 @@
     [state :- ESConnState
      id :- s/Str
      ident]
-    (if-let [doc (d/get-doc (:conn state)
-                            (:index state)
-                            (name mapping)
-                            (ensure-document-id id)
-                            {})]
-      (if (allow-write? doc ident)
-        (d/delete-doc (:conn state)
-                      (:index state)
-                      (name mapping)
-                      (ensure-document-id id)
-                      (get-in state [:props :refresh] false))
+    (when-let [{index :_index doc :_source}
+               (get-doc-with-index state mapping id {})]
+        (if (allow-write? doc ident)
+          (d/delete-doc (:conn state)
+                        index
+                        (name mapping)
+                        (ensure-document-id id)
+                        (get-in state [:props :refresh] false))
 
-        (throw (ex-info "You are not allowed to delete this document"
-                        {:type :access-control-error}))))))
+          (throw (ex-info "You are not allowed to delete this document"
+                          {:type :access-control-error}))))))
 
 (def default-sort-field :_doc)
 

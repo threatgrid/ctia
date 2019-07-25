@@ -1,7 +1,7 @@
 (def cheshire-version "5.8.1")
 (def compojure-api-version "1.1.11")
 (def schema-tools-version "0.9.1")
-(def schema-version "1.1.7")
+(def schema-version "1.1.11")
 (def jetty-server-version "9.4.15.v20190215")
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -49,7 +49,7 @@
                                metosin/ring-swagger
                                com.google.guava/guava
                                org.clojure/tools.reader]]
-                 [threatgrid/clj-momo "0.2.31"]
+                 [threatgrid/clj-momo "0.2.32"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
@@ -75,7 +75,15 @@
                   ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)
                   :exclusions [commons-codec]]
                  [yogsototh/clj-jwt "0.2.1"]
-                 [threatgrid/ring-jwt-middleware "0.0.10" :exclusions [metosin/compojure-api]]
+                 [threatgrid/ring-turnstile-middleware "0.1.0"
+                  :exclusions [metosin/schema-tools]]
+                 [threatgrid/ring-jwt-middleware "0.0.13"
+                  :exclusions [metosin/compojure-api]]
+                 [scopula "0.1.4"
+                  :exclusions [org.clojure/spec.alpha
+                               org.clojure/clojure
+                               org.clojure/core.specs.alpha
+                               com.andrewmcveigh/cljs-time]]
 
                  ;; clients
                  [clj-http "3.7.0" :exclusions [commons-codec]]

@@ -32,7 +32,8 @@
     write-capabilities)
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
-                 write-capabilities)))
+                 write-capabilities))
+  (rate-limit-fn [_ _]))
 
 (defrecord ReadOnlyIdentity []
   IIdentity
@@ -46,7 +47,8 @@
     read-only-capabilities)
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
-                 read-only-capabilities)))
+                 read-only-capabilities))
+  (rate-limit-fn [_ _]))
 
 (defrecord AuthService [auth-config]
   IAuth

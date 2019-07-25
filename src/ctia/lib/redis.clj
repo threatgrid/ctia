@@ -4,11 +4,12 @@
 ;; Connections
 
 (defn redis-conf->conn-spec
-  [{:keys [host port timeout-ms password ssl]}]
+  [{:keys [host port db timeout-ms password ssl]}]
   (cond-> {:host host
-           :port port
-           :timeout-ms timeout-ms}
+           :port port}
+    timeout-ms (assoc :timeout-ms timeout-ms)
     password (assoc :password password)
+    db (assoc :db db)
     ssl (assoc :ssl-fn :default)))
 
 (defn server-connection

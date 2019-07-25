@@ -40,7 +40,8 @@
    :mapping s/Str
    :type s/Str
    :settings s/Any
-   :config s/Any})
+   :config s/Any
+   :props {s/Any s/Any}})
 
 (s/defn store->map :- StoreMap
   "transform a store record
@@ -52,6 +53,7 @@
     {:conn (merge (:conn store-state)
                   conn-overrides)
      :indexname (:index store-state)
+     :props (:props store-state)
      :mapping entity-type
      :type entity-type
      :settings (-> store-state :props :settings)

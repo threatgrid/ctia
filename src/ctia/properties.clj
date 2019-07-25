@@ -34,6 +34,9 @@
    (str "ctia.store.es." store ".refresh_interval")  s/Str
    (str "ctia.store.es." store ".replicas") s/Num
    (str "ctia.store.es." store ".shards") s/Num
+   (str "ctia.store.es." store ".rollover.max_docs") s/Num
+   (str "ctia.store.es." store ".rollover.max_age") s/Str
+   (str "ctia.store.es." store ".aliased")  s/Bool
    (str "ctia.store.es." store ".default_operator") (s/enum "OR" "AND")
    (str "ctia.store.es." store ".timeout") s/Num})
 
@@ -57,8 +60,6 @@
    StorePropertiesSchema
    (st/required-keys {"ctia.auth.type" s/Keyword})
 
-
-
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
                       "ctia.auth.entities.scope" s/Str
                       "ctia.auth.casebook.scope" s/Str
@@ -75,6 +76,18 @@
                       "ctia.http.min-threads" s/Int
                       "ctia.http.max-threads" s/Int})
 
+   (st/optional-keys {"ctia.http.rate-limit.enabled" s/Bool
+                      "ctia.http.rate-limit.key-prefix" s/Str
+                      "ctia.http.rate-limit.unlimited.client-ids" s/Str
+                      "ctia.http.rate-limit.limits.group.default" s/Int
+                      "ctia.http.rate-limit.limits.group.customs" s/Str
+                      "ctia.http.rate-limit.redis.host" s/Str
+                      "ctia.http.rate-limit.redis.port" s/Int
+                      "ctia.http.rate-limit.redis.ssl" s/Bool
+                      "ctia.http.rate-limit.redis.password" s/Str
+                      "ctia.http.rate-limit.redis.db" s/Int
+                      "ctia.http.rate-limit.redis.timeout-ms" s/Int})
+
    (st/optional-keys {"ctia.http.send-server-version" s/Bool})
 
    (st/optional-keys {"ctia.http.swagger.oauth2.enabled" s/Bool
@@ -90,6 +103,7 @@
 
    (st/optional-keys {"ctia.http.jwt.enabled" s/Bool
                       "ctia.http.jwt.public-key-path" s/Str
+                      "ctia.http.jwt.public-key-map" s/Str
                       "ctia.http.jwt.local-storage-key" s/Str
                       "ctia.http.jwt.lifetime-in-sec" s/Num
                       "ctia.http.jwt.claim-prefix" s/Str})
@@ -161,8 +175,6 @@
                       "ctia.store.bundle-refresh" Refresh
 
                       "ctia.store.es.migration.indexname" s/Str
-                      "ctia.store.es.event.slicing.strategy"
-                      (s/maybe (s/enum :aliased-index))
                       "ctia.store.es.event.slicing.granularity"
                       (s/enum :minute :hour :day :week :month :year)})))
 

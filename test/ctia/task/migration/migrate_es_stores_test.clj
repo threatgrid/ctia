@@ -7,17 +7,19 @@
             [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.es
+             [query :as es-query]
              [conn :refer [connect]]
              [document :as es-doc]
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
 
             [ctia.properties :as props]
+            [ctia.task.rollover :refer [rollover-stores]]
             [ctia.task.migration
-             [fixtures :as fixt]
              [migrate-es-stores :as sut]
              [store :refer [setup! prefixed-index get-migration fetch-batch]]]
             [ctia.test-helpers
+             [fixtures :as fixt]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post put delete post-bulk with-atom-logger]]
              [es :as es-helpers]
@@ -27,17 +29,25 @@
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
-                  helpers/fixture-properties:clean
-                  es-helpers/fixture-properties:es-store
-                  helpers/fixture-ctia
                   whoami-helpers/fixture-server
-                  es-helpers/fixture-delete-store-indexes]))
+                  whoami-helpers/fixture-reset-state
+                  helpers/fixture-properties:clean
+                  es-helpers/fixture-properties:es-store]))
+
+(setup!) ;; init migration conn and properties
+(def es-props (get-in @props/properties [:ctia :store :es]))
+(def es-conn (connect (:default es-props)))
+(def migration-index (get-in es-props [:migration :indexname]))
+
+(defn fixture-clean-migration [t]
+  (t)
+  (es-index/delete! es-conn "v0.0.0*")
+  (es-index/delete! es-conn (str migration-index "*")))
 
 (use-fixtures :each
-  whoami-helpers/fixture-reset-state)
-
-(defn refresh-indices [host port]
-  (client/post (format "http://%s:%s/_refresh" host port)))
+  (join-fixtures [helpers/fixture-ctia
+                  es-helpers/fixture-delete-store-indexes
+                  fixture-clean-migration]))
 
 (defn make-cat-indices-url [host port]
   (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
@@ -61,17 +71,65 @@
     (es-index/index-exists? conn
                             (prefixed-index indexname prefix))))
 
-(setup!)
-(def es-props (get-in @props/properties [:ctia :store :es]))
-(def es-conn (connect (:default es-props)))
-(def migration-index (get-in es-props [:migration :indexname]))
-
 (def fixtures-nb 100)
 (def minimal-examples (fixt/bundle fixtures-nb false))
 (def example-types
   (->> (vals minimal-examples)
        (map #(-> % first :type keyword))
        set))
+
+(defn rollover-post-bulk
+  "post data in 2 parts and rollover"
+  []
+  (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+  (rollover-stores @stores)
+  (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+  (rollover-stores @stores))
+
+
+(deftest migration-with-rollover
+  (helpers/set-capabilities! "foouser"
+                             ["foogroup"]
+                             "user"
+                             all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user")
+  (testing "migration with rollover and multiple indices for source stores"
+    (let [store-types [:malware :tool :incident]]
+      (rollover-post-bulk)
+      ;; insert malformed documents
+      (doseq [store-type store-types]
+        (es-index/get es-conn
+                      (str (get-in es-props [store-type :indexname]) "*")))
+      (sut/migrate-store-indexes "test-3"
+                                 "0.0.0"
+                                 [:__test]
+                                 store-types
+                                 10
+                                 30
+                                 true
+                                 false)
+
+      (let [migration-state (es-doc/get-doc es-conn
+                                            migration-index
+                                            "migration"
+                                            "test-3"
+                                            {})]
+        (doseq [store-type store-types]
+          (is (= (count (es-index/get es-conn
+                                      (str "v0.0.0_" (get-in es-props [store-type :indexname]) "*")))
+                 3)
+              "target indice should be rolledover during migration")
+          (es-index/get es-conn
+                        (str "v0.0.0_" (get-in es-props [store-type :indexname]) "*"))
+          (let [migrated-store (get-in migration-state [:stores store-type])
+                {:keys [source target]} migrated-store]
+            (is (= fixtures-nb (:total source)))
+            (is (= fixtures-nb (:migrated target))))
+          )))))
+
 
 (deftest migration-with-malformed-docs
   (helpers/set-capabilities! "foouser"
@@ -90,17 +148,18 @@
                    :am "a"
                    :bad "document"}]
       ;; insert proper documents
-      (post-bulk minimal-examples)
+      ;;(post-bulk minimal-examples)
+      (rollover-post-bulk)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-doc/create-doc es-conn
-                           (get-in es-props [store-type :indexname])
+                           (str (get-in es-props [store-type :indexname]) "-write")
                            (name store-type)
                            bad-doc
                            "true"))
       (with-atom-logger logger
         (sut/migrate-store-indexes "test-3"
-                                   "0.0.1"
+                                   "0.0.0"
                                    [:__test]
                                    store-types
                                    10
@@ -121,11 +180,7 @@
           (is (some #(clojure.string/starts-with? % (format "%s - Cannot migrate entity: {"
                                                             (name store-type)))
                     messages)
-              (format "malformed %s was not logged" store-type))))))
-
-  (es-index/delete! es-conn "ctia_*")
-  (es-index/delete! es-conn "v0.0.1*")
-  (es-doc/delete-doc es-conn migration-index "migration" "test-3" "true"))
+              (format "malformed %s was not logged" store-type)))))))
 
 
 (deftest test-migrate-store-indexes
@@ -239,30 +294,33 @@
                       weakness]
                :as es-props}
               (get-in @props/properties [:ctia :store :es])
+              date (java.util.Date.)
+              index-date (.format (java.text.SimpleDateFormat. "yyyy.MM.dd") date)
+              expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date) 1000
+                                      (format "v0.0.0_ctia_event-%s-000002" index-date) 500}
               expected-indices
-              (->> {relationship fixtures-nb
-                    judgement fixtures-nb
-                    coa fixtures-nb
-                    attack-pattern fixtures-nb
-                    malware fixtures-nb
-                    tool fixtures-nb
-                    incident fixtures-nb
-                    event (* (count (keys minimal-examples))
-                             fixtures-nb)
-                    indicator fixtures-nb
-                    investigation fixtures-nb
-                    campaign fixtures-nb
-                    casebook fixtures-nb
-                    sighting fixtures-nb
-                    actor fixtures-nb
-                    vulnerability fixtures-nb
-                    weakness fixtures-nb}
-                   (map (fn [[k v]]
-                          {(str  "v0.0.0_" (:indexname k)) v}))
-                   (into {})
+              (->> #{relationship
+                     judgement
+                     coa
+                     attack-pattern
+                     malware
+                     tool
+                     incident
+                     indicator
+                     investigation
+                     campaign
+                     casebook
+                     sighting
+                     actor
+                     vulnerability
+                     weakness}
+                   (map (fn [k]
+                          {(format  "v0.0.0_%s-%s-000001" (:indexname k) index-date) 50
+                           (format  "v0.0.0_%s-%s-000002" (:indexname k) index-date) 50
+                           (format  "v0.0.0_%s-%s-000003" (:indexname k) index-date) 0}))
+                   (into expected-event-indices)
                    keywordize-keys)
-              refreshes (refresh-indices (:host default)
-                                         (:port default))
+              _ (es-index/refresh! es-conn)
               formatted-cat-indices (get-cat-indices (:host default)
                                                      (:port default))]
           (is (= expected-indices
@@ -271,19 +329,11 @@
 
           (doseq [[index _]
                   expected-indices]
-            (let [search-url (format "http://%s:%s/%s/_search"
-                                     (:host default)
-                                     (:port default)
-                                     (name index))
-                  {:keys [body]
-                   :as search-res}
-                  (client/get search-url {:as :json})
-                  hits (->> body
-                            :hits
-                            :hits
-                            (map #(get-in % [:_source :groups])))]
+            (let [docs (->> (es-doc/search-docs es-conn (name index) nil nil nil {})
+                            :data
+                            (map :groups))]
               (is (every? #(= ["migration-test"] %)
-                          hits))))))
+                          docs))))))
     (testing "restart migration shall properly handle inserts, updates and deletes"
       (let [new-malwares (->> (fixt/n-examples :malware 3 false)
                               (map #(assoc % :description "INSERTED"))
@@ -316,31 +366,33 @@
               malware-target-store (get-in malware-migration [:target :store])
               {last-target-malwares :data} (fetch-batch malware-target-store 3 0 "desc" nil)
               {:keys [conn indexname mapping]} (get-in sighting-migration [:target :store])
-              updated-sighting (es-doc/get-doc conn indexname mapping sighting1-id nil)
-              get-deleted-sightings (map #(es-doc/get-doc conn indexname mapping % nil)
-                                         sighting-ids)]
+              updated-sighting (-> (es-doc/query conn
+                                                 indexname
+                                                 mapping
+                                                 (es-query/ids [sighting1-id])
+                                                 {})
+                                   :data
+                                   first)
+              get-deleted-sightings (-> (es-doc/query conn
+                                                      indexname
+                                                      mapping
+                                                      (es-query/ids sighting-ids)
+                                                      {})
+                                        :data)]
           (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
-              "inserted malwares must found in target malware store")
+              "inserted malwares must be found in target malware store")
 
           (is (= "UPDATED" (:description updated-sighting))
               "updated document must be updated in target stores")
-          (is (= (repeat (count sighting-ids) nil)
-                 get-deleted-sightings)
-              "deleted document must not be in target stores"))))))
-
-  (es-index/delete! es-conn "ctia_*")
-  (es-index/delete! es-conn "v0.0.0*")
-  (es-doc/delete-doc es-conn migration-index "migration" "test-2" "true"))
-
-
-
+          (is (empty? get-deleted-sightings)
+              "deleted document must not be in target stores")))))))
 
 (defn load-test-fn
   [maximal?]
   ;; insert 20000 docs per entity-type
   (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
     (post-bulk bundle))
-  (doseq [batch-size [100 1000 3000 6000 10000]]
+  (doseq [batch-size [1000 3000 6000 10000]]
     (let [total-docs (* (count example-types) 20000)
           _ (println (format "===== migrating %s documents with batch size %s"
                              total-docs

@@ -5,7 +5,9 @@
              [shutdown :as shutdown]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
-            [ctia.http.middleware.auth :as auth]
+            [ctia.http.middleware
+             [auth :as auth]
+             [ratelimit :refer [wrap-rate-limit]]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -50,7 +52,13 @@
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
-            {:pubkey-path (:public-key-path jwt)
+            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
+             (when-let [pubkey-for-issuer-map
+                        (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
+               (fn [{:keys [iss] :as claims}]
+                 (get pubkey-for-issuer-map iss)))
+             :error-handler auth-jwt/jwt-error-handler
+             :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
@@ -60,7 +68,7 @@
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version")
+                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,X-RateLimit-GROUP-Limit")
 
          true wrap-params
 

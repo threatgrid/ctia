@@ -1,11 +1,13 @@
 (ns ctia.entity.identity
-  (:require
-   [ctia.stores.es.mapping :as em]
-   [ctia.store :refer [IIdentityStore]]
-   [clj-momo.lib.es.document
-    :refer [create-doc delete-doc get-doc]]
-   [schema.core :as s]
-   [schema-tools.core :as st]))
+  (:require [schema.core :as s]
+            [schema-tools.core :as st]
+            [clj-momo.lib.es
+             [schemas :refer [ESConnState]]
+             [document :refer [create-doc get-doc delete-doc]]]
+            [ctia.store :refer [IIdentityStore]]
+            [ctia.stores.es
+             [crud :as crud]
+             [mapping :as em]]))
 
 (def Role s/Str)
 (def Login s/Str)
@@ -34,36 +36,40 @@
   [caps]
   (vec (map name caps)))
 
-(defn handle-create [state new-identity]
+(s/defn handle-create :- Identity
+[{:keys [conn props]} :- ESConnState
+ new-identity :- Identity]
   (let [id (:login new-identity)
         realized (assoc new-identity :id id)
         transformed (update-in realized [:capabilities]
                                capabilities-set->capabilities)
-        res (create-doc (:conn state)
-                        (:index state)
+        res (create-doc conn
+                        (:write-index props)
                         mapping
                         transformed
-                        (get-in state [:props :refresh] false))]
+                        (:refresh props "false"))]
     (-> res
         (update-in [:capabilities] capabilities->capabilities-set)
         (dissoc :id))))
 
 (s/defn handle-read :- (s/maybe Identity)
-  [state :- s/Any login :- s/Str]
-  (some-> (get-doc (:conn state)
-                   (:index state)
-                   mapping
-                   login
-                   {})
+  [state :- ESConnState
+   login :- s/Str]
+  (some-> (crud/get-doc-with-index state :identity login {})
+          :_source
           (update-in [:capabilities] capabilities->capabilities-set)
           (dissoc :id)))
 
-(defn handle-delete [state login]
-  (delete-doc (:conn state)
-              (:index state)
-              mapping
-              login
-              true))
+(s/defn handle-delete
+  [state :- ESConnState
+   login :- s/Str]
+  (when-let [{index :_index}
+             (crud/get-doc-with-index state :identity login {})]
+    (delete-doc (:conn state)
+                index
+                mapping
+                login
+                true)))
 
 (def identity-mapping
   {"identity"
