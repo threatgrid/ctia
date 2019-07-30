@@ -23,7 +23,6 @@
 (def judgement-mapping-def
   {"judgement"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping
@@ -31,13 +30,13 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:observable em/observable
-      :disposition {:type "long"}
+      :disposition em/long-type
       :disposition_name em/token
-      :priority {:type "long"}
+      :priority em/long-type
       :confidence em/token
       :severity em/token
       :valid_time em/valid-time
-      :reason em/all_text
+      :reason em/sortable-all-text
       :reason_uri em/token})}})
 
 (def coerce-stored-judgement-list

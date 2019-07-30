@@ -127,7 +127,6 @@
 (def incident-mapping
   {"incident"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

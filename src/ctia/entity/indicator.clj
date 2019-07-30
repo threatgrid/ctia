@@ -68,7 +68,6 @@
 (def indicator-mapping
   {"indicator"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping
@@ -77,7 +76,7 @@
      em/stored-entity-mapping
      {:valid_time em/valid-time
       :producer em/token
-      :negate {:type "boolean"}
+      :negate em/boolean-type
       :indicator_type em/token
       :alternate_ids em/token
       :tags em/all_token

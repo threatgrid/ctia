@@ -68,7 +68,6 @@
 (def data-table-mapping
   {"data-table"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping
@@ -76,7 +75,7 @@
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:valid_time em/valid-time
-      :row_count {:type "long"}
+      :row_count em/long-type
       :columns {:enabled false}
       :rows {:enabled false}})}})
 

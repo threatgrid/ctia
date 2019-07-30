@@ -1,7 +1,6 @@
 (ns ctia.entity.feedback
   (:require [compojure.api.sweet :refer [GET routes]]
             [ctia.domain.entities :refer [page-with-long-id un-store-page]]
-            [ctia.store :refer :all]
             [ctia.entity.feedback.schemas :as fs]
             [ctia.http.routes
              [common :refer [paginated-ok PagingParams]]
@@ -17,15 +16,14 @@
 (def feedback-mapping
   {"feedback"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:entity_id em/all_token
-      :feedback {:type "integer"}
-      :reason em/all_text})}})
+     {:entity_id em/token
+      :feedback em/integer-type
+      :reason em/sortable-all-text})}})
 
 (def-es-store FeedbackStore :feedback fs/StoredFeedback fs/PartialStoredFeedback)
 
@@ -95,6 +93,7 @@
      :delete-capabilities :delete-feedback
      :external-id-capabilities :read-feedback
      :spec :new-feedback/map
+     :can-search? false
      :can-update? false})))
 
 (def feedback-entity

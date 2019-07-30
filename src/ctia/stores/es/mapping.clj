@@ -7,16 +7,33 @@
 ;; not that fields with the same name, nee to have the same mapping,
 ;; even in different entities.  That means
 
+(def float-type
+  {:type "float"
+   :include_in_all false})
+
+(def long-type
+  {:type "long"
+   :include_in_all false})
+
+(def boolean-type
+  {:type "boolean"
+   :include_in_all false})
+
+(def integer-type
+  {:type "integer"
+   :include_in_all false})
+
 (def ts
   "A mapping for our timestamps, which should all be ISO8601 format"
   {:type "date"
+   :include_in_all false
    :format "date_time"})
 
 (def text
   "A mapping for free text, or markdown, fields.  They will be
   analyzed and treated like prose."
   {:type "text"
-   :fielddata true
+   :include_in_all false
    :analyzer "text_analyzer"
    :search_quote_analyzer "text_analyzer"
    :search_analyzer "search_analyzer"})
@@ -28,19 +45,17 @@
 (def token
   "A mapping for fields whose value should be treated like a symbol.
   They will not be analyzed, and they will be lowercased."
-  {:type "text"
-   ;; TODO use token and disable fielddata once token analyzer is supported
-   :fielddata true
-   :analyzer "token_analyzer"
-   :search_analyzer "token_analyzer"})
+  {:type "keyword"
+   :include_in_all false
+   :normalizer "lowercase_normalizer"})
 
 (def all_token
   "The same as the `token` mapping, but will be included in the _all field"
-  {:type "text"
-   :fielddata true
-   :analyzer "token_analyzer"
-   :search_analyzer "token_analyzer"
-   :include_in_all true})
+  (assoc token :include_in_all true))
+
+(def sortable-all-text
+  (assoc all_text
+         :fields {:whole token}))
 
 (def external-reference
   {:properties
@@ -51,19 +66,18 @@
     :external_id token}})
 
 (def base-entity-mapping
-  {:id all_token
+  {:id token
    :type token
    :schema_version token
-   :revision {:type "long"}
-   :external_ids all_token
+   :revision long-type
+   :external_ids token
    :external_references external-reference
    :timestamp ts
    :language token
    :tlp token})
 
 (def describable-entity-mapping
-  {:title (assoc all_text
-                 :fields {:whole all_token})
+  {:title sortable-all-text
    :short_description all_text
    :description all_text})
 
@@ -97,20 +111,20 @@
 (def related-indicators
   {:properties
    (assoc related
-          :indicator_id all_token)})
+          :indicator_id token)})
 
 (def related-coas
   {:properties
    (assoc related
-          :COA_id all_token)})
+          :COA_id token)})
 
 (def related-actors
   {:properties (assoc related
-                      :actor_id all_token)})
+                      :actor_id token)})
 
 (def related-incidents
   {:properties (assoc related
-                      :incident_id all_token)})
+                      :incident_id token)})
 
 (def observable
   {:type "object"
@@ -141,89 +155,6 @@
     :remediated ts
     :closed ts
     :rejected ts}})
-
-(def non-public-data-compromised
-  {:properties
-   {:security_compromise token
-    :data_encrypted {:type "boolean"}}})
-
-(def property-affected
-  {:properties
-   {:property token
-    :description_of_effect text
-    :type_of_availability_loss token
-    :duration_of_availability_loss token
-    :non_public_data_compromised non-public-data-compromised}})
-
-(def affected-asset
-  {:properties
-   {:type token
-    :description all_text
-    :ownership_class token
-    :management_class token
-    :location_class token
-    :property_affected property-affected
-    :identifying_observables observable}})
-
-(def direct-impact-summary
-  {:properties
-   {:asset_losses token
-    :business_mission_distruption token
-    :response_and_recovery_costs token}})
-
-(def indirect-impact-summary
-  {:properties
-   {:loss_of_competitive_advantage token
-    :brand_and_market_damage token
-    :increased_operating_costs token
-    :local_and_regulatory_costs token}})
-
-(def loss-estimation
-  {:properties
-   {:amount {:type "long"}
-    :iso_currency_code token}})
-
-(def total-loss-estimation
-  {:properties
-   {:initial_reported_total_loss_estimation loss-estimation
-    :actual_total_loss_estimation loss-estimation
-    :impact_qualification token
-    :effects token}})
-
-(def impact-assessment
-  {:properties
-   {:direct_impact_summary direct-impact-summary
-    :indirect_impact_summary indirect-impact-summary
-    :total_loss_estimation total-loss-estimation
-    :impact_qualification token
-    :effects token}})
-
-(def contributor
-  {:properties
-   {:role token
-    :name token
-    :email token
-    :phone token
-    :organization token
-    :date ts
-    :contribution_location token}})
-
-(def coa-requested
-  {:properties
-   {:time ts
-    :contributors contributor
-    :COA all_token}})
-
-(def history
-  {:properties
-   {:action_entry coa-requested
-    :journal_entry token}})
-
-(def configuration
-  {:properties
-   {:description all_text
-    :short_description all_text
-    :cce_id token}})
 
 (def action-type
   {:properties
@@ -299,6 +230,7 @@
 
 (def embedded-data-table
   {:dynamic false
+   :include_in_all false
    :properties
    {:row_count {:type "long"}
     :columns {:enabled false}
@@ -308,22 +240,16 @@
   {:properties {:type token
                 :text text}})
 
-(def dynamic-templates
-  [{:date_as_datetime {:match "*"
-                       :match_mapping_type "date"
-                       :mapping ts}}
-   {:string_not_analyzed {:match "*"
-                          :match_mapping_type "string"
-                          :mapping token}}])
-
 (def store-settings
   {:number_of_replicas 1
    :number_of_shards 1
    :analysis
-   {:filter
-    {:token_len {:max 255
-                 :min 0
-                 :type "length"}
+   {:normalizer
+    {:lowercase_normalizer
+     {:type "custom"
+      :char_filter []
+      :filter ["lowercase"]}}
+    :filter {
      :english_stop {:type "stop"
                     :stopwords "_english_"}
      ;; word_delimiter filter enables to improve tokenization https://www.elastic.co/guide/en/elasticsearch/reference/5.6/analysis-word-delimiter-tokenfilter.html
@@ -358,8 +284,4 @@
       :filter ["lowercase"
                "ctia_stemmer"
                "english_stop"
-               "english_stemmer"]}
-     :token_analyzer
-     {:filter ["token_len" "lowercase"]
-      :tokenizer "keyword"
-      :type "custom"}}}})
+               "english_stemmer"]}}}})

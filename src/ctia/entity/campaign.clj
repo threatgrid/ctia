@@ -43,7 +43,6 @@
            :campaign_type
            :status
            :activity.date_time
-           :activity.description
            :confidence]))
 
 (def campaign-sort-fields
@@ -55,7 +54,6 @@
 (def campaign-mapping
   {"campaign"
    {:dynamic false
-    :include_in_all false
     :properties
     (merge
      em/base-entity-mapping

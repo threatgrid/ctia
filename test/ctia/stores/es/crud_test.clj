@@ -1,5 +1,5 @@
 (ns ctia.stores.es.crud-test
-  (:require [clojure.test :as t :refer [is testing deftest use-fixtures join-fixtures]]
+  (:require [clojure.test :as t :refer [is are testing deftest use-fixtures join-fixtures]]
             [schema.core :as s]
             [clj-momo.lib.es.index :as es-index]
             [ctia.stores.es.crud :as sut]
@@ -34,6 +34,32 @@
            {:_id "124"
             :id "124"}]
           identity))))
+
+(deftest parse-sort-by-test
+  (are [sort-by expected] (is (= expected
+                                 (sut/parse-sort-by sort-by)))
+    "title"                         [["title"]]
+    :title                          [["title"]]
+    "title:ASC"                     [["title" "ASC"]]
+    "title:ASC,schema_version:DESC" [["title" "ASC"]
+                                     ["schema_version" "DESC"]]))
+
+(deftest format-sort-by-test
+  (are [sort-fields expected] (is (= expected
+                                     (sut/format-sort-by sort-fields)))
+    [["title"]]                   "title"
+    [["title" "ASC"]]             "title:ASC"
+    [["title" "ASC"]
+     ["schema_version" "DESC"]] "title:ASC,schema_version:DESC"))
+
+(deftest rename-sort-fields
+  (are [sort_by expected_sort_by] (is (= expected_sort_by
+                                         (:sort_by (sut/rename-sort-fields
+                                                    {:sort_by sort_by}))))
+    "title" "title.whole"
+    "revision:DESC,title:ASC,schema_version:DESC" (str "revision:DESC,"
+                                                       "title.whole:ASC,"
+                                                       "schema_version:DESC")))
 
 (use-fixtures :each
   (join-fixtures [es-helpers/fixture-properties:es-store
