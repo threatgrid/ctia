@@ -264,6 +264,11 @@
      :english_stemmer {:type "stemmer"
                        :language "english"}}
     ;; when applying filters, order matters
+   :normalizer
+    {:lowercase_normalizer
+     {:type "custom"
+      :char_filter []
+      :filter ["lowercase"]}}
     :analyzer
     {:default ;; same as text_analyzer
      {:type "custom"
