@@ -49,7 +49,7 @@
                                metosin/ring-swagger
                                com.google.guava/guava
                                org.clojure/tools.reader]]
-                 [threatgrid/clj-momo "0.3.0-SNAPSHOT"]
+                 [threatgrid/clj-momo "0.3.0"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
