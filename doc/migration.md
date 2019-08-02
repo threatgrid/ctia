@@ -5,6 +5,7 @@
 # migration steps
  - as the migration task copies indexes, make sure you have enough disk space before launching it.
  - keep current ctia ES properties: host, port, transport and current store indices.
+ - modify alias and rollover conditions according to the need of future indices. Note that only `max_docs` rollover condition will be considered during migration.
  - if possible, stop any processes that push data into CTIA.
  - launch migration task while your CTIA instance keep running. You can launch parallel migrations for different stores.
  - stop CTIA.
@@ -54,7 +55,7 @@ or from source
 
 | migration task | target ctia versions          | sample command                                                                                          |
 |----------------|-------------------------------|---------------------------------------------------------------------------------------------------------|
-|         0.4.16 | all versions before 1.0.0-rc1 | java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores -m 0.4.16 -p 0.4.16 -b 200 -c |
-|         0.4.28 | all versions before 1.1.0     | java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores -m 0.4.28 -p 0.4.28 -b 200 -c |
-|          1.0.0 | 1.1.0                         | java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores -m 1.0.0 -p 1.0.0 -b 200 -c   |
-|       identity | used for mapping migration    | java -cp ctia.jar:resources:. clojure.main -m ctia.task.migrate-es-stores -m identity -p 1.0.1 -b 200 -c|
+|         0.4.16 | all versions before 1.0.0-rc1 | java -cp ctia.jar:resources:. clojure.main -m ctia.task.migration.migrate-es-stores -m 0.4.16 -p 0.4.16 -b 200 -c |
+|         0.4.28 | all versions before 1.1.0     | java -cp ctia.jar:resources:. clojure.main -m ctia.task.migration.migrate-es-stores -m 0.4.28 -p 0.4.28 -b 200 -c |
+|          1.0.0 | 1.1.0                         | java -cp ctia.jar:resources:. clojure.main -m ctia.task.migration.migrate-es-stores -m 1.0.0 -p 1.0.0 -b 200 -c |
+|       identity | used for mapping migration    | java -cp ctia.jar:resources:. clojure.main -m ctia.task.migration.migrate-es-stores -m identity -p 1.0.1 -b 200 -c|
