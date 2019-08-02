@@ -173,4 +173,3 @@
       (is (true? (delete-fn state-not-aliased
                             "sighting-1"
                             ident))))))
-
