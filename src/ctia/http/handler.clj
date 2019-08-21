@@ -101,6 +101,7 @@
    {:name "Feedback" :description "Feedback operations"}
    {:name "GraphQL" :description "GraphQL operations"}
    {:name "Incident" :description "Incident operations"}
+   {:name "IncidentSummary" :description "Incident Summary operations"}
    {:name "Indicator", :description "Indicator operations"}
    {:name "Judgement", :description "Judgement operations"}
    {:name "Malware", :description "Malware operations"}
