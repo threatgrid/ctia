@@ -57,7 +57,6 @@
        (POST "/" []
              :return entity-schema
              :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
-             :header-params [{Authorization :- (s/maybe s/Str) nil}]
              :summary (format "Adds a new %s" capitalized)
              :capabilities post-capabilities
              :auth-identity identity
@@ -82,7 +81,6 @@
        (PUT "/:id" []
             :return entity-schema
             :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
-            :header-params [{Authorization :- (s/maybe s/Str) nil}]
             :summary (format "Updates an %s" capitalized)
             :path-params [id :- s/Str]
             :capabilities put-capabilities
@@ -114,7 +112,6 @@
        (PATCH "/:id" []
               :return entity-schema
               :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
-              :header-params [{Authorization :- (s/maybe s/Str) nil}]
               :summary (format "Partially Update %s" capitalized)
               :path-params [id :- s/Str]
               :capabilities patch-capabilities
@@ -148,7 +145,6 @@
             :return list-schema
             :query [q external-id-q-params]
             :path-params [external_id :- s/Str]
-            :header-params [{Authorization :- (s/maybe s/Str) nil}]
             :summary (format "List %s by external id" capitalized)
             :capabilities external-id-capabilities
             :auth-identity identity
@@ -170,7 +166,6 @@
             :capabilities search-capabilities
             :auth-identity identity
             :identity-map identity-map
-            :header-params [{Authorization :- (s/maybe s/Str) nil}]
             (-> (query-string-search-store
                  entity
                  query-string-search
@@ -187,7 +182,6 @@
           :summary (format "Gets a %s by ID" entity-str)
           :path-params [id :- s/Str]
           :query [params get-params]
-          :header-params [{Authorization :- (s/maybe s/Str) nil}]
           :capabilities get-capabilities
           :auth-identity identity
           :identity-map identity-map
@@ -206,7 +200,6 @@
              :no-doc hide-delete?
              :path-params [id :- s/Str]
              :summary (format "Deletes a %s" capitalized)
-             :header-params [{Authorization :- (s/maybe s/Str) nil}]
              :capabilities delete-capabilities
              :auth-identity identity
              :identity-map identity-map

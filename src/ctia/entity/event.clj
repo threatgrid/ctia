@@ -130,7 +130,6 @@
         :return [EventBucket]
         :query [q EventTimelineParams]
         :path-params [entity_id :- s/Str]
-        :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :summary "Timeline history of an entity"
         :capabilities :search-event
         :auth-identity identity

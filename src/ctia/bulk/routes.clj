@@ -13,7 +13,6 @@
   (POST "/" []
         :return BulkRefs
         :body [bulk NewBulk {:description "a new Bulk object"}]
-        :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :summary "POST many new entities using a single HTTP call"
         :auth-identity login
         :capabilities #{:create-actor
@@ -58,7 +57,6 @@
                       {tools           :- [Reference] []}
                       {weaknesses      :- [Reference] []}
                       {vulnerabilities :- [Reference] []}]
-       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities #{:read-actor
                        :read-attack-pattern
                        :read-campaign

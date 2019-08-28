@@ -57,7 +57,6 @@
        :return fs/PartialFeedbackList
        :query [params FeedbackQueryParams]
        :summary "Search Feedback"
-       :header-params [{Authorization :- (s/maybe s/Str) nil}]
        :capabilities :read-feedback
        :auth-identity identity
        :identity-map identity-map

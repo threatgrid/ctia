@@ -1,5 +1,5 @@
 (def cheshire-version "5.8.1")
-(def compojure-api-version "1.1.11")
+(def compojure-api-version "1.1.12")
 (def schema-tools-version "0.9.1")
 (def schema-version "1.1.11")
 (def jetty-server-version "9.4.15.v20190215")
@@ -29,7 +29,7 @@
              "-server"]
   :pedantic? :warn
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [clj-time "0.14.2"]
+                 [clj-time "0.15.1"]
                  [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "0.5.9"]
@@ -48,15 +48,21 @@
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava
-                               org.clojure/tools.reader]]
+                               org.clojure/tools.reader
+                               org.clojure/clojurescript]]
                  [threatgrid/clj-momo "0.3.0"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
-                  :exclusions [com.google.code.findbugs/jsr305
-                               com.andrewmcveigh/cljs-time
-                               org.clojure/core.memoize
-                               org.clojure/tools.reader]]
+                  :exclusions [org.clojure/tools.reader]]
+                 [metosin/ring-swagger "0.26.2"
+                  :exclusions [commons-io
+                               prismatic/plumbing
+                               potemkin
+                               frankiesardo/linked
+                               metosin/ring-http-response
+                               metosin/schema-tools]]
+                 [metosin/ring-swagger-ui "3.20.1"]
                  [org.eclipse.jetty/jetty-server ~jetty-server-version]
                  [ring/ring-jetty-adapter "1.7.1"
                   :exclusions [commons-io
@@ -126,9 +132,6 @@
                                metosin/ring-http-response]]
                  [com.graphql-java/graphql-java "9.4"
                   :exclusions [org.slf4j/slf4j-api]]]
-
-  :exclusions [;; We don't need CLJS, but it comes in via cljs-time (CTIM)
-               com.andrewmcveigh/cljs-time]
 
   :resource-paths ["resources" "doc"]
   :aot [ctia.main]
