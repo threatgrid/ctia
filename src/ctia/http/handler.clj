@@ -1,5 +1,6 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
+            [clojure.string :as string]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.casebook :refer [casebook-operation-routes]]
             [ctia.entity.incident :refer [incident-additional-routes]]
@@ -27,6 +28,7 @@
             [ctia.properties :refer [properties
                                      get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
+            [ctia.version :refer [current-version]]
             [ctia.version.routes :refer [version-routes]]
             [ctia.status.routes :refer [status-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
@@ -130,8 +132,8 @@
         (when scopes
           (into {}
                 (-> scopes
-                    (clojure.string/split #",")
-                    (->> (map #(clojure.string/split % #"\|"))))))
+                    (string/split #",")
+                    (->> (map #(string/split % #"\|"))))))
         scopes
         (keys scope-map)]
 
@@ -161,6 +163,7 @@
                                   (get-in @properties
                                           [:ctia :http :jwt :local-storage-key])}}
                    :data {:info {:title "CTIA"
+                                 :version (string/replace (current-version) #"\n" "")
                                  :license {:name "All Rights Reserved",
                                            :url ""}
                                  :contact {:name "Cisco Security Business Group -- Advanced Threat "
