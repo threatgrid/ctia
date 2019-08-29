@@ -79,7 +79,6 @@
         :return rs/Relationship
         :body [link-req IncidentCasebookLinkRequest
                {:description "an Incident Link request"}]
-        :header-params [{Authorization :- (s/maybe s/Str) nil}]
         :summary "Link an Incident to a Casebook"
         :path-params [id :- s/Str]
         :capabilities #{:read-incident

@@ -66,7 +66,6 @@
            :tags ["Bundle"]
            (GET "/export" []
                 :return NewBundleExport
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :query [q BundleExportQuery]
                 :summary "Export records with their local relationships. Ids are URIs (with port if precised)."
                 :capabilities export-capabilities
@@ -80,7 +79,6 @@
 
            (POST "/export" []
                 :return NewBundleExport
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :query [q BundleExportOptions]
                 :body [b BundleExportIds]
                 :summary "Export records with their local relationships. Ids are URIs (with port if precised)."
@@ -100,7 +98,6 @@
                  [{external-key-prefixes
                    :- (describe s/Str "Comma separated list of external key prefixes")
                    nil}]
-                 :header-params [{Authorization :- (s/maybe s/Str) nil}]
                  :summary "POST many new entities using a single HTTP call"
                  :auth-identity auth-identity
                  :capabilities #{:create-actor

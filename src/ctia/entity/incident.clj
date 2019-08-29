@@ -93,7 +93,6 @@
          :return Incident
          :body [update IncidentStatusUpdate
                 {:description "an Incident Status Update"}]
-         :header-params [{Authorization :- (s/maybe s/Str) nil}]
          :summary "Update an Incident Status"
          :path-params [id :- s/Str]
          :capabilities :create-incident

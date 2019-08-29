@@ -129,7 +129,6 @@
    (PATCH "/:id" []
           :return Casebook
           :body [partial-casebook PartialNewCasebook {:description "a Casebook partial update"}]
-          :header-params [{Authorization :- (s/maybe s/Str) nil}]
           :summary "Partially Update a Casebook"
           :path-params [id :- s/Str]
           :capabilities :create-casebook
@@ -162,7 +161,6 @@
                   :body [operation CasebookObservablesUpdate
                          {:description "A casebook Observables operation"}]
                   :path-params [id :- s/Str]
-                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                   :summary "Edit Observables on a casebook"
                   :capabilities :create-casebook
                   :auth-identity identity
@@ -195,7 +193,6 @@
                   :body [operation CasebookTextsUpdate
                          {:description "A casebook Texts operation"}]
                   :path-params [id :- s/Str]
-                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                   :summary "Edit Texts on a casebook"
                   :capabilities :create-casebook
                   :auth-identity identity
@@ -228,7 +225,6 @@
                   :body [operation CasebookBundleUpdate
                          {:description "A casebook Bundle operation"}]
                   :path-params [id :- s/Str]
-                  :header-params [{Authorization :- (s/maybe s/Str) nil}]
                   :summary "Edit a Bundle on a casebook"
                   :capabilities :create-casebook
                   :auth-identity identity

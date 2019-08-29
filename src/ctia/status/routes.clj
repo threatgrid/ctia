@@ -10,6 +10,5 @@
            :tags ["Status"]
            (GET "/" []
                 :return StatusInfo
-                :header-params [{Authorization :- (s/maybe s/Str) nil}]
                 :summary "Health Check"
                 (ok {:status :ok}))))

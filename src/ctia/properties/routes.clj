@@ -9,6 +9,5 @@
            :tags ["Properties"]
            :summary "Configured properties"
            :capabilities :developer
-           :header-params [{Authorization :- (s/maybe s/Str) nil}]
            (GET "/" []
                 (ok @properties))))
