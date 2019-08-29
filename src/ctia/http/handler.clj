@@ -168,9 +168,11 @@
                                            :email "cisco-intel-api-support@cisco.com"}
                                  :description api-description}
                           :security [{"JWT" []}]
-                          :securityDefinitions {"JWT" {:type "apiKey"
-                                                       :in "header"
-                                                       :name "Authorization"}}
+                          :securityDefinitions
+                          {"JWT" {:type "apiKey"
+                                  :in "header"
+                                  :name "Authorization"
+                                  :description "Ex: Bearer \\<token\\>"}}
                           :tags api-tags}}
             (:enabled oauth2)
             (apply-oauth2-swagger-conf
