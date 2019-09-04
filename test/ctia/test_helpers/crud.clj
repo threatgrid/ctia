@@ -125,11 +125,11 @@
                                  :status)))]
           (is (= 200 (get-status true))
               "Create queries should wait for index refresh when wait_for is true")
-          ;; we trigger newt tests twice because the refresh could occur between the first POST / GET sequence.
+          ;; we trigger next 404 tests twice because the refresh could occur between the first POST / GET sequence.
           (is (or (= 404 (get-status false))
                   (= 404 (get-status false)))
              "Create queries should not wait for index refresh when wait_for is false")
-          (testing "default refresh value is applied when wait_for is not specified"
+          (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
             (if (= "false" (get-in properties [:ctia :store :es :default :refresh]))
               (is (or (= 404 (get-status nil))
                       (= 404 (get-status nil))))
