@@ -56,7 +56,7 @@
      (when can-post?
        (POST "/" []
              :return entity-schema
-             :query [q {(s/optional-key :refresh) (s/enum "false" "wait_for")}]
+             :query [q {(s/optional-key :wait_for) s/Bool}]
              :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
              :summary (format "Adds a new %s" capitalized)
              :capabilities post-capabilities
@@ -69,7 +69,10 @@
                                           create-record
                                           %
                                           identity-map
-                                          q)
+                                          (case (:wait_for q)
+                                            true {:refresh "wait_for"}
+                                            false {:refresh "false"}
+                                            {}))
                   :long-id-fn with-long-id
                   :entity-type entity
                   :identity identity

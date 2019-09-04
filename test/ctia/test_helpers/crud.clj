@@ -6,7 +6,7 @@
    [clojure
     [string :as str]
     [test :refer [is testing]]]
-   [ctia.properties :refer [get-http-show]]
+   [ctia.properties :refer [get-http-show properties]]
    [ctia.test-helpers
     [core :as helpers :refer [delete get post put patch]]
     [search :refer [test-query-string-search]]]
@@ -36,7 +36,7 @@
     (let [new-record (dissoc example :id)
           {post-status :status
            post-record :parsed-body}
-          (post (str "ctia/" entity "?refresh=wait_for")
+          (post (str "ctia/" entity "?wait_for=true")
                 :body new-record
                 :headers headers)
           record-id (id/long-id->id (:id post-record))
@@ -107,6 +107,33 @@
                                 (if update-tests?
                                   updated-record
                                   post-record))))))
+
+      (testing "testing wait_for values"
+        (let [get-status (fn [wait_for]
+                           (let [path (cond-> (str "ctia/" entity)
+                                        (boolean? wait_for) (str "?wait_for=" wait_for))
+                                 record (post path
+                                              :body new-record
+                                              :headers headers)
+                                 short-id (-> record
+                                              :parsed-body
+                                              :id
+                                              id/long-id->id
+                                              :short-id)]
+                             (-> (get (format "ctia/%s/%s" entity short-id)
+                                      :headers headers)
+                                 :status)))]
+          (is (= 200 (get-status true))
+              "Create queries should wait for index refresh when wait_for is true")
+          ;; we trigger newt tests twice because the refresh could occur between the first POST / GET sequence.
+          (is (or (= 404 (get-status false))
+                  (= 404 (get-status false)))
+             "Create queries should not wait for index refresh when wait_for is false")
+          (testing "default refresh value is applied when wait_for is not specified"
+            (if (= "false" (get-in properties [:ctia :store :es :default :refresh]))
+              (is (or (= 404 (get-status nil))
+                      (= 404 (get-status nil))))
+              (is (= 200 (get-status nil)))))))
 
       (when invalid-tests?
         (testing (format "PUT invalid /ctia/%s/:id" entity)
