@@ -131,8 +131,6 @@
           :throw-exceptions false
           :body (json/generate-string obj)})]
     (when (not= 201 status)
-      (println "Post to ES failed.\nWrong HTTP status code: " status)
-      (pprint response)
       (throw (AssertionError. "POST to ES failed")))))
 
 (defn post-all-to-es [objects]

@@ -31,20 +31,23 @@
          update-tests? true
          patch-tests? false
          search-tests? true}}]
+
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
-          {status :status
-           record :parsed-body}
-          (post (str "ctia/" entity)
+          {post-status :status
+           post-record :parsed-body}
+          (post (str "ctia/" entity "?refresh=wait_for")
                 :body new-record
                 :headers headers)
-          record-id
-          (id/long-id->id (:id record))
-          record-external-ids
-          (:external_ids record)]
-      (is (= 201 status))
-      (is (deep=
-           (assoc new-record :id (id/long-id record-id)) record))
+          record-id (id/long-id->id (:id post-record))
+          {get-status :status
+           get-record :parsed-body}
+          (get (format "ctia/%s/%s" entity (:short-id record-id))
+               :headers headers)
+          expected (assoc post-record :id (id/long-id record-id))
+          record-external-ids (:external_ids post-record)]
+      (is (= 201 post-status))
+      (is (deep= expected post-record))
 
       (testing (format "the %s ID has correct fields" entity)
         (let [show-props (get-http-show)]
@@ -54,15 +57,8 @@
           (is (= (:path-prefix record-id) (seq (:path-prefix show-props))))))
 
       (testing (format "GET /ctia/%s/:id" entity)
-        (let [response (get (format "ctia/%s/%s" entity (:short-id record-id))
-                            :headers headers)
-              actor (:parsed-body response)]
-          (is (= 200 (:status response)))
-
-          (let [expected (assoc new-record :id (id/long-id record-id))]
-            (is (deep=
-                 expected
-                 record)))))
+        (is (= 200 get-status))
+        (is (deep= expected get-record)))
 
       (when search-tests?
         (test-query-string-search entity
@@ -76,9 +72,7 @@
                             :headers headers)
               records (:parsed-body response)]
           (is (= 200 (:status response)))
-          (is (deep=
-               [(assoc record :id (id/long-id record-id))]
-               records))))
+          (is (deep= [expected] records))))
 
       (testing (format "PATCH /ctia/%s/:id" entity)
         (let [updates {update-field "patch"}
@@ -89,11 +83,11 @@
           (when patch-tests?
             (is (= 200 (:status response)))
             (is (deep=
-                 (merge record updates)
+                 (merge post-record updates)
                  updated-record)))))
 
       (testing (format "PUT /ctia/%s/:id" entity)
-        (let [with-updates (assoc record
+        (let [with-updates (assoc post-record
                                   update-field "modified")
               response (put (format "ctia/%s/%s" entity (:short-id record-id))
                             :body with-updates
@@ -112,14 +106,14 @@
               (additional-tests record-id
                                 (if update-tests?
                                   updated-record
-                                  record))))))
+                                  post-record))))))
 
       (when invalid-tests?
         (testing (format "PUT invalid /ctia/%s/:id" entity)
           (let [{status :status
                  body :body}
                 (put (format "ctia/%s/%s" entity (:short-id record-id))
-                     :body (assoc record invalid-test-field (str/join
+                     :body (assoc post-record invalid-test-field (str/join
                                                              (repeatedly 1025 (constantly \0))))
                      :headers {"Authorization" "45c1f5e3f05d0"})]
             (is (= status 400))
