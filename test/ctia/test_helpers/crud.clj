@@ -127,13 +127,13 @@
               "Create queries should wait for index refresh when wait_for is true")
           ;; we trigger next 404 tests twice because the refresh could occur between the first POST / GET sequence.
           (is (some #(= 404 %)
-                    (repeatedly 100 (fn [] (get-status false))))
+                    (repeatedly 100 #(get-status false)))
              "Create queries should not wait for index refresh when wait_for is false")
           (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
             (if (= "false" (get-in properties [:ctia :store :es :default :refresh]))
 
               (is (some #(= 404 %)
-                        (repeatedly 100 (fn [] (get-status nil)))))
+                        (repeatedly 100 #(get-status nil))))
               (is (= 200 (get-status nil)))))))
 
       (when invalid-tests?
