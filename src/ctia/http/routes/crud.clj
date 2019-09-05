@@ -15,6 +15,7 @@
     [created filter-map-search-options paginated-ok search-options]]
    [ctia.store :refer :all]
    [ring.util.http-response :refer [no-content not-found ok]]
+   [ring.swagger.schema :refer [describe]]
    [schema.core :as s]))
 
 (defn entity-crud-routes
@@ -56,6 +57,7 @@
      (when can-post?
        (POST "/" []
              :return entity-schema
+             :query-params [{wait_for :- (describe s/Bool "wait for entity to be available for search") nil}]
              :body [new-entity new-schema {:description (format "a new %s" capitalized)}]
              :summary (format "Adds a new %s" capitalized)
              :capabilities post-capabilities
@@ -68,7 +70,10 @@
                                           create-record
                                           %
                                           identity-map
-                                          {})
+                                          (case wait_for
+                                            true {:refresh "wait_for"}
+                                            false {:refresh "false"}
+                                            {}))
                   :long-id-fn with-long-id
                   :entity-type entity
                   :identity identity
