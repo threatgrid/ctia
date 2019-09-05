@@ -1,5 +1,6 @@
 (ns ctia.http.server
   (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
             [clj-http.client :as http]
             [ctia
              [properties :refer [properties]]
@@ -15,7 +16,8 @@
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
              [reload :refer [wrap-reload]]])
-  (:import org.eclipse.jetty.server.Server))
+  (:import org.eclipse.jetty.server.Server
+           (java.util.concurrent TimeoutException)))
 
 (defonce server (atom nil))
 
@@ -61,18 +63,25 @@
   "check the status of the JWT (typically revocation) by making an HTTP request.
   Should return nil if the JWT is ok, and a list of error messages if something's wrong."
   [rev-hash-map params jwt {:keys [iss] :as claims}]
-  (try
-    (let [{:keys [status body]}
-          (-> rev-hash-map
-              (get iss)
-              (http-get jwt))]
-      (when (= status 401)
-        (throw (ex-info "jwt rejected"
-                        {:error-body body}))))
-    (catch TimeoutException e
-      (log/warnf "Couldn't check jwt status due to a call timeout to %s. By default we consider the JWt as valid."
-                 url)
-      nil)))
+  (if-let [check-jwt-url (get rev-hash-map iss)]
+    (try
+      (let [{:keys [status body]}
+            (http-get params check-jwt-url jwt)]
+        (when (= status 401)
+          (let [{:keys [error_description]} body]
+            [error_description])))
+      (catch TimeoutException e
+        (log/warnf "Couldn't check jwt status due to a call timeout to %s. By default we consider the JWt as valid."
+                   check-jwt-url)
+        nil))
+    (do
+      ;; We are here if the JWT is signed by a trusted source but the issuer
+      ;; is not explicitely supported.
+      ;; Because it is mostly a consequence to a configuration mistake
+      ;; this log is an error and not an info.
+      (log/errorf "JWT Issuer %s not recognized. You mostly likely need to change the ctia.http.jwt.revocation-endpoints property"
+                  iss)
+      ["JWT issuer not supported by this instance."])))
 
 (defn- new-jetty-instance
   [{:keys [dev-reload
@@ -111,8 +120,8 @@
                                      revocation-endpoints
                                      (if (:check-timeout jwt)
                                        {:session-timeout (:check-timeout jwt)
-                                        :connection-timeout (:check-timeout jwt)})
-                                     ))
+                                        :connection-timeout (:check-timeout jwt)}
+                                       {})))
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 
