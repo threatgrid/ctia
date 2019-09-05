@@ -15,7 +15,8 @@
             [ring.middleware
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
-             [reload :refer [wrap-reload]]])
+             [reload :refer [wrap-reload]]]
+            [clojure.core.memoize :as memo])
   (:import org.eclipse.jetty.server.Server
            (java.util.concurrent TimeoutException)))
 
@@ -48,7 +49,7 @@
     "IROH DEV:https://visibility.int.iroh.site/iroh/session/status,IROH TEST:https://visibility.test.iroh.site/iroh/session/status"))
   )
 
-(defn http-get [params url jwt]
+(defn _http-get [params url jwt]
   (log/infof "checkin JWT, GET %s" url)
   (http/get url
             (into
@@ -59,10 +60,13 @@
               :connection-timeout 2000}
              params)))
 
+(defn http-get-fn [n]
+  (memo/tll _http-get :ttl/threshold n))
+
 (defn check-revocation-endpoints
   "check the status of the JWT (typically revocation) by making an HTTP request.
   Should return nil if the JWT is ok, and a list of error messages if something's wrong."
-  [rev-hash-map params jwt {:keys [iss] :as claims}]
+  [http-get rev-hash-map params jwt {:keys [iss] :as claims}]
   (if-let [check-jwt-url (get rev-hash-map iss)]
     (try
       (let [{:keys [status body]}
@@ -117,6 +121,7 @@
             (when-let [revocation-endpoints (parse-revocation-endpoints
                                              (:revocation-endpoints jwt))]
               :jwt-check-fn (partial check-revocation-endpoints
+                                     (http-get-fn (or (:cache-ttl jwt) 5000))
                                      revocation-endpoints
                                      (if (:check-timeout jwt)
                                        {:session-timeout (:check-timeout jwt)

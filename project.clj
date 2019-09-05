@@ -83,7 +83,7 @@
                  [yogsototh/clj-jwt "0.2.1"]
                  [threatgrid/ring-turnstile-middleware "0.1.0"
                   :exclusions [metosin/schema-tools]]
-                 [threatgrid/ring-jwt-middleware "0.0.13"
+                 [threatgrid/ring-jwt-middleware "1.0.0-SNAPSHOT"
                   :exclusions [metosin/compojure-api]]
                  [scopula "0.1.4"
                   :exclusions [org.clojure/spec.alpha
