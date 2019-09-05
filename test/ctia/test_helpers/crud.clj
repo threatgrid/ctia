@@ -40,10 +40,6 @@
                 :body new-record
                 :headers headers)
           record-id (id/long-id->id (:id post-record))
-          {get-status :status
-           get-record :parsed-body}
-          (get (format "ctia/%s/%s" entity (:short-id record-id))
-               :headers headers)
           expected (assoc post-record :id (id/long-id record-id))
           record-external-ids (:external_ids post-record)]
       (is (= 201 post-status))
@@ -57,8 +53,12 @@
           (is (= (:path-prefix record-id) (seq (:path-prefix show-props))))))
 
       (testing (format "GET /ctia/%s/:id" entity)
-        (is (= 200 get-status))
-        (is (deep= expected get-record)))
+        (let [{get-status :status
+               get-record :parsed-body}
+              (get (format "ctia/%s/%s" entity (:short-id record-id))
+                   :headers headers)]
+          (is (= 200 get-status))
+          (is (deep= expected get-record))))
 
       (when search-tests?
         (test-query-string-search entity
@@ -126,13 +126,14 @@
           (is (= 200 (get-status true))
               "Create queries should wait for index refresh when wait_for is true")
           ;; we trigger next 404 tests twice because the refresh could occur between the first POST / GET sequence.
-          (is (or (= 404 (get-status false))
-                  (= 404 (get-status false)))
+          (is (some #(= 404 %)
+                    (repeatedly 100 (fn [] (get-status false))))
              "Create queries should not wait for index refresh when wait_for is false")
           (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
             (if (= "false" (get-in properties [:ctia :store :es :default :refresh]))
-              (is (or (= 404 (get-status nil))
-                      (= 404 (get-status nil))))
+
+              (is (some #(= 404 %)
+                        (repeatedly 100 (fn [] (get-status nil)))))
               (is (= 200 (get-status nil)))))))
 
       (when invalid-tests?
