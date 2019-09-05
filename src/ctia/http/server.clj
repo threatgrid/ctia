@@ -1,5 +1,6 @@
 (ns ctia.http.server
-  (:require [clojure.string :refer [split]]
+  (:require [clojure.string :as string]
+            [clj-http.client :as http]
             [ctia
              [properties :refer [properties]]
              [shutdown :as shutdown]]
@@ -23,12 +24,55 @@
    turn it to a a vec of patterns"
   [origins-str]
   (vec (map re-pattern
-            (split origins-str #","))))
+            (string/split origins-str #","))))
 
 (defn- str->set-of-keywords
   "take a string with words separated with commas, returns a vec of keywords"
   [s]
-  (set (map keyword (split s #","))))
+  (set (map keyword (string/split s #","))))
+
+(defn parse-revocation-endpoints
+  "take a string of couples separated by : and return an hash-map out of it."
+  [s]
+  (some->> (string/split s #",")
+           (map #(string/split % #":" 2))
+           (into {})))
+
+(comment
+  (=
+   {"IROH DEV" "https://visibility.int.iroh.site/iroh/session/status",
+    "IROH TEST" "https://visibility.test.iroh.site/iroh/session/status"}
+   (parse-revocation-endpoints
+    "IROH DEV:https://visibility.int.iroh.site/iroh/session/status,IROH TEST:https://visibility.test.iroh.site/iroh/session/status"))
+  )
+
+(defn http-get [params url jwt]
+  (log/infof "checkin JWT, GET %s" url)
+  (http/get url
+            (into
+             {:as :json
+              :throw-exceptions false
+              :headers {:Authorization (format "Bearer %s" jwt)}
+              :socket-timeout 2000
+              :connection-timeout 2000}
+             params)))
+
+(defn check-revocation-endpoints
+  "check the status of the JWT (typically revocation) by making an HTTP request.
+  Should return nil if the JWT is ok, and a list of error messages if something's wrong."
+  [rev-hash-map params jwt {:keys [iss] :as claims}]
+  (try
+    (let [{:keys [status body]}
+          (-> rev-hash-map
+              (get iss)
+              (http-get jwt))]
+      (when (= status 401)
+        (throw (ex-info "jwt rejected"
+                        {:error-body body}))))
+    (catch TimeoutException e
+      (log/warnf "Couldn't check jwt status due to a call timeout to %s. By default we consider the JWt as valid."
+                 url)
+      nil)))
 
 (defn- new-jetty-instance
   [{:keys [dev-reload
@@ -60,6 +104,15 @@
              :error-handler auth-jwt/jwt-error-handler
              :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+
+            (when-let [revocation-endpoints (parse-revocation-endpoints
+                                             (:revocation-endpoints jwt))]
+              :jwt-check-fn (partial check-revocation-endpoints
+                                     revocation-endpoints
+                                     (if (:check-timeout jwt)
+                                       {:session-timeout (:check-timeout jwt)
+                                        :connection-timeout (:check-timeout jwt)})
+                                     ))
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 
