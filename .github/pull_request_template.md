@@ -1,13 +1,12 @@
 one_line_short_description
 
 > **Epic** #
-> / Close #
-> / Related #
+> Close #
+> Related #
 
 Describe your PR for reviewers.
 Don't forget to set correct labels (User Facing / Beta / Feature Flag)
 If there is UI change please add a screen capture.
-
 
 <a name="iroh-services-clients">[§](#iroh-services-clients)</a> IROH Services Clients
 =====================================================================================
