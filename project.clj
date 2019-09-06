@@ -92,7 +92,7 @@
                                com.andrewmcveigh/cljs-time]]
 
                  ;; clients
-                 [clj-http "3.7.0" :exclusions [commons-codec]]
+                 [clj-http "3.10.0" :exclusions [commons-codec potemkin]]
                  [com.taoensso/carmine "2.19.1"]
 
                  ;; Metrics
