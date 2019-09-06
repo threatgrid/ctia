@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.clj-time.core :as time]
             [clj-momo.test-helpers.core :as mth]
+            [clj-http.fake :as fake]
             [clj-time.core :as t]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
@@ -270,7 +271,7 @@
       "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"
 
       "ctia.http.jwt.url-check.endpoints"
-      "IROH Auth=http://localhost:14567/check-1,IROH Auth TEST=http://localhost:14567/check-2"
+      "IROH Auth=https://jwt.check-1/check,IROH Auth TEST=https://jwt.check-2/check"
 
       "ctia.http.jwt.url-check.timeout" 5000
       "ctia.http.jwt.url-check.cache-ttl" 5]
@@ -344,42 +345,51 @@
                    (is (= 200 (get-judgement jwt-2))))
                  (testing "Key 2 with wrong issuer"
                    (is (= 401 (get-judgement bad-iss-jwt-2))))))))
-         (testing "Check URL server down"
-           ;; TODO start server, sleep for too long
-           ;; TODO start server, allways return 401
-           ;; TODO start server, verify the authorization header content
-           (let [{judgement :parsed-body
-                  status :status
-                  :as resp}
-                 (post "ctia/judgement"
-                       :body new-judgement-1
-                       :headers {"Authorization" "45c1f5e3f05d0"
-                                 "origin" "http://external.cisco.com"})
-                 judgement-id (id/long-id->id (:id judgement))
-                 judgement-external-ids (:external_ids judgement)
+         (testing "Check URL server returns 401"
+           (fake/with-fake-routes
+            {"https://jwt.check-1/check"
+             (fn [req] {:status 401 :body "ok"})
 
-                 get-judgement (fn [jwt]
-                                 (let [{:keys [status] :as response}
-                                       (get (str "ctia/judgement/" (:short-id judgement-id))
-                                            :headers {"Authorization" (str "Bearer " jwt)})]
-                                   (:status response)))]
-             (is (= 201 status))
-             (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
-               (let [{:keys [status] :as response}
-                     (get (str "ctia/judgement/" (:short-id judgement-id))
-                          :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
-                 (is (= 401 (:status response)))))
+             "https://jwt.check-2/check"
+             (fn [req] {:status 401 :body "ok"})}
+            (let [{judgement :parsed-body
+                   status :status
+                   :as resp}
+                  (post "ctia/judgement"
+                        :body new-judgement-1
+                        :headers {"Authorization" "45c1f5e3f05d0"
+                                  "origin" "http://external.cisco.com"})
+                  judgement-id (id/long-id->id (:id judgement))
+                  judgement-external-ids (:external_ids judgement)
 
-             (testing "GET /ctia/judgement/:id"
-               (testing "Mulitple JWT keys"
-                 (testing "Key 1 with correct issuer"
-                   (is (= 200 (get-judgement jwt-1))))
-                 (testing "Key 1 with wrong issuer"
-                   (is (= 401 (get-judgement bad-iss-jwt-1))))
-                 (testing "Key 2 with correct issuer"
-                   (is (= 200 (get-judgement jwt-2))))
-                 (testing "Key 2 with wrong issuer"
-                   (is (= 401 (get-judgement bad-iss-jwt-2)))))))))))))
+                  get-judgement (fn [jwt]
+                                  (let [{:keys [status] :as response}
+                                        (get (str "ctia/judgement/" (:short-id judgement-id))
+                                             :headers {"Authorization" (str "Bearer " jwt)})]
+                                    (:status response)))]
+              (is (= 201 status))
+              (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
+                (let [{:keys [status] :as response}
+                      (get (str "ctia/judgement/" (:short-id judgement-id))
+                           :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
+                  (is (= 401 (:status response)))))
+
+              (testing "GET /ctia/judgement/:id"
+                (testing "Mulitple JWT keys"
+                  (testing "Key 1 with correct issuer"
+                    (is (= 401 (get-judgement jwt-1))))
+                  (testing "Key 1 with wrong issuer"
+                    (is (= 401 (get-judgement bad-iss-jwt-1))))
+                  (testing "Key 2 with correct issuer"
+                    (is (= 401 (get-judgement jwt-2))))
+                  (testing "Key 2 with wrong issuer"
+                    (is (= 401 (get-judgement bad-iss-jwt-2)))))))))
+
+
+         ;; TODO start server, sleep for too long
+         ;; TODO start server, verify the authorization header content
+
+         )))))
 
   (deftest test-judgement-with-jwt-routes
     (test-for-each-store

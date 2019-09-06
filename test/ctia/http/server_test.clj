@@ -12,14 +12,14 @@
 (use-fixtures :each
   helpers/fixture-properties:clean)
 
-(deftest parse-revocation-endpoints-test
-  (is (nil? (sut/parse-revocation-endpoints nil)))
+(deftest parse-external-endpoints-test
+  (is (nil? (sut/parse-external-endpoints nil)))
 
   (is
    (=
     {"IROH DEV" "https://visibility.int.iroh.site/iroh/session/status",
      "IROH TEST" "https://visibility.test.iroh.site/iroh/session/status"}
-    (sut/parse-revocation-endpoints
+    (sut/parse-external-endpoints
      (str
       "IROH DEV=https://visibility.int.iroh.site/iroh/session/status,"
       "IROH TEST=https://visibility.test.iroh.site/iroh/session/status")))))

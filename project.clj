@@ -163,6 +163,7 @@
 
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
+                                  [clj-http-fake "1.0.3"]
                                   [com.gfredericks/test.chuck "0.2.8"]
                                   [prismatic/schema-generators "0.1.1"]]
                    :pedantic? :warn
@@ -183,6 +184,7 @@
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [org.clojure/test.check "0.9.0"]
+                                   [clj-http-fake "1.0.3"]
                                    [com.gfredericks/test.chuck "0.2.8"]
                                    [prismatic/schema-generators "0.1.1"]]
                     :pedantic? :abort
