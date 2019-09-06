@@ -58,7 +58,7 @@
 
 (defn check-external-endpoints
   "check the status of the JWT (typically revocation) by making an HTTP request.
-  Should return nil if the JWT is ok, and a list of error messages if something's wrong."
+  Should return [] if the JWT is ok, and a list of error messages if something's wrong."
   [http-get rev-hash-map params jwt {:keys [iss] :as claims}]
   (if-let [check-jwt-url (get rev-hash-map iss)]
     (try
@@ -70,7 +70,11 @@
       (catch TimeoutException e
         (log/warnf "Couldn't check jwt status due to a call timeout to %s. By default we consider the JWt as valid."
                    check-jwt-url)
-        nil))
+        [])
+      (catch Exception e
+        (log/warnf "Couldn't check jwt status due to a call error to %s. By default we consider the JWt as valid."
+                   check-jwt-url)
+        []))
     (do
       ;; We are here if the JWT is signed by a trusted source but the issuer
       ;; is not explicitely supported.
@@ -112,15 +116,15 @@
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
             (let [{:keys [endpoints timeout cache-ttl]}
-                  (:url-check jwt)]
+                       (:url-check jwt)]
               (when-let [external-endpoints (parse-external-endpoints endpoints)]
-                :jwt-check-fn (partial check-external-endpoints
-                                       (http-get-fn (or cache-ttl 5000))
-                                       external-endpoints
-                                       (if timeout
-                                         {:session-timeout timeout
-                                          :connection-timeout timeout}
-                                         {}))))
+                {:jwt-check-fn (partial check-external-endpoints
+                                        (http-get-fn (or cache-ttl 5000))
+                                        external-endpoints
+                                        (if timeout
+                                          {:session-timeout timeout
+                                           :connection-timeout timeout}
+                                          {}))}))
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 

@@ -185,81 +185,201 @@
    :reason "This is a bad IP address that talked to some evil servers"
    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
-(deftest jwt-related-tests-on-judgements
-  (apply-fixtures
-   ["ctia.http.jwt.enabled" true
-    "ctia.http.jwt.public-key-map"
-    "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"]
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
+(deftest jwt-keymap-tests-on-judgements
+  (testing "JWT Key Map"
+    (apply-fixtures
+     ["ctia.http.jwt.enabled" true
+      "ctia.http.jwt.public-key-map"
+      "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"]
+     (fn []
+       (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+       (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+       (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+       (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
 
-     (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
-           priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
-           priv-key-2 (jwt-key/private-key "resources/cert/ctia-jwt-2.key")
-           now (t/now)
-           in-one-hour (t/plus now (t/hours 1))
-           claims-1
-           {:exp in-one-hour
-            :iat now
-            :iss "IROH Auth",
-            :email "gbuisson+qa_sdc_iroh@cisco.com",
-            :nbf now
-            "sub" "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32"
-            :jti "a268ae7a3-09c9-4149-b495-b98c8c5de666",
-            (clm "oauth/client/id") "iroh-ui",
-            (clm "oauth/client/name") "iroh-ui",
-            (clm "oauth/kind") "session-token",
-            (clm "org/id") "63489cf9-561c-4958-a13d-6d84b7ef09d4",
-            (clm "org/name") "IROH Testing",
-            (clm "scopes") ["casebook","global-intel","private-intel","collect",
-                            "enrich","inspect","integration","iroh-auth",
-                            "response","ui-settings"],
-            (clm "user/email") "gbuisson+qa_sdc_iroh@cisco.com",
-            (clm "user/id") "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
-            (clm "user/idp/id") "amp",
-            (clm "user/nick") "gbuisson+qa_sdc_iroh@cisco.com",
-            (clm "version") "1"}
-           claims-2 (assoc claims-1 :iss "IROH Auth TEST")
-           jwt-1 (-> claims-1 jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
-           bad-iss-jwt-1 (-> claims-1 (assoc :iss "IROH Auth TEST") jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
-           jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
-           bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)]
-       (testing "POST /ctia/judgement"
-         (let [{judgement :parsed-body
-                status :status
-                :as resp}
-               (post "ctia/judgement"
-                     :body new-judgement-1
-                     :headers {"Authorization" "45c1f5e3f05d0"
-                               "origin" "http://external.cisco.com"})
-               judgement-id (id/long-id->id (:id judgement))
-               judgement-external-ids (:external_ids judgement)
+       (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
+             priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
+             priv-key-2 (jwt-key/private-key "resources/cert/ctia-jwt-2.key")
+             now (t/now)
+             in-one-hour (t/plus now (t/hours 1))
+             claims-1
+             {:exp in-one-hour
+              :iat now
+              :iss "IROH Auth",
+              :email "gbuisson+qa_sdc_iroh@cisco.com",
+              :nbf now
+              "sub" "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32"
+              :jti "a268ae7a3-09c9-4149-b495-b98c8c5de666",
+              (clm "oauth/client/id") "iroh-ui",
+              (clm "oauth/client/name") "iroh-ui",
+              (clm "oauth/kind") "session-token",
+              (clm "org/id") "63489cf9-561c-4958-a13d-6d84b7ef09d4",
+              (clm "org/name") "IROH Testing",
+              (clm "scopes") ["casebook","global-intel","private-intel","collect",
+                              "enrich","inspect","integration","iroh-auth",
+                              "response","ui-settings"],
+              (clm "user/email") "gbuisson+qa_sdc_iroh@cisco.com",
+              (clm "user/id") "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
+              (clm "user/idp/id") "amp",
+              (clm "user/nick") "gbuisson+qa_sdc_iroh@cisco.com",
+              (clm "version") "1"}
+             claims-2 (assoc claims-1 :iss "IROH Auth TEST")
+             jwt-1 (-> claims-1 jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
+             bad-iss-jwt-1 (-> claims-1 (assoc :iss "IROH Auth TEST") jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
+             jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
+             bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)]
+         (testing "POST /ctia/judgement"
+           (let [{judgement :parsed-body
+                  status :status
+                  :as resp}
+                 (post "ctia/judgement"
+                       :body new-judgement-1
+                       :headers {"Authorization" "45c1f5e3f05d0"
+                                 "origin" "http://external.cisco.com"})
+                 judgement-id (id/long-id->id (:id judgement))
+                 judgement-external-ids (:external_ids judgement)
 
-               get-judgement (fn [jwt]
-                               (let [{:keys [status] :as response}
-                                     (get (str "ctia/judgement/" (:short-id judgement-id))
-                                          :headers {"Authorization" (str "Bearer " jwt)})]
-                                 (:status response)))]
-           (is (= 201 status))
-           (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
-             (let [{:keys [status] :as response}
-                   (get (str "ctia/judgement/" (:short-id judgement-id))
-                        :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
-               (is (= 401 (:status response)))))
+                 get-judgement (fn [jwt]
+                                 (let [{:keys [status] :as response}
+                                       (get (str "ctia/judgement/" (:short-id judgement-id))
+                                            :headers {"Authorization" (str "Bearer " jwt)})]
+                                   (:status response)))]
+             (is (= 201 status))
+             (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
+               (let [{:keys [status] :as response}
+                     (get (str "ctia/judgement/" (:short-id judgement-id))
+                          :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
+                 (is (= 401 (:status response)))))
 
-           (testing "GET /ctia/judgement/:id"
-             (testing "Mulitple JWT keys"
-               (testing "Key 1 with correct issuer"
-                 (is (= 200 (get-judgement jwt-1))))
-               (testing "Key 1 with wrong issuer"
-                 (is (= 401 (get-judgement bad-iss-jwt-1))))
-               (testing "Key 2 with correct issuer"
-                 (is (= 200 (get-judgement jwt-2))))
-               (testing "Key 2 with wrong issuer"
-                 (is (= 401 (get-judgement bad-iss-jwt-2))))))))))))
+             (testing "GET /ctia/judgement/:id"
+               (testing "Mulitple JWT keys"
+                 (testing "Key 1 with correct issuer"
+                   (is (= 200 (get-judgement jwt-1))))
+                 (testing "Key 1 with wrong issuer"
+                   (is (= 401 (get-judgement bad-iss-jwt-1))))
+                 (testing "Key 2 with correct issuer"
+                   (is (= 200 (get-judgement jwt-2))))
+                 (testing "Key 2 with wrong issuer"
+                   (is (= 401 (get-judgement bad-iss-jwt-2)))))))))))))
+
+(deftest jwt-url-checks-tests-on-judgements
+  (testing "JWT Key Map + URL-Check"
+    (apply-fixtures
+     ["ctia.http.jwt.enabled" true
+      "ctia.http.jwt.public-key-map"
+      "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"
+
+      "ctia.http.jwt.url-check.endpoints"
+      "IROH Auth=http://localhost:14567/check-1,IROH Auth TEST=http://localhost:14567/check-2"
+
+      "ctia.http.jwt.url-check.timeout" 5000
+      "ctia.http.jwt.url-check.cache-ttl" 5]
+     (fn []
+       (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+       (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
+       (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+       (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
+
+       (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
+             priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
+             priv-key-2 (jwt-key/private-key "resources/cert/ctia-jwt-2.key")
+             now (t/now)
+             in-one-hour (t/plus now (t/hours 1))
+             claims-1
+             {:exp in-one-hour
+              :iat now
+              :iss "IROH Auth",
+              :email "gbuisson+qa_sdc_iroh@cisco.com",
+              :nbf now
+              "sub" "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32"
+              :jti "a268ae7a3-09c9-4149-b495-b98c8c5de666",
+              (clm "oauth/client/id") "iroh-ui",
+              (clm "oauth/client/name") "iroh-ui",
+              (clm "oauth/kind") "session-token",
+              (clm "org/id") "63489cf9-561c-4958-a13d-6d84b7ef09d4",
+              (clm "org/name") "IROH Testing",
+              (clm "scopes") ["casebook","global-intel","private-intel","collect",
+                              "enrich","inspect","integration","iroh-auth",
+                              "response","ui-settings"],
+              (clm "user/email") "gbuisson+qa_sdc_iroh@cisco.com",
+              (clm "user/id") "56bb5f8c-cc4e-4ed3-a91a-c6604287fe32",
+              (clm "user/idp/id") "amp",
+              (clm "user/nick") "gbuisson+qa_sdc_iroh@cisco.com",
+              (clm "version") "1"}
+             claims-2 (assoc claims-1 :iss "IROH Auth TEST")
+             jwt-1 (-> claims-1 jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
+             bad-iss-jwt-1 (-> claims-1 (assoc :iss "IROH Auth TEST") jwt/jwt (jwt/sign :RS256 priv-key-1) jwt/to-str)
+             jwt-2 (-> claims-2 jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)
+             bad-iss-jwt-2 (-> claims-2 (assoc :iss "IROH Auth") jwt/jwt (jwt/sign :RS256 priv-key-2) jwt/to-str)]
+         (testing "Check URL server down"
+           (let [{judgement :parsed-body
+                  status :status
+                  :as resp}
+                 (post "ctia/judgement"
+                       :body new-judgement-1
+                       :headers {"Authorization" "45c1f5e3f05d0"
+                                 "origin" "http://external.cisco.com"})
+                 judgement-id (id/long-id->id (:id judgement))
+                 judgement-external-ids (:external_ids judgement)
+
+                 get-judgement (fn [jwt]
+                                 (let [{:keys [status] :as response}
+                                       (get (str "ctia/judgement/" (:short-id judgement-id))
+                                            :headers {"Authorization" (str "Bearer " jwt)})]
+                                   (:status response)))]
+             (is (= 201 status))
+             (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
+               (let [{:keys [status] :as response}
+                     (get (str "ctia/judgement/" (:short-id judgement-id))
+                          :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
+                 (is (= 401 (:status response)))))
+
+             (testing "GET /ctia/judgement/:id"
+               (testing "Mulitple JWT keys"
+                 (testing "Key 1 with correct issuer"
+                   (is (= 200 (get-judgement jwt-1))))
+                 (testing "Key 1 with wrong issuer"
+                   (is (= 401 (get-judgement bad-iss-jwt-1))))
+                 (testing "Key 2 with correct issuer"
+                   (is (= 200 (get-judgement jwt-2))))
+                 (testing "Key 2 with wrong issuer"
+                   (is (= 401 (get-judgement bad-iss-jwt-2))))))))
+         (testing "Check URL server down"
+           ;; TODO start server, sleep for too long
+           ;; TODO start server, allways return 401
+           ;; TODO start server, verify the authorization header content
+           (let [{judgement :parsed-body
+                  status :status
+                  :as resp}
+                 (post "ctia/judgement"
+                       :body new-judgement-1
+                       :headers {"Authorization" "45c1f5e3f05d0"
+                                 "origin" "http://external.cisco.com"})
+                 judgement-id (id/long-id->id (:id judgement))
+                 judgement-external-ids (:external_ids judgement)
+
+                 get-judgement (fn [jwt]
+                                 (let [{:keys [status] :as response}
+                                       (get (str "ctia/judgement/" (:short-id judgement-id))
+                                            :headers {"Authorization" (str "Bearer " jwt)})]
+                                   (:status response)))]
+             (is (= 201 status))
+             (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
+               (let [{:keys [status] :as response}
+                     (get (str "ctia/judgement/" (:short-id judgement-id))
+                          :headers {"Authorization" "Bearer 45c1f5e3f05d0"})]
+                 (is (= 401 (:status response)))))
+
+             (testing "GET /ctia/judgement/:id"
+               (testing "Mulitple JWT keys"
+                 (testing "Key 1 with correct issuer"
+                   (is (= 200 (get-judgement jwt-1))))
+                 (testing "Key 1 with wrong issuer"
+                   (is (= 401 (get-judgement bad-iss-jwt-1))))
+                 (testing "Key 2 with correct issuer"
+                   (is (= 200 (get-judgement jwt-2))))
+                 (testing "Key 2 with wrong issuer"
+                   (is (= 401 (get-judgement bad-iss-jwt-2)))))))))))))
 
   (deftest test-judgement-with-jwt-routes
     (test-for-each-store
