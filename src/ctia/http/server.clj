@@ -34,20 +34,13 @@
   [s]
   (set (map keyword (string/split s #","))))
 
-(defn parse-revocation-endpoints
+(defn parse-external-endpoints
   "take a string of couples separated by : and return an hash-map out of it."
   [s]
-  (some->> (string/split s #",")
-           (map #(string/split % #":" 2))
-           (into {})))
-
-(comment
-  (=
-   {"IROH DEV" "https://visibility.int.iroh.site/iroh/session/status",
-    "IROH TEST" "https://visibility.test.iroh.site/iroh/session/status"}
-   (parse-revocation-endpoints
-    "IROH DEV:https://visibility.int.iroh.site/iroh/session/status,IROH TEST:https://visibility.test.iroh.site/iroh/session/status"))
-  )
+  (when s
+    (some->> (string/split s #",")
+             (map #(string/split % #"=" 2))
+             (into {}))))
 
 (defn _http-get [params url jwt]
   (log/infof "checkin JWT, GET %s" url)
@@ -61,9 +54,9 @@
              params)))
 
 (defn http-get-fn [n]
-  (memo/tll _http-get :ttl/threshold n))
+  (memo/ttl _http-get :ttl/threshold n))
 
-(defn check-revocation-endpoints
+(defn check-external-endpoints
   "check the status of the JWT (typically revocation) by making an HTTP request.
   Should return nil if the JWT is ok, and a list of error messages if something's wrong."
   [http-get rev-hash-map params jwt {:keys [iss] :as claims}]
@@ -83,7 +76,7 @@
       ;; is not explicitely supported.
       ;; Because it is mostly a consequence to a configuration mistake
       ;; this log is an error and not an info.
-      (log/errorf "JWT Issuer %s not recognized. You mostly likely need to change the ctia.http.jwt.revocation-endpoints property"
+      (log/errorf "JWT Issuer %s not recognized. You mostly likely need to change the ctia.http.jwt.url-check.endpoints property"
                   iss)
       ["JWT issuer not supported by this instance."])))
 
@@ -118,15 +111,16 @@
              :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
-            (when-let [revocation-endpoints (parse-revocation-endpoints
-                                             (:revocation-endpoints jwt))]
-              :jwt-check-fn (partial check-revocation-endpoints
-                                     (http-get-fn (or (:cache-ttl jwt) 5000))
-                                     revocation-endpoints
-                                     (if (:check-timeout jwt)
-                                       {:session-timeout (:check-timeout jwt)
-                                        :connection-timeout (:check-timeout jwt)}
-                                       {})))
+            (let [{:keys [endpoints timeout cache-ttl]}
+                  (:url-check jwt)]
+              (when-let [external-endpoints (parse-external-endpoints endpoints)]
+                :jwt-check-fn (partial check-external-endpoints
+                                       (http-get-fn (or cache-ttl 5000))
+                                       external-endpoints
+                                       (if timeout
+                                         {:session-timeout timeout
+                                          :connection-timeout timeout}
+                                         {}))))
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 

@@ -1,6 +1,7 @@
 (ns ctia.http.server-test
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
+            [ctia.http.server :as sut]
             [ctia.test-helpers
              [core :as helpers :refer [post get with-properties]]
              [es :as es-helpers]]
@@ -10,6 +11,18 @@
 
 (use-fixtures :each
   helpers/fixture-properties:clean)
+
+(deftest parse-revocation-endpoints-test
+  (is (nil? (sut/parse-revocation-endpoints nil)))
+
+  (is
+   (=
+    {"IROH DEV" "https://visibility.int.iroh.site/iroh/session/status",
+     "IROH TEST" "https://visibility.test.iroh.site/iroh/session/status"}
+    (sut/parse-revocation-endpoints
+     (str
+      "IROH DEV=https://visibility.int.iroh.site/iroh/session/status,"
+      "IROH TEST=https://visibility.test.iroh.site/iroh/session/status")))))
 
 (deftest version-header-test
   (testing "Server should not be sent by default"

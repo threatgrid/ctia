@@ -32,7 +32,7 @@
                  [clj-time "0.15.1"]
                  [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
-                 [org.clojure/core.memoize "0.5.9"]
+                 [org.clojure/core.memoize "0.7.2"]
                  [org.clojure/tools.logging "0.4.1"]
                  [org.clojure/tools.cli "0.4.1"]
                  [pandect "0.6.1"]
