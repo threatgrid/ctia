@@ -18,7 +18,8 @@
              [reload :refer [wrap-reload]]]
             [clojure.core.memoize :as memo])
   (:import org.eclipse.jetty.server.Server
-           (java.util.concurrent TimeoutException)))
+           (java.util.concurrent TimeoutException)
+           (java.net UnknownHostException)))
 
 (defonce server (atom nil))
 
@@ -68,13 +69,19 @@
           (let [{:keys [error_description]} body]
             [error_description])))
       (catch TimeoutException e
-        (log/warnf "Couldn't check jwt status due to a call timeout to %s. By default we consider the JWt as valid."
+        (log/warnf "Couldn't check jwt status due to a call timeout to %s."
                    check-jwt-url)
         [])
+      (catch UnknownHostException e
+          (log/errorf "The server for checking JWT seems down: %s."
+                      check-jwt-url)
+        [])
       (catch Exception e
-        (log/warnf "Couldn't check jwt status due to a call error to %s. By default we consider the JWt as valid."
+        (log/warnf "Couldn't check jwt status due to a call error to %s."
                    check-jwt-url)
-        []))
+        [(str "Some Exception Occured during double check"
+              (pr-str e)
+              )]))
     (do
       ;; We are here if the JWT is signed by a trusted source but the issuer
       ;; is not explicitely supported.
