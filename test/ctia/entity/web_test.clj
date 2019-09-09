@@ -2,10 +2,12 @@
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.clj-time.core :as time]
             [clj-momo.test-helpers.core :as mth]
+            [clj-http.client :as client]
             [clj-http.fake :as fake]
             [clj-time.core :as t]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
+            [ctia.http.server]
             ctia.properties
             [ctia.entity.judgement.schemas
              :refer [judgement-fields judgement-sort-fields]]
@@ -16,7 +18,7 @@
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
+             [http :as http-helper :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store]]]
             [clj-jwt.core :as jwt]
@@ -25,7 +27,8 @@
             [ctia.test-helpers.es :as es-helpers]
             [ctim.examples.judgements :as ex :refer [new-judgement-maximal]]
             [clojure.tools.logging :as log]
-            [clojure.tools.logging.test :as tlog]))
+            [clojure.tools.logging.test :as tlog]
+            [ring.adapter.jetty :as jetty]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -128,8 +131,11 @@
 
                  get-judgement (fn [jwt]
                                  (let [{:keys [status] :as response}
-                                       (get (str "ctia/judgement/" (:short-id judgement-id))
-                                            :headers {"Authorization" (str "Bearer " jwt)})]
+                                       (client/get
+                                        (str "http://localhost:" (helpers/get-http-port) "/ctia/judgement/" (:short-id judgement-id))
+                                        {:headers {"Authorization" (str "Bearer " jwt)}
+                                         :throw-exceptions false
+                                         :as :json})]
                                    (:status response)))]
              (is (= 201 status))
              (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
@@ -151,20 +157,19 @@
 
 
 
-(deftest jwt-url-checks-tests-on-judgements
+(defn jwt-url-checks-test
+  [url-1 url-2 tst-fn]
   (testing "JWT Key Map + URL-Check"
     (apply-fixtures
      ["ctia.http.jwt.enabled" true
       "ctia.http.jwt.public-key-map"
       "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"
 
-      "ctia.http.jwt.url-check.endpoints"
-      "IROH Auth=https://jwt.check-1/check,IROH Auth TEST=https://jwt.check-2/check"
-
-      "ctia.http.jwt.url-check.timeout" 5000
-      "ctia.http.jwt.url-check.cache-ttl" 5]
+      "ctia.http.jwt.url-check.endpoints" (str "IROH Auth=" url-1 ",IROH Auth TEST=" url-2)
+      "ctia.http.jwt.url-check.timeout" 1000
+      "ctia.http.jwt.url-check.cache-ttl" 1]
      (fn []
-       (let [{:keys [jwt-1 bad-iss-jwt-1 jwt-2 bad-iss-jwt-2]} (gen-jwts)]
+       (let [jwts (gen-jwts)]
          (let [{judgement :parsed-body status :status}
                (post "ctia/judgement"
                      :body new-judgement-1
@@ -175,43 +180,63 @@
                                (let [{:keys [status] :as response}
                                      (get (str "ctia/judgement/" (:short-id judgement-id))
                                           :headers {"Authorization" (str "Bearer " jwt)})]
-                                 response))]
+                                 response))
+               ctx (assoc jwts :get-judgement get-judgement)]
            (is (= 201 status))
-           (testing "Check URL server down"
-             (testing "issuer 1"
-               (is (= 200 (:status (get-judgement jwt-1))))
-               (is (tlog/logged? "ctia.http.server"
-                                 :error
-                                 "The server for checking JWT seems down: https://jwt.check-1/check.")))
-             (testing "issuer 2"
-               (is (= 200 (:status (get-judgement jwt-2))))
-               (is (tlog/logged? "ctia.http.server"
-                                 :error
-                                 "The server for checking JWT seems down: https://jwt.check-2/check."))))
+           (tst-fn ctx)))))))
 
-           (comment(testing "Check URL server returns 401"
-                     (fake/with-fake-routes
-                       {"https://jwt.check-1/check"
-                        (fn [req]
-                          (log/warn "requested 1")
-                          {:status 401 :body (pr-str (:headers req))})
 
-                        "https://jwt.check-2/check"
-                        (fn [req]
-                          (log/warn "requested 2")
-                          {:status 401 :body (pr-str (:headers req))})}
-                       (comment
-                         (testing "Mulitple JWT keys"
-                           (testing "Key 1 with correct issuer"
-                             (is (= 401 (:status (get-judgement jwt-1)))))
-                           (testing "Key 2 with correct issuer"
-                             (is (= 401 (:status (get-judgement jwt-2)))))
-                           ))))))
+(deftest jwt-url-checks-server-down-test
+  (let [url-1 "https://jwt.check-1/check"
+        url-2 "https://jwt.check-2/check"]
+    (jwt-url-checks-test
+     url-1
+     url-2
+     (fn [{:keys [get-judgement jwt-1 jwt-2]}]
+       (testing "Check URL server down"
+         (testing "issuer 1"
+           (is (= 200 (:status (get-judgement jwt-1))))
+           (is (tlog/logged? "ctia.http.server"
+                             :error
+                             (str "The server for checking JWT seems down: " url-1 "."))))
+         (testing "issuer 2"
+           (is (= 200 (:status (get-judgement jwt-2))))
+           (is (tlog/logged? "ctia.http.server"
+                             :error
+                             (str "The server for checking JWT seems down: " url-2 ".")))))))))
 
-         ;; TODO start server, sleep for too long
-         ;; TODO start server, verify the authorization header content
+(defn with-server
+  [port handler tst-fn]
+  (let [s (jetty/run-jetty handler {:port port
+                                    :join? false
+                                    :min-threads 2
+                                    :async? true})]
+    (tst-fn)
+    (.stop s)))
 
-         )))))
+(deftest jwt-url-checks-server-refused-test
+  (let [port (let [socket (java.net.ServerSocket. 0)]
+               (.close socket)
+               (.getLocalPort socket))]
+    (with-server
+      port
+      (fn [req]
+        {:status 401
+         :body (pr-str (:headers req))})
+      (let [url-1 (format "https://127.0.0.1:%d/check" port)
+            url-2 (format "https://127.0.0.1:%d/check" port)]
+        (jwt-url-checks-test
+         url-1
+         url-2
+         (fn [{:keys [get-judgement jwt-1 jwt-2]}]
+           (testing "Check URL server returns 401"
+             (is (= {}
+                    (ctia.http.server/_http-get {} url-1 jwt-1)))
+             (testing "Mulitple JWT keys"
+               (testing "Key 1 with correct issuer"
+                 (is (= 401 (:status (get-judgement jwt-1)))))
+               (testing "Key 2 with correct issuer"
+                 (is (= 401 (:status (get-judgement jwt-2)))))))))))))
 
   (deftest test-judgement-with-jwt-routes
     (test-for-each-store

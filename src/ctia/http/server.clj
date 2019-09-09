@@ -46,13 +46,12 @@
 (defn _http-get [params url jwt]
   (log/infof "checkin JWT, GET %s" url)
   (http/get url
-            (into
-             {:as :json
-              :throw-exceptions false
-              :headers {:Authorization (format "Bearer %s" jwt)}
-              :socket-timeout 2000
-              :connection-timeout 2000}
-             params)))
+            (into {:as :json
+                   :throw-exceptions false
+                   :headers {:Authorization (format "Bearer %s" jwt)}
+                   :socket-timeout 2000
+                   :connection-timeout 2000}
+                  params)))
 
 (defn http-get-fn [n]
   (memo/ttl _http-get :ttl/threshold n))
