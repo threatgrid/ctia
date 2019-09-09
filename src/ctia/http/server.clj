@@ -65,7 +65,8 @@
       (let [{:keys [status body]}
             (http-get params check-jwt-url jwt)]
         (when (= status 401)
-          (let [{:keys [error_description]} body]
+          (let [{:keys [error_description]
+                 :or {error_description "JWT Refused"}} body]
             [error_description])))
       (catch TimeoutException e
         (log/warnf "Couldn't check jwt status due to a call timeout to %s."

@@ -163,7 +163,6 @@
 
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
-                                  [clj-http-fake "1.0.3"]
                                   [com.gfredericks/test.chuck "0.2.8"]
                                   [prismatic/schema-generators "0.1.1"]]
                    :pedantic? :warn
