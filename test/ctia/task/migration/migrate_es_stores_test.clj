@@ -53,14 +53,16 @@
   (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
 
 (defn get-cat-indices [host port]
-  (let [url (make-cat-indices-url host port)]
-    (->> (client/get url {:as :json-strict
-                          :throw-exceptions false})
-         :body
-         (reduce (fn [acc {:keys [index] :as entry}]
-                   (assoc acc
-                          index (Integer. (:docs.count entry))))
-                 {})
+  (let [url (make-cat-indices-url host
+                                  port)
+        {:keys [body]
+         :as cat-response} (client/get url {:as :json})]
+    (->> body
+         (map (fn [{:keys [index]
+                    :as entry}]
+                {index (read-string
+                        (:docs.count entry))}))
+         (into {})
          keywordize-keys)))
 
 (defn index-exists?
