@@ -83,7 +83,7 @@
                       check-jwt-url)
         [])
       (catch Exception e
-        (log/warnf "Couldn't check jwt status due to an error calling %s"
+        (log/warnf e "Couldn't check jwt status due to an error calling %s"
                    check-jwt-url)
         []))
     (do
