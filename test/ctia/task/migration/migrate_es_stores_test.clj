@@ -25,8 +25,7 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.stores.es.store :refer [store->map]]
-            [ctia.store :refer [stores]]
-            [clojure.data.json :as json]))
+            [ctia.store :refer [stores]]))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation

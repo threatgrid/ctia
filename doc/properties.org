@@ -89,7 +89,7 @@
 | ctia.http.jwt.public-key-map      | provide the JWT key path for each JWT issuer | string (i=x,j=y)     |
 | ctia.http.jwt.url-check.endpoints | the URL to check for each JWT issuer         | string (i=x,j=y)     |
 | ctia.http.jwt.url-check.timeout   | timeout in ms for the check HTTP call        | number (in ms)       |
-| ctia.http.jwt.url-check.cache-ttl | cache ttl of the URL check                   | string (in ms)       |
+| ctia.http.jwt.url-check.cache-ttl | cache ttl of the URL check                   | number (in ms)       |
 
 **** public-key-map
 Example of format for supporting multiple JWTs:
