@@ -26,20 +26,6 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(def new-judgement
-  (merge new-judgement-maximal
-         {:observable {:value "1.2.3.4"
-                       :type "ip"}
-          :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                         "http://ex.tld/ctia/judgement/judgement-456"]
-          :disposition 2
-          :disposition_name "Malicious"
-          :source "test"
-          :priority 100
-          :severity "High"
-          :confidence "Low"
-          :reason "This is a bad IP address that talked to some evil servers"}))
-
 (def new-judgement-1
   {:observable {:value "1.2.3.4"
                 :type "ip"}
