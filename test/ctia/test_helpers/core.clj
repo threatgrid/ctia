@@ -126,8 +126,9 @@
       (entries [_]
         (deref log))
       (append! [this logger-ns level throwable message]
-        (when (log/enabled? level logger-ns)
-          (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message)))
+        ;; Uncomment to see logs while also capturing them
+        ;; (when (log/enabled? level logger-ns)
+        ;;   (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message)))
         (swap! log (fnil conj []) (log-entry-fn logger-ns level throwable message))
         this))))
 
@@ -141,6 +142,7 @@
     ;; I think that binding might have issue accross process while with-redefs not.
     ;; It could be any other problem as well.
     (tlog/with-log (f)))
+  (log/warn "Logs are hidden by the fixture-log fixture, you can see them by uncommenting logs during debug time")
   (let [sl (atomic-log tlog/->LogEntry)
         lf (tlog/logger-factory sl (constantly true))]
     (with-redefs [tlog/*stateful-log* sl
