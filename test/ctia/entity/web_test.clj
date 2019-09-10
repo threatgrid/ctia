@@ -54,7 +54,6 @@
    :reason "This is a bad IP address that talked to some evil servers"
    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
-
 (def expected-headers
   {"Access-Control-Expose-Headers"
    (str "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
@@ -175,7 +174,6 @@
                                        "Access-Control-Allow-Methods"]))
                       "Should returns the CORS headers even using JWT")))))))))))
 
-
 (deftest test-judgement-with-jwt-routes
   (test-for-each-store
    (fn []
@@ -269,10 +267,6 @@
                (is (= 403 (:status response))
                    "Normal users shouldn't be allowed to set the ids during creation.")))))))))
 
-
-
-
-
 (defn gen-jwts []
   (let [clm (fn [k] (str "https://schemas.cisco.com/iroh/identity/claims/" k))
         priv-key-1 (jwt-key/private-key "resources/cert/ctia-jwt.key")
@@ -363,7 +357,8 @@
                  (testing "Key 2 with wrong issuer"
                    (is (= 401 (get-judgement bad-iss-jwt-2)))))))))))))
 
-
+(def test-timeout 300)
+(def test-cache-ttl 300)
 
 (defn jwt-url-checks-test
   [url-1 url-2 tst-fn]
@@ -374,8 +369,8 @@
       "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"
 
       "ctia.http.jwt.url-check.endpoints" (str "IROH Auth=" url-1 ",IROH Auth TEST=" url-2)
-      "ctia.http.jwt.url-check.timeout" 1000
-      "ctia.http.jwt.url-check.cache-ttl" 1000]
+      "ctia.http.jwt.url-check.timeout" test-timeout
+      "ctia.http.jwt.url-check.cache-ttl" test-cache-ttl]
      (fn []
        (let [jwts (gen-jwts)]
          (let [{judgement :parsed-body status :status}
@@ -392,8 +387,6 @@
                ctx (assoc jwts :get-judgement get-judgement)]
            (is (= 201 status))
            (tst-fn ctx)))))))
-
-
 
 (defn get-free-port
   "find a free port that could be used to start a new server."
@@ -515,11 +508,9 @@
                (is (= 401 (:status (get-judgement jwt-2))))
                (is (= 2 @counter)
                    "Making a call to another JWT should generate another call")
-               (Thread/sleep 1100) ;; wait a bit more than cache-ttl
+               (Thread/sleep (+ test-cache-ttl 100)) ;; wait 100ms more than cache-ttl
                (is (= 401 (:status (get-judgement jwt-1))))
                (is (= 401 (:status (get-judgement jwt-1))))
                (is (= 401 (:status (get-judgement jwt-1))))
                (is (= 3 @counter)
                    "After the cache-ttl we should make a new call for the same JWT")))))))))
-
-
