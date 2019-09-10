@@ -83,7 +83,7 @@
                  [yogsototh/clj-jwt "0.2.1"]
                  [threatgrid/ring-turnstile-middleware "0.1.0"
                   :exclusions [metosin/schema-tools]]
-                 [threatgrid/ring-jwt-middleware "1.0.0-SNAPSHOT"
+                 [threatgrid/ring-jwt-middleware "1.0.0"
                   :exclusions [metosin/compojure-api]]
                  [scopula "0.1.4"
                   :exclusions [org.clojure/spec.alpha
@@ -92,7 +92,7 @@
                                com.andrewmcveigh/cljs-time]]
 
                  ;; clients
-                 [clj-http "3.10.0" :exclusions [commons-codec potemkin]]
+                 [clj-http "3.9.0" :exclusions [commons-codec potemkin]]
                  [com.taoensso/carmine "2.19.1"]
 
                  ;; Metrics
