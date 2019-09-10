@@ -76,33 +76,11 @@
                  status :status
                  :as resp}
                 (post "ctia/judgement"
-                      :body {:observable {:value "1.2.3.4"
-                                          :type "ip"}
-                             :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                                            "http://ex.tld/ctia/judgement/judgement-456"]
-                             :disposition 2
-                             :source "test"
-                             :priority 100
-                             :timestamp #inst "2042-01-01T00:00:00.000Z"
-                             :severity "High"
-                             :confidence "Low"
-                             :reason "This is a bad IP address that talked to some evil servers"
-                             :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                      :body new-judgement-1
                       :headers {"Authorization" "45c1f5e3f05d0"
                                 "Origin" "http://external.cisco.com"})
                 bad-origin-resp (post "ctia/judgement"
-                                      :body {:observable {:value "1.2.3.4"
-                                                          :type "ip"}
-                                             :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                                                            "http://ex.tld/ctia/judgement/judgement-456"]
-                                             :disposition 2
-                                             :source "test"
-                                             :priority 100
-                                             :timestamp #inst "2042-01-01T00:00:00.000Z"
-                                             :severity "High"
-                                             :confidence "Low"
-                                             :reason "This is a bad IP address that talked to some evil servers"
-                                             :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                                      :body new-judgement-1
                                       :headers {"Authorization" "45c1f5e3f05d0"
                                                 "Origin" "http://badcors.com"})
                 judgement-id (id/long-id->id (:id judgement))
@@ -187,18 +165,7 @@
               status :status
               :as resp}
              (post "ctia/judgement"
-                   :body {:observable {:value "1.2.3.4"
-                                       :type "ip"}
-                          :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                                         "http://ex.tld/ctia/judgement/judgement-456"]
-                          :disposition 2
-                          :source "test"
-                          :priority 100
-                          :timestamp #inst "2042-01-01T00:00:00.000Z"
-                          :severity "High"
-                          :confidence "Low"
-                          :reason "This is a bad IP address that talked to some evil servers"
-                          :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                   :body new-judgement-1
                    :headers {"Authorization" "45c1f5e3f05d0"
                              "origin" "http://external.cisco.com"})
              judgement-id (id/long-id->id (:id judgement))
@@ -250,18 +217,8 @@
                     judgement :parsed-body
                     :as response}
                    (post "ctia/judgement"
-                         :body {:observable {:value "1.2.3.4"
-                                             :type "ip"}
-                                :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                                               "http://ex.tld/ctia/judgement/judgement-456"]
-                                :id "http://localhost:3001/ctia/judgement/judgement-00001111-0000-1111-2222-000011112222"
-                                :disposition 2
-                                :source "test"
-                                :priority 100
-                                :severity "High"
-                                :confidence "Low"
-                                :reason "This is a bad IP address that talked to some evil servers"
-                                :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
+                         :body (assoc new-judgement-1
+                                      :id "http://localhost:3001/ctia/judgement/judgement-00001111-0000-1111-2222-000011112222")
                          :headers {"Authorization" (str "Bearer " jwt-token)
                                    "origin" "http://external.cisco.com"})]
                (is (= 403 (:status response))
@@ -360,17 +317,17 @@
 (def test-timeout 300)
 (def test-cache-ttl 300)
 
-(defn jwt-url-checks-test
+(defn jwt-http-checks-test
   [url-1 url-2 tst-fn]
-  (testing "JWT Key Map + URL-Check"
+  (testing "JWT Key Map + Http-Check"
     (apply-fixtures
      ["ctia.http.jwt.enabled" true
       "ctia.http.jwt.public-key-map"
       "IROH Auth=resources/cert/ctia-jwt.pub,IROH Auth TEST=resources/cert/ctia-jwt-2.pub"
 
-      "ctia.http.jwt.url-check.endpoints" (str "IROH Auth=" url-1 ",IROH Auth TEST=" url-2)
-      "ctia.http.jwt.url-check.timeout" test-timeout
-      "ctia.http.jwt.url-check.cache-ttl" test-cache-ttl]
+      "ctia.http.jwt.http-check.endpoints" (str "IROH Auth=" url-1 ",IROH Auth TEST=" url-2)
+      "ctia.http.jwt.http-check.timeout" test-timeout
+      "ctia.http.jwt.http-check.cache-ttl" test-cache-ttl]
      (fn []
        (let [jwts (gen-jwts)]
          (let [{judgement :parsed-body status :status}
@@ -406,10 +363,10 @@
     (tst-fn port)
     (.stop s)))
 
-(deftest jwt-url-checks-server-down-test
+(deftest jwt-http-checks-server-down-test
   (let [url-1 "https://jwt.check-1/check"
         url-2 "https://jwt.check-2/check"]
-    (jwt-url-checks-test
+    (jwt-http-checks-test
      url-1
      url-2
      (fn [{:keys [get-judgement jwt-1 jwt-2]}]
@@ -427,7 +384,7 @@
                              :error
                              (str "The server for checking JWT seems down: " url-2)))))))))
 
-(deftest jwt-url-checks-server-refused-test
+(deftest jwt-http-checks-server-refused-test
   (let [refuse-handler (fn [req]
                          {:status 401
                           :headers {"Content-Type" "application/json"}
@@ -440,7 +397,7 @@
       (fn [port]
         (let [url-1 (format "http://127.0.0.1:%d/check" port)
               url-2 (format "http://127.0.0.1:%d/check" port)]
-          (jwt-url-checks-test
+          (jwt-http-checks-test
            url-1
            url-2
            (fn [{:keys [get-judgement jwt-1 jwt-2]}]
@@ -454,7 +411,7 @@
                                      :key-fn keyword))
                    "The error should use the description returned by the server and we check the server get the correct header")))))))))
 
-(deftest jwt-url-checks-server-slow-test
+(deftest jwt-http-checks-server-slow-test
   (let [slow-handler (fn [req]
                        (Thread/sleep 3000)
                        {:status 401
@@ -467,7 +424,7 @@
       (fn [port]
         (let [url-1 (format "http://127.0.0.1:%d/check" port)
               url-2 (format "http://127.0.0.1:%d/check" port)]
-          (jwt-url-checks-test
+          (jwt-http-checks-test
            url-1
            url-2
            (fn [{:keys [get-judgement jwt-1 jwt-2]}]
@@ -478,7 +435,7 @@
                                  :warn
                                  (format "Couldn't check jwt status due to a call timeout to %s" url-1)))))))))))
 
-(deftest jwt-url-checks-server-cached-response-test
+(deftest jwt-http-checks-server-cached-response-test
   (let [counter (atom 0)
         count-handler
         (fn [req]
@@ -494,7 +451,7 @@
       (fn [port]
         (let [url-1 (format "http://127.0.0.1:%d/check" port)
               url-2 (format "http://127.0.0.1:%d/check" port)]
-          (jwt-url-checks-test
+          (jwt-http-checks-test
            url-1
            url-2
            (fn [{:keys [get-judgement jwt-1 jwt-2]}]

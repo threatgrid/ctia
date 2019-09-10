@@ -39,10 +39,17 @@
 (defn parse-external-endpoints
   "take a string of couples separated by : and return an hash-map out of it."
   [s]
-  (when s
-    (some->> (string/split s #",")
-             (map #(string/split % #"=" 2))
-             (into {}))))
+  (try
+    (when s
+      (some->> (string/split s #",")
+               (map #(string/split % #"=" 2))
+               (into {})))
+    (catch Exception e
+      (throw (ex-info
+              (str "Wrong format for external endpoints."
+                   " Use 'i=url1,j=url2' where i, j are issuers."
+                   " Check the properties.org file of CTIA repository for some examples.")
+              {:bad-string s})))))
 
 (defn _http-get [params url jwt]
   (log/infof "checkin JWT, GET %s" url)
@@ -91,7 +98,7 @@
       ;; is not explicitely supported.
       ;; Because it is mostly a consequence to a configuration mistake
       ;; this log is an error and not an info.
-      (log/errorf "JWT Issuer %s not recognized. You mostly likely need to change the ctia.http.jwt.url-check.endpoints property"
+      (log/errorf "JWT Issuer %s not recognized. You mostly likely need to change the ctia.http.jwt.http-check.endpoints property"
                   iss)
       ["JWT issuer not supported by this instance."])))
 
@@ -127,7 +134,7 @@
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
             (let [{:keys [endpoints timeout cache-ttl]}
-                       (:url-check jwt)]
+                       (:http-check jwt)]
               (when-let [external-endpoints (parse-external-endpoints endpoints)]
                 {:jwt-check-fn (partial check-external-endpoints
                                         (http-get-fn (or cache-ttl 5000))

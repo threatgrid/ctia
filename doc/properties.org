@@ -81,15 +81,15 @@
    Configure JWT authentication support,
    see: https://jwt.io/
 
-| Property                          | Description                                  | Possible values      |
-|-----------------------------------+----------------------------------------------+----------------------|
-| ctia.http.jwt.enabled             | enable JWT auth support                      | =true= =false=       |
-| ctia.http.jwt.public-key-path     | set the JWT key path                         | string (a full path) |
-| ctia.http.jwt.local-storage-key   | set JWT local storage key                    | string (a full path) |
-| ctia.http.jwt.public-key-map      | provide the JWT key path for each JWT issuer | string (i=x,j=y)     |
-| ctia.http.jwt.url-check.endpoints | the URL to check for each JWT issuer         | string (i=x,j=y)     |
-| ctia.http.jwt.url-check.timeout   | timeout in ms for the check HTTP call        | number (in ms)       |
-| ctia.http.jwt.url-check.cache-ttl | cache ttl of the URL check                   | number (in ms)       |
+| Property                           | Description                                  | Possible values      |
+|------------------------------------+----------------------------------------------+----------------------|
+| ctia.http.jwt.enabled              | enable JWT auth support                      | =true= =false=       |
+| ctia.http.jwt.public-key-path      | set the JWT key path                         | string (a full path) |
+| ctia.http.jwt.local-storage-key    | set JWT local storage key                    | string (a full path) |
+| ctia.http.jwt.public-key-map       | provide the JWT key path for each JWT issuer | string (i=x,j=y)     |
+| ctia.http.jwt.http-check.endpoints | the URL to check for each JWT issuer         | string (i=x,j=y)     |
+| ctia.http.jwt.http-check.timeout   | timeout in ms for the check HTTP call        | number (in ms)       |
+| ctia.http.jwt.http-check.cache-ttl | cache ttl of the URL check                   | number (in ms)       |
 
 **** public-key-map
 Example of format for supporting multiple JWTs:
@@ -105,13 +105,15 @@ at the path =/etc/ctia/ctia-pub-key-2.pub=.
 **** revocation-endpoints
 Example of format for calling check URL of JWTs is:
 
-~APP-ONE=https://url.one/check/jwt,APP-TWO=https://url.one/check/jwt~
+~APP-ONE=https://url.one/check/jwt,APP-TWO=https://url.two/check/jwt~
 
-This mean that when receiving a JWT, if the JWT pass all the local checks;
-signature, expirations, etc... The JWT will be used to call that URL that
-can be used to check if the JWT is revoked for example.
+This mean that when receiving a JWT, and all local checks (signature,
+expirations, etc...) are successful, the JWT will then be used to call an
+external URL.
+This endpoint should perform further checks.
+Typically checking if the JWT is revoked.
 
-Notice if the call timeout or returns anything other than a 401 then we
+Note: if the call timeout or returns anything other than a 401 then we
 consider the check to have passed successfully to prevent a full breakage
 if the external server is down.
 This is after all just another layer of security which should already be

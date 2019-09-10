@@ -16,6 +16,23 @@
   (is (nil? (sut/parse-external-endpoints nil)))
 
   (is
+   (= {:msg
+       (str "Wrong format for external endpoints."
+            " Use 'i=url1,j=url2' where i, j are issuers."
+            " Check the properties.org file of CTIA repository for some examples.")
+       :data
+       {:bad-string
+        "IROH DEV:https://visibility.int.iroh.site/iroh/session/status,IROH TEST/https://visibility.test.iroh.site/iroh/session/status"}}
+    (try
+      (sut/parse-external-endpoints
+       (str
+        "IROH DEV:https://visibility.int.iroh.site/iroh/session/status,"
+        "IROH TEST/https://visibility.test.iroh.site/iroh/session/status"))
+      (catch Exception e
+        {:msg (.getMessage e)
+         :data (ex-data e)}))))
+
+  (is
    (=
     {"IROH DEV" "https://visibility.int.iroh.site/iroh/session/status",
      "IROH TEST" "https://visibility.test.iroh.site/iroh/session/status"}

@@ -1,30 +1,23 @@
 (ns ctia.entity.judgement-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.lib.clj-time.core :as time]
-            [clj-momo.test-helpers.core :as mth]
-            [clj-http.fake :as fake]
-            [clj-time.core :as t]
+  (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
-            ctia.properties
             [ctia.entity.judgement.schemas
-             :refer [judgement-fields judgement-sort-fields]]
-            [ctia.test-helpers
-             [access-control :refer [access-control-test]]
-             [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post post-entity-bulk]]
-             [crud :refer [entity-crud-test]]
-             [fake-whoami-service :as whoami-helpers]
-             [field-selection :refer [field-selection-tests]]
-             [http :refer [doc-id->rel-url]]
-             [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
-            [ctim.domain.id :as id]
+             :refer
+             [judgement-fields judgement-sort-fields]]
+            ctia.properties
+            [ctia.test-helpers.access-control :refer [access-control-test]]
+            [ctia.test-helpers.auth :refer [all-capabilities]]
+            [ctia.test-helpers.core :as helpers :refer [get post post-entity-bulk]]
+            [ctia.test-helpers.crud :refer [entity-crud-test]]
             [ctia.test-helpers.es :as es-helpers]
-            [ctim.examples.judgements :as ex :refer [new-judgement-maximal]]
-            [clojure.tools.logging :as log]
-            [clojure.tools.logging.test :as tlog]
-            ))
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.field-selection :refer [field-selection-tests]]
+            [ctia.test-helpers.http :refer [doc-id->rel-url]]
+            [ctia.test-helpers.pagination :refer [pagination-test]]
+            [ctia.test-helpers.store :refer [test-for-each-store]]
+            [ctim.examples.judgements :as ex :refer [new-judgement-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -161,32 +154,6 @@
        :search-tests? false
        :additional-tests additional-tests
        :headers {:Authorization "45c1f5e3f05d0"}}))))
-
-(defn apply-fixtures
-  [properties fn]
-  (let [fixture-fn
-        (join-fixtures [helpers/fixture-log
-                        helpers/fixture-properties:clean
-                        helpers/fixture-properties:cors
-                        #(helpers/with-properties properties (%))
-                        es-helpers/fixture-properties:es-store
-                        helpers/fixture-ctia
-                        es-helpers/fixture-delete-store-indexes])]
-    (fixture-fn fn)))
-
-(def new-judgement-1
-  {:observable {:value "1.2.3.4"
-                :type "ip"}
-   :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
-                  "http://ex.tld/ctia/judgement/judgement-456"]
-   :disposition 2
-   :source "test"
-   :priority 100
-   :timestamp #inst "2042-01-01T00:00:00.000Z"
-   :severity "High"
-   :confidence "Low"
-   :reason "This is a bad IP address that talked to some evil servers"
-   :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
 (deftest test-judgement-routes-for-dispositon-determination
   (test-for-each-store

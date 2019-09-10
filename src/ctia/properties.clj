@@ -107,9 +107,9 @@
                       "ctia.http.jwt.local-storage-key" s/Str
                       "ctia.http.jwt.lifetime-in-sec" s/Num
                       "ctia.http.jwt.claim-prefix" s/Str
-                      "ctia.http.jwt.url-check.endpoints" s/Str
-                      "ctia.http.jwt.url-check.timeout" s/Num
-                      "ctia.http.jwt.url-check.cache-ttl" s/Num})
+                      "ctia.http.jwt.http-check.endpoints" s/Str
+                      "ctia.http.jwt.http-check.timeout" s/Num
+                      "ctia.http.jwt.http-check.cache-ttl" s/Num})
 
    (st/optional-keys {"ctia.http.dev-reload" s/Bool
                       "ctia.http.show.protocol" s/Str
