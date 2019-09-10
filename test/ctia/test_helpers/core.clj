@@ -126,7 +126,8 @@
       (entries [_]
         (deref log))
       (append! [this logger-ns level throwable message]
-        (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message))
+        (when (log/enabled? level logger-ns)
+          (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message)))
         (swap! log (fnil conj []) (log-entry-fn logger-ns level throwable message))
         this))))
 
