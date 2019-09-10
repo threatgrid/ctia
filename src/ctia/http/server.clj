@@ -133,7 +133,7 @@
                                         (http-get-fn (or cache-ttl 5000))
                                         external-endpoints
                                         (if timeout
-                                          {:session-timeout timeout
+                                          {:socket-timeout timeout
                                            :connection-timeout timeout}
                                           {}))}))
             (when-let [lifetime (:lifetime-in-sec jwt)]
