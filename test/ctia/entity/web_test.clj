@@ -167,7 +167,7 @@
 
       "ctia.http.jwt.url-check.endpoints" (str "IROH Auth=" url-1 ",IROH Auth TEST=" url-2)
       "ctia.http.jwt.url-check.timeout" 1000
-      "ctia.http.jwt.url-check.cache-ttl" 1]
+      "ctia.http.jwt.url-check.cache-ttl" 1000]
      (fn []
        (let [jwts (gen-jwts)]
          (let [{judgement :parsed-body status :status}
@@ -204,32 +204,34 @@
            (is (tlog/logged? "ctia.http.server"
                              :error
                              (str "The server for checking JWT seems down: " url-2 ".")))))))))
-
-(defn with-server
-  [port handler tst-fn]
-  (let [s (jetty/run-jetty handler {:port port
-                                    :join? false
-                                    :min-threads 2})]
-    (tst-fn)
-    (.stop s)))
-
-(defn get-free-port []
+(defn get-free-port
+  "find a free port that could be used to start a new server."
+  []
   (let [socket (java.net.ServerSocket. 0)]
     (.close socket)
     (.getLocalPort socket)))
 
-(deftest jwt-url-checks-server-refused-test
+(defn with-server
+  "Start tst-fn function while handler is started as a server.
+  The tst-fn should be a function that takes the port as parameter."
+  [handler tst-fn]
   (let [port (get-free-port)
-        refuse-handler (fn [req]
+        s (jetty/run-jetty handler {:port port
+                                    :join? false
+                                    :min-threads 2})]
+    (tst-fn port)
+    (.stop s)))
+
+(deftest jwt-url-checks-server-refused-test
+  (let [refuse-handler (fn [req]
                          {:status 401
                           :headers {"Content-Type" "application/json"}
                           :body (json/write-str
                                  {:error "refused"
                                   :error_description (get-in req [:headers "Authorization"])})})]
     (with-server
-      port
       refuse-handler
-      (fn []
+      (fn [port]
         (let [url-1 (format "http://127.0.0.1:%d/check" port)
               url-2 (format "http://127.0.0.1:%d/check" port)]
           (jwt-url-checks-test
@@ -237,15 +239,62 @@
            url-2
            (fn [{:keys [get-judgement jwt-1 jwt-2]}]
              (testing "Check URL server returns 401"
-               #_(is (= {}
-                      (ctia.http.server/_http-get {} url-1 jwt-1)))
-               (testing "Mulitple JWT keys"
-                 (testing "Key 1 with correct issuer"
-                   (is (= 401 (:status (get-judgement jwt-1))))
-                   (is (= "{\"error\":\"invalid_jwt\",\"error_description\":\"(56bb5f8c-cc4e-4ed3-a91a-c6604287fe32) JWT Refused\"}"
-                          (:body (get-judgement jwt-1)))))
-                 (testing "Key 2 with correct issuer"
-                   (is (= 401 (:status (get-judgement jwt-2))))))))))))))
+               (testing "Key 1 with correct issuer"
+                 (is (= 401 (:status (get-judgement jwt-1))))
+                 (is (= {:error "invalid_jwt"
+                         :error_description "(56bb5f8c-cc4e-4ed3-a91a-c6604287fe32) JWT Refused"}
+                        (json/read-str (:body (get-judgement jwt-1))
+                                       :key-fn keyword))))))))))))
+
+(deftest jwt-url-checks-server-slow-test
+  (let [slow-handler (fn [req]
+                       (Thread/sleep 3000)
+                       {:status 401
+                        :headers {"Content-Type" "application/json"}
+                        :body (json/write-str
+                               {:error "refused"
+                                :error_description (get-in req [:headers "Authorization"])})})]
+    (with-server
+      slow-handler
+      (fn [port]
+        (let [url-1 (format "http://127.0.0.1:%d/check" port)
+              url-2 (format "http://127.0.0.1:%d/check" port)]
+          (jwt-url-checks-test
+           url-1
+           url-2
+           (fn [{:keys [get-judgement jwt-1 jwt-2]}]
+             (testing "Check URL server too long to answer"
+               (testing "Key 1 with correct issuer"
+                 (is (= 200 (:status (get-judgement jwt-1)))))))))))))
+
+(deftest jwt-url-checks-server-cached-response-test
+  (let [counter (atom 0)
+        count-handler (fn [req]
+                       (swap! counter inc)
+                       {:status 401
+                        :headers {"Content-Type" "application/json"}
+                        :body (json/write-str
+                               {:error "refused"
+                                :error_description (get-in req [:headers "Authorization"])})})]
+    (with-server
+      count-handler
+      (fn [port]
+        (let [url-1 (format "http://127.0.0.1:%d/check" port)
+              url-2 (format "http://127.0.0.1:%d/check" port)]
+          (jwt-url-checks-test
+           url-1
+           url-2
+           (fn [{:keys [get-judgement jwt-1 jwt-2]}]
+             (testing "Check URL server too long to answer"
+               (is (= 401 (:status (get-judgement jwt-1))))
+               (is (= 401 (:status (get-judgement jwt-1))))
+               (is (= 401 (:status (get-judgement jwt-1))))
+               (is (= 1 @counter))
+               (Thread/sleep 1100) ;; wiaht a bit more than cache-ttl
+               (is (= 401 (:status (get-judgement jwt-1))))
+               (is (= 401 (:status (get-judgement jwt-1))))
+               (is (= 401 (:status (get-judgement jwt-1))))
+               (is (= 2 @counter))))))))))
 
 (deftest test-judgement-with-jwt-routes
   (test-for-each-store

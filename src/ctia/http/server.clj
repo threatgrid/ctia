@@ -19,7 +19,8 @@
             [clojure.core.memoize :as memo])
   (:import org.eclipse.jetty.server.Server
            (java.util.concurrent TimeoutException)
-           (java.net UnknownHostException)))
+           (java.net UnknownHostException
+                     SocketTimeoutException)))
 
 (defonce server (atom nil))
 
@@ -69,6 +70,10 @@
                  :or {error_description "JWT Refused"}} body]
             [error_description])))
       (catch TimeoutException e
+        (log/warnf "Couldn't check jwt status due to a call timeout to %s."
+                   check-jwt-url)
+        [])
+      (catch SocketTimeoutException e
         (log/warnf "Couldn't check jwt status due to a call timeout to %s."
                    check-jwt-url)
         [])
