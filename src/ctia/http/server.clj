@@ -48,6 +48,7 @@
   (log/infof "checkin JWT, GET %s" url)
   (http/get url
             (into {:as :json
+                   :coerce :always
                    :throw-exceptions false
                    :headers {:Authorization (format "Bearer %s" jwt)}
                    :socket-timeout 2000
@@ -70,23 +71,21 @@
                  :or {error_description "JWT Refused"}} body]
             [error_description])))
       (catch TimeoutException e
-        (log/warnf "Couldn't check jwt status due to a call timeout to %s."
+        (log/warnf "Couldn't check jwt status due to a call timeout to %s"
                    check-jwt-url)
         [])
       (catch SocketTimeoutException e
-        (log/warnf "Couldn't check jwt status due to a call timeout to %s."
+        (log/warnf "Couldn't check jwt status due to a call timeout to %s"
                    check-jwt-url)
         [])
       (catch UnknownHostException e
-          (log/errorf "The server for checking JWT seems down: %s."
+          (log/errorf "The server for checking JWT seems down: %s"
                       check-jwt-url)
         [])
       (catch Exception e
-        (log/warnf "Couldn't check jwt status due to a call error to %s."
+        (log/warnf "Couldn't check jwt status due to an error calling %s"
                    check-jwt-url)
-        [(str "Some Exception Occured during double check"
-              (pr-str e)
-              )]))
+        []))
     (do
       ;; We are here if the JWT is signed by a trusted source but the issuer
       ;; is not explicitely supported.
