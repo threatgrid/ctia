@@ -21,6 +21,8 @@
    [ctia.flows.crud :as crud]
    [ctim.domain.id :as id]
    [ctim.generators.common :as cgc]
+   [clojure.tools.logging :as log]
+   [clojure.tools.logging.test :as tlog]
    [flanders
     [spec :as fs]
     [utils :as fu]]))
@@ -111,6 +113,42 @@
                                    "ctia.hook.AutoLoadedJar2"
                                    "hook-example.core/hook-example-2"])]
     (f)))
+
+(defn atomic-log
+  "Returns a StatefulLog, appending to an atom the result of invoking
+  log-entry-fn with the same args as append!
+  But also print the log.
+  "
+  [log-entry-fn]
+  (let [log (atom [])]
+    (reify
+      tlog/StatefulLog
+      (entries [_]
+        (deref log))
+      (append! [this logger-ns level throwable message]
+        #_(do ;; Uncomment to see logs while also capturing them for debug purpose
+            (println "!DO NOT FORGET TO COMMENT ctia.test-helpers.core/atomic-log println BEFORE PUSHING YOUR PR")
+            (when (log/enabled? level logger-ns)
+              (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message))))
+        (swap! log (fnil conj []) (log-entry-fn logger-ns level throwable message))
+        this))))
+
+(defn fixture-log
+  [f]
+  (comment
+    ;; The first version was this one.
+    ;; There is bug that make it not work accross process/thread
+    ;; I'm not sure where the problem occurs.
+    ;; I might take more time to inspect the issue later.
+    ;; I think that binding might have issue accross process while with-redefs not.
+    ;; It could be any other problem as well.
+    (tlog/with-log (f)))
+  (log/warn "Logs are hidden by the fixture-log fixture. To see them check ctia.test-helpers.core/atomic-log function")
+  (let [sl (atomic-log tlog/->LogEntry)
+        lf (tlog/logger-factory sl (constantly true))]
+    (with-redefs [tlog/*stateful-log* sl
+                  log/*logger-factory* lf]
+      (f))))
 
 (defn fixture-ctia
   ([t] (fixture-ctia t true))

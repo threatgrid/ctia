@@ -1,5 +1,7 @@
 (ns ctia.http.server
-  (:require [clojure.string :refer [split]]
+  (:require [clojure.string :as string]
+            [clojure.tools.logging :as log]
+            [clj-http.client :as http]
             [ctia
              [properties :refer [properties]]
              [shutdown :as shutdown]]
@@ -13,8 +15,12 @@
             [ring.middleware
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
-             [reload :refer [wrap-reload]]])
-  (:import org.eclipse.jetty.server.Server))
+             [reload :refer [wrap-reload]]]
+            [clojure.core.memoize :as memo])
+  (:import org.eclipse.jetty.server.Server
+           (java.util.concurrent TimeoutException)
+           (java.net UnknownHostException
+                     SocketTimeoutException)))
 
 (defonce server (atom nil))
 
@@ -23,12 +29,78 @@
    turn it to a a vec of patterns"
   [origins-str]
   (vec (map re-pattern
-            (split origins-str #","))))
+            (string/split origins-str #","))))
 
 (defn- str->set-of-keywords
   "take a string with words separated with commas, returns a vec of keywords"
   [s]
-  (set (map keyword (split s #","))))
+  (set (map keyword (string/split s #","))))
+
+(defn parse-external-endpoints
+  "take a string of couples separated by : and return an hash-map out of it."
+  [s]
+  (try
+    (when s
+      (some->> (string/split s #",")
+               (map #(string/split % #"=" 2))
+               (into {})))
+    (catch Exception e
+      (throw (ex-info
+              (str "Wrong format for external endpoints."
+                   " Use 'i=url1,j=url2' where i, j are issuers."
+                   " Check the properties.org file of CTIA repository for some examples.")
+              {:bad-string s})))))
+
+(defn _http-get [params url jwt]
+  (log/infof "checkin JWT, GET %s" url)
+  (http/get url
+            (into {:as :json
+                   :coerce :always
+                   :throw-exceptions false
+                   :headers {:Authorization (format "Bearer %s" jwt)}
+                   :socket-timeout 2000
+                   :connection-timeout 2000}
+                  params)))
+
+(defn http-get-fn [n]
+  (memo/ttl _http-get :ttl/threshold n))
+
+(defn check-external-endpoints
+  "check the status of the JWT (typically revocation) by making an HTTP request.
+  Should return [] if the JWT is ok, and a list of error messages if something's wrong."
+  [http-get rev-hash-map params jwt {:keys [iss] :as claims}]
+  (if-let [check-jwt-url (get rev-hash-map iss)]
+    (try
+      (let [{:keys [status body]}
+            (http-get params check-jwt-url jwt)]
+        (when (= status 401)
+          (let [{:keys [error_description]
+                 :or {error_description "JWT Refused"}} body]
+            [error_description])))
+      (catch TimeoutException e
+        (log/warnf "Couldn't check jwt status due to a call timeout to %s"
+                   check-jwt-url)
+        [])
+      (catch SocketTimeoutException e
+        (log/warnf "Couldn't check jwt status due to a call timeout to %s"
+                   check-jwt-url)
+        [])
+      (catch UnknownHostException e
+          (log/errorf "The server for checking JWT seems down: %s"
+                      check-jwt-url)
+        [])
+      (catch Exception e
+        (log/warnf e "Couldn't check jwt status due to an error calling %s"
+                   check-jwt-url)
+        []))
+    (do
+      ;; We are here if the JWT is signed by a trusted source but the issuer
+      ;; is not explicitely supported.
+      ;; Because it is mostly a consequence to a configuration mistake
+      ;; this log is an error and not an info.
+      (log/errorf "JWT Issuer %s not recognized. You mostly likely need to change the ctia.http.jwt.http-check.endpoints property"
+                  iss)
+      ["JWT issuer not supported by this instance."])))
 
 (defn- new-jetty-instance
   [{:keys [dev-reload
@@ -60,6 +132,17 @@
              :error-handler auth-jwt/jwt-error-handler
              :pubkey-path (:public-key-path jwt)
              :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+
+            (let [{:keys [endpoints timeout cache-ttl]}
+                       (:http-check jwt)]
+              (when-let [external-endpoints (parse-external-endpoints endpoints)]
+                {:jwt-check-fn (partial check-external-endpoints
+                                        (http-get-fn (or cache-ttl 5000))
+                                        external-endpoints
+                                        (if timeout
+                                          {:socket-timeout timeout
+                                           :connection-timeout timeout}
+                                          {}))}))
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 
