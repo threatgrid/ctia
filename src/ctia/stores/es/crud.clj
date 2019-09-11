@@ -42,6 +42,12 @@
   (let [[orig docid] (re-matches #".*?([^/]+)\z" id) ]
     docid))
 
+(defn ensure-document-id-in-map
+  "Ensure a document ID in a given filter map"
+  [{:keys [id] :as m}]
+  (cond-> m
+    id (update :id ensure-document-id)))
+
 (defn remove-es-actions
   "Removes the ES action level
 
@@ -206,7 +212,6 @@
     params
     (assoc params :sort_by default-sort-field)))
 
-
 (s/defschema FilterSchema
   (st/optional-keys
    {:all-of {s/Any s/Any}
@@ -309,7 +314,7 @@
                                  (name mapping)
                                  {:bool {:must [(find-restriction-query-part ident)
                                                 {:query_string query_string}]}}
-                                 filter-map
+                                 (ensure-document-id-in-map filter-map)
                                  (-> params
                                      rename-sort-fields
                                      with-default-sort-field

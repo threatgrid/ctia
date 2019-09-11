@@ -9,6 +9,17 @@
              [core :as helpers]
              [es :as es-helpers]]))
 
+(deftest ensure-document-id-in-map-test
+  (is (= {:id "actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7"}
+         (sut/ensure-document-id-in-map
+          {:id "http://localhost:3000/ctia/actor/actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7"})))
+  (is (= {:id "actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7"}
+         (sut/ensure-document-id-in-map
+          {:id "actor-677796fd-b5d2-46e3-b57d-4879bcca1ce7"})))
+  (is (= {:title "title"}
+         (sut/ensure-document-id-in-map
+          {:title "title"}))))
+
 (deftest partial-results-test
   (is (= {:data [{:error "Exception"
                   :id "123"}
