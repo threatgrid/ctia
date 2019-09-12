@@ -102,6 +102,11 @@
                   iss)
       ["JWT issuer not supported by this instance."])))
 
+(defn wrap-specific-headers
+  [handler headers]
+  (fn [req]
+    (update (handler req) :headers into headers)))
+
 (defn- new-jetty-instance
   [{:keys [dev-reload
            max-threads
@@ -151,7 +156,9 @@
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,X-RateLimit-GROUP-Limit")
+                    :access-control-expose-headers "X-Total-Hits,X-Content-Type-Options,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,X-RateLimit-GROUP-Limit")
+
+         true (wrap-specific-headers {"X-Content-Type-Options" "nosniff"})
 
          true wrap-params
 
