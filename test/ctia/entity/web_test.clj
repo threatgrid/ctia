@@ -42,13 +42,13 @@
 
 (def expected-headers
   {"Access-Control-Expose-Headers"
-   (str "X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
+   (str "X-Total-Hits,X-Content-Type-Options,X-Next,X-Previous,X-Sort,Etag,"
         "X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,"
         "X-RateLimit-GROUP-Limit"),
    "Access-Control-Allow-Origin" "http://external.cisco.com",
    "Access-Control-Allow-Methods" "DELETE, GET, PATCH, POST, PUT"})
 
-(deftest cors-test
+(deftest headers-test
   (helpers/fixture-properties:cors
    (fn []
      (test-for-each-store
@@ -57,7 +57,7 @@
         (helpers/set-capabilities! "baruser" ["bargroup"] "user" #{})
         (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
         (whoami-helpers/set-whoami-response "2222222222222" "baruser" "bargroup" "user")
-        (testing "POST /ctia/judgement"
+        (testing "Headers"
           (let [{judgement :parsed-body
                  status :status
                  :as resp}
@@ -70,7 +70,9 @@
                                       :headers {"Authorization" "45c1f5e3f05d0"
                                                 "Origin" "http://badcors.com"})
                 judgement-id (id/long-id->id (:id judgement))
-                judgement-external-ids (:external_ids judgement)]
+                judgement-external-ids (:external_ids judgement)
+
+                swagger-ui-resp (get "index.html")]
 
             (is (= 201 status))
             (is (= expected-headers
@@ -79,6 +81,14 @@
                                  "Access-Control-Allow-Origin"
                                  "Access-Control-Allow-Methods"]))
                 "We should returns the CORS headers when correct origin")
+            (is (= "nosniff"
+                   (get-in resp [:headers "X-Content-Type-Options"]))
+                "The request should contain the X-Content-Type-Options header set to nosniff")
+
+            (is (= 200 (:status swagger-ui-resp)))
+            (is (= "nosniff"
+                   (get-in swagger-ui-resp [:headers "X-Content-Type-Options"]))
+                "Swagger-UI request should contain the X-Content-Type-Options header set to nosniff")
             (is (= 201 (:status bad-origin-resp)))
             (is (= {}
                    (select-keys (:headers bad-origin-resp)
