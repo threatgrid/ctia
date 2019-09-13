@@ -102,10 +102,21 @@
                   iss)
       ["JWT issuer not supported by this instance."])))
 
+(defn wrap-additional-headers
+  "Add additional headers to all requests.
+
+  The handler can override the value of those headers but not remove them.
+  "
+  [handler headers]
+  (fn [req]
+    (update (handler req)
+            :headers (fn [response-headers]
+                       (into headers response-headers)))))
+
 (defn wrap-html-headers
   "Wrap specific headers to HTML content
 
-  The handler can override the security headers."
+  The handler can override the headers."
   [handler headers]
   (fn [req]
     (let [response (handler req)]
@@ -113,9 +124,6 @@
         (some->> (get-in response [:headers "Content-Type"])
                  (re-matches #"(?i).*text/html.*"))
         (update :headers (fn [response-headers]
-                           ;; the order is significant
-                           ;; the handler can take precedence on the value
-                           ;; of the headers
                            (into headers response-headers)))))))
 
 (defn- new-jetty-instance
@@ -170,9 +178,10 @@
                     (str->set-of-keywords access-control-allow-methods)
                     :access-control-expose-headers "*")
 
+         true (wrap-additional-headers
+               {"X-Content-Type-Options" "nosniff"})
          true (wrap-html-headers
-               {"X-Content-Type-Options" "nosniff"
-                "Content-Security-Policy" (str "default-src 'self';"
+               {"Content-Security-Policy" (str "default-src 'self';"
                                                " style-src 'self' 'unsafe-inline';"
                                                " img-src 'self' data:;"
                                                " script-src 'self' 'unsafe-inline';"
