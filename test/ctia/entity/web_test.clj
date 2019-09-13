@@ -78,9 +78,8 @@
                                  "Access-Control-Allow-Origin"
                                  "Access-Control-Allow-Methods"]))
                 "We should returns the CORS headers when correct origin")
-            (is (= "nosniff"
-                   (get-in resp [:headers "X-Content-Type-Options"]))
-                "The request should contain the X-Content-Type-Options header set to nosniff")
+            (is (nil? (get-in resp [:headers "X-Content-Type-Options"]))
+                "An API request should not contain the X-Content-Type-Options header")
             (is (= 200 (:status swagger-ui-resp)))
             (is (= "nosniff"
                    (get-in swagger-ui-resp [:headers "X-Content-Type-Options"]))

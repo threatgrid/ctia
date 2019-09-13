@@ -102,10 +102,21 @@
                   iss)
       ["JWT issuer not supported by this instance."])))
 
-(defn wrap-specific-headers
+(defn wrap-html-headers
+  "Wrap specific headers to HTML content
+
+  The handler can override the security headers."
   [handler headers]
   (fn [req]
-    (update (handler req) :headers into headers)))
+    (let [response (handler req)]
+      (cond-> response
+        (some->> (get-in response [:headers "Content-Type"])
+                 (re-matches #"(?i).*text/html.*"))
+        (update :headers (fn [response-headers]
+                           ;; the order is significant
+                           ;; the handler can take precedence on the value
+                           ;; of the headers
+                           (into headers response-headers)))))))
 
 (defn- new-jetty-instance
   [{:keys [dev-reload
@@ -159,13 +170,14 @@
                     (str->set-of-keywords access-control-allow-methods)
                     :access-control-expose-headers "*")
 
-         true (wrap-specific-headers {"X-Content-Type-Options" "nosniff"
-                                      "Content-Security-Policy" (str "default-src 'self';"
-                                                                     " style-src 'self' 'unsafe-inline';"
-                                                                     " img-src 'self' data:;"
-                                                                     " script-src 'self' 'unsafe-inline';"
-                                                                     " connect-src 'self';")
-                                      "X-Frame-Options" "DENY"})
+         true (wrap-html-headers
+               {"X-Content-Type-Options" "nosniff"
+                "Content-Security-Policy" (str "default-src 'self';"
+                                               " style-src 'self' 'unsafe-inline';"
+                                               " img-src 'self' data:;"
+                                               " script-src 'self' 'unsafe-inline';"
+                                               " connect-src 'self';")
+                "X-Frame-Options" "DENY"})
 
          true wrap-params
 
