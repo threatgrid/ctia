@@ -112,6 +112,7 @@
            max-threads
            min-threads
            port
+           trusted-urls
            access-control-allow-origin
            access-control-allow-methods
            jwt
@@ -156,9 +157,15 @@
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "X-Total-Hits,X-Content-Type-Options,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,X-RateLimit-GROUP-Limit")
+                    :access-control-expose-headers "*")
 
-         true (wrap-specific-headers {"X-Content-Type-Options" "nosniff"})
+         true (wrap-specific-headers {"X-Content-Type-Options" "nosniff"
+                                      "Content-Security-Policy" (str "default-src 'self';"
+                                                                     " style-src 'self' 'unsafe-inline';"
+                                                                     " img-src 'self' data:;"
+                                                                     " script-src 'self' 'unsafe-inline';"
+                                                                     " connect-src 'self';")
+                                      "X-Frame-Options" "DENY"})
 
          true wrap-params
 
