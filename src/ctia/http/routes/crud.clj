@@ -83,11 +83,11 @@
                  un-store
                  created)))
      (when can-update?
-       (PUT "/:id" []
+       (PUT "/:uuid" []
             :return entity-schema
             :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
             :summary (format "Updates an %s" capitalized)
-            :path-params [id :- s/Str]
+            :path-params [uuid :- s/Str]
             :capabilities put-capabilities
             :auth-identity identity
             :identity-map identity-map
@@ -101,12 +101,12 @@
                           :realize-fn realize-fn
                           :update-fn #(write-store entity
                                                    update-record
-                                                   (:id %)
+                                                   (:uuid %)
                                                    %
                                                    identity-map)
                           :long-id-fn with-long-id
                           :entity-type entity
-                          :entity-id id
+                          :entity-id uuid
                           :identity identity
                           :entity entity-update
                           :spec new-spec)
@@ -114,11 +114,11 @@
               (ok updated-rec)
               (not-found))))
      (when can-patch?
-       (PATCH "/:id" []
+       (PATCH "/:uuid" []
               :return entity-schema
               :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
               :summary (format "Partially Update %s" capitalized)
-              :path-params [id :- s/Str]
+              :path-params [uuid :- s/Str]
               :capabilities patch-capabilities
               :auth-identity identity
               :identity-map identity-map
@@ -132,12 +132,12 @@
                             :realize-fn realize-fn
                             :update-fn #(write-store entity
                                                      update-record
-                                                     (:id %)
+                                                     (:uuid %)
                                                      %
                                                      identity-map)
                             :long-id-fn with-long-id
                             :entity-type entity
-                            :entity-id id
+                            :entity-id uuid
                             :identity identity
                             :patch-operation :replace
                             :partial-entity partial-update
@@ -182,17 +182,17 @@
                 un-store-page
                 paginated-ok)))
 
-     (GET "/:id" []
+     (GET "/:uuid" []
           :return (s/maybe get-schema)
-          :summary (format "Gets a %s by ID" entity-str)
-          :path-params [id :- s/Str]
+          :summary (format "Gets a %s by it's UUID" entity-str)
+          :path-params [uuid :- s/Str]
           :query [params get-params]
           :capabilities get-capabilities
           :auth-identity identity
           :identity-map identity-map
           (if-let [rec (read-store entity
                                    read-record
-                                   id
+                                   uuid
                                    identity-map
                                    params)]
             (-> rec
@@ -201,9 +201,9 @@
                 ok)
             (not-found)))
 
-     (DELETE "/:id" []
+     (DELETE "/:uuid" []
              :no-doc hide-delete?
-             :path-params [id :- s/Str]
+             :path-params [uuid :- s/Str]
              :summary (format "Deletes a %s" capitalized)
              :capabilities delete-capabilities
              :auth-identity identity
@@ -220,7 +220,7 @@
                                            identity-map)
                   :entity-type entity
                   :long-id-fn with-long-id
-                  :entity-id id
+                  :entity-id uuid
                   :identity identity)
                (no-content)
                (not-found))))))

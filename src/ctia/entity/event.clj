@@ -126,15 +126,15 @@
 
 (def event-history-routes
   (routes
-   (GET "/history/:entity_id" []
+   (GET "/history/:entity-id" []
         :return [EventBucket]
         :query [q EventTimelineParams]
-        :path-params [entity_id :- s/Str]
+        :path-params [entity-id :- s/Str]
         :summary "Timeline history of an entity"
         :capabilities :search-event
         :auth-identity identity
         :identity-map identity-map
-        (let [res (fetch-related-events entity_id
+        (let [res (fetch-related-events entity-id
                                         identity-map
                                         (into q {:sort_by :timestamp :sort_order :desc}))
               timeline (bucketize-events res)]

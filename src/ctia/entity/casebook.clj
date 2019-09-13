@@ -126,11 +126,11 @@
 
 (def casebook-operation-routes
   (routes
-   (PATCH "/:id" []
+   (PATCH "/:uuid" []
           :return Casebook
           :body [partial-casebook PartialNewCasebook {:description "a Casebook partial update"}]
           :summary "Partially Update a Casebook"
-          :path-params [id :- s/Str]
+          :path-params [uuid :- s/Str]
           :capabilities :create-casebook
           :auth-identity identity
           :identity-map identity-map
@@ -143,24 +143,24 @@
                         :realize-fn realize-casebook
                         :update-fn #(write-store :casebook
                                                  update-record
-                                                 (:id %)
+                                                 (:uuid %)
                                                  %
                                                  identity-map)
                         :long-id-fn with-long-id
                         :entity-type :casebook
-                        :entity-id id
+                        :entity-id uuid
                         :identity identity
                         :patch-operation :replace
                         :partial-entity partial-casebook
                         :spec :new-casebook/map)]
             (ok (un-store res))
             (not-found {:error "casebook not found"})))
-   (context "/:id/observables" []
+   (context "/:uuid/observables" []
             (POST "/" []
                   :return Casebook
                   :body [operation CasebookObservablesUpdate
                          {:description "A casebook Observables operation"}]
-                  :path-params [id :- s/Str]
+                  :path-params [uuid :- s/Str]
                   :summary "Edit Observables on a casebook"
                   :capabilities :create-casebook
                   :auth-identity identity
@@ -174,12 +174,12 @@
                                 :realize-fn realize-casebook
                                 :update-fn #(write-store :casebook
                                                          update-record
-                                                         (:id %)
+                                                         (:uuid %)
                                                          %
                                                          identity-map)
                                 :long-id-fn with-long-id
                                 :entity-type :casebook
-                                :entity-id id
+                                :entity-id uuid
                                 :identity identity
                                 :patch-operation (:operation operation)
                                 :partial-entity {:observables (:observables operation)}
@@ -187,12 +187,12 @@
                     (ok (un-store res))
                     (not-found {:error "casebook not found"}))))
 
-   (context "/:id/texts" []
+   (context "/:uuid/texts" []
             (POST "/" []
                   :return Casebook
                   :body [operation CasebookTextsUpdate
                          {:description "A casebook Texts operation"}]
-                  :path-params [id :- s/Str]
+                  :path-params [uuid :- s/Str]
                   :summary "Edit Texts on a casebook"
                   :capabilities :create-casebook
                   :auth-identity identity
@@ -206,12 +206,12 @@
                                 :realize-fn realize-casebook
                                 :update-fn #(write-store :casebook
                                                          update-record
-                                                         (:id %)
+                                                         (:uuid %)
                                                          %
                                                          identity-map)
                                 :long-id-fn with-long-id
                                 :entity-type :casebook
-                                :entity-id id
+                                :entity-id uuid
                                 :identity identity
                                 :patch-operation (:operation operation)
                                 :partial-entity {:texts (:texts operation)}
@@ -219,12 +219,12 @@
                     (ok (un-store res))
                     (not-found {:error "casebook not found"}))))
 
-   (context "/:id/bundle" []
+   (context "/:uuid/bundle" []
             (POST "/" []
                   :return Casebook
                   :body [operation CasebookBundleUpdate
                          {:description "A casebook Bundle operation"}]
-                  :path-params [id :- s/Str]
+                  :path-params [uuid :- s/Str]
                   :summary "Edit a Bundle on a casebook"
                   :capabilities :create-casebook
                   :auth-identity identity
@@ -238,12 +238,12 @@
                                 :realize-fn realize-casebook
                                 :update-fn #(write-store :casebook
                                                          update-record
-                                                         (:id %)
+                                                         (:uuid %)
                                                          %
                                                          identity-map)
                                 :long-id-fn with-long-id
                                 :entity-type :casebook
-                                :entity-id id
+                                :entity-id uuid
                                 :identity identity
                                 :patch-operation (:operation operation)
                                 :partial-entity {:bundle (:bundle operation)}
