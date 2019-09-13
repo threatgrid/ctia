@@ -131,7 +131,6 @@
            max-threads
            min-threads
            port
-           trusted-urls
            access-control-allow-origin
            access-control-allow-methods
            jwt
