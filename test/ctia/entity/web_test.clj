@@ -41,11 +41,8 @@
    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
 (def expected-headers
-  {"Access-Control-Expose-Headers"
-   (str "X-Total-Hits,X-Content-Type-Options,X-Next,X-Previous,X-Sort,Etag,"
-        "X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,"
-        "X-RateLimit-GROUP-Limit"),
-   "Access-Control-Allow-Origin" "http://external.cisco.com",
+  {"Access-Control-Expose-Headers" "*"
+   "Access-Control-Allow-Origin" "http://external.cisco.com"
    "Access-Control-Allow-Methods" "DELETE, GET, PATCH, POST, PUT"})
 
 (deftest headers-test
@@ -81,14 +78,24 @@
                                  "Access-Control-Allow-Origin"
                                  "Access-Control-Allow-Methods"]))
                 "We should returns the CORS headers when correct origin")
-            (is (= "nosniff"
-                   (get-in resp [:headers "X-Content-Type-Options"]))
-                "The request should contain the X-Content-Type-Options header set to nosniff")
-
+            (is (= "nosniff" (get-in resp [:headers "X-Content-Type-Options"]))
+                "An API request should have the X-Content-Type-Options header set to nosniff")
+            (is (nil? (get-in resp [:headers "Content-Security-Policy"]))
+                "An API request should not contain the Content-Security-Policy header")
+            (is (nil? (get-in resp [:headers "X-Frame-Options"]))
+                "An API request should not contain the X-Frame-Options header")
             (is (= 200 (:status swagger-ui-resp)))
             (is (= "nosniff"
                    (get-in swagger-ui-resp [:headers "X-Content-Type-Options"]))
                 "Swagger-UI request should contain the X-Content-Type-Options header set to nosniff")
+            (is (= "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; connect-src 'self';"
+                   (get-in swagger-ui-resp [:headers "Content-Security-Policy"]))
+                "The request should contain the Content-Security-Policy header set to nosniff")
+            (is (= "DENY"
+                   (get-in swagger-ui-resp [:headers "X-Frame-Options"]))
+                "The request should contain the Content-Security-Policy header set to nosniff")
+
+
             (is (= 201 (:status bad-origin-resp)))
             (is (= {}
                    (select-keys (:headers bad-origin-resp)

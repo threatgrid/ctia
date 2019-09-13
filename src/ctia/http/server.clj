@@ -102,10 +102,29 @@
                   iss)
       ["JWT issuer not supported by this instance."])))
 
-(defn wrap-specific-headers
+(defn wrap-additional-headers
+  "Add additional headers to all requests.
+
+  The handler can override the value of those headers but not remove them.
+  "
   [handler headers]
   (fn [req]
-    (update (handler req) :headers into headers)))
+    (update (handler req)
+            :headers (fn [response-headers]
+                       (into headers response-headers)))))
+
+(defn wrap-html-headers
+  "Wrap specific headers to HTML content
+
+  The handler can override the headers."
+  [handler headers]
+  (fn [req]
+    (let [response (handler req)]
+      (cond-> response
+        (some->> (get-in response [:headers "Content-Type"])
+                 (re-matches #"(?i).*text/html.*"))
+        (update :headers (fn [response-headers]
+                           (into headers response-headers)))))))
 
 (defn- new-jetty-instance
   [{:keys [dev-reload
@@ -156,9 +175,17 @@
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "X-Total-Hits,X-Content-Type-Options,X-Next,X-Previous,X-Sort,Etag,X-Ctia-Version,X-Ctia-Config,X-Ctim-Version,X-RateLimit-GROUP-Limit")
+                    :access-control-expose-headers "*")
 
-         true (wrap-specific-headers {"X-Content-Type-Options" "nosniff"})
+         true (wrap-additional-headers
+               {"X-Content-Type-Options" "nosniff"})
+         true (wrap-html-headers
+               {"Content-Security-Policy" (str "default-src 'self';"
+                                               " style-src 'self' 'unsafe-inline';"
+                                               " img-src 'self' data:;"
+                                               " script-src 'self' 'unsafe-inline';"
+                                               " connect-src 'self';")
+                "X-Frame-Options" "DENY"})
 
          true wrap-params
 
