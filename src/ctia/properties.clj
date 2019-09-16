@@ -179,7 +179,8 @@
 
                       "ctia.store.es.migration.indexname" s/Str
                       "ctia.store.es.event.slicing.granularity"
-                      (s/enum :minute :hour :day :week :month :year)})))
+                      (s/enum :minute :hour :day :week :month :year)})
+   (st/optional-keys {"ctia.versions.config" s/Str})))
 
 (def configurable-properties
   (mls/keys PropertiesSchema))
