@@ -117,7 +117,7 @@
   [mapping Model]
   (let [coerce! (coerce-to-fn (s/maybe Model))]
     (s/fn :- (s/maybe [Model])
-      [{:keys [index props] :as state} :- ESConnState
+      [{:keys [props] :as state} :- ESConnState
        models :- [Model]
        ident
        {:keys [refresh] :as params}]

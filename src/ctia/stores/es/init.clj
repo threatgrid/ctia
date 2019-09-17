@@ -47,15 +47,18 @@
    put the index template, return an ESConnState"
   [properties :- StoreProperties]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties)]
+        (init-store-conn properties)
+        existing-index (es-index/get conn (str index "*"))]
     (es-index/create-template! conn index config)
     (when (and (:aliased props)
-               (empty? (es-index/get conn (str index "*"))))
+               (empty? existing-index))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn
                         (format "<%s-{now/d}-000001>" index)
                         (update config :aliases assoc (:write-index props) {})))
-    conn-state))
+    (cond-> conn-state
+      (contains? existing-index (keyword index))
+      (assoc-in [:props :write-index] index))))
 
 
 (s/defn get-store-properties :- StoreProperties
