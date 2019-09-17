@@ -3,7 +3,6 @@
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
             [clj-momo.lib.es.index :as es-index]
-            [clojure.pprint :refer [pprint]]
             [ctia
              [properties :refer [properties]]
              [store :as store]]
