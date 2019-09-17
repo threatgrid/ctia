@@ -360,3 +360,9 @@ ES Migration related settings
 |------------------------------+------------------------------------------------------------------------------------------------------------+-----------------|
 | ctia.migration.optimizations | Speed up the migration process disabling indexing and replicas while migrating,                            |boolean          |
 |                              | settings are reverted to their actual values when the process is complete, this should be considered safe. |                 |
+
+** Versions
+
+| Property             | Description                                                   | Possible values |
+|----------------------+---------------------------------------------------------------+-----------------|
+| ctia.versions.config | Version of the configuration if managed in another repository | string          |
