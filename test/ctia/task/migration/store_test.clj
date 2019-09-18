@@ -57,33 +57,6 @@
     (is (nil? (get-in wo-stores [:source :store])))
     (is (nil? (get-in wo-stores [:target :store])))))
 
-(deftest source-store-maps->target-store-maps-test
-  (let [malware-source-store {:indexname "ctia-malware"
-                              :mapping :malware
-                              :config {:aliases {"ctia-malware" {}
-                                                 "ctia-malware-write" {}}}
-                              :props {:write-index "ctia-malware-write"}}
-        sighting-source-store {:indexname "ctia-sighting"
-                               :mapping :sighting
-                               :config {:aliases {"ctia-sighting" {}
-                                                  "ctia-sighting-write" {}}}
-                               :props {:write-index "ctia-sighting-write"}}
-        malware-target-store  {:indexname "v0.0.0_ctia-malware"
-                               :mapping :malware
-                               :config {:aliases {"v0.0.0_ctia-malware" {}
-                                                  "v0.0.0_ctia-malware-write" {}}}
-                               :props {:write-index "v0.0.0_ctia-malware-write"}}
-        sighting-target-store  {:indexname "v0.0.0_ctia-sighting"
-                                :mapping :sighting
-                                :config {:aliases {"v0.0.0_ctia-sighting" {}
-                                                   "v0.0.0_ctia-sighting-write" {}}}
-                                :props {:write-index "v0.0.0_ctia-sighting-write"}}]
-    (is (= {:malware malware-target-store
-            :sighting sighting-target-store}
-           (sut/source-store-maps->target-store-maps {:malware malware-source-store
-                                                      :sighting sighting-source-store}
-           "0.0.0")))))
-
 (deftest rollover?-test
   (is (false? (sut/rollover? false 10 10 10))
       "rollover? should returned false when index is not aliased")

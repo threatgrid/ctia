@@ -43,18 +43,26 @@
    :config s/Any
    :props {s/Any s/Any}})
 
+
+(s/defn store-state->map :- StoreMap
+  "transform a store state
+   into a properties map for easier manipulation,
+   override the cm to use the custom timeout "
+  [{:keys [index props conn config] :as state}
+   conn-overrides]
+  (let [entity-type (-> props :entity name)]
+    {:conn (merge conn conn-overrides)
+     :indexname index
+     :props props
+     :mapping entity-type
+     :type entity-type
+     :settings (:settings props)
+     :config config}))
+
 (s/defn store->map :- StoreMap
   "transform a store record
    into a properties map for easier manipulation,
    override the cm to use the custom timeout "
   [store conn-overrides]
-  (let [store-state (-> store first :state)
-        entity-type (-> store-state :props :entity name)]
-    {:conn (merge (:conn store-state)
-                  conn-overrides)
-     :indexname (:index store-state)
-     :props (:props store-state)
-     :mapping entity-type
-     :type entity-type
-     :settings (-> store-state :props :settings)
-     :config (:config store-state)}))
+  (-> store first :state
+      (store-state->map conn-overrides)))
