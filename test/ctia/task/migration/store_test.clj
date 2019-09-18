@@ -125,8 +125,7 @@
        (is (= "v0.0.0_ctia_tool" (get-in tool [:props :write-index]))
            "unaliased store should directly write on index")
        (is (= "v0.0.0_ctia_default-write" (get-in plop [:props :write-index]))
-           "target-stores should use default configuration when index is not configured")
-       ))))
+           "target-stores should use default configuration when index is not configured")))))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
