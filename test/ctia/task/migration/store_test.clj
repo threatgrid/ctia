@@ -88,6 +88,46 @@
                                      {:created "08-15-1953"
                                       :modified "04-29-2019"}))))
 
+
+
+(defn apply-fixtures
+  [properties fn]
+  (let [fixture-fn
+        (join-fixtures [#(helpers/with-properties properties (%))
+                        helpers/fixture-ctia
+                        es-helpers/fixture-delete-store-indexes])]
+    (fixture-fn fn)))
+
+(deftest get-target-stores-test
+  (testing "something"
+    (apply-fixtures
+     ["ctia.store.es.default.shards" 1
+      "ctia.store.es.default.replicas" 1
+      "ctia.store.es.default.port" "9200"
+      "ctia.store.es.default.indexname" "ctia_default"
+      "ctia.store.es.default.default_operator" "AND"
+      "ctia.store.es.default.aliased" true
+      "ctia.store.es.default.rollover.max_docs" 50
+      "ctia.store.es.malware.indexname" "ctia_malware"
+      "ctia.store.es.tool.indexname" "ctia_tool"
+      "ctia.store.es.tool.aliased" false
+      "ctia.store.malware" "es"
+      "ctia.store.tool" "es"]
+     #(let [{:keys [tool malware plop]}
+            (sut/get-target-stores "0.0.0" [:tool :malware :plop])]
+        (println "plop")
+       (is (= "v0.0.0_ctia_malware" (:indexname malware)))
+       (is (= "v0.0.0_ctia_tool" (:indexname tool)))
+       (is (= "v0.0.0_ctia_default" (:indexname plop))
+           "target-stores should use default configuration when index is not configured")
+       (is (= "v0.0.0_ctia_malware-write" (get-in malware [:props :write-index]))
+           "aliased stores should write on dedicated alias")
+       (is (= "v0.0.0_ctia_tool" (get-in tool [:props :write-index]))
+           "unaliased store should directly write on index")
+       (is (= "v0.0.0_ctia_default-write" (get-in plop [:props :write-index]))
+           "target-stores should use default configuration when index is not configured")
+       ))))
+
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server
