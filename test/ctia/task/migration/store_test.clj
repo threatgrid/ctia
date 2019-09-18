@@ -99,7 +99,7 @@
     (fixture-fn fn)))
 
 (deftest get-target-stores-test
-  (testing "something"
+  (testing "get-target-stores should properly init store maps from configuration"
     (apply-fixtures
      ["ctia.store.es.default.shards" 1
       "ctia.store.es.default.replicas" 1
