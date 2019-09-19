@@ -57,11 +57,11 @@
       (es-index/create! conn
                         (format "<%s-{now/d}-000001>" index)
                         (update config :aliases assoc (:write-index props) {})))
-    (cond-> conn-state
-      (contains? existing-index (keyword index))
+    (if (contains? existing-index (keyword index))
       (do (log/error "an existing unaliased was configured as aliased. Switching from unaliased to aliased indices requires a migration."
                      properties)
-          (assoc-in [:props :write-index] index)))))
+          (assoc-in conn-state [:props :write-index] index))
+      conn-state)))
 
 
 (s/defn get-store-properties :- StoreProperties

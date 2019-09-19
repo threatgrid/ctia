@@ -91,15 +91,12 @@
 
 (deftest get-target-stores-test
   (let [{:keys [tool malware plop]}
-        (sut/get-target-stores "0.0.0" [:tool :malware :plop])]
+        (sut/get-target-stores "0.0.0" [:tool :malware])]
     (is (= "v0.0.0_ctia_malware" (:indexname malware)))
     (is (= "v0.0.0_ctia_tool" (:indexname tool)))
-    (is (= "v0.0.0_test_ctia" (:indexname plop))
-        "target-stores should use default configuration when index is not configured")
     (is (= "v0.0.0_ctia_malware-write" (get-in malware [:props :write-index])))
-    (is (= "v0.0.0_ctia_tool-write" (get-in tool [:props :write-index])))
-    (is (= "v0.0.0_test_ctia-write" (get-in plop [:props :write-index]))
-        "target-stores should use default configuration when index is not configured")))
+    (is (= "v0.0.0_ctia_tool-write" (get-in tool [:props :write-index])))))
+
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
