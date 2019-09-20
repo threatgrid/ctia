@@ -13,13 +13,14 @@
 
 
 # Migration Steps
+ - replace `ctia.properties` by the migration property file that you prepared (`ctia_migration.properties`).
  - Launch migration task while your CTIA instance keep running. You can launch parallel migrations for different stores.
- - Stop CTIA.
- - Complete migration using `--restart` parameter to complete migration and handle writes that occured during migration.
- - After the migration task completes, replace CTIA properties with the one you prepared to launch the server with migrated indices (ex: `ctia_vX.X.X.properties`).
+ - Stop CTIA server instance.
+ - Complete migration using `--restart` parameter to handle writes that occurred during the migration. Keep the same migration properties.
+ - After the migration task completes, replace CTIA properties of the server instance with the one you prepared to launch the server with migrated indices (ex: `ctia_vX.X.X.properties`).
  - Launch new version of CTIA. 
- - The migration task doesn't alter the existing indices, you should delete them after a successful migration.
- 
+ - The migration task doesn't alter the existing indices, you can delete them after a successful migration.
+
  
  In case of failure, you have 2 solutions depending on the situation:
    - you can relaunch the task at will, it should fully recreate the new indices.
