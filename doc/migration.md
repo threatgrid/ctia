@@ -6,8 +6,8 @@
  - As the migration task copies indexes, make sure you have enough disk space before launching it.
  - Make sure the resulting indices from your prefix configuration don't match existing ones as they will be deleted.
  - Prepare the migration properties (ex: `ctia_migration.properties`):
-   - Modify `aliased` and `rollover` options according to the need of future indices. Note that only `max_docs` rollover condition will be considered during migration.
-   - Keep current ctia ES properties: host, port, transport and current store indices.
+   - Keep current CTIA ES properties: host, port, transport and current store indices. These properties will be used to read source indices.
+   - Modify `aliased`, `rollover`, and `shards` options according to the need of future indices. The migrated indices will be built with these options. Note that only `max_docs` rollover condition will be considered during migration.
    - Configure desired number of shards.
  - Prepare the future migration properties (ex: `ctia_vX.X.X.properties`) that will be used to restart CTIA on migration indices. In particular you will have to set `aliased`, `rollover`, and `indexname` options according to targeted indices state.
  - If possible, stop any processes that push data into CTIA.
