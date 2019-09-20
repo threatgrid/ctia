@@ -1,5 +1,6 @@
 (ns ctia.stores.es.init
   (:require
+   [clojure.tools.logging :as log]
    [ctia.properties :refer [properties]]
    [ctia.stores.es.mapping :refer [store-settings]]
    [clj-momo.lib.es
@@ -56,9 +57,11 @@
       (es-index/create! conn
                         (format "<%s-{now/d}-000001>" index)
                         (update config :aliases assoc (:write-index props) {})))
-    (cond-> conn-state
-      (contains? existing-index (keyword index))
-      (assoc-in [:props :write-index] index))))
+    (if (contains? existing-index (keyword index))
+      (do (log/error "an existing unaliased was configured as aliased. Switching from unaliased to aliased indices requires a migration."
+                     properties)
+          (assoc-in conn-state [:props :write-index] index))
+      conn-state)))
 
 
 (s/defn get-store-properties :- StoreProperties

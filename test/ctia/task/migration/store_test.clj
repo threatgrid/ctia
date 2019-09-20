@@ -57,33 +57,6 @@
     (is (nil? (get-in wo-stores [:source :store])))
     (is (nil? (get-in wo-stores [:target :store])))))
 
-(deftest source-store-maps->target-store-maps-test
-  (let [malware-source-store {:indexname "ctia-malware"
-                              :mapping :malware
-                              :config {:aliases {"ctia-malware" {}
-                                                 "ctia-malware-write" {}}}
-                              :props {:write-index "ctia-malware-write"}}
-        sighting-source-store {:indexname "ctia-sighting"
-                               :mapping :sighting
-                               :config {:aliases {"ctia-sighting" {}
-                                                  "ctia-sighting-write" {}}}
-                               :props {:write-index "ctia-sighting-write"}}
-        malware-target-store  {:indexname "v0.0.0_ctia-malware"
-                               :mapping :malware
-                               :config {:aliases {"v0.0.0_ctia-malware" {}
-                                                  "v0.0.0_ctia-malware-write" {}}}
-                               :props {:write-index "v0.0.0_ctia-malware-write"}}
-        sighting-target-store  {:indexname "v0.0.0_ctia-sighting"
-                                :mapping :sighting
-                                :config {:aliases {"v0.0.0_ctia-sighting" {}
-                                                   "v0.0.0_ctia-sighting-write" {}}}
-                                :props {:write-index "v0.0.0_ctia-sighting-write"}}]
-    (is (= {:malware malware-target-store
-            :sighting sighting-target-store}
-           (sut/source-store-maps->target-store-maps {:malware malware-source-store
-                                                      :sighting sighting-source-store}
-           "0.0.0")))))
-
 (deftest rollover?-test
   (is (false? (sut/rollover? false 10 10 10))
       "rollover? should returned false when index is not aliased")
@@ -114,6 +87,16 @@
   (is (true? (sut/search-real-index? true
                                      {:created "08-15-1953"
                                       :modified "04-29-2019"}))))
+
+
+(deftest get-target-stores-test
+  (let [{:keys [tool malware plop]}
+        (sut/get-target-stores "0.0.0" [:tool :malware])]
+    (is (= "v0.0.0_ctia_malware" (:indexname malware)))
+    (is (= "v0.0.0_ctia_tool" (:indexname tool)))
+    (is (= "v0.0.0_ctia_malware-write" (get-in malware [:props :write-index])))
+    (is (= "v0.0.0_ctia_tool-write" (get-in tool [:props :write-index])))))
+
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation

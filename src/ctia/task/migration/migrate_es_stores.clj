@@ -228,9 +228,7 @@
   "check all new es store indexes"
   [store-keys batch-size prefix]
   (let [current-stores (mst/stores->maps (select-keys @stores store-keys))
-        target-stores
-        (mst/source-store-maps->target-store-maps current-stores
-                                              prefix)
+        target-stores (mst/get-target-stores prefix store-keys)
         batch-size (or batch-size default-batch-size)]
 
     (log/infof "checking stores: %s" (keys current-stores))
