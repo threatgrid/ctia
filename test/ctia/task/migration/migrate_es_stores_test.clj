@@ -127,8 +127,7 @@
           (let [migrated-store (get-in migration-state [:stores store-type])
                 {:keys [source target]} migrated-store]
             (is (= fixtures-nb (:total source)))
-            (is (= fixtures-nb (:migrated target))))
-          )))))
+            (is (= fixtures-nb (:migrated target)))))))))
 
 
 (deftest migration-with-malformed-docs

@@ -203,20 +203,20 @@
     {:keys [aliased write-index]} :props
     :as store-map}
    docs]
-  (let [{modified true not-modified false} (group-by #(search-real-index? aliased %)
-                                                     docs)
-        prepared-not-modified (map #(assoc %
-                                           :_id (:id %)
-                                           :_index write-index
-                                           :_type mapping)
-                                   not-modified)
+  (let [with-metas (map #(assoc %
+                                :_id (:id %)
+                                :_index write-index
+                                :_type mapping)
+                        docs)
+        {modified true not-modified false} (group-by #(search-real-index? aliased %)
+                                                     with-metas)
         modified-by-ids (fmap first (group-by :id modified))
         bulk-metas-res (->> (map :id modified)
                             (bulk-metas store-map))
         prepared-modified (->> bulk-metas-res
                                (merge-with into modified-by-ids)
                                vals)]
-    (concat prepared-modified prepared-not-modified)))
+    (concat prepared-modified not-modified)))
 
 (defn store-batch
   "store a batch of documents using a bulk operation"
