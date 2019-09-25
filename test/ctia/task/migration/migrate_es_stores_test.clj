@@ -72,19 +72,48 @@
                             (prefixed-index indexname prefix))))
 
 (def fixtures-nb 100)
+(def updates-nb 50)
 (def minimal-examples (fixt/bundle fixtures-nb false))
 (def example-types
   (->> (vals minimal-examples)
        (map #(-> % first :type keyword))
        set))
 
+(defn update-entity
+  [{entity-type :type
+    entity-id :short-id}]
+  (let [entity-path (format "ctia/%s/%s" (str entity-type) entity-id)
+        previous (-> (helpers/get entity-path
+                                  :headers {"Authorization" "45c1f5e3f05d0"})
+                     :parsed-body)]
+  (put entity-path
+       :body (assoc previous :description "UPDATED")
+       :headers {"Authorization" "45c1f5e3f05d0"})))
+
+(defn random-updates
+  [bulk-result nb]
+  (let [random-ids (->> (select-keys bulk-result
+                                     [:malwares
+                                      :sightings
+                                      :indicators
+                                      :vulnerabilities])
+                        vals
+                        (apply concat)
+                        shuffle
+                        (take nb)
+                        (map long-id->id))]
+    (doseq [entity random-ids]
+      (update-entity entity))))
+
 (defn rollover-post-bulk
   "post data in 2 parts and rollover"
   []
-  (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-  (rollover-stores @stores)
-  (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-  (rollover-stores @stores))
+  (let [bulk-res-1 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+        _ (rollover-stores @stores)
+        bulk-res-2 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+        _ (rollover-stores @stores)]
+    (random-updates bulk-res-1 (/ updates-nb 2))
+    (random-updates bulk-res-2 (/ updates-nb 2))))
 
 
 (deftest migration-with-rollover
@@ -147,7 +176,6 @@
                    :am "a"
                    :bad "document"}]
       ;; insert proper documents
-      ;;(post-bulk minimal-examples)
       (rollover-post-bulk)
       ;; insert malformed documents
       (doseq [store-type store-types]
@@ -193,7 +221,7 @@
                                       "foogroup"
                                       "user")
   ;; insert proper documents
-  (post-bulk minimal-examples)
+  (rollover-post-bulk)
   (testing "migrate ES Stores test setup"
     (testing "simulate migrate es indexes shall not create any document"
       (sut/migrate-store-indexes "test-1"
@@ -236,7 +264,9 @@
                   source-size
                   (cond
                     (= :identity entity-type) 1
-                    (= :event entity-type) (* fixtures-nb (count minimal-examples))
+                    (= :event entity-type) (+ updates-nb
+                                              (* fixtures-nb
+                                                 (count minimal-examples)))
                     (contains? example-types (keyword entity-type)) fixtures-nb
                     :else 0)]
               (is (= source-size (:total source)))
@@ -252,7 +282,8 @@
           (is (clojure.set/subset?
                ["campaign - finished migrating 100 documents"
                 "indicator - finished migrating 100 documents"
-                "event - finished migrating 1500 documents"
+                (format "event - finished migrating %s documents"
+                        (+ 1500 updates-nb))
                 "actor - finished migrating 100 documents"
                 "relationship - finished migrating 100 documents"
                 "incident - finished migrating 100 documents"
@@ -295,8 +326,10 @@
               (get-in @props/properties [:ctia :store :es])
               date (java.util.Date.)
               index-date (.format (java.text.SimpleDateFormat. "yyyy.MM.dd") date)
-              expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date) 1000
-                                      (format "v0.0.0_ctia_event-%s-000002" index-date) 500}
+              expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
+                                      1000
+                                      (format "v0.0.0_ctia_event-%s-000002" index-date)
+                                      (+ 500 updates-nb)}
               expected-indices
               (->> #{relationship
                      judgement
