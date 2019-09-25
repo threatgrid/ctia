@@ -91,6 +91,7 @@
        :headers {"Authorization" "45c1f5e3f05d0"})))
 
 (defn random-updates
+  "select nb random entities of the bulk and update them"
   [bulk-result nb]
   (let [random-ids (->> (select-keys bulk-result
                                      [:malwares
@@ -106,7 +107,7 @@
       (update-entity entity))))
 
 (defn rollover-post-bulk
-  "post data in 2 parts and rollover"
+  "post data in 2 parts with rollover, randomly update son entities"
   []
   (let [bulk-res-1 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
         _ (rollover-stores @stores)
