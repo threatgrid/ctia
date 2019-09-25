@@ -198,7 +198,11 @@
                 (not= created modified))))
 
 (defn prepare-docs
-  "Generates the _index, _id and _type meta data for bulk ops. In particular it determines in which indices modified documents need to be written."
+  "Generates the _index, _id and _type meta data for bulk ops.
+  By default we set :_index as write-index for all documents.
+  Then, this function detects documents that were modified during the migration,
+  retrieves the actual target index they were previously inserted,
+  and use it to set :_index meta for these documents"
   [{:keys [conn mapping]
     {:keys [aliased write-index]} :props
     :as store-map}
