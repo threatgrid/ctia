@@ -371,13 +371,27 @@
       (let [new-malwares (->> (fixt/n-examples :malware 3 false)
                               (map #(assoc % :description "INSERTED"))
                               (hash-map :malwares))
-            [sighting1 & sightings] (:parsed-body (helpers/get "ctia/sighting/search"
-                                                  :query-params {:limit 10 :query "*"}
+            [sighting0] (:parsed-body (helpers/get "ctia/sighting/search"
+                                                   :query-params {:limit 1
+                                                                  :query "*"
+                                                                  :sort_order "asc"
+                                                                  :sort_by "timestamp"}
                                                   :headers {"Authorization" "45c1f5e3f05d0"}))
+            [sighting1 & sightings] (:parsed-body (helpers/get "ctia/sighting/search"
+                                                               :query-params {:limit 10
+                                                                              :query "*"
+                                                                              :sort_order "desc"
+                                                                              :sort_by "timestamp"}
+                                                               :headers {"Authorization" "45c1f5e3f05d0"}))
+            sighting0-id (-> sighting0 :id long-id->id :short-id)
             sighting1-id (-> sighting1 :id long-id->id :short-id)
             sighting-ids (map #(-> % :id long-id->id :short-id)
                                sightings)]
         (post-bulk new-malwares)
+        (put (format "ctia/sighting/%s" sighting0-id)
+             :body (-> (dissoc sighting0 :id)
+                       (assoc :description "UPDATED"))
+             :headers {"Authorization" "45c1f5e3f05d0"})
         (put (format "ctia/sighting/%s" sighting1-id)
              :body (-> (dissoc sighting1 :id)
                        (assoc :description "UPDATED"))
@@ -399,13 +413,12 @@
               malware-target-store (get-in malware-migration [:target :store])
               {last-target-malwares :data} (fetch-batch malware-target-store 3 0 "desc" nil)
               {:keys [conn indexname mapping]} (get-in sighting-migration [:target :store])
-              updated-sighting (-> (es-doc/query conn
-                                                 indexname
-                                                 mapping
-                                                 (es-query/ids [sighting1-id])
-                                                 {})
-                                   :data
-                                   first)
+              updated-sightings (-> (es-doc/query conn
+                                                  indexname
+                                                  mapping
+                                                  (es-query/ids [sighting0-id sighting1-id])
+                                                  {})
+                                    :data)
               get-deleted-sightings (-> (es-doc/query conn
                                                       indexname
                                                       mapping
@@ -415,7 +428,7 @@
           (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
               "inserted malwares must be found in target malware store")
 
-          (is (= "UPDATED" (:description updated-sighting))
+          (is (= (repeat 2 "UPDATED") (map :description updated-sightings))
               "updated document must be updated in target stores")
           (is (empty? get-deleted-sightings)
               "deleted document must not be in target stores")))))))

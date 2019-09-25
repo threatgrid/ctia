@@ -200,9 +200,12 @@
 (defn prepare-docs
   "Generates the _index, _id and _type meta data for bulk ops.
   By default we set :_index as write-index for all documents.
-  Then, this function detects documents that were modified during the migration,
-  retrieves the actual target index they were previously inserted,
-  and use it to set :_index meta for these documents"
+  In the case of aliased target, write-index is set to the write alias.
+  This write alias points to last index and a document that was inserted in a previous index,
+  must be updated in that same index in order to avoid its duplication.
+  Thus, this function detects documents that were modified during a migration toward an aliased index,
+  retrieves the actual target indices they were previously inserted in,
+  and uses them to set :_index meta for these documents"
   [{:keys [conn mapping]
     {:keys [aliased write-index]} :props
     :as store-map}
