@@ -371,12 +371,14 @@
       (let [new-malwares (->> (fixt/n-examples :malware 3 false)
                               (map #(assoc % :description "INSERTED"))
                               (hash-map :malwares))
+            ;; retrieve first source entity, inserted in first index
             [sighting0] (:parsed-body (helpers/get "ctia/sighting/search"
                                                    :query-params {:limit 1
                                                                   :query "*"
                                                                   :sort_order "asc"
                                                                   :sort_by "timestamp"}
                                                   :headers {"Authorization" "45c1f5e3f05d0"}))
+            ;; retrieve last source entities, inserted in second index
             [sighting1 & sightings] (:parsed-body (helpers/get "ctia/sighting/search"
                                                                :query-params {:limit 10
                                                                               :query "*"
@@ -387,7 +389,9 @@
             sighting1-id (-> sighting1 :id long-id->id :short-id)
             sighting-ids (map #(-> % :id long-id->id :short-id)
                                sightings)]
+        ;; insert new entities
         (post-bulk new-malwares)
+        ;; modify entities in first and second indices
         (put (format "ctia/sighting/%s" sighting0-id)
              :body (-> (dissoc sighting0 :id)
                        (assoc :description "UPDATED"))
@@ -396,6 +400,7 @@
              :body (-> (dissoc sighting1 :id)
                        (assoc :description "UPDATED"))
              :headers {"Authorization" "45c1f5e3f05d0"})
+        ;; delete entities
         (doseq [sighting-id sighting-ids]
           (delete (format "ctia/sighting/%s" sighting-id)
                   :headers {"Authorization" "45c1f5e3f05d0"}))
