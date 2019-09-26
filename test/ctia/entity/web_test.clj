@@ -41,8 +41,9 @@
    :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}})
 
 (def expected-headers
-  {"Access-Control-Expose-Headers" "*"
-   "Access-Control-Allow-Origin" "http://external.cisco.com"
+  {"Access-Control-Expose-Headers"
+   "X-Iroh-Version,X-Iroh-Config,X-Ctim-Version,X-RateLimit-ORG-Limit,X-Content-Type-Options,Retry-After,X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,X-Frame-Options,X-Content-Type-Options,Content-Security-Policy",
+   "Access-Control-Allow-Origin" "http://external.cisco.com",
    "Access-Control-Allow-Methods" "DELETE, GET, PATCH, POST, PUT"})
 
 (deftest headers-test
