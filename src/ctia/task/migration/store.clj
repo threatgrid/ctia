@@ -198,25 +198,32 @@
                 (not= created modified))))
 
 (defn prepare-docs
-  "Generates the _index, _id and _type meta data for bulk ops. In particular it determines in which indices modified documents need to be written."
+  "Generates the _index, _id and _type meta data for bulk ops.
+  By default we set :_index as write-index for all documents.
+  In the case of aliased target, write-index is set to the write alias.
+  This write alias points to last index and a document that was inserted in a previous index,
+  must be updated in that same index in order to avoid its duplication.
+  Thus, this function detects documents that were modified during a migration toward an aliased index,
+  retrieves the actual target indices they were previously inserted in,
+  and uses them to set :_index meta for these documents"
   [{:keys [conn mapping]
     {:keys [aliased write-index]} :props
     :as store-map}
    docs]
-  (let [{modified true not-modified false} (group-by #(search-real-index? aliased %)
-                                                     docs)
-        prepared-not-modified (map #(assoc %
-                                           :_id (:id %)
-                                           :_index write-index
-                                           :_type mapping)
-                                   not-modified)
+  (let [with-metas (map #(assoc %
+                                :_id (:id %)
+                                :_index write-index
+                                :_type mapping)
+                        docs)
+        {modified true not-modified false} (group-by #(search-real-index? aliased %)
+                                                     with-metas)
         modified-by-ids (fmap first (group-by :id modified))
         bulk-metas-res (->> (map :id modified)
                             (bulk-metas store-map))
         prepared-modified (->> bulk-metas-res
                                (merge-with into modified-by-ids)
                                vals)]
-    (concat prepared-modified prepared-not-modified)))
+    (concat prepared-modified not-modified)))
 
 (defn store-batch
   "store a batch of documents using a bulk operation"

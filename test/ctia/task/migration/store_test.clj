@@ -16,7 +16,7 @@
             [ctia.stores.es.store :refer [store->map]]
             [ctia.test-helpers
              [fixtures :as fixt]
-             [core :as helpers :refer [post-bulk delete]]
+             [core :as helpers :refer [post-bulk put delete]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.task.rollover :refer [rollover-stores]]
@@ -151,9 +151,9 @@
                                  sort
                                  (map name))
         [sighting-index-1 sighting-index-2] (->> (es-index/get es-conn "ctia_sighting*")
-                                keys
-                                sort
-                                (map name))
+                                                 keys
+                                                 sort
+                                                 (map name))
         bulk-metas-malware-res (sut/bulk-metas sighting-store-map malware-ids)
         bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1)
         bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2)]
@@ -170,6 +170,72 @@
           (is (= _id (:_id metas)))
           (is (= "sighting" (:_type metas)))
           (is (= sighting-index-2 (:_index metas)))))))
+
+(deftest prepare-docs-test
+  ;; insert elements in different indices, modify some and check that we retrieve the right one
+  (let [sighting-store-map {:conn es-conn
+                            :indexname "ctia_sighting"
+                            :props {:write-index "ctia_sighting-write"
+                                    :aliased true}
+                            :mapping "sighting"
+                            :type "sighting"
+                            :settings {}
+                            :config {}}
+        post-bulk-res-1 (post-bulk examples)
+        _ (rollover-stores @stores)
+        post-bulk-res-2 (post-bulk examples)
+        _ (es-index/refresh! es-conn)
+
+        sighting-ids-1 (->> (:sightings post-bulk-res-1)
+                             (map #(-> % long-id->id :short-id))
+                             (take 3))
+        sighting-ids-2 (->> (:sightings post-bulk-res-2)
+                             (map #(-> % long-id->id :short-id))
+                             (take 3))
+        sighting-id-1 (first sighting-ids-1)
+        sighting-id-2 (first sighting-ids-2)
+        _  (put (format "ctia/sighting/%s" sighting-id-1)
+                :body (-> (helpers/get (format "ctia/sighting/%s" sighting-id-1)
+                                       :headers {"Authorization" "45c1f5e3f05d0"})
+                          :parsed-body
+                          (assoc :description "UPDATED"))
+                :headers {"Authorization" "45c1f5e3f05d0"})
+        _  (put (format "ctia/sighting/%s" sighting-id-2)
+                :body (-> (helpers/get (format "ctia/sighting/%s" sighting-id-1)
+                                       :headers {"Authorization" "45c1f5e3f05d0"})
+                          :parsed-body
+                          (assoc :description "UPDATED"))
+                :headers {"Authorization" "45c1f5e3f05d0"})
+
+        _ (es-index/refresh! es-conn)
+        [sighting-index-1 sighting-index-2] (->> (es-index/get es-conn "ctia_sighting*")
+                                                 keys
+                                                 sort
+                                                 (map name))
+
+        sighting-docs-1 (map #(-> (es-doc/get-doc es-conn
+                                                  sighting-index-1
+                                                  "sighting"
+                                                  %
+                                                  {}))
+                             sighting-ids-1)
+        sighting-docs-2 (map #(-> (es-doc/get-doc es-conn
+                                                  sighting-index-2
+                                                  "sighting"
+                                                  %
+                                                  {}))
+                             sighting-ids-2)
+        sighting-docs (concat sighting-docs-1 sighting-docs-2)
+        prepared-docs (sut/prepare-docs sighting-store-map sighting-docs)]
+    (testing "prepare-docs should set proper _id, _type, _index for modified and unmodified documents"
+      (is (= (sort (concat [sighting-index-1 sighting-index-2]
+                           (repeat 4 "ctia_sighting-write")))
+             (sort (map :_index prepared-docs))))
+      (is (= (repeat 6 "sighting")
+             (sort (map :_type prepared-docs))))
+      (is (= (set (concat sighting-ids-1 sighting-ids-2))
+             (set (map :_id prepared-docs)))))))
+
 
 (deftest store-batch-store-size-test
   (let [indexname "test_index"
