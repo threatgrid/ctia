@@ -368,39 +368,74 @@
               (is (every? #(= ["migration-test"] %)
                           docs))))))
     (testing "restart migration shall properly handle inserts, updates and deletes"
-      (let [new-malwares (->> (fixt/n-examples :malware 3 false)
+      (let [;; retrieve the first 2 source indices for sighting store
+            {:keys [host port]}(get-in @props/properties [:ctia :store :es :default])
+            [sighting-index-1 sighting-index-2]
+            (->> (get-cat-indices host port)
+                 keys
+                 (map name)
+                 (filter #(.contains % "sighting"))
+                 sort
+                 (take 2))
+
+            ;; retrieve source entity to update, in first position of first index
+            es-sighting0 (-> (es-doc/query es-conn
+                                           sighting-index-1
+                                           "sighting"
+                                           {:match_all {}}
+                                           {:sort_by "timestamp:asc"
+                                            :size 1})
+                             :data
+                             first)
+            ;; retrieve source entity to update, in first position of second index
+            es-sighting1 (-> (es-doc/query es-conn
+                                           sighting-index-2
+                                           "sighting"
+                                           {:match_all {}}
+                                           {:sort_by "timestamp:asc"
+                                            :size 1})
+                             :data
+                             first)
+
+            ;; prepare new malwares
+            new-malwares (->> (fixt/n-examples :malware 3 false)
                               (map #(assoc % :description "INSERTED"))
                               (hash-map :malwares))
-            ;; retrieve first source entity, inserted in first index
-            [sighting0] (:parsed-body (helpers/get "ctia/sighting/search"
-                                                   :query-params {:limit 1
-                                                                  :query "*"
-                                                                  :sort_order "asc"
-                                                                  :sort_by "timestamp"}
-                                                  :headers {"Authorization" "45c1f5e3f05d0"}))
-            ;; retrieve last source entities, inserted in second index
-            [sighting1 & sightings] (:parsed-body (helpers/get "ctia/sighting/search"
-                                                               :query-params {:limit 10
-                                                                              :query "*"
-                                                                              :sort_order "desc"
-                                                                              :sort_by "timestamp"}
-                                                               :headers {"Authorization" "45c1f5e3f05d0"}))
-            sighting0-id (-> sighting0 :id long-id->id :short-id)
-            sighting1-id (-> sighting1 :id long-id->id :short-id)
-            sighting-ids (map #(-> % :id long-id->id :short-id)
-                               sightings)]
-        ;; insert new entities
+
+            ;; retrieve 5 source entities to delete, in last positions of first index
+            es-sightings-1 (-> (es-doc/query es-conn
+                                             sighting-index-1
+                                             "sighting"
+                                             {:match_all {}}
+                                             {:sort_by "timestamp:desc"
+                                              :limit 5})
+                               :data)
+            ;; retrieve 5 source entities to delete, in last positions of second index
+            es-sightings-2 (-> (es-doc/query es-conn
+                                             sighting-index-2
+                                             "sighting"
+                                             {:match_all {}}
+                                             {:sort_by "timestamp:desc"
+                                              :limit 5})
+                               :data)
+            sightings (concat es-sightings-1 es-sightings-2)
+            sighting0-id (:id es-sighting0)
+            sighting1-id (:id es-sighting1)
+            sighting-ids (map :id sightings)
+            updated-sighting-body (-> (:sightings minimal-examples)
+                                      first
+                                      (dissoc :id)
+                                      (assoc :description "UPDATED"))]
+        ;; insert new entities in source store
         (post-bulk new-malwares)
-        ;; modify entities in first and second indices
+        ;; modify entities in first and second source indices
         (put (format "ctia/sighting/%s" sighting0-id)
-             :body (-> (dissoc sighting0 :id)
-                       (assoc :description "UPDATED"))
+             :body updated-sighting-body
              :headers {"Authorization" "45c1f5e3f05d0"})
         (put (format "ctia/sighting/%s" sighting1-id)
-             :body (-> (dissoc sighting1 :id)
-                       (assoc :description "UPDATED"))
+             :body updated-sighting-body
              :headers {"Authorization" "45c1f5e3f05d0"})
-        ;; delete entities
+        ;; delete entities from first and second source indices
         (doseq [sighting-id sighting-ids]
           (delete (format "ctia/sighting/%s" sighting-id)
                   :headers {"Authorization" "45c1f5e3f05d0"}))
