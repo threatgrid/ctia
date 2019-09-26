@@ -175,7 +175,12 @@
                     (allow-origin-regexps access-control-allow-origin)
                     :access-control-allow-methods
                     (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers "*")
+                    :access-control-expose-headers
+                    (str "X-Iroh-Version,X-Iroh-Config,X-Ctim-Version,"
+                         "X-RateLimit-ORG-Limit,"
+                         "X-Content-Type-Options,"
+                         "Retry-After,X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
+                         "X-Frame-Options,X-Content-Type-Options,Content-Security-Policy"))
 
          true (wrap-additional-headers
                {"X-Content-Type-Options" "nosniff"})
