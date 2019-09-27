@@ -117,12 +117,14 @@
                         :search_after next-search-after})
         (if next
           (recur  next-search-after)
-          (do (log/info "nothing more to search after: " res)
+          (do (log/info (format "%s Nothing more to search after: %s"
+                                (:type source-store)
+                                (pr-str (last data))))
               (close! data-chan)))))
 
     (loop [migrated-count migrated-count-state]
       ;; sync loop that consumes batches in chan and migrates them to target
-      (if-let [{:keys [documents search_after]} (<!! (go (<! data-chan)))]
+      (if-let [{:keys [documents search_after]} (<!! data-chan)]
         (let[migrated (transduce migrations conj documents)
              {:keys [data errors]} (list-coerce migrated)
              new-migrated-count (+ migrated-count (count data))]
