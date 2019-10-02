@@ -2,7 +2,7 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [clojure.core.async :as async :refer [chan <!! >!! <! close! go go-loop]]
+            [clojure.core.async :as async :refer [chan <!! >!! close! thread go-loop]]
 
             [schema-tools.core :as st]
             [schema.core :as s]
@@ -81,8 +81,8 @@
            data-chan
            batch-size
            query]}]
-  (go-loop [current-search-after nil]
-    ;; async go loop that reads batches from source and produces them in chan
+  (loop [current-search-after nil]
+    ;; loop that reads batches from source and produces them in chan
     (let [{:keys [data paging] :as res} (mst/query-fetch-batch query
                                                                source-store
                                                                batch-size
@@ -91,7 +91,6 @@
                                                                current-search-after)
           next (:next paging)
           next-search-after (:sort paging)]
-      (println " data ==>" (count data))
       (>!! data-chan {:documents data
                       :search_after next-search-after})
       (if next
@@ -183,7 +182,7 @@
           (log/infof "%s - handling sliced query %s"
                      (name entity-type)
                      (pr-str query))
-          (read-source migration-params)
+          (thread (read-source migration-params))
           (recur (next queries)
                  (write-target migration-params)))
         (log/infof "%s - finished migrating %s documents"

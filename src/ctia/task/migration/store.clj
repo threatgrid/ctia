@@ -295,8 +295,10 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
         query (when search_after
                 {:bool
                  {:filter
-                  {:range {:gte (first search_after)
-                           :format "epoch-millis"}}}})
+                  {:range
+                   {agg-field
+                    {:gte (first search_after)
+                     :format "epoch_millis"}}}}})
         aggs-q {:time-ranges
                 {:date_histogram
                  {:field agg-field
