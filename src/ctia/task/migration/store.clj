@@ -260,6 +260,59 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (es-index/refresh! conn write-index)
     (rollover-store (store-map->es-conn-state store-map))))
 
+
+(defn format-buckets
+  [raw-buckets field interval]
+  (let [unit (case interval
+               "year" "y"
+               "month" "M"
+               "week" "w"
+               "day" "d"
+               "hour" "h"
+               "minute" "m"
+               "second" "s")
+        filtered (->> raw-buckets
+                      (filter #(< 0 (:doc_count %)))
+                      (map :key_as_string))]
+    (loop [dates filtered
+           queries []]
+      (if-let [date (first dates)]
+        (->> (cond-> {:gte date}
+               (next dates) (assoc :lt (str date "||+1" unit)))
+             (assoc-in {}
+                       [:bool :filter :range field])
+             (conj queries)
+             (recur (next dates)))
+        queries))))
+
+(s/defn sliced-queries
+  [{:keys [conn indexname mapping]} :- StoreMap
+   search_after
+   interval]
+  (let [agg-field (case mapping
+                    "event" :timestamp
+                    :modified)
+        query (when search_after
+                {:bool
+                 {:filter
+                  {:range {:gte (first search_after)
+                           :format "epoch-millis"}}}})
+        aggs-q {:time-ranges
+                {:date_histogram
+                 {:field agg-field
+                  :interval interval
+                  :missing "2017-01-01T00:00:00.000Z"}}}
+        res (retry es-max-retry
+                   es-doc/query
+                   conn
+                   indexname
+                   mapping
+                   query
+                   aggs-q
+                   {:limit 0})
+        buckets (->> res :aggs :time-ranges :buckets)]
+    (format-buckets buckets agg-field interval)))
+
 (s/defn query-fetch-batch :- {s/Any s/Any}
   "fetch a batch of documents from an es index and a query"
   [query :- (s/maybe ESQuery)
@@ -283,11 +336,11 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
          (when search_after
            {:search_after search_after}))]
     (retry es-max-retry
-           es-doc/search-docs conn
+           es-doc/query
+           conn
            indexname
            mapping
            query
-           {}
            params)))
 
 (s/defn fetch-batch :- {s/Any s/Any}

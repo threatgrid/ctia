@@ -75,6 +75,68 @@
   (let [coercer (coerce-to-fn Model)]
     #(reduce (partial append-coerced coercer) {} %)))
 
+(defn read-source
+  [{:keys [source-store
+           entity-type
+           data-chan
+           batch-size
+           query]}]
+  (go-loop [current-search-after nil]
+    ;; async go loop that reads batches from source and produces them in chan
+    (let [{:keys [data paging] :as res} (mst/query-fetch-batch query
+                                                               source-store
+                                                               batch-size
+                                                               0
+                                                               "asc"
+                                                               current-search-after)
+          next (:next paging)
+          next-search-after (:sort paging)]
+      (println " data ==>" (count data))
+      (>!! data-chan {:documents data
+                      :search_after next-search-after})
+      (if next
+        (recur  next-search-after)
+        (close! data-chan)))))
+
+
+(defn write-target
+  [{:keys [target-store
+           data-chan
+           migrations
+           entity-type
+           batch-size
+           migration-id
+           list-coerce
+           migrated-count
+           migration-es-conn
+           confirm?]}]
+  (loop [current-count migrated-count]
+    ;; sync loop that consumes batches in chan and migrates them to target
+    (if-let [{:keys [documents search_after]} (<!! data-chan)]
+      (let [migrated (transduce migrations conj documents)
+           {:keys [data errors]} (list-coerce migrated)
+           new-current-count (+ current-count (count data))]
+        (doseq [entity errors]
+          (let [message
+                (format "%s - Cannot migrate entity: %s"
+                        (name entity-type)
+                        (pr-str entity))]
+            (log/error message)))
+        (when confirm?
+          (when (seq data) (mst/store-batch target-store data))
+          (mst/rollover target-store batch-size new-current-count)
+          (mst/update-migration-store migration-id
+                                      entity-type
+                                      (into {:target {:migrated new-current-count}}
+                                            (when search_after
+                                              {:source {:search_after search_after}}))
+                                      migration-es-conn))
+        (log/infof "%s - migrated: %s documents"
+                   (name entity-type)
+                   new-current-count)
+        (recur new-current-count))
+      current-count)))
+
 (defn migrate-store
   "migrate a single store"
   [migration-state
@@ -93,8 +155,16 @@
          migrated-count-state :migrated} target
         store-schema (type->schema (keyword (:type target-store)))
         list-coerce (list-coerce-fn store-schema)
-        data-chan (chan buffer-size)]
-
+        all-queries (mst/sliced-queries source-store search_after "week")
+        base-params {:source-store source-store
+                     :target-store target-store
+                     :migrations migrations
+                     :entity-type entity-type
+                     :batch-size batch-size
+                     :migration-id migration-id
+                     :list-coerce list-coerce
+                     :migration-es-conn @mst/migration-es-conn
+                     :confirm? confirm?}]
     (log/infof "%s - store size: %s records"
                (:type source-store)
                source-store-size)
@@ -103,59 +173,28 @@
       (mst/update-migration-store migration-id
                                   entity-type
                                   {:started (time/now)}))
-
-    (go-loop [current-search-after search_after]
-      ;; async go loop that reads batches from source and produces them in chan
-      (let [{:keys [data paging] :as res} (mst/fetch-batch source-store
-                                                           batch-size
-                                                           0
-                                                           "asc"
-                                                           current-search-after)
-            next (:next paging)
-            next-search-after (:sort paging)]
-        (>!! data-chan {:documents data
-                        :search_after next-search-after})
-        (if next
-          (recur  next-search-after)
-          (do (log/info (format "%s Nothing more to search after: %s"
-                                (:type source-store)
-                                (pr-str (last data))))
-              (close! data-chan)))))
-
-    (loop [migrated-count migrated-count-state]
-      ;; sync loop that consumes batches in chan and migrates them to target
-      (if-let [{:keys [documents search_after]} (<!! data-chan)]
-        (let[migrated (transduce migrations conj documents)
-             {:keys [data errors]} (list-coerce migrated)
-             new-migrated-count (+ migrated-count (count data))]
-          (doseq [entity errors]
-            (let [message
-                  (format "%s - Cannot migrate entity: %s"
-                          (:type source-store)
-                          (pr-str entity))]
-              (log/error message)))
-          (when confirm?
-            (when (seq data) (mst/store-batch target-store data))
-            (mst/rollover target-store batch-size new-migrated-count)
-            (mst/update-migration-store migration-id
-                                        entity-type
-                                        (into {:target {:migrated new-migrated-count}}
-                                              (when search_after
-                                                {:source {:search_after search_after}}))
-                                        @mst/migration-es-conn))
-          (log/infof "%s - migrated: %s documents"
-                     (:type source-store)
-                     new-migrated-count)
-          (recur new-migrated-count))
-        (do (log/infof "%s - finished migrating %s documents"
-                       (:type source-store)
-                       migrated-count)
-            (when confirm?
-              (mst/finalize-migration! migration-id
-                                       entity-type
-                                       source-store
-                                       target-store
-                                       @mst/migration-es-conn)))))))
+    (loop [queries all-queries
+           migrated-count migrated-count-state]
+      (if-let [query (first queries)]
+        (let [migration-params (assoc base-params
+                                      :query query
+                                      :migrated-count migrated-count
+                                      :data-chan (chan buffer-size))]
+          (log/infof "%s - handling sliced query %s"
+                     (name entity-type)
+                     (pr-str query))
+          (read-source migration-params)
+          (recur (next queries)
+                 (write-target migration-params)))
+        (log/infof "%s - finished migrating %s documents"
+                   (name entity-type)
+                   migrated-count)))
+    (when confirm?
+      (mst/finalize-migration! migration-id
+                               entity-type
+                               source-store
+                               target-store
+                               @mst/migration-es-conn))))
 
 (s/defn migrate-store-indexes
   "migrate the selected es store indexes"

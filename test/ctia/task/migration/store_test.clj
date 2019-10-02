@@ -48,6 +48,62 @@
                                    :mappings {:a :b}}
                                   {:write-index "test_index-write"}))))
 
+(deftest format-buckets-test
+  (let [raw-buckets [{:key_as_string "2019-03-11T00:00:00.000Z",
+                      :key 1552262400000,
+                      :doc_count 3026106}
+                     {:key_as_string "2019-03-18T00:00:00.000Z",
+                      :key 1552867200000,
+                      :doc_count 2233335}
+                     {:key_as_string "2019-03-25T00:00:00.000Z",
+                      :key 1553472000000,
+                      :doc_count 0}
+                     {:key_as_string "2019-04-01T00:00:00.000Z",
+                      :key 1554076800000,
+                      :doc_count 11675823}]
+        expected-by-week  [{:bool
+                            {:filter
+                             {:range
+                              {:modified
+                               {:gte "2019-03-11T00:00:00.000Z"
+                                :lt "2019-03-11T00:00:00.000Z||+1w"}}}}}
+                           {:bool
+                            {:filter
+                             {:range
+                              {:modified
+                               {:gte "2019-03-18T00:00:00.000Z"
+                                :lt "2019-03-18T00:00:00.000Z||+1w"}}}}}
+                           {:bool
+                            {:filter
+                             {:range
+                              {:modified
+                               {:gte "2019-04-01T00:00:00.000Z"}}}}}]
+        expected-by-month  [{:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2019-03-11T00:00:00.000Z"
+                                 :lt "2019-03-11T00:00:00.000Z||+1M"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2019-03-18T00:00:00.000Z"
+                                 :lt "2019-03-18T00:00:00.000Z||+1M"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2019-04-01T00:00:00.000Z"}}}}}]
+        formatted-by-month (sut/format-buckets raw-buckets :modified "month")
+        formatted-by-week (sut/format-buckets raw-buckets :modified "week")]
+        (is (= 3 (count formatted-by-month) (count formatted-by-week))
+            "format-range-buckets should filter buckets with 0 documents")
+        (is (= formatted-by-month expected-by-month)
+            "format-range-buckets should properly format raw buckets per month")
+        (is (= formatted-by-week expected-by-week)
+            "format-range-buckets should properly format raw buckets per week")))
+
 (deftest wo-storemaps-test
   (let [fake-migration (sut/init-migration "migration-id-1"
                                            "0.0.0"

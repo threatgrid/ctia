@@ -31,6 +31,7 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [clj-time "0.15.1"]
                  [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
+                 [clj-http-fake "1.0.3"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "0.7.2"]
                  [org.clojure/tools.logging "0.5.0"]
@@ -50,7 +51,7 @@
                                com.google.guava/guava
                                org.clojure/tools.reader
                                org.clojure/clojurescript]]
-                 [threatgrid/clj-momo "0.3.0"]
+                 [threatgrid/clj-momo "0.3.1-SNAPSHOT"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
