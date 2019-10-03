@@ -2,7 +2,7 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [clojure.core.async :as async :refer [chan <!! >!! close! thread go-loop]]
+            [clojure.core.async :as async :refer [chan <!! >!! close! thread]]
 
             [schema-tools.core :as st]
             [schema.core :as s]

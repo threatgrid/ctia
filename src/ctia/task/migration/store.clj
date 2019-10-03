@@ -261,6 +261,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (rollover-store (store-map->es-conn-state store-map))))
 
 (defn missing-query
+  "implement missing filter through a must_not exists bool query
+  https://www.elastic.co/guide/en/elasticsearch/reference/5.6/query-dsl-exists-query.html#missing-query"
   [field]
   {:bool
    {:must_not
@@ -268,6 +270,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
      {:field field}}}})
 
 (defn range-query
+  "returns a bool range filter query with start and end limits"
   [field date unit]
   {:bool
    {:filter
@@ -277,6 +280,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
        :lt (str date "||+1" unit)}}}}})
 
 (defn last-range-query
+  "returns a bool range filter query with only start limit. Add epoch_millis
+  format if specified so (required  when date comes from search_after)"
   [field date epoch-millis?]
   {:bool
    {:filter
@@ -286,6 +291,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
         epoch-millis? (assoc :format "epoch_millis"))}}}})
 
 (defn format-buckets
+  "format buckets from aggregation results into an ordered list of proper bool queries"
   [raw-buckets field interval]
   (let [unit (case interval
                "year" "y"
@@ -310,6 +316,14 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
         queries))))
 
 (s/defn sliced-queries
+  "this function performs a date aggregation on modification dates and returns
+  bool queries that will be used to perform the migration per date ranges.
+  modification field is `modified` for entities and `timestamp` for events.
+  Some documents misses the required date field and are handled with a first query
+  that group them with a must_not exists bool query.
+  Last range does not contains end date limit in order to handle documents
+  that are created or modified during the migration. Note that new entities are now
+  created with creation value as first modified value"
   [{:keys [conn indexname mapping]} :- StoreMap
    search_after
    interval]
