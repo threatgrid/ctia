@@ -223,6 +223,11 @@
                      confirm?))
     (handle-deletes migration-state store-keys batch-size confirm?)))
 
+(defn exit [error?]
+  (if error?
+    (System/exit -1)
+    (System/exit 0)))
+
 (defn run-migration
   [migration-id prefix migrations store-keys batch-size buffer-size confirm? restart?]
   (assert migration-id "Please provide an unique ID for this migration process")
