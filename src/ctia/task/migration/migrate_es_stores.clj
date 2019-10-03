@@ -223,61 +223,6 @@
                      confirm?))
     (handle-deletes migration-state store-keys batch-size confirm?)))
 
-(defn check-store
-  "check a single store"
-  [target-store batch-size]
-  (let [store-schema (type->schema (keyword (:type target-store)))
-        list-coerce (list-coerce-fn store-schema)
-        target-store-size (mst/store-size target-store)]
-    (log/infof "%s - store size: %s records"
-               (:type target-store)
-               target-store-size)
-
-    (loop [sort-keys nil
-           checked-count 0
-           invalids []]
-      (let [{:keys [data paging]
-             :as batch}
-            (mst/fetch-batch target-store
-                             batch-size
-                             0
-                             "asc"
-                             sort-keys)
-            next (:next paging)
-            offset (:offset next 0)
-            search_after (:sort paging)
-            {:keys [errors]} (list-coerce data)
-            checked-count (+ checked-count
-                             (count data))]
-        (if next
-          (recur search_after checked-count (concat invalids errors))
-          (do
-            (log/infof "%s - finished checking %s documents"
-                       (:type target-store)
-                       checked-count)
-            (when (seq errors)
-              (log/warnf "%s - errors were detected: %s"
-                         (:type target-store)
-                         (pr-str errors)))))))))
-
-(defn check-store-indexes
-  "check all new es store indexes"
-  [store-keys batch-size prefix]
-  (let [current-stores (mst/stores->maps (select-keys @stores store-keys))
-        target-stores (mst/get-target-stores prefix store-keys)
-        batch-size (or batch-size default-batch-size)]
-
-    (log/infof "checking stores: %s" (keys current-stores))
-    (log/infof "set batch size: %s" batch-size)
-    (doseq [[sk sr] target-stores]
-      (log/infof "checking store: %s" sk)
-      (check-store sr batch-size))))
-
-(defn exit [error?]
-  (if error?
-    (System/exit -1)
-    (System/exit 0)))
-
 (defn run-migration
   [migration-id prefix migrations store-keys batch-size buffer-size confirm? restart?]
   (assert migration-id "Please provide an unique ID for this migration process")
@@ -296,9 +241,6 @@
                            buffer-size
                            confirm?
                            restart?)
-    (when confirm?
-      (check-store-indexes store-keys batch-size prefix)
-      (exit true))
     (log/info "migration complete")
     (catch Exception e
       (log/error e "Unexpected error during migration")

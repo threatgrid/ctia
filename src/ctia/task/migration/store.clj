@@ -260,6 +260,30 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (es-index/refresh! conn write-index)
     (rollover-store (store-map->es-conn-state store-map))))
 
+(defn missing-query
+  [field]
+  {:bool
+   {:must_not
+    {:exists
+     {:field field}}}})
+
+(defn range-query
+  [field date unit]
+  {:bool
+   {:filter
+    {:range
+     {field
+      {:gte date
+       :lt (str date "||+1" unit)}}}}})
+
+(defn last-range-query
+  [field date epoch-millis?]
+  {:bool
+   {:filter
+    {:range
+     {field
+      (cond-> {:gte date}
+        epoch-millis? (assoc :format "epoch_millis"))}}}})
 
 (defn format-buckets
   [raw-buckets field interval]
@@ -275,14 +299,14 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                       (filter #(< 0 (:doc_count %)))
                       (map :key_as_string))]
     (loop [dates filtered
-           queries []]
+           queries [(missing-query field)]]
       (if-let [date (first dates)]
-        (->> (cond-> {:gte date}
-               (next dates) (assoc :lt (str date "||+1" unit)))
-             (assoc-in {}
-                       [:bool :filter :range field])
-             (conj queries)
-             (recur (next dates)))
+        (->>
+         (cond
+           (next dates) (range-query field date unit)
+           :else (last-range-query field date false))
+         (conj queries)
+         (recur (next dates)))
         queries))))
 
 (s/defn sliced-queries
@@ -292,18 +316,18 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
   (let [agg-field (case mapping
                     "event" :timestamp
                     :modified)
-        query (when search_after
-                {:bool
-                 {:filter
-                  {:range
-                   {agg-field
-                    {:gte (first search_after)
-                     :format "epoch_millis"}}}}})
-        aggs-q {:time-ranges
+        query (when (some->> (first search_after)
+                             time/coerce-to-date
+                             (time/after? (time/now)))
+                ;; we have a valid search_after, filter on it
+                (last-range-query agg-field
+                                  (first search_after)
+                                  true))
+        aggs-q {:intervals
                 {:date_histogram
                  {:field agg-field
                   :interval interval
-                  :missing "2017-01-01T00:00:00.000Z"}}}
+                  :missing (time/format-date-time (time/now))}}}
         res (retry es-max-retry
                    es-doc/query
                    conn
@@ -312,7 +336,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                    query
                    aggs-q
                    {:limit 0})
-        buckets (->> res :aggs :time-ranges :buckets)]
+        buckets (->> res :aggs :intervals :buckets)]
     (format-buckets buckets agg-field interval)))
 
 (s/defn query-fetch-batch :- {s/Any s/Any}

@@ -48,53 +48,87 @@
                                    :mappings {:a :b}}
                                   {:write-index "test_index-write"}))))
 
+
+(deftest missing-query-test
+  (is (= {:bool
+          {:must_not
+           {:exists
+            {:field :timestamp}}}}
+         (sut/missing-query :timestamp)))
+  (is (= {:bool
+          {:must_not
+           {:exists
+            {:field :date}}}}
+         (sut/missing-query :date))))
+
+(deftest range-query-test
+  (is (= {:bool
+          {:filter
+           {:range
+            {:created
+             {:gte "2019-03-11T00:00:00.000Z"
+              :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
+         (sut/range-query :created "2019-03-11T00:00:00.000Z" "d"))))
+
+(deftest last-range-query-test
+  (testing "last-range-query should produce a bool filter with a range query."
+    (is (= {:bool
+            {:filter
+             {:range
+              {:modified
+               {:gte "2019-03-25T00:00:00.000Z"}}}}}
+           (sut/last-range-query :modified
+                                 "2019-03-25T00:00:00.000Z"
+                                 false)))
+    (is (= {:bool
+            {:filter
+             {:range
+              {:modified
+               {:gte 1553472000000
+                :format "epoch_millis"}}}}}
+           (sut/last-range-query :modified
+                                 1553472000000
+                                 true))
+        "When epoch_millis? is true, it should add the epoch_millis format into the range query")))
+
 (deftest format-buckets-test
-  (let [raw-buckets [{:key_as_string "2019-03-11T00:00:00.000Z",
-                      :key 1552262400000,
+  (let [raw-buckets [{:key_as_string "2019-03-11T00:00:00.000Z"
+                      :key 1552262400000
                       :doc_count 3026106}
-                     {:key_as_string "2019-03-18T00:00:00.000Z",
-                      :key 1552867200000,
-                      :doc_count 2233335}
-                     {:key_as_string "2019-03-25T00:00:00.000Z",
-                      :key 1553472000000,
+                     {:key_as_string "2019-03-18T00:00:00.000Z"
+                      :key 1552867200000
                       :doc_count 0}
-                     {:key_as_string "2019-04-01T00:00:00.000Z",
-                      :key 1554076800000,
-                      :doc_count 11675823}]
-        expected-by-week  [{:bool
+                     {:key_as_string "2019-03-25T00:00:00.000Z"
+                      :key 1553472000000
+                      :doc_count 54183}
+                     {:key_as_string "2019-04-01T00:00:00.000Z"
+                      :key 1554076800000
+                      :doc_count 0}]
+        missing-query {:bool
+                       {:must_not
+                        {:exists
+                         {:field :modified}}}}
+        last-query {:bool
+                    {:filter
+                     {:range
+                      {:modified
+                       {:gte "2019-03-25T00:00:00.000Z"}}}}}
+        expected-by-week  [missing-query
+                           {:bool
                             {:filter
                              {:range
                               {:modified
                                {:gte "2019-03-11T00:00:00.000Z"
                                 :lt "2019-03-11T00:00:00.000Z||+1w"}}}}}
-                           {:bool
-                            {:filter
-                             {:range
-                              {:modified
-                               {:gte "2019-03-18T00:00:00.000Z"
-                                :lt "2019-03-18T00:00:00.000Z||+1w"}}}}}
-                           {:bool
-                            {:filter
-                             {:range
-                              {:modified
-                               {:gte "2019-04-01T00:00:00.000Z"}}}}}]
-        expected-by-month  [{:bool
+                           last-query]
+        expected-by-month  [missing-query
+                            {:bool
                              {:filter
                               {:range
                                {:modified
                                 {:gte "2019-03-11T00:00:00.000Z"
                                  :lt "2019-03-11T00:00:00.000Z||+1M"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2019-03-18T00:00:00.000Z"
-                                 :lt "2019-03-18T00:00:00.000Z||+1M"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2019-04-01T00:00:00.000Z"}}}}}]
+                            last-query]
         formatted-by-month (sut/format-buckets raw-buckets :modified "month")
         formatted-by-week (sut/format-buckets raw-buckets :modified "week")]
         (is (= 3 (count formatted-by-month) (count formatted-by-week))
