@@ -4,7 +4,9 @@
             [ring.swagger.coerce :as sc]
             [schema.core :as s]
             [schema-tools.core :as st]
-            [clj-momo.lib.time :as time]
+            [clj-momo.lib.clj-time
+             [core :as time]
+             [coerce :as time-coerce]]
             [clj-momo.lib.es
              [schemas :refer [ESConn ESQuery ESConnState]]
              [conn :as conn]
@@ -290,6 +292,15 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
       (cond-> {:gte date}
         epoch-millis? (assoc :format "epoch_millis"))}}}})
 
+(def missing-date-str "2000-01-01T00:00:00.000Z")
+(def missing-date (time-coerce/to-date-time missing-date-str))
+
+(defn missing-bucket?
+  [date-str]
+  (or (= date-str missing-date-str)
+      (->> (time-coerce/to-date-time date-str)
+           (time/after? missing-date))))
+
 (defn format-buckets
   "format buckets from aggregation results into an ordered list of proper bool queries"
   [raw-buckets field interval]
@@ -305,10 +316,11 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                       (filter #(< 0 (:doc_count %)))
                       (map :key_as_string))]
     (loop [dates filtered
-           queries [(missing-query field)]]
+           queries []]
       (if-let [date (first dates)]
         (->>
          (cond
+           (missing-bucket? date) (missing-query field)
            (next dates) (range-query field date unit)
            :else (last-range-query field date false))
          (conj queries)
@@ -331,8 +343,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                     "event" :timestamp
                     :modified)
         query (when (some->> (first search_after)
-                             time/coerce-to-date
-                             (time/after? (time/now)))
+                             time-coerce/to-date
+                             (time/after? (time/internal-now)))
                 ;; we have a valid search_after, filter on it
                 (last-range-query agg-field
                                   (first search_after)
@@ -341,7 +353,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                 {:date_histogram
                  {:field agg-field
                   :interval interval
-                  :missing (time/format-date-time (time/now))}}}
+                  :missing missing-date-str}}}
         res (retry es-max-retry
                    es-doc/query
                    conn
@@ -499,7 +511,7 @@ when confirm? is true, it stores this state and creates the target indices."
   (let [source-stores (stores->maps (select-keys @stores store-keys))
         target-stores (get-target-stores prefix store-keys)
         migration-properties (migration-store-properties)
-        now (time/now)
+        now (time/internal-now)
         migration-stores (->> source-stores
                               (map (fn [[k v]]
                                      {k (init-migration-store v (k target-stores))}))
@@ -601,7 +613,7 @@ when confirm? is true, it stores this state and creates the target indices."
   (retry es-max-retry es-index/refresh! (:conn target-store) (:indexname target-store))
   (update-migration-store migration-id
                           store-key
-                          {:completed (time/now)}
+                          {:completed (time/internal-now)}
                           es-conn))
 
 (defn setup!

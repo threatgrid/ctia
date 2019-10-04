@@ -1,7 +1,9 @@
 (ns ctia.task.migration.store-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
             [clj-momo.test-helpers.core :as mth]
-            [clj-momo.lib.time :as time]
+            [clj-momo.lib.clj-time
+             [core :as time]
+             [coerce :as time-coerce]]
             [clj-momo.lib.es
              [conn :refer [connect]]
              [document :as es-doc]
@@ -70,6 +72,18 @@
               :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
          (sut/range-query :created "2019-03-11T00:00:00.000Z" "d"))))
 
+(deftest missing-bucket?-test
+  (is (true? (sut/missing-bucket? sut/missing-date-str)))
+  (is (true? (sut/missing-bucket? (->> (time/minus sut/missing-date
+                                                   (time/days 1))
+                                       time-coerce/to-string))))
+  (is (false? (sut/missing-bucket? (->> (time/plus sut/missing-date
+                                                   (time/seconds 1))
+                                        time-coerce/to-string))))
+  (is (false? (sut/missing-bucket? (->> (time/plus sut/missing-date
+                                                   (time/years 1))
+                                        time-coerce/to-string)))))
+
 (deftest last-range-query-test
   (testing "last-range-query should produce a bool filter with a range query."
     (is (= {:bool
@@ -92,18 +106,50 @@
         "When epoch_millis? is true, it should add the epoch_millis format into the range query")))
 
 (deftest format-buckets-test
-  (let [raw-buckets [{:key_as_string "2019-03-11T00:00:00.000Z"
-                      :key 1552262400000
-                      :doc_count 3026106}
-                     {:key_as_string "2019-03-18T00:00:00.000Z"
-                      :key 1552867200000
-                      :doc_count 0}
-                     {:key_as_string "2019-03-25T00:00:00.000Z"
-                      :key 1553472000000
-                      :doc_count 54183}
-                     {:key_as_string "2019-04-01T00:00:00.000Z"
-                      :key 1554076800000
-                      :doc_count 0}]
+  (let [raw-buckets-1 [{:key_as_string sut/missing-date-str
+                        :key 1552262400000
+                        :doc_count 3026106}
+                       {:key_as_string "2019-03-11T00:00:00.000Z"
+                        :key 1552262400000
+                        :doc_count 1}
+                       {:key_as_string "2019-03-18T00:00:00.000Z"
+                        :key 1552867200000
+                        :Doc_count 0}
+                       {:key_as_string "2019-03-25T00:00:00.000Z"
+                        :key 1553472000000
+                        :doc_count 54183}
+                       {:key_as_string "2019-04-01T00:00:00.000Z"
+                        :key 1554076800000
+                        :doc_count 0}]
+        raw-buckets-2 [{:key_as_string (->> (time/minus sut/missing-date
+                                                        (time/days 1))
+                                            time-coerce/to-string)
+                        :key 1552262400000
+                        :doc_count 3026106}
+                       {:key_as_string "2019-03-11T00:00:00.000Z"
+                        :key 1552262400000
+                        :doc_count 1}
+                       {:key_as_string "2019-03-18T00:00:00.000Z"
+                        :key 1552867200000
+                        :doc_count 0}
+                       {:key_as_string "2019-03-25T00:00:00.000Z"
+                        :key 1553472000000
+                        :doc_count 54183}
+                       {:key_as_string "2019-04-01T00:00:00.000Z"
+                        :key 1554076800000
+                        :doc_count 0}]
+        raw-buckets-3 [{:key_as_string "2019-03-11T00:00:00.000Z"
+                        :key 1552262400000
+                        :doc_count 1}
+                       {:key_as_string "2019-03-18T00:00:00.000Z"
+                        :key 1552867200000
+                        :doc_count 0}
+                       {:key_as_string "2019-03-25T00:00:00.000Z"
+                        :key 1553472000000
+                        :doc_count 54183}
+                       {:key_as_string "2019-04-01T00:00:00.000Z"
+                        :key 1554076800000
+                        :doc_count 0}]
         missing-query {:bool
                        {:must_not
                         {:exists
@@ -113,7 +159,16 @@
                      {:range
                       {:modified
                        {:gte "2019-03-25T00:00:00.000Z"}}}}}
-        expected-by-week  [missing-query
+
+        expected-by-day [missing-query
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2019-03-11T00:00:00.000Z"
+                               :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
+                          last-query]
+        expected-by-week [missing-query
                            {:bool
                             {:filter
                              {:range
@@ -121,22 +176,29 @@
                                {:gte "2019-03-11T00:00:00.000Z"
                                 :lt "2019-03-11T00:00:00.000Z||+1w"}}}}}
                            last-query]
-        expected-by-month  [missing-query
-                            {:bool
+        expected-by-month [{:bool
                              {:filter
                               {:range
                                {:modified
                                 {:gte "2019-03-11T00:00:00.000Z"
                                  :lt "2019-03-11T00:00:00.000Z||+1M"}}}}}
-                            last-query]
-        formatted-by-month (sut/format-buckets raw-buckets :modified "month")
-        formatted-by-week (sut/format-buckets raw-buckets :modified "week")]
-        (is (= 3 (count formatted-by-month) (count formatted-by-week))
-            "format-range-buckets should filter buckets with 0 documents")
-        (is (= formatted-by-month expected-by-month)
-            "format-range-buckets should properly format raw buckets per month")
-        (is (= formatted-by-week expected-by-week)
-            "format-range-buckets should properly format raw buckets per week")))
+                           last-query]
+        formatted-by-day (sut/format-buckets raw-buckets-1 :modified "day")
+        formatted-by-week (sut/format-buckets raw-buckets-2 :modified "week")
+        formatted-by-month (sut/format-buckets raw-buckets-3 :modified "month")]
+
+    (is (= 3 (count formatted-by-day))
+        "format-range-buckets should filter buckets with 0 documents and add missing query when a bucket has a date equal to default missing value")
+    (is (= 3 (count formatted-by-week))
+        "format-range-buckets should filter buckets with 0 documents and add missing query when a bucket has a date before default missing value")
+    (is (= 2 (count formatted-by-month))
+        "format-range-buckets should filter buckets with 0 documents and not add missing-query when all buckets dates are after default missing value")
+    (is (= formatted-by-day expected-by-day)
+        "format-range-buckets should properly format raw buckets per day")
+    (is (= formatted-by-week expected-by-week)
+        "format-range-buckets should properly format raw buckets per week")
+    (is (= formatted-by-month expected-by-month)
+        "format-range-buckets should properly format raw buckets per month")))
 
 (deftest wo-storemaps-test
   (let [fake-migration (sut/init-migration "migration-id-1"
@@ -494,7 +556,7 @@
         _ (delete (format "ctia/sighting/%s" sighting1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (es-index/refresh! es-conn)
-        since (time/now)
+        since (time/internal-now)
         _ (delete (format "ctia/sighting/%s" sighting2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" tool1-id)
