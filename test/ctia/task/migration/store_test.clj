@@ -1,5 +1,6 @@
 (ns ctia.task.migration.store-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+            [clojure.data.json :as json]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.clj-time
              [core :as time]
@@ -275,6 +276,169 @@
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
 
+(defn format-doc-ops
+  [str-doc]
+  (let [{:keys [_type _index _source]}
+        (json/read-str str-doc :key-fn keyword)]
+    (assoc _source :_type _type :_index _index)))
+
+(defn load-file-bulk
+  [filepath]
+  (with-open [rdr (clojure.java.io/reader filepath)]
+    (es-doc/bulk-create-doc es-conn
+                            (map format-doc-ops
+                                 (line-seq rdr))
+                            "true")))
+
+(deftest sliced-queries-test
+
+  (let [storemap {:conn es-conn
+                  :indexname "ctia_relationship"
+                  :mapping "relationship"
+                  :props {:write-index "ctia_relationship"}
+                  :type "relationship"
+                  :settings {}
+                  :config {}}
+        data (load-file-bulk "./test/data/indices/sample-relationships-1000.json")
+        sliced-1 (sut/sliced-queries storemap nil "week")
+        expected-queries [{:bool {:must_not {:exists {:field :modified}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-02-26T00:00:00.000Z",
+                                 :lt "2018-02-26T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-03-05T00:00:00.000Z",
+                                 :lt "2018-03-05T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-03-12T00:00:00.000Z",
+                                 :lt "2018-03-12T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-03-19T00:00:00.000Z",
+                                 :lt "2018-03-19T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-04-09T00:00:00.000Z",
+                                 :lt "2018-04-09T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-04-16T00:00:00.000Z",
+                                 :lt "2018-04-16T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-04-23T00:00:00.000Z",
+                                 :lt "2018-04-23T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-04-30T00:00:00.000Z",
+                                 :lt "2018-04-30T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-05-07T00:00:00.000Z",
+                                 :lt "2018-05-07T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-05-14T00:00:00.000Z",
+                                 :lt "2018-05-14T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-05-21T00:00:00.000Z",
+                                 :lt "2018-05-21T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-06-18T00:00:00.000Z",
+                                 :lt "2018-06-18T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-06-25T00:00:00.000Z",
+                                 :lt "2018-06-25T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-07-02T00:00:00.000Z",
+                                 :lt "2018-07-02T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-07-09T00:00:00.000Z",
+                                 :lt "2018-07-09T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-07-16T00:00:00.000Z",
+                                 :lt "2018-07-16T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-07-23T00:00:00.000Z",
+                                 :lt "2018-07-23T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2018-07-30T00:00:00.000Z",
+                                 :lt "2018-07-30T00:00:00.000Z||+1w"}}}}}
+                            {:bool
+                             {:filter {:range {:modified {:gte "2018-08-06T00:00:00.000Z"}}}}}]]
+    (is (= expected-queries
+           (sut/sliced-queries storemap nil "week")))
+    (is (= [{:bool
+             {:filter
+              {:range
+               {:modified
+                {:gte "2018-07-16T00:00:00.000Z",
+                 :lt "2018-07-16T00:00:00.000Z||+1w"}}}}}
+            {:bool
+             {:filter
+              {:range
+               {:modified
+                {:gte "2018-07-23T00:00:00.000Z",
+                 :lt "2018-07-23T00:00:00.000Z||+1w"}}}}}
+            {:bool
+             {:filter
+              {:range
+               {:modified
+                {:gte "2018-07-30T00:00:00.000Z",
+                 :lt "2018-07-30T00:00:00.000Z||+1w"}}}}}
+            {:bool
+             {:filter {:range {:modified {:gte "2018-08-06T00:00:00.000Z"}}}}}]
+           (sut/sliced-queries storemap
+                               [(time-coerce/to-long "2018-07-16T00:00:00.000Z")
+                                "whatever"]
+                               "week"))
+        "slice-queries should take into account search_after param")))
 
 (deftest bulk-metas-test
   ;; insert elements in different indices and check that we retrieve the right one

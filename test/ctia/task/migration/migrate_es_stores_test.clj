@@ -3,6 +3,7 @@
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
             [clojure.core.async :as async :refer [chan <!! timeout]]
+            [clojure.data.json :as json]
 
             [clj-http.fake :refer [with-fake-routes]]
             [schema.core :as s]
@@ -161,57 +162,127 @@
             (is (= fixtures-nb (:total source)))
             (is (= fixtures-nb (:migrated target)))))))))
 
+(defn format-doc-ops
+  [str-doc]
+  (let [{:keys [_type _index _source]}
+        (json/read-str str-doc :key-fn keyword)]
+    (assoc _source :_type _type :_index _index)))
 
-;;(deftest migration-slow-es-read
-;;  (helpers/set-capabilities! "foouser"
-;;                             ["foogroup"]
-;;                             "user"
-;;                             all-capabilities)
-;;  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-;;                                      "foouser"
-;;                                      "foogroup"
-;;                                      "user")
-;;  (testing "migration with rollover and multiple indices for source stores"
-;;    (let [store-types [:malware :tool :incident]
-;;          migration-id "test-slow-read"
-;;          nb-slow-reqs (atom 5)]
-;;      (rollover-post-bulk)
-;;      ;; insert malformed documents
-;;      (doseq [store-type store-types]
-;;        (es-index/get es-conn
-;;                      (str (get-in es-props [store-type :indexname]) "*")))
-;;      (with-redefs [es-doc/search-docs
-;;                    (fn [es-conn index-name mapping es-query all-of params]
-;;                      (when (< 0 @nb-slow-reqs)
-;;                        (println "TEST " @nb-slow-reqs)
-;;                        (<!! (timeout (/ 5000 @nb-slow-reqs)))
-;;                        (swap! nb-slow-reqs dec))
-;;                      (es-doc/query es-conn index-name mapping {:match_all {}} params))]
-;;          (sut/migrate-store-indexes migration-id
-;;                                     "0.0.0"
-;;                                     [:__test]
-;;                                     store-types
-;;                                     10
-;;                                     30
-;;                                     true
-;;                                     false))
-;;
-;;      (let [migration-state (es-doc/get-doc es-conn
-;;                                            migration-index
-;;                                            "migration"
-;;                                            migration-id
-;;                                            {})]
-;;        (doseq [store-type store-types]
-;;          (is (= (count (es-index/get es-conn
-;;                                      (str "v0.0.0_" (get-in es-props [store-type :indexname]) "*")))
-;;                 3)
-;;              "target indice should be rolledover during migration")
-;;          (es-index/get es-conn
-;;                        (str "v0.0.0_" (get-in es-props [store-type :indexname]) "*"))
-;;          (let [migrated-store (get-in migration-state [:stores store-type])
-;;                {:keys [source target]} migrated-store]
-;;            (is (= fixtures-nb (:total source)))
-;;            (is (= fixtures-nb (:migrated target)))))))))
+(defn load-bulk
+  [docs]
+  (es-doc/bulk-create-doc es-conn
+                          docs
+                          "true"))
+
+(deftest sliced-migration-test
+  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+    (let [storemap {:conn es-conn
+                    :indexname "ctia_relationship"
+                    :mapping "relationship"
+                    :props {:write-index "ctia_relationship"}
+                    :type "relationship"
+                    :settings {}
+                    :config {}}
+          {wo-modified true
+           w-modified false} (->> (line-seq rdr)
+                                  (map format-doc-ops)
+                                  (group-by #(nil? (:modified %))))
+          sorted-w-modified (sort-by :modified w-modified)
+          bulk-1 (concat wo-modified (take 500 sorted-w-modified))
+          bulk-2 (drop 500 sorted-w-modified)
+          logger-1 (atom [])
+          _ (load-bulk bulk-1)
+          _ (with-atom-logger logger-1
+              (sut/migrate-store-indexes "migration-test-4"
+                                         "0.0.0"
+                                         [:__test]
+                                         [:relationship]
+                                         100
+                                         30
+                                         true
+                                         false))
+          migration-state-1 (es-doc/get-doc es-conn
+                                            migration-index
+                                            "migration"
+                                            "migration-test-4"
+                                            {})
+          target-count-1 (es-doc/count-docs es-conn
+                                            "v0.0.0_ctia_relationship"
+                                            "relationship"
+                                            nil)
+          _ (load-bulk bulk-2)
+          logger-2 (atom [])
+          _ (with-atom-logger logger-1
+              (sut/migrate-store-indexes "migration-test-4"
+                                         "0.0.0"
+                                         [:__test]
+                                         [:relationship]
+                                         100
+                                         30
+                                         true
+                                         true))
+          target-count-2 (es-doc/count-docs es-conn
+                                            "v0.0.0_ctia_relationship"
+                                            "relationship"
+                                            nil)
+          migration-state-2 (es-doc/get-doc es-conn
+                                            migration-index
+                                            "migration"
+                                            "migration-test-4"
+                                            {})]
+      (is (= (+ 500 (count wo-modified))
+             target-count-1
+             (get-in migration-state-1 [:stores :relationship :target :migrated])
+             (get-in migration-state-1 [:stores :relationship :source :total]))
+          "migration process should start with documents missing field used for bucketizing")
+
+      (is (= 1000
+             target-count-2
+             (get-in migration-state-2 [:stores :relationship :source :total]))
+          "migration process should complete the migration after restart"))))
+
+(deftest migration-slow-es-read
+  (testing "migration with rollover and multiple indices for source stores"
+    (let [store-types [:malware :tool :incident]
+          migration-id "test-slow-read"
+          nb-slow-reqs (atom 5)]
+      (rollover-post-bulk)
+      ;; insert malformed documents
+      (doseq [store-type store-types]
+        (es-index/get es-conn
+                      (str (get-in es-props [store-type :indexname]) "*")))
+      (with-redefs [es-doc/search-docs
+                    (fn [es-conn index-name mapping es-query all-of params]
+                      (when (< 0 @nb-slow-reqs)
+                        (println "TEST " @nb-slow-reqs)
+                        (<!! (timeout (/ 5000 @nb-slow-reqs)))
+                        (swap! nb-slow-reqs dec))
+                      (es-doc/query es-conn index-name mapping {:match_all {}} params))]
+          (sut/migrate-store-indexes migration-id
+                                     "0.0.0"
+                                     [:__test]
+                                     store-types
+                                     10
+                                     30
+                                     true
+                                     false))
+
+      (let [migration-state (es-doc/get-doc es-conn
+                                            migration-index
+                                            "migration"
+                                            migration-id
+                                            {})]
+        (doseq [store-type store-types]
+          (is (= (count (es-index/get es-conn
+                                      (str "v0.0.0_" (get-in es-props [store-type :indexname]) "*")))
+                 3)
+              "target indice should be rolledover during migration")
+          (es-index/get es-conn
+                        (str "v0.0.0_" (get-in es-props [store-type :indexname]) "*"))
+          (let [migrated-store (get-in migration-state [:stores store-type])
+                {:keys [source target]} migrated-store]
+            (is (= fixtures-nb (:total source)))
+            (is (= fixtures-nb (:migrated target)))))))))
 
 
 (deftest migration-with-malformed-docs

@@ -284,13 +284,16 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 (defn last-range-query
   "returns a bool range filter query with only start limit. Add epoch_millis
   format if specified so (required  when date comes from search_after)"
-  [field date epoch-millis?]
-  {:bool
-   {:filter
-    {:range
-     {field
-      (cond-> {:gte date}
-        epoch-millis? (assoc :format "epoch_millis"))}}}})
+  ([field date epoch-millis?]
+   (last-range-query field date epoch-millis? false))
+  ([field date epoch-millis? strict?]
+   {:bool
+    {:filter
+     {:range
+      {field
+       (cond-> {:gte date}
+         strict? (clojure.set/rename-keys {:gte :gt})
+         epoch-millis? (assoc :format "epoch_millis"))}}}}))
 
 (def missing-date-str "2000-01-01T00:00:00.000Z")
 (def missing-date (time-coerce/to-date-time missing-date-str))
@@ -340,7 +343,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    search_after
    interval]
   (let [agg-field (case mapping
-                    "event" :timestamp
+                    "event" "timestamp"
                     :modified)
         query (when (some->> (first search_after)
                              time-coerce/to-date
@@ -348,6 +351,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                 ;; we have a valid search_after, filter on it
                 (last-range-query agg-field
                                   (first search_after)
+                                  true
                                   true))
         aggs-q {:intervals
                 {:date_histogram
