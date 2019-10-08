@@ -126,6 +126,20 @@
         (update :headers (fn [response-headers]
                            (into headers response-headers)))))))
 
+(defn build-csp
+  "Build the Content Security Policy header from the http configuration"
+  [{:keys [swagger] :as http-config}]" connect-src 'self';"
+  (str "default-src 'self';"
+       " style-src 'self' 'unsafe-inline';"
+       " img-src 'self' data:;"
+       " script-src 'self' 'unsafe-inline';"
+       " connect-src 'self'"
+       (when-let [{:keys [token-url refresh-url]} (:oauth2 swagger)]
+         (cond-> ""
+           token-url (str " " token-url)
+           refresh-url (str " " refresh-url)))
+       ";"))
+
 (defn- new-jetty-instance
   [{:keys [dev-reload
            max-threads
@@ -136,7 +150,8 @@
            jwt
            send-server-version]
     :or {access-control-allow-methods "get,post,put,patch,delete"
-         send-server-version false}}]
+         send-server-version false}
+    :as http-config}]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler)
@@ -185,11 +200,7 @@
          true (wrap-additional-headers
                {"X-Content-Type-Options" "nosniff"})
          true (wrap-html-headers
-               {"Content-Security-Policy" (str "default-src 'self';"
-                                               " style-src 'self' 'unsafe-inline';"
-                                               " img-src 'self' data:;"
-                                               " script-src 'self' 'unsafe-inline';"
-                                               " connect-src 'self';")
+               {"Content-Security-Policy" (build-csp http-config)
                 "X-Frame-Options" "DENY"})
 
          true wrap-params

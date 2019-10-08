@@ -64,3 +64,25 @@
          (let [{:keys [headers]}
                (get "ctia/version")]
            (is (clojure.core/get headers "Server"))))))))
+
+(deftest build-csp-test
+  (is (= (str "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+              "img-src 'self' data:; script-src 'self' 'unsafe-inline'; "
+              "connect-src 'self';")
+         (sut/build-csp {})))
+  (is (= (str "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+              "img-src 'self' data:; script-src 'self' 'unsafe-inline'; "
+              "connect-src 'self' https://visibility.int.iroh.site/iroh/oauth2/token;")
+         (sut/build-csp
+          {:swagger
+           {:oauth2
+            {:token-url "https://visibility.int.iroh.site/iroh/oauth2/token"}}})))
+  (is (= (str "default-src 'self'; style-src 'self' 'unsafe-inline'; "
+              "img-src 'self' data:; script-src 'self' 'unsafe-inline'; "
+              "connect-src 'self' https://visibility.int.iroh.site/iroh/oauth2/token "
+              "https://visibility.int.iroh.site/iroh/oauth2/refresh;")
+         (sut/build-csp
+          {:swagger
+           {:oauth2
+            {:token-url "https://visibility.int.iroh.site/iroh/oauth2/token"
+             :refresh-url "https://visibility.int.iroh.site/iroh/oauth2/refresh"}}}))))
