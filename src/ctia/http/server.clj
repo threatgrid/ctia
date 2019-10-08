@@ -128,7 +128,7 @@
 
 (defn build-csp
   "Build the Content Security Policy header from the http configuration"
-  [{:keys [swagger] :as http-config}]" connect-src 'self';"
+  [{:keys [swagger] :as http-config}]
   (str "default-src 'self';"
        " style-src 'self' 'unsafe-inline';"
        " img-src 'self' data:;"
