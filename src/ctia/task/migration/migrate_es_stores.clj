@@ -77,11 +77,12 @@
 
 (defn read-source
   [{:keys [source-store
+           search_after
            entity-type
            data-chan
            batch-size
            query]}]
-  (loop [current-search-after nil]
+  (loop [current-search-after search_after]
     ;; loop that reads batches from source and produces them in chan
     (let [{:keys [data paging] :as res} (mst/query-fetch-batch query
                                                                source-store
@@ -157,6 +158,7 @@
         all-queries (mst/sliced-queries source-store search_after "week")
         base-params {:source-store source-store
                      :target-store target-store
+                     :search_after search_after
                      :migrations migrations
                      :entity-type entity-type
                      :batch-size batch-size

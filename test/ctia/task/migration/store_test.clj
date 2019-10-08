@@ -99,6 +99,24 @@
             {:filter
              {:range
               {:modified
+               {:gt "2019-03-25T00:00:00.000Z"}}}}}
+           (sut/last-range-query :modified
+                                 "2019-03-25T00:00:00.000Z"
+                                 false
+                                 true))
+        "when strict? is set to false, last-range should ust :gt filter")
+    (is (= (sut/last-range-query :modified
+                                 "2019-03-25T00:00:00.000Z"
+                                 false)
+           (sut/last-range-query :modified
+                                 "2019-03-25T00:00:00.000Z"
+                                 false
+                                 false))
+        "default strict? value should be false")
+    (is (= {:bool
+            {:filter
+             {:range
+              {:modified
                {:gte 1553472000000
                 :format "epoch_millis"}}}}}
            (sut/last-range-query :modified
@@ -115,7 +133,7 @@
                         :doc_count 1}
                        {:key_as_string "2019-03-18T00:00:00.000Z"
                         :key 1552867200000
-                        :Doc_count 0}
+                        :doc_count 0}
                        {:key_as_string "2019-03-25T00:00:00.000Z"
                         :key 1553472000000
                         :doc_count 54183}
@@ -291,7 +309,6 @@
                             "true")))
 
 (deftest sliced-queries-test
-
   (let [storemap {:conn es-conn
                   :indexname "ctia_relationship"
                   :mapping "relationship"

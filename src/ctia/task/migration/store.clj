@@ -307,6 +307,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 (defn format-buckets
   "format buckets from aggregation results into an ordered list of proper bool queries"
   [raw-buckets field interval]
+  (clojure.pprint/pprint raw-buckets)
   (let [unit (case interval
                "year" "y"
                "month" "M"
