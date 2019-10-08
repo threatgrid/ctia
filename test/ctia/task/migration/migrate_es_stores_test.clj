@@ -3,8 +3,6 @@
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
             [clojure.core.async :as async :refer [chan <!! timeout]]
-            [clojure.data.json :as json]
-
             [clj-http.fake :refer [with-fake-routes]]
             [schema.core :as s]
             [clj-http.client :as client]
@@ -162,18 +160,6 @@
             (is (= fixtures-nb (:total source)))
             (is (= fixtures-nb (:migrated target)))))))))
 
-(defn format-doc-ops
-  [str-doc]
-  (let [{:keys [_type _index _source]}
-        (json/read-str str-doc :key-fn keyword)]
-    (assoc _source :_type _type :_index _index)))
-
-(defn load-bulk
-  [docs]
-  (es-doc/bulk-create-doc es-conn
-                          docs
-                          "true"))
-
 (deftest sliced-migration-test
   (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
     (let [storemap {:conn es-conn
@@ -185,13 +171,13 @@
                     :config {}}
           {wo-modified true
            w-modified false} (->> (line-seq rdr)
-                                  (map format-doc-ops)
+                                  (map es-helpers/prepare-bulk-ops)
                                   (group-by #(nil? (:modified %))))
           sorted-w-modified (sort-by :modified w-modified)
           bulk-1 (concat wo-modified (take 500 sorted-w-modified))
           bulk-2 (drop 500 sorted-w-modified)
           logger-1 (atom [])
-          _ (load-bulk bulk-1)
+          _ (es-helpers/load-bulk es-conn bulk-1)
           _ (with-atom-logger logger-1
               (sut/migrate-store-indexes "migration-test-4"
                                          "0.0.0"
@@ -210,7 +196,7 @@
                                             "v0.0.0_ctia_relationship"
                                             "relationship"
                                             nil)
-          _ (load-bulk bulk-2)
+          _ (es-helpers/load-bulk es-conn bulk-2)
           logger-2 (atom [])
           _ (with-atom-logger logger-1
               (sut/migrate-store-indexes "migration-test-4"

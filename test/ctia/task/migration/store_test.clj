@@ -294,20 +294,6 @@
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
 
-(defn format-doc-ops
-  [str-doc]
-  (let [{:keys [_type _index _source]}
-        (json/read-str str-doc :key-fn keyword)]
-    (assoc _source :_type _type :_index _index)))
-
-(defn load-file-bulk
-  [filepath]
-  (with-open [rdr (clojure.java.io/reader filepath)]
-    (es-doc/bulk-create-doc es-conn
-                            (map format-doc-ops
-                                 (line-seq rdr))
-                            "true")))
-
 (deftest sliced-queries-test
   (let [storemap {:conn es-conn
                   :indexname "ctia_relationship"
@@ -316,7 +302,7 @@
                   :type "relationship"
                   :settings {}
                   :config {}}
-        data (load-file-bulk "./test/data/indices/sample-relationships-1000.json")
+        data (es-helpers/load-file-bulk es-conn "./test/data/indices/sample-relationships-1000.json")
         sliced-1 (sut/sliced-queries storemap nil "week")
         expected-queries [{:bool {:must_not {:exists {:field :modified}}}}
                             {:bool
