@@ -89,7 +89,7 @@
             (is (= "nosniff"
                    (get-in swagger-ui-resp [:headers "X-Content-Type-Options"]))
                 "Swagger-UI request should contain the X-Content-Type-Options header set to nosniff")
-            (is (= "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; connect-src 'self';"
+            (is (= "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:9001/iroh/oauth2/token http://localhost:9001/iroh/oauth2/refresh;"
                    (get-in swagger-ui-resp [:headers "Content-Security-Policy"]))
                 "The request should contain the Content-Security-Policy header set to nosniff")
             (is (= "DENY"
