@@ -2,7 +2,7 @@
   (:require [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
-            [clojure.core.async :as async :refer [chan <!! timeout]]
+            [clojure.core.async :as async :refer [chan <!!]]
             [clj-http.fake :refer [with-fake-routes]]
             [schema.core :as s]
             [clj-http.client :as client]
@@ -12,6 +12,9 @@
              [conn :refer [connect]]
              [document :as es-doc]
              [index :as es-index]]
+            [clj-momo.lib.clj-time
+             [core :as time]
+             [coerce :as time-coerce]]
             [ctim.domain.id :refer [long-id->id]]
 
             [ctia.properties :as props]
@@ -159,6 +162,88 @@
                 {:keys [source target]} migrated-store]
             (is (= fixtures-nb (:total source)))
             (is (= fixtures-nb (:migrated target)))))))))
+
+(defn consume-close-chan
+  [c]
+  (loop [batches []]
+    (if-let [batch (<!! c)]
+      (recur (conj batches batch))
+      batches)))
+
+(def date-str->epoch-millis
+  (comp time-coerce/to-long time-coerce/to-date-time))
+
+(deftest read-source-test
+  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+    (let [storemap {:conn es-conn
+                    :indexname "ctia_relationship"
+                    :mapping "relationship"
+                    :props {:write-index "ctia_relationship"}
+                    :type "relationship"
+                    :settings {}
+                    :config {}}
+          docs (map es-helpers/prepare-bulk-ops
+                    (line-seq rdr))
+          _ (es-helpers/load-bulk es-conn docs)
+          docs-no-modified (->> (filter #(nil? (:modified %))
+                                        docs)
+                                (map #(dissoc % :_index :_type :_id)))
+          docs-100 (->> (take 100 docs)
+                        (map #(dissoc % :_index :_type :_id)))
+          missing-query {:bool {:must_not {:exists {:field :modified}}}}
+          ids-100-query {:ids {:values (map :id docs-100)}}
+          match-all-query {:match_all {}}
+          chan-missing (chan 2)
+          chan-ids (chan 2)
+          chan-match-all (chan 10)
+          nb-skipped-ids 10
+          [last-skipped & expected-ids-docs] (->> (sort-by (juxt :modified :created :id)
+                                                         docs-100)
+                                                (drop (dec nb-skipped-ids)))
+          {after-modified :modified
+           after-created :created
+           after-id :id} last-skipped
+          search_after [(date-str->epoch-millis after-modified)
+                        (date-str->epoch-millis after-created)
+                        after-id]
+          _ (sut/read-source {:source-store storemap
+                              :data-chan chan-missing
+                              :batch-size 1000
+                              :query missing-query})
+          _ (sut/read-source {:source-store storemap
+                              :data-chan chan-ids
+                              :batch-size 1000
+                              :search_after search_after
+                              :query ids-100-query})
+          _ (sut/read-source {:source-store storemap
+                              :data-chan chan-match-all
+                              :batch-size 200
+                              :query match-all-query})
+          missing-batches (consume-close-chan chan-missing)
+          ids-batches (consume-close-chan chan-ids)
+          match-all-batches (consume-close-chan chan-match-all)]
+      (testing "queries should be used to select data"
+        (is (= 1 (count missing-batches)))
+        (is (= (set docs-no-modified)
+               (set (:documents (first missing-batches))))))
+
+      (testing "search_after should be properly taken into account"
+        (is (= 1 (count ids-batches)))
+        (is (= (set expected-ids-docs)
+               (set (:documents (first ids-batches)))))
+        (is (= (- 100 nb-skipped-ids)
+               (count (:documents (first ids-batches))))))
+
+      (testing "batch-size should be properly taken into account"
+        (is (= 6 (count match-all-batches)))
+        (let [search_after-list (->> (take 5 match-all-batches)
+                                     (map :search_after))]
+          (is (= search_after-list (sort-by str search_after-list))
+              "search_after should be properly set for each batch"))
+        (is (nil? (:search_after (last match-all-batches))))
+        (is (every? #(= 200 (count (:documents %)))
+                    (take 5 match-all-batches)))
+        (is (= 0 (count (:documents (last match-all-batches)))))))))
 
 (deftest sliced-migration-test
   (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]

@@ -159,9 +159,12 @@
 
 (defn prepare-bulk-ops
   [str-doc]
-  (let [{:keys [_type _index _source]}
+  (let [{:keys [_type _id _index _source]}
         (json/parse-string str-doc true)]
-    (assoc _source :_type _type :_index _index)))
+    (assoc _source
+           :_type _type
+           :_index _index
+           :_id _id)))
 
 (defn load-bulk
   [es-conn docs]

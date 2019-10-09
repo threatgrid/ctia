@@ -78,7 +78,6 @@
 (defn read-source
   [{:keys [source-store
            search_after
-           entity-type
            data-chan
            batch-size
            query]}]
