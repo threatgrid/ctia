@@ -227,50 +227,6 @@
              (get-in migration-state-2 [:stores :relationship :source :total]))
           "migration process should complete the migration after restart"))))
 
-(deftest migration-slow-es-read
-  (testing "migration with rollover and multiple indices for source stores"
-    (let [store-types [:malware :tool :incident]
-          migration-id "test-slow-read"
-          nb-slow-reqs (atom 5)]
-      (rollover-post-bulk)
-      ;; insert malformed documents
-      (doseq [store-type store-types]
-        (es-index/get es-conn
-                      (str (get-in es-props [store-type :indexname]) "*")))
-      (with-redefs [es-doc/search-docs
-                    (fn [es-conn index-name mapping es-query all-of params]
-                      (when (< 0 @nb-slow-reqs)
-                        (println "TEST " @nb-slow-reqs)
-                        (<!! (timeout (/ 5000 @nb-slow-reqs)))
-                        (swap! nb-slow-reqs dec))
-                      (es-doc/query es-conn index-name mapping {:match_all {}} params))]
-          (sut/migrate-store-indexes migration-id
-                                     "0.0.0"
-                                     [:__test]
-                                     store-types
-                                     10
-                                     30
-                                     true
-                                     false))
-
-      (let [migration-state (es-doc/get-doc es-conn
-                                            migration-index
-                                            "migration"
-                                            migration-id
-                                            {})]
-        (doseq [store-type store-types]
-          (is (= (count (es-index/get es-conn
-                                      (str "v0.0.0_" (get-in es-props [store-type :indexname]) "*")))
-                 3)
-              "target indice should be rolledover during migration")
-          (es-index/get es-conn
-                        (str "v0.0.0_" (get-in es-props [store-type :indexname]) "*"))
-          (let [migrated-store (get-in migration-state [:stores store-type])
-                {:keys [source target]} migrated-store]
-            (is (= fixtures-nb (:total source)))
-            (is (= fixtures-nb (:migrated target)))))))))
-
-
 (deftest migration-with-malformed-docs
   (helpers/set-capabilities! "foouser"
                              ["foogroup"]
