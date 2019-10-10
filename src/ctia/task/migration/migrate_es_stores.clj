@@ -97,7 +97,6 @@
         (recur  next-search-after)
         (close! data-chan)))))
 
-
 (defn write-target
   [{:keys [target-store
            data-chan

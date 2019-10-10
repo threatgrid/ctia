@@ -2,7 +2,7 @@
   (:require [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
-            [clojure.core.async :as async :refer [chan <!!]]
+            [clojure.core.async :as async :refer [chan <!! >!! close!]]
             [clj-http.fake :refer [with-fake-routes]]
             [schema.core :as s]
             [clj-http.client :as client]
@@ -17,11 +17,16 @@
              [coerce :as time-coerce]]
             [ctim.domain.id :refer [long-id->id]]
 
+            [ctia.entity.relationship.schemas :refer [StoredRelationship]]
             [ctia.properties :as props]
             [ctia.task.rollover :refer [rollover-stores]]
             [ctia.task.migration
              [migrate-es-stores :as sut]
-             [store :refer [setup! prefixed-index get-migration fetch-batch]]]
+             [store :refer [setup!
+                            prefixed-index
+                            init-migration
+                            get-migration
+                            fetch-batch]]]
             [ctia.test-helpers
              [fixtures :as fixt]
              [auth :refer [all-capabilities]]
@@ -244,6 +249,107 @@
         (is (every? #(= 200 (count (:documents %)))
                     (take 5 match-all-batches)))
         (is (= 0 (count (:documents (last match-all-batches)))))))))
+
+
+(deftest write-target-test
+  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+    (let [prefix "0.0.1"
+          indexname "v0.0.1_ctia_relationship"
+          storemap {:conn es-conn
+                    :indexname indexname
+                    :mapping "relationship"
+                    :props {:write-index indexname}
+                    :type "relationship"
+                    :settings {}
+                    :config {}}
+          list-coerce (sut/list-coerce-fn StoredRelationship)
+          migration-id "migration-1"
+          docs (map (comp :_source es-helpers/str->edn)
+                    (line-seq rdr))
+          test-fn (fn [total
+                       chunck-size
+                       msg
+                       {:keys [confirm? migrated-count]
+                        :or {migrated-count 0}
+                        :as override-params}]
+                    (init-migration migration-id
+                                    prefix
+                                    [:relationship]
+                                    true)
+                    (let [test-docs (take total docs)
+                          data-chan (chan 10);(inc (/ total chunck-size)))
+                          batches (->> (partition-all chunck-size test-docs)
+                                       (map #(assoc {:documents %}
+                                                    :search_after
+                                                    [(rand-int total)])))
+                          _ (doseq [batch batches]
+                              (>!! data-chan batch))
+                          _ (close! data-chan)
+                          base-params {:target-store storemap
+                                       :entity-type :relationship
+                                       :list-coerce list-coerce
+                                       :migration-id migration-id
+                                       :data-chan data-chan
+                                       :migrations (sut/compose-migrations [:__test])
+                                       :migrated-count migrated-count
+                                       :batch-size 1000
+                                       :migration-es-conn es-conn
+                                       :confirm? true}
+                          nb-migrated (sut/write-target (into base-params
+                                                                 override-params))
+                          {target-state :target
+                           source-state :source} (-> (get-migration migration-id es-conn)
+                                                     :stores
+                                                     :relationship)
+                          migrated-docs (:data (es-doc/query es-conn
+                                                             indexname
+                                                             "relationship"
+                                                             {:match_all {}}
+                                                             {:limit total}))]
+                      (testing msg
+                        (when-not confirm?
+                          (is (= (+ total migrated-count)
+                                 nb-migrated))
+                          (is (= (+ migrated-count (count migrated-docs))
+                                 (:migrated target-state))))
+                        (when confirm?
+                          (is (= (+ total migrated-count)
+                                 (count migrated-docs)
+                                 nb-migrated
+                                 (:migrated target-state)))
+                          (is (= (set (map #(dissoc % :groups)
+                                           migrated-docs))
+                                 (set (map #(dissoc % :groups)
+                                           test-docs)))
+                              "write-target should only perform attended modifications")
+                          (is (every? #(= (:groups %)
+                                          ["migration-test"])
+                                      migrated-docs)
+                              "write-target should perform attended modifications on migrated documents")
+                          (is (= (:search_after (last batches))
+                                 (:search_after source-state))
+                              "write-target should store last search_after in migration state")))))]
+      (test-fn 1000
+               1000
+               "write-target should properly read from data channel, modify red documents, and write them in target index"
+               {})
+      (test-fn 1000
+               1000
+               "write-target should not write anything when `confirm?` is set to false"
+               {:confirm? false})
+
+      (test-fn 1000
+               1000
+               "write-target should properly read from data channel, modify red documents, and write them in target index"
+               {:migrated-count 5000})
+      (test-fn 1000
+               300
+               "write-target should properly read all elements in data channel"
+               {})
+      (test-fn 0
+               1000
+               "write-target should not fail when channel is empty and closed"
+               {}))))
 
 (deftest sliced-migration-test
   (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
