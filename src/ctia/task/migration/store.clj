@@ -295,14 +295,17 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
          strict? (clojure.set/rename-keys {:gte :gt})
          epoch-millis? (assoc :format "epoch_millis"))}}}}))
 
-(def missing-date-str "2000-01-01T00:00:00.000Z")
+(def missing-date-str "2010-01-01T00:00:00.000Z")
 (def missing-date (time-coerce/to-date-time missing-date-str))
 
 (defn missing-bucket?
+  "Returns true if the date is related to missing date.
+   Depending on date interval the date of missing bucket returned
+   by ES could be either equal or before missing date."
   [date-str]
   (or (= date-str missing-date-str)
-      (->> (time-coerce/to-date-time date-str)
-           (time/after? missing-date))))
+      (-> (time-coerce/to-date-time date-str)
+          (time/before? missing-date))))
 
 (defn format-buckets
   "format buckets from aggregation results into an ordered list of proper bool queries"

@@ -76,6 +76,11 @@
     #(reduce (partial append-coerced coercer) {} %)))
 
 (defn read-source
+  "This function retrieves in `source-store` all the documents that match the given `query`
+   by batch of maximum size `batch-size`. When not nil the `search_after` parameter is used
+   to skip previously retrieved data. Then it pushes the retrieved data in the given channel,
+  `data-chan`, along with next search_after value for eventual further restart. Once all the
+   documents that match given query are retrieved, it closes the channel `data-chan`"
   [{:keys [source-store
            search_after
            data-chan
@@ -98,6 +103,14 @@
         (close! data-chan)))))
 
 (defn write-target
+  "This function reads batches from `data-chan` (pushed by read-source) until it reads
+   a `nil`, meaning that the channel has been closed by `read-source` function. The
+   batches are (1) modified with `migrations` functions, (2) validated by `list-coerce`
+   and (3) written into given `target-store`. At each batch the migration state, number
+   of migrated documents and search_after value, is updated in ES after the documents
+   are written in the store. If the process fails or is stopped before that update of
+   the migration state, the documents will be red again by `read-source` and overridden
+   in case of restart."
   [{:keys [target-store
            data-chan
            migrations
