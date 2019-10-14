@@ -10,7 +10,7 @@
              [common
               :refer [BaseEntityFilterParams PagingParams
                       SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [entity-crud-routes wait_for->refresh]]]
             [ctia.schemas
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting
@@ -32,6 +32,7 @@
             [flanders
              [schema :as fs]
              [utils :as fu]]
+            [ring.swagger.schema :refer [describe]]
             [ring.util.http-response :refer [not-found ok]]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -94,6 +95,7 @@
          :body [update IncidentStatusUpdate
                 {:description "an Incident Status Update"}]
          :summary "Update an Incident Status"
+         :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
          :path-params [id :- s/Str]
          :capabilities :create-incident
          :auth-identity identity
@@ -112,7 +114,8 @@
                                                update-record
                                                (:id %)
                                                %
-                                               identity-map)
+                                               identity-map
+                                               (wait_for->refresh wait_for))
                       :long-id-fn with-long-id
                       :entity-type :incident
                       :entity-id id

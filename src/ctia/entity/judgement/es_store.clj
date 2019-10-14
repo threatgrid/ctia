@@ -105,10 +105,10 @@
     (handle-create state new-judgements ident params))
   (read-record [_ id ident params]
     (handle-read state id ident params))
-  (delete-record [_ id ident]
-    (handle-delete state id ident))
-  (update-record [_ id judgement ident]
-    (handle-update state id judgement ident))
+  (delete-record [_ id ident params]
+    (handle-delete state id ident params))
+  (update-record [_ id judgement ident params]
+    (handle-update state id judgement ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
 

@@ -5,8 +5,8 @@
 (defprotocol IStore
   (create-record [this new-records ident params])
   (read-record [this id ident params])
-  (update-record [this id record ident])
-  (delete-record [this id ident])
+  (update-record [this id record ident params])
+  (delete-record [this id ident params])
   (list-records [this filtermap ident params]))
 
 (defprotocol IJudgementStore
