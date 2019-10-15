@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [identity])
   (:require
    [compojure.api.sweet :refer :all]
+   [ctia.http.routes.crud :refer [wait_for->refresh]]
    [ctia.bundle
     [core :refer [bundle-max-size
                   bundle-size
@@ -97,7 +98,8 @@
                  :query-params
                  [{external-key-prefixes
                    :- (describe s/Str "Comma separated list of external key prefixes")
-                   nil}]
+                   nil}
+                  {wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
                  :summary "POST many new entities using a single HTTP call"
                  :auth-identity auth-identity
                  :capabilities #{:create-actor
@@ -120,4 +122,7 @@
                    (if (> (bundle-size bundle)
                           max-size)
                      (bad-request (str "Bundle max nb of entities: " max-size))
-                     (ok (import-bundle bundle external-key-prefixes auth-identity)))))))
+                     (ok (import-bundle bundle
+                                        external-key-prefixes
+                                        auth-identity
+                                        (wait_for->refresh wait_for))))))))
