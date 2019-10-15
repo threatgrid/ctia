@@ -1,4 +1,2 @@
-[commit]
-	template = .github/pull_request_template.md
 [alias]
   synctg = "!oldbr=`git rev-parse --abbrev-ref HEAD` ; git checkout master && git fetch --all && git rebase tg/master && git push ; git checkout $oldbr"
