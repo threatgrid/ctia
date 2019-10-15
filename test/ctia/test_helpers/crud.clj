@@ -108,7 +108,7 @@
                                   updated-record
                                   post-record))))))
 
-      (testing "testing wait_for values"
+      (testing "testing wait_for values on entity creation"
         (let [get-status (fn [wait_for]
                            (let [path (cond-> (str "ctia/" entity)
                                         (boolean? wait_for) (str "?wait_for=" wait_for))
@@ -125,7 +125,7 @@
                                  :status)))]
           (is (= 200 (get-status true))
               "Create queries should wait for index refresh when wait_for is true")
-          ;; we trigger next 404 tests twice because the refresh could occur between the first POST / GET sequence.
+          ;; we trigger next 404 tests several times because the refresh could occur between the first POST / GET sequence.
           (is (some #(= 404 %)
                     (repeatedly 100 #(get-status false)))
              "Create queries should not wait for index refresh when wait_for is false")
@@ -135,6 +135,90 @@
               (is (some #(= 404 %)
                         (repeatedly 100 #(get-status nil))))
               (is (= 200 (get-status nil)))))))
+
+
+      (testing "testing wait_for values on entity update / patch"
+        (let [entity-id (-> (format "ctia/%s?wait_for=true" entity)
+                            (post :body new-record
+                                  :headers headers)
+                            :parsed-body
+                            :id
+                            id/long-id->id
+                            :short-id)
+              get-modified (fn [method wait_for value]
+                             (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
+                                          (boolean? wait_for) (str "?wait_for=" wait_for))
+                                   updates (cond->> {update-field value}
+                                             (= put method) (into new-record))
+                                   record (method path
+                                                  :body updates
+                                                  :headers headers)]
+                               (-> (get (format "ctia/%s/%s" entity entity-id)
+                                        :headers headers)
+                                   :parsed-body
+                                   update-field)))]
+          (when update-tests?
+            (is (= "updated-true"
+                   (get-modified put true "updated-true"))
+                "Update queries should wait for index refresh when wait_for is true")
+            ;; we trigger next 404 tests several times because the refresh could occur between the first POST / GET sequence.
+            (is (some #(not= % (get-modified put false %))
+                      (map #(str "updated-false" %)
+                           (range 100)))
+                "Update queries should not wait for index refresh when wait_for is false")
+
+            (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
+              (if (#{"false" nil} (get-in properties [:ctia :store :es :default :refresh]))
+
+                (is (some #(not= % (get-modified put nil %))
+                          (map #(str "updated-nil-false" %)
+                               (range 100)))
+                (is (= "updated-nil-true" (get-modified put nil "updated-nil-true")))))))
+
+          (when patch-tests?
+            (is (= "patched-true"
+                   (get-modified patch true "patched-true"))
+                "Patch queries should wait for index refresh when wait_for is true")
+            ;; we trigger next 404 tests several times because the refresh could occur between the first POST / GET sequence.
+            (is (some #(not= % (get-modified patch false %))
+                      (map #(str "patched-false" %)
+                           (range 100)))
+                "Patch queries should not wait for index refresh when wait_for is false")
+            (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
+              (if (#{"false" nil} (get-in properties [:ctia :store :es :default :refresh]))
+                (is (some #(not= % (get-modified patch nil %))
+                          (map #(str "patched-nil-false" %)
+                               (range 100)))
+                    (is (= "patched-nil-true" (get-modified patch nil "updated-nil-true")))))))))
+
+      (testing "testing wait_for values on entity deletion"
+        (let [get-status (fn [wait_for]
+                           (let [entity-id (-> (post (str "ctia/" entity "?wait_for=true")
+                                                     :body new-record
+                                                     :headers headers)
+                                               :parsed-body
+                                               :id
+                                               id/long-id->id
+                                               :short-id)
+                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
+                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
+                             (delete path
+                                     :headers headers)
+                             (-> (get (format "ctia/%s/%s" entity entity-id)
+                                      :headers headers)
+                                 :status)))]
+          (is (= 404 (get-status true))
+              "Delete queries should wait for index refresh when wait_for is true")
+          ;; we trigger next 200 tests several times because the refresh could occur between the first POST / GET sequence.
+          (is (some #(= 200 %)
+                    (repeatedly 3 #(get-status false)))
+             "Delete queries should not wait for index refresh when wait_for is false")
+          (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
+            (if (= "false" (get-in properties [:ctia :store :es :default :refresh]))
+
+              (is (some #(= 200 %)
+                        (repeatedly 3 #(get-status nil))))
+              (is (= 404 (get-status nil)))))))
 
       (when invalid-tests?
         (testing (format "PUT invalid /ctia/%s/:id" entity)
