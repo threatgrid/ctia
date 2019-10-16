@@ -9,7 +9,7 @@
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia
-             [properties :refer [get-http-show]]
+             [properties :refer [get-http-show properties]]
              [store :refer [stores]]]
             [ctia.bulk.core
              :refer
@@ -181,6 +181,65 @@
                                   (str (encode (name type)) "=" (encode short-id))))
                               (core/get bulk-ids type))))
              (keys bulk-ids))))
+
+
+(deftest test-bulk-wait_for-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (testing "POST /ctia/bulk with wait_for"
+       (let [headers {"Authorization" "45c1f5e3f05d0"}
+             get-statuses (fn [wait_for]
+                            (let [nb 2
+                                  indicators (map mk-new-indicator (range nb))
+                                  judgements (map mk-new-judgement (range nb))
+                                  new-bulk {:indicators indicators
+                                            :judgements judgements
+                                            :relationships (map #(mk-new-relationship %
+                                                                                      (-> indicators (nth %) :id)
+                                                                                      (-> judgements (nth %) :id))
+                                                                (range nb))}
+
+                                  path (cond-> "ctia/bulk"
+                                         (boolean? wait_for) (str "?wait_for=" wait_for))
+                                  response (post path
+                                                 :body new-bulk
+                                                 :headers headers)
+                                  bulk-ids (->> (:parsed-body response)
+                                                :tempids
+                                                vals
+                                                (map id/long-id->id))
+                                  statuses (map #(:status (get (format "ctia/%s/%s"
+                                                                       (:type %)
+                                                                       (:short-id %))
+                                                               :headers headers))
+                                                bulk-ids)
+                                  ]
+                              (clojure.pprint/pprint statuses)
+                              (is (= 201 (:status response)))
+                              statuses))]
+         (is (every? #(= 200 %)
+                     (get-statuses true))
+             "Bulk import should wait for index refresh when wait_for is true")
+         (is (some (fn [statuses]
+                     (some #(= 404 %) statuses))
+                   (repeatedly 10 #(get-statuses false)))
+             "Bulk imports should not wait for index refresh when wait_for is false")
+         (testing "Configured ctia.store.bundle-refresh value is applied when wait_for is not specified"
+           (if (= "false" (get-in @properties [:ctia :store :bundle-refresh]))
+             (is (some (fn [statuses]
+                         (some #(= 404 %) statuses))
+                       (repeatedly 2 #(get-statuses nil))))
+             (is (every? #(= 200 %)
+                         (get-statuses true)))))
+         )))))
+
+
+
 
 (deftest test-bulk-routes
   (test-for-each-store

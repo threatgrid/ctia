@@ -8,7 +8,12 @@
     [test :refer [is testing]]]
    [ctia.properties :refer [get-http-show properties]]
    [ctia.test-helpers
-    [core :as helpers :refer [delete get post put patch]]
+    [core :as helpers :refer [delete
+                              get
+                              post
+                              put
+                              patch
+                              entity->short-id]]
     [search :refer [test-query-string-search]]]
    [ctim.domain.id :as id]))
 
@@ -117,9 +122,7 @@
                                               :headers headers)
                                  short-id (-> record
                                               :parsed-body
-                                              :id
-                                              id/long-id->id
-                                              :short-id)]
+                                              entity->short-id)]
                              (-> (get (format "ctia/%s/%s" entity short-id)
                                       :headers headers)
                                  :status)))]
@@ -142,9 +145,7 @@
                             (post :body new-record
                                   :headers headers)
                             :parsed-body
-                            :id
-                            id/long-id->id
-                            :short-id)
+                            entity->short-id)
               get-modified (fn [method wait_for value]
                              (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
                                           (boolean? wait_for) (str "?wait_for=" wait_for))
@@ -197,9 +198,7 @@
                                                      :body new-record
                                                      :headers headers)
                                                :parsed-body
-                                               :id
-                                               id/long-id->id
-                                               :short-id)
+                                               entity->short-id)
                                  path (cond-> (format "ctia/%s/%s" entity entity-id)
                                         (boolean? wait_for) (str "?wait_for=" wait_for))]
                              (delete path

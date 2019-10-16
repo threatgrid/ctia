@@ -202,7 +202,6 @@
        (map (fn [[k v]] [k (count v)]))
        (into {})))
 
-
 (deftest bundle-import-wait_for-test
   (test-for-each-store
    (fn []
@@ -256,7 +255,7 @@
          (if (= "false" (get-in @properties [:ctia :store :bundle-refresh]))
            (is (some (fn [statuses]
                        (some #(= 404 %) statuses))
-                     (repeatedly 2 #(get-statuses nil))))
+                     (repeatedly 10 #(get-statuses nil))))
            (is (every? #(= 200 %)
                        (get-statuses true)))))))))
 
