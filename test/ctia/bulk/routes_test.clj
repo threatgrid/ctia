@@ -217,9 +217,7 @@
                                                                        (:type %)
                                                                        (:short-id %))
                                                                :headers headers))
-                                                bulk-ids)
-                                  ]
-                              (clojure.pprint/pprint statuses)
+                                                bulk-ids)]
                               (is (= 201 (:status response)))
                               statuses))]
          (is (every? #(= 200 %)
@@ -230,16 +228,12 @@
                    (repeatedly 10 #(get-statuses false)))
              "Bulk imports should not wait for index refresh when wait_for is false")
          (testing "Configured ctia.store.bundle-refresh value is applied when wait_for is not specified"
-           (if (= "false" (get-in @properties [:ctia :store :bundle-refresh]))
+           (if (= "false" (get-in @properties [:ctia :store :bulk-refresh]))
              (is (some (fn [statuses]
                          (some #(= 404 %) statuses))
                        (repeatedly 2 #(get-statuses nil))))
              (is (every? #(= 200 %)
-                         (get-statuses true)))))
-         )))))
-
-
-
+                         (get-statuses true))))))))))
 
 (deftest test-bulk-routes
   (test-for-each-store
