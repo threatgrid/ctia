@@ -2,26 +2,33 @@
  This task will run through all configured stores, transform and copy data to new elasticsearch indices. 
  A migration state will be stored in a configured state to enable restart.
 
-# migration steps
- - as the migration task copies indexes, make sure you have enough disk space before launching it.
- - keep current ctia ES properties: host, port, transport and current store indices.
- - modify alias and rollover conditions according to the need of future indices. Note that only `max_docs` rollover condition will be considered during migration.
- - if possible, stop any processes that push data into CTIA.
- - launch migration task while your CTIA instance keep running. You can launch parallel migrations for different stores.
- - stop CTIA.
- - complete migration using `--restart` parameter to complete migration and handle writes that occured during migration.
- - after the migration task completes, you will need to edit your properties, changing each store index to the new one.
- - launch new version of CTIA. 
- - this task doesn't alter the existing indices, you should delete them after a successful migration.
- 
+# :warning: Prepare Migration :warning:
+ - As the migration task copies indexes, make sure you have enough disk space before launching it.
+ - Make sure the resulting indices from your prefix configuration don't match existing ones as they will be deleted.
+ - Prepare the migration properties (ex: `ctia_migration.properties`):
+   - Keep current CTIA ES properties: host, port, transport and current store indices. These properties will be used to read source indices.
+   - Modify `aliased`, `rollover`, and `shards` options according to the need of future indices. The migrated indices will be built with these options. Note that only `max_docs` rollover condition will be considered during migration.
+   - Configure desired number of shards.
+ - Prepare the future migration properties (ex: `ctia_vX.X.X.properties`) that will be used to restart CTIA on migration indices. In particular you will have to set `aliased`, `rollover`, and `indexname` options according to targeted indices state.
+ - If possible, stop any processes that push data into CTIA.
+
+
+# Migration Steps
+ - replace `ctia.properties` by the migration property file that you prepared (`ctia_migration.properties`).
+ - Launch migration task while your CTIA instance keep running. You can launch parallel migrations for different stores.
+ - Stop CTIA server instance.
+ - Complete migration using `--restart` parameter to handle writes that occurred during the migration. Keep the same migration properties.
+ - After the migration task completes, replace CTIA properties of the server instance with the one you prepared to launch the server with migrated indices (ex: `ctia_vX.X.X.properties`).
+ - Launch new version of CTIA. 
+ - The migration task doesn't alter the existing indices, you can delete them after a successful migration.
+
  
  In case of failure, you have 2 solutions depending on the situation:
    - you can relaunch the task at will, it should fully recreate the new indices.
    - you can restart this migration with `--restart` parameter, it will reuse the migration
  
- Make sure the resulting indices from your prefix configuration don't match existing ones as they will be deleted (unless the migration is restarted)
  
-# launch the task with:
+# Launch the task with:
  
 `java -cp ctia.jar:resources:. clojure.main -m ctia.task.migration.migrate-es-stores <options>`
 
@@ -51,7 +58,7 @@ or from source
 - the migration failed, you corrected the issue that made it fail, you can restart it with `--restart` (or `-r`) parameter (same command as above). 
 
 
-# available migrations
+# Available migrations
 
 | migration task | target ctia versions          | sample command                                                                                          |
 |----------------|-------------------------------|---------------------------------------------------------------------------------------------------------|

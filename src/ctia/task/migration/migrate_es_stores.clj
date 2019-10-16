@@ -196,17 +196,16 @@
                (:type target-store)
                target-store-size)
 
-    (loop [offset 0
-           sort-keys nil
+    (loop [sort-keys nil
            checked-count 0
            invalids []]
       (let [{:keys [data paging]
              :as batch}
             (mst/fetch-batch target-store
-                         batch-size
-                         offset
-                         nil
-                         sort-keys)
+                             batch-size
+                             0
+                             "asc"
+                             sort-keys)
             next (:next paging)
             offset (:offset next 0)
             search_after (:sort paging)
@@ -214,7 +213,7 @@
             checked-count (+ checked-count
                              (count data))]
         (if next
-          (recur offset search_after checked-count (concat invalids errors))
+          (recur search_after checked-count (concat invalids errors))
           (do
             (log/infof "%s - finished checking %s documents"
                        (:type target-store)
@@ -228,9 +227,7 @@
   "check all new es store indexes"
   [store-keys batch-size prefix]
   (let [current-stores (mst/stores->maps (select-keys @stores store-keys))
-        target-stores
-        (mst/source-store-maps->target-store-maps current-stores
-                                              prefix)
+        target-stores (mst/get-target-stores prefix store-keys)
         batch-size (or batch-size default-batch-size)]
 
     (log/infof "checking stores: %s" (keys current-stores))

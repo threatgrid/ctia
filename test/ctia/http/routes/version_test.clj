@@ -27,7 +27,8 @@
      (testing "GET /ctia/version"
        (let [response (get "ctia/version")]
          (is (= 200 (:status response)))
-         (is (= schema-version (get-in response [:parsed-body :ctim-version]))))))))
+         (is (= schema-version (get-in response [:parsed-body :ctim-version])))
+         (is (= "test" (get-in response [:parsed-body :ctia-config]))))))))
 
 (deftest test-version-headers
   (test-for-each-store
@@ -39,4 +40,5 @@
          (is (every? (set (keys headers))
                      ["X-Ctia-Version"
                       "X-Ctia-Config"
-                      "X-Ctim-Version"])))))))
+                      "X-Ctim-Version"]))
+         (is (= "test" (clojure.core/get headers "X-Ctia-Config"))))))))

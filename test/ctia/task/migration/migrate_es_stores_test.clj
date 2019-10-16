@@ -72,19 +72,49 @@
                             (prefixed-index indexname prefix))))
 
 (def fixtures-nb 100)
+(def updates-nb 50)
 (def minimal-examples (fixt/bundle fixtures-nb false))
 (def example-types
   (->> (vals minimal-examples)
        (map #(-> % first :type keyword))
        set))
 
+(defn update-entity
+  [{entity-type :type
+    entity-id :short-id}]
+  (let [entity-path (format "ctia/%s/%s" (str entity-type) entity-id)
+        previous (-> (helpers/get entity-path
+                                  :headers {"Authorization" "45c1f5e3f05d0"})
+                     :parsed-body)]
+  (put entity-path
+       :body (assoc previous :description "UPDATED")
+       :headers {"Authorization" "45c1f5e3f05d0"})))
+
+(defn random-updates
+  "select nb random entities of the bulk and update them"
+  [bulk-result nb]
+  (let [random-ids (->> (select-keys bulk-result
+                                     [:malwares
+                                      :sightings
+                                      :indicators
+                                      :vulnerabilities])
+                        vals
+                        (apply concat)
+                        shuffle
+                        (take nb)
+                        (map long-id->id))]
+    (doseq [entity random-ids]
+      (update-entity entity))))
+
 (defn rollover-post-bulk
-  "post data in 2 parts and rollover"
+  "post data in 2 parts with rollover, randomly update son entities"
   []
-  (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-  (rollover-stores @stores)
-  (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-  (rollover-stores @stores))
+  (let [bulk-res-1 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+        _ (rollover-stores @stores)
+        bulk-res-2 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
+        _ (rollover-stores @stores)]
+    (random-updates bulk-res-1 (/ updates-nb 2))
+    (random-updates bulk-res-2 (/ updates-nb 2))))
 
 
 (deftest migration-with-rollover
@@ -127,8 +157,7 @@
           (let [migrated-store (get-in migration-state [:stores store-type])
                 {:keys [source target]} migrated-store]
             (is (= fixtures-nb (:total source)))
-            (is (= fixtures-nb (:migrated target))))
-          )))))
+            (is (= fixtures-nb (:migrated target)))))))))
 
 
 (deftest migration-with-malformed-docs
@@ -148,7 +177,6 @@
                    :am "a"
                    :bad "document"}]
       ;; insert proper documents
-      ;;(post-bulk minimal-examples)
       (rollover-post-bulk)
       ;; insert malformed documents
       (doseq [store-type store-types]
@@ -194,7 +222,7 @@
                                       "foogroup"
                                       "user")
   ;; insert proper documents
-  (post-bulk minimal-examples)
+  (rollover-post-bulk)
   (testing "migrate ES Stores test setup"
     (testing "simulate migrate es indexes shall not create any document"
       (sut/migrate-store-indexes "test-1"
@@ -237,7 +265,9 @@
                   source-size
                   (cond
                     (= :identity entity-type) 1
-                    (= :event entity-type) (* fixtures-nb (count minimal-examples))
+                    (= :event entity-type) (+ updates-nb
+                                              (* fixtures-nb
+                                                 (count minimal-examples)))
                     (contains? example-types (keyword entity-type)) fixtures-nb
                     :else 0)]
               (is (= source-size (:total source)))
@@ -253,7 +283,8 @@
           (is (clojure.set/subset?
                ["campaign - finished migrating 100 documents"
                 "indicator - finished migrating 100 documents"
-                "event - finished migrating 1500 documents"
+                (format "event - finished migrating %s documents"
+                        (+ 1500 updates-nb))
                 "actor - finished migrating 100 documents"
                 "relationship - finished migrating 100 documents"
                 "incident - finished migrating 100 documents"
@@ -296,8 +327,10 @@
               (get-in @props/properties [:ctia :store :es])
               date (java.util.Date.)
               index-date (.format (java.text.SimpleDateFormat. "yyyy.MM.dd") date)
-              expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date) 1000
-                                      (format "v0.0.0_ctia_event-%s-000002" index-date) 500}
+              expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
+                                      1000
+                                      (format "v0.0.0_ctia_event-%s-000002" index-date)
+                                      (+ 500 updates-nb)}
               expected-indices
               (->> #{relationship
                      judgement
@@ -335,20 +368,74 @@
               (is (every? #(= ["migration-test"] %)
                           docs))))))
     (testing "restart migration shall properly handle inserts, updates and deletes"
-      (let [new-malwares (->> (fixt/n-examples :malware 3 false)
+      (let [;; retrieve the first 2 source indices for sighting store
+            {:keys [host port]}(get-in @props/properties [:ctia :store :es :default])
+            [sighting-index-1 sighting-index-2]
+            (->> (get-cat-indices host port)
+                 keys
+                 (map name)
+                 (filter #(.contains % "sighting"))
+                 sort
+                 (take 2))
+
+            ;; retrieve source entity to update, in first position of first index
+            es-sighting0 (-> (es-doc/query es-conn
+                                           sighting-index-1
+                                           "sighting"
+                                           {:match_all {}}
+                                           {:sort_by "timestamp:asc"
+                                            :size 1})
+                             :data
+                             first)
+            ;; retrieve source entity to update, in first position of second index
+            es-sighting1 (-> (es-doc/query es-conn
+                                           sighting-index-2
+                                           "sighting"
+                                           {:match_all {}}
+                                           {:sort_by "timestamp:asc"
+                                            :size 1})
+                             :data
+                             first)
+
+            ;; prepare new malwares
+            new-malwares (->> (fixt/n-examples :malware 3 false)
                               (map #(assoc % :description "INSERTED"))
                               (hash-map :malwares))
-            [sighting1 & sightings] (:parsed-body (helpers/get "ctia/sighting/search"
-                                                  :query-params {:limit 10 :query "*"}
-                                                  :headers {"Authorization" "45c1f5e3f05d0"}))
-            sighting1-id (-> sighting1 :id long-id->id :short-id)
-            sighting-ids (map #(-> % :id long-id->id :short-id)
-                               sightings)]
+
+            ;; retrieve 5 source entities to delete, in last positions of first index
+            es-sightings-1 (-> (es-doc/query es-conn
+                                             sighting-index-1
+                                             "sighting"
+                                             {:match_all {}}
+                                             {:sort_by "timestamp:desc"
+                                              :limit 5})
+                               :data)
+            ;; retrieve 5 source entities to delete, in last positions of second index
+            es-sightings-2 (-> (es-doc/query es-conn
+                                             sighting-index-2
+                                             "sighting"
+                                             {:match_all {}}
+                                             {:sort_by "timestamp:desc"
+                                              :limit 5})
+                               :data)
+            sightings (concat es-sightings-1 es-sightings-2)
+            sighting0-id (:id es-sighting0)
+            sighting1-id (:id es-sighting1)
+            sighting-ids (map :id sightings)
+            updated-sighting-body (-> (:sightings minimal-examples)
+                                      first
+                                      (dissoc :id)
+                                      (assoc :description "UPDATED"))]
+        ;; insert new entities in source store
         (post-bulk new-malwares)
-        (put (format "ctia/sighting/%s" sighting1-id)
-             :body (-> (dissoc sighting1 :id)
-                       (assoc :description "UPDATED"))
+        ;; modify entities in first and second source indices
+        (put (format "ctia/sighting/%s" sighting0-id)
+             :body updated-sighting-body
              :headers {"Authorization" "45c1f5e3f05d0"})
+        (put (format "ctia/sighting/%s" sighting1-id)
+             :body updated-sighting-body
+             :headers {"Authorization" "45c1f5e3f05d0"})
+        ;; delete entities from first and second source indices
         (doseq [sighting-id sighting-ids]
           (delete (format "ctia/sighting/%s" sighting-id)
                   :headers {"Authorization" "45c1f5e3f05d0"}))
@@ -366,13 +453,12 @@
               malware-target-store (get-in malware-migration [:target :store])
               {last-target-malwares :data} (fetch-batch malware-target-store 3 0 "desc" nil)
               {:keys [conn indexname mapping]} (get-in sighting-migration [:target :store])
-              updated-sighting (-> (es-doc/query conn
-                                                 indexname
-                                                 mapping
-                                                 (es-query/ids [sighting1-id])
-                                                 {})
-                                   :data
-                                   first)
+              updated-sightings (-> (es-doc/query conn
+                                                  indexname
+                                                  mapping
+                                                  (es-query/ids [sighting0-id sighting1-id])
+                                                  {})
+                                    :data)
               get-deleted-sightings (-> (es-doc/query conn
                                                       indexname
                                                       mapping
@@ -382,7 +468,7 @@
           (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
               "inserted malwares must be found in target malware store")
 
-          (is (= "UPDATED" (:description updated-sighting))
+          (is (= (repeat 2 "UPDATED") (map :description updated-sightings))
               "updated document must be updated in target stores")
           (is (empty? get-deleted-sightings)
               "deleted document must not be in target stores")))))))

@@ -27,7 +27,7 @@ tools to know what to look for.
 
 In addition to the RESTful HTTP API, it also has an Event Bus.
 
-The data model is defined in the [CTIM](/threatgrid/ctim) project,
+The data model is defined in the [CTIM](https://github.com/threatgrid/ctim) project,
 although it's quite easy to see the API and the models it handles
 using the built-in [Swagger UI](http://localhost:3000/index.html) once
 you have it running.

@@ -15,10 +15,12 @@
             [ctia.lib.collection :refer [fmap]]
             [ctia.stores.es
              [crud :as crud]
-             [init :refer [init-store-conn init-es-conn! get-store-properties]]
+             [init :refer [init-store-conn
+                           init-es-conn!
+                           get-store-properties
+                           StoreProperties]]
              [mapping :as em]
              [store :refer [StoreMap] :as es-store]]
-            [ctia.lib.collection :refer [fmap]]
             [ctia.task.rollover :refer [rollover-store]]
             [ctia
              [init :refer [init-store-service! log-properties]]
@@ -144,10 +146,11 @@
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
     (format "v%s_%s" prefix version-trimmed)))
 
+(def conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
+
 (defn store->map
   [store-record]
-  (es-store/store->map store-record
-              {:cm (conn/make-connection-manager {:timeout timeout})}))
+  (es-store/store->map store-record conn-overrides))
 
 (defn stores->maps
   "transform store records to maps"
@@ -168,15 +171,6 @@
     (-> (assoc-in store [:config :aliases] aliases)
         (update-in [:props :write-index] prefixer)
         (update :indexname prefixer))))
-
-
-(defn source-store-maps->target-store-maps
-  "transform target store records to maps"
-  [source-stores prefix]
-  (into {}
-        (map (fn [[sk sr]]
-               {sk (source-store-map->target-store-map sr prefix)})
-             source-stores)))
 
 (def bulk-max-size (* 5 1024 1024)) ;; 5Mo
 
@@ -204,25 +198,32 @@
                 (not= created modified))))
 
 (defn prepare-docs
-  "Generates the _index, _id and _type meta data for bulk ops. In particular it determines in which indices modified documents need to be written."
+  "Generates the _index, _id and _type meta data for bulk ops.
+  By default we set :_index as write-index for all documents.
+  In the case of aliased target, write-index is set to the write alias.
+  This write alias points to last index and a document that was inserted in a previous index,
+  must be updated in that same index in order to avoid its duplication.
+  Thus, this function detects documents that were modified during a migration toward an aliased index,
+  retrieves the actual target indices they were previously inserted in,
+  and uses them to set :_index meta for these documents"
   [{:keys [conn mapping]
     {:keys [aliased write-index]} :props
     :as store-map}
    docs]
-  (let [{modified true not-modified false} (group-by #(search-real-index? aliased %)
-                                                     docs)
-        prepared-not-modified (map #(assoc %
-                                           :_id (:id %)
-                                           :_index write-index
-                                           :_type mapping)
-                                   not-modified)
+  (let [with-metas (map #(assoc %
+                                :_id (:id %)
+                                :_index write-index
+                                :_type mapping)
+                        docs)
+        {modified true not-modified false} (group-by #(search-real-index? aliased %)
+                                                     with-metas)
         modified-by-ids (fmap first (group-by :id modified))
         bulk-metas-res (->> (map :id modified)
                             (bulk-metas store-map))
         prepared-modified (->> bulk-metas-res
                                (merge-with into modified-by-ids)
                                vals)]
-    (concat prepared-modified prepared-not-modified)))
+    (concat prepared-modified not-modified)))
 
 (defn store-batch
   "store a batch of documents using a bulk operation"
@@ -373,6 +374,28 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (retry es-max-retry es-index/create-template! conn indexname index-config)
     (retry es-max-retry es-index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
 
+(defn target-store-properties
+  [prefix store-key]
+  (-> (get-store-properties store-key)
+      (update :indexname
+              #(prefixed-index % prefix))))
+
+(s/defn init-storemap :- StoreMap
+  [props :- StoreProperties]
+  (-> (init-store-conn props)
+      (es-store/store-state->map conn-overrides)))
+
+(defn get-target-store
+  [prefix store-key]
+  (init-storemap (target-store-properties prefix store-key)))
+
+(defn get-target-stores
+  [prefix store-keys]
+  (->> (map (fn [k]
+              {k (get-target-store prefix k)})
+            store-keys)
+       (into {})))
+
 (s/defn init-migration :- MigrationSchema
   "init the migration state, for each store it provides necessary data on source and target stores (indexname, type, source size, search_after).
 when confirm? is true, it stores this state and creates the target indices."
@@ -380,10 +403,8 @@ when confirm? is true, it stores this state and creates the target indices."
    prefix :- s/Str
    store-keys :- [s/Keyword]
    confirm? :- s/Bool]
-
   (let [source-stores (stores->maps (select-keys @stores store-keys))
-        target-stores
-        (source-store-maps->target-store-maps source-stores prefix)
+        target-stores (get-target-stores prefix store-keys)
         migration-properties (migration-store-properties)
         now (time/now)
         migration-stores (->> source-stores
@@ -407,7 +428,7 @@ when confirm? is true, it stores this state and creates the target indices."
    {source :source
     target :target :as raw-store} :- MigratedStore]
   (let [source-store (store->map (get @stores entity-type))
-        target-store (source-store-map->target-store-map source-store prefix)]
+        target-store (get-target-store prefix entity-type)]
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))
 

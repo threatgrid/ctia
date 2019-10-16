@@ -210,10 +210,37 @@
           (is (= 1 (count parsed-body))
               "filters are applied, and match properly")))))
 
+(defn test-filter-by-id
+  [entity]
+  (let [search-uri (format "ctia/%s/search" (name entity))
+        {:keys [parsed-body status]} (search search-uri "*")
+        first-entity (some-> parsed-body first)]
+    (is (= 200 status))
+    (is (some? first-entity))
+    (testing "filter by long ID"
+      (let [response
+            (get search-uri
+                 :headers {"Authorization" "45c1f5e3f05d0"}
+                 :query-params {"query" "*"
+                                "id" (:id first-entity)})]
+        (is (= 200 (:status response)))
+        (is (= first-entity (some-> response :parsed-body first)))))
+    (testing "filter by short ID"
+      (let [response
+            (get search-uri
+                 :headers {"Authorization" "45c1f5e3f05d0"}
+                 :query-params {"query" "*"
+                                "id" (-> (:id first-entity)
+                                         long-id->id
+                                         :short-id)})]
+        (is (= 200 (:status response)))
+        (is (= first-entity (some-> response :parsed-body first)))))))
+
 (defn test-query-string-search
   [entity query query-field example]
       ;; only when ES store
   (when (= "es" (get-in @properties [:ctia :store (keyword entity)]))
     (if (= :description query-field)
       (test-describable-search entity example)
-      (test-non-describable-search entity query query-field))))
+      (test-non-describable-search entity query query-field))
+    (test-filter-by-id entity)))

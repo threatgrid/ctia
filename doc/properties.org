@@ -81,13 +81,17 @@
    Configure JWT authentication support,
    see: https://jwt.io/
 
-| Property                        | Description                                  | Possible values      |
-|---------------------------------+----------------------------------------------+----------------------|
-| ctia.http.jwt.enabled           | enable JWT auth support                      | =true= =false=       |
-| ctia.http.jwt.public-key-path   | set the JWT key path                         | string (a full path) |
-| ctia.http.jwt.local-storage-key | set JWT local storage key                    | string (a full path) |
-| ctia.http.jwt.public-key-map    | provide the JWT key path for each JWT issuer | string               |
+| Property                           | Description                                  | Possible values      |
+|------------------------------------+----------------------------------------------+----------------------|
+| ctia.http.jwt.enabled              | enable JWT auth support                      | =true= =false=       |
+| ctia.http.jwt.public-key-path      | set the JWT key path                         | string (a full path) |
+| ctia.http.jwt.local-storage-key    | set JWT local storage key                    | string (a full path) |
+| ctia.http.jwt.public-key-map       | provide the JWT key path for each JWT issuer | string (i=x,j=y)     |
+| ctia.http.jwt.http-check.endpoints | the URL to check for each JWT issuer         | string (i=x,j=y)     |
+| ctia.http.jwt.http-check.timeout   | timeout in ms for the check HTTP call        | number (in ms)       |
+| ctia.http.jwt.http-check.cache-ttl | cache ttl of the URL check                   | number (in ms)       |
 
+**** public-key-map
 Example of format for supporting multiple JWTs:
 
 ~APP-ONE=/etc/ctia/ctia-pub-key-1.pub,APP-TWO=/etc/ctia/ctia-pub-key-2.pub~
@@ -97,6 +101,23 @@ is equal to =APP-ONE= CTIA will try to check the signature using the public key
 at the path =/etc/ctia/ctia-pub-key-1.pub=.
 If the claim is equal to =APP-TWO= then we check the signature using the public keys
 at the path =/etc/ctia/ctia-pub-key-2.pub=.
+
+**** revocation-endpoints
+Example of format for calling check URL of JWTs is:
+
+~APP-ONE=https://url.one/check/jwt,APP-TWO=https://url.two/check/jwt~
+
+This mean that when receiving a JWT, and all local checks (signature,
+expirations, etc...) are successful, the JWT will then be used to call an
+external URL.
+This endpoint should perform further checks.
+Typically checking if the JWT is revoked.
+
+Note: if the call timeout or returns anything other than a 401 then we
+consider the check to have passed successfully to prevent a full breakage
+if the external server is down.
+This is after all just another layer of security which should already be
+quite acceptable via signed JWT alone.
 
 *** Rate limit
 
@@ -339,3 +360,9 @@ ES Migration related settings
 |------------------------------+------------------------------------------------------------------------------------------------------------+-----------------|
 | ctia.migration.optimizations | Speed up the migration process disabling indexing and replicas while migrating,                            |boolean          |
 |                              | settings are reverted to their actual values when the process is complete, this should be considered safe. |                 |
+
+** Versions
+
+| Property             | Description                                                   | Possible values |
+|----------------------+---------------------------------------------------------------+-----------------|
+| ctia.versions.config | Version of the configuration if managed in another repository | string          |

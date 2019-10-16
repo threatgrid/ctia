@@ -134,11 +134,9 @@
              "Create queries should not wait for index refresh when wait_for is false")
           (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
             (if (= "false" (get-in @properties [:ctia :store :es :default :refresh]))
-
               (is (some #(= 404 %)
                         (repeatedly 100 #(get-status nil))))
               (is (= 200 (get-status nil)))))))
-
 
       (testing "testing wait_for values on entity update / patch"
         (let [entity-id (-> (format "ctia/%s?wait_for=true" entity)

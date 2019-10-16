@@ -1,5 +1,6 @@
 (ns ctia.stores.es.init
   (:require
+   [clojure.tools.logging :as log]
    [ctia.properties :refer [properties]]
    [ctia.stores.es.mapping :refer [store-settings]]
    [clj-momo.lib.es
@@ -47,15 +48,20 @@
    put the index template, return an ESConnState"
   [properties :- StoreProperties]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties)]
+        (init-store-conn properties)
+        existing-index (es-index/get conn (str index "*"))]
     (es-index/create-template! conn index config)
     (when (and (:aliased props)
-               (empty? (es-index/get conn (str index "*"))))
+               (empty? existing-index))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn
                         (format "<%s-{now/d}-000001>" index)
                         (update config :aliases assoc (:write-index props) {})))
-    conn-state))
+    (if (contains? existing-index (keyword index))
+      (do (log/error "an existing unaliased was configured as aliased. Switching from unaliased to aliased indices requires a migration."
+                     properties)
+          (assoc-in conn-state [:props :write-index] index))
+      conn-state)))
 
 
 (s/defn get-store-properties :- StoreProperties
