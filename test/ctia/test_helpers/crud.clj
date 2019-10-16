@@ -130,7 +130,7 @@
                     (repeatedly 100 #(get-status false)))
              "Create queries should not wait for index refresh when wait_for is false")
           (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
-            (if (= "false" (get-in properties [:ctia :store :es :default :refresh]))
+            (if (= "false" (get-in @properties [:ctia :store :es :default :refresh]))
 
               (is (some #(= 404 %)
                         (repeatedly 100 #(get-status nil))))
@@ -168,7 +168,7 @@
                 "Update queries should not wait for index refresh when wait_for is false")
 
             (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
-              (if (#{"false" nil} (get-in properties [:ctia :store :es :default :refresh]))
+              (if (#{"false" nil} (get-in @properties [:ctia :store :es :default :refresh]))
 
                 (is (some #(not= % (get-modified put nil %))
                           (map #(str "updated-nil-false" %)
@@ -185,7 +185,7 @@
                            (range 100)))
                 "Patch queries should not wait for index refresh when wait_for is false")
             (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
-              (if (#{"false" nil} (get-in properties [:ctia :store :es :default :refresh]))
+              (if (#{"false" nil} (get-in @properties [:ctia :store :es :default :refresh]))
                 (is (some #(not= % (get-modified patch nil %))
                           (map #(str "patched-nil-false" %)
                                (range 100)))
@@ -214,7 +214,7 @@
                     (repeatedly 3 #(get-status false)))
              "Delete queries should not wait for index refresh when wait_for is false")
           (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
-            (if (= "false" (get-in properties [:ctia :store :es :default :refresh]))
+            (if (= "false" (get-in @properties [:ctia :store :es :default :refresh]))
 
               (is (some #(= 200 %)
                         (repeatedly 3 #(get-status nil))))
