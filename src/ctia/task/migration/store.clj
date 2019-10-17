@@ -307,6 +307,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
       (-> (time-coerce/to-date-time date-str)
           (time/before? missing-date))))
 
+(def Interval (s/enum "year" "month" "week" "day"))
 
 (s/defn format-buckets :- [ESQuery]
   "format buckets from aggregation results into an ordered list of proper bool queries"
@@ -314,7 +315,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                     {:doc_count s/Int
                      :key_as_string s/Str})]
    field :- s/Keyword
-   interval :- (s/enum "year" "month" "week" "day")]
+   interval :- Interval]
   (let [unit (case interval
                "year" "y"
                "month" "M"
@@ -345,8 +346,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
   that are created or modified during the migration. Note that new entities are now
   created with creation value as first modified value"
   [{:keys [conn indexname mapping]} :- StoreMap
-   search_after
-   interval]
+   search_after :- [s/Any]
+   interval :- Interval]
   (let [agg-field (case mapping
                     "event" :timestamp
                     :modified)
