@@ -2,7 +2,6 @@
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [clojure.core.async :as async :refer [chan <!! >!! close! thread]]
 
             [schema-tools.core :as st]
             [schema.core :as s]
@@ -83,24 +82,22 @@
    documents that match given query are retrieved, it closes the channel `data-chan`"
   [{:keys [source-store
            search_after
-           data-chan
            batch-size
-           query]}]
-  (loop [current-search-after search_after]
+           query]
+    :as batch-params}]
     ;; loop that reads batches from source and produces them in chan
-    (let [{:keys [data paging] :as res} (mst/query-fetch-batch query
-                                                               source-store
-                                                               batch-size
-                                                               0
-                                                               "asc"
-                                                               current-search-after)
-          next (:next paging)
+  (when batch-params
+    (let [{:keys [data paging]} (mst/query-fetch-batch query
+                                                       source-store
+                                                       batch-size
+                                                       0
+                                                       "asc"
+                                                       search_after)
           next-search-after (:sort paging)]
-      (>!! data-chan {:documents data
-                      :search_after next-search-after})
-      (if next
-        (recur  next-search-after)
-        (close! data-chan)))))
+      (when (seq data)
+        (assoc batch-params
+               :documents data
+               :search_after next-search-after)))))
 
 (defn write-target
   "This function reads batches from `data-chan` (pushed by read-source) until it reads
@@ -111,42 +108,60 @@
    are written in the store. If the process fails or is stopped before that update of
    the migration state, the documents will be red again by `read-source` and overridden
    in case of restart."
-  [{:keys [target-store
-           data-chan
+  [migrated-count
+   {:keys [target-store
+           documents
+           search_after
            migrations
            entity-type
            batch-size
            migration-id
            list-coerce
-           migrated-count
            migration-es-conn
-           confirm?]}]
-  (loop [current-count migrated-count]
-    ;; sync loop that consumes batches in chan and migrates them to target
-    (if-let [{:keys [documents search_after]} (<!! data-chan)]
-      (let [migrated (transduce migrations conj documents)
-           {:keys [data errors]} (list-coerce migrated)
-           new-current-count (+ current-count (count data))]
-        (doseq [entity errors]
-          (let [message
-                (format "%s - Cannot migrate entity: %s"
-                        (name entity-type)
-                        (pr-str entity))]
-            (log/error message)))
-        (when confirm?
-          (when (seq data) (mst/store-batch target-store data))
-          (mst/rollover target-store batch-size new-current-count)
-          (mst/update-migration-store migration-id
-                                      entity-type
-                                      (into {:target {:migrated new-current-count}}
-                                            (when search_after
-                                              {:source {:search_after search_after}}))
-                                      migration-es-conn))
-        (log/infof "%s - migrated: %s documents"
-                   (name entity-type)
-                   new-current-count)
-        (recur new-current-count))
-      current-count)))
+           confirm?]
+    :as batch-params}]
+  (let [migrated (transduce migrations conj documents)
+        {:keys [data errors]} (list-coerce migrated)
+        new-migrated-count (+ migrated-count (count data))]
+    (doseq [entity errors]
+      (let [message
+            (format "%s - Cannot migrate entity: %s"
+                    (name entity-type)
+                    (pr-str entity))]
+        (log/error message)))
+    (when confirm?
+      (when (seq data) (mst/store-batch target-store data))
+      (mst/rollover target-store batch-size new-migrated-count)
+      (mst/update-migration-store migration-id
+                                  entity-type
+                                  (into {:target {:migrated new-migrated-count}}
+                                        (when search_after
+                                          {:source {:search_after search_after}}))
+                                  migration-es-conn))
+    (log/infof "%s - migrated: %s documents"
+               (name entity-type)
+               new-migrated-count)
+    new-migrated-count))
+
+(defn migrate-query
+  [{:keys [entity-type
+           migrated-count
+           buffer-size]
+    :as migration-params}
+   query]
+  (log/infof "%s - handling sliced query %s"
+             (name entity-type)
+             (pr-str query))
+  (let [read-params (assoc migration-params :query query)
+        data-queue (->> (iterate read-source read-params)
+                        rest
+                        (seque buffer-size))
+        new-migrated-count (reduce write-target
+                                   migrated-count
+                                   (take-while seq data-queue))]
+    (assoc migration-params
+           :migrated-count
+           new-migrated-count)))
 
 (defn migrate-store
   "migrate a single store"
@@ -166,9 +181,11 @@
          migrated-count-state :migrated} target
         store-schema (type->schema (keyword (:type target-store)))
         list-coerce (list-coerce-fn store-schema)
-        all-queries (mst/sliced-queries source-store search_after "week")
+        queries (mst/sliced-queries source-store search_after "week")
         base-params {:source-store source-store
                      :target-store target-store
+                     :migrated-count migrated-count-state
+                     :buffer-size buffer-size
                      :search_after search_after
                      :migrations migrations
                      :entity-type entity-type
@@ -180,27 +197,16 @@
     (log/infof "%s - store size: %s records"
                (:type source-store)
                source-store-size)
-
     (when (and confirm? (not started))
       (mst/update-migration-store migration-id
                                   entity-type
                                   {:started (time/now)}))
-    (loop [queries all-queries
-           migrated-count migrated-count-state]
-      (if-let [query (first queries)]
-        (let [migration-params (assoc base-params
-                                      :query query
-                                      :migrated-count migrated-count
-                                      :data-chan (chan buffer-size))]
-          (log/infof "%s - handling sliced query %s"
-                     (name entity-type)
-                     (pr-str query))
-          (thread (read-source migration-params))
-          (recur (next queries)
-                 (write-target migration-params)))
-        (log/infof "%s - finished migrating %s documents"
-                   (name entity-type)
-                   migrated-count)))
+    (->> (reduce migrate-query
+                 base-params
+                 queries)
+         :migrated-count
+         (log/infof "%s - finished migrating %s documents"
+                    (name entity-type)))
     (when confirm?
       (mst/finalize-migration! migration-id
                                entity-type

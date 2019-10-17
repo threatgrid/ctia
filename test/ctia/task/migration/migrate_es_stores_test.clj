@@ -2,7 +2,6 @@
   (:require [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
-            [clojure.core.async :as async :refer [chan <!! >!! close!]]
             [clj-http.fake :refer [with-fake-routes]]
             [schema.core :as s]
             [clj-http.client :as client]
@@ -168,13 +167,6 @@
             (is (= fixtures-nb (:total source)))
             (is (= fixtures-nb (:migrated target)))))))))
 
-(defn consume-close-chan
-  [c]
-  (loop [batches []]
-    (if-let [batch (<!! c)]
-      (recur (conj batches batch))
-      batches)))
-
 (def date-str->epoch-millis
   (comp time-coerce/to-long time-coerce/to-date-time))
 
@@ -190,17 +182,14 @@
           docs (map es-helpers/prepare-bulk-ops
                     (line-seq rdr))
           _ (es-helpers/load-bulk es-conn docs)
-          docs-no-modified (->> (filter #(nil? (:modified %))
-                                        docs)
-                                (map #(dissoc % :_index :_type :_id)))
-          docs-100 (->> (take 100 docs)
-                        (map #(dissoc % :_index :_type :_id)))
+          no-meta-docs (map #(dissoc % :_index :_type :_id)
+                            docs)
+          docs-no-modified (filter #(nil? (:modified %))
+                                   no-meta-docs)
+          docs-100 (take 100 no-meta-docs)
           missing-query {:bool {:must_not {:exists {:field :modified}}}}
           ids-100-query {:ids {:values (map :id docs-100)}}
           match-all-query {:match_all {}}
-          chan-missing (chan 2)
-          chan-ids (chan 2)
-          chan-match-all (chan 10)
           nb-skipped-ids 10
           [last-skipped & expected-ids-docs] (->> (sort-by (juxt :modified :created :id)
                                                          docs-100)
@@ -211,44 +200,48 @@
           search_after [(date-str->epoch-millis after-modified)
                         (date-str->epoch-millis after-created)
                         after-id]
-          _ (sut/read-source {:source-store storemap
-                              :data-chan chan-missing
-                              :batch-size 1000
-                              :query missing-query})
-          _ (sut/read-source {:source-store storemap
-                              :data-chan chan-ids
-                              :batch-size 1000
-                              :search_after search_after
-                              :query ids-100-query})
-          _ (sut/read-source {:source-store storemap
-                              :data-chan chan-match-all
-                              :batch-size 200
-                              :query match-all-query})
-          missing-batches (consume-close-chan chan-missing)
-          ids-batches (consume-close-chan chan-ids)
-          match-all-batches (consume-close-chan chan-match-all)]
+          read-params-1 {:source-store storemap
+                         :batch-size 1000
+                         :query missing-query}
+          read-params-2 {:source-store storemap
+                         :batch-size 100
+                         :search_after search_after
+                         :query ids-100-query}
+          read-params-3 {:source-store storemap
+                         :batch-size 400
+                         :query match-all-query}
+          missing-res (sut/read-source read-params-1)
+          ids-res (sut/read-source read-params-2)
+          match-all-res (rest (iterate sut/read-source read-params-3))]
+
       (testing "queries should be used to select data"
-        (is (= 1 (count missing-batches)))
         (is (= (set docs-no-modified)
-               (set (:documents (first missing-batches))))))
-
+               (set (:documents missing-res)))))
       (testing "search_after should be properly taken into account"
-        (is (= 1 (count ids-batches)))
         (is (= (set expected-ids-docs)
-               (set (:documents (first ids-batches)))))
+               (set (:documents ids-res))))
         (is (= (- 100 nb-skipped-ids)
-               (count (:documents (first ids-batches))))))
-
-      (testing "batch-size should be properly taken into account"
-        (is (= 6 (count match-all-batches)))
-        (let [search_after-list (->> (take 5 match-all-batches)
-                                     (map :search_after))]
-          (is (= search_after-list (sort-by str search_after-list))
-              "search_after should be properly set for each batch"))
-        (is (nil? (:search_after (last match-all-batches))))
-        (is (every? #(= 200 (count (:documents %)))
-                    (take 5 match-all-batches)))
-        (is (= 0 (count (:documents (last match-all-batches)))))))))
+               (count (:documents ids-res)))))
+      (testing "read source should return parameters for next call"
+        (is (= read-params-1
+               (dissoc missing-res :search_after :documents)))
+        (is (= (dissoc read-params-2 :search_after)
+               (dissoc ids-res :search_after :documents))))
+      (testing "read-source shoould return nil when parameters map is nil or the query result is empty"
+        (is (= nil
+               (sut/read-source nil)
+               (sut/read-source (assoc read-params-1
+                                       :batch-size
+                                       0)))))
+      (testing "read-source result should be usable to call read-source again for scrolling given query"
+        (is (= '(400 400 200 0)
+               (->> (take 4 match-all-res)
+                    (map #(-> % :documents count)))))
+        (is (= (set no-meta-docs)
+               (->> (take 4 match-all-res)
+                    (map :documents)
+                    (apply concat)
+                    set)))))))
 
 
 (deftest write-target-test
@@ -266,37 +259,32 @@
           migration-id "migration-1"
           docs (map (comp :_source es-helpers/str->edn)
                     (line-seq rdr))
+
+          base-params {:target-store storemap
+                       :entity-type :relationship
+                       :list-coerce list-coerce
+                       :migration-id migration-id
+                       :migrations (sut/compose-migrations [:__test])
+                       :batch-size 1000
+                       :migration-es-conn es-conn
+                       :confirm? true}
           test-fn (fn [total
-                       chunck-size
+                       migrated-count
                        msg
-                       {:keys [confirm? migrated-count]
-                        :or {migrated-count 0}
+                       {:keys [confirm?]
                         :as override-params}]
                     (init-migration migration-id
                                     prefix
                                     [:relationship]
                                     true)
                     (let [test-docs (take total docs)
-                          data-chan (chan 10);(inc (/ total chunck-size)))
-                          batches (->> (partition-all chunck-size test-docs)
-                                       (map #(assoc {:documents %}
-                                                    :search_after
-                                                    [(rand-int total)])))
-                          _ (doseq [batch batches]
-                              (>!! data-chan batch))
-                          _ (close! data-chan)
-                          base-params {:target-store storemap
-                                       :entity-type :relationship
-                                       :list-coerce list-coerce
-                                       :migration-id migration-id
-                                       :data-chan data-chan
-                                       :migrations (sut/compose-migrations [:__test])
-                                       :migrated-count migrated-count
-                                       :batch-size 1000
-                                       :migration-es-conn es-conn
-                                       :confirm? true}
-                          nb-migrated (sut/write-target (into base-params
-                                                                 override-params))
+                          search_after [(rand-int total)]
+                          batch-params  (-> (into base-params
+                                                  override-params)
+                                            (assoc :documents test-docs
+                                                   :search_after search_after))
+                          nb-migrated (sut/write-target migrated-count
+                                                        batch-params)
                           {target-state :target
                            source-state :source} (-> (get-migration migration-id es-conn)
                                                      :stores
@@ -310,11 +298,11 @@
                         (when-not confirm?
                           (is (= (+ total migrated-count)
                                  nb-migrated))
-                          (is (= (+ migrated-count (count migrated-docs))
+                          (is (= (count migrated-docs)
                                  (:migrated target-state))))
                         (when confirm?
                           (is (= (+ total migrated-count)
-                                 (count migrated-docs)
+                                 (+ (count migrated-docs) migrated-count)
                                  nb-migrated
                                  (:migrated target-state)))
                           (is (= (set (map #(dissoc % :groups)
@@ -326,30 +314,23 @@
                                           ["migration-test"])
                                       migrated-docs)
                               "write-target should perform attended modifications on migrated documents")
-                          (is (= (:search_after (last batches))
+                          (is (= search_after
                                  (:search_after source-state))
                               "write-target should store last search_after in migration state")))))]
-      (test-fn 1000
-               1000
-               "write-target should properly read from data channel, modify red documents, and write them in target index"
-               {})
-      (test-fn 1000
-               1000
-               "write-target should not write anything when `confirm?` is set to false"
-               {:confirm? false})
+      (test-fn 100
+               0
+               "write-target should properly modify documents, and write them in target index"
+               {:confirm? true})
 
-      (test-fn 1000
-               1000
-               "write-target should properly read from data channel, modify red documents, and write them in target index"
-               {:migrated-count 5000})
-      (test-fn 1000
-               300
-               "write-target should properly read all elements in data channel"
-               {})
-      (test-fn 0
-               1000
-               "write-target should not fail when channel is empty and closed"
-               {}))))
+      (test-fn 100
+               10
+               "write-target should properly accumulate migration count"
+               {:confirm? true})
+
+      (test-fn 100
+               0
+               "write-target should not write anything while properly simulating migration when `confirm?` is set to false"
+               {:confirm? false}))))
 
 (deftest sliced-migration-test
   (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
