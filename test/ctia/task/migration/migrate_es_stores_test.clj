@@ -2,7 +2,6 @@
   (:require [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
-            [clj-http.fake :refer [with-fake-routes]]
             [schema.core :as s]
             [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
@@ -257,7 +256,7 @@
                     :config {}}
           list-coerce (sut/list-coerce-fn StoredRelationship)
           migration-id "migration-1"
-          docs (map (comp :_source es-helpers/str->edn)
+          docs (map (comp :_source es-helpers/str->doc)
                     (line-seq rdr))
 
           base-params {:target-store storemap

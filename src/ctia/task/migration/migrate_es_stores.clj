@@ -6,16 +6,19 @@
             [schema-tools.core :as st]
             [schema.core :as s]
             [clj-momo.lib.time :as time]
+            [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
 
             [ctia.store :refer [stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
-            [ctia.stores.es.crud :refer [coerce-to-fn]]
+            [ctia.stores.es
+             [crud :refer [coerce-to-fn]]
+             [store :refer [StoreMap]]]
             [ctia.task.migration.migrations :refer [available-migrations]]
             [ctia.task.migration.store :as mst]))
 
 (def default-batch-size 100)
-(def default-buffer-size 30)
+(def default-buffer-size 10)
 
 (def all-types
   (assoc (->> (vals entities)
@@ -74,17 +77,34 @@
   (let [coercer (coerce-to-fn Model)]
     #(reduce (partial append-coerced coercer) {} %)))
 
-(defn read-source
-  "This function retrieves in `source-store` all the documents that match the given `query`
-   by batch of maximum size `batch-size`. When not nil the `search_after` parameter is used
-   to skip previously retrieved data. Then it pushes the retrieved data in the given channel,
-  `data-chan`, along with next search_after value for eventual further restart. Once all the
-   documents that match given query are retrieved, it closes the channel `data-chan`"
+(s/defschema BatchParams
+  (st/optional-keys
+   {:source-store StoreMap
+    :target-store StoreMap
+    :migrated-count s/Int
+    :buffer-size s/Int
+    :search_after [s/Any]
+    :migrations s/Any
+    :entity-type s/Keyword
+    :batch-size s/Int
+    :migration-id s/Str
+    :list-coerce s/Any
+    :migration-es-conn ESConn
+    :confirm? s/Bool
+    :documents [{s/Any s/Any}]
+    :query ESQuery}))
+
+
+(s/defn read-source :- (s/maybe BatchParams)
+  "This function retrieves in `source-store`a batch of documents that match the given `query`.
+   When not nil, the `search_after` parameter is used to skip previously retrieved data. The
+   returned result prepares the next batch parameters with new `search_after` along with the
+   documents that have to be written in target."
   [{:keys [source-store
            search_after
            batch-size
            query]
-    :as batch-params}]
+    :as batch-params} :- (s/maybe BatchParams)]
     ;; loop that reads batches from source and produces them in chan
   (when batch-params
     (let [{:keys [data paging]} (mst/query-fetch-batch query
@@ -99,16 +119,12 @@
                :documents data
                :search_after next-search-after)))))
 
-(defn write-target
-  "This function reads batches from `data-chan` (pushed by read-source) until it reads
-   a `nil`, meaning that the channel has been closed by `read-source` function. The
-   batches are (1) modified with `migrations` functions, (2) validated by `list-coerce`
-   and (3) written into given `target-store`. At each batch the migration state, number
-   of migrated documents and search_after value, is updated in ES after the documents
-   are written in the store. If the process fails or is stopped before that update of
-   the migration state, the documents will be red again by `read-source` and overridden
-   in case of restart."
-  [migrated-count
+(s/defn write-target :- s/Int
+  "This function writes a batch of documents which are (1) modified with `migrations` functions,
+   (2) validated by `list-coerce` and (3) written into given `target-store`. This function updates
+   the number of successfully migrated documents and search_after in the migration state identified
+   by given`migration-id` It finally returns this new number of successfully migrated documents."
+  [migrated-count :- s/Int
    {:keys [target-store
            documents
            search_after
@@ -119,7 +135,7 @@
            list-coerce
            migration-es-conn
            confirm?]
-    :as batch-params}]
+    :as batch-params} :- BatchParams]
   (let [migrated (transduce migrations conj documents)
         {:keys [data errors]} (list-coerce migrated)
         new-migrated-count (+ migrated-count (count data))]
@@ -134,21 +150,22 @@
       (mst/rollover target-store batch-size new-migrated-count)
       (mst/update-migration-store migration-id
                                   entity-type
-                                  (into {:target {:migrated new-migrated-count}}
-                                        (when search_after
-                                          {:source {:search_after search_after}}))
+                                  (cond-> {:target {:migrated new-migrated-count}}
+                                    search_after (assoc :source
+                                                        {:search_after search_after}))
                                   migration-es-conn))
     (log/infof "%s - migrated: %s documents"
                (name entity-type)
                new-migrated-count)
     new-migrated-count))
 
-(defn migrate-query
+(s/defn migrate-query :- BatchParams
+  "migrate documents that match given `query`"
   [{:keys [entity-type
            migrated-count
            buffer-size]
-    :as migration-params}
-   query]
+    :as migration-params} :- BatchParams
+   query :- ESQuery]
   (log/infof "%s - handling sliced query %s"
              (name entity-type)
              (pr-str query))

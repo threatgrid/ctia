@@ -156,13 +156,13 @@
 (defn post-all-to-es [objects]
   (run! post-to-es objects))
 
-(defn str->edn
+(defn str->doc
   [str-doc]
   (json/parse-string str-doc true))
 
 (defn prepare-bulk-ops
   [str-doc]
-  (let [{:keys [_type _id _index _source]} (str->edn str-doc)]
+  (let [{:keys [_type _id _index _source]} (str->doc str-doc)]
     (assoc _source
            :_type _type
            :_index _index

@@ -262,7 +262,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (es-index/refresh! conn write-index)
     (rollover-store (store-map->es-conn-state store-map))))
 
-(defn missing-query
+(s/defn missing-query :- ESQuery
   "implement missing filter through a must_not exists bool query
   https://www.elastic.co/guide/en/elasticsearch/reference/5.6/query-dsl-exists-query.html#missing-query"
   [field]
@@ -271,7 +271,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     {:exists
      {:field field}}}})
 
-(defn range-query
+(s/defn range-query :- ESQuery
   "returns a bool range filter query with start and end limits"
   [field date unit]
   {:bool
@@ -281,7 +281,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
       {:gte date
        :lt (str date "||+1" unit)}}}}})
 
-(defn last-range-query
+(s/defn last-range-query :- ESQuery
   "returns a bool range filter query with only start limit. Add epoch_millis
   format if specified so (required  when date comes from search_after)"
   ([field date epoch-millis?]
@@ -307,17 +307,19 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
       (-> (time-coerce/to-date-time date-str)
           (time/before? missing-date))))
 
-(defn format-buckets
+
+(s/defn format-buckets :- [ESQuery]
   "format buckets from aggregation results into an ordered list of proper bool queries"
-  [raw-buckets field interval]
+  [raw-buckets :- [(st/open-schema
+                    {:doc_count s/Int
+                     :key_as_string s/Str})]
+   field :- s/Keyword
+   interval :- (s/enum "year" "month" "week" "day")]
   (let [unit (case interval
                "year" "y"
                "month" "M"
                "week" "w"
-               "day" "d"
-               "hour" "h"
-               "minute" "m"
-               "second" "s")
+               "day" "d")
         filtered (->> raw-buckets
                       (filter #(< 0 (:doc_count %)))
                       (map :key_as_string))]
@@ -333,7 +335,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
          (recur (next dates)))
         queries))))
 
-(s/defn sliced-queries
+(s/defn sliced-queries :- [ESQuery]
   "this function performs a date aggregation on modification dates and returns
   bool queries that will be used to perform the migration per date ranges.
   modification field is `modified` for entities and `timestamp` for events.
@@ -346,7 +348,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    search_after
    interval]
   (let [agg-field (case mapping
-                    "event" "timestamp"
+                    "event" :timestamp
                     :modified)
         query (when (some->> (first search_after)
                              time-coerce/to-date
