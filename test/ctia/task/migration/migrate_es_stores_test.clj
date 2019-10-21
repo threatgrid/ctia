@@ -3,7 +3,6 @@
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
             [schema.core :as s]
-            [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.es
              [query :as es-query]
@@ -55,22 +54,6 @@
   (join-fixtures [helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
-
-(defn make-cat-indices-url [host port]
-  (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
-
-(defn get-cat-indices [host port]
-  (let [url (make-cat-indices-url host
-                                  port)
-        {:keys [body]
-         :as cat-response} (client/get url {:as :json})]
-    (->> body
-         (map (fn [{:keys [index]
-                    :as entry}]
-                {index (read-string
-                        (:docs.count entry))}))
-         (into {})
-         keywordize-keys)))
 
 (defn index-exists?
   [store prefix]
@@ -145,7 +128,7 @@
                                  [:__test]
                                  store-types
                                  10
-                                 30
+                                 3
                                  true
                                  false)
 
@@ -169,7 +152,7 @@
 (def date-str->epoch-millis
   (comp time-coerce/to-long time-coerce/to-date-time))
 
-(deftest read-source-test
+(deftest read-source-batch-test
   (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
     (let [storemap {:conn es-conn
                     :indexname "ctia_relationship"
@@ -209,9 +192,9 @@
           read-params-3 {:source-store storemap
                          :batch-size 400
                          :query match-all-query}
-          missing-res (sut/read-source read-params-1)
-          ids-res (sut/read-source read-params-2)
-          match-all-res (rest (iterate sut/read-source read-params-3))]
+          missing-res (sut/read-source-batch read-params-1)
+          ids-res (sut/read-source-batch read-params-2)
+          match-all-res (rest (iterate sut/read-source-batch read-params-3))]
 
       (testing "queries should be used to select data"
         (is (= (set docs-no-modified)
@@ -226,13 +209,13 @@
                (dissoc missing-res :search_after :documents)))
         (is (= (dissoc read-params-2 :search_after)
                (dissoc ids-res :search_after :documents))))
-      (testing "read-source shoould return nil when parameters map is nil or the query result is empty"
+      (testing "read-source-batch shoould return nil when parameters map is nil or the query result is empty"
         (is (= nil
-               (sut/read-source nil)
-               (sut/read-source (assoc read-params-1
+               (sut/read-source-batch nil)
+               (sut/read-source-batch (assoc read-params-1
                                        :batch-size
                                        0)))))
-      (testing "read-source result should be usable to call read-source again for scrolling given query"
+      (testing "read-source-batch result should be usable to call read-source-batch again for scrolling given query"
         (is (= '(400 400 200 0)
                (->> (take 4 match-all-res)
                     (map #(-> % :documents count)))))
@@ -242,6 +225,19 @@
                     (apply concat)
                     set)))))))
 
+(deftest read-source-test
+  (testing "read-source should produce a lazy seq from recursive read-source-batch calls"
+    (let [counter (atom 0)]
+      (with-redefs [sut/read-source-batch (fn [batch-params]
+                                            (when (< @counter 5)
+                                              (swap! counter inc)
+                                              (update batch-params :migrated-count inc)))]
+        (let [batches (map :migrated-count
+                           (sut/read-source {:migrated-count 0}))]
+          (is (= '(1 2) (take 2 batches)))
+          (is (= 2 @counter))
+          (is (= '(1 2 3 4 5) (take 10 batches)))
+          (is (= 5 @counter)))))))
 
 (deftest write-target-test
   (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
@@ -288,6 +284,7 @@
                            source-state :source} (-> (get-migration migration-id es-conn)
                                                      :stores
                                                      :relationship)
+                          _ (es-index/refresh! es-conn)
                           migrated-docs (:data (es-doc/query es-conn
                                                              indexname
                                                              "relationship"
@@ -355,7 +352,7 @@
                                          [:__test]
                                          [:relationship]
                                          100
-                                         30
+                                         3
                                          true
                                          false))
           migration-state-1 (es-doc/get-doc es-conn
@@ -375,7 +372,7 @@
                                          [:__test]
                                          [:relationship]
                                          100
-                                         30
+                                         3
                                          true
                                          true))
           target-count-2 (es-doc/count-docs es-conn
@@ -429,7 +426,7 @@
                                    [:__test]
                                    store-types
                                    10
-                                   30
+                                   3
                                    true
                                    false))
       (let [messages (set @logger)
@@ -468,7 +465,7 @@
                                  [:0.4.16]
                                  (keys @stores)
                                  10
-                                 30
+                                 3
                                  false
                                  false)
 
@@ -487,7 +484,7 @@
                                    [:__test]
                                    (keys @stores)
                                    10
-                                   30
+                                   3
                                    true
                                    false))
       (testing "shall generate a proper migration state"
@@ -592,7 +589,7 @@
                    (into expected-event-indices)
                    keywordize-keys)
               _ (es-index/refresh! es-conn)
-              formatted-cat-indices (get-cat-indices (:host default)
+              formatted-cat-indices (es-helpers/get-cat-indices (:host default)
                                                      (:port default))]
           (is (= expected-indices
                  (select-keys formatted-cat-indices
@@ -609,7 +606,7 @@
       (let [;; retrieve the first 2 source indices for sighting store
             {:keys [host port]}(get-in @props/properties [:ctia :store :es :default])
             [sighting-index-1 sighting-index-2]
-            (->> (get-cat-indices host port)
+            (->> (es-helpers/get-cat-indices host port)
                  keys
                  (map name)
                  (filter #(.contains % "sighting"))
@@ -682,7 +679,7 @@
                                    [:__test]
                                    (keys @stores)
                                    2 ;; small batch to check proper delete paging
-                                   10
+                                   1
                                    true
                                    true)
         (let [migration-state (get-migration "test-2" es-conn)
@@ -729,7 +726,7 @@
                                        [:__test]
                                        (into [] example-types)
                                        batch-size
-                                       30
+                                       3
                                        true
                                        false)
           end (System/currentTimeMillis)

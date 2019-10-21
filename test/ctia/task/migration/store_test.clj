@@ -51,7 +51,6 @@
                                    :mappings {:a :b}}
                                   {:write-index "test_index-write"}))))
 
-
 (deftest missing-query-test
   (is (= {:bool
           {:must_not
@@ -232,9 +231,11 @@
   (is (false? (sut/rollover? false 10 10 10))
       "rollover? should returned false when index is not aliased")
   (testing "rollover? should return true when migrated doc exceed a multiple of max_docs with a maximum of batch-size, false otherwise"
+    (is (sut/rollover? true 100 10 100))
     (is (sut/rollover? true 100 10 101))
     (is (sut/rollover? true 100 10 109))
     (is (sut/rollover? true 100 10 110))
+    (is (sut/rollover? true 100 10 200))
     (is (sut/rollover? true 100 10 301))
     (is (sut/rollover? true 100 10 309))
     (is (sut/rollover? true 100 10 310))
@@ -244,6 +245,7 @@
     (is (false? (sut/rollover? true 100 10 150)))
     (is (false? (sut/rollover? true 100 10 250)))
     (is (false? (sut/rollover? true 100 10 299)))
+    (is (false? (sut/rollover? true 100 10 311)))
     (is (false? (sut/rollover? true 100 10 350)))))
 
 (deftest search-real-index?
@@ -293,6 +295,88 @@
 
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
+
+(deftest rollover-test
+  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+    (let [storename "ctia_relationship"
+          write-alias (str storename "-write")
+          max-docs 15
+          batch-size 5
+          storemap {:conn es-conn
+                    :indexname storename
+                    :mapping "relationship"
+                    :props {:aliased true
+                            :write-index write-alias
+                            :rollover {:max_docs max-docs}}
+                    :type "relationship"
+                    :settings {}
+                    :config {}}
+          docs-all (->> (line-seq rdr)
+                        (take 100)
+                        (map es-helpers/prepare-bulk-ops)
+                        (map #(assoc % :_index write-alias)))
+          test-fn (fn [docs nb try-rollover? rolled-over?]
+                        (let [state-before (es-helpers/get-cat-indices
+                                            "localhost"
+                                            9200)
+                              migrated-count (- (count docs-all)
+                                                (count docs))
+                              indices-before (set (keys state-before))
+                              total-before (reduce + (vals state-before))
+                              _ (es-helpers/load-bulk es-conn
+                                                      (take nb docs)
+                                                      "false")
+                              res (sut/rollover storemap
+                                                batch-size
+                                                (+ nb migrated-count))
+
+                              state-after (es-helpers/get-cat-indices
+                                           "localhost"
+                                           9200)
+                              indices-after (set (keys state-after))
+                              total-after (reduce + (vals state-after))]
+                          (is (= (boolean (:rolled_over res))
+                                 rolled-over?))
+                          (when rolled-over?
+                            (is (< (count indices-before)
+                                   (count indices-after)))
+                            (is (= (+ nb migrated-count)
+                                   total-after)))
+                          (when-not rolled-over?
+                            (is (= indices-before
+                                   indices-after)))
+                          (if try-rollover?
+                            (is (< total-before total-after)
+                                "when conditions are met to try rollover, we must refresh write index")
+                            (is (= total-before total-after)
+                                "refresh index should occur only when a rollover could succeed"))
+                          (drop nb docs)))]
+      (es-index/delete! es-conn (str "*" storename "*"))
+      (es-index/create! es-conn
+                        (format "<%s-000001>" storename)
+                        {:settings {:refresh_interval -1}
+                         :aliases {write-alias {}}})
+      (testing "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
+          (->
+           (test-fn docs-all
+                    10 ;; total docs: 10, current index 10
+                    false
+                    false)
+           (test-fn 5 ;; total docs: 15, current index 15
+                    true
+                    true)
+           (test-fn 5 ;; total docs: 20, current index 5
+                    true
+                    false)
+           (test-fn 5 ;; total docs: 25, current index 10
+                    false
+                    false)
+           (test-fn 4 ;; total docs: 29, current index 14
+                    false
+                    false)
+           (test-fn 5 ;; total docs: 34, current index 19
+                    true
+                    true))))))
 
 (deftest sliced-queries-test
   (let [storemap {:conn es-conn

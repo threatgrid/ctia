@@ -18,7 +18,7 @@
             [ctia.task.migration.store :as mst]))
 
 (def default-batch-size 100)
-(def default-buffer-size 10)
+(def default-buffer-size 3)
 
 (def all-types
   (assoc (->> (vals entities)
@@ -94,8 +94,7 @@
     :documents [{s/Any s/Any}]
     :query ESQuery}))
 
-
-(s/defn read-source :- (s/maybe BatchParams)
+(s/defn read-source-batch :- (s/maybe BatchParams)
   "This function retrieves in `source-store`a batch of documents that match the given `query`.
    When not nil, the `search_after` parameter is used to skip previously retrieved data. The
    returned result prepares the next batch parameters with new `search_after` along with the
@@ -105,7 +104,6 @@
            batch-size
            query]
     :as batch-params} :- (s/maybe BatchParams)]
-    ;; loop that reads batches from source and produces them in chan
   (when batch-params
     (let [{:keys [data paging]} (mst/query-fetch-batch query
                                                        source-store
@@ -118,6 +116,15 @@
         (assoc batch-params
                :documents data
                :search_after next-search-after)))))
+
+(defn read-source
+  "returns a lazy-seq of batch from source store"
+  [read-params]
+  (->>
+   (lazy-seq
+    (when-let [batch (read-source-batch read-params)]
+      (cons batch (read-source batch))))
+   (take-while seq)))
 
 (s/defn write-target :- s/Int
   "This function writes a batch of documents which are (1) modified with `migrations` functions,
@@ -170,12 +177,11 @@
              (name entity-type)
              (pr-str query))
   (let [read-params (assoc migration-params :query query)
-        data-queue (->> (iterate read-source read-params)
-                        rest
-                        (seque buffer-size))
+        data-queue (seque buffer-size
+                          (read-source read-params))
         new-migrated-count (reduce write-target
                                    migrated-count
-                                   (take-while seq data-queue))]
+                                   data-queue)]
     (assoc migration-params
            :migrated-count
            new-migrated-count)))

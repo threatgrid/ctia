@@ -169,10 +169,11 @@
            :_id _id)))
 
 (defn load-bulk
-  [es-conn docs]
-  (es-doc/bulk-create-doc es-conn
-                          docs
-                          "true"))
+  ([es-conn docs] (load-bulk es-conn docs "true"))
+  ([es-conn docs refresh?]
+   (es-doc/bulk-create-doc es-conn
+                           docs
+                           refresh?)))
 
 (defn load-file-bulk
   [es-conn filepath]
@@ -180,3 +181,19 @@
     (load-bulk es-conn
                (map prepare-bulk-ops
                     (line-seq rdr)))))
+
+(defn make-cat-indices-url [host port]
+  (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
+
+(defn get-cat-indices [host port]
+  (let [url (make-cat-indices-url host
+                                  port)
+        {:keys [body]
+         :as cat-response} (http/get url {:as :json})]
+    (->> body
+         (map (fn [{:keys [index]
+                    :as entry}]
+                {index (read-string
+                        (:docs.count entry))}))
+         (into {})
+         clojure.walk/keywordize-keys)))

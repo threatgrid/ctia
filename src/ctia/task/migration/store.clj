@@ -245,8 +245,9 @@
   [aliased? max_docs batch-size migrated-count]
   (and aliased?
        max_docs
-       (> migrated-count max_docs)
-       (<= (mod migrated-count max_docs)
+       (>= migrated-count max_docs)
+       (<= 0
+           (mod migrated-count max_docs)
            batch-size)))
 
 (s/defn rollover
@@ -258,7 +259,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     :as store-map} :- StoreMap
    batch-size :- s/Int
    migrated-count :- s/Int]
-  (when rollover?
+  (when (rollover? aliased max_docs batch-size migrated-count)
     (es-index/refresh! conn write-index)
     (rollover-store (store-map->es-conn-state store-map))))
 
@@ -476,16 +477,24 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                                [:number_of_replicas :refresh_interval]))]
     {:index res}))
 
+(defn purge-store
+  [entity-type conn storename]
+  (log/infof "%s - purging store: %s" entity-type storename)
+  (let [indexnames (-> (es-index/get conn storename)
+                    keys)]
+    (doseq [indexname indexnames]
+      (log/infof "%s - deleting index: %s" entity-type (name indexname))
+      (es-index/delete! conn (name indexname)))))
+
 (defn create-target-store!
   "create the target store, pushing its template"
   [{:keys [conn indexname config props] entity-type :type :as target-store}]
   (when (retry es-max-retry es-index/index-exists? conn indexname)
     (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
   (let [index-config (target-index-config indexname config props)]
-    (log/infof "%s - purging indexes: %s" entity-type indexname)
-    (retry es-max-retry es-index/delete! conn (str indexname "*"))
     (log/infof "%s - creating index template: %s" entity-type indexname)
-    (log/infof "%s - creating index: %s" entity-type indexname)
+    (purge-store entity-type conn indexname)
+    (log/infof "%s - creating store: %s" entity-type indexname)
     (retry es-max-retry es-index/create-template! conn indexname index-config)
     (retry es-max-retry es-index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
 
