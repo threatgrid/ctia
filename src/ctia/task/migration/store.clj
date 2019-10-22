@@ -340,19 +340,6 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
            (missing-bucket? first-date)) (->> rest
                                               (cons (missing-query field))))))
 
-   ;;     queries (map (fn [date]
-   ;;                    (cond
-   ;;                      (missing-bucket? date) (missing-query field)
-   ;;                      (nil? rest-dates) (last-range-query date field false)
-   ;;                      :else (range-query date field unit)))
-   ;;                  filtered)
-   ;;     last-query (some-> rest-dates
-   ;;                        last
-   ;;                        (last-range-query field false))]
-   ;; (cond-> queries
-   ;;   last-query (-> drop-last
-   ;;                  (concat [last-query])))))
-
 (s/defn sliced-queries :- [ESQuery]
   "this function performs a date aggregation on modification dates and returns
   bool queries that will be used to perform the migration per date ranges.
