@@ -274,7 +274,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (s/defn range-query :- ESQuery
   "returns a bool range filter query with start and end limits"
-  [field date unit]
+  [date field unit]
   {:bool
    {:filter
     {:range
@@ -285,9 +285,9 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 (s/defn last-range-query :- ESQuery
   "returns a bool range filter query with only start limit. Add epoch_millis
   format if specified so (required  when date comes from search_after)"
-  ([field date epoch-millis?]
-   (last-range-query field date epoch-millis? false))
-  ([field date epoch-millis? strict?]
+  ([date field epoch-millis?]
+   (last-range-query date field epoch-millis? false))
+  ([date field epoch-millis? strict?]
    {:bool
     {:filter
      {:range
@@ -301,8 +301,12 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (defn missing-bucket?
   "Returns true if the date is related to missing date.
-   Depending on date interval the date of missing bucket returned
-   by ES could be either equal or before missing date."
+   In aggregation query, we assign a default date, `missing-date` as default value
+   for documents that do not have the datetime field on which is based the aggregation.
+   Depending on date interval the date of missing bucket returned by ES could be
+   either equal or before missing date. Thus we test this in order to not only rely on
+   the value returned by ES aggregation and prevent modification on the aggregation
+   between ES versions."
   [date-str]
   (or (= date-str missing-date-str)
       (-> (time-coerce/to-date-time date-str)
@@ -310,7 +314,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (def Interval (s/enum "year" "month" "week" "day"))
 
-(s/defn format-buckets :- [ESQuery]
+(s/defn format-buckets :- (s/maybe [ESQuery])
   "format buckets from aggregation results into an ordered list of proper bool queries"
   [raw-buckets :- [(st/open-schema
                     {:doc_count s/Int
@@ -324,18 +328,30 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                "day" "d")
         filtered (->> raw-buckets
                       (filter #(< 0 (:doc_count %)))
-                      (map :key_as_string))]
-    (loop [dates filtered
-           queries []]
-      (if-let [date (first dates)]
-        (->>
-         (cond
-           (missing-bucket? date) (missing-query field)
-           (next dates) (range-query field date unit)
-           :else (last-range-query field date false))
-         (conj queries)
-         (recur (next dates)))
-        queries))))
+                      (map :key_as_string))
+        [first-date & rest-dates] filtered
+        queries (map #(range-query % field unit)
+                     (drop-last filtered))
+        last-query (some-> (last filtered)
+                           (last-range-query field false))]
+    (cond-> queries
+      last-query (concat [last-query])
+      (and first-date
+           (missing-bucket? first-date)) (->> rest
+                                              (cons (missing-query field))))))
+
+   ;;     queries (map (fn [date]
+   ;;                    (cond
+   ;;                      (missing-bucket? date) (missing-query field)
+   ;;                      (nil? rest-dates) (last-range-query date field false)
+   ;;                      :else (range-query date field unit)))
+   ;;                  filtered)
+   ;;     last-query (some-> rest-dates
+   ;;                        last
+   ;;                        (last-range-query field false))]
+   ;; (cond-> queries
+   ;;   last-query (-> drop-last
+   ;;                  (concat [last-query])))))
 
 (s/defn sliced-queries :- [ESQuery]
   "this function performs a date aggregation on modification dates and returns
@@ -356,8 +372,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                              time-coerce/to-date
                              (time/after? (time/internal-now)))
                 ;; we have a valid search_after, filter on it
-                (last-range-query agg-field
-                                  (first search_after)
+                (last-range-query (first search_after)
+                                  agg-field
                                   true
                                   true))
         aggs-q {:intervals

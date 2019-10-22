@@ -117,9 +117,9 @@
                :documents data
                :search_after next-search-after)))))
 
-(defn read-source
+(s/defn read-source ;; WARNING: defining schema output breaks lazyness
   "returns a lazy-seq of batch from source store"
-  [read-params]
+  [read-params :- (s/maybe BatchParams)]
   (->>
    (lazy-seq
     (when-let [batch (read-source-batch read-params)]
