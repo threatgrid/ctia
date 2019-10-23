@@ -343,22 +343,30 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 (s/defn sliced-queries :- [ESQuery]
   "this function performs a date aggregation on modification dates and returns
   bool queries that will be used to perform the migration per date ranges.
-  modification field is `modified` for entities and `timestamp` for events.
+  Modification field is `modified` for entities and `timestamp` for events.
   Some documents misses the required date field and are handled with a first query
   that group them with a must_not exists bool query.
   Last range does not contains end date limit in order to handle documents
   that are created or modified during the migration. Note that new entities are now
-  created with creation value as first modified value"
+  created with creation value as first modified value.
+  The `search_after` parameter is used to handle restart where the migration
+  previously ended through a bool filter range query for better performances."
   [{:keys [conn indexname mapping]} :- StoreMap
    search_after :- [s/Any]
    interval :- Interval]
   (let [agg-field (case mapping
                     "event" :timestamp
                     :modified)
+        ;; This search_after value is built according to `sort`
+        ;; in query-fetch-batch. The modification field is always first.
+        ;; ES returns that date value as epoch milliseconds
+        ;; If generated from a missing value, ES returns a date in th
+        ;; future that is ignored.
         query (when (some->> (first search_after)
                              time-coerce/to-date
                              (time/after? (time/internal-now)))
                 ;; we have a valid search_after, filter on it
+                ;; set `epoch-millis?` param as true
                 (last-range-query (first search_after)
                                   agg-field
                                   true
@@ -367,6 +375,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                 {:date_histogram
                  {:field agg-field
                   :interval interval
+                  "format" "date_time"
                   :missing missing-date-str}}}
         res (retry es-max-retry
                    es-doc/query

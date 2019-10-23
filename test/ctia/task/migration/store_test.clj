@@ -410,118 +410,117 @@
                   :settings {}
                   :config {}}
         data (es-helpers/load-file-bulk es-conn "./test/data/indices/sample-relationships-1000.json")
-        sliced-1 (sut/sliced-queries storemap nil "week")
         expected-queries [{:bool {:must_not {:exists {:field :modified}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-02-26T00:00:00.000Z",
-                                 :lt "2018-02-26T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-03-05T00:00:00.000Z",
-                                 :lt "2018-03-05T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-03-12T00:00:00.000Z",
-                                 :lt "2018-03-12T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-03-19T00:00:00.000Z",
-                                 :lt "2018-03-19T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-04-09T00:00:00.000Z",
-                                 :lt "2018-04-09T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-04-16T00:00:00.000Z",
-                                 :lt "2018-04-16T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-04-23T00:00:00.000Z",
-                                 :lt "2018-04-23T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-04-30T00:00:00.000Z",
-                                 :lt "2018-04-30T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-05-07T00:00:00.000Z",
-                                 :lt "2018-05-07T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-05-14T00:00:00.000Z",
-                                 :lt "2018-05-14T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-05-21T00:00:00.000Z",
-                                 :lt "2018-05-21T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-06-18T00:00:00.000Z",
-                                 :lt "2018-06-18T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-06-25T00:00:00.000Z",
-                                 :lt "2018-06-25T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-07-02T00:00:00.000Z",
-                                 :lt "2018-07-02T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-07-09T00:00:00.000Z",
-                                 :lt "2018-07-09T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-07-16T00:00:00.000Z",
-                                 :lt "2018-07-16T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-07-23T00:00:00.000Z",
-                                 :lt "2018-07-23T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2018-07-30T00:00:00.000Z",
-                                 :lt "2018-07-30T00:00:00.000Z||+1w"}}}}}
-                            {:bool
-                             {:filter {:range {:modified {:gte "2018-08-06T00:00:00.000Z"}}}}}]]
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-02-26T00:00:00.000Z",
+                               :lt "2018-02-26T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-03-05T00:00:00.000Z",
+                               :lt "2018-03-05T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-03-12T00:00:00.000Z",
+                               :lt "2018-03-12T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-03-19T00:00:00.000Z",
+                               :lt "2018-03-19T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-04-09T00:00:00.000Z",
+                               :lt "2018-04-09T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-04-16T00:00:00.000Z",
+                               :lt "2018-04-16T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-04-23T00:00:00.000Z",
+                               :lt "2018-04-23T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-04-30T00:00:00.000Z",
+                               :lt "2018-04-30T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-05-07T00:00:00.000Z",
+                               :lt "2018-05-07T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-05-14T00:00:00.000Z",
+                               :lt "2018-05-14T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-05-21T00:00:00.000Z",
+                               :lt "2018-05-21T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-06-18T00:00:00.000Z",
+                               :lt "2018-06-18T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-06-25T00:00:00.000Z",
+                               :lt "2018-06-25T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-02T00:00:00.000Z",
+                               :lt "2018-07-02T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-09T00:00:00.000Z",
+                               :lt "2018-07-09T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-16T00:00:00.000Z",
+                               :lt "2018-07-16T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-23T00:00:00.000Z",
+                               :lt "2018-07-23T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-30T00:00:00.000Z",
+                               :lt "2018-07-30T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter {:range {:modified {:gte "2018-08-06T00:00:00.000Z"}}}}}]]
     (is (= expected-queries
            (sut/sliced-queries storemap nil "week")))
     (is (= [{:bool
