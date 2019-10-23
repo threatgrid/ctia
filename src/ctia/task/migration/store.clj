@@ -296,22 +296,6 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
          strict? (clojure.set/rename-keys {:gte :gt})
          epoch-millis? (assoc :format "epoch_millis"))}}}}))
 
-(def missing-date-str "2010-01-01T00:00:00.000Z")
-(def missing-date (time-coerce/to-date-time missing-date-str))
-
-(defn missing-bucket?
-  "Returns true if the date is related to missing date.
-   In aggregation query, we assign a default date, `missing-date` as default value
-   for documents that do not have the datetime field on which is based the aggregation.
-   Depending on date interval the date of missing bucket returned by ES could be
-   either equal or before missing date. Thus we test this in order to not only rely on
-   the value returned by ES aggregation and prevent modification on the aggregation
-   between ES versions."
-  [date-str]
-  (or (= date-str missing-date-str)
-      (-> (time-coerce/to-date-time date-str)
-          (time/before? missing-date))))
-
 (def Interval (s/enum "year" "month" "week" "day"))
 
 (s/defn format-buckets :- (s/maybe [ESQuery])
@@ -329,16 +313,12 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
         filtered (->> raw-buckets
                       (filter #(< 0 (:doc_count %)))
                       (map :key_as_string))
-        [first-date & rest-dates] filtered
         queries (map #(range-query % field unit)
                      (drop-last filtered))
         last-query (some-> (last filtered)
                            (last-range-query field false))]
-    (cond-> queries
-      last-query (concat [last-query])
-      (and first-date
-           (missing-bucket? first-date)) (->> rest
-                                              (cons (missing-query field))))))
+    (cond-> (cons (missing-query field) queries)
+      last-query (concat [last-query]))))
 
 (s/defn sliced-queries :- [ESQuery]
   "this function performs a date aggregation on modification dates and returns
@@ -360,11 +340,8 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
         ;; This search_after value is built according to `sort`
         ;; in query-fetch-batch. The modification field is always first.
         ;; ES returns that date value as epoch milliseconds
-        ;; If generated from a missing value, ES returns a date in th
-        ;; future that is ignored.
         query (when (some->> (first search_after)
-                             time-coerce/to-date
-                             (time/after? (time/internal-now)))
+                             time-coerce/to-date)
                 ;; we have a valid search_after, filter on it
                 ;; set `epoch-millis?` param as true
                 (last-range-query (first search_after)
@@ -374,9 +351,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
         aggs-q {:intervals
                 {:date_histogram
                  {:field agg-field
-                  :interval interval
-                  "format" "date_time"
-                  :missing missing-date-str}}}
+                  :interval interval}}}
         res (retry es-max-retry
                    es-doc/query
                    conn
@@ -388,6 +363,9 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
         buckets (->> res :aggs :intervals :buckets)]
     (format-buckets buckets agg-field interval)))
 
+(def missing-date-str "2010-01-01T00:00:00.000Z")
+(def missing-date-epoch (time-coerce/to-epoch missing-date-str))
+
 (s/defn query-fetch-batch :- {s/Any s/Any}
   "fetch a batch of documents from an es index and a query"
   [query :- (s/maybe ESQuery)
@@ -396,11 +374,13 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    offset :- s/Int
    sort-order :- (s/maybe s/Str)
    search_after :- (s/maybe [s/Any])]
-  (let [sort-by (conj (case mapping
-                        "event" [{"timestamp" sort-order}]
+  (let [date-sort-order {"order" sort-order
+                         "missing" missing-date-epoch}
+        sort-by (conj (case mapping
+                        "event" [{"timestamp" date-sort-order}]
                         "identity" []
-                        [{"modified" sort-order}
-                         {"created" sort-order}])
+                        [{"modified" date-sort-order}
+                         {"created" date-sort-order}])
                       {"_uid" sort-order})
         params
         (merge

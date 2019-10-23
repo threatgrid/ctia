@@ -72,18 +72,6 @@
               :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
          (sut/range-query "2019-03-11T00:00:00.000Z" :created "d"))))
 
-(deftest missing-bucket?-test
-  (is (true? (sut/missing-bucket? sut/missing-date-str)))
-  (is (true? (sut/missing-bucket? (->> (time/minus sut/missing-date
-                                                   (time/days 1))
-                                       time-coerce/to-string))))
-  (is (false? (sut/missing-bucket? (->> (time/plus sut/missing-date
-                                                   (time/seconds 1))
-                                        time-coerce/to-string))))
-  (is (false? (sut/missing-bucket? (->> (time/plus sut/missing-date
-                                                   (time/years 1))
-                                        time-coerce/to-string)))))
-
 (deftest last-range-query-test
   (testing "last-range-query should produce a bool filter with a range query."
     (is (= {:bool
@@ -123,11 +111,14 @@
                                  true))
         "When epoch_millis? is true, it should add the epoch_millis format into the range query")))
 
+(def missing-modified-query
+  {:bool
+   {:must_not
+    {:exists
+     {:field :modified}}}})
+
 (deftest format-buckets-test
-  (let [raw-buckets-1 [{:key_as_string sut/missing-date-str
-                        :key 1552262400000
-                        :doc_count 3026106}
-                       {:key_as_string "2019-03-11T00:00:00.000Z"
+  (let [raw-buckets-1 [{:key_as_string "2019-03-11T00:00:00.000Z"
                         :key 1552262400000
                         :doc_count 1}
                        {:key_as_string "2019-03-18T00:00:00.000Z"
@@ -139,57 +130,15 @@
                        {:key_as_string "2019-04-01T00:00:00.000Z"
                         :key 1554076800000
                         :doc_count 0}]
-        raw-buckets-2 [{:key_as_string (->> (time/minus sut/missing-date
-                                                        (time/days 1))
-                                            time-coerce/to-string)
-                        :key 1552262400000
-                        :doc_count 3026106}
-                       {:key_as_string "2019-03-11T00:00:00.000Z"
-                        :key 1552262400000
-                        :doc_count 1}
-                       {:key_as_string "2019-03-18T00:00:00.000Z"
-                        :key 1552867200000
-                        :doc_count 0}
-                       {:key_as_string "2019-03-25T00:00:00.000Z"
-                        :key 1553472000000
-                        :doc_count 54183}
-                       {:key_as_string "2019-04-01T00:00:00.000Z"
-                        :key 1554076800000
-                        :doc_count 0}]
-        raw-buckets-3 [{:key_as_string "2019-03-11T00:00:00.000Z"
-                        :key 1552262400000
-                        :doc_count 1}
-                       {:key_as_string "2019-03-18T00:00:00.000Z"
-                        :key 1552867200000
-                        :doc_count 0}
-                       {:key_as_string "2019-03-25T00:00:00.000Z"
-                        :key 1553472000000
-                        :doc_count 54183}
-                       {:key_as_string "2019-04-01T00:00:00.000Z"
-                        :key 1554076800000
-                        :doc_count 0}]
-        raw-buckets-4 [{:key_as_string sut/missing-date-str
-                        :key 1552262400000
-                        :doc_count 3026106}]
-        raw-buckets-5 [{:key_as_string "2019-03-25T00:00:00.000Z"
+        raw-buckets-2 [{:key_as_string "2019-03-25T00:00:00.000Z"
                        :key 1553472000000
                        :doc_count 54183}]
-        raw-buckets-6 [{:key_as_string sut/missing-date-str
-                        :key 1552262400000
-                        :doc_count 3026106}
-                       {:key_as_string "2019-03-25T00:00:00.000Z"
-                        :key 1553472000000
-                        :doc_count 54183}]
-        missing-query {:bool
-                       {:must_not
-                        {:exists
-                         {:field :modified}}}}
         last-query {:bool
                     {:filter
                      {:range
                       {:modified
                        {:gte "2019-03-25T00:00:00.000Z"}}}}}
-        expected-by-day [missing-query
+        expected-by-day [missing-modified-query
                           {:bool
                            {:filter
                             {:range
@@ -197,7 +146,7 @@
                               {:gte "2019-03-11T00:00:00.000Z"
                                :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
                           last-query]
-        expected-by-week [missing-query
+        expected-by-week [missing-modified-query
                            {:bool
                             {:filter
                              {:range
@@ -205,35 +154,28 @@
                                {:gte "2019-03-11T00:00:00.000Z"
                                 :lt "2019-03-11T00:00:00.000Z||+1w"}}}}}
                            last-query]
-        expected-by-month [{:bool
+        expected-by-month [missing-modified-query
+                           {:bool
                              {:filter
                               {:range
                                {:modified
                                 {:gte "2019-03-11T00:00:00.000Z"
                                  :lt "2019-03-11T00:00:00.000Z||+1M"}}}}}
                            last-query]
-        expected-only-one-range [last-query]
-        expected-only-missing [missing-query]
-        expected-only-missing-one-range [missing-query last-query]
+        expected-only-one-range [missing-modified-query last-query]
         formatted-by-day (sut/format-buckets raw-buckets-1 :modified "day")
-        formatted-by-week (sut/format-buckets raw-buckets-2 :modified "week")
-        formatted-by-month (sut/format-buckets raw-buckets-3 :modified "month")
-        formatted-only-missing (sut/format-buckets raw-buckets-4 :modified "day")
-        formatted-only-one-range (sut/format-buckets raw-buckets-5 :modified "day")
-        formatted-only-missing-one-range (sut/format-buckets raw-buckets-6 :modified "day")
-        formatted-empty (sut/format-buckets [] :modified "day")]
-    (is (= expected-only-missing-one-range formatted-only-missing-one-range))
+        formatted-by-week (sut/format-buckets raw-buckets-1 :modified "week")
+        formatted-by-month (sut/format-buckets raw-buckets-1 :modified "month")
+        formatted-only-one-range (sut/format-buckets raw-buckets-2 :modified "day")]
     (is (= expected-only-one-range formatted-only-one-range))
-    (is (= expected-only-missing formatted-only-missing))
-    (is (= '()
+    (is (= (list missing-modified-query)
            (sut/format-buckets nil :modified "day")
            (sut/format-buckets [] :modified "day")))
-    (is (= 3 (count formatted-by-day))
-        "format-range-buckets should filter buckets with 0 documents and add missing query when a bucket has a date equal to default missing value")
-    (is (= 3 (count formatted-by-week))
-        "format-range-buckets should filter buckets with 0 documents and add missing query when a bucket has a date before default missing value")
-    (is (= 2 (count formatted-by-month))
-        "format-range-buckets should filter buckets with 0 documents and not add missing-query when all buckets dates are after default missing value")
+    (is (= 3
+           (count formatted-by-day)
+           (count formatted-by-week)
+           (count formatted-by-month))
+        "format-range-buckets should filter buckets with 0 documents and always add missing-query")
     (is (= formatted-by-day expected-by-day)
         "format-range-buckets should properly format raw buckets per day")
     (is (= formatted-by-week expected-by-week)
@@ -410,7 +352,7 @@
                   :settings {}
                   :config {}}
         data (es-helpers/load-file-bulk es-conn "./test/data/indices/sample-relationships-1000.json")
-        expected-queries [{:bool {:must_not {:exists {:field :modified}}}}
+        expected-queries [missing-modified-query
                           {:bool
                            {:filter
                             {:range
@@ -523,7 +465,8 @@
                            {:filter {:range {:modified {:gte "2018-08-06T00:00:00.000Z"}}}}}]]
     (is (= expected-queries
            (sut/sliced-queries storemap nil "week")))
-    (is (= [{:bool
+    (is (= [missing-modified-query
+            {:bool
              {:filter
               {:range
                {:modified
