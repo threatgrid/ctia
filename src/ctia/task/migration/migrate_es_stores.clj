@@ -123,8 +123,7 @@
   (->>
    (lazy-seq
     (when-let [batch (read-source-batch read-params)]
-      (cons batch (read-source batch))))
-   (take-while seq)))
+      (cons batch (read-source batch))))))
 
 (s/defn write-target :- s/Int
   "This function writes a batch of documents which are (1) modified with `migrations` functions,

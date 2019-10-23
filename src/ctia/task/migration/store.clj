@@ -241,14 +241,22 @@
          bulk-max-size))
 
 (s/defn rollover?
-  "do we need to rollover?"
+  "do we need to rollover? that funciton proposes a heuristic to determine if we should
+   refresh the current write index and try a rollover. We must limit the numnber of refresh
+   that are costly. THat function uses a heuristic to determine if the current number of
+   documents in the write index is bigger than max-docs. It depends on the potential number
+   of batch that are smaller than batch-size that were inserted and the number of previous
+   rollover."
   [aliased? max_docs batch-size migrated-count]
   (and aliased?
        max_docs
        (>= migrated-count max_docs)
-       (<= 0
-           (mod migrated-count max_docs)
-           batch-size)))
+       (let [margin (-> (quot migrated-count max_docs)
+                        (max 1)
+                        (* batch-size))]
+         (<= 0
+             (mod migrated-count max_docs)
+             margin))))
 
 (s/defn rollover
   "Performs rollover if conditions are met.
