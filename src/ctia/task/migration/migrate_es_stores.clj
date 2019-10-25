@@ -120,10 +120,9 @@
 (s/defn read-source ;; WARNING: defining schema output breaks lazyness
   "returns a lazy-seq of batch from source store"
   [read-params :- (s/maybe BatchParams)]
-  (->>
-   (lazy-seq
-    (when-let [batch (read-source-batch read-params)]
-      (cons batch (read-source batch))))))
+  (lazy-seq
+   (when-let [batch (read-source-batch read-params)]
+     (cons batch (read-source batch)))))
 
 (s/defn write-target :- s/Int
   "This function writes a batch of documents which are (1) modified with `migrations` functions,

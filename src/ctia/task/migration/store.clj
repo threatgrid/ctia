@@ -241,33 +241,36 @@
          bulk-max-size))
 
 (s/defn rollover?
-  "do we need to rollover? that funciton proposes a heuristic to determine if we should
-   refresh the current write index and try a rollover. We must limit the numnber of refresh
-   that are costly. THat function uses a heuristic to determine if the current number of
-   documents in the write index is bigger than max-docs. It depends on the potential number
-   of batch that are smaller than batch-size that were inserted and the number of previous
-   rollover."
+  "Do we need to rollover? When a store is properly configured as aliased, that function
+   determines if we should refresh the current write index and try a rollover. We must
+   limit the number of refreshes that are costly. That function checks if the current
+   number of documents in the write index is bigger than max-docs, taking into account
+   that partial batches could have been inserted. Thus it tests if the current index size
+   is bigger than a multiple of max_docs + a margin of `batch-size` rollovers that were
+   already successfully performed."
   [aliased? max_docs batch-size migrated-count]
   (and aliased?
        max_docs
        (>= migrated-count max_docs)
-       (let [margin (-> (quot migrated-count max_docs)
-                        (max 1)
+       (let [margin (-> (quot migrated-count max_docs) ;; how many times we already rolled over?
                         (* batch-size))]
          (<= 0
-             (mod migrated-count max_docs)
+             (rem migrated-count max_docs)
              margin))))
 
 (s/defn rollover
   "Performs rollover if conditions are met.
 Rollover requires refresh so we cannot just call ES with condition since refresh is set to -1 for performance reasons"
-  [{conn :conn
+  [{:keys [conn mapping]
     {:keys [aliased write-index]
      {:keys [max_docs]} :rollover} :props
     :as store-map} :- StoreMap
    batch-size :- s/Int
    migrated-count :- s/Int]
   (when (rollover? aliased max_docs batch-size migrated-count)
+    (log/info (format "%s - refreshing index %s"
+                      mapping
+                      write-index))
     (es-index/refresh! conn write-index)
     (rollover-store (store-map->es-conn-state store-map))))
 

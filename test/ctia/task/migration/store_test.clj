@@ -279,6 +279,7 @@
           docs-all (->> (line-seq rdr)
                         (map es-helpers/prepare-bulk-ops)
                         (map #(assoc % :_index write-alias)))
+          batch-sizes (repeatedly 300 #(inc (rand-int batch-size)))
           test-fn (fn [{:keys [source-docs
                                migrated-count
                                current-index-size]
@@ -316,7 +317,7 @@
                             true (assoc :source-docs (drop nb source-docs))
                             rollover? (assoc :current-index-size 0)
                             (not rollover?) (update :current-index-size + nb))))]
-      (es-index/delete! es-conn (str storename "*"))
+      (es-index/delete! es-conn (str "*" storename "*"))
       (es-index/create! es-conn
                         (format "<%s-000001>" storename)
                         {:settings {:refresh_interval -1}
@@ -326,7 +327,7 @@
                        {:source-docs docs-all
                         :migrated-count 0
                         :current-index-size 0}
-                       (repeatedly 300 #(inc (rand-int batch-size)))))
+                       batch-sizes))
 
         (is (every? #(<= % (+ max-docs batch-size))
                     (->> (es-helpers/get-cat-indices
@@ -335,7 +336,7 @@
                          (keep (fn [[k v]]
                                  (when (clojure.string/starts-with? (name k) storename)
                                    v)))))
-            "All the indices should be smaller than max-docs")))))
+            "All the indices should be smaller than max-docs + batch-size")))))
 
 (deftest sliced-queries-test
   (let [storemap {:conn es-conn
