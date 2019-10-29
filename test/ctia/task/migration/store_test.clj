@@ -1,7 +1,10 @@
 (ns ctia.task.migration.store-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+            [clojure.data.json :as json]
             [clj-momo.test-helpers.core :as mth]
-            [clj-momo.lib.time :as time]
+            [clj-momo.lib.clj-time
+             [core :as time]
+             [coerce :as time-coerce]]
             [clj-momo.lib.es
              [conn :refer [connect]]
              [document :as es-doc]
@@ -48,6 +51,138 @@
                                    :mappings {:a :b}}
                                   {:write-index "test_index-write"}))))
 
+(deftest missing-query-test
+  (is (= {:bool
+          {:must_not
+           {:exists
+            {:field :timestamp}}}}
+         (sut/missing-query :timestamp)))
+  (is (= {:bool
+          {:must_not
+           {:exists
+            {:field :date}}}}
+         (sut/missing-query :date))))
+
+(deftest range-query-test
+  (is (= {:bool
+          {:filter
+           {:range
+            {:created
+             {:gte "2019-03-11T00:00:00.000Z"
+              :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
+         (sut/range-query "2019-03-11T00:00:00.000Z" :created "d"))))
+
+(deftest last-range-query-test
+  (testing "last-range-query should produce a bool filter with a range query."
+    (is (= {:bool
+            {:filter
+             {:range
+              {:modified
+               {:gte "2019-03-25T00:00:00.000Z"}}}}}
+           (sut/last-range-query "2019-03-25T00:00:00.000Z"
+                                 :modified
+                                 false)))
+    (is (= {:bool
+            {:filter
+             {:range
+              {:modified
+               {:gt "2019-03-25T00:00:00.000Z"}}}}}
+           (sut/last-range-query "2019-03-25T00:00:00.000Z"
+                                 :modified
+                                 false
+                                 true))
+        "when strict? is set to false, last-range should ust :gt filter")
+    (is (= (sut/last-range-query "2019-03-25T00:00:00.000Z"
+                                 :modified
+                                 false)
+           (sut/last-range-query "2019-03-25T00:00:00.000Z"
+                                 :modified
+                                 false
+                                 false))
+        "default strict? value should be false")
+    (is (= {:bool
+            {:filter
+             {:range
+              {:modified
+               {:gte 1553472000000
+                :format "epoch_millis"}}}}}
+           (sut/last-range-query 1553472000000
+                                 :modified
+                                 true))
+        "When epoch_millis? is true, it should add the epoch_millis format into the range query")))
+
+(def missing-modified-query
+  {:bool
+   {:must_not
+    {:exists
+     {:field :modified}}}})
+
+(deftest format-buckets-test
+  (let [raw-buckets-1 [{:key_as_string "2019-03-11T00:00:00.000Z"
+                        :key 1552262400000
+                        :doc_count 1}
+                       {:key_as_string "2019-03-18T00:00:00.000Z"
+                        :key 1552867200000
+                        :doc_count 0}
+                       {:key_as_string "2019-03-25T00:00:00.000Z"
+                        :key 1553472000000
+                        :doc_count 54183}
+                       {:key_as_string "2019-04-01T00:00:00.000Z"
+                        :key 1554076800000
+                        :doc_count 0}]
+        raw-buckets-2 [{:key_as_string "2019-03-25T00:00:00.000Z"
+                       :key 1553472000000
+                       :doc_count 54183}]
+        last-query {:bool
+                    {:filter
+                     {:range
+                      {:modified
+                       {:gte "2019-03-25T00:00:00.000Z"}}}}}
+        expected-by-day [missing-modified-query
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2019-03-11T00:00:00.000Z"
+                               :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
+                          last-query]
+        expected-by-week [missing-modified-query
+                           {:bool
+                            {:filter
+                             {:range
+                              {:modified
+                               {:gte "2019-03-11T00:00:00.000Z"
+                                :lt "2019-03-11T00:00:00.000Z||+1w"}}}}}
+                           last-query]
+        expected-by-month [missing-modified-query
+                           {:bool
+                             {:filter
+                              {:range
+                               {:modified
+                                {:gte "2019-03-11T00:00:00.000Z"
+                                 :lt "2019-03-11T00:00:00.000Z||+1M"}}}}}
+                           last-query]
+        expected-only-one-range [missing-modified-query last-query]
+        formatted-by-day (sut/format-buckets raw-buckets-1 :modified "day")
+        formatted-by-week (sut/format-buckets raw-buckets-1 :modified "week")
+        formatted-by-month (sut/format-buckets raw-buckets-1 :modified "month")
+        formatted-only-one-range (sut/format-buckets raw-buckets-2 :modified "day")]
+    (is (= expected-only-one-range formatted-only-one-range))
+    (is (= (list missing-modified-query)
+           (sut/format-buckets nil :modified "day")
+           (sut/format-buckets [] :modified "day")))
+    (is (= 3
+           (count formatted-by-day)
+           (count formatted-by-week)
+           (count formatted-by-month))
+        "format-range-buckets should filter buckets with 0 documents and always add missing-query")
+    (is (= formatted-by-day expected-by-day)
+        "format-range-buckets should properly format raw buckets per day")
+    (is (= formatted-by-week expected-by-week)
+        "format-range-buckets should properly format raw buckets per week")
+    (is (= formatted-by-month expected-by-month)
+        "format-range-buckets should properly format raw buckets per month")))
+
 (deftest wo-storemaps-test
   (let [fake-migration (sut/init-migration "migration-id-1"
                                            "0.0.0"
@@ -61,12 +196,15 @@
   (is (false? (sut/rollover? false 10 10 10))
       "rollover? should returned false when index is not aliased")
   (testing "rollover? should return true when migrated doc exceed a multiple of max_docs with a maximum of batch-size, false otherwise"
+    (is (sut/rollover? true 100 10 100))
     (is (sut/rollover? true 100 10 101))
     (is (sut/rollover? true 100 10 109))
     (is (sut/rollover? true 100 10 110))
+    (is (sut/rollover? true 100 10 200))
     (is (sut/rollover? true 100 10 301))
     (is (sut/rollover? true 100 10 309))
     (is (sut/rollover? true 100 10 310))
+    (is (sut/rollover? true 100 10 311))
     (is (false? (sut/rollover? true 100 10 50)))
     (is (false? (sut/rollover? true 100 10 99)))
     (is (false? (sut/rollover? true 100 10 111)))
@@ -123,6 +261,231 @@
 (def fixtures-nb 100)
 (def examples (fixt/bundle fixtures-nb false))
 
+(deftest rollover-test
+  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+    (let [storename "ctia_relationship"
+          write-alias (str storename "-write")
+          max-docs 40
+          batch-size 4
+          storemap {:conn es-conn
+                    :indexname storename
+                    :mapping "relationship"
+                    :props {:aliased true
+                            :write-index write-alias
+                            :rollover {:max_docs max-docs}}
+                    :type "relationship"
+                    :settings {}
+                    :config {}}
+          docs-all (->> (line-seq rdr)
+                        (map es-helpers/prepare-bulk-ops)
+                        (map #(assoc % :_index write-alias)))
+          batch-sizes (repeatedly 300 #(inc (rand-int batch-size)))
+          test-fn (fn [{:keys [source-docs
+                               migrated-count
+                               current-index-size]
+                        :as state}
+                       nb]
+                    (let [rollover? (<= max-docs (+ current-index-size nb))
+                          cat-before (es-helpers/get-cat-indices
+                                      "localhost"
+                                      9200)
+                          indices-before (set (keys cat-before))
+                          total-before (reduce + (vals cat-before))
+                          _ (es-helpers/load-bulk es-conn
+                                                  (take nb source-docs)
+                                                  "false")
+                          res (when rollover?
+                                (sut/rollover storemap
+                                              batch-size
+                                              (+ nb migrated-count)))
+                          cat-after (es-helpers/get-cat-indices
+                                     "localhost"
+                                     9200)
+                          indices-after (set (keys cat-after))
+                          total-after (reduce + (vals cat-after))]
+                          (when rollover?
+                            (println res)
+                            (is (true? (:rolled_over res)))
+                            (is (< (count indices-before)
+                                   (count indices-after)))
+                            (is (= (+ nb migrated-count)
+                                   total-after)))
+                          (when-not rollover?
+                            (is (= indices-before indices-after)))
+
+                          (cond-> (update state :migrated-count + nb)
+                            true (assoc :source-docs (drop nb source-docs))
+                            rollover? (assoc :current-index-size 0)
+                            (not rollover?) (update :current-index-size + nb))))]
+      (es-index/delete! es-conn (str "*" storename "*"))
+      (es-index/create! es-conn
+                        (format "<%s-000001>" storename)
+                        {:settings {:refresh_interval -1}
+                         :aliases {write-alias {}}})
+      (testing "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
+        (doall (reduce test-fn
+                       {:source-docs docs-all
+                        :migrated-count 0
+                        :current-index-size 0}
+                       batch-sizes))
+
+        (is (every? #(<= % (+ max-docs batch-size))
+                    (->> (es-helpers/get-cat-indices
+                          "localhost"
+                          9200)
+                         (keep (fn [[k v]]
+                                 (when (clojure.string/starts-with? (name k) storename)
+                                   v)))))
+            "All the indices should be smaller than max-docs + batch-size")))))
+
+(deftest sliced-queries-test
+  (let [storemap {:conn es-conn
+                  :indexname "ctia_relationship"
+                  :mapping "relationship"
+                  :props {:write-index "ctia_relationship"}
+                  :type "relationship"
+                  :settings {}
+                  :config {}}
+        data (es-helpers/load-file-bulk es-conn "./test/data/indices/sample-relationships-1000.json")
+        expected-queries [missing-modified-query
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-02-26T00:00:00.000Z",
+                               :lt "2018-02-26T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-03-05T00:00:00.000Z",
+                               :lt "2018-03-05T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-03-12T00:00:00.000Z",
+                               :lt "2018-03-12T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-03-19T00:00:00.000Z",
+                               :lt "2018-03-19T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-04-09T00:00:00.000Z",
+                               :lt "2018-04-09T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-04-16T00:00:00.000Z",
+                               :lt "2018-04-16T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-04-23T00:00:00.000Z",
+                               :lt "2018-04-23T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-04-30T00:00:00.000Z",
+                               :lt "2018-04-30T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-05-07T00:00:00.000Z",
+                               :lt "2018-05-07T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-05-14T00:00:00.000Z",
+                               :lt "2018-05-14T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-05-21T00:00:00.000Z",
+                               :lt "2018-05-21T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-06-18T00:00:00.000Z",
+                               :lt "2018-06-18T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-06-25T00:00:00.000Z",
+                               :lt "2018-06-25T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-02T00:00:00.000Z",
+                               :lt "2018-07-02T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-09T00:00:00.000Z",
+                               :lt "2018-07-09T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-16T00:00:00.000Z",
+                               :lt "2018-07-16T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-23T00:00:00.000Z",
+                               :lt "2018-07-23T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter
+                            {:range
+                             {:modified
+                              {:gte "2018-07-30T00:00:00.000Z",
+                               :lt "2018-07-30T00:00:00.000Z||+1w"}}}}}
+                          {:bool
+                           {:filter {:range {:modified {:gte "2018-08-06T00:00:00.000Z"}}}}}]]
+    (is (= expected-queries
+           (sut/sliced-queries storemap nil "week")))
+    (is (= [missing-modified-query
+            {:bool
+             {:filter
+              {:range
+               {:modified
+                {:gte "2018-07-16T00:00:00.000Z",
+                 :lt "2018-07-16T00:00:00.000Z||+1w"}}}}}
+            {:bool
+             {:filter
+              {:range
+               {:modified
+                {:gte "2018-07-23T00:00:00.000Z",
+                 :lt "2018-07-23T00:00:00.000Z||+1w"}}}}}
+            {:bool
+             {:filter
+              {:range
+               {:modified
+                {:gte "2018-07-30T00:00:00.000Z",
+                 :lt "2018-07-30T00:00:00.000Z||+1w"}}}}}
+            {:bool
+             {:filter {:range {:modified {:gte "2018-08-06T00:00:00.000Z"}}}}}]
+           (sut/sliced-queries storemap
+                               [(time-coerce/to-long "2018-07-16T00:00:00.000Z")
+                                "whatever"]
+                               "week"))
+        "slice-queries should take into account search_after param")))
 
 (deftest bulk-metas-test
   ;; insert elements in different indices and check that we retrieve the right one
@@ -404,7 +767,7 @@
         _ (delete (format "ctia/sighting/%s" sighting1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (es-index/refresh! es-conn)
-        since (time/now)
+        since (time/internal-now)
         _ (delete (format "ctia/sighting/%s" sighting2-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" tool1-id)

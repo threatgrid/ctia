@@ -2,7 +2,9 @@
   "ES test helpers"
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
-            [clj-momo.lib.es.index :as es-index]
+            [clj-momo.lib.es
+             [document :as es-doc]
+             [index :as es-index]]
             [ctia
              [properties :refer [properties]]
              [store :as store]]
@@ -70,6 +72,25 @@
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.migration.indexname" "ctia_migration"
+                      "ctia.store.es.actor.indexname" "ctia_actor"
+                      "ctia.store.es.attack-pattern.indexname" "ctia_attack_pattern"
+                      "ctia.store.es.campaign.indexname" "ctia_campaign"
+                      "ctia.store.es.coa.indexname" "ctia_coa"
+                      "ctia.store.es.event.indexname" "ctia_event"
+                      "ctia.store.es.data-table.indexname" "ctia_data-table"
+                      "ctia.store.es.feedback.indexname" "ctia_feedback"
+                      "ctia.store.es.identity.indexname" "ctia_identity"
+                      "ctia.store.es.incident.indexname" "ctia_incident"
+                      "ctia.store.es.indicator.indexname" "ctia_indicator"
+                      "ctia.store.es.investigation.indexname" "ctia_investigation"
+                      "ctia.store.es.judgement.indexname" "ctia_judgement"
+                      "ctia.store.es.malware.indexname" "ctia_malware"
+                      "ctia.store.es.relationship.indexname" "ctia_relationship"
+                      "ctia.store.es.casebook.indexname" "ctia_casebook"
+                      "ctia.store.es.sighting.indexname" "ctia_sighting"
+                      "ctia.store.es.tool.indexname" "ctia_tool"
+                      "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
+                      "ctia.store.es.weakness.indexname" "ctia_weakness"
                       "ctia.store.actor" "es"
                       "ctia.store.attack-pattern" "es"
                       "ctia.store.campaign" "es"
@@ -134,3 +155,45 @@
 
 (defn post-all-to-es [objects]
   (run! post-to-es objects))
+
+(defn str->doc
+  [str-doc]
+  (json/parse-string str-doc true))
+
+(defn prepare-bulk-ops
+  [str-doc]
+  (let [{:keys [_type _id _index _source]} (str->doc str-doc)]
+    (assoc _source
+           :_type _type
+           :_index _index
+           :_id _id)))
+
+(defn load-bulk
+  ([es-conn docs] (load-bulk es-conn docs "true"))
+  ([es-conn docs refresh?]
+   (es-doc/bulk-create-doc es-conn
+                           docs
+                           refresh?)))
+
+(defn load-file-bulk
+  [es-conn filepath]
+  (with-open [rdr (clojure.java.io/reader filepath)]
+    (load-bulk es-conn
+               (map prepare-bulk-ops
+                    (line-seq rdr)))))
+
+(defn make-cat-indices-url [host port]
+  (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
+
+(defn get-cat-indices [host port]
+  (let [url (make-cat-indices-url host
+                                  port)
+        {:keys [body]
+         :as cat-response} (http/get url {:as :json})]
+    (->> body
+         (map (fn [{:keys [index]
+                    :as entry}]
+                {index (read-string
+                        (:docs.count entry))}))
+         (into {})
+         clojure.walk/keywordize-keys)))

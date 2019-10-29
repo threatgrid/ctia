@@ -4,7 +4,9 @@
             [ring.swagger.coerce :as sc]
             [schema.core :as s]
             [schema-tools.core :as st]
-            [clj-momo.lib.time :as time]
+            [clj-momo.lib.clj-time
+             [core :as time]
+             [coerce :as time-coerce]]
             [clj-momo.lib.es
              [schemas :refer [ESConn ESQuery ESConnState]]
              [conn :as conn]
@@ -239,26 +241,141 @@
          bulk-max-size))
 
 (s/defn rollover?
-  "do we need to rollover?"
+  "Do we need to rollover? When a store is properly configured as aliased, that function
+   determines if we should refresh the current write index and try a rollover. We must
+   limit the number of refreshes that are costly. That function checks if the current
+   number of documents in the write index is bigger than max-docs, taking into account
+   that partial batches could have been inserted. Thus it tests if the current index size
+   is bigger than a multiple of max_docs + a margin of `batch-size` rollovers that were
+   already successfully performed."
   [aliased? max_docs batch-size migrated-count]
   (and aliased?
        max_docs
-       (> migrated-count max_docs)
-       (<= (mod migrated-count max_docs)
-           batch-size)))
+       (>= migrated-count max_docs)
+       (let [margin (-> (quot migrated-count max_docs) ;; how many times we already rolled over?
+                        (* batch-size))]
+         (<= 0
+             (rem migrated-count max_docs)
+             margin))))
 
 (s/defn rollover
   "Performs rollover if conditions are met.
 Rollover requires refresh so we cannot just call ES with condition since refresh is set to -1 for performance reasons"
-  [{conn :conn
+  [{:keys [conn mapping]
     {:keys [aliased write-index]
      {:keys [max_docs]} :rollover} :props
     :as store-map} :- StoreMap
    batch-size :- s/Int
    migrated-count :- s/Int]
-  (when rollover?
+  (when (rollover? aliased max_docs batch-size migrated-count)
+    (log/info (format "%s - refreshing index %s"
+                      mapping
+                      write-index))
     (es-index/refresh! conn write-index)
     (rollover-store (store-map->es-conn-state store-map))))
+
+(s/defn missing-query :- ESQuery
+  "implement missing filter through a must_not exists bool query
+  https://www.elastic.co/guide/en/elasticsearch/reference/5.6/query-dsl-exists-query.html#missing-query"
+  [field]
+  {:bool
+   {:must_not
+    {:exists
+     {:field field}}}})
+
+(s/defn range-query :- ESQuery
+  "returns a bool range filter query with start and end limits"
+  [date field unit]
+  {:bool
+   {:filter
+    {:range
+     {field
+      {:gte date
+       :lt (str date "||+1" unit)}}}}})
+
+(s/defn last-range-query :- ESQuery
+  "returns a bool range filter query with only start limit. Add epoch_millis
+  format if specified so (required  when date comes from search_after)"
+  ([date field epoch-millis?]
+   (last-range-query date field epoch-millis? false))
+  ([date field epoch-millis? strict?]
+   {:bool
+    {:filter
+     {:range
+      {field
+       (cond-> {:gte date}
+         strict? (clojure.set/rename-keys {:gte :gt})
+         epoch-millis? (assoc :format "epoch_millis"))}}}}))
+
+(def Interval (s/enum "year" "month" "week" "day"))
+
+(s/defn format-buckets :- (s/maybe [ESQuery])
+  "format buckets from aggregation results into an ordered list of proper bool queries"
+  [raw-buckets :- [(st/open-schema
+                    {:doc_count s/Int
+                     :key_as_string s/Str})]
+   field :- s/Keyword
+   interval :- Interval]
+  (let [unit (case interval
+               "year" "y"
+               "month" "M"
+               "week" "w"
+               "day" "d")
+        filtered (->> raw-buckets
+                      (filter #(< 0 (:doc_count %)))
+                      (map :key_as_string))
+        queries (map #(range-query % field unit)
+                     (drop-last filtered))
+        last-query (some-> (last filtered)
+                           (last-range-query field false))]
+    (cond-> (cons (missing-query field) queries)
+      last-query (concat [last-query]))))
+
+(s/defn sliced-queries :- [ESQuery]
+  "this function performs a date aggregation on modification dates and returns
+  bool queries that will be used to perform the migration per date ranges.
+  Modification field is `modified` for entities and `timestamp` for events.
+  Some documents misses the required date field and are handled with a first query
+  that group them with a must_not exists bool query.
+  Last range does not contains end date limit in order to handle documents
+  that are created or modified during the migration. Note that new entities are now
+  created with creation value as first modified value.
+  The `search_after` parameter is used to handle restart where the migration
+  previously ended through a bool filter range query for better performances."
+  [{:keys [conn indexname mapping]} :- StoreMap
+   search_after :- [s/Any]
+   interval :- Interval]
+  (let [agg-field (case mapping
+                    "event" :timestamp
+                    :modified)
+        ;; This search_after value is built according to `sort`
+        ;; in query-fetch-batch. The modification field is always first.
+        ;; ES returns that date value as epoch milliseconds
+        query (when (some->> (first search_after)
+                             time-coerce/to-date)
+                ;; we have a valid search_after, filter on it
+                ;; set `epoch-millis?` param as true
+                (last-range-query (first search_after)
+                                  agg-field
+                                  true
+                                  true))
+        aggs-q {:intervals
+                {:date_histogram
+                 {:field agg-field
+                  :interval interval}}}
+        res (retry es-max-retry
+                   es-doc/query
+                   conn
+                   indexname
+                   mapping
+                   query
+                   aggs-q
+                   {:limit 0})
+        buckets (->> res :aggs :intervals :buckets)]
+    (format-buckets buckets agg-field interval)))
+
+(def missing-date-str "2010-01-01T00:00:00.000Z")
+(def missing-date-epoch (time-coerce/to-epoch missing-date-str))
 
 (s/defn query-fetch-batch :- {s/Any s/Any}
   "fetch a batch of documents from an es index and a query"
@@ -268,11 +385,13 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    offset :- s/Int
    sort-order :- (s/maybe s/Str)
    search_after :- (s/maybe [s/Any])]
-  (let [sort-by (conj (case mapping
-                        "event" [{"timestamp" sort-order}]
+  (let [date-sort-order {"order" sort-order
+                         "missing" missing-date-epoch}
+        sort-by (conj (case mapping
+                        "event" [{"timestamp" date-sort-order}]
                         "identity" []
-                        [{"modified" sort-order}
-                         {"created" sort-order}])
+                        [{"modified" date-sort-order}
+                         {"created" date-sort-order}])
                       {"_uid" sort-order})
         params
         (merge
@@ -283,11 +402,11 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
          (when search_after
            {:search_after search_after}))]
     (retry es-max-retry
-           es-doc/search-docs conn
+           es-doc/query
+           conn
            indexname
            mapping
            query
-           {}
            params)))
 
 (s/defn fetch-batch :- {s/Any s/Any}
@@ -361,16 +480,24 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                                [:number_of_replicas :refresh_interval]))]
     {:index res}))
 
+(defn purge-store
+  [entity-type conn storename]
+  (log/infof "%s - purging store: %s" entity-type storename)
+  (let [indexnames (-> (es-index/get conn storename)
+                    keys)]
+    (doseq [indexname indexnames]
+      (log/infof "%s - deleting index: %s" entity-type (name indexname))
+      (es-index/delete! conn (name indexname)))))
+
 (defn create-target-store!
   "create the target store, pushing its template"
   [{:keys [conn indexname config props] entity-type :type :as target-store}]
   (when (retry es-max-retry es-index/index-exists? conn indexname)
     (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
   (let [index-config (target-index-config indexname config props)]
-    (log/infof "%s - purging indexes: %s" entity-type indexname)
-    (retry es-max-retry es-index/delete! conn (str indexname "*"))
     (log/infof "%s - creating index template: %s" entity-type indexname)
-    (log/infof "%s - creating index: %s" entity-type indexname)
+    (purge-store entity-type conn indexname)
+    (log/infof "%s - creating store: %s" entity-type indexname)
     (retry es-max-retry es-index/create-template! conn indexname index-config)
     (retry es-max-retry es-index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
 
@@ -406,7 +533,7 @@ when confirm? is true, it stores this state and creates the target indices."
   (let [source-stores (stores->maps (select-keys @stores store-keys))
         target-stores (get-target-stores prefix store-keys)
         migration-properties (migration-store-properties)
-        now (time/now)
+        now (time/internal-now)
         migration-stores (->> source-stores
                               (map (fn [[k v]]
                                      {k (init-migration-store v (k target-stores))}))
@@ -508,7 +635,7 @@ when confirm? is true, it stores this state and creates the target indices."
   (retry es-max-retry es-index/refresh! (:conn target-store) (:indexname target-store))
   (update-migration-store migration-id
                           store-key
-                          {:completed (time/now)}
+                          {:completed (time/internal-now)}
                           es-conn))
 
 (defn setup!

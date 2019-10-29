@@ -2,22 +2,28 @@
   (:require [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
-
             [schema.core :as s]
-            [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.es
              [query :as es-query]
              [conn :refer [connect]]
              [document :as es-doc]
              [index :as es-index]]
+            [clj-momo.lib.clj-time
+             [core :as time]
+             [coerce :as time-coerce]]
             [ctim.domain.id :refer [long-id->id]]
 
+            [ctia.entity.relationship.schemas :refer [StoredRelationship]]
             [ctia.properties :as props]
             [ctia.task.rollover :refer [rollover-stores]]
             [ctia.task.migration
              [migrate-es-stores :as sut]
-             [store :refer [setup! prefixed-index get-migration fetch-batch]]]
+             [store :refer [setup!
+                            prefixed-index
+                            init-migration
+                            get-migration
+                            fetch-batch]]]
             [ctia.test-helpers
              [fixtures :as fixt]
              [auth :refer [all-capabilities]]
@@ -48,22 +54,6 @@
   (join-fixtures [helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
-
-(defn make-cat-indices-url [host port]
-  (format "http://%s:%s/_cat/indices?format=json&pretty=true" host port))
-
-(defn get-cat-indices [host port]
-  (let [url (make-cat-indices-url host
-                                  port)
-        {:keys [body]
-         :as cat-response} (client/get url {:as :json})]
-    (->> body
-         (map (fn [{:keys [index]
-                    :as entry}]
-                {index (read-string
-                        (:docs.count entry))}))
-         (into {})
-         keywordize-keys)))
 
 (defn index-exists?
   [store prefix]
@@ -138,7 +128,7 @@
                                  [:__test]
                                  store-types
                                  10
-                                 30
+                                 3
                                  true
                                  false)
 
@@ -159,6 +149,251 @@
             (is (= fixtures-nb (:total source)))
             (is (= fixtures-nb (:migrated target)))))))))
 
+(def date-str->epoch-millis
+  (comp time-coerce/to-long time-coerce/to-date-time))
+
+(deftest read-source-batch-test
+  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+    (let [storemap {:conn es-conn
+                    :indexname "ctia_relationship"
+                    :mapping "relationship"
+                    :props {:write-index "ctia_relationship"}
+                    :type "relationship"
+                    :settings {}
+                    :config {}}
+          docs (map es-helpers/prepare-bulk-ops
+                    (line-seq rdr))
+          _ (es-helpers/load-bulk es-conn docs)
+          no-meta-docs (map #(dissoc % :_index :_type :_id)
+                            docs)
+          docs-no-modified (filter #(nil? (:modified %))
+                                   no-meta-docs)
+          docs-100 (take 100 no-meta-docs)
+          missing-query {:bool {:must_not {:exists {:field :modified}}}}
+          ids-100-query {:ids {:values (map :id docs-100)}}
+          match-all-query {:match_all {}}
+          nb-skipped-ids 10
+          [last-skipped & expected-ids-docs] (->> (sort-by (juxt :modified :created :id)
+                                                         docs-100)
+                                                (drop (dec nb-skipped-ids)))
+          {after-modified :modified
+           after-created :created
+           after-id :id} last-skipped
+          search_after [(date-str->epoch-millis after-modified)
+                        (date-str->epoch-millis after-created)
+                        after-id]
+          read-params-1 {:source-store storemap
+                         :batch-size 1000
+                         :query missing-query}
+          read-params-2 {:source-store storemap
+                         :batch-size 100
+                         :search_after search_after
+                         :query ids-100-query}
+          read-params-3 {:source-store storemap
+                         :batch-size 400
+                         :query match-all-query}
+          missing-res (sut/read-source-batch read-params-1)
+          ids-res (sut/read-source-batch read-params-2)
+          match-all-res (rest (iterate sut/read-source-batch read-params-3))]
+
+      (testing "queries should be used to select data"
+        (is (= (set docs-no-modified)
+               (set (:documents missing-res)))))
+      (testing "search_after should be properly taken into account"
+        (is (= (set expected-ids-docs)
+               (set (:documents ids-res))))
+        (is (= (- 100 nb-skipped-ids)
+               (count (:documents ids-res)))))
+      (testing "read source should return parameters for next call"
+        (is (= read-params-1
+               (dissoc missing-res :search_after :documents)))
+        (is (= (dissoc read-params-2 :search_after)
+               (dissoc ids-res :search_after :documents))))
+      (testing "read-source-batch shoould return nil when parameters map is nil or the query result is empty"
+        (is (= nil
+               (sut/read-source-batch nil)
+               (sut/read-source-batch (assoc read-params-1
+                                       :batch-size
+                                       0)))))
+      (testing "read-source-batch result should be usable to call read-source-batch again for scrolling given query"
+        (is (= '(400 400 200 0)
+               (->> (take 4 match-all-res)
+                    (map #(-> % :documents count)))))
+        (is (= (set no-meta-docs)
+               (->> (take 4 match-all-res)
+                    (map :documents)
+                    (apply concat)
+                    set)))))))
+
+(deftest read-source-test
+  (testing "read-source should produce a lazy seq from recursive read-source-batch calls"
+    (let [counter (atom 0)]
+      (with-redefs [sut/read-source-batch (fn [batch-params]
+                                            (when (< @counter 5)
+                                              (swap! counter inc)
+                                              (update batch-params :migrated-count inc)))]
+        (let [batches (map :migrated-count
+                           (sut/read-source {:migrated-count 0}))]
+          (is (= '(1 2) (take 2 batches)))
+          (is (= 2 @counter))
+          (is (= '(1 2 3 4 5) (take 10 batches)))
+          (is (= 5 @counter)))))))
+
+(deftest write-target-test
+  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+    (let [prefix "0.0.1"
+          indexname "v0.0.1_ctia_relationship"
+          storemap {:conn es-conn
+                    :indexname indexname
+                    :mapping "relationship"
+                    :props {:write-index indexname}
+                    :type "relationship"
+                    :settings {}
+                    :config {}}
+          list-coerce (sut/list-coerce-fn StoredRelationship)
+          migration-id "migration-1"
+          docs (map (comp :_source es-helpers/str->doc)
+                    (line-seq rdr))
+
+          base-params {:target-store storemap
+                       :entity-type :relationship
+                       :list-coerce list-coerce
+                       :migration-id migration-id
+                       :migrations (sut/compose-migrations [:__test])
+                       :batch-size 1000
+                       :migration-es-conn es-conn
+                       :confirm? true}
+          test-fn (fn [total
+                       migrated-count
+                       msg
+                       {:keys [confirm?]
+                        :as override-params}]
+                    (init-migration migration-id
+                                    prefix
+                                    [:relationship]
+                                    true)
+                    (let [test-docs (take total docs)
+                          search_after [(rand-int total)]
+                          batch-params  (-> (into base-params
+                                                  override-params)
+                                            (assoc :documents test-docs
+                                                   :search_after search_after))
+                          nb-migrated (sut/write-target migrated-count
+                                                        batch-params)
+                          {target-state :target
+                           source-state :source} (-> (get-migration migration-id es-conn)
+                                                     :stores
+                                                     :relationship)
+                          _ (es-index/refresh! es-conn)
+                          migrated-docs (:data (es-doc/query es-conn
+                                                             indexname
+                                                             "relationship"
+                                                             {:match_all {}}
+                                                             {:limit total}))]
+                      (testing msg
+                        (when-not confirm?
+                          (is (= (+ total migrated-count)
+                                 nb-migrated))
+                          (is (= (count migrated-docs)
+                                 (:migrated target-state))))
+                        (when confirm?
+                          (is (= (+ total migrated-count)
+                                 (+ (count migrated-docs) migrated-count)
+                                 nb-migrated
+                                 (:migrated target-state)))
+                          (is (= (set (map #(dissoc % :groups)
+                                           migrated-docs))
+                                 (set (map #(dissoc % :groups)
+                                           test-docs)))
+                              "write-target should only perform attended modifications")
+                          (is (every? #(= (:groups %)
+                                          ["migration-test"])
+                                      migrated-docs)
+                              "write-target should perform attended modifications on migrated documents")
+                          (is (= search_after
+                                 (:search_after source-state))
+                              "write-target should store last search_after in migration state")))))]
+      (test-fn 100
+               0
+               "write-target should properly modify documents, and write them in target index"
+               {:confirm? true})
+
+      (test-fn 100
+               10
+               "write-target should properly accumulate migration count"
+               {:confirm? true})
+
+      (test-fn 100
+               0
+               "write-target should not write anything while properly simulating migration when `confirm?` is set to false"
+               {:confirm? false}))))
+
+(deftest sliced-migration-test
+  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+    (let [storemap {:conn es-conn
+                    :indexname "ctia_relationship"
+                    :mapping "relationship"
+                    :props {:write-index "ctia_relationship"}
+                    :type "relationship"
+                    :settings {}
+                    :config {}}
+          {wo-modified true
+           w-modified false} (->> (line-seq rdr)
+                                  (map es-helpers/prepare-bulk-ops)
+                                  (group-by #(nil? (:modified %))))
+          sorted-w-modified (sort-by :modified w-modified)
+          bulk-1 (concat wo-modified (take 500 sorted-w-modified))
+          bulk-2 (drop 500 sorted-w-modified)
+          logger-1 (atom [])
+          _ (es-helpers/load-bulk es-conn bulk-1)
+          _ (with-atom-logger logger-1
+              (sut/migrate-store-indexes "migration-test-4"
+                                         "0.0.0"
+                                         [:__test]
+                                         [:relationship]
+                                         100
+                                         3
+                                         true
+                                         false))
+          migration-state-1 (es-doc/get-doc es-conn
+                                            migration-index
+                                            "migration"
+                                            "migration-test-4"
+                                            {})
+          target-count-1 (es-doc/count-docs es-conn
+                                            "v0.0.0_ctia_relationship"
+                                            "relationship"
+                                            nil)
+          _ (es-helpers/load-bulk es-conn bulk-2)
+          logger-2 (atom [])
+          _ (with-atom-logger logger-1
+              (sut/migrate-store-indexes "migration-test-4"
+                                         "0.0.0"
+                                         [:__test]
+                                         [:relationship]
+                                         100
+                                         3
+                                         true
+                                         true))
+          target-count-2 (es-doc/count-docs es-conn
+                                            "v0.0.0_ctia_relationship"
+                                            "relationship"
+                                            nil)
+          migration-state-2 (es-doc/get-doc es-conn
+                                            migration-index
+                                            "migration"
+                                            "migration-test-4"
+                                            {})]
+      (is (= (+ 500 (count wo-modified))
+             target-count-1
+             (get-in migration-state-1 [:stores :relationship :target :migrated])
+             (get-in migration-state-1 [:stores :relationship :source :total]))
+          "migration process should start with documents missing field used for bucketizing")
+
+      (is (= 1000
+             target-count-2
+             (get-in migration-state-2 [:stores :relationship :source :total]))
+          "migration process should complete the migration after restart"))))
 
 (deftest migration-with-malformed-docs
   (helpers/set-capabilities! "foouser"
@@ -191,7 +426,7 @@
                                    [:__test]
                                    store-types
                                    10
-                                   30
+                                   3
                                    true
                                    false))
       (let [messages (set @logger)
@@ -230,7 +465,7 @@
                                  [:0.4.16]
                                  (keys @stores)
                                  10
-                                 30
+                                 3
                                  false
                                  false)
 
@@ -249,7 +484,7 @@
                                    [:__test]
                                    (keys @stores)
                                    10
-                                   30
+                                   3
                                    true
                                    false))
       (testing "shall generate a proper migration state"
@@ -354,7 +589,7 @@
                    (into expected-event-indices)
                    keywordize-keys)
               _ (es-index/refresh! es-conn)
-              formatted-cat-indices (get-cat-indices (:host default)
+              formatted-cat-indices (es-helpers/get-cat-indices (:host default)
                                                      (:port default))]
           (is (= expected-indices
                  (select-keys formatted-cat-indices
@@ -371,7 +606,7 @@
       (let [;; retrieve the first 2 source indices for sighting store
             {:keys [host port]}(get-in @props/properties [:ctia :store :es :default])
             [sighting-index-1 sighting-index-2]
-            (->> (get-cat-indices host port)
+            (->> (es-helpers/get-cat-indices host port)
                  keys
                  (map name)
                  (filter #(.contains % "sighting"))
@@ -444,7 +679,7 @@
                                    [:__test]
                                    (keys @stores)
                                    2 ;; small batch to check proper delete paging
-                                   10
+                                   1
                                    true
                                    true)
         (let [migration-state (get-migration "test-2" es-conn)
@@ -491,7 +726,7 @@
                                        [:__test]
                                        (into [] example-types)
                                        batch-size
-                                       30
+                                       3
                                        true
                                        false)
           end (System/currentTimeMillis)
