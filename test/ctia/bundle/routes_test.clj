@@ -14,11 +14,7 @@
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.properties :refer [properties]]
             [ctia.test-helpers
-             [core :as helpers :refer [deep-dissoc-entity-ids
-                                       get
-                                       post
-                                       delete
-                                       entity->short-id]]
+             [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
@@ -201,63 +197,6 @@
        (group-by :type)
        (map (fn [[k v]] [k (count v)]))
        (into {})))
-
-(deftest bundle-import-wait_for-test
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (let [headers {"Authorization" "45c1f5e3f05d0"}
-           uuid-fn #(str (java.util.UUID/randomUUID))
-           get-statuses (fn [wait_for]
-                          (let [indicators [(mk-indicator (uuid-fn))
-                                            (mk-indicator (uuid-fn))]
-                                sightings [(mk-sighting (uuid-fn))
-                                           (mk-sighting (uuid-fn))]
-                                relationships (map (fn [indicator sighting]
-                                                     (mk-relationship (uuid-fn)
-                                                                      indicator
-                                                                      sighting
-                                                                      "indicates"))
-                                                   indicators
-                                                   sightings)
-                                bundle {:type "bundle"
-                                        :source "source"
-                                        :indicators (set indicators)
-                                        :sightings (set sightings)
-                                        :relationships (set relationships)}
-                                path (cond-> "ctia/bundle/import"
-                                       (boolean? wait_for) (str "?wait_for=" wait_for))
-                                response (post path
-                                               :body bundle
-                                               :headers {"Authorization" "45c1f5e3f05d0"})
-                                statuses (->> (:parsed-body response)
-                                              :results
-                                              (map #(get (format "ctia/%s/%s"
-                                                                 (-> % :type name)
-                                                                 (-> % entity->short-id))
-                                                         :headers headers))
-                                              (map :status))]
-                            (is (= 200 (:status response)))
-                            statuses))]
-
-       (is (every? #(= 200 %)
-                   (get-statuses true))
-           "Bundle import should wait for index refresh when wait_for is true")
-       (is (some (fn [statuses]
-                   (some #(= 404 %) statuses))
-                 (repeatedly 2 #(get-statuses false)))
-           "Bundle imports should not wait for index refresh when wait_for is false")
-       (testing "Configured ctia.store.bundle-refresh value is applied when wait_for is not specified"
-         (if (= "false" (get-in @properties [:ctia :store :bundle-refresh]))
-           (is (some (fn [statuses]
-                       (some #(= 404 %) statuses))
-                     (repeatedly 10 #(get-statuses nil))))
-           (is (every? #(= 200 %)
-                       (get-statuses true)))))))))
 
 (deftest bundle-import-test
   (test-for-each-store

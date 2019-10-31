@@ -260,10 +260,9 @@
              #(dissoc % :new-entity :old-entity)
              (apply concat (vals bundle-import-data)))})
 
-(defn bulk-params [params]
-  (into {:refresh
-         (get-in @properties [:ctia :store :bundle-refresh] "false")}
-        params))
+(defn bulk-params []
+  {:refresh
+   (get-in @properties [:ctia :store :bundle-refresh] "false")})
 
 (defn log-errors
   [response]
@@ -277,8 +276,7 @@
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
-   auth-identity :- (s/protocol auth/IIdentity)
-   params :- {s/Keyword s/Any}]
+   auth-identity :- (s/protocol auth/IIdentity)]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
@@ -289,10 +287,7 @@
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))]
     (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk
-                                  tempids
-                                  auth-identity
-                                  (bulk-params params))
+           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params))
                 (with-bulk-result bundle-import-data)
                 build-response
                 log-errors))))
