@@ -1,6 +1,7 @@
 (ns ctia.bulk.routes-test
   (:refer-clojure :exclude [get])
-  (:require [clj-momo.lib.es.index :as es-index]
+  (:require [cheshire.core :refer [parse-string]]
+            [clj-momo.lib.es.index :as es-index]
             [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
@@ -8,6 +9,7 @@
              [core :as core]
              [string :as str]
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
+            [clj-http.fake :refer [with-global-fake-routes]]
             [ctia
              [properties :refer [get-http-show properties]]
              [store :refer [stores]]]
@@ -15,10 +17,11 @@
              :refer
              [bulk-size gen-bulk-from-fn get-bulk-max-size]]
             [ctia.test-helpers
+             [es :as es-helpers]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store store-fixtures]]]
             [ctim.domain.id :as id]
             [ctim.examples.incidents :refer [new-incident-maximal]]))
 
@@ -184,7 +187,7 @@
 
 
 (deftest test-bulk-wait_for-test
-  (test-for-each-store
+  ((:es-store store-fixtures)
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
@@ -192,48 +195,52 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk with wait_for"
-       (let [headers {"Authorization" "45c1f5e3f05d0"}
-             get-statuses (fn [wait_for]
-                            (let [nb 2
-                                  indicators (map mk-new-indicator (range nb))
-                                  judgements (map mk-new-judgement (range nb))
-                                  new-bulk {:indicators indicators
-                                            :judgements judgements
-                                            :relationships (map #(mk-new-relationship %
-                                                                                      (-> indicators (nth %) :id)
-                                                                                      (-> judgements (nth %) :id))
-                                                                (range nb))}
+       (let [default-es-refresh (->> (get-in @properties
+                                             [:ctia :store :es :default :refresh])
+                                     (str "refresh="))
+             es-params (atom nil)
+             fake-routes
+             {#".*_bulk.*"
+              {:post (fn [{:keys [query-string body]}]
+                       (let [mapping-type (-> (clojure.java.io/reader body)
+                                              line-seq
+                                              first
+                                              (parse-string true)
+                                              (get-in [:index :_type]))]
+                         (when-not (= "event" mapping-type)
+                           (reset! es-params query-string))
+                         {:status 200
+                          :headers {"Content-Type" "application/json"}
+                          :body "{}"}))}}
+             check-refresh (fn [wait_for msg]
+                             (let [nb 2
+                                   indicators (map mk-new-indicator (range nb))
+                                   judgements (map mk-new-judgement (range nb))
+                                   new-bulk {:indicators indicators
+                                             :judgements judgements
+                                             :relationships (map #(mk-new-relationship %
+                                                                                       (-> indicators (nth %) :id)
+                                                                                       (-> judgements (nth %) :id))
+                                                                 (range nb))}
+                                   expected (cond
+                                              (nil? wait_for) default-es-refresh
+                                              (true? wait_for) "refresh=wait_for"
+                                              (false? wait_for) "refresh=false")
+                                   path (cond-> "ctia/bulk"
+                                          (boolean? wait_for) (str "?wait_for=" wait_for))]
 
-                                  path (cond-> "ctia/bulk"
-                                         (boolean? wait_for) (str "?wait_for=" wait_for))
-                                  response (post path
-                                                 :body new-bulk
-                                                 :headers headers)
-                                  bulk-ids (->> (:parsed-body response)
-                                                :tempids
-                                                vals
-                                                (map id/long-id->id))
-                                  statuses (map #(:status (get (format "ctia/%s/%s"
-                                                                       (:type %)
-                                                                       (:short-id %))
-                                                               :headers headers))
-                                                bulk-ids)]
-                              (is (= 201 (:status response)))
-                              statuses))]
-         (is (every? #(= 200 %)
-                     (get-statuses true))
-             "Bulk import should wait for index refresh when wait_for is true")
-         (is (some (fn [statuses]
-                     (some #(= 404 %) statuses))
-                   (repeatedly 10 #(get-statuses false)))
-             "Bulk imports should not wait for index refresh when wait_for is false")
-         (testing "Configured ctia.store.bundle-refresh value is applied when wait_for is not specified"
-           (if (= "false" (get-in @properties [:ctia :store :bulk-refresh]))
-             (is (some (fn [statuses]
-                         (some #(= 404 %) statuses))
-                       (repeatedly 2 #(get-statuses nil))))
-             (is (every? #(= 200 %)
-                         (get-statuses true))))))))))
+                               (with-global-fake-routes fake-routes
+                                 (post path
+                                       :body new-bulk
+                                       :headers {"Authorization" "45c1f5e3f05d0"}))
+
+                               (is (some-> @es-params
+                                           (clojure.string/includes? expected))
+                                   msg)
+                               (reset! es-params nil)))]
+         (check-refresh true "Bulk import should wait for index refresh when wait_for is true")
+         (check-refresh false "Bulk imports should not wait for index refresh when wait_for is false")
+         (check-refresh nil "Configured ctia.store.bundle-refresh value is applied when wait_for is not specified"))))))
 
 (deftest test-bulk-routes
   (test-for-each-store
