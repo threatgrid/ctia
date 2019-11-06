@@ -113,9 +113,9 @@
    (read-fn state id ident params)))
 
 (s/defn handle-update :- StoredSighting
-  [state id realized ident]
+  [state id realized ident params]
   (as-> (stored-sighting->es-stored-sighting realized) $
-    (update-fn state id $ ident)
+    (update-fn state id $ ident params)
     (es-stored-sighting->stored-sighting $)))
 
 (def handle-delete (crud/handle-delete :sighting StoredSighting))
@@ -153,10 +153,10 @@
     (handle-read state id ident params))
   (create-record [_ new-sightings ident params]
     (handle-create state new-sightings ident params))
-  (update-record [_ id sighting ident]
-    (handle-update state id sighting ident))
-  (delete-record [_ id ident]
-    (handle-delete state id ident))
+  (update-record [_ id sighting ident params]
+    (handle-update state id sighting ident params))
+  (delete-record [_ id ident params]
+    (handle-delete state id ident params))
   (list-records [_ filter-map ident params]
     (handle-list state filter-map ident params))
   ISightingStore

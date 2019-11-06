@@ -12,6 +12,7 @@
             [ctia.bundle.core :as core]
             [ctia.store :refer [stores]]
             [ctia.auth.capabilities :refer [all-capabilities]]
+            [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
              [fake-whoami-service :as whoami-helpers]
@@ -196,7 +197,6 @@
        (group-by :type)
        (map (fn [[k v]] [k (count v)]))
        (into {})))
-
 
 (deftest bundle-import-test
   (test-for-each-store

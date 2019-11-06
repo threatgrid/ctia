@@ -276,6 +276,12 @@
            (crud/make-id (name type-kw))
            (get-in @properties [:ctia :http :show])))
 
+(defn entity->short-id
+  [entity]
+  (-> (:id entity)
+      id/long-id->id
+      :short-id))
+
 (defn url-id
   ([type-kw]
    (url-id (crud/make-id (name type-kw)) type-kw))

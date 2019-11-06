@@ -117,10 +117,12 @@
                                         (assoc base-sighting
                                                :updated-field
                                                "value1")
-                                        ident))))
+                                        ident
+                                        {}))))
       (is (true? (delete-fn state-aliased
                             "sighting-1"
-                            ident))))
+                            ident
+                            {}))))
 
     (rollover-store state-aliased)
     (testing "crud operation should properly handle aliased states after rollover"
@@ -141,20 +143,24 @@
                                         (assoc base-sighting
                                                :updated-field
                                                "value2")
-                                        ident))))
+                                        ident
+                                        {}))))
       (is (= "value5"
              (:updated-field (update-fn state-aliased
                                         "sighting-5"
                                         (assoc base-sighting
                                                :updated-field
                                                "value5")
-                                        ident))))
+                                        ident
+                                        {}))))
       (is (true? (delete-fn state-aliased
                             "sighting-2"
-                            ident)))
+                            ident
+                            {})))
       (is (true? (delete-fn state-aliased
                             "sighting-5"
-                            ident))))))
+                            ident
+                            {}))))))
 
 
 (deftest crud-unaliased-test
@@ -180,7 +186,9 @@
                                         (assoc base-sighting
                                                :updated-field
                                                "value1")
-                                        ident))))
+                                        ident
+                                        {}))))
       (is (true? (delete-fn state-not-aliased
                             "sighting-1"
-                            ident))))))
+                            ident
+                            {}))))))

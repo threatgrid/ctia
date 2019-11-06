@@ -4,7 +4,7 @@
             [ctia.flows.crud :as flows]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [entity-crud-routes wait_for->refresh]]]
             [ctia.schemas
              [utils :as csu]
              [core :refer [Bundle def-acl-schema def-stored-schema]]
@@ -24,6 +24,7 @@
              [store :refer [def-es-store]]]
             [ctim.schemas.casebook :as cs]
             [flanders.utils :as fu]
+            [ring.swagger.schema :refer [describe]]
             [ring.util.http-response :refer [ok not-found]]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -130,6 +131,7 @@
           :return Casebook
           :body [partial-casebook PartialNewCasebook {:description "a Casebook partial update"}]
           :summary "Partially Update a Casebook"
+          :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
           :path-params [id :- s/Str]
           :capabilities :create-casebook
           :auth-identity identity
@@ -145,7 +147,8 @@
                                                  update-record
                                                  (:id %)
                                                  %
-                                                 identity-map)
+                                                 identity-map
+                                                 (wait_for->refresh wait_for))
                         :long-id-fn with-long-id
                         :entity-type :casebook
                         :entity-id id
@@ -160,6 +163,7 @@
                   :return Casebook
                   :body [operation CasebookObservablesUpdate
                          {:description "A casebook Observables operation"}]
+                  :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                   :path-params [id :- s/Str]
                   :summary "Edit Observables on a casebook"
                   :capabilities :create-casebook
@@ -176,7 +180,8 @@
                                                          update-record
                                                          (:id %)
                                                          %
-                                                         identity-map)
+                                                         identity-map
+                                                         (wait_for->refresh wait_for))
                                 :long-id-fn with-long-id
                                 :entity-type :casebook
                                 :entity-id id
@@ -192,6 +197,7 @@
                   :return Casebook
                   :body [operation CasebookTextsUpdate
                          {:description "A casebook Texts operation"}]
+                  :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                   :path-params [id :- s/Str]
                   :summary "Edit Texts on a casebook"
                   :capabilities :create-casebook
@@ -208,7 +214,8 @@
                                                          update-record
                                                          (:id %)
                                                          %
-                                                         identity-map)
+                                                         identity-map
+                                                         (wait_for->refresh wait_for))
                                 :long-id-fn with-long-id
                                 :entity-type :casebook
                                 :entity-id id
@@ -224,6 +231,7 @@
                   :return Casebook
                   :body [operation CasebookBundleUpdate
                          {:description "A casebook Bundle operation"}]
+                  :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
                   :path-params [id :- s/Str]
                   :summary "Edit a Bundle on a casebook"
                   :capabilities :create-casebook
@@ -240,7 +248,8 @@
                                                          update-record
                                                          (:id %)
                                                          %
-                                                         identity-map)
+                                                         identity-map
+                                                         (wait_for->refresh wait_for))
                                 :long-id-fn with-long-id
                                 :entity-type :casebook
                                 :entity-id id

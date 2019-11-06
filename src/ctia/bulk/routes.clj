@@ -4,7 +4,9 @@
    [ctia.bulk
     [core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
     [schemas :refer [Bulk BulkRefs NewBulk]]]
-   [ctia.http.routes.common :as common]
+   [ctia.http.routes
+    [common :as common]
+    [crud :refer [wait_for->refresh]]]
    [ctia.schemas.core :refer [Reference]]
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
@@ -12,6 +14,7 @@
 (defroutes bulk-routes
   (POST "/" []
         :return BulkRefs
+        :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
         :body [bulk NewBulk {:description "a new Bulk object"}]
         :summary "POST many new entities using a single HTTP call"
         :auth-identity login
@@ -35,7 +38,10 @@
         (if (> (bulk-size bulk)
                (get-bulk-max-size))
           (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
-          (common/created (create-bulk bulk login))))
+          (common/created (create-bulk bulk
+                                       {}
+                                       login
+                                       (wait_for->refresh wait_for)))))
 
   (GET "/" []
        :return (s/maybe Bulk)

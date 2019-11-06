@@ -120,7 +120,7 @@
       [{:keys [props] :as state} :- ESConnState
        models :- [Model]
        ident
-       {:keys [refresh] :as params}]
+       {:keys [refresh]}]
       (try
         (map #(build-create-result % coerce!)
              (d/bulk-create-doc (:conn state)
@@ -147,7 +147,8 @@
       [state :- ESConnState
        id :- s/Str
        realized :- Model
-       ident]
+       ident
+       {:keys [refresh]}]
       (when-let [{index :_index current-doc :_source}
                  (get-doc-with-index state mapping id {})]
         (if (allow-write? current-doc ident)
@@ -156,7 +157,10 @@
                                  (name mapping)
                                  (ensure-document-id id)
                                  realized
-                                 (get-in state [:props :refresh] "false")))
+                                 (or refresh
+                                     (get-in state
+                                             [:props :refresh]
+                                             "false"))))
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
 
@@ -191,7 +195,8 @@
   (s/fn :- s/Bool
     [state :- ESConnState
      id :- s/Str
-     ident]
+     ident
+     {:keys [refresh]}]
     (when-let [{index :_index doc :_source}
                (get-doc-with-index state mapping id {})]
         (if (allow-write? doc ident)
@@ -199,8 +204,10 @@
                         index
                         (name mapping)
                         (ensure-document-id id)
-                        (get-in state [:props :refresh] false))
-
+                        (or refresh
+                            (get-in state
+                                    [:props :refresh]
+                                    "false")))
           (throw (ex-info "You are not allowed to delete this document"
                           {:type :access-control-error}))))))
 

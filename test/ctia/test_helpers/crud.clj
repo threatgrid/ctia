@@ -1,16 +1,147 @@
 (ns ctia.test-helpers.crud
   (:refer-clojure :exclude [get])
   (:require
+   [cheshire.core :refer [parse-string]]
    [ctia.domain.entities :refer [schema-version]]
-   [clj-momo.test-helpers.http :refer [encode]]
+   [clj-momo.test-helpers.http :refer [encode encode-body]]
+   [clj-http.core :refer [request]]
    [clojure
     [string :as str]
     [test :refer [is testing]]]
+   [clj-http.fake :refer [with-global-fake-routes]]
    [ctia.properties :refer [get-http-show properties]]
    [ctia.test-helpers
-    [core :as helpers :refer [delete get post put patch]]
+    [core :as helpers :refer [delete
+                              get
+                              post
+                              put
+                              patch
+                              entity->short-id]]
     [search :refer [test-query-string-search]]]
    [ctim.domain.id :as id]))
+
+(defn crud-wait-for-test
+  [{:keys [entity
+           example
+           headers
+           update-field
+           update-tests?
+           patch-tests?]
+    :or {update-field :title
+         update-tests? true
+         patch-tests? false}}]
+  (let [new-record (dissoc example :id)
+        default-es-refresh (->> (get-in @properties
+                                        [:ctia :store :es :default :refresh])
+                                (str "refresh="))
+        es-params (atom nil)
+        fake-routes
+        {#".*_bulk.*"
+         {:post (fn [{:keys [query-string body]}]
+                  (let [mapping-type (-> (clojure.java.io/reader body)
+                                         line-seq
+                                         first
+                                         (parse-string true)
+                                         (get-in [:index :_type]))]
+                    (when-not (= "event" mapping-type)
+                      (reset! es-params query-string))
+                    {:status 200
+                     :headers {"Content-Type" "application/json"}
+                     :body "{}"}))}
+         #".*_update.*"
+         {:post (fn [{:keys [query-string]}]
+                  (reset! es-params query-string)
+                  {:status 200
+                   :headers {"Content-Type" "application/json"}
+                   :body "{}"})}
+         #".*9200.*"
+         {:delete (fn [{:keys [query-string]}]
+                    (reset! es-params query-string)
+                    {:status 200
+                     :headers {"Content-Type" "application/json"}
+                     :body "{}"})}}
+        check-refresh (fn [wait_for msg]
+                        (let [expected (cond
+                                         (nil? wait_for) default-es-refresh
+                                         (true? wait_for) "refresh=wait_for"
+                                         (false? wait_for) "refresh=false")]
+                          (is (some-> @es-params
+                                      (clojure.string/includes? expected))
+                              msg)
+                          (reset! es-params nil)))]
+
+      (testing "testing wait_for values on entity creation"
+        (let [test-create (fn [wait_for msg]
+                            (let [path (cond-> (str "ctia/" entity)
+                                         (boolean? wait_for) (str "?wait_for=" wait_for))]
+                              (with-global-fake-routes fake-routes
+                                (post path
+                                      :body new-record
+                                      :headers headers))
+                              (check-refresh wait_for msg)))]
+          (test-create true
+                       "Create queries should wait for index refresh when wait_for is true")
+          (test-create false
+                       "Create queries should not wait for index refresh when wait_for is false")
+          (test-create nil
+                       "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified")))
+
+      (testing "testing wait_for values on entity update / patch"
+        (let [entity-id (-> (format "ctia/%s?wait_for=true" entity)
+                            (post :body new-record
+                                  :headers headers)
+                            :parsed-body
+                            entity->short-id)
+              test-modify (fn [method wait_for msg]
+                            (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
+                                         (boolean? wait_for) (str "?wait_for=" wait_for))
+                                  updates (cond->> {update-field "modified"}
+                                            (= put method) (into new-record))]
+                              (with-global-fake-routes fake-routes
+                                (method path
+                                        :body updates
+                                        :headers headers))
+                              (check-refresh wait_for msg)))]
+          (when update-tests?
+            (test-modify put
+                         true
+                         "Update queries should wait for index refresh when wait_for is true")
+            (test-modify put
+                         false
+                         "Update queries should not wait for index refresh when wait_for is false")
+            (test-modify put
+                         nil
+                         "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"))
+          (when patch-tests?
+            (test-modify patch
+                         true
+                         "Patch queries should wait for index refresh when wait_for is true")
+            (test-modify patch
+                         false
+                         "Patch queries should not wait for index refresh when wait_for is false")
+            (test-modify patch
+                         nil
+                         "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"))))
+
+      (testing "testing wait_for values on entity deletion"
+        (let [test-delete (fn [wait_for msg]
+                            (let [entity-id (-> (post (str "ctia/" entity "?wait_for=true")
+                                                      :body new-record
+                                                      :headers headers)
+                                                :parsed-body
+                                                entity->short-id)
+                                  path (cond-> (format "ctia/%s/%s" entity entity-id)
+                                         (boolean? wait_for) (str "?wait_for=" wait_for))]
+                              (with-global-fake-routes fake-routes
+                                (delete path
+                                        :headers headers))
+                              (check-refresh wait_for msg)))]
+          (test-delete true
+                       "Delete queries should wait for index refresh when wait_for is true")
+          (test-delete false
+                       "Delete queries should not wait for index refresh when wait_for is false")
+          (test-delete nil
+                       "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified")))))
 
 (defn entity-crud-test
   [{:keys [entity
@@ -30,8 +161,8 @@
          search-field :description
          update-tests? true
          patch-tests? false
-         search-tests? true}}]
-
+         search-tests? true}
+    :as params}]
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
           {post-status :status
@@ -108,34 +239,6 @@
                                   updated-record
                                   post-record))))))
 
-      (testing "testing wait_for values"
-        (let [get-status (fn [wait_for]
-                           (let [path (cond-> (str "ctia/" entity)
-                                        (boolean? wait_for) (str "?wait_for=" wait_for))
-                                 record (post path
-                                              :body new-record
-                                              :headers headers)
-                                 short-id (-> record
-                                              :parsed-body
-                                              :id
-                                              id/long-id->id
-                                              :short-id)]
-                             (-> (get (format "ctia/%s/%s" entity short-id)
-                                      :headers headers)
-                                 :status)))]
-          (is (= 200 (get-status true))
-              "Create queries should wait for index refresh when wait_for is true")
-          ;; we trigger next 404 tests twice because the refresh could occur between the first POST / GET sequence.
-          (is (some #(= 404 %)
-                    (repeatedly 100 #(get-status false)))
-             "Create queries should not wait for index refresh when wait_for is false")
-          (testing "Configured ctia.store.es.default.refresh value is applied when wait_for is not specified"
-            (if (= "false" (get-in properties [:ctia :store :es :default :refresh]))
-
-              (is (some #(= 404 %)
-                        (repeatedly 100 #(get-status nil))))
-              (is (= 200 (get-status nil)))))))
-
       (when invalid-tests?
         (testing (format "PUT invalid /ctia/%s/:id" entity)
           (let [{status :status
@@ -201,4 +304,9 @@
           (is (= status 400))
           (is (re-find (re-pattern
                         (str "error.*in.*" (name invalid-test-field)))
-                       (str/lower-case body))))))))
+                       (str/lower-case body))))))
+
+    (when (= "es"
+             (get-in @properties
+                     [:ctia :store (keyword entity)]))
+      (crud-wait-for-test params))))

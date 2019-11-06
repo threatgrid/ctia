@@ -18,6 +18,13 @@
    [ring.swagger.schema :refer [describe]]
    [schema.core :as s]))
 
+(defn wait_for->refresh
+  [wait_for]
+  (case wait_for
+    true {:refresh "wait_for"}
+    false {:refresh "false"}
+    {}))
+
 (defn entity-crud-routes
   [{:keys [entity
            new-schema
@@ -50,7 +57,6 @@
          can-patch? false
          can-search? true
          can-get-by-external-id? true}}]
-
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)]
     (routes
@@ -70,10 +76,7 @@
                                           create-record
                                           %
                                           identity-map
-                                          (case wait_for
-                                            true {:refresh "wait_for"}
-                                            false {:refresh "false"}
-                                            {}))
+                                          (wait_for->refresh wait_for))
                   :long-id-fn with-long-id
                   :entity-type entity
                   :identity identity
@@ -87,6 +90,7 @@
             :return entity-schema
             :body [entity-update new-schema {:description (format "an updated %s" capitalized)}]
             :summary (format "Updates an %s" capitalized)
+            :query-params [{wait_for :- (describe s/Bool "wait for updated entity to be available for search") nil}]
             :path-params [id :- s/Str]
             :capabilities put-capabilities
             :auth-identity identity
@@ -103,7 +107,8 @@
                                                    update-record
                                                    (:id %)
                                                    %
-                                                   identity-map)
+                                                   identity-map
+                                                   (wait_for->refresh wait_for))
                           :long-id-fn with-long-id
                           :entity-type entity
                           :entity-id id
@@ -118,6 +123,7 @@
               :return entity-schema
               :body [partial-update patch-schema {:description (format "%s partial update" capitalized)}]
               :summary (format "Partially Update %s" capitalized)
+              :query-params [{wait_for :- (describe s/Bool "wait for patched entity to be available for search") nil}]
               :path-params [id :- s/Str]
               :capabilities patch-capabilities
               :auth-identity identity
@@ -134,7 +140,8 @@
                                                      update-record
                                                      (:id %)
                                                      %
-                                                     identity-map)
+                                                     identity-map
+                                                     (wait_for->refresh wait_for))
                             :long-id-fn with-long-id
                             :entity-type entity
                             :entity-id id
@@ -204,6 +211,7 @@
      (DELETE "/:id" []
              :no-doc hide-delete?
              :path-params [id :- s/Str]
+             :query-params [{wait_for :- (describe s/Bool "wait for deleted entity to no more be available for search") nil}]
              :summary (format "Deletes a %s" capitalized)
              :capabilities delete-capabilities
              :auth-identity identity
@@ -217,7 +225,8 @@
                   :delete-fn #(write-store entity
                                            delete-record
                                            %
-                                           identity-map)
+                                           identity-map
+                                           (wait_for->refresh wait_for))
                   :entity-type entity
                   :long-id-fn with-long-id
                   :entity-id id
