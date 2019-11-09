@@ -21,6 +21,7 @@
     [data-table :refer [data-table-entity]]
     [feedback :refer [feedback-entity]]
     [incident :refer [incident-entity]]
+    [incident-summary :refer [incident-summary-entity]]
     [relationship :refer [relationship-entity]]
     [identity :refer [identity-entity]]
     [event :refer [event-entity]]]
@@ -35,6 +36,7 @@
    :data-table data-table-entity
    :feedback feedback-entity
    :incident incident-entity
+   :incident-summary incident-summary-entity
    :indicator indicator-entity
    :investigation investigation-entity
    :judgement judgement-entity

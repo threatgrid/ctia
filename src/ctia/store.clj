@@ -39,6 +39,7 @@
    :data-table []
    :sighting []
    :incident []
+   :incident-summary []
    :relationship []
    :identity []
    :attack-pattern []

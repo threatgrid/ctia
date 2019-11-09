@@ -44,7 +44,7 @@
                   :exclusions [prismatic/plumbing
                                potemkin
                                com.andrewmcveigh/cljs-time]]
-                 [threatgrid/ctim "1.0.11"
+                 [threatgrid/ctim "1.0.12-SNAPSHOT"
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava
