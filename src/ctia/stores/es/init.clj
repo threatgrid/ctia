@@ -47,6 +47,11 @@
                 {:aliases {indexname {}}}))
      :conn (connect props)}))
 
+
+(defn upsert-template!
+  [conn index config]
+  (es-index/create-template! conn index config))
+
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
@@ -54,7 +59,7 @@
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties)
         existing-index (es-index/get conn (str index "*"))]
-    (es-index/create-template! conn index config)
+    (upsert-template! conn index config)
     (when (and (:aliased props)
                (empty? existing-index))
       ;;https://github.com/elastic/elasticsearch/pull/34499

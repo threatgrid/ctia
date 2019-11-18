@@ -6,7 +6,7 @@
             [clj-momo.lib.es
              [index :as es-index]
              [schemas :refer [ESConnState]]]
-            [ctia.stores.es.crud :as es-crud]
+            [ctia.stores.es.init :refer [upsert-template!]]
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :refer [properties init!]]
@@ -14,15 +14,15 @@
 
 (s/defn update-store!
   "read store properties of given stores and update indices settings."
-  [{conn :conn
-    indexname :index
+  [{:keys [conn index config]
     {:keys [settings]} :config
     :as state} :- ESConnState]
   (try
+    (upsert-template! conn index config)
+    (log/info "updated template: " index)
     (->> {:index (select-keys settings [:refresh_interval :number_of_replicas])}
-         (es-index/update-settings! conn indexname)
-         pr-str
-         (log/info "updated settings: "))
+         (es-index/update-settings! conn index))
+    (log/info "updated settings: " index)
     (catch clojure.lang.ExceptionInfo e
       (log/warn "could not update settings on that store"
                 (pr-str (ex-data e))))))

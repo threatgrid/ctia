@@ -30,21 +30,6 @@
                         :port 9200
                         :aliased false})
 
-(deftest dynamic-settings-test
-  (is {:number_of_replicas 1
-       :number_of_shards 2
-       :refresh_interval "1s"}
-      (sut/dynamic-settings props-not-aliased))
-  (is {:number_of_replicas 1
-       :number_of_shards 2
-       :refresh_interval "2s"}
-      (sut/dynamic-settings props-aliased))
-
-  (is {:number_of_replicas 1
-       :number_of_shards 1
-       :refresh_interval "1s"}
-      (sut/dynamic-settings {})))
-
 (deftest init-store-conn-test
   (testing "init store conn should return a proper conn state with unaliased conf"
     (let [{:keys [index props config conn]}
