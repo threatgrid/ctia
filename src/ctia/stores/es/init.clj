@@ -18,26 +18,40 @@
    (s/optional-key :write-suffix) s/Str
    s/Keyword s/Any})
 
+(s/defschema DynamicSettings
+  {:refresh_interval s/Str
+   :number_of_shards s/Int
+   :number_of_replicas s/Int})
+
 (def store-mappings
   (apply merge {}
          (map (fn [[_ {:keys [entity es-mapping]}]]
                 {entity es-mapping})
               entities)))
 
+(s/defn dynamic-settings :- DynamicSettings
+  [{:keys [shards replicas refresh_interval]
+    :or {shards 1
+         replicas 1
+         refresh_interval "1s"}} :- StoreProperties]
+  {:refresh_interval refresh_interval
+   :number_of_shards shards
+   :number_of_replicas replicas})
+
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
    connection manager and dedicated store index properties"
-  [{:keys [entity indexname shards replicas mappings aliased]
-    :or {aliased false}
+  [{:keys [entity indexname mappings aliased]
+    :or {aliased false
+         refresh_interval "1s"}
     :as props} :- StoreProperties]
   (let [write-index (str indexname
-                         (when aliased "-write"))
-        settings {:number_of_shards shards
-                  :number_of_replicas replicas}]
+                         (when aliased "-write"))]
     {:index indexname
      :props (assoc props :write-index write-index)
      :config (into
-              {:settings (merge store-settings settings)
+              {:settings (into store-settings
+                               (dynamic-settings props))
                :mappings (get store-mappings entity mappings)}
               (when aliased
                 {:aliases {indexname {}}}))

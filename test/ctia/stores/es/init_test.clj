@@ -13,6 +13,7 @@
 (def write-alias (str indexname "-write"))
 (def props-aliased {:entity :sighting
                     :indexname indexname
+                    :refresh_interval "2s"
                     :shards 2
                     :replicas 1
                     :mappings {:a 1 :b 2}
@@ -29,6 +30,21 @@
                         :port 9200
                         :aliased false})
 
+(deftest dynamic-settings-test
+  (is {:number_of_replicas 1
+       :number_of_shards 2
+       :refresh_interval "1s"}
+      (sut/dynamic-settings props-not-aliased))
+  (is {:number_of_replicas 1
+       :number_of_shards 2
+       :refresh_interval "2s"}
+      (sut/dynamic-settings props-aliased))
+
+  (is {:number_of_replicas 1
+       :number_of_shards 1
+       :refresh_interval "1s"}
+      (sut/dynamic-settings {})))
+
 (deftest init-store-conn-test
   (testing "init store conn should return a proper conn state with unaliased conf"
     (let [{:keys [index props config conn]}
@@ -37,11 +53,12 @@
       (is (= (:write-index props) indexname))
       (is (= "http://localhost:9200" (:uri conn)))
       (is (nil? (:aliases config)))
+      (is (= "1s" (get-in config [:settings :refresh_interval])))
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b])))))
 
-  (testing "init store conn should return a proper conn state with unaliased conf"
+  (testing "init store conn should return a proper conn state with aliased conf"
     (let [{:keys [index props config conn]}
           (sut/init-store-conn props-aliased)]
       (is (= index indexname))
@@ -49,6 +66,7 @@
       (is (= "http://localhost:9200" (:uri conn)))
       (is (= indexname
              (-> config :aliases keys first)))
+      (is (= "2s" (get-in config [:settings :refresh_interval])))
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b]))))))
@@ -64,6 +82,7 @@
       (is (= (:write-index props) indexname))
       (is (= "http://localhost:9200" (:uri conn)))
       (is (nil? (:aliases config)))
+      (is (= "1s" (get-in config [:settings :refresh_interval])))
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b])))))
@@ -86,6 +105,7 @@
       (is (= "http://localhost:9200" (:uri conn)))
       (is (= indexname
              (-> config :aliases keys first)))
+      (is (= "2s" (get-in config [:settings :refresh_interval])))
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b])))))
