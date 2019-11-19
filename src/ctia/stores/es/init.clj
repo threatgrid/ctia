@@ -50,7 +50,8 @@
 
 (defn upsert-template!
   [conn index config]
-  (es-index/create-template! conn index config))
+  (es-index/create-template! conn index config)
+  (log/infof "updated template: %s" index))
 
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,

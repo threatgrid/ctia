@@ -1,12 +1,12 @@
 (ns ctia.task.settings
+  (:import clojure.lang.ExceptionInfo)
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
-
             [schema.core :as s]
             [clj-momo.lib.es
              [index :as es-index]
              [schemas :refer [ESConnState]]]
-            [ctia.stores.es.init :refer [upsert-template!]]
+            [ctia.stores.es.init :refer [StoreProperties init-es-conn! get-store-properties]]
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :refer [properties init!]]
@@ -14,16 +14,14 @@
 
 (s/defn update-store!
   "read store properties of given stores and update indices settings."
-  [{:keys [conn index config]
-    {:keys [settings]} :config
-    :as state} :- ESConnState]
+  [props :- StoreProperties]
   (try
-    (upsert-template! conn index config)
-    (log/info "updated template: " index)
-    (->> {:index (select-keys settings [:refresh_interval :number_of_replicas])}
-         (es-index/update-settings! conn index))
-    (log/info "updated settings: " index)
-    (catch clojure.lang.ExceptionInfo e
+    (let [{:keys [conn index]
+           {:keys [settings]} :config} (init-es-conn! props)]
+      (->> {:index (select-keys settings [:refresh_interval :number_of_replicas])}
+           (es-index/update-settings! conn index))
+      (log/info "updated settings:" index))
+    (catch ExceptionInfo e
       (log/warn "could not update settings on that store"
                 (pr-str (ex-data e))))))
 
@@ -31,8 +29,7 @@
   [store-keys]
   (doseq [kw store-keys]
     (log/infof "updating settings for store: %s" (name kw))
-    (update-store! (-> @stores kw first :state))))
-
+    (update-store! (get-store-properties kw))))
 
 (def cli-options
   [["-h" "--help"]
@@ -53,5 +50,4 @@
     (clojure.pprint/pprint options)
     (init!)
     (log-properties)
-    (init-store-service!)
     (update-stores! (:stores options))))
