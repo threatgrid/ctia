@@ -123,4 +123,6 @@ fragment weaknessFields on Weakness {
     ...noteFields
   }
   abstraction_level
+  owner
+  groups
 }

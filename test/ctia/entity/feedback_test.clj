@@ -23,16 +23,15 @@
    :tlp "green"})
 
 (defn feedback-by-entity-id-test
-  [feedback-id feedback]
+  [feedback-id _]
   (testing "GET /ctia/feedback?entity_id="
     (let [response (get (str "ctia/feedback")
                         :query-params {:entity_id "judgement-123"}
                         :headers {"Authorization" "45c1f5e3f05d0"})
           feedbacks (:parsed-body response)]
       (is (= 200 (:status response)))
-      (is (deep=
-           [(assoc new-feedback :id (id/long-id feedback-id))]
-           feedbacks)))))
+      (is (= [(assoc new-feedback :id (id/long-id feedback-id))]
+             (map #(dissoc % :owner :groups) feedbacks))))))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean

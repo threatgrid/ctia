@@ -1,9 +1,7 @@
 (ns ctia.test-helpers.pagination
   (:refer-clojure :exclude [get])
-  (:require
-   [cemerick.url :refer [url-encode]]
-   [clojure.test :refer [is join-fixtures testing use-fixtures]]
-   [ctia.test-helpers [core :as helpers :refer [get]]]))
+  (:require [clojure.test :refer [is testing]]
+            [ctia.test-helpers.core :as helpers :refer [get]]))
 
 (defn total->limit
   "make a limit from a full list total and offset"
@@ -34,8 +32,8 @@
 
              (is (= 200 full-status limited-status))
              (is (= limit (int limited-total)))
-             (is (deep= (take limit full-res)
-                        limited-res))
+             (is (= (take limit full-res)
+                    limited-res))
              (is (= (clojure.core/get limited-headers "X-Total-Hits")
                     (clojure.core/get full-headers "X-Total-Hits"))))))
 
@@ -44,8 +42,7 @@
   "Retrieving a full paginated response with X-Next"
   [route headers]
   (let [{full-status :status
-         full-res :parsed-body
-         full-headers :headers}
+         full-res :parsed-body}
         (get route
              :headers headers
              :query-params {:limit 10000})
@@ -53,8 +50,7 @@
         (loop [results []
                x-next ""]
           (if x-next
-            (let [{status :status
-                   res :parsed-body
+            (let [{res :parsed-body
                    headers :headers}
                   (get (str route
                             (when (seq x-next) "&") x-next)
@@ -73,7 +69,6 @@
   (testing (str route " with limit and offset")
     (let [offset 1
           {full-status :status
-           d :body
            full-res :parsed-body
            full-headers :headers}
           (get route
@@ -105,22 +100,21 @@
 
       (is (= 200 full-status limited-status))
       (is (= limit (count limited-res)))
-      (is (deep= (->> full-res
-                      (drop offset)
-                      (take limit)) limited-res))
+      (is (= (->> full-res
+                  (drop offset)
+                  (take limit)) limited-res))
 
       (is (= (clojure.core/get limited-headers "X-Total-Hits")
              (clojure.core/get full-headers "X-Total-Hits")))
 
-      (is (deep=
-           {:X-Total-Hits (str total)
-            :X-Previous (str "limit=" limit "&offset=" (if (pos? prev-offset)
-                                                         prev-offset 0))
-            :X-Next expected-x-next}
+      (is (= {:X-Total-Hits (str total)
+              :X-Previous (str "limit=" limit "&offset=" (if (pos? prev-offset)
+                                                           prev-offset 0))
+              :X-Next expected-x-next}
 
-           (-> limited-headers
-               clojure.walk/keywordize-keys
-               (select-keys [:X-Total-Hits :X-Previous :X-Next])))))))
+             (-> limited-headers
+                 clojure.walk/keywordize-keys
+                 (select-keys [:X-Total-Hits :X-Previous :X-Next])))))))
 
 (defn sort-field->sort-fn
   "Given a CTIA sort parameter, generate a sorting function to by used
@@ -156,7 +150,7 @@
                                                   :limit 10000})
 
                               :parsed-body)]
-        (is (deep=
+        (is (=
              manually-sorted
              route-sorted) field)))))
 
@@ -175,7 +169,7 @@
                                        :limit 10
                                        :offset (+ total 1)})
                    :parsed-body)]
-      (is (deep= [] res))))
+      (is (= [] res))))
 
   (testing (str route " with invalid limit")
     (let [total (-> (get route
@@ -191,7 +185,7 @@
                                                   :limit (+ total 1)
                                                   :offset (+ total 1)})]
       (is (= 200 status))
-      (is (deep= body [])))))
+      (is (= body [])))))
 
 (defn pagination-test
   "all pagination related tests for a list route"

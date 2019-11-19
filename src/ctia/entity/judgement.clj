@@ -18,7 +18,8 @@
             [ctim.schemas.judgement :as judgement]
             [flanders.utils :as fu]
             [schema-tools.core :as st]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [ctia.schemas.graphql.ownership :as go]))
 
 (def judgement-fields
   (apply s/enum
@@ -108,9 +109,11 @@
      name
      description
      []
-     (merge fields
-            feedback/feedback-connection-field
-            relationship/relatable-entity-fields))))
+     (merge
+      fields
+      feedback/feedback-connection-field
+      relationship/relatable-entity-fields
+      go/graphql-ownership-fields))))
 
 (def judgement-order-arg
   (graphql-sorting/order-by-arg

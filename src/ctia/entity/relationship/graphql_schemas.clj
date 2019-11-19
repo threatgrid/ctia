@@ -23,7 +23,8 @@
              [vulnerability :as ctim-vul]
              [weakness :as ctim-weak]]
             [flanders.utils :as fu]
-            [schema.core :as s])
+            [schema.core :as s]
+            [ctia.schemas.graphql.ownership :as go])
   (:import graphql.Scalars))
 
 (def related-judgement-fields
@@ -106,7 +107,8 @@
                   description
                   []
                   (merge fields
-                         relation-fields))))
+                         relation-fields
+                         go/graphql-ownership-fields))))
 
 (def relationship-order-arg
   (sorting/order-by-arg
@@ -127,6 +129,7 @@
     :args
     (merge
      common/lucene-query-arguments
+     go/graphql-ownership-fields
      {:relationship_type
       {:type Scalars/GraphQLString
        :description (str "restrict to Relations with the specified relationship_type.")}

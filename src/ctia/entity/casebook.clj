@@ -27,7 +27,8 @@
             [ring.swagger.schema :refer [describe]]
             [ring.util.http-response :refer [ok not-found]]
             [schema-tools.core :as st]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [ctia.schemas.graphql.ownership :as go]))
 
 (def-acl-schema Casebook
   (fu/replace-either-with-any
@@ -276,7 +277,9 @@
      name
      description
      []
-     fields)))
+     (merge
+      fields
+      go/graphql-ownership-fields))))
 
 (def casebook-order-arg
   (graphql-sorting/order-by-arg

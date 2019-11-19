@@ -1,5 +1,6 @@
 (ns ctia.entity.tool
   (:require [ctia.entity.tool.schemas :as ts]
+            [ctia.entity.tool.graphql-schemas :as tgs]
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]

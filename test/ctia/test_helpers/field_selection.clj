@@ -7,7 +7,9 @@
   #{:id
     :tlp
     :authorized_groups
-    :authorized_users})
+    :authorized_users
+    :owner
+    :groups})
 
 (defn testable-fields [fields]
   (remove default-fields fields))

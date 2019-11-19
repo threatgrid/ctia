@@ -7,8 +7,7 @@
             [ctia.schemas
              [utils :as csu]
              [core :refer [def-stored-schema
-                           CTIAEntity
-                           CTIAStoredEntity]]
+                           CTIAEntity]]
              [sorting :as sorting]]
             [ctia.schemas.graphql
              [sorting :as graphql-sorting]
@@ -24,7 +23,8 @@
              [spec :as f-spec]
              [utils :as fu]]
             [schema-tools.core :as st]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [ctia.schemas.graphql.ownership :as go]))
 
 (s/defschema Investigation
   (st/merge (f-schema/->schema inv/Investigation)
@@ -114,7 +114,8 @@
      name
      description
      []
-     fields)))
+     (merge
+      fields go/graphql-ownership-fields))))
 
 (def investigation-order-arg
   (graphql-sorting/order-by-arg

@@ -7,16 +7,16 @@
              :refer
              [judgement-fields judgement-sort-fields]]
             ctia.properties
-            [ctia.test-helpers.access-control :refer [access-control-test]]
-            [ctia.test-helpers.auth :refer [all-capabilities]]
-            [ctia.test-helpers.core :as helpers :refer [get post post-entity-bulk]]
-            [ctia.test-helpers.crud :refer [entity-crud-test]]
-            [ctia.test-helpers.es :as es-helpers]
-            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
-            [ctia.test-helpers.field-selection :refer [field-selection-tests]]
-            [ctia.test-helpers.http :refer [doc-id->rel-url]]
-            [ctia.test-helpers.pagination :refer [pagination-test]]
-            [ctia.test-helpers.store :refer [test-for-each-store]]
+            [ctia.test-helpers
+             [access-control :refer [access-control-test]]
+             [auth :refer [all-capabilities]]
+             [core :as helpers :refer [get post post-entity-bulk]]
+             [crud :refer [entity-crud-test]]
+             [fake-whoami-service :as whoami-helpers]
+             [field-selection :refer [field-selection-tests]]
+             [http :refer [doc-id->rel-url]]
+             [pagination :refer [pagination-test]]
+             [store :refer [test-for-each-store]]]
             [ctim.examples.judgements :as ex :refer [new-judgement-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -40,7 +40,7 @@
           :confidence "Low"
           :reason "This is a bad IP address that talked to some evil servers"}))
 
-(defn additional-tests [judgement-id judgement]
+(defn additional-tests [judgement-id _]
   (testing "GET /ctia/judgement/search"
     ;; only when ES store
     (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
@@ -179,7 +179,7 @@
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 201 status))
-         (is (deep=
+         (is (=
               {:type "judgement"
                :observable {:value "1.2.3.4"
                             :type "ip"}
@@ -195,7 +195,9 @@
                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
               (dissoc judgement
-                      :id)))))
+                      :id
+                      :groups ["foogroup"]
+                      :owner "foouser")))))
 
      (testing "POST a judgement with disposition_name"
        (let [{status :status
@@ -212,23 +214,24 @@
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 201 status))
-         (is (deep=
-              {:type "judgement"
-               :observable {:value "1.2.3.4"
-                            :type "ip"}
-               :disposition 2
-               :disposition_name "Malicious"
-               :source "test"
-               :priority 100
-               :timestamp #inst "2042-01-01T00:00:00.000Z"
-               :severity "High"
-               :confidence "Low"
-               :tlp "green"
-               :schema_version schema-version
-               :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
-                            :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
-              (dissoc judgement
-                      :id)))))
+         (is (= {:type "judgement"
+                 :observable {:value "1.2.3.4"
+                              :type "ip"}
+                 :disposition 2
+                 :disposition_name "Malicious"
+                 :source "test"
+                 :priority 100
+                 :timestamp #inst "2042-01-01T00:00:00.000Z"
+                 :severity "High"
+                 :confidence "Low"
+                 :tlp "green"
+                 :schema_version schema-version
+                 :owner "foouser"
+                 :groups ["foogroup"]
+                 :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
+                              :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
+                (dissoc judgement
+                        :id)))))
 
      (testing "POST a judgement without disposition"
        (let [{status :status
@@ -244,7 +247,7 @@
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 201 status))
-         (is (deep=
+         (is (=
               {:type "judgement"
                :observable {:value "1.2.3.4"
                             :type "ip"}
@@ -256,6 +259,8 @@
                :severity "High"
                :confidence "Low"
                :tlp "green"
+               :owner "foouser"
+               :groups ["foogroup"]
                :schema_version schema-version
                :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"
                             :end_time #inst "2525-01-01T00:00:00.000-00:00"}}
@@ -305,18 +310,17 @@
                           :valid_time {:start_time "2016-02-11T00:40:48.212-00:00"}}
                    :headers {"Authorization" "45c1f5e3f05d0"})]
          (is (= 400 status))
-         (is (deep=
-              {:error "Mismatching disposition and dispositon_name for judgement",
-               :judgement {:observable {:value "1.2.3.4"
-                                        :type "ip"}
-                           :disposition 1
-                           :disposition_name "Unknown"
-                           :source "test"
-                           :priority 100
-                           :severity "High"
-                           :confidence "Low"
-                           :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
-              judgement)))))))
+         (is (= {:error "Mismatching disposition and dispositon_name for judgement",
+                 :judgement {:observable {:value "1.2.3.4"
+                                          :type "ip"}
+                             :disposition 1
+                             :disposition_name "Unknown"
+                             :source "test"
+                             :priority 100
+                             :severity "High"
+                             :confidence "Low"
+                             :valid_time {:start_time #inst "2016-02-11T00:40:48.212-00:00"}}}
+                judgement)))))))
 
 (deftest test-judgement-pagination-field-selection
   (test-for-each-store

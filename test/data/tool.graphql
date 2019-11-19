@@ -93,4 +93,6 @@ fragment toolFields on Tool {
   }
   tool_version
   x_mitre_aliases
+  owner
+  groups
 }

@@ -1,23 +1,19 @@
 (ns ctia.entity.actor
-  (:require
-   [flanders.utils :as fu]
-   [ctia.store :refer :all]
-   [ctia.domain.entities :refer [default-realize-fn]]
-   [ctia.http.routes
-    [common :refer [BaseEntityFilterParams
-                    PagingParams
-                    SourcableEntityFilterParams]]
-    [crud :refer [entity-crud-routes]]]
-   [ctia.schemas
-    [utils :as csu]
-    [core :refer [def-acl-schema def-stored-schema]]
-    [sorting :refer [default-entity-sort-fields]]]
-   [ctia.stores.es.store :refer [def-es-store]]
-   [ctim.schemas.actor :as as]
-   [schema-tools.core :as st]
-   [schema.core :as s]
-   [ctia.stores.es.mapping :as em]
-   [ctia.schemas.sorting :as sorting]))
+  (:require [ctia.domain.entities :refer [default-realize-fn]]
+            [ctia.http.routes
+             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+             [crud :refer [entity-crud-routes]]]
+            [ctia.schemas
+             [core :refer [def-acl-schema def-stored-schema]]
+             [sorting :as sorting]
+             [utils :as csu]]
+            [ctia.stores.es
+             [mapping :as em]
+             [store :refer [def-es-store]]]
+            [ctim.schemas.actor :as as]
+            [flanders.utils :as fu]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (def-acl-schema Actor
   as/Actor

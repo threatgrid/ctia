@@ -1,10 +1,8 @@
 (ns ctia.schemas.graphql.helpers
   (:require [clojure
-             [string :as str]
-             [walk :refer [stringify-keys]]]
+             [walk :as walk :refer [stringify-keys]]]
             [schema.core :as s]
-            [clojure.tools.logging :as log]
-            [clojure.walk :as walk])
+            [clojure.tools.logging :as log])
   (:import [graphql GraphQL GraphQLException]
            [graphql.language
             Field FragmentDefinition FragmentSpread]

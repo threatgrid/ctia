@@ -6,8 +6,9 @@
 
 (def api-key "45c1f5e3f05d0")
 
-(defn doc-id->rel-url [doc-id]
+(defn doc-id->rel-url
   "given a doc id (url) make a relative url for test queries"
+  [doc-id]
   (when doc-id
     (string/replace doc-id #".*(?=ctia)" "")))
 

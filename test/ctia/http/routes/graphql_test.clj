@@ -1,7 +1,6 @@
 (ns ctia.http.routes.graphql-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.schemas.sorting :as fields]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
@@ -15,6 +14,10 @@
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
+
+(def ownership-data-fixture
+  {:groups ["foogroup"]
+   :owner "foouser"})
 
 (def judgement-1
   {"observable" {"value" "1.2.3.4"
@@ -255,30 +258,25 @@
            indicator-2-id (get-in datamap [:indicator-2 :id])
            indicator-3-id (get-in datamap [:indicator-3 :id])
            investigation-1-id (get-in datamap [:investigation-1 :id])
-           investigation-2-id (get-in datamap [:investigation-2 :id])
            casebook-1-id (get-in datamap [:casebook-1 :id])
-           casebook-2-id (get-in datamap [:casebook-2 :id])
            judgement-1-id (get-in datamap [:judgement-1 :id])
-           judgement-2-id (get-in datamap [:judgement-2 :id])
-           judgement-3-id (get-in datamap [:judgement-3 :id])
            sighting-1-id (get-in datamap [:sighting-1 :id])
            graphql-queries (slurp "test/data/queries.graphql")]
 
        (testing "POST /ctia/graphql"
 
          (testing "Query syntax error"
-           (let [{:keys [data errors status]} (gh/query "dummy" {} "")]
+           (let [{:keys [_ errors status]} (gh/query "dummy" {} "")]
              (is (= 400 status))
              (is (= errors
                     ["InvalidSyntaxError{ message=Invalid Syntax ,locations=[SourceLocation{line=1, column=0}]}"]))))
 
          (testing "Query validation error"
-           (let [{:keys [data errors status]}
+           (let [{:keys [_ errors status]}
                  (gh/query "query TestQuery { nonexistent }"
                            {}
                            "TestQuery")]
              (is (= 400 status))
-             (clojure.pprint/pprint errors)
              (is (= errors
                     '("ValidationError{validationErrorType=FieldUndefined, queryPath=[nonexistent], message=Validation error of type FieldUndefined: Field 'nonexistent' in type 'Root' is undefined @ 'nonexistent', locations=[SourceLocation{line=1, column=19}], description='Field 'nonexistent' in type 'Root' is undefined'}")))))
          (testing "unauthorized access without capabilities"
@@ -352,18 +350,20 @@
                                    graphql-queries
                                    {:id judgement-1-id}
                                    [:judgement :relationships]
-                                   [{:relationship_type "element-of"
-                                     :target_ref indicator-1-id
-                                     :source_ref judgement-1-id
-                                     :source_entity (:judgement-1 datamap)
-                                     :target_entity (:indicator-1 datamap)
-                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}
-                                    {:relationship_type "element-of"
-                                     :target_ref indicator-2-id
-                                     :source_ref judgement-1-id
-                                     :source_entity (:judgement-1 datamap)
-                                     :target_entity (:indicator-2 datamap)
-                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}])
+                                   (map
+                                    #(merge % ownership-data-fixture)
+                                    [{:relationship_type "element-of"
+                                      :target_ref indicator-1-id
+                                      :source_ref judgement-1-id
+                                      :source_entity (:judgement-1 datamap)
+                                      :target_entity (:indicator-1 datamap)
+                                      :timestamp #inst "2042-01-01T00:00:00.000Z"}
+                                     {:relationship_type "element-of"
+                                      :target_ref indicator-2-id
+                                      :source_ref judgement-1-id
+                                      :source_entity (:judgement-1 datamap)
+                                      :target_entity (:indicator-2 datamap)
+                                      :timestamp #inst "2042-01-01T00:00:00.000Z"}]))
 
                (testing "sorting"
                  (gh/connection-sort-test
@@ -378,8 +378,9 @@
                                    graphql-queries
                                    {:id judgement-1-id}
                                    [:judgement :feedbacks]
-                                   [(feedback-1 judgement-1-id)
-                                    (feedback-2 judgement-1-id)])
+                                   (map #(merge % ownership-data-fixture)
+                                        [(feedback-1 judgement-1-id)
+                                         (feedback-2 judgement-1-id)]))
 
                (testing "sorting"
                  (gh/connection-sort-test
@@ -395,9 +396,10 @@
                                  graphql-queries
                                  {:query "*"}
                                  [:judgements]
-                                 [(:judgement-1 datamap)
-                                  (:judgement-2 datamap)
-                                  (:judgement-3 datamap)])
+                                 (map #(merge % ownership-data-fixture)
+                                      [(:judgement-1 datamap)
+                                       (:judgement-2 datamap)
+                                       (:judgement-3 datamap)]))
 
              (testing "sorting"
                (gh/connection-sort-test
@@ -437,18 +439,19 @@
                                    graphql-queries
                                    {:id indicator-1-id}
                                    [:indicator :relationships]
-                                   [{:relationship_type "variant-of"
-                                     :target_ref indicator-2-id
-                                     :source_ref indicator-1-id
-                                     :source_entity (:indicator-1 datamap)
-                                     :target_entity (:indicator-2 datamap)
-                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}
-                                    {:relationship_type "variant-of"
-                                     :target_ref indicator-3-id
-                                     :source_ref indicator-1-id
-                                     :source_entity (:indicator-1 datamap)
-                                     :target_entity (:indicator-3 datamap)
-                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}])
+                                   (map #(merge % ownership-data-fixture)
+                                        [{:relationship_type "variant-of"
+                                          :target_ref indicator-2-id
+                                          :source_ref indicator-1-id
+                                          :source_entity (:indicator-1 datamap)
+                                          :target_entity (:indicator-2 datamap)
+                                          :timestamp #inst "2042-01-01T00:00:00.000Z"}
+                                         {:relationship_type "variant-of"
+                                          :target_ref indicator-3-id
+                                          :source_ref indicator-1-id
+                                          :source_entity (:indicator-1 datamap)
+                                          :target_entity (:indicator-3 datamap)
+                                          :timestamp #inst "2042-01-01T00:00:00.000Z"}]))
 
                (testing "sorting"
                  (gh/connection-sort-test
@@ -463,8 +466,9 @@
                                    graphql-queries
                                    {:id indicator-1-id}
                                    [:indicator :feedbacks]
-                                   [(feedback-1 indicator-1-id)
-                                    (feedback-2 indicator-1-id)])
+                                   (map #(merge % ownership-data-fixture)
+                                        [(feedback-1 indicator-1-id)
+                                         (feedback-2 indicator-1-id)]))
 
                (testing "sorting"
                  (gh/connection-sort-test
@@ -480,9 +484,10 @@
                                  graphql-queries
                                  {"query" "*"}
                                  [:indicators]
-                                 [(:indicator-1 datamap)
-                                  (:indicator-2 datamap)
-                                  (:indicator-3 datamap)])
+                                 (map #(merge % ownership-data-fixture)
+                                      [(:indicator-1 datamap)
+                                       (:indicator-2 datamap)
+                                       (:indicator-3 datamap)]))
 
              (testing "sorting"
                (gh/connection-sort-test
@@ -524,8 +529,9 @@
                                  graphql-queries
                                  {"query" "*"}
                                  [:investigations]
-                                 [(:investigation-1 datamap)
-                                  (:investigation-2 datamap)])
+                                 (map #(merge % ownership-data-fixture)
+                                      [(:investigation-1 datamap)
+                                       (:investigation-2 datamap)]))
 
              (testing "sorting"
                (gh/connection-sort-test
@@ -571,8 +577,9 @@
                                  graphql-queries
                                  {"query" "*"}
                                  [:casebooks]
-                                 [(dissoc (:casebook-1 datamap) :bundle :texts)
-                                  (dissoc (:casebook-2 datamap) :bundle :texts)])
+                                 (map #(merge % ownership-data-fixture)
+                                      [(dissoc (:casebook-1 datamap) :bundle :texts)
+                                       (dissoc (:casebook-2 datamap) :bundle :texts)]))
 
              (testing "sorting"
                (gh/connection-sort-test
@@ -614,18 +621,19 @@
                                    graphql-queries
                                    {:id sighting-1-id}
                                    [:sighting :relationships]
-                                   [{:relationship_type "indicates"
-                                     :target_ref indicator-1-id
-                                     :source_ref sighting-1-id
-                                     :source_entity (:sighting-1 datamap)
-                                     :target_entity (:indicator-1 datamap)
-                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}
-                                    {:relationship_type "indicates"
-                                     :target_ref indicator-2-id
-                                     :source_ref sighting-1-id
-                                     :source_entity (:sighting-1 datamap)
-                                     :target_entity (:indicator-2 datamap)
-                                     :timestamp #inst "2042-01-01T00:00:00.000Z"}])
+                                   (map #(merge % ownership-data-fixture)
+                                        [{:relationship_type "indicates"
+                                          :target_ref indicator-1-id
+                                          :source_ref sighting-1-id
+                                          :source_entity (:sighting-1 datamap)
+                                          :target_entity (:indicator-1 datamap)
+                                          :timestamp #inst "2042-01-01T00:00:00.000Z"}
+                                         {:relationship_type "indicates"
+                                          :target_ref indicator-2-id
+                                          :source_ref sighting-1-id
+                                          :source_entity (:sighting-1 datamap)
+                                          :target_entity (:indicator-2 datamap)
+                                          :timestamp #inst "2042-01-01T00:00:00.000Z"}]))
 
                (testing "sorting"
                  (gh/connection-sort-test
@@ -640,8 +648,9 @@
                                    graphql-queries
                                    {:id sighting-1-id}
                                    [:sighting :feedbacks]
-                                   [(feedback-1 sighting-1-id)
-                                    (feedback-2 sighting-1-id)])
+                                   (map #(merge % ownership-data-fixture)
+                                        [(feedback-1 sighting-1-id)
+                                         (feedback-2 sighting-1-id)]))
 
                (testing "sorting"
                  (gh/connection-sort-test
@@ -658,8 +667,9 @@
                                  graphql-queries
                                  {"query" "*"}
                                  [:sightings]
-                                 [(:sighting-1 datamap)
-                                  (:sighting-2 datamap)])
+                                 (map #(merge % ownership-data-fixture)
+                                      [(:sighting-1 datamap)
+                                       (:sighting-2 datamap)]))
 
              (testing "sorting"
                (gh/connection-sort-test

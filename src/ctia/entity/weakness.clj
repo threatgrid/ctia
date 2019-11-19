@@ -24,7 +24,8 @@
    [ctim.schemas.weakness :as ws]
    [schema-tools.core :as st]
    [schema.core :as s]
-   [ctia.schemas.sorting :as sorting]))
+   [ctia.schemas.sorting :as sorting]
+   [ctia.schemas.graphql.ownership :as go]))
 
 (def-acl-schema Weakness
   ws/Weakness
@@ -104,7 +105,8 @@
      []
      (merge fields
             feedback/feedback-connection-field
-            relationship/relatable-entity-fields))))
+            relationship/relatable-entity-fields
+            go/graphql-ownership-fields))))
 
 (def weakness-order-arg
   (graphql-sorting/order-by-arg

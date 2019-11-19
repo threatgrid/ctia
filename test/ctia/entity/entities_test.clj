@@ -1,9 +1,8 @@
 (ns ctia.entity.entities-test
   (:require [ctia.entity.entities :as sut]
-            [clojure.test :as t :refer [deftest is use-fixtures]]
+            [clojure.test :as t :refer [deftest is]]
             [clojure.spec.alpha :refer [gen]]
-            [clojure.spec.gen.alpha :refer [generate]]
-            [schema.test :refer [validate-schemas]]))
+            [clojure.spec.gen.alpha :refer [generate]]))
 
 (defn gen-sample-entity
   [{:keys [new-spec]}]

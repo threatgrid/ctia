@@ -88,11 +88,8 @@
     (long-id->entity-type id-str)))
 
 (defn un-store [record]
-  (let [entity-fields [:created :modified :owner :groups]
-        event-fields [:created :modified]]
-    (case (:type record)
-      "event" (apply dissoc record event-fields)
-      (apply dissoc record entity-fields))))
+  (let [entity-fields [:created :modified]]
+    (apply dissoc record entity-fields)))
 
 (defn un-store-all [x]
   (if (sequential? x)

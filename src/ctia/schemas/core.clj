@@ -48,7 +48,9 @@
    OpenCTIMSchemaVersion
    (st/optional-keys
     {:authorized_users [Str]
-     :authorized_groups [Str]})))
+     :authorized_groups [Str]
+     :owner s/Str
+     :groups [s/Str]})))
 
 (s/defschema CTIAStoredEntity
   (st/merge CTIAEntity

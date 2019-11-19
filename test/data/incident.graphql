@@ -100,4 +100,6 @@ fragment incidentFields on Incident {
   categories
   discovery_method
   intended_effect
+  owner
+  groups
 }

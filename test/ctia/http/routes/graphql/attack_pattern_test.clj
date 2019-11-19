@@ -1,7 +1,6 @@
 (ns ctia.http.routes.graphql.attack-pattern-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.schemas.sorting :as sort-fields]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
@@ -16,7 +15,11 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-  (def external-ref "http://external.com/ctia/attack-pattern/attack-pattern-ab053333-2ad2-41d0-a445-31e9b9c38caf")
+(def external-ref "http://external.com/ctia/attack-pattern/attack-pattern-ab053333-2ad2-41d0-a445-31e9b9c38caf")
+
+(def ownership-data-fixture
+  {:owner "foouser"
+   :groups ["foogroup"]})
 
 (defn init-graph-data []
   (let [ap1 (gh/create-object
@@ -33,9 +36,11 @@
              "attack-pattern"
              (-> new-attack-pattern-maximal
                  (assoc :name "Attack Pattern 3")
-                 (dissoc :id)))]
-    (gh/create-object "feedback" (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
-    (gh/create-object "feedback" (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
+                 (dissoc :id)))
+        f1 (gh/create-object "feedback"
+                             (gh/feedback-1 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))
+        f2 (gh/create-object "feedback"
+                             (gh/feedback-2 (:id ap1) #inst "2042-01-01T00:00:00.000Z"))]
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
@@ -53,7 +58,9 @@
                        :source_ref (:id ap1)})
     {:attack-pattern-1 ap1
      :attack-pattern-2 ap2
-     :attack-pattern-3 ap3}))
+     :attack-pattern-3 ap3
+     :feedback-1 f1
+     :feedback-2 f2}))
 
 (deftest attack-pattern-queries-test
   (test-for-each-store
@@ -89,24 +96,25 @@
                                  {:id attack-pattern-1-id
                                   :relationship_type "variant-of"}
                                  [:attack_pattern :relationships]
-                                 [{:relationship_type "variant-of"
-                                   :target_ref attack-pattern-2-id
-                                   :source_ref attack-pattern-1-id
-                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
-                                   :source_entity (:attack-pattern-1 datamap)
-                                   :target_entity (:attack-pattern-2 datamap)}
-                                  {:relationship_type "variant-of"
-                                   :target_ref attack-pattern-3-id
-                                   :source_ref attack-pattern-1-id
-                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
-                                   :source_entity (:attack-pattern-1 datamap)
-                                   :target_entity (:attack-pattern-3 datamap)}
-                                  {:relationship_type "variant-of"
-                                   :target_ref external-ref
-                                   :source_ref attack-pattern-1-id
-                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
-                                   :source_entity (:attack-pattern-1 datamap)
-                                   :target_entity nil}])
+                                 (map #(merge % ownership-data-fixture)
+                                      [{:relationship_type "variant-of"
+                                        :target_ref attack-pattern-2-id
+                                        :source_ref attack-pattern-1-id
+                                        :timestamp #inst "2042-01-01T00:00:00.000Z"
+                                        :source_entity (:attack-pattern-1 datamap)
+                                        :target_entity (:attack-pattern-2 datamap)}
+                                       {:relationship_type "variant-of"
+                                        :target_ref attack-pattern-3-id
+                                        :source_ref attack-pattern-1-id
+                                        :timestamp #inst "2042-01-01T00:00:00.000Z"
+                                        :source_entity (:attack-pattern-1 datamap)
+                                        :target_entity (:attack-pattern-3 datamap)}
+                                       {:relationship_type "variant-of"
+                                        :target_ref external-ref
+                                        :source_ref attack-pattern-1-id
+                                        :timestamp #inst "2042-01-01T00:00:00.000Z"
+                                        :source_entity (:attack-pattern-1 datamap)
+                                        :target_entity nil}]))
 
              (testing "sorting"
                (gh/connection-sort-test
@@ -121,8 +129,16 @@
                                  graphql-queries
                                  {:id attack-pattern-1-id}
                                  [:attack_pattern :feedbacks]
-                                 [(gh/feedback-1 attack-pattern-1-id #inst "2042-01-01T00:00:00.000Z")
-                                  (gh/feedback-2 attack-pattern-1-id #inst "2042-01-01T00:00:00.000Z")])
+                                 [(dissoc (:feedback-1 datamap)
+                                          :id
+                                          :tlp
+                                          :schema_version
+                                          :type)
+                                  (dissoc (:feedback-2 datamap)
+                                          :id
+                                          :tlp
+                                          :schema_version
+                                          :type)])
 
              (testing "sorting"
                (gh/connection-sort-test

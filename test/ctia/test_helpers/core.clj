@@ -1,31 +1,29 @@
 (ns ctia.test-helpers.core
   (:refer-clojure :exclude [get])
-  (:require
-   [ctia.flows.crud :as crud]
-   [clj-momo.lib.net :as net]
-   [clj-momo.test-helpers
-    [core :as mth]
-    [http :as mthh]]
-   [clojure
-    [string :as str]
-    [walk :refer [prewalk]]]
-   [clojure.spec.alpha :as cs]
-   [clojure.test.check.generators :as gen]
-   [ctia
-    [auth :as auth]
-    [init :as init]
-    [properties :refer [properties PropertiesSchema]]
-    [shutdown :as shutdown]
-    [store :as store]]
-   [ctia.auth.allow-all :as aa]
-   [ctia.flows.crud :as crud]
-   [ctim.domain.id :as id]
-   [ctim.generators.common :as cgc]
-   [clojure.tools.logging :as log]
-   [clojure.tools.logging.test :as tlog]
-   [flanders
-    [spec :as fs]
-    [utils :as fu]]))
+  (:require [clj-momo.lib.net :as net]
+            [clj-momo.test-helpers
+             [core :as mth]
+             [http :as mthh]]
+            [clojure
+             [string :as str]
+             [walk :refer [prewalk]]]
+            [clojure.spec.alpha :as cs]
+            [clojure.test.check.generators :as gen]
+            [clojure.tools.logging :as log]
+            [clojure.tools.logging.test :as tlog]
+            [ctia
+             [auth :as auth]
+             [init :as init]
+             [properties :refer [properties PropertiesSchema]]
+             [shutdown :as shutdown]
+             [store :as store]]
+            [ctia.auth.allow-all :as aa]
+            [ctia.flows.crud :as crud]
+            [ctim.domain.id :as id]
+            [ctim.generators.common :as cgc]
+            [flanders
+             [spec :as fs]
+             [utils :as fu]]))
 
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
@@ -220,8 +218,7 @@
   (mthh/with-port-fn get-http-port mthh/post))
 
 (defn post-bulk [examples]
-  (let [{status :status
-         bulk-res :parsed-body}
+  (let [{bulk-res :parsed-body}
         (post "ctia/bulk"
               :body examples
               :socket-timeout (* 5 60000)

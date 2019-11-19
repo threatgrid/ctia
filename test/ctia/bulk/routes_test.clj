@@ -287,8 +287,9 @@
 
              (doseq [k (keys new-bulk)]
                (testing (str "retrieved " (name k))
-                 (is (= (map #(dissoc % :id :timestamp :source_ref :target_ref) (core/get new-bulk k))
-                        (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref)
+                 (is (= (map #(dissoc % :id :timestamp :source_ref :target_ref)
+                             (core/get new-bulk k))
+                        (map #(dissoc % :id :timestamp :type :tlp :schema_version :disposition_name :source_ref :target_ref :owner :groups)
                              (core/get response k))))
 
                  (let [id (id/long-id->id (:id (first (core/get response k))))]
