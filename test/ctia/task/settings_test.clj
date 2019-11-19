@@ -4,7 +4,6 @@
             [ctia.stores.es.init :as init]
             [clj-momo.lib.es.index :as es-index]))
 
-
 (deftest update-store!-test
   (let [initial-props {:entity :malware
                        :indexname "ctia_malware"
@@ -20,8 +19,7 @@
                          :shards 4
                          :replicas 1
                          :refresh_interval "2s")
-        new-conn-state (init/init-store-conn new-props)
-        _ (sut/update-store! new-conn-state)
+        _ (sut/update-store! new-props)
         {:keys [refresh_interval
                 number_of_shards
                 number_of_replicas]} (-> (es-index/get conn index)
