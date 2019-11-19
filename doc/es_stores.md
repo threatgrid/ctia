@@ -63,6 +63,15 @@ or from source:
 `lein run -m ctia.task.rollover` 
 
 
+## Updating indices dynamic settings
+CTIA proposes a task to update indices dynamic settings like `refresh_interval` and `number_of_replicas`. For that purpose, you must first update the property file with the desired value for these settings and then launch the task with:
+`java -cp ctia.jar:resources:. clojure.main -m ctia.task.settings`
+or from source:
+`lein run -m ctia.task.settings` 
+You can also select some stores with the option `--stores` and a comma separated list of store names:
+`lein run -m ctia.task.settings --stores relaitonship,malware,indicator` 
+
+
 ## From aliased to unaliased and back
 
 Changing the `aliased` mode will only be applied after a migration, it's not possible to do it while running neither by restarting CTIA with modified configuration. In order to do so, you have to modify `aliased` and `rollover` properties and run a migration with current settings. After the migration, properly set the new indexname and restart CTIA.

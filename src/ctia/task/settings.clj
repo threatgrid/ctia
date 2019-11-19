@@ -35,7 +35,8 @@
 
 
 (def cli-options
-  [["-s" "--stores STORES" "comma separated list of store names"
+  [["-h" "--help"]
+   ["-s" "--stores STORES" "comma separated list of store names"
     :default (set (keys @stores))
     :parse-fn #(map keyword (clojure.string/split % #","))]])
 
