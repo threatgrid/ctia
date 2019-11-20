@@ -1,6 +1,5 @@
 (ns ctia.flows.hooks-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [ctia.flows.from-java :as fj]
             [ctia.flows.hooks :as h]
             [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.test-helpers
@@ -111,61 +110,3 @@
                             :prev-entity memory
                             :hook-type   :after-create)
              obj))))
-
-;; -----------------------------------------------------------------------------
-;; Dummy Hook from Java
-
-(defrecord DummyJ [o]
-  Hook
-  (init [this] (doto (.init o)))
-  (handle [_ stored-object prev-object]
-    (fj/from-java-handle o stored-object prev-object))
-  (destroy [this] (doto (.destroy o))))
-
-(defn test-adding-dummy-hooks-from-java []
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.Dummy "hookJ1")))
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.Dummy "hookJ2")))
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.Dummy "hookJ3"))))
-
-(t/deftest check-dummy-hook-from-java
-  (h/shutdown!)
-  (h/reset-hooks!)
-  (test-adding-dummy-hooks-from-java)
-  (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :before-create)
-           (into obj {"hookJ1 - initialized" "passed"
-                      "hookJ2 - initialized" "passed"
-                      "hookJ3 - initialized" "passed"})))
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :after-create)
-           obj))
-  (h/reset-hooks!))
-
-
-;; Dummy Hook from Jar file
-(defrecord DummyJ [o]
-  Hook
-  (init [this] (doto (.init o)))
-  (handle [_ stored-object prev-object]
-    (fj/from-java-handle o stored-object prev-object))
-  (destroy [this] (doto (.destroy o))))
-
-(defn test-adding-dummy-hooks-from-jar []
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar1")))
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar2")))
-  (h/add-hook! :before-create (DummyJ. (new ctia.hook.DummyJar "hookJar3"))))
-
-(t/deftest check-dummy-hook-from-jar
-  (h/shutdown!)
-  (h/reset-hooks!)
-  (test-adding-dummy-hooks-from-jar)
-  (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :before-create)
-           (into obj {"hookJar1 - initialized" "passed-from-jar"
-                      "hookJar2 - initialized" "passed-from-jar"
-                      "hookJar3 - initialized" "passed-from-jar"})))
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :after-create)
-           obj)))

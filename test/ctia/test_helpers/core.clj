@@ -105,14 +105,6 @@
                     "ctia.store.es.event.slicing.strategy" :aliased-index]
     (f)))
 
-(defn fixture-properties:hook-classes [f]
-  (with-properties ["ctia.hooks.before-create"
-                    (str/join "," ["ctia.hook.AutoLoadedJar1"
-                                   "hook-example.core/hook-example-1"
-                                   "ctia.hook.AutoLoadedJar2"
-                                   "hook-example.core/hook-example-2"])]
-    (f)))
-
 (defn atomic-log
   "Returns a StatefulLog, appending to an atom the result of invoking
   log-entry-fn with the same args as append!

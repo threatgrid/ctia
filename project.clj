@@ -150,9 +150,6 @@
                                      (:es-aliased-index %))
                    :no-gen #(not (:generative %))
                    :all #(not (:disabled %))}
-
-  :java-source-paths ["hooks/ctia"]
-  :javac-options  ["-proc:none"] ;; remove a warning
   :filespecs [{:type :fn
                :fn (fn [_]
                      {:type :bytes :path "ctia-version.txt"
@@ -188,12 +185,7 @@
                                    [com.gfredericks/test.chuck "0.2.8"]
                                    [prismatic/schema-generators "0.1.1"]]
                     :pedantic? :abort
-                    :java-source-paths ["hooks/ctia"
-                                        "test/java"]
-                    :resource-paths ["test/resources"
-                                     "test/resources/hooks/JarHook.jar"
-                                     "test/resources/hooks/AutoloadHook.jar"
-                                     "test/resources/hooks/hook-example-0.1.0-SNAPSHOT.jar"]}
+                    :resource-paths ["test/resources"]}
 
              :dev-test {:pedantic? :warn}
              :prepush {:plugins [[yogsototh/lein-kibit "0.1.6-SNAPSHOT"]
@@ -205,8 +197,7 @@
                              {:name :bulk
                               :namespaces [ctia.bulk.routes-bench]}
                              {:name :migration
-                              :namespaces [ctia.tasks.migrate-es-stores-bench]}
-                             ]}
+                              :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
   :plugins [[lein-shell "0.5.0"]
             [perforate "0.3.4"]]
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
