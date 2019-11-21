@@ -160,5 +160,3 @@
 
 (defn execute [query operation-name variables context]
   (g/execute graphql query operation-name variables context))
-
-

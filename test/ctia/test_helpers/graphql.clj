@@ -1,6 +1,6 @@
 (ns ctia.test-helpers.graphql
   (:require [clojure
-             [string :as str]
+             [string :as cs]
              [test :refer [is]]]
             [ctia.schemas.graphql.sorting :as sorting]
             [ctia.test-helpers.core :as helpers]))
@@ -59,7 +59,7 @@
    keyword
    (some-> kw
            name
-           (str/split #"\."))))
+           (cs/split #"\."))))
 
 (defn min-value
   "Takes the min value if the value is sequential.
