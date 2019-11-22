@@ -47,6 +47,17 @@
                 {:aliases {indexname {}}}))
      :conn (connect props)}))
 
+(s/defn update-settings!
+  "read store properties of given stores and update indices settings."
+  [{:keys [conn index]
+    {:keys [settings]} :config} :- ESConnState]
+  (try
+    (->> {:index (select-keys settings [:refresh_interval :number_of_replicas])}
+         (es-index/update-settings! conn index))
+    (log/info "updated settings: " index)
+    (catch clojure.lang.ExceptionInfo e
+      (log/warn "could not update settings on that store"
+                (pr-str (ex-data e))))))
 
 (defn upsert-template!
   [conn index config]
@@ -61,14 +72,17 @@
         (init-store-conn properties)
         existing-index (es-index/get conn (str index "*"))]
     (upsert-template! conn index config)
+    (when (seq existing-index)
+      (update-settings! conn-state))
     (when (and (:aliased props)
                (empty? existing-index))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn
                         (format "<%s-{now/d}-000001>" index)
                         (update config :aliases assoc (:write-index props) {})))
-    (if (contains? existing-index (keyword index))
-      (do (log/error "an existing unaliased was configured as aliased. Switching from unaliased to aliased indices requires a migration."
+    (if (and (:aliased props)
+             (contains? existing-index (keyword index)))
+      (do (log/error "an existing unaliased store was configured as aliased. Switching from unaliased to aliased indices requires a migration."
                      properties)
           (assoc-in conn-state [:props :write-index] index))
       conn-state)))

@@ -56,6 +56,37 @@
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b]))))))
 
+(deftest update-settings!-test
+  (let [indexname "ctia_malware"
+        initial-props {:entity :malware
+                       :indexname indexname
+                       :host "localhost"
+                       :aliased true
+                       :port 9200
+                       :shards 5
+                       :replicas 2
+                       :refresh_interval "1s"}
+        ;; create index
+        {:keys [conn]} (sut/init-es-conn! initial-props)
+        new-props (assoc initial-props
+                         :shards 4
+                         :replicas 1
+                         :refresh_interval "2s")
+        _ (sut/update-settings! (sut/init-store-conn new-props))
+        {:keys [refresh_interval
+                number_of_shards
+                number_of_replicas]} (-> (index/get conn indexname)
+                                         first
+                                         val
+                                         :settings
+                                        :index)]
+    (is (= "5" number_of_shards)
+        "the number of shards is a static parameter")
+    (testing "dynamic parameters should be updated"
+      (is (= "1" number_of_replicas))
+      (is (= "2s" refresh_interval)))
+    (index/delete! conn (str indexname "*"))))
+
 (deftest init-es-conn!-test
   (index/delete! es-conn (str indexname "*"))
   (testing "init-es-conn! should return a proper conn state with unaliased conf, but not create any index"

@@ -64,7 +64,7 @@ or from source:
 
 
 ## Updating indices dynamic settings
-CTIA proposes a task to update indices dynamic settings like `refresh_interval` and `number_of_replicas`. For that purpose, you must first update the property file with the desired value for these settings and then launch the task with:
+When CTIA starts, it updates the dynamic settings of store indices, like `refresh_interval` and `number_of_replicas`, according to property file. However CTIA also proposes a task to update indices dynamic settings without restarting CTIA. For that purpose, you must first update the property file with the desired values for these settings and then launch the task with:
 `java -cp ctia.jar:resources:. clojure.main -m ctia.task.settings`
 or from source:
 `lein run -m ctia.task.settings` 
