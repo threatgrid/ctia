@@ -9,8 +9,7 @@
    [ctia.schemas
     [utils :as csu]
     [core :refer [def-stored-schema
-                  CTIAEntity
-                  CTIAStoredEntity]]
+                  CTIAEntity]]
     [sorting :as sorting]]
    [ctia.schemas.graphql
     [sorting :as graphql-sorting]
@@ -27,7 +26,8 @@
     [spec :as f-spec]
     [utils :as fu]]
    [schema-tools.core :as st]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [ctia.schemas.graphql.ownership :as go]))
 
 (s/defschema Indicator
   (st/merge
@@ -166,7 +166,8 @@
     (g/new-object name description []
                   (merge fields
                          feedback/feedback-connection-field
-                         relationship/relatable-entity-fields))))
+                         relationship/relatable-entity-fields
+                         go/graphql-ownership-fields))))
 
 (def indicator-order-arg
   (graphql-sorting/order-by-arg

@@ -19,6 +19,7 @@
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
+            [ctia.schemas.graphql.ownership :as go]
             [ctim.schemas.attack-pattern :as attack]
             [flanders.utils :as fu]
             [schema-tools.core :as st]
@@ -124,7 +125,8 @@
      []
      (merge fields
             feedback/feedback-connection-field
-            relationship-graphql/relatable-entity-fields))))
+            relationship-graphql/relatable-entity-fields
+            go/graphql-ownership-fields))))
 
 (def attack-pattern-order-arg
   (graphql-sorting/order-by-arg

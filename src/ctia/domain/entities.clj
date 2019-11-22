@@ -39,7 +39,7 @@
      (default-realize new-object id tempids owner groups nil))
     ([new-object :- Model
       id :- s/Str
-      tempids :- (s/maybe TempIDs)
+      _ :- (s/maybe TempIDs)
       owner :- s/Str
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
@@ -88,11 +88,7 @@
     (long-id->entity-type id-str)))
 
 (defn un-store [record]
-  (let [entity-fields [:created :modified :owner :groups]
-        event-fields [:created :modified]]
-    (case (:type record)
-      "event" (apply dissoc record event-fields)
-      (apply dissoc record entity-fields))))
+  (apply dissoc record [:created :modified]))
 
 (defn un-store-all [x]
   (if (sequential? x)

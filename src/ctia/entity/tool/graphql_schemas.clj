@@ -8,7 +8,8 @@
              [sorting :as sorting]]
             [ctim.schemas.tool :as ctim-tool]
             [flanders.utils :as fu]
-            [ctia.entity.tool.schemas :as ts]))
+            [ctia.entity.tool.schemas :as ts]
+            [ctia.schemas.graphql.ownership :as go]))
 
 (def ToolType
   (let [{:keys [fields name description]}
@@ -21,7 +22,8 @@
      []
      (merge fields
             feedback/feedback-connection-field
-            relationship/relatable-entity-fields))))
+            relationship/relatable-entity-fields
+            go/graphql-ownership-fields))))
 
 (def tool-order-arg
   (sorting/order-by-arg

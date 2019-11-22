@@ -3,7 +3,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.test-helpers
-             [core :as helpers :refer [post get with-properties]]
+             [core :as helpers :refer [post get]]
              [es :as es-helpers]]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [ctim.domain.id :as id]))
@@ -84,6 +84,8 @@
                 :priority 100
                 :severity "High"
                 :confidence "Low"
+                :groups ["kitara"]
+                :owner "kitara"
                 :valid_time {:start_time #inst "2016-02-11T00:00:00.000-00:00"
                              :end_time #inst "2016-03-11T00:00:00.000-00:00"}}
                get-judgement)))

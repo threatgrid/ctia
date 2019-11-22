@@ -2,8 +2,7 @@
   (:require [ctia.schemas.graphql.pagination :as sut]
             [clojure.test :refer [deftest is testing use-fixtures]]
             [schema.test :as st]
-            [clj-momo.lib.es.pagination :as pag]
-            [clojure.tools.logging :as log]))
+            [clj-momo.lib.es.pagination :as pag]))
 
 (use-fixtures :once st/validate-schemas)
 

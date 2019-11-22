@@ -1,7 +1,6 @@
 (ns ctia.http.routes.graphql.weakness-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.schemas.sorting :as sort-fields]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
@@ -15,6 +14,10 @@
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
+
+(def ownership-data-fixture
+  {:owner "foouser"
+   :groups ["foogroup"]})
 
 (defn init-graph-data []
   (let [entity-1 (gh/create-object
@@ -31,9 +34,9 @@
                   "weakness"
                   (-> new-weakness-maximal
                       (assoc :title "Weakness 3")
-                      (dissoc :id)))]
-    (gh/create-object "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
-    (gh/create-object "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
+                      (dissoc :id)))
+        f1 (gh/create-object "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
+        f2 (gh/create-object "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))]
     (gh/create-object "relationship"
                       {:relationship_type "related-to"
                        :timestamp #inst "2042-01-01T00:00:00.000Z"
@@ -46,7 +49,9 @@
                        :source_ref (:id entity-1)})
     {:weakness-1 entity-1
      :weakness-2 entity-2
-     :weakness-3 entity-3}))
+     :weakness-3 entity-3
+     :feedback-1 f1
+     :feedback-2 f2}))
 
 (deftest weakness-queries-test
   (test-for-each-store
@@ -81,18 +86,19 @@
                                  {:id weakness-1-id
                                   :relationship_type "related-to"}
                                  [:weakness :relationships]
-                                 [{:relationship_type "related-to"
-                                   :target_ref weakness-2-id
-                                   :source_ref weakness-1-id
-                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
-                                   :source_entity (:weakness-1 datamap)
-                                   :target_entity (:weakness-2 datamap)}
-                                  {:relationship_type "related-to"
-                                   :target_ref weakness-3-id
-                                   :source_ref weakness-1-id
-                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
-                                   :source_entity (:weakness-1 datamap)
-                                   :target_entity (:weakness-3 datamap)}])
+                                 (map #(merge % ownership-data-fixture)
+                                      [{:relationship_type "related-to"
+                                        :target_ref weakness-2-id
+                                        :source_ref weakness-1-id
+                                        :timestamp #inst "2042-01-01T00:00:00.000Z"
+                                        :source_entity (:weakness-1 datamap)
+                                        :target_entity (:weakness-2 datamap)}
+                                       {:relationship_type "related-to"
+                                        :target_ref weakness-3-id
+                                        :source_ref weakness-1-id
+                                        :timestamp #inst "2042-01-01T00:00:00.000Z"
+                                        :source_entity (:weakness-1 datamap)
+                                        :target_entity (:weakness-3 datamap)}]))
 
              (testing "sorting"
                (gh/connection-sort-test
@@ -107,8 +113,8 @@
                                  graphql-queries
                                  {:id weakness-1-id}
                                  [:weakness :feedbacks]
-                                 [(gh/feedback-1 weakness-1-id #inst "2042-01-01T00:00:00.000Z")
-                                  (gh/feedback-2 weakness-1-id #inst "2042-01-01T00:00:00.000Z")])
+                                 [(dissoc (:feedback-1 datamap) :id :tlp :type :schema_version)
+                                  (dissoc (:feedback-2 datamap) :id :tlp :type :schema_version)])
 
              (testing "sorting"
                (gh/connection-sort-test

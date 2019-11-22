@@ -8,12 +8,15 @@
     [pagination :as graphql-pagination]
     [resolvers :as resolvers]
     [sorting :as graphql-sorting]]
-   [flanders.utils :as fu]))
+   [flanders.utils :as fu]
+   [ctia.schemas.graphql.ownership :as go]))
 
 (def FeedbackType
   (let [{:keys [fields name description]}
         (f/->graphql (fu/optionalize-all ctim-feedback/Feedback))]
-    (g/new-object name description [] fields)))
+    (g/new-object name description []
+                  (merge fields
+                         go/graphql-ownership-fields))))
 
 (def feedback-order-arg
   (graphql-sorting/order-by-arg

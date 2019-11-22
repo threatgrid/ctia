@@ -151,10 +151,10 @@
                    :no-gen #(not (:generative %))
                    :all #(not (:disabled %))}
 
-  :java-source-paths ["hooks/ctia"]
+  ;; :java-source-paths ["hooks/ctia"]
   :javac-options  ["-proc:none"] ;; remove a warning
   :filespecs [{:type :fn
-               :fn (fn [p]
+               :fn (fn [_]
                      {:type :bytes :path "ctia-version.txt"
                       :bytes (str (:out (clojure.java.shell/sh
                                          "git" "log" "-n" "1" "--pretty=format:%H "))
@@ -164,6 +164,7 @@
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.8"]
+                                  [clj-http-fake "1.0.3"]
                                   [prismatic/schema-generators "0.1.1"]]
                    :pedantic? :warn
 

@@ -1,9 +1,9 @@
 (ns ctia.test-helpers.graphql
-  (:require [clojure.test :refer [is testing]]
+  (:require [clojure
+             [string :as cs]
+             [test :refer [is]]]
             [ctia.schemas.graphql.sorting :as sorting]
-            [ctia.test-helpers.core :as helpers]
-            [clojure.string :as str]
-            [clojure.tools.logging :as log]))
+            [ctia.test-helpers.core :as helpers]))
 
 (defn create-object [type obj]
   (let [{status :status
@@ -59,7 +59,7 @@
    keyword
    (some-> kw
            name
-           (str/split #"\."))))
+           (cs/split #"\."))))
 
 (defn min-value
   "Takes the min value if the value is sequential.
@@ -172,7 +172,6 @@
         (is (empty? errors) "No errors")
         (let [{nodes-p2 :nodes
                edges-p2 :edges
-               page-info-p2 :pageInfo
                total-count-p2 :totalCount}
               (get-in data connection-path)]
           (is (= (count expected-nodes)

@@ -3,6 +3,8 @@ fragment relationshipBaseFields on Relationship {
   timestamp
   target_ref
   source_ref
+  owner
+  groups
 }
 
 fragment pageInfoFields on PageInfo {
@@ -25,4 +27,6 @@ fragment feedbackFields on Feedback {
   entity_id
   timestamp
   reason
+  owner
+  groups
 }

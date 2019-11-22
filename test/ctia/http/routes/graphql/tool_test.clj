@@ -1,7 +1,6 @@
 (ns ctia.http.routes.graphql.tool-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.schemas.sorting :as sort-fields]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
@@ -15,6 +14,10 @@
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
+
+(def ownership-data-fixture
+  {:owner "foouser"
+   :groups ["foogroup"]})
 
 (defn init-graph-data []
   (let [entity-1 (gh/create-object
@@ -31,9 +34,9 @@
                   "tool"
                   (-> new-tool-maximal
                       (assoc :name "Tool 3")
-                      (dissoc :id)))]
-    (gh/create-object "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
-    (gh/create-object "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
+                      (dissoc :id)))
+        f1 (gh/create-object "feedback" (gh/feedback-1 (:id entity-1) #inst "2042-01-01T00:00:00.000Z"))
+        f2 (gh/create-object "feedback" (gh/feedback-2 (:id entity-1) #inst "2042-01-01T00:00:00.000Z")) ]
     (gh/create-object "relationship"
                       {:relationship_type "variant-of"
                        :target_ref (:id entity-2)
@@ -46,7 +49,9 @@
                        :timestamp #inst "2042-01-01T00:00:00.000Z"})
     {:tool-1 entity-1
      :tool-2 entity-2
-     :tool-3 entity-3}))
+     :tool-3 entity-3
+     :feedback-1 f1
+     :feedback-2 f2}))
 
 (deftest tool-queries-test
   (test-for-each-store
@@ -82,18 +87,19 @@
                                  {:id tool-1-id
                                   :relationship_type "variant-of"}
                                  [:tool :relationships]
-                                 [{:relationship_type "variant-of"
-                                   :target_ref tool-2-id
-                                   :source_ref tool-1-id
-                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
-                                   :source_entity (:tool-1 datamap)
-                                   :target_entity (:tool-2 datamap)}
-                                  {:relationship_type "variant-of"
-                                   :target_ref tool-3-id
-                                   :source_ref tool-1-id
-                                   :timestamp #inst "2042-01-01T00:00:00.000Z"
-                                   :source_entity (:tool-1 datamap)
-                                   :target_entity (:tool-3 datamap)}])
+                                 (map #(merge % ownership-data-fixture)
+                                      [{:relationship_type "variant-of"
+                                        :target_ref tool-2-id
+                                        :source_ref tool-1-id
+                                        :timestamp #inst "2042-01-01T00:00:00.000Z"
+                                        :source_entity (:tool-1 datamap)
+                                        :target_entity (:tool-2 datamap)}
+                                       {:relationship_type "variant-of"
+                                        :target_ref tool-3-id
+                                        :source_ref tool-1-id
+                                        :timestamp #inst "2042-01-01T00:00:00.000Z"
+                                        :source_entity (:tool-1 datamap)
+                                        :target_entity (:tool-3 datamap)}]))
 
              (testing "sorting"
                (gh/connection-sort-test
@@ -108,8 +114,8 @@
                                  graphql-queries
                                  {:id tool-1-id}
                                  [:tool :feedbacks]
-                                 [(gh/feedback-1 tool-1-id #inst "2042-01-01T00:00:00.000Z" )
-                                  (gh/feedback-2 tool-1-id #inst "2042-01-01T00:00:00.000Z")])
+                                 [(dissoc (:feedback-1 datamap) :id :tlp :type :schema_version)
+                                  (dissoc (:feedback-2 datamap) :id :tlp :type :schema_version)])
 
              (testing "sorting"
                (gh/connection-sort-test

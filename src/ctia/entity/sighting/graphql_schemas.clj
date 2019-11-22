@@ -9,7 +9,8 @@
              [sorting :as sorting]
              [pagination :as pagination]]
             [ctim.schemas.sighting :as ctim-sighting]
-            [flanders.utils :as fu]))
+            [flanders.utils :as fu]
+            [ctia.schemas.graphql.ownership :as go]))
 
 (def SightingType
   (let [{:keys [fields name description]}
@@ -22,7 +23,8 @@
      []
      (merge fields
             feedback/feedback-connection-field
-            relationship/relatable-entity-fields))))
+            relationship/relatable-entity-fields
+            go/graphql-ownership-fields))))
 
 (def sighting-order-arg
   (sorting/order-by-arg

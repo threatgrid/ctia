@@ -35,7 +35,8 @@
             [ring.swagger.schema :refer [describe]]
             [ring.util.http-response :refer [not-found ok]]
             [schema-tools.core :as st]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [ctia.schemas.graphql.ownership :as go]))
 
 (def incident-bundle-default-limit 1000)
 
@@ -222,7 +223,8 @@
      []
      (merge fields
             feedback/feedback-connection-field
-            relationship-graphql/relatable-entity-fields))))
+            relationship-graphql/relatable-entity-fields
+            go/graphql-ownership-fields))))
 
 (def incident-order-arg
   (graphql-sorting/order-by-arg

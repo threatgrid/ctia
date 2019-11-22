@@ -238,6 +238,8 @@ fragment indicatorFields on Indicator {
   valid_time {
     ...validTimeFields
   }
+  owner
+  groups
 }
 
 query InvestigationQueryTest($id: String!) {
@@ -271,6 +273,8 @@ fragment investigationFields on Investigation {
   timestamp
   tlp
   source
+  owner
+  groups
 }
 
 query CasebookQueryTest($id: String!) {
@@ -313,6 +317,8 @@ fragment casebookFields on Casebook {
   tlp
   source
   source_uri
+  owner
+  groups
   observables {
     ...observableBaseFields
   }
@@ -331,6 +337,8 @@ fragment relationshipBaseFields on Relationship {
   timestamp
   target_ref
   source_ref
+  owner
+  groups
 }
 
 fragment pageInfoFields on PageInfo {
@@ -362,6 +370,8 @@ fragment judgementFields on Judgement {
   tlp
   priority
   timestamp
+  owner
+  groups
 }
 
 fragment sightingFields on Sighting {
@@ -381,6 +391,8 @@ fragment sightingFields on Sighting {
   source
   timestamp
   tlp
+  owner
+  groups
   source_uri
   relations {
     ...observedRelationFields
@@ -430,5 +442,7 @@ fragment feedbackFields on Feedback {
   feedback
   timestamp
   entity_id
+  owner
+  groups
   reason
 }
