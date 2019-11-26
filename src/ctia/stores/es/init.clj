@@ -27,21 +27,42 @@
 (s/defn init-store-conn :- ESConnState
   "initiate an ES store connection, returning a map containing a
    connection manager and dedicated store index properties"
-  [{:keys [entity indexname shards replicas mappings aliased]
-    :or {aliased false}
+  [{:keys [entity indexname mappings aliased shards replicas refresh_interval]
+    :or {aliased false
+         shards 1
+         replicas 1
+         refresh_interval "1s"}
     :as props} :- StoreProperties]
   (let [write-index (str indexname
                          (when aliased "-write"))
-        settings {:number_of_shards shards
+        settings {:refresh_interval refresh_interval
+                  :number_of_shards shards
                   :number_of_replicas replicas}]
     {:index indexname
      :props (assoc props :write-index write-index)
      :config (into
-              {:settings (merge store-settings settings)
+              {:settings (into store-settings settings)
                :mappings (get store-mappings entity mappings)}
               (when aliased
                 {:aliases {indexname {}}}))
      :conn (connect props)}))
+
+(s/defn update-settings!
+  "read store properties of given stores and update indices settings."
+  [{:keys [conn index]
+    {:keys [settings]} :config} :- ESConnState]
+  (try
+    (->> {:index (select-keys settings [:refresh_interval :number_of_replicas])}
+         (es-index/update-settings! conn index))
+    (log/info "updated settings: " index)
+    (catch clojure.lang.ExceptionInfo e
+      (log/warn "could not update settings on that store"
+                (pr-str (ex-data e))))))
+
+(defn upsert-template!
+  [conn index config]
+  (es-index/create-template! conn index config)
+  (log/infof "updated template: %s" index))
 
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
@@ -50,15 +71,18 @@
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties)
         existing-index (es-index/get conn (str index "*"))]
-    (es-index/create-template! conn index config)
+    (upsert-template! conn index config)
+    (when (seq existing-index)
+      (update-settings! conn-state))
     (when (and (:aliased props)
                (empty? existing-index))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn
                         (format "<%s-{now/d}-000001>" index)
                         (update config :aliases assoc (:write-index props) {})))
-    (if (contains? existing-index (keyword index))
-      (do (log/error "an existing unaliased was configured as aliased. Switching from unaliased to aliased indices requires a migration."
+    (if (and (:aliased props)
+             (contains? existing-index (keyword index)))
+      (do (log/error "an existing unaliased store was configured as aliased. Switching from unaliased to aliased indices requires a migration."
                      properties)
           (assoc-in conn-state [:props :write-index] index))
       conn-state)))

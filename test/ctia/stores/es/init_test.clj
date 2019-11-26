@@ -13,6 +13,7 @@
 (def write-alias (str indexname "-write"))
 (def props-aliased {:entity :sighting
                     :indexname indexname
+                    :refresh_interval "2s"
                     :shards 2
                     :replicas 1
                     :mappings {:a 1 :b 2}
@@ -37,11 +38,12 @@
       (is (= (:write-index props) indexname))
       (is (= "http://localhost:9200" (:uri conn)))
       (is (nil? (:aliases config)))
+      (is (= "1s" (get-in config [:settings :refresh_interval])))
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b])))))
 
-  (testing "init store conn should return a proper conn state with unaliased conf"
+  (testing "init store conn should return a proper conn state with aliased conf"
     (let [{:keys [index props config conn]}
           (sut/init-store-conn props-aliased)]
       (is (= index indexname))
@@ -49,9 +51,41 @@
       (is (= "http://localhost:9200" (:uri conn)))
       (is (= indexname
              (-> config :aliases keys first)))
+      (is (= "2s" (get-in config [:settings :refresh_interval])))
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b]))))))
+
+(deftest update-settings!-test
+  (let [indexname "ctia_malware"
+        initial-props {:entity :malware
+                       :indexname indexname
+                       :host "localhost"
+                       :aliased true
+                       :port 9200
+                       :shards 5
+                       :replicas 2
+                       :refresh_interval "1s"}
+        ;; create index
+        {:keys [conn]} (sut/init-es-conn! initial-props)
+        new-props (assoc initial-props
+                         :shards 4
+                         :replicas 1
+                         :refresh_interval "2s")
+        _ (sut/update-settings! (sut/init-store-conn new-props))
+        {:keys [refresh_interval
+                number_of_shards
+                number_of_replicas]} (-> (index/get conn indexname)
+                                         first
+                                         val
+                                         :settings
+                                        :index)]
+    (is (= "5" number_of_shards)
+        "the number of shards is a static parameter")
+    (testing "dynamic parameters should be updated"
+      (is (= "1" number_of_replicas))
+      (is (= "2s" refresh_interval)))
+    (index/delete! conn (str indexname "*"))))
 
 (deftest init-es-conn!-test
   (index/delete! es-conn (str indexname "*"))
@@ -64,6 +98,7 @@
       (is (= (:write-index props) indexname))
       (is (= "http://localhost:9200" (:uri conn)))
       (is (nil? (:aliases config)))
+      (is (= "1s" (get-in config [:settings :refresh_interval])))
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b])))))
@@ -86,6 +121,7 @@
       (is (= "http://localhost:9200" (:uri conn)))
       (is (= indexname
              (-> config :aliases keys first)))
+      (is (= "2s" (get-in config [:settings :refresh_interval])))
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b])))))

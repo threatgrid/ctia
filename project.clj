@@ -50,7 +50,7 @@
                                com.google.guava/guava
                                org.clojure/tools.reader
                                org.clojure/clojurescript]]
-                 [threatgrid/clj-momo "0.3.1"]
+                 [threatgrid/clj-momo "0.3.2"]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
