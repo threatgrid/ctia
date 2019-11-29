@@ -151,7 +151,7 @@
                    :no-gen #(not (:generative %))
                    :all #(not (:disabled %))}
 
-  ;; :java-source-paths ["hooks/ctia"]
+  :java-source-paths ["hooks/ctia"]
   :javac-options  ["-proc:none"] ;; remove a warning
   :filespecs [{:type :fn
                :fn (fn [_]
