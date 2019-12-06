@@ -1,7 +1,7 @@
 (ns ctia.http.routes.crud
   (:require
    [clojure.string :refer [capitalize]]
-   [ctia.http.middleware.auth :refer :all]
+   [ctia.http.middleware.auth]
    [compojure.api.sweet :refer [DELETE GET POST PUT PATCH routes]]
    [ctia.domain.entities
     :refer
@@ -13,7 +13,15 @@
    [ctia.http.routes.common
     :refer
     [created filter-map-search-options paginated-ok search-options]]
-   [ctia.store :refer :all]
+   [ctia.store :refer [write-store
+                       read-store
+                       query-string-search-store
+                       query-string-search
+                       create-record
+                       delete-record
+                       read-record
+                       update-record
+                       list-records]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [ring.swagger.schema :refer [describe]]
    [schema.core :as s]))

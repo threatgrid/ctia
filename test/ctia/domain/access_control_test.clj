@@ -71,6 +71,9 @@
 
 ;; -- Read tests
 
+
+;; ---- Max record visibility everyone
+
 (deftest allow-read?-tlp-white-test
   (testing "white TLP should allow document read to everyone"
     (test-matching-user "white" sut/allow-read? true?)
@@ -114,6 +117,66 @@
     (test-authorized_groups-mismatch "red" sut/allow-read? false?)
     (test-authorized_users-match "red" sut/allow-read? true?)
     (test-authorized_groups-match "red" sut/allow-read? true?)))
+
+
+;; ---- Max record visibility group
+
+(defn with-max-record-visibility-group [f]
+  (swap! ctia.properties/properties
+         assoc-in [:ctia :access-control :max-record-visibility] "group")
+  (f)
+  (swap! ctia.properties/properties
+         assoc-in [:ctia :access-control :max-record-visibility] "everyone"))
+
+
+(deftest allow-read?-tlp-white-max-record-visibility-group-test
+  (with-max-record-visibility-group
+    #(testing "white TLP should disallow document read to everyone"
+       (test-matching-user "white" sut/allow-read? true?)
+       (test-matching-group "white" sut/allow-read? true?)
+       (test-user-group-mismatch "white" sut/allow-read? false?)
+       (test-no-group "white" sut/allow-read? false?)
+       (test-authorized_users-mismatch "white" sut/allow-read? false?)
+       (test-authorized_groups-mismatch "white" sut/allow-read? false?)
+       (test-authorized_users-match "white" sut/allow-read? true?)
+       (test-authorized_groups-match "white" sut/allow-read? true?))))
+
+(deftest allow-read?-tlp-green-max-record-visibility-group-test
+  (with-max-record-visibility-group
+    #(testing "green TLPs should disallow document read to everyone"
+       (test-matching-user "green" sut/allow-read? true?)
+       (test-matching-group "green" sut/allow-read? true?)
+       (test-no-group "green" sut/allow-read? false?)
+       (test-user-group-mismatch "green" sut/allow-read? false?)
+       (test-authorized_users-mismatch "green" sut/allow-read? false?)
+       (test-authorized_groups-mismatch "green" sut/allow-read? false?)
+       (test-authorized_users-match "green" sut/allow-read? true?)
+       (test-authorized_groups-match "green" sut/allow-read? true?))))
+
+(deftest allow-read?-tlp-amber-max-record-visibility-group-test
+  (with-max-record-visibility-group
+    #(testing "amber TLPs should allow document read to same group"
+       (test-matching-user "amber" sut/allow-read? true?)
+       (test-matching-group "amber" sut/allow-read? true?)
+       (test-no-group "amber" sut/allow-read? false?)
+       (test-user-group-mismatch "amber" sut/allow-read? false?)
+       (test-authorized_users-mismatch "amber" sut/allow-read? false?)
+       (test-authorized_groups-mismatch "amber" sut/allow-read? false?)
+       (test-authorized_users-match "amber" sut/allow-read? true?)
+       (test-authorized_groups-match "amber" sut/allow-read? true?))))
+
+(deftest allow-read?-tlp-red-max-record-visibility-group-test
+  (with-max-record-visibility-group
+    #(testing "red TLPs should allow document read to owner only"
+       (test-matching-user "red" sut/allow-read? true?)
+       (test-matching-group "red" sut/allow-read? false?)
+       (test-no-group "red" sut/allow-read? false?)
+       (test-user-group-mismatch "red" sut/allow-read? false?)
+       (test-authorized_users-mismatch "red" sut/allow-read? false?)
+       (test-authorized_groups-mismatch "red" sut/allow-read? false?)
+       (test-authorized_users-match "red" sut/allow-read? true?)
+       (test-authorized_groups-match "red" sut/allow-read? true?))))
+
 
 ;; -- Write tests
 

@@ -143,8 +143,7 @@
            identity
            tempids
            prev-entity
-           realize-fn
-           enveloped-result?] :as fm} :- FlowMap]
+           realize-fn] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)]
     (assoc fm
@@ -307,7 +306,7 @@
   [entities long-id-fn]
   (->> entities
        (filter #(nil? (:error %)))
-       (map (fn [{:keys [error id] :as entity}]
+       (map (fn [{:keys [_ id] :as entity}]
               [id (:id (long-id-fn entity))]))
        (into {})))
 
@@ -345,7 +344,7 @@
 
 (s/defn ^:private make-result :- s/Any
   [{:keys [flow-type entities results
-           enveloped-result? tempids] :as fm} :- FlowMap]
+           enveloped-result? tempids]} :- FlowMap]
   (case flow-type
     :create (if enveloped-result?
               (cond-> {:data entities}

@@ -27,6 +27,11 @@
     (nthrest tlps
              (.indexOf tlps min-tlp))))
 
+(defn max-record-visibility-everyone? []
+  (= "everyone"
+     (or (:max-record-visibility (get-access-control))
+         "everyone")))
+
 (defn allowed-tlp? [tlp]
   (some #{tlp} (allowed-tlps)))
 
@@ -48,11 +53,12 @@
 (s/defn authorized-group? :- s/Bool
   [doc ident]
   (boolean
-   (and (seq (:groups ident))
-        (seq (:authorized_groups doc))
-        (seq (clojure.set/intersection
-              (set (:groups ident))
-              (set (:authorized_groups doc)))))))
+   (and
+    (seq (:groups ident))
+    (seq (:authorized_groups doc))
+    (seq (clojure.set/intersection
+          (set (:groups ident))
+          (set (:authorized_groups doc)))))))
 
 (s/defn authorized-user? :- s/Bool
   [doc ident]
@@ -90,5 +96,6 @@
 (s/defn allow-read? :- s/Bool
   [doc ident]
   (boolean
-   (or (some #{(:tlp doc)} public-tlps)
+   (or (and (max-record-visibility-everyone?)
+            (some #{(:tlp doc)} public-tlps))
        (allow-write? doc ident))))
