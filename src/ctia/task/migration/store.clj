@@ -1,7 +1,6 @@
 (ns ctia.task.migration.store
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [ring.swagger.coerce :as sc]
             [schema.core :as s]
             [schema-tools.core :as st]
             [clj-momo.lib.clj-time
@@ -26,7 +25,7 @@
             [ctia.task.rollover :refer [rollover-store]]
             [ctia
              [init :refer [init-store-service! log-properties]]
-             [properties :refer [properties init!]]
+             [properties :refer [init!]]
              [store :refer [stores]]]))
 
 (def timeout (* 5 60000))
@@ -37,7 +36,7 @@
   (dissoc em/token :fielddata))
 
 (defn store-mapping
-  [[k store]]
+  [[k]]
   {k {:type "object"
       :properties {:source {:type "object"
                             :properties
@@ -137,7 +136,8 @@
   (let [prepared (wo-storemaps migration)
         {:keys [indexname entity]} (migration-store-properties)]
     (retry es-max-retry
-           es-doc/create-doc conn
+           es-doc/index-doc
+           conn
            indexname
            (name entity)
            prepared
@@ -208,7 +208,7 @@
   Thus, this function detects documents that were modified during a migration toward an aliased index,
   retrieves the actual target indices they were previously inserted in,
   and uses them to set :_index meta for these documents"
-  [{:keys [conn mapping]
+  [{:keys [mapping]
     {:keys [aliased write-index]} :props
     :as store-map}
    docs]
@@ -229,7 +229,7 @@
 
 (defn store-batch
   "store a batch of documents using a bulk operation"
-  [{:keys [conn mapping type] :as store-map}
+  [{:keys [conn mapping] :as store-map}
    batch]
   (log/debugf "%s - storing %s records"
               mapping
@@ -430,23 +430,23 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
         filter-events (fn [{:keys [event_type entity]}]
                         (and (= event_type "record-deleted")
                              (contains? (set entity-types)
-                                        (-> entity :type keyword))))]
-      (let [{:keys [data paging]} (query-fetch-batch query
-                                                     event-store
-                                                     batch-size
-                                                     0
-                                                     "asc"
-                                                     search_after)
-            deleted (->> (filter filter-events data)
-                         (map :entity)
-                         (map #(update % :type keyword)))]
-        {:data (group-by :type deleted)
-         :paging paging})))
+                                        (-> entity :type keyword))))
+        {:keys [data paging]} (query-fetch-batch query
+                                                 event-store
+                                                 batch-size
+                                                 0
+                                                 "asc"
+                                                 search_after)
+        deleted (->> (filter filter-events data)
+                     (map :entity)
+                     (map #(update % :type keyword)))]
+    {:data (group-by :type deleted)
+     :paging paging}))
 
 (s/defn batch-delete
   "delete a batch of documents given their ids"
   [{:keys [conn indexname]
-    entity-type :type :as store} :- StoreMap
+    entity-type :type} :- StoreMap
    ids :- [s/Str]]
   (when (seq ids)
     (es-index/refresh! conn indexname)
@@ -491,7 +491,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (defn create-target-store!
   "create the target store, pushing its template"
-  [{:keys [conn indexname config props] entity-type :type :as target-store}]
+  [{:keys [conn indexname config props] entity-type :type}]
   (when (retry es-max-retry es-index/index-exists? conn indexname)
     (log/warnf "tried to create target store %s, but it already exists. Recreating it." indexname))
   (let [index-config (target-index-config indexname config props)]
@@ -552,8 +552,7 @@ when confirm? is true, it stores this state and creates the target indices."
 (s/defn with-store-map :- MigratedStore
   [entity-type :- s/Keyword
    prefix :- s/Str
-   {source :source
-    target :target :as raw-store} :- MigratedStore]
+   raw-store :- MigratedStore]
   (let [source-store (store->map (get @stores entity-type))
         target-store (get-target-store prefix entity-type)]
     (-> (assoc-in raw-store [:source :store] source-store)

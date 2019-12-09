@@ -2,7 +2,6 @@
   (:require [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
-            [schema.core :as s]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.es
              [query :as es-query]
@@ -10,7 +9,6 @@
              [document :as es-doc]
              [index :as es-index]]
             [clj-momo.lib.clj-time
-             [core :as time]
              [coerce :as time-coerce]]
             [ctim.domain.id :refer [long-id->id]]
 
@@ -27,7 +25,7 @@
             [ctia.test-helpers
              [fixtures :as fixt]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post put delete post-bulk with-atom-logger]]
+             [core :as helpers :refer [put delete post-bulk with-atom-logger]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.stores.es.store :refer [store->map]]
@@ -76,9 +74,9 @@
         previous (-> (helpers/get entity-path
                                   :headers {"Authorization" "45c1f5e3f05d0"})
                      :parsed-body)]
-  (put entity-path
-       :body (assoc previous :description "UPDATED")
-       :headers {"Authorization" "45c1f5e3f05d0"})))
+    (put entity-path
+         :body (assoc previous :description "UPDATED")
+         :headers {"Authorization" "45c1f5e3f05d0"})))
 
 (defn random-updates
   "select nb random entities of the bulk and update them"
@@ -105,7 +103,6 @@
         _ (rollover-stores @stores)]
     (random-updates bulk-res-1 (/ updates-nb 2))
     (random-updates bulk-res-2 (/ updates-nb 2))))
-
 
 (deftest migration-with-rollover
   (helpers/set-capabilities! "foouser"
@@ -174,8 +171,8 @@
           match-all-query {:match_all {}}
           nb-skipped-ids 10
           [last-skipped & expected-ids-docs] (->> (sort-by (juxt :modified :created :id)
-                                                         docs-100)
-                                                (drop (dec nb-skipped-ids)))
+                                                           docs-100)
+                                                  (drop (dec nb-skipped-ids)))
           {after-modified :modified
            after-created :created
            after-id :id} last-skipped
@@ -213,8 +210,8 @@
         (is (= nil
                (sut/read-source-batch nil)
                (sut/read-source-batch (assoc read-params-1
-                                       :batch-size
-                                       0)))))
+                                             :batch-size
+                                             0)))))
       (testing "read-source-batch result should be usable to call read-source-batch again for scrolling given query"
         (is (= '(400 400 200 0)
                (->> (take 4 match-all-res)
@@ -330,14 +327,7 @@
 
 (deftest sliced-migration-test
   (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
-    (let [storemap {:conn es-conn
-                    :indexname "ctia_relationship"
-                    :mapping "relationship"
-                    :props {:write-index "ctia_relationship"}
-                    :type "relationship"
-                    :settings {}
-                    :config {}}
-          {wo-modified true
+    (let [{wo-modified true
            w-modified false} (->> (line-seq rdr)
                                   (map es-helpers/prepare-bulk-ops)
                                   (group-by #(nil? (:modified %))))
@@ -541,7 +531,6 @@
       (testing "shall produce new indices
                   with enough documents and the right transforms"
         (let [{:keys [default
-                      data-table
                       relationship
                       judgement
                       investigation
@@ -550,15 +539,13 @@
                       attack-pattern
                       malware
                       incident
-                      event
                       indicator
                       campaign
                       sighting
                       casebook
                       actor
                       vulnerability
-                      weakness]
-               :as es-props}
+                      weakness]}
               (get-in @props/properties [:ctia :store :es])
               date (java.util.Date.)
               index-date (.format (java.text.SimpleDateFormat. "yyyy.MM.dd") date)
@@ -590,7 +577,7 @@
                    keywordize-keys)
               _ (es-index/refresh! es-conn)
               formatted-cat-indices (es-helpers/get-cat-indices (:host default)
-                                                     (:port default))]
+                                                                (:port default))]
           (is (= expected-indices
                  (select-keys formatted-cat-indices
                               (keys expected-indices))))
@@ -602,111 +589,111 @@
                             (map :groups))]
               (is (every? #(= ["migration-test"] %)
                           docs))))))
-    (testing "restart migration shall properly handle inserts, updates and deletes"
-      (let [;; retrieve the first 2 source indices for sighting store
-            {:keys [host port]}(get-in @props/properties [:ctia :store :es :default])
-            [sighting-index-1 sighting-index-2]
-            (->> (es-helpers/get-cat-indices host port)
-                 keys
-                 (map name)
-                 (filter #(.contains % "sighting"))
-                 sort
-                 (take 2))
+      (testing "restart migration shall properly handle inserts, updates and deletes"
+        (let [;; retrieve the first 2 source indices for sighting store
+              {:keys [host port]}(get-in @props/properties [:ctia :store :es :default])
+              [sighting-index-1 sighting-index-2]
+              (->> (es-helpers/get-cat-indices host port)
+                   keys
+                   (map name)
+                   (filter #(.contains % "sighting"))
+                   sort
+                   (take 2))
 
-            ;; retrieve source entity to update, in first position of first index
-            es-sighting0 (-> (es-doc/query es-conn
-                                           sighting-index-1
-                                           "sighting"
-                                           {:match_all {}}
-                                           {:sort_by "timestamp:asc"
-                                            :size 1})
-                             :data
-                             first)
-            ;; retrieve source entity to update, in first position of second index
-            es-sighting1 (-> (es-doc/query es-conn
-                                           sighting-index-2
-                                           "sighting"
-                                           {:match_all {}}
-                                           {:sort_by "timestamp:asc"
-                                            :size 1})
-                             :data
-                             first)
-
-            ;; prepare new malwares
-            new-malwares (->> (fixt/n-examples :malware 3 false)
-                              (map #(assoc % :description "INSERTED"))
-                              (hash-map :malwares))
-
-            ;; retrieve 5 source entities to delete, in last positions of first index
-            es-sightings-1 (-> (es-doc/query es-conn
+              ;; retrieve source entity to update, in first position of first index
+              es-sighting0 (-> (es-doc/query es-conn
                                              sighting-index-1
                                              "sighting"
                                              {:match_all {}}
-                                             {:sort_by "timestamp:desc"
-                                              :limit 5})
-                               :data)
-            ;; retrieve 5 source entities to delete, in last positions of second index
-            es-sightings-2 (-> (es-doc/query es-conn
+                                             {:sort_by "timestamp:asc"
+                                              :size 1})
+                               :data
+                               first)
+              ;; retrieve source entity to update, in first position of second index
+              es-sighting1 (-> (es-doc/query es-conn
                                              sighting-index-2
                                              "sighting"
                                              {:match_all {}}
-                                             {:sort_by "timestamp:desc"
-                                              :limit 5})
-                               :data)
-            sightings (concat es-sightings-1 es-sightings-2)
-            sighting0-id (:id es-sighting0)
-            sighting1-id (:id es-sighting1)
-            sighting-ids (map :id sightings)
-            updated-sighting-body (-> (:sightings minimal-examples)
-                                      first
-                                      (dissoc :id)
-                                      (assoc :description "UPDATED"))]
-        ;; insert new entities in source store
-        (post-bulk new-malwares)
-        ;; modify entities in first and second source indices
-        (put (format "ctia/sighting/%s" sighting0-id)
-             :body updated-sighting-body
-             :headers {"Authorization" "45c1f5e3f05d0"})
-        (put (format "ctia/sighting/%s" sighting1-id)
-             :body updated-sighting-body
-             :headers {"Authorization" "45c1f5e3f05d0"})
-        ;; delete entities from first and second source indices
-        (doseq [sighting-id sighting-ids]
-          (delete (format "ctia/sighting/%s" sighting-id)
-                  :headers {"Authorization" "45c1f5e3f05d0"}))
-        (sut/migrate-store-indexes "test-2"
-                                   "0.0.0"
-                                   [:__test]
-                                   (keys @stores)
-                                   2 ;; small batch to check proper delete paging
-                                   1
-                                   true
-                                   true)
-        (let [migration-state (get-migration "test-2" es-conn)
-              malware-migration (get-in migration-state [:stores :malware])
-              sighting-migration (get-in migration-state [:stores :sighting])
-              malware-target-store (get-in malware-migration [:target :store])
-              {last-target-malwares :data} (fetch-batch malware-target-store 3 0 "desc" nil)
-              {:keys [conn indexname mapping]} (get-in sighting-migration [:target :store])
-              updated-sightings (-> (es-doc/query conn
-                                                  indexname
-                                                  mapping
-                                                  (es-query/ids [sighting0-id sighting1-id])
-                                                  {})
-                                    :data)
-              get-deleted-sightings (-> (es-doc/query conn
-                                                      indexname
-                                                      mapping
-                                                      (es-query/ids sighting-ids)
-                                                      {})
-                                        :data)]
-          (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
-              "inserted malwares must be found in target malware store")
+                                             {:sort_by "timestamp:asc"
+                                              :size 1})
+                               :data
+                               first)
 
-          (is (= (repeat 2 "UPDATED") (map :description updated-sightings))
-              "updated document must be updated in target stores")
-          (is (empty? get-deleted-sightings)
-              "deleted document must not be in target stores")))))))
+              ;; prepare new malwares
+              new-malwares (->> (fixt/n-examples :malware 3 false)
+                                (map #(assoc % :description "INSERTED"))
+                                (hash-map :malwares))
+
+              ;; retrieve 5 source entities to delete, in last positions of first index
+              es-sightings-1 (-> (es-doc/query es-conn
+                                               sighting-index-1
+                                               "sighting"
+                                               {:match_all {}}
+                                               {:sort_by "timestamp:desc"
+                                                :limit 5})
+                                 :data)
+              ;; retrieve 5 source entities to delete, in last positions of second index
+              es-sightings-2 (-> (es-doc/query es-conn
+                                               sighting-index-2
+                                               "sighting"
+                                               {:match_all {}}
+                                               {:sort_by "timestamp:desc"
+                                                :limit 5})
+                                 :data)
+              sightings (concat es-sightings-1 es-sightings-2)
+              sighting0-id (:id es-sighting0)
+              sighting1-id (:id es-sighting1)
+              sighting-ids (map :id sightings)
+              updated-sighting-body (-> (:sightings minimal-examples)
+                                        first
+                                        (dissoc :id)
+                                        (assoc :description "UPDATED"))]
+          ;; insert new entities in source store
+          (post-bulk new-malwares)
+          ;; modify entities in first and second source indices
+          (put (format "ctia/sighting/%s" sighting0-id)
+               :body updated-sighting-body
+               :headers {"Authorization" "45c1f5e3f05d0"})
+          (put (format "ctia/sighting/%s" sighting1-id)
+               :body updated-sighting-body
+               :headers {"Authorization" "45c1f5e3f05d0"})
+          ;; delete entities from first and second source indices
+          (doseq [sighting-id sighting-ids]
+            (delete (format "ctia/sighting/%s" sighting-id)
+                    :headers {"Authorization" "45c1f5e3f05d0"}))
+          (sut/migrate-store-indexes "test-2"
+                                     "0.0.0"
+                                     [:__test]
+                                     (keys @stores)
+                                     2 ;; small batch to check proper delete paging
+                                     1
+                                     true
+                                     true)
+          (let [migration-state (get-migration "test-2" es-conn)
+                malware-migration (get-in migration-state [:stores :malware])
+                sighting-migration (get-in migration-state [:stores :sighting])
+                malware-target-store (get-in malware-migration [:target :store])
+                {last-target-malwares :data} (fetch-batch malware-target-store 3 0 "desc" nil)
+                {:keys [conn indexname mapping]} (get-in sighting-migration [:target :store])
+                updated-sightings (-> (es-doc/query conn
+                                                    indexname
+                                                    mapping
+                                                    (es-query/ids [sighting0-id sighting1-id])
+                                                    {})
+                                      :data)
+                get-deleted-sightings (-> (es-doc/query conn
+                                                        indexname
+                                                        mapping
+                                                        (es-query/ids sighting-ids)
+                                                        {})
+                                          :data)]
+            (is (= (repeat 3 "INSERTED") (map :description last-target-malwares))
+                "inserted malwares must be found in target malware store")
+
+            (is (= (repeat 2 "UPDATED") (map :description updated-sightings))
+                "updated document must be updated in target stores")
+            (is (empty? get-deleted-sightings)
+                "deleted document must not be in target stores")))))))
 
 (defn load-test-fn
   [maximal?]

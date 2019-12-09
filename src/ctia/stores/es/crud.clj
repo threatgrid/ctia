@@ -152,11 +152,11 @@
       (when-let [{index :_index current-doc :_source}
                  (get-doc-with-index state mapping id {})]
         (if (allow-write? current-doc ident)
-          (coerce! (d/update-doc (:conn state)
+          (coerce! (d/index-doc (:conn state)
                                  index
                                  (name mapping)
-                                 (ensure-document-id id)
-                                 realized
+                                 (assoc realized
+                                        :id (ensure-document-id id))
                                  (or refresh
                                      (get-in state
                                              [:props :refresh]
