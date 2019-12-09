@@ -59,7 +59,6 @@
 
     (testing "testing wait_for values on entity creation"
       (let [test-create (fn [wait_for msg]
-                          (reset! es-params nil)
                           (let [path (cond-> (str "ctia/" entity)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
                             (with-global-fake-routes bulk-routes
@@ -83,7 +82,6 @@
                           :parsed-body
                           entity->short-id)
             test-modify (fn [method wait_for msg]
-                          (reset! es-params nil)
                           (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
@@ -116,7 +114,6 @@
 
     (testing "testing wait_for values on entity deletion"
       (let [test-delete (fn [wait_for msg]
-                          (reset! es-params nil)
                           (let [entity-id (-> (post (str "ctia/" entity "?wait_for=true")
                                                     :body new-record
                                                     :headers headers)
