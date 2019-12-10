@@ -1,6 +1,5 @@
 (ns ctia.task.migration.store-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
-            [clojure.data.json :as json]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.clj-time
              [core :as time]
@@ -10,13 +9,8 @@
              [document :as es-doc]
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
-            [ctim.examples
-             [malwares :refer [malware-minimal]]
-             [relationships :refer [relationship-minimal]]
-             [tools :refer [tool-minimal]]]
             [ctia.properties :as props]
             [ctia.store :refer [stores]]
-            [ctia.stores.es.store :refer [store->map]]
             [ctia.test-helpers
              [fixtures :as fixt]
              [core :as helpers :refer [post-bulk put delete]]
@@ -131,36 +125,36 @@
                         :key 1554076800000
                         :doc_count 0}]
         raw-buckets-2 [{:key_as_string "2019-03-25T00:00:00.000Z"
-                       :key 1553472000000
-                       :doc_count 54183}]
+                        :key 1553472000000
+                        :doc_count 54183}]
         last-query {:bool
                     {:filter
                      {:range
                       {:modified
                        {:gte "2019-03-25T00:00:00.000Z"}}}}}
         expected-by-day [missing-modified-query
+                         {:bool
+                          {:filter
+                           {:range
+                            {:modified
+                             {:gte "2019-03-11T00:00:00.000Z"
+                              :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
+                         last-query]
+        expected-by-week [missing-modified-query
                           {:bool
                            {:filter
                             {:range
                              {:modified
                               {:gte "2019-03-11T00:00:00.000Z"
-                               :lt "2019-03-11T00:00:00.000Z||+1d"}}}}}
+                               :lt "2019-03-11T00:00:00.000Z||+1w"}}}}}
                           last-query]
-        expected-by-week [missing-modified-query
+        expected-by-month [missing-modified-query
                            {:bool
                             {:filter
                              {:range
                               {:modified
                                {:gte "2019-03-11T00:00:00.000Z"
-                                :lt "2019-03-11T00:00:00.000Z||+1w"}}}}}
-                           last-query]
-        expected-by-month [missing-modified-query
-                           {:bool
-                             {:filter
-                              {:range
-                               {:modified
-                                {:gte "2019-03-11T00:00:00.000Z"
-                                 :lt "2019-03-11T00:00:00.000Z||+1M"}}}}}
+                                :lt "2019-03-11T00:00:00.000Z||+1M"}}}}}
                            last-query]
         expected-only-one-range [missing-modified-query last-query]
         formatted-by-day (sut/format-buckets raw-buckets-1 :modified "day")
@@ -228,7 +222,7 @@
 
 
 (deftest get-target-stores-test
-  (let [{:keys [tool malware plop]}
+  (let [{:keys [tool malware]}
         (sut/get-target-stores "0.0.0" [:tool :malware])]
     (is (= "v0.0.0_ctia_malware" (:indexname malware)))
     (is (= "v0.0.0_ctia_tool" (:indexname tool)))
@@ -290,7 +284,6 @@
                                       "localhost"
                                       9200)
                           indices-before (set (keys cat-before))
-                          total-before (reduce + (vals cat-before))
                           _ (es-helpers/load-bulk es-conn
                                                   (take nb source-docs)
                                                   "false")
@@ -303,20 +296,19 @@
                                      9200)
                           indices-after (set (keys cat-after))
                           total-after (reduce + (vals cat-after))]
-                          (when rollover?
-                            (println res)
-                            (is (true? (:rolled_over res)))
-                            (is (< (count indices-before)
-                                   (count indices-after)))
-                            (is (= (+ nb migrated-count)
-                                   total-after)))
-                          (when-not rollover?
-                            (is (= indices-before indices-after)))
+                      (when rollover?
+                        (is (true? (:rolled_over res)))
+                        (is (< (count indices-before)
+                               (count indices-after)))
+                        (is (= (+ nb migrated-count)
+                               total-after)))
+                      (when-not rollover?
+                        (is (= indices-before indices-after)))
 
-                          (cond-> (update state :migrated-count + nb)
-                            true (assoc :source-docs (drop nb source-docs))
-                            rollover? (assoc :current-index-size 0)
-                            (not rollover?) (update :current-index-size + nb))))]
+                      (cond-> (update state :migrated-count + nb)
+                        true (assoc :source-docs (drop nb source-docs))
+                        rollover? (assoc :current-index-size 0)
+                        (not rollover?) (update :current-index-size + nb))))]
       (es-index/delete! es-conn (str "*" storename "*"))
       (es-index/create! es-conn
                         (format "<%s-000001>" storename)
@@ -346,7 +338,7 @@
                   :type "relationship"
                   :settings {}
                   :config {}}
-        data (es-helpers/load-file-bulk es-conn "./test/data/indices/sample-relationships-1000.json")
+        _ (es-helpers/load-file-bulk es-conn "./test/data/indices/sample-relationships-1000.json")
         expected-queries [missing-modified-query
                           {:bool
                            {:filter
@@ -503,11 +495,11 @@
                          (map #(-> % long-id->id :short-id))
                          (take 10))
         sighting-ids-1 (->> (:sightings post-bulk-res-1)
-                             (map #(-> % long-id->id :short-id))
-                             (take 10))
+                            (map #(-> % long-id->id :short-id))
+                            (take 10))
         sighting-ids-2 (->> (:sightings post-bulk-res-2)
-                             (map #(-> % long-id->id :short-id))
-                             (take 10))
+                            (map #(-> % long-id->id :short-id))
+                            (take 10))
         _ (es-index/refresh! es-conn)
         [malware-index-1 _] (->> (es-index/get es-conn "ctia_malware*")
                                  keys
@@ -521,18 +513,18 @@
         bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1)
         bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2)]
     (testing "bulk-metas should property return _id, _type, _index from a document id"
-        (doseq [[_id metas] bulk-metas-malware-res]
-          (is (= _id (:_id metas)))
-          (is (= "malware" (:_type metas)))
-          (is (= malware-index-1 (:_index metas))))
-        (doseq [[_id metas] bulk-metas-sighting-res-1]
-          (is (= _id (:_id metas)))
-          (is (= "sighting" (:_type metas)))
-          (is (= sighting-index-1 (:_index metas))))
-        (doseq [[_id metas] bulk-metas-sighting-res-2]
-          (is (= _id (:_id metas)))
-          (is (= "sighting" (:_type metas)))
-          (is (= sighting-index-2 (:_index metas)))))))
+      (doseq [[_id metas] bulk-metas-malware-res]
+        (is (= _id (:_id metas)))
+        (is (= "malware" (:_type metas)))
+        (is (= malware-index-1 (:_index metas))))
+      (doseq [[_id metas] bulk-metas-sighting-res-1]
+        (is (= _id (:_id metas)))
+        (is (= "sighting" (:_type metas)))
+        (is (= sighting-index-1 (:_index metas))))
+      (doseq [[_id metas] bulk-metas-sighting-res-2]
+        (is (= _id (:_id metas)))
+        (is (= "sighting" (:_type metas)))
+        (is (= sighting-index-2 (:_index metas)))))))
 
 (deftest prepare-docs-test
   ;; insert elements in different indices, modify some and check that we retrieve the right one
@@ -550,11 +542,11 @@
         _ (es-index/refresh! es-conn)
 
         sighting-ids-1 (->> (:sightings post-bulk-res-1)
-                             (map #(-> % long-id->id :short-id))
-                             (take 3))
+                            (map #(-> % long-id->id :short-id))
+                            (take 3))
         sighting-ids-2 (->> (:sightings post-bulk-res-2)
-                             (map #(-> % long-id->id :short-id))
-                             (take 3))
+                            (map #(-> % long-id->id :short-id))
+                            (take 3))
         sighting-id-1 (first sighting-ids-1)
         sighting-id-2 (first sighting-ids-2)
         _  (put (format "ctia/sighting/%s" sighting-id-1)
@@ -678,12 +670,11 @@
                                                               "asc"
                                                               nil)
             search_after (get-in res [:paging :next :search_after])
-            {fetched-events-3 :data
-             search_after-3 :search_after} (sut/fetch-batch event-store
-                                                            100
-                                                            0
-                                                            "asc"
-                                                            search_after)
+            {fetched-events-3 :data} (sut/fetch-batch event-store
+                                                      100
+                                                      0
+                                                      "asc"
+                                                      search_after)
             {fetched-events-4 :data} (sut/fetch-batch event-store
                                                       100
                                                       0
@@ -747,14 +738,12 @@
                                       "user")
   (post-bulk examples)
   (es-index/refresh! es-conn) ;; ensure indices refresh
-  (let [total-examples (->> (map count (vals examples))
-                            (apply +))
-        [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
+  (let [[sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
                                                          :query-params {:limit 2 :query "*"}
                                                          :headers {"Authorization" "45c1f5e3f05d0"}))
         [tool1 tool2 tool3] (:parsed-body (helpers/get "ctia/tool/search"
-                                                 :query-params {:limit 3 :query "*"}
-                                                 :headers {"Authorization" "45c1f5e3f05d0"}))
+                                                       :query-params {:limit 3 :query "*"}
+                                                       :headers {"Authorization" "45c1f5e3f05d0"}))
         [malware1] (:parsed-body (helpers/get "ctia/malware/search"
                                               :query-params {:limit 1 :query "*"}
                                               :headers {"Authorization" "45c1f5e3f05d0"}))
@@ -817,7 +806,7 @@
                                                        prefix
                                                        entity-types
                                                        true)
-          check-state (fn [{:keys [id created stores]} migration-id message]
+          check-state (fn [{:keys [id stores]} migration-id message]
                         (testing message
                           (is (= id migration-id))
                           (is (= (set (keys stores))
@@ -826,15 +815,15 @@
                             (let [{:keys [source target started completed]} (get stores entity-type)
                                   created-indices (es-index/get es-conn (str (:index target) "*"))]
                               (is (= "-1"  (-> (vals created-indices)
-                                             first
-                                             :settings
-                                             :index
-                                             :refresh_interval)))
+                                               first
+                                               :settings
+                                               :index
+                                               :refresh_interval)))
                               (is (= "0"  (-> (vals created-indices)
-                                             first
-                                             :settings
-                                             :index
-                                             :number_of_replicas)))
+                                              first
+                                              :settings
+                                              :index
+                                              :number_of_replicas)))
                               (is (nil? started))
                               (is (nil? completed))
                               (is (= 0 (:migrated target)))
@@ -864,10 +853,10 @@
 
       (testing "stored document shall not contains object stores in source and target"
         (let [{:keys [stores]} (es-doc/get-doc es-conn
-                                              "ctia_migration"
-                                              "migration"
-                                              migration-id-2
-                                              {})]
+                                               "ctia_migration"
+                                               "migration"
+                                               migration-id-2
+                                               {})]
           (doseq [store stores]
-                  (is (nil? (get-in store [:source :store])))
-                  (is (nil? (get-in store [:target :store])))))))))
+            (is (nil? (get-in store [:source :store])))
+            (is (nil? (get-in store [:target :store])))))))))
