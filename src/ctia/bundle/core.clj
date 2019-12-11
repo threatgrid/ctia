@@ -9,7 +9,9 @@
    [ctia
     [auth :as auth]
     [properties :refer [properties]]
-    [store :refer [list-fn read-fn read-store list-all-pages]]]
+    [store :refer [list-fn
+                   read-fn
+                   read-store]]]
    [ctia.lib.collection :refer [fmap]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
@@ -337,15 +339,40 @@
         fetched (bulk/fetch-bulk by-bulk-key identity-map)]
     (clean-bundle fetched)))
 
+(defn relationships-filters
+  [{:keys [related_to
+           source_type
+           target_type]
+    :or {related_to #{:source_ref :target_ref}}}]
+  (let [edge-filters (->> (map #(hash-map % id) (set related_to))
+                          (apply merge))
+        node-filters (cond->> []
+                       source_type (cons (format "source_ref:*%s*" source_type))
+                       target_type (cons (format "target_ref:*%s*" target_type))
+                       (not (or source_type
+                                target_type)) (cons "*")
+                       :always (string/join " AND "))]
+    (string/join node-filters)))
+
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
-  [id identity-map related-to]
-  (let [filters (->> (map #(hash-map % id) (set related-to))
-                     (apply merge))
+  [id
+   identity-map
+   filters]
+  (let [edge-filters (->> (map #(hash-map % id) (set related_to))
+                         (apply merge))
+        node-filters (cond->> []
+                       source_type (cons (format "source_ref:*%s*" source_type))
+                       target_type (cons (format "target_ref:*%s*" target_type))
+                       (not (or source_type
+                                target_type)) (cons "*")
+                       :always (string/join " AND "))
+        nodes-query (string/join node-filters)
         max-relationships (get-in @properties [:ctia :http :bundle :export :max-relationships] 1000)]
     (some-> (:data (read-store :relationship
                                list-fn
-                               {:one-of filters}
+                               {:one-of edge-filters
+                                :query nodes-query}
                                identity-map
                                {:limit max-relationships
                                 :sort_by "timestamp"
@@ -368,11 +395,10 @@
   [id
    identity-map
    ident
-   {:keys [include_related_entities related_to]
-    :or {include_related_entities true
-         related_to #{:source_ref :target_ref}}}]
+   params]
   (if-let [record (fetch-record id identity-map)]
-    (let [relationships (fetch-entity-relationships id identity-map related_to)]
+    (let [relationships (when (:include_related_entities params true)
+                          (fetch-entity-relationships id identity-map params))]
       (cond-> {}
         record
         (assoc (-> (:type record)
@@ -386,8 +412,7 @@
         (assoc :relationships
                (set (map ent/with-long-id relationships)))
 
-        (and (seq relationships)
-             include_related_entities)
+        (seq relationships)
         (->> (deep-merge-with coll/add-colls
                               (fetch-relationship-targets
                                relationships
@@ -403,6 +428,6 @@
    identity-map
    ident
    params]
-  (into empty-bundle
-        (reduce #(deep-merge-with coll/add-colls %1 %2)
-                (map #(export-entities % identity-map ident params) ids))))
+  (->> (map #(export-entities % identity-map ident params) ids)
+       (reduce #(deep-merge-with coll/add-colls %1 %2))
+       (into empty-bundle)))

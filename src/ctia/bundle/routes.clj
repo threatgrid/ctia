@@ -11,11 +11,15 @@
                      NewBundleExport]]]
    [ctia.schemas.core :refer [Bundle NewBundle]]
    [ring.util.http-response :refer :all]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (s/defschema BundleExportOptions
-  {(s/optional-key :related_to) [(s/enum :source_ref :target_ref)]
-   (s/optional-key :include_related_entities) s/Bool})
+  (st/optional-keys
+   {:related_to [(s/enum :source_ref :target_ref)]
+    :source_type s/Str
+    :target_type s/Str
+    :include_related_entities s/Bool}))
 
 (s/defschema BundleExportIds
   {:ids [s/Str]})
@@ -75,7 +79,7 @@
                      (:ids q)
                      identity-map
                      identity
-                     (select-keys q [:include_related_entities :related_to]))))
+                     q)))
 
            (POST "/export" []
                 :return NewBundleExport
