@@ -569,7 +569,7 @@
 
          (is (= 2 (count (:sightings bundle-get-res-4))))
          (is (nil? (:indicators bundle-get-res-4)))
-         (is (= 402 (count (:relationships bundle-get-res-4))))
+         (is (= 0 (count (:relationships bundle-get-res-4))))
 
          (is (= bundle-get-res-3 bundle-get-res-5)
              "default related_to value should be [:source_ref :target_ref]")

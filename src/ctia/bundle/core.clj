@@ -12,13 +12,12 @@
     [store :refer [list-fn
                    read-fn
                    read-store]]]
-   [ctia.lib.collection :refer [fmap]]
+   [ctia.lib.collection :as coll :refer [fmap]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
     :refer
     [BundleImportData BundleImportResult EntityImportData]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.lib.collection :as coll]
    [ctia.schemas.core :refer [NewBundle TempIDs]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
@@ -160,7 +159,6 @@
    with its ID. If more than one old entity is linked to an external id,
    an error is reported."
   [{:keys [external_id]
-    entity-type :type
     :as entity-data} :- EntityImportData
    entity-type
    find-by-external-id]
@@ -219,7 +217,7 @@
 
 (defn create?
   "Whether the provided entity should be created or not"
-  [{:keys [result] :as entity}]
+  [{:keys [result]}]
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
@@ -227,7 +225,7 @@
   "Creates the bulk data structure with all entities to create."
   [bundle-import-data :- BundleImportData]
   (map-kv
-   (fn [k v]
+   (fn [_ v]
      (->> v
           (filter create?)
           (remove nil?)
@@ -340,7 +338,8 @@
     (clean-bundle fetched)))
 
 (defn relationships-filters
-  [{:keys [related_to
+  [id
+   {:keys [related_to
            source_type
            target_type]
     :or {related_to #{:source_ref :target_ref}}}]
@@ -352,27 +351,19 @@
                        (not (or source_type
                                 target_type)) (cons "*")
                        :always (string/join " AND "))]
-    (string/join node-filters)))
+    {:one-of edge-filters
+     :query node-filters}))
 
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id
    identity-map
    filters]
-  (let [edge-filters (->> (map #(hash-map % id) (set related_to))
-                         (apply merge))
-        node-filters (cond->> []
-                       source_type (cons (format "source_ref:*%s*" source_type))
-                       target_type (cons (format "target_ref:*%s*" target_type))
-                       (not (or source_type
-                                target_type)) (cons "*")
-                       :always (string/join " AND "))
-        nodes-query (string/join node-filters)
+  (let [filter-map (relationships-filters id filters)
         max-relationships (get-in @properties [:ctia :http :bundle :export :max-relationships] 1000)]
     (some-> (:data (read-store :relationship
                                list-fn
-                               {:one-of edge-filters
-                                :query nodes-query}
+                               filter-map
                                identity-map
                                {:limit max-relationships
                                 :sort_by "timestamp"

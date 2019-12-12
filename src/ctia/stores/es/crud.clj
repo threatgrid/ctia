@@ -223,7 +223,7 @@
   (st/optional-keys
    {:all-of {s/Any s/Any}
     :one-of {s/Any s/Any}
-    :query {s/Any s/Any}}))
+    :query s/Str}))
 
 (def sort-fields-mapping
   "Mapping table for all fields which needs to be renamed
