@@ -347,11 +347,10 @@
         node-filters (cond->> []
                        source_type (cons (format "source_ref:*%s*" (name source_type)))
                        target_type (cons (format "target_ref:*%s*" (name target_type)))
-                       (not (or source_type
-                                target_type)) (cons "*")
                        :always (string/join " AND "))]
-    {:one-of edge-filters
-     :query node-filters}))
+    (into {:one-of edge-filters}
+          (when (seq node-filters)
+            {:query node-filters}))))
 
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
