@@ -160,7 +160,6 @@
    an error is reported."
   [{:keys [external_id]
     :as entity-data} :- EntityImportData
-   entity-type
    find-by-external-id]
   (if-let [old-entities (find-by-external-id external_id)]
     (let [old-entity (some-> old-entities
@@ -198,7 +197,7 @@
                                  (when external_id
                                    (get entities-by-external-id
                                         {:external_id external_id})))]
-    (map #(with-existing-entity % entity-type find-by-external-id-fn)
+    (map #(with-existing-entity % find-by-external-id-fn)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
@@ -235,7 +234,7 @@
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
-   {:keys [tempids] :as bulk-result}]
+   bulk-result]
   (map-kv (fn [k v]
             (let [{submitted true
                    not-submitted false} (group-by create? v)]

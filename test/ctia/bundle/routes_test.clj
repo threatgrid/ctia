@@ -12,7 +12,6 @@
             [ctia.bundle.core :as core]
             [ctia.store :refer [stores]]
             [ctia.auth.capabilities :refer [all-capabilities]]
-            [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
              [fake-whoami-service :as whoami-helpers]
@@ -69,10 +68,11 @@
 (defn mk-casebook []
   {:id (id/make-transient-id nil)})
 
-(defn mk-incident []
+(defn mk-incident [n]
   {:id (id/make-transient-id nil)
    :incident_time {:opened #inst "2016-02-11T00:40:48.212-00:00"}
    :status "Open"
+   :external_ids [(str "ctia-incident-" n)]
    :confidence "High"})
 
 (defn mk-judgement []
@@ -109,10 +109,9 @@
                                     ["ctia-" "cisco-"]))))
 
 (defn validate-entity-record
-  [{:keys [id original_id action external_id]
+  [{:keys [id original_id external_id]
     entity-type :type
-    :or {entity-type :unknown}
-    :as result}
+    :or {entity-type :unknown}}
    original-entity]
   (testing (str "Entity " external_id)
     (is (= (:id original-entity) original_id)
@@ -388,7 +387,7 @@
            (let [indicators (filter
                              #(= :indicator (:type %))
                              (:results bundle-result-create))]
-             (is (not (empty? indicators))
+             (is (seq indicators)
                  "The result collection for indicators is not empty")
              (is (every? #(contains? % :error) indicators)))
            ;; reopen index to enable cleaning
@@ -409,8 +408,7 @@
                                         :end_time #inst "4242-07-11T00:40:48.212-00:00"})]}
            response-create (post "ctia/bundle/import"
                                  :body bundle
-                                 :headers {"Authorization" "45c1f5e3f05d0"})
-           bundle-result-create (:parsed-body response-create)]
+                                 :headers {"Authorization" "45c1f5e3f05d0"})]
 
        (is (= 200 (:status response-create)))
        (is (= {:results
@@ -633,8 +631,8 @@
         indicator-3 (mk-indicator 3)
         sighting-1 (mk-sighting 1)
         sighting-2 (mk-sighting 2)
-        incident-1 (mk-incident)
-        incident-2 (mk-incident)
+        incident-1 (mk-incident 1)
+        incident-2 (mk-incident 2)
         relationship-1 (mk-relationship 1 sighting-1 indicator-1 "indicates")
         relationship-2 (mk-relationship 2 sighting-1 indicator-2 "indicates")
         relationship-3 (mk-relationship 3 sighting-2 indicator-1 "indicates")
@@ -765,12 +763,19 @@
                    :query-params {:ids [incident-id-2]
                                   :source_type "sighting"}
                    :headers {"Authorization" "45c1f5e3f05d0"}))
-             bundle-incident-target
+             bundle-incident-target-get
              (:parsed-body
               (get "ctia/bundle/export"
                    :query-params {:ids [sighting-id-2]
                                   :target_type "incident"}
-                   :headers {"Authorization" "45c1f5e3f05d0"}))]
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+
+             bundle-incident-target-post
+             (:parsed-body
+              (post "ctia/bundle/export"
+                    :body {:ids [sighting-id-2]}
+                    :query-params {:target_type "incident"}
+                    :headers {"Authorization" "45c1f5e3f05d0"}))]
 
          (testing "relationships should be joined only on attributes specified by related_to values (source_ref and/or target_ref)"
            (is (= #{relationship-id-1
@@ -822,15 +827,25 @@
                                         :sightings
                                         (map :id)
                                         set)))
+           (is (= #{relationship-id-6
+                    relationship-id-7} (->> bundle-sighting-source
+                                            :relationships
+                                            (map :id)
+                                            set)))
            (is (nil?  (:indicators bundle-sighting-source)))
 
-
            (is (= #{incident-id-1
-                    incident-id-2} (->> bundle-incident-target
+                    incident-id-2} (->> bundle-incident-target-get
                                         :incidents
                                         (map :id)
                                         set)))
-           (is (nil?  (:indicators bundle-incident-target)))))))))
+           (is (= #{relationship-id-5
+                    relationship-id-7} (->> bundle-incident-target-get
+                                        :relationships
+                                        (map :id)
+                                        set)))
+           (is (nil?  (:indicators bundle-incident-target-get)))
+           (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 
 (defn with-tlp-property-setting [tlp f]
   (with-redefs [ctia.properties/properties
@@ -905,7 +920,7 @@
 
      (testing "Bundle export should include casebooks"
        (let [casebook (mk-casebook)
-             incident (mk-incident)
+             incident (mk-incident 1)
              casebook-post-res (post "ctia/casebook"
                                      :body casebook
                                      :headers {"Authorization" "45c1f5e3f05d0"})

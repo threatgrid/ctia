@@ -1,7 +1,7 @@
 (ns ctia.bundle.routes
   (:refer-clojure :exclude [identity])
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.sweet :refer [GET POST context defroutes describe]]
    [ctia.bundle
     [core :refer [bundle-max-size
                   bundle-size
@@ -9,8 +9,8 @@
                   export-bundle]]
     [schemas :refer [BundleImportResult
                      NewBundleExport]]]
-   [ctia.schemas.core :refer [Bundle NewBundle]]
-   [ring.util.http-response :refer :all]
+   [ctia.schemas.core :refer [NewBundle]]
+   [ring.util.http-response :refer [ok bad-request]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
@@ -93,7 +93,7 @@
                      (:ids b)
                      identity-map
                      identity
-                     (select-keys q [:include_related_entities :related_to]))))
+                     q)))
 
            (POST "/import" []
                  :return BundleImportResult

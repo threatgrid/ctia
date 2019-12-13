@@ -1,6 +1,6 @@
 (ns ctia.bundle.core-test
   (:require [ctia.bundle.core :as sut]
-            [clojure.test :as t :refer [deftest testing use-fixtures are is]]
+            [clojure.test :as t :refer [deftest use-fixtures are is]]
             [ctia.test-helpers.core :as h]))
 
 (use-fixtures :once h/fixture-properties:clean)
