@@ -1,7 +1,8 @@
 (ns ctia.bundle.schemas
   (:require [schema.core :as s]
+            [schema-tools.core :as st]
             [ctia.schemas.core :as csc]
-            [schema-tools.core :as st]))
+            [ctia.entity.entities :refer [entities]]))
 
 (s/defschema EntityImportResult
   (st/optional-keys
@@ -30,3 +31,23 @@
 
 (s/defschema NewBundleExport
   (st/open-schema csc/NewBundle))
+
+(s/defschema EntityTypes
+  (apply s/enum
+         (-> (keys entities)
+             set
+             (disj :relationship :event :identity))))
+
+(s/defschema BundleExportOptions
+  (st/optional-keys
+   {:related_to [(s/enum :source_ref :target_ref)]
+    :source_type EntityTypes
+    :target_type EntityTypes
+    :include_related_entities s/Bool}))
+
+(s/defschema BundleExportIds
+  {:ids [s/Str]})
+
+(s/defschema BundleExportQuery
+  (merge BundleExportIds
+         BundleExportOptions))

@@ -8,25 +8,15 @@
                   import-bundle
                   export-bundle]]
     [schemas :refer [BundleImportResult
-                     NewBundleExport]]]
+                     NewBundleExport
+                     BundleExportIds
+                     BundleExportOptions
+                     BundleExportQuery]]]
    [ctia.schemas.core :refer [NewBundle]]
    [ring.util.http-response :refer [ok bad-request]]
    [schema.core :as s]
    [schema-tools.core :as st]))
 
-(s/defschema BundleExportOptions
-  (st/optional-keys
-   {:related_to [(s/enum :source_ref :target_ref)]
-    :source_type s/Str
-    :target_type s/Str
-    :include_related_entities s/Bool}))
-
-(s/defschema BundleExportIds
-  {:ids [s/Str]})
-
-(s/defschema BundleExportQuery
-  (merge BundleExportIds
-         BundleExportOptions))
 
 (def export-capabilities
   #{:list-campaigns
