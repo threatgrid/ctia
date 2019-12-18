@@ -12,7 +12,6 @@
             [ctia.bundle.core :as core]
             [ctia.store :refer [stores]]
             [ctia.auth.capabilities :refer [all-capabilities]]
-            [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
              [fake-whoami-service :as whoami-helpers]
@@ -69,14 +68,16 @@
 (defn mk-casebook []
   {:id (id/make-transient-id nil)})
 
-(defn mk-incident []
+(defn mk-incident [n]
   {:id (id/make-transient-id nil)
    :incident_time {:opened #inst "2016-02-11T00:40:48.212-00:00"}
    :status "Open"
+   :external_ids [(str "ctia-incident-" n)]
    :confidence "High"})
 
 (defn mk-judgement []
-  {:observable {:type "ip",
+  {:id (id/make-transient-id nil)
+   :observable {:type "ip",
                 :value "10.0.0.1"}
    :source "source"
    :priority 99
@@ -108,10 +109,9 @@
                                     ["ctia-" "cisco-"]))))
 
 (defn validate-entity-record
-  [{:keys [id original_id action external_id]
+  [{:keys [id original_id external_id]
     entity-type :type
-    :or {entity-type :unknown}
-    :as result}
+    :or {entity-type :unknown}}
    original-entity]
   (testing (str "Entity " external_id)
     (is (= (:id original-entity) original_id)
@@ -387,7 +387,7 @@
            (let [indicators (filter
                              #(= :indicator (:type %))
                              (:results bundle-result-create))]
-             (is (not (empty? indicators))
+             (is (seq indicators)
                  "The result collection for indicators is not empty")
              (is (every? #(contains? % :error) indicators)))
            ;; reopen index to enable cleaning
@@ -408,8 +408,7 @@
                                         :end_time #inst "4242-07-11T00:40:48.212-00:00"})]}
            response-create (post "ctia/bundle/import"
                                  :body bundle
-                                 :headers {"Authorization" "45c1f5e3f05d0"})
-           bundle-result-create (:parsed-body response-create)]
+                                 :headers {"Authorization" "45c1f5e3f05d0"})]
 
        (is (= 200 (:status response-create)))
        (is (= {:results
@@ -569,7 +568,7 @@
 
          (is (= 2 (count (:sightings bundle-get-res-4))))
          (is (nil? (:indicators bundle-get-res-4)))
-         (is (= 402 (count (:relationships bundle-get-res-4))))
+         (is (= 0 (count (:relationships bundle-get-res-4))))
 
          (is (= bundle-get-res-3 bundle-get-res-5)
              "default related_to value should be [:source_ref :target_ref]")
@@ -626,18 +625,26 @@
          (is (= 3 (count (:relationships bundle-export-body))))
          (is (= 1 (count (:sightings bundle-export-body)))))))))
 
-(def bundle-related-fixture
+(def bundle-graph-fixture
   (let [indicator-1 (mk-indicator 1)
         indicator-2 (mk-indicator 2)
         indicator-3 (mk-indicator 3)
         sighting-1 (mk-sighting 1)
         sighting-2 (mk-sighting 2)
-        relationship-1 (mk-relationship 1 sighting-1 indicator-1 "member-of")
-        relationship-2 (mk-relationship 2 sighting-1 indicator-2 "member-of")
-        relationship-3 (mk-relationship 3 sighting-2 indicator-1 "member-of")
-        relationship-4 (mk-relationship 4 sighting-2 indicator-3 "member-of")]
+        incident-1 (mk-incident 1)
+        incident-2 (mk-incident 2)
+        relationship-1 (mk-relationship 1 sighting-1 indicator-1 "indicates")
+        relationship-2 (mk-relationship 2 sighting-1 indicator-2 "indicates")
+        relationship-3 (mk-relationship 3 sighting-2 indicator-1 "indicates")
+        relationship-4 (mk-relationship 4 sighting-2 indicator-3 "indicates")
+        relationship-5 (mk-relationship 5 sighting-2 incident-1 "member-of")
+        relationship-6 (mk-relationship 6 sighting-1 incident-2 "member-of")
+        relationship-7 (mk-relationship 7 sighting-2 incident-2 "member-of")
+        relationship-8 (mk-relationship 8 indicator-1 incident-2 "member-of")]
     {:type "bundle"
      :source "source"
+     :incidents #{incident-1
+                  incident-2}
      :indicators #{indicator-1
                    indicator-2
                    indicator-3}
@@ -645,8 +652,11 @@
      :relationships #{relationship-1
                       relationship-2
                       relationship-3
-                      relationship-4}}))
-
+                      relationship-4
+                      relationship-5
+                      relationship-6
+                      relationship-7
+                      relationship-8}}))
 
 (def fixture-many-relationships
   (let [indicators (map mk-indicator (range 300))
@@ -661,6 +671,7 @@
      :indicators (set indicators)
      :sightings #{sighting}
      :relationships (set relationships)}))
+
 
 (deftest bundle-max-relationships-test
   (test-for-each-store
@@ -685,7 +696,7 @@
          (is (= 500 (count (:relationships exported-bundle)))))))))
 
 
-(deftest bundle-export-related-to-test
+(deftest bundle-export-graph-test
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -693,10 +704,10 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (testing "testing related_to filter: relationships should be joined only on attributes specified by related_to values (source_ref and/or target_ref)"
+     (testing "testing relationships filters"
        (let [bundle-res
              (:parsed-body (post "ctia/bundle/import"
-                                 :body bundle-related-fixture
+                                 :body bundle-graph-fixture
                                  :headers {"Authorization" "45c1f5e3f05d0"}))
 
              by-type (->> bundle-res :results (group-by :type))
@@ -705,17 +716,27 @@
               sighting-id-2] (->> (:sighting by-type)
                                   (sort-by :external_id)
                                   (map :id))
+
              [indicator-id-1
               indicator-id-2
               indicator-id-3] (->> (:indicator by-type)
                                    (sort-by :external_id)
                                    (map :id))
+             [incident-id-1
+              incident-id-2] (->> (:incident by-type)
+                                   (sort-by :external_id)
+                                   (map :id))
              [relationship-id-1
               relationship-id-2
               relationship-id-3
-              relationship-id-4] (->> (:relationship by-type)
+              relationship-id-4
+              relationship-id-5
+              relationship-id-6
+              relationship-id-7
+              relationship-id-8] (->> (:relationship by-type)
                                       (sort-by :external_id)
                                       (map :id))
+             ;; related to queries
              bundle-from-source
              (:parsed-body
               (get "ctia/bundle/export"
@@ -733,50 +754,98 @@
               (get "ctia/bundle/export"
                    :query-params {:ids [indicator-id-2]
                                   :related_to ["target_ref"]}
-                   :headers {"Authorization" "45c1f5e3f05d0"}))]
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
 
-         (is (= #{relationship-id-1
-                  relationship-id-2} (->> bundle-from-source
-                                          :relationships
-                                          (map :id)
-                                          set)))
-         (is (= #{indicator-id-1
-                  indicator-id-2} (->> bundle-from-source
-                                       :indicators
-                                       (map :id)
-                                       set)))
-         (is (= #{sighting-id-1} (->> bundle-from-source
-                                      :sightings
-                                      (map :id)
-                                      set)))
+             ;; node type filters
+             bundle-sighting-source
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [incident-id-2]
+                                  :source_type "sighting"}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
+             bundle-incident-target-get
+             (:parsed-body
+              (get "ctia/bundle/export"
+                   :query-params {:ids [sighting-id-2]
+                                  :target_type "incident"}
+                   :headers {"Authorization" "45c1f5e3f05d0"}))
 
-         (is (= #{indicator-id-1} (->> bundle-from-target-1
-                                       :indicators
-                                       (map :id)
-                                       set)))
-         (is (= #{relationship-id-1
-                  relationship-id-3} (->> bundle-from-target-1
-                                          :relationships
-                                          (map :id)
-                                          set)))
-         (is (= #{sighting-id-1
-                  sighting-id-2} (->> bundle-from-target-1
-                                      :sightings
-                                      (map :id)
-                                      set)))
+             bundle-incident-target-post
+             (:parsed-body
+              (post "ctia/bundle/export"
+                    :body {:ids [sighting-id-2]}
+                    :query-params {:target_type "incident"}
+                    :headers {"Authorization" "45c1f5e3f05d0"}))]
 
-         (is (= #{relationship-id-2} (->> bundle-from-target-2
-                                          :relationships
-                                          (map :id)
-                                          set)))
-         (is (= #{indicator-id-2} (->> bundle-from-target-2
-                                       :indicators
-                                       (map :id)
-                                       set)))
-         (is (= #{sighting-id-1} (->> bundle-from-target-2
-                                      :sightings
-                                      (map :id)
-                                      set))))))))
+         (testing "relationships should be joined only on attributes specified by related_to values (source_ref and/or target_ref)"
+           (is (= #{relationship-id-1
+                    relationship-id-2
+                    relationship-id-6} (->> bundle-from-source
+                                            :relationships
+                                            (map :id)
+                                            set)))
+           (is (= #{indicator-id-1
+                    indicator-id-2} (->> bundle-from-source
+                                         :indicators
+                                         (map :id)
+                                         set)))
+           (is (= #{sighting-id-1} (->> bundle-from-source
+                                        :sightings
+                                        (map :id)
+                                        set)))
+
+           (is (= #{indicator-id-1} (->> bundle-from-target-1
+                                         :indicators
+                                         (map :id)
+                                         set)))
+           (is (= #{relationship-id-1
+                    relationship-id-3} (->> bundle-from-target-1
+                                            :relationships
+                                            (map :id)
+                                            set)))
+           (is (= #{sighting-id-1
+                    sighting-id-2} (->> bundle-from-target-1
+                                        :sightings
+                                        (map :id)
+                                        set)))
+
+           (is (= #{relationship-id-2} (->> bundle-from-target-2
+                                            :relationships
+                                            (map :id)
+                                            set)))
+           (is (= #{indicator-id-2} (->> bundle-from-target-2
+                                         :indicators
+                                         (map :id)
+                                         set)))
+           (is (= #{sighting-id-1} (->> bundle-from-target-2
+                                        :sightings
+                                        (map :id)
+                                        set))))
+         (testing "source_type and target_type should filter relationships nodes from their type"
+           (is (= #{sighting-id-1
+                    sighting-id-2} (->> bundle-sighting-source
+                                        :sightings
+                                        (map :id)
+                                        set)))
+           (is (= #{relationship-id-6
+                    relationship-id-7} (->> bundle-sighting-source
+                                            :relationships
+                                            (map :id)
+                                            set)))
+           (is (nil?  (:indicators bundle-sighting-source)))
+
+           (is (= #{incident-id-1
+                    incident-id-2} (->> bundle-incident-target-get
+                                        :incidents
+                                        (map :id)
+                                        set)))
+           (is (= #{relationship-id-5
+                    relationship-id-7} (->> bundle-incident-target-get
+                                        :relationships
+                                        (map :id)
+                                        set)))
+           (is (nil?  (:indicators bundle-incident-target-get)))
+           (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 
 (defn with-tlp-property-setting [tlp f]
   (with-redefs [ctia.properties/properties
@@ -851,7 +920,7 @@
 
      (testing "Bundle export should include casebooks"
        (let [casebook (mk-casebook)
-             incident (mk-incident)
+             incident (mk-incident 1)
              casebook-post-res (post "ctia/casebook"
                                      :body casebook
                                      :headers {"Authorization" "45c1f5e3f05d0"})

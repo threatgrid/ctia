@@ -9,14 +9,15 @@
    [ctia
     [auth :as auth]
     [properties :refer [properties]]
-    [store :refer [list-fn read-fn read-store list-all-pages]]]
-   [ctia.lib.collection :refer [fmap]]
+    [store :refer [list-fn
+                   read-fn
+                   read-store]]]
+   [ctia.lib.collection :as coll :refer [fmap]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
     :refer
     [BundleImportData BundleImportResult EntityImportData]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.lib.collection :as coll]
    [ctia.schemas.core :refer [NewBundle TempIDs]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
@@ -158,9 +159,7 @@
    with its ID. If more than one old entity is linked to an external id,
    an error is reported."
   [{:keys [external_id]
-    entity-type :type
     :as entity-data} :- EntityImportData
-   entity-type
    find-by-external-id]
   (if-let [old-entities (find-by-external-id external_id)]
     (let [old-entity (some-> old-entities
@@ -198,7 +197,7 @@
                                  (when external_id
                                    (get entities-by-external-id
                                         {:external_id external_id})))]
-    (map #(with-existing-entity % entity-type find-by-external-id-fn)
+    (map #(with-existing-entity % find-by-external-id-fn)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
@@ -217,7 +216,7 @@
 
 (defn create?
   "Whether the provided entity should be created or not"
-  [{:keys [result] :as entity}]
+  [{:keys [result]}]
   ;; Add only new entities without error
   (not (contains? #{"error" "exists"} result)))
 
@@ -225,7 +224,7 @@
   "Creates the bulk data structure with all entities to create."
   [bundle-import-data :- BundleImportData]
   (map-kv
-   (fn [k v]
+   (fn [_ v]
      (->> v
           (filter create?)
           (remove nil?)
@@ -235,7 +234,7 @@
 (s/defn with-bulk-result
   "Set the bulk result to the bundle import data"
   [bundle-import-data :- BundleImportData
-   {:keys [tempids] :as bulk-result}]
+   bulk-result]
   (map-kv (fn [k v]
             (let [{submitted true
                    not-submitted false} (group-by create? v)]
@@ -337,15 +336,32 @@
         fetched (bulk/fetch-bulk by-bulk-key identity-map)]
     (clean-bundle fetched)))
 
+(defn relationships-filters
+  [id
+   {:keys [related_to
+           source_type
+           target_type]
+    :or {related_to #{:source_ref :target_ref}}}]
+  (let [edge-filters (->> (map #(hash-map % id) (set related_to))
+                          (apply merge))
+        node-filters (cond->> []
+                       source_type (cons (format "source_ref:*%s*" (name source_type)))
+                       target_type (cons (format "target_ref:*%s*" (name target_type)))
+                       :always (string/join " AND "))]
+    (into {:one-of edge-filters}
+          (when (seq node-filters)
+            {:query node-filters}))))
+
 (defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
-  [id identity-map related-to]
-  (let [filters (->> (map #(hash-map % id) (set related-to))
-                     (apply merge))
+  [id
+   identity-map
+   filters]
+  (let [filter-map (relationships-filters id filters)
         max-relationships (get-in @properties [:ctia :http :bundle :export :max-relationships] 1000)]
     (some-> (:data (read-store :relationship
                                list-fn
-                               {:one-of filters}
+                               filter-map
                                identity-map
                                {:limit max-relationships
                                 :sort_by "timestamp"
@@ -368,11 +384,10 @@
   [id
    identity-map
    ident
-   {:keys [include_related_entities related_to]
-    :or {include_related_entities true
-         related_to #{:source_ref :target_ref}}}]
+   params]
   (if-let [record (fetch-record id identity-map)]
-    (let [relationships (fetch-entity-relationships id identity-map related_to)]
+    (let [relationships (when (:include_related_entities params true)
+                          (fetch-entity-relationships id identity-map params))]
       (cond-> {}
         record
         (assoc (-> (:type record)
@@ -386,8 +401,7 @@
         (assoc :relationships
                (set (map ent/with-long-id relationships)))
 
-        (and (seq relationships)
-             include_related_entities)
+        (seq relationships)
         (->> (deep-merge-with coll/add-colls
                               (fetch-relationship-targets
                                relationships
@@ -403,6 +417,6 @@
    identity-map
    ident
    params]
-  (into empty-bundle
-        (reduce #(deep-merge-with coll/add-colls %1 %2)
-                (map #(export-entities % identity-map ident params) ids))))
+  (->> (map #(export-entities % identity-map ident params) ids)
+       (reduce #(deep-merge-with coll/add-colls %1 %2))
+       (into empty-bundle)))

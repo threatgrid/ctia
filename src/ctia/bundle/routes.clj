@@ -1,28 +1,22 @@
 (ns ctia.bundle.routes
   (:refer-clojure :exclude [identity])
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.sweet :refer [GET POST context defroutes describe]]
    [ctia.bundle
     [core :refer [bundle-max-size
                   bundle-size
                   import-bundle
                   export-bundle]]
     [schemas :refer [BundleImportResult
-                     NewBundleExport]]]
-   [ctia.schemas.core :refer [Bundle NewBundle]]
-   [ring.util.http-response :refer :all]
-   [schema.core :as s]))
+                     NewBundleExport
+                     BundleExportIds
+                     BundleExportOptions
+                     BundleExportQuery]]]
+   [ctia.schemas.core :refer [NewBundle]]
+   [ring.util.http-response :refer [ok bad-request]]
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
-(s/defschema BundleExportOptions
-  {(s/optional-key :related_to) [(s/enum :source_ref :target_ref)]
-   (s/optional-key :include_related_entities) s/Bool})
-
-(s/defschema BundleExportIds
-  {:ids [s/Str]})
-
-(s/defschema BundleExportQuery
-  (merge BundleExportIds
-         BundleExportOptions))
 
 (def export-capabilities
   #{:list-campaigns
@@ -75,7 +69,7 @@
                      (:ids q)
                      identity-map
                      identity
-                     (select-keys q [:include_related_entities :related_to]))))
+                     q)))
 
            (POST "/export" []
                 :return NewBundleExport
@@ -89,7 +83,7 @@
                      (:ids b)
                      identity-map
                      identity
-                     (select-keys q [:include_related_entities :related_to]))))
+                     q)))
 
            (POST "/import" []
                  :return BundleImportResult

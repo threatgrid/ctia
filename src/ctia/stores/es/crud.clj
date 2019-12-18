@@ -222,7 +222,8 @@
 (s/defschema FilterSchema
   (st/optional-keys
    {:all-of {s/Any s/Any}
-    :one-of {s/Any s/Any}}))
+    :one-of {s/Any s/Any}
+    :query s/Str}))
 
 (def sort-fields-mapping
   "Mapping table for all fields which needs to be renamed
@@ -277,17 +278,19 @@
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [state :- ESConnState
-       filters :- FilterSchema
+       {:keys [all-of one-of query]
+        :or {all-of {} one-of {}}} :- FilterSchema
        ident
        params]
-      (let [{:keys [all-of one-of]
-             :or {all-of {} one-of {}}} filters
-            filter-val (conj (q/prepare-terms all-of)
+      (let [filter-val (conj (q/prepare-terms all-of)
                              (find-restriction-query-part ident))
-            bool-params (merge {:filter filter-val}
-                               (when (not-empty one-of)
-                                 {:should (q/prepare-terms one-of)
-                                  :minimum_should_match 1}))]
+
+            query_string  {:query_string {:query query}}
+            bool-params (cond-> {:filter filter-val}
+                          (seq one-of) (into
+                                        {:should (q/prepare-terms one-of)
+                                         :minimum_should_match 1})
+                          query (update :filter conj query_string))]
         (update
          (coerce! (d/query (:conn state)
                            (:index state)
