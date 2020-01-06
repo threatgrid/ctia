@@ -1,6 +1,4 @@
-(ns ctia.store
-  (:require
-   [clojure.tools.logging :as log]))
+(ns ctia.store)
 
 (defprotocol IStore
   (create-record [this new-records ident params])
@@ -48,7 +46,8 @@
    :investigation []
    :casebook []
    :vulnerability []
-   :weakness []})
+   :weakness []
+   :feed []})
 
 (defonce stores (atom empty-stores))
 

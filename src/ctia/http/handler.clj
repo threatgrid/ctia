@@ -100,6 +100,7 @@
    {:name "COA" :description "COA operations"}
    {:name "DataTable" :description "DataTable operations"}
    {:name "Event" :description "Events operations"}
+   {:name "Feed" :description "Feed operations"}
    {:name "Feedback" :description "Feedback operations"}
    {:name "GraphQL" :description "GraphQL operations"}
    {:name "Incident" :description "Incident operations"}
@@ -123,7 +124,6 @@
            app-name
            authorization-url
            token-url
-           refresh-url
            flow
            realm
            scopes
@@ -152,8 +152,7 @@
                     :flow flow}))))
 
 (defn api-handler []
-  (let [{:keys [oauth2]
-         :as swagger-properties}
+  (let [{:keys [oauth2]}
         (get-http-swagger)]
     (api {:exceptions {:handlers exception-handlers}
           :swagger
@@ -187,28 +186,28 @@
                       wrap-version
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
-                     documentation-routes
-                     (graphql-ui-routes)
-                     (context
-                      "/ctia" []
-                      ;; The order is important here for version-routes
-                      ;; must be before the middleware fn
-                      version-routes
-                      (middleware [wrap-authenticated]
-                                  (entity-routes entities)
-                                  status-routes
-                                  (context
-                                   "/bulk" []
-                                   :tags ["Bulk"]
-                                   bulk-routes)
-                                  (context
-                                   "/incident" []
-                                   :tags ["Incident"]
-                                   incident-casebook-link-route)
-                                  bundle-routes
-                                  observable-routes
-                                  metrics-routes
-                                  properties-routes
-                                  graphql-routes)))
+           documentation-routes
+           (graphql-ui-routes)
+           (context
+               "/ctia" []
+             ;; The order is important here for version-routes
+             ;; must be before the middleware fn
+             version-routes
+             (middleware [wrap-authenticated]
+               (entity-routes entities)
+               status-routes
+               (context
+                   "/bulk" []
+                 :tags ["Bulk"]
+                 bulk-routes)
+               (context
+                   "/incident" []
+                 :tags ["Incident"]
+                 incident-casebook-link-route)
+               bundle-routes
+               observable-routes
+               metrics-routes
+               properties-routes
+               graphql-routes)))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))

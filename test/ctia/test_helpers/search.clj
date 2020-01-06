@@ -186,7 +186,7 @@
       (let [response (search search-uri query)]
         (is (= 200 (:status response)))
         (is (= query (first (map query-field (:parsed-body response))))
-            "query term does not works"))
+            "query term works"))
 
       (with-redefs [log* (fn [& _] nil)]
         ;; avoid unnecessary verbosity
@@ -237,7 +237,9 @@
 
 (defn test-query-string-search
   [entity query query-field example]
-      ;; only when ES store
+  ;; only when ES store
+
+
   (when (= "es" (get-in @properties [:ctia :store (keyword entity)]))
     (if (= :description query-field)
       (test-describable-search entity example)

@@ -23,6 +23,7 @@
     [data-table :refer [data-table-entity]]
     [relationship :refer [relationship-entity]]
     [identity :refer [identity-entity]]
+    [feed :refer [feed-entity]]
     [event :refer [event-entity]]]
    [schema.core :as s]))
 
@@ -38,6 +39,7 @@
    :indicator indicator-entity
    :investigation investigation-entity
    :judgement judgement-entity
+   :feed feed-entity
    :malware malware-entity
    :relationship relationship-entity
    :sighting sighting-entity
