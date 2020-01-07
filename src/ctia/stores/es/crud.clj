@@ -152,16 +152,19 @@ It returns the documents with full hits meta data including the real index in wh
                  (get-doc-with-index state mapping id {})]
         (if (allow-write? current-doc ident)
           (coerce! (d/index-doc (:conn state)
-                                 index
-                                 (name mapping)
-                                 (assoc realized
-                                        :id (ensure-document-id id))
-                                 (or refresh
-                                     (get-in state
-                                             [:props :refresh]
-                                             "false"))))
+                                index
+                                (name mapping)
+                                (assoc realized
+                                       :id (ensure-document-id id))
+                                (or refresh
+                                    (get-in state
+                                            [:props :refresh]
+                                            "false"))))
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
+
+(defn restricted-read? [ident]
+  (not (:public-passthrough ident)))
 
 (defn handle-read
   "Generate an ES read handler using some mapping and schema"
@@ -178,7 +181,8 @@ It returns the documents with full hits meta data including the real index in wh
                                              (make-es-read-params params))
                          :_source
                          coerce!)]
-        (if (allow-read? doc ident)
+        (if (or (not (restricted-read? ident))
+                (allow-read? doc ident))
           doc
           (throw (ex-info "You are not allowed to read this document"
                           {:type :access-control-error})))))))
@@ -281,8 +285,9 @@ It returns the documents with full hits meta data including the real index in wh
         :or {all-of {} one-of {}}} :- FilterSchema
        ident
        params]
-      (let [filter-val (conj (q/prepare-terms all-of)
-                             (find-restriction-query-part ident))
+      (let [filter-val (cond-> (q/prepare-terms all-of)
+                         (restricted-read? ident)
+                         (conj (find-restriction-query-part ident)))
 
             query_string  {:query_string {:query query}}
             bool-params (cond-> {:filter filter-val}
@@ -290,16 +295,17 @@ It returns the documents with full hits meta data including the real index in wh
                                         {:should (q/prepare-terms one-of)
                                          :minimum_should_match 1})
                           query (update :filter conj query_string))]
-        (update
-         (coerce! (d/query (:conn state)
-                           (:index state)
-                           (name mapping)
-                           (q/bool bool-params)
-                           (-> params
-                               rename-sort-fields
-                               with-default-sort-field
-                               make-es-read-params)))
-         :data access-control-filter-list ident)))))
+        (cond-> (coerce! (d/query (:conn state)
+                                  (:index state)
+                                  (name mapping)
+                                  (q/bool bool-params)
+                                  (-> params
+                                      rename-sort-fields
+                                      with-default-sort-field
+                                      make-es-read-params)))
+          (restricted-read? ident) (update :data
+                                           access-control-filter-list
+                                           ident))))))
 
 (defn handle-query-string-search
   "Generate an ES query string handler using some mapping and schema"

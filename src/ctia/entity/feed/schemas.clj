@@ -32,7 +32,7 @@
     (f/entry :feed_type FeedType)
     (f/entry :output OutputType))
    (f/optional-entries
-    (f/entry :name csc/ShortString)
+    (f/entry :title csc/ShortString)
     (f/entry :indicator_id f/any-str)
     (f/entry :lifetime csc/ValidTime))))
 
