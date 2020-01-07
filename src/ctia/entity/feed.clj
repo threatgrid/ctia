@@ -26,25 +26,24 @@
     (merge em/base-entity-mapping
            em/stored-entity-mapping
            {:name em/all_text
-            :lifetime
-            {:type "object"
-             :properties {:start_time em/ts
-                          :end_time em/ts}}
+            :lifetime em/valid-time
             :output em/token
             :indicator_id em/token})}})
 
 (def-es-store FeedStore :feed StoredFeed PartialStoredFeed)
 
 (def feed-fields
-
   (concat
    sorting/base-entity-sort-fields
    [:name
     :output
     :indicator_id]))
 
+(def sort-restricted-feed-fields
+  (remove #{:name} feed-fields))
+
 (def feed-sort-fields
-  (apply s/enum feed-fields))
+  (apply s/enum sort-restricted-feed-fields))
 
 (s/defschema FeedFieldsParam
   {(s/optional-key :fields) [feed-sort-fields]})
@@ -70,7 +69,8 @@
 
 (def feed-routes
   (entity-crud-routes
-   {:entity :feed
+   {:api-tags ["Feed"]
+    :entity :feed
     :new-schema NewFeed
     :entity-schema Feed
     :get-schema PartialFeed
@@ -86,7 +86,8 @@
     :put-capabilities :create-feed
     :delete-capabilities :delete-feed
     :search-capabilities :search-feed
-    :external-id-capabilities :read-feed}))
+    :external-id-capabilities :read-feed
+    :hide-delete? false}))
 
 (def capabilities
   #{:create-feed

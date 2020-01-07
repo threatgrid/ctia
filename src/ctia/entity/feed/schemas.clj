@@ -43,7 +43,6 @@
   (f/optional-entries
    (f/entry :type FeedIdentifier)))
 
-
 (def-acl-schema Feed FeedMapType "feed")
 (def-acl-schema NewFeed NewFeedMapType "new-feed")
 
