@@ -126,6 +126,8 @@
    (st/required-keys {"ctia.access-control.min-tlp" TLP
                       "ctia.access-control.default-tlp" TLP})
 
+   (st/optional-keys {"ctia.access-control.max-record-visibility" (s/enum "group" "everyone")})
+
    (st/optional-keys {"ctia.hook.kafka.enabled" s/Bool
                       "ctia.hook.kafka.compression.type" (s/enum "none" "gzip" "snappy" "lz4" "zstd")
                       "ctia.hook.kafka.ssl.enabled" s/Bool

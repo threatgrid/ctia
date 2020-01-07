@@ -8,7 +8,7 @@ For full documentation see [doc/](doc/)
 We also think the [Use Cases](doc/use_cases.md) document is a good
 starting point.
 
-Interactive, browser based documentation for the API is available once
+Interactive, Swagger docs for the API are available once
 you have it running, at:
 
     http://localhost:3000/index.html
@@ -25,16 +25,14 @@ This is not a full STIX/TAXII service.  Its intent is to help
 Analysts know what is important, and for detection and prevention
 tools to know what to look for.
 
-In addition to the RESTful HTTP API, it also has an Event Bus.
+In addition to the RESTful HTTP API, it also has a GraphQL API and many event handlers.
 
 The data model is defined in the [CTIM](https://github.com/threatgrid/ctim) project,
 although it's quite easy to see the API and the models it handles
 using the built-in [Swagger UI](http://localhost:3000/index.html) once
 you have it running.
 
-CTIA is implemented in [Clojure](http://clojure.org), and if you need
-a crash course in running clojure projects, check out
-[Clojure for the Brave and True](http://www.braveclojure.com/getting-started/).
+CTIA is implemented in [Clojure](http://clojure.org)
 
 ## Usage
 
@@ -49,11 +47,11 @@ CTIA.
 
 You can jump to the [Developer](#Developer) section to see instructions
 on how to run elasticsearch and other optional supporting tools using
-Docker.  CTIA can use Kafka, Redis and ES to push stream of events.
+Docker.  CTIA may use Kafka, Redis and ES to push events.
 
 #### Purging ES Stores
 
-Using an uberjar you can purge all the ES Stores with this command:
+Using an uberjar build you can purge all the ES Stores with this command:
 
 `java -cp ctia.jar:resources:. clojure.main -m ctia.task.purge-es-stores`
 
@@ -76,7 +74,7 @@ lein do clean, uberjar
 java -Xmx4g -Djava.awt.headless=true -XX:MaxPermSize=256m -Dlog.console.threshold=INFO -jar target/ctia.jar
 ```
 
-Obviously, one may tweak the java arguments as needed.
+You may tweak the java arguments as per your requirements.
 
 ## Development
 
@@ -88,21 +86,16 @@ includes all the dependencies you need to run Docker containers.
 
 **With Kafka and Zookeeper now part of the dev cluster, you will need
   to increase the memory you allocate to Docker.  You can do this thru
-  your Docker preferences.  This has been tested with an 4GB
+  your Docker preferences.  This has been tested with a 4GB
   allocation.**
 
 We  provide a  default `containers/dev/docker-compose.yml`  which will
-bring up the  dependencies you need in containers.  We  also provide a
-`containers/test/docker-compose.yml`    which     is    the    cluster
-configuration that our Travis CI tests again.  If you add services, be
-sure  to update  both so  your unit  tests work.
+bring up the  dependencies you need in containers. 
 
-You can then bring up a development environment:
+You can bring up a development environment:
 
 ```
-cd containers/dev
-docker-compose -f docker-compose.yml build
-docker-compose -f docker-compose.yml up
+docker-compose -f containers/dev/docker-compose.yml up
 ```
 
 Using docker for mac, this will bind the following ports on your
@@ -114,59 +107,27 @@ development machine to the services running in the containers:
 * zookeeper - 2181
 * kafka - 9092
 
-If you run into issues with one of your contains being in a weird
-state, you can delete the image.  First shut down the docker-compose
-cluster, and then run `docker images ls` to list the images, and then
-you can delete the image for the container that is giving you trouble.
-The usual culprits are elasticsearch and zookeeper.
-
-It can be very useful to use _Kitematic_ to monitor and interact with
-your containers.
-
-
-If you ever need to reset your entire dev environment, perform the
-following steps
-
-* `docker images ps` - to get a list of images and their image IDs
-* `docker rmi IMGID` - to delete the `zookeeper`, `elasticsearch`, `kafka`, `kibana` and `redis` images
-* `cd containers/dev; docker-compose -f docker-compose.yml up --force-recreate`
-
-Now, in another terminal, you can run CTIA.
-
-
-#### Deprecated Docker Toolbox support
-
-If you can't use docker directly and are forced to use Docker Toolbox,
-you will then need to tell your CTIA where to find its dependencies.
-The services will be listening on your docker-machine's IP, which you
-can get with the command, `docker-machine ip`, and then you define
-your own `resources/ctia.properties` file with the following values:
+If you ever need to reset your entire dev environment, 
+just kill the docker-compose process and run:
 
 ```
-ctia.store.es.default.host=192.168.99.100
-ctia.store.es.default.port=9200
-ctia.hook.es.host=192.168.99.100
-ctia.hook.es.port=9200
-ctia.hook.redis.host=192.168.99.100
-ctia.hook.redismq.host=192.168.99.100
-```
-
-Or you could initialize your properties with:
-
-```
-lein init-properties
+docker-compose -f containers/dev/docker-compose.yml down
+docker-compose -f containers/dev/docker-compose.yml up
 ```
 
 ### Testing and CI
 
-All PRs must pass `lein test` with no fails.  All new code should have
-tests accompanying it.
+All PRs must pass `lein test` with no fails for PRs to be accepted.
+Any new code functionality/change should have tests accompanying it.
 
 ### Data Access Control
 
-Document Access control is defined at the document level, rules are defined using TLP (Traffic Light Protocol) by default:
+Document Access control is defined at the document level, rules are defined using TLP combined with the max-record-visibility property (Traffic Light Protocol) by default:
 
-#### Green/White TLP
+
+#### Everyone Max Record visibility
+
+##### Green/White TLP
 
 | Identity  | Read     | Write    |
 |-----------|----------|----------|
@@ -190,12 +151,40 @@ Document Access control is defined at the document level, rules are defined usin
 | Group/Org |          |          |
 | Others    |          |          |
 
+#### Group Max Record visibility
+
+##### Green/White TLP
+
+| Identity  | Read     | Write    |
+|-----------|----------|----------|
+| Owner     | &#10004; | &#10004; |
+| Group/Org | &#10004; | &#10004; |
+| Others    |          |          |
+
+#### Amber TLP
+
+| Identity  | Read     | Write    |
+|-----------|----------|----------|
+| Owner     | &#10004; | &#10004; |
+| Group/Org | &#10004; | &#10004; |
+| Others    |          |          |
+
+#### Red TLP
+
+| Identity  | Read     | Write    |
+|-----------|----------|----------|
+| Owner     | &#10004; | &#10004; |
+| Group/Org |          |          |
+| Others    |          |          |
+
 
 #### Custom Access Rules
 
 it is possible to grant additional access to any user/group using either `authorized_users`
 or `authorized_groups` document fields, when an identity is marked in one of these fields, 
 it gets full R/W access to the documents.
+
+Please note that the `authorized_groups` property may work only if max record visibility is set to `everyone`
 
 Examples:
 

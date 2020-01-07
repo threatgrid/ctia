@@ -46,10 +46,11 @@
 
    Setup entity access control settings
 
- | Property                        | Description                                                | Possible values                |
- |---------------------------------+------------------------------------------------------------+--------------------------------|
- | ctia.access-control.min-tlp     | set the minimum TLP value for posting a document           | =white= =green=  =amber= =red= |
- | ctia.access-control.default-tlp | set the TLP for a newly posted entity if none is specified | =white= =green= =amber= =red=  |
+ | Property                                  | Description                                                | Possible values                |
+ |-------------------------------------------+------------------------------------------------------------+--------------------------------|
+ | ctia.access-control.min-tlp               | set the minimum TLP value for posting a document           | =white= =green=  =amber= =red= |
+ | ctia.access-control.default-tlp           | set the TLP for a newly posted entity if none is specified | =white= =green= =amber= =red=  |
+ | ctia.access-control.max-record-visibility | set the record max visibility for TLP Green/White          | =everyone= =group=             |
 
 
 ** HTTP

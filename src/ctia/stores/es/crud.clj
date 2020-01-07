@@ -1,23 +1,19 @@
 (ns ctia.stores.es.crud
-  (:require [clojure.set :as set]
+  (:require [clj-momo.lib.es
+             [document :as d]
+             [query :as q]
+             [schemas :refer [ESConnState]]]
             [clojure.string :as string]
-            [clojure.tools.logging :as log]
+            [ctia.domain.access-control
+             :refer
+             [acl-fields allow-read? allow-write?]]
+            [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
              [core :as s]]
-            [schema-tools.core :as st]
-            [clj-momo.lib.es
-             [index :as es-index]
-             [document :as d]
-             [query :as q]
-             [schemas :refer [ESConnState]]]
-            [ctia.lib.pagination :refer [list-response-schema]]
-            [ctia.properties :refer [properties]]
-            [ctia.domain.access-control
-             :refer [acl-fields allow-read? allow-write?]]
-            [ctia.stores.es.query
-             :refer [find-restriction-query-part]]))
+            [schema-tools.core :as st]))
 
 (defn make-es-read-params
   "Prepare ES Params for read operations, setting the _source field
@@ -39,7 +35,7 @@
   document ID, if it's a document ID already, it will just return
   that."
   [id]
-  (let [[orig docid] (re-matches #".*?([^/]+)\z" id) ]
+  (let [[_ docid] (re-matches #".*?([^/]+)\z" id) ]
     docid))
 
 (defn ensure-document-id-in-map
@@ -78,9 +74,9 @@
     {:error \"Error message item2\"}
     {model3}]"
   [exception-data models coerce-fn]
-  (let [{{:keys [errors items]}
+  (let [{{:keys [_ items]}
          :es-http-res-body} exception-data]
-    {:data (map (fn [{:keys [error _id] :as item} model]
+    {:data (map (fn [{:keys [error _id]} model]
                   (if error
                     {:error error
                      :id _id}
@@ -89,7 +85,9 @@
 
 
 (s/defn get-docs-with-indices
-  "Retrieves a documents from a search \"ids\" query. It enables to retrieves documents from an alias that points to multiple indices. It returns the documents with full hits meta data including the real index in which is stored the document."
+  "Retrieves a documents from a search \"ids\" query. It enables to retrieves
+ documents from an alias that points to multiple indices.
+It returns the documents with full hits meta data including the real index in which is stored the document."
   [{:keys [conn index]} :- ESConnState
    mapping :- s/Keyword
    ids :- [s/Str]
@@ -105,7 +103,8 @@
     (:data res)))
 
 (s/defn get-doc-with-index
-  "Retrieves a document from a search \"ids\" query. It is used to perform a get query on an alias that points to multiple indices. It returns the document with full hits meta data including the real index in which is stored the document."
+  "Retrieves a document from a search \"ids\" query. It is used to perform a get query on an alias that points to multiple indices.
+ It returns the document with full hits meta data including the real index in which is stored the document."
   [conn-state :- ESConnState
    mapping :- s/Keyword
    _id :- s/Str
@@ -119,7 +118,7 @@
     (s/fn :- (s/maybe [Model])
       [{:keys [props] :as state} :- ESConnState
        models :- [Model]
-       ident
+       _
        {:keys [refresh]}]
       (try
         (map #(build-create-result % coerce!)
