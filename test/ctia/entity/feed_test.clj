@@ -265,13 +265,20 @@
   whoami-helpers/fixture-reset-state)
 
 (defn feed-view-tests [feed-id feed]
-  (testing "GET /ctia/feed/:id?s=:secret"
-    (let [response (get (str "ctia/feed/" (:short-id feed-id) "/view")
-                        :headers {"Authorization" "45c1f5e3f05d0"})
+  (testing "GET /ctia/feed/:id/view?s=:secret"
+    (let [feed-view-url (str "ctia/feed/"
+                             (:short-id feed-id)
+                             "/view?s="
+                             (:secret feed))
+          response (helpers/get feed-view-url
+                                :headers {"Authorization" "45c1f5e3f05d0"})
           response-body (:parsed-body response)]
-      #_(is (= 200 (:status response)))
-      #_(is (= {} response-body))
 
+      (is (= "ctia/feed/feed-53d686bb-f75f-45ab-a9c3-18e374ff34cc/view?s="
+             feed-view-url))
+      (is (= {} response))
+      (is (= 200 (:status response)))
+      (is (= {} response-body))
       )))
 
 (deftest test-feed-routes
@@ -286,62 +293,60 @@
                                          "foogroup"
                                          "user")
 
-     (testing "Test setup: import the necessary objects for a blocklist"
-       (let [response (helpers/post "ctia/bundle/import"
-                                    :body blocklist-bundle
-                                    :headers {"Authorization" "45c1f5e3f05d0"})
-             bundle-import-result (:parsed-body response)
-             indicator-id (some->> (:results bundle-import-result)
-                                   (filter #(= (:type %) :indicator))
-                                   first
-                                   :id)]
+     (let [response (helpers/post "ctia/bundle/import"
+                                  :body blocklist-bundle
+                                  :headers {"Authorization" "45c1f5e3f05d0"})
+           bundle-import-result (:parsed-body response)
+           indicator-id (some->> (:results bundle-import-result)
+                                 (filter #(= (:type %) :indicator))
+                                 first
+                                 :id)]
 
-         (is (not (nil? indicator-id))
-             "we successfully have an indicator id to test the view")
+       (is (not (nil? indicator-id))
+           "we successfully have an indicator id to test the view")
 
-         (testing "Entity CRUD")
-         (entity-crud-test
-          {:entity "feed"
-           :example (assoc new-feed-maximal
-                           :indicator_id
-                           indicator-id)
-           :search-field :title
-           :update-field :title
-           :invalid-test-field :title
-           :headers {:Authorization "45c1f5e3f05d0"}
-           :additional-tests feed-view-tests}))))))
+       (entity-crud-test
+        {:entity "feed"
+         :example (assoc new-feed-maximal
+                         :indicator_id
+                         indicator-id)
+         :search-field :title
+         :update-field :title
+         :invalid-test-field :title
+         :headers {:Authorization "45c1f5e3f05d0"}
+         :additional-tests feed-view-tests})))))
 
-(deftest test-feed-pagination-field-selection
-  (test-for-each-store
-   (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-     (testing "With Blocklist fixtures imported"
-       (let [ids (post-entity-bulk
-                  (assoc new-feed-maximal :title "foo")
-                  :feeds
-                  345
-                  {"Authorization" "45c1f5e3f05d0"})]
-         (field-selection-tests
-          ["ctia/feed/search?query=*"
-           (doc-id->rel-url (first ids))]
+#_(deftest test-feed-pagination-field-selection
+    (test-for-each-store
+     (fn []
+       (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+       (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                           "foouser"
+                                           "foogroup"
+                                           "user")
+       (testing "With Blocklist fixtures imported"
+         (let [ids (post-entity-bulk
+                    (assoc new-feed-maximal :title "foo")
+                    :feeds
+                    345
+                    {"Authorization" "45c1f5e3f05d0"})]
+           (field-selection-tests
+            ["ctia/feed/search?query=*"
+             (doc-id->rel-url (first ids))]
+            {"Authorization" "45c1f5e3f05d0"}
+            sort-restricted-feed-fields))
+
+         (pagination-test
+          "ctia/feed/search?query=*"
           {"Authorization" "45c1f5e3f05d0"}
-          sort-restricted-feed-fields))
+          sort-restricted-feed-fields)))))
 
-       (pagination-test
-        "ctia/feed/search?query=*"
-        {"Authorization" "45c1f5e3f05d0"}
-        sort-restricted-feed-fields)))))
-
-(deftest test-feed-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "feed"
-                          new-feed-minimal
-                          true
-                          true))))
+#_(deftest test-feed-routes-access-control
+    (test-for-each-store
+     (fn []
+       (access-control-test "feed"
+                            new-feed-minimal
+                            true
+                            true))))
 
 

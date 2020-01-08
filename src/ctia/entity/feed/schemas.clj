@@ -1,14 +1,19 @@
 (ns ctia.entity.feed.schemas
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.schemas
-             [core :refer [def-acl-schema def-stored-schema]]
-             [utils :as csu]]
-            [ctim.schemas.common :as csc]
-            [flanders
-             [core :as f]
-             [spec :as f-spec]
-             [utils :as fu]]
-            [schema.core :as s]))
+  (:require
+   [clj-momo.lib.time :as time]
+   [ctia.domain
+    [access-control :refer [properties-default-tlp]]
+    [entities
+     :refer [contains-key? make-valid-time schema-version]]]
+   [ctia.schemas
+    [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs]]
+    [utils :as csu]]
+   [ctim.schemas.common :as csc]
+   [flanders
+    [core :as f]
+    [spec :as f-spec]
+    [utils :as fu]]
+   [schema.core :as s]))
 
 (def type-identifier "feed")
 
@@ -33,6 +38,7 @@
     (f/entry :output OutputType))
    (f/optional-entries
     (f/entry :title csc/ShortString)
+    (f/entry :secret f/any-str)
     (f/entry :indicator_id f/any-str)
     (f/entry :lifetime csc/ValidTime))))
 
@@ -59,5 +65,34 @@
 
 (s/defschema PartialFeedList [PartialFeed])
 
-(def realize-feed
-  (default-realize-fn "feed" NewFeed StoredFeed))
+(s/defn realize-feed :- StoredFeed
+  ([new-object :- NewFeed
+    id :- s/Str
+    tempids :- (s/maybe TempIDs)
+    owner :- s/Str
+    groups :- [s/Str]]
+   (realize-feed new-object id tempids owner groups nil))
+  ([new-object :- NewFeed
+    id :- s/Str
+    _ :- (s/maybe TempIDs)
+    owner :- s/Str
+    groups :- [s/Str]
+    prev-object :- (s/maybe StoredFeed)]
+   (let [now (time/now)]
+     (merge new-object
+            {:id id
+             :type "feed"
+             :owner (or (:owner prev-object) owner)
+             :groups (or (:groups prev-object) groups)
+             :secret (or (:secret prev-object) (str (java.util.UUID/randomUUID)))
+             :schema_version schema-version
+             :created (or (:created prev-object) now)
+             :modified now
+             :timestamp (or (:timestamp new-object) now)
+             :tlp (:tlp new-object
+                        (:tlp prev-object (properties-default-tlp)))}
+            (when (contains-key? Feed :valid_time)
+              (make-valid-time
+               (:valid_time prev-object)
+               (:valid_time new-object)
+               now))))))

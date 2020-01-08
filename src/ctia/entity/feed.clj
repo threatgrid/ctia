@@ -1,12 +1,20 @@
 (ns ctia.entity.feed
   (:require
+   [ctia.store :refer [list-records]]
+   [compojure.api.middleware :refer [api-middleware-defaults ->mime-types]]
    [ring.swagger.schema :refer [describe]]
-   [ring.util.http-response :refer [ok not-found]]
+   [ring.util.http-response
+    :refer [ok unauthorized not-found]]
    [compojure.api.sweet :refer [GET routes]]
+   [ctia.entity.judgement.schemas :refer [Judgement]]
+   [ctia.schemas.core :refer [Observable]]
    [ctia.domain.entities :refer [un-store
                                  with-long-id]]
    [ctia.store
-    :refer [read-record read-store]]
+    :refer [read-record
+            read-store
+            query-string-search
+            query-string-search-store]]
    [ctia.entity.feed.schemas
     :refer
     [NewFeed
@@ -36,10 +44,10 @@
            {:title em/all_text
             :lifetime em/valid-time
             :output em/token
+            :secret em/token
             :indicator_id em/token})}})
 
 (def-es-store FeedStore :feed StoredFeed PartialStoredFeed)
-
 (def feed-fields
   (concat
    sorting/base-entity-sort-fields
@@ -75,24 +83,57 @@
 (s/defschema FeedByExternalIdQueryParams
   FeedListQueryParams)
 
+(s/defschema FeedView
+  {(s/optional-key :judgements) [Judgement]
+   (s/optional-key :observables) [Observable]})
+
+(def feed-produces
+  (let [formats (get-in api-middleware-defaults [:format :formats])
+        additional-formats #{"text/csv"}]
+
+    (concat
+     (->mime-types (remove {:clojure :yaml-in-html} formats))
+     additional-formats)))
+
 (def feed-view-routes
   (routes
-   (GET "/view/:id" []
-     :summary "Render a Feed View"
+   (GET "/:id/view" []
+     :summary "Get a Feed View"
      :path-params [id :- s/Str]
+     :return FeedView
+     :produces feed-produces
      :query-params [s :- (describe s/Str "The feed share token")]
-     (if-let [rec (read-store :feed
-                              read-record
-                              id
+     (if-let [{:keys [indicator_id
+                      output
+                      secret]}
+              (read-store :feed
+                          read-record
+                          id
+                          {:public-passthrough true}
+                          {})]
+
+       (if (= s secret)
+         (let [relationships (read-store
+                              :relationship
+                              list-records
+                              {:all-of {:target_ref indicator_id}}
                               {:public-passthrough true}
-                              {})]
-       (-> rec
-           with-long-id
-           un-store
-           ok)
-       (not-found)))))
+                              {})
+               judgement-ids (remove nil? (map :source_ref relationships))
+               judgements (remove nil?
+                                  (map (read-store :judgement
+                                                   read-record
+                                                   id
+                                                   {:public-passthrough true}
+                                                   {}) judgement-ids))
+               observables (map :observable judgements)]
 
-
+           (into {:csv-render-fn output}
+                 (ok (if (= :judgements output)
+                       {:judgements (map un-store judgements)}
+                       {:observables observables}))))
+         (unauthorized "wrong secret"))
+       (not-found "unknown feed")))))
 
 (def feed-routes
   (routes
