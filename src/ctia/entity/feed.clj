@@ -1,5 +1,7 @@
 (ns ctia.entity.feed
   (:require
+   [ctia.lib.csv
+    :refer [csv]]
    [ctia.store :refer [list-all-pages
                        list-records
                        read-record
@@ -96,7 +98,7 @@
      (->mime-types (remove {:clojure :yaml-in-html} formats))
      additional-formats)))
 
-(defn render-feed [id s]
+(defn fetch-feed [id s]
   (if-let [{:keys [indicator_id
                    secret
                    output]}
@@ -123,32 +125,41 @@
                                        {}))
                      (remove nil?))]
         (if (seq feed-results)
-          (if (= :observables output)
-            (into {:csv-render-fn :observables}
-                  (ok {:observables (map :observable feed-results)}))
-            (into {:csv-render-fn :judgements}
-                  (ok {:judgements feed-results})))
-          (ok {})))
+          (into {:output output}
+                (if (= :observables output)
+                  {:observables (map :observable feed-results)}
+                  {:judgements feed-results}))
+          {}))
 
-      (unauthorized "wrong secret"))
-    (not-found "unknown feed")))
+      :unauthorized)
+    :not-found))
 
 (def feed-view-routes
   (routes
+   (GET "/:id/view.csv" []
+        :summary "Get a Feed View as a CSV"
+        :path-params [id :- s/Str]
+        :return s/Str
+        :produces #{"text/csv"}
+        :query-params [s :- (describe s/Str "The feed share token")]
+        (let [{:keys [output]
+               :as feed} (fetch-feed id s)]
+          (case feed
+            :not-found (not-found "feed not found")
+            :unauthorized (unauthorized "wrong secret")
+            (csv (output feed)
+                 (str id ".csv") false))))
    (GET "/:id/view" []
         :summary "Get a Feed View"
         :path-params [id :- s/Str]
         :return FeedView
         :produces feed-produces
         :query-params [s :- (describe s/Str "The feed share token")]
-        (render-feed id s))
-   (GET "/:id/view.csv" []
-        :summary "Get a Feed View as CSV"
-        :path-params [id :- s/Str]
-        :return FeedView
-        :produces #{"text/csv"}
-        :query-params [s :- (describe s/Str "The feed share token")]
-        (render-feed id s))))
+        (let [feed (fetch-feed id s)]
+          (case feed
+            :not-found (not-found "feed not found")
+            :unauthorized (unauthorized "wrong secret")
+            (ok (dissoc feed :output)))))))
 
 (def feed-routes
   (routes

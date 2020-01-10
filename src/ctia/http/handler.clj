@@ -1,7 +1,6 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [clojure.string :as string]
-            [ctia.http.middleware.csv :refer [wrap-csv]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.casebook :refer [casebook-operation-routes]]
             [ctia.entity.incident :refer [incident-additional-routes]]
@@ -187,29 +186,28 @@
                       wrap-version
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
-                     documentation-routes
-                     (graphql-ui-routes)
-                     (context
-                      "/ctia" []
-                      ;; The order is important here for version-routes
-                      ;; must be before the middleware fn
-                      version-routes
-                      (middleware [wrap-csv
-                                   wrap-authenticated]
-                                  (entity-routes entities)
-                                  status-routes
-                                  (context
-                                   "/bulk" []
-                                   :tags ["Bulk"]
-                                   bulk-routes)
-                                  (context
-                                   "/incident" []
-                                   :tags ["Incident"]
-                                   incident-casebook-link-route)
-                                  bundle-routes
-                                  observable-routes
-                                  metrics-routes
-                                  properties-routes
-                                  graphql-routes)))
+           documentation-routes
+           (graphql-ui-routes)
+           (context
+               "/ctia" []
+             ;; The order is important here for version-routes
+             ;; must be before the middleware fn
+             version-routes
+             (middleware [wrap-authenticated]
+               (entity-routes entities)
+               status-routes
+               (context
+                   "/bulk" []
+                 :tags ["Bulk"]
+                 bulk-routes)
+               (context
+                   "/incident" []
+                 :tags ["Incident"]
+                 incident-casebook-link-route)
+               bundle-routes
+               observable-routes
+               metrics-routes
+               properties-routes
+               graphql-routes)))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))

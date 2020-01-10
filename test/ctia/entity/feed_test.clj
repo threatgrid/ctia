@@ -268,14 +268,35 @@
 (defn feed-view-tests [_ feed]
   (testing "GET /ctia/feed/:id/view?s=:secret"
     (let [feed-view-url (:feed_view_url feed)
+          feed-view-url-csv (:feed_view_url_csv feed)
+          feed-view-url-csv-wrong-secret (clojure.string/join
+                                          ""
+                                          (drop-last feed-view-url-csv))
           response (client/get feed-view-url
                                {:as :json
                                 :headers {"Authorization" "45c1f5e3f05d0"}})
-          response-body (:body response)]
+          response-csv (client/get feed-view-url-csv
+                                   {:headers {"Authorization" "45c1f5e3f05d0"}})
+
+          response-csv-wrong-secret
+          (client/get feed-view-url-csv-wrong-secret
+                      {:throw-exceptions false
+                       :headers {"Authorization" "45c1f5e3f05d0"}})
+          response-body (:body response)
+          response-body-csv (:body response-csv)
+          response-body-csv-wrong-secret (:body response-csv-wrong-secret)]
 
       (is (= 200 (:status response)))
-      (is (= response-body
-             {:observables [{:value "187.75.16.75", :type "ip"}]} )))))
+      (is (= {:observables [{:value "187.75.16.75", :type "ip"}]}
+             response-body))
+
+      (is (= 200 (:status response-csv)))
+      (is (= "\"\\n\\\"187.75.16.75\\\",\\\"ip\\\"\""
+             response-body-csv))
+
+      (is (= 401 (:status response-csv-wrong-secret)))
+      (is (= "wrong secret"
+             response-body-csv-wrong-secret)))))
 
 (deftest test-feed-routes
   (test-for-each-store
@@ -312,37 +333,35 @@
          :headers {:Authorization "45c1f5e3f05d0"}
          :additional-tests feed-view-tests})))))
 
-#_(deftest test-feed-pagination-field-selection
-    (test-for-each-store
-     (fn []
-       (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-       (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                           "foouser"
-                                           "foogroup"
-                                           "user")
-       (testing "With Blocklist fixtures imported"
-         (let [ids (post-entity-bulk
-                    (assoc new-feed-maximal :title "foo")
-                    :feeds
-                    345
-                    {"Authorization" "45c1f5e3f05d0"})]
-           (field-selection-tests
-            ["ctia/feed/search?query=*"
-             (doc-id->rel-url (first ids))]
-            {"Authorization" "45c1f5e3f05d0"}
-            sort-restricted-feed-fields))
-
-         (pagination-test
-          "ctia/feed/search?query=*"
+(deftest test-feed-pagination-field-selection
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (testing "With Blocklist fixtures imported"
+       (let [ids (post-entity-bulk
+                  (assoc new-feed-maximal :title "foo")
+                  :feeds
+                  345
+                  {"Authorization" "45c1f5e3f05d0"})]
+         (field-selection-tests
+          ["ctia/feed/search?query=*"
+           (doc-id->rel-url (first ids))]
           {"Authorization" "45c1f5e3f05d0"}
-          sort-restricted-feed-fields)))))
+          sort-restricted-feed-fields))
 
-#_(deftest test-feed-routes-access-control
-    (test-for-each-store
-     (fn []
-       (access-control-test "feed"
-                            new-feed-minimal
-                            true
-                            true))))
+       (pagination-test
+        "ctia/feed/search?query=*"
+        {"Authorization" "45c1f5e3f05d0"}
+        sort-restricted-feed-fields)))))
 
-
+(deftest test-feed-routes-access-control
+  (test-for-each-store
+   (fn []
+     (access-control-test "feed"
+                          new-feed-minimal
+                          true
+                          true))))

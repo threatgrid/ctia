@@ -1,4 +1,4 @@
-(ns ctia.http.middleware.csv
+(ns ctia.lib.csv
   (:require
    [clojure.string :as string]
    [ring.util.http-response :refer [ok]]))
@@ -41,17 +41,18 @@
   ([prefix m]
    (into {} (deep-flatten-map-as-couples prefix m))))
 
-
 (defn to-csv
   "Take a list of hash-map and output a CSV string
   Take it wasn't optimized and I might consume a lot of memory."
-  [ms]
+  [ms include-headers?]
   (let [flattened-ms (map deep-flatten-map ms)
         ks (keys (apply merge flattened-ms))]
     (string/join "\n"
-                 (cons (string/join "," (map #(field-protect (name %)) ks))
-                       (for [m flattened-ms]
-                         (string/join "," (map #(field-protect (get m % "")) ks)))))))
+                 (cons
+                  (when include-headers?
+                    (string/join "," (map #(field-protect (name %)) ks)))
+                  (for [m flattened-ms]
+                    (string/join "," (map #(field-protect (get m % "")) ks)))))))
 
 (defn csv-http-headers [filename]
   {"Content-Type" "text/csv; charset=utf8"
@@ -79,24 +80,10 @@
 
 (defn csv
   "Builds a HTTP response from the flat api result."
-  [result uri]
-  (let [csv-output (to-csv result)
+  [result uri include-headers?]
+  (let [csv-output (to-csv result include-headers?)
         response (into (ok csv-output)
                        {:compojure.api.meta/serializable? false})]
     (update-in response [:headers]
                #(into % (csv-http-headers
                          (uri->filename uri))))))
-
-(defn wrap-csv
-  [handler]
-  (fn [{:keys [uri]
-        :as request}]
-    (let [csv? (= (get-in request [:headers "accept"]) "text/csv")
-          {:keys [csv-render-fn
-                  body]
-           :as response} (handler request)]
-      (if csv?
-        (cond-> body
-          csv-render-fn (csv-render-fn)
-          true (csv uri))
-        response))))
