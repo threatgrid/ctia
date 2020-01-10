@@ -4,7 +4,10 @@
    [ctia.domain
     [access-control :refer [properties-default-tlp]]
     [entities
-     :refer [contains-key? make-valid-time schema-version]]]
+     :refer [contains-key?
+             make-valid-time
+             schema-version
+             short-id->long-id]]]
    [ctia.schemas
     [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs]]
     [utils :as csu]]
@@ -39,6 +42,8 @@
    (f/optional-entries
     (f/entry :title csc/ShortString)
     (f/entry :secret f/any-str)
+    (f/entry :feed_view_url f/any-str)
+    (f/entry :feed_view_url_csv f/any-str)
     (f/entry :indicator_id f/any-str)
     (f/entry :lifetime csc/ValidTime))))
 
@@ -78,13 +83,22 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
-   (let [now (time/now)]
+   (let [long-id (short-id->long-id id)
+         secret (or (:secret prev-object)
+                    (str (java.util.UUID/randomUUID)))
+         feed_view_url (or (:feed_view_url prev-object)
+                           (str long-id "/view?s=" secret))
+         feed_view_url_csv (or (:feed_view_url_csv prev-object)
+                               (str long-id "/view.csv?s=" secret))
+         now (time/now)]
      (merge new-object
             {:id id
              :type "feed"
              :owner (or (:owner prev-object) owner)
              :groups (or (:groups prev-object) groups)
-             :secret (or (:secret prev-object) (str (java.util.UUID/randomUUID)))
+             :secret secret
+             :feed_view_url_csv feed_view_url_csv
+             :feed_view_url feed_view_url
              :schema_version schema-version
              :created (or (:created prev-object) now)
              :modified now

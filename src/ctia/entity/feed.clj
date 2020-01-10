@@ -1,6 +1,9 @@
 (ns ctia.entity.feed
   (:require
-   [ctia.store :refer [list-records]]
+   [ctia.store :refer [list-all-pages
+                       list-records
+                       read-record
+                       read-store]]
    [compojure.api.middleware :refer [api-middleware-defaults ->mime-types]]
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response
@@ -9,12 +12,8 @@
    [ctia.entity.judgement.schemas :refer [Judgement]]
    [ctia.schemas.core :refer [Observable]]
    [ctia.domain.entities :refer [un-store
-                                 with-long-id]]
-   [ctia.store
-    :refer [read-record
-            read-store
-            query-string-search
-            query-string-search-store]]
+                                 with-long-id
+                                 long-id->id]]
    [ctia.entity.feed.schemas
     :refer
     [NewFeed
@@ -45,6 +44,8 @@
             :lifetime em/valid-time
             :output em/token
             :secret em/token
+            :feed_view_url em/token
+            :feed_view_url_csv em/token
             :indicator_id em/token})}})
 
 (def-es-store FeedStore :feed StoredFeed PartialStoredFeed)
@@ -95,45 +96,59 @@
      (->mime-types (remove {:clojure :yaml-in-html} formats))
      additional-formats)))
 
+(defn render-feed [id s]
+  (if-let [{:keys [indicator_id
+                   secret
+                   output]}
+           (read-store :feed
+                       read-record
+                       id
+                       {:public-passthrough true}
+                       {})]
+
+    (if (= s secret)
+      (let [feed-results
+            (some->> (list-all-pages
+                      :relationship
+                      list-records
+                      {:all-of {:target_ref indicator_id}}
+                      {:public-passthrough true}
+                      {:fields [:source_ref]})
+                     (map :source_ref)
+                     (remove nil?)
+                     (map #(read-store :judgement
+                                       read-record
+                                       %
+                                       {:public-passthrough true}
+                                       {}))
+                     (remove nil?))]
+        (if (seq feed-results)
+          (if (= :observables output)
+            (into {:csv-render-fn :observables}
+                  (ok {:observables (map :observable feed-results)}))
+            (into {:csv-render-fn :judgements}
+                  (ok {:judgements feed-results})))
+          (ok {})))
+
+      (unauthorized "wrong secret"))
+    (not-found "unknown feed")))
+
 (def feed-view-routes
   (routes
    (GET "/:id/view" []
-     :summary "Get a Feed View"
-     :path-params [id :- s/Str]
-     :return FeedView
-     :produces feed-produces
-     :query-params [s :- (describe s/Str "The feed share token")]
-     (if-let [{:keys [indicator_id
-                      output
-                      secret]}
-              (read-store :feed
-                          read-record
-                          id
-                          {:public-passthrough true}
-                          {})]
-
-       (if (= s secret)
-         (let [relationships (read-store
-                              :relationship
-                              list-records
-                              {:all-of {:target_ref indicator_id}}
-                              {:public-passthrough true}
-                              {})
-               judgement-ids (remove nil? (map :source_ref relationships))
-               judgements (remove nil?
-                                  (map (read-store :judgement
-                                                   read-record
-                                                   id
-                                                   {:public-passthrough true}
-                                                   {}) judgement-ids))
-               observables (map :observable judgements)]
-
-           (into {:csv-render-fn output}
-                 (ok (if (= :judgements output)
-                       {:judgements (map un-store judgements)}
-                       {:observables observables}))))
-         (unauthorized "wrong secret"))
-       (not-found "unknown feed")))))
+        :summary "Get a Feed View"
+        :path-params [id :- s/Str]
+        :return FeedView
+        :produces feed-produces
+        :query-params [s :- (describe s/Str "The feed share token")]
+        (render-feed id s))
+   (GET "/:id/view.csv" []
+        :summary "Get a Feed View as CSV"
+        :path-params [id :- s/Str]
+        :return FeedView
+        :produces #{"text/csv"}
+        :query-params [s :- (describe s/Str "The feed share token")]
+        (render-feed id s))))
 
 (def feed-routes
   (routes

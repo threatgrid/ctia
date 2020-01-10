@@ -1,5 +1,6 @@
 (ns ctia.entity.feed-test
   (:require [clj-momo.test-helpers.core :as mth]
+            [clj-http.client :as client]
             [ctim.schemas.common :as c]
             [clojure.test :refer [deftest testing is join-fixtures use-fixtures]]
             [ctia.entity.feed
@@ -264,22 +265,17 @@
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
 
-(defn feed-view-tests [feed-id feed]
+(defn feed-view-tests [_ feed]
   (testing "GET /ctia/feed/:id/view?s=:secret"
-    (let [feed-view-url (str "ctia/feed/"
-                             (:short-id feed-id)
-                             "/view?s="
-                             (:secret feed))
-          response (helpers/get feed-view-url
-                                :headers {"Authorization" "45c1f5e3f05d0"})
-          response-body (:parsed-body response)]
+    (let [feed-view-url (:feed_view_url feed)
+          response (client/get feed-view-url
+                               {:as :json
+                                :headers {"Authorization" "45c1f5e3f05d0"}})
+          response-body (:body response)]
 
-      (is (= "ctia/feed/feed-53d686bb-f75f-45ab-a9c3-18e374ff34cc/view?s="
-             feed-view-url))
-      (is (= {} response))
       (is (= 200 (:status response)))
-      (is (= {} response-body))
-      )))
+      (is (= response-body
+             {:observables [{:value "187.75.16.75", :type "ip"}]} )))))
 
 (deftest test-feed-routes
   (test-for-each-store
