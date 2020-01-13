@@ -218,7 +218,7 @@
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
 
-(defn feed-view-tests [_ feed]
+(defn feed-view-tests [feed-id feed]
   (testing "GET /ctia/feed/:id/view?s=:secret"
     (let [feed-view-url (:feed_view_url feed)
           feed-view-url-csv (:feed_view_url_csv feed)
@@ -250,7 +250,63 @@
 
       (is (= 401 (:status response-csv-wrong-secret)))
       (is (= "wrong secret"
-             response-body-csv-wrong-secret)))))
+             response-body-csv-wrong-secret))
+
+      (testing "feed output judgements"
+        (let [feed-update (assoc feed :output :judgements)
+              updated-feed-response
+              (helpers/put (str "ctia/feed/" (:short-id feed-id))
+                           :body feed-update
+                           :headers {"Authorization" "45c1f5e3f05d0"})]
+          (is (= 200 (:status updated-feed-response)))
+          (is (= feed-update
+                 (:parsed-body updated-feed-response)))
+
+          (let [feed-view-url (:feed_view_url feed)
+                feed-view-url-csv (:feed_view_url_csv feed)
+                feed-view-url-csv-wrong-secret (->> (drop-last feed-view-url-csv)
+                                                    (string/join ""))
+                response (client/get feed-view-url
+                                     {:as :json
+                                      :headers {"Authorization" "45c1f5e3f05d0"}})
+                response-csv (client/get feed-view-url-csv
+                                         {:headers {"Authorization" "45c1f5e3f05d0"}})
+
+                response-csv-wrong-secret
+                (client/get feed-view-url-csv-wrong-secret
+                            {:throw-exceptions false
+                             :headers {"Authorization" "45c1f5e3f05d0"}})
+                response-body (:body response)
+                response-body-csv (:body response-csv)
+                response-body-csv-wrong-secret (:body response-csv-wrong-secret)]
+
+            (is (= 200 (:status response)))
+            (is (= (set (map :observable
+                             (:judgements blocklist-bundle)))
+                   (set (map :observable
+                             (:judgements response-body)))))
+
+            (is (= 200 (:status response-csv)))
+            (is (string/includes?
+                 response-body-csv
+                 "\"\\\"confidence\\\",\\\"owner\\\"")
+                "headers are rendered")
+
+            (is (string/includes?
+                 response-body-csv
+                 "\\\"High\\\",\\\"foouser\\\"")
+                "Judgement data is included")
+
+            (is (= 401 (:status response-csv-wrong-secret)))
+            (is (= "wrong secret"
+                   response-body-csv-wrong-secret))
+
+            ;;teardown
+            (is (= 200
+                   (:status
+                    (helpers/put (str "ctia/feed/" (:short-id feed-id))
+                                 :body feed
+                                 :headers {"Authorization" "45c1f5e3f05d0"}))))))))))
 
 (deftest test-feed-routes
   (test-for-each-store

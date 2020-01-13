@@ -1,12 +1,12 @@
 (ns ctia.entity.feed
   (:require
+   [ctim.domain.validity :as cdv]
    [ctia.lib.csv
     :refer [csv]]
    [ctia.store :refer [list-all-pages
                        list-records
                        read-record
                        read-store]]
-   [compojure.api.middleware :refer [api-middleware-defaults ->mime-types]]
    [ring.swagger.schema :refer [describe]]
    [ring.util.http-response
     :refer [ok unauthorized not-found]]
@@ -14,8 +14,7 @@
    [ctia.entity.judgement.schemas :refer [Judgement]]
    [ctia.schemas.core :refer [Observable]]
    [ctia.domain.entities :refer [un-store
-                                 with-long-id
-                                 long-id->id]]
+                                 with-long-id]]
    [ctia.entity.feed.schemas
     :refer
     [NewFeed
@@ -51,6 +50,7 @@
             :indicator_id em/token})}})
 
 (def-es-store FeedStore :feed StoredFeed PartialStoredFeed)
+
 (def feed-fields
   (concat
    sorting/base-entity-sort-fields
@@ -93,74 +93,102 @@
 (def identity-map
   {:authorized-anonymous true})
 
+(defn valid-lifetime? [lifetime]
+  (cdv/valid-now?
+   (java.util.Date.)
+   {:valid_time lifetime}))
+
 (defn fetch-feed [id s]
   (if-let [{:keys [indicator_id
                    secret
-                   output]}
+                   output
+                   lifetime
+                   owner
+                   groups]}
            (read-store :feed
                        read-record
                        id
                        identity-map
                        {})]
 
-    (if (= s secret)
-      (let [feed-results
-            (some->> (list-all-pages
-                      :relationship
-                      list-records
-                      {:all-of {:target_ref indicator_id}}
-                      identity-map
-                      {:fields [:source_ref]})
-                     (map :source_ref)
-                     (remove nil?)
-                     (map #(read-store :judgement
-                                       read-record
-                                       %
-                                       identity-map
-                                       {}))
-                     (remove nil?))]
-        (if (seq feed-results)
-          (into {:output output}
-                (if (= :observables output)
-                  {:observables (distinct (map :observable feed-results))}
-                  {:judgements (distinct feed-results)}))
-          {}))
-      :unauthorized)
+    (cond
+      (not (valid-lifetime? lifetime)) :not-found
+      (not= s secret) :unauthorized
+      :else (let [;; VERY IMPORTANT! inherit the identity from the Feed!
+                  feed-identity
+                  {:login owner
+                   :groups groups
+                   :capabilities #{:read-judgement
+                                   :read-relationship
+                                   :list-relationships}}
+                  feed-results
+                  (some->> (list-all-pages
+                            :relationship
+                            list-records
+                            {:all-of {:target_ref indicator_id}}
+                            feed-identity
+                            {:fields [:source_ref]})
+                           (map :source_ref)
+                           (remove nil?)
+                           (map #(read-store :judgement
+                                             read-record
+                                             %
+                                             feed-identity
+                                             {}))
+                           (remove nil?)
+                           (map with-long-id))]
+
+              (cond-> {}
+                (= :observables output)
+                (assoc
+                 :output :observables
+                 :observables
+                 (distinct (map :observable
+                                feed-results)))
+                (= :judgements output)
+                (assoc
+                 :output :judgements
+                 :judgements
+                 (distinct (map un-store
+                                feed-results))))))
     :not-found))
 
 (defn sorted-observable-values [data]
   (sort-by :value
            (map #(select-keys % [:value]) data)))
 
+(defn render-headers? [output]
+  (not= :observables output))
+
 (def feed-view-routes
   (routes
    (GET "/:id/view.csv" []
-        :summary "Get a Feed View as a CSV"
-        :path-params [id :- s/Str]
-        :return s/Str
-        :produces #{"text/csv"}
-        :query-params [s :- (describe s/Str "The feed share token")]
-        (let [{:keys [output]
-               :as feed} (fetch-feed id s)]
-          (case feed
-            :not-found (not-found "feed not found")
-            :unauthorized (unauthorized "wrong secret")
-            (let [data (output feed)
-                  res-str
-                  (if (= (:observables output))
-                    (sorted-observable-values data)
-                    data)]
-              (csv res-str (str id ".csv") false)))))
+     :summary "Get a Feed View as a CSV"
+     :path-params [id :- s/Str]
+     :return s/Str
+     :produces #{"text/csv"}
+     :query-params [s :- (describe s/Str "The feed share token")]
+     (let [{:keys [output]
+            :as feed} (fetch-feed id s)]
+       (case feed
+         :not-found (not-found "feed not found")
+         :unauthorized (unauthorized "wrong secret")
+         (let [data (output feed)
+               transformed (if (= :observables output)
+                             (sorted-observable-values data)
+                             data)]
+           (csv transformed (str id ".csv")
+                (render-headers? output))))))
    (GET "/:id/view" []
-        :summary "Get a Feed View"
-        :path-params [id :- s/Str]
-        :return FeedView
-        :query-params [s :- (describe s/Str "The feed share token")]
-        (let [feed (fetch-feed id s)]
-          (case feed
-            :not-found (not-found "feed not found")
-            :unauthorized (unauthorized "wrong secret")
-            (ok (dissoc feed :output)))))))
+     :summary "Get a Feed View"
+     :path-params [id :- s/Str]
+     :return FeedView
+     :query-params [s :- (describe s/Str "The feed share token")]
+     (let [feed (fetch-feed id s)]
+       (case feed
+         :not-found (not-found "feed not found")
+         :unauthorized (unauthorized "wrong secret")
+         (ok (dissoc feed :output)))))))
 
 (def feed-routes
   (routes
