@@ -164,7 +164,7 @@ It returns the documents with full hits meta data including the real index in wh
                           {:type :access-control-error})))))))
 
 (defn restricted-read? [ident]
-  (not (:public-passthrough ident)))
+  (not (:authorized-anonymous ident)))
 
 (defn handle-read
   "Generate an ES read handler using some mapping and schema"

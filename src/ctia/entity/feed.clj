@@ -90,13 +90,8 @@
   {(s/optional-key :judgements) [Judgement]
    (s/optional-key :observables) [Observable]})
 
-(def feed-produces
-  (let [formats (get-in api-middleware-defaults [:format :formats])
-        additional-formats #{"text/csv"}]
-
-    (concat
-     (->mime-types (remove {:clojure :yaml-in-html} formats))
-     additional-formats)))
+(def identity-map
+  {:authorized-anonymous true})
 
 (defn fetch-feed [id s]
   (if-let [{:keys [indicator_id
@@ -105,7 +100,7 @@
            (read-store :feed
                        read-record
                        id
-                       {:public-passthrough true}
+                       identity-map
                        {})]
 
     (if (= s secret)
@@ -114,25 +109,28 @@
                       :relationship
                       list-records
                       {:all-of {:target_ref indicator_id}}
-                      {:public-passthrough true}
+                      identity-map
                       {:fields [:source_ref]})
                      (map :source_ref)
                      (remove nil?)
                      (map #(read-store :judgement
                                        read-record
                                        %
-                                       {:public-passthrough true}
+                                       identity-map
                                        {}))
                      (remove nil?))]
         (if (seq feed-results)
           (into {:output output}
                 (if (= :observables output)
-                  {:observables (map :observable feed-results)}
-                  {:judgements feed-results}))
+                  {:observables (distinct (map :observable feed-results))}
+                  {:judgements (distinct feed-results)}))
           {}))
-
       :unauthorized)
     :not-found))
+
+(defn sorted-observable-values [data]
+  (sort-by :value
+           (map #(select-keys % [:value]) data)))
 
 (def feed-view-routes
   (routes
@@ -147,13 +145,16 @@
           (case feed
             :not-found (not-found "feed not found")
             :unauthorized (unauthorized "wrong secret")
-            (csv (output feed)
-                 (str id ".csv") false))))
+            (let [data (output feed)
+                  res-str
+                  (if (= (:observables output))
+                    (sorted-observable-values data)
+                    data)]
+              (csv res-str (str id ".csv") false)))))
    (GET "/:id/view" []
         :summary "Get a Feed View"
         :path-params [id :- s/Str]
         :return FeedView
-        :produces feed-produces
         :query-params [s :- (describe s/Str "The feed share token")]
         (let [feed (fetch-feed id s)]
           (case feed

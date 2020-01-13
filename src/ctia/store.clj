@@ -30,6 +30,7 @@
 (def empty-stores
   {:judgement []
    :indicator []
+   :feed []
    :feedback []
    :campaign []
    :actor []
@@ -46,8 +47,7 @@
    :investigation []
    :casebook []
    :vulnerability []
-   :weakness []
-   :feed []})
+   :weakness []})
 
 (defonce stores (atom empty-stores))
 
