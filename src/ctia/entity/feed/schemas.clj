@@ -105,8 +105,8 @@
              :timestamp (or (:timestamp new-object) now)
              :tlp (:tlp new-object
                         (:tlp prev-object (properties-default-tlp)))}
-            (when (contains-key? Feed :valid_time)
-              (make-valid-time
-               (:valid_time prev-object)
-               (:valid_time new-object)
-               now))))))
+            (when (contains-key? Feed :lifetime)
+              {:lifetime (:valid_time (make-valid-time
+                                       (:lifetime prev-object)
+                                       (:lifetime new-object)
+                                       now))})))))

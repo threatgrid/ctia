@@ -224,11 +224,8 @@
           feed-view-url-csv (:feed_view_url_csv feed)
           feed-view-url-csv-wrong-secret (->> (drop-last feed-view-url-csv)
                                               (string/join ""))
-          response (client/get feed-view-url
-                               {:as :json
-                                :headers {"Authorization" "45c1f5e3f05d0"}})
-          response-csv (client/get feed-view-url-csv
-                                   {:headers {"Authorization" "45c1f5e3f05d0"}})
+          response (client/get feed-view-url {:as :json})
+          response-csv (client/get feed-view-url-csv {})
 
           response-csv-wrong-secret
           (client/get feed-view-url-csv-wrong-secret
@@ -267,15 +264,12 @@
                 feed-view-url-csv-wrong-secret (->> (drop-last feed-view-url-csv)
                                                     (string/join ""))
                 response (client/get feed-view-url
-                                     {:as :json
-                                      :headers {"Authorization" "45c1f5e3f05d0"}})
-                response-csv (client/get feed-view-url-csv
-                                         {:headers {"Authorization" "45c1f5e3f05d0"}})
+                                     {:as :json})
+                response-csv (client/get feed-view-url-csv {})
 
                 response-csv-wrong-secret
                 (client/get feed-view-url-csv-wrong-secret
-                            {:throw-exceptions false
-                             :headers {"Authorization" "45c1f5e3f05d0"}})
+                            {:throw-exceptions false})
                 response-body (:body response)
                 response-body-csv (:body response-csv)
                 response-body-csv-wrong-secret (:body response-csv-wrong-secret)]

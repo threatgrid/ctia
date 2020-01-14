@@ -110,7 +110,6 @@
                        id
                        identity-map
                        {})]
-
     (cond
       (not (valid-lifetime? lifetime)) :not-found
       (not= s secret) :unauthorized
@@ -128,8 +127,7 @@
                             {:all-of {:target_ref indicator_id}}
                             feed-identity
                             {:fields [:source_ref]})
-                           (map :source_ref)
-                           (remove nil?)
+                           (keep :source_ref)
                            (map #(read-store :judgement
                                              read-record
                                              %
@@ -137,7 +135,6 @@
                                              {}))
                            (remove nil?)
                            (map with-long-id))]
-
               (cond-> {}
                 (= :observables output)
                 (assoc
@@ -192,7 +189,6 @@
 
 (def feed-routes
   (routes
-   feed-view-routes
    (entity-crud-routes
     {:api-tags ["Feed"]
      :entity :feed

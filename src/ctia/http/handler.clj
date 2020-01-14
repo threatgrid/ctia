@@ -2,6 +2,7 @@
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [clojure.string :as string]
             [ctia.entity.entities :refer [entities]]
+            [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.casebook :refer [casebook-operation-routes]]
             [ctia.entity.incident :refer [incident-additional-routes]]
             [ctia.entity.feedback :refer [feedback-by-entity-route]]
@@ -190,6 +191,10 @@
            (graphql-ui-routes)
            (context
                "/ctia" []
+
+             (context "/feed" []
+               :tags ["Feed"]
+               feed-view-routes)
              ;; The order is important here for version-routes
              ;; must be before the middleware fn
              version-routes
