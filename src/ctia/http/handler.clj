@@ -191,7 +191,6 @@
            (graphql-ui-routes)
            (context
                "/ctia" []
-
              (context "/feed" []
                :tags ["Feed"]
                feed-view-routes)

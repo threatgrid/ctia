@@ -10,7 +10,7 @@
    [ctia.test-helpers
     [access-control :refer [access-control-test]]
     [auth :refer [all-capabilities]]
-    [core :as helpers :refer [post-entity-bulk]]
+    [core :as helpers :refer [post]]
     [crud :refer [entity-crud-test]]
     [fake-whoami-service :as whoami-helpers]
     [field-selection :refer [field-selection-tests]]
@@ -226,7 +226,6 @@
                                               (string/join ""))
           response (client/get feed-view-url {:as :json})
           response-csv (client/get feed-view-url-csv {})
-
           response-csv-wrong-secret
           (client/get feed-view-url-csv-wrong-secret
                       {:throw-exceptions false
@@ -345,18 +344,20 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (testing "With Blocklist fixtures imported"
-       (let [ids (post-entity-bulk
-                  (assoc new-feed-maximal :title "foo")
-                  :feeds
-                  345
-                  {"Authorization" "45c1f5e3f05d0"})]
-         (field-selection-tests
-          ["ctia/feed/search?query=*"
-           (doc-id->rel-url (first ids))]
-          {"Authorization" "45c1f5e3f05d0"}
-          sort-restricted-feed-fields))
-
+     (let [entities (repeat 345 (assoc new-feed-maximal
+                                       :title "foo"))
+           ids (->> (doall (map #(post "/ctia/feed"
+                                       :body (dissoc % :id)
+                                       :headers {"Authorization"
+                                                 "45c1f5e3f05d0"})
+                                entities))
+                    (map :parsed-body)
+                    (map :id))]
+       (field-selection-tests
+        ["ctia/feed/search?query=*"
+         (doc-id->rel-url (first ids))]
+        {"Authorization" "45c1f5e3f05d0"}
+        sort-restricted-feed-fields)
        (pagination-test
         "ctia/feed/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}

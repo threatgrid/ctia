@@ -1,5 +1,6 @@
 (ns ctia.entity.feed.schemas
   (:require
+   [ctia.encryption :as encryption]
    [clj-momo.lib.time :as time]
    [ctia.domain
     [access-control :refer [properties-default-tlp]]
@@ -84,12 +85,19 @@
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
    (let [long-id (short-id->long-id id)
-         secret (or (:secret prev-object)
-                    (str (java.util.UUID/randomUUID)))
-         feed_view_url (or (:feed_view_url prev-object)
-                           (str long-id "/view?s=" secret))
-         feed_view_url_csv (or (:feed_view_url_csv prev-object)
-                               (str long-id "/view.csv?s=" secret))
+         plain-secret (str (java.util.UUID/randomUUID))
+         secret
+         (or (:secret prev-object)
+             (encryption/encrypt-src
+              plain-secret))
+         feed_view_url
+         (or (:feed_view_url prev-object)
+             (encryption/encrypt-src
+              (str long-id "/view?s=" plain-secret)))
+         feed_view_url_csv
+         (or (:feed_view_url_csv prev-object)
+             (encryption/encrypt-src
+              (str long-id "/view.csv?s=" plain-secret)))
          now (time/now)]
      (merge new-object
             {:id id

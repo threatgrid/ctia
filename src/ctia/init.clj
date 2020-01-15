@@ -1,5 +1,7 @@
 (ns ctia.init
   (:require
+   [ctia.encryption.default :as encryption-default]
+   [ctia.encryption :as encryption]
    [ctia.entity.entities :refer [validate-entities]]
    [clj-momo.properties :as mp]
    [clojure.tools.logging :as log]
@@ -23,8 +25,7 @@
    [ctia.http.server :as http-server]
    [ctia.shutdown :as shutdown]
    [ctia.stores.es
-    [init :as es-init]
-    [store :as es-store]]))
+    [init :as es-init]]))
 
 (defn init-auth-service! []
   (let [{auth-service-type :type :as auth} (get-in @p/properties [:ctia :auth])]
@@ -35,6 +36,22 @@
       (throw (ex-info "Auth service not configured"
                       {:message "Unknown service"
                        :requested-service auth-service-type})))))
+
+(defn init-encryption-service! []
+  (let [{:keys [type] :as encryption-properties}
+        (get-in @p/properties [:ctia :encryption])]
+
+    (case type
+      :default (do (reset! encryption/encryption-service
+                           (encryption-default/map->EncryptionService
+                            (assoc encryption-properties
+                                   :state (atom nil))))
+                   (encryption/init
+                    @encryption/encryption-service
+                    encryption-properties))
+      (throw (ex-info "Encryption service not configured"
+                      {:message "Unknown service"
+                       :requested-service type})))))
 
 (defn- get-store-types [store-kw]
   (or (some-> (get-in @p/properties [:ctia :store store-kw])
@@ -92,6 +109,7 @@
   (when (get-in @p/properties [:ctia :events :log])
     (event-logging/init!))
 
+  (init-encryption-service!)
   (init-auth-service!)
   (init-store-service!)
 

@@ -69,6 +69,10 @@
                       "ctia.auth.static.group" s/Str
                       "ctia.auth.static.readonly-for-anonymous" s/Bool})
 
+   (st/optional-keys {"ctia.encryption.type" (s/enum :default)
+                      "ctia.encryption.secret" s/Str
+                      "ctia.encryption.filepath" s/Str})
+
    (st/required-keys {"ctia.http.enabled" s/Bool
                       "ctia.http.port" s/Int
                       "ctia.http.access-control-allow-origin" s/Str
