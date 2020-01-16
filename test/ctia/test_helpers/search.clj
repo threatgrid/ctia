@@ -238,8 +238,6 @@
 (defn test-query-string-search
   [entity query query-field example]
   ;; only when ES store
-
-
   (when (= "es" (get-in @properties [:ctia :store (keyword entity)]))
     (if (= :description query-field)
       (test-describable-search entity example)

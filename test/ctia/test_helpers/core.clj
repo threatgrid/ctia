@@ -220,8 +220,10 @@
 
 (defn post-entity-bulk [example plural x headers]
   (let [new-records
-        (for [_ (range 0 x)]
-          (dissoc example :id))]
+        (for [y (range 0 x)]
+          (-> example
+              (dissoc :id)
+              (assoc :revision y)))]
     (-> (post "ctia/bulk"
               :body {plural new-records}
               :headers headers
