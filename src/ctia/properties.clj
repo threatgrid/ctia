@@ -71,7 +71,7 @@
 
    (st/optional-keys {"ctia.encryption.type" (s/enum :default)
                       "ctia.encryption.secret" s/Str
-                      "ctia.encryption.filepath" s/Str})
+                      "ctia.encryption.key.filepath" s/Str})
 
    (st/required-keys {"ctia.http.enabled" s/Bool
                       "ctia.http.port" s/Int

@@ -112,12 +112,12 @@
     :as feed}]
   (cond-> feed
     secret (assoc :secret
-                  (encryption/decrypt-src secret))
+                  (encryption/decrypt-str secret))
     feed_view_url (assoc :feed_view_url
-                         (encryption/decrypt-src
+                         (encryption/decrypt-str
                           feed_view_url))
     feed_view_url_csv (assoc :feed_view_url_csv
-                             (encryption/decrypt-src
+                             (encryption/decrypt-str
                               feed_view_url_csv))))
 
 (defn decrypt-feed-page [feed-page]
@@ -139,7 +139,7 @@
                        {})]
     (cond
       (not (valid-lifetime? lifetime)) :not-found
-      (not= s (encryption/decrypt-src secret)) :unauthorized
+      (not= s (encryption/decrypt-str secret)) :unauthorized
       :else (let [;; VERY IMPORTANT! inherit the identity from the Feed!
                   feed-identity
                   {:login owner

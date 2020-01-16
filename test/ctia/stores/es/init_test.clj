@@ -3,7 +3,6 @@
             [clj-http.client :as http]
             [clj-momo.lib.es
              [index :as index]
-             [document :as doc]
              [conn :as conn]]
             [clojure.test :refer [deftest testing is]]))
 

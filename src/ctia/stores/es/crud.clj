@@ -6,7 +6,10 @@
             [clojure.string :as string]
             [ctia.domain.access-control
              :refer
-             [acl-fields allow-read? allow-write?]]
+             [restricted-read?
+              acl-fields
+              allow-read?
+              allow-write?]]
             [ctia.lib.pagination :refer [list-response-schema]]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ring.swagger.coerce :as sc]
@@ -35,7 +38,7 @@
   document ID, if it's a document ID already, it will just return
   that."
   [id]
-  (let [[_ docid] (re-matches #".*?([^/]+)\z" id) ]
+  (let [[_orig docid] (re-matches #".*?([^/]+)\z" id) ]
     docid))
 
 (defn ensure-document-id-in-map
@@ -74,7 +77,7 @@
     {:error \"Error message item2\"}
     {model3}]"
   [exception-data models coerce-fn]
-  (let [{{:keys [_ items]}
+  (let [{{:keys [_errors items]}
          :es-http-res-body} exception-data]
     {:data (map (fn [{:keys [error _id]} model]
                   (if error
@@ -163,9 +166,6 @@ It returns the documents with full hits meta data including the real index in wh
           (throw (ex-info "You are not allowed to update this document"
                           {:type :access-control-error})))))))
 
-(defn restricted-read? [ident]
-  (not (:authorized-anonymous ident)))
-
 (defn handle-read
   "Generate an ES read handler using some mapping and schema"
   [mapping Model]
@@ -181,8 +181,7 @@ It returns the documents with full hits meta data including the real index in wh
                                              (make-es-read-params params))
                          :_source
                          coerce!)]
-        (if (or (not (restricted-read? ident))
-                (allow-read? doc ident))
+        (if (allow-read? doc ident)
           doc
           (throw (ex-info "You are not allowed to read this document"
                           {:type :access-control-error})))))))
@@ -194,7 +193,7 @@ It returns the documents with full hits meta data including the real index in wh
 
 (defn handle-delete
   "Generate an ES delete handler using some mapping and schema"
-  [mapping Model]
+  [mapping _Model]
   (s/fn :- s/Bool
     [state :- ESConnState
      id :- s/Str
@@ -202,17 +201,17 @@ It returns the documents with full hits meta data including the real index in wh
      {:keys [refresh]}]
     (when-let [{index :_index doc :_source}
                (get-doc-with-index state mapping id {})]
-        (if (allow-write? doc ident)
-          (d/delete-doc (:conn state)
-                        index
-                        (name mapping)
-                        (ensure-document-id id)
-                        (or refresh
-                            (get-in state
-                                    [:props :refresh]
-                                    "false")))
-          (throw (ex-info "You are not allowed to delete this document"
-                          {:type :access-control-error}))))))
+      (if (allow-write? doc ident)
+        (d/delete-doc (:conn state)
+                      index
+                      (name mapping)
+                      (ensure-document-id id)
+                      (or refresh
+                          (get-in state
+                                  [:props :refresh]
+                                  "false")))
+        (throw (ex-info "You are not allowed to delete this document"
+                        {:type :access-control-error}))))))
 
 (def default-sort-field :_doc)
 
@@ -323,15 +322,16 @@ It returns the documents with full hits meta data including the real index in wh
       (let [query_string (into {:query query}
                                (when default_operator
                                  {:default_operator default_operator}))]
-        (update
-         (coerce! (d/search-docs conn
-                                 index
-                                 (name mapping)
-                                 {:bool {:must [(find-restriction-query-part ident)
-                                                {:query_string query_string}]}}
-                                 (ensure-document-id-in-map filter-map)
-                                 (-> params
-                                     rename-sort-fields
-                                     with-default-sort-field
-                                     make-es-read-params)))
-         :data access-control-filter-list ident)))))
+        (cond-> (coerce! (d/search-docs conn
+                                        index
+                                        (name mapping)
+                                        {:bool {:must [(find-restriction-query-part ident)
+                                                       {:query_string query_string}]}}
+                                        (ensure-document-id-in-map filter-map)
+                                        (-> params
+                                            rename-sort-fields
+                                            with-default-sort-field
+                                            make-es-read-params)))
+          (restricted-read? ident) (update :data
+                                           access-control-filter-list
+                                           ident))))))

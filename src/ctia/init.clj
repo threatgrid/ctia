@@ -44,8 +44,7 @@
     (case type
       :default (do (reset! encryption/encryption-service
                            (encryption-default/map->EncryptionService
-                            (assoc encryption-properties
-                                   :state (atom nil))))
+                            {:state (atom nil)}))
                    (encryption/init
                     @encryption/encryption-service
                     encryption-properties))

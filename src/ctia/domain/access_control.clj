@@ -93,9 +93,13 @@
           (allowed-group? current-doc
                           ident)) true)))
 
+(defn restricted-read? [ident]
+  (not (:authorized-anonymous ident)))
+
 (s/defn allow-read? :- s/Bool
   [doc ident]
   (boolean
-   (or (and (max-record-visibility-everyone?)
+   (or (not (restricted-read? ident))
+       (and (max-record-visibility-everyone?)
             (some #{(:tlp doc)} public-tlps))
        (allow-write? doc ident))))

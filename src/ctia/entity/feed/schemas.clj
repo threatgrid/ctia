@@ -88,15 +88,15 @@
          plain-secret (str (java.util.UUID/randomUUID))
          secret
          (or (:secret prev-object)
-             (encryption/encrypt-src
+             (encryption/encrypt-str
               plain-secret))
          feed_view_url
          (or (:feed_view_url prev-object)
-             (encryption/encrypt-src
+             (encryption/encrypt-str
               (str long-id "/view?s=" plain-secret)))
          feed_view_url_csv
          (or (:feed_view_url_csv prev-object)
-             (encryption/encrypt-src
+             (encryption/encrypt-str
               (str long-id "/view.csv?s=" plain-secret)))
          now (time/now)]
      (merge new-object
@@ -111,8 +111,10 @@
              :created (or (:created prev-object) now)
              :modified now
              :timestamp (or (:timestamp new-object) now)
-             :tlp (:tlp new-object
-                        (:tlp prev-object (properties-default-tlp)))}
+             :tlp
+             (:tlp new-object
+                   (:tlp prev-object
+                         (properties-default-tlp)))}
             (when (contains-key? Feed :lifetime)
               {:lifetime (:valid_time (make-valid-time
                                        (:lifetime prev-object)
