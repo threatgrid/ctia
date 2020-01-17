@@ -47,12 +47,11 @@
   [ms include-headers?]
   (let [flattened-ms (map deep-flatten-map ms)
         ks (keys (apply merge flattened-ms))]
-    (string/join "\n"
-                 (cons
-                  (when include-headers?
-                    (string/join "," (map #(field-protect (name %)) ks)))
-                  (for [m flattened-ms]
-                    (string/join "," (map #(field-protect (get m % "")) ks)))))))
+    (string/join
+     "\n"
+     (cond-> (for [m flattened-ms]
+               (string/join "," (map #(field-protect (get m % "")) ks)))
+       include-headers? (conj (string/join "," (map #(field-protect (name %)) ks)))))))
 
 (defn csv-http-headers [filename]
   {"Content-Type" "text/csv; charset=utf8"

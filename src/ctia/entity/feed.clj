@@ -131,13 +131,15 @@
                    output
                    lifetime
                    owner
-                   groups]}
+                   groups]
+            :as feed}
            (read-store :feed
                        read-record
                        id
                        identity-map
                        {})]
     (cond
+      (not feed) :not-found
       (not (valid-lifetime? lifetime)) :not-found
       (not= s (encryption/decrypt-str secret)) :unauthorized
       :else (let [;; VERY IMPORTANT! inherit the identity from the Feed!
