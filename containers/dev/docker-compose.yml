@@ -12,7 +12,7 @@ services:
       - "9200:9200"
       - "9300:9300"
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:5.3.2
     hostname: "zookeeper"
     environment:
       ZOOKEEPER_SERVER_ID: 1
@@ -25,7 +25,7 @@ services:
       - "2181:2181"
 
   kafka:
-    image: confluentinc/cp-kafka:latest
+    image: confluentinc/cp-kafka:5.3.2
     hostname: "localhost"
     depends_on:
       - zookeeper
