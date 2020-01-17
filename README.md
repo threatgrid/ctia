@@ -250,6 +250,23 @@ Response of the bundle API endpoint:
 |`:external_id` |External ID used to identify the entity|
 |`:error`       |Error message|
 
+
+### Feeds
+
+CTIA allows generating Feeds as public urls meant to easily exchange data 
+through views skipping authentication. You may use this functionality to generate blocklists
+easily consumable by simple systems.
+
+The first kind of `Feed` is the `Indicator` one, you may create it posting a `Feed` document
+specifying an `indicator_id` and an `output` type.
+
+CTIA will then return the realized `Feed` document including two new fields: `feed_view_url` and `feed_view_url_csv`
+
+- both of those urls will be publicly available without authentication so they must be shared carefully.
+- both urls return the Judgements associated with the provided `indicator_id` through their relationships
+- depending on the selected `output` it will either extract and return the observables only or the full Judgements
+- the CSV view output either the full `Judgement` as CSV or the Observable values only depending on the `output`. 
+
 ### Elasticsearch Store management
 
 see [CTIA Elasticsearch Stores: managing big Indices](doc/es_stores.md)
