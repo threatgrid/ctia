@@ -109,6 +109,9 @@
                  [markdown-clj "1.0.1"]
                  [hiccup "2.0.0-alpha1"]
 
+                 ;; Encryption
+                 [lock-key "1.5.0"]
+
                  ;; Hooks
                  [threatgrid/redismq "0.1.1"]
 

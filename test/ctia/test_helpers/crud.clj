@@ -30,7 +30,7 @@
                                         [:ctia :store :es :default :refresh])
                                 (str "refresh="))
         es-params (atom nil)
-        simple-handler (fn [{:keys [query-string] :as p}]
+        simple-handler (fn [{:keys [query-string]}]
                          (reset! es-params query-string)
                          {:status 200
                           :headers {"Content-Type" "application/json"}

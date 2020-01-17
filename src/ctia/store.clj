@@ -1,6 +1,4 @@
-(ns ctia.store
-  (:require
-   [clojure.tools.logging :as log]))
+(ns ctia.store)
 
 (defprotocol IStore
   (create-record [this new-records ident params])
@@ -32,6 +30,7 @@
 (def empty-stores
   {:judgement []
    :indicator []
+   :feed []
    :feedback []
    :campaign []
    :actor []

@@ -63,6 +63,9 @@
 (defn short-id->long-id [id]
   (id/short-id->long-id id get-http-show))
 
+(defn long-id->id [id]
+  (id/long-id->id id))
+
 (defn with-long-id [entity]
   (update entity :id short-id->long-id))
 

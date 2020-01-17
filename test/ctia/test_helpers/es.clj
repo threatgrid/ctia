@@ -6,7 +6,6 @@
              [document :as es-doc]
              [index :as es-index]]
             [ctia
-             [properties :refer [properties]]
              [store :as store]]
             [ctia.stores.es
              [init :as es-init]
@@ -14,7 +13,7 @@
             [ctia.test-helpers.core :as h]))
 
 (defn refresh-indices [entity]
-  (let [{:keys [type host port]}
+  (let [{:keys [host port]}
         (es-init/get-store-properties entity)]
     (http/post (format "http://%s:%s/_refresh" host port))))
 
@@ -97,6 +96,7 @@
                       "ctia.store.coa" "es"
                       "ctia.store.data-table" "es"
                       "ctia.store.event" "es"
+                      "ctia.store.feed" "es"
                       "ctia.store.feedback" "es"
                       "ctia.store.identity" "es"
                       "ctia.store.incident" "es"
@@ -143,7 +143,7 @@
     (str "http://" host ":" port "/" indexname "/" (name t) "/")))
 
 (defn post-to-es [obj]
-  (let [{:keys [status] :as response}
+  (let [{:keys [status]}
         (http/post
          (url-for-type (-> obj :type keyword))
          {:as :json
@@ -188,8 +188,7 @@
 (defn get-cat-indices [host port]
   (let [url (make-cat-indices-url host
                                   port)
-        {:keys [body]
-         :as cat-response} (http/get url {:as :json})]
+        {:keys [body]} (http/get url {:as :json})]
     (->> body
          (map (fn [{:keys [index]
                     :as entry}]
