@@ -53,7 +53,6 @@
             :output em/token
             :secret em/token
             :feed_view_url em/token
-            :feed_view_url_csv em/token
             :indicator_id em/token})}})
 
 (def-es-store FeedStore :feed StoredFeed PartialStoredFeed)

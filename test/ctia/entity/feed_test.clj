@@ -220,25 +220,16 @@
 
 (defn feed-view-tests [feed-id feed]
   (testing "GET /ctia/feed/:id/view?s=:secret"
-    (let [feed-view-url (:feed_view_url feed)
-          feed-view-url-csv (:feed_view_url_csv feed)
+    (let [feed-view-url-csv (:feed_view_url feed)
           feed-view-url-csv-wrong-secret (->> (drop-last feed-view-url-csv)
                                               (string/join ""))
-          response (client/get feed-view-url {:as :json})
           response-csv (client/get feed-view-url-csv {})
           response-csv-wrong-secret
           (client/get feed-view-url-csv-wrong-secret
                       {:throw-exceptions false
                        :headers {"Authorization" "45c1f5e3f05d0"}})
-          response-body (:body response)
           response-body-csv (:body response-csv)
           response-body-csv-wrong-secret (:body response-csv-wrong-secret)]
-
-      (is (= 200 (:status response)))
-      (is (= {:observables [{:value "187.75.16.76", :type "ip"}
-                            {:value "187.75.16.75", :type "ip"}
-                            {:value "187.75.16.77", :type "ip"}]}
-             response-body))
 
       (is (= 200 (:status response-csv)))
       (is (= "\"\\\"187.75.16.75\\\"\\n\\\"187.75.16.76\\\"\\n\\\"187.75.16.77\\\"\""
@@ -253,47 +244,23 @@
               updated-feed-response
               (helpers/put (str "ctia/feed/" (:short-id feed-id))
                            :body feed-update
-                           :headers {"Authorization" "45c1f5e3f05d0"})]
+                           :headers {"Authorization" "45c1f5e3f05d0"})
+              updated-feed (:parsed-body updated-feed-response)]
           (is (= 200 (:status updated-feed-response)))
-          (is (= feed-update
-                 (:parsed-body updated-feed-response)))
+          (is (= (dissoc feed-update :feed_view_url)
+                 (dissoc updated-feed
+                         :feed_view_url)))
 
-          (let [feed-view-url (:feed_view_url feed)
-                feed-view-url-csv (:feed_view_url_csv feed)
-                feed-view-url-csv-wrong-secret (->> (drop-last feed-view-url-csv)
-                                                    (string/join ""))
+          (let [feed-view-url (:feed_view_url updated-feed)
                 response (client/get feed-view-url
                                      {:as :json})
-                response-csv (client/get feed-view-url-csv {})
-
-                response-csv-wrong-secret
-                (client/get feed-view-url-csv-wrong-secret
-                            {:throw-exceptions false})
-                response-body (:body response)
-                response-body-csv (:body response-csv)
-                response-body-csv-wrong-secret (:body response-csv-wrong-secret)]
+                response-body (:body response)]
 
             (is (= 200 (:status response)))
             (is (= (set (map :observable
                              (:judgements blocklist-bundle)))
                    (set (map :observable
                              (:judgements response-body)))))
-
-            (is (= 200 (:status response-csv)))
-            (is (string/includes?
-                 response-body-csv
-                 "\"\\\"confidence\\\",\\\"owner\\\"")
-                "headers are rendered")
-
-            (is (string/includes?
-                 response-body-csv
-                 "\\\"High\\\",\\\"foouser\\\"")
-                "Judgement data is included")
-
-            (is (= 401 (:status response-csv-wrong-secret)))
-            (is (= "wrong secret"
-                   response-body-csv-wrong-secret))
-
             ;;teardown
             (is (= 200
                    (:status
