@@ -116,9 +116,4 @@
              :tlp
              (:tlp new-object
                    (:tlp prev-object
-                         (properties-default-tlp)))}
-            (when (contains-key? Feed :lifetime)
-              {:lifetime (:valid_time (make-valid-time
-                                       (:lifetime prev-object)
-                                       (:lifetime new-object)
-                                       now))})))))
+                         (properties-default-tlp)))}))))

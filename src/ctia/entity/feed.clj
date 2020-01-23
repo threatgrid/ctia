@@ -1,5 +1,6 @@
 (ns ctia.entity.feed
   (:require
+   [clojure.string :as string]
    [ctia.encryption :as encryption]
    [ctia.http.routes.crud :refer [wait_for->refresh]]
    [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
@@ -25,7 +26,6 @@
      paginated-ok
      PagingParams
      search-options]]
-   [ctia.lib.csv :refer [csv]]
    [ctia.schemas
     [core :refer [Observable]]
     [sorting :as sorting]]
@@ -191,6 +191,7 @@
      :summary "Get a Feed View as a CSV"
      :path-params [id :- s/Str]
      :return s/Str
+     :coercion (constantly nil)
      :produces #{"text/csv"}
      :query-params [s :- (describe s/Str "The feed share token")]
      (let [{:keys [output]
@@ -199,11 +200,14 @@
          :not-found (not-found "feed not found")
          :unauthorized (unauthorized "wrong secret")
          (let [data (output feed)
-               transformed (if (= :observables output)
-                             (sorted-observable-values data)
-                             data)]
-           (csv transformed (str id ".csv")
-                (render-headers? output))))))
+               transformed (some->> (sorted-observable-values data)
+                                    (map :value)
+                                    (string/join \newline))]
+           (into
+            (ok transformed)
+            {:compojure.api.meta/serializable? false
+             :headers {"Content-Type" "text/csv; charset=utf8"
+                       "Content-Disposition" (str "attachment;filename=" id)}})))))
    (GET "/:id/view" []
      :summary "Get a Feed View"
      :path-params [id :- s/Str]

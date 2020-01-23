@@ -227,12 +227,13 @@
           response-csv-wrong-secret
           (client/get feed-view-url-csv-wrong-secret
                       {:throw-exceptions false
+                       :accept "text/csv"
                        :headers {"Authorization" "45c1f5e3f05d0"}})
           response-body-csv (:body response-csv)
           response-body-csv-wrong-secret (:body response-csv-wrong-secret)]
 
       (is (= 200 (:status response-csv)))
-      (is (= "\"\\\"187.75.16.75\\\"\\n\\\"187.75.16.76\\\"\\n\\\"187.75.16.77\\\"\""
+      (is (= "187.75.16.75\n187.75.16.76\n187.75.16.77"
              response-body-csv))
 
       (is (= 401 (:status response-csv-wrong-secret)))
