@@ -1,5 +1,6 @@
 (ns ctia.entity.feed
   (:require
+   [clojure.string :as string]
    [ctia.encryption :as encryption]
    [ctia.http.routes.crud :refer [wait_for->refresh]]
    [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
@@ -25,7 +26,6 @@
      paginated-ok
      PagingParams
      search-options]]
-   [ctia.lib.csv :refer [csv]]
    [ctia.schemas
     [core :refer [Observable]]
     [sorting :as sorting]]
@@ -53,7 +53,6 @@
             :output em/token
             :secret em/token
             :feed_view_url em/token
-            :feed_view_url_csv em/token
             :indicator_id em/token})}})
 
 (def-es-store FeedStore :feed StoredFeed PartialStoredFeed)
@@ -107,18 +106,14 @@
 
 (defn decrypt-feed
   [{:keys [secret
-           feed_view_url
-           feed_view_url_csv]
+           feed_view_url]
     :as feed}]
   (cond-> feed
     secret (assoc :secret
                   (encryption/decrypt-str secret))
     feed_view_url (assoc :feed_view_url
                          (encryption/decrypt-str
-                          feed_view_url))
-    feed_view_url_csv (assoc :feed_view_url_csv
-                             (encryption/decrypt-str
-                              feed_view_url_csv))))
+                          feed_view_url))))
 
 (defn decrypt-feed-page [feed-page]
   (update feed-page :data
@@ -188,11 +183,12 @@
 
 (def feed-view-routes
   (routes
-   (GET "/:id/view.csv" []
-     :summary "Get a Feed View as a CSV"
+   (GET "/:id/view.txt" []
+     :summary "Get a Feed View as newline separated entries"
      :path-params [id :- s/Str]
      :return s/Str
-     :produces #{"text/csv"}
+     :coercion (constantly nil)
+     :produces #{"text/plain"}
      :query-params [s :- (describe s/Str "The feed share token")]
      (let [{:keys [output]
             :as feed} (fetch-feed id s)]
@@ -200,11 +196,12 @@
          :not-found (not-found "feed not found")
          :unauthorized (unauthorized "wrong secret")
          (let [data (output feed)
-               transformed (if (= :observables output)
-                             (sorted-observable-values data)
-                             data)]
-           (csv transformed (str id ".csv")
-                (render-headers? output))))))
+               transformed (some->> (sorted-observable-values data)
+                                    (map :value)
+                                    (string/join \newline))]
+           (into (ok transformed)
+                 {:compojure.api.meta/serializable? false
+                  :headers {"Content-Type" "text/plain; charset=utf8"}})))))
    (GET "/:id/view" []
      :summary "Get a Feed View"
      :path-params [id :- s/Str]

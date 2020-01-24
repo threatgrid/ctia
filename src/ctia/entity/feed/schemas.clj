@@ -5,9 +5,7 @@
    [ctia.domain
     [access-control :refer [properties-default-tlp]]
     [entities
-     :refer [contains-key?
-             make-valid-time
-             schema-version
+     :refer [schema-version
              short-id->long-id]]]
    [ctia.schemas
     [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs]]
@@ -44,7 +42,6 @@
     (f/entry :title csc/ShortString)
     (f/entry :secret f/any-str)
     (f/entry :feed_view_url f/any-str)
-    (f/entry :feed_view_url_csv f/any-str)
     (f/entry :indicator_id f/any-str)
     (f/entry :lifetime csc/ValidTime))))
 
@@ -85,19 +82,21 @@
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
    (let [long-id (short-id->long-id id)
-         plain-secret (str (java.util.UUID/randomUUID))
+         plain-secret (if-let [prev-secret (:secret prev-object)]
+                        (encryption/decrypt-str prev-secret)
+                        (str (java.util.UUID/randomUUID)))
+         output (or (:output new-object)
+                    (:output prev-object))
          secret
          (or (:secret prev-object)
              (encryption/encrypt-str
               plain-secret))
          feed_view_url
-         (or (:feed_view_url prev-object)
-             (encryption/encrypt-str
-              (str long-id "/view?s=" plain-secret)))
-         feed_view_url_csv
-         (or (:feed_view_url_csv prev-object)
-             (encryption/encrypt-str
-              (str long-id "/view.csv?s=" plain-secret)))
+         (encryption/encrypt-str
+          (str long-id "/view?s=" plain-secret))
+         feed_view_url_txt
+         (encryption/encrypt-str
+          (str long-id "/view.txt?s=" plain-secret))
          now (time/now)]
      (merge new-object
             {:id id
@@ -105,8 +104,9 @@
              :owner (or (:owner prev-object) owner)
              :groups (or (:groups prev-object) groups)
              :secret secret
-             :feed_view_url_csv feed_view_url_csv
-             :feed_view_url feed_view_url
+             :feed_view_url (if (= :judgements output)
+                              feed_view_url
+                              feed_view_url_txt)
              :schema_version schema-version
              :created (or (:created prev-object) now)
              :modified now
@@ -114,9 +114,4 @@
              :tlp
              (:tlp new-object
                    (:tlp prev-object
-                         (properties-default-tlp)))}
-            (when (contains-key? Feed :lifetime)
-              {:lifetime (:valid_time (make-valid-time
-                                       (:lifetime prev-object)
-                                       (:lifetime new-object)
-                                       now))})))))
+                         (properties-default-tlp)))}))))
