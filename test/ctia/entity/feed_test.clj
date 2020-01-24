@@ -220,25 +220,24 @@
 
 (defn feed-view-tests [feed-id feed]
   (testing "GET /ctia/feed/:id/view?s=:secret"
-    (let [feed-view-url-csv (:feed_view_url feed)
-          feed-view-url-csv-wrong-secret (->> (drop-last feed-view-url-csv)
+    (let [feed-view-url-txt (:feed_view_url feed)
+          feed-view-url-txt-wrong-secret (->> (drop-last feed-view-url-txt)
                                               (string/join ""))
-          response-csv (client/get feed-view-url-csv {})
-          response-csv-wrong-secret
-          (client/get feed-view-url-csv-wrong-secret
+          response-txt (client/get feed-view-url-txt {})
+          response-txt-wrong-secret
+          (client/get feed-view-url-txt-wrong-secret
                       {:throw-exceptions false
-                       :accept "text/csv"
                        :headers {"Authorization" "45c1f5e3f05d0"}})
-          response-body-csv (:body response-csv)
-          response-body-csv-wrong-secret (:body response-csv-wrong-secret)]
+          response-body-txt (:body response-txt)
+          response-body-txt-wrong-secret (:body response-txt-wrong-secret)]
 
-      (is (= 200 (:status response-csv)))
+      (is (= 200 (:status response-txt)))
       (is (= "187.75.16.75\n187.75.16.76\n187.75.16.77"
-             response-body-csv))
+             response-body-txt))
 
-      (is (= 401 (:status response-csv-wrong-secret)))
+      (is (= 401 (:status response-txt-wrong-secret)))
       (is (= "wrong secret"
-             response-body-csv-wrong-secret))
+             response-body-txt-wrong-secret))
 
       (testing "feed output judgements"
         (let [feed-update (assoc feed :output :judgements)

@@ -106,18 +106,14 @@
 
 (defn decrypt-feed
   [{:keys [secret
-           feed_view_url
-           feed_view_url_csv]
+           feed_view_url]
     :as feed}]
   (cond-> feed
     secret (assoc :secret
                   (encryption/decrypt-str secret))
     feed_view_url (assoc :feed_view_url
                          (encryption/decrypt-str
-                          feed_view_url))
-    feed_view_url_csv (assoc :feed_view_url_csv
-                             (encryption/decrypt-str
-                              feed_view_url_csv))))
+                          feed_view_url))))
 
 (defn decrypt-feed-page [feed-page]
   (update feed-page :data
@@ -187,12 +183,12 @@
 
 (def feed-view-routes
   (routes
-   (GET "/:id/view.csv" []
-     :summary "Get a Feed View as a CSV"
+   (GET "/:id/view.txt" []
+     :summary "Get a Feed View as newline separated entries"
      :path-params [id :- s/Str]
      :return s/Str
      :coercion (constantly nil)
-     :produces #{"text/csv"}
+     :produces #{"text/plain"}
      :query-params [s :- (describe s/Str "The feed share token")]
      (let [{:keys [output]
             :as feed} (fetch-feed id s)]
@@ -203,11 +199,9 @@
                transformed (some->> (sorted-observable-values data)
                                     (map :value)
                                     (string/join \newline))]
-           (into
-            (ok transformed)
-            {:compojure.api.meta/serializable? false
-             :headers {"Content-Type" "text/csv; charset=utf8"
-                       "Content-Disposition" (str "attachment;filename=" id)}})))))
+           (into (ok transformed)
+                 {:compojure.api.meta/serializable? false
+                  :headers {"Content-Type" "text/plain; charset=utf8"}})))))
    (GET "/:id/view" []
      :summary "Get a Feed View"
      :path-params [id :- s/Str]

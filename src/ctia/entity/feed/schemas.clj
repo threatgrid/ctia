@@ -5,9 +5,7 @@
    [ctia.domain
     [access-control :refer [properties-default-tlp]]
     [entities
-     :refer [contains-key?
-             make-valid-time
-             schema-version
+     :refer [schema-version
              short-id->long-id]]]
    [ctia.schemas
     [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs]]
@@ -96,9 +94,9 @@
          feed_view_url
          (encryption/encrypt-str
           (str long-id "/view?s=" plain-secret))
-         feed_view_url_csv
+         feed_view_url_txt
          (encryption/encrypt-str
-          (str long-id "/view.csv?s=" plain-secret))
+          (str long-id "/view.txt?s=" plain-secret))
          now (time/now)]
      (merge new-object
             {:id id
@@ -108,7 +106,7 @@
              :secret secret
              :feed_view_url (if (= :judgements output)
                               feed_view_url
-                              feed_view_url_csv)
+                              feed_view_url_txt)
              :schema_version schema-version
              :created (or (:created prev-object) now)
              :modified now
