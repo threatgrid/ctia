@@ -28,7 +28,7 @@
              "-Dlog.console.threshold=INFO"
              "-server"]
   :pedantic? :warn
-  :dependencies [[org.clojure/clojure "1.9.0"]
+  :dependencies [[org.clojure/clojure "1.10.1"]
                  [clj-time "0.15.1"]
                  [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
@@ -102,8 +102,10 @@
                  [metrics-clojure-riemann "2.10.0"]
                  [clout "2.1.2"]
                  [slugger "1.0.1"]
-                 [riemann-clojure-client "0.4.5"]
-                 [com.google.protobuf/protobuf-java "3.5.1"]
+                 [riemann-clojure-client "0.5.1"]
+                 [com.google.protobuf/protobuf-java "3.7.1"]
+                 ; https://stackoverflow.com/a/43574427
+                 [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
 
                  ;; Docs
                  [markdown-clj "1.0.1"]
