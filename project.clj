@@ -55,6 +55,9 @@
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version
                   :exclusions [org.clojure/tools.reader]]
+                 ; optional dep for compojure-api's dep ring-middleware-format
+                 ; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
+                 [com.ibm.icu/icu4j "63.1"]
                  [metosin/ring-swagger "0.26.2"
                   :exclusions [commons-io
                                prismatic/plumbing
