@@ -1,7 +1,7 @@
-(def cheshire-version "5.8.1")
+(def cheshire-version "5.9.0")
 (def compojure-api-version "1.1.13")
-(def schema-tools-version "0.9.1")
-(def schema-version "1.1.11")
+(def schema-tools-version "0.11.0")
+(def schema-version "1.1.12")
 (def jetty-server-version "9.4.15.v20190215")
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -100,7 +100,7 @@
                  [metrics-clojure-jvm "2.10.0"]
                  [metrics-clojure-ring "2.10.0"]
                  [metrics-clojure-riemann "2.10.0"]
-                 [clout "2.1.2"]
+                 [clout "2.2.1"]
                  [slugger "1.0.1"]
                  [riemann-clojure-client "0.5.1"]
                  [com.google.protobuf/protobuf-java "3.7.1"]
