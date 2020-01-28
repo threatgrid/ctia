@@ -132,6 +132,11 @@
    {:type token
     :value all_token}})
 
+(def assertion
+  {:properties
+   {:name all_text
+    :value all_text}})
+
 (def related-identities
   {:properties (assoc related
                       :identity all_token

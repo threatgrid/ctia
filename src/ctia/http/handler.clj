@@ -112,6 +112,7 @@
    {:name "Properties", :description "Properties operations"}
    {:name "Casebook", :description "Casebook operations"}
    {:name "Sighting", :description "Sighting operations"}
+   {:name "Identity Assertion", :description "Identity Assertion operations"}
    {:name "Bulk", :description "Bulk operations"}
    {:name "Metrics", :description "Performance Statistics"}
    {:name "Tool", :description "Tool operations"}

@@ -20,6 +20,7 @@
              [malwares :refer [malware-maximal]]
              [relationships :refer [relationship-maximal]]
              [sightings :refer [sighting-maximal]]
+             [identity-assertions :refer [identity-assertion-maximal]]
              [tools :refer [tool-maximal]]]
             [perforate.core :refer [defcase defgoal]]))
 

@@ -52,6 +52,15 @@
    :sensor "endpoint.sensor"
    :confidence "High"})
 
+(defn mk-identity-assertion [n]
+{:id (id/make-transient-id nil)
+ :external_ids [(str "ctia-identity-aasertion-" n)]
+ :timestamp #inst "2016-02-11T00:40:48.212-00:00"
+ :valid_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}
+ :identity {:type "endpoint" :os "Windows 95" :observables [{:type "ip" :value "100.213.110.122"}] :observed_time {:start_time #inst "2016-02-01T00:00:00.000-00:00"}}
+ :assertions [{:name "tag" :value "foo"}]
+ :source "source"})
+
 (defn mk-indicator
   [n]
   {:id (id/make-transient-id nil)
@@ -210,6 +219,8 @@
                        (mk-indicator 1)]
            sightings [(mk-sighting 0)
                       (mk-sighting 1)]
+           identity_assertions [(mk-identity-assertion 0)
+                                (mk-identity-assertion 1)]
            relationships (map (fn [idx indicator sighting]
                                 (mk-relationship idx indicator
                                                  sighting "indicates"))
@@ -232,6 +243,7 @@
                        :source "source"
                        :indicators (set indicators)
                        :sightings (set sightings)
+                       :identity_assertions (set identity_assertions)
                        :relationships (set relationships)}
                response (post "ctia/bundle/import"
                               :body bundle

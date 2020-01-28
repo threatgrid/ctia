@@ -326,6 +326,7 @@ Rate limit related configuration
   =relationship=
   =scratchpad=
   =sighting=
+  =identity-assertion=
   =tool=
 
 

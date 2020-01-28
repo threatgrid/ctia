@@ -17,6 +17,7 @@
     [sighting :refer [sighting-entity]]
     [judgement :refer [judgement-entity]]
     [casebook :refer [casebook-entity]]
+    [identity-assertion :refer [identity-assertion-entity]]
     [actor :refer [actor-entity]]
     [campaign :refer [campaign-entity]]
     [coa :refer [coa-entity]]
@@ -43,6 +44,7 @@
    :malware malware-entity
    :relationship relationship-entity
    :sighting sighting-entity
+   :identity-assertion identity-assertion-entity
    :tool tool-entity
    :vulnerability vulnerability-entity
    :weakness weakness-entity

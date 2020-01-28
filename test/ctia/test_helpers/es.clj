@@ -107,6 +107,7 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.casebook" "es"
                       "ctia.store.sighting" "es"
+                      "ctia.store.identity-assertion" "es" 
                       "ctia.store.tool" "es"
                       "ctia.store.vulnerability" "es"
                       "ctia.store.weakness" "es"
