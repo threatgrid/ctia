@@ -144,7 +144,7 @@
   :classpath ".:resources"
   :uberjar-name "ctia.jar"
   :uberjar-exclusions [#"ctia\.properties"]
-  :min-lein-version "2.4.0"
+  :min-lein-version "2.9.1"
   :test-selectors {:es-store :es-store
                    :disabled :disabled
                    :default #(not (or (:disabled %)
