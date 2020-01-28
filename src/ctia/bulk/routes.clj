@@ -63,8 +63,8 @@
                       {sightings       :- [Reference] []}
                       {tools           :- [Reference] []}
                       {weaknesses      :- [Reference] []}
-                      {vulnerabilities :- [Reference] []}]
-                      {identity_assertions :- [Reference] []}
+                      {vulnerabilities :- [Reference] []}
+                      {identity_assertions :- [Reference] []}]
        :capabilities #{:read-actor
                        :read-attack-pattern
                        :read-campaign
