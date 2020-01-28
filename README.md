@@ -71,7 +71,7 @@ This is the proper way to run this in production.
 
 ```
 lein do clean, uberjar
-java -Xmx4g -Djava.awt.headless=true -XX:MaxPermSize=256m -Dlog.console.threshold=INFO -jar target/ctia.jar
+java -Xmx4g -Djava.awt.headless=true -Dlog.console.threshold=INFO -jar target/ctia.jar
 ```
 
 You may tweak the java arguments as per your requirements.

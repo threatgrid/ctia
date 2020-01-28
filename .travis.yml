@@ -4,7 +4,6 @@ dist: trusty
 
 env:
     global:
-      - JAVA_OPTS="-XX:MaxPermSize=256m"
       - LOG_DIR=$HOME/log
       - BIN_DIR=$HOME/bin
       - LEIN_ROOT=1
