@@ -465,8 +465,7 @@
 
        (is (= 201 status-create) "The bulk create status should be 201")
        (is (= {:vulnerabilities
-               '({:msg
-                  "In: [:impact :cvss_v2 :vector_string] val: \"CLEARLY INVALID STRING\" fails spec: :new-vulnerability.impact.cvss_v2/vector_string at: [:impact :cvss_v2 :vector_string] predicate: :clojure.spec.alpha/unknown\n",
+               '({:msg "\"CLEARLY INVALID STRING\" - failed: cvss-v2-vector-string? in: [:impact :cvss_v2 :vector_string] at: [:impact :cvss_v2 :vector_string] spec: :new-vulnerability.impact.cvss_v2/vector_string\n",
                   :error "Entity validation Error",
                   :type :spec-validation-error,
                   :entity
