@@ -40,17 +40,19 @@
                  ;; Schemas
                  [prismatic/schema ~schema-version]
                  [metosin/schema-tools ~schema-tools-version]
-                 [threatgrid/flanders "0.1.17"
+                 [threatgrid/flanders "0.1.20"
                   :exclusions [prismatic/plumbing
                                potemkin
-                               com.andrewmcveigh/cljs-time]]
+                               com.andrewmcveigh/cljs-time
+                               cheshire]]
                  [threatgrid/ctim "1.0.15"
                   :exclusions [threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava
                                org.clojure/tools.reader
                                org.clojure/clojurescript]]
-                 [threatgrid/clj-momo "0.3.3"]
+                 [threatgrid/clj-momo "0.3.3"
+                  :exclusions [cheshire]]
 
                  ;; Web server
                  [metosin/compojure-api ~compojure-api-version

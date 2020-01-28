@@ -1,3 +1,3 @@
 #!/bin/bash
-set -ev
+set -ex
 lein do clean, javac, test :no-gen

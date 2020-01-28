@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ev
+set -e
 
 echo "branch: ${TRAVIS_BRANCH}"
 echo "build number: ${TRAVIS_BUILD_NUMBER}"
@@ -11,7 +11,7 @@ function build-and-publish-package {
   PKG_TYPE=$1
 
   echo "Building new $PKG_TYPE package"
-  lein uberjar
+  ( set -x; lein uberjar )
   BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}"
   echo $BUILD_NAME
   echo "Build: $BUILD_NAME"
@@ -26,9 +26,9 @@ function build-and-publish-package {
   fi
 
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
-  pip install --upgrade --user awscli
+  ( set -x; pip install --upgrade --user awscli )
   export PATH=$PATH:$HOME/.local/bin
-  aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME} --sse aws:kms --sse-kms-key-id alias/kms-s3
+  ( set-x; aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME} --sse aws:kms --sse-kms-key-id alias/kms-s3 )
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - INT only
   if [ "${PKG_TYPE}" == "int" ]; then
@@ -40,7 +40,7 @@ function build-and-publish-package {
   fi
 }
 
-if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_EVENT_TYPE}" != "cron" ]]; then
   if [[ ${TRAVIS_BRANCH} == "master" ]]; then
     # non-pr builds on the master branch yield INT packages
     echo "OK: master branch detected"
@@ -67,5 +67,5 @@ if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
     echo "Not on master or release branch. Not building a package."
   fi
 else
-  echo "Build is for a pull request.  Not building a package."
+  echo "Build is for a pull request or cron job.  Not building a package."
 fi
