@@ -1,17 +1,19 @@
 (ns ctia.entity.identity-assertion-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.entity.identity-assertion :refer [identity-assertion-fields]]
+            [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+            [ctia.entity.identity-assertion :refer [identity-assertion-fields identity-assertion-sort-fields]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [post-entity-bulk]]
+             [core :as helpers :refer [post-entity-bulk post-bulk]]
              [crud :refer [entity-crud-test]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [api-key doc-id->rel-url]]
              [pagination :refer [pagination-test]]
+             [core :as helpers :refer [get]]
              [store :refer [test-for-each-store]]]
+            [clojure.pprint :refer [pprint]]
             [ctim.examples.identity-assertions
              :refer
              [new-identity-assertion-maximal new-identity-assertion-minimal]]))
@@ -31,6 +33,35 @@
        ["http://ex.tld/ctia/identity-assertion/identity-assertion-123"
         "http://ex.tld/ctia/identity-assertion/identity-assertion-345"])))
 
+(defn additional-tests [identity-assertion-id _]
+  (testing "GET /ctia/identity-assertion/search"
+  ;; only when ES store
+    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :identity-assertion]))
+      (let [term "identity.observables.value:\"1.2.3.4\""
+            response (get (str "ctia/identity-assertion/search")
+                          :query-params {"query" term}
+                          :headers {"Authorization" "45c1f5e3f05d0"})]
+        (is (= 200 (:status response)) "IP quoted term works"))
+
+      (let [term "1.2.3.4"
+            response (get (str "ctia/identity-assertion/search")
+                          :headers {"Authorization" "45c1f5e3f05d0"}
+                          :query-params {"query" term})]
+        (is (= 200 (:status response)) "IP unquoted, term works"))
+
+      (let [term "assertions.name:\"cisco:ctr:device:id\""
+            response (get (str "ctia/identity-assertion/search")
+                          :query-params {"query" term}
+                          :headers {"Authorization" "45c1f5e3f05d0"})]
+        (is (= 200 (:status response)) "Search by Assertion name term works"))
+
+      (let [term "*"
+            response (get (str "ctia/identity-assertion/search")
+                          :query-params {"query" term
+                                         "assertions.name" "cisco:ctr:device:id"}
+                          :headers {"Authorization" "45c1f5e3f05d0"})]
+        (is (= 200 (:status response)) "Search by Assertion term works")))))
+
 (deftest test-identity-assertion-routes
   (test-for-each-store
    (fn []
@@ -43,8 +74,35 @@
       {:entity "identity-assertion"
        :example new-identity-assertion-maximal
        :invalid-tests? false
-       :update-tests? false
+       :update-tests? true
        :search-tests? false
        :update-field :source
-       :search-field :source
+       :additional-tests additional-tests
        :headers {:Authorization "45c1f5e3f05d0"}}))))
+
+(deftest test-identity-assertion-pagination-field-selection
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+
+     (let [ids (post-entity-bulk
+                new-identity-assertion-maximal
+                :identity_assertions
+                30
+                {"Authorization" "45c1f5e3f05d0"})]
+
+       (field-selection-tests
+        ["ctia/identity-assertion/search?query=*"
+         (doc-id->rel-url (first ids))]
+        {"Authorization" "45c1f5e3f05d0"}
+        identity-assertion-fields)
+
+
+       (pagination-test
+        "ctia/identity-assertion/search?query=*"
+        {"Authorization" "45c1f5e3f05d0"}
+        identity-assertion-fields)))))

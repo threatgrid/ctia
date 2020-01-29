@@ -48,7 +48,7 @@
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:identity em/sighting-target
+     {:identity em/identity
       :assertions em/assertion
       :valid_time em/valid-time})}})
 
@@ -57,11 +57,7 @@
 (def identity-assertion-fields
   (concat sorting/base-entity-sort-fields
           [:valid_time.start_time
-           :valid_time.end_time
-           :assertions.name
-           :assertions.value
-           :identity.observables.type
-           :identity.observables.value]))
+           :valid_time.end_time]))
 
 (def identity-assertion-sort-fields
   (apply s/enum identity-assertion-fields))
@@ -106,8 +102,7 @@
     :put-capabilities :create-identity-assertion
     :delete-capabilities :delete-identity-assertion
     :search-capabilities :search-identity-assertion
-    :external-id-capabilities :read-identity-assertion
-    :hide-entity? true}))
+    :external-id-capabilities :read-identity-assertion}))
 
 (def capabilities
   #{:create-identity-assertion

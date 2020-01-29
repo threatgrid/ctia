@@ -87,6 +87,7 @@
                       "ctia.store.es.relationship.indexname" "ctia_relationship"
                       "ctia.store.es.casebook.indexname" "ctia_casebook"
                       "ctia.store.es.sighting.indexname" "ctia_sighting"
+                      "ctia.store.es.identity-assertion.indexname" "ctia_identity_assertion"
                       "ctia.store.es.tool.indexname" "ctia_tool"
                       "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
                       "ctia.store.es.weakness.indexname" "ctia_weakness"

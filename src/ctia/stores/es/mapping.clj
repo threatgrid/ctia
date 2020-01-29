@@ -132,9 +132,14 @@
    {:type token
     :value all_token}})
 
+(def identity
+  {:dynamic false
+   :properties
+   {:observables observable}})
+
 (def assertion
   {:properties
-   {:name all_text
+   {:name all_token
     :value all_text}})
 
 (def related-identities
