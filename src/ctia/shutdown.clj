@@ -22,7 +22,7 @@
       (catch Exception excep
         (log/error excep (format "Shutdown hook %s failed" name))))))
 
-(defn shutdown-ctia-and-agents! []
+(defn ^Runnable shutdown-ctia-and-agents! []
   (log/warn "shutting down CTIA")
   (shutdown-ctia!)
   (log/warn "shutting down agents")

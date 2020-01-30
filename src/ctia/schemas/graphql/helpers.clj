@@ -5,17 +5,29 @@
             [clojure.tools.logging :as log])
   (:import [graphql GraphQL GraphQLException]
            [graphql.language
-            Field FragmentDefinition FragmentSpread]
+            Field FragmentDefinition FragmentSpread NamedNode SelectionSetContainer]
            [graphql.schema
+            DataFetcher
             DataFetchingEnvironment
-            DataFetchingFieldSelectionSetImpl
-            DataFetcher GraphQLArgument GraphQLArgument$Builder GraphQLEnumType
-            GraphQLFieldDefinition GraphQLInputObjectType
-            GraphQLInputObjectType$Builder GraphQLInputObjectField
-            GraphQLInputObjectField$Builder GraphQLInputType
-            GraphQLInterfaceType GraphQLList GraphQLNonNull GraphQLObjectType
-            GraphQLObjectType$Builder GraphQLOutputType GraphQLSchema
-            GraphQLTypeReference GraphQLUnionType TypeResolver]))
+            GraphQLArgument 
+            GraphQLEnumType
+            GraphQLEnumValueDefinition
+            GraphQLFieldDefinition
+            GraphQLFieldDefinition$Builder
+            GraphQLInputObjectField
+            GraphQLInputObjectType
+            GraphQLInputObjectType$Builder
+            GraphQLInputType
+            GraphQLInterfaceType
+            GraphQLList
+            GraphQLNonNull
+            GraphQLObjectType
+            GraphQLObjectType$Builder
+            GraphQLOutputType
+            GraphQLSchema
+            GraphQLTypeReference
+            GraphQLUnionType
+            TypeResolver]))
 
 ;; Type registry to avoid any duplicates when using new-object
 ;; or new-enum. Contains a map with types indexed by name
@@ -28,8 +40,8 @@
   clojure.lang.IPersistentMap
   (->java [o]
     (-> o
-        stringify-keys
-        (java.util.HashMap.)))
+        ^java.util.Map (stringify-keys)
+        java.util.HashMap.))
   nil
   (->java [_] nil))
 
@@ -72,9 +84,9 @@
    created, the corresponding object is retrieved from the provided or the
    default type repository."
   ([enum-name description values] (enum enum-name
-                                   description
-                                   values
-                                   default-type-registry))
+                                        description
+                                        values
+                                        default-type-registry))
   ([enum-name description values registry]
    (or (get @registry enum-name)
        (let [builder (-> (GraphQLEnumType/newEnum)
@@ -84,7 +96,10 @@
          (doseq [value values]
            (if names-and-values?
              (.value builder (key value) (val value))
-             (.value builder value)))
+             (if (string? value)
+               (.value builder ^String value)
+               ;unsure if reachable
+               (.value builder ^GraphQLEnumValueDefinition value))))
          (let [graphql-enum (.build builder)]
            (swap! registry assoc enum-name graphql-enum)
            graphql-enum)))))
@@ -110,13 +125,13 @@
 (defn get-selections
   "return selections if the given entity
    is either a Field or a FragmentDefinition"
-  [s]
+  [^SelectionSetContainer s]
   (when (or (instance? Field s)
             (instance? FragmentDefinition s))
     (some-> s .getSelectionSet .getSelections)))
 
-(defn get-selections-get [s]
-  (some-> s .getSelectionSet .get))
+(defn get-selections-get [^DataFetchingEnvironment s]
+  (some-> ^DataFetchingEnvironment s .getSelectionSet .get))
 
 (defn fragment-spread? [x]
   (instance? FragmentSpread x))
@@ -124,13 +139,14 @@
 (defn fragment-definition? [x]
   (instance? FragmentDefinition x))
 
-(defn resolve-fragment-selections
+(defn ^NamedNode resolve-fragment-selections
   "if the given entity is a FragmentSpread
   return its definition else return the entity"
-  [s fragments]
+  [^NamedNode s fragments]
   (if (fragment-spread? s)
     (let [f-name (.getName s)]
-      (get fragments (keyword f-name))) s))
+      (get fragments (keyword f-name)))
+    s))
 
 (defn fields->selections
   "Given a fields list and a fragment def map,
@@ -205,12 +221,9 @@
 
                                         ;----- Input
 
-(defn new-argument
-  [^String arg-name
-   ^GraphQLOutputType arg-type
-   ^String arg-description
-   ^Object arg-default-value]
-  (let [^GraphQLArgument$Builder builder
+(defn ^GraphQLArgument new-argument
+  [arg-name arg-type arg-description arg-default-value]
+  (let [builder
         (-> (GraphQLArgument/newArgument)
             (.name arg-name)
             (.type arg-type)
@@ -219,48 +232,45 @@
       (.defaultValue builder arg-default-value))
     (.build builder)))
 
-(defn add-args
-  [^GraphQLFieldDefinition field
+(defn ^GraphQLFieldDefinition$Builder add-args
+  [^GraphQLFieldDefinition$Builder field
    args]
   (doseq [[k {arg-type :type
               arg-description :description
               arg-default-value :default
               :or {arg-description ""}}] args]
-    (let [^GraphQLArgument narg
-          (new-argument (name k)
-                        arg-type
-                        arg-description
-                        arg-default-value)]
+    (let [narg (new-argument (name k)
+                             arg-type
+                             arg-description
+                             arg-default-value)]
       (.argument field narg)))
   field)
 
-(defn new-input-field
-  [^String field-name
+(defn ^GraphQLInputObjectField new-input-field
+  [field-name
    ^GraphQLInputType field-type
-   ^String field-description
-   ^Object default-value]
+   field-description
+   default-value]
   (log/debug "New input field" field-name (pr-str field-type))
-  (let [^GraphQLInputObjectField$Builder builder
-        (-> (GraphQLInputObjectField/newInputObjectField)
-            (.name field-name)
-            (.type field-type)
-            (.description field-description))]
+  (let [builder (-> (GraphQLInputObjectField/newInputObjectField)
+                    (.name field-name)
+                    (.type field-type)
+                    (.description field-description))]
     (when (some? default-value)
       (.defaultValue builder default-value))
     (.build builder)))
 
-(defn add-input-fields
+(defn ^GraphQLInputObjectType$Builder add-input-fields
   [^GraphQLInputObjectType$Builder builder
    fields]
   (doseq [[k {field-type :type
               field-description :description
               field-default-value :default-value
               :or {field-description ""}}] fields]
-    (let [^GraphQLInputObjectField newf
-          (new-input-field (name k)
-                           field-type
-                           field-description
-                           field-default-value)]
+    (let [newf (new-input-field (name k)
+                                field-type
+                                field-description
+                                field-default-value)]
       (.field builder newf)))
   builder)
 
@@ -272,16 +282,16 @@
       (.name object-name)
       (.description description)
       (add-input-fields fields)
-      (.build)))
+      .build))
 
-;;----- Ouput
+;;----- Output
 
-(defn new-field
-  [^String field-name
+(defn ^GraphQLFieldDefinition new-field
+  [field-name
    ^GraphQLOutputType field-type
-   ^String field-description
+   field-description
    field-args
-   ^DataFetcher field-data-fetcher]
+   field-data-fetcher]
   (log/debug "New field" field-name (pr-str field-type))
   (-> (GraphQLFieldDefinition/newFieldDefinition)
       (.name field-name)
@@ -289,9 +299,9 @@
       (.description field-description)
       (.dataFetcher field-data-fetcher)
       (add-args field-args)
-      (.build)))
+      .build))
 
-(defn add-fields
+(defn ^GraphQLObjectType$Builder add-fields
   [^GraphQLObjectType$Builder builder
    fields]
   (doseq [[k {field-type :type
@@ -301,12 +311,11 @@
               :or {field-description ""
                    field-args {}
                    field-resolver (map-resolver k)}}] fields]
-    (let [^GraphQLFieldDefinition newf
-          (new-field (name k)
-                     field-type
-                     field-description
-                     field-args
-                     (fn->data-fetcher field-resolver))]
+    (let [newf (new-field (name k)
+                          field-type
+                          field-description
+                          field-args
+                          (fn->data-fetcher field-resolver))]
       (.field builder newf)))
   builder)
 
@@ -332,7 +341,7 @@
            (swap! registry assoc object-name obj)
            obj)))))
 
-(defn fn->type-resolver
+(defn ^TypeResolver fn->type-resolver
   "Converts a function that takes the current object, the args
   and the global schema to a TypeResolver."
   [f]
@@ -344,48 +353,46 @@
         (f object args schema)))))
 
 (defn new-union
-  [^String union-name
-   ^String description
-   type-resolver-fn
-   types]
-  (let [^TypeResolver type-resolver
-        (fn->type-resolver type-resolver-fn)
-        ^GraphQLUnionType
+  [union-name description type-resolver-fn types]
+  (let [type-resolver (fn->type-resolver type-resolver-fn)
         graphql-union (-> (GraphQLUnionType/newUnionType)
                           (.description description)
                           (.name union-name)
+                          ; FIXME: this method is deprecated
                           (.typeResolver type-resolver))]
     (doseq [type types]
-      (.possibleType graphql-union type))
+      (if (instance? GraphQLObjectType type)
+        (.possibleType graphql-union ^GraphQLObjectType type)
+        (.possibleType graphql-union ^GraphQLTypeReference type)))
     (.build graphql-union)))
 
 (defn new-ref
-  [^String object-name]
-  (new GraphQLTypeReference object-name))
+  [object-name]
+  (GraphQLTypeReference. object-name))
 
 (defn new-schema
   [^GraphQLObjectType query]
   (-> (GraphQLSchema/newSchema)
       (.query query)
-      (.build)))
+      .build))
 
 (defn get-type
   "Retrieves a Type from the given schema by its name"
   [^GraphQLSchema schema
-   ^String type-name]
+   type-name]
   (.getType schema type-name))
 
 (defn new-graphql
-  [^GraphQLSchema schema]
+  [schema]
   (-> (GraphQL/newGraphQL schema)
-      (.build)))
+      .build))
 
 (defn execute
   [^GraphQL graphql
-   ^String query
-   ^String operation-name
-   ^java.util.Map variables
-   ^java.util.Map context]
+   query
+   operation-name
+   variables
+   context]
   (try
     (let [result (.execute graphql
                            query

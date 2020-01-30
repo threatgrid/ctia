@@ -1,6 +1,6 @@
 (ns ctia.http.middleware.cache-control
   (:require [pandect.algo.sha1 :refer [sha1]])
-  (:import java.io.File))
+  (:import [java.io File]))
 
 (defn- read-request? [request]
   (#{:get :head} (:request-method request)))
@@ -10,10 +10,11 @@
 
 (defn calculate-etag [accept body]
   (let [etagc
-        (case (class body)
-          String (sha1 (str accept ":" body))
-          File (str (.lastModified body) "-" (.length body))
-          (sha1 (.getBytes (str accept ":" (pr-str body)) "UTF-8")))]
+        (cond
+          (instance? String body) (sha1 (str accept ":" body))
+          (instance? File body) (let [^File body body]
+                                  (str (.lastModified body) "-" (.length body)))
+          :else (sha1 (.getBytes (str accept ":" (pr-str body)) "UTF-8")))]
     (str \" etagc \")))
 
 (defn update-headers

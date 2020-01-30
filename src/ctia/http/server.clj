@@ -140,7 +140,7 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
-(defn- new-jetty-instance
+(defn- ^Server new-jetty-instance
   [{:keys [dev-reload
            max-threads
            min-threads
@@ -152,67 +152,66 @@
     :or {access-control-allow-methods "get,post,put,patch,delete"
          send-server-version false}
     :as http-config}]
-  (doto
-      (jetty/run-jetty
-       (cond-> (handler/api-handler)
-         true auth/wrap-authentication
+  (let [handler (cond-> (handler/api-handler)
+                  true auth/wrap-authentication
 
-         (:enabled jwt)
-         auth-jwt/wrap-jwt-to-ctia-auth
+                  (:enabled jwt)
+                  auth-jwt/wrap-jwt-to-ctia-auth
 
-         (:enabled jwt)
-         ((rjwt/wrap-jwt-auth-fn
-           (merge
-            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
-             (when-let [pubkey-for-issuer-map
-                        (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (fn [{:keys [iss] :as claims}]
-                 (get pubkey-for-issuer-map iss)))
-             :error-handler auth-jwt/jwt-error-handler
-             :pubkey-path (:public-key-path jwt)
-             :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+                  (:enabled jwt)
+                  ((rjwt/wrap-jwt-auth-fn
+                     (merge
+                       {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
+                        (when-let [pubkey-for-issuer-map
+                                   (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
+                          (fn [{:keys [iss] :as claims}]
+                            (get pubkey-for-issuer-map iss)))
+                        :error-handler auth-jwt/jwt-error-handler
+                        :pubkey-path (:public-key-path jwt)
+                        :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
-            (let [{:keys [endpoints timeout cache-ttl]}
-                       (:http-check jwt)]
-              (when-let [external-endpoints (parse-external-endpoints endpoints)]
-                {:jwt-check-fn (partial check-external-endpoints
-                                        (http-get-fn (or cache-ttl 5000))
-                                        external-endpoints
-                                        (if timeout
-                                          {:socket-timeout timeout
-                                           :connection-timeout timeout}
-                                          {}))}))
-            (when-let [lifetime (:lifetime-in-sec jwt)]
-              {:jwt-max-lifetime-in-sec lifetime}))))
+                       (let [{:keys [endpoints timeout cache-ttl]}
+                             (:http-check jwt)]
+                         (when-let [external-endpoints (parse-external-endpoints endpoints)]
+                           {:jwt-check-fn (partial check-external-endpoints
+                                                   (http-get-fn (or cache-ttl 5000))
+                                                   external-endpoints
+                                                   (if timeout
+                                                     {:socket-timeout timeout
+                                                      :connection-timeout timeout}
+                                                     {}))}))
+                       (when-let [lifetime (:lifetime-in-sec jwt)]
+                         {:jwt-max-lifetime-in-sec lifetime}))))
 
-         access-control-allow-origin
-         (wrap-cors :access-control-allow-origin
-                    (allow-origin-regexps access-control-allow-origin)
-                    :access-control-allow-methods
-                    (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers
-                    (str "X-Iroh-Version,X-Iroh-Config,X-Ctim-Version,"
-                         "X-RateLimit-ORG-Limit,"
-                         "X-Content-Type-Options,"
-                         "Retry-After,X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
-                         "X-Frame-Options,X-Content-Type-Options,Content-Security-Policy"))
+                  access-control-allow-origin
+                  (wrap-cors :access-control-allow-origin
+                             (allow-origin-regexps access-control-allow-origin)
+                             :access-control-allow-methods
+                             (str->set-of-keywords access-control-allow-methods)
+                             :access-control-expose-headers
+                             (str "X-Iroh-Version,X-Iroh-Config,X-Ctim-Version,"
+                                  "X-RateLimit-ORG-Limit,"
+                                  "X-Content-Type-Options,"
+                                  "Retry-After,X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
+                                  "X-Frame-Options,X-Content-Type-Options,Content-Security-Policy"))
 
-         true (wrap-additional-headers
-               {"X-Content-Type-Options" "nosniff"})
-         true (wrap-html-headers
-               {"Content-Security-Policy" (build-csp http-config)
-                "X-Frame-Options" "DENY"})
+                  true (wrap-additional-headers
+                         {"X-Content-Type-Options" "nosniff"})
+                  true (wrap-html-headers
+                         {"Content-Security-Policy" (build-csp http-config)
+                          "X-Frame-Options" "DENY"})
 
-         true wrap-params
+                  true wrap-params
 
-         dev-reload wrap-reload)
-       {:port port
-        :min-threads min-threads
-        :max-threads max-threads
-        :join? false
-        :send-server-version? send-server-version})
-    (.setStopAtShutdown true)
-    (.setStopTimeout (* 1000 10))))
+                  dev-reload wrap-reload)
+        options {:port port
+                 :min-threads min-threads
+                 :max-threads max-threads
+                 :join? false
+                 :send-server-version? send-server-version}]
+    (doto (jetty/run-jetty handler options)
+      (.setStopAtShutdown true)
+      (.setStopTimeout (* 1000 10)))))
 
 (defn- stop!  []
   (swap! server
