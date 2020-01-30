@@ -168,6 +168,7 @@
                                   (:out (clojure.java.shell/sh
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
+  :global-vars {*warn-on-reflection* true}
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check "0.9.0"]
                                   [com.gfredericks/test.chuck "0.2.8"]
