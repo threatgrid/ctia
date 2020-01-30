@@ -1,6 +1,6 @@
 (def cheshire-version "5.9.0")
 (def compojure-api-version "1.1.13")
-(def schema-tools-version "0.11.0")
+(def schema-tools-version "0.12.2")
 (def schema-version "1.1.12")
 (def jetty-server-version "9.4.15.v20190215")
 ;; On avoiding dependency overrides:
