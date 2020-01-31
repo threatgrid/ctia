@@ -13,6 +13,7 @@
              [relationships :refer [relationship-maximal relationship-minimal]]
              [casebooks :refer [casebook-maximal casebook-minimal]]
              [sightings :refer [sighting-maximal sighting-minimal]]
+             [identity-assertions :refer [identity-assertion-maximal identity-assertion-minimal]]
              [tools :refer [tool-maximal tool-minimal]]
              [vulnerabilities :refer [vulnerability-maximal vulnerability-minimal]]
              [weaknesses :refer [weakness-maximal weakness-minimal]]]))

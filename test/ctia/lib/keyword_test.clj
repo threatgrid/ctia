@@ -11,4 +11,5 @@
   (is (= :indicator (singular :indicators)))
   (is (= :judgement (singular :judgements)))
   (is (= :sighting (singular :sightings)))
+  (is (= :identity_assertion (singular :identity_assertions)))
   (is (= :ttp (singular :ttps))))

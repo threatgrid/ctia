@@ -32,6 +32,7 @@
                         :create-relationship
                         :create-casebook
                         :create-sighting
+                        :create-identity-assertion
                         :create-tool
                         :create-vulnerability
                         :create-weakness}
@@ -62,7 +63,8 @@
                       {sightings       :- [Reference] []}
                       {tools           :- [Reference] []}
                       {weaknesses      :- [Reference] []}
-                      {vulnerabilities :- [Reference] []}]
+                      {vulnerabilities :- [Reference] []}
+                      {identity_assertions :- [Reference] []}]
        :capabilities #{:read-actor
                        :read-attack-pattern
                        :read-campaign
@@ -77,25 +79,27 @@
                        :read-relationship
                        :read-casebook
                        :read-sighting
+                       :read-identity-assertion
                        :read-tool
                        :read-vulnerability
                        :read-weakness}
        :auth-identity auth-identity
        (let [entities-map {:actors           actors
                            :attack_patterns  attack_patterns
-                           :campaigns        campaigns
-                           :coas             coas
-                           :data_tables      data_tables
-                           :feedbacks        feedbacks
-                           :incidents        incidents
-                           :investigations   investigations
-                           :indicators       indicators
-                           :judgements       judgements
-                           :malwares         malwares
-                           :relationships    relationships
-                           :casebooks        casebooks
-                           :sightings        sightings
-                           :tools            tools
-                           :vulnerabilities  vulnerabilities
-                           :weaknesses       weaknesses}]
+                           :campaigns           campaigns
+                           :coas                coas
+                           :data_tables         data_tables
+                           :feedbacks           feedbacks
+                           :incidents           incidents
+                           :investigations      investigations
+                           :indicators          indicators
+                           :judgements          judgements
+                           :malwares            malwares
+                           :relationships       relationships
+                           :casebooks           casebooks
+                           :sightings           sightings
+                           :identity_assertions identity_assertions
+                           :tools               tools
+                           :vulnerabilities     vulnerabilities
+                           :weaknesses          weaknesses}]
          (ok (fetch-bulk entities-map auth-identity)))))

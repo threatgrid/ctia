@@ -24,6 +24,7 @@
              [relationship :refer [NewRelationship]]
              [casebook :refer [NewCasebook]]
              [sighting :refer [NewSighting]]
+             [identity-assertion :refer [NewIdentityAssertion]]
              [tool :refer [NewTool]]
              [vulnerability :refer [NewVulnerability]]
              [weakness :refer [NewWeakness]]]
@@ -78,6 +79,7 @@
          [NewMalware "max-new-malware"]
          [NewRelationship "max-new-relationship"]
          [NewSighting "max-new-sighting"]
+         [NewIdentityAssertion "max-new-identity-assertion"]
          [NewTool "max-new-tool"]
          [NewVulnerability "max-new-vulnerability"]
          [NewWeakness "max-new-weakness"]
@@ -136,6 +138,10 @@
 (def api-for-sighting-routes
   (api-for-route 'sighting
                  (spec-gen "max-new-sighting")))
+
+(def api-for-identity-assertion-routes
+  (api-for-route 'identity-assertion
+                 (spec-gen "max-new-identity-assertion")))
 
 (def api-for-tool-routes
   (api-for-route 'tool

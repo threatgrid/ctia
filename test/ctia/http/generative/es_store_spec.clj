@@ -51,6 +51,9 @@
 (defspec ^:generative api-for-sighting-routes-es-store
   prop/api-for-sighting-routes)
 
+(defspec ^:generative api-for-identity-assertion-routes-es-store
+  prop/api-for-identity-assertion-routes)
+
 (defspec ^:generative api-for-tool-routes-es-store
   prop/api-for-tool-routes)
 

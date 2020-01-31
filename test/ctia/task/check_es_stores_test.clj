@@ -23,6 +23,7 @@
              [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
              [sightings :refer [sighting-minimal]]
+             [identity-assertions :refer [identity-assertion-minimal]]
              [tools :refer [tool-minimal]]
              [vulnerabilities :refer [vulnerability-minimal]]
              [weaknesses :refer [weakness-minimal]]]))
@@ -102,6 +103,7 @@
                     "feedback - finished checking 0 documents"
                     "casebook - finished checking 100 documents"
                     "sighting - finished checking 100 documents"
+                    "identity-assertion - finished checking 0 documents"
                     "attack-pattern - finished checking 100 documents"
                     "malware - finished checking 100 documents"
                     "tool - finished checking 100 documents"
