@@ -30,7 +30,7 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  :pedantic? :abort
+  :pedantic? :warn
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [clj-time "0.15.2"]
                  [org.clojure/core.async "0.7.559"]
