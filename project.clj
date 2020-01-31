@@ -4,6 +4,7 @@
 (def schema-generators-version "0.1.3")
 (def clj-http-fake-version "1.0.3")
 (def perforate-version "0.3.4")
+(def ring-version "1.8.0")
 
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -72,17 +73,8 @@
                                metosin/ring-http-response
                                metosin/schema-tools]]
                  [metosin/ring-swagger-ui "3.24.3"]
-                 [org.eclipse.jetty/jetty-server "9.4.15.v20190215"]
-                 [ring/ring-jetty-adapter "1.8.0"
-                  :exclusions [commons-io
-                               clj-time
-                               com.andrewmcveigh/cljs-time
-                               org.eclipse.jetty/jetty-server]]
-                 [ring/ring-devel "1.7.1"
-                  :exclusions [joda-time
-                               commons-io
-                               clj-time
-                               com.andrewmcveigh/cljs-time]]
+                 [ring/ring-jetty-adapter ~ring-version]
+                 [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
                  [ring/ring-codec "1.1.2"
                   ;; Exclusions:
