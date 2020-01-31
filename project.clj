@@ -1,4 +1,9 @@
 (def cheshire-version "5.9.0")
+(def test-check-version "0.10.0")
+(def test-chuck-version "0.2.10")
+(def schema-generators-version "0.1.3")
+(def clj-http-fake-version "1.0.3")
+(def perforate-version "0.3.4")
 
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -26,18 +31,18 @@
              "-server"]
   :pedantic? :warn
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [clj-time "0.15.1"]
-                 [org.clojure/core.async "0.3.465" :exclusions [org.clojure/tools.reader]]
+                 [clj-time "0.15.2"]
+                 [org.clojure/core.async "0.7.559" :exclusions [org.clojure/tools.reader]]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
-                 [org.clojure/core.memoize "0.7.2"]
+                 [org.clojure/core.memoize "0.8.2"]
                  [org.clojure/tools.logging "0.5.0"]
-                 [org.clojure/tools.cli "0.4.1"]
+                 [org.clojure/tools.cli "0.4.2"]
                  [pandect "0.6.1"]
 
                  ;; Schemas
                  [prismatic/schema "1.1.12"]
                  [metosin/schema-tools "0.12.2"]
-                 [threatgrid/flanders "0.1.20"
+                 [threatgrid/flanders "0.1.22"
                   :exclusions [prismatic/plumbing
                                potemkin
                                com.andrewmcveigh/cljs-time
@@ -56,17 +61,19 @@
                   :exclusions [org.clojure/tools.reader]]
                  ; optional dep for compojure-api's dep ring-middleware-format
                  ; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
-                 [com.ibm.icu/icu4j "63.1"]
+                 [com.ibm.icu/icu4j "65.1"]
                  [metosin/ring-swagger "0.26.2"
                   :exclusions [commons-io
                                prismatic/plumbing
                                potemkin
                                frankiesardo/linked
+                               ; provided by ring/ring-jetty-adapter
+                               ring/ring-core
                                metosin/ring-http-response
                                metosin/schema-tools]]
-                 [metosin/ring-swagger-ui "3.20.1"]
+                 [metosin/ring-swagger-ui "3.24.3"]
                  [org.eclipse.jetty/jetty-server "9.4.15.v20190215"]
-                 [ring/ring-jetty-adapter "1.7.1"
+                 [ring/ring-jetty-adapter "1.8.0"
                   :exclusions [commons-io
                                clj-time
                                com.andrewmcveigh/cljs-time
@@ -76,8 +83,8 @@
                                commons-io
                                clj-time
                                com.andrewmcveigh/cljs-time]]
-                 [ring-cors "0.1.11"]
-                 [ring/ring-codec "1.1.1"
+                 [ring-cors "0.1.13"]
+                 [ring/ring-codec "1.1.2"
                   ;; Exclusions:
                   ;; - ring-codec 1.0.1 is not using the latest commons-codec
                   ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)
@@ -94,7 +101,7 @@
                                com.andrewmcveigh/cljs-time]]
 
                  ;; clients
-                 [clj-http "3.9.0" :exclusions [commons-codec potemkin]]
+                 [clj-http "3.10.0" :exclusions [commons-codec potemkin]]
                  [com.taoensso/carmine "2.19.1"]
 
                  ;; Metrics
@@ -105,12 +112,12 @@
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
                  [riemann-clojure-client "0.5.1"]
-                 [com.google.protobuf/protobuf-java "3.7.1"]
+                 [com.google.protobuf/protobuf-java "3.11.1"]
                  ; https://stackoverflow.com/a/43574427
                  [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
 
                  ;; Docs
-                 [markdown-clj "1.0.1"]
+                 [markdown-clj "1.10.1"]
                  [hiccup "2.0.0-alpha1"]
 
                  ;; Encryption
@@ -119,7 +126,7 @@
                  ;; Hooks
                  [threatgrid/redismq "0.1.1"]
 
-                 [zookeeper-clj "0.9.3"]
+                 [zookeeper-clj "0.9.4"]
                  [org.onyxplatform/onyx-kafka "0.14.5.0"
                   :exclusions [org.clojure/clojure
                                com.andrewmcveigh/cljs-time
@@ -134,10 +141,11 @@
                  [base64-clj "0.1.1"]
                  [threatgrid/ring-graphql-ui "0.1.1"
                   :exclusions [commons-fileupload
+                               ; provided by ring/ring-jetty-adapter
                                ring/ring-core
                                cheshire
                                metosin/ring-http-response]]
-                 [com.graphql-java/graphql-java "9.4"
+                 [com.graphql-java/graphql-java "14.0"
                   :exclusions [org.slf4j/slf4j-api]]]
 
   :resource-paths ["resources" "doc"]
@@ -167,10 +175,10 @@
 
   :global-vars {*warn-on-reflection* true}
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
-                                  [org.clojure/test.check "0.9.0"]
-                                  [com.gfredericks/test.chuck "0.2.8"]
-                                  [clj-http-fake "1.0.3"]
-                                  [prismatic/schema-generators "0.1.1"]]
+                                  [org.clojure/test.check ~test-check-version]
+                                  [com.gfredericks/test.chuck ~test-chuck-version]
+                                  [clj-http-fake ~clj-http-fake-version]
+                                  [prismatic/schema-generators ~schema-generators-version]]
                    :pedantic? :warn
 
                    :resource-paths ["test/resources"]}
@@ -180,18 +188,18 @@
                               "-Dcom.sun.management.jmxremote.authenticate=false"
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
              :bench {:dependencies [[cheshire ~cheshire-version]
-                                    [perforate "0.3.4"]
-                                    [criterium "0.4.4"]
-                                    [org.clojure/test.check "0.9.0"]
-                                    [com.gfredericks/test.chuck "0.2.8"]
-                                    [prismatic/schema-generators "0.1.1"]]
+                                    [perforate ~perforate-version]
+                                    [criterium "0.4.5"]
+                                    [org.clojure/test.check ~test-check-version]
+                                    [com.gfredericks/test.chuck ~test-chuck-version]
+                                    [prismatic/schema-generators ~schema-generators-version]]
                      :source-paths ["src","test","benchmarks"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
-                                   [org.clojure/test.check "0.9.0"]
-                                   [clj-http-fake "1.0.3"]
-                                   [com.gfredericks/test.chuck "0.2.8"]
-                                   [prismatic/schema-generators "0.1.1"]]
+                                   [clj-http-fake ~clj-http-fake-version]
+                                   [com.gfredericks/test.chuck ~test-chuck-version]
+                                   [org.clojure/test.check ~test-check-version]
+                                   [prismatic/schema-generators ~schema-generators-version]]
                     :pedantic? :abort
                     :resource-paths ["test/resources"]}
 
@@ -207,7 +215,7 @@
                              {:name :migration
                               :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
   :plugins [[lein-shell "0.5.0"]
-            [perforate "0.3.4"]]
+            [perforate ~perforate-version]]
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
             "kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
