@@ -33,7 +33,7 @@
   :pedantic? :abort
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [clj-time "0.15.2"]
-                 [org.clojure/core.async "0.7.559" :exclusions [org.clojure/tools.reader]]
+                 [org.clojure/core.async "0.7.559"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "0.8.2"]
                  [org.clojure/tools.logging "0.5.0"]
@@ -49,17 +49,16 @@
                                com.andrewmcveigh/cljs-time
                                cheshire]]
                  [threatgrid/ctim "1.0.15"
-                  :exclusions [threatgrid/flanders
+                  :exclusions [org.clojure/tools.reader ;;TODO delete this exclusion when upgrading ctim
+                               threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava
-                               org.clojure/tools.reader
                                org.clojure/clojurescript]]
                  [threatgrid/clj-momo "0.3.3"
                   :exclusions [cheshire]]
 
                  ;; Web server
-                 [metosin/compojure-api "1.1.13"
-                  :exclusions [org.clojure/tools.reader]]
+                 [metosin/compojure-api "1.1.13" ]
                  ; optional dep for compojure-api's dep ring-middleware-format
                  ; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
