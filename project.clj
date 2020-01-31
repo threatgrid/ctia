@@ -1,8 +1,5 @@
 (def cheshire-version "5.9.0")
-(def compojure-api-version "1.1.13")
-(def schema-tools-version "0.12.2")
-(def schema-version "1.1.12")
-(def jetty-server-version "9.4.15.v20190215")
+
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
 ;;   conflicts.  Do not change this in master.
@@ -38,8 +35,8 @@
                  [pandect "0.6.1"]
 
                  ;; Schemas
-                 [prismatic/schema ~schema-version]
-                 [metosin/schema-tools ~schema-tools-version]
+                 [prismatic/schema "1.1.12"]
+                 [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.20"
                   :exclusions [prismatic/plumbing
                                potemkin
@@ -55,7 +52,7 @@
                   :exclusions [cheshire]]
 
                  ;; Web server
-                 [metosin/compojure-api ~compojure-api-version
+                 [metosin/compojure-api "1.1.13"
                   :exclusions [org.clojure/tools.reader]]
                  ; optional dep for compojure-api's dep ring-middleware-format
                  ; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
@@ -68,7 +65,7 @@
                                metosin/ring-http-response
                                metosin/schema-tools]]
                  [metosin/ring-swagger-ui "3.20.1"]
-                 [org.eclipse.jetty/jetty-server ~jetty-server-version]
+                 [org.eclipse.jetty/jetty-server "9.4.15.v20190215"]
                  [ring/ring-jetty-adapter "1.7.1"
                   :exclusions [commons-io
                                clj-time
