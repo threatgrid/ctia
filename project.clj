@@ -1,10 +1,11 @@
 (def cheshire-version "5.9.0")
-(def test-check-version "0.10.0")
-(def test-chuck-version "0.2.10")
-(def schema-generators-version "0.1.3")
 (def clj-http-fake-version "1.0.3")
+(def metrics-clojure-version "2.10.0")
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
+(def schema-generators-version "0.1.3")
+(def test-check-version "0.10.0")
+(def test-chuck-version "0.2.10")
 
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -43,14 +44,9 @@
                  ;; Schemas
                  [prismatic/schema "1.1.12"]
                  [metosin/schema-tools "0.12.2"]
-                 [threatgrid/flanders "0.1.22"
-                  :exclusions [prismatic/plumbing
-                               potemkin
-                               com.andrewmcveigh/cljs-time
-                               cheshire]]
+                 [threatgrid/flanders "0.1.23-20200203.184028-2"]
                  [threatgrid/ctim "1.0.15"
                   :exclusions [org.clojure/tools.reader ;;TODO delete this exclusion when upgrading ctim
-                               threatgrid/flanders
                                metosin/ring-swagger
                                com.google.guava/guava
                                org.clojure/clojurescript]]
@@ -81,25 +77,19 @@
                   ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)
                   :exclusions [commons-codec]]
                  [yogsototh/clj-jwt "0.2.1"]
-                 [threatgrid/ring-turnstile-middleware "0.1.0"
-                  :exclusions [metosin/schema-tools]]
-                 [threatgrid/ring-jwt-middleware "1.0.0"
-                  :exclusions [metosin/compojure-api]]
-                 [scopula "0.1.4"
-                  :exclusions [org.clojure/spec.alpha
-                               org.clojure/clojure
-                               org.clojure/core.specs.alpha
-                               com.andrewmcveigh/cljs-time]]
+                 [threatgrid/ring-turnstile-middleware "0.1.1-20200203.182733-1"]
+                 [threatgrid/ring-jwt-middleware "1.0.0"]
+                 [scopula "0.1.4"]
 
                  ;; clients
-                 [clj-http "3.10.0" :exclusions [commons-codec potemkin]]
+                 [clj-http "3.10.0"]
                  [com.taoensso/carmine "2.19.1"]
 
                  ;; Metrics
-                 [metrics-clojure "2.10.0"]
-                 [metrics-clojure-jvm "2.10.0"]
-                 [metrics-clojure-ring "2.10.0"]
-                 [metrics-clojure-riemann "2.10.0"]
+                 [metrics-clojure ~metrics-clojure-version]
+                 [metrics-clojure-jvm ~metrics-clojure-version]
+                 [metrics-clojure-ring ~metrics-clojure-version]
+                 [metrics-clojure-riemann ~metrics-clojure-version]
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
                  [riemann-clojure-client "0.5.1"]
@@ -109,7 +99,7 @@
 
                  ;; Docs
                  [markdown-clj "1.10.1"]
-                 [hiccup "2.0.0-alpha1"]
+                 [hiccup "2.0.0-alpha2"]
 
                  ;; Encryption
                  [lock-key "1.5.0"]
@@ -119,14 +109,11 @@
 
                  [zookeeper-clj "0.9.4"]
                  [org.onyxplatform/onyx-kafka "0.14.5.0"
-                  :exclusions [org.clojure/clojure
-                               com.andrewmcveigh/cljs-time
+                  :exclusions [com.andrewmcveigh/cljs-time
                                com.stuartsierra/component
                                io.netty/netty
-                               org.slf4j/slf4j-log4j12
                                org.apache.zookeeper/zookeeper
-                               com.google.guava/guava
-                               org.clojure/core.async]]
+                               com.google.guava/guava]]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]
