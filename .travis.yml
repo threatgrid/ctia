@@ -54,6 +54,7 @@ before_script:
     - until curl http://127.0.0.1:9200/; do sleep 1; done
     # Wait Kafka
     - until echo dump | nc 127.0.0.1 2181 | grep brokers; do sleep 1; done
+    - lein pom && mvn dependency:tree -Dverbose
 
 services:
     - docker
