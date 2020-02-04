@@ -47,7 +47,8 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23-20200204.180031-3"] ;sha: f92c65bb811e97cc0b96443e46474ba8caa1e1cc
 
-                 [threatgrid/ctim "1.0.16-20200204.180350-3"] ;sha: 52c56b769917b26b6a2362686fdc8479761beb53
+                  
+                 [threatgrid/ctim "1.0.16-20200204.203310-4"] ;sha: 418bd718a82ad29c9b343f9a8ef5738df6dce2e0
                  [threatgrid/clj-momo "0.3.4-20200204.172456-2"] ;sha: 296203d2bc07e0063103e4bc1cc0c921284db927
 
                  [com.arohner/uri "0.1.2"]
@@ -123,7 +124,7 @@
                                ring/ring-core
                                cheshire
                                metosin/ring-http-response]]
-                 [com.graphql-java/graphql-java "14.0"
+                 [com.graphql-java/graphql-java "9.5"
                   :exclusions [org.slf4j/slf4j-api]]]
 
   :resource-paths ["resources" "doc"]
