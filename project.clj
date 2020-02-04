@@ -81,7 +81,7 @@
                  [scopula "0.1.4"]
 
                  ;; clients
-                 [clj-http "3.10.0"]
+                 [clj-http "3.10.0"] ;TODO bump clj-http with https://github.com/dakrone/clj-http/pull/532
                  [com.taoensso/carmine "2.19.1"]
 
                  ;; Metrics

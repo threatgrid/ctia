@@ -1,4 +1,5 @@
-(ns ctia.stores.es.mapping)
+(ns ctia.stores.es.mapping
+  (:refer-clojure :exclude [identity]))
 
 ;; This provides a reasonable default mapping for all of our entities.
 ;; It aschews nested objects since they are performance risks, and
