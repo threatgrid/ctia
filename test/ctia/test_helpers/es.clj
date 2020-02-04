@@ -132,7 +132,7 @@
     (t)))
 
 (defn- url-for-type [t]
-  (assert (keyword? type) "Type must be a keyword")
+  (assert (keyword? t) "Type must be a keyword")
   (let [{:keys [indexname host port]}
         (-> @ctia.store/stores
             t
