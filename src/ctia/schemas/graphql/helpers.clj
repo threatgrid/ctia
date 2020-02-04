@@ -87,7 +87,7 @@
                                         description
                                         values
                                         default-type-registry))
-  ([enum-name description values registry]
+  ([^String enum-name ^String description values registry]
    (or (get @registry enum-name)
        (let [builder (-> (GraphQLEnumType/newEnum)
                          (.name enum-name)
@@ -222,7 +222,7 @@
                                         ;----- Input
 
 (defn ^GraphQLArgument new-argument
-  [arg-name arg-type arg-description arg-default-value]
+  [^String arg-name arg-type ^String arg-description arg-default-value]
   (let [builder
         (-> (GraphQLArgument/newArgument)
             (.name arg-name)
@@ -247,9 +247,9 @@
   field)
 
 (defn ^GraphQLInputObjectField new-input-field
-  [field-name
+  [^String field-name
    ^GraphQLInputType field-type
-   field-description
+   ^String field-description
    default-value]
   (log/debug "New input field" field-name (pr-str field-type))
   (let [builder (-> (GraphQLInputObjectField/newInputObjectField)
@@ -287,9 +287,9 @@
 ;;----- Output
 
 (defn ^GraphQLFieldDefinition new-field
-  [field-name
+  [^String field-name
    ^GraphQLOutputType field-type
-   field-description
+   ^String field-description
    field-args
    field-data-fetcher]
   (log/debug "New field" field-name (pr-str field-type))
@@ -353,7 +353,7 @@
         (f object args schema)))))
 
 (defn new-union
-  [union-name description type-resolver-fn types]
+  [^String union-name ^String description type-resolver-fn types]
   (let [type-resolver (fn->type-resolver type-resolver-fn)
         graphql-union (-> (GraphQLUnionType/newUnionType)
                           (.description description)
