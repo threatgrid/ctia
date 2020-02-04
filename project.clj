@@ -33,6 +33,8 @@
              "-Dlog.console.threshold=INFO"
              "-server"]
   :pedantic? :abort
+  ; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
+  ; to inspect conflicts.
   :dependencies [[org.clojure/clojure ~clj-version]
                  [clj-time "0.15.2"]
                  [org.clojure/core.async "0.7.559"]
@@ -58,24 +60,14 @@
                  ; optional dep for compojure-api's dep ring-middleware-format
                  ; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
-                 [metosin/ring-swagger "0.26.2"
-                  :exclusions [commons-io
-                               prismatic/plumbing
-                               potemkin
-                               frankiesardo/linked
-                               ; provided by ring/ring-jetty-adapter
-                               ring/ring-core
-                               metosin/ring-http-response
-                               metosin/schema-tools]]
+                 [metosin/ring-swagger "0.26.2"]
                  [metosin/ring-swagger-ui "3.24.3"]
+                 [ring/ring-core ~ring-version] ;ring/ring-jetty-adapter > metosin/ring-swagger
                  [ring/ring-jetty-adapter ~ring-version]
                  [ring/ring-devel ~ring-version]
                  [ring-cors "0.1.13"]
-                 [ring/ring-codec "1.1.2"
-                  ;; Exclusions:
-                  ;; - ring-codec 1.0.1 is not using the latest commons-codec
-                  ;;   - As of 2016-08-25, the latest version is 1.10 (using 1.6)
-                  :exclusions [commons-codec]]
+                 [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
+                 [ring/ring-codec "1.1.2"]
                  [yogsototh/clj-jwt "0.2.1"]
                  [threatgrid/ring-turnstile-middleware "0.1.1-20200203.182733-1"]
                  [threatgrid/ring-jwt-middleware "1.0.0"]
@@ -92,8 +84,12 @@
                  [metrics-clojure-riemann ~metrics-clojure-version]
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
+                 [com.google.guava/guava "20.0"];org.onyxplatform/onyx-kafka > threatgrid/ctim
+                 [io.netty/netty "3.10.6.Final"];org.onyxplatform/onyx-kafka > metrics-clojure-riemann, zookeeper-clj
+                 [io.netty/netty-codec "4.1.42.Final"] ;org.apache.zookeeper/zookeeper > riemann-clojure-client
+                 [io.netty/netty-resolver "4.1.42.Final"] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
+                 [com.google.protobuf/protobuf-java "3.11.1"] ;riemann-clojure-client > threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
                  [riemann-clojure-client "0.5.1"]
-                 [com.google.protobuf/protobuf-java "3.11.1"]
                  ; https://stackoverflow.com/a/43574427
                  [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
 
@@ -107,25 +103,16 @@
                  ;; Hooks
                  [threatgrid/redismq "0.1.1"]
 
+                 [org.apache.zookeeper/zookeeper "3.5.6"] ; override zookeeper-clj, org.onyxplatform/onyx-kafka
+                 [args4j "2.32"] ;org.onyxplatform/onyx-kafka > threatgrid/ctim
+                 [com.stuartsierra/component "0.3.2"] ;org.onyxplatform/onyx-kafka internal override
+                 [org.onyxplatform/onyx-kafka "0.14.5.0"]
                  [zookeeper-clj "0.9.4"]
-                 [args4j "2.32"] ; org.onyxplatform/onyx-kafka > threatgrid/ctim
-                 [org.onyxplatform/onyx-kafka "0.14.5.0"
-                  :exclusions [com.andrewmcveigh/cljs-time
-                               com.stuartsierra/component
-                               io.netty/netty
-                               org.apache.zookeeper/zookeeper
-                               com.google.guava/guava]]
 
                  ;; GraphQL
                  [base64-clj "0.1.1"]
-                 [threatgrid/ring-graphql-ui "0.1.1"
-                  :exclusions [commons-fileupload
-                               ; provided by ring/ring-jetty-adapter
-                               ring/ring-core
-                               cheshire
-                               metosin/ring-http-response]]
-                 [com.graphql-java/graphql-java "9.7"
-                  :exclusions [org.slf4j/slf4j-api]]]
+                 [threatgrid/ring-graphql-ui "0.1.1"]
+                 [com.graphql-java/graphql-java "9.7"]]
 
   :resource-paths ["resources" "doc"]
   :aot [ctia.main]
@@ -193,6 +180,7 @@
                               :namespaces [ctia.bulk.routes-bench]}
                              {:name :migration
                               :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
+  ; use `lein deps :plugins-tree` to inspect conflicts
   :plugins [[lein-shell "0.5.0"]
             [org.clojure/clojure ~clj-version] ;override perforate
             [perforate ~perforate-version]]
