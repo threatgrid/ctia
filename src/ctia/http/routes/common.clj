@@ -2,7 +2,6 @@
   (:require [clj-http.headers :refer [canonicalize]]
             [clojure.string :as str]
             [ctia.schemas.sorting :as sorting]
-            [cemerick.url :refer [url-encode]]
             [ring.swagger.schema :refer [describe]]
             [ring.util
              [codec :as codec]

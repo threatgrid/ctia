@@ -1,5 +1,6 @@
 (def cheshire-version "5.9.0")
 (def clj-http-fake-version "1.0.3")
+(def clj-version "1.10.1")
 (def metrics-clojure-version "2.10.0")
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
@@ -32,7 +33,7 @@
              "-Dlog.console.threshold=INFO"
              "-server"]
   :pedantic? :abort
-  :dependencies [[org.clojure/clojure "1.10.1"]
+  :dependencies [[org.clojure/clojure ~clj-version]
                  [clj-time "0.15.2"]
                  [org.clojure/core.async "0.7.559"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
@@ -44,14 +45,12 @@
                  ;; Schemas
                  [prismatic/schema "1.1.12"]
                  [metosin/schema-tools "0.12.2"]
-                 [threatgrid/flanders "0.1.23-20200203.184028-2"]
-                 [threatgrid/ctim "1.0.15"
-                  :exclusions [org.clojure/tools.reader ;;TODO delete this exclusion when upgrading ctim
-                               metosin/ring-swagger
-                               com.google.guava/guava
-                               org.clojure/clojurescript]]
-                 [threatgrid/clj-momo "0.3.3"
-                  :exclusions [cheshire]]
+                 [threatgrid/flanders "0.1.23-20200204.180031-3"] ;sha: f92c65bb811e97cc0b96443e46474ba8caa1e1cc
+
+                 [threatgrid/ctim "1.0.16-20200204.180350-3"] ;sha: 52c56b769917b26b6a2362686fdc8479761beb53
+                 [threatgrid/clj-momo "0.3.4-20200204.172456-2"] ;sha: 296203d2bc07e0063103e4bc1cc0c921284db927
+
+                 [com.arohner/uri "0.1.2"]
 
                  ;; Web server
                  [metosin/compojure-api "1.1.13" ]
@@ -108,6 +107,7 @@
                  [threatgrid/redismq "0.1.1"]
 
                  [zookeeper-clj "0.9.4"]
+                 [args4j "2.32"] ; org.onyxplatform/onyx-kafka > threatgrid/ctim
                  [org.onyxplatform/onyx-kafka "0.14.5.0"
                   :exclusions [com.andrewmcveigh/cljs-time
                                com.stuartsierra/component
@@ -193,6 +193,7 @@
                              {:name :migration
                               :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
   :plugins [[lein-shell "0.5.0"]
+            [org.clojure/clojure ~clj-version] ;override perforate
             [perforate ~perforate-version]]
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
             "kibit" ["with-profile" "prepush" "kibit"]
