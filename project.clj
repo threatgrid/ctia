@@ -124,7 +124,7 @@
                                ring/ring-core
                                cheshire
                                metosin/ring-http-response]]
-                 [com.graphql-java/graphql-java "9.5"
+                 [com.graphql-java/graphql-java "9.7"
                   :exclusions [org.slf4j/slf4j-api]]]
 
   :resource-paths ["resources" "doc"]
