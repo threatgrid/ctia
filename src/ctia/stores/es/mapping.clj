@@ -5,8 +5,8 @@
 ;; It aschews nested objects since they are performance risks, and
 ;; restricts the _all to a minimal set.
 
-;; not that fields with the same name, nee to have the same mapping,
-;; even in different entities.  That means
+;; Note that fields with the same name, need to have the same mapping,
+;; even in different entities.
 
 (def float-type
   {:type "float"
