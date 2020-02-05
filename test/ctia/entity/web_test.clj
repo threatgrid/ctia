@@ -285,7 +285,7 @@
                                         (str "http://localhost:" (helpers/get-http-port) "/ctia/judgement/" (:short-id judgement-id))
                                         {:headers {"Authorization" (str "Bearer " jwt)}
                                          :throw-exceptions false
-                                         :as :json})]
+                                         :as :json-strict})]
                                    (:status response)))]
              (is (= 201 status))
              (testing "GET /ctia/judgement/:id with bad JWT Authorization header"
