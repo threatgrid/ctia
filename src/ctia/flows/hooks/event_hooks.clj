@@ -23,11 +23,11 @@
   (destroy [_]
     (log/warn "shutting down Kafka producer")
     (.close producer))
-  (handle [_ {:keys [^String id] :as event} _]
+  (handle [_ event _]
     (okh/send-sync! producer
                     (get-in kafka-config [:topic :name])
                     nil
-                    (.getBytes id)
+                    (.getBytes ^String (:id event))
                     (.getBytes (generate-string event)))
     event))
 
