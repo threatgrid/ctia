@@ -360,7 +360,10 @@
         (f object args schema)))))
 
 (defn new-union
-  [^String union-name ^String description type-resolver-fn types]
+  [^String union-name
+   ^String description
+   type-resolver-fn
+   types]
   (let [type-resolver (fn->type-resolver type-resolver-fn)
         graphql-union (-> (GraphQLUnionType/newUnionType)
                           (.description description)
