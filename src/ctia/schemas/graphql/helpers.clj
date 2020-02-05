@@ -84,9 +84,9 @@
    created, the corresponding object is retrieved from the provided or the
    default type repository."
   ([enum-name description values] (enum enum-name
-                                        description
-                                        values
-                                        default-type-registry))
+                                   description
+                                   values
+                                   default-type-registry))
   ([^String enum-name ^String description values registry]
    (or (get @registry enum-name)
        (let [builder (-> (GraphQLEnumType/newEnum)
@@ -222,7 +222,10 @@
                                         ;----- Input
 
 (defn ^GraphQLArgument new-argument
-  [^String arg-name arg-type ^String arg-description arg-default-value]
+  [^String arg-name
+   arg-type
+   ^String arg-description
+   arg-default-value]
   (let [builder
         (-> (GraphQLArgument/newArgument)
             (.name arg-name)
@@ -239,10 +242,11 @@
               arg-description :description
               arg-default-value :default
               :or {arg-description ""}}] args]
-    (let [narg (new-argument (name k)
-                             arg-type
-                             arg-description
-                             arg-default-value)]
+    (let [narg
+          (new-argument (name k)
+                        arg-type
+                        arg-description
+                        arg-default-value)]
       (.argument field narg)))
   field)
 
@@ -252,10 +256,11 @@
    ^String field-description
    default-value]
   (log/debug "New input field" field-name (pr-str field-type))
-  (let [builder (-> (GraphQLInputObjectField/newInputObjectField)
-                    (.name field-name)
-                    (.type field-type)
-                    (.description field-description))]
+  (let [builder
+        (-> (GraphQLInputObjectField/newInputObjectField)
+            (.name field-name)
+            (.type field-type)
+            (.description field-description))]
     (when (some? default-value)
       (.defaultValue builder default-value))
     (.build builder)))
@@ -267,10 +272,11 @@
               field-description :description
               field-default-value :default-value
               :or {field-description ""}}] fields]
-    (let [newf (new-input-field (name k)
-                                field-type
-                                field-description
-                                field-default-value)]
+    (let [newf
+          (new-input-field (name k)
+                           field-type
+                           field-description
+                           field-default-value)]
       (.field builder newf)))
   builder)
 
@@ -311,11 +317,12 @@
               :or {field-description ""
                    field-args {}
                    field-resolver (map-resolver k)}}] fields]
-    (let [newf (new-field (name k)
-                          field-type
-                          field-description
-                          field-args
-                          (fn->data-fetcher field-resolver))]
+    (let [newf
+          (new-field (name k)
+                     field-type
+                     field-description
+                     field-args
+                     (fn->data-fetcher field-resolver))]
       (.field builder newf)))
   builder)
 
