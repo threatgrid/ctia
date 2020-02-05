@@ -11,8 +11,8 @@
    (fn [x]
      (if (and
           (instance? clojure.lang.IMapEntry x)
-          (= :schema_version (:k (first x))))
-       (do (swap! collector conj (.getName (last x))) x)
+          (= :schema_version (:k (key x))))
+       (do (swap! collector conj (.getName ^Class (val x))) x)
        (collect-schema-version-leaves collector x)))
    identity
    m))

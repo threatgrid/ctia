@@ -1,4 +1,4 @@
-(def cheshire-version "5.9.0")
+(def cheshire-version "5.10.0")
 (def clj-http-fake-version "1.0.3")
 (def clj-version "1.10.1")
 (def metrics-clojure-version "2.10.0")
@@ -49,7 +49,7 @@
                  [threatgrid/flanders "0.1.23-20200204.180031-3"] ;sha: f92c65bb811e97cc0b96443e46474ba8caa1e1cc
 
                   
-                 [threatgrid/ctim "1.0.16-20200204.203310-4"] ;sha: 418bd718a82ad29c9b343f9a8ef5738df6dce2e0
+                 [threatgrid/ctim "1.0.16-20200205.182529-5"] ;sha: 121b661f9638d6720c2ac22f2bdd125383abdc8a
                  [threatgrid/clj-momo "0.3.4-20200204.172456-2"] ;sha: 296203d2bc07e0063103e4bc1cc0c921284db927
 
                  [com.arohner/uri "0.1.2"]
@@ -74,6 +74,7 @@
 
                  ;; clients
                  [clj-http "3.9.1"] ;TODO bump clj-http with https://github.com/dakrone/clj-http/pull/532
+                                    ; Note: clj-http 3.10.0 breaks the ctia unit tests
                  [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
 
                  ;; Metrics

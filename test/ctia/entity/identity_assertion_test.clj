@@ -1,4 +1,5 @@
 (ns ctia.entity.identity-assertion-test
+  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
             [ctia.entity.identity-assertion :refer [identity-assertion-fields identity-assertion-sort-fields]]
