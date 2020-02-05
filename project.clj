@@ -74,7 +74,7 @@
 
                  ;; clients
                  [clj-http "3.9.1"] ;TODO bump clj-http with https://github.com/dakrone/clj-http/pull/532
-                                    ; Note: clj-http 3.10.0 breaks the ctia unit tests
+                                    ; Note: clj-http 3.10.0 breaks the ctia unit tests, in the same way as https://github.com/dakrone/clj-http/issues/489
                  [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
 
                  ;; Metrics
