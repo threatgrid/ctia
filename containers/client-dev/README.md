@@ -17,6 +17,7 @@ If your docker host OS is Linux,
 Elasticsearch 5x bootstrap checks the maximum map count configuration,
 tune it accordingly with `sudo sysctl -w vm.max_map_count=262144`
 
+NOTE: This project has been tested and works with Java 8. Java 9 have been tested and do not work.
 
 To run the latest containers from Docker HUB simply invoke docker-compose with this configuration:
 
