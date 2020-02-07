@@ -15,16 +15,14 @@ services:
       - elasticsearch-client-dev
 
   redis-client-dev:
-    image: redis
+    image: redis:5.0.5
     ports:
       - "6379:6379"
 
   elasticsearch-client-dev:
-    image: elasticsearch:5.1
+    image: elasticsearch:5.6.9
     environment:
-      ES_NETWORK_HOST: 0.0.0.0
-      ES_NODE_MASTER: "true"
-      ES_CLUSTER_NAME: elasticsearch
+      - cluster.name=elasticsearch
     volumes:
       - ./elasticsearch/data:/usr/share/elasticsearch/data
     ports:

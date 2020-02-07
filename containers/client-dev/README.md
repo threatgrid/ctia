@@ -40,7 +40,7 @@ Created ~/path-to/ctia/target/ctia.jar
 
 ~/path-to/ctia$ cd containers/client-dev/
 
-~/path-to/ctia/containers/client-dev$ sudo docker-compose build
+~/path-to/ctia/containers/client-dev$ docker-compose build
 redis-client-dev uses an image, skipping
 elasticsearch-client-dev uses an image, skipping
 Building ctia
