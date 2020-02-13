@@ -46,11 +46,11 @@
                  ;; Schemas
                  [prismatic/schema "1.1.12"]
                  [metosin/schema-tools "0.12.2"]
-                 [threatgrid/flanders "0.1.23-20200204.180031-3"] ;sha: f92c65bb811e97cc0b96443e46474ba8caa1e1cc
+                 [threatgrid/flanders "0.1.23"]
 
                   
-                 [threatgrid/ctim "1.0.16-20200205.182529-5"] ;sha: 121b661f9638d6720c2ac22f2bdd125383abdc8a
-                 [threatgrid/clj-momo "0.3.4-20200204.172456-2"] ;sha: 296203d2bc07e0063103e4bc1cc0c921284db927
+                 [threatgrid/ctim "1.0.16"]
+                 [threatgrid/clj-momo "0.3.4"]
 
                  [com.arohner/uri "0.1.2"]
 
