@@ -80,7 +80,6 @@
                  [metrics-clojure ~metrics-clojure-version]
                  [metrics-clojure-jvm ~metrics-clojure-version]
                  [metrics-clojure-ring ~metrics-clojure-version]
-                 [metrics-clojure-riemann ~metrics-clojure-version]
                  [clout "2.2.1"]
                  [slugger "1.0.1"]
                  [com.google.guava/guava "20.0"];org.onyxplatform/onyx-kafka > threatgrid/ctim
