@@ -27,8 +27,8 @@ cache:
     - $HOME/.cache/pip
 jdk:
     - oraclejdk8
-    # https://github.com/travis-ci/travis-ci/issues/5227
     - openjdk11
+    - openjdk13
 
 before_install:
     # ES5 needs this
