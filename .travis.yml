@@ -1,10 +1,9 @@
 language: clojure
-lein: 2.7.1
+lein: 2.9.1
 dist: trusty
 
 env:
     global:
-      - JAVA_OPTS="-XX:MaxPermSize=256m"
       - LOG_DIR=$HOME/log
       - BIN_DIR=$HOME/bin
       - LEIN_ROOT=1
@@ -28,7 +27,7 @@ cache:
     - $HOME/.cache/pip
 jdk:
     # https://github.com/travis-ci/travis-ci/issues/5227
-    - oraclejdk8
+    - openjdk11
 
 before_install:
     # ES5 needs this

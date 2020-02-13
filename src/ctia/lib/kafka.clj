@@ -4,12 +4,16 @@
    [ctia.properties :refer [properties]]
    [onyx.kafka.helpers :as okh]
    [onyx.plugin.kafka :as opk])
-  (:import kafka.admin.AdminUtils
-           kafka.admin.AdminClient))
+  (:import [kafka.admin AdminUtils AdminClient]
+           [org.apache.kafka.common TopicPartition]
+           [org.apache.kafka.clients.consumer ConsumerRebalanceListener
+            KafkaConsumer]
+           [org.apache.kafka.clients.producer KafkaProducer]
+           [java.util Collection]))
 
 (defn decompress
-  [v]
-  (when v (String. v "UTF-8")))
+  [^bytes v]
+  (some-> v (String. "UTF-8")))
 
 (defn ssl-enabled? [{:keys [ssl]}]
   (boolean (:enabled ssl)))
@@ -27,7 +31,7 @@
    "ssl.key.password"
    (get-in ssl [:key :password])})
 
-(defn build-producer [kafka-props]
+(defn ^KafkaProducer build-producer [kafka-props]
   (let [producer-opts {}
         {:keys [request-size compression]} kafka-props
         compression-type (:type compression)
@@ -42,7 +46,7 @@
                         (okh/byte-array-serializer)
                         (okh/byte-array-serializer))))
 
-(defn build-consumer [kafka-props]
+(defn ^KafkaConsumer build-consumer [kafka-props]
   (let [{:keys [request-size]} kafka-props
         address (get-in kafka-props [:zk :address])
         brokers (opk/find-brokers {:kafka/zookeeper address})
@@ -53,10 +57,13 @@
                         (okh/byte-array-deserializer)
                         (okh/byte-array-deserializer))))
 
-(defn poll [consumer name f timeout]
+(defn poll [^KafkaConsumer consumer name f timeout]
   (loop []
     (let [records (.poll consumer timeout)]
-      (doseq [record (.records records name)]
+      (doseq [record (if (string? name)
+                       (.records records ^String name)
+                       ;unsure if this case is reachable
+                       (.records records ^TopicPartition name))]
         (f (okh/consumer-record->message decompress
                                          record)))
       (.commitSync consumer)
@@ -67,25 +74,25 @@
    create a producer and start polling the requested topic
    return a map with the KafkaConsumer and the wrapping thread"
   [kafka-props handler {:keys [timeout
-                               rebalance-listener]}]
+                               ^ConsumerRebalanceListener rebalance-listener]}]
   (let [{:keys [name]}
         (:topic kafka-props)
         consumer (build-consumer kafka-props)
         consumer-thread (Thread. #(poll consumer
                                         name
                                         handler
-                                        timeout))]
+                                        timeout))
+        ^Collection topics [name]]
     (if rebalance-listener
-      (.subscribe consumer [name] rebalance-listener)
-      (.subscribe consumer [name]))
+      (.subscribe consumer topics rebalance-listener)
+      (.subscribe consumer topics))
 
     (.start consumer-thread)
     {:consumer consumer
      :consumer-thread consumer-thread}))
 
 (defn stop-consumer
-  [{:keys [consumer
-           consumer-thread]}]
+  [{:keys [^Thread consumer-thread]}]
   (.stop consumer-thread))
 
 (defn create-topic [kafka-props]

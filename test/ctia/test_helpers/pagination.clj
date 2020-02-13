@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.pagination
   (:refer-clojure :exclude [get])
   (:require [clojure.test :refer [is testing]]
+            [ctim.domain.id :as id]
             [ctia.test-helpers.core :as helpers :refer [get]]))
 
 (defn total->limit
@@ -80,8 +81,8 @@
           limit (total->limit total offset)
           last-record (nth full-res (- (+ limit offset) 1))
           search-after-id (when-let [last-id (:id last-record)]
-                            (.short-id
-                             (ctim.domain.id/long-id->id last-id)))
+                            (id/short-id
+                              (id/long-id->id last-id)))
           base-x-next (format "limit=%s&offset=%s"
                               limit
                               (+ offset limit)

@@ -45,7 +45,7 @@ By default, CTIA uses Elasticsearch 5.x as its data store.  Assuming you
 have it running on 127.0.0.1:9200 you can simply start
 CTIA.
 
-You can jump to the [Developer](#Developer) section to see instructions
+You can jump to the [Development](#Development) section to see instructions
 on how to run elasticsearch and other optional supporting tools using
 Docker.  CTIA may use Kafka, Redis and ES to push events.
 
@@ -71,7 +71,7 @@ This is the proper way to run this in production.
 
 ```
 lein do clean, uberjar
-java -Xmx4g -Djava.awt.headless=true -XX:MaxPermSize=256m -Dlog.console.threshold=INFO -jar target/ctia.jar
+java -Xmx4g -Djava.awt.headless=true -Dlog.console.threshold=INFO -jar target/ctia.jar
 ```
 
 You may tweak the java arguments as per your requirements.
@@ -371,7 +371,7 @@ X-Ctia-Version: 70323eb3b72da558e7f056e418533402f65d335a
 
 ## License
 
-Copyright © 2015-2016 Cisco Systems
+Copyright © 2015-2020 Cisco Systems
 
 Eclipse Public License v1.0
 

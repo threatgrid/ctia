@@ -598,7 +598,7 @@
               (->> (es-helpers/get-cat-indices host port)
                    keys
                    (map name)
-                   (filter #(.contains % "sighting"))
+                   (filter #(.contains ^String % "sighting"))
                    sort
                    (take 2))
 

@@ -54,7 +54,7 @@
 (defn _http-get [params url jwt]
   (log/infof "checkin JWT, GET %s" url)
   (http/get url
-            (into {:as :json
+            (into {:as :json-strict
                    :coerce :always
                    :throw-exceptions false
                    :headers {:Authorization (format "Bearer %s" jwt)}
@@ -140,7 +140,7 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
-(defn- new-jetty-instance
+(defn- ^Server new-jetty-instance
   [{:keys [dev-reload
            max-threads
            min-threads

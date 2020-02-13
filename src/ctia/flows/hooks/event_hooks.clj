@@ -13,9 +13,10 @@
    [onyx.kafka.helpers :as okh]
    [onyx.plugin.kafka :as opk]
    [cheshire.core :refer [generate-string]]
-   [schema.core :as s]))
+   [schema.core :as s])
+  (:import [org.apache.kafka.clients.producer KafkaProducer]))
 
-(defrecord KafkaEventPublisher [producer kafka-config]
+(defrecord KafkaEventPublisher [^KafkaProducer producer kafka-config]
   Hook
   (init [_]
     :nothing)
@@ -26,9 +27,8 @@
     (okh/send-sync! producer
                     (get-in kafka-config [:topic :name])
                     nil
-                    (.getBytes (:id event))
+                    (.getBytes ^String (:id event))
                     (.getBytes (generate-string event)))
-    :nothing
     event))
 
 (defrecord RedisEventPublisher [conn publish-channel-name]

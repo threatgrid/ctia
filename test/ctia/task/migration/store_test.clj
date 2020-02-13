@@ -256,7 +256,7 @@
 (def examples (fixt/bundle fixtures-nb false))
 
 (deftest rollover-test
-  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+  (with-open [rdr (clojure.java.io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [storename "ctia_relationship"
           write-alias (str storename "-write")
           max-docs 40

@@ -429,7 +429,7 @@
                  :type :indicator,
                  :external_id "ctia-indicator-1",
                  :error "Entity validation Error",
-                 :msg "In: [:valid_time :end_time] val: #inst \"4242-07-11T00:40:48.212-00:00\" fails spec: :new-indicator.valid_time/end_time at: [:valid_time :end_time] predicate: (inst-in-range? #inst \"1970-01-01T00:00:00.000-00:00\" #inst \"2525-01-01T00:01:00.000-00:00\" %)\n"}]}
+                 :msg "#inst \"4242-07-11T00:40:48.212-00:00\" - failed: (inst-in-range? #inst \"1970-01-01T00:00:00.000-00:00\" #inst \"2525-01-01T00:01:00.000-00:00\" %) in: [:valid_time :end_time] at: [:valid_time :end_time] spec: :new-indicator.valid_time/end_time\n"}]}
               (:parsed-body response-create)))))))
 
 (deftest find-by-external-ids-test

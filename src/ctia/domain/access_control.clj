@@ -1,7 +1,8 @@
 (ns ctia.domain.access-control
   (:require [ctia.properties :refer [get-access-control]]
             [ctim.schemas.common :as csc]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import [java.util List]))
 
 (def acl-fields
   "Those fields should always be retrieved from _source
@@ -16,7 +17,7 @@
 (def public-tlps
   ["white" "green"])
 
-(def tlps ["white" "green" "amber" "red"])
+(def ^List tlps ["white" "green" "amber" "red"])
 
 (defn properties-default-tlp []
   (or (:default-tlp (get-access-control))

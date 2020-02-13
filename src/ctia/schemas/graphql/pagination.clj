@@ -6,7 +6,8 @@
             [schema-tools.core :as st]
             [schema.core :as s]
             [ctia.schemas.graphql.sorting :as sorting])
-  (:import graphql.Scalars))
+  (:import [graphql Scalars]
+           [graphql.schema GraphQLType]))
 
 (def PageInfo
   (g/new-object
@@ -35,7 +36,7 @@
     :cursor {:type (g/non-null Scalars/GraphQLString)}}))
 
 (defn new-connection
-  [node-type]
+  [^GraphQLType node-type]
   (let [type-name (str/capitalize (.getName node-type))
         connection-name (str type-name
                              "Connection")

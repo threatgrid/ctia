@@ -132,7 +132,7 @@
     (t)))
 
 (defn- url-for-type [t]
-  (assert (keyword? type) "Type must be a keyword")
+  (assert (keyword? t) "Type must be a keyword")
   (let [{:keys [indexname host port]}
         (-> @ctia.store/stores
             t
@@ -148,7 +148,7 @@
   (let [{:keys [status]}
         (http/post
          (url-for-type (-> obj :type keyword))
-         {:as :json
+         {:as :json-strict
           :content-type :json
           :throw-exceptions false
           :body (json/generate-string obj)})]
@@ -190,7 +190,7 @@
 (defn get-cat-indices [host port]
   (let [url (make-cat-indices-url host
                                   port)
-        {:keys [body]} (http/get url {:as :json})]
+        {:keys [body]} (http/get url {:as :json-strict})]
     (->> body
          (map (fn [{:keys [index]
                     :as entry}]

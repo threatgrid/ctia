@@ -1,11 +1,12 @@
-(ns ctia.stores.es.mapping)
+(ns ctia.stores.es.mapping
+  (:refer-clojure :exclude [identity]))
 
 ;; This provides a reasonable default mapping for all of our entities.
 ;; It aschews nested objects since they are performance risks, and
 ;; restricts the _all to a minimal set.
 
-;; not that fields with the same name, nee to have the same mapping,
-;; even in different entities.  That means
+;; Note that fields with the same name, need to have the same mapping,
+;; even in different entities.
 
 (def float-type
   {:type "float"

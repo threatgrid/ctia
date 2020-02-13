@@ -22,7 +22,7 @@
    [ctim.examples.incidents :refer [new-incident-minimal]]
    [ctim.examples.casebooks :refer [new-casebook-minimal]]
    [ctim.domain.id :as id]
-   [cemerick.url :refer [url-encode]]
+   [cemerick.uri :as uri]
    [ctia.test-helpers.es :as es-helpers]))
 
 (use-fixtures :once
@@ -126,11 +126,11 @@
                             :headers {"Authorization" "user1"})
                     uri-timeline-incident-user1
                     (->> (:id incident)
-                         url-encode
+                         uri/uri-encode
                          (str "ctia/event/history/"))
                     uri-timeline-incident-user3
                     (->> (:id incident-user-3)
-                         url-encode
+                         uri/uri-encode
                          (str "ctia/event/history/"))
                     {timeline1-body :parsed-body
                      timeline1-status :status}
@@ -180,7 +180,7 @@
 
                 (testing "should be able to list all related incident events filtered with Access control"
 
-                  (let [q (url-encode
+                  (let [q (uri/uri-encode
                            (format "entity.id:\"%s\" OR entity.source_ref:\"%s\" OR entity.target_ref:\"%s\""
                                    (:id incident)
                                    (:id incident)
