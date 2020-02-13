@@ -4,8 +4,8 @@ dist: trusty
 
 env:
     global:
-      - LOG_DIR=$HOME/log
       - BIN_DIR=$HOME/bin
+      - LOG_DIR=$HOME/log
       - LEIN_ROOT=1
       - CTIA_MAJOR_VERSION=1
       - COMPOSE_URI=https://github.com/docker/compose/releases/download/1.9.0
@@ -18,6 +18,7 @@ env:
       - CTIA_HOOK_ES_PORT=9200
       - CTIA_HOOK_ES_INDEXNAME=elasticsearch
       - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
+      - SHELLCHECK_VERSION="v0.7.0" # "stable" or "v0.4.7", or "latest"
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -31,11 +32,18 @@ jdk:
     - openjdk13
 
 before_install:
+    # upgrade shellcheck (https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary)
+    - wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-${SHELLCHECK_VERSION?}.linux.x86_64.tar.xz" | tar -xJv
+    - cp "shellcheck-${SHELLCHECK_VERSION}/shellcheck" "${BIN_DIR}"
+    - shellcheck --version
+    # run shellcheck
+    - ./scripts/shellcheck-build.sh
+
     # ES5 needs this
     - sudo sysctl -w vm.max_map_count=262144
-    # create log & bin dir if missing
+
+    # create log dir if missing
     - mkdir -p $LOG_DIR
-    - mkdir -p $BIN_DIR
 
     #https://github.com/travis-ci/travis-ci/issues/5227
     - echo "127.0.0.1 "`hostname` | sudo tee /etc/hosts
