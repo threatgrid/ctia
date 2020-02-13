@@ -68,7 +68,7 @@
                  [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
                  [ring/ring-codec "1.1.2"]
                  [yogsototh/clj-jwt "0.2.1"]
-                 [threatgrid/ring-turnstile-middleware "0.1.1-20200203.182733-1"];sha: 6bef68919a0038d55721c44a84c03e7827a26f42
+                 [threatgrid/ring-turnstile-middleware "0.1.1"]
                  [threatgrid/ring-jwt-middleware "1.0.0"]
                  [scopula "0.1.4"]
 
