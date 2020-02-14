@@ -4,8 +4,8 @@ dist: trusty
 
 env:
     global:
-      - BIN_DIR=$HOME/bin
       - LOG_DIR=$HOME/log
+      - BIN_DIR=$HOME/bin
       - LEIN_ROOT=1
       - CTIA_MAJOR_VERSION=1
       - COMPOSE_URI=https://github.com/docker/compose/releases/download/1.9.0
