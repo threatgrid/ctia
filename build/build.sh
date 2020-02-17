@@ -11,9 +11,9 @@ function build-and-publish-package {
   PKG_TYPE=$1
 
   echo "Building new $PKG_TYPE package"
-  ( set -x; lein uberjar )
+  ( set -x && lein uberjar )
   BUILD_NAME="${CTIA_MAJOR_VERSION}-${PKG_TYPE}-${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}"
-  echo $BUILD_NAME
+  echo "$BUILD_NAME"
   echo "Build: $BUILD_NAME"
   echo "Commit: ${TRAVIS_COMMIT}"
   echo "Version: $BUILD_NAME"
@@ -26,18 +26,18 @@ function build-and-publish-package {
   fi
 
   ARTIFACT_NAME="${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT:0:8}.jar"
-  ( set -x; pip install --upgrade --user awscli )
+  ( set -x && pip install --upgrade --user awscli )
   export PATH=$PATH:$HOME/.local/bin
-  ( set -x; aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/${ARTIFACT_NAME} --sse aws:kms --sse-kms-key-id alias/kms-s3 )
+  ( set -x && aws s3 cp ./target/ctia.jar s3://${ARTIFACTS_BUCKET}/artifacts/ctia/"${ARTIFACT_NAME}" --sse aws:kms --sse-kms-key-id alias/kms-s3 )
 
   # Run Vulnerability Scan in the artifact using ZeroNorth - INT only
   # WARNING: don't `set -x` here, exposes credentials
   if [ "${PKG_TYPE}" == "int" ]; then
     echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
     sudo docker pull zeronorth/owasp-5-job-runner
-    sudo docker run -v ${PWD}/target/ctia.jar:/code/ctia.jar -e CYBRIC_API_KEY="${CYBRIC_API_KEY}" -e POLICY_ID=IUkmdVdkSjms9CjeWK-Peg -e WORKSPACE=${PWD}/target -v /var/run/docker.sock:/var/run/docker.sock --name zeronorth zeronorth/integration:latest python cybric.py
+    sudo docker run -v "${PWD}"/target/ctia.jar:/code/ctia.jar -e CYBRIC_API_KEY="${CYBRIC_API_KEY}" -e POLICY_ID=IUkmdVdkSjms9CjeWK-Peg -e WORKSPACE="${PWD}"/target -v /var/run/docker.sock:/var/run/docker.sock --name zeronorth zeronorth/integration:latest python cybric.py
     echo "Waiting the ZeroNorth Vulnerability Scanner to finish..."
-    while [[ ! -z $(docker ps -a --format "{{.ID}}" -f status=running -f ancestor=zeronorth/owasp-5-job-runner) ]]; do sleep 5; done
+    while [[ -n $(docker ps -a --format "{{.ID}}" -f status=running -f ancestor=zeronorth/owasp-5-job-runner) ]]; do sleep 5; done
   fi
 }
 
