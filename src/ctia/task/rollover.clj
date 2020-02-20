@@ -1,15 +1,12 @@
 (ns ctia.task.rollover
-  (:import [clojure.lang ExceptionInfo])
-  (:require [clojure.tools.logging :as log]
-            [schema.core :as s]
-            [clj-momo.lib.es
-             [index :as es-index]
-             [schemas :refer [ESConnState]]]
-            [ctia.stores.es.crud :as es-crud]
-            [ctia
-             [init :refer [init-store-service! log-properties]]
-             [properties :refer [properties init!]]
-             [store :refer [stores]]]))
+  (:require [clj-momo.lib.es.index :as es-index]
+            [clj-momo.lib.es.schemas :refer [ESConnState]]
+            [clojure.tools.logging :as log]
+            [ctia.init :refer [init-store-service! log-properties]]
+            [ctia.properties :refer [init!]]
+            [ctia.store :refer [stores]]
+            [schema.core :as s])
+  (:import clojure.lang.ExceptionInfo))
 
 (s/defn rollover-store
   "Sends rollover query on a store if paramater aliased and rollover conditions are configured."
