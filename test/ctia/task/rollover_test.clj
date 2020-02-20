@@ -4,7 +4,7 @@
              [conn :refer [connect]]
              [document :as es-doc]
              [index :as es-index]]
-
+            [clojure.string :as string]
             [ctia.stores.es.init :as init]
             [ctia.properties :as props]
             [ctia.test-helpers
@@ -59,3 +59,33 @@
     (es-index/refresh! (:conn state-aliased))
     (is (true? (:rolled_over (sut/rollover-store state-aliased))))
     (is (= 3 (count-index)))))
+
+;;(deftest rollover-stores-error-test
+;;  (with-redefs [es-index/rollover! (fn [_ alias _]
+;;                                     (if (string/starts-with? alias "ok_index")
+;;                                       {:rolled_over (rand-nth [true false])}
+;;                                       (throw (ex-info "that's baaaaaaaddd"
+;;                                                       {:code :unhappy}))))]
+;;    (let [ok-state (init/init-store-conn {:entity "sighting"
+;;                                          :indexname "ok_index"
+;;                                          :rollover {:max_docs 3}
+;;                                          :aliased true})
+;;          ko-state (init/init-store-conn {:entity "sighting"
+;;                                          :indexname "bbaaaaadddd_index"
+;;                                          :rollover {:max_docs 2}
+;;                                          :aliased true})
+;;          stores {:ok-type-1 [{:state ok-state}]
+;;                  :ok-type-2 [{:state ok-state}]
+;;                  :ok-type-3 [{:state ok-state}]
+;;                  :ko-type-1 [{:state ko-state}]
+;;                  :ko-type-2 [{:state ko-state}]}
+;;          {:keys [nb-errors
+;;                  ok-type-1
+;;                  ok-type-2
+;;                  ok-type-3
+;;                  ko-type-1
+;;                  ko-type-2]} (sut/rollover-stores stores)]
+;;      (is (= 2 nb-errors))
+;;      (is (every? nil? [ko-type-1 ko-type-2]))
+;;      (is (every? #(some? (:rolled_over %))
+;;                  [ok-type-1 ok-type-2 ok-type-3])))))
