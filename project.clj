@@ -23,7 +23,7 @@
 ;;   valid, and update the exclusions/comments accordingly
 ;; - Maybe you can just delete the dep! (doesn't hurt to check)
 
-(defproject ctia "1.1.0"
+(defproject ctia "1.1.1-SNAPSHOT"
   :description "Cisco Threat Intelligence API"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
@@ -119,16 +119,9 @@
   :uberjar-name "ctia.jar"
   :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.9.1"
-  :test-selectors {:es-store :es-store
-                   :disabled :disabled
-                   :default #(not (or (:disabled %)
-                                      (:sleepy %)
-                                      (:generative %)))
-                   :integration #(or (:es-store %)
-                                     (:integration %)
-                                     (:es-aliased-index %))
-                   :no-gen #(not (:generative %))
-                   :all #(not (:disabled %))}
+  :test-selectors ~(-> (slurp "dev-resources/circleci_test/config.clj")
+                       read-string
+                       :selectors)
   :filespecs [{:type :fn
                :fn (fn [_]
                      {:type :bytes :path "ctia-version.txt"
@@ -142,9 +135,10 @@
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
                                   [clj-http-fake ~clj-http-fake-version]
-                                  [prismatic/schema-generators ~schema-generators-version]]
+                                  [prismatic/schema-generators ~schema-generators-version]
+                                  [circleci/circleci.test "0.4.3"]]
                    :pedantic? :warn
-
+                   :source-paths ["dev"]
                    :resource-paths ["test/resources"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
@@ -196,4 +190,12 @@
 
             "init-properties" ^{:doc (str "create an initial `ctia.properties`"
                                           " using docker machine ip")}
-            ["shell" "scripts/init-properties-for-docker.sh"]})
+            ["shell" "scripts/init-properties-for-docker.sh"]
+            
+            ; circleci.test
+            ;"test" ["run" "-m" "circleci.test/dir" :project/test-paths]
+            "test" ["trampoline"
+                    "with-profile" "+test" ;https://github.com/circleci/circleci.test/issues/13
+                    "run" "-m" "ctia.dev.split-tests/dir" :project/test-paths]
+            "tests" ["run" "-m" "circleci.test"]
+            "retest" ["run" "-m" "circleci.test.retest"]})

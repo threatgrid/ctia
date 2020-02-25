@@ -41,7 +41,7 @@ function build-and-publish-package {
   fi
 }
 
-if [[ "${TRAVIS_PULL_REQUEST}" = "false" && "${TRAVIS_EVENT_TYPE}" != "cron" ]]; then
+if [[ "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
   if [[ ${TRAVIS_BRANCH} == "master" ]]; then
     # non-pr builds on the master branch yield INT packages
     echo "OK: master branch detected"
