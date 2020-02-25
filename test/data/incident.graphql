@@ -102,4 +102,5 @@ fragment incidentFields on Incident {
   intended_effect
   owner
   groups
+  assignees
 }

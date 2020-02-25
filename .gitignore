@@ -12,3 +12,4 @@ resources/*.backup*
 resources/ctia.properties.*
 data/**/*.edn
 pom.xml
+/checkouts

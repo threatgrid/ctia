@@ -78,7 +78,7 @@
                                          first
                                          val
                                          :settings
-                                        :index)]
+                                         :index)]
     (is (= "5" number_of_shards)
         "the number of shards is a static parameter")
     (testing "dynamic parameters should be updated"

@@ -1,6 +1,6 @@
 (ns ctia.http.routes.graphql.incident-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [clojure.test :as test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers]
