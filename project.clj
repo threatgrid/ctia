@@ -5,7 +5,7 @@
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
 (def schema-generators-version "0.1.3")
-(def test-check-version "0.10.0")
+(def test-check-version "1.0.0")
 (def test-chuck-version "0.2.10")
 
 ;; On avoiding dependency overrides:
@@ -23,7 +23,7 @@
 ;;   valid, and update the exclusions/comments accordingly
 ;; - Maybe you can just delete the dep! (doesn't hurt to check)
 
-(defproject ctia "1.1.0"
+(defproject ctia "1.1.1-SNAPSHOT"
   :description "Cisco Threat Intelligence API"
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
@@ -36,11 +36,11 @@
   ; to inspect conflicts.
   :dependencies [[org.clojure/clojure ~clj-version]
                  [clj-time "0.15.2"]
-                 [org.clojure/core.async "0.7.559"]
+                 [org.clojure/core.async "1.0.567"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "0.8.2"]
                  [org.clojure/tools.logging "0.5.0"]
-                 [org.clojure/tools.cli "0.4.2"]
+                 [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
 
                  ;; Schemas
