@@ -1,17 +1,12 @@
 (ns ctia.task.rollover
-  (:require [clojure.tools.cli :refer [parse-opts]]
+  (:require [clj-momo.lib.es.index :as es-index]
+            [clj-momo.lib.es.schemas :refer [ESConnState]]
             [clojure.tools.logging :as log]
-
-            [schema.core :as s]
-            [clj-momo.lib.es
-             [index :as es-index]
-             [schemas :refer [ESConnState]]]
-
-            [ctia.stores.es.crud :as es-crud]
-            [ctia
-             [init :refer [init-store-service! log-properties]]
-             [properties :refer [properties init!]]
-             [store :refer [stores]]]))
+            [ctia.init :refer [init-store-service! log-properties]]
+            [ctia.properties :refer [init!]]
+            [ctia.store :refer [stores]]
+            [schema.core :as s])
+  (:import clojure.lang.ExceptionInfo))
 
 (s/defn rollover-store
   "Sends rollover query on a store if paramater aliased and rollover conditions are configured."
@@ -19,24 +14,39 @@
     {:keys [write-index aliased]
      conditions :rollover} :props} :- ESConnState]
   (when (and aliased (seq conditions))
-    (try
-      (let [{rolledover? :rolled_over :as response}
-            (es-index/rollover! conn write-index conditions)]
-        (when rolledover?
-          (log/info "rolled over: " (pr-str response)))
-        response)
-      (catch clojure.lang.ExceptionInfo e
-        (log/warn "could not rollover, a concurrent rollover could be already running on that index"
-                  (pr-str (ex-data e)))))))
+    (let [{rolledover? :rolled_over :as response}
+          (es-index/rollover! conn write-index conditions)]
+      (when rolledover?
+        (log/info "rolled over: " (pr-str response)))
+      response)))
+
+(defn concat-rollover
+  [state [k store]]
+  (log/infof "requesting _rollover for store: %s" k)
+  (try
+    (->> (first store)
+         :state
+         (rollover-store)
+         (assoc state k))
+    (catch ExceptionInfo e
+      (log/error (format "could not rollover, a concurrent rollover could be already running on that index"
+                         k
+                         (pr-str (ex-data e))))
+      (update state :nb-errors inc))))
 
 (defn rollover-stores
   [stores]
-  (doseq [[k store] stores]
-    (log/infof "requesting _rollover for store: %s" k)
-    (rollover-store (-> store first :state))))
+  (reduce concat-rollover
+          {:nb-errors 0}
+          stores))
 
-(defn -main [& args]
+(defn -main [& _args]
   (init!)
   (log-properties)
   (init-store-service!)
-  (rollover-stores @stores))
+  (let [{:keys [nb-errors]
+         :as res} (rollover-stores @stores)]
+    (log/info "completed rollover task: " res)
+    (when (< 0 nb-errors)
+      (log/error "there was errors while rolling over stores")
+      (System/exit 1))))
