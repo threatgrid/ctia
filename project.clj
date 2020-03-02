@@ -194,7 +194,7 @@
   ;         :git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
   ; 2. change the upstream dependency's version to the relevant sha
   ;    eg., [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
-  :git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
+  ;:git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
             "kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
