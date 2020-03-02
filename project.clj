@@ -49,7 +49,7 @@
                  [threatgrid/flanders "0.1.23"]
 
                   
-                 [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
+                 [threatgrid/ctim "524821933c46ea745ee594c85684682482b99f66"]
                  [threatgrid/clj-momo "0.3.4"]
 
                  [com.arohner/uri "0.1.2"]
