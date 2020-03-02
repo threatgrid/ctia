@@ -178,7 +178,8 @@
     (s/optional-key :discovery_method) s/Str
     (s/optional-key :intended_effect) s/Str
     (s/optional-key :categories) s/Str
-    (s/optional-key :sort_by) incident-sort-fields}))
+    (s/optional-key :sort_by) incident-sort-fields
+    (s/optional-key :assignees) s/Str}))
 
 (def IncidentGetParams IncidentFieldsParam)
 
