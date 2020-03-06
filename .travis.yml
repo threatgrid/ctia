@@ -85,7 +85,7 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # Note:
     # - cron jobs are created here: https://travis-ci.com/threatgrid/ctia/settings
     # - they repeat around the same time as initially started
-    # - ensure that build/build.sh ignores cron jobs before enabling
+    # - we deploy (also) during cron jobs in the 'deploy' stage
     - stage: test
       name: "JDK 8"
       if: type = cron
