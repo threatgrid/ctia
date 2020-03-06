@@ -23,7 +23,8 @@ env:
       # travis allows 5 concurrent builds for open source plans
       # across org
       - TRAVISCI_JOB_PARALLELISM=5
-
+      # test future clojure releases
+      - CLOJURE_NEXT=1.10.2-alpha1
 
 # Cache our Maven deps to be kind to clojars, github, docker images
 cache:
@@ -91,9 +92,16 @@ matrix: #note: don't use "jobs:" introduces an extra build
       jdk: oraclejdk8
     - name: "JDK 11"
       if: type = cron
+    - name: "JDK 11 + Clojure next"
+      if: type = cron
+      env: CLOJURE_VERSION="${CLOJURE_NEXT}"
     - name: "JDK 13"
       if: type = cron
       jdk: openjdk13
+    - name: "JDK 13 + Clojure next"
+      if: type = cron
+      jdk: openjdk13
+      env: CLOJURE_VERSION="${CLOJURE_NEXT}"
 
     # Deploy
     # ======

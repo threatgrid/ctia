@@ -1,6 +1,7 @@
 (def cheshire-version "5.10.0")
 (def clj-http-fake-version "1.0.3")
-(def clj-version "1.10.1")
+(def clj-version (or (System/getenv "CLOJURE_VERSION")
+                     "1.10.1"))
 (def metrics-clojure-version "2.10.0")
 (def perforate-version "0.3.4")
 (def ring-version "1.8.0")
