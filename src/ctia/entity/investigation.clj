@@ -17,6 +17,7 @@
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
+            [ctim.schemas.common :refer [IdentitySpecification]]
             [ctim.schemas.investigation :as inv]
             [flanders
              [schema :as f-schema]
@@ -29,7 +30,12 @@
 (s/defschema Investigation
   (st/merge (f-schema/->schema inv/Investigation)
             CTIAEntity
-            {s/Keyword s/Any}))
+            {(s/required-key :actions) (s/either s/Str {s/Keyword s/Any})
+             (s/required-key :object_ids) [s/Str]
+             ;; "type:value"
+             (s/required-key :investigated_observables [s/Str])
+             (s/required-key :targets [(f-schema/->schema IdentitySpecification)])
+             s/Keyword s/Any}))
 
 (f-spec/->spec inv/Investigation "investigation")
 
@@ -64,7 +70,10 @@
                 :include_in_all false}
    :targets {:type "nested"
              :include_in_all false}
-   :investigated_observables {:type "nested"
+   :investigated_observables {:type "text"
+                              :analyzer "text_analyzer"
+                              :search_quote_analyzer "text_analyzer"
+                              :search_analyzer "search_analyzer"
                               :include_in_all false}})
 
 (def investigation-mapping
