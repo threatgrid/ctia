@@ -33,8 +33,8 @@
             {(s/required-key :actions) (s/either s/Str {s/Keyword s/Any})
              (s/required-key :object_ids) [s/Str]
              ;; The value of this field should look like "type:value".
-             (s/required-key :investigated_observables [s/Str])
-             (s/required-key :targets [(f-schema/->schema IdentitySpecification)])
+             (s/required-key :investigated_observables) [s/Str]
+             (s/required-key :targets) [(f-schema/->schema IdentitySpecification)]
              s/Keyword s/Any}))
 
 (f-spec/->spec inv/Investigation "investigation")
