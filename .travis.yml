@@ -18,7 +18,7 @@ env:
       - CTIA_HOOK_ES_PORT=9200
       - CTIA_HOOK_ES_INDEXNAME=elasticsearch
       - CTIA_HOOK_REDIS_URI=redis://127.0.0.1:6379
-      - SHELLCHECK_VERSION="v0.7.0" # "stable" or "v0.4.7", or "latest"
+      - SHELLCHECK_VERSION=v0.7.0 # "stable" or "v0.4.7", or "latest"
       # https://stackoverflow.com/a/34809448
       # travis allows 5 concurrent builds for open source plans
       # across org
@@ -66,19 +66,19 @@ matrix: #note: don't use "jobs:" introduces an extra build
     - stage: test
       name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS="[0 ${TRAVISCI_JOB_PARALLELISM}]"
+      env: SPLIT_TESTS=[0,$TRAVISCI_JOB_PARALLELISM]
     - name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS="[1 ${TRAVISCI_JOB_PARALLELISM}]"
+      env: SPLIT_TESTS=[1,$TRAVISCI_JOB_PARALLELISM]
     - name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS="[2 ${TRAVISCI_JOB_PARALLELISM}]"
+      env: SPLIT_TESTS=[2,$TRAVISCI_JOB_PARALLELISM]
     - name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS="[3 ${TRAVISCI_JOB_PARALLELISM}]"
+      env: SPLIT_TESTS=[3,$TRAVISCI_JOB_PARALLELISM]
     - name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS="[4 ${TRAVISCI_JOB_PARALLELISM}]"
+      env: SPLIT_TESTS=[4,$TRAVISCI_JOB_PARALLELISM]
 
     # Cron jobs:
     # ==========
@@ -94,14 +94,14 @@ matrix: #note: don't use "jobs:" introduces an extra build
       if: type = cron
     - name: "JDK 11 + Clojure next"
       if: type = cron
-      env: CLOJURE_VERSION="${CLOJURE_NEXT}"
+      env: CLOJURE_VERSION=$CLOJURE_NEXT
     - name: "JDK 13"
       if: type = cron
       jdk: openjdk13
     - name: "JDK 13 + Clojure next"
       if: type = cron
       jdk: openjdk13
-      env: CLOJURE_VERSION="${CLOJURE_NEXT}"
+      env: CLOJURE_VERSION=$CLOJURE_NEXT
 
     # Deploy
     # ======
