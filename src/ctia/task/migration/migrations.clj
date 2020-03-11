@@ -2,7 +2,8 @@
   (:require [clj-momo.lib.clj-time
              [coerce :as time-coerce]
              [core :as time-core]]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [cheshire.core :as json]))
 
 (def add-groups
   "set a document group to [\"tenzin\"] if unset"
@@ -147,6 +148,85 @@
                        :COA_requested :COA_taken :contact :history :related_indicators
                        :related_observables :attributed_actors :related_incidents)
                (update :incident_time simplify-incident-time))
+           doc))))
+
+;; Add new investigation fields
+
+(defn transient-id? [id]
+  (and (string? id)
+       (re-find #"\Atransient" (str id))))
+
+(defn object-id [doc]
+  (let [id (get doc :id)]
+    (when (not (transient-id? id))
+      id)))
+
+(defn read-actions [investigation]
+  (let [actions (get investigation :actions)]
+    (if (string? actions)
+      (json/parse-string actions true)
+      [])))
+
+(def empty-action-data
+  {:object_ids #{}
+   :investigated_observables #{}
+   :targets #{}})
+
+(defn merge-action-data
+  ([] empty-action-data)
+  ([m] m)
+  ([m1 m2]
+   (merge m1 {:object_ids (into (get m1 :object_ids)
+                                (get m2 :object_ids))
+              :investigated_observables (into (get m1 :investigated_observables)
+                                              (get m2 :investigated_observables))
+              :targets (into (get m1 :targets)
+                             (get m2 :targets))})))
+
+(defmulti derive-action-data
+  (fn [action]
+    (get action :type))
+  :default ::default)
+
+(defmethod derive-action-data ::default [_]
+  empty-action-data)
+
+(defmethod derive-action-data "collect" [action]
+  (let [investigated-observables (into #{}
+                                       (map (fn [{:keys [type value]}]
+                                              (str type ":" value)))
+                                       (:result action))]
+    (assoc empty-action-data :investigated_observables investigated-observables)))
+
+(defmethod derive-action-data "investigate" [action]
+  (let [data (get-in action [:result :data])]
+    (transduce
+     (comp (map :data)
+           (mapcat vals)
+           (mapcat :docs))
+     (fn
+       ([result] result)
+       ([result doc]
+        (let [result (if-some [object-id (object-id doc)]
+                       (update result :object_ids conj object-id)
+                       result)
+              result (update result :targets into (get doc :targets))]
+          result)))
+     {:object_ids #{}
+      :investigated_observables []
+      :targets #{}}
+     data)))
+
+(defn migrate-action-data [investigation]
+  (transduce (map derive-action-data)
+             merge-action-data
+             (merge investigation empty-action-data)
+             (read-actions investigation)))
+
+(def migrate-action-data
+  (map (fn [{entity-type :type :as doc}]
+         (if (= entity-type "investigation")
+           (migrate-action-data doc)
            doc))))
 
 (def available-migrations
