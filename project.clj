@@ -50,7 +50,7 @@
 
                   
                  [threatgrid/ctim "524821933c46ea745ee594c85684682482b99f66"]
-                 [threatgrid/clj-momo "0.3.4"]
+                 [threatgrid/clj-momo "5f26bf337a02719d9caf1206a85508fccc232158"]
 
                  [com.arohner/uri "0.1.2"]
 
@@ -194,7 +194,8 @@
   ;         :git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
   ; 2. change the upstream dependency's version to the relevant sha
   ;    eg., [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
-  ;:git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
+  :git-down {;threatgrid/ctim {:coordinates frenchy64/ctim}
+             threatgrid/clj-momo {:coordinates frenchy64/clj-momo}}
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
             "kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
