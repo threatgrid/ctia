@@ -48,5 +48,5 @@
          :as res} (rollover-stores @stores)]
     (log/info "completed rollover task: " res)
     (when (< 0 nb-errors)
-      (log/error "there was errors while rolling over stores")
+      (log/error "there were errors while rolling over stores")
       (System/exit 1))))

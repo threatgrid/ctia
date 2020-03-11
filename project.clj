@@ -50,7 +50,7 @@
 
                   
                  [threatgrid/ctim "524821933c46ea745ee594c85684682482b99f66"]
-                 [threatgrid/clj-momo "5f26bf337a02719d9caf1206a85508fccc232158"]
+                 [threatgrid/clj-momo "f532dfaf5d03b852fcfb93051f2d4aac33830adf"]
 
                  [com.arohner/uri "0.1.2"]
 
@@ -69,7 +69,7 @@
                  [ring/ring-codec "1.1.2"]
                  [yogsototh/clj-jwt "0.2.1"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
-                 [threatgrid/ring-jwt-middleware "1.0.0"]
+                 [threatgrid/ring-jwt-middleware "1.0.0" :exclusions [threatgrid/clj-momo]]
                  [scopula "0.1.4"]
 
                  ;; clients
