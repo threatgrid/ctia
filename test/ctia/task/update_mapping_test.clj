@@ -4,6 +4,7 @@
             [clojure.string :as string]
             [clojure.test :refer [deftest is join-fixtures use-fixtures testing]]
             [ctia.task.rollover :as rollover]
+            [ctia.entity.incident :as incident]
             [ctia.store :as store]
             [ctia.stores.es.init :as init]
             [ctia.properties :as props]
@@ -35,16 +36,27 @@
   (let [new-field-mapping {:type "keyword", :include_in_all false, :normalizer "lowercase_normalizer"}
 
         ; set up connection
-        props (cond-> {:entity :incident
-                       :indexname "ctia_incident"
-                       :host "localhost"
-                       :port 9200}
-                aliased? (assoc :props {:aliased true
-                                        :write-index "ctia_incident-write"}))
-        {:keys [conn] :as state} (init/init-es-conn! props)
+        store-properties (cond-> {:entity :incident
+                                  :indexname "ctia_incident"
+                                  :host "localhost"
+                                  :port 9200}
+                           aliased? (assoc :props {:aliased true
+                                                   :write-index "ctia_incident-write"}))
+        {:keys [conn] :as state} (init/init-es-conn! store-properties)
 
         index-names (cond-> ["ctia_incident"]
                       aliased? (conj "ctia_incident-write"))
+
+        ; minimal store (same shape as @ctia.store/stores)
+        stores1 {:incident
+                 [((:es-store incident/incident-entity)
+                   {:index "ctia_incident"
+                    :props (:props store-properties)
+                    :config {}
+                    :conn conn})]}
+
+        ; stores1 has no new fields, so this does nothing
+        _ (task/update-mapping-stores! stores1)
 
         ;ensure new field is absent
         _ (inspect-indices
@@ -57,10 +69,13 @@
               (testing "Indices don't include new mapping"
                 (is (nil? (get-in mappings [:incident :properties :new-field]))))))
 
-        ; add field
-        _ (task/update-mapping-store state {"incident"
-                                            {:properties
-                                             {"new-field" new-field-mapping}}})
+        ; add :new-field mapping
+        stores2 (assoc-in stores1
+                          [:incident 0 :state :config :mappings "incident" :properties :new-field]
+                          new-field-mapping)
+
+        ; stores2 has new fields, so this adds them to the ES _mappings
+        _ (task/update-mapping-stores! stores2)
 
         ; ensure new field mapped correctly
         _ (inspect-indices
