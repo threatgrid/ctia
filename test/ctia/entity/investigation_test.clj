@@ -12,13 +12,23 @@
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store]]]
-            [ctim.examples.investigations
-             :refer
-             [new-investigation-maximal new-investigation-minimal]]))
+            [ctim.examples.investigations]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
+
+(def new-investigation-maximal
+  (assoc ctim.examples.investigations/new-investigation-maximal
+         :object_ids []
+         :investigated_observables []
+         :targets []))
+
+(def new-investigation-minimal
+  (assoc ctim.examples.investigations/new-investigation-minimal
+         :object_ids []
+         :investigated_observables []
+         :targets []))
 
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)
@@ -26,14 +36,12 @@
 (deftest test-investigation-routes
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser"
-                                ["foogroup"]
-                                "user"
-                                all-capabilities)
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
                                          "foogroup"
                                          "user")
+
      (entity-crud-test
       {:entity "investigation"
        :example new-investigation-maximal

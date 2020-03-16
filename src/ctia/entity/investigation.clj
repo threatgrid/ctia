@@ -27,21 +27,24 @@
             [schema.core :as s]
             [ctia.schemas.graphql.ownership :as go]))
 
+(s/defschema InvestigationActionData
+  {(s/required-key :object_ids) [s/Str]
+   ;; The value of this field should look like "type:value".
+   (s/required-key :investigated_observables) [s/Str]
+   (s/required-key :targets) [(f-schema/->schema IdentitySpecification)]})
+
 (s/defschema Investigation
   (st/merge (f-schema/->schema inv/Investigation)
             CTIAEntity
-            {(s/required-key :actions) (s/either s/Str {s/Keyword s/Any})
-             (s/required-key :object_ids) [s/Str]
-             ;; The value of this field should look like "type:value".
-             (s/required-key :investigated_observables) [s/Str]
-             (s/required-key :targets) [(f-schema/->schema IdentitySpecification)]
-             s/Keyword s/Any}))
+            InvestigationActionData
+            {s/Keyword s/Any}))
 
 (f-spec/->spec inv/Investigation "investigation")
 
 (s/defschema PartialInvestigation
   (st/merge (f-schema/->schema (fu/optionalize-all inv/Investigation))
             CTIAEntity
+            InvestigationActionData
             {s/Keyword s/Any}))
 
 (s/defschema PartialInvestigationList
@@ -50,6 +53,7 @@
 (s/defschema NewInvestigation
   (st/merge (f-schema/->schema inv/NewInvestigation)
             CTIAEntity
+            InvestigationActionData
             {s/Keyword s/Any}))
 
 (f-spec/->spec inv/NewInvestigation "new-investigation")
@@ -105,7 +109,10 @@
                          :type
                          :search-txt
                          :short_description
-                         :created_at])))
+                         :created_at
+                         :object_ids
+                         :investigated_observables
+                         :targets])))
 
 (s/defschema InvestigationFieldsParam
   {(s/optional-key :fields) [investigation-select-fields]})
