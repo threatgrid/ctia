@@ -2,7 +2,7 @@
 
 This document describes how big Elasticsearch indices are managed in CTIA.
 
-For CRUD implementation details, see [slides](doc/es_stores.pdf).
+For CRUD implementation details, see [slides](es_stores.pdf).
 
 ## Configuring Aliased stores
 In the configuration, we can define if stores should use aliases or not. This can be defined per store or with a default behavior. Aliased store are highly recommended for large stores like sightings or relationships to ease Elasticsearch scaling.
@@ -77,4 +77,4 @@ You can also select some stores with the option `--stores` and a comma separated
 Changing the `aliased` mode will only be applied after a migration, it's not possible to do it while running neither by restarting CTIA with modified configuration. In order to do so, you have to modify `aliased` and `rollover` properties and run a migration with current settings. After the migration, properly set the new indexname and restart CTIA.
 When the target store is aliased, the migration process will manage requesting of the _rollover API to trigger it at the right time while avoiding an excessive number of call to that API. Note that `max_age` is a meaningless _rollover condition during the migration, since it checks the age of the index which is here newly created.
 
-see [Migration procedure](doc/migration.md)
+see [Migration procedure](migration.md)
