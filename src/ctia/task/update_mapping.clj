@@ -6,28 +6,31 @@
             [ctia.init :as init]
             [ctia.properties :as properties]
             [ctia.store :as store]
+            [clojure.string :as str]
             [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]))
 
-(s/defn update-mapping-store
-  "Updates _mapping on store"
-  [{:keys [conn index] :as cs} :- es-schema/ESConnState
-   mappings :- s/Any]
-  (es-index/update-mapping! conn index mappings))
+(defn- update-mapping-state!
+  [{:keys [conn index config props] :as state}]
+  (let [write-index (:write-index props)
+        indices (cond-> #{index}
+                  (and (:aliased props) write-index) (conj write-index))]
+    (es-index/update-mapping!
+      conn
+      (str/join "," indices)
+      (:mappings config))))
 
-(defn update-mapping-stores
+(defn update-mapping-stores!
+  "Takes a map the same shape as @ctia.store/stores
+  and updates the _mapping of every index contained in it."
   [stores-map]
-  (into {}
-        (map (fn [[k stores]]
-               (log/infof "updating _mapping for store: %s" k)
-               [k (mapv (fn [{:keys [state]}]
-                          (update-mapping-store state (get-in state [:config :mappings])))
-                        stores)]))
-        stores-map))
+  (doseq [[_ stores] stores-map
+          {:keys [state]} stores]
+    (update-mapping-state! state)))
 
 (defn -main [& _args]
   (properties/init!)
   (init/log-properties)
   (init/init-store-service!)
-  (let [res (update-mapping-stores @store/stores)]
-    (log/info "Completed update-mapping task: " res)))
+  (update-mapping-stores! @store/stores)
+  (log/info "Completed update-mapping task"))
