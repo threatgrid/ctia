@@ -78,3 +78,17 @@ Changing the `aliased` mode will only be applied after a migration, it's not pos
 When the target store is aliased, the migration process will manage requesting of the _rollover API to trigger it at the right time while avoiding an excessive number of call to that API. Note that `max_age` is a meaningless _rollover condition during the migration, since it checks the age of the index which is here newly created.
 
 see [Migration procedure](migration.md)
+
+## Manual mappings update task
+
+Not all schema updates require a full migration.
+In some cases, indices may be manually updated to pick up newly added fields.
+For example, this is applicable in the case of adding an optional field to an existing object that does
+not require existing instances to be updated.
+
+`ctia.task.update-mapping` provides this functionality.
+
+You can launch this task with:
+`java -cp ctia.jar:resources:. clojure.main -m ctia.task.update-mapping`
+or from source:
+`lein run -m ctia.task.update-mapping`.
