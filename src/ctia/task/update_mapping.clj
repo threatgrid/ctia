@@ -19,7 +19,6 @@
     (doto conn
       ; template update should go first in the (unlikely) case of
       ; a race condition with a simuntaneously successful rollover.
-      #_
       (es-init/upsert-template!
         index
         config)
