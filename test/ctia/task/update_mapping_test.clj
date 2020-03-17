@@ -8,6 +8,7 @@
             [ctia.store :as store]
             [ctia.stores.es.init :as init]
             [ctia.properties :as props]
+            [ctia.stores.es.mapping :as es-mapping]
             [ctia.task.update-mapping :as task]
             [ctia.test-helpers.core :as helpers]
             [ctia.test-helpers.es :as es-helpers]
@@ -47,8 +48,7 @@
   (let [new-fields (vec (shuffle (map #(keyword nil (str "new-field" %)) (range nb-new-fields))))
         _ (assert (or (empty? new-fields)
                       (apply distinct? new-fields)))
-        dummy-field-mapping {:type "keyword", :include_in_all false, :normalizer "lowercase_normalizer"}
-        new-field-mappings (zipmap new-fields (repeat dummy-field-mapping))]
+        new-field-mappings (zipmap new-fields (repeat es-mapping/token))]
     (cons
       {:present {}
        :absent new-fields}
@@ -67,27 +67,23 @@
   of stores, rollovers, and update-mapping-stores! calls, and test intermediate states.
   "
   [aliased?]
+  {:pre [(boolean? aliased?)]}
   (let [; set up connection
         store-properties (cond-> {:entity :incident
                                   :indexname "ctia_incident"
                                   :host "localhost"
-                                  :port 9200}
-                           aliased? (assoc :props {:aliased true
-                                                   :write-index "ctia_incident-write"
-                                                   ; cheap trick to rollover store without adding docs
-                                                   :rollover {:max_docs 0}}))
-        {:keys [conn] :as state} (init/init-es-conn! store-properties)
+                                  :port 9200
+                                  :aliased aliased?}
+                           ; cheap trick to rollover store without adding docs
+                           aliased? (assoc :rollover {:max_docs 0}))
 
         index-names (cond-> ["ctia_incident"]
                       aliased? (conj "ctia_incident-write"))
 
         ; minimal store (same shape as @ctia.store/stores)
-        stores {:incident
-                [((:es-store incident/incident-entity)
-                  {:index "ctia_incident"
-                   :props (:props store-properties)
-                   :config {}
-                   :conn conn})]}
+        [conn stores] (let [{:keys [conn] :as state} (init/init-es-conn! store-properties)]
+                        [conn {:incident [((:es-store incident/incident-entity)
+                                           state)]}])
 
         testing-plan (gen-testing-plan 10)
 
