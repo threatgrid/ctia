@@ -2,11 +2,12 @@
   "Updates the _mapping on an ES index."
   (:require [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.schemas :as es-schema]
+            [clojure.string :as str]
             [clojure.tools.logging :as log]
             [ctia.init :as init]
             [ctia.properties :as properties]
             [ctia.store :as store]
-            [clojure.string :as str]
+            [ctia.stores.es.init :as es-init]
             [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]))
 
@@ -15,10 +16,16 @@
   (let [write-index (:write-index props)
         indices (cond-> #{index}
                   (and (:aliased props) write-index) (conj write-index))]
-    (es-index/update-mapping!
-      conn
-      (str/join "," indices)
-      (:mappings config))))
+    (doto conn
+      ; template update should go first in the (unlikely) case of
+      ; a race condition with a simuntaneously successful rollover.
+      (es-init/upsert-template!
+        index
+        config)
+      (es-index/update-mapping!
+        (str/join "," indices)
+        (:mappings config)))
+    nil))
 
 (defn update-mapping-stores!
   "Takes a map the same shape as @ctia.store/stores

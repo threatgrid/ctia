@@ -92,7 +92,7 @@
         testing-plan (gen-testing-plan 10)
 
         ; update-mapping-stores! and rollover-stores should be able to run in
-        ; any order
+        ; any order. the order is chosen below
         fs (cond-> {:update-mapping-stores! task/update-mapping-stores!}
              aliased?
              (assoc
@@ -117,7 +117,8 @@
                                                  "incident" :properties (nth add-field 0)]
                                                 (nth add-field 1)))]
                        (testing (str "Incides should correctly update with ordering " (vec chosen-order))
-                         (run! (comp #(% stores) fs) chosen-order)
+                         (testing "Store should update without error"
+                           (run! (comp #(% stores) fs) chosen-order))
                          (inspect-indices
                            conn
                            index-names
