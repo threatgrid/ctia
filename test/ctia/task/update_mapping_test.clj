@@ -25,15 +25,24 @@
                   es-helpers/fixture-delete-store-indexes]))
 
 (defn- inspect-indices [conn istrs f]
-  (let [idxs (map (partial es-index/get conn) istrs)]
+  (let [index-map (into {}
+                        (map (juxt identity (partial es-index/get conn)))
+                        istrs)]
     (testing "Each query yields at least one index"
-      (is (every? seq idxs)))
-    (run! (comp f val) (apply concat idxs))))
+      (is (every? (comp seq index-map) istrs)))
+    (doseq [[index-name idxs] index-map
+            index idxs]
+      (f index-name index))))
 
 (defn- update-mapping-stores!-test-helper
-  "Iff aliased? is true, test update-mapping-stores! with an aliased store."
+  "If aliased? is true, test update-mapping-stores! with an aliased store.
+  If aliased? is false, test update-mapping-stores! with an unaliased store.
+  
+  This function builds up a `reduce` to functionally step through a sequence of
+  of stores, rollovers, and update-mapping-stores! calls, and test intermediate states.
+  "
   [aliased?]
-  (let [new-field-mapping {:type "keyword", :include_in_all false, :normalizer "lowercase_normalizer"}
+  (let [field-mapping {:type "keyword", :include_in_all false, :normalizer "lowercase_normalizer"}
 
         ; set up connection
         store-properties (cond-> {:entity :incident
@@ -41,53 +50,67 @@
                                   :host "localhost"
                                   :port 9200}
                            aliased? (assoc :props {:aliased true
-                                                   :write-index "ctia_incident-write"}))
+                                                   :write-index "ctia_incident-write"
+                                                   ; cheap trick to rollover store without adding docs
+                                                   :rollover {:max_docs 0}}))
         {:keys [conn] :as state} (init/init-es-conn! store-properties)
 
         index-names (cond-> ["ctia_incident"]
                       aliased? (conj "ctia_incident-write"))
 
         ; minimal store (same shape as @ctia.store/stores)
-        stores1 {:incident
-                 [((:es-store incident/incident-entity)
-                   {:index "ctia_incident"
-                    :props (:props store-properties)
-                    :config {}
-                    :conn conn})]}
+        stores {:incident
+                [((:es-store incident/incident-entity)
+                  {:index "ctia_incident"
+                   :props (:props store-properties)
+                   :config {}
+                   :conn conn})]}
 
-        ; stores1 has no new fields, so this does nothing
-        _ (task/update-mapping-stores! stores1)
+        ; TestingStep = {:present #{Kw}, :absent #{Kw}, (optional-field :add-field) Kw}
+        ; testing-procedure : [TestingStep]
+        testing-procedure [; 1. ensure both fields are absent
+                           {:present #{}
+                            :absent #{:new-field1 :new-field2}}
+                           ; 2. add first field, ensure it is present
+                           {:add-field :new-field1
+                            :present #{:new-field1}
+                            :absent #{:new-field2}}
+                           ; 3. add second field, ensure it is also present
+                           {:add-field :new-field2
+                            :present #{:new-field1 :new-field2}
+                            :absent #{}}]
 
-        ;ensure new field is absent
-        _ (inspect-indices
-            conn
-            index-names
-            (fn [{:keys [aliases mappings] :as index}]
-              (when aliased?
-                (testing "Indices alias each other"
-                  (is (= aliases {:ctia_incident {}, :ctia_incident-write {}}))))
-              (testing "Indices don't include new mapping"
-                (is (nil? (get-in mappings [:incident :properties :new-field]))))))
+        ; Store TestingStep -> Store
+        testing-fn (fn [stores {:keys [present absent add-field]}]
+                     (let [stores (cond-> stores
+                                    add-field (assoc-in
+                                                [:incident 0 :state :config :mappings
+                                                 "incident" :properties add-field]
+                                                field-mapping))
+                           _ (task/update-mapping-stores! stores)
+                           _ (when aliased?
+                               (let [{:keys [nb-errors] :as responses} (rollover/rollover-stores stores)]
+                                 (testing "Rollover completed without errors"
+                                   (is (= 0 nb-errors)
+                                       (pr-str responses)))
+                                 (testing ":incident store successfully rolled over"
+                                   (is (get-in responses [:incident :rolled_over])
+                                       (pr-str responses)))))
 
-        ; add :new-field mapping
-        stores2 (assoc-in stores1
-                          [:incident 0 :state :config :mappings "incident" :properties :new-field]
-                          new-field-mapping)
+                           _ (inspect-indices
+                               conn
+                               index-names
+                               (fn [index-name {:keys [mappings] :as index}]
+                                 (doseq [f absent]
+                                   (testing (str "Index " index-name " doesn't map field " f)
+                                     (is (nil? (get-in mappings [:incident :properties f])))))
+                                 (doseq [f present]
+                                   (testing (str "Index " index-name " maps field " f)
+                                     (is (= field-mapping (get-in mappings [:incident :properties f])))))))]
+                       stores))
 
-        ; stores2 has new fields, so this adds them to the ES _mappings
-        _ (task/update-mapping-stores! stores2)
-
-        ; ensure new field mapped correctly
-        _ (inspect-indices
-            conn
-            index-names
-            (fn [{:keys [aliases mappings]}]
-              (when aliased?
-                (testing "Indices alias each other"
-                  (is (= aliases {:ctia_incident {}, :ctia_incident-write {}}))))
-              (testing "Indices include new mapping"
-                (is (= (get-in mappings [:incident :properties :new-field])
-                       new-field-mapping)))))]))
+        ; the actual testing
+        _ (reduce testing-fn stores testing-procedure)]))
 
 ; separated to take advantage of fixtures
 (deftest update-mapping-stores!-aliased-test   (update-mapping-stores!-test-helper true))
