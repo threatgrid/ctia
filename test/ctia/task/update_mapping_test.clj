@@ -103,10 +103,7 @@
 
         ; Store TestingStep -> Store
         testing-fn (fn [stores {:keys [present absent add-field] :as _step_}]
-                     (let [chosen-order (if aliased?
-                                          ;FIXME shuffle
-                                          [:rollover-stores :update-mapping-stores!]
-                                          (shuffle (keys fs)))
+                     (let [chosen-order (shuffle (keys fs))
                            stores (cond-> stores
                                     add-field (assoc-in
                                                 [:incident 0 :state :config :mappings
