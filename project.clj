@@ -69,7 +69,7 @@
                  [ring/ring-codec "1.1.2"]
                  [yogsototh/clj-jwt "0.3.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
-                 [threatgrid/ring-jwt-middleware "8e6d404723cd629040ae1502438ba0575ec8f197"]
+                 [threatgrid/ring-jwt-middleware "92431eebf30c821e16b51e5764e6ceb2470a075f"]
                  [scopula "0.1.4"]
 
                  ;; clients
