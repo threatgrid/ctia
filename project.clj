@@ -67,9 +67,9 @@
                  [ring-cors "0.1.13"]
                  [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
                  [ring/ring-codec "1.1.2"]
-                 [yogsototh/clj-jwt "0.2.1"]
+                 [yogsototh/clj-jwt "0.3.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
-                 [threatgrid/ring-jwt-middleware "f6e7f2f324e89870cc110529a36249c3168a94a6"]
+                 [threatgrid/ring-jwt-middleware "8e6d404723cd629040ae1502438ba0575ec8f197"]
                  [scopula "0.1.4"]
 
                  ;; clients
