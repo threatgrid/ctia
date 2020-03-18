@@ -69,7 +69,7 @@
                  [ring/ring-codec "1.1.2"]
                  [yogsototh/clj-jwt "0.3.0"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
-                 [threatgrid/ring-jwt-middleware "92431eebf30c821e16b51e5764e6ceb2470a075f"]
+                 [threatgrid/ring-jwt-middleware "1.0.1-20200318.162004-1"] ;sha: 344c66ed2b07955f48dac51733f93d95eac83517
                  [scopula "0.1.4"]
 
                  ;; clients
@@ -199,7 +199,7 @@
   ;; uncomment and change during dev
   :git-down {;threatgrid/ctim {:coordinates frenchy64/ctim}
              ;threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
-             threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}
+             ;threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}
              }
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
             "kibit" ["with-profile" "prepush" "kibit"]
