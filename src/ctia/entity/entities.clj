@@ -10,7 +10,6 @@
     [vulnerability :refer [vulnerability-entity]]
     [attack-pattern :refer [attack-pattern-entity]]
     [indicator :refer [indicator-entity]]
-    [investigation :refer [investigation-entity]]
     [incident :refer [incident-entity]]
     [malware :refer [malware-entity]]
     [tool :refer [tool-entity]]
@@ -25,7 +24,8 @@
     [relationship :refer [relationship-entity]]
     [identity :refer [identity-entity]]
     [feed :refer [feed-entity]]
-    [event :refer [event-entity]]]
+    [event :refer [event-entity]]
+    [investigation :refer [investigation-entity]]]
    [schema.core :as s]))
 
 (def entities

@@ -32,8 +32,8 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  ; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
-  ; to inspect conflicts.
+                                        ; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
+                                        ; to inspect conflicts.
   :dependencies [[org.clojure/clojure ~clj-version]
                  [clj-time "0.15.2"]
                  [org.clojure/core.async "0.7.559"]
@@ -48,7 +48,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                  
+                 
                  [threatgrid/ctim "1.0.16"]
                  [threatgrid/clj-momo "0.3.4"]
 
@@ -56,8 +56,8 @@
 
                  ;; Web server
                  [metosin/compojure-api "1.1.13" ]
-                 ; optional dep for compojure-api's dep ring-middleware-format
-                 ; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
+                                        ; optional dep for compojure-api's dep ring-middleware-format
+                                        ; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
                  [metosin/ring-swagger "0.26.2"]
                  [metosin/ring-swagger-ui "3.24.3"]
@@ -88,7 +88,7 @@
                  [io.netty/netty-resolver "4.1.42.Final"] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
                  [com.google.protobuf/protobuf-java "3.11.1"] ;riemann-clojure-client > threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
                  [riemann-clojure-client "0.5.1"]
-                 ; https://stackoverflow.com/a/43574427
+                                        ; https://stackoverflow.com/a/43574427
                  [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
 
                  ;; Docs
@@ -137,7 +137,7 @@
                                   (:out (clojure.java.shell/sh
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
-  :global-vars {*warn-on-reflection* true}
+  :global-vars {*warn-on-reflection* false}
   :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
@@ -178,7 +178,7 @@
                               :namespaces [ctia.bulk.routes-bench]}
                              {:name :migration
                               :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
-  ; use `lein deps :plugins-tree` to inspect conflicts
+                                        ; use `lein deps :plugins-tree` to inspect conflicts
   :plugins [[lein-shell "0.5.0"]
             [org.clojure/clojure ~clj-version] ;override perforate
             [perforate ~perforate-version]]
