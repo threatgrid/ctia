@@ -5,6 +5,7 @@
              [flanders :as flanders]
              [helpers :as g]
              [pagination :as pagination]]
+            [ctia.schemas.graphql.refs :as refs]
             [ctia.entity.investigation.flanders-schemas :as f-inv]
             [ctia.entity.investigation :refer [investigation-fields]]
             [ctia.schemas.graphql.ownership :as go]))
@@ -13,7 +14,7 @@
   (let [{:keys [fields name description]}
         (flanders/->graphql
          (fu/optionalize-all f-inv/Investigation)
-         {})]
+         {refs/observable-type-name refs/ObservableTypeRef})]
     (g/new-object
      name
      description
