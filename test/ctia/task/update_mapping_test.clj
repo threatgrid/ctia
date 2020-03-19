@@ -25,16 +25,6 @@
   (join-fixtures [helpers/fixture-ctia
                   es-helpers/fixture-delete-store-indexes]))
 
-(defn- inspect-indices [conn istrs f]
-  (let [index-map (into {}
-                        (map (juxt identity (partial es-index/get conn)))
-                        istrs)]
-    (testing "Each query yields at least one index"
-      (is (every? (comp seq index-map) istrs)))
-    (doseq [[index-name idxs] index-map
-            [_index-kw_ index] idxs]
-      (f index-name index))))
-
 ; TestingStep = {:present {Kw Mapping}
 ;                :absent [Kw]
 ;                (optional-entry :add-field) (tuple Kw Mapping)}
@@ -52,12 +42,12 @@
     (cons
       {:present {}
        :absent new-fields}
-      (map
-        (fn [i]
-          {:add-field (find new-field-mappings (nth new-fields i))
+      (map-indexed
+        (fn [i new-field]
+          {:add-field (find new-field-mappings new-field)
            :present (select-keys new-field-mappings (subvec new-fields 0 (inc i)))
            :absent (subvec new-fields (inc i))})
-        (range (count new-fields))))))
+        new-fields))))
 
 (defn- update-mapping-stores!-test-helper
   "If aliased? is true, test update-mapping-stores! with an aliased store.
@@ -112,17 +102,20 @@
                        (testing (str "Incides should correctly update with ordering " (vec chosen-order))
                          (testing "Store should update without error"
                            (run! (comp #(% stores) fs) chosen-order))
-                         (inspect-indices
-                           conn
-                           index-names
-                           (fn [index-name {:keys [mappings] :as _index_}]
-                             (doseq [f absent]
-                               (testing (str "Index " index-name " should not map field " f)
-                                 (is (nil? (get-in mappings [:incident :properties f])))))
-                             (doseq [[f expected-mapping] present]
-                               (testing (str "Index " index-name " should map field " f)
+                         (let [index-map (into {}
+                                               (map (juxt identity (partial es-index/get conn)))
+                                               index-names)]
+                           (testing "Each query yields at least one index"
+                             (is (every? (comp seq index-map) index-names)))
+                           (doseq [[index-name idxs] index-map
+                                   [_index-kw_ {:keys [mappings] :as _index_}] idxs]
+                             (run! #(testing (str "Index " index-name " should not map field " %)
+                                      (is (nil? (get-in mappings [:incident :properties %]))))
+                                   absent)
+                             (doseq [[field expected-mapping] present]
+                               (testing (str "Index " index-name " should map field " field)
                                  (is (= expected-mapping
-                                        (get-in mappings [:incident :properties f]))))))))
+                                        (get-in mappings [:incident :properties field]))))))))
                        stores))
 
         ; the actual testing
