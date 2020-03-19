@@ -64,6 +64,17 @@
   (es-index/create-template! conn index config)
   (log/infof "updated template: %s" index))
 
+(defn update-mapping!
+  [conn index config]
+  (try
+    (es-index/update-mapping!
+     conn
+     index
+     (:mappings config))
+    (catch clojure.lang.ExceptionInfo e
+      (log/fatal "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration" (ex-data e))
+      (System/exit 1))))
+
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
@@ -71,9 +82,10 @@
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties)
         existing-index (es-index/get conn (str index "*"))]
-    (upsert-template! conn index config)
     (when (seq existing-index)
+      (update-mapping! conn index config)
       (update-settings! conn-state))
+    (upsert-template! conn index config)
     (when (and (:aliased props)
                (empty? existing-index))
       ;;https://github.com/elastic/elasticsearch/pull/34499
@@ -86,7 +98,6 @@
                      properties)
           (assoc-in conn-state [:props :write-index] index))
       conn-state)))
-
 
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
