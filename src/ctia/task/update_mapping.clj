@@ -3,6 +3,7 @@
   (:require [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.schemas :as es-schema]
             [clojure.tools.cli :refer [parse-opts]]
+            [clojure.pprint :as pp]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [ctia.init :as init]
@@ -44,7 +45,7 @@
     (when (:help options)
       (println summary)
       (System/exit 0))
-    (clojure.pprint/pprint options)
+    (pp/pprint options)
     (properties/init!)
     (init/log-properties)
     (init/init-store-service!)
