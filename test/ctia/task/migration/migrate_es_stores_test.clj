@@ -1,5 +1,6 @@
 (ns ctia.task.migration.migrate-es-stores-test
-  (:require [clojure
+  (:require [clojure.string :as str]
+            [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
             [clj-momo.test-helpers.core :as mth]
@@ -430,8 +431,8 @@
                 {:keys [source target]} migrated-store]
             (is (= (inc fixtures-nb) (:total source)))
             (is (= fixtures-nb (:migrated target))))
-          (is (some #(clojure.string/starts-with? % (format "%s - Cannot migrate entity: {"
-                                                            (name store-type)))
+          (is (some #(str/starts-with? % (format "%s - Cannot migrate entity: {"
+                                                 (name store-type)))
                     messages)
               (format "malformed %s was not logged" store-type)))))))
 

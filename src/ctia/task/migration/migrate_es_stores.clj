@@ -326,7 +326,7 @@
                 restart]} options]
     (when errors
       (binding  [*out* *err*]
-        (println (clojure.string/join "\n" errors))
+        (println (string/join "\n" errors))
         (println summary))
       (System/exit 1))
     (when (:help options)

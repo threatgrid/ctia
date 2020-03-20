@@ -1,5 +1,6 @@
 (ns ctia.task.migration.store-test
-  (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.clj-time
              [core :as time]
@@ -326,7 +327,7 @@
                           "localhost"
                           9200)
                          (keep (fn [[k v]]
-                                 (when (clojure.string/starts-with? (name k) storename)
+                                 (when (str/starts-with? (name k) storename)
                                    v)))))
             "All the indices should be smaller than max-docs + batch-size")))))
 

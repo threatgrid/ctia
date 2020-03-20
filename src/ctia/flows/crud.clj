@@ -2,6 +2,7 @@
   "This namespace handle all necessary flows for creating, updating
   and deleting entities."
   (:require [clj-momo.lib.map :refer [deep-merge-with]]
+            [clojure.string :as str]
             [clojure.set :refer [index]]
             [clojure.spec.alpha :as cs]
             [clojure.tools.logging :as log]
@@ -109,7 +110,7 @@
     (not (allowed-tlp? tlp))
     {:msg (format "Invalid document TLP %s, allowed TLPs are: %s"
                   tlp
-                  (clojure.string/join "," (allowed-tlps)))
+                  (str/join "," (allowed-tlps)))
      :error "Entity Access Control validation Error"
      :type :invalid-tlp-error
      :entity entity}

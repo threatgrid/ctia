@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.field-selection
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is testing]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [is testing]]
             [ctia.test-helpers.core :as helpers :refer [get]]))
 
 (def default-fields
@@ -17,7 +18,7 @@
 (defn expected-field [field]
   (-> field
       name
-      (clojure.string/split #"\.")
+      (str/split #"\.")
       first
       keyword))
 

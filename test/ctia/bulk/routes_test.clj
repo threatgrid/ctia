@@ -243,7 +243,7 @@
                                        :headers {"Authorization" "45c1f5e3f05d0"}))
 
                                (is (some-> @es-params
-                                           (clojure.string/includes? expected))
+                                           (str/includes? expected))
                                    msg)
                                (reset! es-params nil)))]
          (check-refresh true "Bulk import should wait for index refresh when wait_for is true")

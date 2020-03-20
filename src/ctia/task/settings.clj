@@ -1,6 +1,7 @@
 (ns ctia.task.settings
   (:import clojure.lang.ExceptionInfo)
-  (:require [clojure.tools.cli :refer [parse-opts]]
+  (:require [clojure.string :as str]
+            [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [schema.core :as s]
             [clj-momo.lib.es
@@ -22,13 +23,13 @@
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
     :default (set (keys @stores))
-    :parse-fn #(map keyword (clojure.string/split % #","))]])
+    :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)]
     (when errors
       (binding  [*out* *err*]
-        (println (clojure.string/join "\n" errors))
+        (println (str/join "\n" errors))
         (println summary))
       (System/exit 1))
     (when (:help options)
