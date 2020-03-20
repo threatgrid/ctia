@@ -1,5 +1,6 @@
 (ns ctia.task.migration.store-test
-  (:require [clojure.string :as str]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.clj-time
@@ -257,7 +258,7 @@
 (def examples (fixt/bundle fixtures-nb false))
 
 (deftest rollover-test
-  (with-open [rdr (clojure.java.io/reader "./test/data/indices/sample-relationships-1000.json")]
+  (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [storename "ctia_relationship"
           write-alias (str storename "-write")
           max-docs 40

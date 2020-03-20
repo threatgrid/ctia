@@ -5,6 +5,7 @@
             [clj-momo.test-helpers
              [core :as mth]
              [http :refer [encode]]]
+            [clojure.java.io :as io]
             [clojure
              [core :as core]
              [string :as str]
@@ -210,7 +211,7 @@
              fake-routes
              {#".*_bulk.*"
               {:post (fn [{:keys [query-string body]}]
-                       (let [mapping-type (-> (clojure.java.io/reader body)
+                       (let [mapping-type (-> (io/reader body)
                                               line-seq
                                               first
                                               (parse-string true)

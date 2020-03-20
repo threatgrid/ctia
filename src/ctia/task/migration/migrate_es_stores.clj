@@ -15,7 +15,8 @@
              [crud :refer [coerce-to-fn]]
              [store :refer [StoreMap]]]
             [ctia.task.migration.migrations :refer [available-migrations]]
-            [ctia.task.migration.store :as mst]))
+            [ctia.task.migration.store :as mst])
+  (:import (java.util UUID)))
 
 (def default-batch-size 100)
 (def default-buffer-size 3)
@@ -295,7 +296,7 @@
 (def cli-options
   ;; An option with a required argument
   [["-i" "--id ID" "The ID of the migration state to create or restar"
-    :default (str "migration-" (java.util.UUID/randomUUID))]
+    :default (str "migration-" (UUID/randomUUID))]
    ["-p" "--prefix PREFIX" "prefix of the newly created indices"]
    ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"
     :parse-fn #(map keyword (string/split % #","))]
