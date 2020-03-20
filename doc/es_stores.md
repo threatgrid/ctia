@@ -92,3 +92,5 @@ You can launch this task with:
 `java -cp ctia.jar:resources:. clojure.main -m ctia.task.update-mapping`
 or from source:
 `lein run -m ctia.task.update-mapping`.
+You can also select some stores with the option `--stores` and a comma separated list of store names:
+`lein run -m ctia.task.update-mapping --stores incident,malware`.

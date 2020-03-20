@@ -44,6 +44,7 @@
     (when (:help options)
       (println summary)
       (System/exit 0))
+    (clojure.pprint/pprint options)
     (properties/init!)
     (init/log-properties)
     (init/init-store-service!)

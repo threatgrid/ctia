@@ -52,7 +52,6 @@
 (defn- update-mapping-stores!-test-helper
   "If aliased? is true, test update-mapping-stores! with an aliased store.
   If aliased? is false, test update-mapping-stores! with an unaliased store.
-  
   This function builds up a `reduce` to functionally step through a sequence of
   of stores, rollovers, and update-mapping-stores! calls, and test intermediate states.
   "

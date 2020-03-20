@@ -64,6 +64,10 @@
   (es-index/create-template! conn index config)
   (log/infof "updated template: %s" index))
 
+(defn system-exit-error
+  []
+  (System/exit 1))
+
 (defn update-mapping!
   [conn index config]
   (try
@@ -73,7 +77,7 @@
      (:mappings config))
     (catch clojure.lang.ExceptionInfo e
       (log/fatal "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration" (ex-data e))
-      (System/exit 1))))
+      (system-exit-error))))
 
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
@@ -107,7 +111,6 @@
      {:entity store-kw}
      (get-in props [:ctia :store :es :default] {})
      (get-in props [:ctia :store :es store-kw] {}))))
-
 
 (defn- make-factory
   "Return a store instance factory. Most of the ES stores are
