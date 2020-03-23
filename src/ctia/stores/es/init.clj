@@ -66,17 +66,20 @@
 
 (defn system-exit-error
   []
-  (System/exit 1))
+  (log/warn "CTIA is probably starting with an invalid mapping.")
+  ;;(System/exit 1)
+  )
 
 (defn update-mapping!
   [conn index config]
   (try
+    (log/info "updating mapping: " index)
     (es-index/update-mapping!
      conn
      index
      (:mappings config))
     (catch clojure.lang.ExceptionInfo e
-      (log/fatal "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration" (ex-data e))
+      (log/error "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration" (ex-data e))
       (system-exit-error))))
 
 (s/defn init-es-conn! :- ESConnState
