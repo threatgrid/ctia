@@ -1,5 +1,6 @@
 (ns ctia.bulk.core
-  (:require [clojure.set :as set]
+  (:require [clojure.string :as str]
+            [clojure.set :as set]
             [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
@@ -15,7 +16,7 @@
         (map (fn [{:keys [entity plural]}]
                {entity (-> plural
                            name
-                           (clojure.string/replace #"-" "_")
+                           (str/replace #"-" "_")
                            keyword)})
              (vals entities))))
 

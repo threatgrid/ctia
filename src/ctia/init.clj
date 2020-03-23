@@ -4,6 +4,7 @@
    [ctia.encryption :as encryption]
    [ctia.entity.entities :refer [validate-entities]]
    [clj-momo.properties :as mp]
+   [clojure.string :as str]
    [clojure.tools.logging :as log]
    [ctia.lib.metrics
     [riemann :as riemann]
@@ -54,7 +55,7 @@
 
 (defn- get-store-types [store-kw]
   (or (some-> (get-in @p/properties [:ctia :store store-kw])
-              (clojure.string/split #","))
+              (str/split #","))
       []))
 
 (defn- build-store [store-kw store-type]

@@ -1,5 +1,6 @@
 (ns ctia.bulk.schemas
-  (:require [ctia.entity.entities :refer [entities]]
+  (:require [clojure.string :as str]
+            [ctia.entity.entities :refer [entities]]
             [ctia.schemas.core :refer [TempIDs Reference]]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -18,7 +19,7 @@
                      (get entity sch))] sch)]
              {(-> plural
                   name
-                  (clojure.string/replace #"-" "_")
+                  (str/replace #"-" "_")
                   keyword)
               bulk-schema})))
         (apply merge {}))))

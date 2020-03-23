@@ -1,5 +1,7 @@
 (ns ctia.task.migration.store-test
-  (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
             [clj-momo.test-helpers.core :as mth]
             [clj-momo.lib.clj-time
              [core :as time]
@@ -256,7 +258,7 @@
 (def examples (fixt/bundle fixtures-nb false))
 
 (deftest rollover-test
-  (with-open [rdr (clojure.java.io/reader "./test/data/indices/sample-relationships-1000.json")]
+  (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [storename "ctia_relationship"
           write-alias (str storename "-write")
           max-docs 40
@@ -326,7 +328,7 @@
                           "localhost"
                           9200)
                          (keep (fn [[k v]]
-                                 (when (clojure.string/starts-with? (name k) storename)
+                                 (when (str/starts-with? (name k) storename)
                                    v)))))
             "All the indices should be smaller than max-docs + batch-size")))))
 
@@ -489,7 +491,8 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        _ (rollover-stores @stores)
+        {:keys [nb-errors]} (rollover-stores @stores)
+        _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         malware-ids (->> (:malwares post-bulk-res-1)
                          (map #(-> % long-id->id :short-id))
@@ -537,7 +540,8 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        _ (rollover-stores @stores)
+        {:keys [nb-errors]} (rollover-stores @stores)
+        _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         _ (es-index/refresh! es-conn)
 
@@ -568,17 +572,17 @@
                                                  sort
                                                  (map name))
 
-        sighting-docs-1 (map #(-> (es-doc/get-doc es-conn
-                                                  sighting-index-1
-                                                  "sighting"
-                                                  %
-                                                  {}))
+        sighting-docs-1 (map #(es-doc/get-doc es-conn
+                                              sighting-index-1
+                                              "sighting"
+                                              %
+                                              {})
                              sighting-ids-1)
-        sighting-docs-2 (map #(-> (es-doc/get-doc es-conn
-                                                  sighting-index-2
-                                                  "sighting"
-                                                  %
-                                                  {}))
+        sighting-docs-2 (map #(es-doc/get-doc es-conn
+                                              sighting-index-2
+                                              "sighting"
+                                              %
+                                              {})
                              sighting-ids-2)
         sighting-docs (concat sighting-docs-1 sighting-docs-2)
         prepared-docs (sut/prepare-docs sighting-store-map sighting-docs)]

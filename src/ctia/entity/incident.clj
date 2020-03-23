@@ -141,7 +141,8 @@
       :incident_time em/incident-time
       :categories em/token
       :discovery_method em/token
-      :intended_effect em/token})}})
+      :intended_effect em/token
+      :assignees em/token})}})
 
 (def-es-store IncidentStore :incident StoredIncident PartialStoredIncident)
 
@@ -158,7 +159,8 @@
            :incident_time.closed
            :incident_time.rejected
            :discovery_method
-           :intended_effect]))
+           :intended_effect
+           :assignees]))
 
 (def incident-sort-fields
   (apply s/enum incident-fields))
@@ -178,7 +180,8 @@
     (s/optional-key :discovery_method) s/Str
     (s/optional-key :intended_effect) s/Str
     (s/optional-key :categories) s/Str
-    (s/optional-key :sort_by) incident-sort-fields}))
+    (s/optional-key :sort_by) incident-sort-fields
+    (s/optional-key :assignees) s/Str}))
 
 (def IncidentGetParams IncidentFieldsParam)
 

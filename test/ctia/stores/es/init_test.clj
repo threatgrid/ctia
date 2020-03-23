@@ -1,6 +1,7 @@
 (ns ctia.stores.es.init-test
   (:require [ctia.stores.es.init :as sut]
             [clj-http.client :as http]
+            [ctia.stores.es.mapping :as m]
             [clj-momo.lib.es
              [index :as index]
              [conn :as conn]]
@@ -78,7 +79,7 @@
                                          first
                                          val
                                          :settings
-                                        :index)]
+                                         :index)]
     (is (= "5" number_of_shards)
         "the number of shards is a static parameter")
     (testing "dynamic parameters should be updated"
@@ -101,6 +102,32 @@
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b])))))
+
+  (testing "update mapping should allow adding fields or identical mapping"
+    (let [exited (atom false)
+          fake-exit (fn [] (reset! exited true))
+          test-fn (fn [msg error? field field-mapping]
+                    ;; init and create aliased indices
+                    (sut/init-es-conn! props-aliased)
+                    (with-redefs [sut/system-exit-error fake-exit
+                                  ;; redef mappings
+                                  sut/store-mappings
+                                  (cond-> sut/store-mappings
+                                    field (assoc-in [:sighting "sighting" :properties field]
+                                                    field-mapping))]
+                      ;; init again to trigger mapping update
+                      (sut/init-es-conn! props-aliased)
+                      ; check state
+                      (is (= error? @exited) msg)
+                      ;; reset state
+                      (index/delete! es-conn (str indexname "*"))
+                      (reset! exited false)))]
+      (test-fn "update mapping should not fail on unchanged mapping"
+               false nil nil)
+      (test-fn "update mapping should not fail on field addition"
+               false :new-field m/token)
+      (test-fn "update mapping should fail when modifying existing field mapping"
+               true :id m/text)))
 
   (testing "init-es-conn! should return a proper conn state with aliased conf, and create an initial aliased index"
     (index/delete! es-conn (str indexname "*"))
@@ -128,7 +155,9 @@
   (testing "init-es-conn! should return a conn state that ignore aliased conf setting when an unaliased index already exists"
     (index/delete! es-conn (str indexname "*"))
     (http/delete (str "http://localhost:9200/_template/" indexname "*"))
-    (index/create! es-conn indexname {})
+    (index/create! es-conn
+                   indexname
+                   {:settings m/store-settings})
     (let [{:keys [index props config conn]}
           (sut/init-es-conn! props-aliased)
           existing-index (index/get es-conn (str indexname "*"))

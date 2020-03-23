@@ -39,7 +39,7 @@
                  [org.clojure/core.async "1.0.567"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "0.8.2"]
-                 [org.clojure/tools.logging "0.5.0"]
+                 [org.clojure/tools.logging "1.0.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
 
@@ -49,8 +49,8 @@
                  [threatgrid/flanders "0.1.23"]
 
                   
-                 [threatgrid/ctim "1.0.16"]
-                 [threatgrid/clj-momo "0.3.4"]
+                 [threatgrid/ctim "1.0.17"]
+                 [threatgrid/clj-momo "0.3.5"]
 
                  [com.arohner/uri "0.1.2"]
 
@@ -67,9 +67,9 @@
                  [ring-cors "0.1.13"]
                  [commons-codec "1.12"] ;threatgrid/ctim, threatgrid/clj-momo, clj-http > ring/ring-codec
                  [ring/ring-codec "1.1.2"]
-                 [yogsototh/clj-jwt "0.2.1"]
+                 [threatgrid/clj-jwt "0.3.1"]
                  [threatgrid/ring-turnstile-middleware "0.1.1"]
-                 [threatgrid/ring-jwt-middleware "1.0.0"]
+                 [threatgrid/ring-jwt-middleware "1.0.1"]
                  [scopula "0.1.4"]
 
                  ;; clients
@@ -181,7 +181,26 @@
   ; use `lein deps :plugins-tree` to inspect conflicts
   :plugins [[lein-shell "0.5.0"]
             [org.clojure/clojure ~clj-version] ;override perforate
-            [perforate ~perforate-version]]
+            [perforate ~perforate-version]
+            [reifyhealth/lein-git-down "0.3.5"]]
+  :middleware [lein-git-down.plugin/inject-properties]
+  ; lein-git-down config
+  :repositories [["public-github" {:url "git://github.com"}]
+                 ["private-github" {:url "git://github.com" :protocol :ssh}]]
+  ; to simultaneously work on an upstream dependency and have
+  ; Travis pick up on it:
+  ; 1. add an entry mapping the upstream's maven coordinate to its dev GitHub repository
+  ;    in the :git-down map:
+  ;    eg., To work on ctim in the `frenchy64` fork:
+  ;         :git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
+  ; 2. change the upstream dependency's version to the relevant sha
+  ;    eg., [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
+  ;
+  ;; uncomment and change during dev
+  :git-down {;threatgrid/ctim {:coordinates frenchy64/ctim}
+             ;threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
+             ;threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}
+             }
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
             "kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]

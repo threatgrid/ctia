@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.search
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is testing]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [is testing]]
             [clojure.tools.logging :refer [log*]]
             [ctim.domain.id :refer [long-id->id]]
             [ctia.properties :refer [properties]]
@@ -10,7 +11,7 @@
   [base-word]
   (-> (java.util.UUID/randomUUID)
       str
-      (clojure.string/replace "-" "")
+      (str/replace "-" "")
       (->> (str base-word))))
 
 (defn search
@@ -38,7 +39,7 @@
         capital-word (unique-word "CAPITAL")
         base-possessive-word "possessive"
         possessive-word (str base-possessive-word "'s")
-        base-possessive-word (clojure.string/replace possessive-word "'s" "")
+        base-possessive-word (str/replace possessive-word "'s" "")
         base-domain (unique-word "cisco")
         domain-word (format "www.%s.com" base-domain)
         url-word (unique-word (format "http://%s/" domain-word))
@@ -93,7 +94,7 @@
 
     (testing "lowercase filter should be properly applied on describable fields"
       (let [all-upper-ids (search-ids search-uri capital-word)
-            all-lower-ids (search-ids search-uri (clojure.string/lower-case capital-word))
+            all-lower-ids (search-ids search-uri (str/lower-case capital-word))
             description-upper-ids (search-ids search-uri (format "description:(%s)" capital-word))
             description-lower-ids (search-ids search-uri (format "description:(%s)" capital-word))]
         (is (= matched-ids
@@ -132,8 +133,8 @@
           "possessive filter should be applied before stop word filter to remove s"))
 
     ;; test search on url
-    (let [escaped-url (-> (clojure.string/replace url-word "/" "\\/")
-                          (clojure.string/replace ":" "\\:"))
+    (let [escaped-url (-> (str/replace url-word "/" "\\/")
+                          (str/replace ":" "\\:"))
           found-ids-escaped (search-ids search-uri escaped-url)]
 
       (with-redefs [log* (fn [& _] nil)]

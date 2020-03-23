@@ -1,5 +1,7 @@
 (ns ctia.task.migration.migrate-es-stores-test
-  (:require [clojure
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
              [walk :refer [keywordize-keys]]]
             [clj-momo.test-helpers.core :as mth]
@@ -29,7 +31,9 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.stores.es.store :refer [store->map]]
-            [ctia.store :refer [stores]]))
+            [ctia.store :refer [stores]])
+  (:import (java.text SimpleDateFormat)
+           (java.util Date)))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -150,7 +154,7 @@
   (comp time-coerce/to-long time-coerce/to-date-time))
 
 (deftest read-source-batch-test
-  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+  (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [storemap {:conn es-conn
                     :indexname "ctia_relationship"
                     :mapping "relationship"
@@ -237,7 +241,7 @@
           (is (= 5 @counter)))))))
 
 (deftest write-target-test
-  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+  (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [prefix "0.0.1"
           indexname "v0.0.1_ctia_relationship"
           storemap {:conn es-conn
@@ -326,7 +330,7 @@
                {:confirm? false}))))
 
 (deftest sliced-migration-test
-  (with-open [rdr (clojure.java.io/reader"./test/data/indices/sample-relationships-1000.json")]
+  (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [{wo-modified true
            w-modified false} (->> (line-seq rdr)
                                   (map es-helpers/prepare-bulk-ops)
@@ -430,8 +434,8 @@
                 {:keys [source target]} migrated-store]
             (is (= (inc fixtures-nb) (:total source)))
             (is (= fixtures-nb (:migrated target))))
-          (is (some #(clojure.string/starts-with? % (format "%s - Cannot migrate entity: {"
-                                                            (name store-type)))
+          (is (some #(str/starts-with? % (format "%s - Cannot migrate entity: {"
+                                                 (name store-type)))
                     messages)
               (format "malformed %s was not logged" store-type)))))))
 
@@ -549,8 +553,8 @@
                       vulnerability
                       weakness]}
               (get-in @props/properties [:ctia :store :es])
-              date (java.util.Date.)
-              index-date (.format (java.text.SimpleDateFormat. "yyyy.MM.dd") date)
+              date (Date.)
+              index-date (.format (SimpleDateFormat. "yyyy.MM.dd") date)
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
                                       1000
                                       (format "v0.0.0_ctia_event-%s-000002" index-date)
