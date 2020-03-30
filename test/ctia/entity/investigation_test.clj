@@ -12,23 +12,13 @@
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
              [store :refer [test-for-each-store]]]
-            [ctim.examples.investigations]))
+            [ctia.entity.investigation.examples :refer
+             [new-investigation-maximal
+              new-investigation-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
                                     whoami-helpers/fixture-server]))
-
-(def new-investigation-maximal
-  (assoc ctim.examples.investigations/new-investigation-maximal
-         :object_ids []
-         :investigated_observables []
-         :targets []))
-
-(def new-investigation-minimal
-  (assoc ctim.examples.investigations/new-investigation-minimal
-         :object_ids []
-         :investigated_observables []
-         :targets []))
 
 (use-fixtures :each
   whoami-helpers/fixture-reset-state)

@@ -1,70 +1,24 @@
 (ns ctia.entity.investigation
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.store :refer :all]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
-            [ctia.schemas
-             [utils :as csu]
-             [core :refer [def-stored-schema
-                           CTIAEntity]]
-             [sorting :as sorting]]
-            [ctia.schemas.graphql
-             [sorting :as graphql-sorting]
-             [flanders :as flanders]
-             [helpers :as g]
-             [pagination :as pagination]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctim.schemas.common :refer [IdentitySpecification]]
-            [ctim.schemas.investigation :as inv]
-            [flanders
-             [schema :as f-schema]
-             [spec :as f-spec]
-             [utils :as fu]]
-            [schema-tools.core :as st]
-            [schema.core :as s]
-            [ctia.schemas.graphql.ownership :as go]))
-
-(s/defschema InvestigationActionData
-  {(s/required-key :object_ids) [s/Str]
-   ;; The value of this field should look like "type:value".
-   (s/required-key :investigated_observables) [s/Str]
-   (s/required-key :targets) [(f-schema/->schema IdentitySpecification)]})
-
-(s/defschema Investigation
-  (st/merge (f-schema/->schema inv/Investigation)
-            CTIAEntity
-            InvestigationActionData
-            {s/Keyword s/Any}))
-
-(f-spec/->spec inv/Investigation "investigation")
-
-(s/defschema PartialInvestigation
-  (st/merge (f-schema/->schema (fu/optionalize-all inv/Investigation))
-            CTIAEntity
-            InvestigationActionData
-            {s/Keyword s/Any}))
-
-(s/defschema PartialInvestigationList
-  [PartialInvestigation])
-
-(s/defschema NewInvestigation
-  (st/merge (f-schema/->schema inv/NewInvestigation)
-            CTIAEntity
-            InvestigationActionData
-            {s/Keyword s/Any}))
-
-(f-spec/->spec inv/NewInvestigation "new-investigation")
-
-(def-stored-schema StoredInvestigation Investigation)
-
-(s/defschema PartialStoredInvestigation
-  (csu/optional-keys-schema StoredInvestigation))
-
-(def realize-investigation
-  (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
+  (:require
+   [ctia.http.routes
+    [common :refer [BaseEntityFilterParams
+                    PagingParams
+                    SourcableEntityFilterParams]]
+    [crud :refer [entity-crud-routes]]]
+   [ctia.stores.es
+    [mapping :as em]
+    [store :refer [def-es-store]]]
+   [ctia.entity.investigation.schemas
+    :refer [Investigation
+            PartialInvestigation
+            PartialStoredInvestigation
+            NewInvestigation
+            StoredInvestigation
+            PartialInvestigationList
+            realize-investigation]]
+   [schema-tools.core :as st]
+   [schema.core :as s]
+   [ctia.schemas.sorting :as sorting]))
 
 (def snapshot-action-fields-mapping
   {:object_ids {:type "text"
@@ -132,29 +86,6 @@
   (st/merge
    InvestigationFieldsParam
    PagingParams))
-
-(def InvestigationType
-  (let [{:keys [fields name description]}
-        (flanders/->graphql
-         (fu/optionalize-all inv/Investigation)
-         {})]
-    (g/new-object
-     name
-     description
-     []
-     (merge
-      fields go/graphql-ownership-fields))))
-
-(def investigation-order-arg
-  (graphql-sorting/order-by-arg
-   "InvestigationOrder"
-   "investigations"
-   (into {}
-         (map (juxt graphql-sorting/sorting-kw->enum-name name)
-              investigation-fields))))
-
-(def InvestigationConnectionType
-  (pagination/new-connection InvestigationType))
 
 (def investigation-routes
   (entity-crud-routes
