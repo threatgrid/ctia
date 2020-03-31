@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [ctia.schemas.sorting :as sorting]
             [ring.swagger.schema :refer [describe]]
+            [clj-momo.lib.clj-time.core :as t]
             [ring.util
              [codec :as codec]
              [http-response :as http-res]
@@ -17,7 +18,18 @@
                      :search_after])
 
 (def filter-map-search-options
-  (conj search-options :query))
+  (conj search-options :query :from :to))
+
+(s/defschema BaseEntityFilterParams
+  {(s/optional-key :id) s/Str
+   (s/optional-key :from) s/Inst
+   (s/optional-key :to) s/Inst
+   (s/optional-key :revision) s/Int
+   (s/optional-key :language) s/Str
+   (s/optional-key :tlp) s/Str})
+
+(s/defschema SourcableEntityFilterParams
+  {(s/optional-key :source) s/Str})
 
 (s/defschema PagingParams
   "A schema defining the accepted paging and sorting related query parameters."
@@ -69,12 +81,35 @@
   [{:keys [id] :as resource}]
   (http-res/created id resource))
 
-(s/defschema BaseEntityFilterParams
-  {(s/optional-key :id) s/Str
-   (s/optional-key :revision) s/Int
-   (s/optional-key :language) s/Str
-   (s/optional-key :tlp) s/Str})
+(defn now [] (java.util.Date.))
 
-(s/defschema SourcableEntityFilterParams
-  {(s/optional-key :source) s/Str})
+(s/defn coerce-from :- s/Inst
+  "coerce from to limit interval querying to one year"
+  [from :- s/Inst
+   to :- (s/maybe s/Inst)]
+  (let [to-or-now (or to (now))
+        to-minus-one-year (t/minus to-or-now (t/years 1))]
+    (t/latest from to-minus-one-year)))
 
+(defn search-query
+  ([date-field search-params]
+   (search-query date-field
+                 search-params
+                 (fn [from to] from)))
+  ([date-field
+    {:keys [query from to] :as search-params}
+    coerce-from-fn]
+   (let [filter-map (apply dissoc search-params filter-map-search-options)]
+     (cond-> {}
+       (seq filter-map) (assoc :filter-map filter-map)
+       query (assoc :query-string query)
+       from (assoc-in [:date-range date-field :gte]
+                      (coerce-from-fn from to))
+       to (assoc-in [:date-range date-field :lt] to)))))
+
+(defn wait_for->refresh
+  [wait_for]
+  (case wait_for
+    true {:refresh "wait_for"}
+    false {:refresh "false"}
+    {}))

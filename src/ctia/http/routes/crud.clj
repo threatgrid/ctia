@@ -2,7 +2,7 @@
   (:require
    [clojure.string :refer [capitalize]]
    [ctia.http.middleware.auth]
-   [compojure.api.sweet :refer [DELETE GET POST PUT PATCH routes]]
+   [compojure.api.sweet :refer [context DELETE GET POST PUT PATCH routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id
@@ -10,28 +10,29 @@
      un-store-page
      with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.http.routes.common
-    :refer
-    [created filter-map-search-options paginated-ok search-options]]
+   [ctia.http.routes.common :refer [created
+                                    filter-map-search-options
+                                    paginated-ok
+                                    search-options
+                                    wait_for->refresh
+                                    search-query
+                                    coerce-from]]
    [ctia.store :refer [write-store
                        read-store
-                       query-string-search-store
                        query-string-search
+                       aggregate
                        create-record
                        delete-record
                        read-record
                        update-record
                        list-records]]
+   [ctia.schemas.search-agg :refer [HistogramParams
+                                    CardinalityParams
+                                    TopnParams]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [ring.swagger.schema :refer [describe]]
-   [schema.core :as s]))
-
-(defn wait_for->refresh
-  [wait_for]
-  (case wait_for
-    true {:refresh "wait_for"}
-    false {:refresh "false"}
-    {}))
+   [schema.core :as s]
+   [schema-tools.core :as st]))
 
 (defn entity-crud-routes
   [{:keys [entity
@@ -58,16 +59,41 @@
            can-update?
            can-patch?
            can-search?
-           can-get-by-external-id?]
+           can-aggregate?
+           can-get-by-external-id?
+           date-field
+           histogram-fields
+           enumerable-fields]
     :or {hide-delete? false
          can-post? true
          can-update? true
          can-patch? false
          can-search? true
-         can-get-by-external-id? true}}]
+         can-aggregate? false
+         can-get-by-external-id? true
+         date-field :created
+         histogram-fields [:created]}}]
   (let [entity-str (name entity)
-        capitalized (capitalize entity-str)]
-    (routes
+        capitalized (capitalize entity-str)
+        agg-search-schema (st/merge
+                           (st/dissoc search-q-params
+                                      :sort_by
+                                      :sort_order
+                                      :fields
+                                      :limit
+                                      :offset)
+                           {:from s/Inst}) ;; make from mandatory
+        aggregate-on-enumerable {:aggregate-on (apply s/enum (map name enumerable-fields))}
+        aggregate-on-date {:aggregate-on (apply s/enum (map name histogram-fields))}
+        histogram-q-params (st/merge agg-search-schema
+                                     HistogramParams
+                                     aggregate-on-date)
+        cardinality-q-params (st/merge agg-search-schema
+                                       aggregate-on-enumerable)
+        topn-q-params (st/merge agg-search-schema
+                                TopnParams
+                                aggregate-on-enumerable)]
+        (routes
      (when can-post?
        (POST "/" []
              :return entity-schema
@@ -186,17 +212,60 @@
             :capabilities search-capabilities
             :auth-identity identity
             :identity-map identity-map
-            (-> (query-string-search-store
+            (-> (read-store
                  entity
                  query-string-search
-                 (:query params)
-                 (apply dissoc params filter-map-search-options)
+                 (search-query date-field params)
                  identity-map
                  (select-keys params search-options))
                 page-with-long-id
                 un-store-page
                 paginated-ok)))
-
+     (when can-aggregate?
+       (context "/metric" []
+                :capabilities search-capabilities
+                :auth-identity identity
+                :identity-map identity-map
+                (GET "/histogram" []
+                     :return [{:key s/Str :value s/Int}]
+                     :summary (format "Histogram for a %s field" capitalized)
+                     :query [params histogram-q-params]
+                     (ok (read-store
+                          entity
+                          aggregate
+                          (search-query (keyword
+                                         (:aggregate-on params))
+                                        (st/select-schema params agg-search-schema)
+                                        coerce-from)
+                          (st/assoc (st/select-schema params HistogramParams)
+                                    :agg-type :histogram)
+                          identity-map)))
+                (GET "/topn" []
+                     :return [{:key s/Any :value s/Int}]
+                     :summary (format "Topn for a %s field" capitalized)
+                     :query [params topn-q-params]
+                     (ok (read-store
+                          entity
+                          aggregate
+                          (search-query date-field
+                                        (st/select-schema params agg-search-schema)
+                                        coerce-from)
+                          (st/assoc (st/select-schema params TopnParams)
+                                    :agg-type :topn)
+                          identity-map)))
+                (GET "/cardinality" []
+                     :return s/Int
+                     :summary (format "Cardinality for a %s field" capitalized)
+                     :query [params cardinality-q-params]
+                     (ok (read-store
+                          entity
+                          aggregate
+                          (search-query date-field
+                                        (st/select-schema params agg-search-schema)
+                                        coerce-from)
+                          (st/assoc (st/select-schema params CardinalityParams)
+                                    :agg-type :cardinality)
+                          identity-map)))))
      (GET "/:id" []
           :return (s/maybe get-schema)
           :summary (format "Gets a %s by ID" entity-str)

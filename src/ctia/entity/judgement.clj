@@ -51,13 +51,14 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    JudgementFieldsParam
+   (st/optional-keys
    {:query s/Str
-    (s/optional-key :disposition_name) s/Str
-    (s/optional-key :disposition) s/Int
-    (s/optional-key :priority) s/Int
-    (s/optional-key :severity) s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :sort_by) judgement-sort-fields}))
+    :disposition_name s/Str
+    :disposition s/Int
+    :priority s/Int
+    :severity s/Str
+    :confidence s/Str
+    :sort_by judgement-sort-fields})))
 
 (def JudgementGetParams JudgementFieldsParam)
 
@@ -91,7 +92,10 @@
     :delete-capabilities :delete-judgement
     :search-capabilities :search-judgement
     :external-id-capabilities :read-judgement
-    :can-update? true}))
+    :can-update? true
+    :can-aggregate? true
+    :histogram-fields js/judgement-histogram-fields
+    :enumerable-fields js/judgement-enumerable-fields}))
 
 (def capabilities
   #{:create-judgement

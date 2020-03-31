@@ -8,9 +8,11 @@
             [ctia.flows.crud :as flows]
             [ctia.http.routes
              [common
-              :refer [BaseEntityFilterParams PagingParams
-                      SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes wait_for->refresh]]]
+              :refer [BaseEntityFilterParams
+                      PagingParams
+                      SourcableEntityFilterParams
+                      wait_for->refresh]]
+             [crud :refer [entity-crud-routes]]]
             [ctia.schemas
              [core :refer [def-acl-schema def-stored-schema]]
              [sorting
@@ -165,6 +167,22 @@
 (def incident-sort-fields
   (apply s/enum incident-fields))
 
+(def incident-enumerable-fields
+  [:source
+   :confidence
+   :status
+   :discovery_method
+   :assignees])
+
+(def incident-histogram-fields
+  [:timestamp
+   :incident_time.opened
+   :incident_time.discovered
+   :incident_time.reported
+   :incident_time.remediated
+   :incident_time.closed
+   :incident_time.rejected])
+
 (s/defschema IncidentFieldsParam
   {(s/optional-key :fields) [incident-sort-fields]})
 
@@ -174,14 +192,15 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    IncidentFieldsParam
-   {:query s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :status) s/Str
-    (s/optional-key :discovery_method) s/Str
-    (s/optional-key :intended_effect) s/Str
-    (s/optional-key :categories) s/Str
-    (s/optional-key :sort_by) incident-sort-fields
-    (s/optional-key :assignees) s/Str}))
+   (st/optional-keys
+    {:query s/Str
+     :confidence s/Str
+     :status s/Str
+     :discovery_method s/Str
+     :intended_effect s/Str
+     :categories s/Str
+     :sort_by incident-sort-fields
+     :assignees s/Str})))
 
 (def IncidentGetParams IncidentFieldsParam)
 
@@ -206,6 +225,7 @@
      :search-q-params IncidentSearchParams
      :new-spec :new-incident/map
      :can-patch? true
+     :can-aggregate? true
      :realize-fn realize-incident
      :get-capabilities :read-incident
      :post-capabilities :create-incident
@@ -213,7 +233,9 @@
      :patch-capabilities :create-incident
      :delete-capabilities :delete-incident
      :search-capabilities :search-incident
-     :external-id-capabilities :read-incident})))
+     :external-id-capabilities :read-incident
+     :histogram-fields incident-histogram-fields
+     :enumerable-fields incident-enumerable-fields})))
 
 (def IncidentType
   (let [{:keys [fields name description]}

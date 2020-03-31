@@ -95,7 +95,7 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    InvestigationFieldsParam
-   {:query s/Str}
+   {(s/optional-key :query) s/Str}
    {s/Keyword s/Any}))
 
 (def InvestigationGetParams InvestigationFieldsParam)

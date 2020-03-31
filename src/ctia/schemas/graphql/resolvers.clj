@@ -16,7 +16,7 @@
   (into {} (filter second m)))
 
 (s/defn ^:private search-entity :- pagination/Connection
-  "Performs a query-string-search-store operation for a given entity type"
+  "Performs a query-string-search operation for a given entity type"
   [entity-type :- s/Keyword
    query :- s/Str
    filtermap :- {s/Keyword (s/maybe s/Str)}
@@ -31,11 +31,11 @@
                                                 field-selection)))]
     (log/debugf "Search entity %s graphql args %s" entity-type args)
 
-    (some-> (query-string-search-store
+    (some-> (read-store
              entity-type
              query-string-search
-             query
-             (remove-map-empty-values filtermap)
+             {:query-string query
+              :filter-map (remove-map-empty-values filtermap)}
              ident
              params)
             with-long-id-fn

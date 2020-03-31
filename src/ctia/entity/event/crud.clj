@@ -4,12 +4,9 @@
    [ctia.entity.event.schemas
     :refer [Event PartialEvent]]
    [ctia.stores.es.crud :as crud]
-   [clj-momo.lib.es
-    [document :as document]
-    [schemas :refer [ESConnState SliceProperties]]
-    [slice :refer [get-slice-props]]]))
+   [clj-momo.lib.es.schemas :refer [ESConnState]]))
 
-(defn attach-bulk-fields [index event]
+'(defn attach-bulk-fields [index event]
   (assoc event
          :_type "event"
          :_id (:id event)
@@ -27,19 +24,15 @@
                     {}
                     {}))
 
-(def ^:private handle-list-fn
+(def handle-list
   (crud/handle-find :event Event))
 
-(s/defn handle-list
-  [state :- ESConnState
-   filter-map :- crud/FilterSchema
-   ident
-   params]
-  (handle-list-fn state
-                  filter-map
-                  ident
-                  params))
+(def handle-read
+  (crud/handle-read :event PartialEvent))
 
 (def handle-event-query-string-search
   (crud/handle-query-string-search
-   "event" PartialEvent))
+   :event PartialEvent))
+
+(def handle-aggregate
+  (crud/handle-aggregate :event))

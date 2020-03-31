@@ -84,8 +84,9 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    WeaknessFieldsParam
-   {:query s/Str
-    (s/optional-key :sort_by)  weakness-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :sort_by  weakness-sort-fields})))
 
 (def WeaknessGetParams WeaknessFieldsParam)
 

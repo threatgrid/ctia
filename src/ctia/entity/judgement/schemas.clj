@@ -84,6 +84,20 @@
   (concat judgement-fields
           ["valid_time.start_time,timestamp"]))
 
+(def judgement-enumerable-fields
+  [:disposition
+   :priority
+   :confidence
+   :severity
+   :observable.type
+   :observable.value])
+
+(def judgement-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
+
+
 (def judgements-by-observable-sort-fields
   (map name (conj judgement-fields
                   "disposition:asc,valid_time.start_time:desc"
