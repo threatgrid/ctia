@@ -328,7 +328,7 @@ It returns the documents with full hits meta data including the real index in wh
       (cond-> [(find-restriction-query-part ident)]
         (seq filter-map) (into filter-terms)
         (seq date-range) (conj date-range-query)
-        (not-empty query-string) (conj es-query-string))}}))
+        (seq query-string) (conj es-query-string))}}))
 
 (defn handle-query-string-search
   "Generate an ES query handler using some mapping and schema"

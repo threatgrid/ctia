@@ -3,18 +3,23 @@
             [schema-tools.core :as st]))
 
 (s/defschema DateRange
+  "Date range query, includes lowerfrom and excludes to"
   {s/Keyword
    (st/optional-keys
     {:gte s/Inst
      :lt s/Inst})})
 
 (s/defschema SearchQuery
+  "components of a search query:
+   - query-string: free text search, with lucene syntax enabled"
   (st/optional-keys
    {:query-string s/Str
     :filter-map {s/Keyword s/Any}
     :date-range DateRange}))
 
-(s/defschema AggType (s/enum :histogram :topn :cardinality))
+(s/defschema AggType
+  "supported aggregation types"
+  (s/enum :histogram :topn :cardinality))
 
 (s/defschema AggCommonParams
   (st/merge

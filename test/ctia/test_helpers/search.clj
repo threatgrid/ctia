@@ -1,12 +1,11 @@
 (ns ctia.test-helpers.search
-  (:refer-clojure :exclude [get])
   (:require [clojure.string :as str]
             [clojure.test :refer [is testing]]
             [clojure.tools.logging :refer [log*]]
             [ctim.domain.id :refer [long-id->id]]
             [ctia.properties :refer [properties]]
             [clj-momo.lib.clj-time.coerce :as tc]
-            [ctia.test-helpers.core :as helpers :refer [get post delete]]))
+            [ctia.test-helpers.core :as helpers]))
 
 (defn unique-word
   [base-word]
@@ -17,20 +16,20 @@
 
 (defn create-doc
   [entity doc]
-  (post (str "ctia/" (name entity))
+  (helpers/post (str "ctia/" (name entity))
         :body doc
         :headers {"Authorization" "45c1f5e3f05d0"}))
 
 (defn delete-doc
   [entity full-id]
   (let [short-id (:short-id (long-id->id full-id))]
-    (delete (format "ctia/%s/%s" (name entity) short-id)
+    (helpers/delete (format "ctia/%s/%s" (name entity) short-id)
             :headers {"Authorization" "45c1f5e3f05d0"})))
 
 (defn search-raw
   [entity query-params]
   (let [search-uri (format "ctia/%s/search" (name entity))]
-    (get search-uri
+    (helpers/get search-uri
          :headers {"Authorization" "45c1f5e3f05d0"}
          :query-params query-params)))
 
@@ -194,9 +193,9 @@
   (testing "search term filter"
     (let [response (search-text entity query)]
       (is (= 200 (:status response)))
-      (is (= query (first (map query-field (:parsed-body response))))
-          "query term works"))
-
+      (doseq [res (:parsed-body response)]
+        (is (= query (get res query-field))
+            "query term must properly match values")))
     (with-redefs [log* (fn [& _] nil)]
       ;; avoid unnecessary verbosity
       (let [response (search-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")]
@@ -206,7 +205,7 @@
                                        "tlp" "red"})]
       (is (= 200 (:status response)))
       (is (empty? (:parsed-body response))
-          "filters should be applied, and should discriminate"))
+          "filters must be applied, and should discriminate"))
 
     (let [{:keys [status parsed-body]} (search-raw entity {:query query
                                                            :tlp "green"})
@@ -214,10 +213,10 @@
                           (keyword query-field) query}]
       (is (= 200 status))
       (is (<= 1 (count parsed-body)))
-      (is (every? #(= (select-keys % [(keyword query-field) :tlp])
-                      matched-fields)
-                  parsed-body)
-          "filters are applied, and match properly"))))
+      (doseq [res parsed-body]
+        (is (= (select-keys res [(keyword query-field) :tlp])
+               matched-fields)
+            "filters must be applied, and match properly")))))
 
 (defn test-filter-by-id
   [entity]

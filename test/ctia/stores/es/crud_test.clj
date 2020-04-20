@@ -329,6 +329,7 @@
                    (search-fn es-conn-state q ident params))]
 
       (testing "Properly handle different search query options"
+        (assert (pos? (count high-t1-title1)))
         (is (= (count (concat high-t1-title1
                               medium-t1-title1))
                (count (:data (search {:query-string query-string}
@@ -337,12 +338,10 @@
                               medium-t1-title1))
                (count (:data (search {:date-range date-range}
                                      {})))))
-
         (is (= (count (concat high-t1-title1
                               high-t2-title2))
                (count (:data (search {:filter-map filter-map}
                                      {})))))
-
         (is (= (count high-t1-title1)
                (count (:data (search {:query-string query-string
                                       :date-range date-range
@@ -353,6 +352,8 @@
                                     {:limit 2})
               search-page-1 (search {:query-string query-string}
                                     (get-in search-page-0 [:paging :next]))]
+          (assert (some? (:data search-page-0)))
+          (assert (some? (:data search-page-1)))
           (is (= (count (concat high-t1-title1
                                 medium-t1-title1))
                  (get-in search-page-0 [:paging :total-hits])))

@@ -82,12 +82,14 @@
                                       :fields
                                       :limit
                                       :offset)
-                           {:from s/Inst}) ;; make from mandatory
+                           {:from s/Inst})
         aggregate-on-enumerable {:aggregate-on (apply s/enum (map name enumerable-fields))}
-        aggregate-on-date {:aggregate-on (apply s/enum (map name histogram-fields))}
+        histogram-filters {:aggregate-on (apply s/enum (map name histogram-fields))
+                           :from (describe s/Inst "Start date of the histogram. Filters the value of selected aggregated-on field.")
+                           (s/optional-key :to) (describe s/Inst "End date of the histogram. Filters the value of selected aggregated-on field.")}
         histogram-q-params (st/merge agg-search-schema
                                      HistogramParams
-                                     aggregate-on-date)
+                                     histogram-filters)
         cardinality-q-params (st/merge agg-search-schema
                                        aggregate-on-enumerable)
         topn-q-params (st/merge agg-search-schema

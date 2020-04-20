@@ -97,7 +97,6 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-
 (def judgements-by-observable-sort-fields
   (map name (conj judgement-fields
                   "disposition:asc,valid_time.start_time:desc"

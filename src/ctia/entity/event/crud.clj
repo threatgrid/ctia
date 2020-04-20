@@ -6,12 +6,6 @@
    [ctia.stores.es.crud :as crud]
    [clj-momo.lib.es.schemas :refer [ESConnState]]))
 
-'(defn attach-bulk-fields [index event]
-  (assoc event
-         :_type "event"
-         :_id (:id event)
-         :_index index))
-
 (def ^:private handle-create-fn
   (crud/handle-create :event Event))
 
