@@ -113,7 +113,7 @@
 
 (def identity-assertion-entity
   {:route-context "/identity-assertion"
-   :tags ["IdentityAssertion"]
+   :tags ["Identity Assertion"]
    :entity :identity-assertion
    :plural :identity-assertions
    :new-spec :new-identity-assertion/map
