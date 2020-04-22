@@ -62,7 +62,7 @@
 
 (s/defschema EventSearchParams
   (st/merge
-   {:query s/Str}
+   {(s/optional-key :query) s/Str}
    PagingParams
    BaseEntityFilterParams
    EventFieldsParam))
@@ -158,7 +158,8 @@
      :can-post? false
      :can-get-by-external-id? false
      :search-capabilities :search-event
-     :delete-capabilities #{:delete-event :developer}})))
+     :delete-capabilities #{:delete-event :developer}
+     :date-field :timestamp})))
 
 (def event-entity
   {:new-spec map?

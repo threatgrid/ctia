@@ -11,6 +11,11 @@
               allow-read?
               allow-write?]]
             [ctia.lib.pagination :refer [list-response-schema]]
+            [ctia.schemas.search-agg :refer [SearchQuery
+                                             HistogramQuery
+                                             TopnQuery
+                                             CardinalityQuery
+                                             AggQuery]]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
             [ring.swagger.coerce :as sc]
             [schema
@@ -121,7 +126,7 @@ It returns the documents with full hits meta data including the real index in wh
     (s/fn :- (s/maybe [Model])
       [{:keys [props] :as state} :- ESConnState
        models :- [Model]
-       _
+       _ident
        {:keys [refresh]}]
       (try
         (map #(build-create-result % coerce!)
@@ -306,32 +311,107 @@ It returns the documents with full hits meta data including the real index in wh
                                            access-control-filter-list
                                            ident))))))
 
+
+(s/defn make-search-query
+  [{{:keys [default_operator]} :props} :- ESConnState
+   {:keys [query-string filter-map date-range]} :- SearchQuery
+   ident]
+  (let [es-query-string {:query_string (into {:query query-string}
+                                             (when default_operator
+                                               {:default_operator default_operator}))}
+        date-range-query (when date-range
+                           {:range date-range})
+        filter-terms (-> (ensure-document-id-in-map filter-map)
+                         q/prepare-terms)]
+    {:bool
+     {:filter
+      (cond-> [(find-restriction-query-part ident)]
+        (seq filter-map) (into filter-terms)
+        (seq date-range) (conj date-range-query)
+        (seq query-string) (conj es-query-string))}}))
+
 (defn handle-query-string-search
-  "Generate an ES query string handler using some mapping and schema"
+  "Generate an ES query handler using some mapping and schema"
   [mapping Model]
   (let [response-schema (list-response-schema Model)
         coerce! (coerce-to-fn response-schema)]
     (s/fn :- response-schema
       [{conn :conn
         index :index
-        {:keys [default_operator]} :props} :- ESConnState
-       query :- s/Str
-       filter-map :- (s/maybe {s/Any s/Any})
+        :as es-conn-state} :- ESConnState
+       {:keys [filter-map] :as search-query} :- SearchQuery
        ident
        params]
-      (let [query_string (into {:query query}
-                               (when default_operator
-                                 {:default_operator default_operator}))]
-        (cond-> (coerce! (d/search-docs conn
-                                        index
-                                        (name mapping)
-                                        {:bool {:must [(find-restriction-query-part ident)
-                                                       {:query_string query_string}]}}
-                                        (ensure-document-id-in-map filter-map)
-                                        (-> params
-                                            rename-sort-fields
-                                            with-default-sort-field
-                                            make-es-read-params)))
+      (let [query (make-search-query es-conn-state search-query ident)]
+        (cond-> (coerce! (d/query conn
+                                  index
+                                  (name mapping)
+                                  query
+                                  (-> params
+                                      rename-sort-fields
+                                      with-default-sort-field
+                                      make-es-read-params)))
           (restricted-read? ident) (update :data
                                            access-control-filter-list
                                            ident))))))
+(s/defn make-histogram
+  [{:keys [aggregate-on granularity timezone]
+    :or {timezone "+00:00"}} :- HistogramQuery]
+  {:date_histogram
+   {:field aggregate-on
+    :interval granularity ;; TODO switch to calendar_interval with ES7
+    :time_zone timezone}})
+
+(s/defn make-topn
+  [{:keys [aggregate-on limit sort_order]
+    :or {limit 10 sort_order :desc}} :- TopnQuery]
+  {:terms
+   {:field aggregate-on
+    :size limit
+    :order {:_count sort_order}}})
+
+(s/defn make-cardinality
+  [{:keys [aggregate-on]} :- CardinalityQuery]
+  {:cardinality {:field aggregate-on
+                 :precision_threshold 10000}})
+
+(s/defn make-aggregation
+  [{:keys [agg-type] :as agg-query} :- AggQuery]
+  (let [agg-fn
+        (case agg-type
+              :topn make-topn
+              :cardinality make-cardinality
+              :histogram make-histogram
+              (throw (ex-info "invalid aggregation type" agg-type)))]
+    {:metric (agg-fn agg-query)}))
+
+(defn format-agg-result
+  [agg-type
+   {:keys [value buckets] :as _metric-res}]
+  (case agg-type
+    :cardinality value
+    :topn (map #(array-map :key (:key %)
+                           :value (:doc_count %))
+               buckets)
+    :histogram (map #(array-map :key (:key_as_string %)
+                                :value (:doc_count %))
+                    buckets)))
+
+(defn handle-aggregate
+  "Generate an ES aggregation handler using some mapping and schema"
+  [mapping]
+  (s/fn :- s/Any
+    [{:keys [conn index] :as es-conn-state} :- ESConnState
+     {:keys [filter-map] :as search-query} :- SearchQuery
+     {:keys [agg-type] :as agg-query} :- AggQuery
+     ident]
+    (let [query (make-search-query es-conn-state search-query ident)
+          agg (make-aggregation agg-query)
+          es-res (d/query conn
+                          index
+                          (name mapping)
+                          query
+                          agg
+                          {:limit 0})]
+      (format-agg-result agg-type
+                         (get-in es-res [:aggs :metric])))))

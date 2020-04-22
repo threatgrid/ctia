@@ -4,9 +4,7 @@
    [ctia.bulk
     [core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
     [schemas :refer [Bulk BulkRefs NewBulk]]]
-   [ctia.http.routes
-    [common :as common]
-    [crud :refer [wait_for->refresh]]]
+   [ctia.http.routes.common :as common]
    [ctia.schemas.core :refer [Reference]]
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
@@ -42,7 +40,7 @@
           (common/created (create-bulk bulk
                                        {}
                                        login
-                                       (wait_for->refresh wait_for)))))
+                                       (common/wait_for->refresh wait_for)))))
 
   (GET "/" []
        :return (s/maybe Bulk)

@@ -55,8 +55,9 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    DataTableFieldsParam
-   {:query s/Str
-    (s/optional-key :sort_by) datatable-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :sort_by datatable-sort-fields})))
 
 (def DataTableGetParams DataTableFieldsParam)
 

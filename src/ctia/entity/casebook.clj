@@ -3,8 +3,11 @@
             [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes wait_for->refresh]]]
+             [common :refer [BaseEntityFilterParams
+                             PagingParams
+                             SourcableEntityFilterParams
+                             wait_for->refresh]]
+             [crud :refer [entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
              [core :refer [Bundle def-acl-schema def-stored-schema]]
@@ -107,9 +110,10 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    CasebookFieldsParam
-   {:query s/Str
-    (s/optional-key :texts.text) s/Str
-    (s/optional-key :sort_by) casebook-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :texts.text s/Str
+     :sort_by casebook-sort-fields})))
 
 (def CasebookGetParams CasebookFieldsParam)
 

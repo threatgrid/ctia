@@ -110,14 +110,15 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    IndicatorFieldsParam
-   {:query s/Str
-    (s/optional-key :indicator_type) s/Str
-    (s/optional-key :tags) s/Int
-    (s/optional-key :kill_chain_phases) s/Str
-    (s/optional-key :producer) s/Str
-    (s/optional-key :specification) s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :sort_by)  indicator-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :indicator_type s/Str
+     :tags s/Int
+     :kill_chain_phases s/Str
+     :producer s/Str
+     :specification s/Str
+     :confidence s/Str
+     :sort_by indicator-sort-fields})))
 
 (def IndicatorGetParams IndicatorFieldsParam)
 

@@ -84,15 +84,16 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    COAFieldsParam
-   {:query s/Str
-    (s/optional-key :stage) s/Str
-    (s/optional-key :coa_type) s/Str
-    (s/optional-key :impact) s/Str
-    (s/optional-key :objective) s/Str
-    (s/optional-key :cost) s/Str
-    (s/optional-key :efficacy) s/Str
-    (s/optional-key :structured_coa_type) s/Str
-    (s/optional-key :sort_by) coa-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :stage s/Str
+     :coa_type s/Str
+     :impact s/Str
+     :objective s/Str
+     :cost s/Str
+     :efficacy s/Str
+     :structured_coa_type s/Str
+     :sort_by coa-sort-fields})))
 
 (def COAGetParams COAFieldsParam)
 

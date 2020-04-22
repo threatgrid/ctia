@@ -83,9 +83,9 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    AttackPatternFieldsParam
-   {:query s/Str}
    (st/optional-keys
-    {:kill_chain_phases.kill_chain_name s/Str
+    {:query s/Str
+     :kill_chain_phases.kill_chain_name s/Str
      :kill_chain_phases.phase_name s/Str
      :sort_by attack-pattern-sort-fields})))
 
