@@ -50,17 +50,29 @@
                     (vector? (first values)) flatten-list-values)]
     (map string/lower-case flattened)))
 
+(defn- check-from-to
+  [from to]
+  (is (<= (time/in-years
+           (time/interval (tc/from-string from)
+                          (tc/from-string to)))
+          1)
+      "[from to[ should not exceed one year"))
+
 (defn- test-cardinality
   "test one field cardinality, examples are already created."
   [examples entity field]
   (testing (format "cardinality %s %s" entity field)
     (let [expected (-> (normalized-values examples field)
                        set
-                       count)]
-      (is (= expected (cardinality entity
-                                   {:query "*"
-                                    :from "2020-01-01"}
-                                   {:aggregate-on (name field)}))))))
+                       count)
+          {:keys [from to filters]
+           :as res} (cardinality entity
+                                 {:query "*"
+                                  :from "2020-01-01"}
+                                 {:aggregate-on (name field)})]
+      (is (= expected
+             (get-in res (parse-field field))))
+      (check-from-to from to))))
 
 (defn- test-topn
   "test one field topn, examples are already created."
@@ -72,11 +84,16 @@
                         reverse
                         (take limit)
                         vals)
-          res (topn entity
-                    {:from "2020-01-01"}
-                    {:aggregate-on (name field)
-                     :limit limit})]
-      (is (= expected (map :value res))))))
+          {:keys [from to]
+           :as res} (topn entity
+                          {:from "2020-01-01"}
+                          {:aggregate-on (name field)
+                           :limit limit})]
+      (is (= expected
+             (->> (parse-field field)
+                  (get-in res)
+                  (map :value))))
+      (check-from-to from to))))
 
 (defn- to-granularity-first-day
   [granularity date]
@@ -108,14 +125,16 @@
                               (map tf/parse values))
           res-days (map #(to-granularity-first-day granularity %)
                         date-values)
-          expected (make-histogram-res res-days)]
+          expected (make-histogram-res res-days)
+          {:keys [from to] :as res} (histogram entity
+                                               {:from from-str
+                                                :to to-str}
+                                               {:aggregate-on (name field)
+                                                :granularity (name granularity)})]
       (is (= expected
-             (filter #(pos? (:value %))
-                     (histogram entity
-                                {:from from-str
-                                 :to to-str}
-                                {:aggregate-on (name field)
-                                 :granularity (name granularity)})))))))
+             (->> (get-in res parsed)
+                  (filter #(pos? (:value %))))))
+      (check-from-to from to))))
 
 (defn schema-enumerable-fields
   [schema fields]

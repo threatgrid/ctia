@@ -8,6 +8,7 @@
              [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
+            [ctia.schemas.search-agg :refer [SearchQuery]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -83,29 +84,49 @@
 
 (defn now [] (java.util.Date.))
 
-(s/defn coerce-from :- s/Inst
+(s/defn coerce-date-range :- {:gte s/Inst
+                              :lt s/Inst}
   "coerce from to limit interval querying to one year"
   [from :- s/Inst
    to :- (s/maybe s/Inst)]
   (let [to-or-now (or to (now))
-        to-minus-one-year (t/minus to-or-now (t/years 1))]
-    (t/latest from to-minus-one-year)))
+        to-minus-one-year (t/minus to-or-now (t/years 1))
+        from (t/latest from to-minus-one-year)]
+    {:gte from
+     :lt to-or-now}))
 
 (defn search-query
   ([date-field search-params]
    (search-query date-field
                  search-params
-                 (fn [from to] from)))
+                 (fn [from to]
+                   (cond-> {}
+                     from (assoc :gte from)
+                     to (assoc :lt to)))))
   ([date-field
     {:keys [query from to] :as search-params}
-    coerce-from-fn]
-   (let [filter-map (apply dissoc search-params filter-map-search-options)]
+    make-date-range-fn]
+   (let [filter-map (apply dissoc search-params filter-map-search-options)
+         date-range (make-date-range-fn from to)]
      (cond-> {}
+       (seq date-range) (assoc-in [:date-range date-field] date-range)
        (seq filter-map) (assoc :filter-map filter-map)
-       query (assoc :query-string query)
-       from (assoc-in [:date-range date-field :gte]
-                      (coerce-from-fn from to))
-       to (assoc-in [:date-range date-field :lt] to)))))
+       query (assoc :query-string query)))))
+
+(s/defn format-agg-result
+  [result
+   agg-type
+   aggregate-on
+   {:keys [date-range query-string filter-map]} :- SearchQuery]
+  (let [nested-fields (map keyword
+                            (str/split (name aggregate-on) #"\."))
+         {from :gte to :lt} (-> date-range first val)
+         base-result (assoc-in {:from from :to to :type agg-type}
+                               nested-fields
+                               result)]
+    (cond-> base-result
+      (seq filter-map) (assoc :filters filter-map)
+      (seq query-string) (assoc-in [:filters :query-string] query-string))))
 
 (defn wait_for->refresh
   [wait_for]
