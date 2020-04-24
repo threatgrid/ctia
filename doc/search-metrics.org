@@ -87,8 +87,7 @@ it will return for instance
             "New": 2},
  "type": "topn",
  "from": "2020-01-01",
- "to": "2020-05-01"
-}
+ "to": "2020-05-01"}
 #+END_SRC
 
 The following request returns the top 20 observed values in judgements with malicious disposition, created between 2020/01/01 and 2020/04/01:
