@@ -102,7 +102,7 @@
                    {:key "2020-04-05" :value 5}]]
     (testing "should properly format aggregation results, nested fields and avoid nil filters."
       (is (= {:observable {:type cardinality}
-              :agg-type :cardinality
+              :type :cardinality
               :from from
               :to to
               :filters {:query-string "baddomain"
@@ -111,13 +111,14 @@
              (sut/format-agg-result cardinality
                                     :cardinality
                                     "observable.type"
-                                    {:date-range {:gte from
-                                                  :lt to}
+                                    {:date-range
+                                     {:timestamp {:gte from
+                                                  :lt to}}
                                      :query-string "baddomain"
                                      :filter-map {:field1 "value1"
                                                   :field2 "value2"}})))
       (is (= {:observable {:type cardinality}
-              :agg-type :cardinality
+              :type :cardinality
               :from from
               :to to
               :filters {:field1 "value1"
@@ -125,31 +126,35 @@
              (sut/format-agg-result cardinality
                                     :cardinality
                                     "observable.type"
-                                    {:date-range {:gte from
-                                                  :lt to}
+                                    {:date-range
+                                     {:timestamp {:gte from
+                                                  :lt to}}
                                      :filter-map {:field1 "value1"
                                                   :field2 "value2"}}))))
     (testing "should properly format aggregation results and avoid nil filters"
       (is (= {:status topn
-              :agg-type :topn
+              :type :topn
               :from from
               :to to
               :filters {:query-string "android"}}
              (sut/format-agg-result topn
                                     :topn
                                     "status"
-                                    {:date-range {:gte from
-                                                  :lt to}
+                                    {:date-range
+                                     {:timestamp {:gte from
+                                                  :lt to}}
                                      :query-string "android"})))
       (is (= {:timestamp histogram
-              :agg-type :histogram
+              :type :histogram
               :from from
               :to to}
              (sut/format-agg-result histogram
                                     :histogram
                                     "timestamp"
-                                    {:date-range {:gte from
-                                                  :lt to}}))))))
+                                    {:date-range
+                                     {:incident_time.closed
+                                      {:gte from
+                                       :lt to}}}))))))
 
 (deftest wait_for->refresh-test
   (is (= {:refresh "wait_for"} (sut/wait_for->refresh true)))
