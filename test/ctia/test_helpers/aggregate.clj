@@ -51,12 +51,16 @@
     (map string/lower-case flattened)))
 
 (defn- check-from-to
-  [from to]
-  (is (<= (time/in-years
-           (time/interval (tc/from-string from)
-                          (tc/from-string to)))
-          1)
-      "[from to[ should not exceed one year"))
+  [from-str to-str]
+  (let [from (tc/from-string from-str)
+        to (tc/from-string to-str)]
+    (testing "should be applied only on non empty date"
+      (is (some? from))
+      (is (some? to)))
+    (is (<= (time/in-years
+             (time/interval from to))
+            1)
+        "[from to[ should not exceed one year")))
 
 (defn- test-cardinality
   "test one field cardinality, examples are already created."
@@ -65,6 +69,7 @@
     (let [expected (-> (normalized-values examples field)
                        set
                        count)
+          _ (assert (pos? expected))
           {:keys [from to filters]
            :as res} (cardinality entity
                                  {:query "*"
@@ -84,6 +89,7 @@
                         reverse
                         (take limit)
                         vals)
+          _ (assert (every? pos? expected))
           {:keys [from to]
            :as res} (topn entity
                           {:from "2020-01-01"}
@@ -126,6 +132,7 @@
           res-days (map #(to-granularity-first-day granularity %)
                         date-values)
           expected (make-histogram-res res-days)
+          _ (every? #(-> % first :value) expected)
           {:keys [from to] :as res} (histogram entity
                                                {:from from-str
                                                 :to to-str}
@@ -177,7 +184,7 @@
            plural
            enumerable-fields
            date-fields] :as metric-params}]
-  (let [docs (generate-n-entity metric-params 10)]
+  (let [docs (generate-n-entity metric-params 100)]
     (with-redefs [;; ensure from coercion in proper one year range
                   now (-> (tc/from-string "2020-12-31")
                           tc/to-date
