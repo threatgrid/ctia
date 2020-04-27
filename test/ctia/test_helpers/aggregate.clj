@@ -35,8 +35,8 @@
 
 (defn flatten-list-values
   [values]
-  (apply concat
-         (map set values)))
+  (->> (map set values)
+       (apply concat)))
 
 (defn- get-values
   [examples field]
@@ -132,7 +132,7 @@
           res-days (map #(to-granularity-first-day granularity %)
                         date-values)
           expected (make-histogram-res res-days)
-          _ (every? #(-> % first :value) expected)
+          _ (assert (every? #(:value %) expected))
           {:keys [from to] :as res} (histogram entity
                                                {:from from-str
                                                 :to to-str}
