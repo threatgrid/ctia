@@ -120,7 +120,7 @@
    {:keys [date-range query-string filter-map]} :- SearchQuery]
   (let [nested-fields (map keyword
                             (str/split (name aggregate-on) #"\."))
-         {from :gte to :lt} (-> date-range first val)
+        {from :gte to :lt} (-> date-range first val)
         filters (cond-> {:from from :to to}
                   (seq filter-map) (into filter-map)
                   (seq query-string) (assoc :query-string query-string))]
