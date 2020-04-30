@@ -70,13 +70,13 @@
                        set
                        count)
           _ (assert (pos? expected))
-          {:keys [from to filters]
+          {{:keys [from to]} :filters
            :as res} (cardinality entity
                                  {:query "*"
                                   :from "2020-01-01"}
                                  {:aggregate-on (name field)})]
       (is (= expected
-             (get-in res (parse-field field))))
+             (get-in (:data res) (parse-field field))))
       (check-from-to from to))))
 
 (defn- test-topn
@@ -90,14 +90,14 @@
                         (take limit)
                         vals)
           _ (assert (every? pos? expected))
-          {:keys [from to]
+          {{:keys [from to]} :filters
            :as res} (topn entity
                           {:from "2020-01-01"}
                           {:aggregate-on (name field)
                            :limit limit})]
       (is (= expected
              (->> (parse-field field)
-                  (get-in res)
+                  (get-in (:data res))
                   (map :value))))
       (check-from-to from to))))
 
@@ -133,13 +133,14 @@
                         date-values)
           expected (make-histogram-res res-days)
           _ (assert (every? #(:value %) expected))
-          {:keys [from to] :as res} (histogram entity
-                                               {:from from-str
-                                                :to to-str}
-                                               {:aggregate-on (name field)
-                                                :granularity (name granularity)})]
+          {{:keys [from to]} :filters
+           :as res} (histogram entity
+                               {:from from-str
+                                :to to-str}
+                               {:aggregate-on (name field)
+                                :granularity (name granularity)})]
       (is (= expected
-             (->> (get-in res parsed)
+             (->> (get-in (:data res) parsed)
                   (filter #(pos? (:value %))))))
       (check-from-to from to))))
 

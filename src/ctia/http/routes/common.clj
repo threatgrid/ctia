@@ -8,7 +8,7 @@
              [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer [SearchQuery]]
+            [ctia.schemas.search-agg :refer [SearchQuery AggResult]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -95,7 +95,7 @@
     {:gte from
      :lt to-or-now}))
 
-(defn search-query
+(s/defn search-query :- SearchQuery
   ([date-field search-params]
    (search-query date-field
                  search-params
@@ -113,7 +113,7 @@
        (seq filter-map) (assoc :filter-map filter-map)
        query (assoc :query-string query)))))
 
-(s/defn format-agg-result
+(s/defn format-agg-result :- AggResult
   [result
    agg-type
    aggregate-on
@@ -121,12 +121,12 @@
   (let [nested-fields (map keyword
                             (str/split (name aggregate-on) #"\."))
          {from :gte to :lt} (-> date-range first val)
-         base-result (assoc-in {:from from :to to :type agg-type}
-                               nested-fields
-                               result)]
-    (cond-> base-result
-      (seq filter-map) (assoc :filters filter-map)
-      (seq query-string) (assoc-in [:filters :query-string] query-string))))
+        filters (cond-> {:from from :to to}
+                  (seq filter-map) (into filter-map)
+                  (seq query-string) (assoc :query-string query-string))]
+    {:data (assoc-in {} nested-fields result)
+     :type agg-type
+     :filters filters}))
 
 (defn wait_for->refresh
   [wait_for]

@@ -101,11 +101,11 @@
                    {:key "2020-04-04" :value 6}
                    {:key "2020-04-05" :value 5}]]
     (testing "should properly format aggregation results, nested fields and avoid nil filters."
-      (is (= {:observable {:type cardinality}
+      (is (= {:data {:observable {:type cardinality}}
               :type :cardinality
-              :from from
-              :to to
-              :filters {:query-string "baddomain"
+              :filters {:from from
+                        :to to
+                        :query-string "baddomain"
                         :field1 "value1"
                         :field2 "value2"}}
              (sut/format-agg-result cardinality
@@ -117,11 +117,11 @@
                                      :query-string "baddomain"
                                      :filter-map {:field1 "value1"
                                                   :field2 "value2"}})))
-      (is (= {:observable {:type cardinality}
+      (is (= {:data {:observable {:type cardinality}}
               :type :cardinality
-              :from from
-              :to to
-              :filters {:field1 "value1"
+              :filters {:from from
+                        :to to
+                        :field1 "value1"
                         :field2 "value2"}}
              (sut/format-agg-result cardinality
                                     :cardinality
@@ -132,11 +132,11 @@
                                      :filter-map {:field1 "value1"
                                                   :field2 "value2"}}))))
     (testing "should properly format aggregation results and avoid nil filters"
-      (is (= {:status topn
+      (is (= {:data {:status topn}
               :type :topn
-              :from from
-              :to to
-              :filters {:query-string "android"}}
+              :filters {:from from
+                        :to to
+                        :query-string "android"}}
              (sut/format-agg-result topn
                                     :topn
                                     "status"
@@ -144,10 +144,10 @@
                                      {:timestamp {:gte from
                                                   :lt to}}
                                      :query-string "android"})))
-      (is (= {:timestamp histogram
+      (is (= {:data {:timestamp histogram}
               :type :histogram
-              :from from
-              :to to}
+              :filters {:from from
+                        :to to}}
              (sut/format-agg-result histogram
                                     :histogram
                                     "timestamp"

@@ -82,12 +82,12 @@ GET /ctia/incident/topn?&aggregate-on=status&limit=3&from=2020-01-01
 #+END_SRC
 it will return for instance
 #+BEGIN_SRC javascript
-{"status": {"Closed": 12,
-            "Open": 6,
-            "New": 2},
+{"data": {"status": {"Closed": 12,
+                     "Open": 6,
+                     "New": 2}},
  "type": "topn",
- "from": "2020-01-01",
- "to": "2020-05-01"}
+ "filters": {"from": "2020-01-01",
+             "to": "2020-05-01"}}
 #+END_SRC
 
 The following request returns the top 20 observed values in judgements with malicious disposition, created between 2020/01/01 and 2020/04/01:
@@ -97,19 +97,19 @@ GET /ctia/judgement/topn?aggregate-on=observable.value&limit=20&from=2020-01-01&
 #+END_SRC
 
 #+BEGIN_SRC javascript
-{"observable":
-  {"value":
-    [
-     {"key": "abuse.ch", "value": 62},
-     {"key": "8.8.8.8", "value": 62},
-     {"key": "4964ab7e8d5959bb42b8ef78582082686dbe6565b010824785bc44595d8ebeee", "value": 38},
-     {"key": "https://www.badbabbad.net/worse.html", "value": 25},
-     ...
-    ]},
+{"data": {"observable":
+           {"value":
+             [
+              {"key": "abuse.ch", "value": 62},
+              {"key": "8.8.8.8", "value": 62},
+              {"key": "4964ab7e8d5959bb42b8ef78582082686dbe6565b010824785bc44595d8ebeee", "value": 38},
+              {"key": "https://www.badbabbad.net/worse.html", "value": 25},
+              ...
+             ]}},
  "type": "topn",
- "from": "2020-01-01",
- "to": "2020-04-01",
- "filters": {"disposition": 2}}
+ "filters": {"from": "2020-01-01",
+             "to": "2020-04-01",
+             "disposition": 2}}
 #+END_SRC
 
 ** Cardinality
@@ -125,10 +125,10 @@ GET /ctia/judgement/cardinality?aggregate-on=obsevable.value&from=2020-01-01
 
 It will return an integer that represent the estimated number of unique values
 #+BEGIN_SRC javascript
-{"observable": {"value": 5384},
+{"data": {"observable": {"value": 5384}},
  "type": "cardinality",
- "from": "2020-01-01",
- "to": "2020-05-01"}
+ "filters": {"from": "2020-01-01",
+             "to": "2020-05-01"}}
 #+END_SRC
 ** Histogram
    This aggregation returns an histogram of entity count for a given datetime field and a granularity, e.g. the number of incidents per day.
@@ -144,17 +144,17 @@ GET /ctia/incident/histogram?aggregate-on=timestamp&granularity=day&status=Open&
 #+END_SRC
 it will return for instance
 #+BEGIN_SRC javascript
-{"timestamp": [{"key": "2020-01-01", "value": 10},
-               {"key": "2020-01-02", "value": 0},
-               {"key": "2020-01-03", "value": 6},
-               {"key": "2020-01-04", "value": 2},
-               {"key": "2020-01-05", "value": 0},
-               {"key": "2020-01-06", "value": 1},
-               {"key": "2020-01-07", "value": 6},
-               {"key": "2020-01-08", "value": 4},
-               {"key": "2020-01-09", "value": 3}],
+{"data": {"timestamp": [{"key": "2020-01-01", "value": 10},
+                        {"key": "2020-01-02", "value": 0},
+                        {"key": "2020-01-03", "value": 6},
+                        {"key": "2020-01-04", "value": 2},
+                        {"key": "2020-01-05", "value": 0},
+                        {"key": "2020-01-06", "value": 1},
+                        {"key": "2020-01-07", "value": 6},
+                        {"key": "2020-01-08", "value": 4},
+                        {"key": "2020-01-09", "value": 3}]},
  "type": "histogram",
- "from": "2020-04-01",
- "to": "2020-05-01",
- "filters": {"Status": "Open"}} 
+ "filters": {"from": "2020-04-01",
+             "to": "2020-05-01",
+             "Status": "Open"}} 
 #+END_SRC

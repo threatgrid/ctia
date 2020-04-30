@@ -67,8 +67,8 @@
     :aggregate-on s/Str}))
 
 (s/defschema AggResult
-  {s/Keyword s/Any
+  {:data {s/Keyword s/Any}
    :type AggType
-   :from s/Inst
-   :to s/Inst
-   (s/optional-key :filters) (s/maybe {s/Any s/Any})})
+   :filters (st/open-schema
+             {:from s/Inst
+              :to s/Inst})})
