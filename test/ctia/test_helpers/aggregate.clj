@@ -35,8 +35,7 @@
 
 (defn flatten-list-values
   [values]
-  (->> (map set values)
-       (apply concat)))
+  (mapcat set values))
 
 (defn- get-values
   [examples field]

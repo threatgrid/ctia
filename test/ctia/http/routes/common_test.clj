@@ -105,8 +105,8 @@
               :type :cardinality
               :filters {:from from
                         :to to
-                        :query-string "baddomain"
-                        :field1 "value1"
+                        :query-string "baddomain*"
+                        :field1 "foo/bar"
                         :field2 "value2"}}
              (sut/format-agg-result cardinality
                                     :cardinality
@@ -114,15 +114,15 @@
                                     {:date-range
                                      {:timestamp {:gte from
                                                   :lt to}}
-                                     :query-string "baddomain"
-                                     :filter-map {:field1 "value1"
+                                     :query-string "baddomain*"
+                                     :filter-map {:field1 "foo/bar"
                                                   :field2 "value2"}})))
       (is (= {:data {:observable {:type cardinality}}
               :type :cardinality
               :filters {:from from
                         :to to
                         :field1 "value1"
-                        :field2 "value2"}}
+                        :field2 "abc def"}}
              (sut/format-agg-result cardinality
                                     :cardinality
                                     "observable.type"
@@ -130,7 +130,7 @@
                                      {:timestamp {:gte from
                                                   :lt to}}
                                      :filter-map {:field1 "value1"
-                                                  :field2 "value2"}}))))
+                                                  :field2 "abc def"}}))))
     (testing "should properly format aggregation results and avoid nil filters"
       (is (= {:data {:status topn}
               :type :topn
