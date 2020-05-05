@@ -75,3 +75,27 @@
     (is (= 1 (-> (<!! output) :entity :data)))
     (is (= 2 (-> (<!! output) :entity :data)))
     (is (nil? (poll! output)))))
+
+(deftest to-update-event-test
+  (let [old {:owner "teseter"
+             :id "test-2"
+             :tlp "white"
+             :type :test
+             :data 2}]
+    (is (= [{:field :new, :action "added", :change {}}]
+           (:fields
+             (o2e/to-update-event
+               (assoc old :new "bar") old
+               "foo"))))
+    (is (= [{:field :data, :action "deleted", :change {}}]
+           (:fields
+             (o2e/to-update-event
+               (dissoc old :data) old
+               "foo"))))
+    (is (= [{:field :data, :action "modified",
+             :change {:before 2
+                      :after 3}}]
+           (:fields
+             (o2e/to-update-event
+               (assoc old :data 3) old
+               "foo"))))))

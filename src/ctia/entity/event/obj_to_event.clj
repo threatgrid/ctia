@@ -22,10 +22,7 @@
   "Given the output of a `diff` between maps return a list
   of edit distance operation under the form of an Update map"
   [[diff-after diff-before _]]
-  (filter
-   (fn [{:keys [change]}]
-     (seq change))
-   (concat
+  (concat
     (map (fn [k]
            (if (contains? diff-after k)
              {:field k
@@ -41,7 +38,7 @@
             :action "added"
             :change {}})
          (remove #(contains? diff-before %)
-                 (keys diff-after))))))
+                 (keys diff-after)))))
 
 
 (s/defn to-update-event :- vs/Event
