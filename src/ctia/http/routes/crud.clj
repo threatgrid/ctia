@@ -16,7 +16,8 @@
                                     search-options
                                     wait_for->refresh
                                     search-query
-                                    coerce-from]]
+                                    coerce-date-range
+                                    format-agg-result]]
    [ctia.store :refer [write-store
                        read-store
                        query-string-search
@@ -28,7 +29,10 @@
                        list-records]]
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
-                                    TopnParams]]
+                                    TopnParams
+                                    EnvelopedTopnResult
+                                    EnvelopedCardinalityResult
+                                    EnvelopedHistogramResult]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [ring.swagger.schema :refer [describe]]
    [schema.core :as s]
@@ -229,45 +233,59 @@
                 :auth-identity identity
                 :identity-map identity-map
                 (GET "/histogram" []
-                     :return [{:key s/Str :value s/Int}]
+                     :return EnvelopedHistogramResult
                      :summary (format "Histogram for a %s field" capitalized)
                      :query [params histogram-q-params]
-                     (ok (read-store
-                          entity
-                          aggregate
-                          (search-query (keyword
-                                         (:aggregate-on params))
-                                        (st/select-schema params agg-search-schema)
-                                        coerce-from)
-                          (st/assoc (st/select-schema params HistogramParams)
-                                    :agg-type :histogram)
-                          identity-map)))
+                     (let [aggregate-on (keyword (:aggregate-on params))
+                           search-q (search-query aggregate-on
+                                                  (st/select-schema params agg-search-schema)
+                                                  coerce-date-range)
+                           agg-q (st/assoc (st/select-schema params HistogramParams)
+                                           :agg-type :histogram)]
+                       (-> (read-store
+                            entity
+                            aggregate
+                            search-q
+                            agg-q
+                            identity-map)
+                           (format-agg-result :histogram aggregate-on search-q)
+                           ok)))
                 (GET "/topn" []
-                     :return [{:key s/Any :value s/Int}]
+                     :return EnvelopedTopnResult
                      :summary (format "Topn for a %s field" capitalized)
                      :query [params topn-q-params]
-                     (ok (read-store
-                          entity
-                          aggregate
-                          (search-query date-field
-                                        (st/select-schema params agg-search-schema)
-                                        coerce-from)
-                          (st/assoc (st/select-schema params TopnParams)
-                                    :agg-type :topn)
-                          identity-map)))
+                     (let [aggregate-on (:aggregate-on params)
+                           search-q (search-query date-field
+                                                  (st/select-schema params agg-search-schema)
+                                                  coerce-date-range)
+                           agg-q (st/assoc (st/select-schema params TopnParams)
+                                           :agg-type :topn)]
+                       (-> (read-store
+                            entity
+                            aggregate
+                            search-q
+                            agg-q
+                            identity-map)
+                           (format-agg-result :topn aggregate-on search-q)
+                           ok)))
                 (GET "/cardinality" []
-                     :return s/Int
+                     :return EnvelopedCardinalityResult
                      :summary (format "Cardinality for a %s field" capitalized)
                      :query [params cardinality-q-params]
-                     (ok (read-store
-                          entity
-                          aggregate
-                          (search-query date-field
-                                        (st/select-schema params agg-search-schema)
-                                        coerce-from)
-                          (st/assoc (st/select-schema params CardinalityParams)
-                                    :agg-type :cardinality)
-                          identity-map)))))
+                     (let [aggregate-on (:aggregate-on params)
+                           search-q (search-query date-field
+                                                  (st/select-schema params agg-search-schema)
+                                                  coerce-date-range)
+                           agg-q (st/assoc (st/select-schema params CardinalityParams)
+                                           :agg-type :cardinality)]
+                       (-> (read-store
+                            entity
+                            aggregate
+                            search-q
+                            agg-q
+                            identity-map)
+                           (format-agg-result :cardinality aggregate-on search-q)
+                           ok)))))
      (GET "/:id" []
           :return (s/maybe get-schema)
           :summary (format "Gets a %s by ID" entity-str)

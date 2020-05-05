@@ -65,3 +65,45 @@
   (st/open-schema
    {:agg-type AggType
     :aggregate-on s/Str}))
+
+(s/defschema MetricResult
+  {s/Keyword (s/if map?
+               (s/recursive #'MetricResult)
+               s/Any)})
+
+(s/defschema EnvelopedMetricResult
+  {:data MetricResult
+   :type AggType
+   :filters (st/open-schema
+             {:from s/Inst
+              :to s/Inst})})
+
+(s/defschema TopnResult
+  {s/Keyword (s/if map?
+               (s/recursive #'TopnResult)
+               [{:key s/Any :value s/Int}])})
+
+(s/defschema EnvelopedTopnResult
+  (st/merge
+   {:data TopnResult}
+   MetricResult))
+
+(s/defschema HistogramResult
+  {s/Keyword (s/if map?
+               (s/recursive #'HistogramResult)
+               [{:key s/Str :value s/Int}])})
+
+(s/defschema EnvelopedHistogramResult
+  (st/merge
+   {:data HistogramResult}
+   MetricResult))
+
+(s/defschema CardinalityResult
+  {s/Keyword (s/if map?
+               (s/recursive #'CardinalityResult)
+               s/Int)})
+
+(s/defschema EnvelopedCardinalityResult
+  (st/merge
+   {:data CardinalityResult}
+   MetricResult))

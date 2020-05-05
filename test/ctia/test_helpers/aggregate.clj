@@ -35,8 +35,7 @@
 
 (defn flatten-list-values
   [values]
-  (apply concat
-         (map set values)))
+  (mapcat set values))
 
 (defn- get-values
   [examples field]
@@ -50,17 +49,34 @@
                     (vector? (first values)) flatten-list-values)]
     (map string/lower-case flattened)))
 
+(defn- check-from-to
+  [from-str to-str]
+  (let [from (tc/from-string from-str)
+        to (tc/from-string to-str)]
+    (testing "should be applied only on non empty date"
+      (is (some? from))
+      (is (some? to)))
+    (is (<= (time/in-years
+             (time/interval from to))
+            1)
+        "[from to[ should not exceed one year")))
+
 (defn- test-cardinality
   "test one field cardinality, examples are already created."
   [examples entity field]
   (testing (format "cardinality %s %s" entity field)
     (let [expected (-> (normalized-values examples field)
                        set
-                       count)]
-      (is (= expected (cardinality entity
-                                   {:query "*"
-                                    :from "2020-01-01"}
-                                   {:aggregate-on (name field)}))))))
+                       count)
+          _ (assert (pos? expected))
+          {{:keys [from to]} :filters
+           :as res} (cardinality entity
+                                 {:query "*"
+                                  :from "2020-01-01"}
+                                 {:aggregate-on (name field)})]
+      (is (= expected
+             (get-in (:data res) (parse-field field))))
+      (check-from-to from to))))
 
 (defn- test-topn
   "test one field topn, examples are already created."
@@ -72,11 +88,17 @@
                         reverse
                         (take limit)
                         vals)
-          res (topn entity
-                    {:from "2020-01-01"}
-                    {:aggregate-on (name field)
-                     :limit limit})]
-      (is (= expected (map :value res))))))
+          _ (assert (every? pos? expected))
+          {{:keys [from to]} :filters
+           :as res} (topn entity
+                          {:from "2020-01-01"}
+                          {:aggregate-on (name field)
+                           :limit limit})]
+      (is (= expected
+             (->> (parse-field field)
+                  (get-in (:data res))
+                  (map :value))))
+      (check-from-to from to))))
 
 (defn- to-granularity-first-day
   [granularity date]
@@ -108,14 +130,18 @@
                               (map tf/parse values))
           res-days (map #(to-granularity-first-day granularity %)
                         date-values)
-          expected (make-histogram-res res-days)]
+          expected (make-histogram-res res-days)
+          _ (assert (every? #(:value %) expected))
+          {{:keys [from to]} :filters
+           :as res} (histogram entity
+                               {:from from-str
+                                :to to-str}
+                               {:aggregate-on (name field)
+                                :granularity (name granularity)})]
       (is (= expected
-             (filter #(pos? (:value %))
-                     (histogram entity
-                                {:from from-str
-                                 :to to-str}
-                                {:aggregate-on (name field)
-                                 :granularity (name granularity)})))))))
+             (->> (get-in (:data res) parsed)
+                  (filter #(pos? (:value %))))))
+      (check-from-to from to))))
 
 (defn schema-enumerable-fields
   [schema fields]
@@ -158,7 +184,7 @@
            plural
            enumerable-fields
            date-fields] :as metric-params}]
-  (let [docs (generate-n-entity metric-params 10)]
+  (let [docs (generate-n-entity metric-params 100)]
     (with-redefs [;; ensure from coercion in proper one year range
                   now (-> (tc/from-string "2020-12-31")
                           tc/to-date
