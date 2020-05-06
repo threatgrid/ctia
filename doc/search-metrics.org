@@ -59,6 +59,17 @@ For instance you can search malicious judgments with high confidence matching "a
 GET /ctia/incident/search?query=abuse.ch&confidence=high&limit=10&sort_by=disposition&sort_order=desc
 #+END_SRC
 
+Finally you can only query entity count with the same filtering parameters through the endpoint ~GET /ctia/{entity-type}/search/count~.
+So reusing a previous search query example, one can count the indicators with "android" in the title, having a high confidence, created since 2020/01/01 with both text and term filtering:
+#+BEGIN_SRC
+GET /ctia/indicator/search/count?query=title:android&confidence=high&from=2020-01-01
+#+END_SRC
+
+The result will return directly the number of matched entities:
+#+BEGIN_SRC javascript
+38
+#+END_SRC
+
 * Aggregating
 Aggregation metrics are available through the endpoint ~GET /CTIA/{entity-type}/metric/{metric-type}~.
 3 types of metrics are proposed: Top N, Cardinality, and Histogram, that can be selected with the corresponding route suffix ~{metric}~, respectively ~topn~, ~cardinality~, and ~histogram~.

@@ -26,6 +26,7 @@
 
 (defprotocol IQueryStringSearchableStore
   (query-string-search [this search-query ident params])
+  (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident]))
 
 (def empty-stores

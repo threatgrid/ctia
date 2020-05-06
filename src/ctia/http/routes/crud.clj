@@ -21,6 +21,7 @@
    [ctia.store :refer [write-store
                        read-store
                        query-string-search
+                       query-string-count
                        aggregate
                        create-record
                        delete-record
@@ -79,13 +80,14 @@
          histogram-fields [:created]}}]
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
+        search-filters (st/dissoc search-q-params
+                                   :sort_by
+                                   :sort_order
+                                   :fields
+                                   :limit
+                                   :offset)
         agg-search-schema (st/merge
-                           (st/dissoc search-q-params
-                                      :sort_by
-                                      :sort_order
-                                      :fields
-                                      :limit
-                                      :offset)
+                           search-filters
                            {:from s/Inst})
         aggregate-on-enumerable {:aggregate-on (apply s/enum (map name enumerable-fields))}
         histogram-filters {:aggregate-on (apply s/enum (map name histogram-fields))
@@ -211,22 +213,32 @@
                 paginated-ok)))
 
      (when can-search?
-       (GET "/search" []
-            :return search-schema
-            :summary (format "Search for a %s using a Lucene/ES query string" capitalized)
-            :query [params search-q-params]
-            :capabilities search-capabilities
-            :auth-identity identity
-            :identity-map identity-map
-            (-> (read-store
-                 entity
-                 query-string-search
-                 (search-query date-field params)
-                 identity-map
-                 (select-keys params search-options))
-                page-with-long-id
-                un-store-page
-                paginated-ok)))
+       (context "/search" []
+                :capabilities search-capabilities
+                :auth-identity identity
+                :identity-map identity-map
+                (GET "/" []
+                     :return search-schema
+                     :summary (format "Search for a %s using a Lucene/ES query string and field filters" capitalized)
+                     :query [params search-q-params]
+                     (-> (read-store
+                          entity
+                          query-string-search
+                          (search-query date-field params)
+                          identity-map
+                          (select-keys params search-options))
+                         page-with-long-id
+                         un-store-page
+                         paginated-ok))
+                (GET "/count" []
+                     :return s/Int
+                     :summary (format "Count %s matching a Lucene/ES query string and field filters" capitalized)
+                     :query [params search-filters]
+                     (ok (read-store
+                          entity
+                          query-string-count
+                          (search-query date-field params)
+                          identity-map)))))
      (when can-aggregate?
        (context "/metric" []
                 :capabilities search-capabilities

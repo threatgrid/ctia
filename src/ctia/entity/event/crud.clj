@@ -28,5 +28,9 @@
   (crud/handle-query-string-search
    :event PartialEvent))
 
+(def handle-event-query-string-count
+  (crud/handle-query-string-count
+   :event))
+
 (def handle-aggregate
   (crud/handle-aggregate :event))
