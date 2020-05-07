@@ -161,4 +161,18 @@
              (to-update-event
                (assoc old :data [0])
                (assoc old :data (last (take 15 (iterate vector 1))))
-               "foo"))))))
+               "foo"))))
+    (is (= [{:field :data,
+             :action "modified",
+             :change
+             {:before 2,
+              :after
+              {:a '(0 1 2 3 4 5 6 7 8 9 ...),
+               :b '(0 1 2 3 4 5 6 7 8 9 ...),
+               :c '[[[[[[[[[[...]]]]]]]]]]}}}]
+           (:fields
+             (to-update-event
+               (assoc old :data {:a (range 100) :b (range 23) :c (last (take 15 (iterate vector 1)))})
+               old
+               "foo"))))
+    ))
