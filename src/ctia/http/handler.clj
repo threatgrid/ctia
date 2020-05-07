@@ -53,7 +53,7 @@
 
   We support a pre-defined set of Observable Types.  Each Observable Type has a
   specific form of natural identifier, its ID, which is almost always
-  the default way it it represented when observed in the wild.
+  the default way it is represented when observed in the wild.
 
   * Ipv4/IPv6  -- 192.168.1.1
   * Domain/Hostname -- foo.com, www.bar.com

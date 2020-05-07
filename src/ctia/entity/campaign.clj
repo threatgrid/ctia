@@ -79,11 +79,12 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    CampaignFieldsParam
-   {:query s/Str
-    (s/optional-key :campaign_type) s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :activity) s/Str
-    (s/optional-key :sort_by)  campaign-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :campaign_type s/Str
+     :confidence s/Str
+     :activity s/Str
+     :sort_by  campaign-sort-fields})))
 
 (def CampaignGetParams CampaignFieldsParam)
 

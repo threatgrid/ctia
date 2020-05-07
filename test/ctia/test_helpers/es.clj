@@ -5,6 +5,7 @@
             [clj-momo.lib.es
              [document :as es-doc]
              [index :as es-index]]
+            [clojure.java.io :as io]
             [ctia
              [store :as store]]
             [ctia.stores.es
@@ -179,7 +180,7 @@
 
 (defn load-file-bulk
   [es-conn filepath]
-  (with-open [rdr (clojure.java.io/reader filepath)]
+  (with-open [rdr (io/reader filepath)]
     (load-bulk es-conn
                (map prepare-bulk-ops
                     (line-seq rdr)))))

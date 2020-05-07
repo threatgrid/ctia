@@ -93,6 +93,7 @@
      :external-id-capabilities :read-feedback
      :spec :new-feedback/map
      :can-search? false
+     :enumerable-fields []
      :can-update? false})))
 
 (def feedback-entity

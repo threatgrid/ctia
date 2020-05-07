@@ -58,11 +58,12 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    RelationshipFieldsParam
-   {:query s/Str
-    (s/optional-key :relationship_type) s/Str
-    (s/optional-key :source_ref) s/Str
-    (s/optional-key :target_ref) s/Str
-    (s/optional-key :sort_by)  relationship-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :relationship_type s/Str
+     :source_ref s/Str
+     :target_ref s/Str
+     :sort_by  relationship-sort-fields})))
 
 (s/defschema RelationshipGetParams RelationshipFieldsParam)
 

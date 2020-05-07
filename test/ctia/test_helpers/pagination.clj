@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.pagination
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is testing]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [is testing]]
             [ctim.domain.id :as id]
             [ctia.test-helpers.core :as helpers :refer [get]]))
 
@@ -122,13 +123,13 @@
    with sort-by, dealing with multi-sort as well as nested keys field sort"
   [sort-fields]
   (let [kws (map keyword
-                 (clojure.string/split (name sort-fields) #","))
+                 (str/split (name sort-fields) #","))
         nested-trans (map (fn [kw]
-                            (if (clojure.string/includes? kw ".")
+                            (if (str/includes? kw ".")
                               (apply comp
                                      (reverse
                                       (map keyword
-                                           (clojure.string/split
+                                           (str/split
                                             (name kw) #"\."))))
                               kw)) kws)]
     (apply juxt nested-trans)))

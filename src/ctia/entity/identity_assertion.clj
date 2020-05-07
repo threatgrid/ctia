@@ -71,12 +71,13 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    IdentityAssertionFieldsParam
-   {:query s/Str
-    (s/optional-key :identity.observables.type) s/Str
-    (s/optional-key :identity.observables.value) s/Str
-    (s/optional-key :assertions.name) s/Str
-    (s/optional-key :assertions.value) s/Str
-    (s/optional-key :sort_by) identity-assertion-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :identity.observables.type s/Str
+     :identity.observables.value s/Str
+     :assertions.name s/Str
+     :assertions.value s/Str
+     :sort_by identity-assertion-sort-fields})))
 
 (def IdentityAssertionGetParams IdentityAssertionFieldsParam)
 
@@ -112,7 +113,7 @@
 
 (def identity-assertion-entity
   {:route-context "/identity-assertion"
-   :tags ["IdentityAssertion"]
+   :tags ["Identity Assertion"]
    :entity :identity-assertion
    :plural :identity-assertions
    :new-spec :new-identity-assertion/map

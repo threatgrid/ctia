@@ -3,10 +3,12 @@
             [clojure.string :as str]
             [ctia.schemas.sorting :as sorting]
             [ring.swagger.schema :refer [describe]]
+            [clj-momo.lib.clj-time.core :as t]
             [ring.util
              [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
+            [ctia.schemas.search-agg :refer [SearchQuery EnvelopedMetricResult]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -17,7 +19,18 @@
                      :search_after])
 
 (def filter-map-search-options
-  (conj search-options :query))
+  (conj search-options :query :from :to))
+
+(s/defschema BaseEntityFilterParams
+  {(s/optional-key :id) s/Str
+   (s/optional-key :from) s/Inst
+   (s/optional-key :to) s/Inst
+   (s/optional-key :revision) s/Int
+   (s/optional-key :language) s/Str
+   (s/optional-key :tlp) s/Str})
+
+(s/defschema SourcableEntityFilterParams
+  {(s/optional-key :source) s/Str})
 
 (s/defschema PagingParams
   "A schema defining the accepted paging and sorting related query parameters."
@@ -69,12 +82,55 @@
   [{:keys [id] :as resource}]
   (http-res/created id resource))
 
-(s/defschema BaseEntityFilterParams
-  {(s/optional-key :id) s/Str
-   (s/optional-key :revision) s/Int
-   (s/optional-key :language) s/Str
-   (s/optional-key :tlp) s/Str})
+(defn now [] (java.util.Date.))
 
-(s/defschema SourcableEntityFilterParams
-  {(s/optional-key :source) s/Str})
+(s/defn coerce-date-range :- {:gte s/Inst
+                              :lt s/Inst}
+  "coerce from to limit interval querying to one year"
+  [from :- s/Inst
+   to :- (s/maybe s/Inst)]
+  (let [to-or-now (or to (now))
+        to-minus-one-year (t/minus to-or-now (t/years 1))
+        from (t/latest from to-minus-one-year)]
+    {:gte from
+     :lt to-or-now}))
 
+(s/defn search-query :- SearchQuery
+  ([date-field search-params]
+   (search-query date-field
+                 search-params
+                 (fn [from to]
+                   (cond-> {}
+                     from (assoc :gte from)
+                     to (assoc :lt to)))))
+  ([date-field
+    {:keys [query from to] :as search-params}
+    make-date-range-fn]
+   (let [filter-map (apply dissoc search-params filter-map-search-options)
+         date-range (make-date-range-fn from to)]
+     (cond-> {}
+       (seq date-range) (assoc-in [:date-range date-field] date-range)
+       (seq filter-map) (assoc :filter-map filter-map)
+       query (assoc :query-string query)))))
+
+(s/defn format-agg-result :- EnvelopedMetricResult
+  [result
+   agg-type
+   aggregate-on
+   {:keys [date-range query-string filter-map]} :- SearchQuery]
+  (let [nested-fields (map keyword
+                            (str/split (name aggregate-on) #"\."))
+        {from :gte to :lt} (-> date-range first val)
+        filters (cond-> {:from from :to to}
+                  (seq filter-map) (into filter-map)
+                  (seq query-string) (assoc :query-string query-string))]
+    {:data (assoc-in {} nested-fields result)
+     :type agg-type
+     :filters filters}))
+
+(defn wait_for->refresh
+  [wait_for]
+  (case wait_for
+    true {:refresh "wait_for"}
+    false {:refresh "false"}
+    {}))

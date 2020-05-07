@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as string]
    [ctia.encryption :as encryption]
-   [ctia.http.routes.crud :refer [wait_for->refresh]]
+   [ctia.http.routes.crud :as crud]
    [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
    [ctia.domain.entities
     :refer
@@ -25,7 +25,9 @@
      filter-map-search-options
      paginated-ok
      PagingParams
-     search-options]]
+     search-options
+     search-query
+     wait_for->refresh]]
    [ctia.schemas
     [core :refer [Observable]]
     [sorting :as sorting]]
@@ -75,11 +77,12 @@
 
 (s/defschema FeedSearchParams
   (st/merge
-   {:query s/Str}
    PagingParams
    BaseEntityFilterParams
    FeedFieldsParam
-   {(s/optional-key :sort_by) feed-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :sort_by feed-sort-fields})))
 
 (def FeedGetParams FeedFieldsParam)
 
@@ -230,8 +233,7 @@
                                   create-record
                                   %
                                   identity-map
-                                  (wait_for->refresh
-                                   wait_for))
+                                  (wait_for->refresh wait_for))
           :long-id-fn with-long-id
           :entity-type :feed
           :identity identity
@@ -300,11 +302,10 @@
      :capabilities :search-feed
      :auth-identity identity
      :identity-map identity-map
-     (-> (query-string-search-store
+     (-> (read-store
           :feed
           query-string-search
-          (:query params)
-          (apply dissoc params filter-map-search-options)
+          (search-query :created params)
           identity-map
           (select-keys params search-options))
          page-with-long-id

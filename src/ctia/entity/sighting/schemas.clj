@@ -60,6 +60,16 @@
            :count
            :sensor]))
 
+(def sighting-histogram-fields
+  [:timestamp
+   :observed_time.start_time
+   :observed_time.end_time])
+
+(def sighting-enumerable-fields
+  [:source
+   :sensor
+   :observables.type])
+
 (def sighting-sort-fields
   (conj sighting-fields
         "observed_time.start_time,timestamp"))

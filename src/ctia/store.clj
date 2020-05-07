@@ -25,7 +25,8 @@
   (list-events [this filtermap ident params]))
 
 (defprotocol IQueryStringSearchableStore
-  (query-string-search [this query filtermap ident params]))
+  (query-string-search [this search-query ident params])
+  (aggregate [this search-query agg-query ident]))
 
 (def empty-stores
   {:judgement []
@@ -56,9 +57,6 @@
   (first (doall (map #(apply write-fn % args) (store @stores)))))
 
 (defn read-store [store read-fn & args]
-  (apply read-fn (first (get @stores store)) args))
-
-(defn query-string-search-store [store read-fn & args]
   (apply read-fn (first (get @stores store)) args))
 
 (def read-fn read-record)
