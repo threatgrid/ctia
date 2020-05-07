@@ -93,9 +93,9 @@ GET /ctia/incident/topn?&aggregate-on=status&limit=3&from=2020-01-01
 #+END_SRC
 it will return for instance
 #+BEGIN_SRC javascript
-{"data": {"status": {"Closed": 12,
-                     "Open": 6,
-                     "New": 2}},
+{"data": {"status": [{"key": "Closed", "value": 12},
+                     {"key": "Open", "value": 6},
+                     {"key": "New", "value": 2}]},
  "type": "topn",
  "filters": {"from": "2020-01-01",
              "to": "2020-05-01"}}
