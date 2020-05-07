@@ -98,4 +98,19 @@
            (:fields
              (o2e/to-update-event
                (assoc old :data 3) old
+               "foo"))))
+    ;; FIXME composite data completely broken
+    #_
+    (is (= []
+           (:fields
+             (o2e/to-update-event
+               (assoc old :data [1 2])
+               (assoc old :data [1])
+               "foo"))))
+    #_
+    (is (= []
+           (:fields
+             (o2e/to-update-event
+               (assoc old :data {:a {:b [1 2]}})
+               (assoc old :data {:a {:b [1]}})
                "foo"))))))

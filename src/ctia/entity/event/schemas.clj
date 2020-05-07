@@ -15,10 +15,17 @@
    DeleteEventType])
 
 (s/defschema Update
-  {:field s/Keyword
-   :action s/Str
-   :change {:before s/Any
-            :after s/Any}})
+  (s/conditional
+    (comp #{"modified"} :action)
+    {:field s/Keyword
+     :action (s/enum "modified")
+     :change {:before s/Any
+              :after s/Any}}
+
+    (comp #{"added" "deleted"} :action)
+    {:field s/Keyword
+     :action (s/enum "added" "deleted")
+     :change {}}))
 
 (s/defschema Event
   (st/merge
