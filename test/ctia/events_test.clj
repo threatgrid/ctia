@@ -78,29 +78,42 @@
     (is (nil? (poll! output)))))
 
 (deftest truncate-test
-  (let [v (o2e/truncate (range 10) '... 5 5)]
-    (is (seq? v))
-    (is (= (concat (range 5) ['...])
-           v)))
-  (let [v (o2e/truncate (vec (range 10)) '... 5 5)]
-    (is (vector? v))
-    (is (= (concat (range 5) ['...])
-           v)))
-  (is (= (last (take 7 (iterate vector '...)))
-         (o2e/truncate (last (take 15 (iterate vector 1))) '... 5 5)))
-  (is (= (last (take 7 (iterate vector '...)))
-         (o2e/truncate (last (take 15 (iterate vector (range 10)))) '... 5 5)))
-  (let [v (o2e/truncate {:a (zipmap (range 10) (range))} '... 5 5)]
-    (is (map? v))
-    (is (map? (:a v)))
-    (is (= #{'...}
-           (set/difference
-             (set (keys (:a v)))
-             (set (range 10)))))
-    (is (= {:a (-> (zipmap (range 10) (range))
-                   (assoc '... '...)
-                   (select-keys (keys (:a v))))}
-           v))))
+  (testing "seqs"
+    (let [v (o2e/truncate (range 10) '... 5 5)]
+      (is (seq? v))
+      (is (= (concat (range 5) ['...])
+             v))))
+  (testing "vectors"
+    (let [v (o2e/truncate (vec (range 10)) '... 5 5)]
+      (is (vector? v))
+      (is (= (concat (range 5) ['...])
+             v))))
+  (testing "sets"
+    (let [v (o2e/truncate (set (range 10)) '... 5 5)]
+      (is (set? v))
+      (is (= 6 (count v)))
+      (is (contains? v '...))
+      (is (= #{'...}
+             (set/difference v
+                             (set (range 10))))
+          v)))
+  (testing "maps"
+    (let [v (o2e/truncate {:a (zipmap (range 10) (range))} '... 5 5)]
+      (is (map? v))
+      (is (map? (:a v)))
+      (is (= #{'...}
+             (set/difference
+               (set (keys (:a v)))
+               (set (range 10)))))
+      (is (= {:a (-> (zipmap (range 10) (range))
+                     (assoc '... '...)
+                     (select-keys (keys (:a v))))}
+             v))))
+  (testing "deeply nested values"
+    (is (= (last (take 7 (iterate vector '...)))
+           (o2e/truncate (last (take 15 (iterate vector 1))) '... 5 5)))
+    (is (= (last (take 7 (iterate vector '...)))
+           (o2e/truncate (last (take 15 (iterate vector (range 10)))) '... 5 5)))))
 
 (deftest to-update-event-test
   (let [to-update-event #(o2e/to-update-event
@@ -169,9 +182,11 @@
               :after
               {:a '(0 1 2 3 4 5 6 7 8 9 ...),
                :b '(0 1 2 3 4 5 6 7 8 9 ...),
-               :c '[[[[[[[[[[...]]]]]]]]]]}}}]
+               :c '[[[[[[[[[[...]]]]]]]]]]
+               :d '#{#{#{#{#{#{#{#{#{#{...}}}}}}}}}}}}}]
            (:fields
              (to-update-event
-               (assoc old :data {:a (range 100) :b (range 23) :c (last (take 15 (iterate vector 1)))})
+               (assoc old :data {:a (range 100) :b (range 23) :c (last (take 15 (iterate vector 1)))
+                                 :d (last (take 15 (iterate hash-set 1)))})
                old
                "foo"))))))

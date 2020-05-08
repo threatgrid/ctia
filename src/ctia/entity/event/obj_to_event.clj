@@ -57,6 +57,20 @@
                     (concat (map tru pre)
                             (when (seq suf)
                               [dots]))))
+       (set? v) (let [pre (take max-count v)
+                      ;; in case keys conflict after truncation,
+                      ;; remove all conflicting keys.
+                      ;; eg., if kvs is [:a :a :b]
+                      ;;      then truncate to [:b]
+                      ks (mapv tru pre)
+                      s (->> ks
+                             frequencies
+                             (filter (comp #{1} second))
+                             (map first)
+                             set)]
+                  (cond-> s
+                    (not= (count s) (count v)) (conj dots)))
+
        (map? v) (let [pre (take max-count (keys v))
                       ;; in case keys conflict after truncation,
                       ;; remove all conflicting keys.
@@ -91,7 +105,10 @@
   "Returns a list of changes for an Update event"
   ([old new placeholder max-count max-depth]
    {:pre [(map? old)
-          (map? new)]}
+          (map? new)
+          (symbol? placeholder)
+          (nat-int? max-count)
+          (nat-int? max-depth)]}
    (let [truncate #(truncate % placeholder max-count max-depth)
          old-keys (set (keys old))
          new-keys (set (keys new))
