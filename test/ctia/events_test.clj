@@ -174,5 +174,4 @@
              (to-update-event
                (assoc old :data {:a (range 100) :b (range 23) :c (last (take 15 (iterate vector 1)))})
                old
-               "foo"))))
-    ))
+               "foo"))))))

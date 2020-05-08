@@ -148,6 +148,8 @@
                       "ctia.hook.kafka.topic.replication-factor" s/Int})
 
    (st/optional-keys {"ctia.events.log" s/Bool
+                      "ctia.events.diff.max-count" s/Int
+                      "ctia.events.diff.max-depth" s/Int
                       "ctia.http.events.timeline.max-seconds" s/Int
                       "ctia.hook.redis.host" s/Str
                       "ctia.hook.redis.port" s/Int

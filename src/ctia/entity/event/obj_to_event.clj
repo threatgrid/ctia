@@ -1,6 +1,7 @@
 (ns ctia.entity.event.obj-to-event
   (:require [ctia.entity.event.schemas :as vs]
             [ctia.domain.entities :refer [with-long-id]]
+            [ctia.properties :as prop]
             [clojure.data :refer [diff]]
             [clojure.set :as set]
             [clojure.walk :as walk]
@@ -42,22 +43,9 @@
          (remove #(contains? diff-before %)
                  (keys diff-after)))))
 
-(def max-count
-  "Maximum length of collections to preserve in Update diffs"
-  10)
-
-(def max-depth
-  "Maximum depth of values to preserve in Update diffs"
-  10)
-
-(def placeholder
-  "Placeholder for truncated values."
-  '...)
-
 (defn truncate
   "Truncate v, a possibly-nested value, by inserting placeholder after given
   max-depth and max-count."
-  ([v] (truncate v placeholder max-count max-depth 0))
   ([v placeholder max-count max-depth] (truncate v placeholder max-count max-depth 0))
   ([v placeholder max-count max-depth depth]
    (let [tru #(truncate % placeholder max-count max-depth (inc depth))
@@ -101,7 +89,6 @@
 
 (defn update-changes
   "Returns a list of changes for an Update event"
-  ([old new] (update-changes old new placeholder max-count max-depth))
   ([old new placeholder max-count max-depth]
    {:pre [(map? old)
           (map? new)]}
@@ -135,6 +122,18 @@
                  :change {:before (truncate (k old))}})
               deleted-keys))))))
 
+(def default-max-count
+  "Default maximum length of collections to preserve in Update diffs"
+  10)
+
+(def default-max-depth
+  "Default maximum depth of values to preserve in Update diffs"
+  10)
+
+(def default-placeholder
+  "Default placeholder for truncated values."
+  '...)
+
 (s/defn to-update-event :- vs/Event
   "transform an object (generally a `StoredObject`) to an `UpdateEvent`.
    The two arguments `object` and `prev-object` should have the same schema.
@@ -142,9 +141,11 @@
    But the complete object is given for simplicity."
   ([object prev-object event-id]
    (to-update-event object prev-object event-id
-                    {:placeholder placeholder
-                     :max-count max-count
-                     :max-depth max-depth}))
+                    {:placeholder default-placeholder
+                     :max-count (get-in @prop/properties [:ctia :events :diff :max-count]
+                                        default-max-count)
+                     :max-depth (get-in @prop/properties [:ctia :events :diff :max-depth]
+                                        default-max-depth)}))
   ([object prev-object event-id {:keys [placeholder max-count max-depth]}]
    {:owner (:owner object)
     :groups (:groups object)
