@@ -244,16 +244,16 @@
                              :type "event",
                              :event_type :record-updated,
                              :fields
-                             [{:field :modified,
-                               :action "modified",
-                               :change
-                               {:before "2042-01-01T00:00:00.000Z",
-                                :after "2042-01-02T00:00:00.000Z"}}
-                              {:field :description,
+                             [{:field :description,
                                :action "modified",
                                :change
                                {:before "my description",
-                                :after "changed description"}}]}
+                                :after "changed description"}}
+                              {:field :modified,
+                               :action "modified",
+                               :change
+                               {:before "2042-01-01T00:00:00.000Z",
+                                :after "2042-01-02T00:00:00.000Z"}}]}
                             {:owner "user1",
                              :groups ["group1"],
                              :timestamp #inst "2042-01-01T00:00:00.000-00:00",

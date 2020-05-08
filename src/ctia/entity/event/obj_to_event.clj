@@ -116,28 +116,31 @@
          added-keys (set/difference new-keys old-keys)
          deleted-keys (set/difference old-keys new-keys)]
      (vec
-       (concat
-         (mapcat (fn [k]
-                   {:pre [(keyword? k)]}
-                   (let [[oldv newv] (map k [old new])]
-                     (when (not= oldv newv)
-                       [{:field k
-                         :action "modified"
-                         :change {:before (truncate oldv)
-                                  :after (truncate newv)}}])))
-                 same-keys)
-         (map (fn [k]
-                {:pre [(keyword? k)]}
-                {:field k
-                 :action "added"
-                 :change {:after (truncate (k new))}})
-              added-keys)
-         (map (fn [k]
-                {:pre [(keyword? k)]}
-                {:field k
-                 :action "deleted"
-                 :change {:before (truncate (k old))}})
-              deleted-keys))))))
+       ;; sort by :field then :action
+       (sort-by
+         (juxt :field :action)
+         (concat
+           (mapcat (fn [k]
+                     {:pre [(keyword? k)]}
+                     (let [[oldv newv] (map k [old new])]
+                       (when (not= oldv newv)
+                         [{:field k
+                           :action "modified"
+                           :change {:before (truncate oldv)
+                                    :after (truncate newv)}}])))
+                   same-keys)
+           (map (fn [k]
+                  {:pre [(keyword? k)]}
+                  {:field k
+                   :action "added"
+                   :change {:after (truncate (k new))}})
+                added-keys)
+           (map (fn [k]
+                  {:pre [(keyword? k)]}
+                  {:field k
+                   :action "deleted"
+                   :change {:before (truncate (k old))}})
+                deleted-keys)))))))
 
 (def default-max-count
   "Default maximum length of collections to preserve in Update diffs"
