@@ -8,7 +8,7 @@
              [codec :as codec]
              [http-response :as http-res]
              [http-status :refer [ok]]]
-            [ctia.schemas.search-agg :refer [SearchQuery EnvelopedMetricResult]]
+            [ctia.schemas.search-agg :refer [SearchQuery MetricResult]]
             [schema.core :as s]))
 
 (def search-options [:sort_by
@@ -113,7 +113,7 @@
        (seq filter-map) (assoc :filter-map filter-map)
        query (assoc :query-string query)))))
 
-(s/defn format-agg-result :- EnvelopedMetricResult
+(s/defn format-agg-result :- MetricResult
   [result
    agg-type
    aggregate-on

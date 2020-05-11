@@ -31,9 +31,7 @@
    [ctia.schemas.search-agg :refer [HistogramParams
                                     CardinalityParams
                                     TopnParams
-                                    EnvelopedTopnResult
-                                    EnvelopedCardinalityResult
-                                    EnvelopedHistogramResult]]
+                                    MetricResult]]
    [ring.util.http-response :refer [no-content not-found ok]]
    [ring.swagger.schema :refer [describe]]
    [schema.core :as s]
@@ -245,7 +243,7 @@
                 :auth-identity identity
                 :identity-map identity-map
                 (GET "/histogram" []
-                     :return EnvelopedHistogramResult
+                     :return MetricResult
                      :summary (format "Histogram for a %s field" capitalized)
                      :query [params histogram-q-params]
                      (let [aggregate-on (keyword (:aggregate-on params))
@@ -263,7 +261,7 @@
                            (format-agg-result :histogram aggregate-on search-q)
                            ok)))
                 (GET "/topn" []
-                     :return EnvelopedTopnResult
+                     :return MetricResult
                      :summary (format "Topn for a %s field" capitalized)
                      :query [params topn-q-params]
                      (let [aggregate-on (:aggregate-on params)
@@ -281,7 +279,7 @@
                            (format-agg-result :topn aggregate-on search-q)
                            ok)))
                 (GET "/cardinality" []
-                     :return EnvelopedCardinalityResult
+                     :return MetricResult
                      :summary (format "Cardinality for a %s field" capitalized)
                      :query [params cardinality-q-params]
                      (let [aggregate-on (:aggregate-on params)
