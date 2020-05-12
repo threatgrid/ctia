@@ -18,6 +18,9 @@
   (query-string-search [_ search-query ident params]
     (crud/handle-event-query-string-search
      state search-query ident params))
+  (query-string-count [_ search-query ident]
+    (crud/handle-event-query-string-count
+     state search-query ident))
   (aggregate [_ search-query agg-query ident]
     (crud/handle-aggregate
      state search-query agg-query ident)))

@@ -86,6 +86,7 @@
 (def read-fn (sut/handle-read :sighting s/Any))
 (def delete-fn (sut/handle-delete :sighting s/Any))
 (def search-fn (sut/handle-query-string-search :sighting s/Any))
+(def count-fn (sut/handle-query-string-count :sighting))
 (def aggregate-fn (sut/handle-aggregate :sighting))
 
 (def ident {:login "johndoe"
@@ -313,8 +314,8 @@
           medium-t1-title1
           low-t2-title2))
 
-(deftest handle-query-string-search-test
-  (testing "handle search shall properly apply query and params"
+(deftest handle-query-string-search-count-test
+  (testing "handle search and count shall properly apply query and params"
     (let [es-conn-state (-> (init/init-es-conn! props-not-aliased)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
@@ -325,33 +326,40 @@
           date-range {:created {:gte timestamp-1
                                 :lt timestamp-2}}
           filter-map {:confidence "High"}
-          search (fn [q params]
-                   (search-fn es-conn-state q ident params))]
-
+          search-helper (fn [q params]
+                          (search-fn es-conn-state q ident params))
+          count-helper (fn [q]
+                         (count-fn es-conn-state q ident))]
       (testing "Properly handle different search query options"
         (assert (pos? (count high-t1-title1)))
         (is (= (count (concat high-t1-title1
                               medium-t1-title1))
-               (count (:data (search {:query-string query-string}
-                                     {})))))
+               (count (:data (search-helper {:query-string query-string}
+                                            {})))
+               (count-helper {:query-string query-string})))
         (is (= (count (concat high-t1-title1
                               medium-t1-title1))
-               (count (:data (search {:date-range date-range}
-                                     {})))))
+               (count (:data (search-helper {:date-range date-range}
+                                            {})))))
         (is (= (count (concat high-t1-title1
                               high-t2-title2))
-               (count (:data (search {:filter-map filter-map}
-                                     {})))))
+               (count (:data (search-helper {:filter-map filter-map}
+                                            {})))
+               (count-helper {:filter-map filter-map})))
         (is (= (count high-t1-title1)
-               (count (:data (search {:query-string query-string
-                                      :date-range date-range
-                                      :filter-map filter-map}
-                                     {}))))))
+               (count (:data (search-helper {:query-string query-string
+                                             :date-range date-range
+                                             :filter-map filter-map}
+                                            {})))
+
+               (count-helper {:query-string query-string
+                              :date-range date-range
+                              :filter-map filter-map}))))
       (testing "Properly handle search params"
-        (let [search-page-0 (search {:query-string query-string}
-                                    {:limit 2})
-              search-page-1 (search {:query-string query-string}
-                                    (get-in search-page-0 [:paging :next]))]
+        (let [search-page-0 (search-helper {:query-string query-string}
+                                           {:limit 2})
+              search-page-1 (search-helper {:query-string query-string}
+                                           (get-in search-page-0 [:paging :next]))]
           (assert (some? (:data search-page-0)))
           (assert (some? (:data search-page-1)))
           (is (= (count (concat high-t1-title1

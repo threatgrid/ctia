@@ -75,14 +75,19 @@
 (s/defschema FeedFieldsParam
   {(s/optional-key :fields) [feed-sort-fields]})
 
-(s/defschema FeedSearchParams
+
+(s/defschema FeedCountParams
   (st/merge
-   PagingParams
    BaseEntityFilterParams
    FeedFieldsParam
    (st/optional-keys
-    {:query s/Str
-     :sort_by feed-sort-fields})))
+    {:query s/Str})))
+
+(s/defschema FeedSearchParams
+  (st/merge
+   FeedCountParams
+   PagingParams
+   {(s/optional-key :sort_by) feed-sort-fields}))
 
 (def FeedGetParams FeedFieldsParam)
 
@@ -312,6 +317,19 @@
          un-store-page
          decrypt-feed-page
          paginated-ok))
+
+   (GET "/search/count" []
+        :return s/Int
+        :summary "Count Feed entities matching given search filters."
+        :query [params FeedCountParams]
+        :capabilities :search-feed
+        :auth-identity identity
+        :identity-map identity-map
+        (ok (read-store
+             :feed
+             query-string-count
+             (search-query :created params)
+             identity-map)))
 
    (GET "/:id" []
      :return (s/maybe PartialFeed)

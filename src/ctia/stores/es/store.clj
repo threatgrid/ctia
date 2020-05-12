@@ -38,6 +38,9 @@
      (~(symbol "query-string-search") [_# search-query# ident# params#]
       ((crud/handle-query-string-search ~entity ~partial-stored-schema)
        ~(symbol "state") search-query# ident# params#))
+     (~(symbol "query-string-count") [_# search-query# ident#]
+      ((crud/handle-query-string-count ~entity)
+       ~(symbol "state") search-query# ident#))
      (~(symbol "aggregate") [_# search-query# agg-query# ident#]
       ((crud/handle-aggregate ~entity)
        ~(symbol "state") search-query# agg-query# ident#))))
