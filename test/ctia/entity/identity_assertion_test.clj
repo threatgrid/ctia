@@ -2,19 +2,19 @@
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
-            [ctia.entity.identity-assertion :refer [identity-assertion-fields identity-assertion-sort-fields]]
+            [ctia.entity.identity-assertion :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post-entity-bulk post-bulk]]
              [crud :refer [entity-crud-test]]
+             [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [api-key doc-id->rel-url]]
              [pagination :refer [pagination-test]]
              [core :as helpers :refer [get]]
-             [store :refer [test-for-each-store]]]
-            [clojure.pprint :refer [pprint]]
+             [store :refer [test-for-each-store store-fixtures]]]
             [ctim.examples.identity-assertions
              :refer
              [new-identity-assertion-maximal new-identity-assertion-minimal]]))
@@ -100,10 +100,22 @@
         ["ctia/identity-assertion/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        identity-assertion-fields)
+        sut/identity-assertion-fields)
 
 
        (pagination-test
         "ctia/identity-assertion/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        identity-assertion-fields)))))
+        sut/identity-assertion-fields)))))
+
+(deftest test-identity-assertion-metric-routes
+  ((:es-store store-fixtures)
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
+     (test-metric-routes {:entity :identity-assertion
+                          :plural :identity_assertions
+                          :entity-minimal new-identity-assertion-minimal
+                          :enumerable-fields sut/identity-assertion-enumerable-fields
+                          :date-fields sut/identity-assertion-histogram-fields
+                          :schema sut/NewIdentityAssertion}))))

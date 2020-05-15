@@ -84,10 +84,6 @@
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
      (let [parameters {:entity "incident"
-                       :plural "incidents"
-                       :enumerable-fields sut/incident-enumerable-fields
-                       :date-fields sut/incident-histogram-fields
-                       :schema sut/NewIncident
                        :patch-tests? true
                        :example new-incident-maximal
                        :headers {:Authorization "45c1f5e3f05d0"}

@@ -169,7 +169,7 @@
                           :plural :judgements
                           :entity-minimal ex/new-judgement-minimal
                           :enumerable-fields judgement-enumerable-fields
-                          :date-fields [:timestamp]
+                          :date-fields judgement-histogram-fields
                           :schema NewJudgement}))))
 
 (deftest test-judgement-routes-for-dispositon-determination

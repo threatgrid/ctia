@@ -1,17 +1,18 @@
 (ns ctia.entity.coa-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.entity.coa :refer [coa-fields]]
+            [ctia.entity.coa :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post-entity-bulk]]
              [crud :refer [entity-crud-test]]
+             [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store store-fixtures]]]
             [ctim.examples.coas :refer [new-coa-maximal new-coa-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -20,7 +21,7 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(deftest test-coa-routes
+(deftest test-coa-crud-routes
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -48,13 +49,13 @@
        (pagination-test
         "ctia/coa/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        coa-fields)
+        sut/coa-fields)
 
        (field-selection-tests
         ["ctia/coa/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        coa-fields)))))
+        sut/coa-fields)))))
 
 (deftest test-coa-routes-access-control
   (test-for-each-store
@@ -63,3 +64,15 @@
                           new-coa-minimal
                           true
                           true))))
+
+(deftest test-coa-metric-routes
+  ((:es-store store-fixtures)
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
+     (test-metric-routes {:entity :coa
+                          :plural :coas
+                          :entity-minimal new-coa-minimal
+                          :enumerable-fields sut/coa-enumerable-fields
+                          :date-fields sut/coa-histogram-fields
+                          :schema sut/NewCOA}))))

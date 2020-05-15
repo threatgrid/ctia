@@ -6,17 +6,18 @@
    [clojure
     [set :refer [subset?]]
     [test :refer [deftest is join-fixtures testing use-fixtures]]]
-   [ctia.entity.casebook :refer [casebook-fields]]
+   [ctia.entity.casebook :as sut]
    [ctia.test-helpers
     [access-control :refer [access-control-test]]
     [auth :refer [all-capabilities]]
     [core :as helpers :refer [post put patch post-entity-bulk]]
     [crud :refer [entity-crud-test]]
+    [aggregate :refer [test-metric-routes]]
     [fake-whoami-service :as whoami-helpers]
     [field-selection :refer [field-selection-tests]]
     [http :refer [doc-id->rel-url]]
     [pagination :refer [pagination-test]]
-    [store :refer [test-for-each-store]]]
+    [store :refer [test-for-each-store store-fixtures]]]
    [ctim.examples.casebooks
     :refer
     [new-casebook-maximal new-casebook-minimal]]
@@ -338,13 +339,13 @@
        (pagination-test
         "ctia/casebook/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        casebook-fields)
+        sut/casebook-fields)
 
        (field-selection-tests
         ["ctia/casebook/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        casebook-fields)))))
+        sut/casebook-fields)))))
 
 (deftest test-casebook-routes-access-control
   (test-for-each-store
@@ -353,3 +354,15 @@
                           new-casebook-minimal
                           true
                           true))))
+
+(deftest test-casebook-metric-routes
+  ((:es-store store-fixtures)
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
+     (test-metric-routes {:entity :casebook
+                          :plural :casebooks
+                          :entity-minimal new-casebook-minimal
+                          :enumerable-fields sut/casebook-enumerable-fields
+                          :date-fields sut/casebook-histogram-fields
+                          :schema sut/NewCasebook}))))

@@ -4,6 +4,7 @@
             [ctia.entity.sighting.schemas :refer [sighting-sort-fields
                                                   sighting-fields
                                                   sighting-enumerable-fields
+                                                  sighting-histogram-fields
                                                   NewSighting]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
@@ -57,9 +58,8 @@
      (test-metric-routes {:entity :sighting
                           :plural :sightings
                           :entity-minimal new-sighting-minimal
-                          :enumerable-fields [:source
-                                              :sensor]
-                          :date-fields [:timestamp]
+                          :enumerable-fields sighting-enumerable-fields
+                          :date-fields sighting-histogram-fields
                           :schema NewSighting}))))
 
 (deftest test-sighting-pagination-field-selection
