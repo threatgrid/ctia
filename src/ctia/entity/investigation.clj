@@ -21,18 +21,10 @@
    [ctia.schemas.sorting :as sorting]))
 
 (def snapshot-action-fields-mapping
-  {:object_ids {:type "text"
-                :analyzer "text_analyzer"
-                :search_quote_analyzer "text_analyzer"
-                :search_analyzer "search_analyzer"
-                :include_in_all false}
+  {:object_ids em/token
    :targets {:type "nested"
              :include_in_all false}
-   :investigated_observables {:type "text"
-                              :analyzer "text_analyzer"
-                              :search_quote_analyzer "text_analyzer"
-                              :search_analyzer "search_analyzer"
-                              :include_in_all false}})
+   :investigated_observables em/text})
 
 (def investigation-mapping
   {"investigation"
