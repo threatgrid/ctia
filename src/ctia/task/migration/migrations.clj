@@ -223,7 +223,7 @@
       ;; else
       empty-action-data)))
 
-(defn migrate-action-data [investigation]
+(defn migrate-investigation-action-data [investigation]
   (transduce (map derive-action-data)
              merge-action-data
              (merge investigation empty-action-data)
@@ -232,7 +232,7 @@
 (def migrate-action-data
   (map (fn [{entity-type :type :as doc}]
          (if (= entity-type "investigation")
-           (migrate-action-data doc)
+           (migrate-investigation-action-data doc)
            doc))))
 
 (def available-migrations
