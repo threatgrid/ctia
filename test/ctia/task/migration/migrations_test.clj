@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest is]]
             [ctia.entity.incident :refer [StoredIncident]]
             [ctia.task.migration.migrations :as sut]
+            [cheshire.core :as json]
             [schema.core :as s]))
 
 (deftest add-groups-test
@@ -369,3 +370,20 @@
                                                                   :observables [{:value "Demo_iOS_1", :type "hostname"}]
                                                                   :observed_time {:start_time "2019-03-27T15:30:24.000Z"},
                                                                   :os "iOS 10.3 (1)"}]}]}}}]}}))))
+
+(deftest migrate-action-data-test
+   (let [actions [{:type "collect"
+                   :result [{:value "585c2a90e4928f67af7be2d0bdc282b7eb6c90113ae588461a441d31b5268e88"
+                             :type "sha256"}
+                            {:value "ac517bb701f20fe2f1826a0170c8ba7ba3f0632c77d89ed2dfe1883f588e9d1f"
+                             :type "sha256"}]}]
+         actions-json (json/encode actions)
+         entities [{:type "investigation"
+                    :actions actions-json}]]
+     (is (= [{:type "investigation",
+              :actions actions-json
+              :object_ids #{}
+              :investigated_observables #{"sha256:585c2a90e4928f67af7be2d0bdc282b7eb6c90113ae588461a441d31b5268e88"
+                                          "sha256:ac517bb701f20fe2f1826a0170c8ba7ba3f0632c77d89ed2dfe1883f588e9d1f"}
+              :targets #{}}]
+            (into [] sut/migrate-action-data entities)))))
