@@ -183,39 +183,45 @@
               :targets (into (get m1 :targets)
                              (get m2 :targets))})))
 
-(defmulti derive-action-data
-  (fn [action]
-    (get action :type))
-  :default ::default)
-
-(defmethod derive-action-data ::default [_]
-  empty-action-data)
-
-(defmethod derive-action-data "collect" [action]
-  (let [investigated-observables (into #{}
-                                       (map (fn [{:keys [type value]}]
-                                              (str type ":" value)))
+(defn derive-collect-action-data
+  {:private true}
+  [action]
+  (let [investigated-observables (into #{} (map (fn [{:keys [type value]}]
+                                                  (str type ":" value)))
                                        (:result action))]
     (assoc empty-action-data :investigated_observables investigated-observables)))
 
-(defmethod derive-action-data "investigate" [action]
+(defn derive-investigate-action-data
+  {:private true}
+  [action]
   (let [data (get-in action [:result :data])]
-    (transduce
-     (comp (map :data)
-           (mapcat vals)
-           (mapcat :docs))
-     (fn
-       ([result] result)
-       ([result doc]
-        (let [result (if-some [object-id (object-id doc)]
-                       (update result :object_ids conj object-id)
-                       result)
-              result (update result :targets into (get doc :targets))]
-          result)))
-     {:object_ids #{}
-      :investigated_observables []
-      :targets #{}}
-     data)))
+    (transduce (comp (map :data)
+                     (mapcat vals)
+                     (mapcat :docs))
+               (fn
+                 ([result] result)
+                 ([result doc]
+                  (let [result (if-some [object-id (object-id doc)]
+                                 (update result :object_ids conj object-id)
+                                 result)
+                        result (update result :targets into (get doc :targets))]
+                    result)))
+               {:object_ids #{}
+                :investigated_observables []
+                :targets #{}}
+               data)))
+
+(defn derive-action-data [action]
+  (let [action-type (get action :type)]
+    (case action-type
+      "collect"
+      (derive-collect-action-data action)
+
+      "investigate"
+      (derive-investigate-action-data action)
+
+      ;; else
+      empty-action-data)))
 
 (defn migrate-action-data [investigation]
   (transduce (map derive-action-data)
