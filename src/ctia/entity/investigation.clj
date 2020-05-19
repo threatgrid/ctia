@@ -22,8 +22,7 @@
 
 (def snapshot-action-fields-mapping
   {:object_ids em/token
-   :targets {:type "nested"
-             :include_in_all false}
+   :targets em/sighting-target
    :investigated_observables em/text})
 
 (def investigation-mapping
