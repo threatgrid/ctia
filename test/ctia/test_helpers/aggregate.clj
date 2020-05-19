@@ -37,24 +37,26 @@
   [values]
   (mapcat set values))
 
-(defn l-get-in
+(defn es-get-in
   "like get-in, but match keys in maps embedded in collections.
-  ~~~clojure
-  > (l-get-in {:a [{:b 2} {:b 3}]} [:a :b])
-    (2 3)
-  > (l-get-in {:a [2 3]} [:a])
-    [2 3]
-  > (l-get-in {:a {:b [2 3]}} [:a :b])
-    [2 3]
-  > (l-get-in {:a [{:b 2} {:b 3}]} [:a :b])
-    (2 3)
-  > (l-get-in {:a {:b 2 :c 3}} [:a :b])
-    2
-  > (l-get-in {:a {:d 2 :c 3}} [:a :b])
-    nil
-  > (l-get-in {:a [{:d 2} {:b 3}]} [:a :b])
-    (3)
-  ~~~"
+   This function is intended to simulate how ES match nested fields like a.b.
+   for instance (get-in {:a [{:b 2} {:b 3}]} [:a :b]) returns nil
+   while (es-get-in {:a [{:b 2} {:b 3}]} [:a :b]) returns '(2 3)"
+  {:test (fn []
+           (is (= (es-get-in {:a [{:b 2} {:b 3}]} [:a :b])
+                      '(2 3)))
+           (is (= (es-get-in {:a [2 3]} [:a])
+                      [2 3]))
+           (is (= (es-get-in {:a {:b [2 3]}} [:a :b])
+                      [2 3]))
+           (is (= (es-get-in {:a [{:b 2} {:b 3}]} [:a :b])
+                      '(2 3)))
+           (is (= (es-get-in {:a {:b 2 :c 3}} [:a :b])
+                      2))
+           (is (= (es-get-in {:a {:d 2 :c 3}} [:a :b])
+                      nil))
+           (is (= (es-get-in {:a [{:d 2} {:b 3}]} [:a :b])
+                      '(3))))}
   [m ks]
   (reduce (fn [acc k]
             (cond
@@ -67,7 +69,7 @@
 (defn- get-values
   [examples field]
   (let [parsed (parse-field field)]
-    (keep #(l-get-in % parsed) examples)))
+    (keep #(es-get-in % parsed) examples)))
 
 (defn- normalized-values
   [examples field]
