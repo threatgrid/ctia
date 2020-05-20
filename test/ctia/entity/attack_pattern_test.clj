@@ -81,6 +81,7 @@
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
      (test-metric-routes (into sut/attack-pattern-entity
-                               {:entity-minimal new-attack-pattern-minimal
+                               {:plural :attack_patterns
+                                :entity-minimal new-attack-pattern-minimal
                                 :enumerable-fields sut/attack-pattern-enumerable-fields
                                 :date-fields sut/attack-pattern-histogram-fields})))))
