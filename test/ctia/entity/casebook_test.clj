@@ -360,9 +360,7 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes {:entity :casebook
-                          :plural :casebooks
-                          :entity-minimal new-casebook-minimal
-                          :enumerable-fields sut/casebook-enumerable-fields
-                          :date-fields sut/casebook-histogram-fields
-                          :schema sut/NewCasebook}))))
+     (test-metric-routes (into sut/casebook-entity
+                               {:entity-minimal new-casebook-minimal
+                                :enumerable-fields sut/casebook-enumerable-fields
+                                :date-fields sut/casebook-histogram-fields})))))

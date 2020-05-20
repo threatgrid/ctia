@@ -127,7 +127,7 @@
   {:route-context "/identity-assertion"
    :tags ["Identity Assertion"]
    :entity :identity-assertion
-   :plural :identity-assertions
+   :plural :identity_assertions
    :new-spec :new-identity-assertion/map
    :schema IdentityAssertion
    :partial-schema PartialIdentityAssertion

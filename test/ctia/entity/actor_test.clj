@@ -77,9 +77,7 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes {:entity :actor
-                          :plural :actors
-                          :entity-minimal new-actor-minimal
-                          :enumerable-fields sut/actor-enumerable-fields
-                          :date-fields sut/actor-histogram-fields
-                          :schema sut/NewActor}))))
+     (test-metric-routes (into sut/actor-entity
+                               {:entity-minimal new-actor-minimal
+                                :enumerable-fields sut/actor-enumerable-fields
+                                :date-fields sut/actor-histogram-fields})))))

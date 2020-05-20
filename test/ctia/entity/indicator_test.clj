@@ -46,10 +46,8 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" caps/all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes {:entity :indicator
-                          :plural :indicators
-                          :entity-minimal new-indicator-minimal
-                          :enumerable-fields sut/indicator-enumerable-fields
-                          :date-fields sut/indicator-histogram-fields
-                          :schema sut/NewIndicator}))))
+     (test-metric-routes (into sut/indicator-entity
+                               {:entity-minimal new-indicator-minimal
+                                :enumerable-fields sut/indicator-enumerable-fields
+                                :date-fields sut/indicator-histogram-fields})))))
 

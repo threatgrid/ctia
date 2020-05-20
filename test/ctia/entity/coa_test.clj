@@ -70,9 +70,7 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes {:entity :coa
-                          :plural :coas
-                          :entity-minimal new-coa-minimal
-                          :enumerable-fields sut/coa-enumerable-fields
-                          :date-fields sut/coa-histogram-fields
-                          :schema sut/NewCOA}))))
+     (test-metric-routes (into sut/coa-entity
+                               {:entity-minimal new-coa-minimal
+                                :enumerable-fields sut/coa-enumerable-fields
+                                :date-fields sut/coa-histogram-fields})))))

@@ -186,9 +186,7 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes {:entity :relationship
-                          :plural :relationships
-                          :entity-minimal new-relationship-minimal
-                          :enumerable-fields sut/relationship-enumerable-fields
-                          :date-fields sut/relationship-histogram-fields
-                          :schema rs/NewRelationship}))))
+     (test-metric-routes (into sut/relationship-entity
+                               {:entity-minimal new-relationship-minimal
+                                :enumerable-fields sut/relationship-enumerable-fields
+                                :date-fields sut/relationship-histogram-fields})))))

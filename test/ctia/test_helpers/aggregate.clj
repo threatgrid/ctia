@@ -202,12 +202,12 @@
           fields))
 
 (defn generate-n-entity
-  [{:keys [schema
+  [{:keys [new-schema
            entity-minimal
            enumerable-fields
            date-fields]}
    n]
-  (let [enumerable-schema (schema-enumerable-fields schema enumerable-fields)
+  (let [enumerable-schema (schema-enumerable-fields new-schema enumerable-fields)
         base-doc (dissoc entity-minimal :id)]
     (doall
      (repeatedly n (fn [] (merge base-doc

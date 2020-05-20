@@ -113,9 +113,7 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes {:entity :identity-assertion
-                          :plural :identity_assertions
-                          :entity-minimal new-identity-assertion-minimal
-                          :enumerable-fields sut/identity-assertion-enumerable-fields
-                          :date-fields sut/identity-assertion-histogram-fields
-                          :schema sut/NewIdentityAssertion}))))
+     (test-metric-routes (into sut/identity-assertion-entity
+                               {:entity-minimal new-identity-assertion-minimal
+                                :enumerable-fields sut/identity-assertion-enumerable-fields
+                                :date-fields sut/identity-assertion-histogram-fields})))))

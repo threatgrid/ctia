@@ -77,9 +77,7 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
-     (test-metric-routes {:entity :weakness
-                          :plural :weaknesses
-                          :entity-minimal new-weakness-minimal
-                          :enumerable-fields sut/weakness-enumerable-fields
-                          :date-fields sut/weakness-histogram-fields
-                          :schema sut/NewWeakness}))))
+     (test-metric-routes (into sut/weakness-entity
+                               {:entity-minimal new-weakness-minimal
+                                :enumerable-fields sut/weakness-enumerable-fields
+                                :date-fields sut/weakness-histogram-fields})))))

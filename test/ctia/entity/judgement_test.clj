@@ -3,6 +3,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
+            [ctia.entity.judgement :as sut]
             [ctia.entity.judgement.schemas
              :refer
              [judgement-fields
@@ -165,12 +166,10 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (test-metric-routes {:entity :judgement
-                          :plural :judgements
-                          :entity-minimal ex/new-judgement-minimal
-                          :enumerable-fields judgement-enumerable-fields
-                          :date-fields judgement-histogram-fields
-                          :schema NewJudgement}))))
+     (test-metric-routes (into sut/judgement-entity
+                               {:entity-minimal ex/new-judgement-minimal
+                                :enumerable-fields judgement-enumerable-fields
+                                :date-fields judgement-histogram-fields})))))
 
 (deftest test-judgement-routes-for-dispositon-determination
   (test-for-each-store
