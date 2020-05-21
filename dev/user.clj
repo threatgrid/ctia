@@ -20,7 +20,7 @@
        search-url
        {:basic-auth auth-str
         :headers {"kbn-xsrf" ""}
-        :as :json-strict
+        :as :json
         :content-type :json
         :throw-exceptions false
         :body (json/generate-string
@@ -56,7 +56,7 @@
           search-url
           {:basic-auth auth-str
            :headers {"kbn-xsrf" ""}
-           :as :json-strict
+           :as :json
            :content-type :json
            :throw-exceptions false
            :body (json/generate-string
@@ -90,7 +90,7 @@
           search-url
           {:basic-auth auth-str
            :headers {"kbn-xsrf" ""}
-           :as :json-strict
+           :as :json
            :content-type :json
            :throw-exceptions false
            :body (json/generate-string
@@ -125,7 +125,7 @@
                   (http/get
                    (ctia-verdict-url observable)
                    {:basic-auth auth-str
-                    :as :json-strict
+                    :as :json
                     :content-type :json
                     :throw-exceptions false})]
               (if (= status 200)
@@ -151,7 +151,7 @@
          search-url
          {:basic-auth auth-str
           :headers {"kbn-xsrf" ""}
-          :as :json-strict
+          :as :json
           :content-type :json
           :throw-exceptions false
           :body (json/generate-string
@@ -182,7 +182,7 @@
           search-url
           {:basic-auth auth-str
            :headers {"kbn-xsrf" ""}
-           :as :json-strict
+           :as :json
            :content-type :json
            :throw-exceptions false
            :body (json/generate-string
