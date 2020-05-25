@@ -95,8 +95,7 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    InvestigationFieldsParam
-   {(s/optional-key :query) s/Str}
-   {s/Keyword s/Any}))
+   {(s/optional-key :query) s/Str}))
 
 (def InvestigationGetParams InvestigationFieldsParam)
 
@@ -128,6 +127,12 @@
 (def InvestigationConnectionType
   (pagination/new-connection InvestigationType))
 
+(def investigation-enumerable-fields
+  [:source])
+
+(def investigation-histogram-fields
+  [:timestamp])
+
 (def investigation-routes
   (entity-crud-routes
    {:entity :investigation
@@ -146,7 +151,10 @@
     :put-capabilities :create-investigation
     :delete-capabilities :delete-investigation
     :search-capabilities :search-investigation
-    :external-id-capabilities :read-investigation}))
+    :external-id-capabilities :read-investigation
+    :can-aggregate? true
+    :histogram-fields investigation-histogram-fields
+    :enumerable-fields investigation-enumerable-fields}))
 
 (def capabilities
   #{:read-investigation

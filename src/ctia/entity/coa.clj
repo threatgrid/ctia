@@ -102,6 +102,17 @@
    PagingParams
    COAFieldsParam))
 
+(def coa-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
+
+(def coa-enumerable-fields
+  [:source
+   :efficacy
+   :cost
+   :coa_type])
+
 (def coa-routes
   (entity-crud-routes
    {:entity :coa
@@ -120,7 +131,10 @@
     :put-capabilities :create-coa
     :delete-capabilities :delete-coa
     :search-capabilities :search-coa
-    :external-id-capabilities :read-coa}))
+    :external-id-capabilities :read-coa
+    :can-aggregate? true
+    :histogram-fields coa-histogram-fields
+    :enumerable-fields coa-enumerable-fields}))
 
 (def capabilities
   #{:create-coa

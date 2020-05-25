@@ -2,12 +2,14 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
             [ctia.auth.capabilities :as caps]
+            [ctia.entity.indicator :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [core :as helpers]
              [crud :refer [entity-crud-test]]
+             [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store store-fixtures]]]
             [ctim.examples.indicators
              :refer
              [new-indicator-maximal new-indicator-minimal]]))
@@ -18,7 +20,7 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(deftest test-indicator-routes
+(deftest test-indicator-crud-routes
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" caps/all-capabilities)
@@ -38,3 +40,14 @@
                           new-indicator-minimal
                           true
                           false))))
+
+(deftest test-indicator-metric-routes
+  ((:es-store store-fixtures)
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" caps/all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
+     (test-metric-routes (into sut/indicator-entity
+                               {:entity-minimal new-indicator-minimal
+                                :enumerable-fields sut/indicator-enumerable-fields
+                                :date-fields sut/indicator-histogram-fields})))))
+
