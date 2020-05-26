@@ -86,7 +86,7 @@
                           "wait_for is false"))
         (test-create nil
                      (str "Configured ctia.store.es.default.refresh value is applied "
-                          "when wait_for is not specified"))))
+                          "when wait_for is not specified for create queries"))))
 
     (testing "testing wait_for values on entity update / patch"
       (let [entity-id (-> (format "ctia/%s?wait_for=true" entity)
@@ -94,37 +94,40 @@
                                 :headers headers)
                           :parsed-body
                           entity->short-id)
-            test-modify (fn [method wait_for msg]
+            test-modify (fn [method-kw wait_for msg]
                           (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
-                                          (= put method) (into new-record))
+                                          (= :put method-kw) (into new-record))
                                 es-params (atom nil)]
                             (with-global-fake-routes {#".*9200.*" {:put (simple-handler es-params)}}
-                              (method path
-                                      :body updates
-                                      :headers headers))
+                              (let [method (case method-kw
+                                             :put put
+                                             :patch patch)]
+                                (method path
+                                        :body updates
+                                        :headers headers)))
                             (check-refresh @es-params wait_for msg)))]
         (when update-tests?
-          (test-modify put true
+          (test-modify :put true
                        (str "Update queries should wait for index refresh when "
                             "wait_for is true"))
-          (test-modify put false
+          (test-modify :put false
                        (str "Update queries should not wait for index refresh "
                             "when wait_for is false"))
-          (test-modify put nil
+          (test-modify :put nil
                        (str "Configured ctia.store.es.default.refresh value "
-                            "is applied when wait_for is not specified")))
+                            "is applied when wait_for is not specified for update queries")))
         (when patch-tests?
-          (test-modify patch true
+          (test-modify :patch true
                        (str "Patch queries should wait for index refresh when "
                             "wait_for is true"))
-          (test-modify patch false
+          (test-modify :patch false
                        (str "Patch queries should not wait for index refresh "
                             "when wait_for is false"))
-          (test-modify patch nil
+          (test-modify :patch nil
                        (str "Configured ctia.store.es.default.refresh value is "
-                            "applied when wait_for is not specified")))))
+                            "applied when wait_for is not specified for patch queries")))))
 
     (testing "testing wait_for values on entity deletion"
       (let [test-delete (fn [wait_for msg]
@@ -148,7 +151,7 @@
                           "when wait_for is false"))
         (test-delete nil
                      (str "Configured ctia.store.es.default.refresh value is "
-                          "applied when wait_for is not specified"))))))
+                          "applied when wait_for is not specified for delete queries"))))))
 
 (defn entity-crud-test
   [{:keys [entity
@@ -266,7 +269,7 @@
                                (name invalid-test-field)))
                          (string/lower-case body))))))
 
-      (testing (format "DELETE non-existant /ctia/%s/:id" entity)
+      (testing (format "DELETE non-existent /ctia/%s/:id" entity)
         (let [response (delete (format "ctia/%s/%s-42424242" entity entity )
                                :headers headers)]
           (is (= 404 (:status response)))))
