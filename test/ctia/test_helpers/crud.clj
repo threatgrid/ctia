@@ -29,43 +29,55 @@
         default-es-refresh (->> (get-in @properties
                                         [:ctia :store :es :default :refresh])
                                 (str "refresh="))
-        es-params (atom nil)
-        simple-handler (fn [{:keys [query-string]}]
-                         (reset! es-params query-string)
-                         {:status 200
-                          :headers {"Content-Type" "application/json"}
-                          :body "{}"})
-        bulk-routes {#".*_bulk.*"
-                     {:post (fn [{:keys [query-string body]}]
-                              (let [mapping-type (-> (io/reader body)
-                                                     line-seq
-                                                     first
-                                                     (parse-string true)
-                                                     (get-in [:index :_type]))]
-                                (when-not (= "event" mapping-type)
-                                  (reset! es-params query-string))
-                                {:status 200
-                                 :headers {"Content-Type" "application/json"}
-                                 :body "{}"}))}}
-        check-refresh (fn [wait_for msg]
+        simple-handler (fn [es-params]
+                         {:pre [(instance? clojure.lang.IAtom es-params)]}
+                         (fn [{:keys [query-string]}]
+                           (swap! es-params (fn [old]
+                                              {:pre [(nil? old)]
+                                               :post [(string? %)]}
+                                              query-string))
+                           {:status 200
+                            :headers {"Content-Type" "application/json"}
+                            :body "{}"}))
+        bulk-routes (fn [es-params]
+                      {:pre [(instance? clojure.lang.IAtom es-params)]}
+                      {#".*_bulk.*"
+                       {:post (fn [{:keys [query-string body]}]
+                                (let [mapping-type (-> (io/reader body)
+                                                       line-seq
+                                                       first
+                                                       (parse-string true)
+                                                       (get-in [:index :_type]))]
+                                  (when-not (= "event" mapping-type)
+                                    (swap! es-params (fn [old]
+                                                       {:pre [(nil? old)]
+                                                        :post [(string? %)]}
+                                                       query-string)))
+                                  {:status 200
+                                   :headers {"Content-Type" "application/json"}
+                                   :body "{}"}))}})
+        check-refresh (fn [es-params wait_for msg]
+                        {:pre [(instance? clojure.lang.IAtom es-params)]}
                         (let [expected (cond
                                          (nil? wait_for) default-es-refresh
                                          (true? wait_for) "refresh=wait_for"
-                                         (false? wait_for) "refresh=false")]
+                                         (false? wait_for) "refresh=false"
+                                         :else (throw (ex-info "Bad wait_for"
+                                                               {:wait_for wait_for})))]
                           (is (some-> @es-params
                                       (string/includes? expected))
-                              (str msg (format " (%s|%s)" expected @es-params)))
-                          (reset! es-params nil)))]
+                              (str msg (format " (%s|%s)" expected @es-params)))))]
 
     (testing "testing wait_for values on entity creation"
       (let [test-create (fn [wait_for msg]
                           (let [path (cond-> (str "ctia/" entity)
-                                       (boolean? wait_for) (str "?wait_for=" wait_for))]
-                            (with-global-fake-routes bulk-routes
+                                       (boolean? wait_for) (str "?wait_for=" wait_for))
+                                es-params (atom nil)]
+                            (with-global-fake-routes (bulk-routes es-params)
                               (post path
                                     :body new-record
                                     :headers headers))
-                            (check-refresh wait_for msg)))]
+                            (check-refresh es-params wait_for msg)))]
         (test-create true
                      "Create queries should wait for index refresh when wait_for is true")
         (test-create false
@@ -85,12 +97,13 @@
                           (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
-                                          (= put method) (into new-record))]
-                            (with-global-fake-routes {#".*9200.*" {:put simple-handler}}
+                                          (= put method) (into new-record))
+                                es-params (atom nil)]
+                            (with-global-fake-routes {#".*9200.*" {:put (simple-handler es-params)}}
                               (method path
                                       :body updates
                                       :headers headers))
-                            (check-refresh wait_for msg)))]
+                            (check-refresh es-params wait_for msg)))]
         (when update-tests?
           (test-modify put true
                        (str "Update queries should wait for index refresh when "
@@ -120,11 +133,12 @@
                                               :parsed-body
                                               entity->short-id)
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
-                                       (boolean? wait_for) (str "?wait_for=" wait_for))]
-                            (with-global-fake-routes {#".*9200.*" {:delete simple-handler}}
+                                       (boolean? wait_for) (str "?wait_for=" wait_for))
+                                es-params (atom nil)]
+                            (with-global-fake-routes {#".*9200.*" {:delete (simple-handler es-params)}}
                               (delete path
                                       :headers headers))
-                            (check-refresh wait_for msg)))]
+                            (check-refresh es-params wait_for msg)))]
         (test-delete true
                      (str "Delete queries should wait for index refresh when "
                           "wait_for is true"))
