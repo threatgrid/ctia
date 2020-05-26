@@ -164,7 +164,13 @@
 (defn read-actions [investigation]
   (let [actions (get investigation :actions)]
     (if (string? actions)
-      (json/parse-string actions true)
+      (try
+        (let [x (json/parse-string actions true)]
+          (if (sequential? x)
+            x
+            []))
+        (catch Exception _
+          []))
       [])))
 
 (def empty-action-data
