@@ -26,9 +26,10 @@
          update-tests? true
          patch-tests? false}}]
   (let [new-record (dissoc example :id)
-        default-es-refresh (->> (get-in @properties
-                                        [:ctia :store :es :default :refresh])
-                                (str "refresh="))
+        default-es-refresh (let [d (get-in @properties
+                                           [:ctia :store :es :default :refresh])]
+                             (assert (string? d) (pr-str d))
+                             (str "refresh=" d))
         simple-handler (fn [es-params]
                          {:pre [(instance? clojure.lang.IAtom es-params)]}
                          (fn [{:keys [query-string]}]
@@ -56,17 +57,17 @@
                                   {:status 200
                                    :headers {"Content-Type" "application/json"}
                                    :body "{}"}))}})
-        check-refresh (fn [es-params wait_for msg]
-                        {:pre [(instance? clojure.lang.IAtom es-params)]}
+        check-refresh (fn [es-params-val wait_for msg]
+                        {:pre [(not (instance? clojure.lang.IAtom es-params-val))]}
                         (let [expected (cond
                                          (nil? wait_for) default-es-refresh
                                          (true? wait_for) "refresh=wait_for"
                                          (false? wait_for) "refresh=false"
                                          :else (throw (ex-info "Bad wait_for"
                                                                {:wait_for wait_for})))]
-                          (is (some-> @es-params
+                          (is (some-> es-params-val
                                       (string/includes? expected))
-                              (str msg (format " (%s|%s)" expected @es-params)))))]
+                              (str msg (format " (%s|%s)" expected es-params-val)))))]
 
     (testing "testing wait_for values on entity creation"
       (let [test-create (fn [wait_for msg]
@@ -77,7 +78,7 @@
                               (post path
                                     :body new-record
                                     :headers headers))
-                            (check-refresh es-params wait_for msg)))]
+                            (check-refresh @es-params wait_for msg)))]
         (test-create true
                      "Create queries should wait for index refresh when wait_for is true")
         (test-create false
@@ -103,7 +104,7 @@
                               (method path
                                       :body updates
                                       :headers headers))
-                            (check-refresh es-params wait_for msg)))]
+                            (check-refresh @es-params wait_for msg)))]
         (when update-tests?
           (test-modify put true
                        (str "Update queries should wait for index refresh when "
@@ -138,7 +139,7 @@
                             (with-global-fake-routes {#".*9200.*" {:delete (simple-handler es-params)}}
                               (delete path
                                       :headers headers))
-                            (check-refresh es-params wait_for msg)))]
+                            (check-refresh @es-params wait_for msg)))]
         (test-delete true
                      (str "Delete queries should wait for index refresh when "
                           "wait_for is true"))
