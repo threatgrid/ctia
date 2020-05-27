@@ -4,6 +4,7 @@
             [clj-momo.lib.clj-time.format :as tf]
             [ctia.test-helpers.core :as hc]
             [clojure.string :as string]
+            [clojure.pprint :refer [pprint]]
             [schema-generators.generators :as g]
             [ctia.http.routes.common :refer [now]]
             [schema-tools.core :as st]
@@ -89,13 +90,17 @@
             1)
         "[from to[ should not exceed one year")))
 
+(defn error-helper-msg
+  [explaining-values]
+  (str "values: \n"
+       (with-out-str (pprint explaining-values))))
+
 (defn- test-cardinality
   "test one field cardinality, examples are already created."
   [examples entity field]
   (testing (format "cardinality %s %s" entity field)
-    (let [expected (-> (normalized-values examples field)
-                       set
-                       count)
+    (let [unique-values (set (normalized-values examples field))
+          expected (count unique-values)
           _ (assert (pos? expected))
           {{:keys [from to]} :filters
            :as res} (cardinality entity
@@ -103,19 +108,20 @@
                                   :from "2020-01-01"}
                                  {:aggregate-on (name field)})]
       (is (= expected
-             (get-in (:data res) (parse-field field))))
+             (get-in (:data res) (parse-field field)))
+          (error-helper-msg
+           (sort-by count unique-values)))
       (check-from-to from to))))
 
 (defn- test-topn
   "test one field topn, examples are already created."
   [examples entity field limit]
   (testing (format "topn %s %s" entity field)
-    (let [expected (->> (normalized-values examples field)
+    (let [prepared (->> (normalized-values examples field)
                         frequencies
                         (sort-by val)
-                        reverse
-                        (take limit)
-                        vals)
+                        reverse)
+          expected (vals (take limit prepared))
           _ (assert (every? pos? expected))
           {{:keys [from to]} :filters
            :as res} (topn entity
@@ -125,7 +131,8 @@
       (is (= expected
              (->> (parse-field field)
                   (get-in (:data res))
-                  (map :value))))
+                  (map :value)))
+          (error-helper-msg prepared))
       (check-from-to from to))))
 
 (defn- to-granularity-first-day
