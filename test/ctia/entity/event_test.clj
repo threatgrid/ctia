@@ -367,3 +367,92 @@
              (count timeline)))
       (is (= (count every-sec) (count (-> timeline first :events))))
       (is (= (count every-milli-2) (count (-> timeline second :events)))))))
+
+(deftest test-event-diffs
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "user1"
+                                ["group1"]
+                                "user1"
+                                all-capabilities)
+     (whoami-helpers/set-whoami-response "user1"
+                                         "user1"
+                                         "group1"
+                                         "user1")
+     (testing "simulate Incident activity"
+       (with-sequential-uuid
+         (fn []
+           (fixture-with-fixed-time
+            (time/timestamp "2042-01-01")
+            (fn []
+              (let [initial-incident
+                    (post (str "ctia/incident")
+                          :body new-incident-minimal
+                          :headers {"Authorization" "user1"})
+                    _ (is (= 201 (:status initial-incident)) initial-incident)
+
+                    ;; add new :assignees field
+                    added-assignees-incident
+                    (put (format "ctia/%s/%s"
+                                 "incident"
+                                 (-> (get-in initial-incident [:parsed-body :id])
+                                     id/long-id->id
+                                     :short-id))
+                         :body (-> initial-incident
+                                   :parsed-body
+                                   (assoc :assignees ["1"]))
+                         :headers {"Authorization" "user1"})
+                    _ (is (= 200 (:status added-assignees-incident))
+                          added-assignees-incident)
+
+                    ;; update existing :assignees field
+                    modified-assignees-incident
+                    (put (format "ctia/%s/%s"
+                                 "incident"
+                                 (-> (get-in added-assignees-incident [:parsed-body :id])
+                                     id/long-id->id
+                                     :short-id))
+                         :body (-> added-assignees-incident
+                                   :parsed-body
+                                   (assoc-in [:assignees 1] "2"))
+                         :headers {"Authorization" "user1"})
+                    _ (is (= 200 (:status modified-assignees-incident))
+                          modified-assignees-incident)
+
+                    ;; delete existing :assignees field
+                    deleted-assignees-incident
+                    (put (format "ctia/%s/%s"
+                                 "incident"
+                                 (-> (get-in modified-assignees-incident [:parsed-body :id])
+                                     id/long-id->id
+                                     :short-id))
+                         :body (-> modified-assignees-incident
+                                   :parsed-body
+                                   (dissoc :assignees))
+                         :headers {"Authorization" "user1"})
+                    _ (is (= 200 (:status deleted-assignees-incident))
+                          deleted-assignees-incident)]
+
+                (testing ":fields are correctly set"
+                  (let [initial-id (get-in initial-incident [:parsed-body :id])
+                        q (uri/uri-encode
+                            (format "entity.id:\"%s\" OR entity.source_ref:\"%s\" OR entity.target_ref:\"%s\""
+                                    initial-id
+                                    initial-id
+                                    initial-id))
+                        results (map :fields
+                                     (:parsed-body (get (str "ctia/event/search?query=" q)
+                                                        :content-type :json
+                                                        :headers {"Authorization" "user1"})))
+                        ]
+                    (is (= '[nil
+                             [{:field :assignees
+                               :action "added"
+                               :change {:after ["1"]}}]
+                             [{:field :assignees
+                               :action "modified"
+                               :change {:before ["1"], :after ["1" "2"]}}]
+                             [{:field :assignees
+                               :action "deleted"
+                               :change {:before ["1" "2"]}}]]
+                           results)))))))))))))
