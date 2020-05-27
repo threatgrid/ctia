@@ -379,7 +379,8 @@
                                          "user1"
                                          "group1"
                                          "user1")
-     (testing "simulate Incident activity"
+     ;; test for https://github.com/threatgrid/iroh/issues/3551
+     (testing "Diff events for Incidents"
        (with-sequential-uuid
          (fn []
            (fixture-with-fixed-time
@@ -443,8 +444,7 @@
                         results (map :fields
                                      (:parsed-body (get (str "ctia/event/search?query=" q)
                                                         :content-type :json
-                                                        :headers {"Authorization" "user1"})))
-                        ]
+                                                        :headers {"Authorization" "user1"})))]
                     (is (= '[nil
                              [{:field :assignees
                                :action "added"
