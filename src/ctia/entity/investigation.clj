@@ -68,8 +68,7 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    InvestigationFieldsParam
-   {:query s/Str}
-   {s/Keyword s/Any}))
+   {(s/optional-key :query) s/Str}))
 
 (def InvestigationGetParams InvestigationFieldsParam)
 
@@ -77,6 +76,35 @@
   (st/merge
    InvestigationFieldsParam
    PagingParams))
+
+(def InvestigationType
+  (let [{:keys [fields name description]}
+        (flanders/->graphql
+         (fu/optionalize-all inv/Investigation)
+         {})]
+    (g/new-object
+     name
+     description
+     []
+     (merge
+      fields go/graphql-ownership-fields))))
+
+(def investigation-order-arg
+  (graphql-sorting/order-by-arg
+   "InvestigationOrder"
+   "investigations"
+   (into {}
+         (map (juxt graphql-sorting/sorting-kw->enum-name name)
+              investigation-fields))))
+
+(def InvestigationConnectionType
+  (pagination/new-connection InvestigationType))
+
+(def investigation-enumerable-fields
+  [:source])
+
+(def investigation-histogram-fields
+  [:timestamp])
 
 (def investigation-routes
   (entity-crud-routes
@@ -96,7 +124,10 @@
     :put-capabilities :create-investigation
     :delete-capabilities :delete-investigation
     :search-capabilities :search-investigation
-    :external-id-capabilities :read-investigation}))
+    :external-id-capabilities :read-investigation
+    :can-aggregate? true
+    :histogram-fields investigation-histogram-fields
+    :enumerable-fields investigation-enumerable-fields}))
 
 (def capabilities
   #{:read-investigation

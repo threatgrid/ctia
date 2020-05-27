@@ -84,8 +84,9 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    WeaknessFieldsParam
-   {:query s/Str
-    (s/optional-key :sort_by)  weakness-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :sort_by  weakness-sort-fields})))
 
 (def WeaknessGetParams WeaknessFieldsParam)
 
@@ -119,6 +120,24 @@
 (def WeaknessConnectionType
   (pagination/new-connection WeaknessType))
 
+(def weakness-histogram-fields
+  [:timestamp])
+
+(def weakness-enumerable-fields
+  [:source
+   :detection_methods.method
+   :architectures.name
+   :architectures.class
+   :languages.name
+   :languages.class
+   :paradigms.name
+   :functional_areas
+   :operating_systems.name
+   :operating_systems.class
+   :likelihood
+   :technologies.name
+   :technologies.prevalence])
+
 (def weakness-routes
   (entity-crud-routes
    {:entity :weakness
@@ -137,7 +156,10 @@
     :put-capabilities :create-weakness
     :delete-capabilities :delete-weakness
     :search-capabilities :search-weakness
-    :external-id-capabilities :read-weakness}))
+    :external-id-capabilities :read-weakness
+    :can-aggregate? true
+    :histogram-fields weakness-histogram-fields
+    :enumerable-fields weakness-enumerable-fields}))
 
 (def capabilities
   #{:create-weakness

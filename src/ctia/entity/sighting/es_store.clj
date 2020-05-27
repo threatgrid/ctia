@@ -55,6 +55,8 @@
 (def update-fn (crud/handle-update :sighting ESStoredSighting))
 (def list-fn (crud/handle-find :sighting ESPartialStoredSighting))
 (def handle-query-string-search (crud/handle-query-string-search :sighting ESPartialStoredSighting))
+(def handle-query-string-count (crud/handle-query-string-count :sighting))
+(def handle-aggregate (crud/handle-aggregate :sighting))
 
 (s/defn observable->observable-hash :- s/Str
   "transform an observable to a hash of the form type:value"
@@ -134,9 +136,9 @@
 
 (s/defn handle-query-string-search-sightings
   :- PartialStoredSightingList
-  [state query filter-map ident params]
+  [state search-query ident params]
   (es-paginated-list->paginated-list
-   (handle-query-string-search state query filter-map ident params)))
+   (handle-query-string-search state search-query ident params)))
 
 (s/defn handle-list-by-observables
   :- PartialStoredSightingList
@@ -163,5 +165,9 @@
   (list-sightings-by-observables [_ observables ident params]
     (handle-list-by-observables state observables ident params))
   IQueryStringSearchableStore
-  (query-string-search [_ query filtermap ident params]
-    (handle-query-string-search-sightings state query filtermap ident params)))
+  (query-string-search [_ search-query ident params]
+    (handle-query-string-search-sightings state search-query ident params))
+  (query-string-count [_ search-query ident]
+    (handle-query-string-count state search-query ident))
+  (aggregate [_ search-query agg-query ident]
+    (handle-aggregate state search-query agg-query ident)))

@@ -5,17 +5,18 @@
              [core :as t]]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.entity.incident :refer [incident-fields]]
+            [ctia.entity.incident :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [patch post post-entity-bulk]]
              [crud :refer [entity-crud-test]]
+             [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store store-fixtures]]]
             [ctim.examples.incidents
              :refer
              [new-incident-maximal new-incident-minimal]]))
@@ -77,17 +78,27 @@
            (is (= (get-in updated-incident [:incident_time :remediated])
                   (tc/to-date fixed-now)))))))))
 
-(deftest test-incident-routes
+(deftest test-incident-crud-routes
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (entity-crud-test
-      {:entity "incident"
-       :patch-tests? true
-       :example new-incident-maximal
-       :headers {:Authorization "45c1f5e3f05d0"}
-       :additional-tests partial-operations-tests}))))
+     (let [parameters {:entity "incident"
+                       :patch-tests? true
+                       :example new-incident-maximal
+                       :headers {:Authorization "45c1f5e3f05d0"}
+                       :additional-tests partial-operations-tests}]
+       (entity-crud-test parameters)))))
+
+(deftest test-incident-metric-routes
+  ((:es-store store-fixtures)
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+     (test-metric-routes (into sut/incident-entity
+                               {:entity-minimal new-incident-minimal
+                                :enumerable-fields sut/incident-enumerable-fields
+                                :date-fields sut/incident-histogram-fields})))))
 
 (deftest test-incident-pagination-field-selection
   (test-for-each-store
@@ -105,13 +116,13 @@
        (pagination-test
         "ctia/incident/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        incident-fields)
+        sut/incident-fields)
 
        (field-selection-tests
         ["ctia/incident/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        incident-fields)))))
+        sut/incident-fields)))))
 
 (deftest test-incident-routes-access-control
   (test-for-each-store

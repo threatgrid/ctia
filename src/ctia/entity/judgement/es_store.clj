@@ -49,6 +49,8 @@
 (def handle-delete (crud/handle-delete :judgement PartialStoredJudgement))
 (def handle-list (crud/handle-find :judgement PartialStoredJudgement))
 (def handle-query-string-search (crud/handle-query-string-search :judgement PartialStoredJudgement))
+(def handle-query-string-count (crud/handle-query-string-count :judgement))
+(def handle-aggregate (crud/handle-aggregate :judgement))
 
 (defn list-active-by-observable
   [state observable ident]
@@ -120,5 +122,9 @@
     (handle-calculate-verdict state observable ident))
 
   IQueryStringSearchableStore
-  (query-string-search [_ query filtermap ident params]
-    (handle-query-string-search state query filtermap ident params)))
+  (query-string-search [_ search-query ident params]
+    (handle-query-string-search state search-query ident params))
+  (query-string-count [_ search-query ident]
+    (handle-query-string-count state search-query ident))
+  (aggregate [_ search-query agg-query ident]
+    (handle-aggregate state search-query agg-query ident)))

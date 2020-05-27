@@ -1,0 +1,171 @@
+#+TITLE: Search and Metrics
+#+AUTHOR: Cisco Threat Response Services
+#+PROPERTY:  eval no
+CTIA provides a way to search and extract metrics in CTIM entities.
+
+* Searching
+An entity search route is available through the endpoint ~GET /ctia/{entity-type}/search~.
+Search is enabled through 2 filtering means: a text query field that accepts free lucene queries, and field filters that enable users to filter on entities values.
+If you do not provide any filter, all documents are matched with TLP restrictions.
+
+For instance the following request enables the user to retrieve all the open incidents assigned to johndoe that were created since 2020/04/01:
+
+#+BEGIN_SRC
+GET /ctia/incident/search?assignee=johndoe&status=open&from=2020-04-01
+#+END_SRC
+
+The folloqing query searches all indicators matching the term "rat" in any field:
+
+#+BEGIN_SRC
+GET /ctia/indicator/search?query=rat
+#+END_SRC
+
+The following query searches all indicators matching the term "rat" in the field ~description~ field:
+
+#+BEGIN_SRC javascript
+GET /ctia/indicator/search?query=description:rat
+#+END_SRC
+
+The following query searches indicators with "android" in the title, having a high confidence, created since 2020/01/01. It combines both text and term filtering:
+
+#+BEGIN_SRC
+GET /ctia/indicator/search?query=title:android&confidence=high&from=2020-01-01
+#+END_SRC
+
+The result is returned in the form of list of matched entities:
+
+#+BEGIN_SRC javascript
+[
+ {"id": "indicator-1", "type": "indicator", "title": "Android problem", ...}
+ {"id": "indicator-2", "type": "indicator", "title": "Android rat", ...}
+ {"id": "indicator-3", "type": "indicator", "title": "Android malware", ...}
+ {"id": "indicator-4", "type": "indicator", "title": "Chrome on Android", ...}
+]
+#+END_SRC
+
+The search results can also be paginated using the ~limit~ and ~offset~ fields:
+The following example returns up to 5 entities after the 10th entities.
+#+BEGIN_SRC
+GET /ctia/incident/search?assignee=johndoe&limit=5&offset=15
+#+END_SRC
+The response header provides the necessary information to navigate in search results:
+1) ~x-total-hits~: indicates the total number of entities that match the search filters.
+2) ~x-previous~: indicates the values ~limit~ and ~offset~ values to access previous page (e.g. ~limit=5&offset=10~). This header element is not provided if there is no previous page.
+3) ~x-next~: indicates the values ~limit~ and ~offset~ values to access next page. It also provides the ~search_after~ value to use in order to deal with created values betweeen 2 search queries. (e.g. ~limit=5&offset=10&search_after=indicator-1384320~).  This header element is not provided if there is no next page.
+
+The entities are sorted by ascending creation order per default, but some other fields are also available to sort on (depending on each CTIM entity type).
+For instance you can search malicious judgments with high confidence matching "abuse.ch" and order results by descending ~disposition~:
+#+BEGIN_SRC
+GET /ctia/incident/search?query=abuse.ch&confidence=high&limit=10&sort_by=disposition&sort_order=desc
+#+END_SRC
+
+Finally you can only query entity count with the same filtering parameters through the endpoint ~GET /ctia/{entity-type}/search/count~.
+So reusing a previous search query example, one can count the indicators with "android" in the title, having a high confidence, created since 2020/01/01 with both text and term filtering:
+#+BEGIN_SRC
+GET /ctia/indicator/search/count?query=title:android&confidence=high&from=2020-01-01
+#+END_SRC
+
+The result will return directly the number of matched entities:
+#+BEGIN_SRC javascript
+38
+#+END_SRC
+
+* Aggregating
+Aggregation metrics are available through the endpoint ~GET /CTIA/{entity-type}/metric/{metric-type}~.
+3 types of metrics are proposed: Top N, Cardinality, and Histogram, that can be selected with the corresponding route suffix ~{metric}~, respectively ~topn~, ~cardinality~, and ~histogram~.
+For each of these metrics we can choose the aggregated field, specific aggregation parameters and apply search filters to select the entities that will be aggregated.
+The search filters works identically as in search routes, with the possibility to filter on field values and with a textual query.
+Unlike in search, the ~from~ parameter is mandatory and a time window aggregated cannot exceed 1 year.
+Managed entity types are ~incident~, ~judgement~, and ~sighting~.
+
+** TOP N
+   Top N returns the most frequent values for a given field.
+This metric is available at the endpoint ~GET /CTIA/{entity-type}/metric/topn~.
+This metric is configurable with 3 parameters:
+- ~aggregate_on~: the name of the field which values will count and ordered. The available values are specified by type.
+- ~limit~: the maximum number of unique values to return. The default value is 10.
+- ~sort_order~: the order of the sort, valid values are ~asc~ or ~desc~. The default is ~desc~.
+ 
+The following example returns the number of incidents per status between since 2020/01/01 with the following query:
+
+#+BEGIN_SRC
+GET /ctia/incident/topn?&aggregate-on=status&limit=3&from=2020-01-01
+#+END_SRC
+it will return for instance
+#+BEGIN_SRC javascript
+{"data": {"status": [{"key": "Closed", "value": 12},
+                     {"key": "Open", "value": 6},
+                     {"key": "New", "value": 2}]},
+ "type": "topn",
+ "filters": {"from": "2020-01-01",
+             "to": "2020-05-01"}}
+#+END_SRC
+
+The following request returns the top 20 observed values in judgements with malicious disposition, created between 2020/01/01 and 2020/04/01:
+
+#+BEGIN_SRC
+GET /ctia/judgement/topn?aggregate-on=observable.value&limit=20&from=2020-01-01&to2020-04-01&disposition=2
+#+END_SRC
+
+#+BEGIN_SRC javascript
+{"data": {"observable":
+           {"value":
+             [
+              {"key": "abuse.ch", "value": 62},
+              {"key": "8.8.8.8", "value": 62},
+              {"key": "4964ab7e8d5959bb42b8ef78582082686dbe6565b010824785bc44595d8ebeee", "value": 38},
+              {"key": "https://www.badbabbad.net/worse.html", "value": 25},
+              ...
+             ]}},
+ "type": "topn",
+ "filters": {"from": "2020-01-01",
+             "to": "2020-04-01",
+             "disposition": 2}}
+#+END_SRC
+
+** Cardinality
+   Cardinality count unique values for a given field, e.g. the number of unique observable values in judgments. 
+This metric is available at the endpoint ~GET /CTIA/{entity-type}/metric/cardinality~.
+This metric returns the exact values until 10000 unique values, but is based an the hyperLogLog algorithm above 10000 which approximates the exact result with an heuristic.
+This metric is configurable with the following parameter:
+- ~aggregate_on~: the name of the field which unique values are counted. The available values are specified by type.
+
+#+BEGIN_SRC
+GET /ctia/judgement/cardinality?aggregate-on=obsevable.value&from=2020-01-01
+#+END_SRC
+
+It will return an integer that represent the estimated number of unique values
+#+BEGIN_SRC javascript
+{"data": {"observable": {"value": 5384}},
+ "type": "cardinality",
+ "filters": {"from": "2020-01-01",
+             "to": "2020-05-01"}}
+#+END_SRC
+** Histogram
+   This aggregation returns an histogram of entity count for a given datetime field and a granularity, e.g. the number of incidents per day.
+This metric is available at the endpoint ~GET /CTIA/{entity-type}/metric/histogram~.
+This metric is configurable with 2 parameters
+- ~aggregate_on~: the name of the date time field which will be used to determine the time range at which belongs each entity.
+- ~granularity~: the size of the time windows that will be returned. The possible values are ~hour~, ~day~, ~week~, ~month~.
+Note that for this aggregation, the ~from~ / ~ton~ filters are applied on the aggregated date instead of the creation date.
+
+The following example returns the number of opened incident per creation date since 2020/04/01:
+#+BEGIN_SRC
+GET /ctia/incident/histogram?aggregate-on=timestamp&granularity=day&status=Open&from=2020-04-01
+#+END_SRC
+it will return for instance
+#+BEGIN_SRC javascript
+{"data": {"timestamp": [{"key": "2020-01-01", "value": 10},
+                        {"key": "2020-01-02", "value": 0},
+                        {"key": "2020-01-03", "value": 6},
+                        {"key": "2020-01-04", "value": 2},
+                        {"key": "2020-01-05", "value": 0},
+                        {"key": "2020-01-06", "value": 1},
+                        {"key": "2020-01-07", "value": 6},
+                        {"key": "2020-01-08", "value": 4},
+                        {"key": "2020-01-09", "value": 3}]},
+ "type": "histogram",
+ "filters": {"from": "2020-04-01",
+             "to": "2020-05-01",
+             "Status": "Open"}} 
+#+END_SRC

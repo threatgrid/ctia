@@ -3,8 +3,11 @@
             [ctia.domain.entities :refer [default-realize-fn un-store with-long-id]]
             [ctia.flows.crud :as flows]
             [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes wait_for->refresh]]]
+             [common :refer [BaseEntityFilterParams
+                             PagingParams
+                             SourcableEntityFilterParams
+                             wait_for->refresh]]
+             [crud :refer [entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
              [core :refer [Bundle def-acl-schema def-stored-schema]]
@@ -107,9 +110,10 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    CasebookFieldsParam
-   {:query s/Str
-    (s/optional-key :texts.text) s/Str
-    (s/optional-key :sort_by) casebook-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :texts.text s/Str
+     :sort_by casebook-sort-fields})))
 
 (def CasebookGetParams CasebookFieldsParam)
 
@@ -292,6 +296,14 @@
 (def CasebookConnectionType
   (pagination/new-connection CasebookType))
 
+(def casebook-enumerable-fields
+  [:source
+   :observables.type
+   :observables.value])
+
+(def casebook-histogram-fields
+  [:timestamp])
+
 (def casebook-routes
   (routes
    casebook-operation-routes
@@ -308,13 +320,16 @@
      :search-q-params CasebookSearchParams
      :new-spec :new-casebook/map
      :realize-fn realize-casebook
+     :can-aggregate? true
      :get-capabilities :read-casebook
      :post-capabilities :create-casebook
      :put-capabilities :create-casebook
      :delete-capabilities :delete-casebook
      :search-capabilities :search-casebook
      :external-id-capabilities :read-casebook
-     :hide-delete? false})))
+     :hide-delete? false
+     :histogram-fields casebook-histogram-fields
+     :enumerable-fields casebook-enumerable-fields})))
 
 (def casebook-entity
   {:route-context "/casebook"

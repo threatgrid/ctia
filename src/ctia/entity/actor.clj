@@ -80,13 +80,14 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    ActorFieldsParam
-   {:query s/Str
-    (s/optional-key :actor_type) s/Str
-    (s/optional-key :motivation) s/Str
-    (s/optional-key :sophistication) s/Str
-    (s/optional-key :intended_effect) s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :sort_by)  actor-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :actor_type s/Str
+     :motivation s/Str
+     :sophistication s/Str
+     :intended_effect s/Str
+     :confidence s/Str
+     :sort_by  actor-sort-fields})))
 
 (def ActorGetParams ActorFieldsParam)
 
@@ -94,6 +95,19 @@
   (st/merge
    PagingParams
    ActorFieldsParam))
+
+(def actor-enumerable-fields
+  [:source
+   :actor_type
+   :motivation
+   :sophistication
+   :confidence
+   :intended_effect])
+
+(def actor-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
 
 (def actor-routes
   (entity-crud-routes
@@ -113,7 +127,10 @@
     :put-capabilities :create-actor
     :delete-capabilities :delete-actor
     :search-capabilities :search-actor
-    :external-id-capabilities :read-actor}))
+    :external-id-capabilities :read-actor
+    :can-aggregate? true
+    :histogram-fields actor-histogram-fields
+    :enumerable-fields actor-enumerable-fields}))
 
 (def capabilities
   #{:create-actor

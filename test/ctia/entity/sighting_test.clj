@@ -1,19 +1,24 @@
 (ns ctia.entity.sighting-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
+            [ctia.entity.sighting :as sut]
             [ctia.entity.sighting.schemas :refer [sighting-sort-fields
-                                                  sighting-fields]]
+                                                  sighting-fields
+                                                  sighting-enumerable-fields
+                                                  sighting-histogram-fields
+                                                  NewSighting]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post-entity-bulk
                                        post-bulk]]
              [crud :refer [entity-crud-test]]
+             [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [api-key doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
+             [store :refer [test-for-each-store store-fixtures]]]
             [ctim.examples.sightings
              :refer
              [new-sighting-maximal new-sighting-minimal]]))
@@ -33,7 +38,7 @@
        ["http://ex.tld/ctia/sighting/sighting-123"
         "http://ex.tld/ctia/sighting/sighting-345"])))
 
-(deftest test-sighting-routes
+(deftest test-sighting-crud-routes
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -45,6 +50,16 @@
       {:entity "sighting"
        :example new-sighting-maximal
        :headers {:Authorization "45c1f5e3f05d0"}}))))
+
+(deftest test-sighting-metric-routes
+  ((:es-store store-fixtures)
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+     (test-metric-routes (into sut/sighting-entity
+                               {:entity-minimal new-sighting-minimal
+                                :enumerable-fields sighting-enumerable-fields
+                                :date-fields sighting-histogram-fields})))))
 
 (deftest test-sighting-pagination-field-selection
   (test-for-each-store

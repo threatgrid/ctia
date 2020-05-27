@@ -101,6 +101,19 @@
 (def indicator-sort-fields
   (apply s/enum indicator-fields))
 
+(def indicator-enumerable-fields
+  [:source
+   :indicator_type
+   :likely_impact
+   :confidence
+   :producer
+   :tags])
+
+(def indicator-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
+
 (s/defschema IndicatorFieldsParam
   {(s/optional-key :fields) [indicator-sort-fields]})
 
@@ -110,14 +123,15 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    IndicatorFieldsParam
-   {:query s/Str
-    (s/optional-key :indicator_type) s/Str
-    (s/optional-key :tags) s/Int
-    (s/optional-key :kill_chain_phases) s/Str
-    (s/optional-key :producer) s/Str
-    (s/optional-key :specification) s/Str
-    (s/optional-key :confidence) s/Str
-    (s/optional-key :sort_by)  indicator-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :indicator_type s/Str
+     :tags s/Int
+     :kill_chain_phases s/Str
+     :producer s/Str
+     :specification s/Str
+     :confidence s/Str
+     :sort_by indicator-sort-fields})))
 
 (def IndicatorGetParams IndicatorFieldsParam)
 
@@ -148,7 +162,10 @@
     :put-capabilities :create-indicator
     :delete-capabilities :delete-indicator
     :search-capabilities :search-indicator
-    :external-id-capabilities :read-indicator}))
+    :external-id-capabilities :read-indicator
+    :can-aggregate? true
+    :histogram-fields indicator-histogram-fields
+    :enumerable-fields indicator-enumerable-fields}))
 
 (def capabilities
   #{:read-indicator

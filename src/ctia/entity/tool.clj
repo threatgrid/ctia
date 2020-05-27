@@ -44,13 +44,20 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    ToolFieldsParam
-   {:query s/Str}
    (st/optional-keys
-    {:labels s/Str
+    {:query s/Str
+     :labels s/Str
      :kill_chain_phases.kill_chain_name s/Str
      :kill_chain_phases.phase_name s/Str
      :tool_version s/Str
      :sort_by tool-sort-fields})))
+
+(def tool-histogram-fields
+  [:timestamp])
+
+(def tool-enumerable-fields
+  [:source
+   :labels])
 
 (s/defschema ToolGetParams ToolFieldsParam)
 
@@ -82,7 +89,10 @@
     :put-capabilities :create-tool
     :delete-capabilities :delete-tool
     :search-capabilities :search-tool
-    :external-id-capabilities :read-tool}))
+    :external-id-capabilities :read-tool
+    :can-aggregate? true
+    :histogram-fields tool-histogram-fields
+    :enumerable-fields tool-enumerable-fields}))
 
 (def tool-entity
   {:route-context "/tool"

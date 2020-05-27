@@ -36,7 +36,7 @@ Post the sighting with the indicator ID.
 
 ## Incident Responder
 
-### 2.1 As an incident responder, I would like to know what malware is asociated with an IP
+### 2.1 As an incident responder, I would like to know what malware is associated with an IP
 
 For each jugement object returned by:
 
@@ -46,9 +46,9 @@ Extract the IDs from the 'indicated_TTP.ttp_id' fields and
 
     curl http://ctiahost/ctia/ttp/ID
 
-### 2.2 As an incident responder, I would like to know what campaigns are asociated with an IP
+### 2.2 As an incident responder, I would like to know what campaigns are associated with an IP
 
-For each jugement object returned by:
+For each judgement object returned by:
 
     curl http://ctiahost/ctia/ip/192.168.1.1/indicators
 
@@ -56,7 +56,7 @@ Extract the IDs from the 'related_campaigns.campaign_id' fields and
 
     curl http://ctiahost/ctia/campaigns/ID
 
-### 2.3 As an incident responder, I would like to know what suggested COAs are asociated with an IP
+### 2.3 As an incident responder, I would like to know what suggested COAs are associated with an IP
 
 For each indicator object returned by:
 

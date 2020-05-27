@@ -58,11 +58,12 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    RelationshipFieldsParam
-   {:query s/Str
-    (s/optional-key :relationship_type) s/Str
-    (s/optional-key :source_ref) s/Str
-    (s/optional-key :target_ref) s/Str
-    (s/optional-key :sort_by)  relationship-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :relationship_type s/Str
+     :source_ref s/Str
+     :target_ref s/Str
+     :sort_by  relationship-sort-fields})))
 
 (s/defschema RelationshipGetParams RelationshipFieldsParam)
 
@@ -136,6 +137,13 @@
                       un-store)]
               (created stored-relationship))))))
 
+(def relationship-histogram-fields
+  [:timestamp])
+
+(def relationship-enumerable-fields
+  [:source
+   :relationship_type])
+
 (def relationship-routes
   (entity-crud-routes
    {:entity :relationship
@@ -154,7 +162,10 @@
     :put-capabilities :create-relationship
     :delete-capabilities :delete-relationship
     :search-capabilities :search-relationship
-    :external-id-capabilities :read-relationship}))
+    :external-id-capabilities :read-relationship
+    :can-aggregate? true
+    :histogram-fields relationship-histogram-fields
+    :enumerable-fields relationship-enumerable-fields}))
 
 (def capabilities
   #{:create-relationship

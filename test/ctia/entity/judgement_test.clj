@@ -3,21 +3,27 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
+            [ctia.entity.judgement :as sut]
             [ctia.entity.judgement.schemas
              :refer
-             [judgement-fields judgement-sort-fields]]
+             [judgement-fields
+              judgement-sort-fields
+              judgement-enumerable-fields
+              judgement-histogram-fields
+              NewJudgement]]
             ctia.properties
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get post post-entity-bulk]]
              [crud :refer [entity-crud-test]]
+             [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
-            [ctim.examples.judgements :as ex :refer [new-judgement-maximal]]))
+             [store :refer [test-for-each-store store-fixtures]]]
+            [ctim.examples.judgements :as ex]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -27,7 +33,7 @@
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
 (def new-judgement
-  (merge new-judgement-maximal
+  (merge ex/new-judgement-maximal
          {:observable {:value "1.2.3.4"
                        :type "ip"}
           :external_ids ["http://ex.tld/ctia/judgement/judgement-123"
@@ -131,7 +137,7 @@
                 :error :missing_capability}
                body))))))
 
-(deftest test-judgement-routes
+(deftest test-judgement-crud-routes
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroupi"] "user" all-capabilities)
@@ -154,6 +160,16 @@
        :search-tests? false
        :additional-tests additional-tests
        :headers {:Authorization "45c1f5e3f05d0"}}))))
+
+(deftest test-judgement-metric-routes
+  ((:es-store store-fixtures)
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
+     (test-metric-routes (into sut/judgement-entity
+                               {:entity-minimal ex/new-judgement-minimal
+                                :enumerable-fields judgement-enumerable-fields
+                                :date-fields judgement-histogram-fields})))))
 
 (deftest test-judgement-routes-for-dispositon-determination
   (test-for-each-store
@@ -332,7 +348,7 @@
                                          "user")
 
      (let [new-judgement
-           (assoc new-judgement-maximal
+           (assoc ex/new-judgement-maximal
                   :observable
                   {:value "1.2.3.4", :type "ip"})
            ids (post-entity-bulk

@@ -23,11 +23,12 @@
    BaseEntityFilterParams
    SourcableEntityFilterParams
    SightingFieldsParam
-   {:query s/Str
-    (s/optional-key :sensor) s/Str
-    (s/optional-key :observables.value) s/Str
-    (s/optional-key :observables.type) s/Str
-    (s/optional-key :sort_by) sighting-sort-fields}))
+   (st/optional-keys
+    {:query s/Str
+     :sensor s/Str
+     :observables.value s/Str
+     :observables.type s/Str
+     :sort_by sighting-sort-fields})))
 
 (s/defschema SightingsByObservableQueryParams
   (st/merge
@@ -59,7 +60,10 @@
     :post-capabilities :create-sighting
     :put-capabilities :create-sighting
     :delete-capabilities :delete-sighting
-    :search-capabilities :search-sighting}))
+    :search-capabilities :search-sighting
+    :can-aggregate? true
+    :histogram-fields ss/sighting-histogram-fields
+    :enumerable-fields ss/sighting-enumerable-fields}))
 
 (def capabilities
   #{:create-sighting
