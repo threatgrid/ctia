@@ -109,8 +109,7 @@
                                  {:aggregate-on (name field)})]
       (is (= expected
              (get-in (:data res) (parse-field field)))
-          (error-helper-msg
-           (sort-by count unique-values)))
+          (error-helper-msg unique-values))
       (check-from-to from to))))
 
 (defn- test-topn
