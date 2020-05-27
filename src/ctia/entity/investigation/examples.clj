@@ -33,9 +33,6 @@
 (def investigation-minimal
   {:id "http://ex.tld/ctia/investigation/investigation-2805d697-66b3-4e14-9b32-179e7a72eab6"
    :source "a source"
-   :object_ids []
-   :investigated_observables []
-   :targets []
    :schema_version c/ctim-schema-version
    :type "investigation"})
 
