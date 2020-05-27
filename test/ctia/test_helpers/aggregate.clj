@@ -73,11 +73,9 @@
 
 (defn- normalized-values
   [examples field]
-  (let [values (get-values examples field)
-        flattened (cond-> values
-                    (coll? (first values)) flatten-list-values)]
-    (map #(cond-> % (string? %) string/lower-case)
-         flattened)))
+  (let [values (get-values examples field)]
+    (cond-> values
+      (coll? (first values)) flatten-list-values)))
 
 (defn- check-from-to
   [from-str to-str]
@@ -201,6 +199,11 @@
           {}
           fields))
 
+(def string-generator
+  (->> (gen/sample gen/string-alphanumeric 20)
+       (map string/lower-case)
+       gen/elements))
+
 (defn generate-n-entity
   [{:keys [new-schema
            entity-minimal
@@ -212,9 +215,7 @@
     (doall
      (repeatedly n (fn [] (merge base-doc
                                  (g/generate enumerable-schema
-                                             {s/Str (gen/such-that #(< 3 (count %)) ;; easier value to simulate ES match
-                                                                   gen/string-alphanumeric
-                                                                   30)})
+                                             {s/Str string-generator})
                                  (generate-date-fields date-fields)))))))
 
 (defn test-metric-routes
