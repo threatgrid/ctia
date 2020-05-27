@@ -6,7 +6,6 @@
                          use-fixtures
                          join-fixtures]]
    [clojure.core.async :refer [<!! chan poll! tap]]
-   [clojure.set :as set]
    [ctia.entity.event.obj-to-event :as o2e]
    [ctia.events :as e]
    [ctia.lib.async :as la]
