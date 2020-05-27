@@ -255,5 +255,5 @@
    :1.0.0 (comp (append-version "1.0.0")
                 (rename-observable-type "pki-serial" "pki_serial")
                 simplify-incident)
-   :1.1.0 (comp (append-version "1.1.0")
+   :investigation-actions (comp (append-version "1.1.0")
                 migrate-action-data)})
