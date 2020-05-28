@@ -86,6 +86,17 @@
      :activity s/Str
      :sort_by  campaign-sort-fields})))
 
+(def campaign-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
+
+(def campaign-enumerable-fields
+  [:source
+   :campaign_type
+   :confidence
+   :status])
+
 (def CampaignGetParams CampaignFieldsParam)
 
 (s/defschema CampaignByExternalIdQueryParams
@@ -112,7 +123,10 @@
     :put-capabilities :create-campaign
     :delete-capabilities :delete-campaign
     :search-capabilities :search-campaign
-    :external-id-capabilities :read-campaign}))
+    :external-id-capabilities :read-campaign
+    :can-aggregate? true
+    :histogram-fields campaign-histogram-fields
+    :enumerable-fields campaign-enumerable-fields}))
 
 (def capabilities
   #{:create-campaign

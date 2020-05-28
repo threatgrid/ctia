@@ -52,6 +52,13 @@
      :tool_version s/Str
      :sort_by tool-sort-fields})))
 
+(def tool-histogram-fields
+  [:timestamp])
+
+(def tool-enumerable-fields
+  [:source
+   :labels])
+
 (s/defschema ToolGetParams ToolFieldsParam)
 
 (s/defschema ToolByExternalIdQueryParams
@@ -82,7 +89,10 @@
     :put-capabilities :create-tool
     :delete-capabilities :delete-tool
     :search-capabilities :search-tool
-    :external-id-capabilities :read-tool}))
+    :external-id-capabilities :read-tool
+    :can-aggregate? true
+    :histogram-fields tool-histogram-fields
+    :enumerable-fields tool-enumerable-fields}))
 
 (def tool-entity
   {:route-context "/tool"

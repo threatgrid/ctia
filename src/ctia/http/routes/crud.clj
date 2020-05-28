@@ -79,11 +79,11 @@
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
         search-filters (st/dissoc search-q-params
-                                   :sort_by
-                                   :sort_order
-                                   :fields
-                                   :limit
-                                   :offset)
+                                  :sort_by
+                                  :sort_order
+                                  :fields
+                                  :limit
+                                  :offset)
         agg-search-schema (st/merge
                            search-filters
                            {:from s/Inst})

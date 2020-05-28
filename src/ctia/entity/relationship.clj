@@ -137,6 +137,13 @@
                       un-store)]
               (created stored-relationship))))))
 
+(def relationship-histogram-fields
+  [:timestamp])
+
+(def relationship-enumerable-fields
+  [:source
+   :relationship_type])
+
 (def relationship-routes
   (entity-crud-routes
    {:entity :relationship
@@ -155,7 +162,10 @@
     :put-capabilities :create-relationship
     :delete-capabilities :delete-relationship
     :search-capabilities :search-relationship
-    :external-id-capabilities :read-relationship}))
+    :external-id-capabilities :read-relationship
+    :can-aggregate? true
+    :histogram-fields relationship-histogram-fields
+    :enumerable-fields relationship-enumerable-fields}))
 
 (def capabilities
   #{:create-relationship

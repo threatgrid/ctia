@@ -94,6 +94,12 @@
 (s/defschema AttackPatternByExternalIdQueryParams
   (st/merge PagingParams AttackPatternFieldsParam))
 
+(def attack-pattern-enumerable-fields
+  [:source])
+
+(def attack-pattern-histogram-fields
+  [:timestamp])
+
 (def attack-pattern-routes
   (entity-crud-routes
    {:entity :attack-pattern
@@ -112,7 +118,10 @@
     :put-capabilities :create-attack-pattern
     :delete-capabilities :delete-attack-pattern
     :search-capabilities :search-attack-pattern
-    :external-id-capabilities :read-attack-pattern}))
+    :external-id-capabilities :read-attack-pattern
+    :can-aggregate? true
+    :histogram-fields attack-pattern-histogram-fields
+    :enumerable-fields attack-pattern-enumerable-fields}))
 
 (def AttackPatternType
   (let [{:keys [fields name description]}

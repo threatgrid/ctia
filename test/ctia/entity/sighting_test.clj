@@ -1,9 +1,11 @@
 (ns ctia.entity.sighting-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
+            [ctia.entity.sighting :as sut]
             [ctia.entity.sighting.schemas :refer [sighting-sort-fields
                                                   sighting-fields
                                                   sighting-enumerable-fields
+                                                  sighting-histogram-fields
                                                   NewSighting]]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
@@ -54,13 +56,10 @@
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "foogroup" "user")
-     (test-metric-routes {:entity :sighting
-                          :plural :sightings
-                          :entity-minimal new-sighting-minimal
-                          :enumerable-fields [:source
-                                              :sensor]
-                          :date-fields [:timestamp]
-                          :schema NewSighting}))))
+     (test-metric-routes (into sut/sighting-entity
+                               {:entity-minimal new-sighting-minimal
+                                :enumerable-fields sighting-enumerable-fields
+                                :date-fields sighting-histogram-fields})))))
 
 (deftest test-sighting-pagination-field-selection
   (test-for-each-store

@@ -101,6 +101,19 @@
 (def indicator-sort-fields
   (apply s/enum indicator-fields))
 
+(def indicator-enumerable-fields
+  [:source
+   :indicator_type
+   :likely_impact
+   :confidence
+   :producer
+   :tags])
+
+(def indicator-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
+
 (s/defschema IndicatorFieldsParam
   {(s/optional-key :fields) [indicator-sort-fields]})
 
@@ -149,7 +162,10 @@
     :put-capabilities :create-indicator
     :delete-capabilities :delete-indicator
     :search-capabilities :search-indicator
-    :external-id-capabilities :read-indicator}))
+    :external-id-capabilities :read-indicator
+    :can-aggregate? true
+    :histogram-fields indicator-histogram-fields
+    :enumerable-fields indicator-enumerable-fields}))
 
 (def capabilities
   #{:read-indicator

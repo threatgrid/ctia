@@ -79,6 +79,15 @@
      :assertions.value s/Str
      :sort_by identity-assertion-sort-fields})))
 
+(def identity-assertion-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
+
+(def identity-assertion-enumerable-fields
+  [:identity.observables.value
+   :identity.observables.type])
+
 (def IdentityAssertionGetParams IdentityAssertionFieldsParam)
 
 (s/defschema IdentityAssertionByExternalIdQueryParams
@@ -103,7 +112,10 @@
     :put-capabilities :create-identity-assertion
     :delete-capabilities :delete-identity-assertion
     :search-capabilities :search-identity-assertion
-    :external-id-capabilities :read-identity-assertion}))
+    :external-id-capabilities :read-identity-assertion
+    :can-aggregate? true
+    :enumerable-fields identity-assertion-enumerable-fields
+    :histogram-fields identity-assertion-histogram-fields}))
 
 (def capabilities
   #{:create-identity-assertion
