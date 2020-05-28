@@ -4,6 +4,7 @@
             [clj-momo.lib.clj-time.format :as tf]
             [ctia.test-helpers.core :as hc]
             [clojure.string :as string]
+            [clojure.pprint :refer [pprint]]
             [schema-generators.generators :as g]
             [ctia.http.routes.common :refer [now]]
             [schema-tools.core :as st]
@@ -73,11 +74,9 @@
 
 (defn- normalized-values
   [examples field]
-  (let [values (get-values examples field)
-        flattened (cond-> values
-                    (coll? (first values)) flatten-list-values)]
-    (map #(cond-> % (string? %) string/lower-case)
-         flattened)))
+  (let [values (get-values examples field)]
+    (cond-> values
+      (coll? (first values)) flatten-list-values)))
 
 (defn- check-from-to
   [from-str to-str]
@@ -91,13 +90,17 @@
             1)
         "[from to[ should not exceed one year")))
 
+(defn error-helper-msg
+  [explaining-values]
+  (str "values: \n"
+       (with-out-str (pprint explaining-values))))
+
 (defn- test-cardinality
   "test one field cardinality, examples are already created."
   [examples entity field]
   (testing (format "cardinality %s %s" entity field)
-    (let [expected (-> (normalized-values examples field)
-                       set
-                       count)
+    (let [unique-values (set (normalized-values examples field))
+          expected (count unique-values)
           _ (assert (pos? expected))
           {{:keys [from to]} :filters
            :as res} (cardinality entity
@@ -105,19 +108,19 @@
                                   :from "2020-01-01"}
                                  {:aggregate-on (name field)})]
       (is (= expected
-             (get-in (:data res) (parse-field field))))
+             (get-in (:data res) (parse-field field)))
+          (error-helper-msg unique-values))
       (check-from-to from to))))
 
 (defn- test-topn
   "test one field topn, examples are already created."
   [examples entity field limit]
   (testing (format "topn %s %s" entity field)
-    (let [expected (->> (normalized-values examples field)
+    (let [prepared (->> (normalized-values examples field)
                         frequencies
                         (sort-by val)
-                        reverse
-                        (take limit)
-                        vals)
+                        reverse)
+          expected (vals (take limit prepared))
           _ (assert (every? pos? expected))
           {{:keys [from to]} :filters
            :as res} (topn entity
@@ -127,7 +130,8 @@
       (is (= expected
              (->> (parse-field field)
                   (get-in (:data res))
-                  (map :value))))
+                  (map :value)))
+          (error-helper-msg prepared))
       (check-from-to from to))))
 
 (defn- to-granularity-first-day
@@ -201,6 +205,11 @@
           {}
           fields))
 
+(def string-generator
+  (->> (gen/sample gen/string-alphanumeric 20)
+       (map string/lower-case)
+       gen/elements))
+
 (defn generate-n-entity
   [{:keys [new-schema
            entity-minimal
@@ -212,9 +221,7 @@
     (doall
      (repeatedly n (fn [] (merge base-doc
                                  (g/generate enumerable-schema
-                                             {s/Str (gen/such-that #(< 3 (count %)) ;; easier value to simulate ES match
-                                                                   gen/string-alphanumeric
-                                                                   30)})
+                                             {s/Str string-generator})
                                  (generate-date-fields date-fields)))))))
 
 (defn test-metric-routes
