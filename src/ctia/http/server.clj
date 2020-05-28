@@ -54,7 +54,7 @@
 (defn _http-get [params url jwt]
   (log/infof "checkin JWT, GET %s" url)
   (http/get url
-            (into {:as :json-strict
+            (into {:as :json
                    :coerce :always
                    :throw-exceptions false
                    :headers {:Authorization (format "Bearer %s" jwt)}
