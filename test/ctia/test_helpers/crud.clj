@@ -33,6 +33,7 @@
         simple-handler (fn [es-params]
                          {:pre [(instance? clojure.lang.IAtom es-params)]}
                          (fn [{:keys [query-string]}]
+                           (assert (string? query-string) (pr-str query-string))
                            (swap! es-params (fn [old]
                                               {:pre [(nil? old)]
                                                :post [(string? %)]}
@@ -50,6 +51,7 @@
                                                        (parse-string true)
                                                        (get-in [:index :_type]))]
                                   (when-not (= "event" mapping-type)
+                                    (assert (string? query-string) (pr-str query-string))
                                     (swap! es-params (fn [old]
                                                        {:pre [(nil? old)]
                                                         :post [(string? %)]}
