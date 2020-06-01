@@ -38,7 +38,7 @@
                  [clj-time "0.15.2"]
                  [org.clojure/core.async "1.0.567"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
-                 [org.clojure/core.memoize "0.8.2"]
+                 [org.clojure/core.memoize "1.0.236"]
                  [org.clojure/tools.logging "1.0.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
@@ -73,7 +73,7 @@
                  [scopula "0.1.4"]
 
                  ;; clients
-                 [clj-http "3.10.0"] ;TODO bump clj-http with https://github.com/dakrone/clj-http/pull/532
+                 [clj-http "3.10.1"]
                  [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
 
                  ;; Metrics

@@ -253,7 +253,7 @@
 
           (let [feed-view-url (:feed_view_url updated-feed)
                 response (client/get feed-view-url
-                                     {:as :json-strict})
+                                     {:as :json})
                 response-body (:body response)]
 
             (is (= 200 (:status response)))
