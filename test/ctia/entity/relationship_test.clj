@@ -48,7 +48,7 @@
                                          "foogroup"
                                          "user")
 
-     (testing "POST /cita/relationship"
+     (testing "POST /ctia/relationship"
        (let [new-relationship
              (-> new-relationship-maximal
                  (assoc
