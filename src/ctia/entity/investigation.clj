@@ -56,6 +56,11 @@
 (def realize-investigation
   (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
 
+(def snapshot-action-fields-mapping
+  {:object_ids em/token
+   :targets em/sighting-target
+   :investigated_observables em/text})
+
 (def investigation-mapping
   {"investigation"
    {:dynamic false
@@ -64,7 +69,8 @@
      em/base-entity-mapping
      em/describable-entity-mapping
      em/sourcable-entity-mapping
-     em/stored-entity-mapping)}})
+     em/stored-entity-mapping
+     snapshot-action-fields-mapping)}})
 
 (def-es-store InvestigationStore :investigation
   StoredInvestigation
@@ -84,7 +90,10 @@
                          :type
                          :search-txt
                          :short_description
-                         :created_at])))
+                         :created_at
+                         :object_ids
+                         :investigated_observables
+                         :targets])))
 
 (s/defschema InvestigationFieldsParam
   {(s/optional-key :fields) [investigation-select-fields]})

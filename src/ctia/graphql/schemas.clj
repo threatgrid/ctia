@@ -14,7 +14,7 @@
    [ctia.entity.indicator :as indicator
     :refer [IndicatorConnectionType
             IndicatorType]]
-   [ctia.entity.investigation :as investigation
+   [ctia.entity.investigation.graphql-schemas :as investigation
     :refer [InvestigationConnectionType
             InvestigationType]]
    [ctia.entity.casebook :as casebook
@@ -71,13 +71,13 @@
                                    p/connection-arguments)
                       :resolve (res/search-entity-resolver :attack-pattern)}
     :incident {:type IncidentType
-                :args search-by-id-args
-                :resolve (res/entity-by-id-resolver :incident)}
+               :args search-by-id-args
+               :resolve (res/entity-by-id-resolver :incident)}
     :incidents {:type IncidentConnectionType
-                 :args (merge common/lucene-query-arguments
-                              incident/incident-order-arg
-                              p/connection-arguments)
-                 :resolve (res/search-entity-resolver :incident)}
+                :args (merge common/lucene-query-arguments
+                             incident/incident-order-arg
+                             p/connection-arguments)
+                :resolve (res/search-entity-resolver :incident)}
     :indicator {:type IndicatorType
                 :args search-by-id-args
                 :resolve (res/entity-by-id-resolver :indicator)}
