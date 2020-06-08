@@ -15,10 +15,32 @@
    DeleteEventType])
 
 (s/defschema Update
+  ;; simplified schema for Swagger UI
   {:field s/Keyword
-   :action s/Str
-   :change {:before s/Any
-            :after s/Any}})
+   :action (s/enum "modified" "added" "deleted")
+   :change (st/optional-keys
+             {:before s/Any
+              :after s/Any})}
+  ;; actual schema
+  #_
+  (s/conditional
+    map?
+    (s/conditional
+      (comp #{"modified"} :action)
+      {:field s/Keyword
+       :action s/Str
+       :change {:before s/Any
+                :after s/Any}}
+
+      (comp #{"added"} :action)
+      {:field s/Keyword
+       :action s/Str
+       :change {:after s/Any}}
+
+      (comp #{"deleted"} :action)
+      {:field s/Keyword
+       :action s/Str
+       :change {:before s/Any}})))
 
 (s/defschema Event
   (st/merge
