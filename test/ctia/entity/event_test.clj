@@ -437,10 +437,7 @@
                 (testing ":fields are correctly set"
                   (let [initial-id (get-in initial-incident [:parsed-body :id])
                         q (uri/uri-encode
-                            (format "entity.id:\"%s\" OR entity.source_ref:\"%s\" OR entity.target_ref:\"%s\""
-                                    initial-id
-                                    initial-id
-                                    initial-id))
+                            (format "entity.id:\"%s\"" initial-id))
                         results (map :fields
                                      (:parsed-body (get (str "ctia/event/search?query=" q)
                                                         :content-type :json
