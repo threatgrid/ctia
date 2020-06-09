@@ -39,7 +39,7 @@
                  [org.clojure/core.async "1.0.567"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
                  [org.clojure/core.memoize "1.0.236"]
-                 [org.clojure/tools.logging "1.0.0"]
+                 [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
 
