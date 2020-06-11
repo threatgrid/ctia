@@ -222,7 +222,6 @@
                                      {:created "08-15-1953"
                                       :modified "04-29-2019"}))))
 
-
 (deftest get-target-stores-test
   (let [{:keys [tool malware]}
         (sut/get-target-stores "0.0.0" [:tool :malware])]
@@ -854,7 +853,6 @@
       (is (thrown? clojure.lang.ExceptionInfo
                    (sut/get-migration migration-id-1 es-conn))
           "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
-
       (testing "stored document shall not contains object stores in source and target"
         (let [{:keys [stores]} (es-doc/get-doc es-conn
                                                "ctia_migration"
