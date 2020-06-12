@@ -283,9 +283,11 @@
            store-keys]} :- MigrationParams]
   (doseq [store-key store-keys]
     (let [index (get-in @properties [:ctia :store :es store-key :indexname])]
-      (assert (not= (mst/prefixed-index index prefix)
-                    index)
-              (format "the source and target indices are identical. The migration was misconfigured."))))
+      (when (= (mst/prefixed-index index prefix)
+               index)
+        (throw (AssertionError.
+                (format "the source and target indices are identical: %s. The migration was misconfigured."
+                        index))))))
   true)
 
 (s/defn ^:always-validate run-migration
