@@ -71,14 +71,23 @@
          ~sch
          CTIAStoredEntity)))))
 
-(defmacro def-acl-schema [name-sym ddl spec-kw-ns]
+(defmacro def-advanced-acl-schema [{:keys [name-sym
+                                           ddl
+                                           spec-kw-ns
+                                           open?]}]
   `(do
      (s/defschema ~name-sym
-       (csutils/recursive-open-schema-version
-        (st/merge
-         (f-schema/->schema ~ddl)
-         CTIAEntity)))
+       (cond-> (csutils/recursive-open-schema-version
+                (st/merge
+                 (f-schema/->schema ~ddl)
+                 CTIAEntity))
+         ~open? st/open-schema))
      (f-spec/->spec ~ddl ~spec-kw-ns)))
+
+(defmacro def-acl-schema [name-sym ddl spec-kw-ns]
+  `(def-advanced-acl-schema {:name-sym ~name-sym
+                             :ddl ~ddl
+                             :spec-kw-ns ~spec-kw-ns}))
 
 ;; verdict
 

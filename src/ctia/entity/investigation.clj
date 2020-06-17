@@ -17,7 +17,7 @@
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
-            [ctim.schemas.investigation :as inv]
+            [ctia.entity.investigation.schemas :as inv]
             [flanders
              [schema :as f-schema]
              [spec :as f-spec]
@@ -25,36 +25,6 @@
             [schema-tools.core :as st]
             [schema.core :as s]
             [ctia.schemas.graphql.ownership :as go]))
-
-(s/defschema Investigation
-  (st/merge (f-schema/->schema inv/Investigation)
-            CTIAEntity
-            {s/Keyword s/Any}))
-
-(f-spec/->spec inv/Investigation "investigation")
-
-(s/defschema PartialInvestigation
-  (st/merge (f-schema/->schema (fu/optionalize-all inv/Investigation))
-            CTIAEntity
-            {s/Keyword s/Any}))
-
-(s/defschema PartialInvestigationList
-  [PartialInvestigation])
-
-(s/defschema NewInvestigation
-  (st/merge (f-schema/->schema inv/NewInvestigation)
-            CTIAEntity
-            {s/Keyword s/Any}))
-
-(f-spec/->spec inv/NewInvestigation "new-investigation")
-
-(def-stored-schema StoredInvestigation Investigation)
-
-(s/defschema PartialStoredInvestigation
-  (csu/optional-keys-schema StoredInvestigation))
-
-(def realize-investigation
-  (default-realize-fn "investigation" NewInvestigation StoredInvestigation))
 
 (def snapshot-action-fields-mapping
   {:object_ids em/token
@@ -73,8 +43,8 @@
      snapshot-action-fields-mapping)}})
 
 (def-es-store InvestigationStore :investigation
-  StoredInvestigation
-  PartialStoredInvestigation)
+  inv/StoredInvestigation
+  inv/PartialStoredInvestigation)
 
 (def investigation-fields
   (concat sorting/default-entity-sort-fields
@@ -113,29 +83,6 @@
    InvestigationFieldsParam
    PagingParams))
 
-(def InvestigationType
-  (let [{:keys [fields name description]}
-        (flanders/->graphql
-         (fu/optionalize-all inv/Investigation)
-         {})]
-    (g/new-object
-     name
-     description
-     []
-     (merge
-      fields go/graphql-ownership-fields))))
-
-(def investigation-order-arg
-  (graphql-sorting/order-by-arg
-   "InvestigationOrder"
-   "investigations"
-   (into {}
-         (map (juxt graphql-sorting/sorting-kw->enum-name name)
-              investigation-fields))))
-
-(def InvestigationConnectionType
-  (pagination/new-connection InvestigationType))
-
 (def investigation-enumerable-fields
   [:source])
 
@@ -145,16 +92,16 @@
 (def investigation-routes
   (entity-crud-routes
    {:entity :investigation
-    :new-schema NewInvestigation
-    :entity-schema Investigation
-    :get-schema PartialInvestigation
+    :new-schema inv/NewInvestigation
+    :entity-schema inv/Investigation
+    :get-schema inv/PartialInvestigation
     :get-params InvestigationGetParams
-    :list-schema PartialInvestigationList
-    :search-schema PartialInvestigationList
+    :list-schema inv/PartialInvestigationList
+    :search-schema inv/PartialInvestigationList
     :external-id-q-params InvestigationsByExternalIdQueryParams
     :search-q-params InvestigationSearchParams
     :new-spec :new-investigation/map
-    :realize-fn realize-investigation
+    :realize-fn inv/realize-investigation
     :get-capabilities :read-investigation
     :post-capabilities :create-investigation
     :put-capabilities :create-investigation
@@ -178,13 +125,13 @@
    :entity :investigation
    :plural :investigations
    :new-spec :new-investigation/map
-   :schema Investigation
-   :partial-schema PartialInvestigation
-   :partial-list-schema PartialInvestigationList
-   :new-schema NewInvestigation
-   :stored-schema StoredInvestigation
-   :partial-stored-schema PartialStoredInvestigation
-   :realize-fn realize-investigation
+   :schema inv/Investigation
+   :partial-schema inv/PartialInvestigation
+   :partial-list-schema inv/PartialInvestigationList
+   :new-schema inv/NewInvestigation
+   :stored-schema inv/StoredInvestigation
+   :partial-stored-schema inv/PartialStoredInvestigation
+   :realize-fn inv/realize-investigation
    :es-store ->InvestigationStore
    :es-mapping investigation-mapping
    :routes investigation-routes

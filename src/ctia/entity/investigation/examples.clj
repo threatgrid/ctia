@@ -28,7 +28,10 @@
    :short_description "short desc"
    :source "a source"
    :source_uri "http://example.com/somewhere-else"
-   :tlp "green"})
+   :tlp "green"
+   ;; add extra actual fields that were actually inserted in the store due to the open schema.
+   "search-txt" "sha256:585c2a90e4928f67af7be2d0bdc282b7eb6c90113ae588461a441d31b5268e88"
+   "actions" "[{\"uuid\":\"cae31704-9454-4428-afac-711e41a7ae24\",\"state\":\"ok\",\"updated\":\"2019-01-02T17:48:32.099Z\",\"type\":\"collect\", ...}]"})
 
 (def investigation-minimal
   {:id "http://ex.tld/ctia/investigation/investigation-2805d697-66b3-4e14-9b32-179e7a72eab6"
