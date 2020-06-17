@@ -546,7 +546,7 @@ when confirm? is true, it stores this state and creates the target indices."
     (when confirm?
       (store-migration migration (:conn es-conn-state))
       (doseq [[_ target-store] target-stores]
-              (create-target-store! target-store)))
+        (create-target-store! target-store)))
     migration))
 
 (s/defn with-store-map :- MigratedStore

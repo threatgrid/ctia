@@ -33,7 +33,9 @@
             [ctia.stores.es.store :refer [store->map]]
             [ctia.store :refer [stores]])
   (:import (java.text SimpleDateFormat)
-           (java.util Date)))
+           (java.util Date)
+           (java.lang AssertionError)
+           (clojure.lang ExceptionInfo)))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -108,6 +110,32 @@
     (random-updates bulk-res-1 (/ updates-nb 2))
     (random-updates bulk-res-2 (/ updates-nb 2))))
 
+(deftest check-migration-params-test
+  (let [migration-params {:migration-id "id"
+                          :prefix       "1.2.0"
+                          :migrations   [:identity]
+                          :store-keys   [:incident :investigation :malware]
+                          :batch-size   100
+                          :buffer-size  3
+                          :confirm? true
+                          :restart? false}]
+    (testing "misconfigured migration"
+      (with-redefs [props/properties (atom (-> (assoc-in @props/properties
+                                                         [:ctia :store :es :investigation :indexname]
+                                                         "v1.2.0_ctia_investigation")
+                                               (assoc-in [:malware 0 :state :props :indexname]
+                                                         "v1.2.0_ctia_malware")))]
+        (is (thrown? AssertionError
+                     (sut/check-migration-params migration-params))
+            "source and target store must be different"))
+      (is (thrown? ExceptionInfo
+                   (sut/check-migration-params (update migration-params
+                                                           :migrations
+                                                           conj
+                                                           :bad-migration-id)))))
+    (testing "properly configured migration"
+      (is (sut/check-migration-params migration-params)))))
+
 (deftest migration-with-rollover
   (helpers/set-capabilities! "foouser"
                              ["foogroup"]
@@ -124,14 +152,14 @@
       (doseq [store-type store-types]
         (es-index/get es-conn
                       (str (get-in es-props [store-type :indexname]) "*")))
-      (sut/migrate-store-indexes "test-3"
-                                 "0.0.0"
-                                 [:__test]
-                                 store-types
-                                 10
-                                 3
-                                 true
-                                 false)
+      (sut/migrate-store-indexes {:migration-id "test-3"
+                                  :prefix       "0.0.0"
+                                  :migrations   [:__test]
+                                  :store-keys   store-types
+                                  :batch-size   10
+                                  :buffer-size  3
+                                  :confirm?     true
+                                  :restart?     false})
 
       (let [migration-state (es-doc/get-doc es-conn
                                             migration-index
@@ -341,14 +369,14 @@
           logger-1 (atom [])
           _ (es-helpers/load-bulk es-conn bulk-1)
           _ (with-atom-logger logger-1
-              (sut/migrate-store-indexes "migration-test-4"
-                                         "0.0.0"
-                                         [:__test]
-                                         [:relationship]
-                                         100
-                                         3
-                                         true
-                                         false))
+              (sut/migrate-store-indexes {:migration-id "migration-test-4"
+                                          :prefix       "0.0.0"
+                                          :migrations   [:__test]
+                                          :store-keys   [:relationship]
+                                          :batch-size   100
+                                          :buffer-size  3
+                                          :confirm?     true
+                                          :restart?     false}))
           migration-state-1 (es-doc/get-doc es-conn
                                             migration-index
                                             "migration"
@@ -359,16 +387,15 @@
                                             "relationship"
                                             nil)
           _ (es-helpers/load-bulk es-conn bulk-2)
-          logger-2 (atom [])
           _ (with-atom-logger logger-1
-              (sut/migrate-store-indexes "migration-test-4"
-                                         "0.0.0"
-                                         [:__test]
-                                         [:relationship]
-                                         100
-                                         3
-                                         true
-                                         true))
+              (sut/migrate-store-indexes {:migration-id "migration-test-4"
+                                          :prefix       "0.0.0"
+                                          :migrations   [:__test]
+                                          :store-keys   [:relationship]
+                                          :batch-size   100
+                                          :buffer-size  3
+                                          :confirm?     true
+                                          :restart?     true}))
           target-count-2 (es-doc/count-docs es-conn
                                             "v0.0.0_ctia_relationship"
                                             "relationship"
@@ -415,14 +442,14 @@
                            bad-doc
                            "true"))
       (with-atom-logger logger
-        (sut/migrate-store-indexes "test-3"
-                                   "0.0.0"
-                                   [:__test]
-                                   store-types
-                                   10
-                                   3
-                                   true
-                                   false))
+        (sut/migrate-store-indexes {:migration-id "test-3"
+                                    :prefix       "0.0.0"
+                                    :migrations   [:__test]
+                                    :store-keys   store-types
+                                    :batch-size   10
+                                    :buffer-size  3
+                                    :confirm?     true
+                                    :restart?     false}))
       (let [messages (set @logger)
             migration-state (es-doc/get-doc es-conn
                                             migration-index
@@ -454,14 +481,14 @@
   (rollover-post-bulk)
   (testing "migrate ES Stores test setup"
     (testing "simulate migrate es indexes shall not create any document"
-      (sut/migrate-store-indexes "test-1"
-                                 "0.0.0"
-                                 [:0.4.16]
-                                 (keys @stores)
-                                 10
-                                 3
-                                 false
-                                 false)
+      (sut/migrate-store-indexes {:migration-id "test-1"
+                                  :prefix       "0.0.0"
+                                  :migrations   [:0.4.16]
+                                  :store-keys   (keys @stores)
+                                  :batch-size   10
+                                  :buffer-size  3
+                                  :confirm?     false
+                                  :restart?     false})
 
       (doseq [store (vals @stores)]
         (is (not (index-exists? store "0.0.0"))))
@@ -473,14 +500,14 @@
   (testing "migrate es indexes"
     (let [logger (atom [])]
       (with-atom-logger logger
-        (sut/migrate-store-indexes "test-2"
-                                   "0.0.0"
-                                   [:__test]
-                                   (keys @stores)
-                                   10
-                                   3
-                                   true
-                                   false))
+        (sut/migrate-store-indexes {:migration-id "test-2"
+                                    :prefix       "0.0.0"
+                                    :migrations   [:__test]
+                                    :store-keys   (keys @stores)
+                                    :batch-size   10
+                                    :buffer-size  3
+                                    :confirm?     true
+                                    :restart?     false}))
       (testing "shall generate a proper migration state"
         (let [migration-state (es-doc/get-doc es-conn
                                               migration-index
@@ -547,7 +574,6 @@
                       indicator
                       campaign
                       sighting
-                      identity-assertion
                       casebook
                       actor
                       vulnerability
@@ -667,14 +693,15 @@
           (doseq [sighting-id sighting-ids]
             (delete (format "ctia/sighting/%s" sighting-id)
                     :headers {"Authorization" "45c1f5e3f05d0"}))
-          (sut/migrate-store-indexes "test-2"
-                                     "0.0.0"
-                                     [:__test]
-                                     (keys @stores)
-                                     2 ;; small batch to check proper delete paging
-                                     1
-                                     true
-                                     true)
+          (sut/migrate-store-indexes {:migration-id "test-2"
+                                      :prefix       "0.0.0"
+                                      :migrations   [:__test]
+                                      :store-keys   (keys @stores)
+                                      ;; small batch to check proper delete paging
+                                      :batch-size   2
+                                      :buffer-size  1
+                                      :confirm?     true
+                                      :restart?     true})
           (let [migration-state (get-migration "test-2" es-conn)
                 malware-migration (get-in migration-state [:stores :malware])
                 sighting-migration (get-in migration-state [:stores :sighting])
@@ -714,14 +741,14 @@
           migration-id (format "test-load-%s" batch-size)
           prefix (format "test_load_%s" batch-size)
           start (System/currentTimeMillis)
-          _ (sut/migrate-store-indexes migration-id
-                                       prefix
-                                       [:__test]
-                                       (into [] example-types)
-                                       batch-size
-                                       3
-                                       true
-                                       false)
+          _ (sut/migrate-store-indexes {:migration-id migration-id
+                                        :prefix       prefix
+                                        :migrations   [:__test]
+                                        :store-keys   (into [] example-types)
+                                        :batch-size   batch-size
+                                        :buffer-size  3
+                                        :confirm?     true
+                                        :restart?     false})
           end (System/currentTimeMillis)
           total (/ (- end start) 1000)
           doc-per-sec (/ total-docs total)
@@ -732,7 +759,7 @@
                                           {})]
       (println "total: " (float total))
       (println "documents per seconds: " (float doc-per-sec))
-      (doseq [[k state] (:stores migration-state)]
+      (doseq [[_ state] (:stores migration-state)]
         (is (= 20000
                (get-in state [:source :total])
                (get-in state [:target :migrated]))))
