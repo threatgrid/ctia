@@ -1,30 +1,14 @@
 (ns ctia.entity.investigation
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.store :refer :all]
-            [ctia.http.routes
-             [common :refer [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
-             [crud :refer [entity-crud-routes]]]
-            [ctia.schemas
-             [utils :as csu]
-             [core :refer [def-stored-schema
-                           CTIAEntity]]
-             [sorting :as sorting]]
-            [ctia.schemas.graphql
-             [sorting :as graphql-sorting]
-             [flanders :as flanders]
-             [helpers :as g]
-             [pagination :as pagination]]
-            [ctia.stores.es
-             [mapping :as em]
-             [store :refer [def-es-store]]]
-            [ctia.entity.investigation.schemas :as inv]
-            [flanders
-             [schema :as f-schema]
-             [spec :as f-spec]
-             [utils :as fu]]
+  (:require [ctia.entity.investigation.schemas :as inv]
+            [ctia.http.routes.common
+             :refer
+             [BaseEntityFilterParams PagingParams SourcableEntityFilterParams]]
+            [ctia.http.routes.crud :refer [entity-crud-routes]]
+            [ctia.schemas.sorting :as sorting]
+            [ctia.stores.es.mapping :as em]
+            [ctia.stores.es.store :refer [def-es-store]]
             [schema-tools.core :as st]
-            [schema.core :as s]
-            [ctia.schemas.graphql.ownership :as go]))
+            [schema.core :as s]))
 
 (def snapshot-action-fields-mapping
   {:object_ids em/token

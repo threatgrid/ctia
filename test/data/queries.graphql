@@ -265,6 +265,17 @@ query InvestigationsQueryTest($query: String, $after: String, $first: Int, $sort
   }
 }
 
+fragment identitySpecificationFields on IdentitySpecification {
+  type
+  os
+  observables {
+    ...observableBaseFields
+  }
+  observed_time {
+    ...observedTimeFields
+  }
+}
+
 fragment investigationFields on Investigation {
   id
   type
@@ -275,6 +286,9 @@ fragment investigationFields on Investigation {
   source
   owner
   groups
+  object_ids
+  investigated_observables
+  targets { ...identitySpecificationFields }
 }
 
 query CasebookQueryTest($id: String!) {

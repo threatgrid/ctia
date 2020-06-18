@@ -21,7 +21,8 @@
    :investigated_observables ["sha256:585c2a90e4928f67af7be2d0bdc282b7eb6c90113ae588461a441d31b5268e88"]
    :targets [{:type "endpoint"
               :observables [{:value "Demo_iOS_3", :type "hostname"}]
-              :observed_time {:start_time "2019-04-01T20:45:11.000Z"}
+              :observed_time {:start_time "2019-04-01T20:45:11.000Z"
+                              :end_time "2020-04-01T20:45:11.000Z"}
               :os "iOS 10.3 (1)"}]
    :title "investigation-title"
    :description "description"
