@@ -104,16 +104,6 @@
    "valid_time" {"start_time" "2016-05-11T00:40:48.000Z"
                  "end_time" "2025-07-11T00:40:48.000Z"}})
 
-(def investigation-1
-  {"source" "foo"
-   "timestamp" #inst "2042-01-01T00:00:00.000Z"
-   "title" "foo"})
-
-(def investigation-2
-  {"source" "bar"
-   "timestamp" #inst "2042-01-01T00:00:00.000Z"
-   "title" "foo"})
-
 (def sighting-1
   {"description" "Hostnames that have resolved to 194.87.217.88"
    "confidence" "High"
@@ -174,8 +164,6 @@
   (let [i1  (gh/create-object "indicator" indicator-1)
         i2  (gh/create-object "indicator" indicator-2)
         i3  (gh/create-object "indicator" indicator-3)
-        in1 (gh/create-object "investigation" investigation-1)
-        in2 (gh/create-object "investigation" investigation-2)
         j1  (gh/create-object "judgement" judgement-1)
         j2  (gh/create-object "judgement" judgement-2)
         j3  (gh/create-object "judgement" judgement-3)
@@ -232,8 +220,6 @@
     {:indicator-1 i1
      :indicator-2 i2
      :indicator-3 i3
-     :investigation-1 in1
-     :investigation-2 in2
      :judgement-1 j1
      :judgement-2 j2
      :judgement-3 j3
@@ -257,7 +243,6 @@
            indicator-1-id (get-in datamap [:indicator-1 :id])
            indicator-2-id (get-in datamap [:indicator-2 :id])
            indicator-3-id (get-in datamap [:indicator-3 :id])
-           investigation-1-id (get-in datamap [:investigation-1 :id])
            casebook-1-id (get-in datamap [:casebook-1 :id])
            judgement-1-id (get-in datamap [:judgement-1 :id])
            sighting-1-id (get-in datamap [:sighting-1 :id])
@@ -509,54 +494,6 @@
                (is (= [(:indicator-1 datamap)]
                       (get-in data [:indicators :nodes]))
                    "The indicator matches the search query"))))
-
-         (testing "investigation query"
-           (let [{:keys [data errors status]}
-                 (gh/query graphql-queries
-                           {:id investigation-1-id}
-                           "InvestigationQueryTest")]
-
-             (is (= 200 status))
-             (is (empty? errors) "No errors")
-
-             (testing "the investigation"
-               (is (= (:investigation-1 datamap)
-                      (:investigation data))))))
-
-         (testing "investigations query"
-           (testing "investigations connection"
-             (gh/connection-test "InvestigationsQueryTest"
-                                 graphql-queries
-                                 {"query" "*"}
-                                 [:investigations]
-                                 (map #(merge % ownership-data-fixture)
-                                      [(:investigation-1 datamap)
-                                       (:investigation-2 datamap)]))
-
-             (testing "sorting"
-               (gh/connection-sort-test
-                "InvestigationsQueryTest"
-                graphql-queries
-                {:query "*"}
-                [:investigations]
-                ctia.entity.investigation/investigation-fields)))
-
-
-
-           (testing "query argument"
-             (let [{:keys [data errors status]}
-                   (gh/query graphql-queries
-                             {:query "source:\"foo\""}
-                             "InvestigationsQueryTest")]
-               (is (= 200 status))
-               (is (empty? errors) "No errors")
-               (is (= 1 (get-in data [:investigations :totalCount]))
-                   "Only one investigation matches to the query")
-               (is (= [(:investigation-1 datamap)]
-                      (get-in data [:investigations :nodes]))
-                   "The investigation matches the search query"))))
-
-                                        ;------------------
 
          (testing "casebook query"
            (let [{:keys [data errors status]}

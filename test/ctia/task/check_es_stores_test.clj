@@ -10,7 +10,7 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :refer [make-transient-id]]
-            [ctia.entity.examples.investigations :refer [investigation-minimal]]
+            [ctia.entity.investigation.examples :refer [investigation-minimal]]
             [ctim.examples
              [actors :refer [actor-minimal]]
              [attack-patterns :refer [attack-pattern-minimal]]
