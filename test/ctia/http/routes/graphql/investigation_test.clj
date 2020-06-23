@@ -25,21 +25,11 @@
                       (fixt/randomize investigation-maximal)
                       :source "ngfw"))
 
-(defn select-graphql-fields
+(defn prepare-result
   [investigation]
-  (select-keys investigation
-               [:id
-                :type
-                :schema_version
-                :title
-                :timestamp
-                :tlp
-                :source
-                :owner
-                :groups
-                :object_ids
-                :investigated_observables
-                :targets]))
+  (dissoc investigation
+          :actions
+          :search-txt))
 
 (deftest investigation-graphql-test
   (test-for-each-store
@@ -49,11 +39,24 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [inv1 (select-graphql-fields
+     (let [inv1 (prepare-result
                  (gh/create-object "investigation" investigation-1))
-           inv2 (select-graphql-fields
+           inv2 (prepare-result
                  (gh/create-object "investigation" investigation-2))
-           graphql-queries (slurp "test/data/queries.graphql")]
+           graphql-queries (slurp "test/data/investigation.graphql")]
+
+       (testing "investigation query"
+         (let [{:keys [data errors status]}
+               (gh/query graphql-queries
+                         {:id (:id inv1)}
+                         "InvestigationQueryTest")]
+
+           (is (= 200 status))
+           (is (empty? errors) "No errors")
+
+           (testing "the investigation"
+             (is (= inv1
+                    (:investigation data))))))
        (testing "investigations query"
          (testing "investigations connection"
            (gh/connection-test "InvestigationsQueryTest"

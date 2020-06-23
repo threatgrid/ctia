@@ -242,55 +242,6 @@ fragment indicatorFields on Indicator {
   groups
 }
 
-query InvestigationQueryTest($id: String!) {
-  investigation(id: $id) {
-    ...investigationFields
-  }
-}
-
-query InvestigationsQueryTest($query: String, $after: String, $first: Int, $sort_field:InvestigationOrderField = ID, $sort_direction: OrderDirection = asc) {
-  investigations(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
-    totalCount
-    pageInfo {
-      ...pageInfoFields
-    }
-    nodes {
-      ...investigationFields
-    }
-    edges {
-      node {
-        ...investigationFields
-      }
-    }
-  }
-}
-
-fragment identitySpecificationFields on IdentitySpecification {
-  type
-  os
-  observables {
-    ...observableBaseFields
-  }
-  observed_time {
-    ...observedTimeFields
-  }
-}
-
-fragment investigationFields on Investigation {
-  id
-  type
-  schema_version
-  title
-  timestamp
-  tlp
-  source
-  owner
-  groups
-  object_ids
-  investigated_observables
-  targets { ...identitySpecificationFields }
-}
-
 query CasebookQueryTest($id: String!) {
   casebook(id: $id) {
     ...casebookFields
