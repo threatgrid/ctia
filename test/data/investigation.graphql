@@ -51,6 +51,7 @@ fragment investigationFields on Investigation {
   groups
   external_ids
   external_references { ...externalReferenceFields}
+  actions
   object_ids
   investigated_observables
   targets { ...identitySpecificationFields }

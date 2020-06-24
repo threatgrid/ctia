@@ -28,7 +28,6 @@
 (defn prepare-result
   [investigation]
   (dissoc investigation
-          :actions
           :search-txt))
 
 (deftest investigation-graphql-test
