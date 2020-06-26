@@ -5,20 +5,30 @@
    [flanders.utils :as fu]
    [ctia.schemas
     [utils :as csu]
-    [core :refer [def-acl-schema
+    [core :refer [def-advanced-acl-schema
                   def-stored-schema]]]
    [schema.core :as s]))
 
-(def-acl-schema Investigation f-inv/Investigation "investigation")
+(def-advanced-acl-schema
+  {:name-sym Investigation
+   :ddl f-inv/Investigation
+   :spec-kw-ns "investigation"
+   :open? true})
 
-(def-acl-schema PartialInvestigation
-  (fu/optionalize-all f-inv/Investigation)
-  "partial-investigation")
+(def-advanced-acl-schema
+  {:name-sym PartialInvestigation
+   :ddl (fu/optionalize-all f-inv/Investigation)
+   :spec-kw-ns "partial-investigation"
+   :open? true})
 
 (s/defschema PartialInvestigationList
   [PartialInvestigation])
 
-(def-acl-schema NewInvestigation f-inv/NewInvestigation "new-investigation")
+(def-advanced-acl-schema
+  {:name-sym NewInvestigation
+   :ddl f-inv/NewInvestigation
+   :spec-kw-ns "new-investigation"
+   :open? true})
 
 (def-stored-schema StoredInvestigation Investigation)
 

@@ -21,14 +21,18 @@
    :investigated_observables ["sha256:585c2a90e4928f67af7be2d0bdc282b7eb6c90113ae588461a441d31b5268e88"]
    :targets [{:type "endpoint"
               :observables [{:value "Demo_iOS_3", :type "hostname"}]
-              :observed_time {:start_time "2019-04-01T20:45:11.000Z"}
+              :observed_time {:start_time "2019-04-01T20:45:11.000Z"
+                              :end_time "2020-04-01T20:45:11.000Z"}
               :os "iOS 10.3 (1)"}]
    :title "investigation-title"
    :description "description"
    :short_description "short desc"
    :source "a source"
    :source_uri "http://example.com/somewhere-else"
-   :tlp "green"})
+   :tlp "green"
+   ;; add extra actual fields that were actually inserted in the store due to the open schema.
+   "search-txt" "sha256:585c2a90e4928f67af7be2d0bdc282b7eb6c90113ae588461a441d31b5268e88"
+   "actions" "[{\"uuid\":\"cae31704-9454-4428-afac-711e41a7ae24\",\"state\":\"ok\",\"updated\":\"2019-01-02T17:48:32.099Z\",\"type\":\"collect\", ...}]"})
 
 (def investigation-minimal
   {:id "http://ex.tld/ctia/investigation/investigation-2805d697-66b3-4e14-9b32-179e7a72eab6"

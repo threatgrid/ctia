@@ -1,0 +1,81 @@
+fragment pageInfoFields on PageInfo {
+  hasNextPage
+  hasPreviousPage
+  startCursor
+  endCursor
+}
+
+fragment externalReferenceFields on ExternalReference {
+  source_name
+  external_id
+  url
+  description
+  hashes
+}
+
+fragment observableBaseFields on Observable {
+  type
+  value
+}
+
+fragment observedTimeFields on ObservedTime {
+  start_time
+  end_time
+}
+
+fragment identitySpecificationFields on IdentitySpecification {
+  type
+  os
+  observables {
+    ...observableBaseFields
+  }
+  observed_time {
+    ...observedTimeFields
+  }
+}
+
+fragment investigationFields on Investigation {
+  id
+  type
+  schema_version
+  revision
+  language
+  description
+  short_description
+  title
+  timestamp
+  tlp
+  source
+  source_uri
+  owner
+  groups
+  external_ids
+  external_references { ...externalReferenceFields}
+  actions
+  object_ids
+  investigated_observables
+  targets { ...identitySpecificationFields }
+}
+
+query InvestigationsQueryTest($query: String, $after: String, $first: Int, $sort_field:InvestigationOrderField = ID, $sort_direction: OrderDirection = asc) {
+  investigations(first: $first, after: $after, query: $query, orderBy: [{field: $sort_field, direction: $sort_direction}, {field: ID, direction: $sort_direction}]) {
+    totalCount
+    pageInfo {
+      ...pageInfoFields
+    }
+    nodes {
+      ...investigationFields
+    }
+    edges {
+      node {
+        ...investigationFields
+      }
+    }
+  }
+}
+
+query InvestigationQueryTest($id: String!) {
+  investigation(id: $id) {
+    ...investigationFields
+  }
+}
