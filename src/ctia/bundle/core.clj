@@ -166,23 +166,18 @@
                              first
                              :entity
                              with-long-id
-                             ent/un-store)
-          num-old-entities (count old-entities)]
+                             ent/un-store)]
+      (when (< (count old-entities) 1)
+        (log/warn
+         (format
+          (str "More than one entity is "
+               "linked to the external id %s (%s)")
+          external_id
+          (pr-str (map :id old-entities)))))
       (cond-> entity-data
         ;; only one entity linked to the external ID
-        (and old-entity
-             (= num-old-entities 1)) (assoc :result "exists"
-                                            ;;:old-entity old-entity
-                                            :id (:id old-entity))
-        ;; more than one entity linked to the external ID
-        (> num-old-entities 1)
-        (assoc :result "error"
-               :error
-               (format
-                (str "More than one entity is "
-                     "linked to the external id %s (%s)")
-                external_id
-                (pr-str (map :id old-entities))))))
+        old-entity (assoc :result "exists"
+                          :id (:id old-entity))))
     entity-data))
 
 (s/defn with-existing-entities :- [EntityImportData]
