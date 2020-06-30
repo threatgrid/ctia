@@ -31,8 +31,6 @@
   [id]
   (and id (re-matches id/transient-id-re id)))
 
-(def default-external-key-prefixes "ctia-")
-
 (defn debug [msg v]
   (log/debug msg v)
   v)
@@ -46,8 +44,10 @@
   "Returns the external ID that can be used to check whether an entity has
   already been imported or not."
   [external-ids key-prefixes]
-  (let [valid-external-ids (mapcat #(prefixed-external-ids % external-ids)
-                                   key-prefixes)]
+  (let [valid-external-ids (if (seq key-prefixes)
+                             (mapcat #(prefixed-external-ids % external-ids)
+                                     key-prefixes)
+                             external-ids)]
     (if (> (count valid-external-ids) 1)
       (log/warnf (str "More than 1 valid external ID has been found "
                       "(key-prefixes:%s | external-ids:%s)")
@@ -66,11 +66,7 @@
   [{:keys [id external_ids] :as entity}
    entity-type
    external-key-prefixes]
-  (let [key-prefixes (parse-key-prefixes
-                      (or external-key-prefixes
-                          (get-in @properties
-                                  [:ctia :store :external-key-prefixes]
-                                  default-external-key-prefixes)))
+  (let [key-prefixes (parse-key-prefixes external-key-prefixes)
         external_id (valid-external-id external_ids key-prefixes)]
     (when-not external_id
       (log/warnf "No valid external ID has been provided (id:%s)" id))
