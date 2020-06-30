@@ -1,6 +1,6 @@
 (ns ctia.bundle.core-test
   (:require [ctia.bundle.core :as sut]
-            [clojure.tools.logging.test :refer [logged? with-log the-log]]
+            [clojure.tools.logging.test :refer [logged? with-log]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.flows.crud :refer [make-id]]
             [clojure.test :as t :refer [deftest use-fixtures join-fixtures are is testing]]
@@ -56,29 +56,38 @@
           indicator-id-2 (make-id "indicator")
           indicator-id-3 (make-id "indicator")
           new-indicator {:id indicator-id-3
-                         :external_id "swe-alarm-indicator-1"}]
-      (testing "no existing external id"
-        (is (= {:id indicator-id-3
-                :external_id "swe-alarm-indicator-1"}
-               (sut/with-existing-entity
-                 new-indicator
-                 (constantly [])))))
-      (testing "1 existing external id"
-        (is (= (with-long-id {:result "exists"
-                              :external_id "swe-alarm-indicator-1"
-                              :id indicator-id-1})
-               (sut/with-existing-entity
-                 new-indicator
-                 (constantly [{:entity {:id indicator-id-1}}])))))
-      (with-log
-        (testing "more than 1 existing external id"
-          (is (= (with-long-id {:result "exists"
-                                :external_id "swe-alarm-indicator-1"
-                                :id indicator-id-2})
-                 (sut/with-existing-entity
-                   new-indicator
-                   (constantly [{:entity {:id indicator-id-2}}
-                                {:entity {:id indicator-id-1}}]))))
-          (is (logged? 'ctia.bundle.core
-                       :warn
-                       #"More than one entity is linked to the external id swe-alarm-indicator-1")))))))
+                         :external_id "swe-alarm-indicator-1"}
+          find-by-ext-id (fn [existing-ids]
+                           (constantly
+                            (map (fn [old-id]
+                                   {:entity {:id old-id}})
+                                 existing-ids)))
+          test-fn (fn [{:keys [msg expected existing-ids log?]}]
+                    (with-log
+                      (testing msg
+                        (is (= expected
+                               (sut/with-existing-entity
+                                 new-indicator
+                                 (find-by-ext-id existing-ids))))
+                        (is (= log?
+                               (logged? 'ctia.bundle.core
+                                        :warn
+                                        #"More than one entity is linked to the external id swe-alarm-indicator-1"))))))]
+      (test-fn {:msg "no existing external id"
+                :expected {:id indicator-id-3
+                           :external_id "swe-alarm-indicator-1"}
+                :existing-ids []
+                :log? false})
+      (test-fn {:msg "1 existing external id"
+                :expected (with-long-id {:result "exists"
+                                         :external_id "swe-alarm-indicator-1"
+                                         :id indicator-id-1})
+                :existing-ids [indicator-id-1]
+                :log? false})
+      (test-fn {:msg "more than 1 existing external id"
+                :expected (with-long-id {:result "exists"
+                                         :external_id "swe-alarm-indicator-1"
+                                         :id indicator-id-2})
+                :existing-ids [indicator-id-2
+                               indicator-id-1]
+                :log? true}))))
