@@ -110,15 +110,9 @@
    :source_ref (:id source)
    :target_ref (:id target)})
 
-(deftest valid-external-id-test
-  (is (= "ctia-1"
-         (core/valid-external-id ["invalid-1" "invalid-2"  "ctia-1"]
-                                 ["ctia-" "cisco-"])))
-  (is (nil? (core/valid-external-id ["invalid-1" "invalid-2"  "ctia-1" "cisco-1"]
-                                    ["ctia-" "cisco-"]))))
-
 (defn validate-entity-record
-  [{:keys [id original_id external_id]
+  [{:keys [id original_id]
+    [external_id & _] :external_ids
     entity-type :type
     :or {entity-type :unknown}}
    original-entity]
@@ -427,7 +421,7 @@
                [{:original_id (:id (-> bundle :indicators first)),
                  :result "error",
                  :type :indicator,
-                 :external_id "ctia-indicator-1",
+                 :external_ids ["ctia-indicator-1"],
                  :error "Entity validation Error",
                  :msg "#inst \"4242-07-11T00:40:48.212-00:00\" - failed: (inst-in-range? #inst \"1970-01-01T00:00:00.000-00:00\" #inst \"2525-01-01T00:01:00.000-00:00\" %) in: [:valid_time :end_time] at: [:valid_time :end_time] spec: :new-indicator.valid_time/end_time\n"}]}
               (:parsed-body response-create)))))))
@@ -446,11 +440,12 @@
                    :source "source"
                    :indicators (set (map mk-indicator (range nb-entities)))}
            response-create (post "ctia/bundle/import"
-                                 :body bundle
-                                 :headers {"Authorization" "45c1f5e3f05d0"})
+                                   :body bundle
+                                   :headers {"Authorization" "45c1f5e3f05d0"})
            bundle-result-create (:parsed-body response-create)
            response-update (post "ctia/bundle/import"
                                  :body bundle
+                                 :query-params {"external-key-prefixes" "ctia-"}
                                  :headers {"Authorization" "45c1f5e3f05d0"})
            bundle-result-update (:parsed-body response-update)]
        (is (= 200 (:status response-create)))
@@ -726,17 +721,17 @@
 
              [sighting-id-1
               sighting-id-2] (->> (:sighting by-type)
-                                  (sort-by :external_id)
+                                  (sort-by :external_ids)
                                   (map :id))
 
              [indicator-id-1
               indicator-id-2
               indicator-id-3] (->> (:indicator by-type)
-                                   (sort-by :external_id)
+                                   (sort-by :external_ids)
                                    (map :id))
              [incident-id-1
               incident-id-2] (->> (:incident by-type)
-                                   (sort-by :external_id)
+                                   (sort-by :external_ids)
                                    (map :id))
              [relationship-id-1
               relationship-id-2
@@ -746,7 +741,7 @@
               relationship-id-6
               relationship-id-7
               relationship-id-8] (->> (:relationship by-type)
-                                      (sort-by :external_id)
+                                      (sort-by :external_ids)
                                       (map :id))
              ;; related to queries
              bundle-from-source
