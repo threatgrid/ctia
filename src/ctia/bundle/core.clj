@@ -167,13 +167,15 @@
                              :entity
                              with-long-id
                              ent/un-store)]
-      (when (< (count old-entities) 1)
+      (when (< 1 (count old-entities))
         (log/warn
          (format
           (str "More than one entity is "
-               "linked to the external id %s (%s)")
+               "linked to the external id %s (examples: %s)")
           external_id
-          (pr-str (map :id old-entities)))))
+          (->> (take 10 old-entities) ;; prevent very large logs
+               (map (comp :id :entity))
+               pr-str))))
       (cond-> entity-data
         ;; only one entity linked to the external ID
         old-entity (assoc :result "exists"

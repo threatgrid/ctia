@@ -1,5 +1,6 @@
 (ns ctia.bundle.core-test
   (:require [ctia.bundle.core :as sut]
+            [clojure.tools.logging.test :refer [logged? with-log the-log]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.flows.crud :refer [make-id]]
             [clojure.test :as t :refer [deftest use-fixtures join-fixtures are is testing]]
@@ -53,28 +54,31 @@
   (testing "with-existing-entity"
     (let [indicator-id-1 (make-id "indicator")
           indicator-id-2 (make-id "indicator")
-          indicator-id-3 (make-id "indicator")]
+          indicator-id-3 (make-id "indicator")
+          new-indicator {:id indicator-id-3
+                         :external_id "swe-alarm-indicator-1"}]
+      (testing "no existing external id"
+        (is (= {:id indicator-id-3
+                :external_id "swe-alarm-indicator-1"}
+               (sut/with-existing-entity
+                 new-indicator
+                 (constantly [])))))
       (testing "1 existing external id"
         (is (= (with-long-id {:result "exists"
                               :external_id "swe-alarm-indicator-1"
                               :id indicator-id-1})
                (sut/with-existing-entity
-                 {:id "transient:1"
-                  :external_id "swe-alarm-indicator-1"}
+                 new-indicator
                  (constantly [{:entity {:id indicator-id-1}}])))))
-      (testing "more than 1 existing external id"
-        (is (= (with-long-id {:result "exists"
-                              :external_id "swe-alarm-indicator-2"
-                              :id indicator-id-2})
-               (sut/with-existing-entity
-                 {:id "transient:2"
-                  :external_id "swe-alarm-indicator-2"}
-                 (constantly [{:entity {:id indicator-id-2}}
-                              {:entity {:id indicator-id-1}}])))))
-      (testing "no existing external id"
-        (is (= {:id indicator-id-3
-                :external_id "swe-alarm-indicator-1"}
-               (sut/with-existing-entity
-                 {:id indicator-id-3
-                  :external_id "swe-alarm-indicator-1"}
-                 (constantly []))))))))
+      (with-log
+        (testing "more than 1 existing external id"
+          (is (= (with-long-id {:result "exists"
+                                :external_id "swe-alarm-indicator-1"
+                                :id indicator-id-2})
+                 (sut/with-existing-entity
+                   new-indicator
+                   (constantly [{:entity {:id indicator-id-2}}
+                                {:entity {:id indicator-id-1}}]))))
+          (is (logged? 'ctia.bundle.core
+                       :warn
+                       #"More than one entity is linked to the external id swe-alarm-indicator-1")))))))
