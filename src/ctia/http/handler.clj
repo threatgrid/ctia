@@ -133,9 +133,8 @@
   (let [scope-map
         (when scopes
           (into {}
-                (-> scopes
-                    (string/split #",")
-                    (->> (map #(string/split % #"\|"))))))
+                (map #(string/split % #"\|"))
+                (string/split scopes #",")))
         scopes
         (keys scope-map)]
 
@@ -144,14 +143,15 @@
                   {:clientId client-id
                    :appName app-name
                    :realm realm})
-        (update-in [:data :security] concat
-                   [{entry-key scopes}])
-        (update-in [:data :securityDefinitions] assoc entry-key
-                   {:type "oauth2"
-                    :scopes scope-map
-                    :authorizationUrl authorization-url
-                    :tokenUrl token-url
-                    :flow flow}))))
+        (update :data
+                #(-> %
+                     (update :security (fnil conj []) {entry-key scopes})
+                     (assoc-in [:securityDefinitions entry-key]
+                               {:type "oauth2"
+                                :scopes scope-map
+                                :authorizationUrl authorization-url
+                                :tokenUrl token-url
+                                :flow flow}))))))
 
 (defn api-handler []
   (let [{:keys [oauth2]}
@@ -167,8 +167,8 @@
                                  :version (string/replace (current-version) #"\n" "")
                                  :license {:name "All Rights Reserved",
                                            :url ""}
-                                 :contact {:name "Cisco Security Business Group -- Advanced Threat "
-                                           :url "http://github.com/threatgrid/ctia"
+                                 :contact {:name "Cisco Security Business Group -- Advanced Threat Intelligence"
+                                           :url "https://github.com/threatgrid/ctia"
                                            :email "cisco-intel-api-support@cisco.com"}
                                  :description api-description}
                           :security [{"JWT" []}]
@@ -191,22 +191,22 @@
            documentation-routes
            (graphql-ui-routes)
            (context
-               "/ctia" []
+             "/ctia" []
              (context "/feed" []
                :tags ["Feed"]
                feed-view-routes)
-             ;; The order is important here for version-routes
+             ;; The order is important here for version-routes:
              ;; must be before the middleware fn
              version-routes
              (middleware [wrap-authenticated]
                (entity-routes entities)
                status-routes
                (context
-                   "/bulk" []
+                 "/bulk" []
                  :tags ["Bulk"]
                  bulk-routes)
                (context
-                   "/incident" []
+                 "/incident" []
                  :tags ["Incident"]
                  incident-casebook-link-route)
                bundle-routes
