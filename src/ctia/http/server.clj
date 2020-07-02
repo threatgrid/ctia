@@ -28,13 +28,16 @@
   "take a CORS allowed origin config string
    turn it to a a vec of patterns"
   [origins-str]
-  (vec (map re-pattern
-            (string/split origins-str #","))))
+  (into []
+        (map re-pattern)
+        (string/split origins-str #",")))
 
 (defn- str->set-of-keywords
   "take a string with words separated with commas, returns a vec of keywords"
   [s]
-  (set (map keyword (string/split s #","))))
+  (into #{}
+        (map keyword)
+        (string/split s #",")))
 
 (defn parse-external-endpoints
   "take a string of couples separated by : and return an hash-map out of it."
@@ -44,7 +47,7 @@
       (some->> (string/split s #",")
                (map #(string/split % #"=" 2))
                (into {})))
-    (catch Exception e
+    (catch Exception _
       (throw (ex-info
               (str "Wrong format for external endpoints."
                    " Use 'i=url1,j=url2' where i, j are issuers."
@@ -77,15 +80,15 @@
           (let [{:keys [error_description]
                  :or {error_description "JWT Refused"}} body]
             [error_description])))
-      (catch TimeoutException e
+      (catch TimeoutException _
         (log/warnf "Couldn't check jwt status due to a call timeout to %s"
                    check-jwt-url)
         [])
-      (catch SocketTimeoutException e
+      (catch SocketTimeoutException _
         (log/warnf "Couldn't check jwt status due to a call timeout to %s"
                    check-jwt-url)
         [])
-      (catch UnknownHostException e
+      (catch UnknownHostException _
           (log/errorf "The server for checking JWT seems down: %s"
                       check-jwt-url)
         [])
@@ -152,73 +155,67 @@
     :or {access-control-allow-methods "get,post,put,patch,delete"
          send-server-version false}
     :as http-config}]
-  (doto
-      (jetty/run-jetty
-       (cond-> (handler/api-handler)
-         true auth/wrap-authentication
+  (doto (jetty/run-jetty
+          (cond-> (-> (handler/api-handler)
+                      auth/wrap-authentication)
+            (:enabled jwt)
+            (-> auth-jwt/wrap-jwt-to-ctia-auth
+                ((rjwt/wrap-jwt-auth-fn
+                   (merge
+                     {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
+                      (when-let [pubkey-for-issuer-map
+                                 (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
+                        (fn [{:keys [iss] :as claims}]
+                          (get pubkey-for-issuer-map iss)))
+                      :error-handler auth-jwt/jwt-error-handler
+                      :pubkey-path (:public-key-path jwt)
+                      :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
 
-         (:enabled jwt)
-         auth-jwt/wrap-jwt-to-ctia-auth
+                     (let [{:keys [endpoints timeout cache-ttl]}
+                           (:http-check jwt)]
+                       (when-let [external-endpoints (parse-external-endpoints endpoints)]
+                         {:jwt-check-fn (partial check-external-endpoints
+                                                 (http-get-fn (or cache-ttl 5000))
+                                                 external-endpoints
+                                                 (if timeout
+                                                   {:socket-timeout timeout
+                                                    :connection-timeout timeout}
+                                                   {}))}))
+                     (when-let [lifetime (:lifetime-in-sec jwt)]
+                       {:jwt-max-lifetime-in-sec lifetime})))))
 
-         (:enabled jwt)
-         ((rjwt/wrap-jwt-auth-fn
-           (merge
-            {:pubkey-fn ;; if :public-key-map is nil, will use just :public-key
-             (when-let [pubkey-for-issuer-map
-                        (auth-jwt/parse-jwt-pubkey-map (:public-key-map jwt))]
-               (fn [{:keys [iss] :as claims}]
-                 (get pubkey-for-issuer-map iss)))
-             :error-handler auth-jwt/jwt-error-handler
-             :pubkey-path (:public-key-path jwt)
-             :no-jwt-handler rjwt/authorize-no-jwt-header-strategy}
+            access-control-allow-origin
+            (wrap-cors :access-control-allow-origin
+                       (allow-origin-regexps access-control-allow-origin)
+                       :access-control-allow-methods
+                       (str->set-of-keywords access-control-allow-methods)
+                       :access-control-expose-headers
+                       (str "X-Iroh-Version,X-Iroh-Config,X-Ctim-Version,"
+                            "X-RateLimit-ORG-Limit,"
+                            "X-Content-Type-Options,"
+                            "Retry-After,X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
+                            "X-Frame-Options,X-Content-Type-Options,Content-Security-Policy"))
 
-            (let [{:keys [endpoints timeout cache-ttl]}
-                       (:http-check jwt)]
-              (when-let [external-endpoints (parse-external-endpoints endpoints)]
-                {:jwt-check-fn (partial check-external-endpoints
-                                        (http-get-fn (or cache-ttl 5000))
-                                        external-endpoints
-                                        (if timeout
-                                          {:socket-timeout timeout
-                                           :connection-timeout timeout}
-                                          {}))}))
-            (when-let [lifetime (:lifetime-in-sec jwt)]
-              {:jwt-max-lifetime-in-sec lifetime}))))
+            true (-> (wrap-additional-headers
+                       {"X-Content-Type-Options" "nosniff"})
+                     (wrap-html-headers
+                       {"Content-Security-Policy" (build-csp http-config)
+                        "X-Frame-Options" "DENY"})
+                     wrap-params)
 
-         access-control-allow-origin
-         (wrap-cors :access-control-allow-origin
-                    (allow-origin-regexps access-control-allow-origin)
-                    :access-control-allow-methods
-                    (str->set-of-keywords access-control-allow-methods)
-                    :access-control-expose-headers
-                    (str "X-Iroh-Version,X-Iroh-Config,X-Ctim-Version,"
-                         "X-RateLimit-ORG-Limit,"
-                         "X-Content-Type-Options,"
-                         "Retry-After,X-Total-Hits,X-Next,X-Previous,X-Sort,Etag,"
-                         "X-Frame-Options,X-Content-Type-Options,Content-Security-Policy"))
-
-         true (wrap-additional-headers
-               {"X-Content-Type-Options" "nosniff"})
-         true (wrap-html-headers
-               {"Content-Security-Policy" (build-csp http-config)
-                "X-Frame-Options" "DENY"})
-
-         true wrap-params
-
-         dev-reload wrap-reload)
-       {:port port
-        :min-threads min-threads
-        :max-threads max-threads
-        :join? false
-        :send-server-version? send-server-version})
+            dev-reload wrap-reload)
+          {:port port
+           :min-threads min-threads
+           :max-threads max-threads
+           :join? false
+           :send-server-version? send-server-version})
     (.setStopAtShutdown true)
     (.setStopTimeout (* 1000 10))))
 
 (defn- stop!  []
   (swap! server
          (fn [^Server server]
-           (when server
-             (.stop server))
+           (some-> server .stop)
            nil)))
 
 (defn start! [& {:keys [join?]
