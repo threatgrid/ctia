@@ -90,12 +90,11 @@
       (let [turnstile-mw
             (turnstile/wrap-rate-limit
              handler
-             (do
-               {:redis-conn (server-connection redis)
-                 :limit-fns [(with-identity-rate-limit-fn
-                               (group-limit-fn conf))]
-                 :rate-limit-handler rate-limited-request-handler
-                 :key-prefix key-prefix}))]
+             {:redis-conn (server-connection redis)
+              :limit-fns [(with-identity-rate-limit-fn
+                            (group-limit-fn conf))]
+              :rate-limit-handler rate-limited-request-handler
+              :key-prefix key-prefix})]
         (fn [request]
           (try
             (turnstile-mw request)
