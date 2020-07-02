@@ -81,7 +81,7 @@
                          offset
                          sort-keys)
             next (:next paging)
-            offset (:offset next 0)
+            offset (long (:offset next 0))
             search_after (:sort paging)
             checked-count (+ checked-count
                              (count data))]

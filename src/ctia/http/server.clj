@@ -22,8 +22,6 @@
            (java.net UnknownHostException
                      SocketTimeoutException)))
 
-(defonce server (atom nil))
-
 (defn- allow-origin-regexps
   "take a CORS allowed origin config string
    turn it to a a vec of patterns"
@@ -212,18 +210,11 @@
     (.setStopAtShutdown true)
     (.setStopTimeout (* 1000 10))))
 
-(defn- stop!  []
-  (swap! server
-         (fn [^Server server]
-           (some-> server .stop)
-           nil)))
-
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
   (let [http-config (get-in @properties [:ctia :http])
         server-instance (new-jetty-instance http-config)]
-    (reset! server server-instance)
-    (shutdown/register-hook! :http.server stop!)
-    (if join?
-      (.join server-instance)
-      server-instance)))
+    (shutdown/register-hook! :http.server #(.stop server-instance))
+    (when join?
+      (.join server-instance))
+    server-instance))
