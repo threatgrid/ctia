@@ -37,10 +37,10 @@
                      :artifact-id "CTIAClient"}
    :ruby {:gemName artifact-id
           :gemVersion artifact-version
-          :gemHomepage "http://github.com/threatgrid/ctia"
+          :gemHomepage "https://github.com/threatgrid/ctia"
           :gemSummary description
           :gemDescription description
-          :gemAuthor "Cisco Security Business Group -- Advanced Threat"
+          :gemAuthor "Cisco Security Business Group -- Advanced Threat Intelligence"
           :gemAuthorEmail "cisco-intel-api-support@cisco.com"}})
 
 (defn spec-uri
