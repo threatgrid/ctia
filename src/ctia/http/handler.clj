@@ -73,14 +73,13 @@
 
 (defmacro entity-routes
   [entities]
-  `(do
-     (compojure.api.sweet/routes
-      ~@(for [entity (remove :no-api?
-                             (vals (eval entities)))]
-          `(context
+  `(routes
+     ~@(for [entity (remove :no-api?
+                            (vals (eval entities)))]
+         `(context
             ~(:route-context entity) []
             :tags ~(:tags entity)
-            (:routes (~(:entity entity) entities)))))))
+            (:routes (~(:entity entity) entities))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler

@@ -10,6 +10,7 @@
             [ctia.http.middleware
              [auth :as auth]
              [ratelimit :refer [wrap-rate-limit]]]
+            [ctia.lib.riemann :as rie]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -181,7 +182,8 @@
                                                     :connection-timeout timeout}
                                                    {}))}))
                      (when-let [lifetime (:lifetime-in-sec jwt)]
-                       {:jwt-max-lifetime-in-sec lifetime})))))
+                       {:jwt-max-lifetime-in-sec lifetime}))))
+                ((rie/wrap-request-logs)))
 
             access-control-allow-origin
             (wrap-cors :access-control-allow-origin
