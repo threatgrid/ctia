@@ -49,3 +49,13 @@ services:
       - ${PWD}/containers/dev/truststore/kafka.truststore.jks:/etc/kafka/secrets/kafka.truststore.jks:ro
       - ${PWD}/containers/dev/credentials:/etc/kafka/secrets/credentials:ro
       - /var/run/docker.sock:/var/run/docker.sock
+  docker-riemann-dev:
+    image: riemannio/riemann:0.3.5
+    ports:
+      - "5555:5555"
+      - "5555:5555/udp"
+      - "5556:5556"
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    volumes:
+      - ./riemann.config:/etc/riemann.config
