@@ -13,3 +13,5 @@ resources/ctia.properties.*
 data/**/*.edn
 pom.xml
 /checkouts
+.dir-locals-2.el
+.lsp/
