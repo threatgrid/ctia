@@ -187,7 +187,7 @@
               {:jwt-max-lifetime-in-sec lifetime}))))
 
          true
-         ((rie/wrap-request-logs "placeholder"))
+         ((rie/wrap-request-logs "http req"))
 
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
