@@ -40,11 +40,16 @@
     (let [start (System/nanoTime)]
       (try
         (when-let [response (handler request)]
-          (send-request-metrics send-event-fn request
-                                {:metric (ms-elapsed start)
-                                 :service service-name
-                                 :_headers (prn-str (:headers response))
-                                 :status (str (:status response))})
+          (let [ms (ms-elapsed start)]
+            (send-request-metrics send-event-fn request
+                                  {:metric ms
+                                   :description (str "Request took "
+                                                     (.format (java.text.DecimalFormat. "#.##")
+                                                              (/ ms 1000))
+                                                     " seconds")
+                                   :service service-name
+                                   :_headers (prn-str (:headers response))
+                                   :status (str (:status response))}))
           response)
         (catch ExceptionInfo e
           (let [data (ex-data e)
