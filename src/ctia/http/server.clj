@@ -186,7 +186,7 @@
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 
-         (:enabled jwt)
+         true
          ((rie/wrap-request-logs "placeholder"))
 
          access-control-allow-origin
