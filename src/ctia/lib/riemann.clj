@@ -6,18 +6,18 @@
             [ctia.lib.utils :as utils])
   (:import [clojure.lang ExceptionInfo]))
 
-(defn request-to-event
+(defn request->event
   [request extra-fields]
-  (merge {:uri (str (:uri request))
-          :_params (utils/safe-pprint (:params request))
-          :remote-addr (str (if-let [xff (get-in request [:headers "x-forwarded-for"])]
-                              (peek (str/split xff #"\s*,\s*"))
-                              (:remote-addr request)))
-          :request-method (str (:request-method request))
-          :mask (str (= "Mask" (get-in request [:headers "x-client-app"])))
-          :identity (:identity request)
-          :jwt (:jwt request)}
-         extra-fields))
+  (into {:uri (str (:uri request))
+         :_params (utils/safe-pprint (:params request))
+         :remote-addr (str (if-let [xff (get-in request [:headers "x-forwarded-for"])]
+                             (peek (str/split xff #"\s*,\s*"))
+                             (:remote-addr request)))
+         :request-method (str (:request-method request))
+         :mask (str (= "Mask" (get-in request [:headers "x-client-app"])))
+         :identity (:identity request)
+         :jwt (:jwt request)}
+        extra-fields))
 
 (defn ms-elapsed
   "provide how much ms were elapsed since `nano-start`."
@@ -25,7 +25,7 @@
   (/ (- (System/nanoTime) nano-start) 1000000.0))
 
 (defn- send-request-metrics [send-event-fn request extra-fields]
-  (let [event (request-to-event request extra-fields)]
+  (let [event (request->event request extra-fields)]
     (try
       (send-event-fn event)
       (catch Exception e
@@ -92,7 +92,7 @@
   "Middleware to log all incoming connections to Riemann"
   [service-name]
   (let [{enabled? :enabled :as config}
-        (get-in @prop/properties [:ctia :metrics :riemann])]
+        (get-in @prop/properties [:ctia :log :riemann])]
     (if-not enabled?
       identity
       (let [_ (log/info "riemann metrics reporting")
