@@ -59,3 +59,7 @@ services:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
     volumes:
       - ./riemann.config:/etc/riemann.config
+  docker-riemann-dash-dev:
+    image: include/docker-riemann-dash
+    ports:
+      - "4567:4567"
