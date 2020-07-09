@@ -91,12 +91,6 @@
            :trace-id (search-event [:trace :id] event)})))
 
 ;; copied from riemann-reporter.core
-(defn find-and-add-metas
-  [e]
-  (let [infos (extract-infos-from-event e)]
-    (into infos e)))
-
-;; copied from riemann-reporter.core
 (defn str-protect [s]
   (str/replace s #"[^a-zA-Z_-]" "-"))
 
@@ -136,7 +130,7 @@
        utils/deep-remove-nils
        (into {})
        utils/deep-filter-out-creds
-       find-and-add-metas
+       extract-infos-from-event ;; difference from iroh (calls find-and-add-metas)
        stringify-values))
 
 ;; based on riemann-reporter.core/send-event
