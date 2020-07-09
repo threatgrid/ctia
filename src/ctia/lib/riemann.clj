@@ -100,25 +100,14 @@
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
   [service-name]
-  (let [{enabled? :enabled :as config}
-        (get-in @prop/properties [:ctia :log :riemann])]
-    (if-not enabled?
-      identity
-      (let [_ (log/info "riemann metrics reporting")
-            send-event-fn 
-            (let [client (riemann/tcp-client
-                           (select-keys config
-                                        [:host :port :interval-in-ms]))]
-              (fn [event]
-                (riemann/send-event client event)))]
-        (fn [handler]
-          (wrap-request-metrics handler
-                                service-name
-                                send-event-fn))))))
-
-(defn log
-  "Produce a log and send an event to riemann.
-  The event should contains the fields :level to specify the log level.
-  The r-service parameter should be the service name that appear in riemann."
-  [_ r-service msg event]
-  '...)
+  (let [_ (log/info "riemann metrics reporting")
+        send-event-fn 
+        (let [client (riemann/tcp-client
+                       (select-keys config
+                                    [:host :port :interval-in-ms]))]
+          (fn [event]
+            (riemann/send-event client event)))]
+    (fn [handler]
+      (wrap-request-metrics handler
+                            service-name
+                            send-event-fn))))
