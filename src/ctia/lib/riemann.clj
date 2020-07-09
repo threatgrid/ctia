@@ -13,7 +13,7 @@
          :remote-addr (str (if-let [xff (get-in request [:headers "x-forwarded-for"])]
                              (peek (str/split xff #"\s*,\s*"))
                              (:remote-addr request)))
-         :request-headers (prn-str (:headers request))
+         :request-headers (pr-str (:headers request))
          :request-body (let [;; HttpInputOverHTTP => string
                              bstr (pr-str (:body request))]
                          (subs bstr 0 (min (count bstr) 100)))
