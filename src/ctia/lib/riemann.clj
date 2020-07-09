@@ -48,10 +48,6 @@
             (send-request-metrics send-event-fn request
                                   {:metric ms
                                    :tags ["ctia" "http"]
-                                   :description (str "Response took "
-                                                     (.format (java.text.DecimalFormat. "#.##")
-                                                              (/ ms 1000))
-                                                     " seconds")
                                    :service service-name
                                    :status (str (:status response))}))
           response)
@@ -100,7 +96,8 @@
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
   [service-name]
-  (let [_ (log/info "riemann metrics reporting")
+  (let [config (get-in @prop/properties [:ctia :log :riemann])
+        _ (log/info "riemann metrics reporting")
         send-event-fn 
         (let [client (riemann/tcp-client
                        (select-keys config
