@@ -13,6 +13,10 @@
          :remote-addr (str (if-let [xff (get-in request [:headers "x-forwarded-for"])]
                              (peek (str/split xff #"\s*,\s*"))
                              (:remote-addr request)))
+         :request-headers (prn-str (:headers request))
+         :request-body (let [;; HttpInputOverHTTP => string
+                             bstr (pr-str (:body request))]
+                         (subs bstr 0 (min (count bstr) 100)))
          :request-method (str (:request-method request))
          :mask (str (= "Mask" (get-in request [:headers "x-client-app"])))
          :identity (:identity request)
@@ -43,12 +47,12 @@
           (let [ms (ms-elapsed start)]
             (send-request-metrics send-event-fn request
                                   {:metric ms
-                                   :description (str "Request took "
+                                   :tags ["ctia" "http"]
+                                   :description (str "Response took "
                                                      (.format (java.text.DecimalFormat. "#.##")
                                                               (/ ms 1000))
                                                      " seconds")
                                    :service service-name
-                                   :_headers (prn-str (:headers response))
                                    :status (str (:status response))}))
           response)
         (catch ExceptionInfo e
