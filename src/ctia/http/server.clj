@@ -186,7 +186,7 @@
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 
-         (get-in @prop/properties [:ctia :log :riemann :enabled])
+         (get-in @properties [:ctia :log :riemann :enabled])
          ((rie/wrap-request-logs "http req"))
 
          access-control-allow-origin
