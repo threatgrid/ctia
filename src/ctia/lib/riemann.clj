@@ -25,7 +25,7 @@
   (/ (- (System/nanoTime) nano-start) 1000000.0))
 
 ;; based on riemann-reporter.core/send-request-metrics
-(defn- send-request-metrics [send-event-fn request extra-fields]
+(defn- send-request-logs [send-event-fn request extra-fields]
   (let [event (request->event request extra-fields)]
     (try
       (send-event-fn event)
@@ -35,43 +35,6 @@
                    (utils/safe-pprint-str e))
         (when (nil? send-event-fn)
           (log/warn "The send-event-fn looks empty. This is certainly due to a configuration problem or perhaps simply a code bug."))))))
-
-;; based on riemann-reporter.core/wrap-request-metrics
-(defn wrap-request-metrics [handler service-name send-event-fn]
-  (fn [request]
-    (let [start (System/nanoTime)]
-      (try
-        (when-let [response (handler request)]
-          (let [ms (ms-elapsed start)]
-            (send-request-metrics send-event-fn request
-                                  {:metric ms
-                                   :service service-name
-                                   :_headers (prn-str (:headers response))
-                                   :status (str (:status response))}))
-          response)
-        (catch ExceptionInfo e
-          (let [data (ex-data e)
-                ex-type (:type data)
-                evt {:metric (ms-elapsed start)
-                     :service (str service-name " error")
-                     :description (.getMessage e)
-                     :error "true"
-                     :status (condp = ex-type
-                               :ring.util.http-response/response (get-in data [:response :status])
-                               :compojure.api.exception/response-validation "500"
-                               :compojure.api.exception/request-validation "400"
-                               "500")}]
-            (send-request-metrics send-event-fn request evt))
-          (throw e))
-        (catch Throwable e
-          (send-request-metrics send-event-fn request
-                                {:metric (ms-elapsed start)
-                                 :service (str service-name " error")
-                                 :description (.getMessage e)
-                                 :stacktrace (.getStackTrace e)
-                                 :status "500"
-                                 :error "true"})
-          (throw e))))))
 
 ;; should align with riemann-reporter.core/extract-infos-from-event
 (defn extract-infos-from-event
@@ -152,7 +115,7 @@
 ;; based on riemann-reporter.core/wrap-request-metrics
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
-  [service-name]
+  [handler service-name]
   (let [config (get-in @prop/properties [:ctia :log :riemann])
         _ (log/info "Riemann request logging initialization")
         send-event-fn 
@@ -163,8 +126,38 @@
                          (riemann/batch-client
                            (or (:batch-size config) 10)))]
           (fn [event]
-            (riemann/send-event client event)))]
-    (fn [handler]
-      (wrap-request-metrics handler
-                            service-name
-                            send-event-fn))))
+            (send-event client service-name event)))]
+    (fn [request]
+      (let [start (System/nanoTime)]
+        (try
+          (when-let [response (handler request)]
+            (let [ms (ms-elapsed start)]
+              (send-request-logs send-event-fn request
+                                 {:metric ms
+                                  :service service-name
+                                  :_headers (prn-str (:headers response))
+                                  :status (str (:status response))}))
+            response)
+          (catch ExceptionInfo e
+            (let [data (ex-data e)
+                  ex-type (:type data)
+                  evt {:metric (ms-elapsed start)
+                       :service (str service-name " error")
+                       :description (.getMessage e)
+                       :error "true"
+                       :status (condp = ex-type
+                                 :ring.util.http-response/response (get-in data [:response :status])
+                                 :compojure.api.exception/response-validation "500"
+                                 :compojure.api.exception/request-validation "400"
+                                 "500")}]
+              (send-request-logs send-event-fn request evt))
+            (throw e))
+          (catch Throwable e
+            (send-request-logs send-event-fn request
+                               {:metric (ms-elapsed start)
+                                :service (str service-name " error")
+                                :description (.getMessage e)
+                                :stacktrace (.getStackTrace e)
+                                :status "500"
+                                :error "true"})
+            (throw e)))))))

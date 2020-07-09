@@ -1,5 +1,6 @@
 (ns ctia.lib.utils
   (:require [clojure.string :as string]
+            [clojure.pprint :as pp]
             [clojure.tools.logging :as log]
             [clojure.walk :as walk]))
 
@@ -74,10 +75,10 @@
 (defn safe-pprint [& xs]
   (->> xs
        (map deep-filter-out-creds)
-       (apply clojure.pprint/pprint)))
+       (apply pp/pprint)))
 
 (defn safe-pprint-str [& xs]
-  (with-out-str (apply safe-pprint-str xs)))
+  (with-out-str (apply safe-pprint xs)))
 
 ;; copied from iroh-core.core
 (defn clean-collection

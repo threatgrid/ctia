@@ -187,7 +187,7 @@
               {:jwt-max-lifetime-in-sec lifetime}))))
 
          (get-in @properties [:ctia :log :riemann :enabled])
-         ((rie/wrap-request-logs "http req"))
+         (rie/wrap-request-logs "http req")
 
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
