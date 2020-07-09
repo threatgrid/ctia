@@ -127,7 +127,6 @@
         (let [client (-> (select-keys config
                                       [:host :port :interval-in-ms])
                          riemann/tcp-client
-                         #_
                          (riemann/batch-client
                            (or (:batch-size config) 10)))]
           (fn [event]
