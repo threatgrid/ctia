@@ -3,6 +3,20 @@
             [clojure.tools.logging :as log]
             [clojure.walk :as walk]))
 
+(defn filter-out-creds [m]
+  (reduce-kv (fn [acc k v]
+               (if (re-matches #"(?i).*(key|pass|token|secret).*" (str k))
+                 (assoc acc k "********")
+                 (assoc acc k v)))
+             m
+             m))
+
+(defn deep-filter-out-creds [m]
+  (walk/prewalk #(if (map? %)
+                   (filter-out-creds %)
+                   %)
+                m))
+
 ;; copied from log-helper.safe
 (def to-obfuscate-pattern
   (let [keywords-to-obfuscate ["authorization"
@@ -46,6 +60,7 @@
   (walk/prewalk #(if (string? %) "********" %) v))
 
 ;; copied from log-helper.safe
+#_ ;; commented out for now, using CTIA's above
 (defn filter-out-creds
   "Given an hash-map obfuscate credentials."
   [m]
@@ -55,15 +70,6 @@
                  :else (assoc acc k v)))
              m
              m))
-
-;; copied from log-helper.safe
-(defn deep-filter-out-creds
-  "Given a structure walk deeply into it to obfuscate any found credential."
-  [m]
-  (walk/prewalk #(if (map? %)
-                   (filter-out-creds %)
-                   %)
-                m))
 
 (defn safe-pprint [& xs]
   (->> xs

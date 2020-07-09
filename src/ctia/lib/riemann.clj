@@ -9,15 +9,15 @@
 ;; based on riemann-reporter.core/request-to-event
 (defn request->event
   [request extra-fields]
-  (merge {:uri (str (:uri request))
-          :_params (utils/safe-pprint-str (:params request))
-          :remote-addr (str (if-let [xff (get-in request [:headers "x-forwarded-for"])]
-                              (peek (str/split xff #"\s*,\s*"))
-                              (:remote-addr request)))
-          :request-method (str (:request-method request))
-          :identity (:identity request)
-          :jwt (:jwt request)}
-         extra-fields))
+  (into {:uri (str (:uri request))
+         :_params (utils/safe-pprint-str (:params request))
+         :remote-addr (str (if-let [xff (get-in request [:headers "x-forwarded-for"])]
+                             (peek (str/split xff #"\s*,\s*"))
+                             (:remote-addr request)))
+         :request-method (str (:request-method request))
+         :identity (:identity request)
+         :jwt (:jwt request)}
+        extra-fields))
 
 (defn ms-elapsed
   "provide how much ms were elapsed since `nano-start`."
@@ -165,6 +165,7 @@
         (let [client (-> (select-keys config
                                       [:host :port :interval-in-ms])
                          riemann/tcp-client
+                         #_
                          (riemann/batch-client
                            (or (:batch-size config) 10)))]
           (fn [event]
