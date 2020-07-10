@@ -13,6 +13,8 @@
             [ctim.domain.id :as id]
             [ctim.schemas
              [actor :refer [NewActor]]
+             [asset :refer [NewAsset]]
+             [asset-mapping :refer [NewAssetMapping]]
              [attack-pattern :refer [NewAttackPattern]]
              [campaign :refer [NewCampaign]]
              [coa :refer [NewCOA]]
@@ -69,6 +71,8 @@
 
 (doseq [[entity kw-ns]
         [[NewActor "max-new-actor"]
+         [NewAsset "max-new-asset"]
+         [NewAssetMapping "max-new-asset-mapping"]
          [NewAttackPattern "max-new-attack-pattern"]
          [NewCampaign "max-new-campaign"]
          [NewCOA "max-new-coa"]
@@ -97,6 +101,12 @@
 (def api-for-actor-routes
   (api-for-route 'actor
                  (spec-gen "max-new-actor")))
+
+(def api-for-asset-routes
+  (api-for-route 'asset (spec-gen "max-new-asset")))
+
+(def api-for-asset-mapping-routes
+  (api-for-route 'asset-mapping (spec-gen "max-new-asset-mapping")))
 
 (def api-for-attack-pattern-routes
   (api-for-route 'attack-pattern
