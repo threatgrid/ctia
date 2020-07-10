@@ -140,7 +140,8 @@
                                   [prismatic/schema-generators ~schema-generators-version]]
                    :pedantic? :warn
 
-                   :resource-paths ["test/resources"]}
+                   :resource-paths ["test/resources"]
+                   :source-paths ["dev"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
