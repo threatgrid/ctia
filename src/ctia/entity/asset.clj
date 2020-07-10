@@ -18,14 +18,14 @@
 
 (def-acl-schema PartialAsset
   (fu/optionalize-all asset-schema/Asset)
-  "partial-actor")
+  "partial-asset")
 
 (s/defschema PartialAssetList
   [PartialAsset])
 
 (def-acl-schema NewAsset
   asset-schema/NewAsset
-  "new-actor")
+  "new-asset")
 
 (def-stored-schema StoredAsset Asset)
 
@@ -38,7 +38,12 @@
   {"asset"
    {:dynamic false
     :properties
-    {:asset_type em/all_token}}})
+    (merge
+     em/base-entity-mapping
+     em/describable-entity-mapping
+     em/sourcable-entity-mapping
+     em/stored-entity-mapping
+     {:actor_type em/token})}})
 
 (def-es-store AssetStore :asset StoredAsset PartialStoredAsset)
 
@@ -60,7 +65,26 @@
    routes.common/PagingParams
    AssetFieldsParam))
 
+(def asset-enumerable-fields
+  [:asset_type])
+
 (def AssetGetParams AssetFieldsParam)
+
+(s/defschema AssetSearchParams
+  (st/merge
+   routes.common/PagingParams
+   routes.common/BaseEntityFilterParams
+   routes.common/SourcableEntityFilterParams
+   AssetFieldsParam
+   (st/optional-keys
+    {:query           s/Str
+     :asset_type      s/Str
+     :sort_by         asset-sort-fields})))
+
+(def asset-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
 
 (def asset-routes
   (entity-crud-routes
@@ -72,19 +96,25 @@
     :list-schema              PartialAssetList
     :search-schema            PartialAssetList
     :external-id-q-params     AssetByExternalIdQueryParams
-    ;; :search-q-params          ActorSearchParams
-    ;; :new-spec                 :new-actor/map
-    ;; :realize-fn               realize-actor
-    ;; :get-capabilities         :read-actor
-    ;; :post-capabilities        :create-actor
-    ;; :put-capabilities         :create-actor
-    ;; :delete-capabilities      :delete-actor
-    ;; :search-capabilities      :search-actor
-    ;; :external-id-capabilities :read-actor
-    ;; :can-aggregate?           true
-    ;; :histogram-fields         actor-histogram-fields
-    ;; :enumerable-fields        actor-enumerable-fields
+    :search-q-params          AssetSearchParams
+    :new-spec                 :new-asset/map
+    :realize-fn               realize-asset
+    :get-capabilities         :read-asset
+    :post-capabilities        :create-asset
+    :put-capabilities         :create-asset
+    :delete-capabilities      :delete-asset
+    :search-capabilities      :search-asset
+    :external-id-capabilities :read-asset
+    :can-aggregate?           true
+    :histogram-fields         asset-histogram-fields
+    :enumerable-fields        asset-enumerable-fields
     }))
+
+(def capabilities
+  #{:create-asset
+    :read-asset
+    :delete-asset
+    :search-asset})
 
 (def asset-entity
   {:route-context         "/asset"
@@ -101,4 +131,6 @@
    :realize-fn            realize-asset
    :es-store              ->AssetStore
    :es-mapping            asset-mapping
-   :routes                asset-routes})
+   :routes                asset-routes
+   :capabilities          capabilities
+   })

@@ -74,6 +74,7 @@
 (def default-capabilities
   {:user
    #{:read-actor
+     :read-asset
      :read-attack-pattern
      :read-campaign
      :read-coa
