@@ -112,11 +112,7 @@
                  [com.graphql-java/graphql-java "9.7"]]
 
   :resource-paths ["resources" "doc"]
-  :aot [ctia.main]
-  :main ctia.main
   :classpath ".:resources"
-  :uberjar-name "ctia.jar"
-  :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.9.1"
   :test-selectors {:es-store :es-store
                    :disabled :disabled
@@ -157,6 +153,10 @@
                                     [com.gfredericks/test.chuck ~test-chuck-version]
                                     [prismatic/schema-generators ~schema-generators-version]]
                      :source-paths ["src","test","benchmarks"]}
+             :uberjar {:aot [ctia.main]
+                       :main ctia.main
+                       :uberjar-name "ctia.jar"
+                       :uberjar-exclusions [#"ctia\.properties"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [clj-http-fake ~clj-http-fake-version]
