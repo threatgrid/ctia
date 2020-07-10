@@ -19,17 +19,22 @@
   (boolean (:enabled ssl)))
 
 (defn make-ssl-opts [{:keys [ssl]}]
-  {"security.protocol" "ssl"
-   "ssl.truststore.location"
-   (get-in ssl [:truststore :location])
-   "ssl.truststore.password"
-   (get-in ssl [:truststore :password])
-   "ssl.keystore.location"
-   (get-in ssl [:keystore :location])
-   "ssl.keystore.password"
-   (get-in ssl [:keystore :password])
-   "ssl.key.password"
-   (get-in ssl [:key :password])})
+  (cond-> {"security.protocol" "ssl"}
+    (:truststore ssl)
+    (into {"ssl.truststore.location"
+           (get-in ssl [:truststore :location])
+           "ssl.truststore.password"
+           (get-in ssl [:truststore :password])})
+
+    (:keystore ssl)
+    (into {"ssl.keystore.location"
+           (get-in ssl [:keystore :location])
+           "ssl.keystore.password"
+           (get-in ssl [:keystore :password])})
+
+    (:key ssl)
+    (into {"ssl.key.password"
+           (get-in ssl [:key :password])})))
 
 (defn ^KafkaProducer build-producer [kafka-props]
   (let [producer-opts {}
@@ -62,7 +67,7 @@
     (let [records (.poll consumer timeout)]
       (doseq [record (if (string? name)
                        (.records records ^String name)
-                       ;unsure if this case is reachable
+                       ;;unsure if this case is reachable
                        (.records records ^TopicPartition name))]
         (f (okh/consumer-record->message decompress
                                          record)))
