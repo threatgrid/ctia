@@ -5,6 +5,7 @@
    [clojure.tools.logging :as log]
    [ctia.schemas.core :refer [Entity]]
    [ctia.entity
+    [asset :refer [asset-entity]]
     [feedback :refer [feedback-entity]]
     [weakness :refer [weakness-entity]]
     [vulnerability :refer [vulnerability-entity]]
@@ -30,6 +31,7 @@
 
 (def entities
   {:actor actor-entity
+   :asset asset-entity
    :attack-pattern attack-pattern-entity
    :campaign campaign-entity
    :casebook casebook-entity
