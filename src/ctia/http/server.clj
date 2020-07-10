@@ -141,7 +141,8 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
-(defn- ^Server new-jetty-instance
+(defn- new-jetty-instance
+  ^Server
   [{:keys [dev-reload
            max-threads
            min-threads

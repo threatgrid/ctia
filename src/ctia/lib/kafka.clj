@@ -36,7 +36,7 @@
     (into {"ssl.key.password"
            (get-in ssl [:key :password])})))
 
-(defn ^KafkaProducer build-producer [kafka-props]
+(defn build-producer ^KafkaProducer [kafka-props]
   (let [producer-opts {}
         {:keys [request-size compression]} kafka-props
         compression-type (:type compression)
@@ -51,7 +51,7 @@
                         (okh/byte-array-serializer)
                         (okh/byte-array-serializer))))
 
-(defn ^KafkaConsumer build-consumer [kafka-props]
+(defn build-consumer ^KafkaConsumer [kafka-props]
   (let [{:keys [request-size]} kafka-props
         address (get-in kafka-props [:zk :address])
         brokers (opk/find-brokers {:kafka/zookeeper address})

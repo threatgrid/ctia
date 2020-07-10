@@ -139,9 +139,10 @@
 (defn fragment-definition? [x]
   (instance? FragmentDefinition x))
 
-(defn ^NamedNode resolve-fragment-selections
+(defn resolve-fragment-selections
   "if the given entity is a FragmentSpread
   return its definition else return the entity"
+  ^NamedNode
   [^NamedNode s fragments]
   (if (fragment-spread? s)
     (let [f-name (.getName s)]
@@ -221,7 +222,8 @@
 
                                         ;----- Input
 
-(defn ^GraphQLArgument new-argument
+(defn new-argument
+  ^GraphQLArgument
   [^String arg-name
    arg-type
    ^String arg-description
@@ -235,7 +237,8 @@
       (.defaultValue builder arg-default-value))
     (.build builder)))
 
-(defn ^GraphQLFieldDefinition$Builder add-args
+(defn add-args
+  ^GraphQLFieldDefinition$Builder
   [^GraphQLFieldDefinition$Builder field
    args]
   (doseq [[k {arg-type :type
@@ -250,7 +253,8 @@
       (.argument field narg)))
   field)
 
-(defn ^GraphQLInputObjectField new-input-field
+(defn new-input-field
+  ^GraphQLInputObjectField
   [^String field-name
    ^GraphQLInputType field-type
    ^String field-description
@@ -265,7 +269,8 @@
       (.defaultValue builder default-value))
     (.build builder)))
 
-(defn ^GraphQLInputObjectType$Builder add-input-fields
+(defn add-input-fields
+  ^GraphQLInputObjectType$Builder
   [^GraphQLInputObjectType$Builder builder
    fields]
   (doseq [[k {field-type :type
@@ -292,7 +297,8 @@
 
 ;;----- Output
 
-(defn ^GraphQLFieldDefinition new-field
+(defn new-field
+  ^GraphQLFieldDefinition
   [^String field-name
    ^GraphQLOutputType field-type
    ^String field-description
@@ -307,7 +313,8 @@
       (add-args field-args)
       .build))
 
-(defn ^GraphQLObjectType$Builder add-fields
+(defn add-fields
+  ^GraphQLObjectType$Builder
   [^GraphQLObjectType$Builder builder
    fields]
   (doseq [[k {field-type :type
@@ -348,9 +355,10 @@
            (swap! registry assoc object-name obj)
            obj)))))
 
-(defn ^TypeResolver fn->type-resolver
+(defn fn->type-resolver
   "Converts a function that takes the current object, the args
   and the global schema to a TypeResolver."
+  ^TypeResolver
   [f]
   (reify TypeResolver
     (getType [_ env]
