@@ -21,6 +21,7 @@
 (def export-capabilities
   #{:list-campaigns
     :read-actor
+    :read-asset
     :read-malware
     :read-attack-pattern
     :read-judgement
