@@ -548,43 +548,45 @@
                                                  (count minimal-examples)))
                     (contains? example-types (keyword entity-type)) fixtures-nb
                     :else 0)]
-              (is (= source-size (:total source)))
+              (is (= source-size (:total source))
+                  (str "source size match for " (:index source)))
               (is (not (nil? started)))
               (is (not (nil? completed)))
-              (is (>= (:total source) (:migrated target)))
+              (is (<= (:migrated target) (:total source)))
               (is (int? (:total source)))
               (is (= (:index target)
                      (prefixed-index (:index source) "0.0.0")))))))
       (testing "shall produce valid logs"
         (let [messages (set @logger)]
           (is (contains? messages "set batch size: 10"))
-          (is (set/subset?
-               ["campaign - finished migrating 100 documents"
-                "indicator - finished migrating 100 documents"
-                (format "event - finished migrating %s documents"
-                        (+ 1500 updates-nb))
-                "actor - finished migrating 100 documents"
-                "relationship - finished migrating 100 documents"
-                "incident - finished migrating 100 documents"
-                "investigation - finished migrating 100 documents"
-                "coa - finished migrating 100 documents"
-                "identity - finished migrating 0 documents"
-                "judgement - finished migrating 100 documents"
-                "data-table - finished migrating 0 documents"
-                "feedback - finished migrating 0 documents"
-                "casebook - finished migrating 100 documents"
-                "sighting - finished migrating 100 documents"
-                "identity-assertion - finished migrating 0 documents"
-                "attack-pattern - finished migrating 100 documents"
-                "malware - finished migrating 100 documents"
-                "tool - finished migrating 100 documents"
-                "vulnerability - finished migrating 100 documents"
-                "weakness - finished migrating 100 documents"]
+          (is (clojure.set/subset?
+               #{"campaign - finished migrating 100 documents"
+                 "indicator - finished migrating 100 documents"
+                 (format "event - finished migrating %s documents"
+                         (+ 1700 updates-nb))
+                 "actor - finished migrating 100 documents"
+                 "asset - finished migrating 100 documents"
+                 "relationship - finished migrating 100 documents"
+                 "incident - finished migrating 100 documents"
+                 "investigation - finished migrating 100 documents"
+                 "coa - finished migrating 100 documents"
+                 "identity - finished migrating 0 documents"
+                 "judgement - finished migrating 100 documents"
+                 "data-table - finished migrating 0 documents"
+                 "feedback - finished migrating 0 documents"
+                 "casebook - finished migrating 100 documents"
+                 "sighting - finished migrating 100 documents"
+                 "identity-assertion - finished migrating 0 documents"
+                 "attack-pattern - finished migrating 100 documents"
+                 "malware - finished migrating 100 documents"
+                 "tool - finished migrating 100 documents"
+                 "vulnerability - finished migrating 100 documents"
+                 "weakness - finished migrating 100 documents" }
                messages))))
 
-      (testing "shall produce new indices
-                  with enough documents and the right transforms"
+      (testing "shall produce new indices with enough documents and the right transforms"
         (let [{:keys [default
+                      asset
                       relationship
                       judgement
                       investigation
@@ -606,9 +608,10 @@
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
                                       1000
                                       (format "v0.0.0_ctia_event-%s-000002" index-date)
-                                      (+ 500 updates-nb)}
+                                      (+ 700 updates-nb)}
               expected-indices
               (->> #{relationship
+                     asset
                      judgement
                      coa
                      attack-pattern
