@@ -45,25 +45,27 @@
   (GET "/" []
        :return (s/maybe Bulk)
        :summary "GET many entities at once"
-       :query-params [{actors          :- [Reference] []}
+       :query-params [{actors :- [Reference] []}
+                      {assets :- [Reference] []}
                       {attack_patterns :- [Reference] []}
-                      {campaigns       :- [Reference] []}
-                      {coas            :- [Reference] []}
-                      {data_tables     :- [Reference] []}
-                      {feedbacks       :- [Reference] []}
-                      {incidents       :- [Reference] []}
-                      {indicators      :- [Reference] []}
-                      {investigations  :- [Reference] []}
-                      {judgements      :- [Reference] []}
-                      {malwares        :- [Reference] []}
-                      {relationships   :- [Reference] []}
-                      {casebooks       :- [Reference] []}
-                      {sightings       :- [Reference] []}
-                      {tools           :- [Reference] []}
-                      {weaknesses      :- [Reference] []}
+                      {campaigns :- [Reference] []}
+                      {coas :- [Reference] []}
+                      {data_tables :- [Reference] []}
+                      {feedbacks :- [Reference] []}
+                      {incidents :- [Reference] []}
+                      {indicators :- [Reference] []}
+                      {investigations :- [Reference] []}
+                      {judgements :- [Reference] []}
+                      {malwares :- [Reference] []}
+                      {relationships :- [Reference] []}
+                      {casebooks :- [Reference] []}
+                      {sightings :- [Reference] []}
+                      {tools :- [Reference] []}
+                      {weaknesses :- [Reference] []}
                       {vulnerabilities :- [Reference] []}
                       {identity_assertions :- [Reference] []}]
        :capabilities #{:read-actor
+                       :read-asset
                        :read-attack-pattern
                        :read-campaign
                        :read-coa
@@ -82,8 +84,9 @@
                        :read-vulnerability
                        :read-weakness}
        :auth-identity auth-identity
-       (let [entities-map {:actors           actors
-                           :attack_patterns  attack_patterns
+       (let [entities-map {:actors              actors
+                           :assets              assets
+                           :attack_patterns     attack_patterns
                            :campaigns           campaigns
                            :coas                coas
                            :data_tables         data_tables

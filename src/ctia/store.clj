@@ -36,6 +36,7 @@
    :feedback []
    :campaign []
    :actor []
+   :asset []
    :coa []
    :data-table []
    :sighting []
