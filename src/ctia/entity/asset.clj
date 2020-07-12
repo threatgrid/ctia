@@ -43,7 +43,7 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:actor_type em/token})}})
+     {:asset_type em/token})}})
 
 (def-es-store AssetStore :asset StoredAsset PartialStoredAsset)
 
