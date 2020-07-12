@@ -95,6 +95,7 @@
 
 (def api-tags
   [{:name "Actor" :description "Actor operations"}
+   {:name "Asset" :description "Asset operations"}
    {:name "Attack Pattern" :description "Attack Pattern operations"}
    {:name "Bundle" :description "Bundle operations"}
    {:name "Campaign" :description "Campaign operations"}
