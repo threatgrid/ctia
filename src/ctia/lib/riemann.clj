@@ -41,7 +41,7 @@
   [event]
   (let [search-event get-in]
     (into {}
-          (remove (comp nil? second))
+          (remove (comp nil? val))
           {:client-id (search-event [:client :id] event)
            :client-name (search-event [:client :name] event)
            :user-id (search-event [:user :id] event)
