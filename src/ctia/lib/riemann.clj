@@ -36,22 +36,31 @@
         (when (nil? send-event-fn)
           (log/warn "The send-event-fn looks empty. This is certainly due to a configuration problem or perhaps simply a code bug."))))))
 
+(def kw->jwt-key
+  (into {}
+        (map (fn [[k v]]
+               [k (str "https://schemas.cisco.com/iroh/identity/claims/" v)]))
+
+        {:client-id   "oauth/client/id"
+         :client-name "oauth/client/name"
+         :user-id     "user/id"
+         :user-name   "user/name"
+         :user-nick   "user/nick"
+         :user-email  "user/email"
+         :org-id      "org/id"
+         :org-name    "org/name"
+         :idp-id      "user/idp/id"
+         ;; :trace-id (search-event [:trace :id] event) ??
+         }))
+
 ;; should align with riemann-reporter.core/extract-infos-from-event
 (defn extract-infos-from-event
   [event]
-  (let [search-event get-in]
-    (into {}
-          (remove (comp nil? val))
-          {:client-id (search-event [:client :id] event)
-           :client-name (search-event [:client :name] event)
-           :user-id (search-event [:user :id] event)
-           :user-name (search-event [:user :name] event)
-           :user-nick (search-event [:user :nick] event)
-           :user-email (search-event [:user :email] event)
-           :org-id (search-event [:org :id] event)
-           :org-name (search-event [:org :name] event)
-           :idp-id (search-event [:idp :id] event)
-           :trace-id (search-event [:trace :id] event)})))
+  (into {}
+        (map (fn [[kw jwt-key]]
+               (when-let [v (get-in event [:jwt jwt-key])]
+                 [kw v])))
+        kw->jwt-key))
 
 (defn find-and-add-metas
   [e]

@@ -161,6 +161,11 @@
          (:enabled jwt)
          auth-jwt/wrap-jwt-to-ctia-auth
 
+         ;; just after :jwt and :identity is attached to request
+         ;; by rjwt/wrap-jwt-auth-fn below.
+         (get-in @properties [:ctia :log :riemann :enabled])
+         (rie/wrap-request-logs "CTIA")
+
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
            (merge
@@ -186,8 +191,6 @@
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 
-         (get-in @properties [:ctia :log :riemann :enabled])
-         (rie/wrap-request-logs "http req")
 
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
