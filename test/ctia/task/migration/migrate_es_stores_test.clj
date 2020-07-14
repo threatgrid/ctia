@@ -56,10 +56,14 @@
 (defn migration-index []
   (get-in (es-props) [:migration :indexname]))
 
+(declare setup)
+
 (defn fixture-clean-migration [t]
-  (defonce setup ;; ugly, but must be done in order to prevent an indefinitely blocking call (which can affect code reloading, or re-running this ns's tests)
-    (setup!) ;; init migration conn and properties
-    )
+  (when-not setup
+     ;; ugly, but must be done in order to prevent an indefinitely blocking call (which can affect code reloading, or re-running this ns's tests))
+    (alter-var-root #'setup (fn [_]
+                              (setup!) ;; init migration conn and properties
+                              :done)))
   (t)
   (es-index/delete! (es-conn) "v0.0.0*")
   (es-index/delete! (es-conn) (str (migration-index) "*")))
