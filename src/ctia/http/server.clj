@@ -191,7 +191,6 @@
             (when-let [lifetime (:lifetime-in-sec jwt)]
               {:jwt-max-lifetime-in-sec lifetime}))))
 
-
          access-control-allow-origin
          (wrap-cors :access-control-allow-origin
                     (allow-origin-regexps access-control-allow-origin)
