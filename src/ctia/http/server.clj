@@ -10,6 +10,7 @@
             [ctia.http.middleware
              [auth :as auth]
              [ratelimit :refer [wrap-rate-limit]]]
+            [ctia.lib.riemann :as rie]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -159,6 +160,11 @@
 
          (:enabled jwt)
          auth-jwt/wrap-jwt-to-ctia-auth
+
+         ;; just after :jwt and :identity is attached to request
+         ;; by rjwt/wrap-jwt-auth-fn below.
+         (get-in @properties [:ctia :log :riemann :enabled])
+         (rie/wrap-request-logs "CTIA")
 
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
