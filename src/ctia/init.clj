@@ -122,7 +122,7 @@
   (validate-entities)
 
   ;; trapperkeeper init
-  (tk-init! [] {})
+  (tk-init! (services) (config))
 
   ;; events init
   (e/init!)
