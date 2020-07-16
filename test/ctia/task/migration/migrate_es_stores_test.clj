@@ -59,18 +59,22 @@
 
 (declare setup)
 
-(defn fixture-clean-migration [t]
+(defn fixture-setup [t]
   (when-not setup
-     ;; ugly, but must be done in order to prevent an indefinitely blocking call (which can affect code reloading, or re-running this ns's tests))
+    ;; ugly, but must be done in order to prevent an indefinitely blocking call (which can affect code reloading, or re-running this ns's tests))
     (alter-var-root #'setup (fn [_]
                               (setup!) ;; init migration conn and properties
                               :done)))
+  (t))
+
+(defn fixture-clean-migration [t]
   (t)
   (es-index/delete! @es-conn "v0.0.0*")
   (es-index/delete! @es-conn (str (migration-index) "*")))
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
+                  fixture-setup
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
 
