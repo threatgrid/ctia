@@ -53,7 +53,6 @@
 
 (def examples
   {:actors          (n-doc actor-minimal fixtures-nb)
-   :assets          (n-doc asset-minimal fixtures-nb)
    :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
    :campaigns       (n-doc campaign-minimal fixtures-nb)
    :coas            (n-doc coa-minimal fixtures-nb)
@@ -95,7 +94,6 @@
                     "indicator - finished checking 100 documents"
                     "event - finished checking 1500 documents"
                     "actor - finished checking 100 documents"
-                    "asset - finished checking 100 documents"
                     "relationship - finished checking 100 documents"
                     "incident - finished checking 100 documents"
                     "investigation - finished checking 100 documents"
