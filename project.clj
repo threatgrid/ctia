@@ -43,6 +43,11 @@
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
 
+                 ;; Trapperkeeper
+                 [puppetlabs/trapperkeeper "3.1.0" :exclusions [org.slf4j/log4j-over-slf4j]]
+                 [puppetlabs/kitchensink "3.1.0"]
+                 [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
+
                  ;; Schemas
                  [prismatic/schema "1.1.12"]
                  [metosin/schema-tools "0.12.2"]

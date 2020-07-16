@@ -26,7 +26,10 @@
    [ctia.http.server :as http-server]
    [ctia.shutdown :as shutdown]
    [ctia.stores.es
-    [init :as es-init]]))
+    [init :as es-init]]
+   [ctia.tk :as tk]
+   [puppetlabs.trapperkeeper.core
+    :refer [boot-services-with-config]]))
 
 (defn init-auth-service! []
   (let [{auth-service-type :type :as auth} (get-in @p/properties [:ctia :auth])]
