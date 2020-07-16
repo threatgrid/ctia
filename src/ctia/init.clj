@@ -86,6 +86,10 @@
               (do (newline)
                   (utils/safe-pprint @p/properties)))))
 
+;;------------------------------------------
+;; Start manual Trapperkeeper management
+;;------------------------------------------
+
 (defn ^:private services []
   [])
 
@@ -104,6 +108,10 @@
 (defn ^:private tk-init! [services config]
   (shutdown/register-hook! :tk tk-shutdown!)
   (reset! global-app (tk/boot-services-with-config services config)))
+
+;;------------------------------------------
+;; End manual Trapperkeeper management
+;;------------------------------------------
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
