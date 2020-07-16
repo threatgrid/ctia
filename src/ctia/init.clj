@@ -27,7 +27,10 @@
    [ctia.shutdown :as shutdown]
    [ctia.stores.es
     [init :as es-init]]
-   [ctia.tk :as tk]))
+   ;; manual trapperkeeper stuff
+   [puppetlabs.trapperkeeper.app :as app]
+   [puppetlabs.trapperkeeper.core :as tk]
+   [puppetlabs.trapperkeeper.internal :as internal]))
 
 (defn init-auth-service! []
   (let [{auth-service-type :type :as auth} (get-in @p/properties [:ctia :auth])]
@@ -82,6 +85,26 @@
   (log/info (with-out-str
               (do (newline)
                   (utils/safe-pprint @p/properties)))))
+
+(defn ^:private services []
+  [])
+
+(defn ^:private config []
+  @p/properties)
+
+(defonce ^:private global-app (atom nil))
+
+(defn ^:private tk-shutdown! []
+  (when-some [app @global-app]
+    (let [shutdown-svc (app/get-service app :ShutdownService)]
+      (internal/request-shutdown shutdown-svc)
+      (tk/run-app app))
+    (reset! global-app nil)))
+
+(defn ^:private tk-init! [services config]
+  (shutdown/register-hook! :tk tk-shutdown!)
+  (reset! global-app (tk/boot-services-with-config services config)))
+
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
   [& {:keys [join?]}]
@@ -99,7 +122,7 @@
   (validate-entities)
 
   ;; trapperkeeper init
-  (tk/init!)
+  (tk-init! [] {})
 
   ;; events init
   (e/init!)
