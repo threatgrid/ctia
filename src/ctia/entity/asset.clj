@@ -43,7 +43,9 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:asset_type em/token})}})
+     {:identity   em/tg-identity
+      :asset_type em/token
+      :valid_time em/valid-time})}})
 
 (def-es-store AssetStore :asset StoredAsset PartialStoredAsset)
 

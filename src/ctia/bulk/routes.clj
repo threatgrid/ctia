@@ -17,6 +17,7 @@
         :summary "POST many new entities using a single HTTP call"
         :auth-identity login
         :capabilities #{:create-actor
+                        :create-asset
                         :create-attack-pattern
                         :create-campaign
                         :create-coa
