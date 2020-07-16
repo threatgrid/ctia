@@ -37,12 +37,23 @@
            (java.lang AssertionError)
            (clojure.lang ExceptionInfo)))
 
+(declare setup)
+
+(defn fixture-setup [t]
+  (when-not setup
+    ;; ugly, but must be done in order to prevent an indefinitely blocking call (which can affect code reloading, or re-running this ns's tests))
+    (alter-var-root #'setup (fn [_]
+                              (setup!) ;; init migration conn and properties
+                              :done)))
+  (t))
+
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
                   whoami-helpers/fixture-server
                   whoami-helpers/fixture-reset-state
                   helpers/fixture-properties:clean
-                  es-helpers/fixture-properties:es-store]))
+                  es-helpers/fixture-properties:es-store
+                  fixture-setup]))
 
 ;; This a is a `defn` to prevent side-effects at compile time
 (defn es-props []
@@ -57,16 +68,6 @@
 (defn migration-index []
   (get-in (es-props) [:migration :indexname]))
 
-(declare setup)
-
-(defn fixture-setup [t]
-  (when-not setup
-    ;; ugly, but must be done in order to prevent an indefinitely blocking call (which can affect code reloading, or re-running this ns's tests))
-    (alter-var-root #'setup (fn [_]
-                              (setup!) ;; init migration conn and properties
-                              :done)))
-  (t))
-
 (defn fixture-clean-migration [t]
   (t)
   (es-index/delete! @es-conn "v0.0.0*")
@@ -74,7 +75,6 @@
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
-                  fixture-setup
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
 
