@@ -17,4 +17,4 @@
 
 (defn init! []
   (shutdown/register-hook! :tk shutdown!)
-  (reset! global-app (tk/boot-services-with-config {} [])))
+  (reset! global-app (tk/boot-services-with-config [] {})))
