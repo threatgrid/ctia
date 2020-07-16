@@ -13,6 +13,7 @@
             [ctia.entity.investigation.examples :refer [investigation-minimal]]
             [ctim.examples
              [actors :refer [actor-minimal]]
+             [assets :refer [asset-minimal]]
              [attack-patterns :refer [attack-pattern-minimal]]
              [campaigns :refer [campaign-minimal]]
              [casebooks :refer [casebook-minimal]]
@@ -51,21 +52,22 @@
   (client/post (format "http://%s:%s/_refresh" host port)))
 
 (def examples
-  {:actors (n-doc actor-minimal fixtures-nb)
+  {:actors          (n-doc actor-minimal fixtures-nb)
+   :assets          (n-doc asset-minimal fixtures-nb)
    :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
-   :campaigns (n-doc campaign-minimal fixtures-nb)
-   :coas (n-doc coa-minimal fixtures-nb)
-   :incidents (n-doc incident-minimal fixtures-nb)
-   :indicators (n-doc indicator-minimal fixtures-nb)
-   :investigations (n-doc investigation-minimal fixtures-nb)
-   :judgements (n-doc judgement-minimal fixtures-nb)
-   :malwares (n-doc malware-minimal fixtures-nb)
-   :relationships (n-doc relationship-minimal fixtures-nb)
-   :casebooks (n-doc casebook-minimal fixtures-nb)
-   :sightings (n-doc sighting-minimal fixtures-nb)
-   :tools (n-doc tool-minimal fixtures-nb)
+   :campaigns       (n-doc campaign-minimal fixtures-nb)
+   :coas            (n-doc coa-minimal fixtures-nb)
+   :incidents       (n-doc incident-minimal fixtures-nb)
+   :indicators      (n-doc indicator-minimal fixtures-nb)
+   :investigations  (n-doc investigation-minimal fixtures-nb)
+   :judgements      (n-doc judgement-minimal fixtures-nb)
+   :malwares        (n-doc malware-minimal fixtures-nb)
+   :relationships   (n-doc relationship-minimal fixtures-nb)
+   :casebooks       (n-doc casebook-minimal fixtures-nb)
+   :sightings       (n-doc sighting-minimal fixtures-nb)
+   :tools           (n-doc tool-minimal fixtures-nb)
    :vulnerabilities (n-doc vulnerability-minimal fixtures-nb)
-   :weaknesses (n-doc weakness-minimal fixtures-nb)})
+   :weaknesses      (n-doc weakness-minimal fixtures-nb)})
 
 (deftest test-check-store-indexes
   (helpers/set-capabilities! "foouser"
@@ -93,6 +95,7 @@
                     "indicator - finished checking 100 documents"
                     "event - finished checking 1500 documents"
                     "actor - finished checking 100 documents"
+                    "asset - finished checking 100 documents"
                     "relationship - finished checking 100 documents"
                     "incident - finished checking 100 documents"
                     "investigation - finished checking 100 documents"

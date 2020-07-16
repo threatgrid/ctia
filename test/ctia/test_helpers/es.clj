@@ -70,9 +70,12 @@
                       "ctia.store.es.default.rollover.max_docs" 50
                       "ctia.store.es.event.rollover.max_docs" 1000
                       "ctia.store.es.actor.indexname" "ctia_actor"
+                      "ctia.store.es.asset.indexname" "ctia_asset"
                       "ctia.store.es.actor.default_operator" "OR"
+                      "ctia.store.es.asset.default_operator" "OR"
                       "ctia.store.es.migration.indexname" "ctia_migration"
                       "ctia.store.es.actor.indexname" "ctia_actor"
+                      "ctia.store.es.asset.indexname" "ctia_asset"
                       "ctia.store.es.attack-pattern.indexname" "ctia_attack_pattern"
                       "ctia.store.es.campaign.indexname" "ctia_campaign"
                       "ctia.store.es.coa.indexname" "ctia_coa"
@@ -93,6 +96,7 @@
                       "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
                       "ctia.store.es.weakness.indexname" "ctia_weakness"
                       "ctia.store.actor" "es"
+                      "ctia.store.asset" "es"
                       "ctia.store.attack-pattern" "es"
                       "ctia.store.campaign" "es"
                       "ctia.store.coa" "es"
