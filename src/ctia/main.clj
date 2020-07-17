@@ -1,10 +1,9 @@
 (ns ctia.main
-  (:gen-class)
-  (:require
-   [ctia.init :refer [log-properties start-ctia!]]))
+  (:gen-class))
 
 (defn -main
   "Application entry point"
   [& args]
-  (start-ctia! :join? true
-               :silent? false))
+  ((requiring-resolve 'ctia.init/start-ctia!)
+   :join? true
+   :silent? false))

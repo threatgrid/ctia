@@ -32,7 +32,7 @@
 
 (defmacro with-properties [properties-vec & sexprs]
   `(with-properties-vec ~properties-vec
-     (fn [] ~@sexprs)))
+     (fn [] (do ~@sexprs))))
 
 (defn fixture-properties:clean [f]
   ;; Remove any set system properties, presumably from a previous test
@@ -163,12 +163,9 @@
 (defn fixture-ctia-fast [t]
   (fixture-ctia t false))
 
-;; TODO - Convert this to a properties fixture
 (defn fixture-allow-all-auth [f]
-  (let [orig-auth-srvc @auth/auth-service]
-    (reset! auth/auth-service (aa/->AuthService))
-    (f)
-    (reset! auth/auth-service orig-auth-srvc)))
+  (with-properties ["ctia.auth.type" "allow-all"]
+    (f)))
 
 (defn fixture-properties:static-auth [name secret]
   (fn [f]

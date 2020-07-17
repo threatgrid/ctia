@@ -7,6 +7,7 @@
 (def schema-generators-version "0.1.3")
 (def test-check-version "1.0.0")
 (def test-chuck-version "0.2.10")
+(def trapperkeeper-version "3.1.0")
 
 ;; On avoiding dependency overrides:
 ;; - :pedantic? should be set to :abort; Use "lein deps :tree" to resolve
@@ -32,6 +33,7 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
+  :exclusions [org.slf4j/log4j-over-slf4j] ;; remove from trapperkeeper jars
   ; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
   ; to inspect conflicts.
   :dependencies [[org.clojure/clojure ~clj-version]
@@ -44,8 +46,8 @@
                  [pandect "0.6.1"]
 
                  ;; Trapperkeeper
-                 [puppetlabs/trapperkeeper "3.1.0" :exclusions [org.slf4j/log4j-over-slf4j]]
-                 [puppetlabs/kitchensink "3.1.0"]
+                 [puppetlabs/trapperkeeper ~trapperkeeper-version]
+                 [puppetlabs/kitchensink ~trapperkeeper-version]
                  [prismatic/plumbing "0.5.5"] ;; upgrade puppetlabs/trapperkeeper
 
                  ;; Schemas
@@ -142,7 +144,11 @@
                                          "git" "symbolic-ref" "--short" "HEAD")))})}]
 
   :global-vars {*warn-on-reflection* true}
-  :profiles {:dev {:dependencies [[cheshire ~cheshire-version]
+  :profiles {:dev {:dependencies [[puppetlabs/trapperkeeper ~trapperkeeper-version
+                                   :classifier "test"]
+                                  [puppetlabs/kitchensink ~trapperkeeper-version
+                                   :classifier "test"]
+                                  [cheshire ~cheshire-version]
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
                                   [clj-http-fake ~clj-http-fake-version]

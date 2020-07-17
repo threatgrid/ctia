@@ -32,16 +32,6 @@
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.internal :as internal]))
 
-(defn init-auth-service! []
-  (let [{auth-service-type :type :as auth} (get-in @p/properties [:ctia :auth])]
-    (case auth-service-type
-      :allow-all (reset! auth/auth-service (allow-all/->AuthService))
-      :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service))
-      :static (reset! auth/auth-service (static-auth/->AuthService auth))
-      (throw (ex-info "Auth service not configured"
-                      {:message "Unknown service"
-                       :requested-service auth-service-type})))))
-
 (defn init-encryption-service! []
   (let [{:keys [type] :as encryption-properties}
         (get-in @p/properties [:ctia :encryption])]
@@ -90,11 +80,20 @@
 ;; Start manual Trapperkeeper management
 ;;------------------------------------------
 
-(defn ^:private services []
-  [])
-
-(defn ^:private config []
-  @p/properties)
+(defn ^:private services+config []
+  (let [properties @p/properties
+        {auth-service-type :type :as auth} (get-in properties [:ctia :auth])
+        auth-svc
+        (case auth-service-type
+          :allow-all allow-all/allow-all-auth-service
+          :threatgrid threatgrid/threatgrid-auth-service
+          :static static-auth/static-auth-service
+          (throw (ex-info "Auth service not configured"
+                          {:message "Unknown service"
+                           :requested-service auth-service-type})))
+        _ (reset! auth/auth-service auth-svc)]
+    {:services [auth-svc]
+     :config properties}))
 
 (defonce ^:private global-app (atom nil))
 
@@ -130,7 +129,8 @@
   (validate-entities)
 
   ;; trapperkeeper init
-  (tk-init! (services) (config))
+  (let [{:keys [services config]} (services+config)]
+    (tk-init! services config))
 
   ;; events init
   (e/init!)
@@ -145,7 +145,6 @@
     (event-logging/init!))
 
   (init-encryption-service!)
-  (init-auth-service!)
   (init-store-service!)
 
   ;; hooks init
