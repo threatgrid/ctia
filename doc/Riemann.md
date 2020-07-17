@@ -39,7 +39,7 @@ The `ctia.log.riemann.service-prefix` property is a string that should identify
 the current CTIA deployment.
 
 For example, the per-request metric is named `"API reqs/ms"`, and with the
-service-prefix property set to `"Production CTIA"`, the `service field becomes
+service-prefix property set to `"Production CTIA"`, the `service` field becomes
 `"Production CTIA API reqs/ms"`.
 
 ## Riemann local development
