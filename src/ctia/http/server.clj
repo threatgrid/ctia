@@ -165,7 +165,7 @@
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
          (get-in @properties [:ctia :log :riemann :enabled])
-         (rie/wrap-request-logs "CTIA")
+         (rie/wrap-request-logs "API reqs/ms")
 
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
