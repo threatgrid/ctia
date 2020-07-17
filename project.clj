@@ -48,6 +48,7 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
+                 ;; TODO: Fix the version before merging
                  [threatgrid/ctim "1.0.18-SNAPSHOT"]
                  [threatgrid/clj-momo "0.3.5"]
 
