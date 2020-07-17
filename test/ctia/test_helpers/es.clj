@@ -72,7 +72,6 @@
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.asset.indexname" "ctia_asset"
                       "ctia.store.es.actor.default_operator" "OR"
-                      "ctia.store.es.asset.default_operator" "OR"
                       "ctia.store.es.migration.indexname" "ctia_migration"
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.asset.indexname" "ctia_asset"

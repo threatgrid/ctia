@@ -4,6 +4,7 @@
 
 (deftest testing-singular
   (is (= :actor (singular :actors)))
+  (is (= :asset (singular :assets)))
   (is (= :campaign (singular :campaigns)))
   (is (= :coa (singular :coas)))
   (is (= :feedback (singular :feedbacks)))
