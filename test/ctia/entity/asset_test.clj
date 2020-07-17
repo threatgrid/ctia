@@ -29,7 +29,7 @@
                                            (is (= 200 (:status response)))
                                            (is (= expected (check-fn response)) desc))
 
-        "asset_type:\"Device\""
+        "asset_type:\"device\""
         (fn [r] (-> r :parsed-body first :asset_type))
         (-> asset-sample :asset_type)
         "Searching by an Asset type works"
