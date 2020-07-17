@@ -112,11 +112,7 @@
                  [com.graphql-java/graphql-java "9.7"]]
 
   :resource-paths ["resources" "doc"]
-  :aot [ctia.main]
-  :main ctia.main
   :classpath ".:resources"
-  :uberjar-name "ctia.jar"
-  :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.9.1"
   :test-selectors {:es-store :es-store
                    :disabled :disabled
@@ -144,7 +140,8 @@
                                   [prismatic/schema-generators ~schema-generators-version]]
                    :pedantic? :warn
 
-                   :resource-paths ["test/resources"]}
+                   :resource-paths ["test/resources"]
+                   :source-paths ["dev"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
@@ -157,6 +154,10 @@
                                     [com.gfredericks/test.chuck ~test-chuck-version]
                                     [prismatic/schema-generators ~schema-generators-version]]
                      :source-paths ["src","test","benchmarks"]}
+             :uberjar {:aot [ctia.main]
+                       :main ctia.main
+                       :uberjar-name "ctia.jar"
+                       :uberjar-exclusions [#"ctia\.properties"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [clj-http-fake ~clj-http-fake-version]

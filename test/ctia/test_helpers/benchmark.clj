@@ -26,5 +26,5 @@
 (def delete-store-indexes esh/delete-store-indexes)
 
 (defn cleanup-ctia! []
-  (esh/delete-store-indexes)
+  (esh/delete-store-indexes false)
   #(shutdown/shutdown-ctia!))
