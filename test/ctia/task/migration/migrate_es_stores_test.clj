@@ -558,28 +558,29 @@
       (testing "shall produce valid logs"
         (let [messages (set @logger)]
           (is (contains? messages "set batch size: 10"))
-          (is (set/subset?
-               ["campaign - finished migrating 100 documents"
-                "indicator - finished migrating 100 documents"
-                (format "event - finished migrating %s documents"
-                        (+ 1500 updates-nb))
-                "actor - finished migrating 100 documents"
-                "relationship - finished migrating 100 documents"
-                "incident - finished migrating 100 documents"
-                "investigation - finished migrating 100 documents"
-                "coa - finished migrating 100 documents"
-                "identity - finished migrating 0 documents"
-                "judgement - finished migrating 100 documents"
-                "data-table - finished migrating 0 documents"
-                "feedback - finished migrating 0 documents"
-                "casebook - finished migrating 100 documents"
-                "sighting - finished migrating 100 documents"
-                "identity-assertion - finished migrating 0 documents"
-                "attack-pattern - finished migrating 100 documents"
-                "malware - finished migrating 100 documents"
-                "tool - finished migrating 100 documents"
-                "vulnerability - finished migrating 100 documents"
-                "weakness - finished migrating 100 documents"]
+          (is (clojure.set/subset?
+               #{"campaign - finished migrating 100 documents"
+                 "indicator - finished migrating 100 documents"
+                 (format "event - finished migrating %s documents"
+                         (+ 1600 updates-nb))
+                 "actor - finished migrating 100 documents"
+                 "asset - finished migrating 100 documents"
+                 "relationship - finished migrating 100 documents"
+                 "incident - finished migrating 100 documents"
+                 "investigation - finished migrating 100 documents"
+                 "coa - finished migrating 100 documents"
+                 "identity - finished migrating 0 documents"
+                 "judgement - finished migrating 100 documents"
+                 "data-table - finished migrating 0 documents"
+                 "feedback - finished migrating 0 documents"
+                 "casebook - finished migrating 100 documents"
+                 "sighting - finished migrating 100 documents"
+                 "identity-assertion - finished migrating 0 documents"
+                 "attack-pattern - finished migrating 100 documents"
+                 "malware - finished migrating 100 documents"
+                 "tool - finished migrating 100 documents"
+                 "vulnerability - finished migrating 100 documents"
+                 "weakness - finished migrating 100 documents" }
                messages))))
 
       (testing "shall produce new indices
