@@ -37,7 +37,7 @@
            (java.lang AssertionError)
            (clojure.lang ExceptionInfo)))
 
-(declare setup)
+(def setup nil)
 
 (defn fixture-setup [t]
   (when-not setup
