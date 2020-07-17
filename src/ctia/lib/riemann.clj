@@ -20,7 +20,7 @@
         extra-fields))
 
 (defn ms-elapsed
-  "provide how much ms were elapsed since `nano-start`."
+  "Milliseconds since `nano-start`."
   [nano-start]
   (/ (- (System/nanoTime) nano-start) 1000000.0))
 
