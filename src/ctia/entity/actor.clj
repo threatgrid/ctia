@@ -96,6 +96,19 @@
    PagingParams
    ActorFieldsParam))
 
+(def actor-enumerable-fields
+  [:source
+   :actor_type
+   :motivation
+   :sophistication
+   :confidence
+   :intended_effect])
+
+(def actor-histogram-fields
+  [:timestamp
+   :valid_time.start_time
+   :valid_time.end_time])
+
 (def actor-routes
   (entity-crud-routes
    {:entity :actor
@@ -114,7 +127,10 @@
     :put-capabilities :create-actor
     :delete-capabilities :delete-actor
     :search-capabilities :search-actor
-    :external-id-capabilities :read-actor}))
+    :external-id-capabilities :read-actor
+    :can-aggregate? true
+    :histogram-fields actor-histogram-fields
+    :enumerable-fields actor-enumerable-fields}))
 
 (def capabilities
   #{:create-actor

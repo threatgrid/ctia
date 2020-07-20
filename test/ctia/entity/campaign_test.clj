@@ -1,18 +1,19 @@
 (ns ctia.entity.campaign-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest join-fixtures use-fixtures]]
-            [ctia.entity.campaign :refer [campaign-fields]]
+            [ctia.entity.campaign :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post-entity-bulk]]
              [crud :refer [entity-crud-test]]
+             [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
              [field-selection :refer [field-selection-tests]]
              [http :refer [doc-id->rel-url]]
              [pagination :refer [pagination-test]]
-             [store :refer [test-for-each-store]]]
-            [ctim.examples.campaigns :as ex :refer [new-campaign-maximal]]))
+             [store :refer [test-for-each-store store-fixtures]]]
+            [ctim.examples.campaigns :as ex :refer [new-campaign-maximal new-campaign-minimal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -50,13 +51,13 @@
        (pagination-test
         "ctia/campaign/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        campaign-fields)
+        sut/campaign-fields)
 
        (field-selection-tests
         ["ctia/campaign/search?query=*"
          (doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        campaign-fields)))))
+        sut/campaign-fields)))))
 
 (deftest test-campaign-routes-access-control
   (test-for-each-store
@@ -65,3 +66,13 @@
                           ex/new-campaign-minimal
                           true
                           true))))
+
+(deftest test-campaign-metric-routes
+  ((:es-store store-fixtures)
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
+     (test-metric-routes (into sut/campaign-entity
+                               {:entity-minimal new-campaign-minimal
+                                :enumerable-fields sut/campaign-enumerable-fields
+                                :date-fields sut/campaign-histogram-fields})))))

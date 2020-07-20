@@ -39,8 +39,8 @@
                  [clj-time "0.15.2"]
                  [org.clojure/core.async "1.0.567"]
                  [org.slf4j/slf4j-log4j12 "1.8.0-beta0"]
-                 [org.clojure/core.memoize "0.8.2"]
-                 [org.clojure/tools.logging "1.0.0"]
+                 [org.clojure/core.memoize "1.0.236"]
+                 [org.clojure/tools.logging "1.1.0"]
                  [org.clojure/tools.cli "1.0.194"]
                  [pandect "0.6.1"]
 
@@ -49,7 +49,6 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                  
                  [threatgrid/ctim "1.0.17"]
                  [threatgrid/clj-momo "0.3.5"]
 
@@ -74,7 +73,7 @@
                  [scopula "0.1.4"]
 
                  ;; clients
-                 [clj-http "3.10.0"] ;TODO bump clj-http with https://github.com/dakrone/clj-http/pull/532
+                 [clj-http "3.10.1"]
                  [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
 
                  ;; Metrics
@@ -114,11 +113,7 @@
                  [com.graphql-java/graphql-java "9.7"]]
 
   :resource-paths ["resources" "doc"]
-  :aot [ctia.main]
-  :main ctia.main
   :classpath ".:resources"
-  :uberjar-name "ctia.jar"
-  :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.9.1"
   :test-selectors ~(-> (slurp "dev-resources/circleci_test/config.clj")
                        read-string
@@ -139,8 +134,9 @@
                                   [prismatic/schema-generators ~schema-generators-version]
                                   [circleci/circleci.test "0.4.3"]]
                    :pedantic? :warn
-                   :source-paths ["dev"]
-                   :resource-paths ["test/resources"]}
+
+                   :resource-paths ["test/resources"]
+                   :source-paths ["dev"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
@@ -153,6 +149,10 @@
                                     [com.gfredericks/test.chuck ~test-chuck-version]
                                     [prismatic/schema-generators ~schema-generators-version]]
                      :source-paths ["src","test","benchmarks"]}
+             :uberjar {:aot [ctia.main]
+                       :main ctia.main
+                       :uberjar-name "ctia.jar"
+                       :uberjar-exclusions [#"ctia\.properties"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[cheshire ~cheshire-version]
                                    [clj-http-fake ~clj-http-fake-version]

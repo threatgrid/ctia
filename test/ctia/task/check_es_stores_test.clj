@@ -10,6 +10,7 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :refer [make-transient-id]]
+            [ctia.entity.investigation.examples :refer [investigation-minimal]]
             [ctim.examples
              [actors :refer [actor-minimal]]
              [attack-patterns :refer [attack-pattern-minimal]]
@@ -18,12 +19,10 @@
              [coas :refer [coa-minimal]]
              [incidents :refer [incident-minimal]]
              [indicators :refer [indicator-minimal]]
-             [investigations :refer [investigation-minimal]]
              [judgements :refer [judgement-minimal]]
              [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
              [sightings :refer [sighting-minimal]]
-             [identity-assertions :refer [identity-assertion-minimal]]
              [tools :refer [tool-minimal]]
              [vulnerabilities :refer [vulnerability-minimal]]
              [weaknesses :refer [weakness-minimal]]]))

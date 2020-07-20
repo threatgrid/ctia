@@ -1,5 +1,6 @@
 (ns ctia.test-helpers.fixtures
   (:require [ctim.domain.id :refer [make-transient-id]]
+            [ctia.entity.investigation.examples :refer [investigation-maximal investigation-minimal]]
             [ctim.examples
              [actors :refer [actor-maximal actor-minimal]]
              [attack-patterns :refer [attack-pattern-maximal attack-pattern-minimal]]
@@ -7,13 +8,11 @@
              [coas :refer [coa-maximal coa-minimal]]
              [incidents :refer [incident-maximal incident-minimal]]
              [indicators :refer [indicator-maximal indicator-minimal]]
-             [investigations :refer [investigation-maximal investigation-minimal]]
              [judgements :refer [judgement-maximal judgement-minimal]]
              [malwares :refer [malware-maximal malware-minimal]]
              [relationships :refer [relationship-maximal relationship-minimal]]
              [casebooks :refer [casebook-maximal casebook-minimal]]
              [sightings :refer [sighting-maximal sighting-minimal]]
-             [identity-assertions :refer [identity-assertion-maximal identity-assertion-minimal]]
              [tools :refer [tool-maximal tool-minimal]]
              [vulnerabilities :refer [vulnerability-maximal vulnerability-minimal]]
              [weaknesses :refer [weakness-maximal weakness-minimal]]]))

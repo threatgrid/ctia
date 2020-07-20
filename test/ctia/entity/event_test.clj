@@ -244,16 +244,16 @@
                              :type "event",
                              :event_type :record-updated,
                              :fields
-                             [{:field :modified,
-                               :action "modified",
-                               :change
-                               {:before "2042-01-01T00:00:00.000Z",
-                                :after "2042-01-02T00:00:00.000Z"}}
-                              {:field :description,
+                             [{:field :description,
                                :action "modified",
                                :change
                                {:before "my description",
-                                :after "changed description"}}]}
+                                :after "changed description"}}
+                              {:field :modified,
+                               :action "modified",
+                               :change
+                               {:before "2042-01-01T00:00:00.000Z",
+                                :after "2042-01-02T00:00:00.000Z"}}]}
                             {:owner "user1",
                              :groups ["group1"],
                              :timestamp #inst "2042-01-01T00:00:00.000-00:00",
@@ -367,3 +367,89 @@
              (count timeline)))
       (is (= (count every-sec) (count (-> timeline first :events))))
       (is (= (count every-milli-2) (count (-> timeline second :events)))))))
+
+(deftest test-event-diffs
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "user1"
+                                ["group1"]
+                                "user1"
+                                all-capabilities)
+     (whoami-helpers/set-whoami-response "user1"
+                                         "user1"
+                                         "group1"
+                                         "user1")
+     ;; test for https://github.com/threatgrid/iroh/issues/3551
+     (testing "Diff events for Incidents"
+       (with-sequential-uuid
+         (fn []
+           (fixture-with-fixed-time
+            (time/timestamp "2042-01-01")
+            (fn []
+              (let [initial-incident
+                    (post (str "ctia/incident")
+                          :body new-incident-minimal
+                          :headers {"Authorization" "user1"})
+                    _ (is (= 201 (:status initial-incident)) initial-incident)
+
+                    ;; add new :assignees field
+                    added-assignees-incident
+                    (put (format "ctia/%s/%s"
+                                 "incident"
+                                 (-> (get-in initial-incident [:parsed-body :id])
+                                     id/long-id->id
+                                     :short-id))
+                         :body (-> initial-incident
+                                   :parsed-body
+                                   (assoc :assignees ["1"]))
+                         :headers {"Authorization" "user1"})
+                    _ (is (= 200 (:status added-assignees-incident))
+                          added-assignees-incident)
+
+                    ;; update existing :assignees field
+                    modified-assignees-incident
+                    (put (format "ctia/%s/%s"
+                                 "incident"
+                                 (-> (get-in added-assignees-incident [:parsed-body :id])
+                                     id/long-id->id
+                                     :short-id))
+                         :body (-> added-assignees-incident
+                                   :parsed-body
+                                   (assoc-in [:assignees 1] "2"))
+                         :headers {"Authorization" "user1"})
+                    _ (is (= 200 (:status modified-assignees-incident))
+                          modified-assignees-incident)
+
+                    ;; delete existing :assignees field
+                    deleted-assignees-incident
+                    (put (format "ctia/%s/%s"
+                                 "incident"
+                                 (-> (get-in modified-assignees-incident [:parsed-body :id])
+                                     id/long-id->id
+                                     :short-id))
+                         :body (-> modified-assignees-incident
+                                   :parsed-body
+                                   (dissoc :assignees))
+                         :headers {"Authorization" "user1"})
+                    _ (is (= 200 (:status deleted-assignees-incident))
+                          deleted-assignees-incident)]
+
+                (testing ":fields are correctly set"
+                  (let [initial-id (get-in initial-incident [:parsed-body :id])
+                        q (uri/uri-encode
+                            (format "entity.id:\"%s\"" initial-id))
+                        results (map :fields
+                                     (:parsed-body (get (str "ctia/event/search?query=" q)
+                                                        :content-type :json
+                                                        :headers {"Authorization" "user1"})))]
+                    (is (= '[nil
+                             [{:field :assignees
+                               :action "added"
+                               :change {:after ["1"]}}]
+                             [{:field :assignees
+                               :action "modified"
+                               :change {:before ["1"], :after ["1" "2"]}}]
+                             [{:field :assignees
+                               :action "deleted"
+                               :change {:before ["1" "2"]}}]]
+                           results)))))))))))))

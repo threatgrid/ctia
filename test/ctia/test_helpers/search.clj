@@ -44,6 +44,17 @@
        (map :id)
        set))
 
+(defn count-raw
+  [entity query-params]
+  (let [count-uri (format "ctia/%s/search/count" (name entity))]
+    (helpers/get count-uri
+                 :headers {"Authorization" "45c1f5e3f05d0"}
+                 :query-params query-params)))
+
+(defn count-text
+  [entity text]
+  (count-raw entity {:query text}))
+
 (defn test-describable-search [entity example]
   (let [;; generate matched and unmatched terms / entities
         capital-word (unique-word "CAPITAL")
@@ -79,24 +90,35 @@
                            set)
         default_operator (or (get-in @properties [:ctia :store :es (keyword entity) :default_operator])
                              (get-in @properties [:ctia :store :es :default :default_operator])
-                             "AND")]
-
+                             "AND")
+        partially-matched-text (format "%s %s"
+                                       "word"
+                                       (unique-word "unmatched"))]
     (if (= "AND" default_operator)
-      (is (empty? (search-ids entity (format "%s %s"
-                                                 "word"
-                                                 (unique-word "unmatched"))))
+      (testing
           (format "AND is default_operator for %s, it must match all words!"
-                  entity))
-      (is (seq (search-ids entity (format "%s %s"
-                                              "word"
-                                              (unique-word "unmatched"))))
-          (format "OR is default_operator for %s, it must match all words!"
-                  entity)))
+                  entity)
+        (let [searched-ids (search-ids entity partially-matched-text)
+              counted (:parsed-body (count-text entity partially-matched-text))]
+          (is (empty? searched-ids))
+          (is (= 0 counted))))
+      (testing
+          (format "OR is default_operator for %s, it can match only one word!"
+                  entity)
+        (let [search-ids (search-ids entity partially-matched-text)
+              counted (:parsed-body (count-text entity partially-matched-text))]
+          (is (seq search-ids))
+          (is (= (count search-ids)
+                 counted)))))
 
     (testing "all field should match simple query"
-      (let [{:keys [status parsed-body]} (is (search-text entity "word"))]
-        (is (= 200 status))
-        (is matched-ids (map :_id parsed-body))))
+      (let [{search-status :status
+             search-body :parsed-body} (search-text entity "word")
+            {count-status :status
+             count-body :parsed-body} (count-text entity "word")]
+        (is (= 200 search-status count-status))
+        (is (= matched-ids (set (map :id search-body))))
+        (is (= (count matched-ids) count-body))))
 
     (testing "lowercase filter should be properly applied on describable fields"
       (let [all-upper-ids (search-ids entity capital-word)
@@ -191,29 +213,44 @@
 (defn test-non-describable-search
   [entity query query-field]
   (testing "search term filter"
-    (let [response (search-text entity query)]
-      (is (= 200 (:status response)))
-      (doseq [res (:parsed-body response)]
+    (let [{search-status :status
+           search-body :parsed-body} (search-text entity query)
+          {count-status :status
+           count-body :parsed-body} (count-text entity query)]
+      (is (= 200 search-status count-status))
+      (is (pos? (count search-body)))
+      (is (= (count search-body) count-body))
+      (doseq [res search-body]
         (is (= query (get res query-field))
             "query term must properly match values")))
     (with-redefs [log* (fn [& _] nil)]
       ;; avoid unnecessary verbosity
-      (let [response (search-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")]
-        (is (= 400 (:status response)))))
+      (let [{search-status :status} (search-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")
+            {count-status :status} (count-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")]
+        (is (= 400 search-status count-status))))
 
-    (let [response (search-raw entity {"query" query
-                                       "tlp" "red"})]
-      (is (= 200 (:status response)))
-      (is (empty? (:parsed-body response))
+    (let [query-params {"query" query
+                        "tlp" "red"}
+          {search-status :status
+           search-body :parsed-body} (search-raw entity query-params)
+          {count-status :status
+           count-body :parsed-body} (count-raw entity query-params)]
+      (is (= 200 search-status count-status))
+      (is (= 0 (count search-body) count-body)
           "filters must be applied, and should discriminate"))
 
-    (let [{:keys [status parsed-body]} (search-raw entity {:query query
-                                                           :tlp "green"})
+    (let [query-params {:query query
+                        :tlp "green"}
+          {search-status :status
+           search-body :parsed-body} (search-raw entity query-params)
+          {count-status :status
+           count-body :parsed-body} (count-raw entity query-params)
           matched-fields {:tlp "green"
                           (keyword query-field) query}]
-      (is (= 200 status))
-      (is (<= 1 (count parsed-body)))
-      (doseq [res parsed-body]
+      (is (= 200 search-status count-status))
+      (is (<= 1 (count search-body)))
+      (is (= (count search-body) count-body))
+      (doseq [res search-body]
         (is (= (select-keys res [(keyword query-field) :tlp])
                matched-fields)
             "filters must be applied, and match properly")))))

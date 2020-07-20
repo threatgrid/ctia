@@ -10,6 +10,7 @@
             [ctia.http.middleware
              [auth :as auth]
              [ratelimit :refer [wrap-rate-limit]]]
+            [ctia.lib.riemann :as rie]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -54,7 +55,7 @@
 (defn _http-get [params url jwt]
   (log/infof "checkin JWT, GET %s" url)
   (http/get url
-            (into {:as :json-strict
+            (into {:as :json
                    :coerce :always
                    :throw-exceptions false
                    :headers {:Authorization (format "Bearer %s" jwt)}
@@ -140,7 +141,8 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
-(defn- ^Server new-jetty-instance
+(defn- new-jetty-instance
+  ^Server
   [{:keys [dev-reload
            max-threads
            min-threads
@@ -159,6 +161,11 @@
 
          (:enabled jwt)
          auth-jwt/wrap-jwt-to-ctia-auth
+
+         ;; just after :jwt and :identity is attached to request
+         ;; by rjwt/wrap-jwt-auth-fn below.
+         (get-in @properties [:ctia :log :riemann :enabled])
+         (rie/wrap-request-logs "CTIA")
 
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn

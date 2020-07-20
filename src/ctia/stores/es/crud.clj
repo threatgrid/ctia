@@ -354,6 +354,22 @@ It returns the documents with full hits meta data including the real index in wh
           (restricted-read? ident) (update :data
                                            access-control-filter-list
                                            ident))))))
+
+(defn handle-query-string-count
+  "Generate an ES count handler using some mapping and schema"
+  [mapping]
+  (s/fn :- s/Int
+    [{conn :conn
+      index :index
+      :as es-conn-state} :- ESConnState
+     {:keys [filter-map] :as search-query} :- SearchQuery
+     ident]
+    (let [query (make-search-query es-conn-state search-query ident)]
+      (d/count-docs conn
+                    index
+                    (name mapping)
+                    query))))
+
 (s/defn make-histogram
   [{:keys [aggregate-on granularity timezone]
     :or {timezone "+00:00"}} :- HistogramQuery]

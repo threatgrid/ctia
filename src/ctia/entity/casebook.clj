@@ -296,6 +296,14 @@
 (def CasebookConnectionType
   (pagination/new-connection CasebookType))
 
+(def casebook-enumerable-fields
+  [:source
+   :observables.type
+   :observables.value])
+
+(def casebook-histogram-fields
+  [:timestamp])
+
 (def casebook-routes
   (routes
    casebook-operation-routes
@@ -312,13 +320,16 @@
      :search-q-params CasebookSearchParams
      :new-spec :new-casebook/map
      :realize-fn realize-casebook
+     :can-aggregate? true
      :get-capabilities :read-casebook
      :post-capabilities :create-casebook
      :put-capabilities :create-casebook
      :delete-capabilities :delete-casebook
      :search-capabilities :search-casebook
      :external-id-capabilities :read-casebook
-     :hide-delete? false})))
+     :hide-delete? false
+     :histogram-fields casebook-histogram-fields
+     :enumerable-fields casebook-enumerable-fields})))
 
 (def casebook-entity
   {:route-context "/casebook"

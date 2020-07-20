@@ -63,7 +63,7 @@ Using lein use this one:
 
 Running from a cloned repository:
 
-`lein run`
+`lein run -m ctia.main`
 
 ### Packaging and running as standalone jar
 
