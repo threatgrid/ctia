@@ -28,7 +28,7 @@
           (range n))))
 
 (defn read-env-config
-  "Returns SPLIT_TESTS as Clojure data."
+  "Returns CTIA_SPLIT_TESTS as Clojure data."
   []
   {:post [((every-pred vector?
                        (comp #{2} count)
@@ -36,7 +36,7 @@
            %)
           (let [[this-split total-splits] %]
             (< -1 this-split total-splits))]}
-  (or (some-> (System/getenv "SPLIT_TESTS")
+  (or (some-> (System/getenv "CTIA_SPLIT_TESTS")
               edn/read-string)
       ; default: this is the first split of total 1 split. (ie., run everything)
       [0 1]))
@@ -59,12 +59,12 @@
 ; See [[LICENSE]] for a copy of EPL 1.0.
 (defn dir
   "Same usage as circleci.test/dir. To split tests, bind
-  environment variable SPLIT_TESTS to a string containing a vector
+  environment variable CTIA_SPLIT_TESTS to a string containing a vector
   pair [n m], where m is the number of splits, and n identifies the
   current split in `(range m)`.
   
-  eg., SPLIT_TESTS=\"[0 2]\" lein test       ; run the first half of the tests
-  eg., SPLIT_TESTS=\"[1 2]\" lein test       ; run the second half of the tests
+  eg., CTIA_SPLIT_TESTS=\"[0 2]\" lein test       ; run the first half of the tests
+  eg., CTIA_SPLIT_TESTS=\"[1 2]\" lein test       ; run the second half of the tests
   "
   ([dirs-str] (dir dirs-str ":default"))
   ([dirs-str selector-str]

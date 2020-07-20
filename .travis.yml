@@ -49,13 +49,13 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # ==========
     # Parallelizes the tests via $TRAVISCI_JOB_PARALLELISM TravisCI jobs.
     #
-    # SPLIT_TESTS is a string containing a clojure vector [n m], where m is the
+    # CTIA_SPLIT_TESTS is a string containing a clojure vector [n m], where m is the
     # total number of splits, and n is a number in (clojure.core/range m)
     # unique to the container which identifies which chunk
     # of the tests to run.
     #
-    # eg., SPLIT_TESTS="[0 2]" runs the first half of the tests
-    # eg., SPLIT_TESTS="[1 2]" runs the second half of the tests
+    # eg., CTIA_SPLIT_TESTS="[0 2]" runs the first half of the tests
+    # eg., CTIA_SPLIT_TESTS="[1 2]" runs the second half of the tests
     #
     # Notes:
     # - this is currently not the case, but it would be nice if the jdk
@@ -66,19 +66,19 @@ matrix: #note: don't use "jobs:" introduces an extra build
     - stage: test
       name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS=[0,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_SPLIT_TESTS=[0,$TRAVISCI_JOB_PARALLELISM]
     - name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS=[1,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_SPLIT_TESTS=[1,$TRAVISCI_JOB_PARALLELISM]
     - name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS=[2,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_SPLIT_TESTS=[2,$TRAVISCI_JOB_PARALLELISM]
     - name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS=[3,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_SPLIT_TESTS=[3,$TRAVISCI_JOB_PARALLELISM]
     - name: "JDK 11"
       if: type != cron
-      env: SPLIT_TESTS=[4,$TRAVISCI_JOB_PARALLELISM]
+      env: CTIA_SPLIT_TESTS=[4,$TRAVISCI_JOB_PARALLELISM]
 
     # Cron jobs:
     # ==========
