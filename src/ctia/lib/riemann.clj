@@ -130,9 +130,10 @@
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
   [handler metric-description]
-  {:pre [(string? metric-description)
-         (seq metric-description)]}
-  (let [_ (log/info "Riemann request logging initialization")
+  (let [_ (assert (and (string? metric-description)
+                       (seq metric-description))
+                  (pr-str metric-description))
+        _ (log/info "Riemann request logging initialization")
         send-event-fn 
         (let [config (get-in @prop/properties [:ctia :log :riemann])
               client (-> (select-keys config
