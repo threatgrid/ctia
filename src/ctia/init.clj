@@ -90,8 +90,7 @@
           :static static-auth/static-auth-service
           (throw (ex-info "Auth service not configured"
                           {:message "Unknown service"
-                           :requested-service auth-service-type})))
-        _ (reset! auth/auth-service auth-svc)]
+                           :requested-service auth-service-type})))]
     {:services [auth-svc]
      :config properties}))
 

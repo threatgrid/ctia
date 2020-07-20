@@ -57,6 +57,12 @@
   [[:ConfigService get-in-config]]
   (init [this context]
         (assoc context :auth-config (get-in-config [:ctia :auth])))
+  (start [this context]
+         (reset! auth/auth-service this)
+         context)
+  (stop [this context]
+        (reset! auth/auth-service nil)
+        context)
   (identity-for-token [this token]
     (let [{:keys [auth-config]} (service-context this)
           secret (get-in auth-config [:static :secret])

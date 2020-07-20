@@ -26,6 +26,12 @@
 (tk/defservice allow-all-auth-service
   IAuth
   []
+  (start [this context]
+         (reset! auth/auth-service this)
+         context)
+  (stop [this context]
+        (reset! auth/auth-service nil)
+        context)
   (identity-for-token [_ _]
     identity-singleton))
 
