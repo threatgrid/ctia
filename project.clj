@@ -81,6 +81,7 @@
                  ;; clients
                  [clj-http "3.10.1"]
                  [com.taoensso/carmine "2.19.1" #_"2.20.0-RC1"]
+                 [cheshire ~cheshire-version] ;; upgrade threatgrid/ring-jwt-middleware, puppetlabs/kitchensink (+ a dozen others)
 
                  ;; Metrics
                  [metrics-clojure ~metrics-clojure-version]
@@ -148,7 +149,6 @@
                                    :classifier "test"]
                                   [puppetlabs/kitchensink ~trapperkeeper-version
                                    :classifier "test"]
-                                  [cheshire ~cheshire-version]
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
                                   [clj-http-fake ~clj-http-fake-version]
@@ -161,16 +161,14 @@
                               "-Dcom.sun.management.jmxremote.local.only=false"
                               "-Dcom.sun.management.jmxremote.authenticate=false"
                               "-Dcom.sun.management.jmxremote.ssl=false"]}
-             :bench {:dependencies [[cheshire ~cheshire-version]
-                                    [perforate ~perforate-version]
+             :bench {:dependencies [[perforate ~perforate-version]
                                     [criterium "0.4.5"]
                                     [org.clojure/test.check ~test-check-version]
                                     [com.gfredericks/test.chuck ~test-chuck-version]
                                     [prismatic/schema-generators ~schema-generators-version]]
                      :source-paths ["src","test","benchmarks"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
-                    :dependencies [[cheshire ~cheshire-version]
-                                   [clj-http-fake ~clj-http-fake-version]
+                    :dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]
                                    [org.clojure/test.check ~test-check-version]
                                    [prismatic/schema-generators ~schema-generators-version]]
