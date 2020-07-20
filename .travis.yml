@@ -86,21 +86,14 @@ matrix: #note: don't use "jobs:" introduces an extra build
     # - cron jobs are created here: https://travis-ci.com/threatgrid/ctia/settings
     # - they repeat around the same time as initially started
     # - we deploy (also) during cron jobs in the 'deploy' stage
-    - stage: test
-      name: "JDK 8"
-      if: type = cron
-      jdk: oraclejdk8
     - name: "JDK 11"
       if: type = cron
     - name: "JDK 11 + Clojure next"
       if: type = cron
       env: CLOJURE_VERSION=$CLOJURE_NEXT
-    - name: "JDK 13"
+    - name: "JDK 14 + Clojure next"
       if: type = cron
-      jdk: openjdk13
-    - name: "JDK 13 + Clojure next"
-      if: type = cron
-      jdk: openjdk13
+      jdk: openjdk14
       env: CLOJURE_VERSION=$CLOJURE_NEXT
 
     # Deploy
