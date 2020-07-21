@@ -1,8 +1,12 @@
 (ns ctia.entity.entities-test
   (:require [ctia.entity.entities :as sut]
-            [clojure.test :as t :refer [deftest is]]
+            [ctia.test-helpers.core :as test-helpers]
+            [clojure.test :as t :refer [deftest is use-fixtures join-fixtures]]
             [clojure.spec.alpha :refer [gen]]
             [clojure.spec.gen.alpha :refer [generate]]))
+
+(use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
+                                    test-helpers/fixture-ctia-fast]))
 
 (defn gen-sample-entity
   [{:keys [new-spec]}]
