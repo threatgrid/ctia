@@ -1,11 +1,13 @@
 (ns ctia.logging
-  (:require [clojure.core.async :as a]
-            [clojure.tools.logging :as log]
-            [ctia.events :as e]
-            [ctia.shutdown :as shutdown]))
+  (:require [ctia.logging-core]))
 
 (defn init!
   "Sets up logging of all events"
   []
   (let [control (e/register-listener #(log/info "event:" %) :blocking)]
     (shutdown/register-hook! :logging #(a/close! control))))
+
+(tk/defservice event-logging-service
+  [[:EventsService register-listener]]
+  (start [this context] (core/start context register-listener))
+  (stop [this context] (core/stop context)))

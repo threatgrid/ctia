@@ -5,7 +5,7 @@
 
 (defonce global-events-service (atom nil))
 
-(defprotocol IEventsService
+(defprotocol EventsService
   (central-channel [this] "Returns the central channel")
   (send-event [this event] [this chan event]
               "Send an event to a channel. Use the central channel by default")
@@ -14,7 +14,7 @@
                      "Convenience wrapper for registering a listener on the central event channel."))
 
 (tk/defservice events-service
-  IEventsService
+  EventsService
   []
   (init [this context] (core/init context))
   (stop [this context] (core/stop context))

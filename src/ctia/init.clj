@@ -6,10 +6,12 @@
    [clj-momo.properties :as mp]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
+   #_
    [ctia.lib.metrics
-    [riemann :as riemann]
-    [jmx :as jmx]
-    [console :as console]]
+    #_[riemann :as riemann] ;; never enabled
+    #_[jmx :as jmx] ;; never enabled
+    #_[console :as console] ;; never enabled
+    ]
    [ctia.lib.utils :as utils]
    [ctia
     [auth :as auth]
@@ -85,9 +87,13 @@
             (throw (ex-info "Encryption service not configured"
                             {:message "Unknown service"
                              :requested-service type}))))]
-    {:services [auth-svc
-                encryption-svc
-                e/events-service]
+    {:services (concat
+                 [auth-svc
+                  encryption-svc
+                  e/events-service]
+                 ;; register event file logging only when enabled
+                 (when (get-in @p/properties [:ctia :events :log])
+                   [event-logging/event-logging-service]))
      :config properties}))
 
 (defonce ^:private global-app (atom nil))
@@ -128,13 +134,10 @@
     (tk-init! services config))
 
   ;; metrics reporters init
-  (riemann/init!)
-  (jmx/init!)
-  (console/init!)
+  ;(riemann/init!)
+  ;(jmx/init!)
+  ;(console/init!)
 
-  ;; register event file logging only when enabled
-  (when (get-in @p/properties [:ctia :events :log])
-    (event-logging/init!))
 
   (init-store-service!)
 
