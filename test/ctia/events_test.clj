@@ -55,7 +55,7 @@
 
 (deftest test-central-events
   "Tests the basic action of sending an event to the central channel"
-  (let [{b :chan-buf c :chan m :mult} @e/central-channel
+  (let [{b :chan-buf c :chan m :mult} (e/get-central-channel)
         output (chan)]
     (tap m output)
     (e/send-event (o2e/to-create-event

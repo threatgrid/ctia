@@ -13,7 +13,7 @@
    [ctia.lib.utils :as utils]
    [ctia
     [auth :as auth]
-    [events :as e]
+    [events-service :as e]
     [logging :as event-logging]
     [properties :as p]
     [store :as store]]
@@ -86,7 +86,8 @@
                             {:message "Unknown service"
                              :requested-service type}))))]
     {:services [auth-svc
-                encryption-svc]
+                encryption-svc
+                e/events-service]
      :config properties}))
 
 (defonce ^:private global-app (atom nil))
@@ -125,9 +126,6 @@
   ;; trapperkeeper init
   (let [{:keys [services config]} (services+config)]
     (tk-init! services config))
-
-  ;; events init
-  (e/init!)
 
   ;; metrics reporters init
   (riemann/init!)

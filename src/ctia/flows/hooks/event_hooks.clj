@@ -2,6 +2,7 @@
   (:require
    [clojure.tools.logging :as log]
    [ctia.events :as events]
+   [ctia.events-service :as events-svc]
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
    [ctia.lib.kafka :as lk]
@@ -95,8 +96,8 @@
 (defrecord ChannelEventPublisher []
   Hook
   (init [_]
-    (assert (some? @events/central-channel)
-            "Events central-channel was not setup"))
+    (assert (some? @events-svc/global-events-service)
+            "Events service was not setup"))
   (destroy [_]
     :nothing)
   (handle [_ event _]
