@@ -104,6 +104,11 @@
                  [args4j "2.32"] ;org.onyxplatform/onyx-kafka > threatgrid/ctim
                  [com.stuartsierra/component "0.3.2"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
+                 ;; Notes on jackson-databind:
+                 ;; - overrides org.onyxplatform/onyx-kafka and others
+                 ;; - some 2.9.x versions of jackson-databind and earlier have known exploits
+                 ;; - 2.10.2 is the same as cheshire's jackson-core dependency
+                 [com.fasterxml.jackson.core/jackson-databind "2.10.2"]
                  [zookeeper-clj "0.9.4"]
 
                  ;; GraphQL
