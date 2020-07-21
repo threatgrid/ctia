@@ -141,7 +141,7 @@
   {:investigation_id Reference})
 
 (def incident-investigation-link-route
-  (POST "/:id/link" []
+  (POST "/:id/link-investigation" []
         :return rs/Relationship
         :body [link-req IncidentInvestigationLinkRequest
                {:description "an Incident Link request"}]
@@ -179,7 +179,7 @@
             :else
             (let [{:keys [investigation_id]} link-req
                   new-relationship
-                  {:source_ref casebook_id
+                  {:source_ref investigation_id
                    :target_ref target-ref
                    :relationship_type "related-to"}
                   stored-relationship

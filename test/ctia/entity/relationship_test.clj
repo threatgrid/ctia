@@ -19,7 +19,7 @@
             [ctim.examples
              [casebooks :refer [new-casebook-minimal]]
              [incidents :refer [new-incident-minimal]]
-             [investigation :refer [new-investigation-minimal]]
+             [investigations :refer [new-investigation-minimal]]
              [relationships :refer [new-relationship-maximal new-relationship-minimal]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -210,9 +210,11 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})
              _ (is (= 201 investigation-status))
 
+             link-suffix "/link-investigation"
+
              {wrong-incident-status :status
               wrong-incident-response :body}
-             (post (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" "/link")
+             (post (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" link-suffix)
                    :body {:investigation_id (:id investigation-body)}
                    :headers {"Authorization" "45c1f5e3f05d0"})
              _ (is (= 404 wrong-incident-status))
@@ -223,7 +225,7 @@
               wrong-investigation-response :body}
              (post (str "ctia/incident/" (-> (:id incident-body)
                                              long-id->id
-                                             :short-id) "/link")
+                                             :short-id) link-suffix)
                    :body {:investigation_id ":"}
                    :headers {"Authorization" "45c1f5e3f05d0"})
              _ (is (= 400 wrong-investigation-status))
@@ -234,7 +236,7 @@
               link-response :parsed-body}
              (post (str "ctia/incident/" (-> (:id incident-body)
                                              long-id->id
-                                             :short-id) "/link")
+                                             :short-id) link-suffix)
                    :body {:investigation_id (:id investigation-body)}
                    :headers {"Authorization" "45c1f5e3f05d0"})
              _ (is (= 201 link-status))
