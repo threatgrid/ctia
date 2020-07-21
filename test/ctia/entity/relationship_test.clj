@@ -124,11 +124,6 @@
              (post "ctia/incident"
                    :body new-incident-minimal
                    :headers {"Authorization" "45c1f5e3f05d0"})
-             {investigation-body :parsed-body
-              investigation-status :status}
-             (post "ctia/investigation"
-                   :body new-investigation-minimal
-                   :headers {"Authorization" "45c1f5e3f05d0"})
 
              {wrong-incident-status :status
               wrong-incident-response :body}
