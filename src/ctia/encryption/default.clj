@@ -3,6 +3,7 @@
    [clojure.tools.logging :as log]
    [ctia.encryption :as encryption :refer [IEncryption]]
    [ctia.encryption.default-core :as core]
+   [ctia.properties :as p]
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
@@ -12,7 +13,8 @@
   []
   (init [this context]
     (log/info "Loading Encryption Key")
-    (core/init context))
+    (core/init context
+               (get-in @p/properties [:ctia :encryption])))
   (start [this context]
          (reset! encryption/encryption-service this)
          (core/start context))

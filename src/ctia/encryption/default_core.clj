@@ -1,6 +1,5 @@
 (ns ctia.encryption.default-core
   (:require [clojure.string :as string]
-            [ctia.properties :as p]
             [lock-key.core :refer [decrypt-from-base64
                                    encrypt-as-base64]]))
 
@@ -13,9 +12,8 @@
               slurp
               string/trim)))
 
-(defn init [context]
-  (let [props (get-in @p/properties [:ctia :encryption])
-        secret (encryption-key props)]
+(defn init [context encryption-props]
+  (let [secret (encryption-key encryption-props)]
     (assoc context
            :encrypt-fn #(encrypt-as-base64 % secret)
            :decrypt-fn #(decrypt-from-base64 % secret))))
