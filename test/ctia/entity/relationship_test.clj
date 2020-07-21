@@ -273,7 +273,8 @@
    (fn []
      (establish-user!)
      ;; Exactly one of a fixed set of fields is allowed in the
-     ;; body of an /incident/:id/link route. This test 
+     ;; body of an /incident/:id/link route. This test generates
+     ;; the interesting combinations of these fields that trigger 400 errors.
      (testing "/incident/:id/link + ambiguous body"
        (let [{incident-body :parsed-body
               incident-status :status}
@@ -295,25 +296,27 @@
                                 "\n"
                                 %1)
 
-             ;; sequence of pairs "mapping" bodies that trigger '400' status to expected error messages
-             body->expected-msg (mapcat
-                                  (fn [ss]
-                                    (let [cnt (count ss)]
-                                      (cond
-                                        (zero? cnt) [[{} (msg-template "None provided.")]]
-                                        (= 1 cnt) nil
-                                        :else
-                                        (let [gen-case
-                                              (fn []
-                                                ;; TODO generate from IncidentLinkRequestOptional
-                                                ;; and merge into body. then bump the number of cases
-                                                ;; generated via repeatedly.
-                                                [(zipmap ss (repeat ":"))
-                                                 (msg-template
-                                                   (str "Provided: "
-                                                        (str/join ", " (->> ss (map name) sort))))])]
-                                          (repeatedly 1 gen-case)))))
-                                  (comb/subsets one-of-kws))]
+             ;; vector of pairs "mapping" bodies that trigger '400' status to expected error messages
+             body->expected-msg (into []
+                                      (mapcat
+                                        (fn [ss]
+                                          (let [cnt (count ss)]
+                                            (cond
+                                              (zero? cnt) [[{} (msg-template "None provided.")]]
+                                              (= 1 cnt) nil
+                                              :else
+                                              (let [gen-case
+                                                    (fn []
+                                                      ;; TODO generate from IncidentLinkRequestOptional
+                                                      ;; and merge into body. then bump the number of cases
+                                                      ;; generated via repeatedly.
+                                                      [(zipmap ss (repeat ":"))
+                                                       (msg-template
+                                                         (str "Provided: "
+                                                              (str/join ", " (->> ss (map name) sort))))])]
+                                                (repeatedly 1 gen-case))))))
+                                      (comb/subsets one-of-kws))]
+         (assert (<= 2 (count body->expected-msg)))
          (doseq [[body expected-msg :as test-case] body->expected-msg]
            (let [{response :body, :keys [status]}
                  (post (str "ctia/incident/" incident-short-id "/link")
