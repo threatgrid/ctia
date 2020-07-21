@@ -81,7 +81,7 @@
    (s/optional-key :tlp) TLP})
 
 (def incident-link-route
-  (POST "/:id/link" [req]
+  (POST "/:id/link" []
         :return rs/Relationship
         :body [link-req IncidentLinkRequest
                {:description "an Incident Link request"}]
@@ -104,7 +104,7 @@
                 :casebook_id #{:read-casebook}
                 :investigation_id #{:read-investigation})
               _ (require-capability! additional-required-capabilities
-                                     (:identity req))
+                                     identity)
               incident (read-store :incident
                                    read-record
                                    id
