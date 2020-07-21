@@ -16,8 +16,12 @@
 (tk/defservice events-service
   EventsService
   []
-  (init [this context] (core/init context))
-  (stop [this context] (core/stop context))
+  (init [this context]
+        (reset! global-events-service this)
+        (core/init context))
+  (stop [this context]
+        (reset! global-events-service nil)
+        (core/stop context))
   
   (central-channel [this] (core/central-channel (service-context this)))
   (send-event [this event] (core/send-event (service-context this) event))
