@@ -137,6 +137,69 @@
                       un-store)]
               (created stored-relationship))))))
 
+(s/defschema IncidentInvestigationLinkRequest
+  {:investigation_id Reference})
+
+(def incident-investigation-link-route
+  (POST "/:id/link" []
+        :return rs/Relationship
+        :body [link-req IncidentInvestigationLinkRequest
+               {:description "an Incident Link request"}]
+        :summary "Link an Incident to an Investigation"
+        :path-params [id :- s/Str]
+        :capabilities #{:read-incident
+                        :read-investigation
+                        :read-relationship
+                        :create-relationship}
+        :auth-identity identity
+        :identity-map identity-map
+        (let [incident (read-store :incident
+                                   read-record
+                                   id
+                                   identity-map
+                                   {})
+              investigation-id (-> link-req
+                                   :investigation_id
+                                   long-id->id
+                                   :short-id)
+              investigation (when investigation-id
+                              (read-store :investigation
+                                          read-record
+                                          investigation-id
+                                          identity-map
+                                          {}))
+              target-ref (short-id->long-id id
+                                            get-http-show)]
+          (cond
+            (or (not incident)
+                (not target-ref))
+            (not-found {:error "Invalid Incident id"})
+            (not investigation)
+            (bad-request {:error "Invalid Investigation id"})
+            :else
+            (let [{:keys [investigation_id]} link-req
+                  new-relationship
+                  {:source_ref casebook_id
+                   :target_ref target-ref
+                   :relationship_type "related-to"}
+                  stored-relationship
+                  (-> (flows/create-flow
+                       :entity-type :relationship
+                       :realize-fn rs/realize-relationship
+                       :store-fn #(write-store :relationship
+                                               create-record
+                                               %
+                                               identity-map
+                                               {})
+                       :long-id-fn with-long-id
+                       :entity-type :relationship
+                       :identity identity
+                       :entities [new-relationship]
+                       :spec :new-relationship/map)
+                      first
+                      un-store)]
+              (created stored-relationship))))))
+
 (def relationship-histogram-fields
   [:timestamp])
 

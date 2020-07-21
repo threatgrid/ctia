@@ -6,7 +6,8 @@
             [ctia.entity.casebook :refer [casebook-operation-routes]]
             [ctia.entity.incident :refer [incident-additional-routes]]
             [ctia.entity.feedback :refer [feedback-by-entity-route]]
-            [ctia.entity.relationship :refer [incident-casebook-link-route]]
+            [ctia.entity.relationship :refer [incident-casebook-link-route
+                                              incident-investigation-link-route]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -208,7 +209,8 @@
                (context
                    "/incident" []
                  :tags ["Incident"]
-                 incident-casebook-link-route)
+                 incident-casebook-link-route
+                 incident-investigation-link-route)
                bundle-routes
                observable-routes
                metrics-routes

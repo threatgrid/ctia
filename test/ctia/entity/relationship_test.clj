@@ -19,6 +19,7 @@
             [ctim.examples
              [casebooks :refer [new-casebook-minimal]]
              [incidents :refer [new-incident-minimal]]
+             [investigation :refer [new-investigation-minimal]]
              [relationships :refer [new-relationship-maximal new-relationship-minimal]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -129,6 +130,11 @@
              (post "ctia/incident"
                    :body new-incident-minimal
                    :headers {"Authorization" "45c1f5e3f05d0"})
+             {investigation-body :parsed-body
+              investigation-status :status}
+             (post "ctia/investigation"
+                   :body new-investigation-minimal
+                   :headers {"Authorization" "45c1f5e3f05d0"})
 
              {wrong-incident-status :status
               wrong-incident-response :body}
@@ -172,11 +178,82 @@
 
          (is (= (:id casebook-body)
                 (:source_ref link-response))
-             "The New Relationship targets the incident")
+             "The New Relationship sources the casebook")
 
          (is (= (:id incident-body)
                 (:target_ref link-response))
-             "The New Relationship sources the casebook")
+             "The New Relationship targets the incident")
+         (is (= relationship-response
+                link-response)
+             "Link Response is the created relationship"))))))
+
+(deftest incident-investigation-link-routes-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (testing "Incident <-> Investigation link"
+       (let [{incident-body :parsed-body
+              incident-status :status}
+             (post "ctia/incident"
+                   :body new-incident-minimal
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (is (= 201 incident-status))
+
+             {investigation-body :parsed-body
+              investigation-status :status}
+             (post "ctia/investigation"
+                   :body new-investigation-minimal
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (is (= 201 investigation-status))
+
+             {wrong-incident-status :status
+              wrong-incident-response :body}
+             (post (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" "/link")
+                   :body {:investigation_id (:id investigation-body)}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (is (= 404 wrong-incident-status))
+             _ (is (= {:error "Invalid Incident id"}
+                      (read-string wrong-incident-response)))
+
+             {wrong-investigation-status :status
+              wrong-investigation-response :body}
+             (post (str "ctia/incident/" (-> (:id incident-body)
+                                             long-id->id
+                                             :short-id) "/link")
+                   :body {:investigation_id ":"}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (is (= 400 wrong-investigation-status))
+             _ (is (= {:error "Invalid Investigation id"}
+                      (read-string wrong-investigation-response)))
+
+             {link-status :status
+              link-response :parsed-body}
+             (post (str "ctia/incident/" (-> (:id incident-body)
+                                             long-id->id
+                                             :short-id) "/link")
+                   :body {:investigation_id (:id investigation-body)}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (is (= 201 link-status))
+
+             {relationship-status :status
+              relationship-response :parsed-body}
+             (get (str "ctia/relationship/" (-> (:id link-response)
+                                                long-id->id
+                                                :short-id))
+                  :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (is (= 200 relationship-status))]
+
+         (is (= (:id investigation-body)
+                (:source_ref link-response))
+             "The New Relationship sources the investigation")
+
+         (is (= (:id incident-body)
+                (:target_ref link-response))
+             "The New Relationship targets the incident")
          (is (= relationship-response
                 link-response)
              "Link Response is the created relationship"))))))
