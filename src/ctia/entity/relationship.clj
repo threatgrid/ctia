@@ -9,6 +9,7 @@
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams created PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
+            [ctia.http.middleware.auth :refer [require-capability!]]
             [ctia.schemas
              [core :refer [Reference TLP]]
              [sorting :as sorting]]
@@ -16,7 +17,7 @@
              [mapping :as em]
              [store :refer [def-es-store]]]
             [ctim.domain.id :refer [long-id->id short-id->long-id]]
-            [ring.util.http-response :refer [not-found bad-request]]
+            [ring.util.http-response :refer [not-found bad-request bad-request!]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -71,117 +72,78 @@
   (st/merge PagingParams
             RelationshipFieldsParam))
 
-(s/defschema IncidentCasebookLinkRequest
-  {:casebook_id Reference
+(s/defschema IncidentLinkRequest
+  {;; Exactly one of:
+   (s/optional-key :casebook_id) Reference
+   (s/optional-key :investigation_id) Reference
+
+   ;; Extra keys
    (s/optional-key :tlp) TLP})
 
-(def incident-casebook-link-route
-  (POST "/:id/link" []
+(def incident-link-route
+  (POST "/:id/link" [req]
         :return rs/Relationship
-        :body [link-req IncidentCasebookLinkRequest
+        :body [link-req IncidentLinkRequest
                {:description "an Incident Link request"}]
-        :summary "Link an Incident to a Casebook"
+        :summary "Link an Incident to a Casebook or Investigation"
         :path-params [id :- s/Str]
+        ;; :read-<source-type> is checked while processing the body
         :capabilities #{:read-incident
-                        :read-casebook
                         :read-relationship
                         :create-relationship}
         :auth-identity identity
         :identity-map identity-map
-        (let [incident (read-store :incident
+        (let [source-type-kw (let [types (select-keys link-req
+                                                      [:casebook_id
+                                                       :investigation_id])]
+                               (when-not (= 1 (count types))
+                                 (bad-request! {:error "Missing source type"}))
+                               (-> types first key))
+              additional-required-capabilities
+              (case source-type-kw
+                :casebook_id #{:read-casebook}
+                :investigation_id #{:read-investigation})
+              _ (require-capability! additional-required-capabilities
+                                     (:identity req))
+              incident (read-store :incident
                                    read-record
                                    id
                                    identity-map
                                    {})
-              casebook-id (-> link-req
-                              :casebook_id
-                              long-id->id
-                              :short-id)
-              casebook (when casebook-id
-                         (read-store :casebook
-                                     read-record
-                                     casebook-id
-                                     identity-map
-                                     {}))
+              source-short-id (-> link-req
+                                  source-type-kw
+                                  long-id->id
+                                  :short-id)
+              source-store-kw (case source-type-kw
+                                :casebook_id :casebook
+                                :investigation_id :investigation)
+              source (when source-short-id
+                       (read-store source-store-kw
+                                   read-record
+                                   source-short-id
+                                   identity-map
+                                   {}))
               target-ref (short-id->long-id id
                                             get-http-show)]
           (cond
             (or (not incident)
                 (not target-ref))
             (not-found {:error "Invalid Incident id"})
-            (not casebook)
-            (bad-request {:error "Invalid Casebook id"})
+            (not source)
+            (bad-request {:error (str "Invalid "
+                                      (case source-type-kw
+                                        :casebook_id "Casebook"
+                                        :investigation_id "Investigation")
+                                      " id")})
             :else
-            (let [{:keys [tlp casebook_id]
+            (let [{source-id source-type-kw
+                   :keys [tlp]
                    :or {tlp "amber"}} link-req
                   new-relationship
-                  {:source_ref casebook_id
+                  {:source_ref source-id
                    :target_ref target-ref
                    :relationship_type "related-to"
                    :tlp tlp}
-                  stored-relationship
-                  (-> (flows/create-flow
-                       :entity-type :relationship
-                       :realize-fn rs/realize-relationship
-                       :store-fn #(write-store :relationship
-                                               create-record
-                                               %
-                                               identity-map
-                                               {})
-                       :long-id-fn with-long-id
-                       :entity-type :relationship
-                       :identity identity
-                       :entities [new-relationship]
-                       :spec :new-relationship/map)
-                      first
-                      un-store)]
-              (created stored-relationship))))))
-
-(s/defschema IncidentInvestigationLinkRequest
-  {:investigation_id Reference})
-
-(def incident-investigation-link-route
-  (POST "/:id/link-investigation" []
-        :return rs/Relationship
-        :body [link-req IncidentInvestigationLinkRequest
-               {:description "an Incident Link request"}]
-        :summary "Link an Incident to an Investigation"
-        :path-params [id :- s/Str]
-        :capabilities #{:read-incident
-                        :read-investigation
-                        :read-relationship
-                        :create-relationship}
-        :auth-identity identity
-        :identity-map identity-map
-        (let [incident (read-store :incident
-                                   read-record
-                                   id
-                                   identity-map
-                                   {})
-              investigation-id (-> link-req
-                                   :investigation_id
-                                   long-id->id
-                                   :short-id)
-              investigation (when investigation-id
-                              (read-store :investigation
-                                          read-record
-                                          investigation-id
-                                          identity-map
-                                          {}))
-              target-ref (short-id->long-id id
-                                            get-http-show)]
-          (cond
-            (or (not incident)
-                (not target-ref))
-            (not-found {:error "Invalid Incident id"})
-            (not investigation)
-            (bad-request {:error "Invalid Investigation id"})
-            :else
-            (let [{:keys [investigation_id]} link-req
-                  new-relationship
-                  {:source_ref investigation_id
-                   :target_ref target-ref
-                   :relationship_type "related-to"}
                   stored-relationship
                   (-> (flows/create-flow
                        :entity-type :relationship
