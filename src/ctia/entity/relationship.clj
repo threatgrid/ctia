@@ -1,5 +1,6 @@
 (ns ctia.entity.relationship
-  (:require [compojure.api.sweet :refer [POST]]
+  (:require [clojure.string :as str]
+            [compojure.api.sweet :refer [POST]]
             [ctia
              [properties :refer [get-http-show]]
              [store :refer :all]]
@@ -72,13 +73,22 @@
   (st/merge PagingParams
             RelationshipFieldsParam))
 
-(s/defschema IncidentLinkRequest
-  {;; Exactly one of:
-   (s/optional-key :casebook_id) Reference
-   (s/optional-key :investigation_id) Reference
+(s/defschema IncidentLinkRequestOptional
+  {(s/optional-key :tlp) TLP})
 
-   ;; Extra keys
-   (s/optional-key :tlp) TLP})
+(def incident-link-source-types
+  [:casebook_id
+   :investigation_id])
+
+(s/defschema IncidentLinkRequest
+  (st/merge
+    ;; Exactly one of these fields is required for a
+    ;; valid request.
+    (into {}
+          (map (fn [k]
+                 [(s/optional-key k) Reference]))
+          incident-link-source-types)
+    IncidentLinkRequestOptional))
 
 (def incident-link-route
   (POST "/:id/link" []
@@ -93,12 +103,24 @@
                         :create-relationship}
         :auth-identity identity
         :identity-map identity-map
-        (let [source-type-kw (let [types (select-keys link-req
-                                                      [:casebook_id
-                                                       :investigation_id])]
-                               (when-not (= 1 (count types))
-                                 (bad-request! {:error "Missing source type"}))
-                               (-> types first key))
+        (let [source-type-kw (let [one-of-kws [:casebook_id
+                                               :investigation_id]
+                                   provided-types (select-keys link-req one-of-kws)]
+                               (when-not (= 1 (count provided-types))
+                                 (bad-request!
+                                   {:error
+                                    (str "Please provide exactly one of the following fields: "
+                                         (str/join ", " (->> one-of-kws (map name) sort))
+                                         "\n"
+                                         (if-let [given-str (when (seq provided-types)
+                                                              (->> provided-types
+                                                                   keys
+                                                                   (map name)
+                                                                   sort
+                                                                   (str/join ", ")))]
+                                           (str "Provided: " given-str)
+                                           "None provided."))}))
+                               (-> provided-types first key))
               additional-required-capabilities
               (case source-type-kw
                 :casebook_id #{:read-casebook}

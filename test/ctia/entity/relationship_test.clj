@@ -1,5 +1,7 @@
 (ns ctia.entity.relationship-test
   (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.math.combinatorics :as comb]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.entity.relationship.schemas :as rs]
             [ctia.entity.relationship :as sut]
@@ -27,6 +29,17 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
+(defn establish-user! []
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user"))
+
+(defn establish-admin! []
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user"))
+
 (def new-relationship
   (-> new-relationship-maximal
       (assoc
@@ -42,12 +55,7 @@
 (deftest test-relationship-routes-bad-reference
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
+     (establish-user!)
      (testing "POST /ctia/relationship"
        (let [new-relationship
              (-> new-relationship-maximal
@@ -68,11 +76,7 @@
 (deftest test-relationship-routes
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
+     (establish-user!)
      (entity-crud-test
       {:entity "relationship"
        :example new-relationship
@@ -81,12 +85,7 @@
 (deftest test-relationship-pagination-field-selection
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
+     (establish-user!)
      (let [ids (post-entity-bulk
                 new-relationship-maximal
                 :relationships
@@ -113,11 +112,7 @@
 (deftest links-routes-test
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
+     (establish-user!)
      (testing "Indicator & Casebook test setup"
        (let [{casebook-body :parsed-body
               casebook-status :status}
@@ -189,11 +184,7 @@
 (deftest incident-investigation-link-routes-test
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
+     (establish-user!)
      ;; Creates an Incident and Investigation, and tests
      ;; various (successful and unsuccessful) ways to link them
      ;; via the /incident/:id/link route.
@@ -277,11 +268,66 @@
                     ::no-link-response))
              "Link response is the created relationship"))))))
 
+(deftest incident-link-routes-ambiguous-test
+  (test-for-each-store
+   (fn []
+     (establish-user!)
+     ;; Exactly one of a fixed set of fields is allowed in the
+     ;; body of an /incident/:id/link route. This test 
+     (testing "/incident/:id/link + ambiguous body"
+       (let [{incident-body :parsed-body
+              incident-status :status}
+             (post "ctia/incident"
+                   :body new-incident-minimal
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (testing "create an incident"
+                 (is (= 201 incident-status)))
+
+             incident-short-id (-> (:id incident-body)
+                                   long-id->id
+                                   :short-id)
+             _ (assert incident-short-id)
+
+             one-of-kws sut/incident-link-source-types
+
+             msg-template #(str "Please provide exactly one of the following fields: "
+                                (str/join ", " (->> one-of-kws (map name) sort))
+                                "\n"
+                                %1)
+
+             ;; sequence of pairs "mapping" bodies that trigger '400' status to expected error messages
+             body->expected-msg (mapcat
+                                  (fn [ss]
+                                    (let [cnt (count ss)]
+                                      (cond
+                                        (zero? cnt) [[{} (msg-template "None provided.")]]
+                                        (= 1 cnt) nil
+                                        :else
+                                        (let [gen-case
+                                              (fn []
+                                                ;; TODO generate from IncidentLinkRequestOptional
+                                                ;; and merge into body. then bump the number of cases
+                                                ;; generated via repeatedly.
+                                                [(zipmap ss (repeat ":"))
+                                                 (msg-template
+                                                   (str "Provided: "
+                                                        (str/join ", " (->> ss (map name) sort))))])]
+                                          (repeatedly 1 gen-case)))))
+                                  (comb/subsets one-of-kws))]
+         (doseq [[body expected-msg :as test-case] body->expected-msg]
+           (let [{response :body, :keys [status]}
+                 (post (str "ctia/incident/" incident-short-id "/link")
+                       :body body
+                       :headers {"Authorization" "45c1f5e3f05d0"})]
+             (testing test-case
+               (is (= 400 status))
+               (is (= {:error expected-msg}
+                      (read-string response)))))))))))
+
 (deftest test-relationship-metric-routes
   ((:es-store store-fixtures)
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
+     (establish-admin!)
      (test-metric-routes (into sut/relationship-entity
                                {:entity-minimal new-relationship-minimal
                                 :enumerable-fields sut/relationship-enumerable-fields
