@@ -24,7 +24,6 @@
        request
        (let [auth-header (or (get-in request [:headers "authorization"])
                              (get-in request [:query-params "Authorization"]))
-             _ (prn ((juxt identity (comp supers class)) auth-service))
              id (auth/identity-for-token auth-service auth-header)
              login (auth/login id)
              groups (auth/groups id)]

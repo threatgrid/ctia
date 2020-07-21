@@ -32,20 +32,6 @@
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.internal :as internal]))
 
-(defn init-encryption-service! []
-  (let [{:keys [type] :as encryption-properties}
-        (get-in @p/properties [:ctia :encryption])]
-
-    (case type
-      :default (do (reset! encryption/encryption-service
-                           (encryption-default/map->EncryptionService
-                            {:state (atom nil)}))
-                   (encryption/init
-                    @encryption/encryption-service
-                    encryption-properties))
-      (throw (ex-info "Encryption service not configured"
-                      {:message "Unknown service"
-                       :requested-service type})))))
 
 (defn- get-store-types [store-kw]
   (or (some-> (get-in @p/properties [:ctia :store store-kw])
@@ -82,16 +68,25 @@
 
 (defn ^:private services+config []
   (let [properties @p/properties
-        {auth-service-type :type :as auth} (get-in properties [:ctia :auth])
         auth-svc
-        (case auth-service-type
-          :allow-all allow-all/allow-all-auth-service
-          :threatgrid threatgrid/threatgrid-auth-service
-          :static static-auth/static-auth-service
-          (throw (ex-info "Auth service not configured"
-                          {:message "Unknown service"
-                           :requested-service auth-service-type})))]
-    {:services [auth-svc]
+        (let [{auth-service-type :type :as auth} (get-in properties [:ctia :auth])]
+          (case auth-service-type
+            :allow-all allow-all/allow-all-auth-service
+            :threatgrid threatgrid/threatgrid-auth-service
+            :static static-auth/static-auth-service
+            (throw (ex-info "Auth service not configured"
+                            {:message "Unknown service"
+                             :requested-service auth-service-type}))))
+        encryption-svc
+        (let [{:keys [type] :as encryption-properties}
+              (get-in properties [:ctia :encryption])]
+          (case type
+            :default encryption-default/default-encryption-service
+            (throw (ex-info "Encryption service not configured"
+                            {:message "Unknown service"
+                             :requested-service type}))))]
+    {:services [auth-svc
+                encryption-svc]
      :config properties}))
 
 (defonce ^:private global-app (atom nil))
@@ -143,7 +138,6 @@
   (when (get-in @p/properties [:ctia :events :log])
     (event-logging/init!))
 
-  (init-encryption-service!)
   (init-store-service!)
 
   ;; hooks init

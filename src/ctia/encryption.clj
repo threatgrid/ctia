@@ -3,7 +3,6 @@
 (defonce encryption-service (atom nil))
 
 (defprotocol IEncryption
-  (init [this props])
   (encrypt [this s])
   (decrypt [this s]))
 
