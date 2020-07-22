@@ -185,6 +185,7 @@
                       "ctia.log.riemann.port" s/Int
                       "ctia.log.riemann.interval-in-ms" s/Int
                       "ctia.log.riemann.batch-size" s/Int
+                      "ctia.log.riemann.service-prefix" s/Str
 
                       "ctia.store.external-key-prefixes" s/Str
                       "ctia.store.bulk-refresh" Refresh

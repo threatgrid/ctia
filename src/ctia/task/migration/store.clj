@@ -601,7 +601,11 @@ when confirm? is true, it stores this state and creates the target indices."
   ([migration-id :- s/Str
     store-key :- s/Keyword
     migrated-doc :- PartialMigratedStore]
-   (update-migration-store migration-id store-key migrated-doc @migration-es-conn))
+   (update-migration-store migration-id
+                           store-key
+                           migrated-doc
+                           (-> migration-es-conn deref (doto (assert "This atom is unset. Maybe some setup hasn't been performed?")))))
+  
   ([migration-id :- s/Str
     store-key :- s/Keyword
     migrated-doc :- PartialMigratedStore

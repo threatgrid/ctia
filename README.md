@@ -63,7 +63,7 @@ Using lein use this one:
 
 Running from a cloned repository:
 
-`lein run`
+`lein run -m ctia.main`
 
 ### Packaging and running as standalone jar
 
@@ -106,6 +106,8 @@ development machine to the services running in the containers:
 * kibana - 5601
 * zookeeper - 2181
 * kafka - 9092
+* riemann - 5555-5557
+* riemann-dash - 4567
 
 If you ever need to reset your entire dev environment, 
 just kill the docker-compose process and run:

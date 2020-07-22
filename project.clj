@@ -112,6 +112,11 @@
                  [args4j "2.32"] ;org.onyxplatform/onyx-kafka > threatgrid/ctim
                  [com.stuartsierra/component "0.3.2"] ;org.onyxplatform/onyx-kafka internal override
                  [org.onyxplatform/onyx-kafka "0.14.5.0"]
+                 ;; Notes on jackson-databind:
+                 ;; - overrides org.onyxplatform/onyx-kafka and others
+                 ;; - some 2.9.x versions of jackson-databind and earlier have known exploits
+                 ;; - 2.10.2 is the same as cheshire's jackson-core dependency
+                 [com.fasterxml.jackson.core/jackson-databind "2.10.2"]
                  [zookeeper-clj "0.9.4"]
 
                  ;; GraphQL
@@ -120,11 +125,7 @@
                  [com.graphql-java/graphql-java "9.7"]]
 
   :resource-paths ["resources" "doc"]
-  :aot [ctia.main]
-  :main ctia.main
   :classpath ".:resources"
-  :uberjar-name "ctia.jar"
-  :uberjar-exclusions [#"ctia\.properties"]
   :min-lein-version "2.9.1"
   :test-selectors {:es-store :es-store
                    :disabled :disabled
@@ -155,7 +156,8 @@
                                   [prismatic/schema-generators ~schema-generators-version]]
                    :pedantic? :warn
 
-                   :resource-paths ["test/resources"]}
+                   :resource-paths ["test/resources"]
+                   :source-paths ["dev"]}
              :jmx {:jvm-opts ["-Dcom.sun.management.jmxremote"
                               "-Dcom.sun.management.jmxremote.port=9010"
                               "-Dcom.sun.management.jmxremote.local.only=false"
@@ -167,6 +169,10 @@
                                     [com.gfredericks/test.chuck ~test-chuck-version]
                                     [prismatic/schema-generators ~schema-generators-version]]
                      :source-paths ["src","test","benchmarks"]}
+             :uberjar {:aot [ctia.main]
+                       :main ctia.main
+                       :uberjar-name "ctia.jar"
+                       :uberjar-exclusions [#"ctia\.properties"]}
              :test {:jvm-opts ["-Dlog.console.threshold=WARN"]
                     :dependencies [[clj-http-fake ~clj-http-fake-version]
                                    [com.gfredericks/test.chuck ~test-chuck-version]

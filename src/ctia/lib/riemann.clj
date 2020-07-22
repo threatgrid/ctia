@@ -20,7 +20,7 @@
         extra-fields))
 
 (defn ms-elapsed
-  "provide how much ms were elapsed since `nano-start`."
+  "Milliseconds since `nano-start`."
   [nano-start]
   (/ (- (System/nanoTime) nano-start) 1000000.0))
 
@@ -112,10 +112,10 @@
 
 ;; based on riemann-reporter.core/send-event
 (defn send-event
-  [conn prefix event]
+  [conn service-prefix event]
   (let [prepared-event (-> event
                            prepare-event
-                           (update :service #(str prefix " " %)))]
+                           (update :service #(str service-prefix " " %)))]
     (if conn
       (do
         (log/debugf "Sending event to riemann:\n%s\nprepared:\n%s"
@@ -129,17 +129,21 @@
 ;; based on riemann-reporter.core/wrap-request-metrics
 (defn wrap-request-logs
   "Middleware to log all incoming connections to Riemann"
-  [handler service-name]
-  (let [config (get-in @prop/properties [:ctia :log :riemann])
+  [handler metric-description]
+  (let [_ (assert (and (string? metric-description)
+                       (seq metric-description))
+                  (pr-str metric-description))
         _ (log/info "Riemann request logging initialization")
         send-event-fn 
-        (let [client (-> (select-keys config
+        (let [config (get-in @prop/properties [:ctia :log :riemann])
+              client (-> (select-keys config
                                       [:host :port :interval-in-ms])
                          riemann/tcp-client
                          (riemann/batch-client
-                           (or (:batch-size config) 10)))]
+                           (or (:batch-size config) 10)))
+              service-prefix (or (:service-prefix config) "CTIA")]
           (fn [event]
-            (send-event client service-name event)))]
+            (send-event client service-prefix event)))]
     (fn [request]
       (let [start (System/nanoTime)]
         (try
@@ -147,7 +151,7 @@
             (let [ms (ms-elapsed start)]
               (send-request-logs send-event-fn request
                                  {:metric ms
-                                  :service service-name
+                                  :service metric-description
                                   :_headers (prn-str (:headers response))
                                   :status (str (:status response))}))
             response)
@@ -155,7 +159,7 @@
             (let [data (ex-data e)
                   ex-type (:type data)
                   evt {:metric (ms-elapsed start)
-                       :service (str service-name " error")
+                       :service (str metric-description " error")
                        :description (.getMessage e)
                        :error "true"
                        :status (condp = ex-type
@@ -168,7 +172,7 @@
           (catch Throwable e
             (send-request-logs send-event-fn request
                                {:metric (ms-elapsed start)
-                                :service (str service-name " error")
+                                :service (str metric-description " error")
                                 :description (.getMessage e)
                                 :stacktrace (.getStackTrace e)
                                 :status "500"

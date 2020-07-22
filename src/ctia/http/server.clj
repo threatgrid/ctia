@@ -141,7 +141,8 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
-(defn- ^Server new-jetty-instance
+(defn- new-jetty-instance
+  ^Server
   [{:keys [dev-reload
            max-threads
            min-threads
@@ -164,7 +165,7 @@
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
          (get-in @properties [:ctia :log :riemann :enabled])
-         (rie/wrap-request-logs "CTIA")
+         (rie/wrap-request-logs "API response time ms")
 
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn
