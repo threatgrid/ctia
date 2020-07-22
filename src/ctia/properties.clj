@@ -19,8 +19,11 @@
   ["ctia-default.properties"
    "ctia.properties"])
 
-(defonce properties
+(defonce ^:private properties
   (atom {}))
+
+(defn get-global-properties []
+  properties)
 
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
@@ -201,13 +204,14 @@
 
 (def init! (mp/build-init-fn files
                              PropertiesSchema
-                             properties))
+                             ;; TOP-LEVEL STATE!!
+                             (get-global-properties)))
 
 (defn get-http-show []
-  (get-in @properties [:ctia :http :show]))
+  (get-in @(get-global-properties) [:ctia :http :show]))
 
 (defn get-http-swagger []
-  (get-in @properties [:ctia :http :swagger]))
+  (get-in @(get-global-properties) [:ctia :http :swagger]))
 
 (defn get-access-control []
-  (get-in @properties [:ctia :access-control]))
+  (get-in @(get-global-properties) [:ctia :access-control]))

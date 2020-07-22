@@ -38,7 +38,7 @@
 
 
 (defn- get-store-types [store-kw]
-  (or (some-> (get-in @p/properties [:ctia :store store-kw])
+  (or (some-> (get-in @(p/get-global-properties) [:ctia :store store-kw])
               (str/split #","))
       []))
 
@@ -64,14 +64,14 @@
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint @p/properties)))))
+                  (utils/safe-pprint @(p/get-global-properties))))))
 
 ;;------------------------------------------
 ;; Start manual Trapperkeeper management
 ;;------------------------------------------
 
 (defn ^:private services+config []
-  (let [properties @p/properties
+  (let [properties @(p/get-global-properties)
         auth-svc
         (let [{auth-service-type :type :as auth} (get-in properties [:ctia :auth])]
           (case auth-service-type

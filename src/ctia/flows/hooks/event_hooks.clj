@@ -7,7 +7,6 @@
    [ctia.lib.redis :as lr]
    [ctia.lib.kafka :as lk]
    [ctia.properties :refer [properties]]
-   [ctia.shutdown :as shutdown]
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
    [redismq.core :as rmq]

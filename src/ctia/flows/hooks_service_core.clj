@@ -2,8 +2,7 @@
   "Handle hooks ([Cf. #159](https://github.com/threatgrid/ctia/issues/159))."
   (:require [clojure.tools.logging :as log]
             [ctia.flows.hooks.event-hooks :as event-hooks]
-            [ctia.flows.hook-protocol :as prot]
-            [ctia.shutdown :as shutdown]))
+            [ctia.flows.hook-protocol :as prot]))
 
 (defn- doc-list [& s]
   (with-meta [] {:doc (apply str s)}))

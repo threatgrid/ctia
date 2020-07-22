@@ -9,5 +9,5 @@
   CTIAHTTPServerService
   []
   (start [this context] (core/start context
-                                    (get-in @p/properties [:ctia :http])))
+                                    (get-in @(p/get-global-properties) [:ctia :http])))
   (stop [this context] (core/stop context)))
