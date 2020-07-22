@@ -1,6 +1,6 @@
 (ns ctia.lib.metrics.riemann
   (:require [clj-momo.lib.metrics.riemann :as riemann]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-global-properties]]
             [clojure.tools.logging :as log]))
 
 (defn init! []

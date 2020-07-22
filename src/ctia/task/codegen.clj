@@ -4,7 +4,7 @@
              [shell :as shell]]
             [ctia
              [init :refer [start-ctia!]]
-             [properties :refer [properties]]]))
+             [properties :refer [get-global-properties]]]))
 
 ;; swagger codegen package
 (def codegen-version "2.2.3")

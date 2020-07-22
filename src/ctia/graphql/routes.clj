@@ -3,7 +3,7 @@
             [compojure.api
              [core :as c]
              [sweet :refer :all]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-global-properties]]
             [ctia.graphql.schemas :as gql]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]

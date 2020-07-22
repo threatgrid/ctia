@@ -6,7 +6,7 @@
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
    [ctia.lib.kafka :as lk]
-   [ctia.properties :refer [properties]]
+   [ctia.properties :refer [get-global-properties]]
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
    [redismq.core :as rmq]

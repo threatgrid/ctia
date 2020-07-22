@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [clj-http.client :as http]
             [ctia
-             [properties :refer [properties]]]
+             [properties :refer [get-global-properties]]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware

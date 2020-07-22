@@ -8,7 +8,7 @@
    [clojure.tools.logging :as log]
    [ctia
     [auth :as auth]
-    [properties :refer [properties]]
+    [properties :refer [get-global-properties]]
     [store :refer [list-fn
                    read-fn
                    read-store]]]

@@ -4,7 +4,7 @@
             [clojure.test :refer [is testing]]
             [clojure.tools.logging :refer [log*]]
             [ctim.domain.id :refer [long-id->id]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-global-properties]]
             [clj-momo.lib.clj-time.coerce :as tc]
             [ctia.test-helpers.core :as helpers]))
 
