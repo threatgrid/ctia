@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
-             [properties :refer [get-global-properties]]
+             [properties :refer [properties]]]
             [ctia.lib
              [collection :refer [fmap]]
              [redis :refer [server-connection]]]

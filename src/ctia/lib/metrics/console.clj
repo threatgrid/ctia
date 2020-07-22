@@ -1,6 +1,6 @@
 (ns ctia.lib.metrics.console
   (:require [clj-momo.lib.metrics.console :as console]
-            [ctia.properties :refer [get-global-properties]))
+            [ctia.properties :refer [properties]]))
 
 (defn init! []
   (let [{:keys [enabled interval]}

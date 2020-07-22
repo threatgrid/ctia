@@ -3,7 +3,7 @@
             [clojure.spec.alpha :as cs]
             [clojure.spec.gen.alpha :as csg]
             [clojure.test :refer [deftest testing use-fixtures]]
-            [ctia.properties :refer [get-global-properties]
+            [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [core :as helpers :refer [url-id]]
              [http :refer [assert-post]]

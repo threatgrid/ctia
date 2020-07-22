@@ -1,6 +1,6 @@
 (ns ctia.properties.routes
   (:require [compojure.api.sweet :refer :all]
-            [ctia.properties :refer [get-global-properties]
+            [ctia.properties :refer [properties]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 

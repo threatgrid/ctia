@@ -22,7 +22,7 @@
     [mapping :as em]]
    [ctia.store :refer [read-store list-events list-all-pages]]
    [ctia.domain.entities :as ent]
-   [ctia.properties :refer [get-global-properties]
+   [ctia.properties :refer [properties]]
    [clojure.set :as set]))
 
 (def event-mapping

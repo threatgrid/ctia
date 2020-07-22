@@ -3,7 +3,7 @@
             [clojure.test
              :refer [join-fixtures deftest is testing use-fixtures]]
             [ctia.lib.redis :as lr]
-            [ctia.properties :refer [get-global-properties]
+            [ctia.properties :refer [properties]]
             [ctia.test-helpers
              [core :as test-helpers]
              [es :as es-helpers]])

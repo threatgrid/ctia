@@ -11,7 +11,7 @@
    [clojure.core.memoize :as memo]
    [ctia
     [auth :as auth]
-    [properties :refer [get-global-properties]
+    [properties :refer [properties]]
     [store :as store]]
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.services :refer [service-context]]))

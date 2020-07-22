@@ -2,7 +2,7 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia
-    [properties :refer [get-global-properties]
+    [properties :refer [properties]]
     [store :refer :all]]
    [ctia.domain.entities
     :refer
