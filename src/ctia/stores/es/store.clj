@@ -17,7 +17,11 @@
    entity
    stored-schema
    partial-stored-schema]
-  ;; TODO review for capture ('state' in scope when evaluating 'entity' and 'partial-stored-schema' etc)
+  (assert (symbol? store-name) (pr-str store-name))
+  (assert (keyword? entity) (pr-str entity))
+  (assert (symbol? stored-schema) (pr-str stored-schema))
+  (assert (not= 'state stored-schema) "Captured stored-schema binding!")
+  (assert (not= 'state partial-stored-schema) "Captured partial-stored-schema binding!")
   `(defrecord ~store-name [~(symbol "state")]
      IStore
      (~(symbol "read-record") [_# id# ident# params#]
