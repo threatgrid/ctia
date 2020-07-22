@@ -26,7 +26,7 @@
     [static :as static-auth]
     [threatgrid :as threatgrid]]
    [ctia.version :as version]
-   [ctia.flows.hooks :as h]
+   [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
    [ctia.shutdown :as shutdown]
    [ctia.stores.es
@@ -94,7 +94,8 @@
                   encryption-svc
                   e/events-service
                   store-svc/store-service
-                  http-server-svc/ctia-http-server-service]
+                  http-server-svc/ctia-http-server-service
+                  hooks-svc/hooks-service]
                  ;; register event file logging only when enabled
                  (when (get-in properties [:ctia :events :log])
                    [event-logging/event-logging-service]))
@@ -143,7 +144,4 @@
 
 
   ;; NOTE: depends on TK's store-service
-  (init-store-service!)
-
-  ;; hooks init
-  (h/init!))
+  (init-store-service!))

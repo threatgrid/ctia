@@ -1,7 +1,7 @@
 (ns ctia.shutdown
   (:require [clojure.tools.logging :as log]))
 
-(defonce shutdown-hooks (ref {:registered? false :hooks {}}))
+(defonce ^:private shutdown-hooks (ref {:registered? false :hooks {}}))
 
 (defn register-hook! [key f]
   (dosync
