@@ -4,7 +4,7 @@
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.redis :as lr]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-global-properties]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers

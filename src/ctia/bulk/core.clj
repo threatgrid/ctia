@@ -4,7 +4,7 @@
             [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
-             [properties :refer [properties]]
+             [properties :refer [get-global-properties]
              [store :as store :refer [read-store write-store]]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.entity.entities :refer [entities]]

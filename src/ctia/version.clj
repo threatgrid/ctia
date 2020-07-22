@@ -4,7 +4,7 @@
              [shell :as shell]]
             [clojure.string :as st]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [properties]]))
+            [ctia.properties :refer [get-global-properties]))
 
 (def version-file "ctia-version.txt")
 

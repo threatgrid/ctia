@@ -1,7 +1,7 @@
 (ns ctia.stores.es.init
   (:require
    [clojure.tools.logging :as log]
-   [ctia.properties :refer [properties]]
+   [ctia.properties :refer [get-global-properties]
    [ctia.stores.es.mapping :refer [store-settings]]
    [clj-momo.lib.es
     [conn :refer [connect]]

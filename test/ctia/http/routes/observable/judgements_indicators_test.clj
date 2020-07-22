@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mht]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-global-properties]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get make-id post]]

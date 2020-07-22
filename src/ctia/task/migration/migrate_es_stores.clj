@@ -12,7 +12,7 @@
             [ctia.store-service-core :refer [empty-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-global-properties]
             [ctia.stores.es
              [crud :refer [coerce-to-fn]]
              [store :refer [StoreMap]]]

@@ -4,7 +4,7 @@
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.kafka :as lk]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :refer [get-global-properties]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [cheshire.core :refer [parse-string]]
