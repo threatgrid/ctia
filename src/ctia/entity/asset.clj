@@ -59,9 +59,6 @@
 (s/defschema AssetFieldsParam
   {(s/optional-key :fields) [asset-sort-fields]})
 
-(s/defschema AssetFieldsParam
-  {(s/optional-key :fields) [asset-sort-fields]})
-
 (s/defschema AssetByExternalIdQueryParams
   (st/merge
    routes.common/PagingParams

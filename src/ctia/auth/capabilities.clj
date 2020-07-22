@@ -76,6 +76,8 @@
    #{:read-actor
      :read-asset
      :list-assets
+     :read-asset-mapping
+     :list-asset-mappings
      :read-attack-pattern
      :read-campaign
      :read-coa

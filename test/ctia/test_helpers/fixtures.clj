@@ -3,7 +3,8 @@
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [actors :refer [actor-maximal actor-minimal]]
-             [assets :refer [asset-maximal asset-minimal]]
+             [assets :refer [asset-maximal asset-minimal
+                             asset-mapping-maximal asset-mapping-minimal]]
              [attack-patterns :refer [attack-pattern-maximal attack-pattern-minimal]]
              [campaigns :refer [campaign-maximal campaign-minimal]]
              [coas :refer [coa-maximal coa-minimal]]
@@ -30,6 +31,7 @@
   (case entity-type
     :actor          (n-doc (if maximal? actor-maximal actor-minimal) nb)
     :asset          (n-doc (if maximal? asset-maximal asset-minimal) nb)
+    :asset-mapping  (n-doc (if maximal? asset-mapping-maximal asset-mapping-minimal) nb)
     :attack-pattern (n-doc (if maximal? attack-pattern-maximal attack-pattern-minimal) nb)
     :campaign       (n-doc (if maximal? campaign-maximal campaign-minimal) nb)
     :coa            (n-doc (if maximal? coa-maximal coa-minimal) nb)
@@ -49,6 +51,7 @@
   [fixtures-nb maximal?]
   {:actors          (n-examples :actor fixtures-nb maximal?)
    :assets          (n-examples :asset fixtures-nb maximal?)
+   :asset_mappings  (n-examples :asset-mapping fixtures-nb maximal?)
    :attack_patterns (n-examples :attack-pattern fixtures-nb maximal?)
    :campaigns       (n-examples :campaign fixtures-nb maximal?)
    :coas            (n-examples :coa fixtures-nb maximal?)

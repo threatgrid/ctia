@@ -2,8 +2,10 @@
   (:require [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
             [clojure.set :as set]
+            [clojure.string :as string]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.properties :as p]
+            [ctia.entity.investigation.examples :refer [investigation-minimal]]
+            [ctia.properties :as props]
             [ctia.task.check-es-stores :as sut]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -11,10 +13,9 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :refer [make-transient-id]]
-            [ctia.entity.investigation.examples :refer [investigation-minimal]]
             [ctim.examples
              [actors :refer [actor-minimal]]
-             [assets :refer [asset-minimal]]
+             [assets :refer [asset-minimal asset-mapping-minimal]]
              [attack-patterns :refer [attack-pattern-minimal]]
              [campaigns :refer [campaign-minimal]]
              [casebooks :refer [casebook-minimal]]
@@ -55,6 +56,7 @@
 (def examples
   {:actors          (n-doc actor-minimal fixtures-nb)
    :assets          (n-doc asset-minimal fixtures-nb)
+   :asset_mappings  (n-doc asset-mapping-minimal fixtures-nb)
    :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
    :campaigns       (n-doc campaign-minimal fixtures-nb)
    :coas            (n-doc coa-minimal fixtures-nb)
@@ -91,10 +93,14 @@
           (testing "shall produce valid logs"
             (let [messages (set @logger)]
               (is (contains? messages "set batch size: 100"))
-              (is (clojure.set/subset?
+              (is (some
+                   #(string/includes? % "event - finished checking")
+                   messages))
+              (is (set/subset?
                    #{"campaign - finished checking 100 documents"
                      "indicator - finished checking 100 documents"
-                     "event - finished checking 1600 documents"
+                     "asset - finished checking 100 documents"
+                     "asset-mapping - finished checking 0 documents"
                      "actor - finished checking 100 documents"
                      "relationship - finished checking 100 documents"
                      "incident - finished checking 100 documents"

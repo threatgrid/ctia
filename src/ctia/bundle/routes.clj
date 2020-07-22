@@ -22,6 +22,9 @@
   #{:list-campaigns
     :read-actor
     :read-asset
+    :list-assets
+    :read-asset-mapping
+    :list-asset-mappings
     :read-malware
     :read-attack-pattern
     :read-judgement
