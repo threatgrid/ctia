@@ -1,5 +1,6 @@
 (ns ctia.entity.relationship
-  (:require [compojure.api.sweet :refer [POST]]
+  (:require [clojure.string :as str]
+            [compojure.api.sweet :refer [POST]]
             [ctia
              [properties :refer [get-http-show]]
              [store :refer :all]]
@@ -9,6 +10,7 @@
             [ctia.http.routes
              [common :refer [BaseEntityFilterParams created PagingParams SourcableEntityFilterParams]]
              [crud :refer [entity-crud-routes]]]
+            [ctia.http.middleware.auth :refer [require-capability!]]
             [ctia.schemas
              [core :refer [Reference TLP]]
              [sorting :as sorting]]
@@ -16,7 +18,7 @@
              [mapping :as em]
              [store :refer [def-es-store]]]
             [ctim.domain.id :refer [long-id->id short-id->long-id]]
-            [ring.util.http-response :refer [not-found bad-request]]
+            [ring.util.http-response :refer [not-found bad-request bad-request!]]
             [schema-tools.core :as st]
             [schema.core :as s]))
 
@@ -71,51 +73,96 @@
   (st/merge PagingParams
             RelationshipFieldsParam))
 
-(s/defschema IncidentCasebookLinkRequest
-  {:casebook_id Reference
-   (s/optional-key :tlp) TLP})
+(s/defschema IncidentLinkRequestOptional
+  {(s/optional-key :tlp) TLP})
 
-(def incident-casebook-link-route
+(def incident-link-source-types
+  [:casebook_id
+   :investigation_id])
+
+(s/defschema IncidentLinkRequest
+  (st/merge
+    ;; Exactly one of these fields is required for a
+    ;; valid request.
+    (into {}
+          (map (fn [k]
+                 [(s/optional-key k) Reference]))
+          incident-link-source-types)
+    IncidentLinkRequestOptional))
+
+(def incident-link-route
   (POST "/:id/link" []
         :return rs/Relationship
-        :body [link-req IncidentCasebookLinkRequest
+        :body [link-req IncidentLinkRequest
                {:description "an Incident Link request"}]
-        :summary "Link an Incident to a Casebook"
+        :summary "Link an Incident to a Casebook or Investigation"
         :path-params [id :- s/Str]
+        ;; :read-<source-type> is checked while processing the body
         :capabilities #{:read-incident
-                        :read-casebook
                         :read-relationship
                         :create-relationship}
         :auth-identity identity
         :identity-map identity-map
-        (let [incident (read-store :incident
+        (let [source-type-kw (let [one-of-kws [:casebook_id
+                                               :investigation_id]
+                                   provided-types (select-keys link-req one-of-kws)]
+                               (when-not (= 1 (count provided-types))
+                                 (bad-request!
+                                   {:error
+                                    (str "Please provide exactly one of the following fields: "
+                                         (str/join ", " (->> one-of-kws (map name) sort))
+                                         "\n"
+                                         (if-let [given-str (when (seq provided-types)
+                                                              (->> provided-types
+                                                                   keys
+                                                                   (map name)
+                                                                   sort
+                                                                   (str/join ", ")))]
+                                           (str "Provided: " given-str)
+                                           "None provided."))}))
+                               (-> provided-types first key))
+              additional-required-capabilities
+              (case source-type-kw
+                :casebook_id #{:read-casebook}
+                :investigation_id #{:read-investigation})
+              _ (require-capability! additional-required-capabilities
+                                     identity)
+              incident (read-store :incident
                                    read-record
                                    id
                                    identity-map
                                    {})
-              casebook-id (-> link-req
-                              :casebook_id
-                              long-id->id
-                              :short-id)
-              casebook (when casebook-id
-                         (read-store :casebook
-                                     read-record
-                                     casebook-id
-                                     identity-map
-                                     {}))
+              source-short-id (-> link-req
+                                  source-type-kw
+                                  long-id->id
+                                  :short-id)
+              source-store-kw (case source-type-kw
+                                :casebook_id :casebook
+                                :investigation_id :investigation)
+              source (when source-short-id
+                       (read-store source-store-kw
+                                   read-record
+                                   source-short-id
+                                   identity-map
+                                   {}))
               target-ref (short-id->long-id id
                                             get-http-show)]
           (cond
             (or (not incident)
                 (not target-ref))
             (not-found {:error "Invalid Incident id"})
-            (not casebook)
-            (bad-request {:error "Invalid Casebook id"})
+            (not source)
+            (bad-request {:error (str "Invalid "
+                                      (case source-type-kw
+                                        :casebook_id "Casebook"
+                                        :investigation_id "Investigation")
+                                      " id")})
             :else
-            (let [{:keys [tlp casebook_id]
+            (let [{source-id source-type-kw
+                   :keys [tlp]
                    :or {tlp "amber"}} link-req
                   new-relationship
-                  {:source_ref casebook_id
+                  {:source_ref source-id
                    :target_ref target-ref
                    :relationship_type "related-to"
                    :tlp tlp}

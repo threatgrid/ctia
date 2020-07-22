@@ -1,13 +1,14 @@
 (ns ctia.entity.relationship-test
-  (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mth]
+            [clojure.math.combinatorics :as comb]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.entity.relationship.schemas :as rs]
             [ctia.entity.relationship :as sut]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
-             [core :as helpers :refer [get post post-entity-bulk]]
+             [core :as helpers :refer [post post-entity-bulk]]
              [crud :refer [entity-crud-test]]
              [aggregate :refer [test-metric-routes]]
              [fake-whoami-service :as whoami-helpers]
@@ -19,6 +20,7 @@
             [ctim.examples
              [casebooks :refer [new-casebook-minimal]]
              [incidents :refer [new-incident-minimal]]
+             [investigations :refer [new-investigation-minimal]]
              [relationships :refer [new-relationship-maximal new-relationship-minimal]]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
@@ -26,6 +28,17 @@
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
+
+(defn establish-user! []
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                      "foouser"
+                                      "foogroup"
+                                      "user"))
+
+(defn establish-admin! []
+  (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+  (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user"))
 
 (def new-relationship
   (-> new-relationship-maximal
@@ -42,12 +55,7 @@
 (deftest test-relationship-routes-bad-reference
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
+     (establish-user!)
      (testing "POST /ctia/relationship"
        (let [new-relationship
              (-> new-relationship-maximal
@@ -68,11 +76,7 @@
 (deftest test-relationship-routes
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
+     (establish-user!)
      (entity-crud-test
       {:entity "relationship"
        :example new-relationship
@@ -81,12 +85,7 @@
 (deftest test-relationship-pagination-field-selection
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
-
+     (establish-user!)
      (let [ids (post-entity-bulk
                 new-relationship-maximal
                 :relationships
@@ -113,11 +112,7 @@
 (deftest links-routes-test
   (test-for-each-store
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                         "foouser"
-                                         "foogroup"
-                                         "user")
+     (establish-user!)
      (testing "Indicator & Casebook test setup"
        (let [{casebook-body :parsed-body
               casebook-status :status}
@@ -152,10 +147,10 @@
                    :headers {"Authorization" "45c1f5e3f05d0"})
              {relationship-status :status
               relationship-response :parsed-body}
-             (get (str "ctia/relationship/" (-> (:id link-response)
-                                                long-id->id
-                                                :short-id))
-                  :headers {"Authorization" "45c1f5e3f05d0"})]
+             (helpers/get (str "ctia/relationship/" (-> (:id link-response)
+                                                        long-id->id
+                                                        :short-id))
+                          :headers {"Authorization" "45c1f5e3f05d0"})]
 
          (is (= 404 wrong-incident-status))
          (is (= {:error "Invalid Incident id"}
@@ -172,20 +167,165 @@
 
          (is (= (:id casebook-body)
                 (:source_ref link-response))
-             "The New Relationship targets the incident")
+             "The New Relationship sources the casebook")
 
          (is (= (:id incident-body)
                 (:target_ref link-response))
-             "The New Relationship sources the casebook")
+             "The New Relationship targets the incident")
          (is (= relationship-response
                 link-response)
              "Link Response is the created relationship"))))))
 
+(deftest incident-investigation-link-routes-test
+  (test-for-each-store
+   (fn []
+     (establish-user!)
+     ;; Creates an Incident and Investigation, and tests
+     ;; various (successful and unsuccessful) ways to link them
+     ;; via the /incident/:id/link route.
+     (testing "/incident/:id/link + :investigation_id"
+       (let [{incident-body :parsed-body
+              incident-status :status}
+             (post "ctia/incident"
+                   :body new-incident-minimal
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (testing "create an incident"
+                 (is (= 201 incident-status)))
+
+             {investigation-body :parsed-body
+              investigation-status :status}
+             (post "ctia/investigation"
+                   :body new-investigation-minimal
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (testing "create an investigation"
+                 (is (= 201 investigation-status)))
+
+             {wrong-incident-status :status
+              wrong-incident-response :body}
+             (post (str "ctia/incident/" "r0pV4UNSjWyUYXUtpgQxooVR7HbjnMKB" "/link")
+                   :body {:investigation_id (:id investigation-body)}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (testing "cannot link non-existent incident"
+                 (is (= 404 wrong-incident-status))
+                 (is (= {:error "Invalid Incident id"}
+                        (read-string wrong-incident-response))))
+
+             {wrong-investigation-status :status
+              wrong-investigation-response :body}
+             (post (str "ctia/incident/"
+                        (-> (:id incident-body)
+                            long-id->id
+                            :short-id)
+                        "/link")
+                   :body {:investigation_id ":"}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (testing "cannot link non-existent investigation"
+                 (is (= 400 wrong-investigation-status))
+                 (is (= {:error "Invalid Investigation id"}
+                        (read-string wrong-investigation-response))))
+
+             {link-status :status
+              link-response :parsed-body}
+             (post (str "ctia/incident/"
+                        (-> (:id incident-body)
+                            long-id->id
+                            :short-id)
+                        "/link")
+                   :body {:investigation_id (:id investigation-body)}
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (testing "can link existing incident and investigation"
+                 (is (= 201 link-status)))
+
+             {relationship-status :status
+              relationship-response :parsed-body}
+             (helpers/get (str "ctia/relationship/"
+                               (-> (:id link-response)
+                                   long-id->id
+                                   :short-id))
+                          :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (testing "a relationship was created between the incident and investigation"
+                 (is (= 200 relationship-status)))]
+
+         (is (= (or (:id investigation-body)
+                    ::no-investigation-id)
+                (or (:source_ref link-response)
+                    ::no-source-ref))
+             "The new Relationship sources the investigation")
+
+         (is (= (or (:id incident-body)
+                    ::no-incident-body)
+                (or (:target_ref link-response)
+                    ::no-target-ref))
+             "The new Relationship targets the incident")
+         (is (= (or relationship-response
+                    ::no-relationship-response)
+                (or link-response
+                    ::no-link-response))
+             "Link response is the created relationship"))))))
+
+(deftest incident-link-routes-ambiguous-test
+  (test-for-each-store
+   (fn []
+     (establish-user!)
+     ;; Exactly one of a fixed set of fields is allowed in the
+     ;; body of an /incident/:id/link route. This test generates
+     ;; the interesting combinations of these fields that trigger 400 errors.
+     (testing "/incident/:id/link + ambiguous body"
+       (let [{incident-body :parsed-body
+              incident-status :status}
+             (post "ctia/incident"
+                   :body new-incident-minimal
+                   :headers {"Authorization" "45c1f5e3f05d0"})
+             _ (testing "create an incident"
+                 (is (= 201 incident-status)))
+
+             incident-short-id (-> (:id incident-body)
+                                   long-id->id
+                                   :short-id)
+             _ (assert incident-short-id)
+
+             one-of-kws sut/incident-link-source-types
+
+             msg-template #(str "Please provide exactly one of the following fields: "
+                                (str/join ", " (->> one-of-kws (map name) sort))
+                                "\n"
+                                %1)
+
+             ;; vector of pairs "mapping" bodies that trigger '400' status to expected error messages
+             body->expected-msg (into []
+                                      (mapcat
+                                        (fn [ss]
+                                          (let [cnt (count ss)]
+                                            (cond
+                                              (zero? cnt) [[{} (msg-template "None provided.")]]
+                                              (= 1 cnt) nil
+                                              :else
+                                              (let [gen-case
+                                                    (fn []
+                                                      ;; TODO generate from IncidentLinkRequestOptional
+                                                      ;; and merge into body. then bump the number of cases
+                                                      ;; generated via repeatedly.
+                                                      [(zipmap ss (repeat ":"))
+                                                       (msg-template
+                                                         (str "Provided: "
+                                                              (str/join ", " (->> ss (map name) sort))))])]
+                                                (repeatedly 1 gen-case))))))
+                                      (comb/subsets one-of-kws))]
+         (assert (<= 2 (count body->expected-msg)))
+         (doseq [[body expected-msg :as test-case] body->expected-msg]
+           (let [{response :body, :keys [status]}
+                 (post (str "ctia/incident/" incident-short-id "/link")
+                       :body body
+                       :headers {"Authorization" "45c1f5e3f05d0"})]
+             (testing test-case
+               (is (= 400 status))
+               (is (= {:error expected-msg}
+                      (read-string response)))))))))))
+
 (deftest test-relationship-metric-routes
   ((:es-store store-fixtures)
    (fn []
-     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
-     (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
+     (establish-admin!)
      (test-metric-routes (into sut/relationship-entity
                                {:entity-minimal new-relationship-minimal
                                 :enumerable-fields sut/relationship-enumerable-fields
