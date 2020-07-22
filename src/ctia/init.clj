@@ -27,7 +27,7 @@
     [threatgrid :as threatgrid]]
    [ctia.version :as version]
    [ctia.flows.hooks :as h]
-   [ctia.http.server :as http-server]
+   [ctia.http.server-service :as http-server-svc]
    [ctia.shutdown :as shutdown]
    [ctia.stores.es
     [init :as es-init]]
@@ -93,7 +93,8 @@
                  [auth-svc
                   encryption-svc
                   e/events-service
-                  store-svc/store-service]
+                  store-svc/store-service
+                  http-server-svc/ctia-http-server-service]
                  ;; register event file logging only when enabled
                  (when (get-in properties [:ctia :events :log])
                    [event-logging/event-logging-service]))
@@ -119,6 +120,8 @@
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
   [& {:keys [join?]}]
+  (assert (not join?)
+          "Joining http server not supported via start-ctia!")
 
   (log/info "starting CTIA version: "
             (version/current-version))
@@ -146,11 +149,4 @@
   (init-store-service!)
 
   ;; hooks init
-  (h/init!)
-
-  ;; Start HTTP server
-  (let [{http-port :port
-         enabled? :enabled} (get-in @p/properties [:ctia :http])]
-    (when enabled?
-      (log/info (str "Starting HTTP server on port " http-port))
-      (http-server/start! :join? join?))))
+  (h/init!))
