@@ -10,7 +10,7 @@
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
-             [sweet :refer  [routes api context undocumented]]]
+             [sweet :as sweet :refer [api context undocumented]]]
             [compojure.route :as rt]
             [ctia.bundle.routes :refer [bundle-routes]]
             [ctia.bulk.routes :refer [bulk-routes]]
@@ -74,7 +74,7 @@
 (defmacro entity-routes
   [entities]
   `(do
-     (compojure.api.sweet/routes
+     (sweet/routes
       ~@(for [entity (remove :no-api?
                              (vals (eval entities)))]
           `(context
