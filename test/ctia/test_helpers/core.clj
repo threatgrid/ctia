@@ -156,7 +156,7 @@
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
        (try
-         (init/start-ctia! :join? false)
+         (init/start-ctia!)
          (t)
          (finally
            (shutdown/shutdown-ctia!)))))))

@@ -119,10 +119,7 @@
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
-  [& {:keys [join?]}]
-  (assert (not join?)
-          "Joining http server not supported via start-ctia!")
-
+  []
   (log/info "starting CTIA version: "
             (version/current-version))
 
