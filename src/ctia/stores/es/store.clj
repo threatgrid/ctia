@@ -17,6 +17,7 @@
    entity
    stored-schema
    partial-stored-schema]
+  ;; TODO review for capture ('state' in scope when evaluating 'entity' and 'partial-stored-schema' etc)
   `(defrecord ~store-name [~(symbol "state")]
      IStore
      (~(symbol "read-record") [_# id# ident# params#]
