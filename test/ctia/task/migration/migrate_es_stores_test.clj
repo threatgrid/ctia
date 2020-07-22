@@ -47,8 +47,7 @@
                   whoami-helpers/fixture-server
                   whoami-helpers/fixture-reset-state
                   helpers/fixture-properties:clean
-                  es-helpers/fixture-properties:es-store
-                  fixture-setup!]))
+                  es-helpers/fixture-properties:es-store]))
 
 (def es-props (delay (get-in @props/properties [:ctia :store :es])))
 (def es-conn (delay (connect (:default @es-props))))
@@ -61,6 +60,7 @@
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
+                  fixture-setup! ;; Note: goes after fixture-ctia
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
 
