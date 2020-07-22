@@ -122,7 +122,8 @@
         #_(do ;; Uncomment to see logs while also capturing them for debug purpose
             (println "!DO NOT FORGET TO COMMENT ctia.test-helpers.core/atomic-log println BEFORE PUSHING YOUR PR")
             (when (log/enabled? level logger-ns)
-              (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message))))
+              (println (format "CAPTURED LOG: [%s] [%s] %s" logger-ns level message))
+              (println throwable)))
         (swap! log (fnil conj []) (log-entry-fn logger-ns level throwable message))
         this))))
 
