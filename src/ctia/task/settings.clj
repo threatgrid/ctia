@@ -12,7 +12,8 @@
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :refer [properties init!]]
-             [store :refer [get-global-stores]]]))
+             [store :refer [get-global-stores]]
+             [store-service-core :refer [empty-stores]]]))
 
 (defn update-stores!
   [store-keys]
@@ -23,7 +24,7 @@
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys @(get-global-stores)))
+    :default (set (keys empty-stores))
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]

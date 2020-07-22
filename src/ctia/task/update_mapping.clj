@@ -9,6 +9,7 @@
             [ctia.init :as init]
             [ctia.properties :as properties]
             [ctia.store :as store]
+            [ctia.store-service-core :refer [empty-stores]]
             [ctia.stores.es.init :as es-init]
             [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]))
@@ -32,7 +33,7 @@
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys @(store/get-global-stores)))
+    :default (set (keys empty-stores))
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
