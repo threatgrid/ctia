@@ -9,7 +9,7 @@
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
 
-            [ctia.store :refer [get-global-stores]]
+            [ctia.store-service-core :refer [empty-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.properties :refer [properties]]
@@ -326,7 +326,7 @@
     :parse-fn read-string
     :validate [#(< 0 %) "buffer-size must be a positive number"]]
    ["-s" "--stores STORES" "comma separated list of stores to migrate"
-    :default (-> (keys @(get-global-stores)) set (disj :identity))
+    :default (-> (keys empty-stores) set (disj :identity))
     :parse-fn #(map keyword (string/split % #","))]
    ["-c" "--confirm" "really do the migration?"]
    ["-r" "--restart" "restart ongoing migration?"]

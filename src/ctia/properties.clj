@@ -8,6 +8,7 @@
             [clj-momo.lib.schema :as mls]
             [clj-momo.properties :as mp]
             [ctia.store :as store]
+            [ctia.store-service-core :as store-svc-core]
             [schema-tools.core :as st]
             [schema.core :as s]
             [ctia.schemas.core
@@ -42,7 +43,7 @@
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
-  (let [configurable-stores (map name (keys @(store/get-global-stores)))
+  (let [configurable-stores (map name (keys store-svc-core/empty-stores))
         store-names (conj configurable-stores "default")]
     (st/optional-keys
      (reduce merge {}

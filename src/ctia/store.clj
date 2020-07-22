@@ -1,4 +1,5 @@
-(ns ctia.store)
+(ns ctia.store
+  (:require [ctia.store-service :as store-svc]))
 
 (defprotocol IStore
   (create-record [this new-records ident params])
@@ -29,40 +30,19 @@
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident]))
 
-(def empty-stores
-  {:judgement []
-   :indicator []
-   :feed []
-   :feedback []
-   :campaign []
-   :actor []
-   :coa []
-   :data-table []
-   :sighting []
-   :identity-assertion []
-   :incident []
-   :relationship []
-   :identity []
-   :attack-pattern []
-   :malware []
-   :tool []
-   :event []
-   :investigation []
-   :casebook []
-   :vulnerability []
-   :weakness []})
-
-(defonce ^:private stores (atom empty-stores))
-
 (defn get-global-stores []
   {:post [%]}
-  stores)
+  (store-svc/get-stores @store-svc/global-store-service))
 
 (defn write-store [store write-fn & args]
-  (first (doall (map #(apply write-fn % args) (store @(get-global-stores))))))
+  (store-svc/write-store @store-svc/global-store-service
+                         store
+                         #(apply write-fn % args)))
 
 (defn read-store [store read-fn & args]
-  (apply read-fn (first (get @(get-global-stores) store)) args))
+  (store-svc/read-store @store-svc/global-store-service
+                        store
+                        #(apply read-fn % args)))
 
 (def read-fn read-record)
 (def create-fn create-record)

@@ -18,7 +18,9 @@
     [events-service :as e]
     [logging :as event-logging]
     [properties :as p]
-    [store :as store]]
+    [store :as store]
+    [store-service :as store-svc]
+    [store-service-core :as store-svc-core]]
    [ctia.auth
     [allow-all :as allow-all]
     [static :as static-auth]
@@ -46,12 +48,12 @@
 
 (defn init-store-service! []
   (reset! (store/get-global-stores)
-          (->> (keys store/empty-stores)
+          (->> (keys store-svc-core/empty-stores)
                (map (fn [store-kw]
                       [store-kw (keep (partial build-store store-kw)
                                       (get-store-types store-kw))]))
                (into {})
-               (merge-with into store/empty-stores))))
+               (merge-with into store-svc-core/empty-stores))))
 
 (defn log-properties []
   (log/debug (with-out-str
@@ -90,9 +92,10 @@
     {:services (concat
                  [auth-svc
                   encryption-svc
-                  e/events-service]
+                  e/events-service
+                  store-svc/store-service]
                  ;; register event file logging only when enabled
-                 (when (get-in @p/properties [:ctia :events :log])
+                 (when (get-in properties [:ctia :events :log])
                    [event-logging/event-logging-service]))
      :config properties}))
 
@@ -139,6 +142,7 @@
   ;(console/init!)
 
 
+  ;; NOTE: depends on TK's store-service
   (init-store-service!)
 
   ;; hooks init
