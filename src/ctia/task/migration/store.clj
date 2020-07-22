@@ -31,7 +31,7 @@
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
-(def migration-es-conn (atom nil))
+(defonce migration-es-conn (atom nil))
 
 (def token-mapping
   (dissoc em/token :fielddata))
@@ -51,14 +51,15 @@
                    :completed em/ts}}})
 
 (def migration-mapping
-  {"migration"
-   {:dynamic false
-    :properties
-    {:id em/token
-     :timestamp em/ts
-     :stores {:type "object"
-              :properties (->> (map store-mapping @(get-global-stores))
-                               (into {}))}}}})
+  (delay
+    {"migration"
+     {:dynamic false
+      :properties
+      {:id em/token
+       :timestamp em/ts
+       :stores {:type "object"
+                :properties (->> (map store-mapping @(get-global-stores))
+                                 (into {}))}}}}))
 
 (defn migration-store-properties []
   (into (get-store-properties :migration)
@@ -66,7 +67,7 @@
          :replicas 1
          :refresh true
          :aliased false
-         :mappings migration-mapping}))
+         :mappings @migration-mapping}))
 
 (s/defschema SourceState
   {:index s/Str
@@ -149,7 +150,7 @@
   (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
     (format "v%s_%s" prefix version-trimmed)))
 
-(def conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
+(defonce conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
 
 (defn store->map
   [store-record]
