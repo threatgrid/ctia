@@ -38,7 +38,7 @@
   ([context
     listen-fn :- (s/=> s/Any es/Event)
     mode :- (s/enum :compute :blocking)]
-   (register-listener listen-fn (constantly true) mode))
+   (register-listener context listen-fn (constantly true) mode))
   ([{:keys [central-channel] :as _context_}
     listen-fn :- (s/=> s/Any es/Event)
     pred :- (s/=> s/Bool es/Event)
