@@ -55,13 +55,14 @@
 (defonce ^:private stores (atom empty-stores))
 
 (defn get-global-stores []
+  {:post [%]}
   stores)
 
 (defn write-store [store write-fn & args]
-  (first (doall (map #(apply write-fn % args) (store @stores)))))
+  (first (doall (map #(apply write-fn % args) (store @(get-global-stores))))))
 
 (defn read-store [store read-fn & args]
-  (apply read-fn (first (get @stores store)) args))
+  (apply read-fn (first (get @(get-global-stores) store)) args))
 
 (def read-fn read-record)
 (def create-fn create-record)
