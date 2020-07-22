@@ -1,7 +1,7 @@
-(ns ctia.entity.asset-test
+(ns ctia.entity.asset-mapping-test
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
-            [ctia.entity.asset :as asset]
+            [ctia.entity.asset-mapping :as asset-mapping]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
             [ctia.test-helpers.core :as helpers]
@@ -11,7 +11,8 @@
             [ctia.test-helpers.http :as http]
             [ctia.test-helpers.pagination :as pagination]
             [ctia.test-helpers.store :as store]
-            [ctim.examples.assets :refer [new-asset-minimal new-asset-maximal]]))
+            [ctim.examples.assets :refer [new-asset-mapping-minimal
+                                          new-asset-mapping-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean
@@ -19,33 +20,35 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-(defn additional-tests [asset-id asset-sample]
-  (testing "GET /ctia/asset/search"
+(defn additional-tests [_ asset-mapping-sample]
+  ;; TODO: write one
+  (testing "GET /ctia/asset-mapping/search"
     ;; only when ES store
-    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :asset]))
-      (are [term check-fn expected desc] (let [response (helpers/get "ctia/asset/search"
-                                                                     :query-params {"query" term}
-                                                                     :headers {"Authorization" "45c1f5e3f05d0"})]
+    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :asset-mapping]))
+      (are [term check-fn expected desc] (let [response (helpers/get
+                                                         "ctia/asset-mapping/search"
+                                                         :query-params {"query" term}
+                                                         :headers {"Authorization" "45c1f5e3f05d0"})]
                                            (is (= 200 (:status response)))
                                            (is (= expected (check-fn response)) desc))
 
-        "asset_type:\"device\""
-        (fn [r] (-> r :parsed-body first :asset_type))
-        (-> asset-sample :asset_type)
-        "Searching by an Asset type works"
+        "specificity:\"unique\""
+        (fn [r] (-> r :parsed-body first :specificity))
+        (-> asset-mapping-sample :specificity)
+        "Searching Asset Mapping by specificity"
 
         ;; TODO: Add more cases
 
         ))))
 
-(deftest asset-routes-test
+(deftest asset-mapping-routes-test
   (store/test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:entity           "asset"
-       :example          new-asset-maximal
+      {:entity           "asset-mapping"
+       :example          new-asset-mapping-maximal
        :invalid-tests?   false
        :update-tests?    true
        :search-tests?    false
@@ -53,7 +56,7 @@
        :additional-tests additional-tests
        :headers          {:Authorization "45c1f5e3f05d0"}}))))
 
-(deftest asset-pagination-test
+#_(deftest asset-mapping-pagination-test
   (store/test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
@@ -63,30 +66,30 @@
                                          "user")
 
      (let [ids (helpers/post-entity-bulk
-                new-asset-maximal
-                :assets
+                new-asset-mapping-maximal
+                :asset-mappings
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
 
        (field-selection/field-selection-tests
-        ["ctia/asset/search?query=*"
+        ["ctia/asset-mapping/search?query=*"
          (http/doc-id->rel-url (first ids))]
         {"Authorization" "45c1f5e3f05d0"}
-        asset/asset-fields)
+        asset-mapping/asset-mapping-fields)
 
        (pagination/pagination-test
-        "ctia/asset/search?query=*"
+        "ctia/asset-mapping/search?query=*"
         {"Authorization" "45c1f5e3f05d0"}
-        asset/asset-fields)))))
+        asset-mapping/asset-mapping-fields)))))
 
-(deftest asset-metric-routes-test
+#_(deftest asset-metric-routes-test
   ((:es-store store/store-fixtures)
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
      (aggregate/test-metric-routes
-      (into asset/asset-entity
+      (into asset-mapping/asset-mapping-entity
             {:plural            :assets
-             :entity-minimal    new-asset-minimal
-             :enumerable-fields asset/asset-enumerable-fields
-             :date-fields       asset/asset-histogram-fields})))))
+             :entity-minimal    new-asset-mapping-minimal
+             :enumerable-fields asset-mapping/asset-mapping-enumerable-fields
+             :date-fields       asset-mapping/asset-mapping-histogram-fields})))))
