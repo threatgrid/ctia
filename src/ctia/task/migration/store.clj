@@ -1,5 +1,6 @@
 (ns ctia.task.migration.store
-  (:require [clojure.string :as string]
+  (:require [clojure.set :as set]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
             [schema.core :as s]
             [schema-tools.core :as st]
@@ -26,7 +27,7 @@
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :refer [init!]]
-             [store :refer [stores]]]))
+             [store :refer [get-global-stores]]]))
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
@@ -56,7 +57,7 @@
     {:id em/token
      :timestamp em/ts
      :stores {:type "object"
-              :properties (->> (map store-mapping @stores)
+              :properties (->> (map store-mapping @(get-global-stores))
                                (into {}))}}}})
 
 (defn migration-store-properties []
@@ -179,7 +180,7 @@
 (s/defn store-map->es-conn-state :- ESConnState
   "Transforms a store map in ES lib conn state"
   [conn-state :- StoreMap]
-  (dissoc (clojure.set/rename-keys conn-state {:indexname :index})
+  (dissoc (set/rename-keys conn-state {:indexname :index})
           :mapping :type :settings))
 
 (defn bulk-metas
@@ -304,7 +305,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
      {:range
       {field
        (cond-> {:gte date}
-         strict? (clojure.set/rename-keys {:gte :gt})
+         strict? (set/rename-keys {:gte :gt})
          epoch-millis? (assoc :format "epoch_millis"))}}}}))
 
 (def Interval (s/enum "year" "month" "week" "day"))
@@ -426,7 +427,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    search_after :- (s/maybe [s/Any])]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
-        event-store (store->map (:event @stores))
+        event-store (store->map (:event @(get-global-stores)))
         filter-events (fn [{:keys [event_type entity]}]
                         (and (= event_type "record-deleted")
                              (contains? (set entity-types)
@@ -530,7 +531,7 @@ when confirm? is true, it stores this state and creates the target indices."
    prefix :- s/Str
    store-keys :- [s/Keyword]
    confirm? :- s/Bool]
-  (let [source-stores (stores->maps (select-keys @stores store-keys))
+  (let [source-stores (stores->maps (select-keys @(get-global-stores) store-keys))
         target-stores (get-target-stores prefix store-keys)
         migration-properties (migration-store-properties)
         now (time/internal-now)
@@ -553,7 +554,7 @@ when confirm? is true, it stores this state and creates the target indices."
   [entity-type :- s/Keyword
    prefix :- s/Str
    raw-store :- MigratedStore]
-  (let [source-store (store->map (get @stores entity-type))
+  (let [source-store (store->map (get @(get-global-stores) entity-type))
         target-store (get-target-store prefix entity-type)]
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))

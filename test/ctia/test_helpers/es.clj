@@ -6,6 +6,7 @@
              [document :as es-doc]
              [index :as es-index]]
             [clojure.java.io :as io]
+            [clojure.walk :as walk]
             [ctia
              [store :as store]]
             [ctia.stores.es
@@ -19,7 +20,7 @@
     (http/post (format "http://%s:%s/_refresh" host port))))
 
 (defn delete-store-indexes [restore-conn?]
-  (doseq [store-impls (vals @store/stores)
+  (doseq [store-impls (vals @(store/get-global-stores))
           {:keys [state]} store-impls]
     (es-store/delete-state-indexes state)
     (when restore-conn?
@@ -47,7 +48,7 @@
   (purge-index :event))
 
 (defn purge-indexes []
-  (doseq [entity (keys @store/stores)]
+  (doseq [entity (keys @(store/get-global-stores))]
     (purge-index entity)))
 
 (defn fixture-purge-indexes
@@ -135,7 +136,7 @@
 (defn- url-for-type [t]
   (assert (keyword? t) "Type must be a keyword")
   (let [{:keys [indexname host port]}
-        (-> @ctia.store/stores
+        (-> @(store/get-global-stores)
             t
             first
             :state
@@ -198,4 +199,4 @@
                 {index (read-string
                         (:docs.count entry))}))
          (into {})
-         clojure.walk/keywordize-keys)))
+         walk/keywordize-keys)))

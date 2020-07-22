@@ -12,7 +12,7 @@
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
             [ctia.properties :as props]
-            [ctia.store :refer [stores]]
+            [ctia.store :refer [get-global-stores]]
             [ctia.test-helpers
              [fixtures :as fixt]
              [core :as helpers :refer [post-bulk put delete]]
@@ -490,7 +490,7 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        {:keys [nb-errors]} (rollover-stores @stores)
+        {:keys [nb-errors]} (rollover-stores @(get-global-stores))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         malware-ids (->> (:malwares post-bulk-res-1)
@@ -539,7 +539,7 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        {:keys [nb-errors]} (rollover-stores @stores)
+        {:keys [nb-errors]} (rollover-stores @(get-global-stores))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         _ (es-index/refresh! es-conn)

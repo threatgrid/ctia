@@ -1,6 +1,7 @@
 (ns ctia.test-helpers.access-control
   (:refer-clojure :exclude [get])
-  (:require [clojure.test :refer [is testing]]
+  (:require [clojure.set :as set]
+            [clojure.test :refer [is testing]]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
@@ -161,20 +162,20 @@
 
     (testing "player 3 try to access player 1 entities"
       ;; read
-      (is (clojure.set/subset?
+      (is (set/subset?
            #{player-3-1-entity-read-status}
            player-3-1-expected-read-statuses)))
 
     ;; initial restrictions control
     (testing "player 2 try to access player 1 entities"
       ;; read
-      (is (clojure.set/subset?
+      (is (set/subset?
            #{player-2-1-entity-read-status}
            player-2-1-expected-read-statuses))
 
       ;; update
       (when can-update?
-        (is (clojure.set/subset?
+        (is (set/subset?
              #{player-2-1-entity-overwrite-status}
              player-2-1-expected-write-statuses))
 
@@ -185,19 +186,19 @@
 
       ;; delete
       (when can-delete?
-        (is (clojure.set/subset?
+        (is (set/subset?
              #{player-2-1-entity-delete-status}
              player-2-1-expected-write-statuses))))
 
     (testing "player 2 try to access player 3 created entities"
       ;; read
-      (is (clojure.set/subset?
+      (is (set/subset?
            #{player-2-3-entity-read-status}
            player-2-3-expected-read-statuses))
 
       ;; update
       (when can-update?
-        (is (clojure.set/subset?
+        (is (set/subset?
              #{player-2-3-entity-overwrite-status}
              player-2-3-expected-write-statuses))
 
@@ -209,7 +210,7 @@
 
       ;; delete
       (when can-delete?
-        (is (clojure.set/subset?
+        (is (set/subset?
              #{player-2-3-entity-delete-status}
              player-2-3-expected-write-statuses))))))
 

@@ -13,7 +13,7 @@
             [clj-http.fake :refer [with-global-fake-routes]]
             [ctia
              [properties :refer [get-http-show properties]]
-             [store :refer [stores]]]
+             [store :refer [get-global-stores]]]
             [ctia.bulk.core
              :refer
              [bulk-size gen-bulk-from-fn get-bulk-max-size]]
@@ -488,7 +488,7 @@
                                          "foogroup"
                                          "user")
 
-     (let [{:keys [index conn]} (-> @stores :tool first :state)
+     (let [{:keys [index conn]} (-> @(get-global-stores) :tool first :state)
        ;; close tool index to produce ES errors on that store
            _ (es-index/close! conn index)
            tools (->> [(mk-new-tool 1)

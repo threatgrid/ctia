@@ -4,7 +4,7 @@
             [clojure.tools.logging :as log]
             [ctia.init :refer [init-store-service! log-properties]]
             [ctia.properties :refer [init!]]
-            [ctia.store :refer [stores]]
+            [ctia.store :refer [get-global-stores]]
             [schema.core :as s])
   (:import clojure.lang.ExceptionInfo))
 
@@ -45,7 +45,7 @@
   (log-properties)
   (init-store-service!)
   (let [{:keys [nb-errors]
-         :as res} (rollover-stores @stores)]
+         :as res} (rollover-stores @(get-global-stores))]
     (log/info "completed rollover task: " res)
     (when (< 0 nb-errors)
       (log/error "there were errors while rolling over stores")

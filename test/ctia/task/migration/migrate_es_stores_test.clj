@@ -1,5 +1,6 @@
 (ns ctia.task.migration.migrate-es-stores-test
   (:require [clojure.java.io :as io]
+            [clojure.set :as set]
             [clojure.string :as str]
             [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
@@ -31,7 +32,7 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.stores.es.store :refer [store->map]]
-            [ctia.store :refer [stores]])
+            [ctia.store :refer [get-global-stores]])
   (:import (java.text SimpleDateFormat)
            (java.util Date)
            (java.lang AssertionError)
@@ -104,9 +105,9 @@
   "post data in 2 parts with rollover, randomly update son entities"
   []
   (let [bulk-res-1 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-        _ (rollover-stores @stores)
+        _ (rollover-stores @(get-global-stores))
         bulk-res-2 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-        _ (rollover-stores @stores)]
+        _ (rollover-stores @(get-global-stores))]
     (random-updates bulk-res-1 (/ updates-nb 2))
     (random-updates bulk-res-2 (/ updates-nb 2))))
 
@@ -484,13 +485,13 @@
       (sut/migrate-store-indexes {:migration-id "test-1"
                                   :prefix       "0.0.0"
                                   :migrations   [:0.4.16]
-                                  :store-keys   (keys @stores)
+                                  :store-keys   (keys @(get-global-stores))
                                   :batch-size   10
                                   :buffer-size  3
                                   :confirm?     false
                                   :restart?     false})
 
-      (doseq [store (vals @stores)]
+      (doseq [store (vals @(get-global-stores))]
         (is (not (index-exists? store "0.0.0"))))
       (is (nil? (seq (es-doc/get-doc es-conn
                                      (get-in es-props [:migration :indexname])
@@ -503,7 +504,7 @@
         (sut/migrate-store-indexes {:migration-id "test-2"
                                     :prefix       "0.0.0"
                                     :migrations   [:__test]
-                                    :store-keys   (keys @stores)
+                                    :store-keys   (keys @(get-global-stores))
                                     :batch-size   10
                                     :buffer-size  3
                                     :confirm?     true
@@ -514,7 +515,7 @@
                                               "migration"
                                               "test-2"
                                               {})]
-          (is (= (set (keys @stores))
+          (is (= (set (keys @(get-global-stores)))
                  (set (keys (:stores migration-state)))))
           (doseq [[entity-type migrated-store] (:stores migration-state)]
             (let [{:keys [source target started completed]} migrated-store
@@ -536,7 +537,7 @@
       (testing "shall produce valid logs"
         (let [messages (set @logger)]
           (is (contains? messages "set batch size: 10"))
-          (is (clojure.set/subset?
+          (is (set/subset?
                ["campaign - finished migrating 100 documents"
                 "indicator - finished migrating 100 documents"
                 (format "event - finished migrating %s documents"
@@ -696,7 +697,7 @@
           (sut/migrate-store-indexes {:migration-id "test-2"
                                       :prefix       "0.0.0"
                                       :migrations   [:__test]
-                                      :store-keys   (keys @stores)
+                                      :store-keys   (keys @(get-global-stores))
                                       ;; small batch to check proper delete paging
                                       :batch-size   2
                                       :buffer-size  1

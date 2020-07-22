@@ -10,7 +10,7 @@
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
-            [ctia.store :refer [stores]]
+            [ctia.store :refer [get-global-stores]]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
              [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
@@ -370,7 +370,7 @@
                        (map :result (:results bundle-result-update)))
                "All existing entities are not updated")))
        (testing "Partial results with errors"
-         (let [indicator-store-state (-> @stores :indicator first :state)
+         (let [indicator-store-state (-> @(get-global-stores) :indicator first :state)
                indexname (:index indicator-store-state)
                ;; close indicator index to produce ES errors on that store
                _ (es-index/close! (:conn indicator-store-state) indexname)

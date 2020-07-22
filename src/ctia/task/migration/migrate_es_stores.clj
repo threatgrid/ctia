@@ -1,5 +1,6 @@
 (ns ctia.task.migration.migrate-es-stores
   (:require [clojure.tools.cli :refer [parse-opts]]
+            [clojure.pprint :as pp]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
 
@@ -8,7 +9,7 @@
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
 
-            [ctia.store :refer [stores]]
+            [ctia.store :refer [get-global-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.properties :refer [properties]]
@@ -325,7 +326,7 @@
     :parse-fn read-string
     :validate [#(< 0 %) "buffer-size must be a positive number"]]
    ["-s" "--stores STORES" "comma separated list of stores to migrate"
-    :default (-> (keys @stores) set (disj :identity))
+    :default (-> (keys @(get-global-stores)) set (disj :identity))
     :parse-fn #(map keyword (string/split % #","))]
    ["-c" "--confirm" "really do the migration?"]
    ["-r" "--restart" "restart ongoing migration?"]
@@ -349,7 +350,7 @@
     (when (:help options)
       (println summary)
       (System/exit 0))
-    (clojure.pprint/pprint options)
+    (pp/pprint options)
     (run-migration {:migration-id id
                     :prefix       prefix
                     :migrations   migrations

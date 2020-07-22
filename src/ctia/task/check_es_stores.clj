@@ -11,7 +11,7 @@
    [ctia
     [init :refer [init-store-service! log-properties]]
     [properties :as p :refer [properties]]
-    [store :refer [stores]]]
+    [store :refer [get-global-stores]]]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
@@ -113,7 +113,7 @@
 (defn check-store-indexes
   "check all new es store indexes"
   [batch-size]
-  (let [current-stores @stores
+  (let [current-stores @(get-global-stores)
         batch-size (or batch-size default-batch-size)]
     (log/infof "checking stores: %s" (keys current-stores))
     (log/infof "set batch size: %s" batch-size)

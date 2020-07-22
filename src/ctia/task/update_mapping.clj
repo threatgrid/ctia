@@ -22,7 +22,7 @@
          es-init/update-mapping!]))
 
 (defn update-mapping-stores!
-  "Takes a map the same shape as @ctia.store/stores
+  "Takes a map the same shape as @(ctia.store/get-global-stores)
   and updates the _mapping of every index contained in it."
   [stores-map]
   (doseq [[_ stores] stores-map
@@ -32,7 +32,7 @@
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys @store/stores))
+    :default (set (keys @(store/get-global-stores)))
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
@@ -50,6 +50,6 @@
     (init/log-properties)
     (init/init-store-service!)
     (->> (:stores options)
-         (select-keys @store/stores)
+         (select-keys @(store/get-global-stores))
          update-mapping-stores!)
     (log/info "Completed update-mapping task")))

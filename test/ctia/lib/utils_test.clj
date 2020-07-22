@@ -1,5 +1,6 @@
 (ns ctia.lib.utils-test
   (:require [ctia.lib.utils :as sut]
+            [clojure.pprint :as pp]
             [clojure.test :as t :refer [deftest is testing]]))
 
 (def map-with-creds
@@ -28,7 +29,7 @@
          (sut/deep-filter-out-creds map-with-creds))))
 
 (deftest safe-pprint-test
-  (is (= (with-out-str (clojure.pprint/pprint map-with-hidden-creds))
+  (is (= (with-out-str (pp/pprint map-with-hidden-creds))
          (with-out-str
            (sut/safe-pprint map-with-creds)))))
 

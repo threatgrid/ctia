@@ -52,7 +52,10 @@
    :vulnerability []
    :weakness []})
 
-(defonce stores (atom empty-stores))
+(defonce ^:private stores (atom empty-stores))
+
+(defn get-global-stores []
+  stores)
 
 (defn write-store [store write-fn & args]
   (first (doall (map #(apply write-fn % args) (store @stores)))))
@@ -80,5 +83,5 @@
                       identity-map
                       query-params)]
       (if-let [next-params (:next paging)]
-        (recur next-params (concat results data))
-        (concat results data)))))
+        (recur next-params (into results data))
+        (into results data)))))

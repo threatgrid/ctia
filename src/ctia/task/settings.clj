@@ -1,6 +1,7 @@
 (ns ctia.task.settings
   (:import clojure.lang.ExceptionInfo)
-  (:require [clojure.string :as str]
+  (:require [clojure.pprint :as pp]
+            [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [schema.core :as s]
@@ -11,7 +12,7 @@
             [ctia
              [init :refer [init-store-service! log-properties]]
              [properties :refer [properties init!]]
-             [store :refer [stores]]]))
+             [store :refer [get-global-stores]]]))
 
 (defn update-stores!
   [store-keys]
@@ -22,7 +23,7 @@
 (def cli-options
   [["-h" "--help"]
    ["-s" "--stores STORES" "comma separated list of store names"
-    :default (set (keys @stores))
+    :default (set (keys @(get-global-stores)))
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
@@ -35,7 +36,7 @@
     (when (:help options)
       (println summary)
       (System/exit 0))
-    (clojure.pprint/pprint options)
+    (pp/pprint options)
     (init!)
     (log-properties)
     (update-stores! (:stores options))))

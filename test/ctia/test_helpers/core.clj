@@ -7,6 +7,7 @@
             [clojure
              [walk :refer [prewalk]]]
             [clojure.spec.alpha :as cs]
+            [clojure.test :as test]
             [clojure.test.check.generators :as gen]
             [clojure.tools.logging :as log]
             [clojure.tools.logging.test :as tlog]
@@ -194,8 +195,8 @@
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
   `(do
      ~@(for [[name-key fixture-fn] fixture-map]
-         `(clojure.test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
-                                   {(keyword name-key) true})
+         `(test/deftest ~(with-meta (symbol (str test-name "-" (name name-key)))
+                                    {(keyword name-key) true})
             (~fixture-fn (fn [] ~@body))))))
 
 (defn get-http-port []

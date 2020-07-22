@@ -49,7 +49,7 @@
       "with all scopes you should have most capabilities except some very
        specific ones")
 
-  (is (clojure.set/subset?
+  (is (set/subset?
        (sut/scopes-to-capabilities #{(sut/casebook-root-scope)})
        (sut/scopes-to-capabilities #{(sut/entity-root-scope)}))
       "casebook capabilities are a subset of all entity caps")

@@ -45,7 +45,7 @@
     "es" (es-init/init-store! store-kw)))
 
 (defn init-store-service! []
-  (reset! store/stores
+  (reset! (store/get-global-stores)
           (->> (keys store/empty-stores)
                (map (fn [store-kw]
                       [store-kw (keep (partial build-store store-kw)

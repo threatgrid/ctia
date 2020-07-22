@@ -1,5 +1,6 @@
 (ns ctia.test-helpers.search
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :refer [is testing]]
             [clojure.tools.logging :refer [log*]]
             [ctim.domain.id :refer [long-id->id]]
@@ -175,8 +176,8 @@
       (if (= "AND" default_operator)
         (is (= matched-ids found-ids-escaped)
             "escaping reserved characters should avoid parsing errors and preserve behavior of AND")
-        (is (clojure.set/subset? (clojure.set/union matched-ids unmatched-ids)
-                                 found-ids-escaped)
+        (is (set/subset? (set/union matched-ids unmatched-ids)
+                         found-ids-escaped)
             ;; OR could match other test documents matching "http"
             "escaping reserved characters should avoid parsing errors and preserve behavior of OR"))
       (is (= matched-ids
