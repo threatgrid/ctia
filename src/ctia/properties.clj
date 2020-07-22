@@ -22,6 +22,9 @@
 (defonce ^:private properties
   (atom {}))
 
+;; Note: this var is redefined in these places:
+;; - ctia.bundle.routes-test/with-tlp-property-setting
+;; - ctia.task.migration.migrate-es-stores-test
 (defn get-global-properties []
   properties)
 

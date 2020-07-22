@@ -16,7 +16,7 @@
             [ctim.domain.id :refer [long-id->id]]
 
             [ctia.entity.relationship.schemas :refer [StoredRelationship]]
-            [ctia.properties :as props]
+            [ctia.properties :as p]
             [ctia.task.rollover :refer [rollover-stores]]
             [ctia.task.migration
              [migrate-es-stores :as sut]
@@ -49,7 +49,7 @@
                   helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
-(def es-props (delay (get-in @props/properties [:ctia :store :es])))
+(def es-props (delay (get-in @(p/get-global-properties) [:ctia :store :es])))
 (def es-conn (delay (connect (:default @es-props))))
 (def migration-index (delay (get-in @es-props [:migration :indexname])))
 
@@ -126,11 +126,13 @@
                           :confirm? true
                           :restart? false}]
     (testing "misconfigured migration"
-      (with-redefs [props/properties (atom (-> (assoc-in @props/properties
-                                                         [:ctia :store :es :investigation :indexname]
-                                                         "v1.2.0_ctia_investigation")
-                                               (assoc-in [:malware 0 :state :props :indexname]
-                                                         "v1.2.0_ctia_malware")))]
+      (with-redefs [p/get-global-properties
+                    (let [new-props (atom (-> (assoc-in @(p/get-global-properties)
+                                                        [:ctia :store :es :investigation :indexname]
+                                                        "v1.2.0_ctia_investigation")
+                                              (assoc-in [:malware 0 :state :props :indexname]
+                                                        "v1.2.0_ctia_malware")))]
+                      (fn [] new-props))]
         (is (thrown? AssertionError
                      (sut/check-migration-params migration-params))
             "source and target store must be different"))
@@ -584,7 +586,7 @@
                       actor
                       vulnerability
                       weakness]}
-              (get-in @props/properties [:ctia :store :es])
+              (get-in @(p/get-global-properties) [:ctia :store :es])
               date (Date.)
               index-date (.format (SimpleDateFormat. "yyyy.MM.dd") date)
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
@@ -629,7 +631,7 @@
                           docs))))))
       (testing "restart migration shall properly handle inserts, updates and deletes"
         (let [;; retrieve the first 2 source indices for sighting store
-              {:keys [host port]} (get-in @props/properties [:ctia :store :es :default])
+              {:keys [host port]} (get-in @(p/get-global-properties) [:ctia :store :es :default])
               [sighting-index-1 sighting-index-2]
               (->> (es-helpers/get-cat-indices host port)
                    keys

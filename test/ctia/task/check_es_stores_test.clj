@@ -3,7 +3,7 @@
             [clj-momo.test-helpers.core :as mth]
             [clojure.set :as set]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.properties :as props]
+            [ctia.properties :as p]
             [ctia.task.check-es-stores :as sut]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -77,7 +77,7 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-  (let [store-config (get-in @props/properties [:ctia :store :es :default])]
+  (let [store-config (get-in @(p/get-global-properties) [:ctia :store :es :default])]
     (post-bulk examples)
     (refresh-all-indices (:host store-config)
                          (:port store-config))

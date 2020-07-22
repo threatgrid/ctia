@@ -26,7 +26,7 @@
              [version :refer [wrap-version]]]
             [ctia.metrics.routes :refer [metrics-routes]]
             [ctia.observable.routes :refer [observable-routes]]
-            [ctia.properties :refer [properties
+            [ctia.properties :refer [get-global-properties
                                      get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
             [ctia.version :refer [current-version]]

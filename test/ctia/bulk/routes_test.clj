@@ -12,7 +12,7 @@
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [clj-http.fake :refer [with-global-fake-routes]]
             [ctia
-             [properties :refer [get-http-show properties]]
+             [properties :refer [get-http-show get-global-properties]]
              [store :refer [get-global-stores]]]
             [ctia.bulk.core
              :refer

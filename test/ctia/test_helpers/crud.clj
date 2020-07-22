@@ -8,7 +8,7 @@
              [test :refer [is testing]]]
             [clojure.java.io :as io]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show properties]]
+            [ctia.properties :refer [get-http-show get-global-properties]]
             [ctia.test-helpers
              [core :as helpers
               :refer [delete entity->short-id get patch post put]]

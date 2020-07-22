@@ -14,7 +14,7 @@
             [ctia
              [auth :as auth]
              [init :as init]
-             [properties :refer [properties PropertiesSchema]]
+             [properties :refer [get-global-properties PropertiesSchema]]
              [shutdown :as shutdown]
              [store :as store]]
             [ctia.auth.allow-all :as aa]

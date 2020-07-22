@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [clojure.set :as set]
             [clojure.test :refer [is testing]]
+            [ctia.properties :as p]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [delete get post put]]
@@ -952,7 +953,7 @@
 (defn test-access-control-tlp-settings
   [entity new-entity]
   (testing "TLP Settings Enforcement"
-    (swap! ctia.properties/properties assoc-in
+    (swap! (p/get-global-properties) assoc-in
            [:ctia :access-control]
            {:default-tlp "amber"
             :min-tlp "amber"})
