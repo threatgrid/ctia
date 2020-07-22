@@ -3,5 +3,5 @@
             [ctia.properties :refer [get-global-properties]))
 
 (defn init! []
-  (when (get-in @properties [:ctia :metrics :jmx :enabled])
+  (when (get-in @(get-global-properties) [:ctia :metrics :jmx :enabled])
     (jmx/start)))

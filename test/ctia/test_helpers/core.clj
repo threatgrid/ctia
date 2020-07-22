@@ -201,7 +201,7 @@
             (~fixture-fn (fn [] ~@body))))))
 
 (defn get-http-port []
-  (get-in @properties [:ctia :http :port]))
+  (get-in @(get-global-properties) [:ctia :http :port]))
 
 (def get
   (mthh/with-port-fn get-http-port mthh/get))
@@ -263,7 +263,7 @@
   [type-kw]
   (id/->id type-kw
            (crud/make-id (name type-kw))
-           (get-in @properties [:ctia :http :show])))
+           (get-in @(get-global-properties) [:ctia :http :show])))
 
 (defn entity->short-id
   [entity]
@@ -278,7 +278,7 @@
    (id/long-id
     (id/short-id->id (name type-kw)
                      short-id
-                     (get-in @properties [:ctia :http :show])))))
+                     (get-in @(get-global-properties) [:ctia :http :show])))))
 
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 
@@ -299,7 +299,7 @@
   (id/long-id
    (id/->id (keyword entity-name)
             (fake-short-id entity-name id)
-            (get-in @properties [:ctia :http :show]))))
+            (get-in @(get-global-properties) [:ctia :http :show]))))
 
 (defmacro with-atom-logger
   [atom-logger & body]

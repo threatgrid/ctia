@@ -125,7 +125,7 @@
 
 (defn bulk-refresh? []
   (get-in
-   @properties [:ctia
+   @(get-global-properties) [:ctia
                 :store
                 :bulk-refresh]
    "false"))
@@ -170,7 +170,7 @@
   (apply + (map count (vals bulk))))
 
 (defn get-bulk-max-size []
-  (get-in @properties [:ctia :http :bulk :max-size]))
+  (get-in @(get-global-properties) [:ctia :http :bulk :max-size]))
 
 (defn fetch-bulk
   [entities-map auth-identity]

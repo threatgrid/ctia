@@ -5,7 +5,7 @@
 
 (defn init! []
   (let [{enabled? :enabled :as config}
-        (get-in @properties [:ctia :metrics :riemann])]
+        (get-in @(get-global-properties) [:ctia :metrics :riemann])]
     (when enabled?
       (log/info "riemann metrics reporting")
       (riemann/start (select-keys config

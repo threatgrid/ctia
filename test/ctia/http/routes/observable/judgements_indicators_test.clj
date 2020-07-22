@@ -24,7 +24,7 @@
                                          "foogroup"
                                          "user")
 
-     (let [http-show (get-in @properties [:ctia :http :show])
+     (let [http-show (get-in @(get-global-properties) [:ctia :http :show])
            judgement-1-id (make-id :judgement)
            judgement-2-id (make-id :judgement)
            judgement-3-id (make-id :judgement)

@@ -24,7 +24,7 @@
                                          "foogroup"
                                          "user")
 
-     (let [http-show (get-in @properties [:ctia :http :show])
+     (let [http-show (get-in @(get-global-properties) [:ctia :http :show])
            sighting-1-id (make-id :sighting)
            sighting-2-id (make-id :sighting)
            sighting-3-id (make-id :sighting)

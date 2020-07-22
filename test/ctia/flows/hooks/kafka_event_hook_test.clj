@@ -30,7 +30,7 @@
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
           rebalance-signal (CountDownLatch. 1)
-          kafka-props (get-in @properties [:ctia :hook :kafka])
+          kafka-props (get-in @(get-global-properties) [:ctia :hook :kafka])
           consumer-map
           (lk/subscribe
            kafka-props

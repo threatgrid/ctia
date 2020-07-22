@@ -109,7 +109,7 @@
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
   [store-kw :- s/Keyword]
-  (let [props @properties]
+  (let [props @(get-global-properties)]
     (merge
      {:entity store-kw}
      (get-in props [:ctia :store :es :default] {})

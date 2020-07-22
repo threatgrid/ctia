@@ -74,7 +74,7 @@
 (s/defn same-bucket? :- s/Bool
   [bucket :- EventBucket
    event :- Event]
-  (let [max-seconds (get-in @properties [:ctia :http :events :timeline :max-seconds] 5)
+  (let [max-seconds (get-in @(get-global-properties) [:ctia :http :events :timeline :max-seconds] 5)
         from        (t/minus (:from bucket) (t/seconds max-seconds))
         to          (t/plus (:to bucket) (t/seconds max-seconds))]
     (and (= (:owner bucket) (:owner event))

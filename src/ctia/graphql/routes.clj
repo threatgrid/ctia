@@ -12,7 +12,7 @@
 
 (defn graphql-ui-routes []
   (let [jwt-storage-key
-        (get-in @properties [:ctia :http :jwt :local-storage-key])]
+        (get-in @(get-global-properties) [:ctia :http :jwt :local-storage-key])]
     (c/undocumented
      ;; --- GraphiQL https://github.com/shahankit/custom-graphiql/
      (graphiql {:path "/graphiql"
