@@ -1,7 +1,6 @@
 (ns ctia.events
   (:require [clj-momo.lib.time :as time]
             [ctia.lib.async :as la]
-            [ctia.shutdown :as shutdown]
             [ctia.entity.event.schemas :as es]
             [ctia.events-service :as events-svc]
             [ctim.schemas.common :as c]

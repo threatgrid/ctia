@@ -19,35 +19,39 @@
    :after-delete (doc-list "`after-delete` hooks are called after an entity is deleted.")
    :event (doc-list "`event` hooks are called with an event during any CRUD activity.")})
 
-(defonce hooks (atom empty-hooks))
+(defonce ^:private hooks (atom empty-hooks))
+
+(defn get-global-hooks []
+  {:post [%]}
+  hooks)
 
 (defn reset-hooks! []
-  (reset! hooks
+  (reset! (get-global-hooks)
           (-> empty-hooks
               event-hooks/register-hooks)))
 
 (defn add-hook!
   "Add a `Hook` for the hook `hook-type`"
   [hook-type hook]
-  (swap! hooks update hook-type conj hook))
+  (swap! (get-global-hooks) update hook-type conj hook))
 
 (defn add-hooks!
   "Add a list of `Hook` for the hook `hook-type`"
   [hook-type hook-list]
-  (swap! hooks update hook-type into hook-list))
+  (swap! (get-global-hooks) update hook-type into hook-list))
 
 (defn init-hooks!
   "Initialize all hooks"
   []
-  (doseq [hook-list (vals @hooks)
+  (doseq [hook-list (vals @(get-global-hooks))
           hook hook-list]
     (prot/init hook))
-  @hooks)
+  @(get-global-hooks))
 
 (defn destroy-hooks!
   "Should call all destructor for each hook in reverse order."
   []
-  (doseq [hook-list (vals @hooks)
+  (doseq [hook-list (vals @(get-global-hooks))
           hook (reverse hook-list)]
     (prot/destroy hook)))
 
@@ -60,7 +64,7 @@
              entity
              prev-entity
              read-only?]}]
-  (loop [[hook & more-hooks :as hooks] (get @hooks hook-type)
+  (loop [[hook & more-hooks :as hooks] (get @(get-global-hooks) hook-type)
          result entity]
     (if (empty? hooks)
       result
@@ -84,5 +88,5 @@
 (defn init! []
   (reset-hooks!)
   (init-hooks!)
-  (log/info "Hooks Initialized: " (pr-str @hooks))
+  (log/info "Hooks Initialized: " (pr-str @(get-global-hooks)))
   (shutdown/register-hook! :flows.hooks shutdown!))
