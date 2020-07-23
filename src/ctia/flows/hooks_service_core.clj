@@ -65,6 +65,7 @@
 (defn start
   "Initialize all hooks"
   [{:keys [hooks] :as context}]
+  (reset-hooks! context)
   (doto @hooks
     #(doseq [hook-list (vals %)
              hook hook-list]
