@@ -34,7 +34,7 @@
                       (assoc-in [:ctia :store :es :indicator :refresh_interval]
                                 "12s")))
         _ (sut/update-stores! [:relationship :malware])
-        es-props (get-in @(p/get-global-properties) [:ctia :store :es])
+        es-props (get-in (p/read-global-properties) [:ctia :store :es])
         conn (es-conn/connect (:default es-props))
         relationship-indexname (get-in es-props [:relationship :indexname])
         relationship-index (es-index/get conn (str relationship-indexname "*"))

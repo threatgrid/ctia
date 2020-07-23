@@ -8,7 +8,7 @@
 ;; only ever used by the es-store-service.
 
 (defn- get-store-types [store-kw]
-  (or (some-> (get-in @(p/get-global-properties) [:ctia :store store-kw])
+  (or (some-> (get-in (p/read-global-properties) [:ctia :store store-kw])
               (str/split #","))
       []))
 

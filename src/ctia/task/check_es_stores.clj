@@ -11,7 +11,7 @@
    [ctia
     [store-service :as store-svc]
     [init :refer [log-properties]]
-    [properties :as p :refer [get-global-properties]]]
+    [properties :as p]]
    [ctia.stores.es-service :as es-svc]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
@@ -47,7 +47,7 @@
   (tk/boot-services-with-config
     [store-svc/store-service
      es-svc/es-store-service]
-    @(get-global-properties)))
+    (p/read-global-properties)))
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"

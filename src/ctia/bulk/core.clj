@@ -4,7 +4,7 @@
             [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
-             [properties :refer [get-global-properties]]
+             [properties :as p]
              [store :as store :refer [read-store write-store]]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.entity.entities :refer [entities]]
@@ -125,9 +125,10 @@
 
 (defn bulk-refresh? []
   (get-in
-   @(get-global-properties) [:ctia
-                :store
-                :bulk-refresh]
+   (p/read-global-properties)
+   [:ctia
+    :store
+    :bulk-refresh]
    "false"))
 
 (defn create-bulk
@@ -170,7 +171,7 @@
   (apply + (map count (vals bulk))))
 
 (defn get-bulk-max-size []
-  (get-in @(get-global-properties) [:ctia :http :bulk :max-size]))
+  (get-in (p/read-global-properties) [:ctia :http :bulk :max-size]))
 
 (defn fetch-bulk
   [entities-map auth-identity]

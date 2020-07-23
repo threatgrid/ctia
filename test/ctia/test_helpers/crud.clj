@@ -8,7 +8,7 @@
              [test :refer [is testing]]]
             [clojure.java.io :as io]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [get-http-show get-global-properties]]
+            [ctia.properties :as p :refer [get-http-show]]
             [ctia.test-helpers
              [core :as helpers
               :refer [delete entity->short-id get patch post put]]
@@ -26,7 +26,7 @@
          update-tests? true
          patch-tests? false}}]
   (let [new-record (dissoc example :id)
-        default-es-refresh (->> (get-in @(get-global-properties)
+        default-es-refresh (->> (get-in (p/read-global-properties)
                                         [:ctia :store :es :default :refresh])
                                 (str "refresh="))
         es-params (atom nil)
@@ -305,6 +305,6 @@
                        (string/lower-case body))))))
 
     (when (= "es"
-             (get-in @(get-global-properties)
+             (get-in (p/read-global-properties)
                      [:ctia :store (keyword entity)]))
       (crud-wait-for-test params))))

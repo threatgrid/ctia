@@ -3,7 +3,7 @@
             [clojure.test
              :refer [join-fixtures deftest is testing use-fixtures]]
             [ctia.lib.redis :as lr]
-            [ctia.properties :refer [get-global-properties]]
+            [ctia.properties :as p]
             [ctia.test-helpers
              [core :as test-helpers]
              [es :as es-helpers]])
@@ -34,7 +34,7 @@
 
 (deftest ^:integration test-redis-pubsub-works
   (testing "That we can connect to redis and do pub/sub"
-    (let [redis-config (get-in @(get-global-properties) [:ctia :hook :redis])
+    (let [redis-config (get-in (p/read-global-properties) [:ctia :hook :redis])
           server-connection (lr/server-connection redis-config)
           event-channel-name (str (gensym "events"))
           results (atom [])

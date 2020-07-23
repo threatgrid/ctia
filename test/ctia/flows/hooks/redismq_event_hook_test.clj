@@ -7,7 +7,6 @@
             [ctia.flows.hooks.event-hooks :as hooks]
             [ctia.flows.hooks.event-hooks :as eh]
 
-            [ctia.properties :refer [get-global-properties]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers

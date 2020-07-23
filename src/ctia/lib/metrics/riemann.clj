@@ -1,11 +1,11 @@
 (ns ctia.lib.metrics.riemann
   (:require [clj-momo.lib.metrics.riemann :as riemann]
-            [ctia.properties :refer [get-global-properties]]
+            [ctia.properties :as p]
             [clojure.tools.logging :as log]))
 
 (defn init! []
   (let [{enabled? :enabled :as config}
-        (get-in @(get-global-properties) [:ctia :metrics :riemann])]
+        (get-in (p/read-global-properties) [:ctia :metrics :riemann])]
     (when enabled?
       (log/info "riemann metrics reporting")
       (riemann/start (select-keys config

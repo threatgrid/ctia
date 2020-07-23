@@ -8,7 +8,7 @@
    [clojure.tools.logging :as log]
    [ctia
     [auth :as auth]
-    [properties :refer [get-global-properties]]
+    [properties :as p]
     [store :refer [list-fn
                    read-fn
                    read-store]]]
@@ -68,7 +68,7 @@
    external-key-prefixes]
   (let [key-prefixes (parse-key-prefixes
                       (or external-key-prefixes
-                          (get-in @(get-global-properties)
+                          (get-in (p/read-global-properties)
                                   [:ctia :store :external-key-prefixes]
                                   default-external-key-prefixes)))
         external_id (valid-external-id external_ids key-prefixes)]
@@ -258,7 +258,7 @@
 
 (defn bulk-params []
   {:refresh
-   (get-in @(get-global-properties) [:ctia :store :bundle-refresh] "false")})
+   (get-in (p/read-global-properties) [:ctia :store :bundle-refresh] "false")})
 
 (defn log-errors
   [response]
@@ -303,7 +303,7 @@
   (if (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (get-in @(get-global-properties) [:ctia :http :show :hostname])]
+            this-host (get-in (p/read-global-properties) [:ctia :http :show :hostname])]
         (= (:hostname id-rec) this-host))
       true)
     false))
@@ -355,7 +355,7 @@
    identity-map
    filters]
   (let [filter-map (relationships-filters id filters)
-        max-relationships (get-in @(get-global-properties) [:ctia :http :bundle :export :max-relationships] 1000)]
+        max-relationships (get-in (p/read-global-properties) [:ctia :http :bundle :export :max-relationships] 1000)]
     (some-> (:data (read-store :relationship
                                list-fn
                                filter-map

@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [ctia
              [auth :as auth]
-             [properties :refer [get-global-properties]]]
+             [properties :as p]]
             [ctia.lib
              [collection :refer [fmap]]
              [redis :refer [server-connection]]]
@@ -85,7 +85,7 @@
 (defn wrap-rate-limit
   [handler]
   (let [{:keys [redis enabled key-prefix] :as conf}
-        (get-in @(get-global-properties) [:ctia :http :rate-limit])]
+        (get-in (p/read-global-properties) [:ctia :http :rate-limit])]
     (if enabled
       (let [turnstile-mw
             (turnstile/wrap-rate-limit

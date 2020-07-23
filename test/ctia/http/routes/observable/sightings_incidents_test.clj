@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [get])
   (:require [clj-momo.test-helpers.core :as mht]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.properties :refer [get-global-properties]]
+            [ctia.properties :as p]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [get make-id post]]
@@ -24,7 +24,7 @@
                                          "foogroup"
                                          "user")
 
-     (let [http-show (get-in @(get-global-properties) [:ctia :http :show])
+     (let [http-show (get-in (p/read-global-properties) [:ctia :http :show])
            sighting-1-id (make-id :sighting)
            sighting-2-id (make-id :sighting)
            sighting-3-id (make-id :sighting)

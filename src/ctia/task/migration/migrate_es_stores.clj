@@ -12,7 +12,7 @@
             [ctia.store-service-core :refer [empty-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
-            [ctia.properties :refer [get-global-properties]]
+            [ctia.properties :as p]
             [ctia.stores.es
              [crud :refer [coerce-to-fn]]
              [store :refer [StoreMap]]]
@@ -283,7 +283,7 @@
   [{:keys [prefix
            store-keys]} :- MigrationParams]
   (doseq [store-key store-keys]
-    (let [index (get-in @(get-global-properties) [:ctia :store :es store-key :indexname])]
+    (let [index (get-in (p/read-global-properties) [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
                index)
         (throw (AssertionError.

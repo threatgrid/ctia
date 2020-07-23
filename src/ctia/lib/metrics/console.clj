@@ -1,9 +1,9 @@
 (ns ctia.lib.metrics.console
   (:require [clj-momo.lib.metrics.console :as console]
-            [ctia.properties :refer [get-global-properties]]))
+            [ctia.properties :as p]))
 
 (defn init! []
   (let [{:keys [enabled interval]}
-        (get-in @(get-global-properties) [:ctia :metrics :console])]
+        (get-in (p/read-global-properties) [:ctia :metrics :console])]
     (when enabled
       (console/start interval))))

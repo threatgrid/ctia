@@ -2,7 +2,7 @@
   (:require
    [compojure.api.sweet :refer :all]
    [ctia
-    [properties :refer [get-global-properties]]
+    [properties :as p]
     [store :refer :all]]
    [ctia.domain.entities
     :refer
@@ -77,7 +77,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (get-in @(get-global-properties) [:ctia :http :show])
+        (let [http-show (get-in (p/read-global-properties) [:ctia :http :show])
               judgements (:data (read-store
                                  :judgement
                                  list-judgements-by-observable
@@ -138,7 +138,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (get-in @(get-global-properties) [:ctia :http :show])
+        (let [http-show (get-in (p/read-global-properties) [:ctia :http :show])
               sightings (:data (read-store :sighting
                                            list-sightings-by-observables
                                            [{:type observable_type
@@ -178,7 +178,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (get-in @(get-global-properties) [:ctia :http :show])
+        (let [http-show (get-in (p/read-global-properties) [:ctia :http :show])
               sightings (:data (read-store :sighting
                                            list-sightings-by-observables
                                            [{:type observable_type

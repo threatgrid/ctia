@@ -28,6 +28,9 @@
 (defn get-global-properties []
   properties)
 
+(defn read-global-properties []
+  @(get-global-properties))
+
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
 
@@ -211,10 +214,10 @@
                              (get-global-properties)))
 
 (defn get-http-show []
-  (get-in @(get-global-properties) [:ctia :http :show]))
+  (get-in (read-global-properties) [:ctia :http :show]))
 
 (defn get-http-swagger []
-  (get-in @(get-global-properties) [:ctia :http :swagger]))
+  (get-in (read-global-properties) [:ctia :http :swagger]))
 
 (defn get-access-control []
-  (get-in @(get-global-properties) [:ctia :access-control]))
+  (get-in (read-global-properties) [:ctia :access-control]))

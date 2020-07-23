@@ -17,7 +17,7 @@
   (tk/boot-services-with-config
     [store-svc/store-service
      es-svc/es-store-service]
-    @(p/get-global-properties)))
+    (p/read-global-properties)))
 
 (defn delete-store-indexes [stores]
   (doseq [store-impls (vals @stores)

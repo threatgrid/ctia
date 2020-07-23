@@ -5,7 +5,7 @@
             [ctia.init :refer [log-properties]]
             [ctia.store-service :as store-svc]
             [ctia.stores.es-service :as es-svc]
-            [ctia.properties :refer [init! get-global-properties]]
+            [ctia.properties :as p]
             [ctia.store :refer [get-global-stores]]
             [puppetlabs.trapperkeeper.app :as app]
             [puppetlabs.trapperkeeper.core :as tk]
@@ -45,13 +45,13 @@
           stores))
 
 (defn -main [& _args]
-  (init!)
+  (p/init!)
   (log-properties)
   (try
     (let [app (tk/boot-services-with-config
                 [store-svc/store-service
                  es-svc/es-store-service]
-                @(get-global-properties))
+                (p/read-global-properties))
           store-svc (app/get-service app :StoreService)
           {:keys [nb-errors]
            :as res} (rollover-stores @(store-svc/get-stores store-svc))]

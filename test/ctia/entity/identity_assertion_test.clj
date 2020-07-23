@@ -38,7 +38,7 @@
 (defn additional-tests [identity-assertion-id _]
   (testing "GET /ctia/identity-assertion/search"
   ;; only when ES store
-    (when (= "es" (get-in @(p/get-global-properties) [:ctia :store :identity-assertion]))
+    (when (= "es" (get-in (p/read-global-properties) [:ctia :store :identity-assertion]))
       (let [term "identity.observables.value:\"1.2.3.4\""
             response (get (str "ctia/identity-assertion/search")
                           :query-params {"query" term}

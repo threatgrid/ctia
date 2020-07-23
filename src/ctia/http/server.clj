@@ -2,14 +2,13 @@
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clj-http.client :as http]
-            [ctia
-             [properties :refer [get-global-properties]]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware
              [auth :as auth]
              [ratelimit :refer [wrap-rate-limit]]]
             [ctia.lib.riemann :as rie]
+            [ctia.properties :as p]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -161,7 +160,7 @@
 
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
-         (get-in @(get-global-properties) [:ctia :log :riemann :enabled])
+         (get-in (p/read-global-properties) [:ctia :log :riemann :enabled])
          (rie/wrap-request-logs "API response time ms")
 
          (:enabled jwt)

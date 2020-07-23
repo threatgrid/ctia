@@ -238,7 +238,7 @@
                   helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
-(def es-props (delay (get-in @(p/get-global-properties) [:ctia :store :es])))
+(def es-props (delay (get-in (p/read-global-properties) [:ctia :store :es])))
 (def es-conn (delay (connect (:default @es-props))))
 (def migration-index (delay (get-in @es-props [:migration :indexname])))
 

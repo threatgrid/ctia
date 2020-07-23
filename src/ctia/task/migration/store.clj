@@ -28,7 +28,7 @@
             [ctia.task.rollover :refer [rollover-store]]
             [ctia
              [init :refer [log-properties]]
-             [properties :as p :refer [init!]]
+             [properties :as p]
              [store :refer [get-global-stores]]]
             [puppetlabs.trapperkeeper.core :as tk]))
 
@@ -61,7 +61,7 @@
       {:id em/token
        :timestamp em/ts
        :stores {:type "object"
-                :properties (->> (map store-mapping @(get-global-stores))
+                :properties (->> (map store-mapping (p/read-global-stores))
                                  (into {}))}}}}))
 
 (defn migration-store-properties []
@@ -431,7 +431,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    search_after :- (s/maybe [s/Any])]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
-        event-store (store->map (:event @(get-global-stores)))
+        event-store (store->map (:event (p/read-global-stores)))
         filter-events (fn [{:keys [event_type entity]}]
                         (and (= event_type "record-deleted")
                              (contains? (set entity-types)
@@ -535,7 +535,7 @@ when confirm? is true, it stores this state and creates the target indices."
    prefix :- s/Str
    store-keys :- [s/Keyword]
    confirm? :- s/Bool]
-  (let [source-stores (stores->maps (select-keys @(get-global-stores) store-keys))
+  (let [source-stores (stores->maps (select-keys (p/read-global-stores) store-keys))
         target-stores (get-target-stores prefix store-keys)
         migration-properties (migration-store-properties)
         now (time/internal-now)
@@ -558,7 +558,7 @@ when confirm? is true, it stores this state and creates the target indices."
   [entity-type :- s/Keyword
    prefix :- s/Str
    raw-store :- MigratedStore]
-  (let [source-store (store->map (get @(get-global-stores) entity-type))
+  (let [source-store (store->map (get (p/read-global-stores) entity-type))
         target-store (get-target-store prefix entity-type)]
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))
@@ -651,12 +651,12 @@ when confirm? is true, it stores this state and creates the target indices."
   returns a tk app."
   []
   (log/info "starting CTIA Stores...")
-  (init!)
+  (p/init!)
   (log-properties)
   (let [app (tk/boot-services-with-config
               [store-svc/store-service
                es-svc/es-store-service]
-              @(p/get-global-properties))]
+              (p/read-global-properties))]
     (->> (migration-store-properties)
          init-store-conn
          :conn

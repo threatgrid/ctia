@@ -1,7 +1,7 @@
 (ns ctia.stores.es.init
   (:require
    [clojure.tools.logging :as log]
-   [ctia.properties :refer [get-global-properties]]
+   [ctia.properties :as p]
    [ctia.stores.es.mapping :refer [store-settings]]
    [clj-momo.lib.es
     [conn :refer [connect]]
@@ -110,7 +110,7 @@
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
   [store-kw :- s/Keyword]
-  (let [props @(get-global-properties)]
+  (let [props (p/read-global-properties)]
     (merge
      {:entity store-kw}
      (get-in props [:ctia :store :es :default] {})

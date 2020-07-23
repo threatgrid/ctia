@@ -57,7 +57,7 @@
       (let [app (tk/boot-services-with-config
                   [store-svc/store-service
                    es-svc/es-store-service]
-                  @(p/get-global-properties))
+                  (p/read-global-properties))
             store-svc (app/get-service app :StoreService)]
         (->> (:stores options)
              (select-keys @(store-svc/get-stores

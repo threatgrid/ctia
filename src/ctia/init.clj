@@ -33,8 +33,7 @@
     [init :as es-init]]
    ;; manual trapperkeeper stuff
    [puppetlabs.trapperkeeper.app :as app]
-   [puppetlabs.trapperkeeper.core :as tk]
-   [puppetlabs.trapperkeeper.internal :as internal]))
+   [puppetlabs.trapperkeeper.core :as tk]))
 
 (defn log-properties []
   (log/debug (with-out-str
@@ -45,14 +44,14 @@
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint @(p/get-global-properties))))))
+                  (utils/safe-pprint (p/read-global-properties))))))
 
 ;;------------------------------------------
 ;; Start manual Trapperkeeper management
 ;;------------------------------------------
 
 (defn ^:private services+config []
-  (let [properties @(p/get-global-properties)
+  (let [properties (p/read-global-properties)
         auth-svc
         (let [{auth-service-type :type :as auth} (get-in properties [:ctia :auth])]
           (case auth-service-type
