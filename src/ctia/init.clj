@@ -114,13 +114,16 @@
   (shutdown/register-hook! :tk tk-shutdown!)
   (reset! global-app (tk/boot-services-with-config services config)))
 
+(defn ^:private join-tk-app []
+  (tk/run-app @global-app))
+
 ;;------------------------------------------
 ;; End manual Trapperkeeper management
 ;;------------------------------------------
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
-  []
+  [& {:keys [join?]}]
   (log/info "starting CTIA version: "
             (version/current-version))
 
@@ -144,4 +147,6 @@
 
 
   ;; NOTE: depends on TK's store-service
-  (init-store-service!))
+  (init-store-service!)
+  (when join?
+    (join-tk-app)))

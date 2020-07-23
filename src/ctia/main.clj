@@ -4,4 +4,5 @@
 (defn -main
   "Application entry point"
   [& args]
-  ((requiring-resolve 'ctia.init/start-ctia!)))
+  ((requiring-resolve 'ctia.init/start-ctia!)
+   :join? true))
