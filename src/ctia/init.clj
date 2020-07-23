@@ -46,10 +46,6 @@
               (do (newline)
                   (utils/safe-pprint (p/read-global-properties))))))
 
-;;------------------------------------------
-;; Start manual Trapperkeeper management
-;;------------------------------------------
-
 (defn ^:private services+config []
   (let [properties (p/read-global-properties)
         auth-svc
@@ -82,15 +78,6 @@
                    [event-logging/event-logging-service]))
      :config properties}))
 
-(defonce ^:private global-app (atom nil))
-
-(defn ^:private tk-init! [services config]
-  (reset! global-app (tk/boot-services-with-config services config)))
-
-;;------------------------------------------
-;; End manual Trapperkeeper management
-;;------------------------------------------
-
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class).
   Returns the Trapperkeeper app."
@@ -111,5 +98,5 @@
 
   ;; trapperkeeper init
   (let [{:keys [services config]} (services+config)
-        app (tk-init! services config)]
+        app (tk/boot-services-with-config services config)]
     app))
