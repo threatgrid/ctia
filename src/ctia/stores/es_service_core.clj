@@ -16,7 +16,7 @@
   (case store-type
     "es" (es-init/init-store! store-kw)))
 
-(defn init-store-service! [stores]
+(defn- init-store-service! [stores]
   (reset! stores
           (->> (keys empty-stores)
                (map (fn [store-kw]
