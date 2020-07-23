@@ -30,14 +30,6 @@
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident]))
 
-(defn get-global-stores []
-  {:post [%]}
-  (store-svc/get-stores @store-svc/global-store-service))
-
-(defn deref-global-stores []
-  {:post [%]}
-  @(get-global-stores))
-
 (defn write-store [store write-fn & args]
   (store-svc/write-store @store-svc/global-store-service
                          store

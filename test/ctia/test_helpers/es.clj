@@ -2,6 +2,7 @@
   "ES test helpers"
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
+            [ctia.test-helpers.core :as helpers]
             [clj-momo.lib.es
              [document :as es-doc]
              [index :as es-index]]
@@ -59,16 +60,18 @@
   (t)
   (purge-index :event))
 
-(defn purge-indexes []
-  (doseq [entity (keys @(store/get-global-stores))]
+(defn purge-indexes [store-svc]
+  (doseq [entity (keys @(store-svc/get-stores store-svc))]
     (purge-index entity)))
 
 (defn fixture-purge-indexes
   "walk through all producers and delete their index"
   [t]
-  (purge-indexes)
-  (t)
-  (purge-indexes))
+  (let [app (helpers/get-current-app)
+        store-svc (app/get-service app :StoreService)]
+    (purge-indexes store-svc)
+    (t)
+    (purge-indexes store-svc)))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -144,33 +147,6 @@
                       "ctia.hook.es.slicing.strategy" "aliased-index"
                       "ctia.hook.es.slicing.granularity" "week"]
     (t)))
-
-(defn- url-for-type [t]
-  (assert (keyword? t) "Type must be a keyword")
-  (let [{:keys [indexname host port]}
-        (-> @(store/get-global-stores)
-            t
-            first
-            :state
-            :props)]
-    (assert (seq host) "Missing host")
-    (assert (integer? port) "Missing port")
-    (assert (seq indexname) "Missing index-name")
-    (str "http://" host ":" port "/" indexname "/" (name t) "/")))
-
-(defn post-to-es [obj]
-  (let [{:keys [status]}
-        (http/post
-         (url-for-type (-> obj :type keyword))
-         {:as :json
-          :content-type :json
-          :throw-exceptions false
-          :body (json/generate-string obj)})]
-    (when (not= 201 status)
-      (throw (AssertionError. "POST to ES failed")))))
-
-(defn post-all-to-es [objects]
-  (run! post-to-es objects))
 
 (defn str->doc
   [str-doc]

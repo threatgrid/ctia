@@ -13,7 +13,7 @@
             [clj-http.fake :refer [with-global-fake-routes]]
             [ctia
              [properties :as p :refer [get-http-show]]
-             [store :refer [get-global-stores]]]
+             [store-service :as store-svc]]
             [ctia.bulk.core
              :refer
              [bulk-size gen-bulk-from-fn get-bulk-max-size]]
@@ -24,7 +24,8 @@
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store store-fixtures]]]
             [ctim.domain.id :as id]
-            [ctim.examples.incidents :refer [new-incident-maximal]]))
+            [ctim.examples.incidents :refer [new-incident-maximal]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -488,7 +489,9 @@
                                          "foogroup"
                                          "user")
 
-     (let [{:keys [index conn]} (-> @(get-global-stores) :tool first :state)
+     (let [app (helpers/get-current-app)
+           store-svc (app/get-service app :StoreService)
+           {:keys [index conn]} (-> @(store-svc/get-stores store-svc) :tool first :state)
        ;; close tool index to produce ES errors on that store
            _ (es-index/close! conn index)
            tools (->> [(mk-new-tool 1)

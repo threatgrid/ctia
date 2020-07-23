@@ -32,8 +32,8 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.stores.es.store :refer [store->map]]
-            [ctia.store :refer [get-global-stores]]
-            [puppetlabs.trapperkeeper.app :as tk-app]
+            [ctia.store-service :as store-svc]
+            [puppetlabs.trapperkeeper.app :as app]
             [puppetlabs.kitchensink.testutils :as ks])
   (:import (java.text SimpleDateFormat)
            (java.util Date)
@@ -46,7 +46,7 @@
       (try
         (f)
         (finally
-          (tk-app/stop app))))))
+          (app/stop app))))))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -65,7 +65,7 @@
   (es-index/delete! @es-conn (str @migration-index "*")))
 
 (use-fixtures :each
-  (join-fixtures [helpers/fixture-ctia
+  (join-fixtures [helpers/fixture-ctia ;; FIXME both these fixtures start TK apps!
                   fixture-setup! ;; Note: goes after fixture-ctia
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
@@ -114,11 +114,11 @@
 
 (defn rollover-post-bulk
   "post data in 2 parts with rollover, randomly update son entities"
-  []
+  [store-svc]
   (let [bulk-res-1 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-        _ (rollover-stores @(get-global-stores))
+        _ (rollover-stores @(store-svc/get-stores store-svc))
         bulk-res-2 (post-bulk (fixt/bundle (/ fixtures-nb 2) false))
-        _ (rollover-stores @(get-global-stores))]
+        _ (rollover-stores @(store-svc/get-stores store-svc))]
     (random-updates bulk-res-1 (/ updates-nb 2))
     (random-updates bulk-res-2 (/ updates-nb 2))))
 
@@ -160,8 +160,10 @@
                                       "foogroup"
                                       "user")
   (testing "migration with rollover and multiple indices for source stores"
-    (let [store-types [:malware :tool :incident]]
-      (rollover-post-bulk)
+    (let [app (helpers/get-current-app)
+          store-svc (app/get-service app :StoreService)
+          store-types [:malware :tool :incident]]
+      (rollover-post-bulk store-svc)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-index/get @es-conn
@@ -173,7 +175,8 @@
                                   :batch-size   10
                                   :buffer-size  3
                                   :confirm?     true
-                                  :restart?     false})
+                                  :restart?     false}
+                                 store-svc)
 
       (let [migration-state (es-doc/get-doc @es-conn
                                             @migration-index
@@ -284,7 +287,9 @@
 
 (deftest write-target-test
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-    (let [prefix "0.0.1"
+    (let [app (helpers/get-current-app)
+          store-svc (app/get-service app :StoreService)
+          prefix "0.0.1"
           indexname "v0.0.1_ctia_relationship"
           storemap {:conn @es-conn
                     :indexname indexname
@@ -324,7 +329,7 @@
                           nb-migrated (sut/write-target migrated-count
                                                         batch-params)
                           {target-state :target
-                           source-state :source} (-> (get-migration migration-id @es-conn)
+                           source-state :source} (-> (get-migration migration-id @es-conn store-svc)
                                                      :stores
                                                      :relationship)
                           _ (es-index/refresh! @es-conn)
@@ -373,7 +378,10 @@
 
 (deftest sliced-migration-test
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-    (let [{wo-modified true
+    (let [app (helpers/get-current-app)
+          store-svc (app/get-service app :StoreService)
+
+          {wo-modified true
            w-modified false} (->> (line-seq rdr)
                                   (map es-helpers/prepare-bulk-ops)
                                   (group-by #(nil? (:modified %))))
@@ -390,7 +398,8 @@
                                           :batch-size   100
                                           :buffer-size  3
                                           :confirm?     true
-                                          :restart?     false}))
+                                          :restart?     false}
+                                         store-svc))
           migration-state-1 (es-doc/get-doc @es-conn
                                             @migration-index
                                             "migration"
@@ -409,7 +418,8 @@
                                           :batch-size   100
                                           :buffer-size  3
                                           :confirm?     true
-                                          :restart?     true}))
+                                          :restart?     true}
+                                         store-svc))
           target-count-2 (es-doc/count-docs @es-conn
                                             "v0.0.0_ctia_relationship"
                                             "relationship"
@@ -440,14 +450,17 @@
                                       "foogroup"
                                       "user")
   (testing "migration with malformed documents in store"
-    (let [store-types [:malware :tool :incident]
+    (let [app (helpers/get-current-app)
+          store-svc (app/get-service app :StoreService)
+
+          store-types [:malware :tool :incident]
           logger (atom [])
           bad-doc {:id 1
                    :hey "I"
                    :am "a"
                    :bad "document"}]
       ;; insert proper documents
-      (rollover-post-bulk)
+      (rollover-post-bulk store-svc)
       ;; insert malformed documents
       (doseq [store-type store-types]
         (es-doc/create-doc @es-conn
@@ -463,7 +476,8 @@
                                     :batch-size   10
                                     :buffer-size  3
                                     :confirm?     true
-                                    :restart?     false}))
+                                    :restart?     false}
+                                   store-svc))
       (let [messages (set @logger)
             migration-state (es-doc/get-doc @es-conn
                                             @migration-index
@@ -491,44 +505,50 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-  ;; insert proper documents
-  (rollover-post-bulk)
-  (testing "migrate ES Stores test setup"
-    (testing "simulate migrate es indexes shall not create any document"
-      (sut/migrate-store-indexes {:migration-id "test-1"
-                                  :prefix       "0.0.0"
-                                  :migrations   [:0.4.16]
-                                  :store-keys   (keys @(get-global-stores))
-                                  :batch-size   10
-                                  :buffer-size  3
-                                  :confirm?     false
-                                  :restart?     false})
+  (let [app (helpers/get-current-app)
+        store-svc (app/get-service app :StoreService)]
+    ;; insert proper documents
+    (rollover-post-bulk store-svc)
+    (testing "migrate ES Stores test setup"
+      (testing "simulate migrate es indexes shall not create any document"
+        (sut/migrate-store-indexes {:migration-id "test-1"
+                                    :prefix       "0.0.0"
+                                    :migrations   [:0.4.16]
+                                    :store-keys   (keys @(store-svc/get-stores store-svc))
+                                    :batch-size   10
+                                    :buffer-size  3
+                                    :confirm?     false
+                                    :restart?     false}
+                                   store-svc)
 
-      (doseq [store (vals @(get-global-stores))]
-        (is (not (index-exists? store "0.0.0"))))
-      (is (nil? (seq (es-doc/get-doc @es-conn
-                                     (get-in @es-props [:migration :indexname])
-                                     "migration"
-                                     "test-1"
-                                     {}))))))
+        (doseq [store (vals @(store-svc/get-stores store-svc))]
+          (is (not (index-exists? store "0.0.0"))))
+        (is (nil? (seq (es-doc/get-doc @es-conn
+                                       (get-in @es-props [:migration :indexname])
+                                       "migration"
+                                       "test-1"
+                                       {})))))))
   (testing "migrate es indexes"
-    (let [logger (atom [])]
+    (let [app (helpers/get-current-app)
+          store-svc (app/get-service app :StoreService)
+          logger (atom [])]
       (with-atom-logger logger
         (sut/migrate-store-indexes {:migration-id "test-2"
                                     :prefix       "0.0.0"
                                     :migrations   [:__test]
-                                    :store-keys   (keys @(get-global-stores))
+                                    :store-keys   (keys @(store-svc/get-stores store-svc))
                                     :batch-size   10
                                     :buffer-size  3
                                     :confirm?     true
-                                    :restart?     false}))
+                                    :restart?     false}
+                                   store-svc))
       (testing "shall generate a proper migration state"
         (let [migration-state (es-doc/get-doc @es-conn
                                               @migration-index
                                               "migration"
                                               "test-2"
                                               {})]
-          (is (= (set (keys @(get-global-stores)))
+          (is (= (set (keys @(store-svc/get-stores store-svc)))
                  (set (keys (:stores migration-state)))))
           (doseq [[entity-type migrated-store] (:stores migration-state)]
             (let [{:keys [source target started completed]} migrated-store
@@ -710,13 +730,14 @@
           (sut/migrate-store-indexes {:migration-id "test-2"
                                       :prefix       "0.0.0"
                                       :migrations   [:__test]
-                                      :store-keys   (keys @(get-global-stores))
+                                      :store-keys   (keys @(store-svc/get-stores store-svc))
                                       ;; small batch to check proper delete paging
                                       :batch-size   2
                                       :buffer-size  1
                                       :confirm?     true
-                                      :restart?     true})
-          (let [migration-state (get-migration "test-2" @es-conn)
+                                      :restart?     true}
+                                     store-svc)
+          (let [migration-state (get-migration "test-2" @es-conn store-svc)
                 malware-migration (get-in migration-state [:stores :malware])
                 sighting-migration (get-in migration-state [:stores :sighting])
                 malware-target-store (get-in malware-migration [:target :store])
@@ -743,7 +764,7 @@
                 "deleted document must not be in target stores")))))))
 
 (defn load-test-fn
-  [maximal?]
+  [maximal? store-svc]
   ;; insert 20000 docs per entity-type
   (doseq [bundle (repeatedly 20 #(fixt/bundle 1000 maximal?))]
     (post-bulk bundle))
@@ -762,7 +783,8 @@
                                         :batch-size   batch-size
                                         :buffer-size  3
                                         :confirm?     true
-                                        :restart?     false})
+                                        :restart?     false}
+                                       store-svc)
           end (System/currentTimeMillis)
           total (/ (- end start) 1000)
           doc-per-sec (/ total-docs total)

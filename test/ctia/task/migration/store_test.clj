@@ -12,14 +12,15 @@
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
             [ctia.properties :as p]
-            [ctia.store :refer [get-global-stores]]
             [ctia.test-helpers
              [fixtures :as fixt]
              [core :as helpers :refer [post-bulk put delete]]
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.task.rollover :refer [rollover-stores]]
-            [ctia.task.migration.store :as sut]))
+            [ctia.task.migration.store :as sut]
+            [ctia.store-service :as store-svc]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -481,7 +482,9 @@
 
 (deftest bulk-metas-test
   ;; insert elements in different indices and check that we retrieve the right one
-  (let [sighting-store-map {:conn @es-conn
+  (let [app (helpers/get-current-app)
+        store-svc (app/get-service app :StoreService)
+        sighting-store-map {:conn @es-conn
                             :indexname "ctia_sighting"
                             :props {:write-index "ctia_sighting"}
                             :mapping "sighting"
@@ -489,7 +492,7 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        {:keys [nb-errors]} (rollover-stores @(get-global-stores))
+        {:keys [nb-errors]} (rollover-stores @(store-svc/get-stores store-svc))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         malware-ids (->> (:malwares post-bulk-res-1)
@@ -529,7 +532,9 @@
 
 (deftest prepare-docs-test
   ;; insert elements in different indices, modify some and check that we retrieve the right one
-  (let [sighting-store-map {:conn @es-conn
+  (let [app (helpers/get-current-app)
+        store-svc (app/get-service app :StoreService)
+        sighting-store-map {:conn @es-conn
                             :indexname "ctia_sighting"
                             :props {:write-index "ctia_sighting-write"
                                     :aliased true}
@@ -538,7 +543,7 @@
                             :settings {}
                             :config {}}
         post-bulk-res-1 (post-bulk examples)
-        {:keys [nb-errors]} (rollover-stores @(get-global-stores))
+        {:keys [nb-errors]} (rollover-stores @(store-svc/get-stores store-svc))
         _ (is (= 0 nb-errors))
         post-bulk-res-2 (post-bulk examples)
         _ (es-index/refresh! @es-conn)
@@ -740,7 +745,9 @@
                                       "user")
   (post-bulk examples)
   (es-index/refresh! @es-conn) ;; ensure indices refresh
-  (let [[sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
+  (let [app (helpers/get-current-app)
+        store-svc (app/get-service app :StoreService)
+        [sighting1 sighting2] (:parsed-body (helpers/get "ctia/sighting/search"
                                                          :query-params {:limit 2 :query "*"}
                                                          :headers {"Authorization" "45c1f5e3f05d0"}))
         [tool1 tool2 tool3] (:parsed-body (helpers/get "ctia/tool/search"
@@ -769,11 +776,12 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" malware1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        {data1 :data paging1 :paging} (sut/fetch-deletes [:sighting :tool] since 3 nil)
+        {data1 :data paging1 :paging} (sut/fetch-deletes [:sighting :tool] since 3 nil store-svc)
         {data2 :data paging2 :paging} (sut/fetch-deletes [:sighting :tool]
                                                          since
                                                          2
-                                                         (:sort paging1))]
+                                                         (:sort paging1)
+                                                         store-svc)]
     (is (nil? (:next paging2)))
     (is (= #{(:id tool1) (:id tool2)} (->> (:tool data1)
                                            (map :id)
@@ -796,7 +804,9 @@
   (post-bulk examples)
   (es-index/refresh! @es-conn) ; ensure indices refresh
   (testing "init-migration should properly create new migration state from selected types."
-    (let [prefix "0.0.0"
+    (let [app (helpers/get-current-app)
+          store-svc (app/get-service app :StoreService)
+          prefix "0.0.0"
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
           migration-id-2 "migration-2"
@@ -846,11 +856,11 @@
       (check-state real-migration-from-init
                    migration-id-2
                    "init-migration with confirmation shall return a propr migration state")
-      (check-state (sut/get-migration migration-id-2 @es-conn)
+      (check-state (sut/get-migration migration-id-2 @es-conn store-svc)
                    migration-id-2
                    "init-migration shall store confirmed migration, and get-migration should be properly retrieved from store")
       (is (thrown? clojure.lang.ExceptionInfo
-                   (sut/get-migration migration-id-1 @es-conn))
+                   (sut/get-migration migration-id-1 @es-conn store-svc))
           "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
       (testing "stored document shall not contains object stores in source and target"
         (let [{:keys [stores]} (es-doc/get-doc @es-conn

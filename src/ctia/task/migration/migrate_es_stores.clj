@@ -17,7 +17,8 @@
              [crud :refer [coerce-to-fn]]
              [store :refer [StoreMap]]]
             [ctia.task.migration.migrations :refer [available-migrations]]
-            [ctia.task.migration.store :as mst])
+            [ctia.task.migration.store :as mst]
+            [puppetlabs.trapperkeeper.app :as app])
   (:import [java.util UUID]
            [java.lang AssertionError]))
 
@@ -143,7 +144,8 @@
            migration-id
            list-coerce
            migration-es-conn
-           confirm?]} :- BatchParams]
+           confirm?]} :- BatchParams
+   store-svc]
   (let [migrated (transduce migrations conj documents)
         {:keys [data errors]} (list-coerce migrated)
         new-migrated-count (+ migrated-count (count data))]
@@ -161,7 +163,8 @@
                                   (cond-> {:target {:migrated new-migrated-count}}
                                     search_after (assoc :source
                                                         {:search_after search_after}))
-                                  migration-es-conn))
+                                  migration-es-conn
+                                  store-svc))
     (log/infof "%s - migrated: %s documents"
                (name entity-type)
                new-migrated-count)
@@ -194,7 +197,8 @@
    migrations
    batch-size
    buffer-size
-   confirm?]
+   confirm?
+   store-svc]
   (log/infof "migrating store: %s" entity-type)
   (let [{stores :stores migration-id :id} migration-state
         {:keys [source target started]} (get stores entity-type)
@@ -224,7 +228,8 @@
     (when (and confirm? (not started))
       (mst/update-migration-store migration-id
                                   entity-type
-                                  {:started (time/now)}))
+                                  {:started (time/now)}
+                                  store-svc))
     (->> (reduce migrate-query
                  base-params
                  queries)
@@ -236,7 +241,8 @@
                                entity-type
                                source-store
                                target-store
-                               @mst/migration-es-conn))))
+                               @mst/migration-es-conn
+                               store-svc))))
 
 (s/defschema MigrationParams
   {:migration-id s/Str
@@ -257,10 +263,11 @@
            batch-size
            buffer-size
            confirm?
-           restart?]} :- MigrationParams]
+           restart?]} :- MigrationParams
+   store-svc]
   (let [migration-state (if restart?
-                          (mst/get-migration migration-id @mst/migration-es-conn)
-                          (mst/init-migration migration-id prefix store-keys confirm?))
+                          (mst/get-migration migration-id @mst/migration-es-conn store-svc)
+                          (mst/init-migration migration-id prefix store-keys confirm? store-svc))
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
     (log/infof "migrating stores: %s" store-keys)
@@ -271,7 +278,8 @@
                      migrations
                      batch-size
                      buffer-size
-                     confirm?))
+                     confirm?
+                     store-svc))
     (handle-deletes migration-state store-keys batch-size confirm?)))
 
 (defn exit [error?]
@@ -299,9 +307,10 @@
     (assert prefix "Please provide an indexname prefix for target store creation"))
   (log/info "migrating all ES Stores")
   (try
-    (let [app (mst/setup!)]
+    (let [app (mst/setup!)
+          store-svc (app/get-service app :StoreService)]
       (check-migration-params params)
-      (migrate-store-indexes params)
+      (migrate-store-indexes params store-svc)
       (log/info "migration complete")
       (exit false))
     (catch AssertionError e

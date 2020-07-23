@@ -10,7 +10,7 @@
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
-            [ctia.store :refer [get-global-stores]]
+            [ctia.store-service :as store-svc]
             [ctia.properties :as p]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
@@ -18,7 +18,8 @@
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
-            [ctim.examples.bundles :refer [bundle-maximal]]))
+            [ctim.examples.bundles :refer [bundle-maximal]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn fixture-properties [t]
   (helpers/with-properties ["ctia.http.bulk.max-size" 1000
@@ -216,7 +217,9 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [indicators [(mk-indicator 0)
+     (let [app (helpers/get-current-app)
+           store-svc (app/get-service app :StoreService)
+           indicators [(mk-indicator 0)
                        (mk-indicator 1)]
            sightings [(mk-sighting 0)
                       (mk-sighting 1)]
@@ -371,7 +374,7 @@
                        (map :result (:results bundle-result-update)))
                "All existing entities are not updated")))
        (testing "Partial results with errors"
-         (let [indicator-store-state (-> @(get-global-stores) :indicator first :state)
+         (let [indicator-store-state (-> @(store-svc/get-stores store-svc) :indicator first :state)
                indexname (:index indicator-store-state)
                ;; close indicator index to produce ES errors on that store
                _ (es-index/close! (:conn indicator-store-state) indexname)

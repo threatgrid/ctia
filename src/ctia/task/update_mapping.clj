@@ -27,7 +27,7 @@
          es-init/update-mapping!]))
 
 (defn update-mapping-stores!
-  "Takes a map the same shape as @(ctia.store/get-global-stores)
+  "Takes a map the same shape as @(ctia.store-service/get-stores store-svc)
   and updates the _mapping of every index contained in it."
   [stores-map]
   (doseq [[_ stores] stores-map
