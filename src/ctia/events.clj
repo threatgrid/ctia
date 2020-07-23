@@ -19,18 +19,3 @@
    (events-svc/send-event @events-svc/global-events-service
                           channel-data
                           event)))
-
-(s/defn register-listener :- Channel
-  "Convenience wrapper for registering a listener on the central event channel."
-  ([listen-fn :- (=> s/Any es/Event)
-    mode :- (s/enum :compute :blocking)]
-   (events-svc/register-listener @events-svc/global-events-service
-                                 listen-fn
-                                 mode))
-  ([listen-fn :- (=> s/Any es/Event)
-    pred :- (=> s/Bool es/Event)
-    mode :- (s/enum :compute :blocking)]
-   (events-svc/register-listener @events-svc/global-events-service
-                                 listen-fn
-                                 pred
-                                 mode)))
