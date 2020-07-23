@@ -85,11 +85,6 @@
 
 (defonce ^:private global-app (atom nil))
 
-(defn ^:private tk-shutdown! []
-  (when-some [app @global-app]
-    (app/stop app)
-    (reset! global-app nil)))
-
 (defn ^:private tk-init! [services config]
   (reset! global-app (tk/boot-services-with-config services config)))
 
