@@ -299,16 +299,20 @@
     (assert prefix "Please provide an indexname prefix for target store creation"))
   (log/info "migrating all ES Stores")
   (try
-    (mst/setup!)
-    (check-migration-params params)
-    (migrate-store-indexes params)
-    (log/info "migration complete")
+    (let [app (mst/setup!)]
+      (check-migration-params params)
+      (migrate-store-indexes params)
+      (log/info "migration complete")
+      (exit false))
     (catch AssertionError e
-       (log/error (.getMessage e)))
+      (log/error (.getMessage e))
+      (exit true))
     (catch Exception e
       (log/error e "Unexpected error during migration")
-      (exit true)))
-  (exit false))
+      (exit true))
+    (finally
+      (log/error "Unknown error")
+      (exit true))))
 
 (def cli-options
   ;; An option with a required argument

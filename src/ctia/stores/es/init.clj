@@ -8,7 +8,8 @@
     [index :as es-index]
     [schemas :refer [ESConnState]]]
    [ctia.entity.entities :refer [entities]]
-   [schema.core :as s]))
+   [schema.core :as s]
+   [puppetlabs.trapperkeeper.core :as tk]))
 
 (s/defschema StoreProperties
   {:entity s/Keyword

@@ -29,31 +29,13 @@
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
    [ctia.shutdown :as shutdown]
+   [ctia.stores.es-service :as es-svc]
    [ctia.stores.es
     [init :as es-init]]
    ;; manual trapperkeeper stuff
    [puppetlabs.trapperkeeper.app :as app]
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.internal :as internal]))
-
-
-(defn- get-store-types [store-kw]
-  (or (some-> (get-in @(p/get-global-properties) [:ctia :store store-kw])
-              (str/split #","))
-      []))
-
-(defn- build-store [store-kw store-type]
-  (case store-type
-    "es" (es-init/init-store! store-kw)))
-
-(defn init-store-service! []
-  (reset! (store/get-global-stores)
-          (->> (keys store-svc-core/empty-stores)
-               (map (fn [store-kw]
-                      [store-kw (keep (partial build-store store-kw)
-                                      (get-store-types store-kw))]))
-               (into {})
-               (merge-with into store-svc-core/empty-stores))))
 
 (defn log-properties []
   (log/debug (with-out-str
@@ -94,6 +76,7 @@
                   encryption-svc
                   e/events-service
                   store-svc/store-service
+                  es-svc/es-store-service
                   http-server-svc/ctia-http-server-service
                   hooks-svc/hooks-service]
                  ;; register event file logging only when enabled
@@ -114,16 +97,14 @@
   (shutdown/register-hook! :tk tk-shutdown!)
   (reset! global-app (tk/boot-services-with-config services config)))
 
-(defn ^:private join-tk-app []
-  (tk/run-app @global-app))
-
 ;;------------------------------------------
 ;; End manual Trapperkeeper management
 ;;------------------------------------------
 
 (defn start-ctia!
-  "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
-  [& {:keys [join?]}]
+  "Does the heavy lifting for ctia.main (ie entry point that isn't a class).
+  Returns the Trapperkeeper app."
+  []
   (log/info "starting CTIA version: "
             (version/current-version))
 
@@ -136,17 +117,12 @@
   (log-properties)
   (validate-entities)
 
-  ;; trapperkeeper init
-  (let [{:keys [services config]} (services+config)]
-    (tk-init! services config))
-
   ;; metrics reporters init
   ;(riemann/init!)
   ;(jmx/init!)
   ;(console/init!)
 
-
-  ;; NOTE: depends on TK's store-service
-  (init-store-service!)
-  (when join?
-    (join-tk-app)))
+  ;; trapperkeeper init
+  (let [{:keys [services config]} (services+config)
+        app (tk-init! services config)]
+    app))

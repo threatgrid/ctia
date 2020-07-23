@@ -10,7 +10,7 @@
              [schemas :refer [ESConnState]]]
             [ctia.stores.es.init :refer [init-es-conn! get-store-properties]]
             [ctia
-             [init :refer [init-store-service! log-properties]]
+             [init :refer [log-properties]]
              [properties :refer [init!]]
              [store :refer [get-global-stores]]
              [store-service-core :refer [empty-stores]]]))

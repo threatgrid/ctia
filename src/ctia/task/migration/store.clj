@@ -15,6 +15,8 @@
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
             [ctia.lib.collection :refer [fmap]]
+            [ctia.store-service :as store-svc]
+            [ctia.stores.es-service :as es-svc]
             [ctia.stores.es
              [crud :as crud]
              [init :refer [init-store-conn
@@ -25,9 +27,10 @@
              [store :refer [StoreMap] :as es-store]]
             [ctia.task.rollover :refer [rollover-store]]
             [ctia
-             [init :refer [init-store-service! log-properties]]
-             [properties :refer [init!]]
-             [store :refer [get-global-stores]]]))
+             [init :refer [log-properties]]
+             [properties :as p :refer [init!]]
+             [store :refer [get-global-stores]]]
+            [puppetlabs.trapperkeeper.core :as tk]))
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
@@ -644,13 +647,18 @@ when confirm? is true, it stores this state and creates the target indices."
                           es-conn))
 
 (defn setup!
-  "init properties, start CTIA and its store service"
+  "init properties, start CTIA and its store service.
+  returns a tk app."
   []
   (log/info "starting CTIA Stores...")
   (init!)
   (log-properties)
-  (init-store-service!)
-  (->> (migration-store-properties)
-       init-store-conn
-       :conn
-       (reset! migration-es-conn)))
+  (let [app (tk/boot-services-with-config
+              [store-svc/store-service
+               es-svc/es-store-service]
+              @(p/get-global-properties))]
+    (->> (migration-store-properties)
+         init-store-conn
+         :conn
+         (reset! migration-es-conn))
+    app))

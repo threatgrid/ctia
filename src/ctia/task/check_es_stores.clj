@@ -9,12 +9,15 @@
    [clojure.string :as string]
    [clojure.tools.logging :as log]
    [ctia
-    [init :refer [init-store-service! log-properties]]
-    [properties :as p :refer [get-global-properties]]
-    [store :refer [get-global-stores]]]
+    [store-service :as store-svc]
+    [init :refer [log-properties]]
+    [properties :as p :refer [get-global-properties]]]
+   [ctia.stores.es-service :as es-svc]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
+   [puppetlabs.trapperkeeper.app :as app]
+   [puppetlabs.trapperkeeper.core :as tk]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
@@ -34,13 +37,17 @@
     (do (log/warnf "missing schema definition for: %s" type)
         s/Any)))
 
-(defn setup
-  "init properties, start CTIA and its store service"
+(defn ^:private setup
+  "init properties, start CTIA and its store service.
+  returns trapperkeeper app"
   []
   (log/info "starting CTIA Stores...")
   (p/init!)
   (log-properties)
-  (init-store-service!))
+  (tk/boot-services-with-config
+    [store-svc/store-service
+     es-svc/es-store-service]
+    @(get-global-properties)))
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"
@@ -112,8 +119,9 @@
 
 (defn check-store-indexes
   "check all new es store indexes"
-  [batch-size]
-  (let [current-stores @(get-global-stores)
+  [app batch-size]
+  (let [store-svc (app/get-service app :StoreService)
+        current-stores (store-svc/get-stores store-svc)
         batch-size (or batch-size default-batch-size)]
     (log/infof "checking stores: %s" (keys current-stores))
     (log/infof "set batch size: %s" batch-size)
@@ -124,21 +132,24 @@
     (System/exit -1)
     (System/exit 0)))
 
-(defn run-check
+(defn ^:private run-check
   [batch-size]
   (assert batch-size "Please specify a batch size")
   (log/info "checking all ES Stores")
   (try
-    (setup)
-    (when-let [errors (seq (check-store-indexes batch-size))]
-      (log/errorf "Schema errors found during check: %s"
-                  (pr-str errors))
-      (exit true))
-    (log/info "check complete")
+    (let [app (setup)]
+      (when-let [errors (seq (check-store-indexes app batch-size))]
+        (log/errorf "Schema errors found during check: %s"
+                    (pr-str errors))
+        (exit true))
+      (log/info "check complete")
+      (exit false))
     (catch Exception e
       (log/error e "Unexpected error during store checks")
-      (exit true)))
-  (exit false))
+      (exit true))
+    (finally
+      (log/error "Unknown error")
+      (exit true))))
 
 (defn -main
   "invoke with lein run -m ctia.task.check-es-stores <batch-size>"

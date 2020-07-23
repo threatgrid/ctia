@@ -32,15 +32,21 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctia.stores.es.store :refer [store->map]]
-            [ctia.store :refer [get-global-stores]])
+            [ctia.store :refer [get-global-stores]]
+            [puppetlabs.trapperkeeper.app :as tk-app]
+            [puppetlabs.kitchensink.testutils :as ks])
   (:import (java.text SimpleDateFormat)
            (java.util Date)
            (java.lang AssertionError)
            (clojure.lang ExceptionInfo)))
 
 (defn fixture-setup! [f]
-  (setup!) ;; init migration conn and properties
-  (f))
+  (ks/with-no-jvm-shutdown-hooks
+    (let [app (setup!)] ;; init migration conn and properties
+      (try
+        (f)
+        (finally
+          (tk-app/stop app))))))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation

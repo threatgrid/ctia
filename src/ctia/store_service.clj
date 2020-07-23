@@ -6,7 +6,7 @@
 (defonce global-store-service (atom nil))
 
 (defprotocol StoreService
-  (get-stores [this])
+  (get-stores [this] "Returns the atom of stores")
   (write-store [this store write-fn])
   (read-store [this store read-fn]))
 

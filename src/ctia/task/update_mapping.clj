@@ -2,15 +2,19 @@
   "Updates the _mapping on an ES index."
   (:require [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.schemas :as es-schema]
-            [clojure.tools.cli :refer [parse-opts]]
             [clojure.pprint :as pp]
             [clojure.string :as str]
+            [clojure.tools.cli :refer [parse-opts]]
             [clojure.tools.logging :as log]
             [ctia.init :as init]
-            [ctia.properties :as properties]
+            [ctia.properties :as p]
             [ctia.store :as store]
+            [ctia.store-service :as store-svc]
             [ctia.store-service-core :refer [empty-stores]]
+            [ctia.stores.es-service :as es-svc]
             [ctia.stores.es.init :as es-init]
+            [puppetlabs.trapperkeeper.app :as app]
+            [puppetlabs.trapperkeeper.core :as tk]
             [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]))
 
@@ -37,20 +41,30 @@
     :parse-fn #(map keyword (str/split % #","))]])
 
 (defn -main [& args]
-  (let [{:keys [options errors summary]} (parse-opts args cli-options)]
-    (when errors
-      (binding  [*out* *err*]
-        (println (str/join "\n" errors))
-        (println summary))
-      (System/exit 1))
-    (when (:help options)
-      (println summary)
-      (System/exit 0))
-    (pp/pprint options)
-    (properties/init!)
-    (init/log-properties)
-    (init/init-store-service!)
-    (->> (:stores options)
-         (select-keys @(store/get-global-stores))
-         update-mapping-stores!)
-    (log/info "Completed update-mapping task")))
+  (try
+    (let [{:keys [options errors summary]} (parse-opts args cli-options)]
+      (when errors
+        (binding  [*out* *err*]
+          (println (str/join "\n" errors))
+          (println summary))
+        (System/exit 1))
+      (when (:help options)
+        (println summary)
+        (System/exit 0))
+      (pp/pprint options)
+      (p/init!)
+      (init/log-properties)
+      (let [app (tk/boot-services-with-config
+                  [store-svc/store-service
+                   es-svc/es-store-service]
+                  @(p/get-global-properties))
+            store-svc (app/get-service app :StoreService)]
+        (->> (:stores options)
+             (select-keys @(store-svc/get-stores
+                             store-svc))
+             update-mapping-stores!)
+        (log/info "Completed update-mapping task")
+        (System/exit 0)))
+    (finally
+      (log/error "unknown error")
+      (System/exit 1))))
