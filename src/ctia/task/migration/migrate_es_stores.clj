@@ -176,14 +176,15 @@
            migrated-count
            buffer-size]
     :as migration-params} :- BatchParams
-   query :- ESQuery]
+   query :- ESQuery
+   store-svc]
   (log/infof "%s - handling sliced query %s"
              (name entity-type)
              (pr-str query))
   (let [read-params (assoc migration-params :query query)
         data-queue (seque buffer-size
                           (read-source read-params))
-        new-migrated-count (reduce write-target
+        new-migrated-count (reduce #(write-target %1 %2 store-svc)
                                    migrated-count
                                    data-queue)]
     (assoc migration-params
@@ -230,7 +231,7 @@
                                   entity-type
                                   {:started (time/now)}
                                   store-svc))
-    (->> (reduce migrate-query
+    (->> (reduce #(migrate-query %1 %2 store-svc)
                  base-params
                  queries)
          :migrated-count
