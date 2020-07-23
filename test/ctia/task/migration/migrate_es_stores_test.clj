@@ -319,7 +319,8 @@
                     (init-migration migration-id
                                     prefix
                                     [:relationship]
-                                    true)
+                                    true
+                                    store-svc)
                     (let [test-docs (take total docs)
                           search_after [(rand-int total)]
                           batch-params  (-> (into base-params

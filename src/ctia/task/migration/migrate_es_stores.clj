@@ -55,9 +55,11 @@
   [{:keys [created stores]} :- mst/MigrationSchema
    store-keys :- [s/Keyword]
    batch-size :- s/Int
-   confirm? :- s/Bool]
+   confirm? :- s/Bool
+   store-svc]
   (loop [search_after nil]
-    (let [{:keys [data paging]} (mst/fetch-deletes store-keys created batch-size search_after)
+    (let [{:keys [data paging]} (mst/fetch-deletes store-keys created batch-size search_after
+                                                   store-svc)
           {new-search-after :sort next :next} paging]
       (doseq [[entity-type entities] data]
         (log/infof "Handling %s deleted %s during migration"
@@ -281,7 +283,7 @@
                      buffer-size
                      confirm?
                      store-svc))
-    (handle-deletes migration-state store-keys batch-size confirm?)))
+    (handle-deletes migration-state store-keys batch-size confirm? store-svc)))
 
 (defn exit [error?]
   (if error?

@@ -181,10 +181,14 @@
         "format-range-buckets should properly format raw buckets per month")))
 
 (deftest wo-storemaps-test
-  (let [fake-migration (sut/init-migration "migration-id-1"
+  (let [app (helpers/get-current-app)
+        store-svc (app/get-service app :StoreService)
+
+        fake-migration (sut/init-migration "migration-id-1"
                                            "0.0.0"
                                            [:tool :sighting :malware]
-                                           false)
+                                           false
+                                           store-svc)
         wo-stores (sut/wo-storemaps fake-migration)]
     (is (nil? (get-in wo-stores [:source :store])))
     (is (nil? (get-in wo-stores [:target :store])))))
@@ -813,11 +817,13 @@
           fake-migration (sut/init-migration migration-id-1
                                              prefix
                                              entity-types
-                                             false)
+                                             false
+                                             store-svc)
           real-migration-from-init (sut/init-migration migration-id-2
                                                        prefix
                                                        entity-types
-                                                       true)
+                                                       true
+                                                       store-svc)
           check-state (fn [{:keys [id stores]} migration-id message]
                         (testing message
                           (is (= id migration-id))
