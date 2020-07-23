@@ -20,7 +20,7 @@
                            keyword)})
              (vals entities))))
 
-(def inverted-bulk-entity-mapping
+(def ^:private inverted-bulk-entity-mapping
   (set/map-invert bulk-entity-mapping))
 
 (defn bulk-key
@@ -49,7 +49,7 @@
     k store/read-record
     % (auth/ident->map auth-identity) params))
 
-(defn create-entities
+(defn- create-entities
   "Create many entities provided their type and returns a list of ids"
   [new-entities entity-type tempids auth-identity params]
   (when (seq new-entities)
@@ -100,7 +100,7 @@
     (catch java.util.concurrent.ExecutionException e
       (throw (.getCause e)))))
 
-(defn merge-tempids
+(defn- merge-tempids
   "Merges tempids from all entities
    {:entity-type1 {:data []
                    :tempids {transientid1 id1
@@ -123,7 +123,7 @@
        (map (fn [[_ v]] (:tempids v)))
        (reduce into {})))
 
-(defn bulk-refresh? []
+(defn- bulk-refresh? []
   (get-in
    (p/read-global-properties)
    [:ctia
