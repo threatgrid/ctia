@@ -29,7 +29,7 @@
             [ctia
              [init :refer [log-properties]]
              [properties :as p]
-             [store :refer [get-global-stores]]]
+             [store :refer [deref-global-stores]]]
             [puppetlabs.trapperkeeper.core :as tk]))
 
 (def timeout (* 5 60000))
@@ -61,7 +61,7 @@
       {:id em/token
        :timestamp em/ts
        :stores {:type "object"
-                :properties (->> (map store-mapping (p/read-global-stores))
+                :properties (->> (map store-mapping (deref-global-stores))
                                  (into {}))}}}}))
 
 (defn migration-store-properties []
@@ -431,7 +431,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
    search_after :- (s/maybe [s/Any])]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
-        event-store (store->map (:event (p/read-global-stores)))
+        event-store (store->map (:event (deref-global-stores)))
         filter-events (fn [{:keys [event_type entity]}]
                         (and (= event_type "record-deleted")
                              (contains? (set entity-types)
@@ -535,7 +535,7 @@ when confirm? is true, it stores this state and creates the target indices."
    prefix :- s/Str
    store-keys :- [s/Keyword]
    confirm? :- s/Bool]
-  (let [source-stores (stores->maps (select-keys (p/read-global-stores) store-keys))
+  (let [source-stores (stores->maps (select-keys (deref-global-stores) store-keys))
         target-stores (get-target-stores prefix store-keys)
         migration-properties (migration-store-properties)
         now (time/internal-now)
@@ -558,7 +558,7 @@ when confirm? is true, it stores this state and creates the target indices."
   [entity-type :- s/Keyword
    prefix :- s/Str
    raw-store :- MigratedStore]
-  (let [source-store (store->map (get (p/read-global-stores) entity-type))
+  (let [source-store (store->map (get (deref-global-stores) entity-type))
         target-store (get-target-store prefix entity-type)]
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))

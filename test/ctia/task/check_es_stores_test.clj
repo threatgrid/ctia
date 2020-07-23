@@ -69,15 +69,16 @@
    :weaknesses (n-doc weakness-minimal fixtures-nb)})
 
 (deftest test-check-store-indexes
-  (helpers/set-capabilities! "foouser"
-                             ["foogroup"]
-                             "user"
-                             all-capabilities)
-  (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
-                                      "foouser"
-                                      "foogroup"
-                                      "user")
-  (let [store-config (get-in (p/read-global-properties) [:ctia :store :es :default])]
+  (let [app (helpers/get-current-app)
+        _ (helpers/set-capabilities! "foouser"
+                                     ["foogroup"]
+                                     "user"
+                                     all-capabilities)
+        _ (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                              "foouser"
+                                              "foogroup"
+                                              "user")
+        store-config (get-in (p/read-global-properties) [:ctia :store :es :default])]
     (post-bulk examples)
     (refresh-all-indices (:host store-config)
                          (:port store-config))
@@ -85,7 +86,7 @@
       (testing "check ES indexes"
         (let [logger (atom [])]
           (with-atom-logger logger
-            (doall (sut/check-store-indexes 100)))
+            (doall (sut/check-store-indexes app 100)))
           (testing "shall produce valid logs"
             (let [messages (set @logger)]
               (is (contains? messages "set batch size: 100"))

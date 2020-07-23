@@ -144,6 +144,14 @@
                   log/*logger-factory* lf]
       (f))))
 
+(def ^:dynamic ^:private *current-app* nil)
+
+(defn get-current-app []
+  {:post [%]}
+  (let [app *current-app*]
+    (assert app "App not bound!")
+    app))
+
 (defn fixture-ctia
   ([t] (fixture-ctia t true))
   ([t enable-http?]
@@ -158,7 +166,8 @@
                        "ctia.http.show.port" http-port]
        (let [app (init/start-ctia!)]
          (try
-           (t)
+           (binding [*current-app* app]
+             (t))
            (finally
              (app/stop app))))))))
 
