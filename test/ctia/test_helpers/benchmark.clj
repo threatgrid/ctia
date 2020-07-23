@@ -1,8 +1,7 @@
 (ns ctia.test-helpers.benchmark
   (:require [clj-momo.lib.net :as net]
             [ctia
-             [init :refer [start-ctia!]]
-             [shutdown :as shutdown]]
+             [init :refer [start-ctia!]]]
             [ctia.test-helpers
              [core :as helpers]
              [es :as esh]]))
@@ -27,4 +26,6 @@
 
 (defn cleanup-ctia! []
   (esh/delete-store-indexes false)
-  #(shutdown/shutdown-ctia!))
+  #(do
+     (assert nil "dead?")
+     #_(requiring-resolve 'ctia.shutdown/shutdown-ctia!)))

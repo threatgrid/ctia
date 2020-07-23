@@ -28,5 +28,5 @@
                (core/write-store (service-context this)
                                  store write-fn))
   (read-store [this store read-fn]
-               (core/read-store (service-context this)
-                                store read-fn)))
+              (core/read-store (service-context this)
+                               store read-fn)))

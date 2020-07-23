@@ -15,7 +15,6 @@
              [auth :as auth]
              [init :as init]
              [properties :refer [get-global-properties PropertiesSchema]]
-             [shutdown :as shutdown]
              [store :as store]]
             [ctia.auth.allow-all :as aa]
             [ctia.flows.crud :as crud]
@@ -23,7 +22,8 @@
             [ctim.generators.common :as cgc]
             [flanders
              [spec :as fs]
-             [utils :as fu]]))
+             [utils :as fu]]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
@@ -156,11 +156,11 @@
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (try
-         (init/start-ctia!)
-         (t)
-         (finally
-           (shutdown/shutdown-ctia!)))))))
+       (let [app (init/start-ctia!)]
+         (try
+           (t)
+           (finally
+             (app/stop app))))))))
 
 (defn fixture-ctia-fast [t]
   (fixture-ctia t false))

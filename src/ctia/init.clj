@@ -28,7 +28,6 @@
    [ctia.version :as version]
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
-   [ctia.shutdown :as shutdown]
    [ctia.stores.es-service :as es-svc]
    [ctia.stores.es
     [init :as es-init]]
@@ -88,13 +87,10 @@
 
 (defn ^:private tk-shutdown! []
   (when-some [app @global-app]
-    (let [shutdown-svc (app/get-service app :ShutdownService)]
-      (internal/request-shutdown shutdown-svc)
-      (tk/run-app app))
+    (app/stop app)
     (reset! global-app nil)))
 
 (defn ^:private tk-init! [services config]
-  (shutdown/register-hook! :tk tk-shutdown!)
   (reset! global-app (tk/boot-services-with-config services config)))
 
 ;;------------------------------------------
@@ -107,9 +103,6 @@
   []
   (log/info "starting CTIA version: "
             (version/current-version))
-
-  ;; shutdown hook
-  (shutdown/init!)
 
   ;; properties init
   (p/init!)

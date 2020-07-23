@@ -76,7 +76,7 @@
   (fmap (fn [setup-fn]
           (let [port (setup-fn)
                 duration (with-out-str (time (play-create-bulk port)))]
-            (cleanup-ctia! nil)
+            (cleanup-ctia! nil) ;; um, cleanup-ctia! is a thunk. is this namespace dead? - Ambrose
             duration))
         {:atom-store setup-ctia-atom-store!
          :es-store setup-ctia-es-store!
