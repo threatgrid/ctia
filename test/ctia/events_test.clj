@@ -8,10 +8,12 @@
    [clojure.core.async :refer [<!! chan poll! tap]]
    [ctia.entity.event.obj-to-event :as o2e]
    [ctia.events :as e]
+   [ctia.events-service :as events-svc]
    [ctia.lib.async :as la]
    [ctia.test-helpers
     [core :as helpers]
     [es :as es-helpers]]
+   [puppetlabs.trapperkeeper.app :as app]
    [schema.test :as st]))
 
 (use-fixtures :once st/validate-schemas)
@@ -55,7 +57,10 @@
 
 (deftest test-central-events
   "Tests the basic action of sending an event to the central channel"
-  (let [{b :chan-buf c :chan m :mult} (e/get-central-channel)
+  (let [app (helpers/get-current-app)
+        events-svc (app/get-service app :EventsService)
+        {b :chan-buf c :chan m :mult} (events-svc/central-channel
+                                        events-svc)
         output (chan)]
     (tap m output)
     (e/send-event (o2e/to-create-event

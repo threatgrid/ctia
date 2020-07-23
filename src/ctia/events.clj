@@ -10,10 +10,6 @@
             [puppetlabs.trapperkeeper.core :as tk])
   (:import [clojure.core.async.impl.protocols Channel]))
 
-(defn get-central-channel []
-  (events-svc/central-channel
-    @events-svc/global-events-service))
-
 (s/defn send-event
   "Send an event to a channel. Use the central channel by default"
   ([event :- es/Event]
