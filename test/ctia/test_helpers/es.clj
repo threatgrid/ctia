@@ -7,32 +7,44 @@
              [index :as es-index]]
             [clojure.java.io :as io]
             [clojure.walk :as walk]
-            [ctia
-             [store :as store]]
+            [ctia.store :as store]
+            [ctia.store-service :as store-svc]
             [ctia.stores.es
              [init :as es-init]
              [store :as es-store]]
-            [ctia.test-helpers.core :as h]))
+            [ctia.test-helpers.core :as h]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn refresh-indices [entity]
   (let [{:keys [host port]}
         (es-init/get-store-properties entity)]
     (http/post (format "http://%s:%s/_refresh" host port))))
 
-(defn delete-store-indexes [restore-conn?]
-  (doseq [store-impls (vals @(store/get-global-stores))
-          {:keys [state]} store-impls]
-    (es-store/delete-state-indexes state)
-    (when restore-conn?
-      (es-init/init-es-conn!
-       (es-init/get-store-properties (get-in state [:props :entity]))))))
+(defn delete-store-indexes
+  ;; TODO delete this arity
+  ([restore-conn?]
+   (let [app (h/get-current-app) ;; uses thread-local binding
+         store-svc (app/get-service app :StoreService)]
+     (delete-store-indexes
+       store-svc
+       restore-conn?)))
+  ([store-svc restore-conn?]
+   (doseq [store-impls (vals @(store-svc/get-stores
+                                store-svc))
+           {:keys [state]} store-impls]
+     (es-store/delete-state-indexes state)
+     (when restore-conn?
+       (es-init/init-es-conn!
+         (es-init/get-store-properties (get-in state [:props :entity])))))))
 
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
-  (delete-store-indexes true)
-  (t)
-  (delete-store-indexes false))
+  (let [app (h/get-current-app) ;; uses thread-local binding
+        store-svc (app/get-service app :StoreService)]
+    (delete-store-indexes store-svc true)
+    (t)
+    (delete-store-indexes store-svc false)))
 
 (defn purge-index [entity]
   (let [{:keys [conn index]} (es-init/init-store-conn

@@ -6,7 +6,6 @@
             [ctia.store-service :as store-svc]
             [ctia.stores.es-service :as es-svc]
             [ctia.properties :as p]
-            [ctia.store :refer [get-global-stores]]
             [puppetlabs.trapperkeeper.app :as app]
             [puppetlabs.trapperkeeper.core :as tk]
             [schema.core :as s])
