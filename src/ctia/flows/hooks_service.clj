@@ -16,6 +16,8 @@
                read-only?, in which case the result of the hooks do not change the result.
                In any hook returns nil, the result is ignored and the input entity is kept.")
   (apply-event-hooks [this event])
+  (init-hooks! [this])
+  (shutdown! [this])
   (reset-hooks! [this]))
 
 (tk/defservice hooks-service
@@ -45,5 +47,9 @@
   (apply-event-hooks [this event] (core/apply-event-hooks
                                     (service-context this)
                                     event))
+  (init-hooks! [this] (core/init-hooks!
+                        (service-context this)))
+  (shutdown! [this] (core/shutdown!
+                      (service-context this)))
   (reset-hooks! [this] (core/reset-hooks!
                          (service-context this))))

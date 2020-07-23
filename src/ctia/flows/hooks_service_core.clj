@@ -59,24 +59,30 @@
                 :entity event
                 :read-only? true}))
 
+(defn init-hooks! [{:keys [hooks]}]
+  (doto @hooks
+    #(doseq [hook-list (vals %)
+             hook hook-list]
+       (prot/init hook))
+    #(log/info "Hooks Initialized: " (pr-str %))))
+
 (defn init [context]
   (assoc context :hooks (atom empty-hooks)))
 
 (defn start
   "Initialize all hooks"
-  [{:keys [hooks] :as context}]
+  [context]
   (reset-hooks! context)
-  (doto @hooks
-    #(doseq [hook-list (vals %)
-             hook hook-list]
-       (prot/init hook))
-    #(log/info "Hooks Initialized: " (pr-str %)))
+  (init-hooks! context)
   context)
+
+(defn shutdown! [{:keys [hooks] :as context}]
+  (doseq [hook-list (vals @hooks)
+          hook (reverse hook-list)]
+    (prot/destroy hook)))
 
 (defn stop
   "Should call all destructor for each hook in reverse order."
-  [{:keys [hooks] :as context}]
-  (doseq [hook-list (vals @hooks)
-          hook (reverse hook-list)]
-    (prot/destroy hook))
+  [context]
+  (shutdown! context)
   (dissoc context :hooks))

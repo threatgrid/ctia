@@ -1,29 +1,19 @@
 (ns ctia.flows.hooks-test
   (:require [clj-momo.test-helpers.core :as mth]
             [ctia.flows.hooks :as h]
+            [ctia.flows.hooks-service :as hooks-svc]
             [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.test-helpers
              [core :as helpers]
              [es :as es-helpers]]
-            [clojure.test :as t]))
+            [clojure.test :as t]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (t/use-fixtures :each (t/join-fixtures [mth/fixture-schema-validation
                                         helpers/fixture-properties:clean
                                         es-helpers/fixture-properties:es-store
                                         helpers/fixture-ctia-fast]))
 
-;; FIXME port these tests to the new trapperkeeper hooks-service.
-;; the problem at the moment is this namespace calls h/init!,
-;; which was deleted. It was deleted because it also initialized hooks,
-;; which I moved to the `start` method of hooks-service.
-;; I can see several different ways forward:
-;; - auto-initialize on `add-hook!`
-;; - make Hook implementations into services
-;;
-;; Whatever the case, it would probably need `with-app-with-config`,
-;; which isn't possible at the moment since trapperkeeper is tightly
-;; managed by ctia.init.
-(comment
 (def obj {:x "x" :y 0 :z {:foo "bar"}})
 
 ;; -----------------------------------------------------------------------------
@@ -37,34 +27,46 @@
                                     (str % " - " name))))
   (destroy [this] :noop))
 
-(defn test-adding-dummy-hooks []
-  (h/add-hook! :before-create (Dummy. "hook1"))
-  (h/add-hook! :before-create (Dummy. "hook2"))
-  (h/add-hook! :before-create (Dummy. "hook3")))
+(defn test-adding-dummy-hooks [hooks-svc]
+  (hooks-svc/add-hook! hooks-svc :before-create (Dummy. "hook1"))
+  (hooks-svc/add-hook! hooks-svc :before-create (Dummy. "hook2"))
+  (hooks-svc/add-hook! hooks-svc :before-create (Dummy. "hook3")))
 
 (t/deftest check-dummy-hook-order
-  (test-adding-dummy-hooks)
-  (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type  :before-create)
-           (into obj {:dummy "hook1 - hook2 - hook3"})))
-  (t/is (= (h/apply-hooks :entity  obj
-                          :hook-type  :after-create)
-           obj)))
+  (let [app (helpers/get-current-app)
+        hooks-svc (app/get-service app :HooksService)]
+    (test-adding-dummy-hooks hooks-svc)
+    (hooks-svc/init-hooks! hooks-svc)
+    (t/is (= (hooks-svc/apply-hooks
+               hooks-svc
+               {:entity obj
+                :hook-type  :before-create})
+             (into obj {:dummy "hook1 - hook2 - hook3"})))
+    (t/is (= (hooks-svc/apply-hooks
+               hooks-svc
+               {:entity obj
+                :hook-type  :after-create})
+             obj))))
 
 (t/deftest check-dummy-hook-read-only
-  (h/shutdown!)
-  (h/reset-hooks!)
-  (test-adding-dummy-hooks)
-  (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity   obj
-                          :hook-type   :before-create
-                          :read-only?  true)
-           obj))
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type   :after-create
-                          :read-only?  true)
-           obj)))
+  (let [app (helpers/get-current-app)
+        hooks-svc (app/get-service app :HooksService)]
+    (hooks-svc/shutdown! hooks-svc)
+    (hooks-svc/reset-hooks! hooks-svc)
+    (test-adding-dummy-hooks hooks-svc)
+    (hooks-svc/init-hooks! hooks-svc)
+    (t/is (= (hooks-svc/apply-hooks
+               hooks-svc
+               {:entity   obj
+                :hook-type   :before-create
+                :read-only?  true})
+             obj))
+    (t/is (= (hooks-svc/apply-hooks
+               hooks-svc
+               {:entity obj
+                :hook-type   :after-create
+                :read-only?  true})
+             obj))))
 
 ;; -----------------------------------------------------------------------------
 ;; nil hook testing
@@ -74,22 +76,28 @@
   (handle [_ stored-object prev-object] nil)
   (destroy [this] :noop))
 
-(defn test-adding-nil-hooks []
-  (h/add-hook! :before-create (Nil. "nil1"))
-  (h/add-hook! :before-create (Nil. "nil2"))
-  (h/add-hook! :before-create (Nil. "nil3")))
+(defn test-adding-nil-hooks [hooks-svc]
+  (hooks-svc/add-hook! hooks-svc :before-create (Nil. "nil1"))
+  (hooks-svc/add-hook! hooks-svc :before-create (Nil. "nil2"))
+  (hooks-svc/add-hook! hooks-svc :before-create (Nil. "nil3")))
 
 (t/deftest check-nil-hook
-  (h/shutdown!)
-  (h/reset-hooks!)
-  (test-adding-nil-hooks)
-  (h/init-hooks!)
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :before-create)
-           obj))
-  (t/is (= (h/apply-hooks :entity obj
-                          :hook-type :after-create)
-           obj)))
+  (let [app (helpers/get-current-app)
+        hooks-svc (app/get-service app :HooksService)]
+    (hooks-svc/shutdown! hooks-svc)
+    (hooks-svc/reset-hooks! hooks-svc)
+    (test-adding-nil-hooks hooks-svc)
+    (hooks-svc/init-hooks! hooks-svc)
+    (t/is (= (hooks-svc/apply-hooks
+               hooks-svc
+               {:entity obj
+                :hook-type :before-create})
+             obj))
+    (t/is (= (hooks-svc/apply-hooks
+               hooks-svc
+               {:entity obj
+                :hook-type :after-create})
+             obj))))
 
 ;; -----------------------------------------------------------------------------
 ;; Memory Hook
@@ -101,23 +109,28 @@
   (destroy [this] :noop))
 
 
-(defn test-adding-memory-hooks []
-  (h/add-hook! :before-create (Memory. "memory1"))
-  (h/add-hook! :before-create (Memory. "memory2"))
-  (h/add-hook! :before-create (Memory. "memory3")))
+(defn test-adding-memory-hooks [hooks-svc]
+  (hooks-svc/add-hook! hooks-svc :before-create (Memory. "memory1"))
+  (hooks-svc/add-hook! hooks-svc :before-create (Memory. "memory2"))
+  (hooks-svc/add-hook! hooks-svc :before-create (Memory. "memory3")))
 
 (t/deftest check-memory-hook
-  (let [memory {:y "y"}]
-    (h/shutdown!)
-    (h/reset-hooks!)
-    (test-adding-memory-hooks)
-    (h/init-hooks!)
-    (t/is (= (h/apply-hooks :entity   obj
-                            :prev-entity memory
-                            :hook-type   :before-create)
+  (let [app (helpers/get-current-app)
+        hooks-svc (app/get-service app :HooksService)
+        memory {:y "y"}]
+    (hooks-svc/shutdown! hooks-svc)
+    (hooks-svc/reset-hooks! hooks-svc)
+    (test-adding-memory-hooks hooks-svc)
+    (hooks-svc/init-hooks! hooks-svc)
+    (t/is (= (hooks-svc/apply-hooks
+               hooks-svc
+               {:entity obj
+                :prev-entity memory
+                :hook-type :before-create})
              (into obj {:previous {:y "y"}})))
-    (t/is (= (h/apply-hooks :entity obj
-                            :prev-entity memory
-                            :hook-type   :after-create)
+    (t/is (= (hooks-svc/apply-hooks
+               hooks-svc
+               {:entity obj
+                :prev-entity memory
+                :hook-type   :after-create})
              obj))))
-)
