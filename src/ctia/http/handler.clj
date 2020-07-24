@@ -1,7 +1,7 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [clojure.string :as string]
-            [ctia.entity.entities :refer [entities]]
+            [ctia.entity.entities :as entities]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.casebook :refer [casebook-operation-routes]]
             [ctia.entity.incident :refer [incident-additional-routes]]
@@ -71,19 +71,20 @@
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
 (defn entity->routes [entity services-map]
-  {:post [(fn? %)]}
+  {:post [%]}
   ((:routes entity) services-map))
 
 (defmacro entity-routes
-  [entities services-map]
-  `(do
-     (sweet/routes
-      ~@(for [entity (remove :no-api?
-                             (vals (eval entities)))]
-          `(context
-            ~(:route-context entity) []
-            :tags ~(:tags entity)
-            (entity->routes (~(:entity entity) entities) ~services-map))))))
+  [services-map]
+  (let [gsm (gensym 'services-map)]
+    `(let [~gsm ~services-map]
+       (sweet/routes
+         ~@(for [entity (remove :no-api?
+                                (vals entities/entities))]
+             `(context
+                ~(:route-context entity) []
+                :tags ~(:tags entity)
+                (entity->routes (~(:entity entity) entities/entities) ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -202,7 +203,7 @@
              ;; must be before the middleware fn
              version-routes
              (middleware [wrap-authenticated]
-               (entity-routes entities {:hooks-svc hooks-svc})
+               (entity-routes {:hooks-svc hooks-svc})
                status-routes
                (context
                    "/bulk" []
