@@ -3,7 +3,6 @@
             [clojure.string :as string]
             [ctia.entity.entities :as entities]
             [ctia.entity.feed :refer [feed-view-routes]]
-            [ctia.entity.casebook :refer [casebook-operation-routes]]
             [ctia.entity.incident :refer [incident-additional-routes]]
             [ctia.entity.feedback :refer [feedback-by-entity-route]]
             [ctia.entity.relationship :refer [incident-link-route]]

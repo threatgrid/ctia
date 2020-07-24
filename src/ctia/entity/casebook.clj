@@ -130,7 +130,7 @@
     :delete-casebook
     :search-casebook})
 
-(def casebook-operation-routes
+(defn casebook-operation-routes [{:keys [apply-hooks apply-event-hooks]}]
   (routes
    (PATCH "/:id" []
           :return Casebook
@@ -142,6 +142,8 @@
           :auth-identity identity
           :identity-map identity-map
           (if-let [res (flows/patch-flow
+                        :apply-hooks apply-hooks
+                        :apply-event-hooks apply-event-hooks
                         :get-fn #(read-store :casebook
                                              read-record
                                              %
@@ -175,6 +177,8 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :apply-hooks apply-hooks
+                                :apply-event-hooks apply-event-hooks
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -209,6 +213,8 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :apply-hooks apply-hooks
+                                :apply-event-hooks apply-event-hooks
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -243,6 +249,8 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :apply-hooks apply-hooks
+                                :apply-event-hooks apply-event-hooks
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -306,7 +314,7 @@
 
 (defn casebook-routes [service-map]
   (routes
-   casebook-operation-routes
+   (casebook-operation-routes service-map)
    ((entity-crud-routes
     {:api-tags ["Casebook"]
      :entity :casebook

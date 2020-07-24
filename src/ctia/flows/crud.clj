@@ -484,6 +484,8 @@
              partial-entity
              long-id-fn
              spec]}]
+  {:pre [apply-hooks
+         apply-event-hooks]}
   (let [prev-entity (get-fn entity-id)]
     (when prev-entity
       (-> {:flow-type :update
