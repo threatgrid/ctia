@@ -304,10 +304,10 @@
 (def casebook-histogram-fields
   [:timestamp])
 
-(def casebook-routes
+(defn casebook-routes [service-map]
   (routes
    casebook-operation-routes
-   (entity-crud-routes
+   ((entity-crud-routes
     {:api-tags ["Casebook"]
      :entity :casebook
      :new-schema NewCasebook
@@ -329,7 +329,8 @@
      :external-id-capabilities :read-casebook
      :hide-delete? false
      :histogram-fields casebook-histogram-fields
-     :enumerable-fields casebook-enumerable-fields})))
+     :enumerable-fields casebook-enumerable-fields})
+    service-map)))
 
 (def casebook-entity
   {:route-context "/casebook"

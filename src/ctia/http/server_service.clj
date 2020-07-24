@@ -7,7 +7,8 @@
 
 (tk/defservice ctia-http-server-service
   CTIAHTTPServerService
-  []
+  [HooksService]
   (start [this context] (core/start context
-                                    (get-in (p/read-global-properties) [:ctia :http])))
+                                    (get-in (p/read-global-properties) [:ctia :http])
+                                    HooksService))
   (stop [this context] (core/stop context)))

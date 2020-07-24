@@ -74,10 +74,10 @@
     :read-feedback
     :delete-feedback})
 
-(def feedback-routes
+(defn feedback-routes [service-map]
   (routes
    feedback-by-entity-route
-   (entity-crud-routes
+   ((entity-crud-routes
     {:entity :feedback
      :new-schema fs/NewFeedback
      :entity-schema fs/Feedback
@@ -94,7 +94,8 @@
      :spec :new-feedback/map
      :can-search? false
      :enumerable-fields []
-     :can-update? false})))
+     :can-update? false})
+    service-map)))
 
 (def feedback-entity
   {:route-context "/feedback"

@@ -10,6 +10,7 @@
      un-store-page
      with-long-id]]
    [ctia.flows.crud :as flows]
+   [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.routes.common :refer [created
                                     filter-map-search-options
                                     paginated-ok
@@ -37,6 +38,8 @@
    [schema.core :as s]
    [schema-tools.core :as st]))
 
+;; returns a function that takes a map of services,
+;; and returns routes.
 (defn entity-crud-routes
   [{:keys [entity
            new-schema
@@ -76,6 +79,8 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}}]
+ (fn [{:keys [hooks-svc] :as _services-map_}]
+  {:pre [hooks-svc]}
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
         search-filters (st/dissoc search-q-params
@@ -110,6 +115,7 @@
              :auth-identity identity
              :identity-map identity-map
              (-> (flows/create-flow
+                  :hooks-svc hooks-svc
                   :entity-type entity
                   :realize-fn realize-fn
                   :store-fn #(write-store entity
@@ -137,6 +143,7 @@
             :identity-map identity-map
             (if-let [updated-rec
                      (-> (flows/update-flow
+                          :hooks-svc hooks-svc
                           :get-fn #(read-store entity
                                                read-record
                                                %
@@ -170,6 +177,7 @@
               :identity-map identity-map
               (if-let [updated-rec
                        (-> (flows/patch-flow
+                            :hooks-svc hooks-svc
                             :get-fn #(read-store entity
                                                  read-record
                                                  %
@@ -324,6 +332,7 @@
              :auth-identity identity
              :identity-map identity-map
              (if (flows/delete-flow
+                  :hooks-svc hooks-svc
                   :get-fn #(read-store entity
                                        read-record
                                        %
@@ -339,4 +348,4 @@
                   :entity-id id
                   :identity identity)
                (no-content)
-               (not-found))))))
+               (not-found)))))))

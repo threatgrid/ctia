@@ -70,9 +70,12 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
+(defn entity->routes [entity services-map]
+  {:post [(fn? %)]}
+  ((:routes entity) services-map))
 
 (defmacro entity-routes
-  [entities]
+  [entities services-map]
   `(do
      (sweet/routes
       ~@(for [entity (remove :no-api?
@@ -80,7 +83,7 @@
           `(context
             ~(:route-context entity) []
             :tags ~(:tags entity)
-            (:routes (~(:entity entity) entities)))))))
+            (entity->routes (~(:entity entity) entities) ~services-map))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -153,7 +156,7 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(defn api-handler []
+(defn api-handler [hooks-svc]
   (let [{:keys [oauth2]}
         (get-http-swagger)]
     (api {:exceptions {:handlers exception-handlers}
@@ -199,7 +202,7 @@
              ;; must be before the middleware fn
              version-routes
              (middleware [wrap-authenticated]
-               (entity-routes entities)
+               (entity-routes entities {:hooks-svc hooks-svc})
                status-routes
                (context
                    "/bulk" []

@@ -140,10 +140,10 @@
               timeline (bucketize-events res)]
           (ok timeline)))))
 
-(def event-routes
+(defn event-routes [service-map]
   (routes
    event-history-routes
-   (entity-crud-routes
+   ((entity-crud-routes
     {:tags ["Event"]
      :entity :event
      :entity-schema Event
@@ -159,7 +159,8 @@
      :can-get-by-external-id? false
      :search-capabilities :search-event
      :delete-capabilities #{:delete-event :developer}
-     :date-field :timestamp})))
+     :date-field :timestamp})
+    service-map)))
 
 (def event-entity
   {:new-spec map?
