@@ -146,12 +146,11 @@
 
 (def ^:dynamic ^:private *current-app* nil)
 
-(defmacro ^:private bind-current-app [app & body]
-  `(let [app# ~app
-         _# (assert (nil? *current-app*) "Rebound app!")
-         _# (assert app#)]
-     (binding [*current-app* app#]
-       ~@body)))
+(defn bind-current-app* [app f]
+  (let [_ (assert (nil? *current-app*) "Rebound app!")
+        _ (assert app)]
+    (binding [*current-app* app]
+      (f))))
 
 (defn get-current-app []
   {:post [%]}
@@ -173,8 +172,7 @@
                        "ctia.http.show.port" http-port]
        (let [app (init/start-ctia!)]
          (try
-           (bind-current-app app
-             (t))
+           (bind-current-app* app t)
            (finally
              (app/stop app))))))))
 

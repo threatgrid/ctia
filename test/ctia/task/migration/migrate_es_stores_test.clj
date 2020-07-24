@@ -44,7 +44,9 @@
   (ks/with-no-jvm-shutdown-hooks
     (let [app (setup!)] ;; init migration conn and properties
       (try
-        (f)
+        ;; this should clash with the built-in fixture
+        ;; to remind me to fix it - Ambrose
+        (helpers/bind-current-app* f)
         (finally
           (app/stop app))))))
 
