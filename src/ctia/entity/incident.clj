@@ -91,7 +91,7 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(def incident-additional-routes
+(defn incident-additional-routes [{:keys [apply-hooks apply-event-hooks]}]
   (routes
    (POST "/:id/status" []
          :return Incident
@@ -107,6 +107,8 @@
            (if-let [updated
                     (un-store
                      (flows/patch-flow
+                      :apply-hooks apply-hooks
+                      :apply-event-hooks apply-event-hooks
                       :get-fn #(read-store :incident
                                            read-record
                                            %
@@ -211,7 +213,7 @@
 
 (defn incident-routes [service-map]
   (routes
-   incident-additional-routes
+   (incident-additional-routes service-map)
    ((entity-crud-routes
     {:entity :incident
      :new-schema NewIncident
