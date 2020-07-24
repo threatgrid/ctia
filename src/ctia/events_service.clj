@@ -3,8 +3,6 @@
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
-(defonce global-events-service (atom nil))
-
 (defprotocol EventsService
   (central-channel [this] "Returns the central channel")
   (send-event [this event] [this chan event]
@@ -16,12 +14,8 @@
 (tk/defservice events-service
   EventsService
   []
-  (init [this context]
-        (reset! global-events-service this)
-        (core/init context))
-  (stop [this context]
-        (reset! global-events-service nil)
-        (core/stop context))
+  (init [this context] (core/init context))
+  (stop [this context] (core/stop context))
   
   (central-channel [this] (core/central-channel (service-context this)))
   (send-event [this event] (core/send-event (service-context this) event))

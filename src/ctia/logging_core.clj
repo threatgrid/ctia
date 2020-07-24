@@ -1,7 +1,6 @@
 (ns ctia.logging-core
   (:require [clojure.core.async :as a]
-            [clojure.tools.logging :as log]
-            [ctia.events :as e]))
+            [clojure.tools.logging :as log]))
 
 (defn start [context register-listener-fn]
   (assoc context :control (register-listener-fn #(log/info "event:" %) :blocking)))

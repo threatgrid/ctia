@@ -1,5 +1,5 @@
 (ns ctia.logger-test
-  (:require [ctia.events :as e]
+  (:require [ctia.events-service :as events-svc]
             [ctia.test-helpers
              [core :as test-helpers]
              [es :as es-helpers]]
@@ -7,7 +7,8 @@
             [clojure.test :as t :refer :all]
             [schema.test :as st]
             [clojure.tools.logging :as log]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (use-fixtures :once st/validate-schemas)
 (use-fixtures :each (join-fixtures [test-helpers/fixture-properties:clean
@@ -16,7 +17,10 @@
                                     test-helpers/fixture-ctia-fast]))
 
 (deftest test-logged
-  (let [sb (StringBuilder.)
+  (let [app (test-helpers/get-current-app)
+        events-svc (app/get-service app :EventsService)
+        
+        sb (StringBuilder.)
         patched-log (fn [logger
                          level
                          throwable
@@ -24,22 +28,26 @@
                       (.append sb message)
                       (.append sb "\n"))]
     (with-redefs [log/log* patched-log]
-      (e/send-event (o2e/to-create-event
-                     {:owner "tester"
-                      :groups ["foo"]
-                      :id "test-1"
-                      :type :test
-                      :tlp "green"
-                      :data 1}
-                     "test-1"))
-      (e/send-event (o2e/to-create-event
-                     {:owner "tester"
-                      :groups ["foo"]
-                      :id "test-2"
-                      :type :test
-                      :tlp "green"
-                      :data 2}
-                     "test-2"))
+      (events-svc/send-event
+        events-svc
+        (o2e/to-create-event
+          {:owner "tester"
+           :groups ["foo"]
+           :id "test-1"
+           :type :test
+           :tlp "green"
+           :data 1}
+          "test-1"))
+      (events-svc/send-event
+        events-svc
+        (o2e/to-create-event
+          {:owner "tester"
+           :groups ["foo"]
+           :id "test-2"
+           :type :test
+           :tlp "green"
+           :data 2}
+          "test-2"))
       (Thread/sleep 100)   ;; wait until the go loop is done
       (let [scrubbed (-> (str sb)
                          (str/replace #"#inst \"[^\"]*\"" "#inst \"\"")

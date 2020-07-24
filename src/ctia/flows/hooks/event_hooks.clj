@@ -1,7 +1,6 @@
 (ns ctia.flows.hooks.event-hooks
   (:require
    [clojure.tools.logging :as log]
-   [ctia.events :as events]
    [ctia.events-service :as events-svc]
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
@@ -91,20 +90,6 @@
     (->RedisMQPublisher (rmq/make-queue queue-name
                                         conn-spec
                                         {:max-depth max-depth}))))
-
-(defrecord ChannelEventPublisher []
-  Hook
-  (init [_]
-    (assert (some? @events-svc/global-events-service)
-            "Events service was not setup"))
-  (destroy [_]
-    :nothing)
-  (handle [_ event _]
-    (try
-      (events/send-event event)
-      (catch Exception e
-        (log/error e "Unable to push an event to Redis")))
-    event))
 
 (defn- judgement?
   [{{t :type} :entity :as _event_}]
