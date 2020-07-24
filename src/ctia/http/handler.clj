@@ -3,7 +3,6 @@
             [clojure.string :as string]
             [ctia.entity.entities :as entities]
             [ctia.entity.feed :refer [feed-view-routes]]
-            [ctia.entity.feedback :refer [feedback-by-entity-route]]
             [ctia.entity.relationship :refer [incident-link-route]]
             [compojure.api
              [core :refer [middleware]]
@@ -221,7 +220,7 @@
                (context
                    "/incident" []
                  :tags ["Incident"]
-                 incident-link-route)
+                 (incident-link-route apply-hooks apply-event-hooks))
                (bundle-routes apply-hooks apply-event-hooks)
                observable-routes
                metrics-routes

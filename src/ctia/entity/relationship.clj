@@ -90,7 +90,7 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(def incident-link-route
+(defn incident-link-route [apply-hooks apply-event-hooks]
   (POST "/:id/link" []
         :return rs/Relationship
         :body [link-req IncidentLinkRequest
@@ -168,6 +168,8 @@
                    :tlp tlp}
                   stored-relationship
                   (-> (flows/create-flow
+                       :apply-hooks apply-hooks
+                       :apply-event-hooks apply-event-hooks
                        :entity-type :relationship
                        :realize-fn rs/realize-relationship
                        :store-fn #(write-store :relationship
