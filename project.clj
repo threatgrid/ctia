@@ -153,7 +153,8 @@
                                   [org.clojure/test.check ~test-check-version]
                                   [com.gfredericks/test.chuck ~test-chuck-version]
                                   [clj-http-fake ~clj-http-fake-version]
-                                  [prismatic/schema-generators ~schema-generators-version]]
+                                  [prismatic/schema-generators ~schema-generators-version]
+                                  [org.clojure/math.combinatorics "0.1.6"]]
                    :pedantic? :warn
 
                    :resource-paths ["test/resources"]
