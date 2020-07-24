@@ -3,8 +3,6 @@
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
-(defonce global-hooks-service (atom nil))
-
 (defprotocol HooksService
   (add-hook! [this hook-type hook]
              "Add a `Hook` for the hook `hook-type`")
@@ -23,15 +21,9 @@
 (tk/defservice hooks-service
   HooksService
   []
-  (init [this context]
-        (reset! global-hooks-service this)
-        (core/init context))
-  (start [this context]
-         (reset! global-hooks-service this)
-         (core/start context))
-  (stop [this context]
-        (reset! global-hooks-service nil)
-        (core/stop context))
+  (init [this context] (core/init context))
+  (start [this context] (core/start context))
+  (stop [this context] (core/stop context))
 
   (add-hook! [this hook-type hook] (core/add-hook!
                                      (service-context this)

@@ -1,6 +1,5 @@
 (ns ctia.flows.hooks-test
   (:require [clj-momo.test-helpers.core :as mth]
-            [ctia.flows.hooks :as h]
             [ctia.flows.hooks-service :as hooks-svc]
             [ctia.flows.hook-protocol :refer [Hook]]
             [ctia.test-helpers
