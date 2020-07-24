@@ -1,7 +1,7 @@
 (ns ctia.bundle.routes
   (:refer-clojure :exclude [identity])
   (:require
-   [compojure.api.sweet :refer [GET POST context defroutes describe]]
+   [compojure.api.sweet :refer [GET POST context routes describe]]
    [ctia.bundle
     [core :refer [bundle-max-size
                   bundle-size
@@ -57,7 +57,8 @@
     :read-casebook
     :list-casebooks})
 
-(defroutes bundle-routes
+(defn bundle-routes [apply-hooks apply-event-hooks]
+ (routes 
   (context "/bundle" []
            :tags ["Bundle"]
            (GET "/export" []
@@ -117,4 +118,5 @@
                    (if (> (bundle-size bundle)
                           max-size)
                      (bad-request (str "Bundle max nb of entities: " max-size))
-                     (ok (import-bundle bundle external-key-prefixes auth-identity)))))))
+                     (ok (import-bundle bundle external-key-prefixes auth-identity
+                                        apply-hooks apply-event-hooks))))))))

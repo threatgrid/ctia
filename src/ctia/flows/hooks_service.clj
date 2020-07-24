@@ -20,9 +20,6 @@
   (shutdown! [this])
   (reset-hooks! [this]))
 
-(defn apply-hooks* [hooks-svc & {:as hook-options}]
-  (apply-hooks hooks-svc hook-options))
-
 (tk/defservice hooks-service
   HooksService
   []

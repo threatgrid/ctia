@@ -272,7 +272,9 @@
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
-   auth-identity :- (s/protocol auth/IIdentity)]
+   auth-identity :- (s/protocol auth/IIdentity)
+   apply-hooks
+   apply-event-hooks]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
@@ -283,7 +285,7 @@
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))]
     (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params))
+           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params) apply-hooks apply-event-hooks)
                 (with-bulk-result bundle-import-data)
                 build-response
                 log-errors))))

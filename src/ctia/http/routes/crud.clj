@@ -10,7 +10,6 @@
      un-store-page
      with-long-id]]
    [ctia.flows.crud :as flows]
-   [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.routes.common :refer [created
                                     filter-map-search-options
                                     paginated-ok
@@ -79,8 +78,7 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}}]
- (fn [{:keys [hooks-svc] :as _services-map_}]
-  {:pre [hooks-svc]}
+ (fn [{:keys [apply-hooks apply-event-hooks] :as _services-map_}]
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
         search-filters (st/dissoc search-q-params
@@ -115,7 +113,8 @@
              :auth-identity identity
              :identity-map identity-map
              (-> (flows/create-flow
-                  :hooks-svc hooks-svc
+                  :apply-hooks apply-hooks
+                  :apply-event-hooks apply-event-hooks
                   :entity-type entity
                   :realize-fn realize-fn
                   :store-fn #(write-store entity
@@ -143,7 +142,8 @@
             :identity-map identity-map
             (if-let [updated-rec
                      (-> (flows/update-flow
-                          :hooks-svc hooks-svc
+                          :apply-hooks apply-hooks
+                          :apply-event-hooks apply-event-hooks
                           :get-fn #(read-store entity
                                                read-record
                                                %
@@ -177,7 +177,8 @@
               :identity-map identity-map
               (if-let [updated-rec
                        (-> (flows/patch-flow
-                            :hooks-svc hooks-svc
+                            :apply-hooks apply-hooks
+                            :apply-event-hooks apply-event-hooks
                             :get-fn #(read-store entity
                                                  read-record
                                                  %
@@ -332,7 +333,8 @@
              :auth-identity identity
              :identity-map identity-map
              (if (flows/delete-flow
-                  :hooks-svc hooks-svc
+                  :apply-hooks apply-hooks
+                  :apply-event-hooks apply-event-hooks
                   :get-fn #(read-store entity
                                        read-record
                                        %

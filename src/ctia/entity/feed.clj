@@ -221,7 +221,7 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(def feed-routes
+(defn feed-routes [_service-map_]
   (routes
    (POST "/" []
      :return Feed

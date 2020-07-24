@@ -70,21 +70,31 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
-(defn entity->routes [entity services-map]
-  {:post [%]}
-  ((:routes entity) services-map))
+(defn entity->routes [entities entity-kw services-map]
+  {:pre [(map? entities)
+         (keyword? entity-kw)
+         (map? services-map)]
+   :post [%]}
+  (let [{:keys [routes] :as entity} (get entities entity-kw)
+        _ (assert entity)
+        _ (assert routes entity)]
+    (routes services-map)))
 
 (defmacro entity-routes
   [services-map]
   (let [gsm (gensym 'services-map)]
     `(let [~gsm ~services-map]
        (sweet/routes
-         ~@(for [entity (remove :no-api?
-                                (vals entities/entities))]
+         ~@(for [{:keys [route-context
+                         tags
+                         entity]}
+                 (remove :no-api?
+                         (vals entities/entities))
+                 :let [_ (assert (keyword? entity))]]
              `(context
-                ~(:route-context entity) []
-                :tags ~(:tags entity)
-                (entity->routes (~(:entity entity) entities/entities) ~gsm)))))))
+                ~route-context []
+                :tags ~tags
+                (entity->routes entities/entities ~entity ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -157,7 +167,7 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(defn api-handler [hooks-svc]
+(defn api-handler [apply-hooks apply-event-hooks]
   (let [{:keys [oauth2]}
         (get-http-swagger)]
     (api {:exceptions {:handlers exception-handlers}
@@ -203,17 +213,18 @@
              ;; must be before the middleware fn
              version-routes
              (middleware [wrap-authenticated]
-               (entity-routes {:hooks-svc hooks-svc})
+               (entity-routes {:apply-hooks apply-hooks
+                               :apply-event-hooks apply-event-hooks})
                status-routes
                (context
                    "/bulk" []
                  :tags ["Bulk"]
-                 bulk-routes)
+                 (bulk-routes apply-hooks apply-event-hooks))
                (context
                    "/incident" []
                  :tags ["Incident"]
                  incident-link-route)
-               bundle-routes
+               (bundle-routes apply-hooks apply-event-hooks)
                observable-routes
                metrics-routes
                properties-routes

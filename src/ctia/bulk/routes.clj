@@ -9,7 +9,8 @@
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
 
-(defroutes bulk-routes
+(defn bulk-routes [apply-hooks apply-event-hooks]
+ (routes
   (POST "/" []
         :return BulkRefs
         :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
@@ -40,7 +41,9 @@
           (common/created (create-bulk bulk
                                        {}
                                        login
-                                       (common/wait_for->refresh wait_for)))))
+                                       (common/wait_for->refresh wait_for)
+                                       apply-hooks
+                                       apply-event-hooks))))
 
   (GET "/" []
        :return (s/maybe Bulk)
@@ -100,4 +103,4 @@
                            :tools               tools
                            :vulnerabilities     vulnerabilities
                            :weaknesses          weaknesses}]
-         (ok (fetch-bulk entities-map auth-identity)))))
+         (ok (fetch-bulk entities-map auth-identity))))))

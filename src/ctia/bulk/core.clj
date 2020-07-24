@@ -51,9 +51,11 @@
 
 (defn- create-entities
   "Create many entities provided their type and returns a list of ids"
-  [new-entities entity-type tempids auth-identity params]
+  [new-entities entity-type tempids auth-identity params apply-hooks apply-event-hooks]
   (when (seq new-entities)
     (update (flows/create-flow
+             :apply-hooks apply-hooks
+             :apply-event-hooks apply-event-hooks
              :entity-type entity-type
              :realize-fn (-> entities entity-type :realize-fn)
              :store-fn (create-fn entity-type auth-identity params)
@@ -138,15 +140,18 @@
 
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
-  ([bulk login] (create-bulk bulk {} login {}))
+  ([bulk login apply-hooks apply-event-hooks] (create-bulk bulk {} login {} apply-hooks apply-event-hooks))
   ([bulk tempids login {:keys [refresh] :as params
-                        :or {refresh (bulk-refresh?)}}]
+                        :or {refresh (bulk-refresh?)}}
+    apply-hooks apply-event-hooks]
    (let [new-entities (gen-bulk-from-fn
                        create-entities
                        (dissoc bulk :relationships)
                        tempids
                        login
-                       {:refresh refresh})
+                       {:refresh refresh}
+                       apply-hooks
+                       apply-event-hooks)
          entities-tempids (into tempids
                                 (merge-tempids new-entities))
          new-relationships (gen-bulk-from-fn
@@ -154,7 +159,9 @@
                             (select-keys bulk [:relationships])
                             entities-tempids
                             login
-                            {:refresh refresh})
+                            {:refresh refresh}
+                            apply-hooks
+                            apply-event-hooks)
          all-tempids (merge entities-tempids
                             (merge-tempids new-relationships))
          all-entities (into new-entities new-relationships)

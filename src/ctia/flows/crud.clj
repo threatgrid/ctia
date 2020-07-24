@@ -13,7 +13,6 @@
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
-            [ctia.flows.hooks-service :as h]
             [ctia.schemas.core :refer [TempIDs]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
@@ -32,7 +31,8 @@
    :entity-type s/Keyword
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
-   :hooks-svc s/Any
+   :apply-hooks s/Any
+   :apply-event-hooks s/Any
    :identity (s/protocol auth/IIdentity)
    (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
@@ -190,29 +190,29 @@
       fm)))
 
 (s/defn ^:private apply-before-hooks :- FlowMap
-  [{:keys [entities flow-type prev-entity hooks-svc] :as fm} :- FlowMap]
+  [{:keys [entities flow-type prev-entity apply-hooks] :as fm} :- FlowMap]
   (assoc fm
          :entities
          (doall
           (for [entity entities]
-            (h/apply-hooks* hooks-svc :entity entity
+            (apply-hooks  {:entity entity
                            :prev-entity prev-entity
                            :hook-type (case flow-type
                                         :create :before-create
                                         :update :before-update
                                         :delete :before-delete)
-                           :read-only? (= flow-type :delete))))))
+                           :read-only? (= flow-type :delete)})))))
 
 (s/defn ^:private apply-after-hooks :- FlowMap
-  [{:keys [entities flow-type prev-entity hooks-svc] :as fm} :- FlowMap]
+  [{:keys [entities flow-type prev-entity apply-hooks] :as fm} :- FlowMap]
   (doseq [entity entities]
-    (h/apply-hooks* hooks-svc :entity entity
+    (apply-hooks  {:entity entity
                    :prev-entity prev-entity
                    :hook-type (case flow-type
                                 :create :after-create
                                 :update :after-update
                                 :delete :after-delete)
-                   :read-only? true))
+                   :read-only? true}))
   fm)
 
 (s/defn ^:private create-events :- FlowMap
@@ -339,9 +339,9 @@
     fm))
 
 (s/defn ^:private apply-event-hooks :- FlowMap
-  [{:keys [events hooks-svc] :as fm} :- FlowMap]
+  [{:keys [events apply-event-hooks] :as fm} :- FlowMap]
   (doseq [event events]
-    (h/apply-event-hooks hooks-svc event))
+    (apply-event-hooks event))
   fm)
 
 (s/defn ^:private make-result :- s/Any
@@ -388,12 +388,16 @@
              tempids
              long-id-fn
              spec
-             hooks-svc
+             apply-hooks
+             apply-event-hooks
              enveloped-result?]}]
+  {:pre [apply-hooks
+         apply-event-hooks]}
   (-> {:flow-type :create
+       :apply-hooks apply-hooks
+       :apply-event-hooks apply-event-hooks
        :entity-type entity-type
        :entities (map #(dissoc % :schema_version) entities)
-       :hooks-svc hooks-svc
        :tempids tempids
        :identity identity
        :long-id-fn long-id-fn
@@ -430,15 +434,19 @@
              identity
              entity
              long-id-fn
-             hooks-svc
+             apply-hooks
+             apply-event-hooks
              spec]}]
+  {:pre [apply-hooks
+         apply-event-hooks]}
   (let [prev-entity (get-fn entity-id)]
     (when prev-entity
       (-> {:flow-type :update
            :entity-type entity-type
            :entities [(dissoc entity
                               :schema_version)]
-           :hooks-svc hooks-svc
+           :apply-hooks apply-hooks
+           :apply-event-hooks apply-event-hooks
            :prev-entity prev-entity
            :identity identity
            :long-id-fn long-id-fn
@@ -465,7 +473,8 @@
     - `:before-update` hooks can modify the entity stored.
     - `:after-update` hooks are read only"
   [& {:keys [entity-type
-             hooks-svc
+             apply-hooks
+             apply-event-hooks
              get-fn
              realize-fn
              update-fn
@@ -480,7 +489,8 @@
       (-> {:flow-type :update
            :entity-type entity-type
            :entities []
-           :hooks-svc hooks-svc
+           :apply-hooks apply-hooks
+           :apply-event-hooks apply-event-hooks
            :prev-entity prev-entity
            :partial-entity partial-entity
            :patch-operation patch-operation
@@ -515,12 +525,15 @@
              delete-fn
              entity-id
              long-id-fn
-             identity
-             hooks-svc]}]
-  {:pre [hooks-svc]}
+             apply-hooks
+             apply-event-hooks
+             identity]}]
+  {:pre [apply-hooks
+         apply-event-hooks]}
   (let [entity (get-fn entity-id)]
     (-> {:flow-type :delete
-         :hooks-svc hooks-svc
+         :apply-hooks apply-hooks
+         :apply-event-hooks apply-event-hooks
          :entity-type entity-type
          :entities (remove nil? [entity])
          :prev-entity entity

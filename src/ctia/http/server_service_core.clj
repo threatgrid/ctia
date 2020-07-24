@@ -3,10 +3,10 @@
             [clojure.tools.logging :as log])
   (:import [org.eclipse.jetty.server Server]))
 
-(defn start [context {:keys [port] :as http-config} hooks-svc]
+(defn start [context {:keys [port] :as http-config} apply-hooks apply-event-hooks]
   (log/info (str "Starting HTTP server on port " port))
   (assoc context
-         :server (new-jetty-instance http-config hooks-svc)))
+         :server (new-jetty-instance http-config apply-hooks apply-event-hooks)))
 
 (defn stop [{:keys [^Server server] :as context}]
   (.stop server)
