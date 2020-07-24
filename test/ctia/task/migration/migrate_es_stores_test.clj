@@ -328,7 +328,8 @@
                                             (assoc :documents test-docs
                                                    :search_after search_after))
                           nb-migrated (sut/write-target migrated-count
-                                                        batch-params)
+                                                        batch-params
+                                                        store-svc)
                           {target-state :target
                            source-state :source} (-> (get-migration migration-id @es-conn store-svc)
                                                      :stores
