@@ -338,7 +338,7 @@
              :tempids (tempids-with-long-ids tempids short-to-long-map)))
     fm))
 
-(s/defn ^:private apply-event-hooks :- FlowMap
+(s/defn ^:private apply-event-hooks* :- FlowMap
   [{:keys [events apply-event-hooks] :as fm} :- FlowMap]
   (doseq [event events]
     (apply-event-hooks event))
@@ -415,7 +415,7 @@
       apply-long-id-fn
       create-events
       write-events
-      apply-event-hooks
+      apply-event-hooks*
       apply-after-hooks
       make-result))
 
@@ -462,7 +462,7 @@
           apply-long-id-fn
           create-events
           write-events
-          apply-event-hooks
+          apply-event-hooks*
           apply-after-hooks
           make-result))))
 
@@ -511,7 +511,7 @@
           apply-long-id-fn
           create-events
           write-events
-          apply-event-hooks
+          apply-event-hooks*
           apply-after-hooks
           make-result))))
 
@@ -548,6 +548,6 @@
         apply-long-id-fn
         create-events
         write-events
-        apply-event-hooks
+        apply-event-hooks*
         apply-after-hooks
         make-result)))
