@@ -545,10 +545,11 @@
                                                  (count minimal-examples)))
                     (contains? example-types (keyword entity-type)) fixtures-nb
                     :else 0)]
-              (is (= source-size (:total source)))
+              (is (= source-size (:total source))
+                  (str "source size match for " (:index source)))
               (is (not (nil? started)))
               (is (not (nil? completed)))
-              (is (>= (:total source) (:migrated target)))
+              (is (<= (:migrated target) (:total source)))
               (is (int? (:total source)))
               (is (= (:index target)
                      (prefixed-index (:index source) "0.0.0")))))))
