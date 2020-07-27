@@ -4,7 +4,7 @@
 
 (deftest read-entities-test
   (testing "Attempting to read an unreachable entity should not throw"
-    (let [res (with-redefs [ctia.bulk.core/read-fn (fn [_ _ _] (fn [id] nil))]
-                (sut/read-entities ["judgement-123"]
-                                   :judgement {}))]
+    (let [res (sut/read-entities ["judgement-123"]
+                                 :judgement {}
+                                 {:StoreService {:read-store (constantly nil)}})]
       (is (= [nil] res)))))
