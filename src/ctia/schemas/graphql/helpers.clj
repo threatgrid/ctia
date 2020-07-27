@@ -29,6 +29,11 @@
             GraphQLUnionType
             TypeResolver]))
 
+(defn resolve-with-rt-opt [maybe-fn rt-opt]
+  (if (fn? maybe-fn)
+    (maybe-fn rt-opt)
+    maybe-fn))
+
 ;; Type registry to avoid any duplicates when using new-object
 ;; or new-enum. Contains a map with types indexed by name
 (def default-type-registry (atom {}))
@@ -104,9 +109,9 @@
            (swap! registry assoc enum-name graphql-enum)
            graphql-enum)))))
 
-(defn list-type [t] (GraphQLList/list t))
+(defn list-type [t] #(GraphQLList/list (-> t (resolve-with-rt-opt %))))
 
-(defn non-null [t] (GraphQLNonNull/nonNull t))
+(defn non-null [t] #(GraphQLNonNull/nonNull (-> t (resolve-with-rt-opt %))))
 
 (defn non-nulls
   "Takes a map containing GraphQL fields and decorates them
@@ -198,7 +203,7 @@
 (defn fn->data-fetcher
   "Converts a function that takes 4 parameters (context, args, field-selection value)
   to a GraphQL DataFetcher"
-  [f]
+  [f rt-opt]
   (reify DataFetcher
     (get [_ env]
       (let [fragments (->clj (.getFragmentsByName env))
@@ -206,7 +211,8 @@
             args (->clj (.getArguments env))
             value (->clj (.getSource env))
             field-selection (env->field-selection env fragments)
-            result (f context args field-selection value)]
+            result (-> (f context args field-selection value)
+                       (resolve-with-rt-opt rt-opt))]
         (debug "data-fetcher context:" context)
         (debug "data-fetcher args:" args)
         (debug "data-fetcher value:"  value)
@@ -256,11 +262,13 @@
 (defn new-input-field
   ^GraphQLInputObjectField
   [^String field-name
-   ^GraphQLInputType field-type
+   field-type
    ^String field-description
    default-value]
-  (log/debug "New input field" field-name (pr-str field-type))
-  (let [builder
+ #(let [^GraphQLInputType field-type (-> field-type
+                                         (resolve-with-rt-opt %))
+        _ (log/debug "New input field" field-name (pr-str field-type))
+        builder
         (-> (GraphQLInputObjectField/newInputObjectField)
             (.name field-name)
             (.type field-type)
@@ -273,26 +281,29 @@
   ^GraphQLInputObjectType$Builder
   [^GraphQLInputObjectType$Builder builder
    fields]
+ (fn [rt-opt]
   (doseq [[k {field-type :type
               field-description :description
               field-default-value :default-value
               :or {field-description ""}}] fields]
     (let [newf
-          (new-input-field (name k)
-                           field-type
-                           field-description
-                           field-default-value)]
+          (-> (new-input-field (name k)
+                               field-type
+                               field-description
+                               field-default-value)
+              (resolve-with-rt-opt rt-opt))]
       (.field builder newf)))
-  builder)
+  builder))
 
 (defn new-input-object
   [^String object-name
    ^String description
    fields]
-  (-> (GraphQLInputObjectType/newInputObject)
+ #(-> (GraphQLInputObjectType/newInputObject)
       (.name object-name)
       (.description description)
       (add-input-fields fields)
+      (resolve-with-rt-opt %)
       .build))
 
 ;;----- Output
@@ -316,7 +327,7 @@
 (defn add-fields
   ^GraphQLObjectType$Builder
   [^GraphQLObjectType$Builder builder
-   fields]
+   fields rt-opt]
   (doseq [[k {field-type :type
               field-description :description
               field-args :args
@@ -329,7 +340,7 @@
                      field-type
                      field-description
                      field-args
-                     (fn->data-fetcher field-resolver))]
+                     (fn->data-fetcher field-resolver rt-opt))]
       (.field builder newf)))
   builder)
 
@@ -344,11 +355,11 @@
     interfaces
     fields
     registry]
-   (or (get @registry object-name)
+  #(or (get @registry object-name)
        (let [builder (-> (GraphQLObjectType/newObject)
                          (.description description)
                          (.name object-name)
-                         (add-fields fields))]
+                         (add-fields fields %))]
          (doseq [^GraphQLInterfaceType interface interfaces]
            (.withInterface builder interface))
          (let [obj (.build builder)]
@@ -359,20 +370,21 @@
   "Converts a function that takes the current object, the args
   and the global schema to a TypeResolver."
   ^TypeResolver
-  [f]
+  [f rt-opt]
   (reify TypeResolver
     (getType [_ env]
       (let [object (->clj (.getObject env))
             args (->clj (.getArguments env))
             schema (.getSchema env)]
-        (f object args schema)))))
+        (-> (f object args schema)
+            (resolve-with-rt-opt rt-opt))))))
 
 (defn new-union
   [^String union-name
    ^String description
    type-resolver-fn
    types]
-  (let [type-resolver (fn->type-resolver type-resolver-fn)
+ #(let [type-resolver (fn->type-resolver type-resolver-fn %)
         graphql-union (-> (GraphQLUnionType/newUnionType)
                           (.description description)
                           (.name union-name)
@@ -390,8 +402,8 @@
 
 (defn new-schema
   [^GraphQLObjectType query]
-  (-> (GraphQLSchema/newSchema)
-      (.query query)
+ #(-> (GraphQLSchema/newSchema)
+      (.query ^GraphQLObjectType (resolve-with-rt-opt query %))
       .build))
 
 (defn get-type
@@ -402,7 +414,7 @@
 
 (defn new-graphql
   [schema]
-  (-> (GraphQL/newGraphQL schema)
+ #(-> (GraphQL/newGraphQL (-> schema (resolve-with-rt-opt %)))
       .build))
 
 (defn execute

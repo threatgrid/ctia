@@ -23,7 +23,8 @@
    args :- {s/Keyword s/Any}
    ident
    field-selection
-   with-long-id-fn]
+   with-long-id-fn
+   {{{:keys [read-store]} :StoreService} :services :as rt-opt}]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -45,19 +46,21 @@
 (defn search-entity-resolver
   [entity-type-kw]
   (fn [context args field-selection src]
-    (search-entity entity-type-kw
+   #(search-entity entity-type-kw
                    (:query args)
                    {}
                    args
                    (:ident context)
                    field-selection
-                   page-with-long-id)))
+                   page-with-long-id
+                   %)))
 
 (s/defn entity-by-id
   [entity-type-kw :- s/Keyword
    id :- s/Str
    ident
    field-selection :- (s/maybe [s/Keyword])]
+ (fn [{{{:keys [read-store]} :StoreService} :services :as rt-opt}]
   (log/debugf "Retrieve %s (id:%s, fields:%s)"
               entity-type-kw
               id
@@ -68,7 +71,7 @@
                       ident
                       {:fields (concat default-fields field-selection)})
           with-long-id
-          un-store))
+          un-store)))
 
 (defn entity-by-id-resolver
   [entity-type-kw]
@@ -142,7 +145,7 @@
 
 (defn search-relationships
   [context args field-selection src]
-  (let [{:keys [query relationship_type target_type]} args
+ #(let [{:keys [query relationship_type target_type]} args
         filtermap {:relationship_type relationship_type
                    :target_type target_type
                    :source_ref (:id src)}]
@@ -152,4 +155,5 @@
                    args
                    (:ident context)
                    (concat field-selection [:target_ref :source_ref])
-                   page-with-long-id)))
+                   page-with-long-id
+                   %)))

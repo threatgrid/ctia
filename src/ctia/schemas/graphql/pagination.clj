@@ -37,20 +37,24 @@
 
 (defn new-connection
   [^GraphQLType node-type]
-  (let [type-name (str/capitalize (.getName node-type))
+ #(let [^GraphQLType node-type (-> node-type
+                                   (g/resolve-with-rt-opt %))
+        type-name (str/capitalize (.getName node-type))
         connection-name (str type-name
                              "Connection")
         edge-name (str type-name
                        "Edge")]
+   (->
     (g/new-object
-     connection-name
-     (str "A connection to a list of " type-name)
-     []
-     {:pageInfo {:type (g/non-null PageInfo)}
-      :totalCount {:type Scalars/GraphQLInt}
-      :edges {:type (g/list-type (new-edge node-type
-                                           edge-name))}
-      :nodes {:type (g/list-type node-type)}})))
+      connection-name
+      (str "A connection to a list of " type-name)
+      []
+      {:pageInfo {:type (g/non-null PageInfo)}
+       :totalCount {:type Scalars/GraphQLInt}
+       :edges {:type (g/list-type (new-edge node-type
+                                            edge-name))}
+       :nodes {:type (g/list-type node-type)}})
+    (g/resolve-with-rt-opt %))))
 
 ;;------- Limit/Offset with opaque cursor
 ;; See : https://github.com/darthtrevino/relay-cursor-paging/blob/master/src/getPagingParameters.ts
