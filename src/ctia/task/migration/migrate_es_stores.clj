@@ -12,6 +12,7 @@
             [ctia.store-service-core :refer [empty-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
+            [ctia.init :refer [start-ctia!]]
             [ctia.properties :as p]
             [ctia.stores.es
              [crud :refer [coerce-to-fn]]
@@ -310,8 +311,10 @@
     (assert prefix "Please provide an indexname prefix for target store creation"))
   (log/info "migrating all ES Stores")
   (try
-    (let [app (mst/setup!)
-          store-svc (app/get-service app :StoreService)]
+    (let [_ (log/info "starting CTIA Stores...")
+          app (start-ctia!)
+          store-svc (app/get-service app :StoreService)
+          _ (mst/setup! store-svc)]
       (check-migration-params params)
       (migrate-store-indexes params store-svc)
       (log/info "migration complete")

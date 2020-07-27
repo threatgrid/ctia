@@ -14,6 +14,7 @@
              [query :as es-query]
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
+            [ctia.init :refer [start-ctia!]]
             [ctia.lib.collection :refer [fmap]]
             [ctia.store-service :as store-svc]
             [ctia.stores.es-service :as es-svc]
@@ -661,17 +662,8 @@ when confirm? is true, it stores this state and creates the target indices."
 (defn setup!
   "init properties, start CTIA and its store service.
   returns a tk app."
-  []
-  (log/info "starting CTIA Stores...")
-  (p/init!)
-  (log-properties)
-  (let [app (tk/boot-services-with-config
-              [store-svc/store-service
-               es-svc/es-store-service]
-              (p/read-global-properties))
-        store-svc (app/get-service app :StoreService)]
-    (->> (migration-store-properties store-svc)
-         init-store-conn
-         :conn
-         (reset! migration-es-conn))
-    app))
+  [store-svc]
+  (->> (migration-store-properties store-svc)
+       init-store-conn
+       :conn
+       (reset! migration-es-conn)))

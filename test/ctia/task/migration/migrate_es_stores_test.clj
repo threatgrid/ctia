@@ -41,14 +41,10 @@
            (clojure.lang ExceptionInfo)))
 
 (defn fixture-setup! [f]
-  (ks/with-no-jvm-shutdown-hooks
-    (let [app (setup!)] ;; init migration conn and properties
-      (try
-        ;; this should clash with the built-in fixture
-        ;; to remind me to fix it - Ambrose
-        (helpers/bind-current-app* app f)
-        (finally
-          (app/stop app))))))
+  (let [app (helpers/get-current-app)
+        store-svc (app/get-service app :StoreService)]
+    (setup! store-svc)
+    (f)))
 
 (use-fixtures :once
   (join-fixtures [mth/fixture-schema-validation
@@ -67,7 +63,7 @@
   (es-index/delete! @es-conn (str @migration-index "*")))
 
 (use-fixtures :each
-  (join-fixtures [helpers/fixture-ctia ;; FIXME both these fixtures start TK apps!
+  (join-fixtures [helpers/fixture-ctia
                   fixture-setup! ;; Note: goes after fixture-ctia
                   es-helpers/fixture-delete-store-indexes
                   fixture-clean-migration]))
