@@ -10,8 +10,7 @@
     [auth :as auth]
     [properties :as p]
     [store :refer [list-fn
-                   read-fn
-                   read-store]]]
+                   read-fn]]]
    [ctia.lib.collection :as coll :refer [fmap]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
@@ -93,7 +92,7 @@
         acc-entities))))
 
 (defn find-by-external-ids
-  [import-data entity-type auth-identity]
+  [import-data entity-type auth-identity {{:keys [read-store]} :StoreService}]
   (let [external-ids (keep :external_id import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
@@ -184,12 +183,13 @@
 
 (s/defn with-existing-entities :- [EntityImportData]
   "Add existing entities to the import data map."
-  [import-data entity-type identity-map]
+  [import-data entity-type identity-map services]
   (let [entities-by-external-id
         (by-external-id
          (find-by-external-ids import-data
                                entity-type
-                               identity-map))
+                               identity-map
+                               services))
         find-by-external-id-fn (fn [external_id]
                                  (when external_id
                                    (get entities-by-external-id
@@ -203,12 +203,13 @@
    will be imported"
   [bundle-entities
    external-key-prefixes
-   auth-identity]
+   auth-identity
+   services]
   (map-kv (fn [k v]
             (let [entity-type (bulk/entity-type-from-bulk-key k)]
               (-> v
                   (init-import-data entity-type external-key-prefixes)
-                  (with-existing-entities entity-type auth-identity))))
+                  (with-existing-entities entity-type auth-identity services))))
           bundle-entities))
 
 (defn create?
@@ -277,7 +278,8 @@
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
-                                           auth-identity)
+                                           auth-identity
+                                           services)
         bulk (debug "Bulk" (prepare-bulk bundle-import-data))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
@@ -354,7 +356,8 @@
   "given an entity id, fetch all related relationship"
   [id
    identity-map
-   filters]
+   filters
+   {{:keys [read-store]} :StoreService}]
   (let [filter-map (relationships-filters id filters)
         max-relationships (get-in (p/read-global-properties) [:ctia :http :bundle :export :max-relationships] 1000)]
     (some-> (:data (read-store :relationship
@@ -368,7 +371,7 @@
 
 (defn fetch-record
   "Fetch a record by ID guessing its type"
-  [id identity-map]
+  [id identity-map {{:keys [read-store]} :StoreService}]
   (when-let [entity-type (ent/id->entity-type id)]
     (read-store (keyword entity-type)
                 read-fn
@@ -384,9 +387,9 @@
    ident
    params
    services]
-  (if-let [record (fetch-record id identity-map)]
+  (if-let [record (fetch-record id identity-map services)]
     (let [relationships (when (:include_related_entities params true)
-                          (fetch-entity-relationships id identity-map params))]
+                          (fetch-entity-relationships id identity-map params services))]
       (cond-> {}
         record
         (assoc (-> (:type record)

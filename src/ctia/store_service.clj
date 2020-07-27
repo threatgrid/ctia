@@ -34,7 +34,7 @@
 (defn store-service-fn->varargs
   "Given a 2-argument write-store or read-store function (eg., from defservice),
   lifts the function to support variable arguments."
-  [store-fn]
-  {:pre [store-fn]}
+  [store-svc-fn]
+  {:pre [store-svc-fn]}
   (fn [store f & args]
-    (store-fn store #(apply f % args))))
+    (store-svc-fn store #(apply f % args))))

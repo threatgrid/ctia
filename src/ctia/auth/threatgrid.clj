@@ -11,7 +11,8 @@
    [clojure.core.memoize :as memo]
    [ctia
     [auth :as auth]
-    [store :as store]]
+    [store :as store]
+    [store-service :as store-svc]]
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
@@ -50,20 +51,24 @@
         (json/parse-string
          (:body response))))))
 
-(defn lookup-stored-identity [login]
-  (store/read-store :identity store/read-identity login))
+(defn lookup-stored-identity [login read-store]
+  (read-store :identity store/read-identity login))
 
 (tk/defservice threatgrid-auth-service
   auth/IAuth
-  [[:ConfigService get-in-config]]
+  [[:ConfigService get-in-config]
+   [:StoreService read-store]]
   (init [this context]
-        (into context
-              (let [{:keys [whoami-url cache]} (get-in-config [:ctia :auth :threatgrid])
-                    whoami-fn (make-whoami-fn whoami-url)]
-                {:whoami-fn
-                 (if cache (memo whoami-fn) whoami-fn)
-                 :lookup-stored-identity-fn
-                 (if cache (memo lookup-stored-identity) lookup-stored-identity)})))
+        (let [read-store (-> read-store
+                             store-svc/store-service-fn->varargs)
+              lookup-stored-identity #(lookup-stored-identity % read-store)]
+          (into context
+                (let [{:keys [whoami-url cache]} (get-in-config [:ctia :auth :threatgrid])
+                      whoami-fn (make-whoami-fn whoami-url)]
+                  {:whoami-fn
+                   (if cache (memo whoami-fn) whoami-fn)
+                   :lookup-stored-identity-fn
+                   (if cache (memo lookup-stored-identity) lookup-stored-identity)}))))
 
   (start [this context]
          (reset! auth/auth-service this)

@@ -5,10 +5,12 @@
              [test :refer [is join-fixtures testing use-fixtures]]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.store :as store]
+            [ctia.store-service :as store-svc]
             [ctia.test-helpers
              [core :as test-helpers :refer [deftest-for-each-fixture post]]
              [es :as es-helpers]]
-            [ctim.domain.id :as id]))
+            [ctim.domain.id :as id]
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 
@@ -23,7 +25,11 @@
                                     es-helpers/fixture-delete-store-indexes])}
 
   (testing "Events are published to es"
-    (let [{{judgement-1-long-id :id
+    (let [app (test-helpers/get-current-app)
+          store-svc (app/get-service app :StoreService)
+          read-store (-> #(store-svc/read-store store-svc %1 %2)
+                         store-service-fn->varargs)
+          {{judgement-1-long-id :id
             :as judgement-1} :parsed-body
            judgement-1-status :status}
           (post "ctia/judgement"
@@ -78,7 +84,7 @@
       (is (= 201 judgement-2-status))
       (is (= 201 judgement-3-status))
 
-      (let [events (:data (store/read-store :event
+      (let [events (:data (read-store :event
                                             store/list-events
                                             {:all-of {:owner "Unknown"}}
                                             {:login "Unknown"
