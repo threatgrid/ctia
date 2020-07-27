@@ -78,7 +78,7 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}}]
- (fn [{:keys [apply-hooks apply-event-hooks] :as _services-map_}]
+ (fn [{{:keys [apply-hooks apply-event-hooks]} :HooksService :as _services_}]
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
         search-filters (st/dissoc search-q-params

@@ -30,3 +30,11 @@
   (read-store [this store read-fn]
               (core/read-store (service-context this)
                                store read-fn)))
+
+(defn store-service-fn->varargs
+  "Given a 2-argument write-store or read-store function (eg., from defservice),
+  lifts the function to support variable arguments."
+  [store-fn]
+  {:pre [store-fn]}
+  (fn [store f & args]
+    (store-fn store #(apply f % args))))

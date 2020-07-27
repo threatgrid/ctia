@@ -164,7 +164,7 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(defn api-handler [apply-hooks apply-event-hooks]
+(defn api-handler [services]
   (let [{:keys [oauth2]}
         (get-http-swagger)]
     (api {:exceptions {:handlers exception-handlers}
@@ -210,18 +210,17 @@
              ;; must be before the middleware fn
              version-routes
              (middleware [wrap-authenticated]
-               (entity-routes {:apply-hooks apply-hooks
-                               :apply-event-hooks apply-event-hooks})
+               (entity-routes services)
                status-routes
                (context
                    "/bulk" []
                  :tags ["Bulk"]
-                 (bulk-routes apply-hooks apply-event-hooks))
+                 (bulk-routes services))
                (context
                    "/incident" []
                  :tags ["Incident"]
-                 (incident-link-route apply-hooks apply-event-hooks))
-               (bundle-routes apply-hooks apply-event-hooks)
+                 (incident-link-route services))
+               (bundle-routes services)
                observable-routes
                metrics-routes
                properties-routes

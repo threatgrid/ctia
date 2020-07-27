@@ -9,7 +9,7 @@
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
 
-(defn bulk-routes [apply-hooks apply-event-hooks]
+(defn bulk-routes [{{:keys [apply-hooks apply-event-hooks]} :HooksService}]
  (routes
   (POST "/" []
         :return BulkRefs

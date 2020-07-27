@@ -90,7 +90,7 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(defn incident-link-route [apply-hooks apply-event-hooks]
+(defn incident-link-route [{{:keys [apply-hooks apply-event-hooks]} :HooksService}]
   (POST "/:id/link" []
         :return rs/Relationship
         :body [link-req IncidentLinkRequest

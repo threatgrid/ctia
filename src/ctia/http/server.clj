@@ -150,11 +150,10 @@
     :or {access-control-allow-methods "get,post,put,patch,delete"
          send-server-version false}
     :as http-config}
-   apply-hooks
-   apply-event-hooks]
+   services]
   (doto
       (jetty/run-jetty
-       (cond-> (handler/api-handler apply-hooks apply-event-hooks)
+       (cond-> (handler/api-handler services)
          true auth/wrap-authentication
 
          (:enabled jwt)

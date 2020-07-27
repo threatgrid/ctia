@@ -57,7 +57,7 @@
     :read-casebook
     :list-casebooks})
 
-(defn bundle-routes [apply-hooks apply-event-hooks]
+(defn bundle-routes [{{:keys [apply-hooks apply-event-hooks]} :HooksService}]
  (routes 
   (context "/bundle" []
            :tags ["Bundle"]

@@ -19,9 +19,7 @@
              [sorting :as graphql-sorting]
              [refs :as refs]]
             [ctia.store :refer [read-record
-                                update-record
-                                read-store
-                                write-store]]
+                                update-record]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
@@ -130,7 +128,9 @@
     :delete-casebook
     :search-casebook})
 
-(defn casebook-operation-routes [{:keys [apply-hooks apply-event-hooks]}]
+(defn casebook-operation-routes [{{:keys [apply-hooks apply-event-hooks]} :HooksService
+                                  {:keys [read-store write-store]} :StoreService
+                                  :as _services_}]
   (routes
    (PATCH "/:id" []
           :return Casebook
