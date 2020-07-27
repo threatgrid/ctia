@@ -8,6 +8,7 @@
              [core :as helpers :refer [post-bulk]]]
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
+             [assets :refer [asset-maximal asset-mapping-maximal]]
              [actors :refer [actor-maximal]]
              [attack-patterns :refer [attack-pattern-maximal]]
              [campaigns :refer [campaign-maximal]]
@@ -33,6 +34,8 @@
 
 (defn make-examples [fixtures-nb]
   {:actors (n-doc actor-maximal fixtures-nb)
+   :assets (n-doc asset-maximal fixtures-nb)
+   :asset_mappings (n-doc asset-mapping-maximal fixtures-nb)
    :attack_patterns (n-doc attack-pattern-maximal fixtures-nb)
    :campaigns (n-doc campaign-maximal fixtures-nb)
    :coas (n-doc coa-maximal fixtures-nb)
