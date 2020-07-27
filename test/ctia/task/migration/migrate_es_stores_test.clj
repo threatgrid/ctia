@@ -46,7 +46,7 @@
       (try
         ;; this should clash with the built-in fixture
         ;; to remind me to fix it - Ambrose
-        (helpers/bind-current-app* f)
+        (helpers/bind-current-app* app f)
         (finally
           (app/stop app))))))
 
