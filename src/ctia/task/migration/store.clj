@@ -35,6 +35,7 @@
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
+;;TODO refactor to local argument
 (defonce migration-es-conn (atom nil))
 
 (def token-mapping
