@@ -583,9 +583,9 @@
                  "weakness - finished migrating 100 documents" }
                messages))))
 
-      ;; TODO: fix broken test
-      #_(testing "shall produce new indices with enough documents and the right transforms"
+      (testing "shall produce new indices with enough documents and the right transforms"
         (let [{:keys [default
+                      asset
                       relationship
                       judgement
                       investigation
@@ -607,9 +607,10 @@
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
                                       1000
                                       (format "v0.0.0_ctia_event-%s-000002" index-date)
-                                      (+ 500 updates-nb)}
+                                      (+ 600 updates-nb)}
               expected-indices
               (->> #{relationship
+                     asset
                      judgement
                      coa
                      attack-pattern
