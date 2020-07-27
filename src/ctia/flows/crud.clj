@@ -34,10 +34,10 @@
    :flow-type (s/enum :create :update :delete)
    :services (st/open-schema
                {:HooksService (st/open-schema
-                                {:apply-hooks fn?
-                                 :apply-event-hooks fn?})
+                                {:apply-hooks (s/pred fn?)
+                                 :apply-event-hooks (s/pred fn?)})
                 :StoreService (st/open-schema
-                                {:write-store fn?})})
+                                {:write-store (s/pred fn?)})})
    :identity (s/protocol auth/IIdentity)
    (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
