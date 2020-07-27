@@ -273,8 +273,7 @@
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
-   apply-hooks
-   apply-event-hooks]
+   services]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
@@ -285,7 +284,7 @@
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))]
     (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params) apply-hooks apply-event-hooks)
+           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params) services)
                 (with-bulk-result bundle-import-data)
                 build-response
                 log-errors))))
@@ -318,7 +317,7 @@
 
 (defn fetch-relationship-targets
   "given relationships, fetch all related objects"
-  [relationships identity-map]
+  [relationships identity-map services]
   (let [all-ids (->> relationships
                      (map (fn [{:keys [target_ref source_ref]}]
                             [target_ref source_ref]))
@@ -332,7 +331,7 @@
                           (map (fn [[k v]]
                                  {(bulk/bulk-key
                                    (keyword k)) v}) by-type))
-        fetched (bulk/fetch-bulk by-bulk-key identity-map)]
+        fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
     (clean-bundle fetched)))
 
 (defn relationships-filters
@@ -383,7 +382,8 @@
   [id
    identity-map
    ident
-   params]
+   params
+   services]
   (if-let [record (fetch-record id identity-map)]
     (let [relationships (when (:include_related_entities params true)
                           (fetch-entity-relationships id identity-map params))]
@@ -404,7 +404,8 @@
         (->> (deep-merge-with coll/add-colls
                               (fetch-relationship-targets
                                relationships
-                               ident)))))
+                               ident
+                               services)))))
     {}))
 
 (def empty-bundle
@@ -415,7 +416,8 @@
   [ids
    identity-map
    ident
-   params]
-  (->> (map #(export-entities % identity-map ident params) ids)
+   params
+   services]
+  (->> (map #(export-entities % identity-map ident params services) ids)
        (reduce #(deep-merge-with coll/add-colls %1 %2))
        (into empty-bundle)))

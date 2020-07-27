@@ -22,7 +22,8 @@
               to-delete-event
               to-update-event]]
             [ring.util.http-response :as http-response]
-            [schema.core :as s])
+            [schema.core :as s]
+            [schema-tools.core :as st])
   (:import java.util.UUID))
 
 (s/defschema FlowMap
@@ -31,8 +32,12 @@
    :entity-type s/Keyword
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
-   :apply-hooks s/Any
-   :apply-event-hooks s/Any
+   :services (st/open-schema
+               {:HooksService (st/open-schema
+                                {:apply-hooks fn?
+                                 :apply-event-hooks fn?})
+                :StoreService (st/open-schema
+                                {:write-store fn?})})
    :identity (s/protocol auth/IIdentity)
    (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
@@ -190,7 +195,8 @@
       fm)))
 
 (s/defn ^:private apply-before-hooks :- FlowMap
-  [{:keys [entities flow-type prev-entity apply-hooks] :as fm} :- FlowMap]
+  [{{{:keys [apply-hooks]} :HooksService} :services
+    :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
   (assoc fm
          :entities
          (doall
@@ -204,7 +210,8 @@
                            :read-only? (= flow-type :delete)})))))
 
 (s/defn ^:private apply-after-hooks :- FlowMap
-  [{:keys [entities flow-type prev-entity apply-hooks] :as fm} :- FlowMap]
+  [{{{:keys [apply-hooks]} :HooksService} :services
+    :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
   (doseq [entity entities]
     (apply-hooks  {:entity entity
                    :prev-entity prev-entity
@@ -241,11 +248,12 @@
     fm))
 
 (s/defn ^:private write-events :- FlowMap
-  [{:keys [events] :as fm} :- FlowMap]
+  [{{{:keys [write-store]} :StoreService} :services
+    :keys [events] :as fm} :- FlowMap]
   (if (seq events)
     (assoc fm
            :events
-           (store/write-store :event store/create-events events))
+           (write-store :event store/create-events events))
     fm))
 
 (s/defn remove-errors :- FlowMap
@@ -338,10 +346,11 @@
              :tempids (tempids-with-long-ids tempids short-to-long-map)))
     fm))
 
-(s/defn ^:private apply-event-hooks* :- FlowMap
-  [{:keys [events apply-event-hooks] :as fm} :- FlowMap]
+(s/defn ^:private apply-event-hooks :- FlowMap
+  [{{:keys [HooksService]} :services
+    :keys [events] :as fm} :- FlowMap]
   (doseq [event events]
-    (apply-event-hooks event))
+    ((:apply-event-hooks HooksService) event))
   fm)
 
 (s/defn ^:private make-result :- s/Any
@@ -388,14 +397,11 @@
              tempids
              long-id-fn
              spec
-             apply-hooks
-             apply-event-hooks
+             services
              enveloped-result?]}]
-  {:pre [apply-hooks
-         apply-event-hooks]}
+  {:pre [services]}
   (-> {:flow-type :create
-       :apply-hooks apply-hooks
-       :apply-event-hooks apply-event-hooks
+       :services services
        :entity-type entity-type
        :entities (map #(dissoc % :schema_version) entities)
        :tempids tempids
@@ -415,7 +421,7 @@
       apply-long-id-fn
       create-events
       write-events
-      apply-event-hooks*
+      apply-event-hooks
       apply-after-hooks
       make-result))
 
@@ -434,19 +440,16 @@
              identity
              entity
              long-id-fn
-             apply-hooks
-             apply-event-hooks
+             services
              spec]}]
-  {:pre [apply-hooks
-         apply-event-hooks]}
+  {:pre [services]}
   (let [prev-entity (get-fn entity-id)]
     (when prev-entity
       (-> {:flow-type :update
            :entity-type entity-type
            :entities [(dissoc entity
                               :schema_version)]
-           :apply-hooks apply-hooks
-           :apply-event-hooks apply-event-hooks
+           :services services
            :prev-entity prev-entity
            :identity identity
            :long-id-fn long-id-fn
@@ -462,7 +465,7 @@
           apply-long-id-fn
           create-events
           write-events
-          apply-event-hooks*
+          apply-event-hooks
           apply-after-hooks
           make-result))))
 
@@ -473,8 +476,7 @@
     - `:before-update` hooks can modify the entity stored.
     - `:after-update` hooks are read only"
   [& {:keys [entity-type
-             apply-hooks
-             apply-event-hooks
+             services
              get-fn
              realize-fn
              update-fn
@@ -484,15 +486,13 @@
              partial-entity
              long-id-fn
              spec]}]
-  {:pre [apply-hooks
-         apply-event-hooks]}
+  {:pre [services]}
   (let [prev-entity (get-fn entity-id)]
     (when prev-entity
       (-> {:flow-type :update
            :entity-type entity-type
            :entities []
-           :apply-hooks apply-hooks
-           :apply-event-hooks apply-event-hooks
+           :services services
            :prev-entity prev-entity
            :partial-entity partial-entity
            :patch-operation patch-operation
@@ -511,7 +511,7 @@
           apply-long-id-fn
           create-events
           write-events
-          apply-event-hooks*
+          apply-event-hooks
           apply-after-hooks
           make-result))))
 
@@ -527,15 +527,12 @@
              delete-fn
              entity-id
              long-id-fn
-             apply-hooks
-             apply-event-hooks
+             services
              identity]}]
-  {:pre [apply-hooks
-         apply-event-hooks]}
+  {:pre [services]}
   (let [entity (get-fn entity-id)]
     (-> {:flow-type :delete
-         :apply-hooks apply-hooks
-         :apply-event-hooks apply-event-hooks
+         :services services
          :entity-type entity-type
          :entities (remove nil? [entity])
          :prev-entity entity
@@ -548,6 +545,6 @@
         apply-long-id-fn
         create-events
         write-events
-        apply-event-hooks*
+        apply-event-hooks
         apply-after-hooks
         make-result)))

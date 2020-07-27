@@ -12,10 +12,12 @@
    StoreService]
   (start [this context] (core/start context
                                     (get-in (p/read-global-properties) [:ctia :http])
-                                    {:HooksService (select-keys HooksService [:apply-hooks
-                                                                              :apply-event-hooks])
+                                    {:HooksService (-> HooksService 
+                                                       (select-keys [:apply-hooks
+                                                                     :apply-event-hooks]))
                                      :StoreService (-> StoreService 
-                                                       (select-keys [:read-store :write-store])
+                                                       (select-keys [:read-store
+                                                                     :write-store])
                                                        (update :read-store store-service-fn->varargs)
                                                        (update :write-store store-service-fn->varargs))}))
   (stop [this context] (core/stop context)))

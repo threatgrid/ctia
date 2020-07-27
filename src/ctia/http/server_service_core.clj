@@ -9,5 +9,5 @@
          :server (new-jetty-instance http-config services)))
 
 (defn stop [{:keys [^Server server] :as context}]
-  (.stop server)
+  (some-> server .stop)
   (dissoc context :server))

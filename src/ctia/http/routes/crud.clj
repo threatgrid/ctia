@@ -18,9 +18,7 @@
                                     search-query
                                     coerce-date-range
                                     format-agg-result]]
-   [ctia.store :refer [write-store
-                       read-store
-                       query-string-search
+   [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
                        create-record
@@ -78,7 +76,8 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}}]
- (fn [{{:keys [apply-hooks apply-event-hooks]} :HooksService :as _services_}]
+ (fn [{{:keys [write-store read-store]} :StoreService
+       :as services}]
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
         search-filters (st/dissoc search-q-params
@@ -113,8 +112,7 @@
              :auth-identity identity
              :identity-map identity-map
              (-> (flows/create-flow
-                  :apply-hooks apply-hooks
-                  :apply-event-hooks apply-event-hooks
+                  :services services
                   :entity-type entity
                   :realize-fn realize-fn
                   :store-fn #(write-store entity
@@ -142,8 +140,7 @@
             :identity-map identity-map
             (if-let [updated-rec
                      (-> (flows/update-flow
-                          :apply-hooks apply-hooks
-                          :apply-event-hooks apply-event-hooks
+                          :services services
                           :get-fn #(read-store entity
                                                read-record
                                                %
@@ -177,8 +174,7 @@
               :identity-map identity-map
               (if-let [updated-rec
                        (-> (flows/patch-flow
-                            :apply-hooks apply-hooks
-                            :apply-event-hooks apply-event-hooks
+                            :services services
                             :get-fn #(read-store entity
                                                  read-record
                                                  %
@@ -333,8 +329,7 @@
              :auth-identity identity
              :identity-map identity-map
              (if (flows/delete-flow
-                  :apply-hooks apply-hooks
-                  :apply-event-hooks apply-event-hooks
+                  :services services
                   :get-fn #(read-store entity
                                        read-record
                                        %

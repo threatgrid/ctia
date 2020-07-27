@@ -24,7 +24,8 @@
              [helpers :as g]
              [pagination :as pagination]
              [sorting :as graphql-sorting]]
-            [ctia.store :refer :all]
+            [ctia.store :refer [read-record
+                                update-record]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
@@ -91,7 +92,8 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(defn incident-additional-routes [{:keys [apply-hooks apply-event-hooks]}]
+(defn incident-additional-routes [{{:keys [read-store write-store]} :StoreService
+                                   :as services}]
   (routes
    (POST "/:id/status" []
          :return Incident
@@ -107,8 +109,7 @@
            (if-let [updated
                     (un-store
                      (flows/patch-flow
-                      :apply-hooks apply-hooks
-                      :apply-event-hooks apply-event-hooks
+                      :services services
                       :get-fn #(read-store :incident
                                            read-record
                                            %

@@ -221,7 +221,7 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(defn feed-routes [{:keys [apply-hooks apply-event-hooks]}]
+(defn feed-routes [services]
   (routes
    (POST "/" []
      :return Feed
@@ -232,8 +232,7 @@
      :auth-identity identity
      :identity-map identity-map
      (-> (flows/create-flow
-          :apply-hooks apply-hooks
-          :apply-event-hooks apply-event-hooks
+          :services services
           :entity-type :feed
           :realize-fn realize-feed
           :store-fn #(write-store :feed
@@ -261,8 +260,7 @@
      :identity-map identity-map
      (if-let [updated-rec
               (-> (flows/update-flow
-                   :apply-hooks apply-hooks
-                   :apply-event-hooks apply-event-hooks
+                   :services services
                    :get-fn #(read-store :feed
                                         read-record
                                         %
@@ -364,8 +362,7 @@
      :auth-identity identity
      :identity-map identity-map
      (if (flows/delete-flow
-          :apply-hooks apply-hooks
-          :apply-event-hooks apply-event-hooks
+          :services services
           :get-fn #(read-store :feed
                                read-record
                                %

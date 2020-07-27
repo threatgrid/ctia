@@ -3,7 +3,8 @@
             [compojure.api.sweet :refer [POST]]
             [ctia
              [properties :refer [get-http-show]]
-             [store :refer :all]]
+             [store :refer [create-record
+                            read-record]]]
             [ctia.domain.entities :refer [un-store with-long-id]]
             [ctia.entity.relationship.schemas :as rs]
             [ctia.flows.crud :as flows]
@@ -90,7 +91,8 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(defn incident-link-route [{{:keys [apply-hooks apply-event-hooks]} :HooksService}]
+(defn incident-link-route [{{:keys [read-store write-store]} :StoreService
+                            :as services}]
   (POST "/:id/link" []
         :return rs/Relationship
         :body [link-req IncidentLinkRequest
@@ -168,8 +170,7 @@
                    :tlp tlp}
                   stored-relationship
                   (-> (flows/create-flow
-                       :apply-hooks apply-hooks
-                       :apply-event-hooks apply-event-hooks
+                       :services services
                        :entity-type :relationship
                        :realize-fn rs/realize-relationship
                        :store-fn #(write-store :relationship

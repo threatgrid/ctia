@@ -128,9 +128,8 @@
     :delete-casebook
     :search-casebook})
 
-(defn casebook-operation-routes [{{:keys [apply-hooks apply-event-hooks]} :HooksService
-                                  {:keys [read-store write-store]} :StoreService
-                                  :as _services_}]
+(defn casebook-operation-routes [{{:keys [read-store write-store]} :StoreService
+                                  :as services}]
   (routes
    (PATCH "/:id" []
           :return Casebook
@@ -142,8 +141,7 @@
           :auth-identity identity
           :identity-map identity-map
           (if-let [res (flows/patch-flow
-                        :apply-hooks apply-hooks
-                        :apply-event-hooks apply-event-hooks
+                        :services services
                         :get-fn #(read-store :casebook
                                              read-record
                                              %
@@ -177,8 +175,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
-                                :apply-hooks apply-hooks
-                                :apply-event-hooks apply-event-hooks
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -213,8 +210,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
-                                :apply-hooks apply-hooks
-                                :apply-event-hooks apply-event-hooks
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -249,8 +245,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
-                                :apply-hooks apply-hooks
-                                :apply-event-hooks apply-event-hooks
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %

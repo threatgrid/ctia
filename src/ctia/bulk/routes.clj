@@ -9,7 +9,7 @@
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
 
-(defn bulk-routes [{{:keys [apply-hooks apply-event-hooks]} :HooksService}]
+(defn bulk-routes [services]
  (routes
   (POST "/" []
         :return BulkRefs
@@ -42,8 +42,7 @@
                                        {}
                                        login
                                        (common/wait_for->refresh wait_for)
-                                       apply-hooks
-                                       apply-event-hooks))))
+                                       services))))
 
   (GET "/" []
        :return (s/maybe Bulk)
@@ -103,4 +102,4 @@
                            :tools               tools
                            :vulnerabilities     vulnerabilities
                            :weaknesses          weaknesses}]
-         (ok (fetch-bulk entities-map auth-identity))))))
+         (ok (fetch-bulk entities-map auth-identity services))))))

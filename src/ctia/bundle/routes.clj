@@ -57,7 +57,7 @@
     :read-casebook
     :list-casebooks})
 
-(defn bundle-routes [{{:keys [apply-hooks apply-event-hooks]} :HooksService}]
+(defn bundle-routes [services]
  (routes 
   (context "/bundle" []
            :tags ["Bundle"]
@@ -72,7 +72,8 @@
                      (:ids q)
                      identity-map
                      identity
-                     q)))
+                     q
+                     services)))
 
            (POST "/export" []
                 :return NewBundleExport
@@ -86,7 +87,8 @@
                      (:ids b)
                      identity-map
                      identity
-                     q)))
+                     q
+                     services)))
 
            (POST "/import" []
                  :return BundleImportResult
@@ -118,5 +120,4 @@
                    (if (> (bundle-size bundle)
                           max-size)
                      (bad-request (str "Bundle max nb of entities: " max-size))
-                     (ok (import-bundle bundle external-key-prefixes auth-identity
-                                        apply-hooks apply-event-hooks))))))))
+                     (ok (import-bundle bundle external-key-prefixes auth-identity services))))))))

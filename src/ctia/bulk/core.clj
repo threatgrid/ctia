@@ -5,7 +5,7 @@
             [ctia
              [auth :as auth]
              [properties :as p]
-             [store :as store :refer [read-store write-store]]]
+             [store :as store]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.entity.entities :refer [entities]]
             [ctia.flows.crud :as flows]
@@ -37,28 +37,27 @@
 
 (defn create-fn
   "return the create function provided an entity type key"
-  [k auth-identity params]
+  [k auth-identity params {{:keys [write-store]} :StoreService :as _services_}]
   #(write-store
     k store/create-record
     % (auth/ident->map auth-identity) params))
 
 (defn read-fn
   "return the create function provided an entity type key"
-  [k auth-identity params]
+  [k auth-identity params {{:keys [read-store]} :StoreService :as _services_}]
   #(read-store
     k store/read-record
     % (auth/ident->map auth-identity) params))
 
 (defn- create-entities
   "Create many entities provided their type and returns a list of ids"
-  [new-entities entity-type tempids auth-identity params apply-hooks apply-event-hooks]
+  [new-entities entity-type tempids auth-identity params services]
   (when (seq new-entities)
     (update (flows/create-flow
-             :apply-hooks apply-hooks
-             :apply-event-hooks apply-event-hooks
+             :services services
              :entity-type entity-type
              :realize-fn (-> entities entity-type :realize-fn)
-             :store-fn (create-fn entity-type auth-identity params)
+             :store-fn (create-fn entity-type auth-identity params services)
              :long-id-fn with-long-id
              :enveloped-result? true
              :identity auth-identity
@@ -70,8 +69,8 @@
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
-  [ids entity-type auth-identity]
-  (let [read-entity (read-fn entity-type auth-identity {})]
+  [ids entity-type auth-identity services]
+  (let [read-entity (read-fn entity-type auth-identity {} services)]
     (map (fn [id]
            (try
              (if-let [entity (read-entity id)]
@@ -140,18 +139,17 @@
 
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
-  ([bulk login apply-hooks apply-event-hooks] (create-bulk bulk {} login {} apply-hooks apply-event-hooks))
+  ([bulk login services] (create-bulk bulk {} login {} services))
   ([bulk tempids login {:keys [refresh] :as params
                         :or {refresh (bulk-refresh?)}}
-    apply-hooks apply-event-hooks]
+    services]
    (let [new-entities (gen-bulk-from-fn
                        create-entities
                        (dissoc bulk :relationships)
                        tempids
                        login
                        {:refresh refresh}
-                       apply-hooks
-                       apply-event-hooks)
+                       services)
          entities-tempids (into tempids
                                 (merge-tempids new-entities))
          new-relationships (gen-bulk-from-fn
@@ -160,8 +158,7 @@
                             entities-tempids
                             login
                             {:refresh refresh}
-                            apply-hooks
-                            apply-event-hooks)
+                            services)
          all-tempids (merge entities-tempids
                             (merge-tempids new-relationships))
          all-entities (into new-entities new-relationships)
@@ -181,9 +178,9 @@
   (get-in (p/read-global-properties) [:ctia :http :bulk :max-size]))
 
 (defn fetch-bulk
-  [entities-map auth-identity]
+  [entities-map auth-identity services]
   (let [bulk (into {} (remove (comp empty? second) entities-map))]
     (if (> (bulk-size bulk) (get-bulk-max-size))
       (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
       (ent/un-store-map
-       (gen-bulk-from-fn read-entities bulk auth-identity)))))
+       (gen-bulk-from-fn read-entities bulk auth-identity services)))))
