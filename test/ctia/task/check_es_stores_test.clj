@@ -53,6 +53,7 @@
 
 (def examples
   {:actors          (n-doc actor-minimal fixtures-nb)
+   :asset           (n-doc asset-minimal fixtures-nb)
    :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
    :campaigns       (n-doc campaign-minimal fixtures-nb)
    :coas            (n-doc coa-minimal fixtures-nb)
