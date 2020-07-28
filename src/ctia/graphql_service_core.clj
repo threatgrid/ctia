@@ -4,14 +4,14 @@
             [ctia.schemas.graphql.helpers :as helpers])
   (:import [graphql GraphQL]))
 
-;; :graphql-promise is a Promise<GraphQL>
-(defn get-graphql [{:keys [graphql-promise]}]
+(defn get-graphql [{:keys [graphql]}]
   {:post [(instance? GraphQL %)]}
-  @graphql-promise)
+  graphql)
 
 ;; :type-registry is an Atom<{String, Promise<graphql.*>}>
 (defn get-or-update-type-registry [type-registry name f]
   {:post [%]}
+  (prn 'get-or-update-type-registry name (sort (keys @type-registry)))
   (or ;; fast-path for readers
       (some-> (get @type-registry name) deref)
       ;; might need to generate a value (or coordinate with another thread doing so)
@@ -27,16 +27,15 @@
           (deliver newprm (f)))
         @newprm)))
 
-(defn init [context]
-  (assoc context
-         :type-registry (atom {})
-         :graphql-promise (promise)))
-
-(defn start [{:keys [graphql-promise type-registry] :as context} services]
-  (deliver graphql-promise
+(defn start [context services]
+  ;; Type registry to avoid any duplicates when using new-object
+  ;; or new-enum. Contains a map with promises delivering graphql types, indexed by name
+  (let [type-registry (atom {})]
+    (assoc context
+           :type-registry type-registry
+           :graphql
            (-> schemas/graphql
                (helpers/resolve-with-rt-opt
                  {:services
                   (assoc-in services [:GraphQLService :get-or-update-type-registry]
-                            #(get-or-update-type-registry type-registry %1 %2))})))
-  context)
+                            #(get-or-update-type-registry type-registry %1 %2))})))))
