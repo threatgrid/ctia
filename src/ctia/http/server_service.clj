@@ -2,9 +2,12 @@
   (:require [ctia.http.server-service-core :as core]
             [ctia.properties :as p]
             [ctia.store-service :as store-svc]
-            [puppetlabs.trapperkeeper.core :as tk]))
+            [puppetlabs.trapperkeeper.core :as tk]
+            [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
-(defprotocol CTIAHTTPServerService)
+(defprotocol CTIAHTTPServerService
+  ;; for testing purposes
+  (get-ctia-http-server-service-dependencies [this]))
 
 (tk/defservice ctia-http-server-service
   CTIAHTTPServerService
@@ -25,4 +28,5 @@
                                      :IAuth IAuth
                                      :GraphQLService GraphQLService
                                      :IEncryption IEncryption}))
-  (stop [this context] (core/stop context)))
+  (stop [this context] (core/stop context))
+  (get-ctia-http-server-service-dependencies [this] (:services (service-context this))))

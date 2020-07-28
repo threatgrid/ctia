@@ -154,7 +154,7 @@
                ;unsure if reachable
                (.value builder ^GraphQLEnumValueDefinition value))))
          (let [graphql-enum (.build builder)]
-           graphql-enum)))))
+           graphql-enum))))))
 
 (s/defn list-type :- (MaybeDelayedGraphQLValue GraphQLList)
   [t :- (MaybeDelayedGraphQLValue GraphQLValue)]
