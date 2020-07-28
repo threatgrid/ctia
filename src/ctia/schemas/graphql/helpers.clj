@@ -138,23 +138,23 @@
   "Creates a GraphQLEnumType. If a type with the same name has already been
    created, the corresponding object is retrieved from the provided or the
    default type repository."
-  [enum-name :- String description values]
-  (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as _rt-opt_}]
-   (get-or-update-type-registry
-     enum-name
-     #(let [builder (-> (GraphQLEnumType/newEnum)
-                        (.name enum-name)
-                        (.description ^String description))
-            names-and-values? (map? values)]
-        (doseq [value values]
-          (if names-and-values?
-            (.value builder (key value) (val value))
-            (if (string? value)
-              (.value builder ^String value)
-              ;unsure if reachable
-              (.value builder ^GraphQLEnumValueDefinition value))))
-        (let [graphql-enum (.build builder)]
-          graphql-enum)))))
+  ([enum-name :- String description values]
+   (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as _rt-opt_}]
+    (get-or-update-type-registry
+      enum-name
+      #(let [builder (-> (GraphQLEnumType/newEnum)
+                         (.name enum-name)
+                         (.description ^String description))
+             names-and-values? (map? values)]
+         (doseq [value values]
+           (if names-and-values?
+             (.value builder (key value) (val value))
+             (if (string? value)
+               (.value builder ^String value)
+               ;unsure if reachable
+               (.value builder ^GraphQLEnumValueDefinition value))))
+         (let [graphql-enum (.build builder)]
+           graphql-enum)))))
 
 (s/defn list-type :- (MaybeDelayedGraphQLValue GraphQLList)
   [t :- (MaybeDelayedGraphQLValue GraphQLValue)]
@@ -359,11 +359,11 @@
   (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as rt-opt}]
     (get-or-update-type-registry
       object-name
-      #(-> (GraphQLInputObjectType/newInputObject)
-           (.name ^String object-name)
-           (.description ^String description)
-           (add-input-fields fields rt-opt)
-           .build))))
+ #(-> (GraphQLInputObjectType/newInputObject)
+      (.name ^String object-name)
+      (.description ^String description)
+      (add-input-fields fields rt-opt)
+      .build))))
 
 ;;----- Output
 
