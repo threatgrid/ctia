@@ -5,8 +5,6 @@
 
 (defn start [context {:keys [port] :as http-config} services]
   (log/info (str "Starting HTTP server on port " port))
-  ;; force graphql start
-  ((-> services :GraphQLService :get-graphql))
   (assoc context
          :server (new-jetty-instance http-config services)))
 

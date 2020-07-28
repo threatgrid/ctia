@@ -3,25 +3,33 @@
             [ctia.graphql.schemas :as schemas]
             [ctia.schemas.graphql.helpers :as helpers]))
 
-(defn get-graphql [{:keys [graphql]}]
-  @graphql)
+(defn get-graphql [{:keys [graphql-promise]}]
+  @graphql-promise)
 
-(defn get-or-update-type-registry [{:keys [type-registry]} name f]
-  ;; FIXME seems prone to races, putting a lock here for now.
-  ;; better solution might be swap! an intermediate value while
-  ;; computing (f) so we don't block readers.
-  (locking type-registry
-    (or (get @type-registry name)
-        (let [v (f)]
-          (swap! type-registry assoc name v)
-          v))))
+(defn get-or-update-type-registry [type-registry name f]
+  (or (some-> (get @type-registry name) deref)
+      (let [[{oldprm name} {newprm name}] (swap-vals! type-registry
+                                                      (fn [{oldprm name :as oldtr}]
+                                                        (cond-> oldtr
+                                                          (not oldprm)
+                                                          (assoc name (promise)))))
+            _ (assert (or oldprm newprm))]
+        (when (not= oldprm newprm)
+          (do (assert (not oldprm))
+              (assert newprm)
+              (deliver newprm (f))))
+        @newprm)))
 
-(defn start [context services]
+(defn init [context]
   (assoc context
          :type-registry (atom {})
-         ;; delayed because :services contains GraphQLService operations,
-         ;; which are only callable after this 'start' function returns.
-         :graphql (delay
-                    (-> schemas/graphql
-                        (helpers/resolve-with-rt-opt
-                          {:services services})))))
+         :graphql-promise (promise)))
+
+(defn start [{:keys [graphql-promise type-registry] :as context} services]
+  (deliver graphql-promise
+           (-> schemas/graphql
+               (helpers/resolve-with-rt-opt
+                 {:services
+                  (assoc-in services [:GraphQLService :get-or-update-type-registry]
+                            #(get-or-update-type-registry type-registry %1 %2))})))
+  context)
