@@ -138,14 +138,8 @@
   "Creates a GraphQLEnumType. If a type with the same name has already been
    created, the corresponding object is retrieved from the provided or the
    default type repository."
-  ([enum-name description values]
-   (fn [rt-opt]
-     (enum enum-name
-           description
-           values
-           rt-opt)))
-  ([enum-name :- String description values
-    {{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as _rt-opt_}]
+  [enum-name :- String description values]
+  (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as _rt-opt_}]
    (get-or-update-type-registry
      enum-name
      #(let [builder (-> (GraphQLEnumType/newEnum)

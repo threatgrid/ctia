@@ -30,3 +30,11 @@
   {:pre [store-svc-fn]}
   (fn [store f & args]
     (store-svc-fn store #(apply f % args))))
+
+(defn lift-store-service-fns
+  "Given a map of StoreService services (via defservice), lift
+  them to support variable arguments."
+  [services]
+  (cond-> services
+    (:read-store services) (update :read-store store-service-fn->varargs)
+    (:write-store services) (update :write-store store-service-fn->varargs)))
