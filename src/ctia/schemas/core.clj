@@ -34,8 +34,8 @@
     {:new-schema (s/protocol s/Schema)
      :route-context s/Str
      ;; a 1-arg function of taking a map of services, returning routes
-     ;; (eg., return value of `entity-crud-routes`
-     :routes s/Any
+     ;; (eg., return value of `entity-crud-routes`)
+     :routes (s/=> s/Any {s/Keyword {s/Keyword (s/pred fn?)}})
      :tags [s/Str]
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool

@@ -366,11 +366,14 @@
   [object-name
    description
    fields :- MaybeDelayedGraphQLFields]
- #(-> (GraphQLInputObjectType/newInputObject)
-      (.name ^String object-name)
-      (.description ^String description)
-      (add-input-fields fields %)
-      .build))
+  (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as rt-opt}]
+    (get-or-update-type-registry
+      object-name
+      #(-> (GraphQLInputObjectType/newInputObject)
+           (.name ^String object-name)
+           (.description ^String description)
+           (add-input-fields fields rt-opt)
+           .build))))
 
 ;;----- Output
 
@@ -452,18 +455,21 @@
    ^String description
    type-resolver-fn
    types]
- #(let [type-resolver (fn->type-resolver type-resolver-fn %)
-        graphql-union (-> (GraphQLUnionType/newUnionType)
-                          (.description description)
-                          (.name union-name)
-                          ; FIXME: this method is deprecated
-                          (.typeResolver type-resolver))]
-    (doseq [type types
-            :let [type (-> type (resolve-with-rt-opt %))]]
-      (if (instance? GraphQLObjectType type)
-        (.possibleType graphql-union ^GraphQLObjectType type)
-        (.possibleType graphql-union ^GraphQLTypeReference type)))
-    (.build graphql-union)))
+  (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as rt-opt}]
+    (get-or-update-type-registry
+      union-name
+      #(let [type-resolver (fn->type-resolver type-resolver-fn rt-opt)
+             graphql-union (-> (GraphQLUnionType/newUnionType)
+                               (.description description)
+                               (.name union-name)
+                               ; FIXME: this method is deprecated
+                               (.typeResolver type-resolver))]
+         (doseq [type types
+                 :let [type (-> type (resolve-with-rt-opt rt-opt))]]
+           (if (instance? GraphQLObjectType type)
+             (.possibleType graphql-union ^GraphQLObjectType type)
+             (.possibleType graphql-union ^GraphQLTypeReference type)))
+         (.build graphql-union)))))
 
 (defn new-ref
   [object-name]
