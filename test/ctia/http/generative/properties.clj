@@ -105,7 +105,7 @@
   (api-for-route 'asset (spec-gen "max-new-asset")))
 
 (def api-for-asset-mapping-routes
-  (api-for-route 'asset (spec-gen "max-new-asset-mapping")))
+  (api-for-route 'asset-mapping (spec-gen "max-new-asset-mapping")))
 
 (def api-for-attack-pattern-routes
   (api-for-route 'attack-pattern
