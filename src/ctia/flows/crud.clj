@@ -50,6 +50,16 @@
    (s/optional-key :enveloped-result?) (s/maybe s/Bool)
    :store-fn (s/pred fn?)})
 
+(defn- wrap-realize-fn [realize-fn services]
+  (fn [& args]
+    (let [maybe-delayed (apply realize-fn args)]
+      (if (fn? maybe-delayed)
+        (maybe-delayed {:services services})
+        maybe-delayed))))
+
+(defn- init-flow-map [{:keys [services] :as flow-map}]
+  (update flow-map :realize-fn wrap-realize-fn services))
+
 (defn- find-id
   "Lookup an ID in a given entity.  Parse it, because it might be a
    URL, and return the short form ID.  Returns nil if the ID could not
@@ -412,6 +422,7 @@
        :store-fn store-fn
        :create-event-fn to-create-event
        :enveloped-result? enveloped-result?}
+      init-flow-map
       validate-entities
       create-ids-from-transient
       realize-entities
@@ -457,6 +468,7 @@
            :spec spec
            :store-fn update-fn
            :create-event-fn to-update-event}
+          init-flow-map
           validate-entities
           realize-entities
           throw-validation-error
@@ -502,6 +514,7 @@
            :spec spec
            :store-fn update-fn
            :create-event-fn to-update-event}
+          init-flow-map
           patch-entities
           validate-entities
           realize-entities

@@ -20,8 +20,7 @@
           "init throws without props"))
     (testing "encrypt and decrypt a string using encryption-key's secret"
       (let [context (-> {}
-                        (sut-core/init {:key {:filepath key-path}})
-                        sut-core/start)
+                        (sut-core/init {:key {:filepath key-path}}))
             plain "foo"
             enc (sut-core/encrypt context plain)
             dec (sut-core/decrypt context enc)]

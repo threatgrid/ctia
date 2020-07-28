@@ -15,11 +15,5 @@
     (log/info "Loading Encryption Key")
     (core/init context
                (get-in (p/read-global-properties) [:ctia :encryption])))
-  (start [this context]
-         (reset! encryption/encryption-service this)
-         (core/start context))
-  (stop [this context]
-        (reset! encryption/encryption-service nil)
-        (core/stop context))
   (decrypt [this src] (core/decrypt (service-context this) src))
   (encrypt [this src] (core/encrypt (service-context this) src)))

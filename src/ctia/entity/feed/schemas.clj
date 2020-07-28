@@ -1,6 +1,5 @@
 (ns ctia.entity.feed.schemas
   (:require
-   [ctia.encryption :as encryption]
    [clj-momo.lib.time :as time]
    [ctia.domain
     [access-control :refer [properties-default-tlp]]
@@ -8,7 +7,7 @@
      :refer [schema-version
              short-id->long-id]]]
    [ctia.schemas
-    [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs]]
+    [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs MaybeDelayedRealizeFn]]
     [utils :as csu]]
    [ctim.schemas.common :as csc]
    [flanders
@@ -68,7 +67,7 @@
 
 (s/defschema PartialFeedList [PartialFeed])
 
-(s/defn realize-feed :- StoredFeed
+(s/defn realize-feed :- (MaybeDelayedRealizeFn StoredFeed)
   ([new-object :- NewFeed
     id :- s/Str
     tempids :- (s/maybe TempIDs)
@@ -81,21 +80,22 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
+  (fn [{{{:keys [encrypt decrypt]} :IEncryption} :services}]
    (let [long-id (short-id->long-id id)
          plain-secret (if-let [prev-secret (:secret prev-object)]
-                        (encryption/decrypt-str prev-secret)
+                        (decrypt prev-secret)
                         (str (java.util.UUID/randomUUID)))
          output (or (:output new-object)
                     (:output prev-object))
          secret
          (or (:secret prev-object)
-             (encryption/encrypt-str
+             (encrypt
               plain-secret))
          feed_view_url
-         (encryption/encrypt-str
+         (encrypt
           (str long-id "/view?s=" plain-secret))
          feed_view_url_txt
-         (encryption/encrypt-str
+         (encrypt
           (str long-id "/view.txt?s=" plain-secret))
          now (time/now)]
      (merge new-object
@@ -114,4 +114,4 @@
              :tlp
              (:tlp new-object
                    (:tlp prev-object
-                         (properties-default-tlp)))}))))
+                         (properties-default-tlp)))})))))

@@ -18,12 +18,6 @@
            :encrypt-fn #(encrypt-as-base64 % secret)
            :decrypt-fn #(decrypt-from-base64 % secret))))
 
-(defn start [context]
-  context)
-
-(defn stop [context]
-  context)
-
 (defn decrypt [{:keys [decrypt-fn]} src]
   (decrypt-fn src))
 

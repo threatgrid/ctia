@@ -1,7 +1,6 @@
 (ns ctia.entity.feed
   (:require
    [clojure.string :as string]
-   [ctia.encryption :as encryption]
    [ctia.http.routes.crud :as crud]
    [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
    [ctia.domain.entities
@@ -115,20 +114,23 @@
 (defn decrypt-feed
   [{:keys [secret
            feed_view_url]
-    :as feed}]
+    :as feed}
+   {{:keys [decrypt]} :IEncryption :as services}]
   (cond-> feed
     secret (assoc :secret
-                  (encryption/decrypt-str secret))
+                  (decrypt secret))
     feed_view_url (assoc :feed_view_url
-                         (encryption/decrypt-str
+                         (decrypt
                           feed_view_url))))
 
-(defn decrypt-feed-page [feed-page]
+(defn decrypt-feed-page [feed-page services]
   (update feed-page :data
           (fn [feeds]
-            (map decrypt-feed feeds))))
+            (map #(decrypt-feed % services) feeds))))
 
-(defn fetch-feed [id s {{:keys [read-store]} :StoreService :as services}]
+(defn fetch-feed [id s {{:keys [read-store]} :StoreService
+                        {:keys [decrypt]} :IEncryption
+                        :as services}]
   (if-let [{:keys [indicator_id
                    secret
                    output
@@ -144,7 +146,7 @@
     (cond
       (not feed) :not-found
       (not (valid-lifetime? lifetime)) :not-found
-      (not= s (encryption/decrypt-str secret)) :unauthorized
+      (not= s (decrypt secret)) :unauthorized
       :else (let [;; VERY IMPORTANT! inherit the identity from the Feed!
                   feed-identity
                   {:login owner
@@ -248,7 +250,7 @@
           :spec :new-feed/map)
          first
          un-store
-         decrypt-feed
+         (decrypt-feed services)
          created))
    (PUT "/:id" []
      :return Feed
@@ -281,7 +283,7 @@
                    :entity entity-update
                    :spec :new-feed/map)
                   un-store
-                  decrypt-feed)]
+                  (decrypt-feed services))]
        (ok updated-rec)
        (not-found)))
 
@@ -300,7 +302,7 @@
                      q)
          page-with-long-id
          un-store-page
-         decrypt-feed-page
+         (decrypt-feed-page services)
          paginated-ok))
 
    (GET "/search" []
@@ -318,7 +320,7 @@
           (select-keys params search-options))
          page-with-long-id
          un-store-page
-         decrypt-feed-page
+         (decrypt-feed-page services)
          paginated-ok))
 
    (GET "/search/count" []
@@ -350,7 +352,7 @@
        (-> rec
            with-long-id
            un-store
-           decrypt-feed
+           (decrypt-feed services)
            ok)
        (not-found)))
 

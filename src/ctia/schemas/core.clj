@@ -18,6 +18,13 @@
    :created java.util.Date
    (s/optional-key :modified) java.util.Date})
 
+(defn MaybeDelayedRealizeFn [a]
+  (s/if fn?
+    ;; delayed
+    (s/=> a {s/Keyword {s/Keyword (s/pred fn?)}})
+    ;; eager
+    a))
+
 (s/defschema Entity
   (st/merge
    {:entity s/Keyword
@@ -40,7 +47,19 @@
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
      :no-api? s/Bool
-     :realize-fn s/Any})))
+     :realize-fn (s/=>* (MaybeDelayedRealizeFn (s/pred map?))
+                   [s/Any  ;; new-object
+                    s/Any  ;; id
+                    s/Any  ;; tempids
+                    s/Any  ;; owner
+                    s/Any] ;; groups
+                   [s/Any  ;; new-object
+                    s/Any  ;; id
+                    s/Any  ;; tempids
+                    s/Any  ;; owner
+                    s/Any  ;; groups
+                    s/Any] ;; prev-object
+                   )})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})
