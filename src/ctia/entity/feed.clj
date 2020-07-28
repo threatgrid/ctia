@@ -200,7 +200,7 @@
      :produces #{"text/plain"}
      :query-params [s :- (describe s/Str "The feed share token")]
      (let [{:keys [output]
-            :as feed} (fetch-feed id s)]
+            :as feed} (fetch-feed id s services)]
        (case feed
          :not-found (not-found "feed not found")
          :unauthorized (unauthorized "wrong secret")
@@ -216,7 +216,7 @@
      :path-params [id :- s/Str]
      :return FeedView
      :query-params [s :- (describe s/Str "The feed share token")]
-     (let [feed (fetch-feed id s)]
+     (let [feed (fetch-feed id s services)]
        (case feed
          :not-found (not-found "feed not found")
          :unauthorized (unauthorized "wrong secret")
