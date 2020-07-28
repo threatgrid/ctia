@@ -21,7 +21,7 @@
 
 (deftest testable-wrap-authentication-test
   (with-app-with-config app
-    auth-svc/allow-all-auth-service
+    [auth-svc/allow-all-auth-service]
     {}
     (is (= {:status 200 :body "test"}
            (let [handler (fn [request] {:status 200 :body (or (:body request)
