@@ -41,7 +41,6 @@
     :properties
     (merge
      em/base-entity-mapping
-     em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:identity    em/tg-identity
@@ -104,7 +103,7 @@
     :get-params               AssetMappingGetParams
     :list-schema              PartialAssetMappingList
     :search-schema            PartialAssetMappingList
-    :external-id-q-params     AssetMappingGetParams
+    :external-id-q-params     AssetMappingByExternalIdQueryParams
     :search-q-params          AssetMappingSearchParams
     :new-spec                 :new-asset-mapping/map
     :realize-fn               realize-asset-mapping

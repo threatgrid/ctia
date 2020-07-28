@@ -70,9 +70,9 @@
                       "ctia.store.es.default.rollover.max_docs" 50
                       "ctia.store.es.event.rollover.max_docs" 1000
                       "ctia.store.es.actor.indexname" "ctia_actor"
+                      "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.asset.indexname" "ctia_asset"
                       "ctia.store.es.asset-mapping.indexname" "ctia_asset_mapping"
-                      "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.migration.indexname" "ctia_migration"
                       "ctia.store.es.attack-pattern.indexname" "ctia_attack_pattern"
                       "ctia.store.es.campaign.indexname" "ctia_campaign"
@@ -112,7 +112,7 @@
                       "ctia.store.relationship" "es"
                       "ctia.store.casebook" "es"
                       "ctia.store.sighting" "es"
-                      "ctia.store.identity-assertion" "es" 
+                      "ctia.store.identity-assertion" "es"
                       "ctia.store.tool" "es"
                       "ctia.store.vulnerability" "es"
                       "ctia.store.weakness" "es"
