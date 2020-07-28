@@ -440,8 +440,8 @@
                    :source "source"
                    :indicators (set (map mk-indicator (range nb-entities)))}
            response-create (post "ctia/bundle/import"
-                                   :body bundle
-                                   :headers {"Authorization" "45c1f5e3f05d0"})
+                                 :body bundle
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
            bundle-result-create (:parsed-body response-create)
            response-update (post "ctia/bundle/import"
                                  :body bundle

@@ -1,6 +1,6 @@
 (ns ctia.bundle.core-test
   (:require [ctia.bundle.core :as sut]
-            [clojure.tools.logging.test :refer [logged? with-log the-log]]
+            [clojure.tools.logging.test :refer [logged? with-log]]
             [ctia.domain.entities :as ent :refer [with-long-id]]
             [ctia.flows.crud :refer [make-id]]
             [clojure.test :as t :refer [deftest use-fixtures join-fixtures are is testing]]
@@ -93,8 +93,7 @@
                 :log? true}))))
 
 (deftest filter-external-ids-test
-  (let [external-ids ["ctia-indicator-1" "cisco-indicator-1" "indicator-1"]
-        test-fn (fn [prefixes expected log?])]
+  (let [external-ids ["ctia-indicator-1" "cisco-indicator-1" "indicator-1"]]
     (are [expected prefixes log?]
         (testing prefixes
           (with-log
@@ -103,7 +102,8 @@
             (is (= log?
                    (logged? 'ctia.bundle.core
                             :warn
-                            #"More than 1 valid external ID has been found")))))
+                            #"More than 1 valid external ID has been found"))))
+          true)
       external-ids [] true
       external-ids nil true
       [] ["not-matched"] false
