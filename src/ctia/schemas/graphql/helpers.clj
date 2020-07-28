@@ -136,8 +136,7 @@
 
 (s/defn enum :- (MaybeDelayedGraphQLValue GraphQLEnumType)
   "Creates a GraphQLEnumType. If a type with the same name has already been
-   created, the corresponding object is retrieved from the provided or the
-   default type repository."
+   created, the corresponding object is retrieved instead."
   ([enum-name :- String description values]
    (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as _rt-opt_}]
     (get-or-update-type-registry
@@ -352,7 +351,9 @@
       (.field builder newf)))
   builder)
 
-(s/defn new-input-object :- (MaybeDelayedGraphQLValue GraphQLValue)
+(s/defn new-input-object :- (MaybeDelayedGraphQLValue GraphQLInputObjectType)
+  "Creates a GraphQLInputObjectType. If a type with the same name has already been
+   created, the corresponding object is retrieved instead."
   [object-name
    description
    fields :- MaybeDelayedGraphQLFields]
@@ -441,6 +442,8 @@
             (resolve-with-rt-opt rt-opt))))))
 
 (s/defn new-union :- (MaybeDelayedGraphQLValue GraphQLUnionType)
+  "Creates a GraphQLUnionType. If a type with the same name has already been
+   created, the corresponding object is retrieved instead."
   [^String union-name
    ^String description
    type-resolver-fn
