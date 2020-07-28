@@ -46,14 +46,14 @@
                        "Edge")]
    (->
     (g/new-object
-      connection-name
-      (str "A connection to a list of " type-name)
-      []
-      {:pageInfo {:type (g/non-null PageInfo)}
-       :totalCount {:type Scalars/GraphQLInt}
-       :edges {:type (g/list-type (new-edge node-type
-                                            edge-name))}
-       :nodes {:type (g/list-type node-type)}})
+     connection-name
+     (str "A connection to a list of " type-name)
+     []
+     {:pageInfo {:type (g/non-null PageInfo)}
+      :totalCount {:type Scalars/GraphQLInt}
+      :edges {:type (g/list-type (new-edge node-type
+                                           edge-name))}
+      :nodes {:type (g/list-type node-type)}})
     (g/resolve-with-rt-opt %))))
 
 ;;------- Limit/Offset with opaque cursor

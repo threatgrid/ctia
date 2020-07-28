@@ -290,8 +290,7 @@
   [^String arg-name
    arg-type :- (MaybeDelayedGraphQLValue GraphQLValue)
    ^String arg-description
-   arg-default-value
-   rt-opt :- GraphQLRuntimeOptions]
+   arg-default-value, rt-opt :- GraphQLRuntimeOptions]
   (let [builder
         (-> (GraphQLArgument/newArgument)
             (.name arg-name)
@@ -301,11 +300,10 @@
       (.defaultValue builder arg-default-value))
     (.build builder)))
 
-(defn- add-args
+(defn add-args
   ^GraphQLFieldDefinition$Builder
   [^GraphQLFieldDefinition$Builder field
-   args
-   rt-opt]
+   args, rt-opt]
   (doseq [[k {arg-type :type
               arg-description :description
               arg-default-value :default
@@ -319,13 +317,12 @@
       (.argument field narg)))
   field)
 
-(s/defn ^:private new-input-field
+(s/defn new-input-field
   :- GraphQLInputObjectField
   [^String field-name
    field-type :- (MaybeDelayedGraphQLValue GraphQLValue)
    ^String field-description
-   default-value
-   rt-opt :- GraphQLRuntimeOptions]
+   default-value, rt-opt :- GraphQLRuntimeOptions]
   (let [^GraphQLInputType field-type (-> field-type
                                          (resolve-with-rt-opt rt-opt))
         _ (log/debug "New input field" field-name (pr-str field-type))
@@ -351,8 +348,7 @@
           (new-input-field (name k)
                            field-type
                            field-description
-                           field-default-value
-                           rt-opt)]
+                           field-default-value rt-opt)]
       (.field builder newf)))
   builder)
 
@@ -452,18 +448,18 @@
   (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as rt-opt}]
     (get-or-update-type-registry
       union-name
-      #(let [type-resolver (fn->type-resolver type-resolver-fn rt-opt)
-             graphql-union (-> (GraphQLUnionType/newUnionType)
-                               (.description description)
-                               (.name union-name)
-                               ; FIXME: this method is deprecated
-                               (.typeResolver type-resolver))]
-         (doseq [type types
-                 :let [type (-> type (resolve-with-rt-opt rt-opt))]]
-           (if (instance? GraphQLObjectType type)
-             (.possibleType graphql-union ^GraphQLObjectType type)
-             (.possibleType graphql-union ^GraphQLTypeReference type)))
-         (.build graphql-union)))))
+ #(let [type-resolver (fn->type-resolver type-resolver-fn rt-opt)
+        graphql-union (-> (GraphQLUnionType/newUnionType)
+                          (.description description)
+                          (.name union-name)
+                          ; FIXME: this method is deprecated
+                          (.typeResolver type-resolver))]
+    (doseq [type types
+            :let [type (-> type (resolve-with-rt-opt rt-opt))]]
+      (if (instance? GraphQLObjectType type)
+        (.possibleType graphql-union ^GraphQLObjectType type)
+        (.possibleType graphql-union ^GraphQLTypeReference type)))
+    (.build graphql-union)))))
 
 (defn new-ref
   [object-name]
