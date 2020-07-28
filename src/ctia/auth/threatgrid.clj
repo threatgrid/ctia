@@ -70,13 +70,6 @@
                    :lookup-stored-identity-fn
                    (if cache (memo lookup-stored-identity) lookup-stored-identity)}))))
 
-  (start [this context]
-         (reset! auth/auth-service this)
-         context)
-  (stop [this context]
-        (reset! auth/auth-service nil)
-        context)
-
   (identity-for-token [this token]
     (let [{:keys [whoami-fn lookup-stored-identity-fn]} (service-context this)]
       (or (when-let [{{:strs [role
