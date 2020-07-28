@@ -139,29 +139,28 @@
    created, the corresponding object is retrieved from the provided or the
    default type repository."
   ([enum-name description values]
-   (fn [{{{:keys [get-type-registry]} :GraphQLService} :services :as rt-opt}]
-     (->
-       (enum enum-name
-             description
-             values
-             (get-type-registry))
-       (resolve-with-rt-opt rt-opt))))
-  ([^String enum-name ^String description values registry]
-   (or (get @registry enum-name)
-       (let [builder (-> (GraphQLEnumType/newEnum)
-                         (.name enum-name)
-                         (.description description))
-             names-and-values? (map? values)]
-         (doseq [value values]
-           (if names-and-values?
-             (.value builder (key value) (val value))
-             (if (string? value)
-               (.value builder ^String value)
-               ;unsure if reachable
-               (.value builder ^GraphQLEnumValueDefinition value))))
-         (let [graphql-enum (.build builder)]
-           (swap! registry assoc enum-name graphql-enum)
-           graphql-enum)))))
+   (fn [rt-opt]
+     (enum enum-name
+           description
+           values
+           rt-opt)))
+  ([enum-name :- String description values
+    {{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as _rt-opt_}]
+   (get-or-update-type-registry
+     enum-name
+     #(let [builder (-> (GraphQLEnumType/newEnum)
+                        (.name enum-name)
+                        (.description ^String description))
+            names-and-values? (map? values)]
+        (doseq [value values]
+          (if names-and-values?
+            (.value builder (key value) (val value))
+            (if (string? value)
+              (.value builder ^String value)
+              ;unsure if reachable
+              (.value builder ^GraphQLEnumValueDefinition value))))
+        (let [graphql-enum (.build builder)]
+          graphql-enum)))))
 
 (s/defn list-type :- MaybeDelayedGraphQLValue
   [t :- MaybeDelayedGraphQLValue]
@@ -422,24 +421,23 @@
    created, the corresponding object is retrieved from the provided or the
    default type repository."
   ([object-name description interfaces fields]
-   (fn [{{{:keys [get-type-registry]} :GraphQLService} :services :as rt-opt}]
-     (-> (new-object object-name description interfaces fields (get-type-registry))
-         (resolve-with-rt-opt rt-opt))))
+   (fn [rt-opt]
+     (new-object object-name description interfaces fields rt-opt)))
   ([object-name
     description
     interfaces
     fields :- MaybeDelayedGraphQLFields
-    registry]
-  #(or (get @registry object-name)
-       (let [builder (-> (GraphQLObjectType/newObject)
-                         (.description ^String description)
-                         (.name ^String object-name)
-                         (add-fields fields %))]
-         (doseq [^GraphQLInterfaceType interface interfaces]
-           (.withInterface builder interface))
-         (let [obj (.build builder)]
-           (swap! registry assoc object-name obj)
-           obj)))))
+    {{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as rt-opt}]
+   (get-or-update-type-registry
+     object-name
+     #(let [builder (-> (GraphQLObjectType/newObject)
+                        (.description ^String description)
+                        (.name ^String object-name)
+                        (add-fields fields rt-opt))]
+        (doseq [^GraphQLInterfaceType interface interfaces]
+          (.withInterface builder interface))
+        (let [obj (.build builder)]
+          obj)))))
 
 (s/defn fn->type-resolver :- TypeResolver
   "Converts a function that takes the current object, the args

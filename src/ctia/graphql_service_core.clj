@@ -6,15 +6,21 @@
 (defn get-graphql [{:keys [graphql]}]
   @graphql)
 
-(defn get-type-registry [{:keys [type-registry]}]
-  type-registry)
+(defn get-or-update-type-registry [{:keys [type-registry]} name f]
+  ;; FIXME seems prone to races, putting a lock here for now.
+  ;; better solution might be swap! an intermediate value while
+  ;; computing (f) so we don't block readers.
+  (locking type-registry
+    (or (get @type-registry name)
+        (let [v (f)]
+          (swap! type-registry assoc name v)
+          v))))
 
 (defn start [context services]
   (assoc context
-         ;; TODO investigate race conditions
          :type-registry (atom {})
-         ;; delayed because :services also contains GraphQLService operations,
-         ;; which is only ready to call after this 'start' function returns.
+         ;; delayed because :services contains GraphQLService operations,
+         ;; which are only callable after this 'start' function returns.
          :graphql (delay
                     (-> schemas/graphql
                         (helpers/resolve-with-rt-opt

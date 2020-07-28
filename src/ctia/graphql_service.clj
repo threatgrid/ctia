@@ -7,11 +7,14 @@
   (get-graphql [this] "Returns an instance of graphql.GraphQL")
   ;; Type registry to avoid any duplicates when using new-object
   ;; or new-enum. Contains a map with types indexed by name
-  (get-type-registry [this] "Returns the type registry, an atom"))
+  (get-or-update-type-registry
+    [this name f]
+    "If name exists in registry, return existing mapping. Otherwise conj
+    {name (f)} to registry, and return (f)."))
 
 (defn- GraphQLService-map [this]
-  {:get-graphql #(get-graphql this)
-   :get-type-registry #(get-type-registry this)})
+  {:get-graphql (partial get-graphql this)
+   :get-or-update-type-registry (partial get-or-update-type-registry this)})
 
 (tk/defservice graphql-service
   GraphQLService
@@ -19,4 +22,6 @@
   (start [this context] (core/start context {:StoreService StoreService
                                              :GraphQLService (GraphQLService-map this)}))
   (get-graphql [this] (core/get-graphql (service-context this)))
-  (get-type-registry [this] (core/get-type-registry (service-context this))))
+  (get-or-update-type-registry [this name f] (core/get-or-update-type-registry (service-context this)
+                                                                               name
+                                                                               f)))
