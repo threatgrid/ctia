@@ -5,7 +5,7 @@
              [index :as es-index]
              [conn :as conn]
              [schemas :refer [ESConn]]]
-            [ctia.store :refer :all]
+            [ctia.store :refer [IStore IQueryStringSearchableStore]]
             [ctia.stores.es.crud :as crud]))
 
 (defn delete-state-indexes [{:keys [conn index config]}]

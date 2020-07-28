@@ -205,7 +205,7 @@
                "/ctia" []
              (context "/feed" []
                :tags ["Feed"]
-               feed-view-routes)
+               (feed-view-routes services))
              ;; The order is important here for version-routes
              ;; must be before the middleware fn
              version-routes
@@ -221,9 +221,9 @@
                  :tags ["Incident"]
                  (incident-link-route services))
                (bundle-routes services)
-               observable-routes
+               (observable-routes services)
                metrics-routes
                properties-routes
-               graphql-routes)))
+               (graphql-routes services))))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))

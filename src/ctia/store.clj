@@ -30,16 +30,6 @@
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident]))
 
-(defn write-store [store write-fn & args]
-  (store-svc/write-store @store-svc/global-store-service
-                         store
-                         #(apply write-fn % args)))
-
-(defn read-store [store read-fn & args]
-  (store-svc/read-store @store-svc/global-store-service
-                        store
-                        #(apply read-fn % args)))
-
 (def read-fn read-record)
 (def create-fn create-record)
 (def list-fn list-records)
@@ -49,7 +39,8 @@
    list-fn
    filters
    identity-map
-   params]
+   params
+   {{:keys [read-store]} :StoreService :as _services_}]
   (loop [query-params params
          results []]
     (let [{:keys [data

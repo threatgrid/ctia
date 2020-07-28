@@ -154,7 +154,7 @@
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler services)
-         true auth/wrap-authentication
+         true (auth/wrap-authentication services)
 
          (:enabled jwt)
          auth-jwt/wrap-jwt-to-ctia-auth

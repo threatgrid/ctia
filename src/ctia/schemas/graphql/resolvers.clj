@@ -4,6 +4,9 @@
              :refer
              [page-with-long-id un-store un-store-page with-long-id]]
             [ctia.schemas.core :as ctia-schemas]
+            [ctia.schemas.graphql.helpers :refer [MaybeDelayedGraphQLTypeResolver
+                                                  MaybeDelayedGraphQLValue
+                                                  GraphQLRuntimeOptions]]
             [ctia.schemas.graphql.pagination :as pagination]
             [ctia.store :refer :all]
             [schema.core :as s]))
@@ -24,7 +27,7 @@
    ident
    field-selection
    with-long-id-fn
-   {{{:keys [read-store]} :StoreService} :services :as rt-opt}]
+   {{{:keys [read-store]} :StoreService} :services :as _rt-opt_} :- GraphQLRuntimeOptions]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -43,7 +46,7 @@
             un-store-page
             (pagination/result->connection-response paging-params))))
 
-(defn search-entity-resolver
+(s/defn search-entity-resolver :- MaybeDelayedGraphQLTypeResolver
   [entity-type-kw]
   (fn [context args field-selection src]
    #(search-entity entity-type-kw
@@ -55,12 +58,12 @@
                    page-with-long-id
                    %)))
 
-(s/defn entity-by-id
+(s/defn entity-by-id :- MaybeDelayedGraphQLValue
   [entity-type-kw :- s/Keyword
    id :- s/Str
    ident
    field-selection :- (s/maybe [s/Keyword])]
- (fn [{{{:keys [read-store]} :StoreService} :services :as rt-opt}]
+ (fn [{{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
   (log/debugf "Retrieve %s (id:%s, fields:%s)"
               entity-type-kw
               id
@@ -73,7 +76,7 @@
           with-long-id
           un-store)))
 
-(defn entity-by-id-resolver
+(s/defn entity-by-id-resolver :- MaybeDelayedGraphQLTypeResolver
   [entity-type-kw]
   (fn [context args field-selection _]
     (entity-by-id entity-type-kw
@@ -83,11 +86,12 @@
 
 ;;---- Feedback
 
-(s/defn search-feedbacks-by-entity-id
+(s/defn search-feedbacks-by-entity-id :- MaybeDelayedGraphQLValue
   [entity-id :- s/Str
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
+ (fn [{{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -99,15 +103,16 @@
                         (:ident context)
                         params)
             un-store-page
-            (pagination/result->connection-response paging-params))))
+            (pagination/result->connection-response paging-params)))))
 
 ;;---- Judgement
 
-(s/defn search-judgements-by-observable :- pagination/Connection
+(s/defn search-judgements-by-observable :- MaybeDelayedGraphQLValue;;<pagination/Connection>
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
+ (fn [{{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -119,15 +124,16 @@
                         params)
             page-with-long-id
             un-store
-            (pagination/result->connection-response paging-params))))
+            (pagination/result->connection-response paging-params)))))
 
 ;;---- Sighting
 
-(s/defn search-sightings-by-observable :- pagination/Connection
+(s/defn search-sightings-by-observable :- MaybeDelayedGraphQLValue;;<pagination/Connection>
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
+ (fn [{{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -139,11 +145,11 @@
                         params)
             page-with-long-id
             un-store
-            (pagination/result->connection-response paging-params))))
+            (pagination/result->connection-response paging-params)))))
 
 ;;---- Relationship
 
-(defn search-relationships
+(s/defn search-relationships :- MaybeDelayedGraphQLValue
   [context args field-selection src]
  #(let [{:keys [query relationship_type target_type]} args
         filtermap {:relationship_type relationship_type

@@ -1,7 +1,6 @@
 (ns ctia.entity.judgement.es-store
   (:require [clj-momo.lib.es.document :refer [search-docs]]
             [clj-momo.lib.time :as time]
-            [ctia.store :refer :all]
             [ctia.domain.access-control :refer [allow-write?]]
             [ctia.entity.judgement.schemas
              :refer

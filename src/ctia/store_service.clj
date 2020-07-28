@@ -3,8 +3,6 @@
             [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
-(defonce global-store-service (atom nil))
-
 (defprotocol StoreService
   (get-stores [this] "Returns the atom of stores")
   (write-store [this store write-fn])
@@ -15,13 +13,7 @@
   storage area for all stores."
   StoreService
   []
-  (init [this context]
-        (reset! global-store-service this)
-        (core/init context))
-  ;; this impl can be deleted with global-store-service
-  (stop [this context]
-        (reset! global-store-service nil)
-        context)
+  (init [this context] (core/init context))
 
   (get-stores [this] (core/get-stores (service-context this)))
   (write-store [this store write-fn]

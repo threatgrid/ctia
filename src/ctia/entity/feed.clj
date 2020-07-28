@@ -128,7 +128,7 @@
           (fn [feeds]
             (map decrypt-feed feeds))))
 
-(defn fetch-feed [id s]
+(defn fetch-feed [id s {{:keys [read-store]} :StoreService :as services}]
   (if-let [{:keys [indicator_id
                    secret
                    output
@@ -158,7 +158,8 @@
                             list-records
                             {:all-of {:target_ref indicator_id}}
                             feed-identity
-                            {:fields [:source_ref]})
+                            {:fields [:source_ref]}
+                            services)
                            (keep :source_ref)
                            (map #(read-store :judgement
                                              read-record
@@ -189,7 +190,7 @@
 (defn render-headers? [output]
   (not= :observables output))
 
-(def feed-view-routes
+(defn feed-view-routes [services]
   (routes
    (GET "/:id/view.txt" []
      :summary "Get a Feed View as newline separated entries"
@@ -221,7 +222,7 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(defn feed-routes [services]
+(defn feed-routes [{{:keys [write-store read-store]} :StoreService :as services}]
   (routes
    (POST "/" []
      :return Feed

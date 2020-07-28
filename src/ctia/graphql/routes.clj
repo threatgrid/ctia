@@ -23,7 +23,8 @@
                :endpoint "/ctia/graphql"
                :jwtLocalStorageKey jwt-storage-key}))))
 
-(defroutes graphql-routes
+(defn graphql-routes [services]
+ (routes
   (POST "/graphql" []
         :tags ["GraphQL"]
         :return gql/RelayGraphQLResponse
@@ -72,7 +73,7 @@
                      (pr-str body)
                      " variables: " (pr-str variables))
           (let [{:keys [errors data] :as result}
-                (gql/execute query operationName variables request-context)
+                (gql/execute query operationName variables request-context services)
                 str-errors (map str errors)]
             (log/debug "Graphql result:" result)
             (cond
@@ -81,4 +82,4 @@
                                                   (some? data) (assoc :data data))))
               (some? data) (ok {:data data})
               :else (internal-server-error
-                     {:error "No data or errors were returned by the GraphQL query"}))))))
+                     {:error "No data or errors were returned by the GraphQL query"})))))))

@@ -25,7 +25,8 @@
             (s/optional-key :sort_by)
             (describe (s/enum :id) "Sort result on a field")))
 
-(defroutes observable-routes
+(defn observable-routes [{{:keys [read-store]} :StoreService :as services}]
+ (routes
   (GET "/:observable_type/:observable_value/verdict" []
        :tags ["Verdict"]
        :path-params [observable_type :- ObservableTypeIdentifier
@@ -204,4 +205,4 @@
               (pag/paginate params)
               (pag/response {:offset (:offset params)
                              :limit (:limit params)
-                             :hits (count incident-ids)}))))))
+                             :hits (count incident-ids)})))))))

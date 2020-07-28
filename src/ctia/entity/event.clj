@@ -20,7 +20,7 @@
    [ctia.stores.es
     [crud :as crud]
     [mapping :as em]]
-   [ctia.store :refer [read-store list-events list-all-pages]]
+   [ctia.store :refer [list-events list-all-pages]]
    [ctia.domain.entities :as ent]
    [ctia.properties :as p]
    [clojure.set :as set]))
@@ -113,7 +113,7 @@
         buckets (reduce timeline-append [] events)]
     (reverse (sort-by :from buckets))))
 
-(defn fetch-related-events [_id identity-map q]
+(defn fetch-related-events [_id identity-map q services]
   (let [filters {:entity.id _id
                  :entity.source_ref _id
                  :entity.target_ref _id}]
@@ -121,10 +121,10 @@
                             list-events
                             {:one-of filters}
                             identity-map
-                            q)
+                            q services)
             ent/un-store-all)))
 
-(def event-history-routes
+(defn event-history-routes [services]
   (routes
    (GET "/history/:entity_id" []
         :return [EventBucket]
@@ -136,13 +136,14 @@
         :identity-map identity-map
         (let [res (fetch-related-events entity_id
                                         identity-map
-                                        (into q {:sort_by :timestamp :sort_order :desc}))
+                                        (into q {:sort_by :timestamp :sort_order :desc})
+                                        services)
               timeline (bucketize-events res)]
           (ok timeline)))))
 
-(defn event-routes [service-map]
+(defn event-routes [services]
   (routes
-   event-history-routes
+   (event-history-routes services)
    ((entity-crud-routes
     {:tags ["Event"]
      :entity :event
@@ -160,7 +161,7 @@
      :search-capabilities :search-event
      :delete-capabilities #{:delete-event :developer}
      :date-field :timestamp})
-    service-map)))
+    services)))
 
 (def event-entity
   {:new-spec map?

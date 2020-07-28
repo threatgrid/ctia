@@ -18,7 +18,8 @@
 (defn observable-verdict
   [{observable-type :type
     observable-value :value}
-   ident]
+   ident
+   {{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
@@ -28,8 +29,8 @@
 (def observable-fields
   {:verdict {:type verdict/VerdictType
              :resolve (fn [context _ _ src]
-                        (observable-verdict (select-keys src [:type :value])
-                                            (:ident context)))}
+                       #(observable-verdict (select-keys src [:type :value])
+                                            (:ident context) %))}
    :judgements {:type judgement/JudgementConnectionType
                 :args (into pagination/connection-arguments
                             judgement/judgement-order-arg)

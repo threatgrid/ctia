@@ -158,5 +158,5 @@
 (def schema (g/new-schema QueryType))
 (def graphql (g/new-graphql schema))
 
-(defn execute [query operation-name variables context]
-  (g/execute graphql query operation-name variables context))
+(defn execute [query operation-name variables context {{:keys [get-graphql]} :GraphQLService :as services}]
+  (g/execute (get-graphql) query operation-name variables context))

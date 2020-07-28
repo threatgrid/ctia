@@ -9,7 +9,9 @@
 (tk/defservice ctia-http-server-service
   CTIAHTTPServerService
   [HooksService
-   StoreService]
+   StoreService
+   IAuth
+   GraphQLService]
   (start [this context] (core/start context
                                     (get-in (p/read-global-properties) [:ctia :http])
                                     {:HooksService (-> HooksService 
@@ -19,5 +21,7 @@
                                                        (select-keys [:read-store
                                                                      :write-store])
                                                        (update :read-store store-service-fn->varargs)
-                                                       (update :write-store store-service-fn->varargs))}))
+                                                       (update :write-store store-service-fn->varargs))
+                                     :IAuth IAuth
+                                     :GraphQLService GraphQLService}))
   (stop [this context] (core/stop context)))

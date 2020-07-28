@@ -52,7 +52,7 @@
      JudgementFieldsParam
      {(s/optional-key :sort_by) feedback-sort-fields})))
 
-(def feedback-by-entity-route
+(defn feedback-by-entity-route [{{:keys [read-store]} :StoreService :as _services_}]
   (GET "/" []
        :return fs/PartialFeedbackList
        :query [params FeedbackQueryParams]
@@ -74,9 +74,9 @@
     :read-feedback
     :delete-feedback})
 
-(defn feedback-routes [service-map]
+(defn feedback-routes [services]
   (routes
-   feedback-by-entity-route
+   (feedback-by-entity-route services)
    ((entity-crud-routes
     {:entity :feedback
      :new-schema fs/NewFeedback
@@ -95,7 +95,7 @@
      :can-search? false
      :enumerable-fields []
      :can-update? false})
-    service-map)))
+    services)))
 
 (def feedback-entity
   {:route-context "/feedback"

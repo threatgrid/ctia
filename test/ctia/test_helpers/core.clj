@@ -15,7 +15,8 @@
              [auth :as auth]
              [init :as init]
              [properties :as p :refer [PropertiesSchema]]
-             [store :as store]]
+             [store :as store]
+             [store-service :as store-svc]]
             [ctia.auth.allow-all :as aa]
             [ctia.flows.crud :as crud]
             [ctim.domain.id :as id]
@@ -202,10 +203,14 @@
 
 (defn set-capabilities!
   [login groups role caps]
-  (store/write-store :identity store/create-identity {:login login
+  (let [app (get-current-app)
+        store-svc (app/get-service app :StoreService)
+        write-store (-> #(store-svc/write-store store-svc %1 %2)
+                        store-svc/store-service-fn->varargs)]
+    (write-store :identity store/create-identity {:login login
                                                       :groups groups
                                                       :role role
-                                                      :capabilities caps}))
+                                                      :capabilities caps})))
 
 (defmacro deftest-for-each-fixture [test-name fixture-map & body]
   `(do
