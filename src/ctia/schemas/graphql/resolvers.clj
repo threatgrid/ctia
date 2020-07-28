@@ -6,6 +6,7 @@
             [ctia.schemas.core :as ctia-schemas]
             [ctia.schemas.graphql.helpers :refer [MaybeDelayedGraphQLTypeResolver
                                                   MaybeDelayedGraphQLValue
+                                                  GraphQLValue
                                                   GraphQLRuntimeOptions]]
             [ctia.schemas.graphql.pagination :as pagination]
             [ctia.store :refer :all]
@@ -58,7 +59,7 @@
                    page-with-long-id
                    %)))
 
-(s/defn entity-by-id :- MaybeDelayedGraphQLValue
+(s/defn entity-by-id :- (MaybeDelayedGraphQLValue GraphQLValue)
   [entity-type-kw :- s/Keyword
    id :- s/Str
    ident
@@ -86,7 +87,7 @@
 
 ;;---- Feedback
 
-(s/defn search-feedbacks-by-entity-id :- MaybeDelayedGraphQLValue
+(s/defn search-feedbacks-by-entity-id :- (MaybeDelayedGraphQLValue GraphQLValue)
   [entity-id :- s/Str
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
@@ -107,7 +108,7 @@
 
 ;;---- Judgement
 
-(s/defn search-judgements-by-observable :- MaybeDelayedGraphQLValue;;<pagination/Connection>
+(s/defn search-judgements-by-observable :- (MaybeDelayedGraphQLValue pagination/Connection)
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
@@ -128,7 +129,7 @@
 
 ;;---- Sighting
 
-(s/defn search-sightings-by-observable :- MaybeDelayedGraphQLValue;;<pagination/Connection>
+(s/defn search-sightings-by-observable :- (MaybeDelayedGraphQLValue pagination/Connection)
   [observable :- ctia-schemas/Observable
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
@@ -149,7 +150,7 @@
 
 ;;---- Relationship
 
-(s/defn search-relationships :- MaybeDelayedGraphQLValue
+(s/defn search-relationships :- (MaybeDelayedGraphQLValue GraphQLValue)
   [context args field-selection src]
  #(let [{:keys [query relationship_type target_type]} args
         filtermap {:relationship_type relationship_type

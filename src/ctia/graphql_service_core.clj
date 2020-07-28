@@ -11,7 +11,6 @@
 ;; :type-registry is an Atom<{String, Promise<graphql.*>}>
 (defn get-or-update-type-registry [type-registry name f]
   {:post [%]}
-  (prn 'get-or-update-type-registry name (sort (keys @type-registry)))
   (or ;; fast-path for readers
       (some-> (get @type-registry name) deref)
       ;; might need to generate a value (or coordinate with another thread doing so)
