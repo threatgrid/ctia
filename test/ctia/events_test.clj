@@ -7,7 +7,7 @@
                          join-fixtures]]
    [clojure.core.async :refer [<!! chan poll! tap]]
    [ctia.entity.event.obj-to-event :as o2e]
-   [ctia.events-service :as events-svc]
+   [ctia.events :as events-svc]
    [ctia.lib.async :as la]
    [ctia.test-helpers
     [core :as helpers]

@@ -1,5 +1,5 @@
 (ns ctia.logger-test
-  (:require [ctia.events-service :as events-svc]
+  (:require [ctia.events :as events-svc]
             [ctia.test-helpers
              [core :as test-helpers]
              [es :as es-helpers]]

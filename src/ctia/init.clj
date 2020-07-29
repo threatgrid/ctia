@@ -15,7 +15,7 @@
    [ctia.lib.utils :as utils]
    [ctia
     [auth :as auth]
-    [events-service :as e]
+    [events :as e]
     [logging :as event-logging]
     [properties :as p]
     [store :as store]
