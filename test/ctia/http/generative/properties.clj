@@ -15,6 +15,7 @@
              [actor :refer [NewActor]]
              [asset :refer [NewAsset]]
              [asset-mapping :refer [NewAssetMapping]]
+             [asset-properties :refer [NewAssetProperties]]
              [attack-pattern :refer [NewAttackPattern]]
              [campaign :refer [NewCampaign]]
              [coa :refer [NewCOA]]
@@ -73,6 +74,7 @@
         [[NewActor "max-new-actor"]
          [NewAsset "max-new-asset"]
          [NewAssetMapping "max-new-asset-mapping"]
+         [NewAssetProperties "max-new-asset-properties"]
          [NewAttackPattern "max-new-attack-pattern"]
          [NewCampaign "max-new-campaign"]
          [NewCOA "max-new-coa"]
@@ -107,6 +109,9 @@
 
 (def api-for-asset-mapping-routes
   (api-for-route 'asset-mapping (spec-gen "max-new-asset-mapping")))
+
+(def api-for-asset-properties-routes
+  (api-for-route 'asset-properties (spec-gen "max-new-asset-properties")))
 
 (def api-for-attack-pattern-routes
   (api-for-route 'attack-pattern

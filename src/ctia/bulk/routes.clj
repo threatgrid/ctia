@@ -19,6 +19,7 @@
         :capabilities #{:create-actor
                         :create-asset
                         :create-asset-mapping
+                        :create-asset-properties
                         :create-attack-pattern
                         :create-campaign
                         :create-coa
@@ -50,6 +51,7 @@
        :query-params [{actors              :- [Reference] []}
                       {asset_mappings      :- [Reference] []}
                       {assets              :- [Reference] []}
+                      {asset_properties    :- [Reference] []}
                       {attack_patterns     :- [Reference] []}
                       {campaigns           :- [Reference] []}
                       {casebooks           :- [Reference] []}
@@ -70,6 +72,7 @@
        :capabilities #{:read-actor
                        :read-asset
                        :read-asset-mapping
+                       :read-asset-properties
                        :read-attack-pattern
                        :read-campaign
                        :read-casebook
@@ -91,6 +94,7 @@
        (let [entities-map {:actors              actors
                            :asset_mappings      asset_mappings
                            :assets              assets
+                           :asset_properties    asset_properties
                            :attack_patterns     attack_patterns
                            :campaigns           campaigns
                            :casebooks           casebooks
