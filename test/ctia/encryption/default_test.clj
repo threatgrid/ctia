@@ -2,28 +2,30 @@
   (:require
    [ctia.encryption :as enc]
    [ctia.encryption.default :as sut]
-   [ctia.encryption.default-core :as sut-core]
    [clojure.test :as t :refer [deftest testing is]]
-   [lock-key.core :refer [decrypt-from-base64
-                          encrypt-as-base64]]))
+   [puppetlabs.trapperkeeper.app :as app]
+   [puppetlabs.trapperkeeper.testutils.bootstrap :refer [with-app-with-config]]))
 
-;; TODO update to use with-app-with-config when tk is no longer global
-(deftest simulated-default-encryption-service-test
-  (let [key-path "resources/cert/ctia-encryption.key"]
-    (testing "encryption-key requires key"
-      (is (try (sut-core/init {} {})
-               false
-               (catch Exception e
-                 (is (= (.getMessage e)
-                        "no secret or key filepath provided"))
-                 true))
-          "init throws without props"))
-    (testing "encrypt and decrypt a string using encryption-key's secret"
-      (let [context (-> {}
-                        (sut-core/init {:key {:filepath key-path}}))
-            plain "foo"
-            enc (sut-core/encrypt context plain)
-            dec (sut-core/decrypt context enc)]
-        (is (string? enc))
-        (is (not= plain enc))
-        (is (= dec plain))))))
+(deftest encryption-default-record-test
+  (let [key-path "resources/cert/ctia-encryption.key"
+        rec (fn [app]
+              (app/get-service app :IEncryption))]
+    (testing "failed service init"
+      (assert
+        (try (with-app-with-config app
+               [sut/default-encryption-service]
+               {:ctia {:encryption nil}}
+               false)
+             (catch Throwable e
+               (is (= (.getMessage e)
+                      "Assert failed: no secret or key filepath provided\n(or secret (:filepath key))"))))))
+    (with-app-with-config app
+      [sut/default-encryption-service]
+      {:ctia {:encryption {:key {:filepath key-path}}}}
+      (testing "encrypt and decrypt a string using the record"
+        (let [plain "foo"
+              enc (enc/encrypt (rec app) "foo")
+              dec (enc/decrypt (rec app) enc)]
+          (is (string? enc))
+          (is (not= plain enc))
+          (is (= dec plain)))))))
