@@ -2,6 +2,7 @@
   (:require
    [clojure.tools.logging :as log]
    [ctia.properties :as p]
+   [clojure.set :refer [difference]]
    [ctia.stores.es.mapping :refer [store-settings]]
    [clj-momo.lib.es
     [conn :refer [connect]]
@@ -66,9 +67,10 @@
 
 (defn system-exit-error
   []
-  (log/warn "CTIA is probably starting with an invalid mapping.")
-  ;;(System/exit 1)
-  )
+  (log/error (str "CTIA tried to start with an invalid configuration: \n"
+                  "- invalid mapping\n"
+                  "- ambiguous index names"))
+  (System/exit 1))
 
 (defn update-mapping!
   [conn index config]
@@ -82,25 +84,42 @@
       (log/error "cannot update mapping. You probably tried to update the mapping of an existing field. It's only possible to add new field to existing mappings. If you need to modify the type of a field in an existing index, you must perform a migration" (ex-data e))
       (system-exit-error))))
 
+(defn get-existing-indices
+  [conn index]
+  ;; retrieve existing indices using wildcard to identify ambiguous index names
+  (let [existing (-> (es-index/get conn (str index "*"))
+                     keys
+                     set)
+        index-pattern (re-pattern (str index "(-\\d{4}.\\d{2}.\\d{2}.*)?"))
+        matching (filter #(re-matches index-pattern (name %))
+                         existing)
+        ambiguous (difference existing (set matching))]
+    (if (seq ambiguous)
+      (do (log/warn (format "ambiguous index names, %s and %s."
+                            index
+                            ambiguous))
+          (system-exit-error))
+      existing)))
+
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
   [properties :- StoreProperties]
   (let [{:keys [conn index props config] :as conn-state}
         (init-store-conn properties)
-        existing-index (es-index/get conn (str index "*"))]
-    (when (seq existing-index)
+        existing-indices (get-existing-indices conn index)]
+    (when (seq existing-indices)
       (update-mapping! conn index config)
       (update-settings! conn-state))
     (upsert-template! conn index config)
     (when (and (:aliased props)
-               (empty? existing-index))
+               (empty? existing-indices))
       ;;https://github.com/elastic/elasticsearch/pull/34499
       (es-index/create! conn
                         (format "<%s-{now/d}-000001>" index)
                         (update config :aliases assoc (:write-index props) {})))
     (if (and (:aliased props)
-             (contains? existing-index (keyword index)))
+             (contains? existing-indices (keyword index)))
       (do (log/error "an existing unaliased store was configured as aliased. Switching from unaliased to aliased indices requires a migration."
                      properties)
           (assoc-in conn-state [:props :write-index] index))
