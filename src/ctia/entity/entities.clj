@@ -7,6 +7,7 @@
    [ctia.entity
     [asset :refer [asset-entity]]
     [asset-mapping :refer [asset-mapping-entity]]
+    [asset-properties :refer [asset-properties-entity]]
     [feedback :refer [feedback-entity]]
     [weakness :refer [weakness-entity]]
     [vulnerability :refer [vulnerability-entity]]
@@ -34,6 +35,7 @@
   {:actor              actor-entity
    :asset              asset-entity
    :asset-mapping      asset-mapping-entity
+   :asset-properties   asset-properties-entity
    :attack-pattern     attack-pattern-entity
    :campaign           campaign-entity
    :casebook           casebook-entity

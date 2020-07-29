@@ -25,6 +25,8 @@
     :list-assets
     :read-asset-mapping
     :list-asset-mappings
+    :read-asset-properties
+    :list-asset-properties
     :read-malware
     :read-attack-pattern
     :read-judgement
@@ -103,6 +105,7 @@
                  :capabilities #{:create-actor
                                  :create-asset
                                  :create-asset-mapping
+                                 :create-asset-properties
                                  :create-attack-pattern
                                  :create-campaign
                                  :create-coa

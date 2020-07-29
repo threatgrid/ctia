@@ -38,6 +38,7 @@
    :actor []
    :asset []
    :asset-mapping []
+   :asset-properties []
    :coa []
    :data-table []
    :sighting []
