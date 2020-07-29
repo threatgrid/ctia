@@ -8,23 +8,18 @@
   {:post [(instance? GraphQL %)]}
   graphql)
 
-;; :type-registry is an Atom<{String, Promise<graphql.*>}>
+;; :type-registry is an Atom<{String, IDeref<graphql.*>}>
 (defn get-or-update-type-registry [type-registry name f]
   {:post [%]}
   (or ;; fast-path for readers
       (some-> (get @type-registry name) deref)
-      ;; might need to generate a value (or coordinate with another thread doing so)
-      (let [[{oldprm name} {newprm name}] (swap-vals! type-registry
-                                                      (fn [{oldprm name :as oldtr}]
-                                                        (cond-> oldtr
-                                                          (not oldprm)
-                                                          (assoc name (promise)))))
-            _ (assert (or oldprm newprm))]
-        ;; if oldprm is nil, we're in charge of delivering newprm.
-        ;; otherwise, another thread will deliver newprm.
-        (when (nil? oldprm)
-          (deliver newprm (f)))
-        @newprm)))
+      ;; generate a new graphql value, or coordinate with another thread doing the same
+      (let [{result-delay name} (swap! type-registry
+                                       (fn [{existing-delay name :as oldtr}]
+                                         (cond-> oldtr
+                                           (not existing-delay)
+                                           (assoc name (delay (f))))))]
+        @result-delay)))
 
 (defn start [context services]
   ;; Type registry to avoid any duplicates when using new-object
