@@ -145,18 +145,18 @@
                   log/*logger-factory* lf]
       (f))))
 
-(def ^:dynamic ^:private *current-app* nil)
+(def ^:dynamic ^:private *current-app*)
 
 (defn bind-current-app* [app f]
-  (let [_ (assert (nil? *current-app*) "Rebound app!")
+  (let [_ (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
         _ (assert app)]
     (binding [*current-app* app]
       (f))))
 
 (defn get-current-app []
   {:post [%]}
+  (assert (thread-bound? #'*current-app*) "App not bound!")
   (let [app *current-app*]
-    (assert app "App not bound!")
     app))
 
 (defn fixture-ctia
