@@ -385,8 +385,7 @@
   [id
    identity-map
    ident
-   params
-   services]
+   params services]
   (if-let [record (fetch-record id identity-map services)]
     (let [relationships (when (:include_related_entities params true)
                           (fetch-entity-relationships id identity-map params services))]
@@ -419,8 +418,7 @@
   [ids
    identity-map
    ident
-   params
-   services]
+   params services]
   (->> (map #(export-entities % identity-map ident params services) ids)
        (reduce #(deep-merge-with coll/add-colls %1 %2))
        (into empty-bundle)))
