@@ -5,7 +5,7 @@
             [ctia.schemas.sorting :as sorting]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
-            [ctim.schemas.asset :as asset-schema]
+            [ctim.schemas.asset-mapping :as asset-mapping-schema]
             [schema-tools.core :as st]
             [ctia.http.routes.crud :refer [entity-crud-routes]]
             [ctia.http.routes.common :as routes.common]
@@ -13,18 +13,18 @@
             [schema.core :as s]))
 
 (def-acl-schema AssetMapping
-  asset-schema/AssetMapping
+  asset-mapping-schema/AssetMapping
   "asset-mapping")
 
 (def-acl-schema PartialAssetMapping
-  (fu/optionalize-all asset-schema/AssetMapping)
+  (fu/optionalize-all asset-mapping-schema/AssetMapping)
   "partial-asset-mapping")
 
 (s/defschema PartialAssetMappingList
   [PartialAssetMapping])
 
 (def-acl-schema NewAssetMapping
-  asset-schema/NewAssetMapping
+  asset-mapping-schema/NewAssetMapping
   "new-asset-mapping")
 
 (def-stored-schema StoredAssetMapping AssetMapping)

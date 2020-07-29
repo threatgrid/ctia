@@ -13,7 +13,8 @@
             [ctim.domain.id :as id]
             [ctim.schemas
              [actor :refer [NewActor]]
-             [asset :refer [NewAsset NewAssetMapping]]
+             [asset :refer [NewAsset]]
+             [asset-mapping :refer [NewAssetMapping]]
              [attack-pattern :refer [NewAttackPattern]]
              [campaign :refer [NewCampaign]]
              [coa :refer [NewCOA]]

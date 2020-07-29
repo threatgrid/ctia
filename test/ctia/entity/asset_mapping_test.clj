@@ -11,8 +11,8 @@
             [ctia.test-helpers.http :as http]
             [ctia.test-helpers.pagination :as pagination]
             [ctia.test-helpers.store :as store]
-            [ctim.examples.assets :refer [new-asset-mapping-minimal
-                                          new-asset-mapping-maximal]]))
+            [ctim.examples.asset-mappings :refer [new-asset-mapping-minimal
+                                                  new-asset-mapping-maximal]]))
 
 (use-fixtures :once (join-fixtures [mth/fixture-schema-validation
                                     helpers/fixture-properties:clean

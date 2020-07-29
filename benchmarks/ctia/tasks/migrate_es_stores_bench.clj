@@ -8,7 +8,8 @@
              [core :as helpers :refer [post-bulk]]]
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
-             [assets :refer [asset-maximal asset-mapping-maximal]]
+             [assets :refer [asset-maximal]]
+             [asset-mappings :refer [asset-mapping-maximal]]
              [actors :refer [actor-maximal]]
              [attack-patterns :refer [attack-pattern-maximal]]
              [campaigns :refer [campaign-maximal]]

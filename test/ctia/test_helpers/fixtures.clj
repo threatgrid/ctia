@@ -3,8 +3,8 @@
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [actors :refer [actor-maximal actor-minimal]]
-             [assets :refer [asset-maximal asset-minimal
-                             asset-mapping-maximal asset-mapping-minimal]]
+             [assets :refer [asset-maximal asset-minimal]]
+             [asset-mappings :refer [asset-mapping-maximal asset-mapping-minimal]]
              [attack-patterns :refer [attack-pattern-maximal attack-pattern-minimal]]
              [campaigns :refer [campaign-maximal campaign-minimal]]
              [coas :refer [coa-maximal coa-minimal]]

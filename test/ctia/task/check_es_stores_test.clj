@@ -15,7 +15,8 @@
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
              [actors :refer [actor-minimal]]
-             [assets :refer [asset-minimal asset-mapping-minimal]]
+             [assets :refer [asset-minimal]]
+             [asset-mappings :refer [asset-mapping-minimal]]
              [attack-patterns :refer [attack-pattern-minimal]]
              [campaigns :refer [campaign-minimal]]
              [casebooks :refer [casebook-minimal]]
