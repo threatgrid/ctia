@@ -7,7 +7,9 @@
             [schema.core :as s :refer [=>]]
             [schema-tools.core :as st]
             [puppetlabs.trapperkeeper.core :as tk]
-            [puppetlabs.trapperkeeper.services :refer [service-context]]))
+            [puppetlabs.trapperkeeper.services :refer [service-context]])
+  (:import [clojure.core.async.impl.protocols Channel]
+           [java.util Map]))
 
 (defprotocol EventsService
   (central-channel [this] "Returns the central channel")
@@ -41,7 +43,8 @@
    (let [event (if timestamp event (assoc event :timestamp (time/now)))]
      (a/>!! ch event))))
 
-(s/defn register-listener*
+(s/defn register-listener* :- Channel
+
   "Convenience wrapper for registering a listener on the central event channel."
   ([context
     listen-fn :- (s/=> s/Any es/Event)

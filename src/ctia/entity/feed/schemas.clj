@@ -1,5 +1,6 @@
 (ns ctia.entity.feed.schemas
   (:require
+   [ctia.encryption :as encryption]
    [clj-momo.lib.time :as time]
    [ctia.domain
     [access-control :refer [properties-default-tlp]]
