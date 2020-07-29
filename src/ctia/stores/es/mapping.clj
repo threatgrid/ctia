@@ -128,6 +128,9 @@
 (def related-asset-mappings
   {:properties (assoc related :asset_mapping_id token)})
 
+(def related-asset-properties
+  {:properties (assoc related :asset_properties_id token)})
+
 (def related-incidents
   {:properties (assoc related
                       :incident_id token)})
