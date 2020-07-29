@@ -72,7 +72,7 @@
                       "ctia.store.es.event.rollover.max_docs" 1000
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
-                      "ctia.store.es.asset.indexname" "ctia_asset"
+                      "ctia.store.es.asset.indexname" "ctia_assets"
                       "ctia.store.es.asset-mapping.indexname" "ctia_asset_mapping"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.asset.indexname" "ctia_assets"
