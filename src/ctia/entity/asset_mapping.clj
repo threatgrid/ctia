@@ -48,7 +48,7 @@
       :confidence  em/token
       :specificity em/token
       :stability   em/token
-      :observable  em/token
+      :observable  em/observable
       :asset_ref   em/token})}})
 
 (def-es-store AssetMappingStore :asset-mapping StoredAssetMapping PartialStoredAssetMapping)
