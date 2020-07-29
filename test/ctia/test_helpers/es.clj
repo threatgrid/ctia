@@ -22,9 +22,8 @@
     (http/post (format "http://%s:%s/_refresh" host port))))
 
 (defn delete-store-indexes
-  ;; TODO delete this arity
   ([restore-conn?]
-   (let [app (h/get-current-app) ;; uses thread-local binding
+   (let [app (h/get-current-app)
          store-svc (app/get-service app :StoreService)]
      (delete-store-indexes
        store-svc
@@ -41,7 +40,7 @@
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
-  (let [app (h/get-current-app) ;; uses thread-local binding
+  (let [app (h/get-current-app)
         store-svc (app/get-service app :StoreService)]
     (delete-store-indexes store-svc true)
     (t)
