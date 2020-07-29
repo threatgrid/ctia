@@ -16,6 +16,7 @@
    [puppetlabs.trapperkeeper.core :as tk]
    [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
+(declare make-auth-service)
 
 (def cache-ttl-ms (* 1000 60 5))
 
@@ -63,26 +64,29 @@
                              store-svc/store-service-fn->varargs)
               lookup-stored-identity #(lookup-stored-identity % read-store)]
           (into context
-                (let [{:keys [whoami-url cache]} (get-in-config [:ctia :auth :threatgrid])
-                      whoami-fn (make-whoami-fn whoami-url)]
-                  {:whoami-fn
-                   (if cache (memo whoami-fn) whoami-fn)
-                   :lookup-stored-identity-fn
-                   (if cache (memo lookup-stored-identity) lookup-stored-identity)}))))
+                (make-auth-service get-in-config lookup-stored-identity))))
 
   (identity-for-token [this token]
-    (let [{:keys [whoami-fn lookup-stored-identity-fn]} (service-context this)]
-      (or (when-let [{{:strs [role
-                              login
-                              organization_id]} "data"}
-                     (when token (whoami-fn token))]
-            (when (and role login organization_id)
-              (map->Identity (or (lookup-stored-identity-fn login)
-                                 {:login login
-                                  ;; TODO check if this the right field we could use here
-                                  :groups [organization_id]
-                                  :role role
-                                  :capabilities (->> (str/lower-case role)
-                                                     keyword
-                                                     (get default-capabilities))}))))
-          auth/denied-identity-singleton))))
+   (let [{:keys [whoami-fn lookup-stored-identity-fn]} (service-context this)]
+    (or (when-let [{{:strs [role
+                            login
+                            organization_id]} "data"}
+                   (when token (whoami-fn token))]
+          (when (and role login organization_id)
+            (map->Identity (or (lookup-stored-identity-fn login)
+                               {:login login
+                                ;; TODO check if this the right field we could use here
+                                :groups [organization_id]
+                                :role role
+                                :capabilities (->> (str/lower-case role)
+                                                   keyword
+                                                   (get default-capabilities))}))))
+        auth/denied-identity-singleton))))
+
+(defn make-auth-service [get-in-config lookup-stored-identity]
+  (let [{:keys [whoami-url cache]} (get-in-config [:ctia :auth :threatgrid])
+        whoami-fn (make-whoami-fn whoami-url)]
+    {:whoami-fn
+     (if cache (memo whoami-fn) whoami-fn)
+     :lookup-stored-identity-fn
+     (if cache (memo lookup-stored-identity) lookup-stored-identity)}))
