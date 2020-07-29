@@ -100,7 +100,7 @@
                    #{"campaign - finished checking 100 documents"
                      "indicator - finished checking 100 documents"
                      "asset - finished checking 100 documents"
-                     "asset-mapping - finished checking 0 documents"
+                     "asset-mapping - finished checking 100 documents"
                      "actor - finished checking 100 documents"
                      "relationship - finished checking 100 documents"
                      "incident - finished checking 100 documents"
