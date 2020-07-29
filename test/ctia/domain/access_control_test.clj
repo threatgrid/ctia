@@ -1,6 +1,7 @@
 (ns ctia.domain.access-control-test
   (:require [ctia.domain.access-control :as sut]
-            [clojure.test :refer [deftest testing is]]))
+            [clojure.test :refer [deftest testing is]]
+            [ctia.properties :as p]))
 
 (defn test-matching-user [tlp sut-fn check-fn]
   (is (check-fn (sut-fn
@@ -132,10 +133,10 @@
 ;; ---- Max record visibility group
 
 (defn with-max-record-visibility-group [f]
-  (swap! ctia.properties/properties
+  (swap! (p/get-global-properties)
          assoc-in [:ctia :access-control :max-record-visibility] "group")
   (f)
-  (swap! ctia.properties/properties
+  (swap! (p/get-global-properties)
          assoc-in [:ctia :access-control :max-record-visibility] "everyone"))
 
 

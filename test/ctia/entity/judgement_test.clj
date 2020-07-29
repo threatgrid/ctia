@@ -11,7 +11,7 @@
               judgement-enumerable-fields
               judgement-histogram-fields
               NewJudgement]]
-            ctia.properties
+            [ctia.properties :as p]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -49,7 +49,7 @@
 (defn additional-tests [judgement-id _]
   (testing "GET /ctia/judgement/search"
     ;; only when ES store
-    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :indicator]))
+    (when (= "es" (get-in (p/read-global-properties) [:ctia :store :indicator]))
       (let [term "observable.value:\"1.2.3.4\""
             response (get (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}

@@ -11,7 +11,7 @@
              [document :as es-doc]
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
-            [ctia.properties :as props]
+            [ctia.properties :as p]
             [ctia.store :refer [stores]]
             [ctia.test-helpers
              [fixtures :as fixt]
@@ -238,8 +238,8 @@
                   helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
-(props/init!)
-(def es-props (get-in @props/properties [:ctia :store :es]))
+(p/init!)
+(def es-props (get-in (p/read-global-properties) [:ctia :store :es]))
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
 

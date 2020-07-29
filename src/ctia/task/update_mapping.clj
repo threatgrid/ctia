@@ -7,7 +7,7 @@
             [clojure.string :as str]
             [clojure.tools.logging :as log]
             [ctia.init :as init]
-            [ctia.properties :as properties]
+            [ctia.properties :as p]
             [ctia.store :as store]
             [ctia.stores.es.init :as es-init]
             [schema.core :as s])
@@ -46,7 +46,7 @@
       (println summary)
       (System/exit 0))
     (pp/pprint options)
-    (properties/init!)
+    (p/init!)
     (init/log-properties)
     (init/init-store-service!)
     (->> (:stores options)

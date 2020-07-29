@@ -12,7 +12,7 @@
              [test :refer [deftest is join-fixtures testing use-fixtures]]]
             [clj-http.fake :refer [with-global-fake-routes]]
             [ctia
-             [properties :refer [get-http-show properties]]
+             [properties :as p :refer [get-http-show]]
              [store :refer [stores]]]
             [ctia.bulk.core
              :refer
@@ -204,7 +204,7 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk with wait_for"
-       (let [default-es-refresh (->> (get-in @properties
+       (let [default-es-refresh (->> (get-in (p/read-global-properties)
                                              [:ctia :store :es :default :refresh])
                                      (str "refresh="))
              es-params (atom nil)

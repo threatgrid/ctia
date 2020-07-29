@@ -3,7 +3,7 @@
             [compojure.api
              [core :as c]
              [sweet :refer :all]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [ctia.graphql.schemas :as gql]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]
@@ -12,7 +12,7 @@
 
 (defn graphql-ui-routes []
   (let [jwt-storage-key
-        (get-in @properties [:ctia :http :jwt :local-storage-key])]
+        (get-in (p/read-global-properties) [:ctia :http :jwt :local-storage-key])]
     (c/undocumented
      ;; --- GraphiQL https://github.com/shahankit/custom-graphiql/
      (graphiql {:path "/graphiql"

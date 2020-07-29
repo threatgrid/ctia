@@ -26,8 +26,8 @@
              [version :refer [wrap-version]]]
             [ctia.metrics.routes :refer [metrics-routes]]
             [ctia.observable.routes :refer [observable-routes]]
-            [ctia.properties :refer [properties
-                                     get-http-swagger]]
+            [ctia.properties :as p
+             :refer [get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
             [ctia.version :refer [current-version]]
             [ctia.version.routes :refer [version-routes]]
@@ -161,7 +161,7 @@
           (cond-> {:ui "/"
                    :spec "/swagger.json"
                    :options {:ui {:jwtLocalStorageKey
-                                  (get-in @properties
+                                  (get-in (p/read-global-properties)
                                           [:ctia :http :jwt :local-storage-key])}}
                    :data {:info {:title "CTIA"
                                  :version (string/replace (current-version) #"\n" "")

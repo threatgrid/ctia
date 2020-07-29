@@ -3,7 +3,7 @@
             [clojure.spec.alpha :as cs]
             [clojure.spec.gen.alpha :as csg]
             [clojure.test :refer [deftest testing use-fixtures]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [ctia.test-helpers
              [core :as helpers :refer [url-id]]
              [http :refer [assert-post]]
@@ -21,7 +21,7 @@
   "generate an observable and many records of all listable entities"
   (test-for-each-store
    (fn []
-     (let [http-show (get-in @properties [:ctia :http :show])
+     (let [http-show (get-in (p/read-global-properties) [:ctia :http :show])
            observable {:type "ip"
                        :value "1.2.3.4"}
            title "test"
@@ -66,7 +66,7 @@
                            :target_ref (id/long-id indicator-id)}))))
 
        (testing "indicators with query (ES only)"
-         (when (= "es" (get-in @properties [:ctia :store :indicator]))
+         (when (= "es" (get-in (p/read-global-properties) [:ctia :store :indicator]))
            (pagination-test (str "/ctia/indicator/search?query=" title)
                             {"Authorization" "45c1f5e3f05d0"}
                             [:id :title])))

@@ -4,7 +4,7 @@
              [shell :as shell]]
             [ctia
              [init :refer [start-ctia!]]
-             [properties :refer [properties]]]))
+             [properties :as p]]))
 
 ;; swagger codegen package
 (def codegen-version "2.2.3")
@@ -46,7 +46,7 @@
 (defn spec-uri
   "compose the full path of the swagger spec to generate from"
   []
-  (let [port (get-in @properties [:ctia :http :port] 3000)]
+  (let [port (get-in (p/read-global-properties) [:ctia :http :port] 3000)]
     (str "http://localhost:" port "/swagger.json")))
 
 (defn exec-command

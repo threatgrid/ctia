@@ -10,7 +10,7 @@
    [clojure.tools.logging :as log]
    [ctia
     [init :refer [init-store-service! log-properties]]
-    [properties :as p :refer [properties]]
+    [properties :as p]
     [store :refer [stores]]]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]

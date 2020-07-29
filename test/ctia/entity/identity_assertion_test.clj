@@ -3,6 +3,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
             [ctia.entity.identity-assertion :as sut]
+            [ctia.properties :as p]
             [ctia.test-helpers
              [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
@@ -37,7 +38,7 @@
 (defn additional-tests [identity-assertion-id _]
   (testing "GET /ctia/identity-assertion/search"
   ;; only when ES store
-    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :identity-assertion]))
+    (when (= "es" (get-in (p/read-global-properties) [:ctia :store :identity-assertion]))
       (let [term "identity.observables.value:\"1.2.3.4\""
             response (get (str "ctia/identity-assertion/search")
                           :query-params {"query" term}

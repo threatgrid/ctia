@@ -18,8 +18,17 @@
   ["ctia-default.properties"
    "ctia.properties"])
 
-(defonce properties
+(defonce ^:private properties
   (atom {}))
+
+;; Note: this var is redefined in these places:
+;; - ctia.bundle.routes-test/with-tlp-property-setting
+;; - ctia.task.migration.migrate-es-stores-test
+(defn get-global-properties []
+  properties)
+
+(defn read-global-properties []
+  @(get-global-properties))
 
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
@@ -200,13 +209,14 @@
 
 (def init! (mp/build-init-fn files
                              PropertiesSchema
-                             properties))
+                             ;; TOP-LEVEL STATE!!
+                             (get-global-properties)))
 
 (defn get-http-show []
-  (get-in @properties [:ctia :http :show]))
+  (get-in (read-global-properties) [:ctia :http :show]))
 
 (defn get-http-swagger []
-  (get-in @properties [:ctia :http :swagger]))
+  (get-in (read-global-properties) [:ctia :http :swagger]))
 
 (defn get-access-control []
-  (get-in @properties [:ctia :access-control]))
+  (get-in (read-global-properties) [:ctia :access-control]))
