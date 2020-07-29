@@ -29,7 +29,7 @@
          (rollover-store)
          (assoc state k))
     (catch ExceptionInfo e
-      (log/error (format "could not rollover, a concurrent rollover could be already running on that index"
+      (log/error (format "could not rollover %s, a concurrent rollover could be already running on that index %s"
                          k
                          (pr-str (ex-data e))))
       (update state :nb-errors inc))))
