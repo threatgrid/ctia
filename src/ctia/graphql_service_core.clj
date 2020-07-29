@@ -14,7 +14,8 @@
   (or ;; fast-path for readers
       (some-> (get @type-registry name) deref)
       ;; generate a new graphql value, or coordinate with another thread doing the same
-      (let [{result-delay name} (swap! type-registry
+      (let [f (bound-fn* f) ;; may be run on another thread
+            {result-delay name} (swap! type-registry
                                        (fn [{existing-delay name :as oldtr}]
                                          (cond-> oldtr
                                            (not existing-delay)
