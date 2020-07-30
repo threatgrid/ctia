@@ -862,7 +862,7 @@
 
 (defn with-tlp-property-setting [tlp f]
   (with-redefs [p/global-properties-atom
-                (let [new-props (-> @(p/global-properties-atom)
+                (let [new-props (-> (p/get-global-properties)
                                     (assoc-in [:ctia :access-control :min-tlp] tlp)
                                     (assoc-in [:ctia :access-control :default-tlp] tlp)
                                     atom)]

@@ -80,7 +80,7 @@
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint @(p/global-properties-atom))))))
+                  (utils/safe-pprint (p/get-global-properties))))))
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
   [& {:keys [join?]}]

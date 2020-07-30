@@ -141,7 +141,7 @@
                           :restart? false}]
     (testing "misconfigured migration"
       (with-redefs [p/global-properties-atom
-                    (let [new-props (atom (-> @(p/global-properties-atom)
+                    (let [new-props (atom (-> (p/get-global-properties)
                                               (assoc-in [:ctia :store :es :investigation :indexname]
                                                         "v1.2.0_ctia_investigation")
                                               (assoc-in [:malware 0 :state :props :indexname]

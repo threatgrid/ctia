@@ -18,6 +18,7 @@
   ["ctia-default.properties"
    "ctia.properties"])
 
+;; should ONLY be used directly by `global-properties-atom`!
 (defonce ^:private global-properties
   (atom {}))
 
@@ -27,15 +28,16 @@
 (defn global-properties-atom []
   global-properties)
 
-;; Follows TK ConfigService's `get-in-config` for easy future
-;; migration.
+;; Follows TK ConfigService's `get-config` for future migration.
+(defn get-global-properties []
+  @(global-properties-atom))
+
+;; Follows TK ConfigService's `get-in-config` for future migration.
 (defn get-in-global-properties
   ([path]
    (get-in-global-properties path nil))
   ([path default]
-   ;; Note: use @(global-properties-atom) here, not @global-properties!
-   ;; `get-global-properties` is redefined during tests.
-   (get-in @(global-properties-atom) path default)))
+   (get-in (get-global-properties) path default)))
 
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
