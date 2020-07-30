@@ -12,7 +12,6 @@
             [ctia.store-service-core :refer [empty-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
-            [ctia.init :refer [start-ctia!]]
             [ctia.properties :as p]
             [ctia.stores.es
              [crud :refer [coerce-to-fn]]
