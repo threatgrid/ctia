@@ -2,14 +2,14 @@
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
             [clj-http.client :as http]
-            [ctia.properties :as p]
+            [ctia
+             [properties :as p]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware
              [auth :as auth]
              [ratelimit :refer [wrap-rate-limit]]]
             [ctia.lib.riemann :as rie]
-            [ctia.properties :as p]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
