@@ -8,6 +8,7 @@
             [clojure.java.io :as io]
             [ctia
              [store :as store]]
+            [clojure.walk :as walk]
             [ctia.stores.es
              [init :as es-init]
              [store :as es-store]]
@@ -198,4 +199,4 @@
                 {index (read-string
                         (:docs.count entry))}))
          (into {})
-         clojure.walk/keywordize-keys)))
+         walk/keywordize-keys)))
