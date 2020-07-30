@@ -46,9 +46,9 @@
      (entity-crud-test
       {:entity           "asset"
        :example          new-asset-maximal
-       :invalid-tests?   false
+       :invalid-tests?   true
        :update-tests?    true
-       :search-tests?    false
+       :search-tests?    true
        :update-field     :source
        :additional-tests additional-tests
        :headers          {:Authorization "45c1f5e3f05d0"}}))))
