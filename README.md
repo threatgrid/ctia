@@ -109,13 +109,16 @@ development machine to the services running in the containers:
 * riemann - 5555-5557
 * riemann-dash - 4567
 
-If you ever need to reset your entire dev environment, 
+If you ever need to reset your entire dev environment,
 just kill the docker-compose process and run:
 
 ```
 docker-compose -f containers/dev/docker-compose.yml down
-docker-compose -f containers/dev/docker-compose.yml up
+docker-compose -f containers/dev/docker-compose.yml up --force-recreate --remove-orphans
 ```
+
+In particular, this resets ElasticSearch indicies, which cannot
+be created more than once.
 
 ### Testing and CI
 
