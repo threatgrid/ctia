@@ -4,7 +4,7 @@
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.kafka :as lk]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [cheshire.core :refer [parse-string]]
@@ -30,7 +30,7 @@
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
           rebalance-signal (CountDownLatch. 1)
-          kafka-props (get-in @properties [:ctia :hook :kafka])
+          kafka-props (p/get-in-global-properties [:ctia :hook :kafka])
           consumer-map
           (lk/subscribe
            kafka-props

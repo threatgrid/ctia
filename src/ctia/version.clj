@@ -4,7 +4,7 @@
              [shell :as shell]]
             [clojure.string :as st]
             [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :refer [properties]]))
+            [ctia.properties :as p]))
 
 (def version-file "ctia-version.txt")
 
@@ -15,7 +15,7 @@
                    (:out (shell/sh "git" "symbolic-ref" "--short" "HEAD"))))))
 
 (defn current-config-version []
-  (get-in @properties [:ctia :versions :config] ""))
+  (p/get-in-global-properties [:ctia :versions :config] ""))
 
 (defn version-data []
   {:base "/ctia"

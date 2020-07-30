@@ -11,6 +11,7 @@
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
             [ctia.store :refer [stores]]
+            [ctia.properties :as p]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
              [core :as helpers :refer [deep-dissoc-entity-ids get post delete]]
@@ -860,11 +861,12 @@
            (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 
 (defn with-tlp-property-setting [tlp f]
-  (with-redefs [ctia.properties/properties
-                (-> (deref ctia.properties/properties)
-                    (assoc-in [:ctia :access-control :min-tlp] tlp)
-                    (assoc-in [:ctia :access-control :default-tlp] tlp)
-                    atom)]
+  (with-redefs [p/global-properties-atom
+                (let [new-props (-> (p/get-global-properties)
+                                    (assoc-in [:ctia :access-control :min-tlp] tlp)
+                                    (assoc-in [:ctia :access-control :default-tlp] tlp)
+                                    atom)]
+                  (fn [] new-props))]
     (f)))
 
 (deftest bundle-tlp-test

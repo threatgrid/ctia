@@ -1,5 +1,6 @@
 (ns ctia.domain.access-control
-  (:require [ctia.properties :refer [get-access-control]]
+  (:require [clojure.set :as set]
+            [ctia.properties :refer [get-access-control]]
             [ctim.schemas.common :as csc]
             [schema.core :as s])
   (:import [java.util List]))
@@ -57,7 +58,7 @@
    (and
     (seq (:groups ident))
     (seq (:authorized_groups doc))
-    (seq (clojure.set/intersection
+    (seq (set/intersection
           (set (:groups ident))
           (set (:authorized_groups doc)))))))
 
@@ -67,7 +68,7 @@
    (and
     (not (nil? (:login ident)))
     (seq (:authorized_users doc))
-    (seq (clojure.set/intersection
+    (seq (set/intersection
           #{(:login ident)}
           (set (:authorized_users doc)))))))
 

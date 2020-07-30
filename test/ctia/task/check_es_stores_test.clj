@@ -1,8 +1,9 @@
 (ns ctia.task.check-es-stores-test
   (:require [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
+            [clojure.set :as set]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
-            [ctia.properties :as props]
+            [ctia.properties :as p]
             [ctia.task.check-es-stores :as sut]
             [ctia.test-helpers
              [auth :refer [all-capabilities]]
@@ -76,7 +77,7 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-  (let [store-config (get-in @props/properties [:ctia :store :es :default])]
+  (let [store-config (p/get-in-global-properties [:ctia :store :es :default])]
     (post-bulk examples)
     (refresh-all-indices (:host store-config)
                          (:port store-config))
@@ -88,7 +89,7 @@
           (testing "shall produce valid logs"
             (let [messages (set @logger)]
               (is (contains? messages "set batch size: 100"))
-              (is (clojure.set/subset?
+              (is (set/subset?
                    ["campaign - finished checking 100 documents"
                     "indicator - finished checking 100 documents"
                     "event - finished checking 1500 documents"

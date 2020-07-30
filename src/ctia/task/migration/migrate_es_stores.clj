@@ -1,5 +1,6 @@
 (ns ctia.task.migration.migrate-es-stores
   (:require [clojure.tools.cli :refer [parse-opts]]
+            [clojure.pprint :as pp]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
 
@@ -11,7 +12,7 @@
             [ctia.store :refer [stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [ctia.stores.es
              [crud :refer [coerce-to-fn]]
              [store :refer [StoreMap]]]
@@ -282,7 +283,7 @@
   [{:keys [prefix
            store-keys]} :- MigrationParams]
   (doseq [store-key store-keys]
-    (let [index (get-in @properties [:ctia :store :es store-key :indexname])]
+    (let [index (p/get-in-global-properties [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
                index)
         (throw (AssertionError.
@@ -349,7 +350,7 @@
     (when (:help options)
       (println summary)
       (System/exit 0))
-    (clojure.pprint/pprint options)
+    (pp/pprint options)
     (run-migration {:migration-id id
                     :prefix       prefix
                     :migrations   migrations

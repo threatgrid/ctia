@@ -1,6 +1,6 @@
 (ns ctia.properties.routes
   (:require [compojure.api.sweet :refer :all]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
@@ -10,4 +10,4 @@
            :summary "Configured properties"
            :capabilities :developer
            (GET "/" []
-                (ok @properties))))
+                (ok (p/get-global-properties)))))

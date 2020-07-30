@@ -1,7 +1,7 @@
 (ns ctia.stores.es.init
   (:require
    [clojure.tools.logging :as log]
-   [ctia.properties :refer [properties]]
+   [ctia.properties :as p]
    [ctia.stores.es.mapping :refer [store-settings]]
    [clj-momo.lib.es
     [conn :refer [connect]]
@@ -109,11 +109,10 @@
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
   [store-kw :- s/Keyword]
-  (let [props @properties]
-    (merge
-     {:entity store-kw}
-     (get-in props [:ctia :store :es :default] {})
-     (get-in props [:ctia :store :es store-kw] {}))))
+  (merge
+    {:entity store-kw}
+    (p/get-in-global-properties [:ctia :store :es :default] {})
+    (p/get-in-global-properties [:ctia :store :es store-kw] {})))
 
 (defn- make-factory
   "Return a store instance factory. Most of the ES stores are
