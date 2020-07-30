@@ -9,6 +9,7 @@
             [clj-momo.lib.time :as time]
             [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
 
+            [ctia.init :as init]
             [ctia.store-service-core :refer [empty-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
@@ -294,7 +295,7 @@
   [{:keys [prefix
            store-keys]} :- MigrationParams]
   (doseq [store-key store-keys]
-    (let [index (get-in (p/read-global-properties) [:ctia :store :es store-key :indexname])]
+    (let [index (p/get-in-global-properties [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
                index)
         (throw (AssertionError.
@@ -311,7 +312,7 @@
   (log/info "migrating all ES Stores")
   (try
     (let [_ (log/info "starting CTIA Stores...")
-          app (start-ctia!)
+          app (init/start-ctia!)
           store-svc (app/get-service app :StoreService)
           _ (mst/setup! store-svc)]
       (check-migration-params params)

@@ -15,7 +15,7 @@
                    (:out (shell/sh "git" "symbolic-ref" "--short" "HEAD"))))))
 
 (defn current-config-version []
-  (get-in (p/read-global-properties) [:ctia :versions :config] ""))
+  (p/get-in-global-properties [:ctia :versions :config] ""))
 
 (defn version-data []
   {:base "/ctia"

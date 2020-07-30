@@ -45,10 +45,14 @@
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint (p/read-global-properties))))))
+                  (utils/safe-pprint (p/get-global-properties))))))
 
 (defn ^:private services+config []
-  (let [properties (p/read-global-properties)
+  (let [;; this is interesting because we can't potentially
+        ;; use `get-in-config` here because TK hasn't booted yet.
+        ;; might be more appropriate to read from disk here.
+        ;; using the properties atom directly as a reminder of this corner case.
+        properties @(p/global-properties-atom)
         auth-svc
         (let [{auth-service-type :type :as auth} (get-in properties [:ctia :auth])]
           (case auth-service-type

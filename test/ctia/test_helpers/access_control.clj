@@ -953,7 +953,7 @@
 (defn test-access-control-tlp-settings
   [entity new-entity]
   (testing "TLP Settings Enforcement"
-    (swap! (p/get-global-properties) assoc-in
+    (swap! (p/global-properties-atom) assoc-in
            [:ctia :access-control]
            {:default-tlp "amber"
             :min-tlp "amber"})

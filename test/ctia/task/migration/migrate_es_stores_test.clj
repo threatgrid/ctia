@@ -53,7 +53,7 @@
                   helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
-(def es-props (delay (get-in (p/read-global-properties) [:ctia :store :es])))
+(def es-props (delay (p/get-in-global-properties [:ctia :store :es])))
 (def es-conn (delay (connect (:default @es-props))))
 (def migration-index (delay (get-in @es-props [:migration :indexname])))
 
@@ -130,8 +130,8 @@
                           :confirm? true
                           :restart? false}]
     (testing "misconfigured migration"
-      (with-redefs [p/get-global-properties
-                    (let [new-props (atom (-> (p/read-global-properties)
+      (with-redefs [p/global-properties-atom
+                    (let [new-props (atom (-> (p/get-global-properties)
                                               (assoc-in [:ctia :store :es :investigation :indexname]
                                                         "v1.2.0_ctia_investigation")
                                               (assoc-in [:malware 0 :state :props :indexname]
@@ -612,7 +612,7 @@
                       actor
                       vulnerability
                       weakness]}
-              (get-in (p/read-global-properties) [:ctia :store :es])
+              (p/get-in-global-properties [:ctia :store :es])
               date (Date.)
               index-date (.format (SimpleDateFormat. "yyyy.MM.dd") date)
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
@@ -657,7 +657,7 @@
                           docs))))))
       (testing "restart migration shall properly handle inserts, updates and deletes"
         (let [;; retrieve the first 2 source indices for sighting store
-              {:keys [host port]} (get-in (p/read-global-properties) [:ctia :store :es :default])
+              {:keys [host port]} (p/get-in-global-properties [:ctia :store :es :default])
               [sighting-index-1 sighting-index-2]
               (->> (es-helpers/get-cat-indices host port)
                    keys

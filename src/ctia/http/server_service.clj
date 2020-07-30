@@ -17,7 +17,7 @@
    GraphQLService
    IEncryption]
   (start [this context] (core/start context
-                                    (get-in (p/read-global-properties) [:ctia :http])
+                                    (p/get-in-global-properties [:ctia :http])
                                     {:HooksService (-> HooksService 
                                                        (select-keys [:apply-hooks
                                                                      :apply-event-hooks]))

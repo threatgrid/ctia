@@ -125,11 +125,9 @@
        (reduce into {})))
 
 (defn bulk-refresh? []
-  (get-in
-   (p/read-global-properties) [:ctia
-                :store
-                :bulk-refresh]
-   "false"))
+  (p/get-in-global-properties
+    [:ctia :store :bulk-refresh]
+    "false"))
 
 (defn create-bulk
   "Creates entities in bulk. To define relationships between entities,
@@ -171,7 +169,7 @@
   (apply + (map count (vals bulk))))
 
 (defn get-bulk-max-size []
-  (get-in (p/read-global-properties) [:ctia :http :bulk :max-size]))
+  (p/get-in-global-properties [:ctia :http :bulk :max-size]))
 
 (defn fetch-bulk
   [entities-map auth-identity services]

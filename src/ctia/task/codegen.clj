@@ -46,7 +46,7 @@
 (defn spec-uri
   "compose the full path of the swagger spec to generate from"
   []
-  (let [port (get-in (p/read-global-properties) [:ctia :http :port] 3000)]
+  (let [port (p/get-in-global-properties [:ctia :http :port] 3000)]
     (str "http://localhost:" port "/swagger.json")))
 
 (defn exec-command

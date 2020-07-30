@@ -10,4 +10,4 @@
            :summary "Configured properties"
            :capabilities :developer
            (GET "/" []
-                (ok (p/read-global-properties)))))
+                (ok (p/get-global-properties)))))

@@ -47,7 +47,9 @@
   (tk/boot-services-with-config
     [store-svc/store-service
      es-svc/es-store-service]
-    (p/read-global-properties)))
+    ;; can't be refactored to `get-config` because TK hasn't booted.
+    ;; using global atom directly as a reminder.
+    @(p/global-properties-atom)))
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"

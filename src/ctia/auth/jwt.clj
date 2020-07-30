@@ -65,16 +65,16 @@
     (resp/unauthorized (json/generate-string err))))
 
 (defn entity-root-scope []
-  (get-in (p/read-global-properties) [:ctia :auth :entities :scope]
-          "private-intel"))
+  (p/get-in-global-properties [:ctia :auth :entities :scope]
+                              "private-intel"))
 
 (defn casebook-root-scope []
-  (get-in (p/read-global-properties) [:ctia :auth :casebook :scope]
-          "casebook"))
+  (p/get-in-global-properties [:ctia :auth :casebook :scope]
+                              "casebook"))
 
 (def claim-prefix
-  (get-in (p/read-global-properties) [:ctia :http :jwt :claim-prefix]
-          "https://schemas.cisco.com/iroh/identity/claims"))
+  (p/get-in-global-properties [:ctia :http :jwt :claim-prefix]
+                              "https://schemas.cisco.com/iroh/identity/claims"))
 
 (defn unionize
   "Given a seq of set make the union of all of them"
@@ -156,8 +156,8 @@
 (defn unlimited-client-ids
   "Retrieves and parses unlimited client-ids defined in the properties"
   []
-  (some-> (get-in (p/read-global-properties)
-                  [:ctia :http :rate-limit :unlimited :client-ids])
+  (some-> (p/get-in-global-properties
+            [:ctia :http :rate-limit :unlimited :client-ids])
           (string/split #",")
           set))
 

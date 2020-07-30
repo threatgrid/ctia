@@ -85,7 +85,7 @@
 (defn wrap-rate-limit
   [handler]
   (let [{:keys [redis enabled key-prefix] :as conf}
-        (get-in (p/read-global-properties) [:ctia :http :rate-limit])]
+        (p/get-in-global-properties [:ctia :http :rate-limit])]
     (if enabled
       (let [turnstile-mw
             (turnstile/wrap-rate-limit
