@@ -30,8 +30,7 @@
    [ctia.flows.hooks-service :as hooks-svc]
    [ctia.http.server-service :as http-server-svc]
    [ctia.stores.es-service :as es-svc]
-   [ctia.stores.es
-    [init :as es-init]]
+   [ctia.stores.es.init :as es-init]
    ;; manual trapperkeeper stuff
    [puppetlabs.trapperkeeper.app :as app]
    [puppetlabs.trapperkeeper.core :as tk]))

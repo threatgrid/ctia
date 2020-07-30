@@ -7,9 +7,10 @@
              [document :as es-doc]
              [index :as es-index]]
             [clojure.java.io :as io]
+            [ctia
+             [store :as store]
+             [store-service :as store-svc]]
             [clojure.walk :as walk]
-            [ctia.store :as store]
-            [ctia.store-service :as store-svc]
             [ctia.stores.es
              [init :as es-init]
              [store :as es-store]]

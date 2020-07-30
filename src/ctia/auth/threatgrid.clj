@@ -11,6 +11,7 @@
    [clojure.core.memoize :as memo]
    [ctia
     [auth :as auth]
+    [properties :as p]
     [store :as store]
     [store-service :as store-svc]]
    [puppetlabs.trapperkeeper.core :as tk]
