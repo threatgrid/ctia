@@ -861,8 +861,8 @@
            (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 
 (defn with-tlp-property-setting [tlp f]
-  (with-redefs [p/get-global-properties
-                (let [new-props (-> (p/read-global-properties)
+  (with-redefs [p/global-properties-atom
+                (let [new-props (-> @(p/global-properties-atom)
                                     (assoc-in [:ctia :access-control :min-tlp] tlp)
                                     (assoc-in [:ctia :access-control :default-tlp] tlp)
                                     atom)]

@@ -29,7 +29,7 @@
     [init :as es-init]]))
 
 (defn init-auth-service! []
-  (let [{auth-service-type :type :as auth} (get-in (p/read-global-properties) [:ctia :auth])]
+  (let [{auth-service-type :type :as auth} (p/get-in-global-properties [:ctia :auth])]
     (case auth-service-type
       :allow-all (reset! auth/auth-service (allow-all/->AuthService))
       :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service))
@@ -40,7 +40,7 @@
 
 (defn init-encryption-service! []
   (let [{:keys [type] :as encryption-properties}
-        (get-in (p/read-global-properties) [:ctia :encryption])]
+        (p/get-in-global-properties [:ctia :encryption])]
 
     (case type
       :default (do (reset! encryption/encryption-service
@@ -54,7 +54,7 @@
                        :requested-service type})))))
 
 (defn- get-store-types [store-kw]
-  (or (some-> (get-in (p/read-global-properties) [:ctia :store store-kw])
+  (or (some-> (p/get-in-global-properties [:ctia :store store-kw])
               (str/split #","))
       []))
 
@@ -80,7 +80,7 @@
 
   (log/info (with-out-str
               (do (newline)
-                  (utils/safe-pprint (p/read-global-properties))))))
+                  (utils/safe-pprint @(p/global-properties-atom))))))
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class)"
   [& {:keys [join?]}]
@@ -106,7 +106,7 @@
   (console/init!)
 
   ;; register event file logging only when enabled
-  (when (get-in (p/read-global-properties) [:ctia :events :log])
+  (when (p/get-in-global-properties [:ctia :events :log])
     (event-logging/init!))
 
   (init-encryption-service!)
@@ -118,7 +118,7 @@
 
   ;; Start HTTP server
   (let [{http-port :port
-         enabled? :enabled} (get-in (p/read-global-properties) [:ctia :http])]
+         enabled? :enabled} (p/get-in-global-properties [:ctia :http])]
     (when enabled?
       (log/info (str "Starting HTTP server on port " http-port))
       (http-server/start! :join? join?))))

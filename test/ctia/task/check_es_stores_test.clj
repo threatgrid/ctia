@@ -77,7 +77,7 @@
                                       "foouser"
                                       "foogroup"
                                       "user")
-  (let [store-config (get-in (p/read-global-properties) [:ctia :store :es :default])]
+  (let [store-config (p/get-in-global-properties [:ctia :store :es :default])]
     (post-bulk examples)
     (refresh-all-indices (:host store-config)
                          (:port store-config))

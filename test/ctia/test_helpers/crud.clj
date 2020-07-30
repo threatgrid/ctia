@@ -26,8 +26,8 @@
          update-tests? true
          patch-tests? false}}]
   (let [new-record (dissoc example :id)
-        default-es-refresh (->> (get-in (p/read-global-properties)
-                                        [:ctia :store :es :default :refresh])
+        default-es-refresh (->> (p/get-in-global-properties
+                                  [:ctia :store :es :default :refresh])
                                 (str "refresh="))
         es-params (atom nil)
         simple-handler (fn [{:keys [query-string]}]
@@ -305,6 +305,6 @@
                        (string/lower-case body))))))
 
     (when (= "es"
-             (get-in (p/read-global-properties)
-                     [:ctia :store (keyword entity)]))
+             (p/get-in-global-properties
+               [:ctia :store (keyword entity)]))
       (crud-wait-for-test params))))

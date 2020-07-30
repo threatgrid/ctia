@@ -18,17 +18,24 @@
   ["ctia-default.properties"
    "ctia.properties"])
 
-(defonce ^:private properties
+(defonce ^:private global-properties
   (atom {}))
 
-;; Note: this var is redefined in these places:
-;; - ctia.bundle.routes-test/with-tlp-property-setting
-;; - ctia.task.migration.migrate-es-stores-test
-(defn get-global-properties []
-  properties)
+;; Usages of this function represent barriers to using
+;; TK ConfigService's `get-in-config` in the future.
+;; Prefer `get-in-global-properties` whenever possible.
+(defn global-properties-atom []
+  global-properties)
 
-(defn read-global-properties []
-  @(get-global-properties))
+;; Follows TK ConfigService's `get-in-config` for easy future
+;; migration.
+(defn get-in-global-properties
+  ([path]
+   (get-in-global-properties path nil))
+  ([path default]
+   ;; Note: use @(global-properties-atom) here, not @global-properties!
+   ;; `get-global-properties` is redefined during tests.
+   (get-in @(global-properties-atom) path default)))
 
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
@@ -210,13 +217,13 @@
 (def init! (mp/build-init-fn files
                              PropertiesSchema
                              ;; TOP-LEVEL STATE!!
-                             (get-global-properties)))
+                             (global-properties-atom)))
 
 (defn get-http-show []
-  (get-in (read-global-properties) [:ctia :http :show]))
+  (get-in-global-properties [:ctia :http :show]))
 
 (defn get-http-swagger []
-  (get-in (read-global-properties) [:ctia :http :swagger]))
+  (get-in-global-properties [:ctia :http :swagger]))
 
 (defn get-access-control []
-  (get-in (read-global-properties) [:ctia :access-control]))
+  (get-in-global-properties [:ctia :access-control]))

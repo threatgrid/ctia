@@ -4,6 +4,6 @@
 
 (defn init! []
   (let [{:keys [enabled interval]}
-        (get-in (p/read-global-properties) [:ctia :metrics :console])]
+        (p/get-in-global-properties [:ctia :metrics :console])]
     (when enabled
       (console/start interval))))

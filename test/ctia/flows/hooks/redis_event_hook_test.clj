@@ -26,7 +26,7 @@
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
           {:keys [channel-name] :as redis-config}
-          (get-in (p/read-global-properties) [:ctia :hook :redis])
+          (p/get-in-global-properties [:ctia :hook :redis])
           listener (lr/subscribe-to-messages (lr/server-connection redis-config)
                                              channel-name
                                              (fn test-events-pubsub-fn [ev]

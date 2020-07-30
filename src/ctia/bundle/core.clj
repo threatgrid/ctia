@@ -68,9 +68,9 @@
    external-key-prefixes]
   (let [key-prefixes (parse-key-prefixes
                       (or external-key-prefixes
-                          (get-in (p/read-global-properties)
-                                  [:ctia :store :external-key-prefixes]
-                                  default-external-key-prefixes)))
+                          (p/get-in-global-properties
+                            [:ctia :store :external-key-prefixes]
+                            default-external-key-prefixes)))
         external_id (valid-external-id external_ids key-prefixes)]
     (when-not external_id
       (log/warnf "No valid external ID has been provided (id:%s)" id))
@@ -258,7 +258,7 @@
 
 (defn bulk-params []
   {:refresh
-   (get-in (p/read-global-properties) [:ctia :store :bundle-refresh] "false")})
+   (p/get-in-global-properties [:ctia :store :bundle-refresh] "false")})
 
 (defn log-errors
   [response]
@@ -303,7 +303,7 @@
   (if (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (get-in (p/read-global-properties) [:ctia :http :show :hostname])]
+            this-host (p/get-in-global-properties [:ctia :http :show :hostname])]
         (= (:hostname id-rec) this-host))
       true)
     false))
@@ -355,7 +355,8 @@
    identity-map
    filters]
   (let [filter-map (relationships-filters id filters)
-        max-relationships (get-in (p/read-global-properties) [:ctia :http :bundle :export :max-relationships] 1000)]
+        max-relationships (p/get-in-global-properties [:ctia :http :bundle :export :max-relationships]
+                                                      1000)]
     (some-> (:data (read-store :relationship
                                list-fn
                                filter-map

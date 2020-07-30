@@ -117,7 +117,7 @@ docker-compose -f containers/dev/docker-compose.yml down
 docker-compose -f containers/dev/docker-compose.yml up --force-recreate --remove-orphans
 ```
 
-In particular, this resets ElasticSearch indicies, which cannot
+In particular, this resets ElasticSearch indices, which cannot
 be created more than once.
 
 ### Testing and CI

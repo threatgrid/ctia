@@ -60,7 +60,7 @@
   (when (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (get-in (p/read-global-properties) [:ctia :http :show :hostname])]
+            this-host (p/get-in-global-properties [:ctia :http :show :hostname])]
         (if (= (:hostname id-rec) this-host)
           (:short-id id-rec)
           (http-response/bad-request!
@@ -217,7 +217,7 @@
 (s/defn ^:private create-events :- FlowMap
   [{:keys [create-event-fn entities flow-type identity prev-entity]
     :as fm} :- FlowMap]
-  (if (get-in (p/read-global-properties) [:ctia :events :enabled])
+  (if (p/get-in-global-properties [:ctia :events :enabled])
     (let [events
           (->> entities
                (filter #(nil? (:error %)))

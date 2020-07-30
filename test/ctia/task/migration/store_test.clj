@@ -239,7 +239,7 @@
                   es-helpers/fixture-properties:es-store]))
 
 (p/init!)
-(def es-props (get-in (p/read-global-properties) [:ctia :store :es]))
+(def es-props (p/get-in-global-properties [:ctia :store :es]))
 (def es-conn (connect (:default es-props)))
 (def migration-index (get-in es-props [:migration :indexname]))
 

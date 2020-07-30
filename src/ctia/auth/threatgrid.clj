@@ -71,7 +71,7 @@
         auth/denied-identity-singleton)))
 
 (defn make-auth-service []
-  (let [{:keys [whoami-url cache]} (get-in (p/read-global-properties) [:ctia :auth :threatgrid])
+  (let [{:keys [whoami-url cache]} (p/get-in-global-properties [:ctia :auth :threatgrid])
         whoami-fn (make-whoami-fn whoami-url)]
     (->ThreatgridAuthService
      (if cache (memo whoami-fn) whoami-fn)

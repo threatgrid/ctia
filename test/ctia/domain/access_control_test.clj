@@ -133,10 +133,10 @@
 ;; ---- Max record visibility group
 
 (defn with-max-record-visibility-group [f]
-  (swap! (p/get-global-properties)
+  (swap! (p/global-properties-atom)
          assoc-in [:ctia :access-control :max-record-visibility] "group")
   (f)
-  (swap! (p/get-global-properties)
+  (swap! (p/global-properties-atom)
          assoc-in [:ctia :access-control :max-record-visibility] "everyone"))
 
 

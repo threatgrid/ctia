@@ -161,8 +161,8 @@
           (cond-> {:ui "/"
                    :spec "/swagger.json"
                    :options {:ui {:jwtLocalStorageKey
-                                  (get-in (p/read-global-properties)
-                                          [:ctia :http :jwt :local-storage-key])}}
+                                  (p/get-in-global-properties
+                                    [:ctia :http :jwt :local-storage-key])}}
                    :data {:info {:title "CTIA"
                                  :version (string/replace (current-version) #"\n" "")
                                  :license {:name "All Rights Reserved",

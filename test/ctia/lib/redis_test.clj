@@ -34,7 +34,7 @@
 
 (deftest ^:integration test-redis-pubsub-works
   (testing "That we can connect to redis and do pub/sub"
-    (let [redis-config (get-in (p/read-global-properties) [:ctia :hook :redis])
+    (let [redis-config (p/get-in-global-properties [:ctia :hook :redis])
           server-connection (lr/server-connection redis-config)
           event-channel-name (str (gensym "events"))
           results (atom [])

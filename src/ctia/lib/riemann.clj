@@ -135,7 +135,7 @@
                   (pr-str metric-description))
         _ (log/info "Riemann request logging initialization")
         send-event-fn 
-        (let [config (get-in (p/read-global-properties) [:ctia :log :riemann])
+        (let [config (p/get-in-global-properties [:ctia :log :riemann])
               client (-> (select-keys config
                                       [:host :port :interval-in-ms])
                          riemann/tcp-client

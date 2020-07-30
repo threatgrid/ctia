@@ -89,8 +89,8 @@
                            (repeatedly 2)
                            (map (comp :id :parsed-body))
                            set)
-        default_operator (or (get-in (p/read-global-properties) [:ctia :store :es (keyword entity) :default_operator])
-                             (get-in (p/read-global-properties) [:ctia :store :es :default :default_operator])
+        default_operator (or (p/get-in-global-properties [:ctia :store :es (keyword entity) :default_operator])
+                             (p/get-in-global-properties [:ctia :store :es :default :default_operator])
                              "AND")
         partially-matched-text (format "%s %s"
                                        "word"
@@ -323,7 +323,7 @@
 (defn test-query-string-search
   [entity query query-field example]
   ;; only when ES store
-  (when (= "es" (get-in (p/read-global-properties) [:ctia :store (keyword entity)]))
+  (when (= "es" (p/get-in-global-properties [:ctia :store (keyword entity)]))
     (if (= :description query-field)
       (test-describable-search entity example)
       (ensure-one-document test-non-describable-search

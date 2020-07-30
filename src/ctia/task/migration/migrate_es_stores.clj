@@ -283,7 +283,7 @@
   [{:keys [prefix
            store-keys]} :- MigrationParams]
   (doseq [store-key store-keys]
-    (let [index (get-in (p/read-global-properties) [:ctia :store :es store-key :indexname])]
+    (let [index (p/get-in-global-properties [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
                index)
         (throw (AssertionError.
