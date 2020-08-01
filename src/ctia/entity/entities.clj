@@ -6,6 +6,7 @@
    [ctia.schemas.core :refer [Entity]]
    [ctia.entity
     [asset :refer [asset-entity]]
+    [asset-mapping :refer [asset-mapping-entity]]
     [feedback :refer [feedback-entity]]
     [weakness :refer [weakness-entity]]
     [vulnerability :refer [vulnerability-entity]]
@@ -30,28 +31,29 @@
    [schema.core :as s]))
 
 (def entities
-  {:actor actor-entity
-   :asset asset-entity
-   :attack-pattern attack-pattern-entity
-   :campaign campaign-entity
-   :casebook casebook-entity
-   :coa coa-entity
-   :data-table data-table-entity
-   :feedback feedback-entity
-   :incident incident-entity
-   :indicator indicator-entity
-   :investigation investigation-entity
-   :judgement judgement-entity
-   :feed feed-entity
-   :malware malware-entity
-   :relationship relationship-entity
-   :sighting sighting-entity
+  {:actor              actor-entity
+   :asset              asset-entity
+   :asset-mapping      asset-mapping-entity
+   :attack-pattern     attack-pattern-entity
+   :campaign           campaign-entity
+   :casebook           casebook-entity
+   :coa                coa-entity
+   :data-table         data-table-entity
+   :event              event-entity
+   :feed               feed-entity
+   :feedback           feedback-entity
+   :identity           identity-entity
    :identity-assertion identity-assertion-entity
-   :tool tool-entity
-   :vulnerability vulnerability-entity
-   :weakness weakness-entity
-   :identity identity-entity
-   :event event-entity})
+   :incident           incident-entity
+   :indicator          indicator-entity
+   :investigation      investigation-entity
+   :judgement          judgement-entity
+   :malware            malware-entity
+   :relationship       relationship-entity
+   :sighting           sighting-entity
+   :tool               tool-entity
+   :vulnerability      vulnerability-entity
+   :weakness           weakness-entity})
 
 (defn validate-entities []
   (doseq [[entity entity-map] entities]

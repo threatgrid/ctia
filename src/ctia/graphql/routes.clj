@@ -33,6 +33,7 @@
         #{:list-campaigns
           :read-actor
           :read-asset
+          :read-asset-mapping
           :read-malware
           :read-attack-pattern
           :read-judgement
@@ -57,6 +58,7 @@
           :read-relationship
           :list-actors
           :list-assets
+          :list-asset-mappings
           :read-investigation
           :read-incident
           :list-coas

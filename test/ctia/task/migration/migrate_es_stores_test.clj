@@ -548,10 +548,11 @@
                                                  (count minimal-examples)))
                     (contains? example-types (keyword entity-type)) fixtures-nb
                     :else 0)]
-              (is (= source-size (:total source)))
+              (is (= source-size (:total source))
+                  (str "source size match for " (:index source)))
               (is (not (nil? started)))
               (is (not (nil? completed)))
-              (is (>= (:total source) (:migrated target)))
+              (is (<= (:migrated target) (:total source)))
               (is (int? (:total source)))
               (is (= (:index target)
                      (prefixed-index (:index source) "0.0.0")))))))
@@ -562,7 +563,7 @@
                #{"campaign - finished migrating 100 documents"
                  "indicator - finished migrating 100 documents"
                  (format "event - finished migrating %s documents"
-                         (+ 1600 updates-nb))
+                         (+ 1700 updates-nb))
                  "actor - finished migrating 100 documents"
                  "asset - finished migrating 100 documents"
                  "relationship - finished migrating 100 documents"
@@ -607,7 +608,7 @@
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
                                       1000
                                       (format "v0.0.0_ctia_event-%s-000002" index-date)
-                                      (+ 600 updates-nb)}
+                                      (+ 700 updates-nb)}
               expected-indices
               (->> #{relationship
                      asset
