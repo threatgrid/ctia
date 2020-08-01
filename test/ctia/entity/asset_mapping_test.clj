@@ -2,6 +2,7 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
             [ctia.entity.asset-mapping :as asset-mapping]
+            [ctia.properties :as p]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
             [ctia.test-helpers.core :as helpers]
@@ -24,7 +25,7 @@
   ;; TODO: write one
   (testing "GET /ctia/asset-mapping/search"
     ;; only when ES store
-    (when (= "es" (get-in @ctia.properties/properties [:ctia :store :asset-mapping]))
+    (when (= "es" (p/get-in-global-properties [:ctia :store :asset-mapping]))
       (are [term check-fn expected desc] (let [response (helpers/get
                                                          "ctia/asset-mapping/search"
                                                          :query-params {"query" term}

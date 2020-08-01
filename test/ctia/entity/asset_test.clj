@@ -23,7 +23,7 @@
 (defn additional-tests [asset-id asset-sample]
   (testing "GET /ctia/asset/search"
     ;; only when ES store
-    (when (= "es" (get-in p/get-in-global-properties [:ctia :store :asset]))
+    (when (= "es" (p/get-in-global-properties [:ctia :store :asset]))
       (are [term check-fn expected desc] (let [response (helpers/get (str "ctia/asset/search")
                                                                      :query-params {"query" term}
                                                                      :headers {"Authorization" "45c1f5e3f05d0"})]
