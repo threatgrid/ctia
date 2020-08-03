@@ -80,7 +80,7 @@
                       "ctia.store.es.event.indexname" "ctia_event"
                       "ctia.store.es.data-table.indexname" "ctia_data-table"
                       "ctia.store.es.feedback.indexname" "ctia_feedback"
-                      "ctia.store.es.identity.indexname" "ctia_identity"
+                      "ctia.store.es.identity.indexname" "ctia_identities"
                       "ctia.store.es.incident.indexname" "ctia_incident"
                       "ctia.store.es.indicator.indexname" "ctia_indicator"
                       "ctia.store.es.investigation.indexname" "ctia_investigation"

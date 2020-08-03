@@ -163,7 +163,7 @@
                                                     field-mapping))]
                       ;; init again to trigger mapping update
                       (sut/init-es-conn! props-aliased)
-                                        ; check state
+                      ;; check state
                       (is (= error? @exited?) msg)
                       ;; reset state
                       (index/delete! es-conn (str indexname "*"))
@@ -223,5 +223,6 @@
       (is (= 1 (get-in config [:settings :number_of_replicas])))
       (is (= 2 (get-in config [:settings :number_of_shards])))
       (is (= {} (select-keys (:mappings config) [:a :b])))))
+  ;; clean
   (http/delete (str "http://localhost:9200/_template/" indexname "*"))
   (index/delete! es-conn (str indexname "*")))
