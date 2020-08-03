@@ -95,9 +95,9 @@
                          existing)
         ambiguous (difference existing (set matching))]
     (if (seq ambiguous)
-      (do (log/warn (format "ambiguous index names, %s and %s."
-                            index
-                            ambiguous))
+      (do (log/warn (format "Ambiguous index names. Index: %s, ambiguous: %s."
+                            (pr-str index)
+                            (pr-str ambiguous)))
           (system-exit-error))
       existing)))
 
