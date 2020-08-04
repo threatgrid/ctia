@@ -35,6 +35,11 @@
 (def realize-asset-properties
   (default-realize-fn "asset-properties" NewAssetProperties StoredAssetProperties))
 
+(def ^:private properties-mapping
+  {:properties
+   {:name  em/token
+    :value em/token}})
+
 (def asset-properties-mapping
   {"asset-properties"
    {:dynamic false
@@ -43,9 +48,9 @@
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:identity    em/tg-identity
-      :valid_time  em/valid-time
-      :asset_ref   em/token})}})
+     {:valid_time  em/valid-time
+      :asset_ref   em/token
+      :properties properties-mapping})}})
 
 (def-es-store AssetPropertiesStore :asset-properties StoredAssetProperties PartialStoredAssetProperties)
 
