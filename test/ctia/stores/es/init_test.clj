@@ -91,47 +91,51 @@
   (index/delete! es-conn (str indexname "*"))
   (let [successful? (atom true)
         fake-exit (fn [] (reset! successful? false))]
-    (with-redefs [sut/system-exit-error fake-exit]
-      (let [test-fn (fn [msg
-                         input-indexname
-                         expected-successful?
-                         expected-output]
-                      (reset! successful? true)
-                      (testing msg
-                        (let [ouput (sut/get-existing-indices es-conn input-indexname)]
+    (let [test-fn (fn [msg
+                       input-indexname
+                       expected-successful?
+                       expected-output]
+                    (assert (boolean? expected-successful?))
+                    (reset! successful? true)
+                    (testing msg
+                      (let [ouput (with-redefs [sut/system-exit-error fake-exit]
+                                    (sut/get-existing-indices es-conn input-indexname))]
+                        ;; sut/system-exit-error is redefined to check if
+                        ;; it was called but avoid to actually System/exit
+                        ;; thus testing the output makes sense only on success
                         (when expected-successful?
                           (is (= expected-output ouput)))
                         (is (= expected-successful? @successful?)))))
 
-            _ (test-fn "0 existing index"
-                       indexname
-                       true
-                       #{})
+          _ (test-fn "0 existing index"
+                     indexname
+                     true
+                     #{})
 
-            _ (index/create! es-conn indexname {})
-            _ (test-fn "1 existing index with the exact name"
-                       indexname
-                       true
-                       #{(keyword indexname)})
+          _ (index/create! es-conn indexname {})
+          _ (test-fn "1 existing index with the exact name"
+                     indexname
+                     true
+                     #{(keyword indexname)})
 
-            indexname-with-date (str indexname "-2020.07.31")
-            _ (index/create! es-conn indexname-with-date {})
-            _ (test-fn "2 existing indices, 1 with exact name, 1 suffixed with date"
-                       indexname
-                       true
-                       #{(keyword indexname-with-date)
-                         (keyword indexname)})
+          indexname-with-date (str indexname "-2020.07.31")
+          _ (index/create! es-conn indexname-with-date {})
+          _ (test-fn "2 existing indices, 1 with exact name, 1 suffixed with date"
+                     indexname
+                     true
+                     #{(keyword indexname-with-date)
+                       (keyword indexname)})
 
-            ;; generate an indexname which is a prefix of indexname
-            ambiguous-indexname (->> (count indexname)
-                                     dec
-                                     (subs indexname 0))]
-        (test-fn "CTIA must fail to start with configuration having ambiguous index names between stores"
-                 ambiguous-indexname
-                 false
-                 nil)
-        ;; clean
-        (index/delete! es-conn (str indexname "*"))))))
+          ;; generate an indexname which is a prefix of indexname
+          ambiguous-indexname (->> (count indexname)
+                                   dec
+                                   (subs indexname 0))]
+      (test-fn "CTIA must fail to start with configuration having ambiguous index names between stores"
+               ambiguous-indexname
+               false
+               nil)
+      ;; clean
+      (index/delete! es-conn (str indexname "*")))))
 
 (deftest init-es-conn!-test
   (index/delete! es-conn (str indexname "*"))
