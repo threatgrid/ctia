@@ -43,8 +43,7 @@
      em/base-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:identity    em/tg-identity
-      :valid_time  em/valid-time
+     {:valid_time  em/valid-time
       :confidence  em/token
       :specificity em/token
       :stability   em/token
