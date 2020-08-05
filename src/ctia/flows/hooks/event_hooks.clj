@@ -5,7 +5,7 @@
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
    [ctia.lib.kafka :as lk]
-   [ctia.properties :refer [properties]]
+   [ctia.properties :as p]
    [ctia.shutdown :as shutdown]
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
@@ -48,13 +48,12 @@
 
 (defn redis-event-publisher []
   (let [{:keys [channel-name] :as redis-config}
-        (get-in @properties [:ctia :hook :redis])]
+        (p/get-in-global-properties [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
 
 (defn kafka-event-publisher []
-  (let [kafka-props (get-in @properties
-                            [:ctia :hook :kafka])]
+  (let [kafka-props (p/get-in-global-properties [:ctia :hook :kafka])]
 
     (log/warn "Ensure Kafka topic creation")
     (try
@@ -86,7 +85,7 @@
          :or {queue-name "ctim-event-queue"
               host "localhost"
               port 6379}}
-        (get-in @properties [:ctia :hook :redismq])
+        (p/get-in-global-properties [:ctia :hook :redismq])
         conn-spec (lr/redis-conf->conn-spec config)]
     (->RedisMQPublisher (rmq/make-queue queue-name
                                         conn-spec
@@ -123,7 +122,7 @@
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
          {kafka? :enabled} :kafka}
-        (get-in @properties [:ctia :hook])
+        (p/get-in-global-properties [:ctia :hook])
         all-event-hooks
         (cond-> {}
           redis?   (assoc :redis (redis-event-publisher))

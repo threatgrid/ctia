@@ -1,5 +1,6 @@
 (ns ctia.task.migration.migrate-es-stores-test
   (:require [clojure.java.io :as io]
+            [clojure.set :as set]
             [clojure.string :as str]
             [clojure
              [test :refer [deftest is join-fixtures testing use-fixtures]]
@@ -15,7 +16,7 @@
             [ctim.domain.id :refer [long-id->id]]
 
             [ctia.entity.relationship.schemas :refer [StoredRelationship]]
-            [ctia.properties :as props]
+            [ctia.properties :as p]
             [ctia.task.rollover :refer [rollover-stores]]
             [ctia.task.migration
              [migrate-es-stores :as sut]
@@ -57,7 +58,7 @@
 
 ;; This a is a `defn` to prevent side-effects at compile time
 (defn es-props []
-  (get-in @props/properties [:ctia :store :es]))
+  (p/get-in-global-properties [:ctia :store :es]))
 
 ;; This a is a `delay` to prevent side-effects at compile time
 (def es-conn
@@ -139,11 +140,13 @@
                           :confirm? true
                           :restart? false}]
     (testing "misconfigured migration"
-      (with-redefs [props/properties (atom (-> (assoc-in @props/properties
-                                                         [:ctia :store :es :investigation :indexname]
-                                                         "v1.2.0_ctia_investigation")
-                                               (assoc-in [:malware 0 :state :props :indexname]
-                                                         "v1.2.0_ctia_malware")))]
+      (with-redefs [p/global-properties-atom
+                    (let [new-props (atom (-> (p/get-global-properties)
+                                              (assoc-in [:ctia :store :es :investigation :indexname]
+                                                        "v1.2.0_ctia_investigation")
+                                              (assoc-in [:malware 0 :state :props :indexname]
+                                                        "v1.2.0_ctia_malware")))]
+                      (fn [] new-props))]
         (is (thrown? AssertionError
                      (sut/check-migration-params migration-params))
             "source and target store must be different"))
@@ -555,7 +558,7 @@
       (testing "shall produce valid logs"
         (let [messages (set @logger)]
           (is (contains? messages "set batch size: 10"))
-          (is (clojure.set/subset?
+          (is (set/subset?
                ["campaign - finished migrating 100 documents"
                 "indicator - finished migrating 100 documents"
                 (format "event - finished migrating %s documents"
@@ -597,7 +600,7 @@
                       actor
                       vulnerability
                       weakness]}
-              (get-in @props/properties [:ctia :store :es])
+              (p/get-in-global-properties [:ctia :store :es])
               date (Date.)
               index-date (.format (SimpleDateFormat. "yyyy.MM.dd") date)
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
@@ -642,7 +645,7 @@
                           docs))))))
       (testing "restart migration shall properly handle inserts, updates and deletes"
         (let [;; retrieve the first 2 source indices for sighting store
-              {:keys [host port]} (get-in @props/properties [:ctia :store :es :default])
+              {:keys [host port]} (p/get-in-global-properties [:ctia :store :es :default])
               [sighting-index-1 sighting-index-2]
               (->> (es-helpers/get-cat-indices host port)
                    keys

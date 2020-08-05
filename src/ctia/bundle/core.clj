@@ -8,7 +8,7 @@
    [clojure.tools.logging :as log]
    [ctia
     [auth :as auth]
-    [properties :refer [properties]]
+    [properties :as p]
     [store :refer [list-fn
                    read-fn
                    read-store]]]
@@ -254,7 +254,7 @@
 
 (defn bulk-params []
   {:refresh
-   (get-in @properties [:ctia :store :bundle-refresh] "false")})
+   (p/get-in-global-properties [:ctia :store :bundle-refresh] "false")})
 
 (defn log-errors
   [response]
@@ -299,7 +299,7 @@
   (if (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (get-in @properties [:ctia :http :show :hostname])]
+            this-host (p/get-in-global-properties [:ctia :http :show :hostname])]
         (= (:hostname id-rec) this-host))
       true)
     false))
@@ -351,7 +351,8 @@
    identity-map
    filters]
   (let [filter-map (relationships-filters id filters)
-        max-relationships (get-in @properties [:ctia :http :bundle :export :max-relationships] 1000)]
+        max-relationships (p/get-in-global-properties [:ctia :http :bundle :export :max-relationships]
+                                                      1000)]
     (some-> (:data (read-store :relationship
                                list-fn
                                filter-map

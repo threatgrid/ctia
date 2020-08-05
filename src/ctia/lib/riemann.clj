@@ -2,7 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [riemann.client :as riemann]
-            [ctia.properties :as prop]
+            [ctia.properties :as p]
             [ctia.lib.utils :as utils])
   (:import [clojure.lang ExceptionInfo]))
 
@@ -135,7 +135,7 @@
                   (pr-str metric-description))
         _ (log/info "Riemann request logging initialization")
         send-event-fn 
-        (let [config (get-in @prop/properties [:ctia :log :riemann])
+        (let [config (p/get-in-global-properties [:ctia :log :riemann])
               client (-> (select-keys config
                                       [:host :port :interval-in-ms])
                          riemann/tcp-client

@@ -10,7 +10,7 @@
             [ctia.stores.es.init :refer [init-es-conn! get-store-properties]]
             [ctia
              [init :refer [init-store-service! log-properties]]
-             [properties :refer [properties init!]]
+             [properties :as p]
              [store :refer [stores]]]))
 
 (defn update-stores!
@@ -36,6 +36,6 @@
       (println summary)
       (System/exit 0))
     (clojure.pprint/pprint options)
-    (init!)
+    (p/init!)
     (log-properties)
     (update-stores! (:stores options))))

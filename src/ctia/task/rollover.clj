@@ -3,7 +3,7 @@
             [clj-momo.lib.es.schemas :refer [ESConnState]]
             [clojure.tools.logging :as log]
             [ctia.init :refer [init-store-service! log-properties]]
-            [ctia.properties :refer [init!]]
+            [ctia.properties :as p]
             [ctia.store :refer [stores]]
             [schema.core :as s])
   (:import clojure.lang.ExceptionInfo))
@@ -41,7 +41,7 @@
           stores))
 
 (defn -main [& _args]
-  (init!)
+  (p/init!)
   (log-properties)
   (init-store-service!)
   (let [{:keys [nb-errors]

@@ -4,7 +4,7 @@
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.domain.entities :refer [schema-version]]
             [ctia.lib.redis :as lr]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [ctim.domain.id :as id]
             [ctim.schemas.common :as c]
             [ctia.test-helpers
@@ -26,7 +26,7 @@
     (let [results (atom [])
           finish-signal (CountDownLatch. 3)
           {:keys [channel-name] :as redis-config}
-          (get-in @properties [:ctia :hook :redis])
+          (p/get-in-global-properties [:ctia :hook :redis])
           listener (lr/subscribe-to-messages (lr/server-connection redis-config)
                                              channel-name
                                              (fn test-events-pubsub-fn [ev]

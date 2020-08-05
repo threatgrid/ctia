@@ -18,8 +18,26 @@
   ["ctia-default.properties"
    "ctia.properties"])
 
-(defonce properties
+;; should ONLY be used directly by `global-properties-atom`!
+(defonce ^:private global-properties
   (atom {}))
+
+;; Usages of this function represent barriers to using
+;; TK ConfigService's `get-in-config` in the future.
+;; Prefer `get-in-global-properties` whenever possible.
+(defn global-properties-atom []
+  global-properties)
+
+;; Follows TK ConfigService's `get-config` for future migration.
+(defn get-global-properties []
+  @(global-properties-atom))
+
+;; Follows TK ConfigService's `get-in-config` for future migration.
+(defn get-in-global-properties
+  ([path]
+   (get-in-global-properties path nil))
+  ([path default]
+   (get-in (get-global-properties) path default)))
 
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
@@ -199,13 +217,14 @@
 
 (def init! (mp/build-init-fn files
                              PropertiesSchema
-                             properties))
+                             ;; TOP-LEVEL STATE!!
+                             (global-properties-atom)))
 
 (defn get-http-show []
-  (get-in @properties [:ctia :http :show]))
+  (get-in-global-properties [:ctia :http :show]))
 
 (defn get-http-swagger []
-  (get-in @properties [:ctia :http :swagger]))
+  (get-in-global-properties [:ctia :http :swagger]))
 
 (defn get-access-control []
-  (get-in @properties [:ctia :access-control]))
+  (get-in-global-properties [:ctia :access-control]))

@@ -1,9 +1,10 @@
 (ns ctia.test-helpers.search
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [clojure.test :refer [is testing]]
             [clojure.tools.logging :refer [log*]]
             [ctim.domain.id :refer [long-id->id]]
-            [ctia.properties :refer [properties]]
+            [ctia.properties :as p]
             [clj-momo.lib.clj-time.coerce :as tc]
             [ctia.test-helpers.core :as helpers]))
 
@@ -88,8 +89,8 @@
                            (repeatedly 2)
                            (map (comp :id :parsed-body))
                            set)
-        default_operator (or (get-in @properties [:ctia :store :es (keyword entity) :default_operator])
-                             (get-in @properties [:ctia :store :es :default :default_operator])
+        default_operator (or (p/get-in-global-properties [:ctia :store :es (keyword entity) :default_operator])
+                             (p/get-in-global-properties [:ctia :store :es :default :default_operator])
                              "AND")
         partially-matched-text (format "%s %s"
                                        "word"
@@ -175,8 +176,8 @@
       (if (= "AND" default_operator)
         (is (= matched-ids found-ids-escaped)
             "escaping reserved characters should avoid parsing errors and preserve behavior of AND")
-        (is (clojure.set/subset? (clojure.set/union matched-ids unmatched-ids)
-                                 found-ids-escaped)
+        (is (set/subset? (set/union matched-ids unmatched-ids)
+                         found-ids-escaped)
             ;; OR could match other test documents matching "http"
             "escaping reserved characters should avoid parsing errors and preserve behavior of OR"))
       (is (= matched-ids
@@ -322,7 +323,7 @@
 (defn test-query-string-search
   [entity query query-field example]
   ;; only when ES store
-  (when (= "es" (get-in @properties [:ctia :store (keyword entity)]))
+  (when (= "es" (p/get-in-global-properties [:ctia :store (keyword entity)]))
     (if (= :description query-field)
       (test-describable-search entity example)
       (ensure-one-document test-non-describable-search

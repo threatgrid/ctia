@@ -3,7 +3,7 @@
             [clojure.tools.logging :as log]
             [clj-http.client :as http]
             [ctia
-             [properties :refer [properties]]
+             [properties :as p]
              [shutdown :as shutdown]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
@@ -164,7 +164,7 @@
 
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
-         (get-in @properties [:ctia :log :riemann :enabled])
+         (p/get-in-global-properties [:ctia :log :riemann :enabled])
          (rie/wrap-request-logs "API response time ms")
 
          (:enabled jwt)
@@ -230,7 +230,7 @@
 
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
-  (let [http-config (get-in @properties [:ctia :http])
+  (let [http-config (p/get-in-global-properties [:ctia :http])
         server-instance (new-jetty-instance http-config)]
     (reset! server server-instance)
     (shutdown/register-hook! :http.server stop!)

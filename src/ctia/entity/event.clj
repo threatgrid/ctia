@@ -22,7 +22,7 @@
     [mapping :as em]]
    [ctia.store :refer [read-store list-events list-all-pages]]
    [ctia.domain.entities :as ent]
-   [ctia.properties :refer [properties]]
+   [ctia.properties :as p]
    [clojure.set :as set]))
 
 (def event-mapping
@@ -74,7 +74,8 @@
 (s/defn same-bucket? :- s/Bool
   [bucket :- EventBucket
    event :- Event]
-  (let [max-seconds (get-in @properties [:ctia :http :events :timeline :max-seconds] 5)
+  (let [max-seconds (p/get-in-global-properties [:ctia :http :events :timeline :max-seconds]
+                                                5)
         from        (t/minus (:from bucket) (t/seconds max-seconds))
         to          (t/plus (:to bucket) (t/seconds max-seconds))]
     (and (= (:owner bucket) (:owner event))

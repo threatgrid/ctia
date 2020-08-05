@@ -1,6 +1,6 @@
 (ns ctia.task.settings-test
   (:require [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
-            [ctia.properties :as props]
+            [ctia.properties :as p]
             [ctia.task.settings :as sut]
             [ctia.stores.es.init :as init]
             [clj-momo.lib.es
@@ -23,9 +23,9 @@
 
 (deftest update-stores!-test
   ;;init all stores
-  (props/init!)
+  (p/init!)
   (let [initial-indicator-props (init/get-store-properties :indicator)
-        _ (swap! props/properties
+        _ (swap! (p/global-properties-atom)
                  #(-> (assoc-in %
                                 [:ctia :store :es :relationship :replicas]
                                 12)
@@ -34,7 +34,7 @@
                       (assoc-in [:ctia :store :es :indicator :refresh_interval]
                                 "12s")))
         _ (sut/update-stores! [:relationship :malware])
-        es-props (get-in @props/properties [:ctia :store :es])
+        es-props (p/get-in-global-properties [:ctia :store :es])
         conn (es-conn/connect (:default es-props))
         relationship-indexname (get-in es-props [:relationship :indexname])
         relationship-index (es-index/get conn (str relationship-indexname "*"))
