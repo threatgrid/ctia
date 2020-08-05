@@ -26,9 +26,12 @@
                                    {})))))]
     qsym))
 
+  
+;; Only uses public trapperkeeper API's, but if ServiceDefinition
+;; gains new methods, will need to add them in the reified wrapper.
 (defmacro defservice
   "A variant of Trapperkeeper's defservice that enforces
-  a provided protocol and checks for stale usage."
+  a provided protocol and checks for stale usage of the ServiceDefinition."
   [svc-name & forms]
   {:pre [(simple-symbol? svc-name)]}
   (let [service-sym      (symbol (name (ns-name *ns*)) (name svc-name))
@@ -63,9 +66,14 @@
              assert-latest-service# (fn [this#]
                                       (let [latest-svc# (get-latest-svc#)
                                             latest-interface# (get-latest-interface#)
-                                            outdated-interface?# (not= original-interface#
-                                                                       latest-interface#)
-                                            outdated-svc?# (not= this# latest-svc#)
+                                            outdated-interface?# (not
+                                                                   (identical?
+                                                                     original-interface#
+                                                                     latest-interface#))
+                                            outdated-svc?# (not
+                                                             (identical?
+                                                               this#
+                                                               latest-svc#))
                                             diag-svc# (juxt identity hash)
                                             diag-interface# (juxt identity hash)
                                             data# {:services {:old (diag-svc# this#)
@@ -79,7 +87,7 @@
                                             report# (fn [s# m#]
                                                       (case strictness
                                                         :error (throw (ex-info s# m#))
-                                                        :debug (prn s# m#
+                                                        :debug (prn 'DEBUG s# m#
                                                                     (try (throw (ex-info s# m#))
                                                                          (catch IExceptionInfo e# e#)))))]
                                         (when outdated-svc?#
