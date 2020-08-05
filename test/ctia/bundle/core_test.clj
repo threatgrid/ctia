@@ -109,3 +109,93 @@
       [] ["not-matched"] false
       ["ctia-indicator-1"] ["ctia"] false
       ["ctia-indicator-1" "cisco-indicator-1"] ["ctia" "cisco"] true)))
+
+(deftest entity->import-data-test
+  (let [sighting-id (make-id "sighting")
+        external_ids ["ireaux-sighting-2"
+                      "ireaux-sighting-1"
+                      "ctia-sighting-1"]
+        test-fn (fn [{:keys [entity prefixes entity-type] :as _params}
+                     {:keys [log? output] :as _expected}]
+                  (with-log
+                    (let [res (sut/entity->import-data entity
+                                                       entity-type
+                                                       prefixes)]
+                      (is (= log?
+                             (logged? 'ctia.bundle.core
+                                      :warn
+                                      #"No valid external ID has been provided"))::test)
+                      (is (= output res)))))]
+    (are [msg params expected]
+        (testing msg
+          (test-fn params expected)
+          true)
+
+      "no external prefixes and no external_id"
+      {:entity {:id sighting-id}
+       :entity-type :sighting
+       :prefixes ""}
+      {:log? true
+       :output {:new-entity {:id sighting-id}
+                :type :sighting}}
+
+      "no prefixes, no external_id and transient id"
+      {:entity {:id "transient:sighting-1"}
+       :entity-type :sighting
+       :prefixes ""}
+      {:log? true
+       :output {:new-entity {:id "transient:sighting-1"}
+                :type :sighting
+                :original_id "transient:sighting-1"}}
+
+      "prefixes but no external_id"
+      {:entity {:id sighting-id}
+       :entity-type :sighting
+       :prefixes "ireaux-"}
+      {:log? true
+       :output {:new-entity {:id sighting-id}
+                :type :sighting}}
+
+      "all external_ids match one prefix"
+      {:entity {:id sighting-id
+                :external_ids external_ids}
+       :entity-type :sighting
+       :prefixes "ireaux-,ctia-"}
+      {:log? false
+       :output {:new-entity {:id sighting-id
+                             :external_ids external_ids}
+                :type :sighting
+                :external_ids external_ids}}
+
+      "external_ids, only some match external prefixes"
+      {:entity {:id sighting-id
+                :external_ids external_ids}
+       :entity-type :sighting
+       :prefixes "ireaux-"}
+      {:log? false
+       :output {:new-entity {:id sighting-id
+                             :external_ids external_ids}
+                :type :sighting
+                :external_ids ["ireaux-sighting-2"
+                               "ireaux-sighting-1"]}}
+
+      "external_ids that match none of provided external_ids"
+      {:entity {:id sighting-id
+                :external_ids external_ids}
+       :entity-type :sighting
+       :prefixes "unmatched-"}
+      {:log? true
+       :output {:new-entity {:id sighting-id
+                             :external_ids external_ids}
+                :type :sighting}}
+
+      "external_ids with no external prefixes should be preserved"
+      {:entity {:id sighting-id
+                :external_ids external_ids}
+       :entity-type :sighting
+       :prefixes ""}
+      {:log? false
+       :output {:new-entity {:id sighting-id
+                             :external_ids external_ids}
+                :type :sighting
+                :external_ids external_ids}})))
