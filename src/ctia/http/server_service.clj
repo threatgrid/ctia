@@ -2,7 +2,7 @@
   (:require [ctia.http.server-service-core :as core]
             [ctia.properties :as p]
             [ctia.store-service :as store-svc]
-            [puppetlabs.trapperkeeper.core :as tk]
+            [ctia.tk :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol CTIAHTTPServerService

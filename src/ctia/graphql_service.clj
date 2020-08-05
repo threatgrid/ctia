@@ -1,7 +1,7 @@
 (ns ctia.graphql-service
   (:require [ctia.graphql-service-core :as core]
             [ctia.store-service :as store-svc]
-            [puppetlabs.trapperkeeper.core :as tk]
+            [ctia.tk :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol GraphQLService

@@ -14,7 +14,7 @@
     [properties :as p]
     [store :as store]
     [store-service :as store-svc]]
-   [puppetlabs.trapperkeeper.core :as tk]
+   [ctia.tk :as tk]
    [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (declare make-auth-service)

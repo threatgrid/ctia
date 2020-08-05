@@ -1,6 +1,6 @@
 (ns ctia.store-service
   (:require [ctia.store-service-core :as core]
-            [puppetlabs.trapperkeeper.core :as tk]
+            [ctia.tk :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol StoreService

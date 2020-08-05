@@ -1,6 +1,6 @@
 (ns ctia.flows.hooks-service
   (:require [ctia.flows.hooks-service-core :as core]
-            [puppetlabs.trapperkeeper.core :as tk]
+            [ctia.tk :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
 (defprotocol HooksService
