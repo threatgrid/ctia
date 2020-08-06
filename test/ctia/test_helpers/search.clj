@@ -208,53 +208,56 @@
 (defn ensure-one-document
   [f example entity & args]
   (let [{{full-id :id} :parsed-body} (create-doc entity (dissoc example :id))]
-       (apply (partial f entity) args)
-       (delete-doc entity full-id)))
+    (apply (partial f entity) args)
+    (delete-doc entity full-id)))
 
 (defn test-non-describable-search
-  [entity query query-field]
+  [entity value query-field]
   (testing "search term filter"
-    (let [{search-status :status
-           search-body :parsed-body} (search-text entity query)
-          {count-status :status
-           count-body :parsed-body} (count-text entity query)]
-      (is (= 200 search-status count-status))
-      (is (pos? (count search-body)))
-      (is (= (count search-body) count-body))
-      (doseq [res search-body]
-        (is (= query (get res query-field))
-            "query term must properly match values")))
-    (with-redefs [log* (fn [& _] nil)]
-      ;; avoid unnecessary verbosity
-      (let [{search-status :status} (search-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")
-            {count-status :status} (count-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")]
-        (is (= 400 search-status count-status))))
+    (let [query (format "%s:%s"
+                        (name query-field)
+                        value)]
+      (let [{search-status :status
+             search-body :parsed-body} (search-text entity query)
+            {count-status :status
+             count-body :parsed-body} (count-text entity query)]
+        (is (= 200 search-status count-status))
+        (is (pos? (count search-body)))
+        (is (= (count search-body) count-body))
+        (doseq [res search-body]
+          (is (= value (get res query-field))
+              "query term must properly match values")))
+      (with-redefs [log* (fn [& _] nil)]
+        ;; avoid unnecessary verbosity
+        (let [{search-status :status} (search-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")
+              {count-status :status} (count-text entity "2607:f0d0:1002:0051:0000:0000:0000:0004")]
+          (is (= 400 search-status count-status))))
 
-    (let [query-params {"query" query
-                        "tlp" "red"}
-          {search-status :status
-           search-body :parsed-body} (search-raw entity query-params)
-          {count-status :status
-           count-body :parsed-body} (count-raw entity query-params)]
-      (is (= 200 search-status count-status))
-      (is (= 0 (count search-body) count-body)
-          "filters must be applied, and should discriminate"))
+      (let [query-params {"query" query
+                          "tlp" "red"}
+            {search-status :status
+             search-body :parsed-body} (search-raw entity query-params)
+            {count-status :status
+             count-body :parsed-body} (count-raw entity query-params)]
+        (is (= 200 search-status count-status))
+        (is (= 0 (count search-body) count-body)
+            "filters must be applied, and should discriminate"))
 
-    (let [query-params {:query query
-                        :tlp "green"}
-          {search-status :status
-           search-body :parsed-body} (search-raw entity query-params)
-          {count-status :status
-           count-body :parsed-body} (count-raw entity query-params)
-          matched-fields {:tlp "green"
-                          (keyword query-field) query}]
-      (is (= 200 search-status count-status))
-      (is (<= 1 (count search-body)))
-      (is (= (count search-body) count-body))
-      (doseq [res search-body]
-        (is (= (select-keys res [(keyword query-field) :tlp])
-               matched-fields)
-            "filters must be applied, and match properly")))))
+      (let [query-params {:query query
+                          :tlp "green"}
+            {search-status :status
+             search-body :parsed-body} (search-raw entity query-params)
+            {count-status :status
+             count-body :parsed-body} (count-raw entity query-params)
+            matched-fields {:tlp "green"
+                            (keyword query-field) value}]
+        (is (= 200 search-status count-status))
+        (is (<= 1 (count search-body)))
+        (is (= (count search-body) count-body))
+        (doseq [res search-body]
+          (is (= (select-keys res [(keyword query-field) :tlp])
+                 matched-fields)
+              "filters must be applied, and match properly"))))))
 
 (defn test-filter-by-id
   [entity]
