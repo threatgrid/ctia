@@ -60,6 +60,8 @@
        :invalid-tests?   true
        :update-tests?    true
        :search-tests?    true
+       :search-field     :source
+       :search-value     "cisco:unified_connect"
        :update-field     :source
        :additional-tests additional-tests
        :headers          {:Authorization "45c1f5e3f05d0"}}))))

@@ -55,7 +55,8 @@
 (def-es-store AssetPropertiesStore :asset-properties StoredAssetProperties PartialStoredAssetProperties)
 
 (def asset-properties-fields
-  (concat sorting/default-entity-sort-fields
+  (concat sorting/base-entity-sort-fields
+          sorting/sourcable-entity-sort-fields
           [:asset_ref]))
 
 (def asset-properties-sort-fields
