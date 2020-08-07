@@ -214,7 +214,7 @@
 (defn test-non-describable-search
   [entity value query-field]
   (testing "search term filter"
-    (let [query (format "%s:%s"
+    (let [query (format "%s:\"%s\""
                         (name query-field)
                         value)]
       (let [{search-status :status

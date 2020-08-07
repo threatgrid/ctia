@@ -55,12 +55,9 @@
        :invalid-tests?   false
        :update-tests?    true
        :update-field     :source
-
-       ;; TODO: something's missing, this isn't working just yet
-       :search-tests?    false
-       :search-field     :properties.name
-       :search-value     "cisco:securex:posture:score"
-
+       :search-tests?    true
+       :search-field     :source
+       :search-value     "cisco:unified_connect"
        :additional-tests additional-tests
        :headers          {:Authorization "45c1f5e3f05d0"}}))))
 
