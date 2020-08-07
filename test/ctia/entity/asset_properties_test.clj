@@ -21,11 +21,6 @@
 
 (use-fixtures :each whoami-helpers/fixture-reset-state)
 
-;; (helpers/get
-;;  "ctia/asset-properties/search"
-;;  :query-params {"query" "asset_ref:\"http://ex.tld/ctia/asset/asset-61884b14-e273-4930-a5ff-dcce69207724\""}
-;;  :headers {"Authorization" "45c1f5e3f05d0"})
-
 (defn additional-tests [_ asset-properties-sample]
   (testing "GET /ctia/asset-properties/search"
     ;; only when ES store
