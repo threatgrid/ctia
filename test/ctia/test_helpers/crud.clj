@@ -147,7 +147,8 @@
            update-tests?
            patch-tests?
            search-tests?
-           additional-tests]
+           additional-tests
+           search-value]
     :or {invalid-tests? true
          invalid-test-field :title
          update-field :title
@@ -187,7 +188,8 @@
 
       (when search-tests?
         (test-query-string-search entity
-                                  (name search-field)
+                                  (or search-value
+                                      (name search-field))
                                   search-field
                                   example))
 

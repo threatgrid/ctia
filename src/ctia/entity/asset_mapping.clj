@@ -53,11 +53,13 @@
 (def-es-store AssetMappingStore :asset-mapping StoredAssetMapping PartialStoredAssetMapping)
 
 (def asset-mapping-fields
-  (concat sorting/default-entity-sort-fields
+  (concat sorting/base-entity-sort-fields
+          sorting/sourcable-entity-sort-fields
           [:confidence
            :specificity
            :stability
-           :observable
+           :observable.value
+           :observable.type
            :asset_ref]))
 
 (def asset-mapping-sort-fields

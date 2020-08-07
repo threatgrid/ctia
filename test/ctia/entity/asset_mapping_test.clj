@@ -51,13 +51,16 @@
       {:entity           "asset-mapping"
        :example          new-asset-mapping-maximal
        :invalid-tests?   false
+       :invalid-field    :asset_ref
        :update-tests?    true
-       :search-tests?    false
+       :search-tests?    true
+       :search-field     :confidence
+       :search-value     "high"
        :update-field     :source
        :additional-tests additional-tests
        :headers          {:Authorization "45c1f5e3f05d0"}}))))
 
-#_(deftest asset-mapping-pagination-test
+(deftest asset-mapping-pagination-test
   (store/test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
@@ -68,7 +71,7 @@
 
      (let [ids (helpers/post-entity-bulk
                 new-asset-mapping-maximal
-                :asset-mappings
+                :asset_mappings
                 30
                 {"Authorization" "45c1f5e3f05d0"})]
 
@@ -83,14 +86,14 @@
         {"Authorization" "45c1f5e3f05d0"}
         asset-mapping/asset-mapping-fields)))))
 
-#_(deftest asset-metric-routes-test
+(deftest asset-metric-routes-test
   ((:es-store store/store-fixtures)
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
      (aggregate/test-metric-routes
       (into asset-mapping/asset-mapping-entity
-            {:plural            :assets
+            {:plural            :asset_mappings
              :entity-minimal    new-asset-mapping-minimal
              :enumerable-fields asset-mapping/asset-mapping-enumerable-fields
              :date-fields       asset-mapping/asset-mapping-histogram-fields})))))
