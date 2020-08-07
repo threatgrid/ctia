@@ -59,12 +59,17 @@
        :example          new-asset-properties-maximal
        :invalid-tests?   false
        :update-tests?    true
-       :search-tests?    false
        :update-field     :source
+
+       ;; TODO: something's missing, this isn't working just yet
+       :search-tests?    false
+       :search-field     :properties.name
+       :search-value     "cisco:securex:posture:score"
+
        :additional-tests additional-tests
        :headers          {:Authorization "45c1f5e3f05d0"}}))))
 
-#_(deftest asset-properties-pagination-test
+(deftest asset-properties-pagination-test
   (store/test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
@@ -90,14 +95,14 @@
         {"Authorization" "45c1f5e3f05d0"}
         asset-properties/asset-properties-fields)))))
 
-#_(deftest asset-metric-routes-test
+(deftest asset-metric-routes-test
   ((:es-store store/store-fixtures)
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0" "foouser" "Administrators" "user")
      (aggregate/test-metric-routes
-      (into asset-mapping/asset-mapping-entity
-            {:plural            :assets
-             :entity-minimal    new-asset-mapping-minimal
-             :enumerable-fields asset-mapping/asset-mapping-enumerable-fields
-             :date-fields       asset-mapping/asset-mapping-histogram-fields})))))
+      (into asset-properties/asset-properties-entity
+            {:plural            :asset_properties
+             :entity-minimal    new-asset-properties-minimal
+             :enumerable-fields asset-properties/asset-properties-enumerable-fields
+             :date-fields       asset-properties/asset-properties-histogram-fields})))))

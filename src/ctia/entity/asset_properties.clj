@@ -36,9 +36,10 @@
   (default-realize-fn "asset-properties" NewAssetProperties StoredAssetProperties))
 
 (def ^:private properties-mapping
-  {:properties
+  {:type "object"
+   :properties
    {:name  em/token
-    :value em/token}})
+    :value em/all_token}})
 
 (def asset-properties-mapping
   {"asset-properties"
@@ -55,8 +56,11 @@
 (def-es-store AssetPropertiesStore :asset-properties StoredAssetProperties PartialStoredAssetProperties)
 
 (def asset-properties-fields
-  (concat sorting/default-entity-sort-fields
-          [:asset_ref]))
+  (concat sorting/base-entity-sort-fields
+          sorting/sourcable-entity-sort-fields
+          [:asset_ref
+           :properties.name
+           :properties.value]))
 
 (def asset-properties-sort-fields
   (apply s/enum asset-properties-fields))
