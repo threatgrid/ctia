@@ -1,6 +1,7 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [clojure.string :as string]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.entity.entities :as entities]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
@@ -30,7 +31,8 @@
             [ctia.version.routes :refer [version-routes]]
             [ctia.status.routes :refer [status-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
-            [ring.util.http-response :refer [ok]]))
+            [ring.util.http-response :refer [ok]]
+            [schema.core :as s]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -67,7 +69,7 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
-(defn entity->routes [entities entity-kw services-map]
+(s/defn entity->routes [entities entity-kw services-map :- APIHandlerServices]
   {:pre [(map? entities)
          (keyword? entity-kw)
          (map? services-map)]
@@ -164,7 +166,7 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(defn api-handler [services]
+(s/defn api-handler [services :- APIHandlerServices]
   (let [{:keys [oauth2]}
         (get-http-swagger)]
     (api {:exceptions {:handlers exception-handlers}

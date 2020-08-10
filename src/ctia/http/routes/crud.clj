@@ -18,6 +18,7 @@
                                     search-query
                                     coerce-date-range
                                     format-agg-result]]
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
    [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
@@ -37,7 +38,7 @@
 
 ;; returns a function that takes a map of services,
 ;; and returns routes.
-(defn entity-crud-routes
+(s/defn entity-crud-routes
   [{:keys [entity
            new-schema
            entity-schema
@@ -76,8 +77,9 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}}]
- (fn [{{:keys [write-store read-store]} :StoreService
-       :as services}]
+  :- DelayedRoutes
+ (s/fn [{{:keys [write-store read-store]} :StoreService
+         :as services} :- APIHandlerServices]
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
         search-filters (st/dissoc search-q-params

@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [ctia.http.routes.crud :as crud]
+   [ctia.schemas.core :refer [APIHandlerServices]]
    [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
    [ctia.domain.entities
     :refer
@@ -111,11 +112,11 @@
    (java.util.Date.)
    {:valid_time lifetime}))
 
-(defn decrypt-feed
+(s/defn decrypt-feed
   [{:keys [secret
            feed_view_url]
     :as feed}
-   {{:keys [decrypt]} :IEncryption :as services}]
+   {{:keys [decrypt]} :IEncryption :as services} :- APIHandlerServices]
   (cond-> feed
     secret (assoc :secret
                   (decrypt secret))
@@ -123,14 +124,15 @@
                          (decrypt
                           feed_view_url))))
 
-(defn decrypt-feed-page [feed-page services]
+(s/defn decrypt-feed-page [feed-page services :- APIHandlerServices]
   (update feed-page :data
           (fn [feeds]
             (map #(decrypt-feed % services) feeds))))
 
-(defn fetch-feed [id s {{:keys [read-store]} :StoreService
-                        {:keys [decrypt]} :IEncryption
-                        :as services}]
+(s/defn fetch-feed [id s
+                    {{:keys [read-store]} :StoreService
+                     {:keys [decrypt]} :IEncryption
+                     :as services} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
                    secret
                    output
@@ -192,7 +194,7 @@
 (defn render-headers? [output]
   (not= :observables output))
 
-(defn feed-view-routes [services]
+(s/defn feed-view-routes [services :- APIHandlerServices]
   (routes
    (GET "/:id/view.txt" []
      :summary "Get a Feed View as newline separated entries"
@@ -224,7 +226,9 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(defn feed-routes [{{:keys [write-store read-store]} :StoreService :as services}]
+(s/defn feed-routes [{{:keys [write-store read-store]} :StoreService
+                      :as services}
+                     :- APIHandlerServices]
   (routes
    (POST "/" []
      :return Feed

@@ -9,7 +9,10 @@
   graphql)
 
 ;; :type-registry is an Atom<{String, IDeref<graphql.*>}>
-(defn get-or-update-type-registry [type-registry name f]
+(defn get-or-update-type-registry
+  "If name exists in registry, return existing mapping. Otherwise conj
+  {name (f)} to registry, and return (f)."
+  [type-registry name f]
   {:post [%]}
   (or ;; fast-path for readers
       (some-> (get @type-registry name) deref)

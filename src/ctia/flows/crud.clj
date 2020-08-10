@@ -32,12 +32,12 @@
    :entity-type s/Keyword
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
-   :services (st/open-schema
-               {:HooksService (st/open-schema
-                                {:apply-hooks (s/pred fn?)
-                                 :apply-event-hooks (s/pred fn?)})
-                :StoreService (st/open-schema
-                                {:write-store (s/pred fn?)})})
+   :services {:HooksService {:apply-hooks (s/pred ifn?)
+                             :apply-event-hooks (s/=> s/Any s/Any)
+                             s/Keyword s/Any}
+              :StoreService {:write-store (s/pred ifn?) ;;varargs
+                             s/Keyword s/Any}
+              s/Keyword s/Any}
    :identity (s/protocol auth/IIdentity)
    (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})

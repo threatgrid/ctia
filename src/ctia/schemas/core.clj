@@ -11,6 +11,28 @@
             [schema-tools.core :as st]
             [schema.core :as s :refer [Bool Str]]))
 
+(s/defschema APIHandlerServices
+  "Maps of services available to routes"
+  {:HooksService {:apply-hooks (s/=> s/Any s/Any) ;; TODO make kw varargs
+                  :apply-event-hooks (s/=> s/Any s/Any)
+                  s/Keyword s/Any}
+   :StoreService {:read-store (s/pred ifn?) ;;varags
+                  :write-store (s/pred ifn?) ;;varags
+                  s/Keyword s/Any}
+   :IAuth {:identity-for-token (s/=> s/Any s/Any)
+           s/Keyword s/Any}
+   :GraphQLService {:get-graphql (s/=> s/Any s/Any)
+                    s/Keyword s/Any}
+   :IEncryption {:encrypt (s/=> s/Any s/Any)
+                 :decrypt (s/=> s/Any s/Any)
+                 s/Keyword s/Any}
+   s/Keyword s/Any})
+
+(s/defschema DelayedRoutes
+  "Function taking a map of services and returning routes
+  (eg., return value of `entity-crud-routes`)"
+  (s/=> s/Any APIHandlerServices))
+
 (def base-stored-entity-entries
   {:id s/Str
    :owner s/Str
@@ -18,7 +40,12 @@
    :created java.util.Date
    (s/optional-key :modified) java.util.Date})
 
-(defn MaybeDelayedRealizeFn [a]
+#_ ;;TODO
+(s/defschema RealizeFnServices
+  )
+
+(defn MaybeDelayedRealizeFn
+  [a]
   (s/if fn?
     ;; delayed
     (s/=> a {s/Keyword {s/Keyword (s/pred fn?)}})
@@ -40,9 +67,7 @@
    (st/optional-keys
     {:new-schema (s/protocol s/Schema)
      :route-context s/Str
-     ;; a 1-arg function of taking a map of services, returning routes
-     ;; (eg., return value of `entity-crud-routes`)
-     :routes (s/=> s/Any {s/Keyword {s/Keyword (s/pred fn?)}})
+     :routes DelayedRoutes
      :tags [s/Str]
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
