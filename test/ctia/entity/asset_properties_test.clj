@@ -50,16 +50,17 @@
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:entity           "asset-properties"
-       :example          new-asset-properties-maximal
-       :invalid-tests?   true
-       :update-tests?    true
-       :update-field     :source
-       :search-tests?    true
-       :search-field     :source
-       :search-value     "cisco:unified_connect"
-       :additional-tests additional-tests
-       :headers          {:Authorization "45c1f5e3f05d0"}}))))
+      {:entity             "asset-properties"
+       :example            new-asset-properties-maximal
+       :invalid-tests?     true
+       :invalid-test-field :asset_ref
+       :update-tests?      true
+       :update-field       :source
+       :search-tests?      true
+       :search-field       :source
+       :search-value       "cisco:unified_connect"
+       :additional-tests   additional-tests
+       :headers            {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest asset-properties-pagination-test
   (store/test-for-each-store

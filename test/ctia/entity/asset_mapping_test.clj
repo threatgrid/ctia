@@ -48,17 +48,17 @@
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
      (whoami-helpers/set-whoami-response http/api-key "foouser" "foogroup" "user")
      (entity-crud-test
-      {:entity           "asset-mapping"
-       :example          new-asset-mapping-maximal
-       :invalid-tests?   false
-       :invalid-field    :asset_ref
-       :update-tests?    true
-       :search-tests?    true
-       :search-field     :confidence
-       :search-value     "high"
-       :update-field     :source
-       :additional-tests additional-tests
-       :headers          {:Authorization "45c1f5e3f05d0"}}))))
+      {:entity             "asset-mapping"
+       :example            new-asset-mapping-maximal
+       :invalid-tests?     true
+       :invalid-test-field :asset_ref
+       :update-tests?      true
+       :search-tests?      true
+       :search-field       :confidence
+       :search-value       "high"
+       :update-field       :source
+       :additional-tests   additional-tests
+       :headers            {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest asset-mapping-pagination-test
   (store/test-for-each-store
