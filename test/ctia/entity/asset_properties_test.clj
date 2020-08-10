@@ -52,7 +52,7 @@
      (entity-crud-test
       {:entity           "asset-properties"
        :example          new-asset-properties-maximal
-       :invalid-tests?   false
+       :invalid-tests?   true
        :update-tests?    true
        :update-field     :source
        :search-tests?    true

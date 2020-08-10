@@ -50,7 +50,7 @@
      (entity-crud-test
       {:entity           "asset-mapping"
        :example          new-asset-mapping-maximal
-       :invalid-tests?   false
+       :invalid-tests?   true
        :invalid-field    :asset_ref
        :update-tests?    true
        :search-tests?    true
