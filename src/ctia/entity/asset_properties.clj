@@ -114,8 +114,7 @@
     :external-id-capabilities :read-asset-properties
     :can-aggregate?           true
     :histogram-fields         asset-properties-histogram-fields
-    :enumerable-fields        asset-properties-enumerable-fields
-    }))
+    :enumerable-fields        asset-properties-enumerable-fields}))
 
 (def capabilities
   #{:create-asset-properties
@@ -139,5 +138,4 @@
    :es-store              ->AssetPropertiesStore
    :es-mapping            asset-properties-mapping
    :routes                asset-properties-routes
-   :capabilities          capabilities
-   })
+   :capabilities          capabilities})
