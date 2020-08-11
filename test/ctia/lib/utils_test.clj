@@ -4,14 +4,18 @@
 
 (def map-with-creds
   {:ctia
-   {"password" "abcd"
+   {"external-key-prefixes" "ctia-,tg-"
+    "CustomerKey" "1234-5678"
+    "password" "abcd"
     :auth
     {:static
      {:secret "1234"}}}})
 
 (def map-with-hidden-creds
   {:ctia
-   {"password" "********"
+   {"external-key-prefixes" "ctia-,tg-"
+    "CustomerKey" "********"
+    "password" "********"
     :auth
     {:static
      {:secret "********"}}}})
