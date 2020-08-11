@@ -13,7 +13,6 @@
                                "pass"
                                "secret"
                                "tempfile"
-                               "customerKey"
                                "response-url"
                                "token"]]
     (re-pattern (str "(?i).*("
@@ -23,6 +22,10 @@
 ;; copied from log-helper.safe
 (def to-obfuscate-keys
   #{"jwt" "authorization"})
+
+;; put pattern exceptions here
+(def to-not-obfuscate-keys
+  #{"external-key-prefixes"})
 
 ;; copied from log-helper.safe
 (defn obfuscate?
@@ -37,6 +40,7 @@
                              (pr-str k))
                   (pr-str k)))]
     (cond
+      (contains? to-not-obfuscate-keys k-str) false
       (contains? to-obfuscate-keys k-str) (string? v)
       :else (some? (re-matches to-obfuscate-pattern k-str)))))
 
