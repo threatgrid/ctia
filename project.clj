@@ -32,8 +32,9 @@
   :jvm-opts ["-Djava.awt.headless=true"
              "-Dlog.console.threshold=INFO"
              "-server"]
-  ; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
-  ; to inspect conflicts.
+  ;; use `lein pom; mvn dependency:tree -Dverbose -Dexcludes=org.clojure:clojure`
+  ;; to inspect conflicts.
+
   :dependencies [[org.clojure/clojure ~clj-version]
                  [clj-time "0.15.2"]
                  [org.clojure/core.async "1.0.567"]
@@ -48,15 +49,15 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                 [threatgrid/ctim "1.0.17"]
+                 [threatgrid/ctim "1.0.18"]
                  [threatgrid/clj-momo "0.3.5"]
 
                  [com.arohner/uri "0.1.2"]
 
                  ;; Web server
                  [metosin/compojure-api "1.1.13" ]
-                 ; optional dep for compojure-api's dep ring-middleware-format
-                 ; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
+                 ;; optional dep for compojure-api's dep ring-middleware-format
+                 ;; see: https://github.com/ngrunwald/ring-middleware-format/issues/74
                  [com.ibm.icu/icu4j "65.1"]
                  [metosin/ring-swagger "0.26.2"]
                  [metosin/ring-swagger-ui "3.24.3"]
@@ -87,7 +88,7 @@
                  [io.netty/netty-resolver "4.1.42.Final"] ;riemann-clojure-client > org.apache.zookeeper/zookeeper
                  [com.google.protobuf/protobuf-java "3.11.1"] ;riemann-clojure-client > threatgrid:ctim, metrics-clojure-riemann, org.onyxplatform/onyx-kafka
                  [riemann-clojure-client "0.5.1"]
-                 ; https://stackoverflow.com/a/43574427
+                 ;; https://stackoverflow.com/a/43574427
                  [jakarta.xml.bind/jakarta.xml.bind-api "2.3.2"]
 
                  ;; Docs
@@ -184,29 +185,29 @@
                               :namespaces [ctia.bulk.routes-bench]}
                              {:name :migration
                               :namespaces [ctia.tasks.migrate-es-stores-bench]}]}
-  ; use `lein deps :plugins-tree` to inspect conflicts
+  ;; use `lein deps :plugins-tree` to inspect conflicts
   :plugins [[lein-shell "0.5.0"]
             [org.clojure/clojure ~clj-version] ;override perforate
             [perforate ~perforate-version]
             [reifyhealth/lein-git-down "0.3.5"]]
   :middleware [lein-git-down.plugin/inject-properties]
-  ; lein-git-down config
+  ;; lein-git-down config
   :repositories [["public-github" {:url "git://github.com"}]
                  ["private-github" {:url "git://github.com" :protocol :ssh}]]
-  ; to simultaneously work on an upstream dependency and have
-  ; Travis pick up on it:
-  ; 1. add an entry mapping the upstream's maven coordinate to its dev GitHub repository
-  ;    in the :git-down map:
-  ;    eg., To work on ctim in the `frenchy64` fork:
-  ;         :git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
-  ; 2. change the upstream dependency's version to the relevant sha
-  ;    eg., [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
-  ;
+  ;; to simultaneously work on an upstream dependency and have
+  ;; Travis pick up on it:
+  ;; 1. add an entry mapping the upstream's maven coordinate to its dev GitHub repository
+  ;;    in the :git-down map:
+  ;;    eg., To work on ctim in the `frenchy64` fork:
+  ;;         :git-down {threatgrid/ctim {:coordinates frenchy64/ctim}}
+  ;; 2. change the upstream dependency's version to the relevant sha
+  ;;    eg., [threatgrid/ctim "9acbc93333d630d9b9a0a9fc19981b0ba0ddec1c"]
+  ;;
+
   ;; uncomment and change during dev
-  :git-down {;threatgrid/ctim {:coordinates frenchy64/ctim}
-             ;threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
-             ;threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}
-             }
+  #_:git-down #_{threatgrid/ctim {:coordinates frenchy64/ctim}
+                 threatgrid/clj-momo {:coordinates frenchy64/clj-momo}
+                 threatgrid/ring-jwt-middleware {:coordinates frenchy64/ring-jwt-middleware}}
   :aliases {"dev-test" ["with-profile" "test,dev-test" "test"]
             "kibit" ["with-profile" "prepush" "kibit"]
             "bikeshed" ["with-profile" "prepush" "bikeshed" "-m" "100"]
