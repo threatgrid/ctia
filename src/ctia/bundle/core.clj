@@ -31,8 +31,6 @@
   [id]
   (and id (re-matches id/transient-id-re id)))
 
-(def default-external-key-prefixes "ctia-")
-
 (defn debug [msg v]
   (log/debug msg v)
   v)
@@ -42,17 +40,19 @@
   [key-prefix external-ids]
   (filter #(string/starts-with? % key-prefix) external-ids))
 
-(s/defn valid-external-id :- (s/maybe s/Str)
-  "Returns the external ID that can be used to check whether an entity has
+(s/defn filter-external-ids :- [s/Str]
+  "Returns the external IDs that can be used to check whether an entity has
   already been imported or not."
   [external-ids key-prefixes]
-  (let [valid-external-ids (mapcat #(prefixed-external-ids % external-ids)
-                                   key-prefixes)]
-    (if (> (count valid-external-ids) 1)
+  (let [valid-ext-ids (if (seq key-prefixes)
+                        (mapcat #(prefixed-external-ids % external-ids)
+                                key-prefixes)
+                        external-ids)]
+    (when (> (count valid-ext-ids) 1)
       (log/warnf (str "More than 1 valid external ID has been found "
                       "(key-prefixes:%s | external-ids:%s)")
-                 (pr-str key-prefixes) (pr-str external-ids))
-      (first valid-external-ids))))
+                 (pr-str key-prefixes) (pr-str external-ids)))
+    valid-ext-ids))
 
 (s/defn parse-key-prefixes :- [s/Str]
   "Parses a comma separated list of external ID prefixes"
@@ -66,18 +66,14 @@
   [{:keys [id external_ids] :as entity}
    entity-type
    external-key-prefixes]
-  (let [key-prefixes (parse-key-prefixes
-                      (or external-key-prefixes
-                          (p/get-in-global-properties
-                            [:ctia :store :external-key-prefixes]
-                            default-external-key-prefixes)))
-        external_id (valid-external-id external_ids key-prefixes)]
-    (when-not external_id
+  (let [key-prefixes (parse-key-prefixes external-key-prefixes)
+        filtered-ext-ids (filter-external-ids external_ids key-prefixes)]
+    (when-not (seq filtered-ext-ids)
       (log/warnf "No valid external ID has been provided (id:%s)" id))
     (cond-> {:new-entity entity
              :type entity-type}
       (transient-id? id) (assoc :original_id id)
-      external_id (assoc :external_id external_id))))
+      (seq filtered-ext-ids) (assoc :external_ids filtered-ext-ids))))
 
 (defn all-pages
   "Retrieves all external ids using pagination."
@@ -94,7 +90,7 @@
 
 (defn find-by-external-ids
   [import-data entity-type auth-identity]
-  (let [external-ids (keep :external_id import-data)]
+  (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
                 (pr-str external-ids))
@@ -158,10 +154,10 @@
   "If the entity has already been imported, update the import data
    with its ID. If more than one old entity is linked to an external id,
    an error is reported."
-  [{:keys [external_id]
+  [{:keys [external_ids]
     :as entity-data} :- EntityImportData
-   find-by-external-id]
-  (if-let [old-entities (find-by-external-id external_id)]
+   find-by-external-ids]
+  (if-let [old-entities (mapcat find-by-external-ids external_ids)]
     (let [old-entity (some-> old-entities
                              first
                              :entity
@@ -171,8 +167,8 @@
         (log/warn
          (format
           (str "More than one entity is "
-               "linked to the external id %s (examples: %s)")
-          external_id
+               "linked to the external ids %s (examples: %s)")
+          external_ids
           (->> (take 10 old-entities) ;; prevent very large logs
                (map (comp :id :entity))
                pr-str))))

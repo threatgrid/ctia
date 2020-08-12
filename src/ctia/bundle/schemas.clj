@@ -10,7 +10,7 @@
     :original_id s/Str
     :result (s/enum "error" "created" "exists")
     :type s/Keyword
-    :external_id s/Str
+    :external_ids [s/Str]
     :error s/Any
     :msg s/Str}))
 

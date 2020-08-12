@@ -204,7 +204,6 @@
                       "ctia.log.riemann.batch-size" s/Int
                       "ctia.log.riemann.service-prefix" s/Str
 
-                      "ctia.store.external-key-prefixes" s/Str
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
 
