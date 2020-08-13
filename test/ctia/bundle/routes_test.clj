@@ -864,15 +864,14 @@
            (is (= bundle-incident-target-get bundle-incident-target-post))))))))
 
 (defn with-tlp-property-setting [tlp f]
-  (with-redefs [p/global-properties-atom
-                (let [new-props (-> (p/get-global-properties)
-                                    (assoc-in [:ctia :access-control :min-tlp] tlp)
-                                    (assoc-in [:ctia :access-control :default-tlp] tlp)
-                                    atom)]
-                  (fn [] new-props))]
+  (helpers/with-config-transformer*
+    #(-> %
+         (assoc-in [:ctia :access-control :min-tlp] tlp)
+         (assoc-in [:ctia :access-control :default-tlp] tlp))
     (f)))
 
 (deftest bundle-tlp-test
+ (with-tlp-property-setting "amber"
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -886,14 +885,13 @@
              new-bundle
              {:type "bundle"
               :source "source"
-              :sightings #{sighting}}]
+              :sightings #{sighting}}
 
-         (with-tlp-property-setting "amber"
-           #(let [res (post "ctia/bundle/import"
-                            :body new-bundle
-                            :headers {"Authorization" "45c1f5e3f05d0"})]
-              (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error)))
-              (is (= 200 (:status res))))))))))
+             res (post "ctia/bundle/import"
+                       :body new-bundle
+                       :headers {"Authorization" "45c1f5e3f05d0"})]
+         (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error)))
+         (is (= 200 (:status res)))))))))
 
 (deftest bundle-acl-fields-test
   (test-for-each-store

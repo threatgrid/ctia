@@ -26,6 +26,19 @@
              [utils :as fu]]
             [puppetlabs.trapperkeeper.app :as app]))
 
+(def ^:dynamic ^:private *current-app*)
+(def ^:dynamic ^:private *config-transformers* [])
+
+(defn with-config-transformer*
+  "For use in a test fixture to dynamically transform a Trapperkeeper
+  config before creating an app. Note this transformation is applied
+  to the result of p/build-init-config."
+  [tf body-fn]
+  (assert (not (thread-bound? #'*current-app*))
+          "Cannot transform config after TK app has started!")
+  (binding [*config-transformers* (conj *config-transformers* tf)]
+    (body-fn)))
+
 (def with-properties-vec
   (mth/build-with-properties-vec-fn PropertiesSchema))
 
@@ -146,8 +159,6 @@
                   log/*logger-factory* lf]
       (f))))
 
-(def ^:dynamic ^:private *current-app*)
-
 (defn bind-current-app* [app f]
   (let [_ (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
         _ (assert app)]
@@ -172,7 +183,12 @@
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (let [app (init/start-ctia!)]
+       (let [app (let [config (reduce #(%2 %1)
+                                      (p/build-init-config)
+                                      *config-transformers*)]
+                   (init/start-ctia!*
+                     {:services (init/default-services config)
+                      :config config}))]
          (try
            (bind-current-app* app t)
            (finally

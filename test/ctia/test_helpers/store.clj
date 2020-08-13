@@ -10,6 +10,8 @@
                    helpers/fixture-ctia
                    es-helpers/fixture-delete-store-indexes])})
 
+;; Note: if parallelizing this function, take care with dynamic bindings.
+;;       ensure compatible with `helpers/with-config-transformer*`
 (defn test-for-each-store [t]
   (doseq [[store-key fixtures] store-fixtures]
     (testing (name store-key)
