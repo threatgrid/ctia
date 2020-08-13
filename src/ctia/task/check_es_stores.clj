@@ -10,14 +10,13 @@
    [clojure.tools.logging :as log]
    [ctia
     [store-service :as store-svc]
-    [init :refer [log-properties]]
+    [init :refer [start-ctia!*]]
     [properties :as p]]
    [ctia.stores.es-service :as es-svc]
    [ctia.entity.entities :refer [entities]]
    [ctia.entity.sighting.schemas :refer [StoredSighting]]
    [ctia.stores.es.crud :refer [coerce-to-fn]]
    [puppetlabs.trapperkeeper.app :as app]
-   [puppetlabs.trapperkeeper.core :as tk]
    [schema-tools.core :as st]
    [schema.core :as s]))
 
@@ -42,14 +41,10 @@
   returns trapperkeeper app"
   []
   (log/info "starting CTIA Stores...")
-  (p/init!)
-  (log-properties)
-  (tk/boot-services-with-config
-    [store-svc/store-service
-     es-svc/es-store-service]
-    ;; can't be refactored to `get-config` because TK hasn't booted.
-    ;; using global atom directly as a reminder.
-    @(p/global-properties-atom)))
+  (let [config (p/build-init-config)]
+    (start-ctia!* {:services [store-svc/store-service
+                              es-svc/es-store-service]
+                   :config config})))
 
 (defn fetch-batch
   "fetch a batch of documents from an es index"

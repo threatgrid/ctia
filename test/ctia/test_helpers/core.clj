@@ -26,12 +26,13 @@
              [utils :as fu]]
             [puppetlabs.trapperkeeper.app :as app]))
 
-(def fixture-property
-  (mth/build-fixture-property-fn PropertiesSchema))
-
 (def with-properties-vec
   (mth/build-with-properties-vec-fn PropertiesSchema))
 
+;; Note! Use of this macro is a blocker to parallelizing tests,
+;; since system properties are global.
+;; TODO refactor to build a thread-local map of extra config entries
+;;      shared only between fixtures (merged in the same order as p/build-init-config)
 (defmacro with-properties [properties-vec & sexprs]
   `(with-properties-vec ~properties-vec
      (fn [] (do ~@sexprs))))

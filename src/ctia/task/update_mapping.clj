@@ -14,7 +14,6 @@
             [ctia.stores.es-service :as es-svc]
             [ctia.stores.es.init :as es-init]
             [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.trapperkeeper.core :as tk]
             [schema.core :as s])
   (:import [clojure.lang ExceptionInfo]))
 
@@ -52,14 +51,10 @@
         (println summary)
         (System/exit 0))
       (pp/pprint options)
-      (p/init!)
-      (init/log-properties)
-      (let [app (tk/boot-services-with-config
-                  [store-svc/store-service
-                   es-svc/es-store-service]
-                  ;; can't be refactored to `get-config` because TK hasn't booted.
-                  ;; using global atom directly as a reminder.
-                  @(p/global-properties-atom))
+      (let [app (let [config (p/build-init-config)]
+                  (init/start-ctia!* {:services [store-svc/store-service
+                                                 es-svc/es-store-service]
+                                      :config config}))
             store-svc (app/get-service app :StoreService)]
         (->> (:stores options)
              (select-keys @(store-svc/get-stores

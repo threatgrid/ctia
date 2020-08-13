@@ -37,6 +37,7 @@
       (println summary)
       (System/exit 0))
     (pp/pprint options)
+    ;; GLOBAL properties init (do not remove until p/get-global-properties is deleted)
     (p/init!)
     (log-properties)
     (update-stores! (:stores options))))

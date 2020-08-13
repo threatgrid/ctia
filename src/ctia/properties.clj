@@ -222,6 +222,20 @@
                              ;; TOP-LEVEL STATE!!
                              (global-properties-atom)))
 
+(defn build-init-config
+  "Returns a (nested keyword) config map from (merged left-to-right):
+
+  1. [[files]] merged left-to-right
+  2. JVM Properties for keys of [[PropertiesSchema]]
+  3. Environment variables for keys of [[PropertiesSchema]]"
+  []
+  {:post [(map? %)]}
+  (let [a (atom nil)]
+    ((mp/build-init-fn files
+                       PropertiesSchema
+                       a))
+    @a))
+
 (defn get-http-show []
   (get-in-global-properties [:ctia :http :show]))
 

@@ -1,4 +1,6 @@
 (ns ctia.tk
+  "Diagnostic wrappers for trapperkeeper services. Set tk-options
+  to configure."
   (:require [clojure.set :as set]
             [puppetlabs.trapperkeeper.services :refer [service
                                                        name-with-attributes

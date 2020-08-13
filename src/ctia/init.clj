@@ -35,25 +35,24 @@
    [puppetlabs.trapperkeeper.app :as app]
    [puppetlabs.trapperkeeper.core :as tk]))
 
-(defn log-properties []
-  (log/debug (with-out-str
+(defn log-properties
+  ([] (log-properties @(p/get-global-properties)))
+  ([config]
+   (log/debug (with-out-str
+                (do (newline)
+                    (utils/safe-pprint
+                      (mp/debug-properties-by-source p/PropertiesSchema
+                                                     p/files)))))
+
+   (log/info (with-out-str
                (do (newline)
-                   (utils/safe-pprint
-                    (mp/debug-properties-by-source p/PropertiesSchema
-                                                   p/files)))))
+                   (utils/safe-pprint config))))))
 
-  (log/info (with-out-str
-              (do (newline)
-                  (utils/safe-pprint (p/get-global-properties))))))
-
-(defn ^:private services+config []
-  (let [;; this is interesting because we can't potentially
-        ;; use `get-in-config` here because TK hasn't booted yet.
-        ;; might be more appropriate to read from disk here.
-        ;; using the properties atom directly as a reminder of this corner case.
-        properties @(p/global-properties-atom)
-        auth-svc
-        (let [{auth-service-type :type :as auth} (get-in properties [:ctia :auth])]
+(defn default-services
+  "Returns the default collection of CTIA services based on provided properties."
+  [config]
+  (let [auth-svc
+        (let [{auth-service-type :type :as auth} (get-in config [:ctia :auth])]
           (case auth-service-type
             :allow-all allow-all/allow-all-auth-service
             :threatgrid threatgrid/threatgrid-auth-service
@@ -63,25 +62,35 @@
                              :requested-service auth-service-type}))))
         encryption-svc
         (let [{:keys [type] :as encryption-properties}
-              (get-in properties [:ctia :encryption])]
+              (get-in config [:ctia :encryption])]
           (case type
             :default encryption-default/default-encryption-service
             (throw (ex-info "Encryption service not configured"
                             {:message "Unknown service"
                              :requested-service type}))))]
-    {:services (concat
-                 [auth-svc
-                  encryption-svc
-                  e/events-service
-                  store-svc/store-service
-                  es-svc/es-store-service
-                  http-server-svc/ctia-http-server-service
-                  hooks-svc/hooks-service
-                  graphql-svc/graphql-service]
-                 ;; register event file logging only when enabled
-                 (when (get-in properties [:ctia :events :log])
-                   [event-logging/event-logging-service]))
-     :config properties}))
+    (into
+      [auth-svc
+       encryption-svc
+       e/events-service
+       store-svc/store-service
+       es-svc/es-store-service
+       http-server-svc/ctia-http-server-service
+       hooks-svc/hooks-service
+       graphql-svc/graphql-service]
+      ;; register event file logging only when enabled
+      (when (get-in config [:ctia :events :log])
+        [event-logging/event-logging-service]))))
+
+(defn start-ctia!*
+  "Lower-level Trapperkeeper booting function for
+  custom services and config."
+  [{:keys [services config]}]
+  ;; GLOBAL properties init (do not remove until p/get-global-properties is deleted)
+  (reset! (p/global-properties-atom) config)
+  (let [_ (validate-entities)
+        _ (log-properties config)
+        app (tk/boot-services-with-config services config)]
+    app))
 
 (defn start-ctia!
   "Does the heavy lifting for ctia.main (ie entry point that isn't a class).
@@ -90,18 +99,13 @@
   (log/info "starting CTIA version: "
             (version/current-version))
 
-  ;; properties init
-  (p/init!)
-
-  (log-properties)
-  (validate-entities)
-
+  ;; TODO port to TK or delete (currently unused)
   ;; metrics reporters init
   ;(riemann/init!)
   ;(jmx/init!)
   ;(console/init!)
 
   ;; trapperkeeper init
-  (let [{:keys [services config]} (services+config)
-        app (tk/boot-services-with-config services config)]
-    app))
+  (let [config (p/build-init-config)]
+    (start-ctia!* {:services (default-services config)
+                   :config config})))

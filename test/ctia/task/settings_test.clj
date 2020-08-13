@@ -23,6 +23,8 @@
 
 (deftest update-stores!-test
   ;;init all stores
+  ;; GLOBAL properties init
+  ;; TODO refactor this test using encapsulated `app` to remove global properties usage
   (p/init!)
   (let [initial-indicator-props (init/get-store-properties :indicator)
         _ (swap! (p/global-properties-atom)

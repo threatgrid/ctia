@@ -1,25 +1,20 @@
 (ns ctia.task.purge-es-stores
   (:require [clojure.tools.logging :as log]
             [ctia
-             [init :refer [log-properties]]
+             [init :refer [log-properties start-ctia!*]]
              [properties :as p]]
             [ctia.stores.es.store :refer [delete-state-indexes]]
-            [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.trapperkeeper.core :as tk]))
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn setup
   "start CTIA store service.
   returns a tk app."
   []
   (log/info "starting CTIA Stores...")
-  (p/init!)
-  (log-properties)
-  (tk/boot-services-with-config
-    [store-svc/store-service
-     es-svc/es-store-service]
-    ;; can't be refactored to `get-config` because TK hasn't booted.
-    ;; using global atom directly as a reminder.
-    @(p/global-properties-atom)))
+  (let [config (p/build-init-config)]
+    (start-ctia!* {:services [store-svc/store-service
+                              es-svc/es-store-service]
+                   :config config})))
 
 (defn delete-store-indexes [stores]
   (doseq [store-impls (vals @stores)

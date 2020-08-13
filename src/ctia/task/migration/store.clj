@@ -14,7 +14,6 @@
              [query :as es-query]
              [index :as es-index]]
             [ctim.domain.id :refer [long-id->id]]
-            [ctia.init :refer [start-ctia!]]
             [ctia.lib.collection :refer [fmap]]
             [ctia.store-service :as store-svc]
             [ctia.stores.es-service :as es-svc]
@@ -30,7 +29,6 @@
             [ctia
              [init :refer [log-properties]]
              [properties :as p]]
-            [puppetlabs.trapperkeeper.core :as tk]
             [puppetlabs.trapperkeeper.app :as app]))
 
 (def timeout (* 5 60000))
