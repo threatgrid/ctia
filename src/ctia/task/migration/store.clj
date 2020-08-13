@@ -659,8 +659,7 @@ when confirm? is true, it stores this state and creates the target indices."
                           store-svc))
 
 (defn setup!
-  "init properties, start CTIA and its store service.
-  returns a tk app."
+  "setup store service"
   [store-svc]
   (->> (migration-store-properties store-svc)
        init-store-conn
