@@ -81,7 +81,9 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
-  (fn [{{{:keys [encrypt decrypt]} :IEncryption} :services}]
+  (s/fn :- StoredFeed
+   [{{{:keys [encrypt decrypt]} :IEncryption}
+     :services}]
    (let [long-id (short-id->long-id id)
          plain-secret (if-let [prev-secret (:secret prev-object)]
                         (decrypt prev-secret)
