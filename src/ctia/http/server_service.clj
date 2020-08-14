@@ -13,10 +13,12 @@
    StoreService
    IAuth
    GraphQLService
-   IEncryption]
+   IEncryption
+   ConfigService]
   (start [this context] (core/start context
                                     (p/get-in-global-properties [:ctia :http])
-                                    {:HooksService (-> HooksService 
+                                    {:ConfigService ConfigService
+                                     :HooksService (-> HooksService 
                                                        (select-keys [:apply-hooks
                                                                      :apply-event-hooks]))
                                      :StoreService (-> StoreService 
