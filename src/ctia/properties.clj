@@ -241,5 +241,5 @@
 (defn get-http-swagger []
   (get-in-global-properties [:ctia :http :swagger]))
 
-(defn get-access-control []
-  (get-in-global-properties [:ctia :access-control]))
+(defn get-access-control [get-in-config]
+  (get-in-config [:ctia :access-control]))

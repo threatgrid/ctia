@@ -128,25 +128,30 @@
                           :batch-size   100
                           :buffer-size  3
                           :confirm? true
-                          :restart? false}]
+                          :restart? false}
+        get-in-config-fn (fn []
+                           (let [config (p/build-init-config)]
+                             #(apply get-in config %&)))]
     (testing "misconfigured migration"
-      (with-redefs [p/global-properties-atom
-                    (let [new-props (atom (-> (p/get-global-properties)
-                                              (assoc-in [:ctia :store :es :investigation :indexname]
-                                                        "v1.2.0_ctia_investigation")
-                                              (assoc-in [:malware 0 :state :props :indexname]
-                                                        "v1.2.0_ctia_malware")))]
-                      (fn [] new-props))]
+      (let [;; shadows get-in-config-fn above
+            get-in-config-fn (fn []
+                               (let [config (-> (p/build-init-config)
+                                                (assoc-in [:ctia :store :es :investigation :indexname]
+                                                          "v1.2.0_ctia_investigation")
+                                                (assoc-in [:malware 0 :state :props :indexname]
+                                                          "v1.2.0_ctia_malware"))]
+                                 #(apply get-in config %&)))]
         (is (thrown? AssertionError
-                     (sut/check-migration-params migration-params))
+                     (sut/check-migration-params migration-params (get-in-config-fn)))
             "source and target store must be different"))
       (is (thrown? ExceptionInfo
                    (sut/check-migration-params (update migration-params
                                                            :migrations
                                                            conj
-                                                           :bad-migration-id)))))
+                                                           :bad-migration-id)
+                                               (get-in-config-fn)))))
     (testing "properly configured migration"
-      (is (sut/check-migration-params migration-params)))))
+      (is (sut/check-migration-params migration-params (get-in-config-fn))))))
 
 (deftest migration-with-rollover
   (helpers/set-capabilities! "foouser"

@@ -112,25 +112,25 @@
     entity))
 
 (defn tlp-check
-  [{:keys [tlp] :as entity}]
+  [{:keys [tlp] :as entity} {{:keys [get-in-config]} :ConfigService :as _services_}]
   (cond
     (not (seq tlp)) entity
-    (not (allowed-tlp? tlp))
+    (not (allowed-tlp? tlp get-in-config))
     {:msg (format "Invalid document TLP %s, allowed TLPs are: %s"
                   tlp
-                  (str/join "," (allowed-tlps)))
+                  (str/join "," (allowed-tlps get-in-config)))
      :error "Entity Access Control validation Error"
      :type :invalid-tlp-error
      :entity entity}
     :else entity))
 
 (s/defn ^:private validate-entities :- FlowMap
-  [{:keys [spec entities] :as fm} :- FlowMap]
+  [{:keys [spec entities services] :as fm} :- FlowMap]
   (assoc fm :entities
          (map (fn [entity]
                 (->> entity
                      (check-spec spec)
-                     tlp-check)) entities)))
+                     (tlp-check services))) entities)))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
