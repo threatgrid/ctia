@@ -13,7 +13,7 @@
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
-            [ctia.schemas.core :refer [TempIDs]]
+            [ctia.schemas.core :refer [TempIDs MaybeDelayedRealizeFn->RealizeFn]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
             [ctia.entity.event.obj-to-event
@@ -32,7 +32,9 @@
    :entity-type s/Keyword
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
-   :services {:HooksService {:apply-hooks (s/pred ifn?)
+   :services {:ConfigService {:get-in-config (s/pred ifn?)
+                              s/Keyword s/Any}
+              :HooksService {:apply-hooks (s/pred ifn?)
                              :apply-event-hooks (s/=> s/Any s/Any)
                              s/Keyword s/Any}
               :StoreService {:write-store (s/pred ifn?) ;;varargs
@@ -49,16 +51,6 @@
    (s/optional-key :tempids) (s/maybe TempIDs)
    (s/optional-key :enveloped-result?) (s/maybe s/Bool)
    :store-fn (s/pred fn?)})
-
-(defn- wrap-realize-fn [realize-fn services]
-  (fn [& args]
-    (let [maybe-delayed (apply realize-fn args)]
-      (if (fn? maybe-delayed)
-        (maybe-delayed {:services services})
-        maybe-delayed))))
-
-(defn- init-flow-map [{:keys [services] :as flow-map}]
-  (update flow-map :realize-fn wrap-realize-fn services))
 
 (defn- find-id
   "Lookup an ID in a given entity.  Parse it, because it might be a
@@ -160,9 +152,13 @@
            identity
            tempids
            prev-entity
+           services
            realize-fn] :as fm} :- FlowMap]
   (let [login (auth/login identity)
-        groups (auth/groups identity)]
+        groups (auth/groups identity)
+        realize-fn (MaybeDelayedRealizeFn->RealizeFn
+                     realize-fn
+                     {:services services})]
     (assoc fm
            :entities
            (doall
@@ -422,7 +418,6 @@
        :store-fn store-fn
        :create-event-fn to-create-event
        :enveloped-result? enveloped-result?}
-      init-flow-map
       validate-entities
       create-ids-from-transient
       realize-entities
@@ -468,7 +463,6 @@
            :spec spec
            :store-fn update-fn
            :create-event-fn to-update-event}
-          init-flow-map
           validate-entities
           realize-entities
           throw-validation-error
@@ -514,7 +508,6 @@
            :spec spec
            :store-fn update-fn
            :create-event-fn to-update-event}
-          init-flow-map
           patch-entities
           validate-entities
           realize-entities
