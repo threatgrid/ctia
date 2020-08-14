@@ -4,7 +4,9 @@
              [entities :refer [default-realize-fn]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [def-acl-schema def-stored-schema TempIDs]]
+             [core :refer [def-acl-schema def-stored-schema TempIDs
+                           MaybeDelayedRealizeFnResult
+                           MaybeDelayedRealizeFn->RealizeFn]]
              [sorting :as sorting]]
             [ctim.schemas.sighting :as ss]
             [flanders.utils :as fu]
@@ -34,7 +36,7 @@
 (def sighting-default-realize
   (default-realize-fn "sighting" NewSighting StoredSighting))
 
-(s/defn realize-sighting :- StoredSighting
+(s/defn realize-sighting :- (MaybeDelayedRealizeFnResult StoredSighting)
   ([new-sighting id tempids owner groups]
    (realize-sighting new-sighting id tempids owner groups nil))
   ([new-sighting :- NewSighting
@@ -43,13 +45,15 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-sighting :- (s/maybe StoredSighting)]
-   (sighting-default-realize
+  (s/fn :- StoredSighting
+   [rt-opt]
+   ((MaybeDelayedRealizeFn->RealizeFn sighting-default-realize rt-opt)
     (assoc new-sighting
            :count (:count new-sighting
                           (:count prev-sighting 1))
            :confidence (:confidence new-sighting
                                     (:confidence prev-sighting "Unknown")))
-    id tempids owner groups prev-sighting)))
+    id tempids owner groups prev-sighting))))
 
 (def sighting-fields
   (concat sorting/default-entity-sort-fields
