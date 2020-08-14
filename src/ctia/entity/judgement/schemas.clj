@@ -5,7 +5,9 @@
              [entities :refer [default-realize-fn]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [def-acl-schema def-stored-schema TempIDs]]
+             [core :refer [def-acl-schema def-stored-schema TempIDs
+                           MaybeDelayedRealizeFnResult
+                           MaybeDelayedRealizeFn->RealizeFn]]
              [sorting :as sorting]]
             [ctim.schemas
              [common :refer [determine-disposition-id disposition-map]]
@@ -41,7 +43,7 @@
 (def judgement-default-realize
   (default-realize-fn "judgement" NewJudgement StoredJudgement))
 
-(s/defn realize-judgement :- (with-error StoredJudgement)
+(s/defn realize-judgement :- (MaybeDelayedRealizeFnResult (with-error StoredJudgement))
   ([new-judgement id tempids owner groups]
    (realize-judgement new-judgement id tempids owner groups nil))
   ([new-judgement :- NewJudgement
@@ -50,10 +52,12 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-judgement :- (s/maybe StoredJudgement)]
+  (s/fn :- (with-error StoredJudgement)
+   [rt-opt]
    (try
      (let [disposition (determine-disposition-id new-judgement)
            disposition-name (get disposition-map disposition)]
-       (judgement-default-realize
+       ((MaybeDelayedRealizeFn->RealizeFn judgement-default-realize rt-opt)
         (assoc new-judgement
                :disposition disposition
                :disposition_name disposition-name)
@@ -65,7 +69,7 @@
             :id id
             :type :realize-entity-error
             :judgement new-judgement}
-           (throw e)))))))
+           (throw e))))))))
 
 (def judgement-fields
   (concat sorting/base-entity-sort-fields
