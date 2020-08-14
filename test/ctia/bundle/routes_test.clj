@@ -863,10 +863,11 @@
     #(-> %
          (assoc-in [:ctia :access-control :min-tlp] tlp)
          (assoc-in [:ctia :access-control :default-tlp] tlp))
-    (f)))
+    f))
 
 (deftest bundle-tlp-test
  (with-tlp-property-setting "amber"
+ (fn []
   (test-for-each-store
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
@@ -885,8 +886,9 @@
              res (post "ctia/bundle/import"
                        :body new-bundle
                        :headers {"Authorization" "45c1f5e3f05d0"})]
-         (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error)))
-         (is (= 200 (:status res)))))))))
+         (is (= "Entity Access Control validation Error" (-> (:parsed-body res) :results first :error))
+             res)
+         (is (= 200 (:status res))))))))))
 
 (deftest bundle-acl-fields-test
   (test-for-each-store
