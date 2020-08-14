@@ -43,6 +43,8 @@
       owner :- s/Str
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
+    (s/fn :- StoredModel
+     [_rt-opt_]
      (let [now (time/now)]
        (merge new-object
               {:id id
@@ -58,7 +60,7 @@
               (when (contains-key? Model :valid_time)
                 (make-valid-time (:valid_time prev-object)
                                  (:valid_time new-object)
-                                 now)))))))
+                                 now))))))))
 
 (defn short-id->long-id [id]
   (id/short-id->long-id id get-http-show))
