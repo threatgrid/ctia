@@ -8,7 +8,9 @@
    [ctia.schemas
     [utils :as csu]
     [core :refer [def-acl-schema
-                  def-stored-schema]]
+                  def-stored-schema
+                  MaybeDelayedRealizeFnResult
+                  MaybeDelayedRealizeFn->RealizeFn]]
     [sorting :as sorting]]
    [ctia.flows.schemas :refer [with-error]]
    [clojure.string :as string]))
@@ -45,7 +47,7 @@
            :target_ref]))
 
 (s/defn realize-relationship
-  :- (with-error StoredRelationship)
+  :- (MaybeDelayedRealizeFnResult (with-error StoredRelationship))
   [{:keys [source_ref
            target_ref]
     :as new-entity}

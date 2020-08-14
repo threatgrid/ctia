@@ -5,9 +5,7 @@
             [ctia.tk :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
 
-(defprotocol CTIAHTTPServerService
-  ;; for testing purposes
-  (get-ctia-http-server-service-dependencies [this]))
+(defprotocol CTIAHTTPServerService)
 
 (tk/defservice ctia-http-server-service
   CTIAHTTPServerService
@@ -28,5 +26,4 @@
                                      :IAuth IAuth
                                      :GraphQLService GraphQLService
                                      :IEncryption IEncryption}))
-  (stop [this context] (core/stop context))
-  (get-ctia-http-server-service-dependencies [this] (:services (service-context this))))
+  (stop [this context] (core/stop context)))

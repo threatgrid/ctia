@@ -44,13 +44,42 @@
 (s/defschema RealizeFnServices
   )
 
-(defn MaybeDelayedRealizeFn
+(defn MaybeDelayedRealizeFnResult
   [a]
   (s/if fn?
     ;; delayed
     (s/=> a {s/Keyword {s/Keyword (s/pred fn?)}})
     ;; eager
     a))
+
+(defn RealizeFnReturning [return]
+  (s/=>* return
+         [s/Any  ;; new-object
+          s/Any  ;; id
+          s/Any  ;; tempids
+          s/Any  ;; owner
+          s/Any] ;; groups
+         [s/Any  ;; new-object
+          s/Any  ;; id
+          s/Any  ;; tempids
+          s/Any  ;; owner
+          s/Any  ;; groups
+          s/Any])) ;; prev-object
+
+(s/defschema MaybeDelayedRealizeFn
+  (RealizeFnReturning (MaybeDelayedRealizeFnResult (s/pred map?))))
+
+(s/defschema RealizeFn
+  (RealizeFnReturning (s/pred map?)))
+
+(defn MaybeDelayedRealizeFn->RealizeFn [realize-fn rt-opt]
+  {:pre [(map? rt-opt)
+         (:services rt-opt)]}
+  (fn [& args]
+    (let [maybe-delayed (apply realize-fn args)]
+      (if (fn? maybe-delayed)
+        (maybe-delayed rt-opt)
+        maybe-delayed))))
 
 (s/defschema Entity
   (st/merge
@@ -72,19 +101,7 @@
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
      :no-api? s/Bool
-     :realize-fn (s/=>* (MaybeDelayedRealizeFn (s/pred map?))
-                   [s/Any  ;; new-object
-                    s/Any  ;; id
-                    s/Any  ;; tempids
-                    s/Any  ;; owner
-                    s/Any] ;; groups
-                   [s/Any  ;; new-object
-                    s/Any  ;; id
-                    s/Any  ;; tempids
-                    s/Any  ;; owner
-                    s/Any  ;; groups
-                    s/Any] ;; prev-object
-                   )})))
+     :realize-fn MaybeDelayedRealizeFn})))
 
 (s/defschema OpenCTIMSchemaVersion
   {(s/optional-key :schema_version) s/Str})

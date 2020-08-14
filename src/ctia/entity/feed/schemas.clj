@@ -8,7 +8,7 @@
      :refer [schema-version
              short-id->long-id]]]
    [ctia.schemas
-    [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs MaybeDelayedRealizeFn]]
+    [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs MaybeDelayedRealizeFnResult]]
     [utils :as csu]]
    [ctim.schemas.common :as csc]
    [flanders
@@ -68,7 +68,7 @@
 
 (s/defschema PartialFeedList [PartialFeed])
 
-(s/defn realize-feed :- (MaybeDelayedRealizeFn StoredFeed)
+(s/defn realize-feed :- (MaybeDelayedRealizeFnResult StoredFeed)
   ([new-object :- NewFeed
     id :- s/Str
     tempids :- (s/maybe TempIDs)
