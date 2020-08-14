@@ -54,7 +54,10 @@
    id
    tempids
    & rest-args]
-  (let [e (assoc (apply relationship-default-realize new-entity id tempids rest-args)
+ (s/fn :- (with-error StoredRelationship)
+  [rt-opt]
+  (let [e (assoc (apply (MaybeDelayedRealizeFn->RealizeFn relationship-default-realize rt-opt)
+                        new-entity id tempids rest-args)
                  :source_ref (get tempids source_ref source_ref)
                  :target_ref (get tempids target_ref target_ref))]
     (if (or (string/starts-with? (:source_ref e) "transient:")
@@ -65,4 +68,4 @@
                    "(The source or target entity is probably not "
                    "provided in the bundle)")
        :type :realize-entity-error}
-      e)))
+      e))))
