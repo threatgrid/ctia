@@ -207,7 +207,7 @@
          :entities
          (doall
           (for [entity entities]
-            (apply-hooks   :entity entity
+            (apply-hooks :entity entity
                            :prev-entity prev-entity
                            :hook-type (case flow-type
                                         :create :before-create
@@ -219,7 +219,7 @@
   [{{{:keys [apply-hooks]} :HooksService} :services
     :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
   (doseq [entity entities]
-    (apply-hooks   :entity entity
+    (apply-hooks :entity entity
                    :prev-entity prev-entity
                    :hook-type (case flow-type
                                 :create :after-create
