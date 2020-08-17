@@ -36,8 +36,6 @@
    [schema.core :as s]
    [schema-tools.core :as st]))
 
-;; returns a function that takes a map of services,
-;; and returns routes.
 (s/defn entity-crud-routes
   [{:keys [entity
            new-schema

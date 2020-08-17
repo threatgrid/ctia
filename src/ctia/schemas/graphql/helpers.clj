@@ -137,8 +137,10 @@
 (s/defn enum :- (MaybeDelayedGraphQLValue GraphQLEnumType)
   "Creates a GraphQLEnumType. If a type with the same name has already been
    created, the corresponding object is retrieved instead."
-  ([enum-name :- String description values]
-   (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as _rt-opt_}]
+   [enum-name :- String description values]
+   (s/fn :- GraphQLEnumType
+    [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services
+      :as _rt-opt_} :- GraphQLRuntimeOptions]
     (get-or-update-type-registry
       enum-name
       #(let [builder (-> (GraphQLEnumType/newEnum)
@@ -153,15 +155,19 @@
                ;unsure if reachable
                (.value builder ^GraphQLEnumValueDefinition value))))
          (let [graphql-enum (.build builder)]
-           graphql-enum))))))
+           graphql-enum)))))
 
 (s/defn list-type :- (MaybeDelayedGraphQLValue GraphQLList)
   [t :- (MaybeDelayedGraphQLValue GraphQLValue)]
-  #(GraphQLList/list (-> t (resolve-with-rt-opt %))))
+  (s/fn :- GraphQLList
+    [rt-opt :- GraphQLRuntimeOptions]
+    (GraphQLList/list (-> t (resolve-with-rt-opt rt-opt)))))
 
 (s/defn non-null :- (MaybeDelayedGraphQLValue GraphQLNonNull)
   [t :- (MaybeDelayedGraphQLValue GraphQLValue)]
-  #(GraphQLNonNull/nonNull (-> t (resolve-with-rt-opt %))))
+  (s/fn :- GraphQLNonNull
+    [rt-opt :- GraphQLRuntimeOptions]
+    (GraphQLNonNull/nonNull (-> t (resolve-with-rt-opt rt-opt)))))
 
 (defn non-nulls
   "Takes a map containing GraphQL fields and decorates them
@@ -357,14 +363,16 @@
   [object-name
    description
    fields :- MaybeDelayedGraphQLFields]
-  (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as rt-opt}]
+  (s/fn :- GraphQLInputObjectType
+    [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services
+      :as rt-opt} :- GraphQLRuntimeOptions]
     (get-or-update-type-registry
       object-name
- #(-> (GraphQLInputObjectType/newInputObject)
-      (.name ^String object-name)
-      (.description ^String description)
-      (add-input-fields fields rt-opt)
-      .build))))
+      #(-> (GraphQLInputObjectType/newInputObject)
+           (.name ^String object-name)
+           (.description ^String description)
+           (add-input-fields fields rt-opt)
+           .build))))
 
 ;;----- Output
 
@@ -375,15 +383,17 @@
    field-description
    field-args
    field-data-fetcher]
-#(let [^GraphQLOutputType field-type (-> field-type (resolve-with-rt-opt %))
-       _ (log/debug "New field" field-name (pr-str field-type))]
-  (-> (GraphQLFieldDefinition/newFieldDefinition)
-      (.name ^String field-name)
-      (.type field-type)
-      (.description ^String field-description)
-      (.dataFetcher field-data-fetcher)
-      (add-args field-args %)
-      .build)))
+  (s/fn :- GraphQLFieldDefinition
+    [rt-opt :- GraphQLRuntimeOptions]
+    (let [^GraphQLOutputType field-type (-> field-type (resolve-with-rt-opt rt-opt))
+          _ (log/debug "New field" field-name (pr-str field-type))]
+      (-> (GraphQLFieldDefinition/newFieldDefinition)
+          (.name ^String field-name)
+          (.type field-type)
+          (.description ^String field-description)
+          (.dataFetcher field-data-fetcher)
+          (add-args field-args rt-opt)
+          .build))))
 
 (s/defn ^:private add-fields
   :- GraphQLObjectType$Builder
@@ -413,7 +423,9 @@
    created, the corresponding object is retrieved from the provided or the
    default type repository."
   [object-name description interfaces fields :- MaybeDelayedGraphQLFields]
-  (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as rt-opt}]
+  (s/fn :- GraphQLObjectType
+    [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services
+      :as rt-opt} :- GraphQLRuntimeOptions]
     (get-or-update-type-registry
       object-name
       #(let [builder (-> (GraphQLObjectType/newObject)
@@ -448,21 +460,23 @@
    ^String description
    type-resolver-fn
    types]
-  (fn [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services :as rt-opt}]
+  (s/fn :- GraphQLUnionType
+    [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services
+      :as rt-opt} :- GraphQLRuntimeOptions]
     (get-or-update-type-registry
       union-name
- #(let [type-resolver (fn->type-resolver type-resolver-fn rt-opt)
-        graphql-union (-> (GraphQLUnionType/newUnionType)
-                          (.description description)
-                          (.name union-name)
-                          ; FIXME: this method is deprecated
-                          (.typeResolver type-resolver))]
-    (doseq [type types
-            :let [type (-> type (resolve-with-rt-opt rt-opt))]]
-      (if (instance? GraphQLObjectType type)
-        (.possibleType graphql-union ^GraphQLObjectType type)
-        (.possibleType graphql-union ^GraphQLTypeReference type)))
-    (.build graphql-union)))))
+      #(let [type-resolver (fn->type-resolver type-resolver-fn rt-opt)
+             graphql-union (-> (GraphQLUnionType/newUnionType)
+                               (.description description)
+                               (.name union-name)
+                               ; FIXME: this method is deprecated
+                               (.typeResolver type-resolver))]
+         (doseq [type types
+                 :let [type (-> type (resolve-with-rt-opt rt-opt))]]
+           (if (instance? GraphQLObjectType type)
+             (.possibleType graphql-union ^GraphQLObjectType type)
+             (.possibleType graphql-union ^GraphQLTypeReference type)))
+         (.build graphql-union)))))
 
 (defn new-ref
   [object-name]
@@ -470,9 +484,11 @@
 
 (s/defn new-schema :- (MaybeDelayedGraphQLValue GraphQLSchema)
   [query :- (MaybeDelayedGraphQLValue GraphQLObjectType)]
- #(-> (GraphQLSchema/newSchema)
-      (.query ^GraphQLObjectType (resolve-with-rt-opt query %))
-      .build))
+  (s/fn :- GraphQLSchema
+    [rt-opt :- GraphQLRuntimeOptions]
+    (-> (GraphQLSchema/newSchema)
+        (.query ^GraphQLObjectType (resolve-with-rt-opt query rt-opt))
+        .build)))
 
 (defn get-type
   "Retrieves a Type from the given schema by its name"
@@ -482,8 +498,10 @@
 
 (s/defn new-graphql :- (MaybeDelayedGraphQLValue GraphQL)
   [schema :- (MaybeDelayedGraphQLValue GraphQLSchema)]
- #(-> (GraphQL/newGraphQL (-> schema (resolve-with-rt-opt %)))
-      .build))
+  (s/fn :- GraphQL
+    [rt-opt :- GraphQLRuntimeOptions]
+    (-> (GraphQL/newGraphQL (-> schema (resolve-with-rt-opt rt-opt)))
+        .build)))
 
 (defn execute
   [^GraphQL graphql

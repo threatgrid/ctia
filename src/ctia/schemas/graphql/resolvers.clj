@@ -47,24 +47,27 @@
             un-store-page
             (pagination/result->connection-response paging-params))))
 
-(s/defn search-entity-resolver :- MaybeDelayedGraphQLTypeResolver
+(s/defn search-entity-resolver :- (MaybeDelayedGraphQLTypeResolver s/Any)
   [entity-type-kw]
   (fn [context args field-selection src]
-   #(search-entity entity-type-kw
-                   (:query args)
-                   {}
-                   args
-                   (:ident context)
-                   field-selection
-                   page-with-long-id
-                   %)))
+    (s/fn [rt-opt :- GraphQLRuntimeOptions]
+      (search-entity entity-type-kw
+                     (:query args)
+                     {}
+                     args
+                     (:ident context)
+                     field-selection
+                     page-with-long-id
+                     rt-opt))))
 
 (s/defn entity-by-id :- (MaybeDelayedGraphQLValue GraphQLValue)
   [entity-type-kw :- s/Keyword
    id :- s/Str
    ident
    field-selection :- (s/maybe [s/Keyword])]
- (fn [{{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
+ (s/fn :- GraphQLValue
+  [{{{:keys [read-store]} :StoreService} :services
+    :as _rt-opt_} :- GraphQLRuntimeOptions]
   (log/debugf "Retrieve %s (id:%s, fields:%s)"
               entity-type-kw
               id
@@ -77,7 +80,7 @@
           with-long-id
           un-store)))
 
-(s/defn entity-by-id-resolver :- MaybeDelayedGraphQLTypeResolver
+(s/defn entity-by-id-resolver :- (MaybeDelayedGraphQLTypeResolver s/Any)
   [entity-type-kw]
   (fn [context args field-selection _]
     (entity-by-id entity-type-kw
@@ -92,7 +95,9 @@
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
- (fn [{{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
+ (s/fn :- GraphQLValue
+  [{{{:keys [read-store]} :StoreService} :services
+    :as _rt-opt_} :- GraphQLRuntimeOptions]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -113,7 +118,9 @@
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
- (fn [{{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
+ (s/fn :- pagination/Connection
+  [{{{:keys [read-store]} :StoreService} :services
+    :as _rt-opt_} :- GraphQLRuntimeOptions]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -134,7 +141,9 @@
    context :- {s/Keyword s/Any}
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
- (fn [{{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
+ (s/fn :- pagination/Connection
+  [{{{:keys [read-store]} :StoreService} :services
+    :as _rt-opt_} :- GraphQLRuntimeOptions]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
                  field-selection (assoc :fields
@@ -152,15 +161,17 @@
 
 (s/defn search-relationships :- (MaybeDelayedGraphQLValue GraphQLValue)
   [context args field-selection src]
- #(let [{:keys [query relationship_type target_type]} args
-        filtermap {:relationship_type relationship_type
-                   :target_type target_type
-                   :source_ref (:id src)}]
-    (search-entity :relationship
-                   query
-                   filtermap
-                   args
-                   (:ident context)
-                   (concat field-selection [:target_ref :source_ref])
-                   page-with-long-id
-                   %)))
+  (s/fn :- GraphQLValue
+    [rt-opt :- GraphQLRuntimeOptions]
+    (let [{:keys [query relationship_type target_type]} args
+          filtermap {:relationship_type relationship_type
+                     :target_type target_type
+                     :source_ref (:id src)}]
+      (search-entity :relationship
+                     query
+                     filtermap
+                     args
+                     (:ident context)
+                     (concat field-selection [:target_ref :source_ref])
+                     page-with-long-id
+                     rt-opt))))
