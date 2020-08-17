@@ -18,10 +18,10 @@
    :after-delete (doc-list "`after-delete` hooks are called after an entity is deleted.")
    :event (doc-list "`event` hooks are called with an event during any CRUD activity.")})
 
-(defn reset-hooks! [{:keys [hooks] :as _context_}]
+(defn reset-hooks! [{:keys [hooks] :as _context_} get-in-config]
   (reset! hooks
           (-> empty-hooks
-              event-hooks/register-hooks)))
+              (event-hooks/register-hooks get-in-config))))
 
 (defn add-hook!
   "Add a `Hook` for the hook `hook-type`"
@@ -71,8 +71,8 @@
 
 (defn start
   "Initialize all hooks"
-  [context]
-  (reset-hooks! context)
+  [context get-in-config]
+  (reset-hooks! context get-in-config)
   (init-hooks! context)
   context)
 

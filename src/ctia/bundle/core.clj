@@ -353,9 +353,10 @@
   [id
    identity-map
    filters
-   {{:keys [read-store]} :StoreService}]
+   {{:keys [get-in-config]} :ConfigService
+    {:keys [read-store]} :StoreService}]
   (let [filter-map (relationships-filters id filters)
-        max-relationships (p/get-in-global-properties [:ctia :http :bundle :export :max-relationships]
+        max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
                                                       1000)]
     (some-> (:data (read-store :relationship
                                list-fn

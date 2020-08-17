@@ -20,9 +20,9 @@
 
 (tk/defservice hooks-service
   HooksService
-  []
+  [[:ConfigService get-in-config]]
   (init [this context] (core/init context))
-  (start [this context] (core/start context))
+  (start [this context] (core/start context get-in-config))
   (stop [this context] (core/stop context))
 
   (add-hook! [this hook-type hook] (core/add-hook!
@@ -40,11 +40,13 @@
                                     (service-context this)
                                     event))
   (init-hooks! [this] (core/init-hooks!
-                        (service-context this)))
+                        (service-context this)
+                        get-in-config))
   (shutdown! [this] (core/shutdown!
                       (service-context this)))
   (reset-hooks! [this] (core/reset-hooks!
-                         (service-context this))))
+                         (service-context this)
+                         get-in-config)))
 
 (defn lift-hooks-service-fns
   "Given a map of HooksService services (via defservice), lift

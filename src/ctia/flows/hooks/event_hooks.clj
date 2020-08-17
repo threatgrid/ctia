@@ -45,9 +45,9 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defn redis-event-publisher []
+(defn redis-event-publisher [get-in-config]
   (let [{:keys [channel-name] :as redis-config}
-        (p/get-in-global-properties [:ctia :hook :redis])]
+        (get-in-config [:ctia :hook :redis])]
     (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
 
@@ -103,14 +103,15 @@
   (= type DeleteEventType))
 
 (s/defn register-hooks :- {s/Keyword [(s/protocol Hook)]}
-  [hooks-m :- {s/Keyword [(s/protocol Hook)]}]
+  [hooks-m :- {s/Keyword [(s/protocol Hook)]}
+   get-in-config]
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
          {kafka? :enabled} :kafka}
         (p/get-in-global-properties [:ctia :hook])
         all-event-hooks
         (cond-> {}
-          redis?   (assoc :redis (redis-event-publisher))
+          redis?   (assoc :redis (redis-event-publisher get-in-config))
           redismq? (assoc :redismq (redismq-publisher))
           kafka?   (assoc :kafka (kafka-event-publisher)))]
     (update hooks-m :event concat (vals all-event-hooks))))
