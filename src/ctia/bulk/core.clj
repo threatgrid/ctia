@@ -124,8 +124,8 @@
        (map (fn [[_ v]] (:tempids v)))
        (reduce into {})))
 
-(defn bulk-refresh? []
-  (p/get-in-global-properties
+(defn bulk-refresh? [get-in-config]
+  (get-in-config
     [:ctia :store :bulk-refresh]
     "false"))
 
@@ -137,9 +137,10 @@
    1. Creates all entities except Relationships
    2. Creates Relationships with mapping between transient and real IDs"
   ([bulk login services] (create-bulk bulk {} login {} services))
-  ([bulk tempids login {:keys [refresh] :as params
-                        :or {refresh (bulk-refresh?)}} services]
-   (let [new-entities (gen-bulk-from-fn
+  ([bulk tempids login params {{:keys [get-in-config]} :ConfigService :as services}]
+   (let [{:keys [refresh] :as params
+          :or {refresh (bulk-refresh? get-in-config)}} params
+         new-entities (gen-bulk-from-fn
                        create-entities
                        (dissoc bulk :relationships)
                        tempids
