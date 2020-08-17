@@ -205,7 +205,8 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk with wait_for"
-       (let [default-es-refresh (->> (p/get-in-global-properties
+       (let [get-in-config (helpers/current-get-in-config-fn)
+             default-es-refresh (->> (get-in-config
                                        [:ctia :store :es :default :refresh])
                                      (str "refresh="))
              es-params (atom nil)

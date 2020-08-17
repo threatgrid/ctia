@@ -23,10 +23,11 @@
 
 (deftest ^:integration test-events-pubsub
   (testing "Events are published to redis"
-    (let [results (atom [])
+    (let [get-in-config (test-helpers/current-get-in-config-fn)
+          results (atom [])
           finish-signal (CountDownLatch. 3)
           {:keys [channel-name] :as redis-config}
-          (p/get-in-global-properties [:ctia :hook :redis])
+          (get-in-config [:ctia :hook :redis])
           listener (lr/subscribe-to-messages (lr/server-connection redis-config)
                                              channel-name
                                              (fn test-events-pubsub-fn [ev]

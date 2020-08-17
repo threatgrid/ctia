@@ -70,6 +70,8 @@
 
 (deftest test-check-store-indexes
   (let [app (helpers/get-current-app)
+        get-in-config (helpers/current-get-in-config-fn)
+
         _ (helpers/set-capabilities! "foouser"
                                      ["foogroup"]
                                      "user"
@@ -78,7 +80,7 @@
                                               "foouser"
                                               "foogroup"
                                               "user")
-        store-config (p/get-in-global-properties [:ctia :store :es :default])]
+        store-config (get-in-config [:ctia :store :es :default])]
     (post-bulk examples)
     (refresh-all-indices (:host store-config)
                          (:port store-config))

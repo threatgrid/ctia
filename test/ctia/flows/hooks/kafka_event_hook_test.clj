@@ -27,10 +27,11 @@
 
 (deftest ^:integration test-events-topic
   (testing "Events are published to kafka topic"
-    (let [results (atom [])
+    (let [get-in-config (test-helpers/current-get-in-config-fn)
+          results (atom [])
           finish-signal (CountDownLatch. 3)
           rebalance-signal (CountDownLatch. 1)
-          kafka-props (p/get-in-global-properties [:ctia :hook :kafka])
+          kafka-props (get-in-config [:ctia :hook :kafka])
           consumer-map
           (lk/subscribe
            kafka-props

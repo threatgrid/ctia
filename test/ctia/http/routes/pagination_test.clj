@@ -21,7 +21,8 @@
   "generate an observable and many records of all listable entities"
   (test-for-each-store
    (fn []
-     (let [http-show (p/get-in-global-properties [:ctia :http :show])
+     (let [get-in-config (helpers/current-get-in-config-fn)
+           http-show (get-in-config [:ctia :http :show])
            observable {:type "ip"
                        :value "1.2.3.4"}
            title "test"
@@ -66,7 +67,7 @@
                            :target_ref (id/long-id indicator-id)}))))
 
        (testing "indicators with query (ES only)"
-         (when (= "es" (p/get-in-global-properties [:ctia :store :indicator]))
+         (when (= "es" (get-in-config [:ctia :store :indicator]))
            (pagination-test (str "/ctia/indicator/search?query=" title)
                             {"Authorization" "45c1f5e3f05d0"}
                             [:id :title])))

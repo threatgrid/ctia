@@ -49,7 +49,7 @@
 (defn additional-tests [judgement-id _]
   (testing "GET /ctia/judgement/search"
     ;; only when ES store
-    (when (= "es" (p/get-in-global-properties [:ctia :store :indicator]))
+    (when (= "es" ((helpers/current-get-in-config-fn) [:ctia :store :indicator]))
       (let [term "observable.value:\"1.2.3.4\""
             response (get (str "ctia/judgement/search")
                           :headers {"Authorization" "45c1f5e3f05d0"}

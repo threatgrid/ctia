@@ -621,7 +621,7 @@
                       actor
                       vulnerability
                       weakness]}
-              (p/get-in-global-properties [:ctia :store :es])
+              (get-in-config [:ctia :store :es])
               date (Date.)
               index-date (.format (SimpleDateFormat. "yyyy.MM.dd") date)
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
@@ -666,7 +666,7 @@
                           docs))))))
       (testing "restart migration shall properly handle inserts, updates and deletes"
         (let [;; retrieve the first 2 source indices for sighting store
-              {:keys [host port]} (p/get-in-global-properties [:ctia :store :es :default])
+              {:keys [host port]} (get-in-config [:ctia :store :es :default])
               [sighting-index-1 sighting-index-2]
               (->> (es-helpers/get-cat-indices host port)
                    keys

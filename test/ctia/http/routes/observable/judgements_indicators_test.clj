@@ -24,7 +24,8 @@
                                          "foogroup"
                                          "user")
 
-     (let [http-show (p/get-in-global-properties [:ctia :http :show])
+     (let [get-in-config (helpers/current-get-in-config-fn)
+           http-show (get-in-config [:ctia :http :show])
            judgement-1-id (make-id :judgement)
            judgement-2-id (make-id :judgement)
            judgement-3-id (make-id :judgement)
