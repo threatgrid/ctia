@@ -1,10 +1,12 @@
 (ns ctia.test-helpers.core
   (:refer-clojure :exclude [get])
   (:require [clj-momo.lib.net :as net]
+            [clj-momo.properties :refer [coerce-properties read-property-files]]
             [clj-momo.test-helpers
              [core :as mth]
              [http :as mthh]]
             [clojure
+             [string :as str]
              [walk :refer [prewalk]]]
             [clojure.spec.alpha :as cs]
             [clojure.test :as test]
@@ -28,33 +30,45 @@
             [puppetlabs.trapperkeeper.config :as tk-config]))
 
 (def ^:dynamic ^:private *current-app*)
+(def ^:dynamic ^:private *props-transformers* [])
 (def ^:dynamic ^:private *config-transformers* [])
+
+(defn ^:private with-props-transformer*
+  "For use in a test fixture to dynamically transform an (uncoerced!) value of
+  PropertiesSchema before being converted into a Trapperkeeper config.
+
+  Used via `with-properties`."
+  [tf body-fn]
+  (assert (not (thread-bound? #'*current-app*))
+          "Cannot transform props after TK app has started!")
+  (binding [*props-transformers* (conj *props-transformers* tf)]
+    (body-fn)))
 
 (defn with-config-transformer*
   "For use in a test fixture to dynamically transform a Trapperkeeper
-  config before creating an app. Note this transformation is applied
-  to the result of p/build-init-config."
+  config before creating an app."
   [tf body-fn]
   (assert (not (thread-bound? #'*current-app*))
           "Cannot transform config after TK app has started!")
   (binding [*config-transformers* (conj *config-transformers* tf)]
     (body-fn)))
 
-(def with-properties-vec
-  (mth/build-with-properties-vec-fn PropertiesSchema))
+(defn with-properties-vec [properties-vec body-fn]
+  (assert (even? (count properties-vec)))
+  (with-props-transformer*
+    ;; fuses extra traversal of properties-vec and avoids extra map creation
+    #(into % (map vec) (partition 2 properties-vec))
+    body-fn))
 
-;; Note! Use of this macro is a blocker to parallelizing tests,
-;; since system properties are global.
-;; TODO refactor to build a thread-local map of extra config entries
-;;      shared only between fixtures (merged in the same order as p/build-init-config)
+;; Note: named for historical reasons, does NOT set System properties.
+;;       instead uses `with-props-transformer*` to build an immutable map of properties
+;;
+;; same remark for all fixture-properties:* functions below
 (defmacro with-properties [properties-vec & sexprs]
   `(with-properties-vec ~properties-vec
      (fn [] (do ~@sexprs))))
 
 (defn fixture-properties:clean [f]
-  ;; Remove any set system properties, presumably from a previous test
-  ;; run
-  (mth/clear-properties PropertiesSchema)
   ;; Override any properties that are in the default properties file
   ;; yet are unsafe/undesirable for tests
   (with-properties ["ctia.auth.type"                            "allow-all"
@@ -160,8 +174,33 @@
                   log/*logger-factory* lf]
       (f))))
 
+(defn- split-property-to-keywords [prop]
+  {:pre [(string? prop)]
+   :post [(seq %)]}
+  (map keyword (str/split prop #"\.")))
+
+(defn build-transformed-init-config
+  "Builds a `config` map using just p/files, *props-transformers*,
+  and *config-transformers*. Ignores System properties and env vars.
+  
+  Prefer over p/build-init-config during tests."
+  []
+  (let [init-props (read-property-files p/files)
+        transformed+coerced-props (->> (reduce #(%2 %1)
+                                               init-props
+                                               *props-transformers*)
+                                       (coerce-properties PropertiesSchema))
+        init-config (reduce (fn [config [prop v]]
+                              (assoc-in config (split-property-to-keywords prop) v))
+                            {}
+                            transformed+coerced-props)
+        transformed-config (reduce #(%2 %1)
+                                   init-config
+                                   *config-transformers*)]
+    transformed-config))
+
 (defn build-get-in-config-fn []
-  (let [config (p/build-init-config)
+  (let [config (build-transformed-init-config)
         get-in-config #(apply get-in config %&)]
     get-in-config))
 
@@ -195,9 +234,7 @@
      (with-properties ["ctia.http.enabled" enable-http?
                        "ctia.http.port" http-port
                        "ctia.http.show.port" http-port]
-       (let [app (let [config (reduce #(%2 %1)
-                                      (p/build-init-config)
-                                      *config-transformers*)]
+       (let [app (let [config (build-transformed-init-config)]
                    (init/start-ctia!*
                      {:services (init/default-services config)
                       :config config}))]

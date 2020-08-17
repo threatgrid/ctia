@@ -2,12 +2,14 @@
   (:require [ctia.auth.jwt :as sut]
             [ctia.auth.capabilities :as caps]
             [ctia.properties :as p]
+            [ctia.test-helpers.core :refer [build-transformed-init-config]]
             [clojure.test :as t :refer [deftest is]]
             [clojure.set :as set])
   (:import [ctia.auth.jwt JWTIdentity]))
 
+;; note: refactor into tests if this namespace uses any fixtures
 (def get-in-config
-  (let [config (p/build-init-config)]
+  (let [config (build-transformed-init-config)]
     #(apply get-in config %&)))
 
 (deftest wrap-jwt-to-ctia-auth-test
