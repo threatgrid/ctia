@@ -41,22 +41,22 @@
 (deftest scopes-to-capapbilities-test
   (is (= "private-intel" (sut/entity-root-scope get-in-config))
       "entity root scope default value is private-intel")
-  (is (= "casebook" (sut/casebook-root-scope))
+  (is (= "casebook" (sut/casebook-root-scope get-in-config))
       "casebook root scope default value is casebook")
   (is (= #{:search-casebook :create-casebook :list-casebooks :read-casebook
            :delete-casebook}
-         (sut/scope-to-capabilities (sut/casebook-root-scope) get-in-config))
+         (sut/scope-to-capabilities (sut/casebook-root-scope get-in-config) get-in-config))
       "Check the casebook capabilities from the casebook scope")
   (is (= #{:developer :specify-id}
          (set/difference caps/all-capabilities
                          (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)
-                                                       (sut/casebook-root-scope)}
+                                                       (sut/casebook-root-scope get-in-config)}
                                                      get-in-config)))
       "with all scopes you should have most capabilities except some very
        specific ones")
 
   (is (set/subset?
-       (sut/scopes-to-capabilities #{(sut/casebook-root-scope)}
+       (sut/scopes-to-capabilities #{(sut/casebook-root-scope get-in-config)}
                                    get-in-config)
        (sut/scopes-to-capabilities #{(sut/entity-root-scope get-in-config)}
                                    get-in-config))
@@ -95,7 +95,7 @@
   (is (= #{:search-casebook :read-sighting :list-sightings :search-sighting
            :list-casebooks :read-casebook}
          (sut/scopes-to-capabilities #{(str (sut/entity-root-scope get-in-config) "/sighting:read")
-                                       (str (sut/casebook-root-scope) ":read")}
+                                       (str (sut/casebook-root-scope get-in-config) ":read")}
                                      get-in-config))
       "Scopes can compose"))
 

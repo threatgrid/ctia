@@ -68,8 +68,8 @@
   (get-in-config [:ctia :auth :entities :scope]
                               "private-intel"))
 
-(defn casebook-root-scope []
-  (p/get-in-global-properties [:ctia :auth :casebook :scope]
+(defn casebook-root-scope [get-in-config]
+  (get-in-config [:ctia :auth :casebook :scope]
                               "casebook"))
 
 (def claim-prefix
@@ -123,7 +123,7 @@
   (let [scope-repr (scopula/to-scope-repr scope)]
     (condp = (first (:path scope-repr))
       (entity-root-scope get-in-config)   (gen-entity-capabilities scope-repr)
-      (casebook-root-scope) (gen-casebook-capabilities scope-repr)
+      (casebook-root-scope get-in-config) (gen-casebook-capabilities scope-repr)
       #{})))
 
 (defn scopes-to-capabilities
