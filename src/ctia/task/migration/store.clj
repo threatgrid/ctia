@@ -1,32 +1,27 @@
 (ns ctia.task.migration.store
-  (:require [clojure.string :as string]
+  (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
+            [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.es.conn :as conn]
+            [clj-momo.lib.es.document :as es-doc]
+            [clj-momo.lib.es.index :as es-index]
+            [clj-momo.lib.es.query :as es-query]
+            [clj-momo.lib.es.schemas :refer [ESConn ESConnState ESQuery]]
+            [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [schema.core :as s]
-            [schema-tools.core :as st]
-            [clj-momo.lib.clj-time
-             [core :as time]
-             [coerce :as time-coerce]]
-            [clj-momo.lib.es
-             [schemas :refer [ESConn ESQuery ESConnState]]
-             [conn :as conn]
-             [document :as es-doc]
-             [query :as es-query]
-             [index :as es-index]]
-            [ctim.domain.id :refer [long-id->id]]
+            [ctia.init :refer [init-store-service! log-properties]]
             [ctia.lib.collection :refer [fmap]]
-            [ctia.stores.es
-             [crud :as crud]
-             [init :refer [init-store-conn
-                           init-es-conn!
-                           get-store-properties
-                           StoreProperties]]
-             [mapping :as em]
-             [store :refer [StoreMap] :as es-store]]
+            [ctia.properties :refer [init!]]
+            [ctia.store :refer [stores]]
+            [ctia.stores.es.crud :as crud]
+            [ctia.stores.es.init
+             :refer
+             [get-store-properties init-es-conn! init-store-conn StoreProperties]]
+            [ctia.stores.es.mapping :as em]
+            [ctia.stores.es.store :as es-store :refer [StoreMap]]
             [ctia.task.rollover :refer [rollover-store]]
-            [ctia
-             [init :refer [init-store-service! log-properties]]
-             [properties :refer [init!]]
-             [store :refer [stores]]]))
+            [ctim.domain.id :refer [long-id->id]]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
@@ -392,7 +387,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                         "identity" []
                         [{"modified" date-sort-order}
                          {"created" date-sort-order}])
-                      {"_uid" sort-order})
+                      {"id" sort-order})
         params
         (merge
          {:offset (or offset 0)

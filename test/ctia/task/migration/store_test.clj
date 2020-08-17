@@ -1,25 +1,23 @@
 (ns ctia.task.migration.store-test
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+  (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
+            [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.es.conn :refer [connect]]
+            [clj-momo.lib.es.document :as es-doc]
+            [clj-momo.lib.es.index :as es-index]
             [clj-momo.test-helpers.core :as mth]
-            [clj-momo.lib.clj-time
-             [core :as time]
-             [coerce :as time-coerce]]
-            [clj-momo.lib.es
-             [conn :refer [connect]]
-             [document :as es-doc]
-             [index :as es-index]]
-            [ctim.domain.id :refer [long-id->id]]
+            [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.properties :as p]
             [ctia.store :refer [stores]]
-            [ctia.test-helpers
-             [fixtures :as fixt]
-             [core :as helpers :refer [post-bulk put delete]]
-             [es :as es-helpers]
-             [fake-whoami-service :as whoami-helpers]]
+            [ctia.stores.es.mapping :as em]
+            [ctia.task.migration.store :as sut]
             [ctia.task.rollover :refer [rollover-stores]]
-            [ctia.task.migration.store :as sut]))
+            [ctia.test-helpers.core :as helpers :refer [delete post-bulk put]]
+            [ctia.test-helpers.es :as es-helpers]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.fixtures :as fixt]
+            [ctim.domain.id :refer [long-id->id]]))
 
 (deftest prefixed-index-test
   (is (= "v0.4.2_ctia_actor"
@@ -644,7 +642,13 @@
                                         :timestamp %
                                         :modified (rand-int 50))
                              (range 50 90))]
-
+      (es-index/create! es-conn
+                        indexname
+                        {:settings {:refresh_interval -1}
+                         :mappings {:event {:properties {:id {:type "keyword"}
+                                                         :batch em/integer-type
+                                                         :timestamp em/integer-type
+                                                         :modified em/integer-type}}}})
       (sut/store-batch event-store event-batch-1)
       (sut/store-batch event-store event-batch-2)
       (es-index/refresh! es-conn indexname)
@@ -719,7 +723,16 @@
                                         :timestamp (rand-int 100)
                                         :modified %
                                         :created %)
-                             (range 100))]
+                             (range 100))
+          mappings {:id {:type "keyword"}
+                    :timestamp em/integer-type
+                    :created em/integer-type
+                    :modified em/integer-type}]
+      (es-index/create! es-conn
+                        indexname
+                        {:settings {:refresh_interval -1}
+                         :mappings {:malware {:properties mappings}
+                                    :tool {:properties mappings}}})
       (sut/store-batch tool-store tool-batch)
       (sut/store-batch malware-store malware-batch)
       (es-index/refresh! es-conn indexname)
