@@ -57,7 +57,7 @@
     :read-casebook
     :list-casebooks})
 
-(defn bundle-routes [services]
+(defn bundle-routes [{{:keys [get-in-config]} :ConfigService :as services}]
  (routes 
   (context "/bundle" []
            :tags ["Bundle"]
@@ -116,7 +116,7 @@
                                  :create-weakness
                                  :create-vulnerability
                                  :import-bundle}
-                 (let [max-size (bundle-max-size)]
+                 (let [max-size (bundle-max-size get-in-config)]
                    (if (> (bundle-size bundle)
                           max-size)
                      (bad-request (str "Bundle max nb of entities: " max-size))

@@ -25,7 +25,8 @@
              [store :refer [test-for-each-store store-fixtures]]]
             [ctim.domain.id :as id]
             [ctim.examples.incidents :refer [new-incident-maximal]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [puppetlabs.trapperkeeper.config :as tk-config]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -334,6 +335,9 @@
 (deftest bulk-max-size-post-test
   (test-for-each-store
    (fn []
+    (let [app (helpers/get-current-app)
+          ConfigService (app/get-service app :ConfigService)
+          get-in-config #(apply tk-config/get-in-config ConfigService %&)]
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
@@ -341,7 +345,7 @@
                                          "user")
 
      ;; Check changing the properties change the computed bulk max size
-     (is (= 100 (get-bulk-max-size)))
+     (is (= 100 (get-bulk-max-size get-in-config)))
      (let [nb 7
            indicators (map mk-new-indicator (range nb))
            judgements (map mk-new-judgement (range nb))
@@ -395,7 +399,7 @@
          (is (= 201 status-ok)))
        (testing "POST of too big bulks are rejected"
          (is (empty? (:errors response-too-big)) "No errors")
-         (is (= 400 status-too-big)))))))
+         (is (= 400 status-too-big))))))))
 
 (defn get-entity
   "Finds an entity in a collection by its ID"

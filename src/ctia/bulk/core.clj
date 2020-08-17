@@ -169,13 +169,13 @@
 (defn bulk-size [bulk]
   (apply + (map count (vals bulk))))
 
-(defn get-bulk-max-size []
-  (p/get-in-global-properties [:ctia :http :bulk :max-size]))
+(defn get-bulk-max-size [get-in-config]
+  (get-in-config [:ctia :http :bulk :max-size]))
 
 (defn fetch-bulk
-  [entities-map auth-identity services]
+  [entities-map auth-identity {{:keys [get-in-config]} :ConfigService :as services}]
   (let [bulk (into {} (remove (comp empty? second) entities-map))]
-    (if (> (bulk-size bulk) (get-bulk-max-size))
-      (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+    (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
+      (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
       (ent/un-store-map
        (gen-bulk-from-fn read-entities bulk auth-identity services)))))

@@ -9,7 +9,7 @@
    [ring.util.http-response :refer :all]
    [schema.core :as s]))
 
-(defn bulk-routes [services]
+(defn bulk-routes [{{:keys [get-in-config]} :ConfigService :as services}]
  (routes
   (POST "/" []
         :return BulkRefs
@@ -36,8 +36,8 @@
                         :create-vulnerability
                         :create-weakness}
         (if (> (bulk-size bulk)
-               (get-bulk-max-size))
-          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+               (get-bulk-max-size get-in-config))
+          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
           (common/created (create-bulk bulk
                                        {}
                                        login
