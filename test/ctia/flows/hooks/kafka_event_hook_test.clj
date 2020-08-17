@@ -22,8 +22,8 @@
                   es-helpers/fixture-properties:es-store
                   test-helpers/fixture-properties:kafka-hook
                   test-helpers/fixture-properties:events-enabled
-                  test-helpers/fixture-ctia
-                  test-helpers/fixture-allow-all-auth]))
+                  test-helpers/fixture-allow-all-auth
+                  test-helpers/fixture-ctia]))
 
 (deftest ^:integration test-events-topic
   (testing "Events are published to kafka topic"

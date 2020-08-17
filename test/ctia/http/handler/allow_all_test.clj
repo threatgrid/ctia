@@ -12,8 +12,8 @@
 
 (use-fixtures :each (join-fixtures [helpers/fixture-properties:clean
                                     es-helpers/fixture-properties:es-store
-                                    helpers/fixture-ctia
-                                    helpers/fixture-allow-all-auth]))
+                                    helpers/fixture-allow-all-auth
+                                    helpers/fixture-ctia]))
 
 (deftest allow-all-auth-judgement-routes-test
   (testing "POST /ctia/judgement"

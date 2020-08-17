@@ -25,8 +25,8 @@
                                     es-helpers/fixture-properties:es-store
                                     fixture-properties:redismq-hook
                                     test-helpers/fixture-properties:events-enabled
-                                    test-helpers/fixture-ctia
-                                    test-helpers/fixture-allow-all-auth]))
+                                    test-helpers/fixture-allow-all-auth
+                                    test-helpers/fixture-ctia]))
 
 (deftest ^:integration test-redismq
   (testing "Events are published to redismq queue"

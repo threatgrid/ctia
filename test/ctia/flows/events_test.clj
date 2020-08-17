@@ -19,8 +19,8 @@
   {:es-simple-index (join-fixtures [test-helpers/fixture-properties:clean
                                     es-helpers/fixture-properties:es-store
                                     test-helpers/fixture-properties:events-enabled
-                                    test-helpers/fixture-ctia
                                     test-helpers/fixture-allow-all-auth
+                                    test-helpers/fixture-ctia
                                     es-helpers/fixture-purge-event-indexes
                                     es-helpers/fixture-delete-store-indexes])}
 
