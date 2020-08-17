@@ -151,14 +151,16 @@
     :or {access-control-allow-methods "get,post,put,patch,delete"
          send-server-version false}
     :as http-config}
-   services]
+   {{:keys [get-in-config]}:ConfigService
+     :as services}]
+  (assert get-in-config)
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler services)
          true (auth/wrap-authentication services)
 
          (:enabled jwt)
-         auth-jwt/wrap-jwt-to-ctia-auth
+         (auth-jwt/wrap-jwt-to-ctia-auth get-in-config)
 
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.

@@ -64,8 +64,8 @@
     (log/info error-msg (pr-str (into infos err)))
     (resp/unauthorized (json/generate-string err))))
 
-(defn entity-root-scope []
-  (p/get-in-global-properties [:ctia :auth :entities :scope]
+(defn entity-root-scope [get-in-config]
+  (get-in-config [:ctia :auth :entities :scope]
                               "private-intel"))
 
 (defn casebook-root-scope []
@@ -119,18 +119,18 @@
 
 (defn scope-to-capabilities
   "given a scope generate capabilities"
-  [scope]
+  [scope get-in-config]
   (let [scope-repr (scopula/to-scope-repr scope)]
     (condp = (first (:path scope-repr))
-      (entity-root-scope)   (gen-entity-capabilities scope-repr)
+      (entity-root-scope get-in-config)   (gen-entity-capabilities scope-repr)
       (casebook-root-scope) (gen-casebook-capabilities scope-repr)
       #{})))
 
 (defn scopes-to-capabilities
   "given a seq of scopes generate a set of capabilities"
-  [scopes]
+  [scopes get-in-config]
   (->> scopes
-       (map scope-to-capabilities)
+       (map #(scope-to-capabilities % get-in-config))
        unionize))
 
 (defn iroh-claim
@@ -167,7 +167,7 @@
     (cond-> {}
       (seq client-ids) (assoc :client-ids client-ids))))
 
-(defrecord JWTIdentity [jwt unlimited-fn]
+(defrecord JWTIdentity [jwt unlimited-fn get-in-config]
   IIdentity
   (authenticated? [_]
     true)
@@ -177,7 +177,7 @@
     (remove nil? [(get jwt (iroh-claim "org/id"))]))
   (allowed-capabilities [_]
     (let [scopes (set (get jwt (iroh-claim "scopes")))]
-      (scopes-to-capabilities scopes)))
+      (scopes-to-capabilities scopes get-in-config)))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
                  (auth/allowed-capabilities this)))
@@ -192,13 +192,13 @@
     (contains? unlimited-client-ids client-id)))
 
 (defn wrap-jwt-to-ctia-auth
-  [handler]
+  [handler get-in-config]
   (let [unlimited-properties (parse-unlimited-props)]
     (fn [request]
       (handler
        (if-let [jwt (:jwt request)]
          (let [identity
-               (->JWTIdentity jwt (partial unlimited? unlimited-properties))]
+               (->JWTIdentity jwt (partial unlimited? unlimited-properties) get-in-config)]
            (assoc request
                   :identity identity
                   :login    (auth/login identity)
