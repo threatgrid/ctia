@@ -286,7 +286,9 @@
             (~fixture-fn (fn [] (do ~@body)))))))
 
 (defn get-http-port []
-  (p/get-in-global-properties [:ctia :http :port]))
+  ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+  ;; to function parameter once the initial TK setup is merged into master.
+  ((current-get-in-config-fn) [:ctia :http :port]))
 
 (def get
   (mthh/with-port-fn get-http-port mthh/get))
@@ -348,7 +350,9 @@
   [type-kw]
   (id/->id type-kw
            (crud/make-id (name type-kw))
-           (p/get-in-global-properties [:ctia :http :show])))
+           ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+           ;; to function parameter once the initial TK setup is merged into master.
+           ((current-get-in-config-fn) [:ctia :http :show])))
 
 (defn entity->short-id
   [entity]
@@ -363,7 +367,9 @@
    (id/long-id
     (id/short-id->id (name type-kw)
                      short-id
-                     (p/get-in-global-properties [:ctia :http :show])))))
+                     ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+                     ;; to function parameter once the initial TK setup is merged into master.
+                     ((current-get-in-config-fn) [:ctia :http :show])))))
 
 (def zero-uuid "00000000-0000-0000-0000-000000000000")
 
@@ -384,7 +390,9 @@
   (id/long-id
    (id/->id (keyword entity-name)
             (fake-short-id entity-name id)
-            (p/get-in-global-properties [:ctia :http :show]))))
+            ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+            ;; to function parameter once the initial TK setup is merged into master.
+            ((current-get-in-config-fn) [:ctia :http :show]))))
 
 (defmacro with-atom-logger
   [atom-logger & body]
