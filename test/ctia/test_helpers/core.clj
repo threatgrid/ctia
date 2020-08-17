@@ -24,7 +24,8 @@
             [flanders
              [spec :as fs]
              [utils :as fu]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [puppetlabs.trapperkeeper.app :as app]
+            [puppetlabs.trapperkeeper.config :as tk-config]))
 
 (def ^:dynamic ^:private *current-app*)
 (def ^:dynamic ^:private *config-transformers* [])
@@ -170,6 +171,12 @@
   (assert (thread-bound? #'*current-app*) "App not bound!")
   (let [app *current-app*]
     app))
+
+(defn current-get-in-config-fn []
+  (let [app (get-current-app)
+        ConfigService (app/get-service app :ConfigService)
+        get-in-config #(apply tk-config/get-in-config ConfigService %&)]
+    get-in-config))
 
 (defn fixture-ctia
   ([t] (fixture-ctia t true))

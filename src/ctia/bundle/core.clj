@@ -253,9 +253,9 @@
              #(dissoc % :new-entity :old-entity)
              (apply concat (vals bundle-import-data)))})
 
-(defn bulk-params []
+(defn bulk-params [get-in-config]
   {:refresh
-   (p/get-in-global-properties [:ctia :store :bundle-refresh] "false")})
+   (get-in-config [:ctia :store :bundle-refresh] "false")})
 
 (defn log-errors
   [response]
@@ -270,7 +270,7 @@
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
-   services]
+   {{:keys [get-in-config]} :ConfigService :as services}]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
@@ -282,7 +282,7 @@
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))]
     (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params) services)
+           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
                 (with-bulk-result bundle-import-data)
                 build-response
                 log-errors))))
@@ -298,11 +298,11 @@
 (defn local-entity?
   "Returns true if this entity'ID is hosted by this CTIA instance,
    false otherwise"
-  [id]
+  [id get-in-config]
   (if (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (p/get-in-global-properties [:ctia :http :show :hostname])]
+            this-host (get-in-config [:ctia :http :show :hostname])]
         (= (:hostname id-rec) this-host))
       true)
     false))
@@ -315,13 +315,13 @@
 
 (defn fetch-relationship-targets
   "given relationships, fetch all related objects"
-  [relationships identity-map services]
+  [relationships identity-map {{:keys [get-in-config]} :ConfigService :as services}]
   (let [all-ids (->> relationships
                      (map (fn [{:keys [target_ref source_ref]}]
                             [target_ref source_ref]))
                      flatten
                      set
-                     (filter local-entity?)
+                     (filter #(local-entity? % get-in-config))
                      set)
         by-type (dissoc (group-by
                          #(ent/long-id->entity-type %) all-ids) nil)

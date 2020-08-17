@@ -25,8 +25,7 @@
              [store :refer [test-for-each-store store-fixtures]]]
             [ctim.domain.id :as id]
             [ctim.examples.incidents :refer [new-incident-maximal]]
-            [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.trapperkeeper.config :as tk-config]))
+            [puppetlabs.trapperkeeper.app :as app]))
 
 (defn fixture-properties:small-max-bulk-size [t]
   ;; Note: These properties may be overwritten by ENV variables
@@ -335,9 +334,7 @@
 (deftest bulk-max-size-post-test
   (test-for-each-store
    (fn []
-    (let [app (helpers/get-current-app)
-          ConfigService (app/get-service app :ConfigService)
-          get-in-config #(apply tk-config/get-in-config ConfigService %&)]
+    (let [get-in-config (helpers/current-get-in-config-fn)]
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
