@@ -155,15 +155,15 @@
 
 (defn unlimited-client-ids
   "Retrieves and parses unlimited client-ids defined in the properties"
-  []
-  (some-> (p/get-in-global-properties
+  [get-in-config]
+  (some-> (get-in-config
             [:ctia :http :rate-limit :unlimited :client-ids])
           (string/split #",")
           set))
 
 (defn parse-unlimited-props
-  []
-  (let [client-ids (unlimited-client-ids)]
+  [get-in-config]
+  (let [client-ids (unlimited-client-ids get-in-config)]
     (cond-> {}
       (seq client-ids) (assoc :client-ids client-ids))))
 
@@ -193,7 +193,7 @@
 
 (defn wrap-jwt-to-ctia-auth
   [handler get-in-config]
-  (let [unlimited-properties (parse-unlimited-props)]
+  (let [unlimited-properties (parse-unlimited-props get-in-config)]
     (fn [request]
       (handler
        (if-let [jwt (:jwt request)]
