@@ -13,7 +13,7 @@
 
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
-  {:HooksService {:apply-hooks (s/=> s/Any s/Any) ;; TODO make kw varargs
+  {:HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)
                   s/Keyword s/Any}
    :StoreService {:read-store (s/pred ifn?) ;;varags

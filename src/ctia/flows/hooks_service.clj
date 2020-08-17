@@ -45,3 +45,14 @@
                       (service-context this)))
   (reset-hooks! [this] (core/reset-hooks!
                          (service-context this))))
+
+(defn lift-hooks-service-fns
+  "Given a map of HooksService services (via defservice), lift
+  them to support variable arguments.
+  
+  apply-hooks   - hook-options becomes keyword arguments"
+  [services]
+  (cond-> services
+    (:apply-hooks services) (update :apply-hooks (fn [apply-hooks]
+                                                   (fn [& {:as args}]
+                                                     (apply-hooks args))))))

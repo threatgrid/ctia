@@ -207,25 +207,25 @@
          :entities
          (doall
           (for [entity entities]
-            (apply-hooks  {:entity entity
+            (apply-hooks   :entity entity
                            :prev-entity prev-entity
                            :hook-type (case flow-type
                                         :create :before-create
                                         :update :before-update
                                         :delete :before-delete)
-                           :read-only? (= flow-type :delete)})))))
+                           :read-only? (= flow-type :delete))))))
 
 (s/defn ^:private apply-after-hooks :- FlowMap
   [{{{:keys [apply-hooks]} :HooksService} :services
     :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
   (doseq [entity entities]
-    (apply-hooks  {:entity entity
+    (apply-hooks   :entity entity
                    :prev-entity prev-entity
                    :hook-type (case flow-type
                                 :create :after-create
                                 :update :after-update
                                 :delete :after-delete)
-                   :read-only? true}))
+                   :read-only? true))
   fm)
 
 (s/defn ^:private create-events :- FlowMap

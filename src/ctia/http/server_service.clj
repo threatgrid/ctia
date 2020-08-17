@@ -1,6 +1,7 @@
 (ns ctia.http.server-service
   (:require [ctia.http.server-service-core :as core]
             [ctia.properties :as p]
+            [ctia.flows.hooks-service :as hooks-svc]
             [ctia.store-service :as store-svc]
             [ctia.tk :as tk]
             [puppetlabs.trapperkeeper.services :refer [service-context]]))
@@ -20,7 +21,8 @@
                                     {:ConfigService ConfigService
                                      :HooksService (-> HooksService 
                                                        (select-keys [:apply-hooks
-                                                                     :apply-event-hooks]))
+                                                                     :apply-event-hooks])
+                                                       hooks-svc/lift-hooks-service-fns)
                                      :StoreService (-> StoreService 
                                                        (select-keys [:read-store
                                                                      :write-store])
