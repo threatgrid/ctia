@@ -72,8 +72,8 @@
   (get-in-config [:ctia :auth :casebook :scope]
                               "casebook"))
 
-(def claim-prefix
-  (p/get-in-global-properties [:ctia :http :jwt :claim-prefix]
+(defn claim-prefix [get-in-config]
+  (get-in-config [:ctia :http :jwt :claim-prefix]
                               "https://schemas.cisco.com/iroh/identity/claims"))
 
 (defn unionize
@@ -150,8 +150,8 @@
   https://clojure.org/reference/reader
   '/' has special meaning.
   "
-  [keyword-name]
-  (str claim-prefix "/" keyword-name))
+  [keyword-name get-in-config]
+  (str (claim-prefix get-in-config) "/" keyword-name))
 
 (defn unlimited-client-ids
   "Retrieves and parses unlimited client-ids defined in the properties"
@@ -174,9 +174,9 @@
   (login [_]
     (:sub jwt))
   (groups [_]
-    (remove nil? [(get jwt (iroh-claim "org/id"))]))
+    (remove nil? [(get jwt (iroh-claim "org/id" get-in-config))]))
   (allowed-capabilities [_]
-    (let [scopes (set (get jwt (iroh-claim "scopes")))]
+    (let [scopes (set (get jwt (iroh-claim "scopes" get-in-config)))]
       (scopes-to-capabilities scopes get-in-config)))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
@@ -186,8 +186,8 @@
       limit-fn)))
 
 (defn unlimited?
-  [unlimited-properties jwt]
-  (let [client-id (get jwt (iroh-claim "oauth/client/id"))
+  [unlimited-properties get-in-config jwt]
+  (let [client-id (get jwt (iroh-claim "oauth/client/id" get-in-config))
         unlimited-client-ids (get unlimited-properties :client-ids)]
     (contains? unlimited-client-ids client-id)))
 
@@ -198,7 +198,7 @@
       (handler
        (if-let [jwt (:jwt request)]
          (let [identity
-               (->JWTIdentity jwt (partial unlimited? unlimited-properties) get-in-config)]
+               (->JWTIdentity jwt (partial unlimited? unlimited-properties get-in-config) get-in-config)]
            (assoc request
                   :identity identity
                   :login    (auth/login identity)
