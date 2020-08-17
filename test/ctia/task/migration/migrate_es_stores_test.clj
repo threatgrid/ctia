@@ -53,14 +53,16 @@
                   helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store]))
 
-(def es-props (delay (p/get-in-global-properties [:ctia :store :es])))
-(def es-conn (delay (connect (:default @es-props))))
-(def migration-index (delay (get-in @es-props [:migration :indexname])))
+(defn es-props [get-in-config]
+  (get-in-config [:ctia :store :es]))
+(defn es-conn [get-in-config] (connect (:default (es-props get-in-config))))
+(defn migration-index [get-in-config] (get-in (es-props get-in-config) [:migration :indexname]))
 
 (defn fixture-clean-migration [t]
   (t)
-  (es-index/delete! @es-conn "v0.0.0*")
-  (es-index/delete! @es-conn (str @migration-index "*")))
+  (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "v0.0.0*")
+  (es-index/delete! (es-conn (helpers/current-get-in-config-fn))
+                    (str (migration-index (helpers/current-get-in-config-fn)) "*")))
 
 (use-fixtures :each
   (join-fixtures [helpers/fixture-ctia
@@ -160,12 +162,13 @@
   (testing "migration with rollover and multiple indices for source stores"
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
-          store-types [:malware :tool :incident]]
+          store-types [:malware :tool :incident]
+          get-in-config (helpers/current-get-in-config-fn)]
       (rollover-post-bulk store-svc)
       ;; insert malformed documents
       (doseq [store-type store-types]
-        (es-index/get @es-conn
-                      (str (get-in @es-props [store-type :indexname]) "*")))
+        (es-index/get (es-conn get-in-config)
+                      (str (get-in (es-props get-in-config) [store-type :indexname]) "*")))
       (sut/migrate-store-indexes {:migration-id "test-3"
                                   :prefix       "0.0.0"
                                   :migrations   [:__test]
@@ -176,18 +179,18 @@
                                   :restart?     false}
                                  store-svc)
 
-      (let [migration-state (es-doc/get-doc @es-conn
-                                            @migration-index
+      (let [migration-state (es-doc/get-doc (es-conn get-in-config)
+                                            (migration-index get-in-config)
                                             "migration"
                                             "test-3"
                                             {})]
         (doseq [store-type store-types]
-          (is (= (count (es-index/get @es-conn
-                                      (str "v0.0.0_" (get-in @es-props [store-type :indexname]) "*")))
+          (is (= (count (es-index/get (es-conn get-in-config)
+                                      (str "v0.0.0_" (get-in (es-props get-in-config) [store-type :indexname]) "*")))
                  3)
               "target indice should be rolledover during migration")
-          (es-index/get @es-conn
-                        (str "v0.0.0_" (get-in @es-props [store-type :indexname]) "*"))
+          (es-index/get (es-conn get-in-config)
+                        (str "v0.0.0_" (get-in (es-props get-in-config) [store-type :indexname]) "*"))
           (let [migrated-store (get-in migration-state [:stores store-type])
                 {:keys [source target]} migrated-store]
             (is (= fixtures-nb (:total source)))
@@ -198,7 +201,8 @@
 
 (deftest read-source-batch-test
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
-    (let [storemap {:conn @es-conn
+    (let [get-in-config (helpers/current-get-in-config-fn)
+          storemap {:conn (es-conn get-in-config)
                     :indexname "ctia_relationship"
                     :mapping "relationship"
                     :props {:write-index "ctia_relationship"}
@@ -207,7 +211,7 @@
                     :config {}}
           docs (map es-helpers/prepare-bulk-ops
                     (line-seq rdr))
-          _ (es-helpers/load-bulk @es-conn docs)
+          _ (es-helpers/load-bulk (es-conn get-in-config) docs)
           no-meta-docs (map #(dissoc % :_index :_type :_id)
                             docs)
           docs-no-modified (filter #(nil? (:modified %))
@@ -287,9 +291,10 @@
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
+          get-in-config (helpers/current-get-in-config-fn)
           prefix "0.0.1"
           indexname "v0.0.1_ctia_relationship"
-          storemap {:conn @es-conn
+          storemap {:conn (es-conn get-in-config)
                     :indexname indexname
                     :mapping "relationship"
                     :props {:write-index indexname}
@@ -307,7 +312,7 @@
                        :migration-id migration-id
                        :migrations (sut/compose-migrations [:__test])
                        :batch-size 1000
-                       :migration-es-conn @es-conn
+                       :migration-es-conn (es-conn get-in-config)
                        :confirm? true}
           test-fn (fn [total
                        migrated-count
@@ -329,11 +334,11 @@
                                                         batch-params
                                                         store-svc)
                           {target-state :target
-                           source-state :source} (-> (get-migration migration-id @es-conn store-svc)
+                           source-state :source} (-> (get-migration migration-id (es-conn get-in-config) store-svc)
                                                      :stores
                                                      :relationship)
-                          _ (es-index/refresh! @es-conn)
-                          migrated-docs (:data (es-doc/query @es-conn
+                          _ (es-index/refresh! (es-conn get-in-config))
+                          migrated-docs (:data (es-doc/query (es-conn get-in-config)
                                                              indexname
                                                              "relationship"
                                                              {:match_all {}}
@@ -380,6 +385,7 @@
   (with-open [rdr (io/reader "./test/data/indices/sample-relationships-1000.json")]
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
+          get-in-config (helpers/current-get-in-config-fn)
 
           {wo-modified true
            w-modified false} (->> (line-seq rdr)
@@ -389,7 +395,7 @@
           bulk-1 (concat wo-modified (take 500 sorted-w-modified))
           bulk-2 (drop 500 sorted-w-modified)
           logger-1 (atom [])
-          _ (es-helpers/load-bulk @es-conn bulk-1)
+          _ (es-helpers/load-bulk (es-conn get-in-config) bulk-1)
           _ (with-atom-logger logger-1
               (sut/migrate-store-indexes {:migration-id "migration-test-4"
                                           :prefix       "0.0.0"
@@ -400,16 +406,16 @@
                                           :confirm?     true
                                           :restart?     false}
                                          store-svc))
-          migration-state-1 (es-doc/get-doc @es-conn
-                                            @migration-index
+          migration-state-1 (es-doc/get-doc (es-conn get-in-config)
+                                            (migration-index get-in-config)
                                             "migration"
                                             "migration-test-4"
                                             {})
-          target-count-1 (es-doc/count-docs @es-conn
+          target-count-1 (es-doc/count-docs (es-conn get-in-config)
                                             "v0.0.0_ctia_relationship"
                                             "relationship"
                                             nil)
-          _ (es-helpers/load-bulk @es-conn bulk-2)
+          _ (es-helpers/load-bulk (es-conn get-in-config) bulk-2)
           _ (with-atom-logger logger-1
               (sut/migrate-store-indexes {:migration-id "migration-test-4"
                                           :prefix       "0.0.0"
@@ -420,12 +426,12 @@
                                           :confirm?     true
                                           :restart?     true}
                                          store-svc))
-          target-count-2 (es-doc/count-docs @es-conn
+          target-count-2 (es-doc/count-docs (es-conn get-in-config)
                                             "v0.0.0_ctia_relationship"
                                             "relationship"
                                             nil)
-          migration-state-2 (es-doc/get-doc @es-conn
-                                            @migration-index
+          migration-state-2 (es-doc/get-doc (es-conn get-in-config)
+                                            (migration-index get-in-config)
                                             "migration"
                                             "migration-test-4"
                                             {})]
@@ -452,6 +458,7 @@
   (testing "migration with malformed documents in store"
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
+          get-in-config (helpers/current-get-in-config-fn)
 
           store-types [:malware :tool :incident]
           logger (atom [])
@@ -463,8 +470,8 @@
       (rollover-post-bulk store-svc)
       ;; insert malformed documents
       (doseq [store-type store-types]
-        (es-doc/create-doc @es-conn
-                           (str (get-in @es-props [store-type :indexname]) "-write")
+        (es-doc/create-doc (es-conn get-in-config)
+                           (str (get-in (es-props get-in-config) [store-type :indexname]) "-write")
                            (name store-type)
                            bad-doc
                            "true"))
@@ -479,8 +486,8 @@
                                     :restart?     false}
                                    store-svc))
       (let [messages (set @logger)
-            migration-state (es-doc/get-doc @es-conn
-                                            @migration-index
+            migration-state (es-doc/get-doc (es-conn get-in-config)
+                                            (migration-index get-in-config)
                                             "migration"
                                             "test-3"
                                             {})]
@@ -506,7 +513,8 @@
                                       "foogroup"
                                       "user")
   (let [app (helpers/get-current-app)
-        store-svc (app/get-service app :StoreService)]
+        store-svc (app/get-service app :StoreService)
+        get-in-config (helpers/current-get-in-config-fn)]
     ;; insert proper documents
     (rollover-post-bulk store-svc)
     (testing "migrate ES Stores test setup"
@@ -523,14 +531,15 @@
 
         (doseq [store (vals @(store-svc/get-stores store-svc))]
           (is (not (index-exists? store "0.0.0"))))
-        (is (nil? (seq (es-doc/get-doc @es-conn
-                                       (get-in @es-props [:migration :indexname])
+        (is (nil? (seq (es-doc/get-doc (es-conn get-in-config)
+                                       (get-in (es-props get-in-config) [:migration :indexname])
                                        "migration"
                                        "test-1"
                                        {})))))))
   (testing "migrate es indexes"
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
+          get-in-config (helpers/current-get-in-config-fn)
           logger (atom [])]
       (with-atom-logger logger
         (sut/migrate-store-indexes {:migration-id "test-2"
@@ -543,8 +552,8 @@
                                     :restart?     false}
                                    store-svc))
       (testing "shall generate a proper migration state"
-        (let [migration-state (es-doc/get-doc @es-conn
-                                              @migration-index
+        (let [migration-state (es-doc/get-doc (es-conn get-in-config)
+                                              (migration-index get-in-config)
                                               "migration"
                                               "test-2"
                                               {})]
@@ -641,7 +650,7 @@
                            (format  "v0.0.0_%s-%s-000003" (:indexname k) index-date) 0}))
                    (into expected-event-indices)
                    keywordize-keys)
-              _ (es-index/refresh! @es-conn)
+              _ (es-index/refresh! (es-conn get-in-config))
               formatted-cat-indices (es-helpers/get-cat-indices (:host default)
                                                                 (:port default))]
           (is (= expected-indices
@@ -650,7 +659,7 @@
 
           (doseq [[index _]
                   expected-indices]
-            (let [docs (->> (es-doc/search-docs @es-conn (name index) nil nil nil {})
+            (let [docs (->> (es-doc/search-docs (es-conn get-in-config) (name index) nil nil nil {})
                             :data
                             (map :groups))]
               (is (every? #(= ["migration-test"] %)
@@ -667,7 +676,7 @@
                    (take 2))
 
               ;; retrieve source entity to update, in first position of first index
-              es-sighting0 (-> (es-doc/query @es-conn
+              es-sighting0 (-> (es-doc/query (es-conn get-in-config)
                                              sighting-index-1
                                              "sighting"
                                              {:match_all {}}
@@ -676,7 +685,7 @@
                                :data
                                first)
               ;; retrieve source entity to update, in first position of second index
-              es-sighting1 (-> (es-doc/query @es-conn
+              es-sighting1 (-> (es-doc/query (es-conn get-in-config)
                                              sighting-index-2
                                              "sighting"
                                              {:match_all {}}
@@ -691,7 +700,7 @@
                                 (hash-map :malwares))
 
               ;; retrieve 5 source entities to delete, in last positions of first index
-              es-sightings-1 (-> (es-doc/query @es-conn
+              es-sightings-1 (-> (es-doc/query (es-conn get-in-config)
                                                sighting-index-1
                                                "sighting"
                                                {:match_all {}}
@@ -699,7 +708,7 @@
                                                 :limit 5})
                                  :data)
               ;; retrieve 5 source entities to delete, in last positions of second index
-              es-sightings-2 (-> (es-doc/query @es-conn
+              es-sightings-2 (-> (es-doc/query (es-conn get-in-config)
                                                sighting-index-2
                                                "sighting"
                                                {:match_all {}}
@@ -737,7 +746,7 @@
                                       :confirm?     true
                                       :restart?     true}
                                      store-svc)
-          (let [migration-state (get-migration "test-2" @es-conn store-svc)
+          (let [migration-state (get-migration "test-2" (es-conn get-in-config) store-svc)
                 malware-migration (get-in migration-state [:stores :malware])
                 sighting-migration (get-in migration-state [:stores :sighting])
                 malware-target-store (get-in malware-migration [:target :store])
@@ -788,8 +797,8 @@
           end (System/currentTimeMillis)
           total (/ (- end start) 1000)
           doc-per-sec (/ total-docs total)
-          migration-state (es-doc/get-doc @es-conn
-                                          @migration-index
+          migration-state (es-doc/get-doc (es-conn (helpers/current-get-in-config-fn))
+                                          (migration-index (helpers/current-get-in-config-fn))
                                           "migration"
                                           migration-id
                                           {})]
@@ -799,9 +808,9 @@
         (is (= 20000
                (get-in state [:source :total])
                (get-in state [:target :migrated]))))
-      (es-index/delete! @es-conn (format "v%s*" prefix))
-      (es-doc/delete-doc @es-conn @migration-index "migration" migration-id "true")))
-  (es-index/delete! @es-conn "ctia_*"))
+      (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) (format "v%s*" prefix))
+      (es-doc/delete-doc (es-conn (helpers/current-get-in-config-fn)) "migration" migration-id "true")))
+  (es-index/delete! (es-conn (helpers/current-get-in-config-fn)) "ctia_*"))
 
 ;;(deftest ^:integration minimal-load-test
 ;;  (testing "load testing with minimal entities"
