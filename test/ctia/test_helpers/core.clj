@@ -350,7 +350,7 @@
   [type-kw]
   (id/->id type-kw
            (crud/make-id (name type-kw))
-           ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+           ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
            ;; to function parameter once the initial TK setup is merged into master.
            ((current-get-in-config-fn) [:ctia :http :show])))
 
@@ -367,7 +367,7 @@
    (id/long-id
     (id/short-id->id (name type-kw)
                      short-id
-                     ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+                     ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
                      ;; to function parameter once the initial TK setup is merged into master.
                      ((current-get-in-config-fn) [:ctia :http :show])))))
 
@@ -390,7 +390,7 @@
   (id/long-id
    (id/->id (keyword entity-name)
             (fake-short-id entity-name id)
-            ;; Note: using current-get-in-config-fn here is a hack and should be refactored
+            ;; FIXME using current-get-in-config-fn here is a hack and should be refactored
             ;; to function parameter once the initial TK setup is merged into master.
             ((current-get-in-config-fn) [:ctia :http :show]))))
 
