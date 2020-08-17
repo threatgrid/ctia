@@ -44,9 +44,7 @@
       groups :- [s/Str]
       prev-object :- (s/maybe StoredModel)]
     (s/fn :- StoredModel
-     [{{{:keys [get-in-config]} :ConfigService}
-       :services}]
-     (assert get-in-config)
+     [_rt-opt_]
      (let [now (time/now)]
        (merge new-object
               {:id id
@@ -58,7 +56,7 @@
                :modified now
                :timestamp (or (:timestamp new-object) now)
                :tlp (:tlp new-object
-                          (:tlp prev-object (properties-default-tlp get-in-config)))}
+                          (:tlp prev-object (properties-default-tlp)))}
               (when (contains-key? Model :valid_time)
                 (make-valid-time (:valid_time prev-object)
                                  (:valid_time new-object)

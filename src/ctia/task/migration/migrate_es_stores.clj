@@ -13,13 +13,13 @@
             [ctia.store-service-core :refer [empty-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
+            [ctia.properties :as p]
             [ctia.stores.es
              [crud :refer [coerce-to-fn]]
              [store :refer [StoreMap]]]
             [ctia.task.migration.migrations :refer [available-migrations]]
             [ctia.task.migration.store :as mst]
-            [puppetlabs.trapperkeeper.app :as app]
-            [puppetlabs.trapperkeeper.config :as tk-config])
+            [puppetlabs.trapperkeeper.app :as app])
   (:import [java.util UUID]
            [java.lang AssertionError]))
 
@@ -293,10 +293,9 @@
 
 (s/defn ^:always-validate check-migration-params
   [{:keys [prefix
-           store-keys]} :- MigrationParams
-   get-in-config]
+           store-keys]} :- MigrationParams]
   (doseq [store-key store-keys]
-    (let [index (get-in-config [:ctia :store :es store-key :indexname])]
+    (let [index (p/get-in-global-properties [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
                index)
         (throw (AssertionError.
@@ -315,10 +314,8 @@
     (let [_ (log/info "starting CTIA Stores...")
           app (init/start-ctia!)
           store-svc (app/get-service app :StoreService)
-          config-svc (app/get-service app :ConfigService)
-          get-in-config (fn [& args] (apply tk-config/get-in-config config-svc args))
           _ (mst/setup! store-svc)]
-      (check-migration-params params get-in-config)
+      (check-migration-params params)
       (migrate-store-indexes params store-svc)
       (log/info "migration complete")
       (exit false))

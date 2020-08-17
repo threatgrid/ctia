@@ -20,12 +20,12 @@
 
 (def ^List tlps ["white" "green" "amber" "red"])
 
-(defn properties-default-tlp [get-in-config]
-  (or (:default-tlp (get-access-control get-in-config))
+(defn properties-default-tlp []
+  (or (:default-tlp (get-access-control))
       csc/default-tlp))
 
-(defn allowed-tlps [get-in-config]
-  (let [min-tlp (:min-tlp (get-access-control get-in-config) "white")]
+(defn allowed-tlps []
+  (let [min-tlp (:min-tlp (get-access-control) "white")]
     (nthrest tlps
              (.indexOf tlps min-tlp))))
 
@@ -34,8 +34,8 @@
      (or (:max-record-visibility (get-access-control))
          "everyone")))
 
-(defn allowed-tlp? [tlp get-in-config]
-  (some #{tlp} (allowed-tlps get-in-config)))
+(defn allowed-tlp? [tlp]
+  (some #{tlp} (allowed-tlps)))
 
 (s/defn allowed-group? :- s/Bool
   [doc ident]
