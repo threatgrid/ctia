@@ -73,8 +73,9 @@
 
 (s/defn same-bucket? :- s/Bool
   [bucket :- EventBucket
-   event :- Event]
-  (let [max-seconds (p/get-in-global-properties [:ctia :http :events :timeline :max-seconds]
+   event :- Event
+   get-in-config]
+  (let [max-seconds (get-in-config [:ctia :http :events :timeline :max-seconds]
                                                 5)
         from        (t/minus (:from bucket) (t/seconds max-seconds))
         to          (t/plus (:to bucket) (t/seconds max-seconds))]
@@ -100,18 +101,20 @@
 
 (s/defn timeline-append :- [EventBucket]
   [timeline :- [EventBucket]
-   event :- Event]
+   event :- Event
+   get-in-config]
   (let [[previous & remaining] timeline]
     (if (and (map? previous)
-             (same-bucket? previous event))
+             (same-bucket? previous event get-in-config))
         (cons (bucket-append previous event)
               remaining)
         (cons (init-bucket event) timeline))))
 
 (s/defn bucketize-events :- [EventBucket]
-  [events :- [Event]]
+  [events :- [Event]
+   get-in-config]
   (let [events (sort-by (juxt :owner :timestamp :event_type) events)
-        buckets (reduce timeline-append [] events)]
+        buckets (reduce #(timeline-append %1 %2 get-in-config) [] events)]
     (reverse (sort-by :from buckets))))
 
 (defn fetch-related-events [_id identity-map q services]
@@ -125,7 +128,7 @@
                             q services)
             ent/un-store-all)))
 
-(defn event-history-routes [services]
+(defn event-history-routes [{{:keys [get-in-config]} :ConfigService :as services}]
   (routes
    (GET "/history/:entity_id" []
         :return [EventBucket]
@@ -139,7 +142,7 @@
                                         identity-map
                                         (into q {:sort_by :timestamp :sort_order :desc})
                                         services)
-              timeline (bucketize-events res)]
+              timeline (bucketize-events res get-in-config)]
           (ok timeline)))))
 
 (defn event-routes [services]

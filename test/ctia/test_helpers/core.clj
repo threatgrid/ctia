@@ -160,6 +160,11 @@
                   log/*logger-factory* lf]
       (f))))
 
+(defn build-get-in-config-fn []
+  (let [config (p/build-init-config)
+        get-in-config #(apply get-in config %&)]
+    get-in-config))
+
 (defn bind-current-app* [app f]
   (let [_ (assert (not (thread-bound? #'*current-app*)) "Rebound app!")
         _ (assert app)]
