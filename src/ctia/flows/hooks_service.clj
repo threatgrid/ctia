@@ -40,8 +40,7 @@
                                     (service-context this)
                                     event))
   (init-hooks! [this] (core/init-hooks!
-                        (service-context this)
-                        get-in-config))
+                        (service-context this)))
   (shutdown! [this] (core/shutdown!
                       (service-context this)))
   (reset-hooks! [this] (core/reset-hooks!
