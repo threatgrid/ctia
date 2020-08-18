@@ -22,11 +22,12 @@
 (def examples (fixt/bundle 100 false))
 
 (deftest rollover-aliased-test
-  (let [props-not-aliased {:entity :malware
+  (let [get-in-config (helpers/current-get-in-config-fn)
+        props-not-aliased {:entity :malware
                            :indexname "ctia_malware"
                            :host "localhost"
                            :port 9200}
-        state-not-aliased (init/init-es-conn! props-not-aliased)
+        state-not-aliased (init/init-es-conn! props-not-aliased get-in-config)
         rollover-not-aliased (sut/rollover-store state-not-aliased)
         props-aliased {:entity :sighting
                        :indexname "ctia_sighting"
@@ -35,7 +36,7 @@
                        :aliased true
                        :rollover {:max_docs 3}
                        :refresh "true"}
-        state-aliased (init/init-es-conn! props-aliased)
+        state-aliased (init/init-es-conn! props-aliased get-in-config)
         rollover-aliased (sut/rollover-store state-aliased)
 
         count-index #(count (es-index/get (:conn state-aliased)

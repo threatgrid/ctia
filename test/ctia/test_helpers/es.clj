@@ -38,7 +38,8 @@
      (when restore-conn?
        (es-init/init-es-conn!
          (es-init/get-store-properties (get-in state [:props :entity])
-                                       get-in-config))))))
+                                       get-in-config)
+         get-in-config)))))
 
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"

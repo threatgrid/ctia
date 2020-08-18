@@ -82,7 +82,8 @@
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
   (s/fn :- StoredFeed
-   [{{{:keys [encrypt decrypt]} :IEncryption}
+   [{{{:keys [get-in-config]} :ConfigService
+      {:keys [encrypt decrypt]} :IEncryption}
      :services}]
    (let [long-id (short-id->long-id id)
          plain-secret (if-let [prev-secret (:secret prev-object)]
@@ -117,4 +118,4 @@
              :tlp
              (:tlp new-object
                    (:tlp prev-object
-                         (properties-default-tlp)))})))))
+                         (properties-default-tlp get-in-config)))})))))

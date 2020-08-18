@@ -547,7 +547,7 @@ when confirm? is true, it stores this state and creates the target indices."
                    :prefix prefix
                    :created now
                    :stores migration-stores}
-        es-conn-state (init-es-conn! migration-properties)]
+        es-conn-state (init-es-conn! migration-properties get-in-config)]
     (when confirm?
       (store-migration migration (:conn es-conn-state) store-svc get-in-config)
       (doseq [[_ target-store] target-stores]

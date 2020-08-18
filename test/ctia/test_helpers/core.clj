@@ -200,6 +200,7 @@
     transformed-config))
 
 (defn build-get-in-config-fn []
+  (assert (not (thread-bound? #'*current-app*)) "Building custom config while app bound!")
   (let [config (build-transformed-init-config)
         get-in-config #(apply get-in config %&)]
     get-in-config))

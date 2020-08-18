@@ -55,7 +55,7 @@
   This function builds up a `reduce` to functionally step through a sequence of
   of stores, rollovers, and update-mapping-stores! calls, and test intermediate states.
   "
-  [aliased?]
+  [aliased? get-in-config]
   {:pre [(boolean? aliased?)]}
   (let [; set up connection
         store-properties (cond-> {:entity :incident
@@ -121,5 +121,9 @@
         _ (reduce testing-fn stores testing-plan)]))
 
 ; separated to take advantage of fixtures
-(deftest update-mapping-stores!-aliased-test   (update-mapping-stores!-test-helper true))
-(deftest update-mapping-stores!-unaliased-test (update-mapping-stores!-test-helper false))
+(deftest update-mapping-stores!-aliased-test   (update-mapping-stores!-test-helper
+                                                 true
+                                                 (helpers/current-get-in-config-fn)))
+(deftest update-mapping-stores!-unaliased-test (update-mapping-stores!-test-helper
+                                                 false
+                                                 (helpers/current-get-in-config-fn)))

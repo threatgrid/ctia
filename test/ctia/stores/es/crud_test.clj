@@ -109,7 +109,8 @@
                         :refresh "true"})
 
 (deftest crud-aliased-test
-  (let [state-aliased (init/init-es-conn! props-aliased)
+  (let [get-in-config (helpers/current-get-in-config-fn)
+        state-aliased (init/init-es-conn! props-aliased get-in-config)
         count-index #(count (es-index/get (:conn state-aliased)
                                           (str (:index state-aliased) "*")))
         base-sighting {:title "a sighting text title"
@@ -178,7 +179,8 @@
                             {}))))))
 
 (deftest crud-unaliased-test
-  (let [state-not-aliased (init/init-es-conn! props-not-aliased)]
+  (let [get-in-config (helpers/current-get-in-config-fn)
+        state-not-aliased (init/init-es-conn! props-not-aliased get-in-config)]
     (testing "crud operation should properly handle not aliased states"
       (create-fn state-not-aliased
                  (map #(assoc base-sighting
@@ -202,7 +204,8 @@
                             {}))))))
 
 (deftest make-search-query-test
-  (let [es-conn-state (-> (init/init-es-conn! props-not-aliased)
+  (let [get-in-config (helpers/current-get-in-config-fn)
+        es-conn-state (-> (init/init-es-conn! props-not-aliased get-in-config)
                           (update :props assoc :default_operator "AND"))
         simple-access-ctrl-query {:terms {"groups" (:groups ident)}}]
     (with-redefs [find-restriction-query-part (constantly simple-access-ctrl-query)]
@@ -316,7 +319,8 @@
 
 (deftest handle-query-string-search-count-test
   (testing "handle search and count shall properly apply query and params"
-    (let [es-conn-state (-> (init/init-es-conn! props-not-aliased)
+    (let [get-in-config (helpers/current-get-in-config-fn)
+          es-conn-state (-> (init/init-es-conn! props-not-aliased get-in-config)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
                        search-metrics-entities
@@ -371,7 +375,8 @@
 
 (deftest handle-aggregate-test
   (testing "handle-aggregate"
-    (let [es-conn-state (-> (init/init-es-conn! props-not-aliased)
+    (let [get-in-config (helpers/current-get-in-config-fn)
+          es-conn-state (-> (init/init-es-conn! props-not-aliased get-in-config)
                             (update :props assoc :default_operator "AND"))
           _ (create-fn es-conn-state
                        search-metrics-entities

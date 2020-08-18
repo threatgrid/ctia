@@ -5,7 +5,7 @@
             [clojure.string :as str]))
 
 (defn find-restriction-query-part
-  [{:keys [login groups]}]
+  [{:keys [login groups]} get-in-config]
   ;; TODO do we really want to discard case on that?
   (let [login (str/lower-case login)
         groups (map str/lower-case groups)]
@@ -30,7 +30,7 @@
                           {:terms {"groups" groups}}]}}]
 
         ;; Any Green/White TLP if max-visibility is set to `everyone`
-        (max-record-visibility-everyone?)
+        (max-record-visibility-everyone? get-in-config)
         (cons {:terms {"tlp" public-tlps}}))}}))
 
 

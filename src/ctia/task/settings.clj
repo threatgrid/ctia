@@ -18,7 +18,8 @@
   [store-keys get-in-config]
   (doseq [kw store-keys]
     (log/infof "updating settings for store: %s" (name kw))
-    (init-es-conn! (get-store-properties kw get-in-config))))
+    (init-es-conn! (get-store-properties kw get-in-config)
+                   get-in-config)))
 
 (def cli-options
   [["-h" "--help"]

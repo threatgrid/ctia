@@ -34,7 +34,8 @@
          shards 1
          replicas 1
          refresh_interval "1s"}
-    :as props} :- StoreProperties]
+    :as props} :- StoreProperties
+   get-in-config]
   (let [write-index (str indexname
                          (when aliased "-write"))
         settings {:refresh_interval refresh_interval
@@ -47,7 +48,8 @@
                :mappings (get store-mappings entity mappings)}
               (when aliased
                 {:aliases {indexname {}}}))
-     :conn (connect props)}))
+     :conn (connect props)
+     :services {:ConfigService {:get-in-config get-in-config}}}))
 
 (s/defn update-settings!
   "read store properties of given stores and update indices settings."
@@ -105,9 +107,10 @@
 (s/defn init-es-conn! :- ESConnState
   "initiate an ES Store connection,
    put the index template, return an ESConnState"
-  [properties :- StoreProperties]
+  [properties :- StoreProperties
+   get-in-config]
   (let [{:keys [conn index props config] :as conn-state}
-        (init-store-conn properties)
+        (init-store-conn properties get-in-config)
         existing-indices (get-existing-indices conn index)]
     (when (seq existing-indices)
       (update-mapping! conn index config)
@@ -142,7 +145,7 @@
   [store-constructor get-in-config]
   (fn store-factory [store-kw]
     (-> (get-store-properties store-kw get-in-config)
-        init-es-conn!
+        (init-es-conn! get-in-config)
         store-constructor)))
 
 (defn ^:private factories [get-in-config]
