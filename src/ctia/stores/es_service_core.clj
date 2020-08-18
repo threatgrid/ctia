@@ -7,8 +7,8 @@
 ;; Note: this implementation assumes StoreService is
 ;; only ever used by the es-store-service.
 
-(defn- get-store-types [store-kw]
-  (or (some-> (p/get-in-global-properties [:ctia :store store-kw])
+(defn- get-store-types [store-kw get-in-config]
+  (or (some-> (get-in-config [:ctia :store store-kw])
               (str/split #","))
       []))
 
@@ -21,10 +21,10 @@
           (->> (keys empty-stores)
                (map (fn [store-kw]
                       [store-kw (keep (partial build-store store-kw get-in-config)
-                                      (get-store-types store-kw))]))
+                                      (get-store-types store-kw get-in-config))]))
                (into {})
                (merge-with into empty-stores))))
 
-(defn start [context stores]
+(defn start [context stores get-in-config]
   (init-store-service! stores get-in-config)
   context)

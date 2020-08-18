@@ -511,7 +511,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (retry es-max-retry es-index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
 
 (defn target-store-properties
-  [prefix store-key]
+  [prefix store-key get-in-config]
   (-> (get-store-properties store-key get-in-config)
       (update :indexname
               #(prefixed-index % prefix))))

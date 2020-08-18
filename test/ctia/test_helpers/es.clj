@@ -2,7 +2,6 @@
   "ES test helpers"
   (:require [cheshire.core :as json]
             [clj-http.client :as http]
-            [ctia.test-helpers.core :as helpers]
             [clj-momo.lib.es
              [document :as es-doc]
              [index :as es-index]]
@@ -17,61 +16,68 @@
             [ctia.test-helpers.core :as h]
             [puppetlabs.trapperkeeper.app :as app]))
 
-(defn refresh-indices [entity]
+(defn refresh-indices [entity get-in-config]
   (let [{:keys [host port]}
-        (es-init/get-store-properties entity)]
+        (es-init/get-store-properties entity get-in-config)]
     (http/post (format "http://%s:%s/_refresh" host port))))
 
 (defn delete-store-indexes
   ([restore-conn?]
    (let [app (h/get-current-app)
-         store-svc (app/get-service app :StoreService)]
+         store-svc (app/get-service app :StoreService)
+         get-in-config (h/current-get-in-config-fn app)]
      (delete-store-indexes
+       restore-conn?
        store-svc
-       restore-conn?)))
-  ([store-svc restore-conn?]
+       get-in-config)))
+  ([restore-conn? store-svc get-in-config]
    (doseq [store-impls (vals @(store-svc/get-stores
                                 store-svc))
            {:keys [state]} store-impls]
      (es-store/delete-state-indexes state)
      (when restore-conn?
        (es-init/init-es-conn!
-         (es-init/get-store-properties (get-in state [:props :entity])))))))
+         (es-init/get-store-properties (get-in state [:props :entity])
+                                       get-in-config))))))
 
 (defn fixture-delete-store-indexes
   "walk through all the es stores delete each store indexes"
   [t]
   (let [app (h/get-current-app)
-        store-svc (app/get-service app :StoreService)]
-    (delete-store-indexes store-svc true)
+        store-svc (app/get-service app :StoreService)
+        get-in-config (h/current-get-in-config-fn app)]
+    (delete-store-indexes true store-svc get-in-config)
     (t)
-    (delete-store-indexes store-svc false)))
+    (delete-store-indexes false store-svc get-in-config)))
 
-(defn purge-index [entity]
+(defn purge-index [entity get-in-config]
   (let [{:keys [conn index]} (es-init/init-store-conn
-                              (es-init/get-store-properties entity))]
+                              (es-init/get-store-properties entity get-in-config))]
     (when conn
       (es-index/delete! conn (str index "*")))))
 
 (defn fixture-purge-event-indexes
   "walk through all producers and delete their index"
   [t]
-  (purge-index :event)
-  (t)
-  (purge-index :event))
+  (let [app (h/get-current-app)
+        get-in-config (h/current-get-in-config-fn app)]
+    (purge-index :event get-in-config)
+    (t)
+    (purge-index :event get-in-config)))
 
-(defn purge-indexes [store-svc]
+(defn purge-indexes [store-svc get-in-config]
   (doseq [entity (keys @(store-svc/get-stores store-svc))]
-    (purge-index entity)))
+    (purge-index entity get-in-config)))
 
 (defn fixture-purge-indexes
   "walk through all producers and delete their index"
   [t]
-  (let [app (helpers/get-current-app)
-        store-svc (app/get-service app :StoreService)]
-    (purge-indexes store-svc)
+  (let [app (h/get-current-app)
+        store-svc (app/get-service app :StoreService)
+        get-in-config (h/current-get-in-config-fn app)]
+    (purge-indexes store-svc get-in-config)
     (t)
-    (purge-indexes store-svc)))
+    (purge-indexes store-svc get-in-config)))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables

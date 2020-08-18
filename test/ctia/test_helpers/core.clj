@@ -216,11 +216,12 @@
   (let [app *current-app*]
     app))
 
-(defn current-get-in-config-fn []
-  (let [app (get-current-app)
-        ConfigService (app/get-service app :ConfigService)
-        get-in-config #(apply tk-config/get-in-config ConfigService %&)]
-    get-in-config))
+(defn current-get-in-config-fn
+  ([] (current-get-in-config-fn (get-current-app)))
+  ([app]
+   (let [ConfigService (app/get-service app :ConfigService)
+         get-in-config #(apply tk-config/get-in-config ConfigService %&)]
+     get-in-config)))
 
 (defn fixture-ctia
   ([t] (fixture-ctia t true))
