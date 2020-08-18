@@ -131,6 +131,9 @@
 (def related-asset-properties
   {:properties (assoc related :asset_properties_id token)})
 
+(def related-target-record
+  {:properties (assoc related :target_record_id token)})
+
 (def related-incidents
   {:properties (assoc related
                       :incident_id token)})

@@ -34,6 +34,7 @@
                         :create-casebook
                         :create-sighting
                         :create-identity-assertion
+                        :create-target-record
                         :create-tool
                         :create-vulnerability
                         :create-weakness}
@@ -66,6 +67,7 @@
                       {malwares            :- [Reference] []}
                       {relationships       :- [Reference] []}
                       {sightings           :- [Reference] []}
+                      {target_records      :- [Reference] []}
                       {tools               :- [Reference] []}
                       {vulnerabilities     :- [Reference] []}
                       {weaknesses          :- [Reference] []}]
@@ -87,6 +89,7 @@
                        :read-malware
                        :read-relationship
                        :read-sighting
+                       :read-target-record
                        :read-tool
                        :read-vulnerability
                        :read-weakness}
@@ -109,6 +112,7 @@
                            :malwares            malwares
                            :relationships       relationships
                            :sightings           sightings
+                           :target_records      target_records
                            :tools               tools
                            :vulnerabilities     vulnerabilities
                            :weaknesses          weaknesses}]
