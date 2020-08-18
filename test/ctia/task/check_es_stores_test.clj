@@ -32,12 +32,13 @@
   (join-fixtures [mth/fixture-schema-validation
                   helpers/fixture-properties:clean
                   es-helpers/fixture-properties:es-store
-                  whoami-helpers/fixture-server
-                  es-helpers/fixture-delete-store-indexes]))
+                  whoami-helpers/fixture-server]))
 
 (use-fixtures :each
   (join-fixtures [whoami-helpers/fixture-reset-state
-                  helpers/fixture-ctia]))
+                  helpers/fixture-ctia
+                  ;; must go after helpers/fixture-ctia
+                  es-helpers/fixture-delete-store-indexes]))
 
 (def fixtures-nb 100)
 
