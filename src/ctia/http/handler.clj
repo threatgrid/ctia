@@ -166,7 +166,8 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(s/defn api-handler [services :- APIHandlerServices]
+(s/defn api-handler [{{:keys [get-in-config]} :ConfigService
+                      :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
         (get-http-swagger)]
     (api {:exceptions {:handlers exception-handlers}
@@ -174,7 +175,7 @@
           (cond-> {:ui "/"
                    :spec "/swagger.json"
                    :options {:ui {:jwtLocalStorageKey
-                                  (p/get-in-global-properties
+                                  (get-in-config
                                     [:ctia :http :jwt :local-storage-key])}}
                    :data {:info {:title "CTIA"
                                  :version (string/replace (current-version) #"\n" "")
@@ -195,14 +196,14 @@
             (apply-oauth2-swagger-conf
              oauth2))}
 
-         (middleware [wrap-rate-limit
+         (middleware [#(wrap-rate-limit % get-in-config)
                       wrap-not-modified
                       wrap-cache-control
                       wrap-version
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
            documentation-routes
-           (graphql-ui-routes)
+           (graphql-ui-routes services)
            (context
                "/ctia" []
              (context "/feed" []

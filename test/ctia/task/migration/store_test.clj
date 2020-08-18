@@ -183,12 +183,14 @@
 (deftest wo-storemaps-test
   (let [app (helpers/get-current-app)
         store-svc (app/get-service app :StoreService)
+        get-in-config (helpers/current-get-in-config-fn)
 
         fake-migration (sut/init-migration "migration-id-1"
                                            "0.0.0"
                                            [:tool :sighting :malware]
                                            false
-                                           store-svc)
+                                           store-svc
+                                           get-in-config)
         wo-stores (sut/wo-storemaps fake-migration)]
     (is (nil? (get-in wo-stores [:source :store])))
     (is (nil? (get-in wo-stores [:target :store])))))
@@ -810,6 +812,7 @@
   (testing "init-migration should properly create new migration state from selected types."
     (let [app (helpers/get-current-app)
           store-svc (app/get-service app :StoreService)
+          get-in-config (helpers/current-get-in-config-fn)
           prefix "0.0.0"
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
@@ -818,12 +821,14 @@
                                              prefix
                                              entity-types
                                              false
-                                             store-svc)
+                                             store-svc
+                                             get-in-config)
           real-migration-from-init (sut/init-migration migration-id-2
                                                        prefix
                                                        entity-types
                                                        true
-                                                       store-svc)
+                                                       store-svc
+                                                       get-in-config)
           check-state (fn [{:keys [id stores]} migration-id message]
                         (testing message
                           (is (= id migration-id))
@@ -862,11 +867,11 @@
       (check-state real-migration-from-init
                    migration-id-2
                    "init-migration with confirmation shall return a propr migration state")
-      (check-state (sut/get-migration migration-id-2 @es-conn store-svc)
+      (check-state (sut/get-migration migration-id-2 @es-conn store-svc get-in-config)
                    migration-id-2
                    "init-migration shall store confirmed migration, and get-migration should be properly retrieved from store")
       (is (thrown? clojure.lang.ExceptionInfo
-                   (sut/get-migration migration-id-1 @es-conn store-svc))
+                   (sut/get-migration migration-id-1 @es-conn store-svc get-in-config))
           "migration-id-1 was not confirmed it should not exist and thus get-migration must raise a proper exception")
       (testing "stored document shall not contains object stores in source and target"
         (let [{:keys [stores]} (es-doc/get-doc @es-conn

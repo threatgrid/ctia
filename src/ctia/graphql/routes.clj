@@ -3,16 +3,15 @@
             [compojure.api
              [core :as c]
              [sweet :refer :all]]
-            [ctia.properties :as p]
             [ctia.graphql.schemas :as gql]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(defn graphql-ui-routes []
+(defn graphql-ui-routes [{{:keys [get-in-config]} :ConfigService :as _services_}]
   (let [jwt-storage-key
-        (p/get-in-global-properties [:ctia :http :jwt :local-storage-key])]
+        (get-in-config [:ctia :http :jwt :local-storage-key])]
     (c/undocumented
      ;; --- GraphiQL https://github.com/shahankit/custom-graphiql/
      (graphiql {:path "/graphiql"

@@ -7,8 +7,7 @@
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
             [ctia.http.middleware
-             [auth :as auth]
-             [ratelimit :refer [wrap-rate-limit]]]
+             [auth :as auth]]
             [ctia.lib.riemann :as rie]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
@@ -165,7 +164,7 @@
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
          (p/get-in-global-properties [:ctia :log :riemann :enabled])
-         (rie/wrap-request-logs "API response time ms")
+         (rie/wrap-request-logs "API response time ms" get-in-config)
 
          (:enabled jwt)
          ((rjwt/wrap-jwt-auth-fn

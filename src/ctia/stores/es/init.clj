@@ -128,11 +128,12 @@
 
 (s/defn get-store-properties :- StoreProperties
   "Lookup the merged store properties map"
-  [store-kw :- s/Keyword]
+  [store-kw :- s/Keyword
+   get-in-config]
   (merge
     {:entity store-kw}
-    (p/get-in-global-properties [:ctia :store :es :default] {})
-    (p/get-in-global-properties [:ctia :store :es store-kw] {})))
+    (get-in-config [:ctia :store :es :default] {})
+    (get-in-config [:ctia :store :es store-kw] {})))
 
 (defn- make-factory
   "Return a store instance factory. Most of the ES stores are
@@ -140,16 +141,16 @@
   code."
   [store-constructor]
   (fn store-factory [store-kw]
-    (-> (get-store-properties store-kw)
+    (-> (get-store-properties store-kw get-in-config)
         init-es-conn!
         store-constructor)))
 
-(def ^:private factories
+(defn ^:private factories [get-in-config]
   (apply merge {}
          (map (fn [[_ {:keys [entity es-store]}]]
-                {entity (make-factory es-store)})
+                {entity (make-factory es-store get-in-config)})
               entities)))
 
-(defn init-store! [store-kw]
-  (when-let [factory (get factories store-kw)]
+(defn init-store! [store-kw get-in-config]
+  (when-let [factory (get (factories get-in-config) store-kw)]
     (factory store-kw)))

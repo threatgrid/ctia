@@ -25,7 +25,9 @@
             (s/optional-key :sort_by)
             (describe (s/enum :id) "Sort result on a field")))
 
-(defn observable-routes [{{:keys [read-store]} :StoreService :as services}]
+(defn observable-routes [{{:keys [get-in-config]} :ConfigService
+                          {:keys [read-store]} :StoreService
+                          :as services}]
  (routes
   (GET "/:observable_type/:observable_value/verdict" []
        :tags ["Verdict"]
@@ -78,7 +80,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (p/get-in-global-properties [:ctia :http :show])
+        (let [http-show (get-in-config [:ctia :http :show])
               judgements (:data (read-store
                                  :judgement
                                  list-judgements-by-observable
@@ -139,7 +141,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (p/get-in-global-properties [:ctia :http :show])
+        (let [http-show (get-in-config [:ctia :http :show])
               sightings (:data (read-store :sighting
                                            list-sightings-by-observables
                                            [{:type observable_type
@@ -179,7 +181,7 @@
        :auth-identity identity
        :identity-map identity-map
        (paginated-ok
-        (let [http-show (p/get-in-global-properties [:ctia :http :show])
+        (let [http-show (get-in-config [:ctia :http :show])
               sightings (:data (read-store :sighting
                                            list-sightings-by-observables
                                            [{:type observable_type

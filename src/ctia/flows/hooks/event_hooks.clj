@@ -51,8 +51,8 @@
     (->RedisEventPublisher (lr/server-connection redis-config)
                            channel-name)))
 
-(defn kafka-event-publisher []
-  (let [kafka-props (p/get-in-global-properties [:ctia :hook :kafka])]
+(defn kafka-event-publisher [get-in-config]
+  (let [kafka-props (get-in-config [:ctia :hook :kafka])]
 
     (log/warn "Ensure Kafka topic creation")
     (try
@@ -77,14 +77,14 @@
         (log/error e "Unable to push an event to Redis")))
     event))
 
-(defn redismq-publisher []
+(defn redismq-publisher [get-in-config]
   (let [{:keys [queue-name host port timeout-ms max-depth enabled
                 password ssl]
          :as config
          :or {queue-name "ctim-event-queue"
               host "localhost"
               port 6379}}
-        (p/get-in-global-properties [:ctia :hook :redismq])
+        (get-in-config [:ctia :hook :redismq])
         conn-spec (lr/redis-conf->conn-spec config)]
     (->RedisMQPublisher (rmq/make-queue queue-name
                                         conn-spec
@@ -112,6 +112,6 @@
         all-event-hooks
         (cond-> {}
           redis?   (assoc :redis (redis-event-publisher get-in-config))
-          redismq? (assoc :redismq (redismq-publisher))
-          kafka?   (assoc :kafka (kafka-event-publisher)))]
+          redismq? (assoc :redismq (redismq-publisher get-in-config))
+          kafka?   (assoc :kafka (kafka-event-publisher get-in-config)))]
     (update hooks-m :event concat (vals all-event-hooks))))

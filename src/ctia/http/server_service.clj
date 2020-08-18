@@ -17,7 +17,7 @@
    IEncryption
    ConfigService]
   (start [this context] (core/start context
-                                    (p/get-in-global-properties [:ctia :http])
+                                    ((:get-in-config ConfigService) [:ctia :http])
                                     {:ConfigService ConfigService
                                      :HooksService (-> HooksService 
                                                        (select-keys [:apply-hooks

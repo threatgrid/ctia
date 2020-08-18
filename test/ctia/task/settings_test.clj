@@ -7,10 +7,22 @@
              [index :as es-index]
              [conn :as es-conn]]
             [ctia.test-helpers
-             [core :refer [fixture-ctia fixture-properties:clean]]
+             [core :as h :refer [fixture-ctia fixture-properties:clean]]
              [es :refer [fixture-properties:es-store fixture-delete-store-indexes]]]))
 
+(defn fixture-update-stores [t]
+  (h/with-config-transformer*
+    #(-> %
+         (assoc-in [:ctia :store :es :relationship :replicas]
+                   12)
+         (assoc-in [:ctia :store :es :malware :refresh_interval]
+                   "12s")
+         (assoc-in [:ctia :store :es :indicator :refresh_interval]
+                   "12s"))
+    t))
+
 (use-fixtures :each (join-fixtures [fixture-properties:es-store
+                                    fixture-update-stores
                                     fixture-ctia
                                     fixture-delete-store-indexes]))
 
@@ -23,20 +35,10 @@
 
 (deftest update-stores!-test
   ;;init all stores
-  ;; GLOBAL properties init
-  ;; TODO refactor this test using encapsulated `app` to remove global properties usage
-  (p/init!)
-  (let [initial-indicator-props (init/get-store-properties :indicator)
-        _ (swap! (p/global-properties-atom)
-                 #(-> (assoc-in %
-                                [:ctia :store :es :relationship :replicas]
-                                12)
-                      (assoc-in [:ctia :store :es :malware :refresh_interval]
-                                "12s")
-                      (assoc-in [:ctia :store :es :indicator :refresh_interval]
-                                "12s")))
+  (let [get-in-config (h/current-get-in-config-fn)
+        initial-indicator-props (init/get-store-properties :indicator get-in-config)
         _ (sut/update-stores! [:relationship :malware])
-        es-props (p/get-in-global-properties [:ctia :store :es])
+        es-props (get-in-config [:ctia :store :es])
         conn (es-conn/connect (:default es-props))
         relationship-indexname (get-in es-props [:relationship :indexname])
         relationship-index (es-index/get conn (str relationship-indexname "*"))

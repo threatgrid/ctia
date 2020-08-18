@@ -177,7 +177,8 @@
                                   :buffer-size  3
                                   :confirm?     true
                                   :restart?     false}
-                                 store-svc)
+                                 store-svc
+                                 get-in-config)
 
       (let [migration-state (es-doc/get-doc (es-conn get-in-config)
                                             (migration-index get-in-config)
@@ -323,7 +324,8 @@
                                     prefix
                                     [:relationship]
                                     true
-                                    store-svc)
+                                    store-svc
+                                    get-in-config)
                     (let [test-docs (take total docs)
                           search_after [(rand-int total)]
                           batch-params  (-> (into base-params
@@ -334,7 +336,10 @@
                                                         batch-params
                                                         store-svc)
                           {target-state :target
-                           source-state :source} (-> (get-migration migration-id (es-conn get-in-config) store-svc)
+                           source-state :source} (-> (get-migration migration-id
+                                                                    (es-conn get-in-config)
+                                                                    store-svc
+                                                                    get-in-config)
                                                      :stores
                                                      :relationship)
                           _ (es-index/refresh! (es-conn get-in-config))
@@ -405,7 +410,8 @@
                                           :buffer-size  3
                                           :confirm?     true
                                           :restart?     false}
-                                         store-svc))
+                                         store-svc
+                                         get-in-config))
           migration-state-1 (es-doc/get-doc (es-conn get-in-config)
                                             (migration-index get-in-config)
                                             "migration"
@@ -425,7 +431,8 @@
                                           :buffer-size  3
                                           :confirm?     true
                                           :restart?     true}
-                                         store-svc))
+                                         store-svc
+                                         get-in-config))
           target-count-2 (es-doc/count-docs (es-conn get-in-config)
                                             "v0.0.0_ctia_relationship"
                                             "relationship"
@@ -484,7 +491,8 @@
                                     :buffer-size  3
                                     :confirm?     true
                                     :restart?     false}
-                                   store-svc))
+                                   store-svc
+                                   get-in-config))
       (let [messages (set @logger)
             migration-state (es-doc/get-doc (es-conn get-in-config)
                                             (migration-index get-in-config)
@@ -527,7 +535,8 @@
                                     :buffer-size  3
                                     :confirm?     false
                                     :restart?     false}
-                                   store-svc)
+                                   store-svc
+                                   get-in-config)
 
         (doseq [store (vals @(store-svc/get-stores store-svc))]
           (is (not (index-exists? store "0.0.0"))))
@@ -550,7 +559,8 @@
                                     :buffer-size  3
                                     :confirm?     true
                                     :restart?     false}
-                                   store-svc))
+                                   store-svc
+                                   get-in-config))
       (testing "shall generate a proper migration state"
         (let [migration-state (es-doc/get-doc (es-conn get-in-config)
                                               (migration-index get-in-config)
@@ -745,8 +755,9 @@
                                       :buffer-size  1
                                       :confirm?     true
                                       :restart?     true}
-                                     store-svc)
-          (let [migration-state (get-migration "test-2" (es-conn get-in-config) store-svc)
+                                     store-svc
+                                     get-in-config)
+          (let [migration-state (get-migration "test-2" (es-conn get-in-config) store-svc get-in-config)
                 malware-migration (get-in migration-state [:stores :malware])
                 sighting-migration (get-in migration-state [:stores :sighting])
                 malware-target-store (get-in malware-migration [:target :store])
@@ -793,7 +804,8 @@
                                         :buffer-size  3
                                         :confirm?     true
                                         :restart?     false}
-                                       store-svc)
+                                       store-svc
+                                       (helpers/current-get-in-config-fn))
           end (System/currentTimeMillis)
           total (/ (- end start) 1000)
           doc-per-sec (/ total-docs total)

@@ -15,10 +15,10 @@
              [store-service-core :refer [empty-stores]]]))
 
 (defn update-stores!
-  [store-keys]
+  [store-keys get-in-config]
   (doseq [kw store-keys]
     (log/infof "updating settings for store: %s" (name kw))
-    (init-es-conn! (get-store-properties kw))))
+    (init-es-conn! (get-store-properties kw get-in-config))))
 
 (def cli-options
   [["-h" "--help"]
@@ -40,4 +40,7 @@
     ;; GLOBAL properties init (do not remove until p/get-global-properties is deleted)
     (p/init!)
     (log-properties)
-    (update-stores! (:stores options))))
+    (let [get-in-config (let [config (p/build-init-config)]
+                          #(apply get-in config %&))]
+      (update-stores! (:stores options)
+                      get-in-config))))

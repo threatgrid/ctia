@@ -15,7 +15,7 @@
                                     whoami-helpers/fixture-server]))
 
 (use-fixtures :each (join-fixtures [whoami-helpers/fixture-reset-state
-                                    helpers/fixture-ctia])
+                                    helpers/fixture-ctia]))
 
 (defn get-actor [actor-id headers]
   (select-keys (get (str "ctia/actor/" (:short-id actor-id))

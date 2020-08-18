@@ -65,8 +65,8 @@
                   :properties (->> (map store-mapping @(store-svc/get-stores store-svc))
                                    (into {}))}}}})))
 
-(defn migration-store-properties [store-svc]
-  (into (get-store-properties :migration)
+(defn migration-store-properties [store-svc get-in-config]
+  (into (get-store-properties :migration get-in-config)
         {:shards 1
          :replicas 1
          :refresh true
@@ -139,9 +139,10 @@
 (s/defn store-migration
   [migration :- MigrationSchema
    conn :- ESConn
-   store-svc]
+   store-svc
+   get-in-config]
   (let [prepared (wo-storemaps migration)
-        {:keys [indexname entity]} (migration-store-properties store-svc)]
+        {:keys [indexname entity]} (migration-store-properties store-svc get-in-config)]
     (retry es-max-retry
            es-doc/index-doc
            conn
@@ -511,7 +512,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (defn target-store-properties
   [prefix store-key]
-  (-> (get-store-properties store-key)
+  (-> (get-store-properties store-key get-in-config)
       (update :indexname
               #(prefixed-index % prefix))))
 
@@ -521,13 +522,13 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
       (es-store/store-state->map conn-overrides)))
 
 (defn get-target-store
-  [prefix store-key]
-  (init-storemap (target-store-properties prefix store-key)))
+  [prefix store-key get-in-config]
+  (init-storemap (target-store-properties prefix store-key get-in-config)))
 
 (defn get-target-stores
-  [prefix store-keys]
+  [prefix store-keys get-in-config]
   (->> (map (fn [k]
-              {k (get-target-store prefix k)})
+              {k (get-target-store prefix k get-in-config)})
             store-keys)
        (into {})))
 
@@ -538,10 +539,11 @@ when confirm? is true, it stores this state and creates the target indices."
    prefix :- s/Str
    store-keys :- [s/Keyword]
    confirm? :- s/Bool
-   store-svc]
+   store-svc
+   get-in-config]
   (let [source-stores (stores->maps (select-keys @(store-svc/get-stores store-svc) store-keys))
-        target-stores (get-target-stores prefix store-keys)
-        migration-properties (migration-store-properties store-svc)
+        target-stores (get-target-stores prefix store-keys get-in-config)
+        migration-properties (migration-store-properties store-svc get-in-config)
         now (time/internal-now)
         migration-stores (->> source-stores
                               (map (fn [[k v]]
@@ -553,7 +555,7 @@ when confirm? is true, it stores this state and creates the target indices."
                    :stores migration-stores}
         es-conn-state (init-es-conn! migration-properties)]
     (when confirm?
-      (store-migration migration (:conn es-conn-state) store-svc)
+      (store-migration migration (:conn es-conn-state) store-svc get-in-config)
       (doseq [[_ target-store] target-stores]
         (create-target-store! target-store)))
     migration))
@@ -562,9 +564,10 @@ when confirm? is true, it stores this state and creates the target indices."
   [entity-type :- s/Keyword
    prefix :- s/Str
    raw-store :- MigratedStore
-   store-svc]
+   store-svc
+   get-in-config]
   (let [source-store (store->map (get @(store-svc/get-stores store-svc) entity-type))
-        target-store (get-target-store prefix entity-type)]
+        target-store (get-target-store prefix entity-type get-in-config)]
     (-> (assoc-in raw-store [:source :store] source-store)
         (assoc-in [:target :store] target-store))))
 
@@ -590,8 +593,9 @@ when confirm? is true, it stores this state and creates the target indices."
    and add necessary store data for migration (indices, connections, etc.)"
   [migration-id :- s/Str
    es-conn :- ESConn
-   store-svc]
-  (let [{:keys [indexname entity]} (migration-store-properties store-svc)
+   store-svc
+   get-in-config]
+  (let [{:keys [indexname entity]} (migration-store-properties store-svc get-in-config)
         {:keys [prefix] :as migration-raw} (retry es-max-retry
                                                   es-doc/get-doc
                                                   es-conn
@@ -605,26 +609,29 @@ when confirm? is true, it stores this state and creates the target indices."
       (throw (ex-info "migration not found" {:id migration-id})))
     (-> (coerce migration-raw)
         (update :stores enrich-stores prefix store-svc)
-        (store-migration es-conn store-svc))))
+        (store-migration es-conn store-svc get-in-config))))
 
 (s/defn update-migration-store
   ([migration-id :- s/Str
     store-key :- s/Keyword
     migrated-doc :- PartialMigratedStore
-    store-svc]
+    store-svc
+    get-in-config]
    (update-migration-store migration-id
                            store-key
                            migrated-doc
                            (-> migration-es-conn deref (doto (assert "This atom is unset. Maybe some setup hasn't been performed?")))
-                           store-svc))
+                           store-svc
+                           get-in-config))
   
   ([migration-id :- s/Str
     store-key :- s/Keyword
     migrated-doc :- PartialMigratedStore
     es-conn :- ESConn
-    store-svc]
+    store-svc
+    get-in-config]
    (let [partial-doc {:stores {store-key migrated-doc}}
-         {:keys [indexname entity]} (migration-store-properties store-svc)]
+         {:keys [indexname entity]} (migration-store-properties store-svc get-in-config)]
      (retry es-max-retry
             es-doc/update-doc
             es-conn
@@ -643,7 +650,8 @@ when confirm? is true, it stores this state and creates the target indices."
    source-store :- StoreMap
    target-store :- StoreMap
    es-conn :- ESConn
-   store-svc]
+   store-svc
+   get-in-config]
   (log/infof "%s - update index settings" (:type source-store))
   (retry es-max-retry
          es-index/update-settings!
@@ -656,12 +664,13 @@ when confirm? is true, it stores this state and creates the target indices."
                           store-key
                           {:completed (time/internal-now)}
                           es-conn
-                          store-svc))
+                          store-svc
+                          get-in-config))
 
 (defn setup!
   "setup store service"
-  [store-svc]
-  (->> (migration-store-properties store-svc)
+  [store-svc get-in-config]
+  (->> (migration-store-properties store-svc get-in-config)
        init-store-conn
        :conn
        (reset! migration-es-conn)))

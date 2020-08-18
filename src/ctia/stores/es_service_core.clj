@@ -12,19 +12,19 @@
               (str/split #","))
       []))
 
-(defn- build-store [store-kw store-type]
+(defn- build-store [store-kw get-in-config store-type]
   (case store-type
-    "es" (es-init/init-store! store-kw)))
+    "es" (es-init/init-store! store-kw get-in-config)))
 
-(defn- init-store-service! [stores]
+(defn- init-store-service! [stores get-in-config]
   (reset! stores
           (->> (keys empty-stores)
                (map (fn [store-kw]
-                      [store-kw (keep (partial build-store store-kw)
+                      [store-kw (keep (partial build-store store-kw get-in-config)
                                       (get-store-types store-kw))]))
                (into {})
                (merge-with into empty-stores))))
 
 (defn start [context stores]
-  (init-store-service! stores)
+  (init-store-service! stores get-in-config)
   context)
