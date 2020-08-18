@@ -1,35 +1,29 @@
 (ns ctia.task.migration.store
-  (:require [clojure.set :as set]
+  (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
+            [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.es.conn :as conn]
+            [clj-momo.lib.es.document :as es-doc]
+            [clj-momo.lib.es.index :as es-index]
+            [clj-momo.lib.es.query :as es-query]
+            [clj-momo.lib.es.schemas :refer [ESConn ESConnState ESQuery]]
+            [clojure.set :as set]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
-            [schema.core :as s]
-            [schema-tools.core :as st]
-            [clj-momo.lib.clj-time
-             [core :as time]
-             [coerce :as time-coerce]]
-            [clj-momo.lib.es
-             [schemas :refer [ESConn ESQuery ESConnState]]
-             [conn :as conn]
-             [document :as es-doc]
-             [query :as es-query]
-             [index :as es-index]]
-            [ctim.domain.id :refer [long-id->id]]
             [ctia.lib.collection :refer [fmap]]
             [ctia.store-service :as store-svc]
             [ctia.stores.es-service :as es-svc]
-            [ctia.stores.es
-             [crud :as crud]
-             [init :refer [init-store-conn
-                           init-es-conn!
-                           get-store-properties
-                           StoreProperties]]
-             [mapping :as em]
-             [store :refer [StoreMap] :as es-store]]
+            [ctia.properties :as p]
+            [ctia.stores.es.crud :as crud]
+            [ctia.stores.es.init
+             :refer
+             [get-store-properties init-es-conn! init-store-conn StoreProperties]]
+            [ctia.stores.es.mapping :as em]
+            [ctia.stores.es.store :as es-store :refer [StoreMap]]
             [ctia.task.rollover :refer [rollover-store]]
-            [ctia
-             [init :refer [log-properties]]
-             [properties :as p]]
-            [puppetlabs.trapperkeeper.app :as app]))
+            [ctim.domain.id :refer [long-id->id]]
+            [puppetlabs.trapperkeeper.app :as app]
+            [schema-tools.core :as st]
+            [schema.core :as s]))
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)

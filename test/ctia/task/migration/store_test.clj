@@ -1,25 +1,23 @@
 (ns ctia.task.migration.store-test
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.test :refer [deftest is testing join-fixtures use-fixtures]]
+  (:require [clj-momo.lib.clj-time.coerce :as time-coerce]
+            [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.es.conn :refer [connect]]
+            [clj-momo.lib.es.document :as es-doc]
+            [clj-momo.lib.es.index :as es-index]
             [clj-momo.test-helpers.core :as mth]
-            [clj-momo.lib.clj-time
-             [core :as time]
-             [coerce :as time-coerce]]
-            [clj-momo.lib.es
-             [conn :refer [connect]]
-             [document :as es-doc]
-             [index :as es-index]]
-            [ctim.domain.id :refer [long-id->id]]
+            [clojure.java.io :as io]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
             [ctia.properties :as p]
-            [ctia.test-helpers
-             [fixtures :as fixt]
-             [core :as helpers :refer [post-bulk put delete]]
-             [es :as es-helpers]
-             [fake-whoami-service :as whoami-helpers]]
-            [ctia.task.rollover :refer [rollover-stores]]
-            [ctia.task.migration.store :as sut]
             [ctia.store-service :as store-svc]
+            [ctia.stores.es.mapping :as em]
+            [ctia.task.migration.store :as sut]
+            [ctia.task.rollover :refer [rollover-stores]]
+            [ctia.test-helpers.core :as helpers :refer [delete post-bulk put]]
+            [ctia.test-helpers.es :as es-helpers]
+            [ctia.test-helpers.fake-whoami-service :as whoami-helpers]
+            [ctia.test-helpers.fixtures :as fixt]
+            [ctim.domain.id :refer [long-id->id]]
             [puppetlabs.trapperkeeper.app :as app]))
 
 (deftest prefixed-index-test
