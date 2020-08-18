@@ -54,9 +54,8 @@
                                          (false? wait_for) "refresh=false")]
                           (is (some-> @es-params
                                       (string/includes? expected))
-                              (str msg (format " (%s|%s)" expected @es-params)))
+                              (str msg (format "(expected %s, actual: %s)" expected @es-params)))
                           (reset! es-params nil)))]
-
     (testing "testing wait_for values on entity creation"
       (let [test-create (fn [wait_for msg]
                           (let [path (cond-> (str "ctia/" entity)
