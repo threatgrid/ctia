@@ -36,14 +36,15 @@
   (default-realize-fn "target-record" NewTargetRecord StoredTargetRecord))
 
 (def ^:private target
-  {:properties
-   {:type          em/token
+  {:type "object"
+   :properties
+   {:type          em/all_token
     :observables   em/observable
-    :os            em/token
+    :os            em/all_token
     :internal      em/boolean-type
-    :source_uri    em/token
+    :source_uri    em/all_token
     :observed_time em/valid-time
-    :sensor        em/token}})
+    :sensor        em/all_token}})
 
 (def target-record-mapping
   {"target-record"
@@ -51,6 +52,7 @@
     :properties
     (merge
      em/base-entity-mapping
+     em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
      {:target target})}})
@@ -61,7 +63,12 @@
   (concat
    sorting/base-entity-sort-fields
    sorting/sourcable-entity-sort-fields
-   [:target]))
+   sorting/describable-entity-sort-fields
+   [:target.type
+    :target.os
+    :target.internal
+    :target.source_uri
+    :target.sensor]))
 
 (def target-record-sort-fields
   (apply s/enum target-record-fields))
@@ -75,7 +82,7 @@
    TargetRecordFieldsParam))
 
 (def target-record-enumerable-fields
-  [])
+  [:target])
 
 (def TargetRecordGetParams TargetRecordFieldsParam)
 
@@ -91,8 +98,8 @@
 
 (def target-record-histogram-fields
   [:timestamp
-   :valid_time.start_time
-   :valid_time.end_time])
+   :target.observed_time.start_time
+   :target.observed_time.end_time])
 
 (def target-record-routes
   (entity-crud-routes
