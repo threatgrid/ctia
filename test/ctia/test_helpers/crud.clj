@@ -16,7 +16,8 @@
             [ctim.domain.id :as id]))
 
 (defn crud-wait-for-test
-  [{:keys [entity
+  [{::keys [get-in-config]
+    :keys [entity
            example
            headers
            update-field
@@ -26,7 +27,7 @@
          update-tests? true
          patch-tests? false}}]
   (let [new-record (dissoc example :id)
-        default-es-refresh (->> (p/get-in-global-properties
+        default-es-refresh (->> (get-in-config
                                   [:ctia :store :es :default :refresh])
                                 (str "refresh="))
         es-params (atom nil)
@@ -157,6 +158,8 @@
          patch-tests? false
          search-tests? true}
     :as params}]
+ (let [app (helpers/get-current-app)
+       get-in-config (helpers/current-get-in-config-fn app)]
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
           {post-status :status
@@ -189,7 +192,8 @@
         (test-query-string-search entity
                                   (name search-field)
                                   search-field
-                                  example))
+                                  example
+                                  get-in-config))
 
       (testing (format "GET /ctia/%s/external_id/:external_id" entity)
         (let [response (get (format "ctia/%s/external_id/%s"
@@ -305,6 +309,6 @@
                        (string/lower-case body))))))
 
     (when (= "es"
-             (p/get-in-global-properties
+             (get-in-config
                [:ctia :store (keyword entity)]))
-      (crud-wait-for-test params))))
+      (crud-wait-for-test (assoc params ::get-in-config get-in-config))))))

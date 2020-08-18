@@ -1,14 +1,15 @@
 (ns ctia.version.routes
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.core :refer [context GET routes]]
    [ctia.schemas.core :refer [VersionInfo]]
    [ctia.version :refer [version-data]]
-   [ring.util.http-response :refer :all]))
+   [ring.util.http-response :refer [ok]]))
 
-(defroutes version-routes
+(defn version-routes [get-in-config]
+ (routes
   (context "/version" []
            :tags ["Version"]
            (GET "/" []
                 :return VersionInfo
                 :summary "API version details"
-                (ok (version-data)))))
+                (ok (version-data get-in-config))))))
