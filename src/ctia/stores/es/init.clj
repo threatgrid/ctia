@@ -139,7 +139,7 @@
   "Return a store instance factory. Most of the ES stores are
   initialized in a common way, so this is used to remove boiler-plate
   code."
-  [store-constructor]
+  [store-constructor get-in-config]
   (fn store-factory [store-kw]
     (-> (get-store-properties store-kw get-in-config)
         init-es-conn!
