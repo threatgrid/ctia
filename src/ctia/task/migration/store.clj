@@ -33,7 +33,7 @@
 
 (def timeout (* 5 60000))
 (def es-max-retry 3)
-;;TODO refactor to local argument
+;;FIXME refactor to local argument
 (defonce migration-es-conn (atom nil))
 
 (def token-mapping
@@ -581,9 +581,10 @@ when confirm? is true, it stores this state and creates the target indices."
    updates source size"
   [stores :- {s/Keyword MigratedStore}
    prefix :- s/Str
-   store-svc]
+   store-svc
+   get-in-config]
   (->> (map (fn [[store-key raw]]
-              {store-key (-> (with-store-map store-key prefix raw store-svc)
+              {store-key (-> (with-store-map store-key prefix raw store-svc get-in-config)
                              update-source-size)})
             stores)
        (into {})))
@@ -608,7 +609,7 @@ when confirm? is true, it stores this state and creates the target indices."
       (log/errorf "migration not found: %s" migration-id)
       (throw (ex-info "migration not found" {:id migration-id})))
     (-> (coerce migration-raw)
-        (update :stores enrich-stores prefix store-svc)
+        (update :stores enrich-stores prefix store-svc get-in-config)
         (store-migration es-conn store-svc get-in-config))))
 
 (s/defn update-migration-store

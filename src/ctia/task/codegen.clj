@@ -4,7 +4,9 @@
              [shell :as shell]]
             [ctia
              [init :refer [start-ctia!]]
-             [properties :as p]]))
+             [properties :as p]]
+            [puppetlabs.trapperkeeper.app :as app]
+            [puppetlabs.trapperkeeper.config :as tk-config]))
 
 ;; swagger codegen package
 (def codegen-version "2.2.3")
@@ -45,8 +47,8 @@
 
 (defn spec-uri
   "compose the full path of the swagger spec to generate from"
-  []
-  (let [port (p/get-in-global-properties [:ctia :http :port] 3000)]
+  [get-in-config]
+  (let [port (get-in-config [:ctia :http :port] 3000)]
     (str "http://localhost:" port "/swagger.json")))
 
 (defn exec-command
@@ -67,11 +69,11 @@
 
 (defn base-command
   "base command for all languages"
-  [lang output-dir]
+  [lang output-dir get-in-config]
   ["java"
    "-jar" local-jar-uri
    "generate"
-   "-i" (spec-uri)
+   "-i" (spec-uri get-in-config)
    "-l" (name lang)
    "--group-id" "cisco"
    "-o" (str (or output-dir "/tmp/ctia-client") "/" (name lang))
@@ -90,11 +92,11 @@
 
 (defn generate-language
   "generate code for one language"
-  [lang props output-dir]
+  [lang props output-dir get-in-config]
 
   (println "generating" lang "client...")
 
-  (let [base (base-command lang output-dir)
+  (let [base (base-command lang output-dir get-in-config)
         additional (props->additional-properties props)
         full-command (into base additional)]
     (apply exec-command full-command)))
@@ -103,9 +105,11 @@
   "invoke with lein run -m ctia.task.codegen <output-dir>"
   [output-dir]
   (try
-    (let [app (setup)]
+    (let [app (setup)
+          config-svc (app/get-service app :ConfigService)
+          get-in-config #(apply tk-config/get-in-config config-svc %&)]
       (doseq [[lang props] langs]
-        (generate-language lang props output-dir))
+        (generate-language lang props output-dir get-in-config))
 
       (println "done")
       (System/exit 0))

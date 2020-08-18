@@ -238,7 +238,8 @@
       (mst/update-migration-store migration-id
                                   entity-type
                                   {:started (time/now)}
-                                  store-svc))
+                                  store-svc
+                                  get-in-config))
     (->> (reduce #(migrate-query %1 %2 store-svc get-in-config)
                  base-params
                  queries)
@@ -301,9 +302,10 @@
 
 (s/defn ^:always-validate check-migration-params
   [{:keys [prefix
-           store-keys]} :- MigrationParams]
+           store-keys]} :- MigrationParams
+   get-in-config]
   (doseq [store-key store-keys]
-    (let [index (p/get-in-global-properties [:ctia :store :es store-key :indexname])]
+    (let [index (get-in-config [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
                index)
         (throw (AssertionError.
@@ -324,8 +326,8 @@
           config-svc (app/get-service app :ConfigService)
           get-in-config #(apply tk-config/get-in-config config-svc %&)
           store-svc (app/get-service app :StoreService)
-          _ (mst/setup! store-svc)]
-      (check-migration-params params)
+          _ (mst/setup! store-svc get-in-config)]
+      (check-migration-params params get-in-config)
       (migrate-store-indexes params store-svc get-in-config)
       (log/info "migration complete")
       (exit false))
