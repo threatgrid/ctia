@@ -238,8 +238,8 @@
 (defn get-http-show []
   (get-in-global-properties [:ctia :http :show]))
 
-(defn get-http-swagger []
-  (get-in-global-properties [:ctia :http :swagger]))
+(defn get-http-swagger [get-in-config]
+  (get-in-config [:ctia :http :swagger]))
 
 (defn get-access-control []
   (get-in-global-properties [:ctia :access-control]))
