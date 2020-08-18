@@ -394,7 +394,7 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
                         "identity" []
                         [{"modified" date-sort-order}
                          {"created" date-sort-order}])
-                      {"_uid" sort-order})
+                      {"id" sort-order})
         params
         (merge
          {:offset (or offset 0)

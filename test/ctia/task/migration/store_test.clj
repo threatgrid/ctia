@@ -670,7 +670,13 @@
                                         :timestamp %
                                         :modified (rand-int 50))
                              (range 50 90))]
-
+      (es-index/create! es-conn
+                        indexname
+                        {:settings {:refresh_interval -1}
+                         :mappings {:event {:properties {:id {:type "keyword"}
+                                                         :batch em/integer-type
+                                                         :timestamp em/integer-type
+                                                         :modified em/integer-type}}}})
       (sut/store-batch event-store event-batch-1)
       (sut/store-batch event-store event-batch-2)
       (es-index/refresh! (es-conn get-in-config) indexname)
@@ -747,7 +753,16 @@
                                         :timestamp (rand-int 100)
                                         :modified %
                                         :created %)
-                             (range 100))]
+                             (range 100))
+          mappings {:id {:type "keyword"}
+                    :timestamp em/integer-type
+                    :created em/integer-type
+                    :modified em/integer-type}]
+      (es-index/create! es-conn
+                        indexname
+                        {:settings {:refresh_interval -1}
+                         :mappings {:malware {:properties mappings}
+                                    :tool {:properties mappings}}})
       (sut/store-batch tool-store tool-batch)
       (sut/store-batch malware-store malware-batch)
       (es-index/refresh! (es-conn get-in-config) indexname)

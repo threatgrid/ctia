@@ -30,9 +30,9 @@
         default-es-refresh (->> (get-in-config
                                   [:ctia :store :es :default :refresh])
                                 (str "refresh="))
-        es-params (atom nil)
-        simple-handler (fn [{:keys [query-string]}]
-                         (reset! es-params query-string)
+        es-params (volatile! nil)
+        simple-handler (fn [{:keys [url query-string]}]
+                         (vreset! es-params query-string)
                          {:status 200
                           :headers {"Content-Type" "application/json"}
                           :body "{}"})
@@ -44,7 +44,7 @@
                                                      (parse-string true)
                                                      (get-in [:index :_type]))]
                                 (when-not (= "event" mapping-type)
-                                  (reset! es-params query-string))
+                                  (vreset! es-params query-string))
                                 {:status 200
                                  :headers {"Content-Type" "application/json"}
                                  :body "{}"}))}}
@@ -55,9 +55,8 @@
                                          (false? wait_for) "refresh=false")]
                           (is (some-> @es-params
                                       (string/includes? expected))
-                              (str msg (format " (%s|%s)" expected @es-params)))
-                          (reset! es-params nil)))]
-
+                              (str msg (format "(expected %s, actual: %s)" expected @es-params)))
+                          (vreset! es-params nil)))]
     (testing "testing wait_for values on entity creation"
       (let [test-create (fn [wait_for msg]
                           (let [path (cond-> (str "ctia/" entity)
@@ -86,8 +85,9 @@
                           (let [path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))
                                 updates (cond->> {update-field "modified"}
-                                          (= put method) (into new-record))]
-                            (with-global-fake-routes {#".*9200.*" {:put simple-handler}}
+                                          (= put method) (into new-record))
+                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))]
+                            (with-global-fake-routes {es-index-uri-pattern {:put simple-handler}}
                               (method path
                                       :body updates
                                       :headers headers))
@@ -120,9 +120,10 @@
                                                     :headers headers)
                                               :parsed-body
                                               entity->short-id)
+                                es-index-uri-pattern (re-pattern (str ".*9200.*" entity-id ".*"))
                                 path (cond-> (format "ctia/%s/%s" entity entity-id)
                                        (boolean? wait_for) (str "?wait_for=" wait_for))]
-                            (with-global-fake-routes {#".*9200.*" {:delete simple-handler}}
+                            (with-global-fake-routes {es-index-uri-pattern {:delete simple-handler}}
                               (delete path
                                       :headers headers))
                             (check-refresh wait_for msg)))]
