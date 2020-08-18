@@ -90,6 +90,12 @@
   (let [_ (validate-entities)
         _ (log-properties config)
         app (tk/boot-services-with-config services config)]
+    ;; TODO port to TK or delete (currently unused). get-in-config is a placeholder for the
+    ;; moment for ConfigService's get-in-config.
+    ;; metrics reporters init
+    ;(riemann/init! get-in-config)
+    ;(jmx/init! get-in-config)
+    ;(console/init! get-in-config)
     app))
 
 (defn start-ctia!
@@ -98,12 +104,6 @@
   []
   (log/info "starting CTIA version: "
             (version/current-version))
-
-  ;; TODO port to TK or delete (currently unused)
-  ;; metrics reporters init
-  ;(riemann/init!)
-  ;(jmx/init!)
-  ;(console/init!)
 
   ;; trapperkeeper init
   (let [config (p/build-init-config)]

@@ -64,11 +64,12 @@
   "Like find-id above, but checks that the hostname in the ID (if it
   is a long ID) is the local server hostname.  Throws bad-request! on
   mismatch."
-  [{id :id, :as entity}]
+  [{id :id, :as entity}
+   get-in-config]
   (when (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (p/get-in-global-properties [:ctia :http :show :hostname])]
+            this-host (get-in-config [:ctia :http :show :hostname])]
         (if (= (:hostname id-rec) this-host)
           (:short-id id-rec)
           (http-response/bad-request!
@@ -88,10 +89,11 @@
 (s/defn ^:private find-entity-id :- s/Str
   [{identity-obj :identity
     :keys [entity-type prev-entity tempids]} :- FlowMap
-   entity :- {s/Keyword s/Any}]
+   entity :- {s/Keyword s/Any}
+   get-in-config]
   (or (find-id prev-entity)
       (get tempids (:id entity))
-      (when-let [entity-id (find-checked-id entity)]
+      (when-let [entity-id (find-checked-id entity get-in-config)]
         (when-not (auth/capable? identity-obj :specify-id)
           (http-response/forbidden!
            {:error "Missing capability to specify entity ID"
@@ -147,12 +149,12 @@
     (update fm :tempids (fnil into {}) newtempids)))
 
 (s/defn ^:private realize-entities :- FlowMap
-  [{:keys [entities
+  [{{{:keys [get-in-config]} :ConfigService :as services} :services
+    :keys [entities
            flow-type
            identity
            tempids
            prev-entity
-           services
            realize-fn] :as fm} :- FlowMap]
   (let [login (auth/login identity)
         groups (auth/groups identity)
@@ -163,7 +165,7 @@
            :entities
            (doall
             (for [entity entities
-                  :let [entity-id (find-entity-id fm entity)]]
+                  :let [entity-id (find-entity-id fm entity get-in-config)]]
               (cond
                 (:error entity) entity
                 (:error entity-id) entity-id
@@ -230,8 +232,10 @@
 
 (s/defn ^:private create-events :- FlowMap
   [{:keys [create-event-fn entities flow-type identity prev-entity]
+    {{:keys [get-in-config]} :ConfigService}
+    :services
     :as fm} :- FlowMap]
-  (if (p/get-in-global-properties [:ctia :events :enabled])
+  (if (get-in-config [:ctia :events :enabled])
     (let [events
           (->> entities
                (filter #(nil? (:error %)))

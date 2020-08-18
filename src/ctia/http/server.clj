@@ -163,7 +163,7 @@
 
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
-         (p/get-in-global-properties [:ctia :log :riemann :enabled])
+         (get-in-config [:ctia :log :riemann :enabled])
          (rie/wrap-request-logs "API response time ms" get-in-config)
 
          (:enabled jwt)

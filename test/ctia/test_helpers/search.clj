@@ -56,7 +56,7 @@
   [entity text]
   (count-raw entity {:query text}))
 
-(defn test-describable-search [entity example]
+(defn test-describable-search [entity example get-in-config]
   (let [;; generate matched and unmatched terms / entities
         capital-word (unique-word "CAPITAL")
         base-possessive-word "possessive"
@@ -89,8 +89,8 @@
                            (repeatedly 2)
                            (map (comp :id :parsed-body))
                            set)
-        default_operator (or (p/get-in-global-properties [:ctia :store :es (keyword entity) :default_operator])
-                             (p/get-in-global-properties [:ctia :store :es :default :default_operator])
+        default_operator (or (get-in-config [:ctia :store :es (keyword entity) :default_operator])
+                             (get-in-config [:ctia :store :es :default :default_operator])
                              "AND")
         partially-matched-text (format "%s %s"
                                        "word"
@@ -325,7 +325,7 @@
   ;; only when ES store
   (when (= "es" (get-in-config [:ctia :store (keyword entity)]))
     (if (= :description query-field)
-      (test-describable-search entity example)
+      (test-describable-search entity example get-in-config)
       (ensure-one-document test-non-describable-search
                            example
                            entity

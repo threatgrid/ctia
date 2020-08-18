@@ -108,7 +108,7 @@
   (let [{{redis? :enabled} :redis
          {redismq? :enabled} :redismq
          {kafka? :enabled} :kafka}
-        (p/get-in-global-properties [:ctia :hook])
+        (get-in-config [:ctia :hook])
         all-event-hooks
         (cond-> {}
           redis?   (assoc :redis (redis-event-publisher get-in-config))
