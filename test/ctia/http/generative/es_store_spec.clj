@@ -29,6 +29,8 @@
 
 (defspec ^:generative api-for-asset-properties-routes-es-store
   prop/api-for-asset-properties-routes)
+(defspec ^:generative api-for-target-record-routes-es-store
+  prop/api-for-target-record-routes)
 
 (defspec ^:generative api-for-attack-pattern-routes-es-store
   prop/api-for-attack-pattern-routes)

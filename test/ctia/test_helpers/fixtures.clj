@@ -6,6 +6,7 @@
              [assets :refer [asset-maximal asset-minimal]]
              [asset-mappings :refer [asset-mapping-maximal asset-mapping-minimal]]
              [asset-properties :refer [asset-properties-maximal asset-properties-minimal]]
+             [target-records :refer [target-record-maximal target-record-minimal]]
              [attack-patterns :refer [attack-pattern-maximal attack-pattern-minimal]]
              [campaigns :refer [campaign-maximal campaign-minimal]]
              [coas :refer [coa-maximal coa-minimal]]
@@ -45,6 +46,7 @@
     :relationship     (n-doc (if maximal? relationship-maximal relationship-minimal) nb)
     :casebook         (n-doc (if maximal? casebook-maximal casebook-minimal) nb)
     :sighting         (n-doc (if maximal? sighting-maximal sighting-minimal) nb)
+    :target-record    (n-doc (if maximal? target-record-maximal target-record-minimal) nb)
     :tool             (n-doc (if maximal? tool-maximal tool-minimal) nb)
     :vulnerability    (n-doc (if maximal? vulnerability-maximal vulnerability-minimal) nb)
     :weakness         (n-doc (if maximal? weakness-maximal weakness-minimal) nb)))
@@ -66,6 +68,7 @@
    :relationships    (n-examples :relationship fixtures-nb maximal?)
    :casebooks        (n-examples :casebook fixtures-nb maximal?)
    :sightings        (n-examples :sighting fixtures-nb maximal?)
+   :target_records   (n-examples :target-record fixtures-nb maximal?)
    :tools            (n-examples :tool fixtures-nb maximal?)
    :vulnerabilities  (n-examples :vulnerability fixtures-nb maximal?)
    :weaknesses       (n-examples :weakness fixtures-nb maximal?)})
