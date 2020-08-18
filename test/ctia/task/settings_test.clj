@@ -37,7 +37,7 @@
   ;;init all stores
   (let [get-in-config (h/current-get-in-config-fn)
         initial-indicator-props (init/get-store-properties :indicator get-in-config)
-        _ (sut/update-stores! [:relationship :malware])
+        _ (sut/update-stores! [:relationship :malware] get-in-config)
         es-props (get-in-config [:ctia :store :es])
         conn (es-conn/connect (:default es-props))
         relationship-indexname (get-in es-props [:relationship :indexname])
