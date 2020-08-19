@@ -61,7 +61,7 @@
                      args
                      (:ident context)
                      field-selection
-                     (page-with-long-id get-in-config)
+                     #(page-with-long-id % get-in-config)
                      rt-opt))))
 
 (s/defn entity-by-id :- (MaybeDelayedGraphQLValue GraphQLValue)
@@ -186,5 +186,5 @@
                      args
                      (:ident context)
                      (concat field-selection [:target_ref :source_ref])
-                     (page-with-long-id get-in-config)
+                     #(page-with-long-id % get-in-config)
                      rt-opt))))
