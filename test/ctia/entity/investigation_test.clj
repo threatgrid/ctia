@@ -65,12 +65,11 @@
         sut/investigation-fields)))))
 
 (deftest test-investigation-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "investigation"
-                          new-investigation-minimal
-                          false
-                          true))))
+  (access-control-test "investigation"
+                       new-investigation-minimal
+                       false
+                       true
+                       test-for-each-store))
 
 (deftest test-investigation-metric-routes
   ((:es-store store-fixtures)

@@ -331,9 +331,8 @@
         sort-restricted-feed-fields)))))
 
 (deftest test-feed-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "feed"
-                          new-feed-minimal
-                          true
-                          true))))
+  (access-control-test "feed"
+                       new-feed-minimal
+                       true
+                       true
+                       test-for-each-store))

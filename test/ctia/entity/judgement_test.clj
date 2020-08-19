@@ -368,9 +368,8 @@
         judgement-fields)))))
 
 (deftest test-judgement-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "judgement"
-                          ex/new-judgement-minimal
-                          true
-                          true))))
+  (access-control-test "judgement"
+                       ex/new-judgement-minimal
+                       true
+                       true
+                       test-for-each-store))

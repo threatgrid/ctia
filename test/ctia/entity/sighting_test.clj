@@ -102,9 +102,8 @@
         sighting-fields)))))
 
 (deftest test-sighting-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "sighting"
-                          new-sighting-minimal
-                          true
-                          true))))
+  (access-control-test "sighting"
+                       new-sighting-minimal
+                       true
+                       true
+                       test-for-each-store))

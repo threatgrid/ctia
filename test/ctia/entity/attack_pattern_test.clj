@@ -68,12 +68,11 @@
         sut/attack-pattern-fields)))))
 
 (deftest attack-pattern-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "attack-pattern"
-                          new-attack-pattern-minimal
-                          true
-                          true))))
+  (access-control-test "attack-pattern"
+                       new-attack-pattern-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-attack-pattern-metric-routes
   ((:es-store store-fixtures)

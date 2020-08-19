@@ -5,7 +5,6 @@
             [ctia.entity.identity-assertion :as sut]
             [ctia.properties :as p]
             [ctia.test-helpers
-             [access-control :refer [access-control-test]]
              [auth :refer [all-capabilities]]
              [core :as helpers :refer [post-entity-bulk post-bulk]]
              [crud :refer [entity-crud-test]]
