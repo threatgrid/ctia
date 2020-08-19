@@ -62,14 +62,18 @@
                                        {:rolled_over (rand-nth [true false])}
                                        (throw (ex-info "that's baaaaaaaddd"
                                                        {:code :unhappy}))))]
-    (let [ok-state (init/init-store-conn {:entity "sighting"
+    (let [app (helpers/get-current-app)
+          get-in-config (helpers/current-get-in-config-fn app)
+          ok-state (init/init-store-conn {:entity "sighting"
                                           :indexname "ok_index"
                                           :rollover {:max_docs 3}
-                                          :aliased true})
+                                          :aliased true}
+                                         get-in-config)
           ko-state (init/init-store-conn {:entity "sighting"
                                           :indexname "bbaaaaadddd_index"
                                           :rollover {:max_docs 2}
-                                          :aliased true})
+                                          :aliased true}
+                                         get-in-config)
           stores {:ok-type-1 [{:state ok-state}]
                   :ok-type-2 [{:state ok-state}]
                   :ok-type-3 [{:state ok-state}]

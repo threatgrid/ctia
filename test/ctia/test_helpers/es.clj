@@ -47,13 +47,16 @@
   (let [app (h/get-current-app)
         store-svc (app/get-service app :StoreService)
         get-in-config (h/current-get-in-config-fn app)]
-    (delete-store-indexes true store-svc get-in-config)
-    (t)
-    (delete-store-indexes false store-svc get-in-config)))
+    (try
+      (delete-store-indexes true store-svc get-in-config)
+      (t)
+      (finally
+        (delete-store-indexes false store-svc get-in-config)))))
 
 (defn purge-index [entity get-in-config]
   (let [{:keys [conn index]} (es-init/init-store-conn
-                              (es-init/get-store-properties entity get-in-config))]
+                              (es-init/get-store-properties entity get-in-config)
+                              get-in-config)]
     (when conn
       (es-index/delete! conn (str index "*")))))
 
@@ -76,9 +79,10 @@
   (let [app (h/get-current-app)
         store-svc (app/get-service app :StoreService)
         get-in-config (h/current-get-in-config-fn app)]
-    (purge-indexes store-svc get-in-config)
-    (t)
-    (purge-indexes store-svc get-in-config)))
+    (try
+      (purge-indexes store-svc get-in-config)
+      (t)
+      (finally (purge-indexes store-svc get-in-config)))))
 
 (defn fixture-properties:es-store [t]
   ;; Note: These properties may be overwritten by ENV variables

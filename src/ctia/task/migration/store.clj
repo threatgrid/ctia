@@ -512,13 +512,15 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
               #(prefixed-index % prefix))))
 
 (s/defn init-storemap :- StoreMap
-  [props :- StoreProperties]
-  (-> (init-store-conn props)
+  [props :- StoreProperties
+   get-in-config]
+  (-> (init-store-conn props get-in-config)
       (es-store/store-state->map conn-overrides)))
 
 (defn get-target-store
   [prefix store-key get-in-config]
-  (init-storemap (target-store-properties prefix store-key get-in-config)))
+  (init-storemap (target-store-properties prefix store-key get-in-config)
+                 get-in-config))
 
 (defn get-target-stores
   [prefix store-keys get-in-config]
