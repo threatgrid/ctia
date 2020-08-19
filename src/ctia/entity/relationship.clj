@@ -149,7 +149,7 @@
                                    identity-map
                                    {}))
               target-ref (short-id->long-id id
-                                            #(get-http-show % get-in-config))]
+                                            #(get-http-show get-in-config))]
           (cond
             (or (not incident)
                 (not target-ref))

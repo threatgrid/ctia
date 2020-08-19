@@ -65,13 +65,13 @@
                                  now))))))))
 
 (defn short-id->long-id [id get-in-config]
-  (id/short-id->long-id id #(get-http-show % get-in-config)))
+  (id/short-id->long-id id #(get-http-show get-in-config)))
 
 (defn long-id->id [id]
   (id/long-id->id id))
 
 (defn with-long-id [entity get-in-config]
-  (update entity :id #(short-id->long-id % get-in-config)))
+  (update entity :id short-id->long-id get-in-config))
 
 (defn page-with-long-id [m get-in-config]
   (update m :data #(map (fn [entity]
@@ -84,7 +84,7 @@
 (defn short-id->entity-type [id-str get-in-config]
   (when-let [short-id (id/short-id->long-id
                        id-str
-                       #(get-http-show % get-in-config))]
+                       #(get-http-show get-in-config))]
     (:type (id/long-id->id short-id))))
 
 (defn id->entity-type
