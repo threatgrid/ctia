@@ -13,7 +13,7 @@
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
-            [ctia.schemas.core :refer [TempIDs MaybeDelayedRealizeFn->RealizeFn]]
+            [ctia.schemas.core :refer [TempIDs MaybeDelayedRealizeFn MaybeDelayedRealizeFn->RealizeFn]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
             [ctia.entity.event.obj-to-event
@@ -32,25 +32,27 @@
    :entity-type s/Keyword
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
-   :services {:ConfigService {:get-in-config (s/pred ifn?)
+   :services {:ConfigService {:get-in-config (s/=> s/Any
+                                                   [s/Any]
+                                                   [s/Any s/Any])
                               s/Keyword s/Any}
-              :HooksService {:apply-hooks (s/pred ifn?)
+              :HooksService {:apply-hooks (s/pred ifn?) ;;kw args
                              :apply-event-hooks (s/=> s/Any s/Any)
                              s/Keyword s/Any}
               :StoreService {:write-store (s/pred ifn?) ;;varargs
                              s/Keyword s/Any}
               s/Keyword s/Any}
    :identity (s/protocol auth/IIdentity)
-   (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
+   (s/optional-key :long-id-fn) (s/maybe (s/=> s/Any s/Any))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :partial-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :patch-operation) (s/enum :add :remove :replace)
-   (s/optional-key :realize-fn) (s/pred fn?)
+   (s/optional-key :realize-fn) MaybeDelayedRealizeFn
    (s/optional-key :results) [s/Bool]
    (s/optional-key :spec) (s/maybe s/Keyword)
    (s/optional-key :tempids) (s/maybe TempIDs)
    (s/optional-key :enveloped-result?) (s/maybe s/Bool)
-   :store-fn (s/pred fn?)})
+   :store-fn (s/=> s/Any s/Any)})
 
 (defn- find-id
   "Lookup an ID in a given entity.  Parse it, because it might be a
