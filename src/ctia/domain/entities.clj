@@ -73,8 +73,10 @@
 (defn with-long-id [entity get-in-config]
   (update entity :id #(short-id->long-id % get-in-config)))
 
-(defn page-with-long-id [m]
-  (update m :data #(map with-long-id %)))
+(defn page-with-long-id [m get-in-config]
+  (update m :data #(map (fn [entity]
+                          (with-long-id entity get-in-config))
+                        %)))
 
 (defn long-id->entity-type [id-str]
   (:type (id/long-id->id id-str)))

@@ -128,7 +128,8 @@
     :delete-casebook
     :search-casebook})
 
-(defn casebook-operation-routes [{{:keys [read-store write-store]} :StoreService
+(defn casebook-operation-routes [{{:keys [get-in-config]} :ConfigService
+                                  {:keys [read-store write-store]} :StoreService
                                   :as services}]
   (routes
    (PATCH "/:id" []
@@ -154,7 +155,7 @@
                                                  %
                                                  identity-map
                                                  (wait_for->refresh wait_for))
-                        :long-id-fn with-long-id
+                        :long-id-fn #(with-long-id % get-in-config)
                         :entity-type :casebook
                         :entity-id id
                         :identity identity
@@ -188,7 +189,7 @@
                                                          %
                                                          identity-map
                                                          (wait_for->refresh wait_for))
-                                :long-id-fn with-long-id
+                                :long-id-fn #(with-long-id % get-in-config)
                                 :entity-type :casebook
                                 :entity-id id
                                 :identity identity
@@ -223,7 +224,7 @@
                                                          %
                                                          identity-map
                                                          (wait_for->refresh wait_for))
-                                :long-id-fn with-long-id
+                                :long-id-fn #(with-long-id % get-in-config)
                                 :entity-type :casebook
                                 :entity-id id
                                 :identity identity
@@ -258,7 +259,7 @@
                                                          %
                                                          identity-map
                                                          (wait_for->refresh wait_for))
-                                :long-id-fn with-long-id
+                                :long-id-fn #(with-long-id % get-in-config)
                                 :entity-type :casebook
                                 :entity-id id
                                 :identity identity

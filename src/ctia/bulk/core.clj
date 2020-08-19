@@ -51,14 +51,16 @@
 
 (defn create-entities
   "Create many entities provided their type and returns a list of ids"
-  [new-entities entity-type tempids auth-identity params services]
+  [new-entities entity-type tempids auth-identity params
+   {{:keys [get-in-config]} :ConfigService
+    :as services}]
   (when (seq new-entities)
     (update (flows/create-flow
              :services services
              :entity-type entity-type
              :realize-fn (-> entities entity-type :realize-fn)
              :store-fn (create-fn entity-type auth-identity params services)
-             :long-id-fn with-long-id
+             :long-id-fn #(with-long-id % get-in-config)
              :enveloped-result? true
              :identity auth-identity
              :entities new-entities

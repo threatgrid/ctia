@@ -130,8 +130,9 @@
             (map #(decrypt-feed % services) feeds))))
 
 (s/defn fetch-feed [id s
-                    {{:keys [read-store]} :StoreService
+                    {{:keys [get-in-config]} :ConfigService
                      {:keys [decrypt]} :IEncryption
+                     {:keys [read-store]} :StoreService
                      :as services} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
                    secret
@@ -171,7 +172,7 @@
                                              feed-identity
                                              {}))
                            (remove nil?)
-                           (map with-long-id))]
+                           (map #(with-long-id % get-in-config)))]
               (cond-> {}
                 (= :observables output)
                 (assoc
@@ -247,7 +248,7 @@
                                   %
                                   identity-map
                                   (wait_for->refresh wait_for))
-          :long-id-fn with-long-id
+          :long-id-fn #(with-long-id % get-in-config)
           :entity-type :feed
           :identity identity
           :entities [new-entity]
@@ -280,7 +281,7 @@
                                             %
                                             identity-map
                                             (wait_for->refresh wait_for))
-                   :long-id-fn with-long-id
+                   :long-id-fn #(with-long-id % get-in-config)
                    :entity-type :feed
                    :entity-id id
                    :identity identity
@@ -304,7 +305,7 @@
                      {:all-of {:external_ids external_id}}
                      identity-map
                      q)
-         page-with-long-id
+         (page-with-long-id get-in-config)
          un-store-page
          (decrypt-feed-page services)
          paginated-ok))
@@ -322,7 +323,7 @@
           (search-query :created params)
           identity-map
           (select-keys params search-options))
-         page-with-long-id
+         (page-with-long-id get-in-config)
          un-store-page
          (decrypt-feed-page services)
          paginated-ok))
@@ -354,7 +355,7 @@
                               identity-map
                               params)]
        (-> rec
-           with-long-id
+           (with-long-id get-in-config)
            un-store
            (decrypt-feed services)
            ok)
@@ -381,7 +382,7 @@
                                    identity-map
                                    (wait_for->refresh wait_for))
           :entity-type :feed
-          :long-id-fn with-long-id
+          :long-id-fn (with-long-id get-in-config)
           :entity-id id
           :identity identity)
        (no-content)

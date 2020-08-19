@@ -49,15 +49,19 @@
 
 (s/defn search-entity-resolver :- (MaybeDelayedGraphQLTypeResolver s/Any)
   [entity-type-kw]
-  (fn [context args field-selection src]
-    (s/fn [rt-opt :- GraphQLRuntimeOptions]
+  (s/fn :- (MaybeDelayedGraphQLValue s/Any)
+    [context args field-selection src]
+    (s/fn [{{{:keys [get-in-config]} :ConfigService}
+            :services
+            :as rt-opt}
+           :- GraphQLRuntimeOptions]
       (search-entity entity-type-kw
                      (:query args)
                      {}
                      args
                      (:ident context)
                      field-selection
-                     page-with-long-id
+                     (page-with-long-id get-in-config)
                      rt-opt))))
 
 (s/defn entity-by-id :- (MaybeDelayedGraphQLValue GraphQLValue)
@@ -66,7 +70,9 @@
    ident
    field-selection :- (s/maybe [s/Keyword])]
  (s/fn :- GraphQLValue
-  [{{{:keys [read-store]} :StoreService} :services
+  [{{{:keys [get-in-config]} :ConfigService
+     {:keys [read-store]} :StoreService}
+    :services
     :as _rt-opt_} :- GraphQLRuntimeOptions]
   (log/debugf "Retrieve %s (id:%s, fields:%s)"
               entity-type-kw
@@ -77,7 +83,7 @@
                       id
                       ident
                       {:fields (concat default-fields field-selection)})
-          with-long-id
+          (with-long-id get-in-config)
           un-store)))
 
 (s/defn entity-by-id-resolver :- (MaybeDelayedGraphQLTypeResolver s/Any)
@@ -119,7 +125,9 @@
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
  (s/fn :- pagination/Connection
-  [{{{:keys [read-store]} :StoreService} :services
+  [{{{:keys [get-in-config]} :ConfigService
+     {:keys [read-store]} :StoreService}
+    :services
     :as _rt-opt_} :- GraphQLRuntimeOptions]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
@@ -130,7 +138,7 @@
                         observable
                         (:ident context)
                         params)
-            page-with-long-id
+            (page-with-long-id get-in-config)
             un-store
             (pagination/result->connection-response paging-params)))))
 
@@ -142,7 +150,9 @@
    args :- {s/Keyword s/Any}
    field-selection :- (s/maybe [s/Keyword])]
  (s/fn :- pagination/Connection
-  [{{{:keys [read-store]} :StoreService} :services
+  [{{{:keys [get-in-config]} :ConfigService
+     {:keys [read-store]} :StoreService}
+    :services
     :as _rt-opt_} :- GraphQLRuntimeOptions]
   (let [paging-params (pagination/connection-params->paging-params args)
         params (cond-> (select-keys paging-params [:limit :offset :sort_by])
@@ -153,7 +163,7 @@
                         [observable]
                         (:ident context)
                         params)
-            page-with-long-id
+            (page-with-long-id get-in-config)
             un-store
             (pagination/result->connection-response paging-params)))))
 
@@ -162,7 +172,10 @@
 (s/defn search-relationships :- (MaybeDelayedGraphQLValue GraphQLValue)
   [context args field-selection src]
   (s/fn :- GraphQLValue
-    [rt-opt :- GraphQLRuntimeOptions]
+    [{{{:keys [get-in-config]} :ConfigService}
+      :services
+      :as rt-opt}
+     :- GraphQLRuntimeOptions]
     (let [{:keys [query relationship_type target_type]} args
           filtermap {:relationship_type relationship_type
                      :target_type target_type
@@ -173,5 +186,5 @@
                      args
                      (:ident context)
                      (concat field-selection [:target_ref :source_ref])
-                     page-with-long-id
+                     (page-with-long-id get-in-config)
                      rt-opt))))

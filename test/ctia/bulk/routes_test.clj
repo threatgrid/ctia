@@ -262,7 +262,7 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk"
-       (let [app (helpers/current-app)
+       (let [app (helpers/get-current-app)
              get-in-config (helpers/current-get-in-config-fn app)
              nb 7
              indicators (map mk-new-indicator (range nb))

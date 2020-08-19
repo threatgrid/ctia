@@ -35,7 +35,7 @@
 (defn api-for-route [model-type entity-gen]
   (for-all
     [new-entity entity-gen]
-    (let [app (helpers/current-app)
+    (let [app (helpers/get-current-app)
           get-in-config (helpers/current-get-in-config-fn app)
           {post-status :status
            {id :id

@@ -76,7 +76,8 @@
          date-field :created
          histogram-fields [:created]}}]
   :- DelayedRoutes
- (s/fn [{{:keys [write-store read-store]} :StoreService
+ (s/fn [{{:keys [get-in-config]} :ConfigService
+         {:keys [write-store read-store]} :StoreService
          :as services} :- APIHandlerServices]
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
@@ -120,7 +121,7 @@
                                           %
                                           identity-map
                                           (wait_for->refresh wait_for))
-                  :long-id-fn with-long-id
+                  :long-id-fn #(with-long-id % get-in-config)
                   :entity-type entity
                   :identity identity
                   :entities [new-entity]
@@ -153,7 +154,7 @@
                                                    %
                                                    identity-map
                                                    (wait_for->refresh wait_for))
-                          :long-id-fn with-long-id
+                          :long-id-fn #(with-long-id % get-in-config)
                           :entity-type entity
                           :entity-id id
                           :identity identity
@@ -187,7 +188,7 @@
                                                      %
                                                      identity-map
                                                      (wait_for->refresh wait_for))
-                            :long-id-fn with-long-id
+                            :long-id-fn #(with-long-id % get-in-config)
                             :entity-type entity
                             :entity-id id
                             :identity identity
@@ -211,7 +212,7 @@
                             {:all-of {:external_ids external_id}}
                             identity-map
                             q)
-                page-with-long-id
+                (page-with-long-id get-in-config)
                 un-store-page
                 paginated-ok)))
 
@@ -230,7 +231,7 @@
                           (search-query date-field params)
                           identity-map
                           (select-keys params search-options))
-                         page-with-long-id
+                         (page-with-long-id get-in-config)
                          un-store-page
                          paginated-ok))
                 (GET "/count" []
@@ -315,7 +316,7 @@
                                    identity-map
                                    params)]
             (-> rec
-                with-long-id
+                (with-long-id get-in-config)
                 un-store
                 ok)
             (not-found)))
@@ -341,7 +342,7 @@
                                            identity-map
                                            (wait_for->refresh wait_for))
                   :entity-type entity
-                  :long-id-fn with-long-id
+                  :long-id-fn #(with-long-id % get-in-config)
                   :entity-id id
                   :identity identity)
                (no-content)

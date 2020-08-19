@@ -179,7 +179,7 @@
                                                %
                                                identity-map
                                                {})
-                       :long-id-fn with-long-id
+                       :long-id-fn #(with-long-id % get-in-config)
                        :entity-type :relationship
                        :identity identity
                        :entities [new-relationship]

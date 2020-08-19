@@ -44,7 +44,7 @@
                                {:type observable_type
                                 :value observable_value}
                                identity-map)
-                   (clojure.core/update :judgement_id short-id->long-id)
+                   (clojure.core/update :judgement_id short-id->long-id get-in-config)
                    ok)
            (not-found {:message "no verdict currently available for the supplied observable"})))
 
@@ -64,7 +64,7 @@
                         :value observable_value}
                        identity-map
                        params)
-           page-with-long-id
+           (page-with-long-id get-in-config)
            un-store-page
            paginated-ok))
 
@@ -125,7 +125,7 @@
                          :value observable_value}]
                        identity-map
                        params)
-           page-with-long-id
+           (page-with-long-id get-in-config)
            un-store-page
            paginated-ok))
 
