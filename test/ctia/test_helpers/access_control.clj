@@ -998,34 +998,36 @@
    can-delete?
    fixtures]
   (let [fixtures (fn [f]
-                   (fixtures
-                     (fn []
-                       (helpers/set-capabilities! "player1"
-                                                  ["foogroup"]
-                                                  "user"
-                                                  all-capabilities)
-                       (helpers/set-capabilities! "player2"
-                                                  ["bargroup"]
-                                                  "user"
-                                                  all-capabilities)
-                       (helpers/set-capabilities! "player3"
-                                                  ["bargroup"]
-                                                  "user"
-                                                  all-capabilities)
+                   (let [setup! (fn [] 
+                                  (helpers/set-capabilities! "player1"
+                                                             ["foogroup"]
+                                                             "user"
+                                                             all-capabilities)
+                                  (helpers/set-capabilities! "player2"
+                                                             ["bargroup"]
+                                                             "user"
+                                                             all-capabilities)
+                                  (helpers/set-capabilities! "player3"
+                                                             ["bargroup"]
+                                                             "user"
+                                                             all-capabilities)
 
-                       (whoami-helpers/set-whoami-response "player-1-token"
-                                                           "player1"
-                                                           "foogroup"
-                                                           "user")
-                       (whoami-helpers/set-whoami-response "player-2-token"
-                                                           "player2"
-                                                           "bargroup"
-                                                           "user")
-                       (whoami-helpers/set-whoami-response "player-3-token"
-                                                           "player3"
-                                                           "bargroup"
-                                                           "user"))
-                       (f)))
+                                  (whoami-helpers/set-whoami-response "player-1-token"
+                                                                      "player1"
+                                                                      "foogroup"
+                                                                      "user")
+                                  (whoami-helpers/set-whoami-response "player-2-token"
+                                                                      "player2"
+                                                                      "bargroup"
+                                                                      "user")
+                                  (whoami-helpers/set-whoami-response "player-3-token"
+                                                                      "player3"
+                                                                      "bargroup"
+                                                                      "user"))]
+                     (fixtures
+                       (fn []
+                         (setup!)
+                         (f)))))
         
         test-default-config #(do (test-access-control-entity-tlp-green
                                    {:entity entity
