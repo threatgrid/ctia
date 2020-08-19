@@ -87,8 +87,9 @@
    routes.common/SourcableEntityFilterParams
    AssetMappingFieldsParam
    (st/optional-keys
-    {:query           s/Str
-     :sort_by         asset-mapping-sort-fields})))
+    {:query     s/Str
+     :sort_by   asset-mapping-sort-fields
+     :asset_ref s/Str})))
 
 (def asset-mapping-histogram-fields
   [:timestamp

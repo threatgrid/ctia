@@ -85,8 +85,9 @@
    routes.common/SourcableEntityFilterParams
    AssetPropertiesFieldsParam
    (st/optional-keys
-    {:query           s/Str
-     :sort_by         asset-properties-sort-fields})))
+    {:query     s/Str
+     :sort_by   asset-properties-sort-fields
+     :asset_ref s/Str})))
 
 (def asset-properties-histogram-fields
   [:timestamp
