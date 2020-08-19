@@ -636,11 +636,11 @@
                                       :value %)
                            (range nb-docs-2))]
     (testing "store-batch and store-size"
-      (sut/store-batch store sample-docs-1)
+      (sut/store-batch store sample-docs-1 get-in-config)
       (is (= 0 (sut/store-size store))
           "store-batch shall not refresh the index")
       (es-index/refresh! (es-conn get-in-config) indexname)
-      (sut/store-batch store sample-docs-2)
+      (sut/store-batch store sample-docs-2 get-in-config)
       (is (= nb-docs-1 (sut/store-size store))
           "store-size shall return the number of first batch docs")
       (es-index/refresh! (es-conn get-in-config) indexname)
@@ -670,15 +670,15 @@
                                         :timestamp %
                                         :modified (rand-int 50))
                              (range 50 90))]
-      (es-index/create! es-conn
+      (es-index/create! (es-conn get-in-config)
                         indexname
                         {:settings {:refresh_interval -1}
                          :mappings {:event {:properties {:id {:type "keyword"}
                                                          :batch em/integer-type
                                                          :timestamp em/integer-type
                                                          :modified em/integer-type}}}})
-      (sut/store-batch event-store event-batch-1)
-      (sut/store-batch event-store event-batch-2)
+      (sut/store-batch event-store event-batch-1 get-in-config)
+      (sut/store-batch event-store event-batch-2 get-in-config)
       (es-index/refresh! (es-conn get-in-config) indexname)
       (let [{fetched-no-query :data} (sut/fetch-batch event-store 80 0 nil nil)
             {fetched-batch-1 :data} (sut/query-fetch-batch {:term {:batch 1}}
@@ -758,13 +758,13 @@
                     :timestamp em/integer-type
                     :created em/integer-type
                     :modified em/integer-type}]
-      (es-index/create! es-conn
+      (es-index/create! (es-conn get-in-config)
                         indexname
                         {:settings {:refresh_interval -1}
                          :mappings {:malware {:properties mappings}
                                     :tool {:properties mappings}}})
-      (sut/store-batch tool-store tool-batch)
-      (sut/store-batch malware-store malware-batch)
+      (sut/store-batch tool-store tool-batch get-in-config)
+      (sut/store-batch malware-store malware-batch get-in-config)
       (es-index/refresh! (es-conn get-in-config) indexname)
       (let [{fetched-tool-asc :data} (sut/fetch-batch tool-store 80 0 "asc" nil)
             {fetched-tool-desc :data} (sut/fetch-batch tool-store 80 0 "desc" nil)

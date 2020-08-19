@@ -181,15 +181,18 @@
 
 (s/defn store-map->es-conn-state :- ESConnState
   "Transforms a store map in ES lib conn state"
-  [conn-state :- StoreMap]
-  (dissoc (set/rename-keys conn-state {:indexname :index})
-          :mapping :type :settings))
+  [conn-state :- StoreMap
+   get-in-config]
+  (-> conn-state 
+      (set/rename-keys {:indexname :index})
+      (dissoc :mapping :type :settings)
+      (assoc :services {:ConfigService {:get-in-config get-in-config}})))
 
 (defn bulk-metas
   "prepare bulk data for document ids"
-  [{:keys [mapping] :as store-map} ids]
+  [{:keys [mapping] :as store-map} ids get-in-config]
   (when (seq ids)
-    (-> (store-map->es-conn-state store-map)
+    (-> (store-map->es-conn-state store-map get-in-config)
         (crud/get-docs-with-indices (keyword mapping) ids {})
         (->> (map (fn [{:keys [_id] :as hit}]
                     {_id (select-keys hit [:_id :_index :_type])}))
@@ -214,7 +217,8 @@
   [{:keys [mapping]
     {:keys [aliased write-index]} :props
     :as store-map}
-   docs]
+   docs
+   get-in-config]
   (let [with-metas (map #(assoc %
                                 :_id (:id %)
                                 :_index write-index
@@ -224,7 +228,7 @@
                                                      with-metas)
         modified-by-ids (fmap first (group-by :id modified))
         bulk-metas-res (->> (map :id modified)
-                            (bulk-metas store-map))
+                            (bulk-metas store-map get-in-config))
         prepared-modified (->> bulk-metas-res
                                (merge-with into modified-by-ids)
                                vals)]
@@ -233,13 +237,14 @@
 (defn store-batch
   "store a batch of documents using a bulk operation"
   [{:keys [conn mapping] :as store-map}
-   batch]
+   batch
+   get-in-config]
   (log/debugf "%s - storing %s records"
               mapping
               (count batch))
   (retry es-max-retry
          es-doc/bulk-create-doc conn
-         (prepare-docs store-map batch)
+         (prepare-docs store-map batch get-in-config)
          "false"
          bulk-max-size))
 

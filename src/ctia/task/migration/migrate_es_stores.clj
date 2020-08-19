@@ -161,7 +161,7 @@
                     (pr-str entity))]
         (log/error message)))
     (when confirm?
-      (when (seq data) (mst/store-batch target-store data))
+      (when (seq data) (mst/store-batch target-store data get-in-config))
       (mst/rollover target-store batch-size new-migrated-count)
       (mst/update-migration-store migration-id
                                   entity-type
