@@ -70,7 +70,8 @@
                       aliased? (conj "ctia_incident-write"))
 
         ; minimal store (same shape as @ctia.store/stores)
-        [conn stores] (let [{:keys [conn] :as state} (init/init-es-conn! store-properties)]
+        [conn stores] (let [{:keys [conn] :as state} (init/init-es-conn! store-properties
+                                                                         get-in-config)]
                         [conn {:incident [((:es-store incident/incident-entity)
                                            state)]}])
 

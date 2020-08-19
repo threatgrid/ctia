@@ -175,7 +175,7 @@
       (is (= expected post-record))
 
       (testing (format "the %s ID has correct fields" entity)
-        (let [show-props (get-http-show)]
+        (let [show-props (get-http-show get-in-config)]
           (is (= (:hostname record-id)    (:hostname show-props)))
           (is (= (:protocol record-id)    (:protocol show-props)))
           (is (= (:port record-id)        (:port show-props)))

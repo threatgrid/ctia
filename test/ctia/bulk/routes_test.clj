@@ -262,7 +262,9 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk"
-       (let [nb 7
+       (let [app (helpers/current-app)
+             get-in-config (helpers/current-get-in-config-fn app)
+             nb 7
              indicators (map mk-new-indicator (range nb))
              judgements (map mk-new-judgement (range nb))
              new-bulk {:actors (map mk-new-actor (range nb))
@@ -280,7 +282,7 @@
                             :body new-bulk
                             :headers {"Authorization" "45c1f5e3f05d0"})
              bulk-ids (:parsed-body response)
-             show-props (get-http-show)]
+             show-props (get-http-show get-in-config)]
          (is (= 201 (:status response)))
 
          (doseq [type (keys new-bulk)]

@@ -85,7 +85,7 @@
    [{{{:keys [get-in-config]} :ConfigService
       {:keys [encrypt decrypt]} :IEncryption}
      :services}]
-   (let [long-id (short-id->long-id id)
+   (let [long-id (short-id->long-id id get-in-config)
          plain-secret (if-let [prev-secret (:secret prev-object)]
                         (decrypt prev-secret)
                         (str (java.util.UUID/randomUUID)))

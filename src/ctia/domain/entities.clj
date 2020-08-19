@@ -64,34 +64,32 @@
                                  (:valid_time new-object)
                                  now))))))))
 
-(defn short-id->long-id [id]
-  (id/short-id->long-id id get-http-show))
+(defn short-id->long-id [id get-in-config]
+  (id/short-id->long-id id #(get-http-show % get-in-config)))
 
 (defn long-id->id [id]
   (id/long-id->id id))
 
-(defn with-long-id [entity]
-  (update entity :id short-id->long-id))
+(defn with-long-id [entity get-in-config]
+  (update entity :id #(short-id->long-id % get-in-config)))
 
 (defn page-with-long-id [m]
   (update m :data #(map with-long-id %)))
 
-(def ->long-id (id/factory:short-id+type->long-id get-http-show))
-
 (defn long-id->entity-type [id-str]
   (:type (id/long-id->id id-str)))
 
-(defn short-id->entity-type [id-str]
+(defn short-id->entity-type [id-str get-in-config]
   (when-let [short-id (id/short-id->long-id
                        id-str
-                       (get-http-show))]
+                       #(get-http-show % get-in-config))]
     (:type (id/long-id->id short-id))))
 
 (defn id->entity-type
   "Extract the entity type from an id"
-  [id-str]
+  [id-str get-in-config]
   (if (id/short-id? id-str)
-    (short-id->entity-type id-str)
+    (short-id->entity-type id-str get-in-config)
     (long-id->entity-type id-str)))
 
 (defn un-store [record]
