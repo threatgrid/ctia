@@ -1,7 +1,7 @@
 (ns ctia.task.purge-es-stores
   (:require [clojure.tools.logging :as log]
             [ctia
-             [init :refer [log-properties start-ctia!*]]
+             [init :refer [start-ctia!*]]
              [properties :as p]]
             [ctia.stores.es.store :refer [delete-state-indexes]]
             [puppetlabs.trapperkeeper.app :as app]))

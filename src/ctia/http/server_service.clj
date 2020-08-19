@@ -18,7 +18,9 @@
    ConfigService]
   (start [this context] (core/start context
                                     ((:get-in-config ConfigService) [:ctia :http])
-                                    {:ConfigService ConfigService
+                                    {:ConfigService (-> ConfigService
+                                                        (select-keys [:get-config
+                                                                      :get-in-config]))
                                      :HooksService (-> HooksService 
                                                        (select-keys [:apply-hooks
                                                                      :apply-event-hooks])

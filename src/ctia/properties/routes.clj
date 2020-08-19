@@ -1,13 +1,15 @@
 (ns ctia.properties.routes
-  (:require [compojure.api.sweet :refer :all]
+  (:require [compojure.api.core :refer [context routes GET]]
             [ctia.properties :as p]
-            [ring.util.http-response :refer :all]
+            [ring.util.http-response :refer [ok]]
             [schema.core :as s]))
 
-(defroutes properties-routes
+(defn properties-routes [{{:keys [get-config]} :ConfigService
+                          :as _services_}]
+ (routes 
   (context "/properties" []
            :tags ["Properties"]
            :summary "Configured properties"
            :capabilities :developer
            (GET "/" []
-                (ok (p/get-global-properties)))))
+                (ok (get-config))))))

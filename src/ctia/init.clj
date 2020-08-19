@@ -36,17 +36,16 @@
    [puppetlabs.trapperkeeper.core :as tk]))
 
 (defn log-properties
-  ([] (log-properties @(p/get-global-properties)))
-  ([config]
-   (log/debug (with-out-str
-                (do (newline)
-                    (utils/safe-pprint
-                      (mp/debug-properties-by-source p/PropertiesSchema
-                                                     p/files)))))
-
-   (log/info (with-out-str
+  [config]
+  (log/debug (with-out-str
                (do (newline)
-                   (utils/safe-pprint config))))))
+                   (utils/safe-pprint
+                     (mp/debug-properties-by-source p/PropertiesSchema
+                                                    p/files)))))
+
+  (log/info (with-out-str
+              (do (newline)
+                  (utils/safe-pprint config)))))
 
 (defn default-services
   "Returns the default collection of CTIA services based on provided properties."
@@ -85,8 +84,6 @@
   "Lower-level Trapperkeeper booting function for
   custom services and config."
   [{:keys [services config]}]
-  ;; GLOBAL properties init (do not remove until p/get-global-properties is deleted)
-  (reset! (p/global-properties-atom) config)
   (let [_ (validate-entities)
         _ (log-properties config)
         app (tk/boot-services-with-config services config)]

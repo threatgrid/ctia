@@ -226,7 +226,7 @@
                (bundle-routes services)
                (observable-routes services)
                metrics-routes
-               properties-routes
+               (properties-routes services)
                (graphql-routes services))))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))

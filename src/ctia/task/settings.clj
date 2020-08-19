@@ -37,10 +37,8 @@
       (println summary)
       (System/exit 0))
     (pp/pprint options)
-    ;; GLOBAL properties init (do not remove until p/get-global-properties is deleted)
-    (p/init!)
-    (log-properties)
     (let [get-in-config (let [config (p/build-init-config)]
+                          (log-properties config)
                           #(apply get-in config %&))]
       (update-stores! (:stores options)
                       get-in-config))))
