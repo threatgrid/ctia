@@ -71,13 +71,14 @@
 
 (defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
-  [ids entity-type auth-identity services]
+  [ids entity-type auth-identity
+   {{:keys [get-in-config]} :ConfigService
+    :as services}]
   (let [read-entity (read-fn entity-type auth-identity {} services)]
     (map (fn [id]
            (try
-             (if-let [entity (read-entity id)]
-               (with-long-id entity)
-               nil)
+             (some-> (read-entity id)
+                     (with-long-id get-in-config))
              (catch Exception e
                (do (log/error (pr-str e))
                    nil)))) ids)))
