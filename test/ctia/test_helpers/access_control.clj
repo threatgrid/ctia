@@ -990,7 +990,7 @@
 ;; the body of this function must change the current TK config
 ;; via test-access-control-tlp-settings. This is only possible by starting a new app.
 ;; Since apps are started by fixtures, this function accepts a fixture and 
-;; must not be called in a context wrapped by fixture-ctia.
+;; must not be called in a context wrapped by fixture-ctia (this is dynamically enforced).
 (defn access-control-test
   [entity
    new-entity
