@@ -383,7 +383,7 @@
                                    identity-map
                                    (wait_for->refresh wait_for))
           :entity-type :feed
-          :long-id-fn (with-long-id get-in-config)
+          :long-id-fn #(with-long-id % get-in-config)
           :entity-id id
           :identity identity)
        (no-content)
