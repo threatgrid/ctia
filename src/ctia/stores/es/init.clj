@@ -4,12 +4,13 @@
    [ctia.properties :as p]
    [clojure.set :refer [difference]]
    [ctia.stores.es.mapping :refer [store-settings]]
+   [ctia.stores.es.schemas :refer [ESConnState]]
    [clj-momo.lib.es
     [conn :refer [connect]]
-    [index :as es-index]
-    [schemas :refer [ESConnState]]]
+    [index :as es-index]]
    [ctia.entity.entities :refer [entities]]
    [schema.core :as s]
+   [schema-tools.core :as st]
    [puppetlabs.trapperkeeper.core :as tk]))
 
 (s/defschema StoreProperties

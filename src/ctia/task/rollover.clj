@@ -1,9 +1,9 @@
 (ns ctia.task.rollover
   (:require [clj-momo.lib.es.index :as es-index]
-            [clj-momo.lib.es.schemas :refer [ESConnState]]
             [clojure.tools.logging :as log]
             [ctia.init :refer [start-ctia!*]]
             [ctia.store-service :as store-svc]
+            [ctia.stores.es.schemas :refer [ESConnState]]
             [ctia.stores.es-service :as es-svc]
             [ctia.properties :as p]
             [puppetlabs.trapperkeeper.app :as app]

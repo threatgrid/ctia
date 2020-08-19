@@ -5,7 +5,7 @@
             [clj-momo.lib.es.document :as es-doc]
             [clj-momo.lib.es.index :as es-index]
             [clj-momo.lib.es.query :as es-query]
-            [clj-momo.lib.es.schemas :refer [ESConn ESConnState ESQuery]]
+            [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
             [clojure.set :as set]
             [clojure.string :as string]
             [clojure.tools.logging :as log]
@@ -18,6 +18,7 @@
              :refer
              [get-store-properties init-es-conn! init-store-conn StoreProperties]]
             [ctia.stores.es.mapping :as em]
+            [ctia.stores.es.schemas :refer [ESConnState]]
             [ctia.stores.es.store :as es-store :refer [StoreMap]]
             [ctia.task.rollover :refer [rollover-store]]
             [ctim.domain.id :refer [long-id->id]]

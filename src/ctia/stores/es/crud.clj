@@ -1,8 +1,7 @@
 (ns ctia.stores.es.crud
   (:require [clj-momo.lib.es
              [document :as d]
-             [query :as q]
-             [schemas :refer [ESConnState]]]
+             [query :as q]]
             [clojure.string :as string]
             [ctia.domain.access-control
              :refer
@@ -17,6 +16,7 @@
                                              CardinalityQuery
                                              AggQuery]]
             [ctia.stores.es.query :refer [find-restriction-query-part]]
+            [ctia.stores.es.schemas :refer [ESConnState]]
             [ring.swagger.coerce :as sc]
             [schema
              [coerce :as c]
