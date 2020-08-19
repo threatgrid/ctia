@@ -281,7 +281,10 @@
 
 (s/defn ^:always-validate check-migration-params
   [{:keys [prefix
+           restart?
            store-keys]} :- MigrationParams]
+  (when-not restart?
+    (assert prefix "Please provide an indexname prefix for target store creation"))
   (doseq [store-key store-keys]
     (let [index (p/get-in-global-properties [:ctia :store :es store-key :indexname])]
       (when (= (mst/prefixed-index index prefix)
@@ -292,16 +295,14 @@
   true)
 
 (s/defn ^:always-validate run-migration
-  [{:keys [prefix
-           restart?]
-    :as params} :- MigrationParams]
-  (when-not restart?
-    (assert prefix "Please provide an indexname prefix for target store creation"))
+  []
   (log/info "migrating all ES Stores")
   (try
     (mst/setup!)
-    (check-migration-params params)
-    (migrate-store-indexes params)
+    (doto (p/get-in-global-properties [:ctia :store :migration])
+      clojure.pprint/pprint
+      check-migration-params
+      migrate-store-indexes)
     (log/info "migration complete")
     (catch AssertionError e
        (log/error (.getMessage e)))
@@ -310,52 +311,5 @@
       (exit true)))
   (exit false))
 
-(def cli-options
-  ;; An option with a required argument
-  [["-i" "--id ID" "The ID of the migration state to create or restar"
-    :default (str "migration-" (UUID/randomUUID))]
-   ["-p" "--prefix PREFIX" "prefix of the newly created indices"]
-   ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"
-    :parse-fn #(map keyword (string/split % #","))]
-   ["-b" "--batch-size SIZE" "number of migrated documents per batch"
-    :default default-batch-size
-    :parse-fn read-string
-    :validate [#(< 0 %) "batch-size must be a positive number"]]
-   ["" "--buffer-size SIZE" "max number of batches in buffer between source and target"
-    :default default-buffer-size
-    :parse-fn read-string
-    :validate [#(< 0 %) "buffer-size must be a positive number"]]
-   ["-s" "--stores STORES" "comma separated list of stores to migrate"
-    :default (-> (keys @stores) set (disj :identity))
-    :parse-fn #(map keyword (string/split % #","))]
-   ["-c" "--confirm" "really do the migration?"]
-   ["-r" "--restart" "restart ongoing migration?"]
-   ["-h" "--help"]])
-
 (defn -main [& args]
-  (let [{:keys [options errors summary]} (parse-opts args cli-options)
-        {:keys [id
-                prefix
-                migrations
-                stores
-                batch-size
-                buffer-size
-                confirm
-                restart]} options]
-    (when errors
-      (binding  [*out* *err*]
-        (println (string/join "\n" errors))
-        (println summary))
-      (System/exit 1))
-    (when (:help options)
-      (println summary)
-      (System/exit 0))
-    (pp/pprint options)
-    (run-migration {:migration-id id
-                    :prefix       prefix
-                    :migrations   migrations
-                    :store-keys   stores
-                    :batch-size   batch-size
-                    :buffer-size  buffer-size
-                    :confirm?     confirm
-                    :restart?     restart})))
+  (run-migration ))
