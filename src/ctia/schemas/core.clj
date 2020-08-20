@@ -11,6 +11,22 @@
             [schema-tools.core :as st]
             [schema.core :as s :refer [Bool Str]]))
 
+(s/defschema APIHandlerServices
+  "Maps of services available to routes"
+  {:ConfigService {;;:get-config (s/=> s/Any s/Any)
+                   :get-in-config (s/=> s/Any
+                                        [s/Any]
+                                        [s/Any s/Any])}
+   ;;:HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
+   ;;               :apply-event-hooks (s/=> s/Any s/Any)}
+   ;;:StoreService {:read-store (s/pred ifn?) ;;varags
+   ;;               :write-store (s/pred ifn?)} ;;varags
+   ;;:IAuth {:identity-for-token (s/=> s/Any s/Any)}
+   ;;:GraphQLService {:get-graphql (s/=> s/Any s/Any)}
+   ;;:IEncryption {:encrypt (s/=> s/Any s/Any)
+   ;;              :decrypt (s/=> s/Any s/Any)}
+   })
+
 (def base-stored-entity-entries
   {:id s/Str
    :owner s/Str

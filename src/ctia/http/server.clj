@@ -11,6 +11,7 @@
              [auth :as auth]
              [ratelimit :refer [wrap-rate-limit]]]
             [ctia.lib.riemann :as rie]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
@@ -141,8 +142,7 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
-(defn- new-jetty-instance
-  ^Server
+(s/defn ^:private ^Server new-jetty-instance
   [{:keys [dev-reload
            max-threads
            min-threads
@@ -155,7 +155,7 @@
          send-server-version false}
     :as http-config}
    {{:keys [get-in-config]} :ConfigService
-     :as services}]
+     :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler)
