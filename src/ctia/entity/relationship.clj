@@ -5,7 +5,7 @@
              [properties :refer [get-http-show]]
              [store :refer [create-record
                             read-record]]]
-            [ctia.domain.entities :refer [un-store with-long-id]]
+            [ctia.domain.entities :refer [long-id->id short-id->long-id un-store with-long-id]]
             [ctia.entity.relationship.schemas :as rs]
             [ctia.flows.crud :as flows]
             [ctia.http.routes
@@ -18,7 +18,6 @@
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
-            [ctim.domain.id :refer [long-id->id short-id->long-id]]
             [ring.util.http-response :refer [not-found bad-request bad-request!]]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -148,8 +147,7 @@
                                    source-short-id
                                    identity-map
                                    {}))
-              target-ref (short-id->long-id id
-                                            #(get-http-show get-in-config))]
+              target-ref (short-id->long-id id get-in-config)]
           (cond
             (or (not incident)
                 (not target-ref))

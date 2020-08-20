@@ -227,8 +227,7 @@
         {modified true not-modified false} (group-by #(search-real-index? aliased %)
                                                      with-metas)
         modified-by-ids (fmap first (group-by :id modified))
-        bulk-metas-res (->> (map :id modified)
-                            (bulk-metas store-map get-in-config))
+        bulk-metas-res (bulk-metas store-map (map :id modified) get-in-config)
         prepared-modified (->> bulk-metas-res
                                (merge-with into modified-by-ids)
                                vals)]
@@ -673,7 +672,7 @@ when confirm? is true, it stores this state and creates the target indices."
 (defn setup!
   "setup store service"
   [store-svc get-in-config]
-  (->> (migration-store-properties store-svc get-in-config)
-       init-store-conn
-       :conn
-       (reset! migration-es-conn)))
+  (reset! migration-es-conn
+          (-> (migration-store-properties store-svc get-in-config)
+              (init-store-conn get-in-config)
+              :conn)))

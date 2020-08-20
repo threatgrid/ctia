@@ -530,9 +530,9 @@
                                                  keys
                                                  sort
                                                  (map name))
-        bulk-metas-malware-res (sut/bulk-metas sighting-store-map malware-ids)
-        bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1)
-        bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2)]
+        bulk-metas-malware-res (sut/bulk-metas sighting-store-map malware-ids get-in-config)
+        bulk-metas-sighting-res-1 (sut/bulk-metas sighting-store-map sighting-ids-1 get-in-config)
+        bulk-metas-sighting-res-2 (sut/bulk-metas sighting-store-map sighting-ids-2 get-in-config)]
     (testing "bulk-metas should property return _id, _type, _index from a document id"
       (doseq [[_id metas] bulk-metas-malware-res]
         (is (= _id (:_id metas)))
@@ -606,7 +606,7 @@
                                               {})
                              sighting-ids-2)
         sighting-docs (concat sighting-docs-1 sighting-docs-2)
-        prepared-docs (sut/prepare-docs sighting-store-map sighting-docs)]
+        prepared-docs (sut/prepare-docs sighting-store-map sighting-docs get-in-config)]
     (testing "prepare-docs should set proper _id, _type, _index for modified and unmodified documents"
       (is (= (sort (concat [sighting-index-1 sighting-index-2]
                            (repeat 4 "ctia_sighting-write")))

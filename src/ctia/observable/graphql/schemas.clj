@@ -19,12 +19,15 @@
   [{observable-type :type
     observable-value :value}
    ident
-   {{{:keys [read-store]} :StoreService} :services :as _rt-opt_}]
+   {{{:keys [get-in-config]} :ConfigService
+     {:keys [read-store]} :StoreService}
+    :services
+    :as _rt-opt_}]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
                       ident)
-          (clojure.core/update :judgement_id ctia-entities/short-id->long-id)))
+          (clojure.core/update :judgement_id ctia-entities/short-id->long-id get-in-config)))
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType
