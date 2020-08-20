@@ -9,7 +9,11 @@
 
 (tk/defservice graphql-service
   GraphQLService
-  [StoreService]
-  (start [_ context] (core/start context {:StoreService (store-svc/lift-store-service-fns
-                                                          StoreService)}))
+  [ConfigService
+   StoreService]
+  (start [_ context] (core/start context {:ConfigService (-> ConfigService
+                                                             (select-keys [:get-in-config]))
+                                          :StoreService (-> StoreService
+                                                            (select-keys [:read-store])
+                                                            store-svc/lift-store-service-fns)}))
   (get-graphql [this] (core/get-graphql (service-context this))))

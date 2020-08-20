@@ -2,7 +2,8 @@
   (:require [base64-clj.core :as b64]
             [clojure.string :as str]
             [clojure.tools.logging :as log]
-            [ctia.schemas.graphql.helpers :as g :refer [GraphQLRuntimeOptions]]
+            [ctia.schemas.graphql.helpers :as g :refer [GraphQLRuntimeOptions
+                                                        MaybeDelayedGraphQLValue]]
             [schema-tools.core :as st]
             [schema.core :as s]
             [ctia.schemas.graphql.sorting :as sorting])
@@ -35,7 +36,7 @@
    {:node {:type node-type}
     :cursor {:type (g/non-null Scalars/GraphQLString)}}))
 
-(defn new-connection
+(s/defn new-connection :- (MaybeDelayedGraphQLValue s/Any)
   [^GraphQLType node-type]
  (s/fn [rt-opt :- GraphQLRuntimeOptions]
   (let [^GraphQLType node-type (-> node-type

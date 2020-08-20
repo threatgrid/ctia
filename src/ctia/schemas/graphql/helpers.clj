@@ -51,7 +51,10 @@
 
 (s/def GraphQLRuntimeOptions
   "A map of options to resolve a DelayedGraphQLValue"
-  {:services s/Any})
+  {:services {:ConfigService {:get-in-config (s/pred ifn?)}
+              :GraphQLService {;; not a real service method, mostly internal to GraphQLService
+                               :get-or-update-type-registry (s/pred ifn?)}
+              :StoreService {:read-store (s/pred ifn?)}}})
 
 (defn DelayedGraphQLValue [a]
   "Higher-order Schema: A function that returns values ready for use by the GraphQL API."
