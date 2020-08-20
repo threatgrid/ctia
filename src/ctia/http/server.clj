@@ -160,7 +160,7 @@
          true auth/wrap-authentication
 
          (:enabled jwt)
-         auth-jwt/wrap-jwt-to-ctia-auth
+         (auth-jwt/wrap-jwt-to-ctia-auth p/get-in-global-properties)
 
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
