@@ -150,7 +150,7 @@
     :or {access-control-allow-methods "get,post,put,patch,delete"
          send-server-version false}
     :as http-config}
-   {{:keys [get-in-config]}:ConfigService
+   {{:keys [get-in-config]} :ConfigService
      :as services}]
   (assert get-in-config)
   (doto
