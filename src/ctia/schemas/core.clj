@@ -22,7 +22,7 @@
    :StoreService {:read-store (s/pred ifn?) ;;varags
                   :write-store (s/pred ifn?)} ;;varags
    :IAuth {:identity-for-token (s/=> s/Any s/Any)}
-   :GraphQLService {:get-graphql (s/=> s/Any s/Any)}
+   :GraphQLService {:get-graphql (s/=> s/Any)}
    :IEncryption {:encrypt (s/=> s/Any s/Any)
                  :decrypt (s/=> s/Any s/Any)}})
 
