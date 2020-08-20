@@ -9,12 +9,14 @@
             [ctia.http.middleware
              [auth :as auth]]
             [ctia.lib.riemann :as rie]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
              [reload :refer [wrap-reload]]]
+            [schema.core :as s]
             [clojure.core.memoize :as memo])
   (:import org.eclipse.jetty.server.Server
            (java.util.concurrent TimeoutException)
@@ -137,8 +139,7 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
-(defn new-jetty-instance
-  ^Server
+(s/defn ^Server new-jetty-instance
   [{:keys [dev-reload
            max-threads
            min-threads
@@ -151,8 +152,7 @@
          send-server-version false}
     :as http-config}
    {{:keys [get-in-config]} :ConfigService
-     :as services}]
-  (assert get-in-config)
+     :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler services)

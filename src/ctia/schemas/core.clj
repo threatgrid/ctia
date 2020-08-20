@@ -13,20 +13,18 @@
 
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
-  {:HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
-                  :apply-event-hooks (s/=> s/Any s/Any)
-                  s/Keyword s/Any}
+  {:ConfigService {:get-config (s/=> s/Any s/Any)
+                   :get-in-config (s/=> s/Any
+                                        [s/Any]
+                                        [s/Any s/Any])}
+   :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
+                  :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
-                  :write-store (s/pred ifn?) ;;varags
-                  s/Keyword s/Any}
-   :IAuth {:identity-for-token (s/=> s/Any s/Any)
-           s/Keyword s/Any}
-   :GraphQLService {:get-graphql (s/=> s/Any s/Any)
-                    s/Keyword s/Any}
+                  :write-store (s/pred ifn?)} ;;varags
+   :IAuth {:identity-for-token (s/=> s/Any s/Any)}
+   :GraphQLService {:get-graphql (s/=> s/Any s/Any)}
    :IEncryption {:encrypt (s/=> s/Any s/Any)
-                 :decrypt (s/=> s/Any s/Any)
-                 s/Keyword s/Any}
-   s/Keyword s/Any})
+                 :decrypt (s/=> s/Any s/Any)}})
 
 (s/defschema DelayedRoutes
   "Function taking a map of services and returning routes
