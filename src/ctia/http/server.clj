@@ -153,18 +153,20 @@
            send-server-version]
     :or {access-control-allow-methods "get,post,put,patch,delete"
          send-server-version false}
-    :as http-config}]
+    :as http-config}
+   {{:keys [get-in-config]} :ConfigService
+     :as services}]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler)
          true auth/wrap-authentication
 
          (:enabled jwt)
-         (auth-jwt/wrap-jwt-to-ctia-auth p/get-in-global-properties)
+         (auth-jwt/wrap-jwt-to-ctia-auth get-in-config)
 
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
-         (p/get-in-global-properties [:ctia :log :riemann :enabled])
+         (get-in-config [:ctia :log :riemann :enabled])
          (rie/wrap-request-logs "API response time ms")
 
          (:enabled jwt)
@@ -231,7 +233,8 @@
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
   (let [http-config (p/get-in-global-properties [:ctia :http])
-        server-instance (new-jetty-instance http-config)]
+        server-instance (new-jetty-instance http-config
+                                            {:ConfigService {:get-in-config p/get-in-global-properties}})]
     (reset! server server-instance)
     (shutdown/register-hook! :http.server stop!)
     (if join?
