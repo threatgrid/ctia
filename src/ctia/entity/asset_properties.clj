@@ -74,7 +74,9 @@
    AssetPropertiesFieldsParam))
 
 (def asset-properties-enumerable-fields
-  [])
+  [:source
+   :properties.name
+   :properties.value])
 
 (def AssetPropertiesGetParams AssetPropertiesFieldsParam)
 

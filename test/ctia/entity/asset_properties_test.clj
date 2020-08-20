@@ -42,7 +42,10 @@
         (-> asset-properties-sample :properties first :value)
         "Properties value match"
 
-        ))))
+        (str "asset_ref:\"" (-> asset-properties-sample :asset-ref) "\"")
+        #(-> % :parsed-body first :asset-ref)
+        (-> asset-properties-sample :asset-ref)
+        "Searching Asset Properties by asset-ref"))))
 
 (deftest asset-properties-routes-test
   (store/test-for-each-store

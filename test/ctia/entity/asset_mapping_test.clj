@@ -34,13 +34,14 @@
                                            (is (= expected (check-fn response)) desc))
 
         "specificity:\"unique\""
-        (fn [r] (-> r :parsed-body first :specificity))
+        #(-> % :parsed-body first :specificity)
         (-> asset-mapping-sample :specificity)
         "Searching Asset Mapping by specificity"
 
-        ;; TODO: Add more cases
-
-        ))))
+        (str "asset_ref:\"" (-> asset-mapping-sample :asset-ref) "\"")
+        #(-> % :parsed-body first :asset-ref)
+        (-> asset-mapping-sample :asset-ref)
+        "Searching Asset Mapping by asset-ref"))))
 
 (deftest asset-mapping-routes-test
   (store/test-for-each-store

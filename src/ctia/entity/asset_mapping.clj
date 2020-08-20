@@ -74,7 +74,8 @@
    AssetMappingFieldsParam))
 
 (def asset-mapping-enumerable-fields
-  [:confidence
+  [:source
+   :confidence
    :specificity
    :stability])
 

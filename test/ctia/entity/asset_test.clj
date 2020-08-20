@@ -31,13 +31,9 @@
                                            (is (= expected (check-fn response)) desc))
 
         "asset_type:\"device\""
-        (fn [r] (-> r :parsed-body first :asset_type))
+        #(-> % :parsed-body first :asset_type)
         (-> asset-sample :asset_type)
-        "Searching by an Asset type works"
-
-        ;; TODO: Add more cases
-
-        ))))
+        "Searching by an Asset type works"))))
 
 (deftest asset-routes-test
   (store/test-for-each-store
