@@ -305,7 +305,8 @@
                           res (when rollover?
                                 (sut/rollover storemap
                                               batch-size
-                                              (+ nb migrated-count)))
+                                              (+ nb migrated-count)
+                                              get-in-config))
                           cat-after (es-helpers/get-cat-indices
                                      "localhost"
                                      9200)
@@ -330,6 +331,7 @@
                         {:settings {:refresh_interval -1}
                          :aliases {write-alias {}}})
       (testing "rollover should refresh write index and trigger rollover when index size is strictly bigger than max-docs"
+        ;; FIXME this doall does nothing
         (doall (reduce test-fn
                        {:source-docs docs-all
                         :migrated-count 0

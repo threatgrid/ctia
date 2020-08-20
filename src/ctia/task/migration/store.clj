@@ -273,13 +273,14 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
      {:keys [max_docs]} :rollover} :props
     :as store-map} :- StoreMap
    batch-size :- s/Int
-   migrated-count :- s/Int]
+   migrated-count :- s/Int
+   get-in-config]
   (when (rollover? aliased max_docs batch-size migrated-count)
     (log/info (format "%s - refreshing index %s"
                       mapping
                       write-index))
     (es-index/refresh! conn write-index)
-    (rollover-store (store-map->es-conn-state store-map))))
+    (rollover-store (store-map->es-conn-state store-map get-in-config))))
 
 (s/defn missing-query :- ESQuery
   "implement missing filter through a must_not exists bool query
