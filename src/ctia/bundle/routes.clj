@@ -73,7 +73,8 @@
                      (:ids q)
                      identity-map
                      identity
-                     q)))
+                     q
+                     services)))
 
            (POST "/export" []
                 :return NewBundleExport
@@ -87,7 +88,8 @@
                      (:ids b)
                      identity-map
                      identity
-                     q)))
+                     q
+                     services)))
 
            (POST "/import" []
                  :return BundleImportResult

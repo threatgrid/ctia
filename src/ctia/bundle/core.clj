@@ -312,9 +312,9 @@
        (filter (comp seq second))
        (into {})))
 
-(defn fetch-relationship-targets
+(s/defn fetch-relationship-targets
   "given relationships, fetch all related objects"
-  [relationships identity-map]
+  [relationships identity-map services :- APIHandlerServices]
   (let [all-ids (->> relationships
                      (map (fn [{:keys [target_ref source_ref]}]
                             [target_ref source_ref]))
@@ -328,7 +328,7 @@
                           (map (fn [[k v]]
                                  {(bulk/bulk-key
                                    (keyword k)) v}) by-type))
-        fetched (bulk/fetch-bulk by-bulk-key identity-map)]
+        fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
     (clean-bundle fetched)))
 
 (defn relationships-filters
@@ -374,13 +374,14 @@
                 identity-map
                 {})))
 
-(defn export-entities
+(s/defn export-entities
   "Given an entity id, export it along
    with its relationship as a Bundle"
   [id
    identity-map
    ident
-   params]
+   params
+   services :- APIHandlerServices]
   (if-let [record (fetch-record id identity-map)]
     (let [relationships (when (:include_related_entities params true)
                           (fetch-entity-relationships id identity-map params))]
@@ -401,18 +402,20 @@
         (->> (deep-merge-with coll/add-colls
                               (fetch-relationship-targets
                                relationships
-                               ident)))))
+                               ident
+                               services)))))
     {}))
 
 (def empty-bundle
   {:type "bundle"
    :source "ctia"})
 
-(defn export-bundle
+(s/defn export-bundle
   [ids
    identity-map
    ident
-   params]
-  (->> (map #(export-entities % identity-map ident params) ids)
+   params
+   services :- APIHandlerServices]
+  (->> (map #(export-entities % identity-map ident params services) ids)
        (reduce #(deep-merge-with coll/add-colls %1 %2))
        (into empty-bundle)))
