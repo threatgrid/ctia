@@ -1,7 +1,7 @@
 (ns ctia.bundle.routes
   (:refer-clojure :exclude [identity])
   (:require
-   [compojure.api.sweet :refer [GET POST context defroutes describe]]
+   [compojure.api.sweet :refer [GET POST context routes describe]]
    [ctia.bundle
     [core :refer [bundle-max-size
                   bundle-size
@@ -12,7 +12,7 @@
                      BundleExportIds
                      BundleExportOptions
                      BundleExportQuery]]]
-   [ctia.schemas.core :refer [NewBundle]]
+   [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
    [ring.util.http-response :refer [ok bad-request]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -57,7 +57,9 @@
     :read-casebook
     :list-casebooks})
 
-(defroutes bundle-routes
+(s/defn bundle-routes [{{:keys [get-in-config]} :ConfigService
+                        :as services} :- APIHandlerServices]
+ (routes 
   (context "/bundle" []
            :tags ["Bundle"]
            (GET "/export" []
@@ -113,8 +115,8 @@
                                  :create-weakness
                                  :create-vulnerability
                                  :import-bundle}
-                 (let [max-size (bundle-max-size)]
+                 (let [max-size (bundle-max-size get-in-config)]
                    (if (> (bundle-size bundle)
                           max-size)
                      (bad-request (str "Bundle max nb of entities: " max-size))
-                     (ok (import-bundle bundle external-key-prefixes auth-identity)))))))
+                     (ok (import-bundle bundle external-key-prefixes auth-identity services))))))))

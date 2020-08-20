@@ -143,6 +143,14 @@
                   log/*logger-factory* lf]
       (f))))
 
+(defn build-get-in-config-fn []
+  ;; stub implementation until trapperkeeper bootstrap
+  p/get-in-global-properties)
+
+(defn current-get-in-config-fn []
+  ;; stub implementation until trapperkeeper bootstrap
+  p/get-in-global-properties)
+
 (defn fixture-ctia
   ([t] (fixture-ctia t true))
   ([t enable-http?]

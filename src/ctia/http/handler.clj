@@ -29,11 +29,13 @@
             [ctia.properties :as p
              :refer [get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.version :refer [current-version]]
             [ctia.version.routes :refer [version-routes]]
             [ctia.status.routes :refer [status-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
-            [ring.util.http-response :refer [ok]]))
+            [ring.util.http-response :refer [ok]]
+            [schema.core :as s]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -153,7 +155,8 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(defn api-handler []
+(s/defn api-handler [{{:keys [get-in-config]} :ConfigService
+                      :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
         (get-http-swagger)]
     (api {:exceptions {:handlers exception-handlers}
@@ -161,7 +164,7 @@
           (cond-> {:ui "/"
                    :spec "/swagger.json"
                    :options {:ui {:jwtLocalStorageKey
-                                  (p/get-in-global-properties
+                                  (get-in-config
                                     [:ctia :http :jwt :local-storage-key])}}
                    :data {:info {:title "CTIA"
                                  :version (string/replace (current-version) #"\n" "")
@@ -204,12 +207,12 @@
                (context
                    "/bulk" []
                  :tags ["Bulk"]
-                 bulk-routes)
+                 (bulk-routes services))
                (context
                    "/incident" []
                  :tags ["Incident"]
                  incident-link-route)
-               bundle-routes
+               (bundle-routes services)
                observable-routes
                metrics-routes
                properties-routes

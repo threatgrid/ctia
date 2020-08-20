@@ -159,7 +159,7 @@
      :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
-       (cond-> (handler/api-handler)
+       (cond-> (handler/api-handler services)
          true auth/wrap-authentication
 
          (:enabled jwt)

@@ -18,7 +18,7 @@
     :refer
     [BundleImportData BundleImportResult EntityImportData]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.schemas.core :refer [NewBundle TempIDs]]
+   [ctia.schemas.core :refer [APIHandlerServices NewBundle TempIDs]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
 
@@ -268,7 +268,8 @@
 (s/defn import-bundle :- BundleImportResult
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
-   auth-identity :- (s/protocol auth/IIdentity)]
+   auth-identity :- (s/protocol auth/IIdentity)
+   services :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
@@ -279,12 +280,13 @@
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))]
     (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params))
+           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params) services)
                 (with-bulk-result bundle-import-data)
                 build-response
                 log-errors))))
 
-(def bundle-max-size bulk/get-bulk-max-size)
+(defn bundle-max-size [get-in-config]
+  (bulk/get-bulk-max-size get-in-config))
 
 (defn bundle-size
   [bundle]
