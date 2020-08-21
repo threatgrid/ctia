@@ -87,8 +87,10 @@
         (recur next-page acc-entities)
         acc-entities))))
 
-(defn find-by-external-ids
-  [import-data entity-type auth-identity {{:keys [read-store]} :StoreService}]
+(s/defn find-by-external-ids
+  [import-data entity-type auth-identity
+   {{:keys [read-store]} :StoreService
+    :as _services_} :- APIHandlerServices]
   (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
@@ -180,7 +182,7 @@
 (s/defn with-existing-entities :- [EntityImportData]
   "Add existing entities to the import data map."
   [import-data entity-type identity-map
-   {{:keys [get-in-config]} :ConfigService :as services}]
+   services :- APIHandlerServices]
   (let [entities-by-external-id
         (by-external-id
          (find-by-external-ids import-data
@@ -191,7 +193,7 @@
                                  (when external_id
                                    (get entities-by-external-id
                                         {:external_id external_id})))]
-    (map #(with-existing-entity % find-by-external-id-fn get-in-config)
+    (map #(with-existing-entity % find-by-external-id-fn)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
@@ -201,7 +203,7 @@
   [bundle-entities
    external-key-prefixes
    auth-identity
-   services]
+   services :- APIHandlerServices]
   (map-kv (fn [k v]
             (let [entity-type (bulk/entity-type-from-bulk-key k)]
               (-> v
