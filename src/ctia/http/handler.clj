@@ -72,17 +72,29 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
+(s/defn entity->routes [entity services-map :- APIHandlerServices]
+  {:pre [entity
+         (map? services-map)]
+   :post [%]}
+  (let [{:keys [routes routes-from-services]} entity
+        _ (assert (or routes routes-from-services))
+        _ (when (and routes routes-from-services)
+            (throw (AssertionError. (str "Bad routes definition: duplicate :routes/:routes-from-services "
+                                         entity))))]
+    (or routes
+        (routes-from-services services-map))))
 
 (defmacro entity-routes
-  [entities]
-  `(do
+  [entities services-map]
+  (let [gsm (gensym 'services-map)]
+  `(let [~gsm ~services-map]
      (compojure.api.sweet/routes
       ~@(for [entity (remove :no-api?
                              (vals (eval entities)))]
           `(context
             ~(:route-context entity) []
             :tags ~(:tags entity)
-            (:routes (~(:entity entity) entities)))))))
+            (entity->routes (~(:entity entity) entities) ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -202,7 +214,7 @@
              ;; must be before the middleware fn
              version-routes
              (middleware [wrap-authenticated]
-               (entity-routes entities)
+               (entity-routes entities services)
                status-routes
                (context
                    "/bulk" []

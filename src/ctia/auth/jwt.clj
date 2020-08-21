@@ -64,16 +64,16 @@
     (log/info error-msg (pr-str (into infos err)))
     (resp/unauthorized (json/generate-string err))))
 
-(defn entity-root-scope [get-in-config]
-  (get-in-config [:ctia :auth :entities :scope]
+(defn entity-root-scope []
+  (p/get-in-global-properties [:ctia :auth :entities :scope]
                               "private-intel"))
 
-(defn casebook-root-scope [get-in-config]
-  (get-in-config [:ctia :auth :casebook :scope]
+(defn casebook-root-scope []
+  (p/get-in-global-properties [:ctia :auth :casebook :scope]
                               "casebook"))
 
-(defn claim-prefix [get-in-config]
-  (get-in-config [:ctia :http :jwt :claim-prefix]
+(def claim-prefix
+  (p/get-in-global-properties [:ctia :http :jwt :claim-prefix]
                               "https://schemas.cisco.com/iroh/identity/claims"))
 
 (defn unionize
@@ -119,18 +119,18 @@
 
 (defn scope-to-capabilities
   "given a scope generate capabilities"
-  [scope get-in-config]
+  [scope]
   (let [scope-repr (scopula/to-scope-repr scope)]
     (condp = (first (:path scope-repr))
-      (entity-root-scope get-in-config)   (gen-entity-capabilities scope-repr)
-      (casebook-root-scope get-in-config) (gen-casebook-capabilities scope-repr)
+      (entity-root-scope)   (gen-entity-capabilities scope-repr)
+      (casebook-root-scope) (gen-casebook-capabilities scope-repr)
       #{})))
 
 (defn scopes-to-capabilities
   "given a seq of scopes generate a set of capabilities"
-  [scopes get-in-config]
+  [scopes]
   (->> scopes
-       (map #(scope-to-capabilities % get-in-config))
+       (map scope-to-capabilities)
        unionize))
 
 (defn iroh-claim
@@ -150,34 +150,34 @@
   https://clojure.org/reference/reader
   '/' has special meaning.
   "
-  [keyword-name get-in-config]
-  (str (claim-prefix get-in-config) "/" keyword-name))
+  [keyword-name]
+  (str claim-prefix "/" keyword-name))
 
 (defn unlimited-client-ids
   "Retrieves and parses unlimited client-ids defined in the properties"
-  [get-in-config]
-  (some-> (get-in-config
+  []
+  (some-> (p/get-in-global-properties
             [:ctia :http :rate-limit :unlimited :client-ids])
           (string/split #",")
           set))
 
 (defn parse-unlimited-props
-  [get-in-config]
-  (let [client-ids (unlimited-client-ids get-in-config)]
+  []
+  (let [client-ids (unlimited-client-ids)]
     (cond-> {}
       (seq client-ids) (assoc :client-ids client-ids))))
 
-(defrecord JWTIdentity [jwt unlimited-fn get-in-config]
+(defrecord JWTIdentity [jwt unlimited-fn]
   IIdentity
   (authenticated? [_]
     true)
   (login [_]
     (:sub jwt))
   (groups [_]
-    (remove nil? [(get jwt (iroh-claim "org/id" get-in-config))]))
+    (remove nil? [(get jwt (iroh-claim "org/id"))]))
   (allowed-capabilities [_]
-    (let [scopes (set (get jwt (iroh-claim "scopes" get-in-config)))]
-      (scopes-to-capabilities scopes get-in-config)))
+    (let [scopes (set (get jwt (iroh-claim "scopes")))]
+      (scopes-to-capabilities scopes)))
   (capable? [this required-capabilities]
     (set/subset? (as-set required-capabilities)
                  (auth/allowed-capabilities this)))
@@ -186,19 +186,19 @@
       limit-fn)))
 
 (defn unlimited?
-  [unlimited-properties get-in-config jwt]
-  (let [client-id (get jwt (iroh-claim "oauth/client/id" get-in-config))
+  [unlimited-properties jwt]
+  (let [client-id (get jwt (iroh-claim "oauth/client/id"))
         unlimited-client-ids (get unlimited-properties :client-ids)]
     (contains? unlimited-client-ids client-id)))
 
 (defn wrap-jwt-to-ctia-auth
-  [handler get-in-config]
-  (let [unlimited-properties (parse-unlimited-props get-in-config)]
+  [handler]
+  (let [unlimited-properties (parse-unlimited-props)]
     (fn [request]
       (handler
        (if-let [jwt (:jwt request)]
          (let [identity
-               (->JWTIdentity jwt (partial unlimited? unlimited-properties get-in-config) get-in-config)]
+               (->JWTIdentity jwt (partial unlimited? unlimited-properties))]
            (assoc request
                   :identity identity
                   :login    (auth/login identity)
