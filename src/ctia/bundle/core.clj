@@ -272,7 +272,8 @@
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
-   {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
@@ -318,7 +319,9 @@
 
 (s/defn fetch-relationship-targets
   "given relationships, fetch all related objects"
-  [relationships identity-map {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+  [relationships identity-map
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (let [all-ids (->> relationships
                      (map (fn [{:keys [target_ref source_ref]}]
                             [target_ref source_ref]))
@@ -351,13 +354,14 @@
           (when (seq node-filters)
             {:query node-filters}))))
 
-(defn fetch-entity-relationships
+(s/defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id
    identity-map
    filters
    {{:keys [get-in-config]} :ConfigService
-    {:keys [read-store]} :StoreService}]
+    {:keys [read-store]} :StoreService
+    :as _services_} :- APIHandlerServices]
   (let [filter-map (relationships-filters id filters)
         max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
                                                       1000)]
@@ -370,11 +374,12 @@
                                 :sort_order "desc"}))
             ent/un-store-all)))
 
-(defn fetch-record
+(s/defn fetch-record
   "Fetch a record by ID guessing its type"
-  [id identity-map {{:keys [get-in-config]} :ConfigService
-                    {:keys [read-store]} :StoreService
-                    :as services}]
+  [id identity-map
+   {{:keys [get-in-config]} :ConfigService
+    {:keys [read-store]} :StoreService
+    :as services} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id get-in-config)]
     (read-store (keyword entity-type)
                 read-fn
