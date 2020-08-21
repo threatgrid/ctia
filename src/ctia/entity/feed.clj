@@ -134,7 +134,7 @@
                     {{:keys [get-in-config]} :ConfigService
                      {:keys [decrypt]} :IEncryption
                      {:keys [read-store]} :StoreService
-                     :as _services_} :- APIHandlerServices]
+                     :as services} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
                    secret
                    output
@@ -164,7 +164,8 @@
                             list-records
                             {:all-of {:target_ref indicator_id}}
                             feed-identity
-                            {:fields [:source_ref]})
+                            {:fields [:source_ref]}
+                            services)
                            (keep :source_ref)
                            (map #(read-store :judgement
                                              read-record

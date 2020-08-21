@@ -117,7 +117,7 @@
         buckets (reduce #(timeline-append %1 %2 get-in-config) [] events)]
     (reverse (sort-by :from buckets))))
 
-(defn fetch-related-events [_id identity-map q]
+(s/defn fetch-related-events [_id identity-map q services :- APIHandlerServices]
   (let [filters {:entity.id _id
                  :entity.source_ref _id
                  :entity.target_ref _id}]
@@ -125,8 +125,10 @@
                             list-events
                             {:one-of filters}
                             identity-map
-                            q)
+                            q
+                            services)
             ent/un-store-all)))
+
 (s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
                                :as _services_} :- APIHandlerServices]
   (routes
@@ -140,7 +142,8 @@
         :identity-map identity-map
         (let [res (fetch-related-events entity_id
                                         identity-map
-                                        (into q {:sort_by :timestamp :sort_order :desc}))
+                                        (into q {:sort_by :timestamp :sort_order :desc})
+                                        services)
               timeline (bucketize-events res get-in-config)]
           (ok timeline)))))
 
