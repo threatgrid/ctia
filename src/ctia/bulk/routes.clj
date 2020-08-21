@@ -1,12 +1,13 @@
 (ns ctia.bulk.routes
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.core :refer [GET POST routes]]
    [ctia.bulk
     [core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
     [schemas :refer [Bulk BulkRefs NewBulk]]]
    [ctia.http.routes.common :as common]
    [ctia.schemas.core :refer [Reference]]
-   [ring.util.http-response :refer :all]
+   [ring.swagger.json-schema :refer [describe]]
+   [ring.util.http-response :refer [bad-request ok]]
    [schema.core :as s]))
 
 (defn bulk-routes [{{:keys [get-in-config]} :ConfigService :as services}]

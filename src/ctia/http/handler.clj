@@ -27,6 +27,7 @@
             [ctia.properties :as p
              :refer [get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.version :refer [current-version]]
             [ctia.version.routes :refer [version-routes]]
             [ctia.status.routes :refer [status-routes]]

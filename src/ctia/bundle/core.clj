@@ -17,7 +17,7 @@
     :refer
     [BundleImportData BundleImportResult EntityImportData]]
    [ctia.domain.entities :as ent :refer [with-long-id]]
-   [ctia.schemas.core :refer [NewBundle TempIDs]]
+   [ctia.schemas.core :refer [APIHandlerServices NewBundle TempIDs]]
    [ctim.domain.id :as id]
    [schema.core :as s]))
 
@@ -272,7 +272,7 @@
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
-   {{:keys [get-in-config]} :ConfigService :as services}]
+   {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
@@ -289,7 +289,8 @@
                 build-response
                 log-errors))))
 
-(def bundle-max-size bulk/get-bulk-max-size)
+(defn bundle-max-size [get-in-config]
+  (bulk/get-bulk-max-size get-in-config))
 
 (defn bundle-size
   [bundle]
@@ -315,9 +316,9 @@
        (filter (comp seq second))
        (into {})))
 
-(defn fetch-relationship-targets
+(s/defn fetch-relationship-targets
   "given relationships, fetch all related objects"
-  [relationships identity-map {{:keys [get-in-config]} :ConfigService :as services}]
+  [relationships identity-map {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
   (let [all-ids (->> relationships
                      (map (fn [{:keys [target_ref source_ref]}]
                             [target_ref source_ref]))
@@ -381,7 +382,7 @@
                 identity-map
                 {})))
 
-(defn export-entities
+(s/defn export-entities
   "Given an entity id, export it along
    with its relationship as a Bundle"
   [id
@@ -389,7 +390,7 @@
    ident
    params
    {{:keys [get-in-config]} :ConfigService
-    :as services}]
+    :as services} :- APIHandlerServices]
   (if-let [record (fetch-record id identity-map services)]
     (let [relationships (when (:include_related_entities params true)
                           (fetch-entity-relationships id identity-map params services))]
@@ -418,11 +419,12 @@
   {:type "bundle"
    :source "ctia"})
 
-(defn export-bundle
+(s/defn export-bundle
   [ids
    identity-map
    ident
-   params services]
+   params
+   services :- APIHandlerServices]
   (->> (map #(export-entities % identity-map ident params services) ids)
        (reduce #(deep-merge-with coll/add-colls %1 %2))
        (into empty-bundle)))

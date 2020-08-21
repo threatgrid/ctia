@@ -12,7 +12,7 @@
                      BundleExportIds
                      BundleExportOptions
                      BundleExportQuery]]]
-   [ctia.schemas.core :refer [NewBundle]]
+   [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
    [ring.util.http-response :refer [ok bad-request]]
    [schema.core :as s]
    [schema-tools.core :as st]))
@@ -57,7 +57,8 @@
     :read-casebook
     :list-casebooks})
 
-(defn bundle-routes [{{:keys [get-in-config]} :ConfigService :as services}]
+(s/defn bundle-routes [{{:keys [get-in-config]} :ConfigService
+                        :as services} :- APIHandlerServices]
  (routes 
   (context "/bundle" []
            :tags ["Bundle"]
