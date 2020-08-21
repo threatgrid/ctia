@@ -210,9 +210,9 @@
    PagingParams
    IncidentFieldsParam))
 
-(defn incident-routes [service-map]
+(s/defn incident-routes [services :- APIHandlerServices]
   (routes
-   (incident-additional-routes service-map)
+   (incident-additional-routes services)
    (entity-crud-routes
     {:entity :incident
      :new-schema NewIncident
