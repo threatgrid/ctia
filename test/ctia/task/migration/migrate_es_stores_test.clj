@@ -158,6 +158,27 @@
     (testing "properly configured migration"
       (is (sut/check-migration-params migration-params)))))
 
+(deftest get-migration-params-test
+  (with-redefs [p/global-properties-atom
+                (let [migration-props {:buffer-size 3,
+                                       :batch-size 100,
+                                       :migration-id "migration-test",
+                                       :restart? false,
+                                       :store-keys "malware,  tool,sighting  ",
+                                       :migrations "identity",
+                                       :confirm? false,
+                                       :prefix "v1.2.0"}]
+                  (fn [] (atom {:ctia {:migration migration-props}})))]
+    (is (= (sut/get-migration-params)
+           {:buffer-size 3
+            :batch-size 100
+            :migration-id "migration-test"
+            :restart? false
+            :store-keys [:malware :tool :sighting]
+            :migrations [:identity]
+            :confirm? false
+            :prefix "v1.2.0"}))))
+
 (deftest migration-with-rollover
   (helpers/set-capabilities! "foouser"
                              ["foogroup"]

@@ -294,12 +294,20 @@
                         index))))))
   true)
 
-(s/defn ^:always-validate run-migration
+(s/defn get-migration-params :- MigrationParams
+  []
+  (let [string-to-coll #(map (comp keyword string/trim)
+                             (string/split % #","))]
+    (-> (p/get-in-global-properties [:ctia :migration])
+        (update :migrations string-to-coll)
+        (update :store-keys string-to-coll))))
+
+(s/defn run-migration
   []
   (log/info "migrating all ES Stores")
   (try
     (mst/setup!)
-    (doto (p/get-in-global-properties [:ctia :store :migration])
+    (doto (get-migration-params)
       clojure.pprint/pprint
       check-migration-params
       migrate-store-indexes)
