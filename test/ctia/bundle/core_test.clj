@@ -70,8 +70,7 @@
                         (is (= expected
                                (sut/with-existing-entity
                                  new-indicator
-                                 (find-by-ext-ids existing-ids)
-                                 get-in-config)))
+                                 (find-by-ext-ids existing-ids))))
                         (is (= log?
                                (logged? 'ctia.bundle.core
                                         :warn
