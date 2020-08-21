@@ -46,6 +46,7 @@
    :feed               feed-entity
    :feedback           feedback-entity
    :identity           identity-entity
+   :identity-assertion identity-assertion-entity
    :incident           incident-entity
    :indicator          indicator-entity
    :investigation      investigation-entity
@@ -53,7 +54,6 @@
    :malware            malware-entity
    :relationship       relationship-entity
    :sighting           sighting-entity
-   :identity-assertion identity-assertion-entity
    :target-record      target-record-entity
    :tool               tool-entity
    :vulnerability      vulnerability-entity

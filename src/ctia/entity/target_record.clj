@@ -147,5 +147,4 @@
    :es-store              ->TargetRecordStore
    :es-mapping            target-record-mapping
    :routes                target-record-routes
-   :capabilities          capabilities
-   })
+   :capabilities          capabilities})
