@@ -212,9 +212,9 @@
    PagingParams
    IncidentFieldsParam))
 
-(defn incident-routes [service-map]
+(s/defn incident-routes [services :- APIHandlerServices]
   (routes
-   (incident-additional-routes service-map)
+   (incident-additional-routes services)
    ((entity-crud-routes
     {:entity :incident
      :new-schema NewIncident
@@ -239,7 +239,7 @@
      :external-id-capabilities :read-incident
      :histogram-fields incident-histogram-fields
      :enumerable-fields incident-enumerable-fields})
-    service-map)))
+    services)))
 
 (def IncidentType
   (let [{:keys [fields name description]}
