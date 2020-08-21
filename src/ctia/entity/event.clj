@@ -130,7 +130,7 @@
             ent/un-store-all)))
 
 (s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
-                               :as _services_} :- APIHandlerServices]
+                               :as services} :- APIHandlerServices]
   (routes
    (GET "/history/:entity_id" []
         :return [EventBucket]
