@@ -14,7 +14,7 @@
                       wait_for->refresh]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
-             [core :refer [def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting
               :refer [default-entity-sort-fields describable-entity-sort-fields
                       sourcable-entity-sort-fields]]
@@ -91,9 +91,9 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(defn incident-additional-routes [{{:keys [get-in-config]} :ConfigService
-                                   {:keys [read-store write-store]} :StoreService
-                                   :as services}]
+(s/defn incident-additional-routes [{{:keys [get-in-config]} :ConfigService
+                                     {:keys [read-store write-store]} :StoreService
+                                     :as services} :- APIHandlerServices]
   (routes
    (POST "/:id/status" []
          :return Incident
@@ -287,5 +287,5 @@
    :realize-fn realize-incident
    :es-store ->IncidentStore
    :es-mapping incident-mapping
-   :routes incident-routes
+   :routes-from-services incident-routes
    :capabilities capabilities})
