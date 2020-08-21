@@ -116,7 +116,8 @@
   [{:keys [secret
            feed_view_url]
     :as feed}
-   {{:keys [decrypt]} :IEncryption :as services} :- APIHandlerServices]
+   {{:keys [decrypt]} :IEncryption
+    :as _services_} :- APIHandlerServices]
   (cond-> feed
     secret (assoc :secret
                   (decrypt secret))
@@ -228,7 +229,7 @@
          (ok (dissoc feed :output)))))))
 
 (s/defn feed-routes [{{:keys [get-in-config]} :ConfigService
-                      {:keys [write-store read-store]} :StoreService
+                      {:keys [read-store write-store]} :StoreService
                       :as services}
                      :- APIHandlerServices]
   (routes
@@ -411,5 +412,5 @@
    :realize-fn realize-feed
    :es-store ->FeedStore
    :es-mapping feed-mapping
-   :routes feed-routes
+   :routes-from-services feed-routes
    :capabilities capabilities})
