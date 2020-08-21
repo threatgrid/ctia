@@ -49,7 +49,8 @@
                  [metosin/schema-tools "0.12.2"]
                  [threatgrid/flanders "0.1.23"]
 
-                 [threatgrid/ctim "1.0.19"]
+                 ;; TODO: Switch to non-snapshot
+                 [threatgrid/ctim "1.0.20-SNAPSHOT"]
                  [threatgrid/clj-momo "0.3.5"]
 
                  [com.arohner/uri "0.1.2"]
