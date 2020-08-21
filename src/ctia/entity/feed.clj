@@ -133,7 +133,7 @@
 (s/defn fetch-feed [id s
                     {{:keys [decrypt]} :IEncryption
                      {:keys [read-store]} :StoreService
-                     :as services} :- APIHandlerServices]
+                     :as _services_} :- APIHandlerServices]
   (if-let [{:keys [indicator_id
                    secret
                    output
@@ -163,8 +163,7 @@
                             list-records
                             {:all-of {:target_ref indicator_id}}
                             feed-identity
-                            {:fields [:source_ref]}
-                            services)
+                            {:fields [:source_ref]})
                            (keep :source_ref)
                            (map #(read-store :judgement
                                              read-record
