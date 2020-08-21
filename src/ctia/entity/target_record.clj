@@ -35,7 +35,7 @@
 (def realize-target-record
   (default-realize-fn "target-record" NewTargetRecord StoredTargetRecord))
 
-(def ^:private target
+(def ^:private targets
   {:type "object"
    :properties
    {:type          em/all_token
@@ -55,7 +55,7 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:target target})}})
+     {:targets targets})}})
 
 (def-es-store TargetRecordStore :target-record StoredTargetRecord PartialStoredTargetRecord)
 
@@ -64,11 +64,11 @@
    sorting/base-entity-sort-fields
    sorting/sourcable-entity-sort-fields
    sorting/describable-entity-sort-fields
-   [:target.type
-    :target.os
-    :target.internal
-    :target.source_uri
-    :target.sensor]))
+   [:targets.type
+    :targets.os
+    :targets.internal
+    :targets.source_uri
+    :targets.sensor]))
 
 (def target-record-sort-fields
   (apply s/enum target-record-fields))
@@ -82,7 +82,7 @@
    TargetRecordFieldsParam))
 
 (def target-record-enumerable-fields
-  [:target])
+  [:targets.type])
 
 (def TargetRecordGetParams TargetRecordFieldsParam)
 
@@ -98,8 +98,8 @@
 
 (def target-record-histogram-fields
   [:timestamp
-   :target.observed_time.start_time
-   :target.observed_time.end_time])
+   :targets.observed_time.start_time
+   :targets.observed_time.end_time])
 
 (def target-record-routes
   (entity-crud-routes

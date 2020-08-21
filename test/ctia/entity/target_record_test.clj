@@ -33,9 +33,9 @@
                                            (is (= expected (check-fn response)) desc))
 
         "*"
-        (fn [r] (-> r :parsed-body first :target first :type))
-        (-> target-record-sample :target first :type)
-        "Searching for target-record:target:type"
+        (fn [r] (-> r :parsed-body first :targets first :type))
+        (-> target-record-sample :targets first :type)
+        "Searching for target-record:targets:type"
 
         ;; TODO: Add more cases
 
