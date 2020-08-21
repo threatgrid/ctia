@@ -209,7 +209,7 @@
                "/ctia" []
              (context "/feed" []
                :tags ["Feed"]
-               feed-view-routes)
+               (feed-view-routes services))
              ;; The order is important here for version-routes
              ;; must be before the middleware fn
              version-routes
