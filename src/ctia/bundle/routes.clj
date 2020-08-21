@@ -1,7 +1,7 @@
 (ns ctia.bundle.routes
   (:refer-clojure :exclude [identity])
   (:require
-   [compojure.api.sweet :refer [GET POST context routes describe]]
+   [compojure.api.core :refer [GET POST context routes]]
    [ctia.bundle
     [core :refer [bundle-max-size
                   bundle-size
@@ -13,6 +13,7 @@
                      BundleExportOptions
                      BundleExportQuery]]]
    [ctia.schemas.core :refer [APIHandlerServices NewBundle]]
+   [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [ok bad-request]]
    [schema.core :as s]
    [schema-tools.core :as st]))
