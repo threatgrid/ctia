@@ -22,7 +22,7 @@
    [ctim.domain.id :as id]
    [schema.core :as s]))
 
-(def find-by-external-ids-limit 1000)
+(def find-by-external-ids-limit 200)
 
 (def bundle-entity-keys
   (set (vals bulk/bulk-entity-mapping)))

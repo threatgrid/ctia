@@ -18,6 +18,7 @@
              [fake-whoami-service :as whoami-helpers]
              [store :refer [test-for-each-store]]]
             [ctim.domain.id :as id]
+            [ctia.auth :as auth :refer [IIdentity]]
             [ctim.examples.bundles :refer [bundle-maximal]]))
 
 (defn fixture-properties [t]
@@ -426,6 +427,48 @@
                  :error "Entity validation Error",
                  :msg "#inst \"4242-07-11T00:40:48.212-00:00\" - failed: (inst-in-range? #inst \"1970-01-01T00:00:00.000-00:00\" #inst \"2525-01-01T00:01:00.000-00:00\" %) in: [:valid_time :end_time] at: [:valid_time :end_time] spec: :new-indicator.valid_time/end_time\n"}]}
               (:parsed-body response-create)))))))
+
+(defrecord FakeIdentity [login groups]
+  IIdentity
+  (authenticated? [_] true)
+  (login [_] login)
+  (groups [_] groups)
+  (allowed-capabilities [_] #{})
+  (capable? [_ _] true)
+  (rate-limit-fn [_ _] false))
+
+(deftest all-pages-test
+  (test-for-each-store
+   (fn []
+     (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
+     (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
+                                         "foouser"
+                                         "foogroup"
+                                         "user")
+     (let [duplicated-indicators (->> (mk-indicator 0)
+                                      (repeat (inc core/find-by-external-ids-limit))
+                                      (map #(assoc % :id (id/make-transient-id nil))))
+           more-indicators (map mk-indicator (range 1 10))
+           all-indicators (set (concat duplicated-indicators more-indicators))
+           duplicated-external-id (-> duplicated-indicators first :external_ids first)
+           all-external-ids (mapcat :external_ids all-indicators)
+           bundle {:type "bundle"
+                   :source "source"
+                   :indicators all-indicators}
+           response-create (post "ctia/bundle/import"
+                                 :body bundle
+                                 :headers {"Authorization" "45c1f5e3f05d0"})
+           ident (FakeIdentity. "foouser" ["foogroup"])
+           matched-entities (core/all-pages :indicator all-external-ids ident)]
+       (assert (= 200 (:status response-create)))
+       (is (< (count matched-entities)
+              (count all-indicators))
+           "all-pages should not retrieve more duplicates than find-by-external-ids-limit")
+       (is (= (set all-external-ids)
+              (->> matched-entities
+                   (mapcat :external_ids)
+                   set))
+           "all-pages must match at least one entity for each existing external-id")))))
 
 (deftest find-by-external-ids-test
   (test-for-each-store
