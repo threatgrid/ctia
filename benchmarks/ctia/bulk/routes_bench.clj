@@ -31,7 +31,6 @@
    :judgements       (tcg/sample (gen/gen-entity :new-judgement) n)
    ;; :sightings (tcg/sample (gen/gen-entity :new-sighting) n)
    :ttps             (tcg/sample (gen/gen-entity :new-ttp) n)})
-   :ttps (tcg/sample (gen/gen-entity :new-ttp) n)})
 
 (defgoal create-bulk "Create Bulk"
   :setup (fn [] [true])
