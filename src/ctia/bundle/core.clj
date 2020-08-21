@@ -78,22 +78,23 @@
 (defn all-pages
   "Retrieves all external ids using pagination."
   [entity-type external-ids auth-identity]
-  (loop [ext-ids external-ids
-         entities []]
-    (let [query {:all-of {:external_ids ext-ids}}
-          paging {:limit find-by-external-ids-limit}
-          {results :data
-           {next-page :next} :paging} (read-store entity-type
-                                                  list-fn
-                                                  query
-                                                  (auth/ident->map auth-identity)
-                                                  paging)
-          acc-entities (into entities results)
-          matched-ext-ids (set (mapcat :external_ids results))
-          remaining-ext-ids (remove matched-ext-ids ext-ids)]
-      (if next-page
-        (recur remaining-ext-ids acc-entities)
-        acc-entities))))
+  (lazy-seq
+   (loop [ext-ids external-ids
+          entities []]
+     (let [query {:all-of {:external_ids ext-ids}}
+           paging {:limit find-by-external-ids-limit}
+           {results :data
+            {next-page :next} :paging} (read-store entity-type
+                                                   list-fn
+                                                   query
+                                                   (auth/ident->map auth-identity)
+                                                   paging)
+           acc-entities (into entities results)
+           matched-ext-ids (set (mapcat :external_ids results))
+           remaining-ext-ids (remove matched-ext-ids ext-ids)]
+       (if next-page
+         (recur remaining-ext-ids acc-entities)
+         acc-entities)))))
 
 (defn find-by-external-ids
   [import-data entity-type auth-identity]
