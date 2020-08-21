@@ -76,13 +76,10 @@
          (map? services-map)]
    :post [%]}
   (let [{:keys [routes routes-from-services] :as entity} (get entities entity-kw)
-        _ (assert (not routes) ":routes deprecated")
-        _ (assert (or routes routes-from-services))
         _ (when (and routes routes-from-services)
             (throw (AssertionError. (str "Bad routes definition: duplicate :routes/:routes-from-services "
                                          entity-kw))))]
-    (or routes
-        (routes-from-services services-map))))
+    ((or routes routes-from-services) services-map)))
 
 (defmacro ^:private entity-routes
   [services-map]
