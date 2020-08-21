@@ -280,7 +280,7 @@
                             :body new-bulk
                             :headers {"Authorization" "45c1f5e3f05d0"})
              bulk-ids (:parsed-body response)
-             show-props (get-http-show get-in-config)]
+             show-props (get-http-show)]
          (is (= 201 (:status response)))
 
          (doseq [type (keys new-bulk)]
