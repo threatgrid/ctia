@@ -379,7 +379,7 @@
   "Fetch a record by ID guessing its type"
   [id identity-map
    {{:keys [read-store]} :StoreService
-    :as services} :- APIHandlerServices]
+    :as _services_} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id)]
     (read-store (keyword entity-type)
                 read-fn
