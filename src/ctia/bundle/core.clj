@@ -183,7 +183,8 @@
 (s/defn with-existing-entities :- [EntityImportData]
   "Add existing entities to the import data map."
   [import-data entity-type identity-map
-   services :- APIHandlerServices]
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (let [entities-by-external-id
         (by-external-id
          (find-by-external-ids import-data
@@ -194,7 +195,7 @@
                                  (when external_id
                                    (get entities-by-external-id
                                         {:external_id external_id})))]
-    (map #(with-existing-entity % find-by-external-id-fn)
+    (map #(with-existing-entity % find-by-external-id-fn get-in-config)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData

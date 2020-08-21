@@ -15,6 +15,7 @@
     [common :refer [BaseEntityFilterParams PagingParams]]
     [crud :refer [entity-crud-routes]]]
    [ctia.lib.pagination :refer [list-response-schema]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
    [ctia.schemas.sorting :as sorting]
    [ctia.stores.es
     [crud :as crud]
@@ -116,7 +117,7 @@
         buckets (reduce #(timeline-append %1 %2 get-in-config) [] events)]
     (reverse (sort-by :from buckets))))
 
-(defn fetch-related-events [_id identity-map q services]
+(s/defn fetch-related-events [_id identity-map q services :- APIHandlerServices]
   (let [filters {:entity.id _id
                  :entity.source_ref _id
                  :entity.target_ref _id}]
@@ -124,10 +125,11 @@
                             list-events
                             {:one-of filters}
                             identity-map
-                            q services)
+                            q
+                            services)
             ent/un-store-all)))
-
-(defn event-history-routes [{{:keys [get-in-config]} :ConfigService :as services}]
+(s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
+                               :as services} :- APIHandlerServices]
   (routes
    (GET "/history/:entity_id" []
         :return [EventBucket]
@@ -144,7 +146,7 @@
               timeline (bucketize-events res get-in-config)]
           (ok timeline)))))
 
-(defn event-routes [services]
+(s/defn event-routes [services :- APIHandlerServices]
   (routes
    (event-history-routes services)
    ((entity-crud-routes
@@ -180,4 +182,4 @@
    :plural :events
    :es-store ->EventStore
    :es-mapping event-mapping
-   :routes event-routes})
+   :routes-from-services event-routes})

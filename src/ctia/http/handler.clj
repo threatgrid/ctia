@@ -75,26 +75,30 @@
          (keyword? entity-kw)
          (map? services-map)]
    :post [%]}
-  (let [{:keys [routes] :as entity} (get entities entity-kw)
-        _ (assert entity)
-        _ (assert routes entity)]
-    (routes services-map)))
+  (let [{:keys [routes routes-from-services] :as entity} (get entities entity-kw)
+        _ (assert (not routes) ":routes deprecated")
+        _ (assert (or routes routes-from-services))
+        _ (when (and routes routes-from-services)
+            (throw (AssertionError. (str "Bad routes definition: duplicate :routes/:routes-from-services "
+                                         entity-kw))))]
+    (or routes
+        (routes-from-services services-map))))
 
-(defmacro entity-routes
+(defmacro ^:private entity-routes
   [services-map]
   (let [gsm (gensym 'services-map)]
-    `(let [~gsm ~services-map]
-       (sweet/routes
-         ~@(for [{:keys [route-context
-                         tags
-                         entity]}
-                 (remove :no-api?
-                         (vals entities/entities))
-                 :let [_ (assert (keyword? entity))]]
-             `(context
-                ~route-context []
-                :tags ~tags
-                (entity->routes entities/entities ~entity ~gsm)))))))
+  `(let [~gsm ~services-map]
+     (compojure.api.sweet/routes
+       ~@(for [{:keys [route-context
+                       tags
+                       entity]}
+               (remove :no-api?
+                       (vals entities/entities))
+               :let [_ (assert (keyword? entity))]]
+           `(context
+             ~route-context []
+             :tags ~tags
+             (entity->routes entities/entities ~entity ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
