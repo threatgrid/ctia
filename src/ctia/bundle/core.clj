@@ -78,23 +78,22 @@
 (defn all-pages
   "Retrieves all external ids using pagination."
   [entity-type external-ids auth-identity]
-  (lazy-seq
-   (loop [ext-ids external-ids
-          entities []]
-     (let [query {:all-of {:external_ids ext-ids}}
-           paging {:limit find-by-external-ids-limit}
-           {results :data
-            {next-page :next} :paging} (read-store entity-type
-                                                   list-fn
-                                                   query
-                                                   (auth/ident->map auth-identity)
-                                                   paging)
-           acc-entities (into entities results)
-           matched-ext-ids (set (mapcat :external_ids results))
-           remaining-ext-ids (remove matched-ext-ids ext-ids)]
-       (if next-page
-         (recur remaining-ext-ids acc-entities)
-         acc-entities)))))
+  (loop [ext-ids external-ids
+         entities []]
+    (let [query {:all-of {:external_ids ext-ids}}
+          paging {:limit find-by-external-ids-limit}
+          {results :data
+           {next-page :next} :paging} (read-store entity-type
+                                                  list-fn
+                                                  query
+                                                  (auth/ident->map auth-identity)
+                                                  paging)
+          acc-entities (into entities results)
+          matched-ext-ids (set (mapcat :external_ids results))
+          remaining-ext-ids (remove matched-ext-ids ext-ids)]
+      (if next-page
+        (recur remaining-ext-ids acc-entities)
+        acc-entities))))
 
 (defn find-by-external-ids
   [import-data entity-type auth-identity]
@@ -104,12 +103,7 @@
                 (pr-str external-ids))
     (if (seq external-ids)
       (debug (format "Results for %s:" (pr-str external-ids))
-             (all-pages
-              (fn [paging]
-                (read-store entity-type list-fn
-                            {:all-of {:external_ids external-ids}}
-                            (auth/ident->map auth-identity)
-                            paging))))
+             (all-pages entity-type external-ids auth-identity))
       [])))
 
 (defn by-external-id
