@@ -52,8 +52,7 @@
 
 (deftest with-existing-entity-test
   (testing "with-existing-entity"
-    (let [get-in-config (h/current-get-in-config-fn)
-          indicator-id-1 (make-id "indicator")
+    (let [indicator-id-1 (make-id "indicator")
           indicator-id-2 (make-id "indicator")
           indicator-id-3 (make-id "indicator")
           new-indicator {:id indicator-id-3
@@ -82,15 +81,13 @@
       (test-fn {:msg "1 existing external id"
                 :expected (with-long-id {:result "exists"
                                          :external_ids ["swe-alarm-indicator-1"]
-                                         :id indicator-id-1}
-                                        get-in-config)
+                                         :id indicator-id-1})
                 :existing-ids [indicator-id-1]
                 :log? false})
       (test-fn {:msg "more than 1 existing external id"
                 :expected (with-long-id {:result "exists"
                                          :external_ids ["swe-alarm-indicator-1"]
-                                         :id indicator-id-2}
-                                        get-in-config)
+                                         :id indicator-id-2})
                 :existing-ids [indicator-id-2
                                indicator-id-1]
                 :log? true}))))
