@@ -72,9 +72,8 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
-(s/defn entity->routes [entity entity-kw services-map :- APIHandlerServices]
+(s/defn entity->routes [entity services-map :- APIHandlerServices]
   {:pre [entity
-         (keyword? entity-kw)
          (map? services-map)]
    :post [%]}
   (let [{:keys [routes routes-from-services]} entity
@@ -95,9 +94,7 @@
           `(context
             ~(:route-context entity) []
             :tags ~(:tags entity)
-            (entity->routes (~(:entity entity) entities)
-                            ~(keyword (:entity entity))
-                            ~gsm)))))))
+            (entity->routes (~(:entity entity) entities) ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
