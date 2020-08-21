@@ -10,8 +10,7 @@
     [auth :as auth]
     [properties :as p]
     [store :refer [list-fn
-                   read-fn
-                   read-store]]]
+                   read-fn]]]
    [ctia.lib.collection :as coll :refer [fmap]]
    [ctia.bulk.core :as bulk]
    [ctia.bundle.schemas
@@ -89,7 +88,7 @@
         acc-entities))))
 
 (defn find-by-external-ids
-  [import-data entity-type auth-identity]
+  [import-data entity-type auth-identity {{:keys [read-store]} :StoreService}]
   (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
@@ -180,17 +179,19 @@
 
 (s/defn with-existing-entities :- [EntityImportData]
   "Add existing entities to the import data map."
-  [import-data entity-type identity-map]
+  [import-data entity-type identity-map
+   {{:keys [get-in-config]} :ConfigService :as services}]
   (let [entities-by-external-id
         (by-external-id
          (find-by-external-ids import-data
                                entity-type
-                               identity-map))
+                               identity-map
+                               services))
         find-by-external-id-fn (fn [external_id]
                                  (when external_id
                                    (get entities-by-external-id
                                         {:external_id external_id})))]
-    (map #(with-existing-entity % find-by-external-id-fn)
+    (map #(with-existing-entity % find-by-external-id-fn get-in-config)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
@@ -199,12 +200,13 @@
    will be imported"
   [bundle-entities
    external-key-prefixes
-   auth-identity]
+   auth-identity
+   services]
   (map-kv (fn [k v]
             (let [entity-type (bulk/entity-type-from-bulk-key k)]
               (-> v
                   (init-import-data entity-type external-key-prefixes)
-                  (with-existing-entities entity-type auth-identity))))
+                  (with-existing-entities entity-type auth-identity services))))
           bundle-entities))
 
 (defn create?
@@ -252,9 +254,9 @@
              #(dissoc % :new-entity :old-entity)
              (apply concat (vals bundle-import-data)))})
 
-(defn bulk-params []
+(defn bulk-params [get-in-config]
   {:refresh
-   (p/get-in-global-properties [:ctia :store :bundle-refresh] "false")})
+   (get-in-config [:ctia :store :bundle-refresh] "false")})
 
 (defn log-errors
   [response]
@@ -269,18 +271,20 @@
   [bundle :- NewBundle
    external-key-prefixes :- (s/maybe s/Str)
    auth-identity :- (s/protocol auth/IIdentity)
-   services :- APIHandlerServices]
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (let [bundle-entities (select-keys bundle bundle-entity-keys)
         bundle-import-data (prepare-import bundle-entities
                                            external-key-prefixes
-                                           auth-identity)
+                                           auth-identity
+                                           services)
         bulk (debug "Bulk" (prepare-bulk bundle-import-data))
         tempids (->> bundle-import-data
                      (map (fn [[_ entities-import-data]]
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))]
     (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params) services)
+           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
                 (with-bulk-result bundle-import-data)
                 build-response
                 log-errors))))
@@ -297,11 +301,11 @@
 (defn local-entity?
   "Returns true if this entity'ID is hosted by this CTIA instance,
    false otherwise"
-  [id]
+  [id get-in-config]
   (if (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (p/get-in-global-properties [:ctia :http :show :hostname])]
+            this-host (get-in-config [:ctia :http :show :hostname])]
         (= (:hostname id-rec) this-host))
       true)
     false))
@@ -314,13 +318,15 @@
 
 (s/defn fetch-relationship-targets
   "given relationships, fetch all related objects"
-  [relationships identity-map services :- APIHandlerServices]
+  [relationships identity-map
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (let [all-ids (->> relationships
                      (map (fn [{:keys [target_ref source_ref]}]
                             [target_ref source_ref]))
                      flatten
                      set
-                     (filter local-entity?)
+                     (filter #(local-entity? % get-in-config))
                      set)
         by-type (dissoc (group-by
                          #(ent/long-id->entity-type %) all-ids) nil)
@@ -347,13 +353,16 @@
           (when (seq node-filters)
             {:query node-filters}))))
 
-(defn fetch-entity-relationships
+(s/defn fetch-entity-relationships
   "given an entity id, fetch all related relationship"
   [id
    identity-map
-   filters]
+   filters
+   {{:keys [get-in-config]} :ConfigService
+    {:keys [read-store]} :StoreService
+    :as _services_} :- APIHandlerServices]
   (let [filter-map (relationships-filters id filters)
-        max-relationships (p/get-in-global-properties [:ctia :http :bundle :export :max-relationships]
+        max-relationships (get-in-config [:ctia :http :bundle :export :max-relationships]
                                                       1000)]
     (some-> (:data (read-store :relationship
                                list-fn
@@ -364,9 +373,11 @@
                                 :sort_order "desc"}))
             ent/un-store-all)))
 
-(defn fetch-record
+(s/defn fetch-record
   "Fetch a record by ID guessing its type"
-  [id identity-map]
+  [id identity-map
+   {{:keys [read-store]} :StoreService
+    :as services} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id)]
     (read-store (keyword entity-type)
                 read-fn
@@ -382,9 +393,9 @@
    ident
    params
    services :- APIHandlerServices]
-  (if-let [record (fetch-record id identity-map)]
+  (if-let [record (fetch-record id identity-map services)]
     (let [relationships (when (:include_related_entities params true)
-                          (fetch-entity-relationships id identity-map params))]
+                          (fetch-entity-relationships id identity-map params services))]
       (cond-> {}
         record
         (assoc (-> (:type record)

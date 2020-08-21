@@ -11,7 +11,7 @@
                   h/fixture-ctia-fast]))
 
 (deftest local-entity?-test
-  (are [x y] (= x (sut/local-entity? y))
+  (are [x y] (= x (sut/local-entity? y (h/current-get-in-config-fn)))
     false nil
     false "http://unknown.site/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"
     true "indicator-56067199-47c0-4294-8957-13d6b265bdc4"
@@ -52,7 +52,8 @@
 
 (deftest with-existing-entity-test
   (testing "with-existing-entity"
-    (let [indicator-id-1 (make-id "indicator")
+    (let [get-in-config (h/current-get-in-config-fn)
+          indicator-id-1 (make-id "indicator")
           indicator-id-2 (make-id "indicator")
           indicator-id-3 (make-id "indicator")
           new-indicator {:id indicator-id-3
@@ -68,7 +69,8 @@
                         (is (= expected
                                (sut/with-existing-entity
                                  new-indicator
-                                 (find-by-ext-ids existing-ids))))
+                                 (find-by-ext-ids existing-ids)
+                                 get-in-config)))
                         (is (= log?
                                (logged? 'ctia.bundle.core
                                         :warn
@@ -81,13 +83,15 @@
       (test-fn {:msg "1 existing external id"
                 :expected (with-long-id {:result "exists"
                                          :external_ids ["swe-alarm-indicator-1"]
-                                         :id indicator-id-1})
+                                         :id indicator-id-1}
+                                        get-in-config)
                 :existing-ids [indicator-id-1]
                 :log? false})
       (test-fn {:msg "more than 1 existing external id"
                 :expected (with-long-id {:result "exists"
                                          :external_ids ["swe-alarm-indicator-1"]
-                                         :id indicator-id-2})
+                                         :id indicator-id-2}
+                                        get-in-config)
                 :existing-ids [indicator-id-2
                                indicator-id-1]
                 :log? true}))))
