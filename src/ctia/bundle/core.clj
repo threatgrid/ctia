@@ -381,7 +381,7 @@
   [id identity-map
    {{:keys [get-in-config]} :ConfigService
     {:keys [read-store]} :StoreService
-    :as services} :- APIHandlerServices]
+    :as _services_} :- APIHandlerServices]
   (when-let [entity-type (ent/id->entity-type id get-in-config)]
     (read-store (keyword entity-type)
                 read-fn
