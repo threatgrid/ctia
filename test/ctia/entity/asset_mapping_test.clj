@@ -35,12 +35,12 @@
 
         "specificity:\"unique\""
         #(-> % :parsed-body first :specificity)
-        (-> asset-mapping-sample :specificity)
+        (:specificity asset-mapping-sample)
         "Searching Asset Mapping by specificity"
 
-        (str "asset_ref:\"" (-> asset-mapping-sample :asset-ref) "\"")
+        (str "asset_ref:\"" (:asset-ref asset-mapping-sample) "\"")
         #(-> % :parsed-body first :asset-ref)
-        (-> asset-mapping-sample :asset-ref)
+        (:asset-ref asset-mapping-sample)
         "Searching Asset Mapping by asset-ref"))))
 
 (deftest asset-mapping-routes-test
