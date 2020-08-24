@@ -5,12 +5,12 @@
     [core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
     [schemas :refer [Bulk BulkRefs NewBulk]]]
    [ctia.http.routes.common :as common]
-   [ctia.schemas.core :refer [Reference]]
+   [ctia.schemas.core :refer [APIHandlerServices Reference]]
    [ring.swagger.json-schema :refer [describe]]
    [ring.util.http-response :refer [bad-request ok]]
    [schema.core :as s]))
 
-(defn bulk-routes [{{:keys [get-in-config]} :ConfigService :as services}]
+(s/defn bulk-routes [{{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
  (routes
   (POST "/" []
         :return BulkRefs
