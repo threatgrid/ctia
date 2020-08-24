@@ -3,7 +3,7 @@
    [clojure.string :as string]
    [ctia.http.routes.crud :as crud]
    [ctia.schemas.core :refer [APIHandlerServices]]
-   [compojure.api.sweet :refer [DELETE GET POST PUT routes]]
+   [compojure.api.core :refer [DELETE GET POST PUT routes]]
    [ctia.domain.entities
     :refer
     [page-with-long-id un-store un-store-page with-long-id]]
@@ -31,7 +31,14 @@
    [ctia.schemas
     [core :refer [Observable]]
     [sorting :as sorting]]
-   [ctia.store :refer :all]
+   [ctia.store :refer [create-record
+                       delete-record
+                       list-all-pages
+                       list-records
+                       read-record
+                       update-record
+                       query-string-count
+                       query-string-search]]
    [ctia.stores.es
     [mapping :as em]
     [store :refer [def-es-store]]]
