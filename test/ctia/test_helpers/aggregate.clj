@@ -2,6 +2,7 @@
   (:require [clj-momo.lib.clj-time.core :as time]
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.format :as tf]
+            [clj-momo.lib.map :refer [deep-merge-with]]
             [ctia.test-helpers.core :as hc]
             [clojure.string :as string]
             [clojure.pprint :refer [pprint]]
@@ -45,25 +46,28 @@
    while (es-get-in {:a [{:b 2} {:b 3}]} [:a :b]) returns '(2 3)"
   {:test (fn []
            (is (= (es-get-in {:a [{:b 2} {:b 3}]} [:a :b])
-                      '(2 3)))
+                  '(2 3)))
            (is (= (es-get-in {:a [2 3]} [:a])
-                      [2 3]))
+                  [2 3]))
            (is (= (es-get-in {:a {:b [2 3]}} [:a :b])
-                      [2 3]))
+                  [2 3]))
            (is (= (es-get-in {:a [{:b 2} {:b 3}]} [:a :b])
-                      '(2 3)))
+                  '(2 3)))
            (is (= (es-get-in {:a {:b 2 :c 3}} [:a :b])
-                      2))
+                  2))
            (is (= (es-get-in {:a {:d 2 :c 3}} [:a :b])
-                      nil))
+                  nil))
            (is (= (es-get-in {:a [{:d 2} {:b 3}]} [:a :b])
-                      '(3))))}
+                  '(3))))}
   [m ks]
   (reduce (fn [acc k]
             (cond
-              (map? acc) (get acc k)
-              (coll? acc) (seq (keep #(get % k) acc))
-              :else (reduced acc)))
+              (map? acc)  (get acc k)
+              (coll? acc) (->> acc
+                               (keep #(es-get-in % [k]))
+                               flatten
+                               seq)
+              :else       (reduced acc)))
           m
           ks))
 
@@ -219,10 +223,15 @@
   (let [enumerable-schema (schema-enumerable-fields new-schema enumerable-fields)
         base-doc (dissoc entity-minimal :id)]
     (doall
-     (repeatedly n (fn [] (merge base-doc
-                                 (g/generate enumerable-schema
-                                             {s/Str string-generator})
-                                 (generate-date-fields date-fields)))))))
+     (repeatedly n (fn [] (deep-merge-with
+                          (fn [a b]
+                            (if (seq? a)
+                              (into a b)
+                              a))
+                           base-doc
+                           (g/generate enumerable-schema
+                                       {s/Str string-generator})
+                           (generate-date-fields date-fields)))))))
 
 (defn test-metric-routes
   [{:keys [entity
