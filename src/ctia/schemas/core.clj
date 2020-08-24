@@ -26,6 +26,11 @@
    :IEncryption {:encrypt (s/=> s/Any s/Any)
                  :decrypt (s/=> s/Any s/Any)}})
 
+(s/defschema DelayedRoutes
+  "Function taking a map of services and returning routes
+  (eg., return value of `entity-crud-routes`)"
+  (s/=> s/Any APIHandlerServices))
+
 (def base-stored-entity-entries
   {:id s/Str
    :owner s/Str
@@ -48,7 +53,9 @@
    (st/optional-keys
     {:new-schema (s/protocol s/Schema)
      :route-context s/Str
+     ;; at most one of :routes and :routes-from-services allowed.
      :routes s/Any
+     :routes-from-services DelayedRoutes
      :tags [s/Str]
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
