@@ -29,10 +29,17 @@
     [init :as es-init]]))
 
 (defn init-auth-service! []
-  (let [{auth-service-type :type :as auth} (p/get-in-global-properties [:ctia :auth])]
+  (let [;; these will be replaced by trapperkeeper services in the future.
+        ;; start temporary global services
+        get-in-config p/get-in-global-properties
+        read-store store/read-store
+        ;; end temporary global services
+        {auth-service-type :type :as auth} (p/get-in-global-properties [:ctia :auth])]
     (case auth-service-type
       :allow-all (reset! auth/auth-service (allow-all/->AuthService))
-      :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service))
+      :threatgrid (reset! auth/auth-service (threatgrid/make-auth-service
+                                              get-in-config
+                                              #(threatgrid/lookup-stored-identity % read-store)))
       :static (reset! auth/auth-service (static-auth/->AuthService auth))
       (throw (ex-info "Auth service not configured"
                       {:message "Unknown service"

@@ -48,8 +48,8 @@
         (json/parse-string
          (:body response))))))
 
-(defn lookup-stored-identity [login]
-  (store/read-store :identity store/read-identity login))
+(defn lookup-stored-identity [login read-store]
+  (read-store :identity store/read-identity login))
 
 (defrecord ThreatgridAuthService [whoami-fn
                                   lookup-stored-identity-fn]
@@ -70,8 +70,8 @@
                                                    (get default-capabilities))}))))
         auth/denied-identity-singleton)))
 
-(defn make-auth-service []
-  (let [{:keys [whoami-url cache]} (p/get-in-global-properties [:ctia :auth :threatgrid])
+(defn make-auth-service [get-in-config lookup-stored-identity]
+  (let [{:keys [whoami-url cache]} (get-in-config [:ctia :auth :threatgrid])
         whoami-fn (make-whoami-fn whoami-url)]
     (->ThreatgridAuthService
      (if cache (memo whoami-fn) whoami-fn)
