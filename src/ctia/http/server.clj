@@ -7,9 +7,7 @@
              [shutdown :as shutdown]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
-            [ctia.http.middleware
-             [auth :as auth]
-             [ratelimit :refer [wrap-rate-limit]]]
+            [ctia.http.middleware.auth :as auth]
             [ctia.lib.riemann :as rie]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
