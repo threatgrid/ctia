@@ -199,5 +199,3 @@
                              :external_ids external_ids}
                 :type :sighting
                 :external_ids external_ids}})))
-
-

@@ -463,6 +463,7 @@
            max-matched (+ core/find-by-external-ids-limit
                           (count more-indicators))]
        (assert (= 200 (:status response-create)))
+       (assert (seq all-external-ids))
        (testing "all-pages should not retrieve more duplicates than find-by-external-ids-limit"
          (is (<= (count matched-entities)
                  max-matched))
