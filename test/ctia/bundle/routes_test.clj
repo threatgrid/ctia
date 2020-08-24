@@ -446,7 +446,7 @@
                                          "foogroup"
                                          "user")
      (let [duplicated-indicators (->> (mk-indicator 0)
-                                      (repeat (inc core/find-by-external-ids-limit))
+                                      (repeat (* 10 core/find-by-external-ids-limit))
                                       (map #(assoc % :id (id/make-transient-id nil))))
            more-indicators (map mk-indicator (range 1 10))
            all-indicators (set (concat duplicated-indicators more-indicators))
@@ -459,11 +459,18 @@
                                  :body bundle
                                  :headers {"Authorization" "45c1f5e3f05d0"})
            ident (FakeIdentity. "foouser" ["foogroup"])
-           matched-entities (core/all-pages :indicator all-external-ids ident)]
+           matched-entities (core/all-pages :indicator all-external-ids ident)
+           max-matched (+ core/find-by-external-ids-limit
+                          (count more-indicators))]
        (assert (= 200 (:status response-create)))
-       (is (< (count matched-entities)
-              (count all-indicators))
-           "all-pages should not retrieve more duplicates than find-by-external-ids-limit")
+       (testing "all-pages should not retrieve more duplicates than find-by-external-ids-limit"
+         (is (<= (count matched-entities)
+                 max-matched))
+         (is (<= (->> matched-entities
+                      (filter #(= duplicated-external-id
+                                  (-> % :external_ids first)))
+                      count)
+                 max-matched)))
        (is (= (set all-external-ids)
               (->> matched-entities
                    (mapcat :external_ids)

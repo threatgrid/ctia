@@ -89,7 +89,7 @@
                                                   (auth/ident->map auth-identity)
                                                   paging)
           acc-entities (into entities results)
-          matched-ext-ids (set (mapcat :external_ids results))
+          matched-ext-ids (into #{} (mapcat :external_ids results))
           remaining-ext-ids (remove matched-ext-ids ext-ids)]
       (if next-page
         (recur remaining-ext-ids acc-entities)
