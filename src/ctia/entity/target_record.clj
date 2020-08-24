@@ -55,7 +55,7 @@
      em/describable-entity-mapping
      em/sourcable-entity-mapping
      em/stored-entity-mapping
-     {:targets targets})}})
+     {:targets em/target-record-target})}})
 
 (def-es-store TargetRecordStore :target-record StoredTargetRecord PartialStoredTargetRecord)
 
