@@ -64,11 +64,7 @@
    sorting/base-entity-sort-fields
    sorting/sourcable-entity-sort-fields
    sorting/describable-entity-sort-fields
-   [:targets.type
-    :targets.os
-    :targets.internal
-    :targets.source_uri
-    :targets.sensor]))
+   []))
 
 (def target-record-sort-fields
   (apply s/enum target-record-fields))
@@ -125,8 +121,7 @@
     :external-id-capabilities :read-target-record
     :can-aggregate?           true
     :histogram-fields         target-record-histogram-fields
-    :enumerable-fields        target-record-enumerable-fields
-    }))
+    :enumerable-fields        target-record-enumerable-fields}))
 
 (def capabilities
   #{:create-target-record

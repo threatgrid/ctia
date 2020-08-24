@@ -581,7 +581,7 @@
                #{"campaign - finished migrating 100 documents"
                  "indicator - finished migrating 100 documents"
                  (format "event - finished migrating %s documents"
-                         (+ 1800 updates-nb))
+                         (+ 1900 updates-nb))
                  "actor - finished migrating 100 documents"
                  "asset - finished migrating 100 documents"
                  "relationship - finished migrating 100 documents"

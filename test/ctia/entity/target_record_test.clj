@@ -30,7 +30,10 @@
                                                          :query-params {"query" term}
                                                          :headers {"Authorization" "45c1f5e3f05d0"})]
                                            (is (= 200 (:status response)))
-                                           (is (= expected (check-fn response)) desc))
+                                           (is (= expected (check-fn response)) desc)
+
+                                           ;; to prevent `are` from double-failing
+                                           true)
 
         "*"
         (fn [r] (-> r :parsed-body first :targets first :type))
@@ -88,8 +91,7 @@
         {"Authorization" "45c1f5e3f05d0"}
         target-record/target-record-fields)))))
 
-;; TODO: Fix
-#_(deftest target-record-metric-routes-test
+(deftest target-record-metric-routes-test
   ((:es-store store/store-fixtures)
    (fn []
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" auth/all-capabilities)
