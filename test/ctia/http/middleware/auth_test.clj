@@ -1,5 +1,6 @@
 (ns ctia.http.middleware.auth-test
   (:require [ctia.http.middleware.auth :as sut]
+            [ctia.auth :refer [identity-for-token]]
             [ctia.auth.allow-all :as auth-svc]
             [clojure.test :as t :refer [deftest is]]))
 
@@ -22,5 +23,6 @@
                                                             "empty body")})
                auth-service (auth-svc/->AuthService)
                request {:body "test"}]
-           ((sut/testable-wrap-authentication handler auth-service)
+           ((sut/testable-wrap-authentication handler
+                                              #(identity-for-token auth-service %))
             request)))))
