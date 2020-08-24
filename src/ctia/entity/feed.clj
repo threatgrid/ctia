@@ -226,8 +226,7 @@
          :unauthorized (unauthorized "wrong secret")
          (ok (dissoc feed :output)))))))
 
-(s/defn feed-routes [{{:keys [get-in-config]} :ConfigService
-                      {:keys [read-store write-store]} :StoreService
+(s/defn feed-routes [{{:keys [read-store write-store]} :StoreService
                       :as services}
                      :- APIHandlerServices]
   (routes
