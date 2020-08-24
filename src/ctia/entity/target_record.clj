@@ -82,7 +82,10 @@
    TargetRecordFieldsParam))
 
 (def target-record-enumerable-fields
-  [:targets.type])
+  [:source
+   :targets.os
+   :targets.internal
+   :targets.observables.type])
 
 (def TargetRecordGetParams TargetRecordFieldsParam)
 
