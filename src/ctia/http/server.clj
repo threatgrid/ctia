@@ -11,12 +11,14 @@
              [auth :as auth]
              [ratelimit :refer [wrap-rate-limit]]]
             [ctia.lib.riemann :as rie]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
             [ring.adapter.jetty :as jetty]
             [ring.middleware
              [cors :refer [wrap-cors]]
              [params :refer [wrap-params]]
              [reload :refer [wrap-reload]]]
+            [schema.core :as s]
             [clojure.core.memoize :as memo])
   (:import org.eclipse.jetty.server.Server
            (java.util.concurrent TimeoutException)
@@ -141,8 +143,7 @@
            refresh-url (str " " refresh-url)))
        ";"))
 
-(defn- new-jetty-instance
-  ^Server
+(s/defn ^:private ^Server new-jetty-instance
   [{:keys [dev-reload
            max-threads
            min-threads
@@ -153,10 +154,12 @@
            send-server-version]
     :or {access-control-allow-methods "get,post,put,patch,delete"
          send-server-version false}
-    :as http-config}]
+    :as http-config}
+   {{:keys [get-in-config]} :ConfigService
+     :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
-       (cond-> (handler/api-handler)
+       (cond-> (handler/api-handler services)
          true auth/wrap-authentication
 
          (:enabled jwt)
@@ -164,7 +167,7 @@
 
          ;; just after :jwt and :identity is attached to request
          ;; by rjwt/wrap-jwt-auth-fn below.
-         (p/get-in-global-properties [:ctia :log :riemann :enabled])
+         (get-in-config [:ctia :log :riemann :enabled])
          (rie/wrap-request-logs "API response time ms")
 
          (:enabled jwt)
@@ -231,7 +234,33 @@
 (defn start! [& {:keys [join?]
                  :or {join? true}}]
   (let [http-config (p/get-in-global-properties [:ctia :http])
-        server-instance (new-jetty-instance http-config)]
+        server-instance (new-jetty-instance http-config
+                                            ;; temporary ugliness until we bootstrap trapperkeeper
+                                            {:ConfigService {:get-config #'p/get-global-properties
+                                                             :get-in-config #'p/get-in-global-properties}
+                                             :HooksService {:apply-hooks (requiring-resolve
+                                                                           'ctia.flows.hooks/apply-hooks)
+                                                            :apply-event-hooks (requiring-resolve
+                                                                                 'ctia.flows.hooks/apply-event-hooks)}
+                                             :StoreService {:read-store (requiring-resolve
+                                                                          'ctia.store/read-store)
+                                                            :write-store (requiring-resolve
+                                                                           'ctia.store/write-store)}
+                                             :IAuth {:identity-for-token
+                                                     (fn [token]
+                                                       ((requiring-resolve 'ctia.auth/identity-for-token)
+                                                        (-> (requiring-resolve 'ctia.auth/auth-service)
+                                                            deref  ;; var
+                                                            deref) ;;atom
+                                                        token))}
+                                             :GraphQLService {:get-graphql
+                                                              (fn []
+                                                                @(requiring-resolve
+                                                                   'ctia.graphql.schemas/graphql))}
+                                             :IEncryption {:decrypt (requiring-resolve
+                                                                      'ctia.encryption/decrypt-str)
+                                                           :encrypt (requiring-resolve
+                                                                      'ctia.encryption/encrypt-str)}})]
     (reset! server server-instance)
     (shutdown/register-hook! :http.server stop!)
     (if join?

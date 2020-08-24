@@ -29,11 +29,13 @@
             [ctia.properties :as p
              :refer [get-http-swagger]]
             [ctia.properties.routes :refer [properties-routes]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ctia.version :refer [current-version]]
             [ctia.version.routes :refer [version-routes]]
             [ctia.status.routes :refer [status-routes]]
             [ring.middleware.not-modified :refer [wrap-not-modified]]
-            [ring.util.http-response :refer [ok]]))
+            [ring.util.http-response :refer [ok]]
+            [schema.core :as s]))
 
 (def api-description
   "A Threat Intelligence API service
@@ -70,17 +72,29 @@
 
   <a href='/doc/README.md'>CTIA Documentation</a>")
 
+(s/defn entity->routes [entity services-map :- APIHandlerServices]
+  {:pre [entity
+         (map? services-map)]
+   :post [%]}
+  (let [{:keys [routes routes-from-services]} entity
+        _ (assert (or routes routes-from-services))
+        _ (when (and routes routes-from-services)
+            (throw (AssertionError. (str "Bad routes definition: duplicate :routes/:routes-from-services "
+                                         entity))))]
+    (or routes
+        (routes-from-services services-map))))
 
 (defmacro entity-routes
-  [entities]
-  `(do
+  [entities services-map]
+  (let [gsm (gensym 'services-map)]
+  `(let [~gsm ~services-map]
      (compojure.api.sweet/routes
       ~@(for [entity (remove :no-api?
                              (vals (eval entities)))]
           `(context
             ~(:route-context entity) []
             :tags ~(:tags entity)
-            (:routes (~(:entity entity) entities)))))))
+            (entity->routes (~(:entity entity) entities) ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -153,7 +167,8 @@
                     :tokenUrl token-url
                     :flow flow}))))
 
-(defn api-handler []
+(s/defn api-handler [{{:keys [get-in-config]} :ConfigService
+                      :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
         (get-http-swagger)]
     (api {:exceptions {:handlers exception-handlers}
@@ -161,7 +176,7 @@
           (cond-> {:ui "/"
                    :spec "/swagger.json"
                    :options {:ui {:jwtLocalStorageKey
-                                  (p/get-in-global-properties
+                                  (get-in-config
                                     [:ctia :http :jwt :local-storage-key])}}
                    :data {:info {:title "CTIA"
                                  :version (string/replace (current-version) #"\n" "")
@@ -199,7 +214,7 @@
              ;; must be before the middleware fn
              version-routes
              (middleware [wrap-authenticated]
-               (entity-routes entities)
+               (entity-routes entities services)
                status-routes
                (context
                    "/bulk" []
