@@ -200,7 +200,7 @@
          (middleware [wrap-rate-limit
                       wrap-not-modified
                       wrap-cache-control
-                      wrap-version
+                      #(wrap-version % get-in-config)
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
            documentation-routes
@@ -212,7 +212,7 @@
                feed-view-routes)
              ;; The order is important here for version-routes
              ;; must be before the middleware fn
-             version-routes
+             (version-routes services)
              (middleware [wrap-authenticated]
                (entity-routes entities services)
                status-routes
