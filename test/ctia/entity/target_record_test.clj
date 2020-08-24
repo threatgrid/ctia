@@ -37,9 +37,15 @@
         (-> target-record-sample :targets first :type)
         "Searching for target-record:targets:type"
 
-        ;; TODO: Add more cases
+        "*"
+        (fn [r] (-> r :parsed-body first :targets first :observables first :value))
+        (-> target-record-sample :targets first :observables first :value)
+        "Searching for target-record:targets:observables:value"
 
-        ))))
+        "*"
+        (fn [r] (-> r :parsed-body first :targets first :observables first :type))
+        (-> target-record-sample :targets first :observables first :type)
+        "Searching for target-record:targets:observables:type"))))
 
 (deftest target-record-routes-test
   (store/test-for-each-store
