@@ -11,7 +11,8 @@
             [ctia.flows.crud :as flows]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring.util.http-response :refer [bad-request]]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (def bulk-entity-mapping
   (into {}
@@ -44,9 +45,18 @@
     k store/create-record
     % (auth/ident->map auth-identity) params))
 
+(s/defschema ReadFnServices
+  {:StoreService (-> APIHandlerServices
+                     (st/get-in [:StoreService])
+                     (st/select-keys [:read-store])
+                     (st/assoc s/Keyword s/Any))
+   s/Keyword s/Any})
+
 (s/defn read-fn
   "return the create function provided an entity type key"
-  [k auth-identity params {{:keys [read-store]} :StoreService :as _services_} :- APIHandlerServices]
+  [k auth-identity params
+   {{:keys [read-store]} :StoreService
+    :as _services_} :- ReadFnServices]
   #(read-store
     k store/read-record
     % (auth/ident->map auth-identity) params))
@@ -70,11 +80,17 @@
             :data (partial map (fn [{:keys [error id] :as result}]
                                  (if error result id))))))
 
+(s/defschema ReadEntitiesServices
+  {:StoreService (-> APIHandlerServices
+                     (st/get-in [:StoreService])
+                     (st/select-keys [:read-store])
+                     (st/assoc s/Keyword s/Any))
+   s/Keyword s/Any})
+
 (s/defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity
-   {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
+   services :- ReadEntitiesServices]
   (let [read-entity (read-fn entity-type auth-identity {} services)]
     (map (fn [id]
            (try

@@ -1,7 +1,10 @@
 (ns ctia.bulk.core-test
   (:require [ctia.bulk.core :as sut :refer [read-fn]]
             [ctia.test-helpers.core :as helpers]
-            [clojure.test :refer [deftest testing is]]))
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [deftest testing is use-fixtures]]))
+
+(use-fixtures :once mth/fixture-schema-validation)
 
 (deftest read-entities-test
   (testing "Attempting to read an unreachable entity should not throw"
