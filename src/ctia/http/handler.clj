@@ -108,31 +108,34 @@
    :compojure.api.exception/default ex/default-error-handler})
 
 (def api-tags
-  [{:name "Actor" :description "Actor operations"}
-   {:name "Attack Pattern" :description "Attack Pattern operations"}
-   {:name "Bundle" :description "Bundle operations"}
-   {:name "Campaign" :description "Campaign operations"}
-   {:name "COA" :description "COA operations"}
-   {:name "DataTable" :description "DataTable operations"}
-   {:name "Event" :description "Events operations"}
-   {:name "Feed" :description "Feed operations"}
-   {:name "Feedback" :description "Feedback operations"}
-   {:name "GraphQL" :description "GraphQL operations"}
-   {:name "Incident" :description "Incident operations"}
-   {:name "Indicator", :description "Indicator operations"}
-   {:name "Judgement", :description "Judgement operations"}
-   {:name "Malware", :description "Malware operations"}
-   {:name "Relationship", :description "Relationship operations"}
-   {:name "Properties", :description "Properties operations"}
-   {:name "Casebook", :description "Casebook operations"}
-   {:name "Sighting", :description "Sighting operations"}
+  [{:name "Actor"               :description "Actor operations"}
+   {:name "Asset"               :description "Asset operations"}
+   {:name "Asset Mapping"       :description "Asset Mapping operations"}
+   {:name "Asset Properties"    :description "Asset Properties operations"}
+   {:name "Attack Pattern"      :description "Attack Pattern operations"}
+   {:name "Bundle"              :description "Bundle operations"}
+   {:name "Campaign"            :description "Campaign operations"}
+   {:name "COA"                 :description "COA operations"}
+   {:name "DataTable"           :description "DataTable operations"}
+   {:name "Event"               :description "Events operations"}
+   {:name "Feed"                :description "Feed operations"}
+   {:name "Feedback"            :description "Feedback operations"}
+   {:name "GraphQL"             :description "GraphQL operations"}
+   {:name "Incident"            :description "Incident operations"}
+   {:name "Indicator",          :description "Indicator operations"}
+   {:name "Judgement",          :description "Judgement operations"}
+   {:name "Malware",            :description "Malware operations"}
+   {:name "Relationship",       :description "Relationship operations"}
+   {:name "Properties",         :description "Properties operations"}
+   {:name "Casebook",           :description "Casebook operations"}
+   {:name "Sighting",           :description "Sighting operations"}
    {:name "Identity Assertion", :description "Identity Assertion operations"}
-   {:name "Bulk", :description "Bulk operations"}
-   {:name "Metrics", :description "Performance Statistics"}
-   {:name "Tool", :description "Tool operations"}
-   {:name "Verdict", :description "Verdict operations"}
-   {:name "Status", :description "Status Information"}
-   {:name "Version", :description "Version Information"}])
+   {:name "Bulk",               :description "Bulk operations"}
+   {:name "Metrics",            :description "Performance Statistics"}
+   {:name "Tool",               :description "Tool operations"}
+   {:name "Verdict",            :description "Verdict operations"}
+   {:name "Status",             :description "Status Information"}
+   {:name "Version",            :description "Version Information"}])
 
 (defn apply-oauth2-swagger-conf
   [swagger-base-conf
@@ -224,8 +227,8 @@
                    "/incident" []
                  :tags ["Incident"]
                  incident-link-route)
-               bundle-routes
                (observable-routes services)
+               (bundle-routes services)
                metrics-routes
                properties-routes
                graphql-routes)))
