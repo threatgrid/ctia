@@ -11,7 +11,7 @@
                   h/fixture-ctia-fast]))
 
 (deftest local-entity?-test
-  (are [x y] (= x (sut/local-entity? y))
+  (are [x y] (= x (sut/local-entity? y (h/current-get-in-config-fn)))
     false nil
     false "http://unknown.site/ctia/indicator/indicator-56067199-47c0-4294-8957-13d6b265bdc4"
     true "indicator-56067199-47c0-4294-8957-13d6b265bdc4"

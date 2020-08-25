@@ -15,3 +15,4 @@ pom.xml
 /checkouts
 .dir-locals-2.el
 .lsp/
+.clj-kondo/

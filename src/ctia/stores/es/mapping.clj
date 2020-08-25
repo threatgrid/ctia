@@ -122,6 +122,14 @@
 (def related-actors
   {:properties (assoc related
                       :actor_id token)})
+(def related-assets
+  {:properties (assoc related :asset_id token)})
+
+(def related-asset-mappings
+  {:properties (assoc related :asset_mapping_id token)})
+
+(def related-asset-properties
+  {:properties (assoc related :asset_properties_id token)})
 
 (def related-incidents
   {:properties (assoc related
