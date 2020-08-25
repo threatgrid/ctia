@@ -229,7 +229,7 @@
                (bundle-routes services)
                observable-routes
                metrics-routes
-               properties-routes
+               (properties-routes services)
                graphql-routes)))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))
