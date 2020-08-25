@@ -138,6 +138,10 @@
 (defn map-kv
   "Returns a map where values are the result of applying
    f to each key and value."
+  {:example '((map-kv
+               #(str (name %1) "-" %2)
+               {:foo 3 :bar 4}) ;; => {:foo "foo-3", :bar "bar-4"}
+              )}
   [f m]
   (into {}
         (map (fn [[k v]]
