@@ -1,7 +1,5 @@
 (ns ctia.task.migration.migrate-es-stores
-  (:require [clojure.tools.cli :refer [parse-opts]]
-            [clojure.pprint :as pp]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [clojure.tools.logging :as log]
 
             [schema-tools.core :as st]
@@ -294,11 +292,11 @@
                         index))))))
   true)
 
-(s/defn get-migration-params :- MigrationParams
-  []
+(s/defn prepare-params :- MigrationParams
+  [migration-properties]
   (let [string-to-coll #(map (comp keyword string/trim)
                              (string/split % #","))]
-    (-> (p/get-in-global-properties [:ctia :migration])
+    (-> migration-properties
         (update :migrations string-to-coll)
         (update :store-keys string-to-coll))))
 
@@ -307,8 +305,9 @@
   (log/info "migrating all ES Stores")
   (try
     (mst/setup!)
-    (doto (get-migration-params)
-      clojure.pprint/pprint
+    (doto (prepare-params
+           (p/get-in-global-properties [:ctia :migration]))
+      (->> pr-str (log/info "migration started"))
       check-migration-params
       migrate-store-indexes)
     (log/info "migration complete")
