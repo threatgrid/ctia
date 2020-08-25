@@ -14,7 +14,7 @@
                       wait_for->refresh]]
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
-             [core :refer [def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting
               :refer [default-entity-sort-fields describable-entity-sort-fields
                       sourcable-entity-sort-fields]]
@@ -24,7 +24,7 @@
              [helpers :as g]
              [pagination :as pagination]
              [sorting :as graphql-sorting]]
-            [ctia.store :refer :all]
+            [ctia.store :refer [read-record update-record]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
@@ -91,7 +91,8 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(def incident-additional-routes
+(s/defn incident-additional-routes [{{:keys [read-store write-store]} :StoreService
+                                     :as _services_} :- APIHandlerServices]
   (routes
    (POST "/:id/status" []
          :return Incident
@@ -209,9 +210,9 @@
    PagingParams
    IncidentFieldsParam))
 
-(def incident-routes
+(s/defn incident-routes [services :- APIHandlerServices]
   (routes
-   incident-additional-routes
+   (incident-additional-routes services)
    (entity-crud-routes
     {:entity :incident
      :new-schema NewIncident
@@ -283,5 +284,5 @@
    :realize-fn realize-incident
    :es-store ->IncidentStore
    :es-mapping incident-mapping
-   :routes incident-routes
+   :routes-from-services incident-routes
    :capabilities capabilities})

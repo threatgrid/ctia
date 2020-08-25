@@ -74,9 +74,9 @@
       (transient-id? id) (assoc :original_id id)
       (seq filtered-ext-ids) (assoc :external_ids filtered-ext-ids))))
 
-(defn all-pages
+(s/defn all-pages
   "Retrieves all external ids using pagination."
-  [entity-type external-ids auth-identity]
+  [entity-type external-ids auth-identity read-store :- (s/pred ifn?)]
   (loop [ext-ids external-ids
          entities []]
     (let [query {:all-of {:external_ids ext-ids}}
@@ -97,14 +97,14 @@
 (s/defn find-by-external-ids
   [import-data entity-type auth-identity
    {{:keys [read-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
+    :as services} :- APIHandlerServices]
   (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
                 (pr-str external-ids))
     (if (seq external-ids)
       (debug (format "Results for %s:" (pr-str external-ids))
-             (all-pages entity-type external-ids auth-identity))
+             (all-pages entity-type external-ids auth-identity read-store))
       [])))
 
 (defn by-external-id
