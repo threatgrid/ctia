@@ -4,7 +4,6 @@
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.casebook :refer [casebook-operation-routes]]
-            [ctia.entity.incident :refer [incident-additional-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
             [compojure.api
              [core :refer [middleware]]
@@ -107,31 +106,34 @@
    :compojure.api.exception/default ex/default-error-handler})
 
 (def api-tags
-  [{:name "Actor" :description "Actor operations"}
-   {:name "Attack Pattern" :description "Attack Pattern operations"}
-   {:name "Bundle" :description "Bundle operations"}
-   {:name "Campaign" :description "Campaign operations"}
-   {:name "COA" :description "COA operations"}
-   {:name "DataTable" :description "DataTable operations"}
-   {:name "Event" :description "Events operations"}
-   {:name "Feed" :description "Feed operations"}
-   {:name "Feedback" :description "Feedback operations"}
-   {:name "GraphQL" :description "GraphQL operations"}
-   {:name "Incident" :description "Incident operations"}
-   {:name "Indicator", :description "Indicator operations"}
-   {:name "Judgement", :description "Judgement operations"}
-   {:name "Malware", :description "Malware operations"}
-   {:name "Relationship", :description "Relationship operations"}
-   {:name "Properties", :description "Properties operations"}
-   {:name "Casebook", :description "Casebook operations"}
-   {:name "Sighting", :description "Sighting operations"}
+  [{:name "Actor"               :description "Actor operations"}
+   {:name "Asset"               :description "Asset operations"}
+   {:name "Asset Mapping"       :description "Asset Mapping operations"}
+   {:name "Asset Properties"    :description "Asset Properties operations"}
+   {:name "Attack Pattern"      :description "Attack Pattern operations"}
+   {:name "Bundle"              :description "Bundle operations"}
+   {:name "Campaign"            :description "Campaign operations"}
+   {:name "COA"                 :description "COA operations"}
+   {:name "DataTable"           :description "DataTable operations"}
+   {:name "Event"               :description "Events operations"}
+   {:name "Feed"                :description "Feed operations"}
+   {:name "Feedback"            :description "Feedback operations"}
+   {:name "GraphQL"             :description "GraphQL operations"}
+   {:name "Incident"            :description "Incident operations"}
+   {:name "Indicator",          :description "Indicator operations"}
+   {:name "Judgement",          :description "Judgement operations"}
+   {:name "Malware",            :description "Malware operations"}
+   {:name "Relationship",       :description "Relationship operations"}
+   {:name "Properties",         :description "Properties operations"}
+   {:name "Casebook",           :description "Casebook operations"}
+   {:name "Sighting",           :description "Sighting operations"}
    {:name "Identity Assertion", :description "Identity Assertion operations"}
-   {:name "Bulk", :description "Bulk operations"}
-   {:name "Metrics", :description "Performance Statistics"}
-   {:name "Tool", :description "Tool operations"}
-   {:name "Verdict", :description "Verdict operations"}
-   {:name "Status", :description "Status Information"}
-   {:name "Version", :description "Version Information"}])
+   {:name "Bulk",               :description "Bulk operations"}
+   {:name "Metrics",            :description "Performance Statistics"}
+   {:name "Tool",               :description "Tool operations"}
+   {:name "Verdict",            :description "Verdict operations"}
+   {:name "Status",             :description "Status Information"}
+   {:name "Version",            :description "Version Information"}])
 
 (defn apply-oauth2-swagger-conf
   [swagger-base-conf
@@ -199,7 +201,7 @@
          (middleware [wrap-rate-limit
                       wrap-not-modified
                       wrap-cache-control
-                      wrap-version
+                      #(wrap-version % get-in-config)
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
            documentation-routes
@@ -211,7 +213,7 @@
                feed-view-routes)
              ;; The order is important here for version-routes
              ;; must be before the middleware fn
-             version-routes
+             (version-routes services)
              (middleware [wrap-authenticated]
                (entity-routes entities services)
                status-routes
@@ -223,10 +225,10 @@
                    "/incident" []
                  :tags ["Incident"]
                  incident-link-route)
-               bundle-routes
+               (bundle-routes services)
                observable-routes
                metrics-routes
-               properties-routes
+               (properties-routes services)
                graphql-routes)))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))
