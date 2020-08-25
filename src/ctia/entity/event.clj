@@ -16,11 +16,12 @@
     [common :refer [BaseEntityFilterParams PagingParams]]
     [crud :refer [entity-crud-routes]]]
    [ctia.lib.pagination :refer [list-response-schema]]
+   [ctia.schemas.core :refer [APIHandlerServices]]
    [ctia.schemas.sorting :as sorting]
    [ctia.stores.es
     [crud :as crud]
     [mapping :as em]]
-   [ctia.store :refer [read-store list-events list-all-pages]]
+   [ctia.store :refer [list-events list-all-pages]]
    [ctia.domain.entities :as ent]
    [ctia.properties :as p]
    [clojure.set :as set]))
@@ -73,8 +74,9 @@
 
 (s/defn same-bucket? :- s/Bool
   [bucket :- EventBucket
-   event :- Event]
-  (let [max-seconds (p/get-in-global-properties [:ctia :http :events :timeline :max-seconds]
+   event :- Event
+   get-in-config]
+  (let [max-seconds (get-in-config [:ctia :http :events :timeline :max-seconds]
                                                 5)
         from        (t/minus (:from bucket) (t/seconds max-seconds))
         to          (t/plus (:to bucket) (t/seconds max-seconds))]
@@ -100,18 +102,20 @@
 
 (s/defn timeline-append :- [EventBucket]
   [timeline :- [EventBucket]
-   event :- Event]
+   event :- Event
+   get-in-config]
   (let [[previous & remaining] timeline]
     (if (and (map? previous)
-             (same-bucket? previous event))
+             (same-bucket? previous event get-in-config))
         (cons (bucket-append previous event)
               remaining)
         (cons (init-bucket event) timeline))))
 
 (s/defn bucketize-events :- [EventBucket]
-  [events :- [Event]]
+  [events :- [Event]
+   get-in-config]
   (let [events (sort-by (juxt :owner :timestamp :event_type) events)
-        buckets (reduce timeline-append [] events)]
+        buckets (reduce #(timeline-append %1 %2 get-in-config) [] events)]
     (reverse (sort-by :from buckets))))
 
 (defn fetch-related-events [_id identity-map q]
@@ -125,7 +129,8 @@
                             q)
             ent/un-store-all)))
 
-(def event-history-routes
+(s/defn event-history-routes [{{:keys [get-in-config]} :ConfigService
+                               :as _services_} :- APIHandlerServices]
   (routes
    (GET "/history/:entity_id" []
         :return [EventBucket]
@@ -138,12 +143,12 @@
         (let [res (fetch-related-events entity_id
                                         identity-map
                                         (into q {:sort_by :timestamp :sort_order :desc}))
-              timeline (bucketize-events res)]
+              timeline (bucketize-events res get-in-config)]
           (ok timeline)))))
 
-(def event-routes
+(s/defn event-routes [services :- APIHandlerServices]
   (routes
-   event-history-routes
+   (event-history-routes services)
    (entity-crud-routes
     {:tags ["Event"]
      :entity :event
@@ -176,4 +181,4 @@
    :plural :events
    :es-store ->EventStore
    :es-mapping event-mapping
-   :routes event-routes})
+   :routes-from-services event-routes})
