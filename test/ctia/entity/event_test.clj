@@ -319,7 +319,8 @@
 
 
 (deftest bucket-operations-test
-  (let [t1 (t/internal-now)
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        t1 (t/internal-now)
         t2 (t/plus t1 (t/seconds 1))
         t3 (t/plus t1 (t/seconds 2))
         t4 (t/plus t1 (t/days 1))
@@ -339,14 +340,15 @@
       (is (= #{event1 event2} (set (:events bucket2))))
       (is (= 2 (:count bucket2))))
     (testing "same-bucket? shoud properly assert that an event is part of a bucket or not"
-      (is (true? (ev/same-bucket? bucket1 event3)))
-      (is (true? (ev/same-bucket? bucket2 event3)))
-      (is (false? (ev/same-bucket? bucket1 event4)))
-      (is (false? (ev/same-bucket? bucket2 event4)))
-      (is (false? (ev/same-bucket? bucket2 event5))))))
+      (is (true? (ev/same-bucket? bucket1 event3 get-in-config)))
+      (is (true? (ev/same-bucket? bucket2 event3 get-in-config)))
+      (is (false? (ev/same-bucket? bucket1 event4 get-in-config)))
+      (is (false? (ev/same-bucket? bucket2 event4 get-in-config)))
+      (is (false? (ev/same-bucket? bucket2 event5 get-in-config))))))
 
 (deftest bucketize-events-test
-  (let [now (t/internal-now)
+  (let [get-in-config (helpers/build-get-in-config-fn)
+        now (t/internal-now)
         one-hour-ago (t/minus now (t/hours 1))
         two-hours-ago (t/minus now (t/hours 2))
         one-month-ago (t/minus now (t/months 1))
@@ -360,7 +362,7 @@
 
         events (->> (concat every-sec every-min every-day every-milli-1 every-milli-2)
                     shuffle)
-        timeline (ev/bucketize-events events)]
+        timeline (ev/bucketize-events events get-in-config)]
     (testing "bucketize function should group events in near same time from same owner"
       (is (< (count timeline) (count events)))
       (is (= (+ (count every-min) (count every-day) 3)
