@@ -21,6 +21,12 @@
 (def export-capabilities
   #{:list-campaigns
     :read-actor
+    :read-asset
+    :list-assets
+    :read-asset-mapping
+    :list-asset-mappings
+    :read-asset-properties
+    :list-asset-properties
     :read-malware
     :read-attack-pattern
     :read-judgement
@@ -101,24 +107,26 @@
                  :summary "POST many new entities using a single HTTP call"
                  :auth-identity auth-identity
                  :capabilities #{:create-actor
+                                 :create-asset
+                                 :create-asset-mapping
+                                 :create-asset-properties
                                  :create-attack-pattern
                                  :create-campaign
                                  :create-coa
                                  :create-data-table
                                  :create-feedback
+                                 :create-identity-assertion
                                  :create-incident
                                  :create-indicator
                                  :create-judgement
                                  :create-malware
                                  :create-relationship
                                  :create-sighting
-                                 :create-identity-assertion
                                  :create-tool
-                                 :create-weakness
                                  :create-vulnerability
+                                 :create-weakness
                                  :import-bundle}
                  (let [max-size (bundle-max-size get-in-config)]
-                   (if (> (bundle-size bundle)
-                          max-size)
+                   (if (< max-size (bundle-size bundle))
                      (bad-request (str "Bundle max nb of entities: " max-size))
                      (ok (import-bundle bundle external-key-prefixes auth-identity services))))))))
