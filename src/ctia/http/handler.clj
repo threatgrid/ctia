@@ -3,7 +3,6 @@
             [clojure.string :as string]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.feed :refer [feed-view-routes]]
-            [ctia.entity.incident :refer [incident-additional-routes]]
             [ctia.entity.feedback :refer [feedback-by-entity-route]]
             [ctia.entity.relationship :refer [incident-link-route]]
             [compojure.api
@@ -202,7 +201,7 @@
          (middleware [wrap-rate-limit
                       wrap-not-modified
                       wrap-cache-control
-                      wrap-version
+                      #(wrap-version % get-in-config)
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
            documentation-routes
@@ -214,7 +213,7 @@
                feed-view-routes)
              ;; The order is important here for version-routes
              ;; must be before the middleware fn
-             version-routes
+             (version-routes services)
              (middleware [wrap-authenticated]
                (entity-routes entities services)
                status-routes
@@ -229,7 +228,7 @@
                (bundle-routes services)
                observable-routes
                metrics-routes
-               properties-routes
+               (properties-routes services)
                graphql-routes)))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))
