@@ -10,7 +10,7 @@
              [test :as t :refer [deftest is join-fixtures testing use-fixtures]]]
             [ctia.bulk.core :as bulk]
             [ctia.bundle.core :as core]
-            [ctia.store :refer [stores]]
+            [ctia.store :as store :refer [stores]]
             [ctia.properties :as p]
             [ctia.auth.capabilities :refer [all-capabilities]]
             [ctia.test-helpers
@@ -445,7 +445,8 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [duplicated-indicators (->> (mk-indicator 0)
+     (let [read-store store/read-store
+           duplicated-indicators (->> (mk-indicator 0)
                                       (repeat (* 10 core/find-by-external-ids-limit))
                                       (map #(assoc % :id (id/make-transient-id nil))))
            more-indicators (map mk-indicator (range 1 10))
@@ -459,7 +460,7 @@
                                  :body bundle
                                  :headers {"Authorization" "45c1f5e3f05d0"})
            ident (FakeIdentity. "foouser" ["foogroup"])
-           matched-entities (core/all-pages :indicator all-external-ids ident)
+           matched-entities (core/all-pages :indicator all-external-ids ident read-store)
            max-matched (+ core/find-by-external-ids-limit
                           (count more-indicators))]
        (assert (= 200 (:status response-create)))
