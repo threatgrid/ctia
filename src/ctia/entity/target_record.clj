@@ -121,8 +121,7 @@
     :external-id-capabilities :read-target-record
     :can-aggregate?           true
     :histogram-fields         target-record-histogram-fields
-    :enumerable-fields        target-record-enumerable-fields
-    }))
+    :enumerable-fields        target-record-enumerable-fields}))
 
 (def capabilities
   #{:create-target-record
