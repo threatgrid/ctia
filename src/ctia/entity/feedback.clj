@@ -54,7 +54,7 @@
      {(s/optional-key :sort_by) feedback-sort-fields})))
 
 (s/defn feedback-by-entity-route [{{:keys [read-store]} :StoreService
-                                   :as _services_}]
+                                   :as _services_} :- APIHandlerServices]
   (GET "/" []
        :return fs/PartialFeedbackList
        :query [params FeedbackQueryParams]
