@@ -40,7 +40,9 @@
 
 (s/defn create-fn
   "return the create function provided an entity type key"
-  [k auth-identity params {{:keys [write-store]} :StoreService :as _services_} :- APIHandlerServices]
+  [k auth-identity params
+   {{:keys [write-store]} :StoreService
+    :as _services_} :- APIHandlerServices]
   #(write-store
     k store/create-record
     % (auth/ident->map auth-identity) params))
@@ -196,7 +198,9 @@
   (get-in-config [:ctia :http :bulk :max-size]))
 
 (s/defn fetch-bulk
-  [entities-map auth-identity {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+  [entities-map auth-identity
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (let [bulk (into {} (remove (comp empty? second) entities-map))]
     (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
       (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
