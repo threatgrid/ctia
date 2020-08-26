@@ -29,9 +29,27 @@
             GraphQLUnionType
             TypeResolver]))
 
+;; type-registry is an Atom<{String, IDeref<graphql.*>}>
+(defn get-or-update-type-registry
+  "If name exists in registry, return existing mapping. Otherwise conj
+  {name (delay (f))} to registry, and return @(delay (f))."
+  [type-registry name f]
+  {:post [%]}
+  (or ;; fast-path for readers
+      (some-> (get @type-registry name) deref)
+      ;; generate a new graphql value, or coordinate with another thread doing the same
+      (let [f (bound-fn* f) ;; may be run on another thread
+            {result-delay name} (swap! type-registry
+                                       (fn [{existing-delay name :as oldtr}]
+                                         (cond-> oldtr
+                                           (not existing-delay)
+                                           (assoc name (delay (f))))))]
+        @result-delay)))
+
 ;; Type registry to avoid any duplicates when using new-object
-;; or new-enum. Contains a map with types indexed by name
-(def default-type-registry (atom {}))
+;; or new-enum. Contains a map with derefable types indexed by name.
+;; Use via get-or-update-type-registry.
+(def ^:private default-type-registry (atom {}))
 
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
@@ -88,10 +106,12 @@
                                    values
                                    default-type-registry))
   ([^String enum-name ^String description values registry]
-   (or (get @registry enum-name)
-       (let [builder (-> (GraphQLEnumType/newEnum)
+    (get-or-update-type-registry
+      registry
+      enum-name
+      #(let [builder (-> (GraphQLEnumType/newEnum)
                          (.name enum-name)
-                         (.description description))
+                         (.description ^String description))
              names-and-values? (map? values)]
          (doseq [value values]
            (if names-and-values?
@@ -101,7 +121,6 @@
                ;unsure if reachable
                (.value builder ^GraphQLEnumValueDefinition value))))
          (let [graphql-enum (.build builder)]
-           (swap! registry assoc enum-name graphql-enum)
            graphql-enum)))))
 
 (defn list-type [t] (GraphQLList/list t))
@@ -289,11 +308,14 @@
   [^String object-name
    ^String description
    fields]
-  (-> (GraphQLInputObjectType/newInputObject)
-      (.name object-name)
-      (.description description)
-      (add-input-fields fields)
-      .build))
+    (get-or-update-type-registry
+      default-type-registry
+      object-name
+      #(-> (GraphQLInputObjectType/newInputObject)
+           (.name ^String object-name)
+           (.description ^String description)
+           (add-input-fields fields)
+           .build)))
 
 ;;----- Output
 
@@ -344,15 +366,16 @@
     interfaces
     fields
     registry]
-   (or (get @registry object-name)
-       (let [builder (-> (GraphQLObjectType/newObject)
-                         (.description description)
-                         (.name object-name)
+    (get-or-update-type-registry
+      registry
+      object-name
+      #(let [builder (-> (GraphQLObjectType/newObject)
+                         (.description ^String description)
+                         (.name ^String object-name)
                          (add-fields fields))]
          (doseq [^GraphQLInterfaceType interface interfaces]
            (.withInterface builder interface))
          (let [obj (.build builder)]
-           (swap! registry assoc object-name obj)
            obj)))))
 
 (defn fn->type-resolver
@@ -372,17 +395,20 @@
    ^String description
    type-resolver-fn
    types]
-  (let [type-resolver (fn->type-resolver type-resolver-fn)
-        graphql-union (-> (GraphQLUnionType/newUnionType)
-                          (.description description)
-                          (.name union-name)
-                          ; FIXME: this method is deprecated
-                          (.typeResolver type-resolver))]
-    (doseq [type types]
-      (if (instance? GraphQLObjectType type)
-        (.possibleType graphql-union ^GraphQLObjectType type)
-        (.possibleType graphql-union ^GraphQLTypeReference type)))
-    (.build graphql-union)))
+    (get-or-update-type-registry
+      default-type-registry
+      union-name
+      #(let [type-resolver (fn->type-resolver type-resolver-fn)
+             graphql-union (-> (GraphQLUnionType/newUnionType)
+                               (.description description)
+                               (.name union-name)
+                               ; FIXME: this method is deprecated
+                               (.typeResolver type-resolver))]
+         (doseq [type types]
+           (if (instance? GraphQLObjectType type)
+             (.possibleType graphql-union ^GraphQLObjectType type)
+             (.possibleType graphql-union ^GraphQLTypeReference type)))
+         (.build graphql-union))))
 
 (defn new-ref
   [object-name]
