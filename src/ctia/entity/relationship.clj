@@ -1,10 +1,9 @@
 (ns ctia.entity.relationship
   (:require [clojure.string :as str]
-            [compojure.api.sweet :refer [POST]]
-            [ctia
-             [properties :refer [get-http-show]]
-             [store :refer :all]]
-            [ctia.domain.entities :refer [un-store with-long-id]]
+            [compojure.api.core :refer [POST]]
+            [ctia.store :refer [create-record
+                                read-record]]
+            [ctia.domain.entities :refer [long-id->id short-id->long-id un-store with-long-id]]
             [ctia.entity.relationship.schemas :as rs]
             [ctia.flows.crud :as flows]
             [ctia.http.routes
@@ -12,12 +11,11 @@
              [crud :refer [entity-crud-routes]]]
             [ctia.http.middleware.auth :refer [require-capability!]]
             [ctia.schemas
-             [core :refer [Reference TLP]]
+             [core :refer [APIHandlerServices Reference TLP]]
              [sorting :as sorting]]
             [ctia.stores.es
              [mapping :as em]
              [store :refer [def-es-store]]]
-            [ctim.domain.id :refer [long-id->id short-id->long-id]]
             [ring.util.http-response :refer [not-found bad-request bad-request!]]
             [schema-tools.core :as st]
             [schema.core :as s]))
@@ -90,7 +88,8 @@
           incident-link-source-types)
     IncidentLinkRequestOptional))
 
-(def incident-link-route
+(s/defn incident-link-route [{{:keys [read-store write-store]} :StoreService
+                              :as _services_} :- APIHandlerServices]
   (POST "/:id/link" []
         :return rs/Relationship
         :body [link-req IncidentLinkRequest
@@ -145,8 +144,7 @@
                                    source-short-id
                                    identity-map
                                    {}))
-              target-ref (short-id->long-id id
-                                            get-http-show)]
+              target-ref (short-id->long-id id)]
           (cond
             (or (not incident)
                 (not target-ref))
