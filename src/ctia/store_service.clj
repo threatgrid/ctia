@@ -1,7 +1,8 @@
 (ns ctia.store-service
   (:require [ctia.store-service-core :as core]
             [ctia.tk :as tk]
-            [puppetlabs.trapperkeeper.services :refer [service-context]]))
+            [puppetlabs.trapperkeeper.services :refer [service-context]]
+            [schema.core :as s]))
 
 (defprotocol StoreService
   (get-stores [this] "Returns the atom of stores")
@@ -23,10 +24,14 @@
               (core/read-store (service-context this)
                                store read-fn)))
 
-(defn store-service-fn->varargs
+(s/defn store-service-fn->varargs
   "Given a 2-argument write-store or read-store function (eg., from defservice),
   lifts the function to support variable arguments."
-  [store-svc-fn]
+  [store-svc-fn :- (s/=> s/Any
+                         (s/named s/Any 
+                                  'store)
+                         (s/named (s/=> s/Any s/Any)
+                                  'f))]
   {:pre [store-svc-fn]}
   (fn [store f & args]
     (store-svc-fn store #(apply f % args))))
