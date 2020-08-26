@@ -53,7 +53,7 @@
                                          (assoc name (delay (f))))))]
       @result-delay)))
 
-;; temporary
+;; TODO move to Trapperkeeper service
 (s/def ^:private default-type-registry :- TypeRegistry (atom {}))
 
 (defprotocol ConvertibleToJava
