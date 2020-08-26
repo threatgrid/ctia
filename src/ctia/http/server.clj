@@ -7,9 +7,7 @@
              [shutdown :as shutdown]]
             [ctia.auth.jwt :as auth-jwt]
             [ctia.http.handler :as handler]
-            [ctia.http.middleware
-             [auth :as auth]
-             [ratelimit :refer [wrap-rate-limit]]]
+            [ctia.http.middleware.auth :as auth]
             [ctia.lib.riemann :as rie]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-jwt-middleware.core :as rjwt]
@@ -155,12 +153,13 @@
     :or {access-control-allow-methods "get,post,put,patch,delete"
          send-server-version false}
     :as http-config}
-   {{:keys [get-in-config]} :ConfigService
+   {{:keys [identity-for-token]} :IAuth
+    {:keys [get-in-config]} :ConfigService
      :as services} :- APIHandlerServices]
   (doto
       (jetty/run-jetty
        (cond-> (handler/api-handler services)
-         true auth/wrap-authentication
+         true (auth/wrap-authentication identity-for-token)
 
          (:enabled jwt)
          (auth-jwt/wrap-jwt-to-ctia-auth get-in-config)
