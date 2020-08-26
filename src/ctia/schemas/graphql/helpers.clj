@@ -33,8 +33,9 @@
   "Type registry to ensure named GraphQL types are created exactly once.
   Contains a map with derefable types indexed by name.
   Use via get-or-update-type-registry."
-  (s/atom {s/Str (s/describe (s/pred some?)
-                             "(IDeref graphql.*)")}))
+  (s/atom {s/Str
+           #_(IDeref graphql.*) ;; returns a graphql-related thing on deref
+           (s/pred some?)}))
 
 (s/defn get-or-update-type-registry
   "If name exists in registry, return existing mapping. Otherwise
