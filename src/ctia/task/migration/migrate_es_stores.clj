@@ -349,30 +349,5 @@
       (log/error "Unknown error")
       (exit true))))
 
-<<<<<<< HEAD
-(def cli-options
-  ;; An option with a required argument
-  [["-i" "--id ID" "The ID of the migration state to create or restar"
-    :default (str "migration-" (UUID/randomUUID))]
-   ["-p" "--prefix PREFIX" "prefix of the newly created indices"]
-   ["-m" "--migrations MIGRATIONS" "a comma separated list of migration ids to apply"
-    :parse-fn #(map keyword (string/split % #","))]
-   ["-b" "--batch-size SIZE" "number of migrated documents per batch"
-    :default default-batch-size
-    :parse-fn read-string
-    :validate [#(< 0 %) "batch-size must be a positive number"]]
-   ["" "--buffer-size SIZE" "max number of batches in buffer between source and target"
-    :default default-buffer-size
-    :parse-fn read-string
-    :validate [#(< 0 %) "buffer-size must be a positive number"]]
-   ["-s" "--stores STORES" "comma separated list of stores to migrate"
-    :default (-> (keys empty-stores) set (disj :identity))
-    :parse-fn #(map keyword (string/split % #","))]
-   ["-c" "--confirm" "really do the migration?"]
-   ["-r" "--restart" "restart ongoing migration?"]
-   ["-h" "--help"]])
-
-=======
->>>>>>> master
 (defn -main [& args]
   (run-migration ))
