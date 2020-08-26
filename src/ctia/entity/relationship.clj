@@ -89,7 +89,7 @@
     IncidentLinkRequestOptional))
 
 (s/defn incident-link-route [{{:keys [read-store write-store]} :StoreService
-                              :as services} :- APIHandlerServices]
+                              :as _services_} :- APIHandlerServices]
   (POST "/:id/link" []
         :return rs/Relationship
         :body [link-req IncidentLinkRequest
