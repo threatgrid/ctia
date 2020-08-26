@@ -448,7 +448,11 @@
                                          "foouser"
                                          "foogroup"
                                          "user")
-     (let [read-store store/read-store
+     (let [app (helpers/get-current-app)
+           store-svc (app/get-service app :StoreService)
+           read-store (-> (partial store-svc/read-store store-svc)
+                          store-svc/store-service-fn->varargs)
+
            duplicated-indicators (->> (mk-indicator 0)
                                       (repeat (* 10 core/find-by-external-ids-limit))
                                       (map #(assoc % :id (id/make-transient-id nil))))

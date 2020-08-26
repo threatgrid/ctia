@@ -2,7 +2,6 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
             [ctia.entity.asset :as asset]
-            [ctia.properties :as p]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
             [ctia.test-helpers.core :as helpers]
@@ -22,8 +21,10 @@
 
 (defn additional-tests [asset-id asset-sample]
   (testing "GET /ctia/asset/search"
+   (let [app (helpers/get-current-app)
+         get-in-config (helpers/current-get-in-config-fn app)]
     ;; only when ES store
-    (when (= "es" (p/get-in-global-properties [:ctia :store :asset]))
+    (when (= "es" (get-in-config [:ctia :store :asset]))
       (are [term check-fn expected desc] (let [response (helpers/get (str "ctia/asset/search")
                                                                      :query-params {"query" term}
                                                                      :headers {"Authorization" "45c1f5e3f05d0"})]
@@ -33,7 +34,7 @@
         "asset_type:\"device\""
         #(-> % :parsed-body first :asset_type)
         (-> asset-sample :asset_type)
-        "Searching by an Asset type works"))))
+        "Searching by an Asset type works")))))
 
 (deftest asset-routes-test
   (store/test-for-each-store
