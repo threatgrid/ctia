@@ -1,10 +1,16 @@
 (ns ctia.bulk.core-test
   (:require [ctia.bulk.core :as sut :refer [read-fn]]
-            [clojure.test :refer [deftest testing is]]))
+            [ctia.test-helpers.core :as helpers]
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.test :refer [deftest testing is use-fixtures]]))
+
+(use-fixtures :once mth/fixture-schema-validation)
 
 (deftest read-entities-test
   (testing "Attempting to read an unreachable entity should not throw"
-    (let [res (with-redefs [ctia.bulk.core/read-fn (fn [_ _ _] (fn [id] nil))]
-                (sut/read-entities ["judgement-123"]
-                                   :judgement {}))]
+    (let [get-in-config (helpers/build-get-in-config-fn)
+          res (sut/read-entities ["judgement-123"]
+                                 :judgement {}
+                                 {:ConfigService {:get-in-config get-in-config}
+                                  :StoreService {:read-store (constantly nil)}})]
       (is (= [nil] res)))))

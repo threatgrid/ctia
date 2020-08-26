@@ -220,7 +220,7 @@
                (context
                    "/bulk" []
                  :tags ["Bulk"]
-                 bulk-routes)
+                 (bulk-routes services))
                (context
                    "/incident" []
                  :tags ["Incident"]

@@ -97,7 +97,7 @@
 (s/defn find-by-external-ids
   [import-data entity-type auth-identity
    {{:keys [read-store]} :StoreService
-    :as services} :- APIHandlerServices]
+    :as _services_} :- APIHandlerServices]
   (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type
@@ -292,12 +292,13 @@
                             (entities-import-data->tempids entities-import-data)))
                      (apply merge {}))]
     (debug "Import bundle response"
-           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config))
+           (->> (bulk/create-bulk bulk tempids auth-identity (bulk-params get-in-config) services)
                 (with-bulk-result bundle-import-data)
                 build-response
                 log-errors))))
 
-(def bundle-max-size bulk/get-bulk-max-size)
+(defn bundle-max-size [get-in-config]
+  (bulk/get-bulk-max-size get-in-config))
 
 (defn bundle-size
   [bundle]
@@ -341,7 +342,7 @@
                           (map (fn [[k v]]
                                  {(bulk/bulk-key
                                    (keyword k)) v}) by-type))
-        fetched (bulk/fetch-bulk by-bulk-key identity-map)]
+        fetched (bulk/fetch-bulk by-bulk-key identity-map services)]
     (clean-bundle fetched)))
 
 (defn relationships-filters

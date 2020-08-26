@@ -204,7 +204,8 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk with wait_for"
-       (let [default-es-refresh (->> (p/get-in-global-properties
+       (let [get-in-config (helpers/current-get-in-config-fn)
+             default-es-refresh (->> (get-in-config
                                        [:ctia :store :es :default :refresh])
                                      (str "refresh="))
              es-params (atom nil)
@@ -260,7 +261,8 @@
                                          "foogroup"
                                          "user")
      (testing "POST /ctia/bulk"
-       (let [nb 7
+       (let [get-in-config (helpers/current-get-in-config-fn)
+             nb 7
              indicators (map mk-new-indicator (range nb))
              judgements (map mk-new-judgement (range nb))
              new-bulk {:actors (map mk-new-actor (range nb))
@@ -333,6 +335,7 @@
 (deftest bulk-max-size-post-test
   (test-for-each-store
    (fn []
+    (let [get-in-config (helpers/current-get-in-config-fn)]
      (helpers/set-capabilities! "foouser" ["foogroup"] "user" all-capabilities)
      (whoami-helpers/set-whoami-response "45c1f5e3f05d0"
                                          "foouser"
@@ -340,7 +343,7 @@
                                          "user")
 
      ;; Check changing the properties change the computed bulk max size
-     (is (= 100 (get-bulk-max-size)))
+     (is (= 100 (get-bulk-max-size get-in-config)))
      (let [nb 7
            indicators (map mk-new-indicator (range nb))
            judgements (map mk-new-judgement (range nb))
@@ -394,7 +397,7 @@
          (is (= 201 status-ok)))
        (testing "POST of too big bulks are rejected"
          (is (empty? (:errors response-too-big)) "No errors")
-         (is (= 400 status-too-big)))))))
+         (is (= 400 status-too-big))))))))
 
 (defn get-entity
   "Finds an entity in a collection by its ID"

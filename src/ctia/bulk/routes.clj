@@ -1,15 +1,17 @@
 (ns ctia.bulk.routes
   (:require
-   [compojure.api.sweet :refer :all]
+   [compojure.api.core :refer [GET POST routes]]
    [ctia.bulk
     [core :refer [bulk-size create-bulk fetch-bulk get-bulk-max-size]]
     [schemas :refer [Bulk BulkRefs NewBulk]]]
    [ctia.http.routes.common :as common]
-   [ctia.schemas.core :refer [Reference]]
-   [ring.util.http-response :refer :all]
+   [ctia.schemas.core :refer [APIHandlerServices Reference]]
+   [ring.swagger.json-schema :refer [describe]]
+   [ring.util.http-response :refer [bad-request ok]]
    [schema.core :as s]))
 
-(defroutes bulk-routes
+(s/defn bulk-routes [{{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+ (routes
   (POST "/" []
         :return BulkRefs
         :query-params [{wait_for :- (describe s/Bool "wait for created entities to be available for search") nil}]
@@ -38,12 +40,13 @@
                         :create-vulnerability
                         :create-weakness}
         (if (> (bulk-size bulk)
-               (get-bulk-max-size))
-          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size)))
+               (get-bulk-max-size get-in-config))
+          (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
           (common/created (create-bulk bulk
                                        {}
                                        login
-                                       (common/wait_for->refresh wait_for)))))
+                                       (common/wait_for->refresh wait_for)
+                                       services))))
 
   (GET "/" []
        :return (s/maybe Bulk)
@@ -112,4 +115,4 @@
                            :tools               tools
                            :vulnerabilities     vulnerabilities
                            :weaknesses          weaknesses}]
-         (ok (fetch-bulk entities-map auth-identity)))))
+         (ok (fetch-bulk entities-map auth-identity services))))))

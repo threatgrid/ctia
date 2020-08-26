@@ -63,7 +63,8 @@
     :read-casebook
     :list-casebooks})
 
-(s/defn bundle-routes [services :- APIHandlerServices]
+(s/defn bundle-routes [{{:keys [get-in-config]} :ConfigService
+                        :as services} :- APIHandlerServices]
  (routes 
   (context "/bundle" []
            :tags ["Bundle"]
@@ -125,7 +126,7 @@
                                  :create-vulnerability
                                  :create-weakness
                                  :import-bundle}
-                 (let [max-size (bundle-max-size)]
+                 (let [max-size (bundle-max-size get-in-config)]
                    (if (< max-size (bundle-size bundle))
                      (bad-request (str "Bundle max nb of entities: " max-size))
                      (ok (import-bundle bundle external-key-prefixes auth-identity services))))))))
