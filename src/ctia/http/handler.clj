@@ -199,7 +199,7 @@
             (apply-oauth2-swagger-conf
              oauth2))}
 
-         (middleware [wrap-rate-limit
+         (middleware [#(wrap-rate-limit % get-in-config)
                       wrap-not-modified
                       wrap-cache-control
                       #(wrap-version % get-in-config)
