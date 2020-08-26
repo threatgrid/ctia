@@ -29,27 +29,32 @@
             GraphQLUnionType
             TypeResolver]))
 
-;; type-registry is an Atom<{String, IDeref<graphql.*>}>
-(defn get-or-update-type-registry
-  "If name exists in registry, return existing mapping. Otherwise conj
-  {name (delay (f))} to registry, and return @(delay (f))."
-  [type-registry name f]
-  {:post [%]}
-  (or ;; fast-path for readers
-      (some-> (get @type-registry name) deref)
-      ;; generate a new graphql value, or coordinate with another thread doing the same
-      (let [f (bound-fn* f) ;; may be run on another thread
-            {result-delay name} (swap! type-registry
-                                       (fn [{existing-delay name :as oldtr}]
-                                         (cond-> oldtr
-                                           (not existing-delay)
-                                           (assoc name (delay (f))))))]
-        @result-delay)))
+(s/defschema TypeRegistry
+  "Type registry to ensure named GraphQL types are created exactly once.
+  Contains a map with derefable types indexed by name.
+  Use via get-or-update-type-registry."
+  (s/atom {s/Str (s/describe (s/pred some?)
+                             "(IDeref graphql.*)")}))
 
-;; Type registry to avoid any duplicates when using new-object
-;; or new-enum. Contains a map with derefable types indexed by name.
-;; Use via get-or-update-type-registry.
-(def ^:private default-type-registry (atom {}))
+(s/defn get-or-update-type-registry
+  "If name exists in registry, return existing mapping. Otherwise
+  atomically calls (f) and returns result after adding to registry under name."
+  [type-registry :- TypeRegistry
+   name :- s/Str
+   f :- (s/=> s/Any s/Any)]
+  (if-some [d (@type-registry name)]
+    @d ;; fast-path for readers
+    ;; generate a new graphql value, or coordinate with another thread doing the same
+    (let [f (bound-fn* f) ;; may be run on another thread
+          {result-delay name} (swap! type-registry
+                                     (fn [{existing-delay name :as oldtr}]
+                                       (cond-> oldtr
+                                         (not existing-delay)
+                                         (assoc name (delay (f))))))]
+      @result-delay)))
+
+;; temporary
+(s/def ^:private default-type-registry :- TypeRegistry (atom {}))
 
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
