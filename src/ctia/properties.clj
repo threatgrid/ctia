@@ -184,6 +184,16 @@
                       "ctia.log.riemann.batch-size" s/Int
                       "ctia.log.riemann.service-prefix" s/Str
 
+
+                      "ctia.migration.migration-id" s/Str
+                      "ctia.migration.prefix" s/Str
+                      "ctia.migration.migrations" s/Str
+                      "ctia.migration.store-keys" s/Str
+                      "ctia.migration.batch-size" s/Int
+                      "ctia.migration.buffer-size" s/Int
+                      "ctia.migration.confirm?" s/Bool
+                      "ctia.migration.restart?" s/Bool
+
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
 

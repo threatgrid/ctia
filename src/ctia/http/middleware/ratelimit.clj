@@ -82,7 +82,7 @@
                  (auth/rate-limit-fn auth-identity limit-fn)]
         (identity-limit-fn request)))))
 
-(defn wrap-rate-limit
+(s/defn wrap-rate-limit
   [handler get-in-config]
   (let [{:keys [redis enabled key-prefix] :as conf}
         (get-in-config [:ctia :http :rate-limit])]

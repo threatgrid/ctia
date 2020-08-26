@@ -3,8 +3,7 @@
              [io :as io]
              [shell :as shell]]
             [clojure.string :as st]
-            [ctia.domain.entities :refer [schema-version]]
-            [ctia.properties :as p]))
+            [ctia.domain.entities :refer [schema-version]]))
 
 (def version-file "ctia-version.txt")
 

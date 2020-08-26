@@ -21,7 +21,7 @@
    [ctim.domain.id :as id]
    [schema.core :as s]))
 
-(def find-by-external-ids-limit 1000)
+(def find-by-external-ids-limit 200)
 
 (def bundle-entity-keys
   (set (vals bulk/bulk-entity-mapping)))
@@ -74,17 +74,24 @@
       (transient-id? id) (assoc :original_id id)
       (seq filtered-ext-ids) (assoc :external_ids filtered-ext-ids))))
 
-(defn all-pages
+(s/defn all-pages
   "Retrieves all external ids using pagination."
-  [f]
-  (loop [paging {:offset 0
-                 :limit find-by-external-ids-limit}
+  [entity-type external-ids auth-identity read-store :- (s/pred ifn?)]
+  (loop [ext-ids external-ids
          entities []]
-    (let [{results :data
-           {next-page :next} :paging} (f paging)
-          acc-entities (into entities results)]
+    (let [query {:all-of {:external_ids ext-ids}}
+          paging {:limit find-by-external-ids-limit}
+          {results :data
+           {next-page :next} :paging} (read-store entity-type
+                                                  list-fn
+                                                  query
+                                                  (auth/ident->map auth-identity)
+                                                  paging)
+          acc-entities (into entities results)
+          matched-ext-ids (into #{} (mapcat :external_ids results))
+          remaining-ext-ids (remove matched-ext-ids ext-ids)]
       (if next-page
-        (recur next-page acc-entities)
+        (recur remaining-ext-ids acc-entities)
         acc-entities))))
 
 (s/defn find-by-external-ids
@@ -97,12 +104,7 @@
                 (pr-str external-ids))
     (if (seq external-ids)
       (debug (format "Results for %s:" (pr-str external-ids))
-             (all-pages
-              (fn [paging]
-                (read-store entity-type list-fn
-                            {:all-of {:external_ids external-ids}}
-                            (auth/ident->map auth-identity)
-                            paging))))
+             (all-pages entity-type external-ids auth-identity read-store))
       [])))
 
 (defn by-external-id
@@ -137,6 +139,10 @@
 (defn map-kv
   "Returns a map where values are the result of applying
    f to each key and value."
+  {:example '((map-kv
+               #(str (name %1) "-" %2)
+               {:foo 3 :bar 4}) ;; => {:foo "foo-3", :bar "bar-4"}
+              )}
   [f m]
   (into {}
         (map (fn [[k v]]

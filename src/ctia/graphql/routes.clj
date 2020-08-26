@@ -32,6 +32,9 @@
         :capabilities
         #{:list-campaigns
           :read-actor
+          :read-asset
+          :read-asset-mapping
+          :read-asset-properties
           :read-malware
           :read-attack-pattern
           :read-judgement
@@ -55,6 +58,9 @@
           :list-attack-patterns
           :read-relationship
           :list-actors
+          :list-assets
+          :list-asset-mappings
+          :list-asset-properties
           :read-investigation
           :read-incident
           :list-coas

@@ -2,7 +2,9 @@
   (:require [clj-http.client :as client]
             [clj-momo.test-helpers.core :as mth]
             [clojure.set :as set]
+            [clojure.string :as string]
             [clojure.test :refer [deftest is join-fixtures testing use-fixtures]]
+            [ctia.entity.investigation.examples :refer [investigation-minimal]]
             [ctia.properties :as p]
             [ctia.task.check-es-stores :as sut]
             [ctia.test-helpers
@@ -11,9 +13,11 @@
              [es :as es-helpers]
              [fake-whoami-service :as whoami-helpers]]
             [ctim.domain.id :refer [make-transient-id]]
-            [ctia.entity.investigation.examples :refer [investigation-minimal]]
             [ctim.examples
              [actors :refer [actor-minimal]]
+             [assets :refer [asset-minimal]]
+             [asset-mappings :refer [asset-mapping-minimal]]
+             [asset-properties :refer [asset-properties-minimal]]
              [attack-patterns :refer [attack-pattern-minimal]]
              [campaigns :refer [campaign-minimal]]
              [casebooks :refer [casebook-minimal]]
@@ -53,21 +57,24 @@
   (client/post (format "http://%s:%s/_refresh" host port)))
 
 (def examples
-  {:actors (n-doc actor-minimal fixtures-nb)
-   :attack_patterns (n-doc attack-pattern-minimal fixtures-nb)
-   :campaigns (n-doc campaign-minimal fixtures-nb)
-   :coas (n-doc coa-minimal fixtures-nb)
-   :incidents (n-doc incident-minimal fixtures-nb)
-   :indicators (n-doc indicator-minimal fixtures-nb)
-   :investigations (n-doc investigation-minimal fixtures-nb)
-   :judgements (n-doc judgement-minimal fixtures-nb)
-   :malwares (n-doc malware-minimal fixtures-nb)
-   :relationships (n-doc relationship-minimal fixtures-nb)
-   :casebooks (n-doc casebook-minimal fixtures-nb)
-   :sightings (n-doc sighting-minimal fixtures-nb)
-   :tools (n-doc tool-minimal fixtures-nb)
-   :vulnerabilities (n-doc vulnerability-minimal fixtures-nb)
-   :weaknesses (n-doc weakness-minimal fixtures-nb)})
+  {:actors           (n-doc actor-minimal fixtures-nb)
+   :assets           (n-doc asset-minimal fixtures-nb)
+   :asset_mappings   (n-doc asset-mapping-minimal fixtures-nb)
+   :asset_properties (n-doc asset-properties-minimal fixtures-nb)
+   :attack_patterns  (n-doc attack-pattern-minimal fixtures-nb)
+   :campaigns        (n-doc campaign-minimal fixtures-nb)
+   :coas             (n-doc coa-minimal fixtures-nb)
+   :incidents        (n-doc incident-minimal fixtures-nb)
+   :indicators       (n-doc indicator-minimal fixtures-nb)
+   :investigations   (n-doc investigation-minimal fixtures-nb)
+   :judgements       (n-doc judgement-minimal fixtures-nb)
+   :malwares         (n-doc malware-minimal fixtures-nb)
+   :relationships    (n-doc relationship-minimal fixtures-nb)
+   :casebooks        (n-doc casebook-minimal fixtures-nb)
+   :sightings        (n-doc sighting-minimal fixtures-nb)
+   :tools            (n-doc tool-minimal fixtures-nb)
+   :vulnerabilities  (n-doc vulnerability-minimal fixtures-nb)
+   :weaknesses       (n-doc weakness-minimal fixtures-nb)})
 
 (deftest test-check-store-indexes
   (let [app (helpers/get-current-app)
@@ -93,24 +100,28 @@
           (testing "shall produce valid logs"
             (let [messages (set @logger)]
               (is (contains? messages "set batch size: 100"))
+              (is (some
+                   #(string/includes? % "event - finished checking")
+                   messages))
               (is (set/subset?
-                   ["campaign - finished checking 100 documents"
-                    "indicator - finished checking 100 documents"
-                    "event - finished checking 1500 documents"
-                    "actor - finished checking 100 documents"
-                    "relationship - finished checking 100 documents"
-                    "incident - finished checking 100 documents"
-                    "investigation - finished checking 100 documents"
-                    "coa - finished checking 100 documents"
-                    "judgement - finished checking 100 documents"
-                    "data-table - finished checking 0 documents"
-                    "feedback - finished checking 0 documents"
-                    "casebook - finished checking 100 documents"
-                    "sighting - finished checking 100 documents"
-                    "identity-assertion - finished checking 0 documents"
-                    "attack-pattern - finished checking 100 documents"
-                    "malware - finished checking 100 documents"
-                    "tool - finished checking 100 documents"
-                    "vulnerability - finished checking 100 documents"
-                    "weakness - finished checking 100 documents"]
+                   #{"campaign - finished checking 100 documents"
+                     "indicator - finished checking 100 documents"
+                     "asset - finished checking 100 documents"
+                     "asset-mapping - finished checking 100 documents"
+                     "actor - finished checking 100 documents"
+                     "relationship - finished checking 100 documents"
+                     "incident - finished checking 100 documents"
+                     "investigation - finished checking 100 documents"
+                     "coa - finished checking 100 documents"
+                     "judgement - finished checking 100 documents"
+                     "data-table - finished checking 0 documents"
+                     "feedback - finished checking 0 documents"
+                     "casebook - finished checking 100 documents"
+                     "sighting - finished checking 100 documents"
+                     "identity-assertion - finished checking 0 documents"
+                     "attack-pattern - finished checking 100 documents"
+                     "malware - finished checking 100 documents"
+                     "tool - finished checking 100 documents"
+                     "vulnerability - finished checking 100 documents"
+                     "weakness - finished checking 100 documents"}
                    messages)))))))))

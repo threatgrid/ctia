@@ -1,6 +1,6 @@
 (ns ctia.http.middleware.auth-test
   (:require [ctia.http.middleware.auth :as sut]
-            [ctia.auth :as auth]
+            [ctia.auth :refer [identity-for-token]]
             [ctia.auth.allow-all :as auth-svc]
             [clojure.test :as t :refer [deftest is]]
             [puppetlabs.trapperkeeper.app :as app]
@@ -30,7 +30,5 @@
                  _ (assert auth-service)
                  request {:body "test"}]
              ((sut/testable-wrap-authentication handler
-                                                {:IAuth
-                                                 {:identity-for-token
-                                                  #(auth/identity-for-token auth-service %)}})
+                                                #(identity-for-token auth-service %))
               request))))))

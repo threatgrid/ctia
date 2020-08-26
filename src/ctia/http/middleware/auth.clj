@@ -15,9 +15,10 @@
         (assoc-in [:headers "authorization"] auth-header))
     request))
 
-(defn testable-wrap-authentication
+(s/defn testable-wrap-authentication
   "wrap-autentication middleware."
-  [handler {{:keys [identity-for-token]} :IAuth :as _services_}]
+  [handler
+   identity-for-token :- (s/=> s/Any s/Any)]
   (fn [request]
     (handler
      (if (:login request)
@@ -29,8 +30,8 @@
              groups (auth/groups id)]
          (add-id-to-request request id login groups auth-header))))))
 
-(defn wrap-authentication [handler services]
-  (testable-wrap-authentication handler services))
+(s/defn wrap-authentication [handler identity-for-token :- (s/=> s/Any s/Any)]
+  (testable-wrap-authentication handler identity-for-token))
 
 (defn wrap-authenticated [handler]
   (fn [request]

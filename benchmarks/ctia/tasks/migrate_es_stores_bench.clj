@@ -8,6 +8,9 @@
              [core :as helpers :refer [post-bulk]]]
             [ctim.domain.id :refer [make-transient-id]]
             [ctim.examples
+             [assets :refer [asset-maximal]]
+             [asset-mappings :refer [asset-mapping-maximal]]
+             [asset-properties :refer [asset-properties-maximal]]
              [actors :refer [actor-maximal]]
              [attack-patterns :refer [attack-pattern-maximal]]
              [campaigns :refer [campaign-maximal]]
@@ -32,19 +35,22 @@
   (map randomize (repeat nb fixture)))
 
 (defn make-examples [fixtures-nb]
-  {:actors (n-doc actor-maximal fixtures-nb)
-   :attack_patterns (n-doc attack-pattern-maximal fixtures-nb)
-   :campaigns (n-doc campaign-maximal fixtures-nb)
-   :coas (n-doc coa-maximal fixtures-nb)
-   :incidents (n-doc incident-maximal fixtures-nb)
-   :indicators (n-doc indicator-maximal fixtures-nb)
-   :investigations (n-doc investigation-maximal fixtures-nb)
-   :judgements (n-doc judgement-maximal fixtures-nb)
-   :malwares (n-doc malware-maximal fixtures-nb)
-   :relationships (n-doc relationship-maximal fixtures-nb)
-   :casebooks (n-doc casebook-maximal fixtures-nb)
-   :sightings (n-doc sighting-maximal fixtures-nb)
-   :tools (n-doc tool-maximal fixtures-nb)})
+  {:actors           (n-doc actor-maximal fixtures-nb)
+   :assets           (n-doc asset-maximal fixtures-nb)
+   :asset_mappings   (n-doc asset-mapping-maximal fixtures-nb)
+   :asset_properties (n-doc asset-properties-maximal fixtures-nb)
+   :attack_patterns  (n-doc attack-pattern-maximal fixtures-nb)
+   :campaigns        (n-doc campaign-maximal fixtures-nb)
+   :coas             (n-doc coa-maximal fixtures-nb)
+   :incidents        (n-doc incident-maximal fixtures-nb)
+   :indicators       (n-doc indicator-maximal fixtures-nb)
+   :investigations   (n-doc investigation-maximal fixtures-nb)
+   :judgements       (n-doc judgement-maximal fixtures-nb)
+   :malwares         (n-doc malware-maximal fixtures-nb)
+   :relationships    (n-doc relationship-maximal fixtures-nb)
+   :casebooks        (n-doc casebook-maximal fixtures-nb)
+   :sightings        (n-doc sighting-maximal fixtures-nb)
+   :tools            (n-doc tool-maximal fixtures-nb)})
 
 (defn post-fixtures []
   (dotimes [n 10]
