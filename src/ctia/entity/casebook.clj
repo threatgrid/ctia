@@ -10,7 +10,7 @@
              [crud :refer [entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
-             [core :refer [Bundle def-acl-schema def-stored-schema]]
+             [core :refer [APIHandlerServices Bundle def-acl-schema def-stored-schema]]
              [sorting :as sorting]]
             [ctia.schemas.graphql
              [flanders :as flanders]
@@ -128,9 +128,9 @@
     :delete-casebook
     :search-casebook})
 
-(defn casebook-operation-routes [{{:keys [get-in-config]} :ConfigService
-                                  {:keys [read-store write-store]} :StoreService
-                                  :as services}]
+(s/defn casebook-operation-routes [{{:keys [get-in-config]} :ConfigService
+                                    {:keys [read-store write-store]} :StoreService
+                                    :as services} :- APIHandlerServices]
   (routes
    (PATCH "/:id" []
           :return Casebook
@@ -308,7 +308,7 @@
 (def casebook-histogram-fields
   [:timestamp])
 
-(defn casebook-routes [service-map]
+(s/defn casebook-routes [services :- APIHandlerServices]
   (routes
    (casebook-operation-routes service-map)
    ((entity-crud-routes
@@ -351,5 +351,5 @@
    :realize-fn realize-casebook
    :es-store ->CasebookStore
    :es-mapping casebook-mapping
-   :routes casebook-routes
+   :routes-from-services casebook-routes
    :capabilities capabilities})
