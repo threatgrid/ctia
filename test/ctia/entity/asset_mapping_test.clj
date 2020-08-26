@@ -31,7 +31,10 @@
                                                          :query-params {"query" term}
                                                          :headers {"Authorization" "45c1f5e3f05d0"})]
                                            (is (= 200 (:status response)))
-                                           (is (= expected (check-fn response)) desc))
+                                           (is (= expected (check-fn response)) desc)
+
+                                           ;; to prevent `are` from double-failing
+                                           true)
 
         "specificity:\"unique\""
         #(-> % :parsed-body first :specificity)

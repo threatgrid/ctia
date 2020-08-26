@@ -225,7 +225,7 @@
     (doall
      (repeatedly n (fn [] (deep-merge-with
                           (fn [a b]
-                            (if (seq? a)
+                            (if (sequential? a)
                               (into a b)
                               a))
                            base-doc
