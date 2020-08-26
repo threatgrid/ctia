@@ -310,7 +310,7 @@
 
 (s/defn casebook-routes [services :- APIHandlerServices]
   (routes
-   (casebook-operation-routes service-map)
+   (casebook-operation-routes services)
    ((entity-crud-routes
     {:api-tags ["Casebook"]
      :entity :casebook
@@ -334,7 +334,7 @@
      :hide-delete? false
      :histogram-fields casebook-histogram-fields
      :enumerable-fields casebook-enumerable-fields})
-    service-map)))
+    services)))
 
 (def casebook-entity
   {:route-context "/casebook"
