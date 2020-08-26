@@ -11,7 +11,8 @@
             [ctia.flows.crud :as flows]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring.util.http-response :refer [bad-request]]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [schema-tools.core :as st]))
 
 (def bulk-entity-mapping
   (into {}
@@ -39,14 +40,25 @@
 
 (s/defn create-fn
   "return the create function provided an entity type key"
-  [k auth-identity params {{:keys [write-store]} :StoreService :as _services_} :- APIHandlerServices]
+  [k auth-identity params
+   {{:keys [write-store]} :StoreService
+    :as _services_} :- APIHandlerServices]
   #(write-store
     k store/create-record
     % (auth/ident->map auth-identity) params))
 
+(s/defschema ReadFnServices
+  {:StoreService (-> APIHandlerServices
+                     (st/get-in [:StoreService])
+                     (st/select-keys [:read-store])
+                     (st/assoc s/Keyword s/Any))
+   s/Keyword s/Any})
+
 (s/defn read-fn
   "return the create function provided an entity type key"
-  [k auth-identity params {{:keys [read-store]} :StoreService :as _services_} :- APIHandlerServices]
+  [k auth-identity params
+   {{:keys [read-store]} :StoreService
+    :as _services_} :- ReadFnServices]
   #(read-store
     k store/read-record
     % (auth/ident->map auth-identity) params))
@@ -71,11 +83,18 @@
             :data (partial map (fn [{:keys [error id] :as result}]
                                  (if error result id))))))
 
+(s/defschema ReadEntitiesServices
+  {:StoreService (-> APIHandlerServices
+                     (st/get-in [:StoreService])
+                     (st/select-keys [:read-store])
+                     (st/assoc s/Keyword s/Any))
+   s/Keyword s/Any})
+
 (s/defn read-entities
   "Retrieve many entities of the same type provided their ids and common type"
   [ids entity-type auth-identity
    {{:keys [get-in-config]} :ConfigService
-    :as services} :- APIHandlerServices]
+    :as services} :- ReadEntitiesServices]
   (let [read-entity (read-fn entity-type auth-identity {} services)]
     (map (fn [id]
            (try
@@ -90,7 +109,7 @@
 
   ~~~~.clojure
   (gen-bulk-from-fn f {k [v1 ... vn]} args)
-  ===> {k (map #(apply f % (singular k) args) [v1 ... vn])}
+  => {k (map #(apply f % (singular k) args) [v1 ... vn])}
   ~~~~
   "
   [func bulk & args]
@@ -180,7 +199,9 @@
   (get-in-config [:ctia :http :bulk :max-size]))
 
 (s/defn fetch-bulk
-  [entities-map auth-identity {{:keys [get-in-config]} :ConfigService :as services} :- APIHandlerServices]
+  [entities-map auth-identity
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (let [bulk (into {} (remove (comp empty? second) entities-map))]
     (if (> (bulk-size bulk) (get-bulk-max-size get-in-config))
       (bad-request (str "Bulk max nb of entities: " (get-bulk-max-size get-in-config)))
