@@ -64,7 +64,10 @@
    sorting/base-entity-sort-fields
    sorting/sourcable-entity-sort-fields
    sorting/describable-entity-sort-fields
-   []))
+   [:targets.type
+    :targets.os
+    :targets.internal
+    :targets.sensor]))
 
 (def target-record-sort-fields
   (apply s/enum target-record-fields))

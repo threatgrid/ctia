@@ -133,7 +133,7 @@
                            :limit limit})]
       (is (= expected
              (->> (parse-field field)
-                  (get-in (:data res))
+                  (es-get-in (:data res))
                   (map :value)))
           (error-helper-msg prepared))
       (check-from-to from to))))
@@ -153,12 +153,17 @@
        (map (fn [[k v]]
               {:key (str k) :value v}))))
 
+
+
 (defn- test-histogram
   "test one field histogram, examples are already created"
   [examples entity field granularity]
   (testing (format "histogram %s %s" entity field)
     (let [parsed (parse-field field)
-          values (keep #(get-in % parsed) examples)
+          values (->>
+                  examples
+                  (keep #(es-get-in % parsed))
+                  flatten)
           from-str "2020-03-01T00:00:00.000Z"
           to-str "2020-10-01T00:00:00.000Z"
           from (tf/parse from-str)
@@ -177,7 +182,7 @@
                                {:aggregate-on (name field)
                                 :granularity (name granularity)})]
       (is (= expected
-             (->> (get-in (:data res) parsed)
+             (->> (es-get-in (:data res) parsed)
                   (filter #(pos? (:value %))))))
       (check-from-to from to))))
 
@@ -224,10 +229,10 @@
         base-doc (dissoc entity-minimal :id)]
     (doall
      (repeatedly n (fn [] (deep-merge-with
-                          (fn [a b]
-                            (if (sequential? a)
-                              (into a b)
-                              a))
+                           (fn [a b]
+                             (if (and (sequential? a) (map? b))
+                               (map #(merge % b) a)
+                               a))
                            base-doc
                            (g/generate enumerable-schema
                                        {s/Str string-generator})
