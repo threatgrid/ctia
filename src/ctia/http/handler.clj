@@ -226,8 +226,8 @@
                    "/incident" []
                  :tags ["Incident"]
                  incident-link-route)
-               (observable-routes services)
                (bundle-routes services)
+               (observable-routes services)
                metrics-routes
                (properties-routes services)
                graphql-routes)))

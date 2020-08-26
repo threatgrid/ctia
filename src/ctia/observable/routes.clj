@@ -29,7 +29,7 @@
 
 (s/defn observable-routes [{{:keys [get-in-config]} :ConfigService
                             {:keys [read-store]} :StoreService
-                            :as services} :- APIHandlerServices]
+                            :as _services_} :- APIHandlerServices]
  (routes
   (GET "/:observable_type/:observable_value/verdict" []
        :tags ["Verdict"]
