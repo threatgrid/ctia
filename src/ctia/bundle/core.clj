@@ -97,7 +97,7 @@
 (s/defn find-by-external-ids
   [import-data entity-type auth-identity
    {{:keys [read-store]} :StoreService
-    :as _services_} :- APIHandlerServices]
+    :as services} :- APIHandlerServices]
   (let [external-ids (mapcat :external_ids import-data)]
     (log/debugf "Searching %s matching these external_ids %s"
                 entity-type

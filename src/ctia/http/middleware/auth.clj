@@ -1,5 +1,6 @@
 (ns ctia.http.middleware.auth
-  (:require [ctia.auth :as auth :refer [auth-service]]
+  (:require [ctia.auth :as auth]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [compojure.api.meta :as meta]
             [ring.util.http-response :as http-response]
             [schema.core :as s]))
@@ -15,22 +16,23 @@
         (assoc-in [:headers "authorization"] auth-header))
     request))
 
-(defn testable-wrap-authentication
+(s/defn testable-wrap-authentication
   "wrap-autentication middleware."
-  [handler auth-service]
+  [handler
+   identity-for-token :- (s/=> s/Any s/Any)]
   (fn [request]
     (handler
      (if (:login request)
        request
        (let [auth-header (or (get-in request [:headers "authorization"])
                              (get-in request [:query-params "Authorization"]))
-             id (auth/identity-for-token auth-service auth-header)
+             id (identity-for-token auth-header)
              login (auth/login id)
              groups (auth/groups id)]
          (add-id-to-request request id login groups auth-header))))))
 
-(defn wrap-authentication [handler]
-  (testable-wrap-authentication handler @auth-service))
+(s/defn wrap-authentication [handler identity-for-token :- (s/=> s/Any s/Any)]
+  (testable-wrap-authentication handler identity-for-token))
 
 (defn wrap-authenticated [handler]
   (fn [request]
