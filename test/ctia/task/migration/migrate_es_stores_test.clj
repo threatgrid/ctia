@@ -158,6 +158,24 @@
     (testing "properly configured migration"
       (is (sut/check-migration-params migration-params)))))
 
+(deftest prepare-params-test
+  (let [migration-props {:buffer-size 3,
+                         :batch-size 100,
+                         :migration-id "migration-test",
+                         :restart? false,
+                         :store-keys "malware,  tool,sighting  ",
+                         :migrations "identity",
+                         :confirm? false,
+                         :prefix "v1.2.0"}
+        prepared (sut/prepare-params migration-props)]
+    (testing "prepare params should properly format migration properties"
+      (is (= (dissoc prepared :store-keys :migrations)
+             (dissoc migration-props :store-keys :migrations)))
+      (is (= (:store-keys prepared)
+             [:malware :tool :sighting]))
+      (is (= (:migrations prepared)
+             [:identity])))))
+
 (deftest migration-with-rollover
   (helpers/set-capabilities! "foouser"
                              ["foogroup"]
