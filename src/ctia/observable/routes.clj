@@ -1,9 +1,10 @@
 (ns ctia.observable.routes
   (:require
-   [compojure.api.sweet :refer :all]
-   [ctia
-    [properties :as p]
-    [store :refer :all]]
+   [compojure.api.core :refer [routes GET]]
+   [ctia.store :refer [calculate-verdict
+                       list-judgements-by-observable
+                       list-records
+                       list-sightings-by-observables]]
    [ctia.domain.entities
     :refer
     [page-with-long-id short-id->long-id un-store-page]]
@@ -14,8 +15,9 @@
    [ctia.entity.sighting.schemas :refer [PartialSightingList]]
    [ctia.http.routes.common :refer [paginated-ok PagingParams]]
    [clj-momo.lib.es.pagination :as pag]
-   [ctia.schemas.core :refer [ObservableTypeIdentifier Reference Verdict]]
+   [ctia.schemas.core :refer [APIHandlerServices ObservableTypeIdentifier Reference Verdict]]
    [ctim.domain.id :as id]
+   [ring.swagger.schema :refer [describe]]
    [ring.util.http-response :refer [not-found ok]]
    [schema-tools.core :as st]
    [schema.core :as s]))
@@ -25,9 +27,9 @@
             (s/optional-key :sort_by)
             (describe (s/enum :id) "Sort result on a field")))
 
-(defn observable-routes [{{:keys [get-in-config]} :ConfigService
-                          {:keys [read-store]} :StoreService
-                          :as services}]
+(s/defn observable-routes [{{:keys [get-in-config]} :ConfigService
+                            {:keys [read-store]} :StoreService
+                            :as services} :- APIHandlerServices]
  (routes
   (GET "/:observable_type/:observable_value/verdict" []
        :tags ["Verdict"]
