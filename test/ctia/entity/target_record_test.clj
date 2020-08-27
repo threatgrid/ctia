@@ -25,30 +25,32 @@
   (testing "GET /ctia/target-record/search"
     ;; only when ES store
     (when (= "es" (p/get-in-global-properties [:ctia :store :target-record]))
-      (are [term check-fn expected desc] (let [response (helpers/get
-                                                         "ctia/target-record/search"
-                                                         :query-params {"query" term}
-                                                         :headers {"Authorization" "45c1f5e3f05d0"})]
-                                           (is (= 200 (:status response)))
-                                           (is (= expected (check-fn response)) desc)
+      (let [{[target] :targets} target-record-sample
+            {[observable] :observables} target]
+        (are [term check-fn expected desc] (let [response (helpers/get
+                                                           "ctia/target-record/search"
+                                                           :query-params {"query" term}
+                                                           :headers {"Authorization" "45c1f5e3f05d0"})]
+                                             (is (= 200 (:status response)))
+                                             (is (= expected (check-fn response)) desc)
 
-                                           ;; to prevent `are` from double-failing
-                                           true)
+                                             ;; to prevent `are` from double-failing
+                                             true)
 
-        "*"
-        (fn [r] (-> r :parsed-body first :targets first :type))
-        (-> target-record-sample :targets first :type)
-        "Searching for target-record:targets:type"
+          (format "targets.type:%s" (:type target))
+          (fn [r] (-> r :parsed-body first :targets first :type))
+          (:type target)
+          "Searching for target-record:targets:type"
 
-        "*"
-        (fn [r] (-> r :parsed-body first :targets first :observables first :value))
-        (-> target-record-sample :targets first :observables first :value)
-        "Searching for target-record:targets:observables:value"
+          (format "targets.observables.value:%s" (:value observable))
+          (fn [r] (-> r :parsed-body first :targets first :observables first :value))
+          (:value observable)
+          "Searching for target-record:targets:observables:value"
 
-        "*"
-        (fn [r] (-> r :parsed-body first :targets first :observables first :type))
-        (-> target-record-sample :targets first :observables first :type)
-        "Searching for target-record:targets:observables:type"))))
+          (format "targets.observables.type:%s" (:type observable))
+          (fn [r] (-> r :parsed-body first :targets first :observables first :type))
+          (:type observable)
+          "Searching for target-record:targets:observables:type")))))
 
 (deftest target-record-routes-test
   (store/test-for-each-store

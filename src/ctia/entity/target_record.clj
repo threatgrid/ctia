@@ -147,5 +147,5 @@
    :realize-fn            realize-target-record
    :es-store              ->TargetRecordStore
    :es-mapping            target-record-mapping
-   :routes                target-record-routes
+   :services->routes      target-record-routes
    :capabilities          capabilities})

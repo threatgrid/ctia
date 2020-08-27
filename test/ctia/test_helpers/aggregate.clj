@@ -1,5 +1,6 @@
 (ns ctia.test-helpers.aggregate
   (:require [clj-momo.lib.clj-time.core :as time]
+            [clj-momo.lib.time :refer [format-date-time]]
             [clj-momo.lib.clj-time.coerce :as tc]
             [clj-momo.lib.clj-time.format :as tf]
             [clj-momo.lib.map :refer [deep-merge-with]]
@@ -153,37 +154,44 @@
        (map (fn [[k v]]
               {:key (str k) :value v}))))
 
-
+(defn- vals->date-vals [from-str to-str values]
+  (let [from  (tf/parse from-str)
+        to    (tf/parse to-str)
+        parse (fn [d] (cond-> d
+                        (inst? d) format-date-time
+                        d tf/parse))]
+    (->> values
+         (map parse)
+         (filter #(and (time/within? from to %)
+                       (time/before? % to))))))
 
 (defn- test-histogram
   "test one field histogram, examples are already created"
   [examples entity field granularity]
   (testing (format "histogram %s %s" entity field)
-    (let [parsed (parse-field field)
-          values (->>
-                  examples
-                  (keep #(es-get-in % parsed))
-                  flatten)
-          from-str "2020-03-01T00:00:00.000Z"
-          to-str "2020-10-01T00:00:00.000Z"
-          from (tf/parse from-str)
-          to (tf/parse to-str)
-          date-values (filter #(and (time/within? from to %)
-                                    (time/before? % to))
-                              (map tf/parse values))
-          res-days (map #(to-granularity-first-day granularity %)
-                        date-values)
-          expected (make-histogram-res res-days)
-          _ (assert (every? #(:value %) expected))
+    (let [parsed      (parse-field field)
+          values      (->>
+                       examples
+                       (keep #(es-get-in % parsed))
+                       flatten)
+          from-str    "2020-03-01T00:00:00.000Z"
+          to-str      "2020-10-01T00:00:00.000Z"
+          date-values (vals->date-vals from-str to-str values)
+          _           (assert (seq? date-values))
+          res-days    (map #(to-granularity-first-day granularity %)
+                           date-values)
+          expected    (make-histogram-res res-days)
+          _           (assert (every? #(:value %) expected))
           {{:keys [from to]} :filters
            :as res} (histogram entity
                                {:from from-str
-                                :to to-str}
+                                :to   to-str}
                                {:aggregate-on (name field)
-                                :granularity (name granularity)})]
+                                :granularity  (name granularity)})]
       (is (= expected
              (->> (es-get-in (:data res) parsed)
-                  (filter #(pos? (:value %))))))
+                  (filter #(pos? (:value %)))))
+          (format "test-histogram on: %s %s" entity field))
       (check-from-to from to))))
 
 (defn schema-enumerable-fields
