@@ -11,46 +11,40 @@
 
 (deftest new-object-test
   (testing "The same object is not created twice"
-    (let [registry (sut/create-named-type-registry)
+    (let [;; while the graphql schema is global, we want to use the global registry
+          ;; to avoid recreating objects.
           new-object-fn #(sut/new-object
-                           ;; graphql schema is currently global, so rerunning test will
-                           ;; use cached type
                            "NewObjectTestObject"
                            "Description 1"
                            []
-                           {}
-                           registry)]
+                           {})]
       (is (identical?
             (new-object-fn)
             (new-object-fn))))))
 
 (deftest enum-test
   (testing "The same enum is not created twice"
-    (let [registry (sut/create-named-type-registry)
+    (let [;; while the graphql schema is global, we want to use the global registry
+          ;; to avoid recreating objects.
           enum-fn #(sut/enum
-                     ;; graphql schema is currently global, so rerunning test will
-                     ;; use cached type
                      "EnumTestEnum"
                      "Description 1"
-                     ["V1" "v2" "V3"]
-                     registry)]
+                     ["V1" "v2" "V3"])]
       (is (identical?
             (enum-fn)
             (enum-fn))))))
 
 (deftest new-union-test
   (testing "The same union is not created twice"
-    (let [registry (sut/create-named-type-registry)
+    (let [;; while the graphql schema is global, we want to use the global registry
+          ;; to avoid recreating objects.
           union-fn #(sut/new-union
-                      ;; graphql schema is currently global, so rerunning test will
-                      ;; use cached type
                       "NewUnionTestUnion"
                       "Description"
                       (fn [obj args schema]
                         (throw (ex-info "stub" {})))
                       [(sut/new-ref "NewUnionTestRefA")
-                       (sut/new-ref "NewUnionTestRefB")]
-                      registry)]
+                       (sut/new-ref "NewUnionTestRefB")])]
       (is (identical?
             (union-fn)
             (union-fn))))))
@@ -67,9 +61,9 @@
                                       (if ran?
                                         (throw (ex-info "Redefined type!" {}))
                                         true)))
+                        ;; while the graphql schema is global, we want to use the global registry
+                        ;; to avoid recreating objects.
                         (sut/enum
-                          ;; graphql schema is currently global, so rerunning test will
-                          ;; use cached type
                           type-name
                           "Description 1"
                           ["V1" "v2" "V3"])))
