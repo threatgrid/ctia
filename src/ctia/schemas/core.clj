@@ -14,9 +14,9 @@
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
   {:ConfigService {:get-config (s/=> s/Any s/Any)
-                   :get-in-config (s/=> s/Any
-                                        [s/Any]
-                                        [s/Any s/Any])}
+                   :get-in-config (s/=>* s/Any
+                                         [s/Any]
+                                         [s/Any s/Any])}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
@@ -38,9 +38,25 @@
    :created java.util.Date
    (s/optional-key :modified) java.util.Date})
 
-#_ ;;TODO
+;; TODO merge this with ctia.schemas.graphql.helpers
+#_
 (s/defschema RealizeFnServices
-  )
+  "Maps of service functions available for realize-fns"
+  {:ConfigService {:get-in-config (s/=>* s/Any
+                                         [s/Any]
+                                         [s/Any s/Any])}
+   :StoreService {:read-store (s/pred ifn?)} ;;varags
+   :GraphQLService {:get-or-update-type-registry (s/=> s/Any
+                                                       (s/named s/Str
+                                                                'name)
+                                                       (s/named (s/=> s/Any s/Any)
+                                                                'f))}})
+
+;; TODO merge this with ctia.schemas.graphql.helpers
+#_
+(s/def GraphQLRuntimeOptions
+  "A map of options to resolve a DelayedGraphQLValue"
+  {:services RealizeFnServices})
 
 (defn MaybeDelayedRealizeFnResult
   [a]
@@ -70,11 +86,17 @@
 (s/defschema RealizeFn
   (RealizeFnReturning (s/pred map?)))
 
-(defn MaybeDelayedRealizeFn->RealizeFn [realize-fn rt-opt]
-  {:pre [(map? rt-opt)
-         (:services rt-opt)]}
+(s/defn MaybeDelayedRealizeFn->RealizeFn
+  :- RealizeFn
+  [realize-fn :- MaybeDelayedRealizeFn
+   rt-opt #_:- #_GraphQLRuntimeOptions]
   (fn [& args]
     (let [maybe-delayed (apply realize-fn args)]
+      (assert (or (fn? maybe-delayed)
+                  (instance? graphql.schema.GraphQLType maybe-delayed))
+              maybe-delayed)
+      ;; TODO if the above assertion succeeds, we can probably use ifn? here.
+      ;; TODO merge with ctia.schemas.graphql.helpers/resolve-with-rt-opt
       (if (fn? maybe-delayed)
         (maybe-delayed rt-opt)
         maybe-delayed))))

@@ -63,7 +63,7 @@
 
 (defn MaybeDelayedGraphQLValue [a]
   "Higher-order Schema: A possibly-delayed GraphQL value."
-  (s/if fn?
+  (s/if fn? ;; FIXME possibly can test for graphql.schema.GraphQLType
     (DelayedGraphQLValue a)
     a))
 
@@ -87,6 +87,11 @@
   "Resolve a MaybeDelayedGraphQLValue value, if needed, using given runtime options."
   [maybe-fn :- (MaybeDelayedGraphQLValue GraphQLValue)
    rt-opt :- GraphQLRuntimeOptions]
+  ;; TODO merge with MaybeDelayedRealizeFn->RealizeFn
+  (assert (or (fn? maybe-fn)
+              (instance? graphql.schema.GraphQLType maybe-fn))
+          maybe-fn)
+  ;; TODO if above assertion holds, use ifn?
   (if (fn? maybe-fn)
     (maybe-fn rt-opt)
     maybe-fn))
