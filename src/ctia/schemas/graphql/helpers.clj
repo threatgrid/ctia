@@ -30,41 +30,19 @@
             GraphQLUnionType
             TypeResolver]))
 
-(declare delayed-graphql-value?)
-
-(s/defn DelayedGraphQLValue
-  :- (s/protocol s/Schema)
-  [a :- (s/protocol s/Schema)]
-  "A 1-argument function that returns values ready for use by the GraphQL API.
-  Must implement clojure.lang.Fn."
-  (let [a (s/constrained a GraphQLValue)]
-    (s/constrained
-      (s/=> a
-            GraphQLRuntimeOptions)
-      delayed-graphql-value?)))
-
-(s/defn MaybeDelayedGraphQLValue
-  :- (s/protocol s/Schema)
-  [a :- (s/protocol s/Schema)]
-  "Higher-order Schema: Returns either a 1-argument function implementing clojure.lang.Fn
-  which returns
-  A possibly-delayed value. "
-  (let [a (s/constrained a GraphQLValue)]
-    (s/if delayed-graphql-value?
-      (DelayedGraphQLValue a)
-      a)))
-
-(s/defschema AnyMaybeDelayedGraphQLValue
-  (MaybeDelayedGraphQLValue GraphQLValue))
-
 (s/defn delayed-graphql-value?
-  [v :- AnyMaybeDelayedGraphQLValue]
+  "A flat predicate deciding if the argument is delayed."
+  [v #_#_:- AnyMaybeDelayedGraphQLValue]
   (fn? v))
 
+(s/defn resolved-graphql-value?
+  "A flat predicate deciding if the argument is not delayed."
+  [v #_#_:- AnyMaybeDelayedGraphQLValue]
+  (not (delayed-graphql-value? v)))
+
 (s/defschema GraphQLValue
-  "A concrete value ready to be passed to the GraphQL API."
   (s/pred
-    (complement delayed-graphql-value?)))
+    resolved-graphql-value?))
 
 (s/defschema GraphQLRuntimeOptions
   "A map of options to resolve a DelayedGraphQLValue."
@@ -73,17 +51,43 @@
                                :get-or-update-type-registry (s/pred ifn?)}
               :StoreService {:read-store (s/pred ifn?)}}})
 
+(s/defn DelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "A 1-argument function that returns values ready for use by the GraphQL API.
+  Must implement clojure.lang.Fn.
+  
+  a must be a subtype of GraphQLValue."
+  (let [a (s/constrained a resolved-graphql-value?)]
+    (s/constrained
+      (s/=> a
+            GraphQLRuntimeOptions)
+      delayed-graphql-value?)))
+
+(s/defn MaybeDelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "Returns a schema representing
+  a must be a subtype of GraphQLValue."
+  (let [a (s/constrained a resolved-graphql-value?)]
+    (s/if delayed-graphql-value?
+      (DelayedGraphQLValue a)
+      a)))
+
+(s/defschema AnyMaybeDelayedGraphQLValue
+  (MaybeDelayedGraphQLValue GraphQLValue))
+
 (s/defn MaybeDelayedGraphQLTypeResolver
   :- (s/protocol s/Schema)
   [a :- (s/protocol s/Schema)]
   "Returns a schema representing type resolvers
   that might return delayed GraphQL values."
-  (let [a (s/constrained a GraphQLValue)]
+  (let [a (s/constrained a resolved-graphql-value?)]
     (s/=> (MaybeDelayedGraphQLValue a)
           (s/named s/Any 'context)
           (s/named s/Any 'args)
           (s/named s/Any 'field-selection)
-          (s/named s/Any 'src))))
+          (s/named s/Any 'source))))
 
 (s/defschema AnyMaybeDelayedGraphQLTypeResolver
   (MaybeDelayedGraphQLTypeResolver GraphQLValue))
@@ -273,7 +277,7 @@
        (seq detected-selections) (concat detected-selections)))))
 
 (s/defn fn->data-fetcher :- DataFetcher
-  "Converts a function that takes 4 parameters (context, args, field-selection value)
+  "Converts a function that takes 4 parameters (context, args, field-selection, source)
   to a GraphQL DataFetcher"
   [f :- AnyMaybeDelayedGraphQLTypeResolver
    rt-opt :- GraphQLRuntimeOptions]
@@ -318,8 +322,8 @@
       (.defaultValue builder arg-default-value))
     (.build builder)))
 
-(defn add-args
-  ^GraphQLFieldDefinition$Builder
+(s/defn ^GraphQLFieldDefinition$Builder
+  add-args
   [^GraphQLFieldDefinition$Builder field
    args
    rt-opt :- GraphQLRuntimeOptions]
@@ -456,9 +460,9 @@
   "Converts a function that takes the current object, the args
   and the global schema to a TypeResolver."
   [f :- (s/=> AnyMaybeDelayedGraphQLValue
-              s/Any ;; object
-              s/Any ;; args
-              s/Any);; schema
+              (s/named s/Any 'object)
+              (s/named s/Any 'args)
+              (s/named s/Any 'schema))
    rt-opt :- GraphQLRuntimeOptions]
   (reify TypeResolver
     (getType [_ env]
