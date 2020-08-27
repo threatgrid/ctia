@@ -2,7 +2,8 @@
   (:require [ctia.schemas.graphql.helpers :as sut]
             [clj-momo.test-helpers.core :as mth]
             [clojure.test :as t :refer [deftest is testing use-fixtures]])
-  (:import [java.util.concurrent CountDownLatch TimeUnit]))
+  (:import [graphql.schema GraphQLType]
+           [java.util.concurrent CountDownLatch TimeUnit]))
 
 (use-fixtures :once mth/fixture-schema-validation)
 
@@ -19,8 +20,9 @@
                            []
                            {}
                            registry)]
-      (is (= (new-object-fn)
-             (new-object-fn))))))
+      (is (identical?
+            (new-object-fn)
+            (new-object-fn))))))
 
 (deftest enum-test
   (testing "The same enum is not created twice"
@@ -32,8 +34,9 @@
                      "Description 1"
                      ["V1" "v2" "V3"]
                      registry)]
-      (is (= (enum-fn)
-             (enum-fn))))))
+      (is (identical?
+            (enum-fn)
+            (enum-fn))))))
 
 (deftest new-union-test
   (testing "The same union is not created twice"
@@ -48,8 +51,9 @@
                       [(sut/new-ref "NewUnionTestRefA")
                        (sut/new-ref "NewUnionTestRefB")]
                       registry)]
-      (is (= (union-fn)
-             (union-fn))))))
+      (is (identical?
+            (union-fn)
+            (union-fn))))))
 
 (deftest get-or-update-type-named-registry-test
   (dotimes [_ 30]
@@ -87,11 +91,16 @@
                            registry
                            type-name
                            runs-once))))
-          _ (assert (seq threads))]
-      (is (apply = (map (fn [d]
-                          {:post [(not= :timeout %)]}
-                          (deref d timeout-ms :timeout))
-                        threads))))))
+          _ (assert (seq threads))
+          expected-result (sut/get-or-update-named-type-registry
+                            registry
+                            type-name
+                            runs-once)
+          _ (assert (instance? GraphQLType expected-result))]
+      (doseq [d threads
+              :let [r (deref d timeout-ms :timeout)]]
+        (assert (instance? GraphQLType r))
+        (is (identical? expected-result r))))))
 
 (deftest valid-type-name?-test
   (is (not (sut/valid-type-name? nil))
