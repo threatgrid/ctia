@@ -30,69 +30,77 @@
             GraphQLUnionType
             TypeResolver]))
 
-;;  For historical reasons (predating trapperkeeper),
-;;  many GraphQL operations in this namespace are evaluated in
-;;  a top-level context, before trapperkeeper can provide services.
-;;  To resolve this, an additional layer of indirection is added:
-;;  each GraphQL operation can either return a GraphQL class or
-;;  a 1-argument function that takes a map and returns a GraphQL class.
-;;
-;;  The argument to that function is called 'rt-opt' because they are
-;;  extra values provided at 'runtime' (as opposed to 'compile time',
-;;  or top-level evaluation time).
-;;  
-;;  Currently, the only known runtime option entry is ':services',
-;;  which contains a map from service keywords to operations (including,
-;;  but not limited to, those provided by defservice).
+(declare delayed-graphql-value?)
+
+(s/defn DelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "A 1-argument function that returns values ready for use by the GraphQL API.
+  Must implement clojure.lang.Fn."
+  (let [a (s/constrained a GraphQLValue)]
+    (s/constrained
+      (s/=> a
+            GraphQLRuntimeOptions)
+      delayed-graphql-value?)))
+
+(s/defn MaybeDelayedGraphQLValue
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "Higher-order Schema: Returns either a 1-argument function implementing clojure.lang.Fn
+  which returns
+  A possibly-delayed value. "
+  (let [a (s/constrained a GraphQLValue)]
+    (s/if delayed-graphql-value?
+      (DelayedGraphQLValue a)
+      a)))
+
+(s/defschema AnyMaybeDelayedGraphQLValue
+  (MaybeDelayedGraphQLValue GraphQLValue))
+
+(s/defn delayed-graphql-value?
+  [v :- AnyMaybeDelayedGraphQLValue]
+  (fn? v))
 
 (s/defschema GraphQLValue
   "A concrete value ready to be passed to the GraphQL API."
-  s/Any) ;; not a function. usually an instance of any class in the graphql.* package
+  (s/pred
+    (complement delayed-graphql-value?)))
 
-(s/def GraphQLRuntimeOptions
-  "A map of options to resolve a DelayedGraphQLValue"
+(s/defschema GraphQLRuntimeOptions
+  "A map of options to resolve a DelayedGraphQLValue."
   {:services {:ConfigService {:get-in-config (s/pred ifn?)}
               :GraphQLService {;; not a real service method, mostly internal to GraphQLService
                                :get-or-update-type-registry (s/pred ifn?)}
               :StoreService {:read-store (s/pred ifn?)}}})
 
-(defn DelayedGraphQLValue [a]
-  "Higher-order Schema: A function that returns values ready for use by the GraphQL API."
-  (s/=> a
-        GraphQLRuntimeOptions))
+(s/defn MaybeDelayedGraphQLTypeResolver
+  :- (s/protocol s/Schema)
+  [a :- (s/protocol s/Schema)]
+  "Returns a schema representing type resolvers
+  that might return delayed GraphQL values."
+  (let [a (s/constrained a GraphQLValue)]
+    (s/=> (MaybeDelayedGraphQLValue a)
+          (s/named s/Any 'context)
+          (s/named s/Any 'args)
+          (s/named s/Any 'field-selection)
+          (s/named s/Any 'src))))
 
-(defn MaybeDelayedGraphQLValue [a]
-  "Higher-order Schema: A possibly-delayed GraphQL value."
-  (s/if fn? ;; FIXME possibly can test for graphql.schema.GraphQLType
-    (DelayedGraphQLValue a)
-    a))
-
-(defn MaybeDelayedGraphQLTypeResolver [a]
-  "Higher-order Schema: A type resolver that can return a delayed GraphQL value."
-  (s/=> (MaybeDelayedGraphQLValue a)
-        s/Any  ;; context
-        s/Any  ;; args
-        s/Any  ;; field-selection
-        s/Any));; src
+(s/defschema AnyMaybeDelayedGraphQLTypeResolver
+  (MaybeDelayedGraphQLTypeResolver GraphQLValue))
 
 (s/defschema MaybeDelayedGraphQLFields
   {s/Keyword
-   {:type (MaybeDelayedGraphQLValue GraphQLValue)
+   {:type AnyMaybeDelayedGraphQLValue
     (s/optional-key :args) s/Any
-    (s/optional-key :resolve) (MaybeDelayedGraphQLTypeResolver GraphQLValue)
+    (s/optional-key :resolve) AnyMaybeDelayedGraphQLTypeResolver
     (s/optional-key :description) s/Any
     (s/optional-key :default-value) s/Any}})
 
 (s/defn resolve-with-rt-opt :- GraphQLValue
   "Resolve a MaybeDelayedGraphQLValue value, if needed, using given runtime options."
-  [maybe-fn :- (MaybeDelayedGraphQLValue GraphQLValue)
+  [maybe-fn :- AnyMaybeDelayedGraphQLValue
    rt-opt :- GraphQLRuntimeOptions]
-  ;; TODO merge with MaybeDelayedRealizeFn->RealizeFn
-  (assert (or (fn? maybe-fn)
-              (instance? graphql.schema.GraphQLType maybe-fn))
-          maybe-fn)
-  ;; TODO if above assertion holds, use ifn?
-  (if (fn? maybe-fn)
+  (if (delayed-graphql-value? maybe-fn)
     (maybe-fn rt-opt)
     maybe-fn))
 
@@ -267,11 +275,7 @@
 (s/defn fn->data-fetcher :- DataFetcher
   "Converts a function that takes 4 parameters (context, args, field-selection value)
   to a GraphQL DataFetcher"
-  [f :- (s/=> (MaybeDelayedGraphQLValue GraphQLValue)
-              s/Any ;; context
-              s/Any ;; args
-              s/Any ;; field-selection
-              s/Any);; value
+  [f :- AnyMaybeDelayedGraphQLTypeResolver
    rt-opt :- GraphQLRuntimeOptions]
   (reify DataFetcher
     (get [_ env]
@@ -288,7 +292,7 @@
         (debug "data-fetcher result:" result)
         result))))
 
-(s/defn map-resolver :- (MaybeDelayedGraphQLTypeResolver GraphQLValue)
+(s/defn map-resolver :- AnyMaybeDelayedGraphQLTypeResolver
   ([k] (map-resolver k identity))
   ([k f]
    (fn [_ _ _ value]
@@ -301,9 +305,10 @@
   new-argument
   :- GraphQLArgument
   [^String arg-name
-   arg-type :- (MaybeDelayedGraphQLValue GraphQLValue)
+   arg-type :- AnyMaybeDelayedGraphQLValue
    ^String arg-description
-   arg-default-value, rt-opt :- GraphQLRuntimeOptions]
+   arg-default-value
+   rt-opt :- GraphQLRuntimeOptions]
   (let [builder
         (-> (GraphQLArgument/newArgument)
             (.name arg-name)
@@ -316,7 +321,8 @@
 (defn add-args
   ^GraphQLFieldDefinition$Builder
   [^GraphQLFieldDefinition$Builder field
-   args, rt-opt]
+   args
+   rt-opt :- GraphQLRuntimeOptions]
   (doseq [[k {arg-type :type
               arg-description :description
               arg-default-value :default
@@ -333,9 +339,10 @@
 (s/defn new-input-field
   :- GraphQLInputObjectField
   [^String field-name
-   field-type :- (MaybeDelayedGraphQLValue GraphQLValue)
+   field-type :- AnyMaybeDelayedGraphQLValue
    ^String field-description
-   default-value, rt-opt :- GraphQLRuntimeOptions]
+   default-value
+   rt-opt :- GraphQLRuntimeOptions]
   (let [^GraphQLInputType field-type (-> field-type
                                          (resolve-with-rt-opt rt-opt))
         _ (log/debug "New input field" field-name (pr-str field-type))
@@ -448,7 +455,7 @@
 (s/defn fn->type-resolver :- TypeResolver
   "Converts a function that takes the current object, the args
   and the global schema to a TypeResolver."
-  [f :- (s/=> (MaybeDelayedGraphQLValue GraphQLValue)
+  [f :- (s/=> AnyMaybeDelayedGraphQLValue
               s/Any ;; object
               s/Any ;; args
               s/Any);; schema
