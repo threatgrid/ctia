@@ -25,24 +25,28 @@
             GraphQLObjectType$Builder
             GraphQLOutputType
             GraphQLSchema
+            GraphQLType
             GraphQLTypeReference
             GraphQLUnionType
             TypeResolver]))
 
-(s/defschema TypeRegistry
-  "Type registry to ensure named GraphQL types are created exactly once.
+(s/defschema NamedTypeRegistry
+  "Type registry to ensure named GraphQL named types are created exactly once.
   Contains a map with derefable types indexed by name.
   Use via get-or-update-type-registry."
   (s/atom {s/Str
-           #_(IDeref graphql.*) ;; returns a graphql-related thing on deref
+           #_(IDeref GraphQLNamedType)
            (s/pred some?)}))
 
-(s/defn get-or-update-type-registry
+(s/defn get-or-update-named-type-registry
+  ;; could return graphql.schema.GraphQLNamedType, but doesn't exist in current GraphQL version
+  :- GraphQLType
   "If name exists in registry, return existing mapping. Otherwise
   atomically calls (f) and returns result after adding to registry under name."
-  [type-registry :- TypeRegistry
+  [type-registry :- NamedTypeRegistry
    name :- s/Str
-   f :- (s/=> s/Any s/Any)]
+   ;; TODO use GraphQLNamedType when available
+   f :- (s/=> GraphQLType)]
   (if-some [d (@type-registry name)]
     @d ;; fast-path for readers
     ;; generate a new graphql value, or coordinate with another thread doing the same
@@ -54,8 +58,15 @@
                                          (assoc name (delay (f))))))]
       @result-delay)))
 
+(s/defn create-named-type-registry
+  :- NamedTypeRegistry
+  []
+  (atom {}))
+
 ;; TODO move to Trapperkeeper service
-(s/def ^:private default-type-registry :- TypeRegistry (atom {}))
+(s/def ^:private default-named-type-registry
+  :- NamedTypeRegistry
+  (create-named-type-registry))
 
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
@@ -110,9 +121,9 @@
   ([enum-name description values] (enum enum-name
                                    description
                                    values
-                                   default-type-registry))
+                                   default-named-type-registry))
   ([^String enum-name ^String description values registry]
-    (get-or-update-type-registry
+    (get-or-update-named-type-registry
       registry
       enum-name
       #(let [builder (-> (GraphQLEnumType/newEnum)
@@ -314,8 +325,8 @@
   [^String object-name
    ^String description
    fields]
-    (get-or-update-type-registry
-      default-type-registry
+    (get-or-update-named-type-registry
+      default-named-type-registry
       object-name
       #(-> (GraphQLInputObjectType/newInputObject)
            (.name ^String object-name)
@@ -366,13 +377,13 @@
    created, the corresponding object is retrieved from the provided or the
    default type repository."
   ([object-name description interfaces fields]
-   (new-object object-name description interfaces fields default-type-registry))
+   (new-object object-name description interfaces fields default-named-type-registry))
   ([^String object-name
     ^String description
     interfaces
     fields
     registry]
-    (get-or-update-type-registry
+    (get-or-update-named-type-registry
       registry
       object-name
       #(let [builder (-> (GraphQLObjectType/newObject)
@@ -397,12 +408,22 @@
         (f object args schema)))))
 
 (defn new-union
-  [^String union-name
-   ^String description
-   type-resolver-fn
-   types]
-    (get-or-update-type-registry
-      default-type-registry
+  ([union-name
+    description
+    type-resolver-fn
+    types]
+   (new-union union-name
+              description
+              type-resolver-fn
+              types
+              default-named-type-registry))
+  ([^String union-name
+    ^String description
+    type-resolver-fn
+    types
+    registry]
+    (get-or-update-named-type-registry
+      registry
       union-name
       #(let [type-resolver (fn->type-resolver type-resolver-fn)
              graphql-union (-> (GraphQLUnionType/newUnionType)
@@ -414,7 +435,7 @@
            (if (instance? GraphQLObjectType type)
              (.possibleType graphql-union ^GraphQLObjectType type)
              (.possibleType graphql-union ^GraphQLTypeReference type)))
-         (.build graphql-union))))
+         (.build graphql-union)))))
 
 (defn new-ref
   [object-name]

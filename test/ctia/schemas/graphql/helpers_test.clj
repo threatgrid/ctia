@@ -1,26 +1,97 @@
 (ns ctia.schemas.graphql.helpers-test
   (:require [ctia.schemas.graphql.helpers :as sut]
-            [clojure.test :as t :refer [deftest is testing]]))
+            [clj-momo.test-helpers.core :as mth]
+            [clojure.test :as t :refer [deftest is testing use-fixtures]])
+  (:import [java.util.concurrent CountDownLatch TimeUnit]))
+
+(use-fixtures :once mth/fixture-schema-validation)
+
+;; TODO when global graphql schema is stubbable, add parallel tests to new-object-test etc
 
 (deftest new-object-test
   (testing "The same object is not created twice"
-    (is (= (sut/new-object "Object"
+    (let [registry (sut/create-named-type-registry)
+          new-object-fn #(sut/new-object
+                           ;; graphql schema is currently global, so rerunning test will
+                           ;; use cached type
+                           "NewObjectTestObject"
                            "Description 1"
                            []
-                           {})
-           (sut/new-object "Object"
-                           "Description 2"
-                           []
-                           {})))))
+                           {}
+                           registry)]
+      (is (= (new-object-fn)
+             (new-object-fn))))))
 
 (deftest enum-test
   (testing "The same enum is not created twice"
-    (is (= (sut/enum "Enum"
+    (let [registry (sut/create-named-type-registry)
+          enum-fn #(sut/enum
+                     ;; graphql schema is currently global, so rerunning test will
+                     ;; use cached type
+                     "EnumTestEnum"
                      "Description 1"
-                     ["V1" "v2" "V3"])
-           (sut/enum "Enum"
-                     "Description 2"
-                     ["V1"])))))
+                     ["V1" "v2" "V3"]
+                     registry)]
+      (is (= (enum-fn)
+             (enum-fn))))))
+
+(deftest new-union-test
+  (testing "The same union is not created twice"
+    (let [registry (sut/create-named-type-registry)
+          union-fn #(sut/new-union
+                      ;; graphql schema is currently global, so rerunning test will
+                      ;; use cached type
+                      "NewUnionTestUnion"
+                      "Description"
+                      (fn [obj args schema]
+                        (throw (ex-info "stub" {})))
+                      [(sut/new-ref "NewUnionTestRefA")
+                       (sut/new-ref "NewUnionTestRefB")]
+                      registry)]
+      (is (= (union-fn)
+             (union-fn))))))
+
+(deftest get-or-update-type-named-registry-test
+  (dotimes [_ 30]
+    (let [type-name "GetOrUpdateTypeNamedRegistryTestEnum"
+          ;; we simulate graphql's restriction that a named type
+          ;; can only be created once, since the graphql schema is
+          ;; currently global.
+          runs-once (let [ran? (atom false)]
+                      (fn []
+                        (swap! ran? (fn [ran?]
+                                      (if ran?
+                                        (throw (ex-info "Redefined type!" {}))
+                                        true)))
+                        (sut/enum
+                          ;; graphql schema is currently global, so rerunning test will
+                          ;; use cached type
+                          type-name
+                          "Description 1"
+                          ["V1" "v2" "V3"])))
+          timeout-ms 10000
+          registry (sut/create-named-type-registry)
+          thread-count 5
+          make-sync-fn (fn []
+                         (let [latch (CountDownLatch. thread-count)]
+                           #(do (.countDown latch)
+                                (assert (.await latch timeout-ms TimeUnit/MILLISECONDS)))))
+          sync-starts (make-sync-fn)
+          threads (doall
+                    (repeatedly
+                      thread-count
+                      #(future
+                         ;; synchronize threads to increase contention
+                         (sync-starts)
+                         (sut/get-or-update-named-type-registry
+                           registry
+                           type-name
+                           runs-once))))
+          _ (assert (seq threads))]
+      (is (apply = (map (fn [d]
+                          {:post [(not= :timeout %)]}
+                          (deref d timeout-ms :timeout))
+                        threads))))))
 
 (deftest valid-type-name?-test
   (is (not (sut/valid-type-name? nil))
