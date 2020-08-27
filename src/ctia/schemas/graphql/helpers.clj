@@ -26,6 +26,7 @@
             GraphQLObjectType$Builder
             GraphQLOutputType
             GraphQLSchema
+            GraphQLType
             GraphQLTypeReference
             GraphQLUnionType
             TypeResolver]))
@@ -46,9 +47,11 @@
 
 (s/defschema GraphQLRuntimeOptions
   "A map of options to resolve a DelayedGraphQLValue."
-  {:services {:ConfigService {:get-in-config (s/pred ifn?)}
+  {:services {s/Keyword {s/Keyword (s/pred ifn?)}}
+   ;; TODO
+   #_{:ConfigService {:get-in-config (s/pred ifn?)}
               :GraphQLService {;; not a real service method, mostly internal to GraphQLService
-                               :get-or-update-type-registry (s/pred ifn?)}
+                               :get-or-update-named-type-registry (s/pred ifn?)}
               :StoreService {:read-store (s/pred ifn?)}}})
 
 (s/defn DelayedGraphQLValue
@@ -108,6 +111,44 @@
     (maybe-fn rt-opt)
     maybe-fn))
 
+(s/defschema NamedTypeRegistry
+  "Type registry to ensure named GraphQL named types are created exactly once.
+  Contains a map with derefable types indexed by name.
+  Use via get-or-update-named-type-registry."
+  (s/atom {s/Str
+           #_(IDeref GraphQLNamedType)
+           (s/pred some?)}))
+
+(s/defn get-or-update-named-type-registry
+  ;; could return graphql.schema.GraphQLNamedType, but doesn't exist in current GraphQL version
+  :- GraphQLType
+  "If name exists in registry, return existing mapping. Otherwise
+  atomically calls (f) and returns result after adding to registry under name."
+  [type-registry :- NamedTypeRegistry
+   name :- s/Str
+   ;; TODO use GraphQLNamedType when available
+   f :- (s/=> GraphQLType)]
+  (if-some [d (@type-registry name)]
+    @d ;; fast-path for readers
+    ;; generate a new graphql value, or coordinate with another thread doing the same
+    (let [f (bound-fn* f) ;; may be run on another thread
+          {result-delay name} (swap! type-registry
+                                     (fn [{existing-delay name :as oldtr}]
+                                       (cond-> oldtr
+                                         (not existing-delay)
+                                         (assoc name (delay (f))))))]
+      @result-delay)))
+
+(s/defn create-named-type-registry
+  :- NamedTypeRegistry
+  []
+  (atom {}))
+
+;; TODO move to Trapperkeeper service
+(s/def ^:private default-named-type-registry
+  :- NamedTypeRegistry
+  (create-named-type-registry))
+
 (defprotocol ConvertibleToJava
   (->java [o] "convert clojure data structure to java object"))
 
@@ -157,11 +198,11 @@
 (s/defn enum :- (MaybeDelayedGraphQLValue GraphQLEnumType)
   "Creates a GraphQLEnumType. If a type with the same name has already been
    created, the corresponding object is retrieved instead."
-   [enum-name :- String description values]
-   (s/fn :- GraphQLEnumType
-    [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services
+  [enum-name :- String description values]
+  (s/fn :- GraphQLEnumType
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLService} :services
       :as _rt-opt_} :- GraphQLRuntimeOptions]
-    (get-or-update-type-registry
+    (get-or-update-named-type-registry
       enum-name
       #(let [builder (-> (GraphQLEnumType/newEnum)
                          (.name enum-name)
@@ -379,13 +420,13 @@
 (s/defn new-input-object :- (MaybeDelayedGraphQLValue GraphQLInputObjectType)
   "Creates a GraphQLInputObjectType. If a type with the same name has already been
    created, the corresponding object is retrieved instead."
-  [object-name
-   description
+  [object-name :- s/Str
+   description :- s/Str
    fields :- MaybeDelayedGraphQLFields]
   (s/fn :- GraphQLInputObjectType
-    [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLService} :services
       :as rt-opt} :- GraphQLRuntimeOptions]
-    (get-or-update-type-registry
+    (get-or-update-named-type-registry
       object-name
       #(-> (GraphQLInputObjectType/newInputObject)
            (.name ^String object-name)
@@ -441,11 +482,14 @@
   "Creates a GraphQLObjectType. If a type with the same name has already been
    created, the corresponding object is retrieved from the provided or the
    default type repository."
-  [object-name description interfaces fields :- MaybeDelayedGraphQLFields]
+  [object-name :- s/Str
+   description :- s/Str
+   interfaces
+   fields :- MaybeDelayedGraphQLFields]
   (s/fn :- GraphQLObjectType
-    [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLService} :services
       :as rt-opt} :- GraphQLRuntimeOptions]
-    (get-or-update-type-registry
+    (get-or-update-named-type-registry
       object-name
       #(let [builder (-> (GraphQLObjectType/newObject)
                          (.description ^String description)
@@ -480,9 +524,9 @@
    type-resolver-fn
    types]
   (s/fn :- GraphQLUnionType
-    [{{{:keys [get-or-update-type-registry]} :GraphQLService} :services
+    [{{{:keys [get-or-update-named-type-registry]} :GraphQLService} :services
       :as rt-opt} :- GraphQLRuntimeOptions]
-    (get-or-update-type-registry
+    (get-or-update-named-type-registry
       union-name
       #(let [type-resolver (fn->type-resolver type-resolver-fn rt-opt)
              graphql-union (-> (GraphQLUnionType/newUnionType)

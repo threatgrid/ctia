@@ -46,11 +46,11 @@
                                          [s/Any]
                                          [s/Any s/Any])}
    :StoreService {:read-store (s/pred ifn?)} ;;varags
-   :GraphQLService {:get-or-update-type-registry (s/=> s/Any
-                                                       (s/named s/Str
-                                                                'name)
-                                                       (s/named (s/=> s/Any s/Any)
-                                                                'f))}})
+   :GraphQLService {:get-or-update-named-type-registry (s/=> s/Any
+                                                             (s/named s/Str
+                                                                      'name)
+                                                             (s/named (s/=> s/Any s/Any)
+                                                                      'f))}})
 
 ;; TODO merge this with ctia.schemas.graphql.helpers
 #_
