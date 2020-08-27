@@ -40,7 +40,7 @@
 
 (s/defschema StorePropertiesSchema
   "All entity store properties for every implementation"
-  (let [configurable-stores (map name (keys store-svc-core/empty-stores))
+  (let [configurable-stores (map name (keys store/empty-stores))
         store-names (conj configurable-stores "default")]
     (st/optional-keys
      (reduce merge {}

@@ -11,7 +11,7 @@
             [ctia
              [init :refer [log-properties]]
              [properties :as p]
-             [store-service-core :refer [empty-stores]]]))
+             [store :refer [empty-stores]]]))
 
 (defn update-stores!
   [store-keys get-in-config]

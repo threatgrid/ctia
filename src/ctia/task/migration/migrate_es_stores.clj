@@ -8,7 +8,6 @@
             [clj-momo.lib.es.schemas :refer [ESConn ESQuery]]
 
             [ctia.init :as init]
-            [ctia.store-service-core :refer [empty-stores]]
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.sighting.schemas :refer [StoredSighting]]
             [ctia.properties :as p]

@@ -1,8 +1,6 @@
 (ns ctia.store
   (:require [ctia.schemas.core :refer [APIHandlerServices]]
-            [ctia.store-service :as store-svc]
             [schema.core :as s]))
-   
 
 (defprotocol IStore
   (create-record [this new-records ident params])
@@ -32,6 +30,32 @@
   (query-string-search [this search-query ident params])
   (query-string-count [this search-query ident])
   (aggregate [this search-query agg-query ident]))
+
+(def empty-stores
+  {:judgement []
+   :indicator []
+   :feed []
+   :feedback []
+   :campaign []
+   :actor []
+   :asset []
+   :asset-mapping []
+   :asset-properties []
+   :coa []
+   :data-table []
+   :sighting []
+   :identity-assertion []
+   :incident []
+   :relationship []
+   :identity []
+   :attack-pattern []
+   :malware []
+   :tool []
+   :event []
+   :investigation []
+   :casebook []
+   :vulnerability []
+   :weakness []})
 
 (def read-fn read-record)
 (def create-fn create-record)

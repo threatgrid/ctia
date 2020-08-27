@@ -1,8 +1,8 @@
 (ns ctia.stores.es-service-core
   (:require [clojure.string :as str]
             [ctia.properties :as p]
-            [ctia.stores.es.init :as es-init]
-            [ctia.store-service-core :refer [empty-stores]]))
+            [ctia.store :refer [empty-stores]]
+            [ctia.stores.es.init :as es-init]))
 
 ;; Note: this implementation assumes StoreService is
 ;; only ever used by the es-store-service.
