@@ -92,7 +92,7 @@
       verb (assoc :incident_time {verb t}))))
 
 (s/defn incident-additional-routes [{{:keys [read-store write-store]} :StoreService
-                                     :as _services_} :- APIHandlerServices]
+                                     :as services} :- APIHandlerServices]
   (routes
    (POST "/:id/status" []
          :return Incident
@@ -108,6 +108,7 @@
            (if-let [updated
                     (un-store
                      (flows/patch-flow
+                      :services services
                       :get-fn #(read-store :incident
                                            read-record
                                            %
