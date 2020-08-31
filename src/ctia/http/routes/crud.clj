@@ -37,6 +37,7 @@
    [schema-tools.core :as st]))
 
 (s/defn entity-crud-routes
+  :- DelayedRoutes
   [{:keys [entity
            new-schema
            entity-schema
@@ -75,7 +76,6 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}}]
-  :- DelayedRoutes
  (s/fn [{{:keys [get-in-config]} :ConfigService
          {:keys [write-store read-store]} :StoreService
          :as services} :- APIHandlerServices]
