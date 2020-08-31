@@ -24,7 +24,7 @@
                :endpoint "/ctia/graphql"
                :jwtLocalStorageKey jwt-storage-key}))))
 
-(s/defn graphql-routes [_services_ :- APIHandlerServices]
+(s/defn graphql-routes [services :- APIHandlerServices]
  (routes
   (POST "/graphql" []
         :tags ["GraphQL"]
