@@ -75,11 +75,9 @@
          (keyword? entity-kw)
          (map? services-map)]
    :post [%]}
-  (let [{:keys [routes routes-from-services] :as entity} (get entities entity-kw)
-        _ (when (and routes routes-from-services)
-            (throw (AssertionError. (str "Bad routes definition: duplicate :routes/:routes-from-services "
-                                         entity-kw))))]
-    ((or routes routes-from-services) services-map)))
+  (let [{:keys [services->routes] :as entity} (get entities entity-kw)]
+    (assert services->routes (str "Missing :services->routes for " entity-kw))
+    (services->routes services-map)))
 
 (defmacro ^:private entity-routes
   [services-map]

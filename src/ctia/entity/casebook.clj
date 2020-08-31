@@ -7,7 +7,7 @@
                              PagingParams
                              SourcableEntityFilterParams
                              wait_for->refresh]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [utils :as csu]
              [core :refer [APIHandlerServices Bundle def-acl-schema def-stored-schema]]
@@ -311,7 +311,8 @@
 (s/defn casebook-routes [services :- APIHandlerServices]
   (routes
    (casebook-operation-routes services)
-   ((entity-crud-routes
+   (services->entity-crud-routes
+    services
     {:api-tags ["Casebook"]
      :entity :casebook
      :new-schema NewCasebook
@@ -333,8 +334,7 @@
      :external-id-capabilities :read-casebook
      :hide-delete? false
      :histogram-fields casebook-histogram-fields
-     :enumerable-fields casebook-enumerable-fields})
-    services)))
+     :enumerable-fields casebook-enumerable-fields})))
 
 (def casebook-entity
   {:route-context "/casebook"
@@ -351,5 +351,5 @@
    :realize-fn realize-casebook
    :es-store ->CasebookStore
    :es-mapping casebook-mapping
-   :routes-from-services casebook-routes
+   :services->routes casebook-routes
    :capabilities capabilities})

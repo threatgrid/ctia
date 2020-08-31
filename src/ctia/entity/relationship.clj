@@ -236,5 +236,5 @@
    :realize-fn rs/realize-relationship
    :es-store ->RelationshipStore
    :es-mapping relationship-mapping
-   :routes relationship-routes
+   :services->routes relationship-routes
    :capabilities capabilities})

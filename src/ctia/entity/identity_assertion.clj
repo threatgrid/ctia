@@ -138,5 +138,5 @@
    :realize-fn realize-identity-assertion
    :es-store ->IdentityAssertionStore
    :es-mapping identity-assertion-mapping
-   :routes identity-assertion-routes
+   :services->routes identity-assertion-routes
    :capabilities capabilities})

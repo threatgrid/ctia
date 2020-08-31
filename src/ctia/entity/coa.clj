@@ -157,5 +157,5 @@
    :realize-fn realize-coa
    :es-store ->COAStore
    :es-mapping coa-mapping
-   :routes coa-routes
+   :services->routes coa-routes
    :capabilities capabilities})

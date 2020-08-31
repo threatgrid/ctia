@@ -116,9 +116,7 @@
    (st/optional-keys
     {:new-schema (s/protocol s/Schema)
      :route-context s/Str
-     ;; at most one of :routes and :routes-from-services allowed.
-     :routes DelayedRoutes
-     :routes-from-services DelayedRoutes ;; deprecated, can be removed
+     :services->routes DelayedRoutes
      :tags [s/Str]
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool

@@ -347,3 +347,9 @@
                   :identity identity)
                (no-content)
                (not-found)))))))
+
+(s/defn services->entity-crud-routes
+  [services :- APIHandlerServices
+   opt]
+  ((entity-crud-routes opt)
+   services))

@@ -182,5 +182,5 @@
    :realize-fn realize-weakness
    :es-store ->WeaknessStore
    :es-mapping weakness-mapping
-   :routes weakness-routes
+   :services->routes weakness-routes
    :capabilities capabilities})
