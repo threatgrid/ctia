@@ -88,7 +88,7 @@
           `(context
             ~(:route-context entity) []
             :tags ~(:tags entity)
-            (entity->routes (~(:entity entity) entities) ~gsm)))))))
+            (entity->routes (~(:entity entity) entities/entities) ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
