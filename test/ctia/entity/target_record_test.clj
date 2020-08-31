@@ -2,7 +2,6 @@
   (:require [clj-momo.test-helpers.core :as mth]
             [clojure.test :refer [deftest is are join-fixtures testing use-fixtures]]
             [ctia.entity.target-record :as target-record]
-            [ctia.properties :as p]
             [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.auth :as auth]
             [ctia.test-helpers.core :as helpers]
@@ -23,8 +22,9 @@
 
 (defn additional-tests [_ target-record-sample]
   (testing "GET /ctia/target-record/search"
+   (let [get-in-config (helpers/current-get-in-config-fn)]
     ;; only when ES store
-    (when (= "es" (p/get-in-global-properties [:ctia :store :target-record]))
+    (when (= "es" (get-in-config [:ctia :store :target-record]))
       (let [{[target] :targets} target-record-sample
             {[observable] :observables} target]
         (are [term check-fn expected desc] (let [response (helpers/get
@@ -50,7 +50,7 @@
           (format "targets.observables.type:%s" (:type observable))
           (fn [r] (-> r :parsed-body first :targets first :observables first :type))
           (:type observable)
-          "Searching for target-record:targets:observables:type")))))
+          "Searching for target-record:targets:observables:type"))))))
 
 (deftest target-record-routes-test
   (store/test-for-each-store
