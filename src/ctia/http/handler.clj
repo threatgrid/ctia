@@ -1,7 +1,7 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [clojure.string :as string]
-            [ctia.entity.entities :as entities]
+            [ctia.entity.entities :refer [entities]]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
             [ctia.schemas.core :refer [APIHandlerServices]]
@@ -88,7 +88,7 @@
           `(context
             ~(:route-context entity) []
             :tags ~(:tags entity)
-            (entity->routes (~(:entity entity) entities/entities) ~gsm)))))))
+            (entity->routes (~(:entity entity) entities) ~gsm)))))))
 
 (def exception-handlers
   {:compojure.api.exception/request-parsing ex/request-parsing-handler
@@ -211,7 +211,7 @@
              ;; must be before the middleware fn
              (version-routes services)
              (middleware [wrap-authenticated]
-               (entity-routes entities/entities services)
+               (entity-routes entities services)
                status-routes
                (context
                    "/bulk" []
