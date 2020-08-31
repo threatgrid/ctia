@@ -32,16 +32,6 @@
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
    :services APIHandlerServices
-   #_{:ConfigService {:get-in-config (s/=> s/Any
-                                                   [s/Any]
-                                                   [s/Any s/Any])
-                              s/Keyword s/Any}
-              :HooksService {:apply-hooks (s/pred ifn?) ;;kw args
-                             :apply-event-hooks (s/=> s/Any s/Any)
-                             s/Keyword s/Any}
-              :StoreService {:write-store (s/pred ifn?) ;;varargs
-                             s/Keyword s/Any}
-              s/Keyword s/Any}
    :identity (s/protocol auth/IIdentity)
    (s/optional-key :long-id-fn) (s/maybe (s/=> s/Any s/Any))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
