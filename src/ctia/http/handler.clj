@@ -1,9 +1,10 @@
 (ns ctia.http.handler
   (:require [clj-momo.ring.middleware.metrics :as metrics]
             [clojure.string :as string]
-            [ctia.entity.entities :refer [entities]]
+            [ctia.entity.entities :as entities]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -200,7 +201,7 @@
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
            documentation-routes
-           (graphql-ui-routes)
+           (graphql-ui-routes services)
            (context
                "/ctia" []
              (context "/feed" []
@@ -210,7 +211,7 @@
              ;; must be before the middleware fn
              (version-routes services)
              (middleware [wrap-authenticated]
-               (entity-routes entities services)
+               (entity-routes entities/entities services)
                status-routes
                (context
                    "/bulk" []
@@ -224,6 +225,6 @@
                (observable-routes services)
                metrics-routes
                (properties-routes services)
-               graphql-routes)))
+               (graphql-routes services))))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))

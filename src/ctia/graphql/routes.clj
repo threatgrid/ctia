@@ -3,16 +3,17 @@
             [compojure.api
              [core :as c]
              [sweet :refer :all]]
-            [ctia.properties :as p]
             [ctia.graphql.schemas :as gql]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(defn graphql-ui-routes []
+(s/defn graphql-ui-routes [{{:keys [get-in-config]} :ConfigService
+                            :as _services_} :- APIHandlerServices]
   (let [jwt-storage-key
-        (p/get-in-global-properties [:ctia :http :jwt :local-storage-key])]
+        (get-in-config [:ctia :http :jwt :local-storage-key])]
     (c/undocumented
      ;; --- GraphiQL https://github.com/shahankit/custom-graphiql/
      (graphiql {:path "/graphiql"
@@ -23,7 +24,8 @@
                :endpoint "/ctia/graphql"
                :jwtLocalStorageKey jwt-storage-key}))))
 
-(defroutes graphql-routes
+(s/defn graphql-routes [_services_ :- APIHandlerServices]
+ (routes
   (POST "/graphql" []
         :tags ["GraphQL"]
         :return gql/RelayGraphQLResponse
@@ -78,7 +80,7 @@
                      (pr-str body)
                      " variables: " (pr-str variables))
           (let [{:keys [errors data] :as result}
-                (gql/execute query operationName variables request-context)
+                (gql/execute query operationName variables request-context services)
                 str-errors (map str errors)]
             (log/debug "Graphql result:" result)
             (cond
@@ -87,4 +89,4 @@
                                                   (some? data) (assoc :data data))))
               (some? data) (ok {:data data})
               :else (internal-server-error
-                     {:error "No data or errors were returned by the GraphQL query"}))))))
+                     {:error "No data or errors were returned by the GraphQL query"})))))))
