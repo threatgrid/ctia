@@ -236,16 +236,6 @@
                                target-store
                                @mst/migration-es-conn))))
 
-(s/defschema MigrationParams
-  {:migration-id s/Str
-   :prefix s/Str
-   :migrations [(apply s/enum (keys available-migrations))]
-   :store-keys [s/Keyword]
-   :batch-size s/Int
-   :buffer-size s/Int
-   :confirm? (s/maybe s/Bool)
-   :restart? (s/maybe s/Bool)})
-
 (s/defn migrate-store-indexes
   "migrate the selected es store indexes"
   [{:keys [migration-id
@@ -255,10 +245,11 @@
            batch-size
            buffer-size
            confirm?
-           restart?]} :- MigrationParams]
+           restart?]
+    :as migration-params} :- mst/MigrationParams]
   (let [migration-state (if restart?
                           (mst/get-migration migration-id @mst/migration-es-conn)
-                          (mst/init-migration migration-id prefix store-keys confirm?))
+                          (mst/init-migration migration-params))
         migrations (compose-migrations migrations)
         batch-size (or batch-size default-batch-size)]
     (log/infof "migrating stores: %s" store-keys)
@@ -280,7 +271,7 @@
 (s/defn ^:always-validate check-migration-params
   [{:keys [prefix
            restart?
-           store-keys]} :- MigrationParams]
+           store-keys]} :- mst/MigrationParams]
   (when-not restart?
     (assert prefix "Please provide an indexname prefix for target store creation"))
   (doseq [store-key store-keys]
@@ -292,7 +283,7 @@
                         index))))))
   true)
 
-(s/defn prepare-params :- MigrationParams
+(s/defn prepare-params :- mst/MigrationParams
   [migration-properties]
   (let [string-to-coll #(map (comp keyword string/trim)
                              (string/split % #","))]

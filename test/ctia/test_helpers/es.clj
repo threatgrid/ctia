@@ -69,7 +69,7 @@
                       "ctia.store.es.default.default_operator" "AND"
                       "ctia.store.es.default.aliased" true
                       "ctia.store.es.default.rollover.max_docs" 50
-                      "ctia.store.es.event.rollover.max_docs" 1000
+
                       "ctia.store.es.actor.indexname" "ctia_actor"
                       "ctia.store.es.actor.default_operator" "OR"
                       "ctia.store.es.asset.indexname" "ctia_assets"
@@ -95,6 +95,7 @@
                       "ctia.store.es.tool.indexname" "ctia_tool"
                       "ctia.store.es.vulnerability.indexname" "ctia_vulnerability"
                       "ctia.store.es.weakness.indexname" "ctia_weakness"
+
                       "ctia.store.actor" "es"
                       "ctia.store.asset" "es"
                       "ctia.store.asset-mapping" "es"
@@ -119,7 +120,10 @@
                       "ctia.store.tool" "es"
                       "ctia.store.vulnerability" "es"
                       "ctia.store.weakness" "es"
-                      "ctia.store.bulk-refresh" "true"]
+                      "ctia.store.bulk-refresh" "true"
+
+                      "ctia.migration.store.es.default.rollover.max_docs" 50
+                      "ctia.migration.store.es.event.rollover.max_docs" 1000]
     (t)))
 
 (defn fixture-properties:es-hook [t]

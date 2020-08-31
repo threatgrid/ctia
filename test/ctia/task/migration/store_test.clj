@@ -178,10 +178,14 @@
         "format-range-buckets should properly format raw buckets per month")))
 
 (deftest wo-storemaps-test
-  (let [fake-migration (sut/init-migration "migration-id-1"
-                                           "0.0.0"
-                                           [:tool :sighting :malware]
-                                           false)
+  (let [fake-migration (sut/init-migration {:migration-id "migration-id-1"
+                                            :prefix "0.0.0"
+                                            :store-keys [:tool :sighting :malware]
+                                            :confirm? false
+                                            :migrations [:identity]
+                                            :batch-size 1000
+                                            :buffer-size 3
+                                            :restart? false})
         wo-stores (sut/wo-storemaps fake-migration)]
     (is (nil? (get-in wo-stores [:source :store])))
     (is (nil? (get-in wo-stores [:target :store])))))
@@ -814,14 +818,18 @@
           entity-types [:tool :malware :relationship]
           migration-id-1 "migration-1"
           migration-id-2 "migration-2"
-          fake-migration (sut/init-migration migration-id-1
-                                             prefix
-                                             entity-types
-                                             false)
-          real-migration-from-init (sut/init-migration migration-id-2
-                                                       prefix
-                                                       entity-types
-                                                       true)
+          base-migration-params {:prefix prefix
+                                 :migrations [:identity]
+                                 :store-keys entity-types
+                                 :batch-size 1000
+                                 :buffer-size 3
+                                 :restart? false}
+          fake-migration (sut/init-migration (assoc base-migration-params
+                                                    :migration-id migration-id-1
+                                                    :confirm? false))
+          real-migration-from-init (sut/init-migration (assoc base-migration-params
+                                                              :migration-id migration-id-2
+                                                              :confirm? true))
           check-state (fn [{:keys [id stores]} migration-id message]
                         (testing message
                           (is (= id migration-id))

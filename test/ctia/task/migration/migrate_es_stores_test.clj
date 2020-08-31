@@ -652,11 +652,15 @@
                    keywordize-keys)
               _ (es-index/refresh! @es-conn)
               formatted-cat-indices (es-helpers/get-cat-indices (:host default)
-                                                                (:port default))]
-          (is (= expected-indices
-                 (select-keys formatted-cat-indices
-                              (keys expected-indices))))
-
+                                                                (:port default))
+              result-indices (select-keys formatted-cat-indices
+                                          (keys expected-indices))]
+          (is (= expected-indices result-indices)
+              (let [[only-expected only-result _]
+                    (clojure.data/diff expected-indices result-indices)]
+                   (format "only in expected ==> %s\nonly in result ==> %s"
+                           only-expected
+                           only-result)))
           (doseq [[index _]
                   expected-indices]
             (let [docs (->> (es-doc/search-docs @es-conn (name index) nil nil nil {})
