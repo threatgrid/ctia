@@ -96,6 +96,8 @@
      :list-sightings
      :read-identity-assertion
      :list-identity-assertions
+     :read-target-record
+     :list-target-records
      :read-tool
      :read-verdict
      :read-weakness

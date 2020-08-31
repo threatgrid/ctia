@@ -131,6 +131,9 @@
 (def related-asset-properties
   {:properties (assoc related :asset_properties_id token)})
 
+(def related-target-record
+  {:properties (assoc related :target_record_id token)})
+
 (def related-incidents
   {:properties (assoc related
                       :incident_id token)})
@@ -231,6 +234,16 @@
                     :dynamic true}
     :source observable
     :related observable}})
+
+(def target-record-target
+  {:dynamic false
+   :properties
+   {:type          token
+    :observed_time valid-time
+    :os            token
+    :observables   observable
+    :internal      boolean-type
+    :sensor        token}})
 
 (def sighting-target
   {:dynamic false
