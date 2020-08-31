@@ -50,6 +50,7 @@
    :identity []
    :attack-pattern []
    :malware []
+   :target-record []
    :tool []
    :event []
    :investigation []

@@ -22,6 +22,7 @@
    :assets           (tcg/sample (gen/gen-entity :new-asset) n)
    :asset-mappings   (tcg/sample (gen/gen-entity :new-asset-mapping) n)
    :asset-properties (tcg/sample (gen/gen-entity :new-asset-properties) n)
+   :target-records   (tcg/sample (gen/gen-entity :new-target-record) n)
    :campaigns        (tcg/sample (gen/gen-entity :new-campaign) n)
    :coas             (tcg/sample (gen/gen-entity :new-coa) n)
    :feedbacks        (tcg/sample (gen/gen-entity :new-feedback) n)

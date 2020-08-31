@@ -66,6 +66,8 @@
           :read-investigation
           :read-incident
           :list-coas
+          :read-target-record
+          :list-target-records
           :read-tool
           :list-investigations
           :read-data-table

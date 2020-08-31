@@ -29,6 +29,7 @@
              [sighting :refer [NewSighting]]
              [identity-assertion :refer [NewIdentityAssertion]]
              [tool :refer [NewTool]]
+             [target-record :refer [NewTargetRecord]]
              [vulnerability :refer [NewVulnerability]]
              [weakness :refer [NewWeakness]]]
             [flanders
@@ -88,6 +89,7 @@
          [NewRelationship "max-new-relationship"]
          [NewSighting "max-new-sighting"]
          [NewIdentityAssertion "max-new-identity-assertion"]
+         [NewTargetRecord "max-new-target-record"]
          [NewTool "max-new-tool"]
          [NewVulnerability "max-new-vulnerability"]
          [NewWeakness "max-new-weakness"]
@@ -114,6 +116,8 @@
 
 (def api-for-asset-properties-routes
   (api-for-route 'asset-properties (spec-gen "max-new-asset-properties")))
+(def api-for-target-record-routes
+  (api-for-route 'target-record (spec-gen "max-new-target-record")))
 
 (def api-for-attack-pattern-routes
   (api-for-route 'attack-pattern

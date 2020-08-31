@@ -28,6 +28,7 @@
              [malwares :refer [malware-minimal]]
              [relationships :refer [relationship-minimal]]
              [sightings :refer [sighting-minimal]]
+             [target-records :refer [target-record-minimal]]
              [tools :refer [tool-minimal]]
              [vulnerabilities :refer [vulnerability-minimal]]
              [weaknesses :refer [weakness-minimal]]]))
@@ -72,6 +73,7 @@
    :relationships    (n-doc relationship-minimal fixtures-nb)
    :casebooks        (n-doc casebook-minimal fixtures-nb)
    :sightings        (n-doc sighting-minimal fixtures-nb)
+   :target_records   (n-doc target-record-minimal fixtures-nb)
    :tools            (n-doc tool-minimal fixtures-nb)
    :vulnerabilities  (n-doc vulnerability-minimal fixtures-nb)
    :weaknesses       (n-doc weakness-minimal fixtures-nb)})
@@ -121,6 +123,7 @@
                      "identity-assertion - finished checking 0 documents"
                      "attack-pattern - finished checking 100 documents"
                      "malware - finished checking 100 documents"
+                     "target-record - finished checking 100 documents"
                      "tool - finished checking 100 documents"
                      "vulnerability - finished checking 100 documents"
                      "weakness - finished checking 100 documents"}
