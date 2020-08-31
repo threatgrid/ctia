@@ -212,5 +212,5 @@
    :realize-fn realize-indicator
    :es-store ->IndicatorStore
    :es-mapping indicator-mapping
-   :routes indicator-routes
+   :services->routes indicator-routes
    :capabilities capabilities})

@@ -14,7 +14,7 @@
     :refer [Event PartialEvent PartialEventList EventBucket]]
    [ctia.http.routes
     [common :refer [BaseEntityFilterParams PagingParams]]
-    [crud :refer [entity-crud-routes]]]
+    [crud :refer [services->entity-crud-routes]]]
    [ctia.lib.pagination :refer [list-response-schema]]
    [ctia.schemas.core :refer [APIHandlerServices]]
    [ctia.schemas.sorting :as sorting]
@@ -149,7 +149,8 @@
 (s/defn event-routes [services :- APIHandlerServices]
   (routes
    (event-history-routes services)
-   (entity-crud-routes
+   (services->entity-crud-routes
+    services
     {:tags ["Event"]
      :entity :event
      :entity-schema Event
@@ -181,4 +182,4 @@
    :plural :events
    :es-store ->EventStore
    :es-mapping event-mapping
-   :routes-from-services event-routes})
+   :services->routes event-routes})

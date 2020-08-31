@@ -12,7 +12,7 @@
                       PagingParams
                       SourcableEntityFilterParams
                       wait_for->refresh]]
-             [crud :refer [entity-crud-routes]]]
+             [crud :refer [services->entity-crud-routes]]]
             [ctia.schemas
              [core :refer [APIHandlerServices def-acl-schema def-stored-schema]]
              [sorting
@@ -213,7 +213,8 @@
 (s/defn incident-routes [services :- APIHandlerServices]
   (routes
    (incident-additional-routes services)
-   (entity-crud-routes
+   (services->entity-crud-routes
+    services
     {:entity :incident
      :new-schema NewIncident
      :entity-schema Incident
@@ -284,5 +285,5 @@
    :realize-fn realize-incident
    :es-store ->IncidentStore
    :es-mapping incident-mapping
-   :routes-from-services incident-routes
+   :services->routes incident-routes
    :capabilities capabilities})
