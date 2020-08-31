@@ -4,12 +4,14 @@
              [core :as c]
              [sweet :refer :all]]
             [ctia.graphql.schemas :as gql]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]
             [ring.util.http-response :refer :all]
             [schema.core :as s]))
 
-(defn graphql-ui-routes [{{:keys [get-in-config]} :ConfigService :as _services_}]
+(s/defn graphql-ui-routes [{{:keys [get-in-config]} :ConfigService
+                            :as _services_} :- APIHandlerServices]
   (let [jwt-storage-key
         (get-in-config [:ctia :http :jwt :local-storage-key])]
     (c/undocumented
@@ -22,7 +24,7 @@
                :endpoint "/ctia/graphql"
                :jwtLocalStorageKey jwt-storage-key}))))
 
-(defn graphql-routes [services]
+(s/defn graphql-routes [_services_ :- APIHandlerServices]
  (routes
   (POST "/graphql" []
         :tags ["GraphQL"]
