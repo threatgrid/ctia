@@ -14,9 +14,9 @@
 (s/defschema APIHandlerServices
   "Maps of services available to routes"
   {:ConfigService {:get-config (s/=> s/Any s/Any)
-                   :get-in-config (s/=> s/Any
-                                        [s/Any]
-                                        [s/Any s/Any])}
+                   :get-in-config (s/=>* s/Any
+                                         [s/Any]
+                                         [s/Any s/Any])}
    :HooksService {:apply-hooks (s/pred ifn?) ;;keyword varargs
                   :apply-event-hooks (s/=> s/Any s/Any)}
    :StoreService {:read-store (s/pred ifn?) ;;varags
