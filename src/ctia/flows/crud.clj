@@ -13,8 +13,7 @@
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
-            [ctia.flows.hooks :as h]
-            [ctia.schemas.core :refer [TempIDs]]
+            [ctia.schemas.core :refer [APIHandlerServices TempIDs]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
             [ctia.entity.event.obj-to-event
@@ -32,8 +31,19 @@
    :entity-type s/Keyword
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
+   :services APIHandlerServices
+   #_{:ConfigService {:get-in-config (s/=> s/Any
+                                                   [s/Any]
+                                                   [s/Any s/Any])
+                              s/Keyword s/Any}
+              :HooksService {:apply-hooks (s/pred ifn?) ;;kw args
+                             :apply-event-hooks (s/=> s/Any s/Any)
+                             s/Keyword s/Any}
+              :StoreService {:write-store (s/pred ifn?) ;;varargs
+                             s/Keyword s/Any}
+              s/Keyword s/Any}
    :identity (s/protocol auth/IIdentity)
-   (s/optional-key :long-id-fn) (s/maybe (s/pred fn?))
+   (s/optional-key :long-id-fn) (s/maybe (s/=> s/Any s/Any))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :partial-entity) (s/maybe {s/Keyword s/Any})
    (s/optional-key :patch-operation) (s/enum :add :remove :replace)
@@ -42,7 +52,7 @@
    (s/optional-key :spec) (s/maybe s/Keyword)
    (s/optional-key :tempids) (s/maybe TempIDs)
    (s/optional-key :enveloped-result?) (s/maybe s/Bool)
-   :store-fn (s/pred fn?)})
+   :store-fn (s/=> s/Any s/Any)})
 
 (defn- find-id
   "Lookup an ID in a given entity.  Parse it, because it might be a
@@ -56,11 +66,12 @@
   "Like find-id above, but checks that the hostname in the ID (if it
   is a long ID) is the local server hostname.  Throws bad-request! on
   mismatch."
-  [{id :id, :as entity}]
+  [{id :id, :as entity}
+   get-in-config]
   (when (seq id)
     (if (id/long-id? id)
       (let [id-rec (id/long-id->id id)
-            this-host (p/get-in-global-properties [:ctia :http :show :hostname])]
+            this-host (get-in-config [:ctia :http :show :hostname])]
         (if (= (:hostname id-rec) this-host)
           (:short-id id-rec)
           (http-response/bad-request!
@@ -80,10 +91,11 @@
 (s/defn ^:private find-entity-id :- s/Str
   [{identity-obj :identity
     :keys [entity-type prev-entity tempids]} :- FlowMap
-   entity :- {s/Keyword s/Any}]
+   entity :- {s/Keyword s/Any}
+   get-in-config]
   (or (find-id prev-entity)
       (get tempids (:id entity))
-      (when-let [entity-id (find-checked-id entity)]
+      (when-let [entity-id (find-checked-id entity get-in-config)]
         (when-not (auth/capable? identity-obj :specify-id)
           (http-response/forbidden!
            {:error "Missing capability to specify entity ID"
@@ -94,7 +106,7 @@
            :entity entity}))
       (make-id entity-type)))
 
-(defn check-spec [spec entity]
+(defn- check-spec [entity spec]
   (if (and spec
            (not (cs/valid? spec entity)))
     {:msg (cs/explain-str spec entity)
@@ -120,7 +132,7 @@
   [{:keys [spec entities] :as fm} :- FlowMap]
   (assoc fm :entities
          (map (fn [entity]
-                (->> entity
+                (-> entity
                      (check-spec spec)
                      tlp-check)) entities)))
 
@@ -139,7 +151,8 @@
     (update fm :tempids (fnil into {}) newtempids)))
 
 (s/defn ^:private realize-entities :- FlowMap
-  [{:keys [entities
+  [{{{:keys [get-in-config]} :ConfigService} :services
+    :keys [entities
            flow-type
            identity
            tempids
@@ -151,7 +164,7 @@
            :entities
            (doall
             (for [entity entities
-                  :let [entity-id (find-entity-id fm entity)]]
+                  :let [entity-id (find-entity-id fm entity get-in-config)]]
               (cond
                 (:error entity) entity
                 (:error entity-id) entity-id
@@ -189,12 +202,13 @@
       fm)))
 
 (s/defn ^:private apply-before-hooks :- FlowMap
-  [{:keys [entities flow-type prev-entity] :as fm} :- FlowMap]
+  [{{{:keys [apply-hooks]} :HooksService} :services
+    :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
   (assoc fm
          :entities
          (doall
           (for [entity entities]
-            (h/apply-hooks :entity entity
+            (apply-hooks :entity entity
                            :prev-entity prev-entity
                            :hook-type (case flow-type
                                         :create :before-create
@@ -203,9 +217,10 @@
                            :read-only? (= flow-type :delete))))))
 
 (s/defn ^:private apply-after-hooks :- FlowMap
-  [{:keys [entities flow-type prev-entity] :as fm} :- FlowMap]
+  [{{{:keys [apply-hooks]} :HooksService} :services
+    :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
   (doseq [entity entities]
-    (h/apply-hooks :entity entity
+    (apply-hooks :entity entity
                    :prev-entity prev-entity
                    :hook-type (case flow-type
                                 :create :after-create
@@ -216,8 +231,10 @@
 
 (s/defn ^:private create-events :- FlowMap
   [{:keys [create-event-fn entities flow-type identity prev-entity]
+    {{:keys [get-in-config]} :ConfigService}
+    :services
     :as fm} :- FlowMap]
-  (if (p/get-in-global-properties [:ctia :events :enabled])
+  (if (get-in-config [:ctia :events :enabled])
     (let [events
           (->> entities
                (filter #(nil? (:error %)))
@@ -240,11 +257,12 @@
     fm))
 
 (s/defn ^:private write-events :- FlowMap
-  [{:keys [events] :as fm} :- FlowMap]
+  [{{{:keys [write-store]} :StoreService} :services
+    :keys [events] :as fm} :- FlowMap]
   (if (seq events)
     (assoc fm
            :events
-           (store/write-store :event store/create-events events))
+           (write-store :event store/create-events events))
     fm))
 
 (s/defn remove-errors :- FlowMap
@@ -338,9 +356,10 @@
     fm))
 
 (s/defn ^:private apply-event-hooks :- FlowMap
-  [{:keys [events] :as fm} :- FlowMap]
+  [{{:keys [HooksService]} :services
+    :keys [events] :as fm} :- FlowMap]
   (doseq [event events]
-    (h/apply-event-hooks event))
+    ((:apply-event-hooks HooksService) event))
   fm)
 
 (s/defn ^:private make-result :- s/Any
@@ -387,8 +406,10 @@
              tempids
              long-id-fn
              spec
+             services
              enveloped-result?]}]
   (-> {:flow-type :create
+       :services services
        :entity-type entity-type
        :entities (map #(dissoc % :schema_version) entities)
        :tempids tempids
@@ -427,6 +448,7 @@
              identity
              entity
              long-id-fn
+             services
              spec]}]
   (let [prev-entity (get-fn entity-id)]
     (when prev-entity
@@ -434,6 +456,7 @@
            :entity-type entity-type
            :entities [(dissoc entity
                               :schema_version)]
+           :services services
            :prev-entity prev-entity
            :identity identity
            :long-id-fn long-id-fn
@@ -460,6 +483,7 @@
     - `:before-update` hooks can modify the entity stored.
     - `:after-update` hooks are read only"
   [& {:keys [entity-type
+             services
              get-fn
              realize-fn
              update-fn
@@ -474,6 +498,7 @@
       (-> {:flow-type :update
            :entity-type entity-type
            :entities []
+           :services services
            :prev-entity prev-entity
            :partial-entity partial-entity
            :patch-operation patch-operation
@@ -508,9 +533,11 @@
              delete-fn
              entity-id
              long-id-fn
+             services
              identity]}]
   (let [entity (get-fn entity-id)]
     (-> {:flow-type :delete
+         :services services
          :entity-type entity-type
          :entities (remove nil? [entity])
          :prev-entity entity

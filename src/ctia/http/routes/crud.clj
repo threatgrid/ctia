@@ -112,6 +112,7 @@
              :auth-identity identity
              :identity-map identity-map
              (-> (flows/create-flow
+                  :services services
                   :entity-type entity
                   :realize-fn realize-fn
                   :store-fn #(write-store entity
@@ -139,6 +140,7 @@
             :identity-map identity-map
             (if-let [updated-rec
                      (-> (flows/update-flow
+                          :services services
                           :get-fn #(read-store entity
                                                read-record
                                                %
@@ -172,6 +174,7 @@
               :identity-map identity-map
               (if-let [updated-rec
                        (-> (flows/patch-flow
+                            :services services
                             :get-fn #(read-store entity
                                                  read-record
                                                  %
@@ -326,6 +329,7 @@
              :auth-identity identity
              :identity-map identity-map
              (if (flows/delete-flow
+                  :services services
                   :get-fn #(read-store entity
                                        read-record
                                        %

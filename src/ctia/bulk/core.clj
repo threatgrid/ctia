@@ -70,6 +70,7 @@
     :as services} :- APIHandlerServices]
   (when (seq new-entities)
     (update (flows/create-flow
+             :services services
              :entity-type entity-type
              :realize-fn (-> entities entity-type :realize-fn)
              :store-fn (create-fn entity-type auth-identity params services)

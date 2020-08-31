@@ -89,7 +89,7 @@
     IncidentLinkRequestOptional))
 
 (s/defn incident-link-route [{{:keys [read-store write-store]} :StoreService
-                              :as _services_} :- APIHandlerServices]
+                              :as services} :- APIHandlerServices]
   (POST "/:id/link" []
         :return rs/Relationship
         :body [link-req IncidentLinkRequest
@@ -166,6 +166,7 @@
                    :tlp tlp}
                   stored-relationship
                   (-> (flows/create-flow
+                       :services services
                        :entity-type :relationship
                        :realize-fn rs/realize-relationship
                        :store-fn #(write-store :relationship
