@@ -324,9 +324,9 @@
       (delete-doc entity id-2))))
 
 (defn test-query-string-search
-  [entity query query-field example]
+  [entity query query-field example get-in-config]
   ;; only when ES store
-  (when (= "es" (p/get-in-global-properties [:ctia :store (keyword entity)]))
+  (when (= "es" (get-in-config [:ctia :store (keyword entity)]))
     (if (= :description query-field)
       (test-describable-search entity example)
       (ensure-one-document test-non-describable-search
