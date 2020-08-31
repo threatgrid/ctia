@@ -142,6 +142,6 @@
    :realize-fn            realize-asset-mapping
    :es-store              ->AssetMappingStore
    :es-mapping            asset-mapping-mapping
-   :routes                asset-mapping-routes
+   :services->routes      asset-mapping-routes
    :capabilities          capabilities
    })

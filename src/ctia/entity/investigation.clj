@@ -118,5 +118,5 @@
    :realize-fn inv/realize-investigation
    :es-store ->InvestigationStore
    :es-mapping investigation-mapping
-   :routes investigation-routes
+   :services->routes investigation-routes
    :capabilities capabilities})

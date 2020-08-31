@@ -169,5 +169,5 @@
    :realize-fn realize-attack-pattern
    :es-store ->AttackPatternStore
    :es-mapping attack-pattern-mapping
-   :routes attack-pattern-routes
+   :services->routes attack-pattern-routes
    :capabilities capabilities})

@@ -149,5 +149,5 @@
    :realize-fn realize-campaign
    :es-store ->CampaignStore
    :es-mapping campaign-mapping
-   :routes campaign-routes
+   :services->routes campaign-routes
    :capabilities capabilities})

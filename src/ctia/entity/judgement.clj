@@ -145,5 +145,5 @@
    :realize-fn js/realize-judgement
    :es-store j-store/->JudgementStore
    :es-mapping j-store/judgement-mapping-def
-   :routes judgement-routes
+   :services->routes judgement-routes
    :capabilities capabilities})

@@ -18,9 +18,8 @@
                                     search-query
                                     coerce-date-range
                                     format-agg-result]]
-   [ctia.store :refer [write-store
-                       read-store
-                       query-string-search
+   [ctia.schemas.core :refer [APIHandlerServices DelayedRoutes]]
+   [ctia.store :refer [query-string-search
                        query-string-count
                        aggregate
                        create-record
@@ -37,7 +36,7 @@
    [schema.core :as s]
    [schema-tools.core :as st]))
 
-(defn entity-crud-routes
+(s/defn entity-crud-routes
   [{:keys [entity
            new-schema
            entity-schema
@@ -76,6 +75,9 @@
          can-get-by-external-id? true
          date-field :created
          histogram-fields [:created]}}]
+  :- DelayedRoutes
+ (s/fn [{{:keys [read-store write-store]} :StoreService
+         :as services} :- APIHandlerServices]
   (let [entity-str (name entity)
         capitalized (capitalize entity-str)
         search-filters (st/dissoc search-q-params
@@ -110,6 +112,7 @@
              :auth-identity identity
              :identity-map identity-map
              (-> (flows/create-flow
+                  :services services
                   :entity-type entity
                   :realize-fn realize-fn
                   :store-fn #(write-store entity
@@ -137,6 +140,7 @@
             :identity-map identity-map
             (if-let [updated-rec
                      (-> (flows/update-flow
+                          :services services
                           :get-fn #(read-store entity
                                                read-record
                                                %
@@ -170,6 +174,7 @@
               :identity-map identity-map
               (if-let [updated-rec
                        (-> (flows/patch-flow
+                            :services services
                             :get-fn #(read-store entity
                                                  read-record
                                                  %
@@ -324,6 +329,7 @@
              :auth-identity identity
              :identity-map identity-map
              (if (flows/delete-flow
+                  :services services
                   :get-fn #(read-store entity
                                        read-record
                                        %
@@ -339,4 +345,10 @@
                   :entity-id id
                   :identity identity)
                (no-content)
-               (not-found))))))
+               (not-found)))))))
+
+(s/defn services->entity-crud-routes
+  [services :- APIHandlerServices
+   opt]
+  ((entity-crud-routes opt)
+   services))

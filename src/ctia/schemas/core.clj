@@ -53,9 +53,7 @@
    (st/optional-keys
     {:new-schema (s/protocol s/Schema)
      :route-context s/Str
-     ;; at most one of :routes and :routes-from-services allowed.
-     :routes s/Any
-     :routes-from-services DelayedRoutes
+     :services->routes DelayedRoutes
      :tags [s/Str]
      :capabilities #{s/Keyword}
      :no-bulk? s/Bool
