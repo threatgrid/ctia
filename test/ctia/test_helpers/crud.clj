@@ -16,7 +16,8 @@
             [ctim.domain.id :as id]))
 
 (defn crud-wait-for-test
-  [{:keys [entity
+  [{::keys [get-in-config]
+    :keys [entity
            example
            headers
            update-field
@@ -26,7 +27,7 @@
          update-tests? true
          patch-tests? false}}]
   (let [new-record (dissoc example :id)
-        default-es-refresh (->> (p/get-in-global-properties
+        default-es-refresh (->> (get-in-config
                                   [:ctia :store :es :default :refresh])
                                 (str "refresh="))
         es-params (volatile! nil)
@@ -159,6 +160,7 @@
          patch-tests? false
          search-tests? true}
     :as params}]
+ (let [get-in-config (helpers/current-get-in-config-fn)]
   (testing (str "POST /ctia/" entity)
     (let [new-record (dissoc example :id)
           {post-status :status
@@ -173,7 +175,7 @@
       (is (= expected post-record))
 
       (testing (format "the %s ID has correct fields" entity)
-        (let [show-props (get-http-show)]
+        (let [show-props (get-http-show get-in-config)]
           (is (= (:hostname record-id)    (:hostname show-props)))
           (is (= (:protocol record-id)    (:protocol show-props)))
           (is (= (:port record-id)        (:port show-props)))
@@ -192,7 +194,8 @@
                                   (or search-value
                                       (name search-field))
                                   search-field
-                                  example))
+                                  example
+                                  get-in-config))
 
       (testing (format "GET /ctia/%s/external_id/:external_id" entity)
         (let [response (get (format "ctia/%s/external_id/%s"
@@ -308,6 +311,6 @@
                        (string/lower-case body))))))
 
     (when (= "es"
-             (p/get-in-global-properties
+             (get-in-config
                [:ctia :store (keyword entity)]))
-      (crud-wait-for-test params))))
+      (crud-wait-for-test (assoc params ::get-in-config get-in-config))))))
