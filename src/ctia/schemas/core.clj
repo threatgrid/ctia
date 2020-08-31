@@ -59,11 +59,14 @@
   {:services RealizeFnServices})
 
 (defn MaybeDelayedRealizeFnResult
+  "The return value of a realize-fn either implements clojure.lang.Fn,
+  thus it expects a map of service maps, otherwise it is considered
+  'resolved'."
   [a]
   (s/if fn?
     ;; delayed
     (s/=> a {s/Keyword {s/Keyword (s/pred fn?)}})
-    ;; eager
+    ;; resolved
     a))
 
 (defn RealizeFnReturning [return]

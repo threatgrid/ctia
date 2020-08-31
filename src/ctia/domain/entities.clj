@@ -2,7 +2,8 @@
   (:require [clj-momo.lib.time :as time]
             [ctia.domain.access-control :refer [properties-default-tlp]]
             [ctia.properties :refer [get-http-show]]
-            [ctia.schemas.core :as ctia-schemas :refer [TempIDs MaybeDelayedRealizeFnResult]]
+            [ctia.schemas.core :as ctia-schemas
+             :refer [TempIDs MaybeDelayedRealizeFn MaybeDelayedRealizeFnResult]]
             [ctim.domain.id :as id]
             [ctim.schemas.common :refer [ctim-schema-version]]
             [schema.core :as s]))
@@ -29,7 +30,8 @@
                     (:end_time prev-valid-time)
                     time/default-expire-date)}})
 
-(defn default-realize-fn [type-name Model StoredModel]
+(s/defn default-realize-fn [type-name Model StoredModel]
+  #_#_:- (MaybeDelayedRealizeFn StoredModel)
   (s/fn default-realize :- (MaybeDelayedRealizeFnResult StoredModel)
     ([new-object :- Model
       id :- s/Str
