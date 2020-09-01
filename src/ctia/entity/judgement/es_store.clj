@@ -1,7 +1,6 @@
 (ns ctia.entity.judgement.es-store
   (:require [clj-momo.lib.es.document :refer [search-docs]]
             [clj-momo.lib.time :as time]
-            [ctia.store :refer :all]
             [ctia.domain.access-control :refer [allow-write?]]
             [ctia.entity.judgement.schemas
              :refer
@@ -53,11 +52,11 @@
 (def handle-aggregate (crud/handle-aggregate :judgement))
 
 (defn list-active-by-observable
-  [state observable ident]
+  [state observable ident get-in-config]
   (let [now-str (time/format-date-time (time/timestamp))
         composed-query
         (assoc-in
-         (find-restriction-query-part ident)
+         (find-restriction-query-part ident get-in-config)
          [:bool :must]
          (active-judgements-by-observable-query
           observable
@@ -95,9 +94,9 @@
    :valid_time (:valid_time judgement)})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
-  [state observable ident]
-
-  (some-> (list-active-by-observable state observable ident)
+  [{{{:keys [get-in-config]} :ConfigService} :services :as state}
+    observable ident]
+  (some-> (list-active-by-observable state observable ident get-in-config)
           first
           make-verdict))
 

@@ -7,6 +7,7 @@
     [entities
      :refer [schema-version
              short-id->long-id]]]
+   [ctia.properties :as p]
    [ctia.schemas
     [core :as ctia-schemas :refer [def-acl-schema def-stored-schema TempIDs]]
     [utils :as csu]]
@@ -114,4 +115,4 @@
              :tlp
              (:tlp new-object
                    (:tlp prev-object
-                         (properties-default-tlp)))}))))
+                         (properties-default-tlp p/get-in-global-properties)))}))))
