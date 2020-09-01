@@ -581,7 +581,7 @@
                #{"campaign - finished migrating 100 documents"
                  "indicator - finished migrating 100 documents"
                  (format "event - finished migrating %s documents"
-                         (+ 1800 updates-nb))
+                         (+ 1900 updates-nb))
                  "actor - finished migrating 100 documents"
                  "asset - finished migrating 100 documents"
                  "relationship - finished migrating 100 documents"
@@ -597,6 +597,7 @@
                  "identity-assertion - finished migrating 0 documents"
                  "attack-pattern - finished migrating 100 documents"
                  "malware - finished migrating 100 documents"
+                 "target-record - finished migrating 100 documents"
                  "tool - finished migrating 100 documents"
                  "vulnerability - finished migrating 100 documents"
                  "weakness - finished migrating 100 documents" }
@@ -605,6 +606,7 @@
       (testing "shall produce new indices with enough documents and the right transforms"
         (let [{:keys [default
                       asset
+                      target-record
                       relationship
                       judgement
                       investigation
@@ -626,10 +628,10 @@
               expected-event-indices {(format "v0.0.0_ctia_event-%s-000001" index-date)
                                       1000
                                       (format "v0.0.0_ctia_event-%s-000002" index-date)
-                                      (+ 800 updates-nb)}
+                                      (+ 900 updates-nb)}
               expected-indices
               (->> #{relationship
-                     asset
+                     target-record
                      judgement
                      coa
                      attack-pattern

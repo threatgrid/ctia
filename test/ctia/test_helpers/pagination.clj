@@ -3,6 +3,7 @@
   (:require [clojure.string :as str]
             [clojure.test :refer [is testing]]
             [ctim.domain.id :as id]
+            [ctia.test-helpers.aggregate :as aggregate]
             [ctia.test-helpers.core :as helpers :refer [get]]))
 
 (defn total->limit
@@ -118,43 +119,48 @@
                  clojure.walk/keywordize-keys
                  (select-keys [:X-Total-Hits :X-Previous :X-Next])))))))
 
-(defn sort-field->sort-fn
-  "Given a CTIA sort parameter, generate a sorting function to by used
-   with sort-by, dealing with multi-sort as well as nested keys field sort"
-  [sort-fields]
-  (let [kws (map keyword
-                 (str/split (name sort-fields) #","))
-        nested-trans (map (fn [kw]
-                            (if (str/includes? kw ".")
-                              (apply comp
-                                     (reverse
-                                      (map keyword
-                                           (str/split
-                                            (name kw) #"\."))))
-                              kw)) kws)]
-    (apply juxt nested-trans)))
+(defn- sort-by-fn
+  "Auxiliary function for sorting nested collections."
+  {:example (comment
+              (let [coll [{:foo [{:bar {:zop 5}}]}
+                          {:foo [{:bar {:zop 1}}]}]]
+                (sort-by #(sort-by-fn % :foo.bar.zop) coll))
+                 ;; => ({:foo [{:bar {:zop 1}}]}
+                 ;;     {:foo [{:bar {:zop 5}}]})
+              )}
+  [m field]
+  (let [v (-> m (aggregate/es-get-in (aggregate/parse-field field)))]
+    (if (sequential? v)
+      (first v)
+      v)))
+
+(defn- grab-vals [field coll]
+  (map
+   #(aggregate/es-get-in % ( aggregate/parse-field field))
+   coll))
 
 (defn sort-test
   "test a list route with all sort options"
   [route headers sort-fields]
   (testing (str route " with sort")
     (doseq [field sort-fields]
-      (let [sort-fn (sort-field->sort-fn field)
-            manually-sorted (->> (get route
+      (let [manually-sorted (->> (get route
                                       :headers headers
                                       :query-params {:limit 10000})
                                  :parsed-body
-                                 (sort-by sort-fn))
+                                 (sort-by #(sort-by-fn % field)))
             route-sorted (->> (get route
                                    :headers headers
-                                   :query-params {:sort_by (name field)
+                                   :query-params {:sort_by    (name field)
                                                   :sort_order "asc"
-                                                  :limit 10000})
-
+                                                  :limit      10000})
                               :parsed-body)]
-        (is (=
-             manually-sorted
-             route-sorted) field)))))
+        (is (->> [manually-sorted route-sorted]
+                 ;; no need to compare collections with nested maps included,
+                 ;; since we only care about the order
+                 (map (partial grab-vals field))
+                 (apply =))
+            (str "sort-test for field: " field))))))
 
 (defn edge-cases-test
   "miscellaneous test which may expose small caveats"
