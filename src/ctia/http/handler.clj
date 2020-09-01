@@ -5,6 +5,7 @@
             [ctia.entity.entities :as entities]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]

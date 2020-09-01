@@ -1,13 +1,13 @@
 (ns ctia.graphql.routes
   (:require [clojure.tools.logging :as log]
-            [compojure.api
-             [core :as c]
-             [sweet :refer :all]]
+            [compojure.api.core :as c :refer [POST routes]]
             [ctia.graphql.schemas :as gql]
             [ctia.schemas.core :refer [APIHandlerServices]]
             [ring-graphql-ui.core :refer [graphiql
                                           voyager]]
-            [ring.util.http-response :refer :all]
+            [ring.util.http-response :refer [bad-request
+                                             internal-server-error
+                                             ok]]
             [schema.core :as s]))
 
 (s/defn graphql-ui-routes [{{:keys [get-in-config]} :ConfigService

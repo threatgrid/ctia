@@ -1,11 +1,9 @@
 (ns ctia.flows.hooks.event-hooks
   (:require
    [clojure.tools.logging :as log]
-   [ctia.events :as events-svc]
    [ctia.flows.hook-protocol :refer [Hook]]
    [ctia.lib.redis :as lr]
    [ctia.lib.kafka :as lk]
-   [ctia.properties :as p]
    [ctia.entity.event.schemas :refer [CreateEventType
                                       DeleteEventType]]
    [redismq.core :as rmq]
