@@ -408,7 +408,6 @@
              spec
              services
              enveloped-result?]}]
-  {:pre [services]}
   (-> {:flow-type :create
        :services services
        :entity-type entity-type
@@ -451,7 +450,6 @@
              long-id-fn
              services
              spec]}]
-  {:pre [services]}
   (let [prev-entity (get-fn entity-id)]
     (when prev-entity
       (-> {:flow-type :update
@@ -495,7 +493,6 @@
              partial-entity
              long-id-fn
              spec]}]
-  {:pre [services]}
   (let [prev-entity (get-fn entity-id)]
     (when prev-entity
       (-> {:flow-type :update
@@ -538,7 +535,6 @@
              long-id-fn
              services
              identity]}]
-  {:pre [services]}
   (let [entity (get-fn entity-id)]
     (-> {:flow-type :delete
          :services services
