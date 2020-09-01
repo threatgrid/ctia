@@ -1,15 +1,17 @@
 (ns ctia.entity.asset-mapping
-  (:require [ctia.domain.entities :refer [default-realize-fn]]
-            [ctia.schemas.core :refer [def-acl-schema def-stored-schema]]
-            [ctia.schemas.utils :as csu]
+  (:require [compojure.api.sweet :refer [POST routes]]
+            [ctia.domain.entities :refer [default-realize-fn]]
+            [ctia.http.routes.common :as routes.common]
+            [ctia.http.routes.crud :refer [services->entity-crud-routes]]
+            [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
+            [ctia.schemas.utils :as csu]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
             [ctim.schemas.asset-mapping :as asset-mapping-schema]
-            [schema-tools.core :as st]
-            [ctia.http.routes.crud :refer [entity-crud-routes]]
-            [ctia.http.routes.common :as routes.common]
             [flanders.utils :as fu]
+            [ring.util.http-response :as http-response]
+            [schema-tools.core :as st]
             [schema.core :as s]))
 
 (def-acl-schema AssetMapping
@@ -97,29 +99,44 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(def asset-mapping-routes
-  (entity-crud-routes
-   {:entity                   :asset-mapping
-    :new-schema               NewAssetMapping
-    :entity-schema            AssetMapping
-    :get-schema               PartialAssetMapping
-    :get-params               AssetMappingGetParams
-    :list-schema              PartialAssetMappingList
-    :search-schema            PartialAssetMappingList
-    :external-id-q-params     AssetMappingByExternalIdQueryParams
-    :search-q-params          AssetMappingSearchParams
-    :new-spec                 :new-asset-mapping/map
-    :realize-fn               realize-asset-mapping
-    :get-capabilities         :read-asset-mapping
-    :post-capabilities        :create-asset-mapping
-    :put-capabilities         :create-asset-mapping
-    :delete-capabilities      :delete-asset-mapping
-    :search-capabilities      :search-asset-mapping
-    :external-id-capabilities :read-asset-mapping
-    :can-aggregate?           true
-    :histogram-fields         asset-mapping-histogram-fields
-    :enumerable-fields        asset-mapping-enumerable-fields
-    }))
+(s/defn additional-routes [params :- APIHandlerServices]
+  (routes
+   (POST "/expire/:id" []
+     :return nil
+     ;; :body [_ _ {:description "Expire AssetMapping"}]
+     :path-params [id :- s/Str]
+     :summary "Expire AssetMapping"
+     :capabilities :create-asset-mapping
+     :auth-identity identity
+     :identity-map identity-map
+     (println "🐱 ----------> you are expired!")
+     (http-response/ok "yo!"))))
+
+(s/defn asset-mapping-routes [services :- APIHandlerServices]
+  (routes
+   (additional-routes services)
+   (services->entity-crud-routes
+    services
+    {:entity                   :asset-mapping
+     :new-schema               NewAssetMapping
+     :entity-schema            AssetMapping
+     :get-schema               PartialAssetMapping
+     :get-params               AssetMappingGetParams
+     :list-schema              PartialAssetMappingList
+     :search-schema            PartialAssetMappingList
+     :external-id-q-params     AssetMappingByExternalIdQueryParams
+     :search-q-params          AssetMappingSearchParams
+     :new-spec                 :new-asset-mapping/map
+     :realize-fn               realize-asset-mapping
+     :get-capabilities         :read-asset-mapping
+     :post-capabilities        :create-asset-mapping
+     :put-capabilities         :create-asset-mapping
+     :delete-capabilities      :delete-asset-mapping
+     :search-capabilities      :search-asset-mapping
+     :external-id-capabilities :read-asset-mapping
+     :can-aggregate?           true
+     :histogram-fields         asset-mapping-histogram-fields
+     :enumerable-fields        asset-mapping-enumerable-fields})))
 
 (def capabilities
   #{:create-asset-mapping
