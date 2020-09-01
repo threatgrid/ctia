@@ -40,8 +40,8 @@
   (log/debug (with-out-str
                (do (newline)
                    (utils/safe-pprint
-                     (mp/debug-properties-by-source p/PropertiesSchema
-                                                    p/files)))))
+                    (mp/debug-properties-by-source p/PropertiesSchema
+                                                   p/files)))))
 
   (log/info (with-out-str
               (do (newline)
