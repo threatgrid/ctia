@@ -130,7 +130,7 @@
 
 (s/defn casebook-operation-routes [{{:keys [get-in-config]} :ConfigService
                                     {:keys [read-store write-store]} :StoreService
-                                    :as _services_} :- APIHandlerServices]
+                                    :as services} :- APIHandlerServices]
   (routes
    (PATCH "/:id" []
           :return Casebook
@@ -142,6 +142,7 @@
           :auth-identity identity
           :identity-map identity-map
           (if-let [res (flows/patch-flow
+                        :services services
                         :get-fn #(read-store :casebook
                                              read-record
                                              %
@@ -175,6 +176,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -209,6 +211,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
@@ -243,6 +246,7 @@
                   :auth-identity identity
                   :identity-map identity-map
                   (if-let [res (flows/patch-flow
+                                :services services
                                 :get-fn #(read-store :casebook
                                                      read-record
                                                      %
