@@ -25,19 +25,17 @@
              [spec :as fs]
              [utils :as fu]]))
 
+(def ^:dynamic ^:private *config-transformers* [])
+
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
 
 (defn with-config-transformer*
+  "For use in a test fixture to dynamically transform a Trapperkeeper
+  config before creating an app."
   [tf body-fn]
-  ;; TODO stub, assumed single-threaded
-  (let [a (p/global-properties-atom)
-        old @a]
-    (try
-      (swap! a tf)
-      (body-fn)
-      (finally
-        (reset! a old)))))
+  (binding [*config-transformers* (conj *config-transformers* tf)]
+    (body-fn)))
 
 (def with-properties-vec
   (mth/build-with-properties-vec-fn PropertiesSchema))
@@ -176,6 +174,16 @@
                        "ctia.http.show.port" http-port]
        (try
          (init/start-ctia! :join? false)
+         ;; TODO temporary implementation of with-config-transformer*
+         ;;      before we integrate trapperkeeper. must go after
+         ;;      `start-ctia!` because it calls `ctia.properties/init!`
+         ;;      to update global properties with System properties,
+         ;;      and we want to update properties after that step.
+         (swap! (p/get-global-properties)
+                (fn [init-config]
+                  (reduce #(%2 %1)
+                          init-config
+                          *config-transformers*)))
          (t)
          (finally
            (shutdown/shutdown-ctia!)))))))
