@@ -5,6 +5,7 @@
             [ctia.entity.judgement.schemas
              :refer
              [PartialStoredJudgement StoredJudgement]]
+            [ctia.properties :as p]
             [ctia.schemas.core :refer [Verdict]]
             [ctia.store :refer [IJudgementStore IQueryStringSearchableStore IStore]]
             [ctia.stores.es
@@ -94,9 +95,9 @@
    :valid_time (:valid_time judgement)})
 
 (s/defn handle-calculate-verdict :- (s/maybe Verdict)
-  [{{{:keys [get-in-config]} :ConfigService} :services :as state}
-    observable ident]
-  (some-> (list-active-by-observable state observable ident get-in-config)
+  [state observable ident]
+
+  (some-> (list-active-by-observable state observable ident p/get-in-global-properties)
           first
           make-verdict))
 
