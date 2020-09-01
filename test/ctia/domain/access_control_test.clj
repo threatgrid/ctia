@@ -144,7 +144,7 @@
 (defn with-max-record-visibility-group [f]
   (swap! (p/global-properties-atom)
          assoc-in [:ctia :access-control :max-record-visibility] "group")
-  (f helpers/build-get-in-config-fn)
+  (f (helpers/build-get-in-config-fn))
   (swap! (p/global-properties-atom)
          assoc-in [:ctia :access-control :max-record-visibility] "everyone"))
 
