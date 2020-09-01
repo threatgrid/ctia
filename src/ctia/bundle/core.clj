@@ -163,12 +163,13 @@
    an error is reported."
   [{:keys [external_ids]
     :as entity-data} :- EntityImportData
-   find-by-external-id]
+   find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
+   get-in-config]
   (if-let [old-entities (mapcat find-by-external-id external_ids)]
     (let [old-entity (some-> old-entities
                              first
                              :entity
-                             with-long-id
+                             (with-long-id get-in-config)
                              ent/un-store)]
       (when (< 1 (count old-entities))
         (log/warn
@@ -188,7 +189,8 @@
 (s/defn with-existing-entities :- [EntityImportData]
   "Add existing entities to the import data map."
   [import-data entity-type identity-map
-   services :- APIHandlerServices]
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (let [entities-by-external-id
         (by-external-id
          (find-by-external-ids import-data
@@ -199,7 +201,7 @@
                                  (when external_id
                                    (get entities-by-external-id
                                         {:external_id external_id})))]
-    (map #(with-existing-entity % find-by-external-id-fn)
+    (map #(with-existing-entity % find-by-external-id-fn get-in-config)
          import-data)))
 
 (s/defn prepare-import :- BundleImportData
@@ -384,9 +386,10 @@
 (s/defn fetch-record
   "Fetch a record by ID guessing its type"
   [id identity-map
-   {{:keys [read-store]} :StoreService
+   {{:keys [get-in-config]} :ConfigService
+    {:keys [read-store]} :StoreService
     :as _services_} :- APIHandlerServices]
-  (when-let [entity-type (ent/id->entity-type id)]
+  (when-let [entity-type (ent/id->entity-type id get-in-config)]
     (read-store (keyword entity-type)
                 read-fn
                 id
@@ -400,7 +403,8 @@
    identity-map
    ident
    params
-   services :- APIHandlerServices]
+   {{:keys [get-in-config]} :ConfigService
+    :as services} :- APIHandlerServices]
   (if-let [record (fetch-record id identity-map services)]
     (let [relationships (when (:include_related_entities params true)
                           (fetch-entity-relationships id identity-map params services))]
@@ -411,11 +415,11 @@
                    bulk/bulk-key)
                #{(-> record
                      ent/un-store
-                     ent/with-long-id)})
+                     (ent/with-long-id get-in-config))})
 
         (seq relationships)
         (assoc :relationships
-               (set (map ent/with-long-id relationships)))
+               (set (map #(ent/with-long-id % get-in-config) relationships)))
 
         (seq relationships)
         (->> (deep-merge-with coll/add-colls
