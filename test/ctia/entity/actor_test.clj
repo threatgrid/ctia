@@ -65,12 +65,11 @@
       sut/actor-fields))))
 
 (deftest test-actor-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "actor"
-                          new-actor-minimal
-                          true
-                          true))))
+  (access-control-test "actor"
+                       new-actor-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-actor-metric-routes
   ((:es-store store-fixtures)

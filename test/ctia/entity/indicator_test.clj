@@ -34,12 +34,11 @@
        :headers {:Authorization "45c1f5e3f05d0"}}))))
 
 (deftest test-indicator-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "indicator"
-                          new-indicator-minimal
-                          true
-                          false))))
+  (access-control-test "indicator"
+                       new-indicator-minimal
+                       true
+                       false
+                       test-for-each-store))
 
 (deftest test-indicator-metric-routes
   ((:es-store store-fixtures)

@@ -60,12 +60,11 @@
         sut/campaign-fields)))))
 
 (deftest test-campaign-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "campaign"
-                          ex/new-campaign-minimal
-                          true
-                          true))))
+  (access-control-test "campaign"
+                       ex/new-campaign-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-campaign-metric-routes
   ((:es-store store-fixtures)

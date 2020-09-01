@@ -28,6 +28,17 @@
 (def fixture-property
   (mth/build-fixture-property-fn PropertiesSchema))
 
+(defn with-config-transformer*
+  [tf body-fn]
+  ;; TODO stub, assumed single-threaded
+  (let [a (p/global-properties-atom)
+        old @a]
+    (try
+      (swap! a tf)
+      body-fn
+      (finally
+        (reset! a old)))))
+
 (def with-properties-vec
   (mth/build-with-properties-vec-fn PropertiesSchema))
 
