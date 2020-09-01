@@ -664,7 +664,6 @@ when confirm? is true, it stores this state and creates the target indices."
   (log/info "starting CTIA Stores...")
   (p/init!)
   (log-properties)
-  (init-store-service!)
   (->> (migration-store-properties)
        es.init/init-store-conn
        :conn

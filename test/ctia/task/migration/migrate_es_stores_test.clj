@@ -323,7 +323,6 @@
           migration-id "migration-1"
           docs (map (comp :_source es-helpers/str->doc)
                     (line-seq rdr))
-
           base-params {:target-store storemap
                        :entity-type :relationship
                        :list-coerce list-coerce
@@ -337,10 +336,14 @@
                        msg
                        {:keys [confirm?]
                         :as override-params}]
-                    (init-migration migration-id
-                                    prefix
-                                    [:relationship]
-                                    true)
+                    (init-migration {:migration-id migration-id
+                                     :prefix prefix
+                                     :store-keys [:relationship]
+                                     :confirm? true
+                                     :migrations [:__test]
+                                     :batch-size 1000
+                                     :buffer-size 3
+                                     :restart? false})
                     (let [test-docs (take total docs)
                           search_after [(rand-int total)]
                           batch-params  (-> (into base-params
