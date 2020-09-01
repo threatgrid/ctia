@@ -178,8 +178,8 @@
          ;;      before we integrate trapperkeeper. must go after
          ;;      `start-ctia!` because it calls `ctia.properties/init!`
          ;;      to update global properties with System properties,
-         ;;      and we want to update properties after that step.
-         (swap! (p/get-global-properties)
+         ;;      and we want to update the config _after_ that step.
+         (swap! (p/global-properties-atom)
                 (fn [init-config]
                   (reduce #(%2 %1)
                           init-config
