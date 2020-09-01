@@ -13,7 +13,10 @@
             [ctia.domain
              [access-control :refer [allowed-tlp? allowed-tlps]]
              [entities :refer [un-store]]]
-            [ctia.schemas.core :refer [TempIDs MaybeDelayedRealizeFn MaybeDelayedRealizeFn->RealizeFn]]
+            [ctia.schemas.core :refer [APIHandlerServices
+                                       MaybeDelayedRealizeFn
+                                       MaybeDelayedRealizeFn->RealizeFn
+                                       TempIDs]]
             [ctim.domain.id :as id]
             [ctia.lib.collection :as coll]
             [ctia.entity.event.obj-to-event
@@ -32,16 +35,7 @@
    :entity-type s/Keyword
    (s/optional-key :events) [{s/Keyword s/Any}]
    :flow-type (s/enum :create :update :delete)
-   :services {:ConfigService {:get-in-config (s/=> s/Any
-                                                   [s/Any]
-                                                   [s/Any s/Any])
-                              s/Keyword s/Any}
-              :HooksService {:apply-hooks (s/pred ifn?) ;;kw args
-                             :apply-event-hooks (s/=> s/Any s/Any)
-                             s/Keyword s/Any}
-              :StoreService {:write-store (s/pred ifn?) ;;varargs
-                             s/Keyword s/Any}
-              s/Keyword s/Any}
+   :services APIHandlerServices
    :identity (s/protocol auth/IIdentity)
    (s/optional-key :long-id-fn) (s/maybe (s/=> s/Any s/Any))
    (s/optional-key :prev-entity) (s/maybe {s/Keyword s/Any})
@@ -106,7 +100,6 @@
            :entity entity}))
       (make-id entity-type)))
 
-;; entity first for clojure.core/->
 (defn- check-spec [entity spec]
   (if (and spec
            (not (cs/valid? spec entity)))
@@ -136,8 +129,8 @@
   (assoc fm :entities
          (map (fn [entity]
                 (-> entity
-                    (check-spec spec)
-                    (tlp-check get-in-config))) entities)))
+                     (check-spec spec)
+                     (tlp-check get-in-config))) entities)))
 
 (s/defn ^:private create-ids-from-transient :- FlowMap
   "Creates IDs for entities identified by transient IDs that have not
@@ -216,24 +209,24 @@
          (doall
           (for [entity entities]
             (apply-hooks :entity entity
-                           :prev-entity prev-entity
-                           :hook-type (case flow-type
-                                        :create :before-create
-                                        :update :before-update
-                                        :delete :before-delete)
-                           :read-only? (= flow-type :delete))))))
+                         :prev-entity prev-entity
+                         :hook-type (case flow-type
+                                      :create :before-create
+                                      :update :before-update
+                                      :delete :before-delete)
+                         :read-only? (= flow-type :delete))))))
 
 (s/defn ^:private apply-after-hooks :- FlowMap
   [{{{:keys [apply-hooks]} :HooksService} :services
     :keys [entities flow-type prev-entity] :as fm} :- FlowMap]
   (doseq [entity entities]
     (apply-hooks :entity entity
-                   :prev-entity prev-entity
-                   :hook-type (case flow-type
-                                :create :after-create
-                                :update :after-update
-                                :delete :after-delete)
-                   :read-only? true))
+                 :prev-entity prev-entity
+                 :hook-type (case flow-type
+                              :create :after-create
+                              :update :after-update
+                              :delete :after-delete)
+                 :read-only? true))
   fm)
 
 (s/defn ^:private create-events :- FlowMap
