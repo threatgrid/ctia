@@ -35,7 +35,7 @@
         old @a]
     (try
       (swap! a tf)
-      body-fn
+      (body-fn)
       (finally
         (reset! a old)))))
 
