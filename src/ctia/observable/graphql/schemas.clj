@@ -12,24 +12,27 @@
     [resolvers :as resolvers]]
    [ctia.store :refer :all]
    [ctia.verdict.graphql.schemas :as verdict]
+   [ctia.properties :as p]
    [ctim.schemas.common :as ctim-common-schema]
    [flanders.utils :as fu]))
 
 (defn observable-verdict
   [{observable-type :type
     observable-value :value}
-   ident]
+   ident
+   get-in-config]
   (some-> (read-store :judgement
                       calculate-verdict
                       {:type observable-type :value observable-value}
                       ident)
-          (clojure.core/update :judgement_id ctia-entities/short-id->long-id)))
+          (clojure.core/update :judgement_id ctia-entities/short-id->long-id get-in-config)))
 
 (def observable-fields
   {:verdict {:type verdict/VerdictType
              :resolve (fn [context _ _ src]
                         (observable-verdict (select-keys src [:type :value])
-                                            (:ident context)))}
+                                            (:ident context)
+                                            p/get-in-global-properties))}
    :judgements {:type judgement/JudgementConnectionType
                 :args (into pagination/connection-arguments
                             judgement/judgement-order-arg)

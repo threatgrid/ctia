@@ -91,7 +91,8 @@
     (cond-> {:status status}
       verb (assoc :incident_time {verb t}))))
 
-(s/defn incident-additional-routes [{{:keys [read-store write-store]} :StoreService
+(s/defn incident-additional-routes [{{:keys [get-in-config]} :ConfigService
+                                     {:keys [read-store write-store]} :StoreService
                                      :as _services_} :- APIHandlerServices]
   (routes
    (POST "/:id/status" []
@@ -120,7 +121,7 @@
                                                %
                                                identity-map
                                                (wait_for->refresh wait_for))
-                      :long-id-fn with-long-id
+                      :long-id-fn #(with-long-id % get-in-config)
                       :entity-type :incident
                       :entity-id id
                       :identity identity

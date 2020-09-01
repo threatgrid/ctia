@@ -82,7 +82,7 @@
     owner :- s/Str
     groups :- [s/Str]
     prev-object :- (s/maybe StoredFeed)]
-   (let [long-id (short-id->long-id id)
+   (let [long-id (short-id->long-id id p/get-in-global-properties)
          plain-secret (if-let [prev-secret (:secret prev-object)]
                         (encryption/decrypt-str prev-secret)
                         (str (java.util.UUID/randomUUID)))
