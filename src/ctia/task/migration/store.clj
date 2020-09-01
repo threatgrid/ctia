@@ -11,7 +11,7 @@
             [ctia.init :refer [init-store-service! log-properties]]
             [ctia.lib.collection :refer [fmap]]
             [ctia.properties :as p]
-            [ctia.store :refer [stores]]
+            [ctia.store :as store]
             [ctia.stores.es.crud :as crud]
             [ctia.stores.es.init :as es.init]
             [ctia.stores.es.mapping :as em]
@@ -58,7 +58,7 @@
   (dissoc em/token :fielddata))
 
 (defn store-mapping
-  [[k]]
+  [k]
   {k {:type "object"
       :properties {:source {:type "object"
                             :properties
@@ -78,7 +78,8 @@
     {:id em/token
      :timestamp em/ts
      :stores {:type "object"
-              :properties (->> (map store-mapping @stores)
+              :properties (->> (keys store/empty-stores)
+                               (map store-mapping)
                                (into {}))}}}})
 
 (defn migration-store-properties []
@@ -422,13 +423,13 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
 
 (s/defn fetch-deletes :- (s/maybe {s/Any s/Any})
   "retrieves delete events for given entity types and since given date"
-  [entity-types :- [s/Keyword]
+  [event-store :- StoreMap
+   entity-types :- [s/Keyword]
    since :- s/Inst
    batch-size :- s/Int
    search_after :- (s/maybe [s/Any])]
   ;; TODO migrate events with mapping enabling to filter on record-type and entity.type
   (let [query {:range {:timestamp {:gte since}}}
-        event-store (store->map (:event @stores))
         filter-events (fn [{:keys [event_type entity]}]
                         (and (= event_type "record-deleted")
                              (contains? (set entity-types)

@@ -53,18 +53,23 @@
    store-keys :- [s/Keyword]
    batch-size :- s/Int
    confirm? :- s/Bool]
-  (loop [search_after nil]
-    (let [{:keys [data paging]} (mst/fetch-deletes store-keys created batch-size search_after)
-          {new-search-after :sort next :next} paging]
-      (doseq [[entity-type entities] data]
-        (log/infof "Handling %s deleted %s during migration"
-                   (count entities)
-                   (name entity-type))
-        (when confirm?
-          (mst/batch-delete (get-in stores [entity-type :target :store])
-                            (map :id entities))))
-      (when next
-        (recur new-search-after)))))
+  (let [event-store (mst/get-source-store :event)]
+    (loop [search_after nil]
+      (let [{:keys [data paging]} (mst/fetch-deletes event-store
+                                                     store-keys
+                                                     created
+                                                     batch-size
+                                                     search_after)
+            {new-search-after :sort next :next} paging]
+        (doseq [[entity-type entities] data]
+          (log/infof "Handling %s deleted %s during migration"
+                     (count entities)
+                     (name entity-type))
+          (when confirm?
+            (mst/batch-delete (get-in stores [entity-type :target :store])
+                              (map :id entities))))
+        (when next
+          (recur new-search-after))))))
 
 (defn append-coerced
   [coercer coerced entity]

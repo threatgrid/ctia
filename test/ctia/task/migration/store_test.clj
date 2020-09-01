@@ -787,8 +787,14 @@
                   :headers {"Authorization" "45c1f5e3f05d0"})
         _ (delete (format "ctia/tool/%s" malware1-id)
                   :headers {"Authorization" "45c1f5e3f05d0"})
-        {data1 :data paging1 :paging} (sut/fetch-deletes [:sighting :tool] since 3 nil)
-        {data2 :data paging2 :paging} (sut/fetch-deletes [:sighting :tool]
+        event-store (sut/get-source-store :event)
+        {data1 :data paging1 :paging} (sut/fetch-deletes event-store
+                                                         [:sighting :tool]
+                                                         since
+                                                         3
+                                                         nil)
+        {data2 :data paging2 :paging} (sut/fetch-deletes event-store
+                                                         [:sighting :tool]
                                                          since
                                                          2
                                                          (:sort paging1))]

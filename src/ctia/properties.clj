@@ -42,22 +42,6 @@
 (defn default-store-properties [store]
   {(str "ctia.store." store) s/Str})
 
-(s/defschema StoreProperties
-  {:host s/Str
-   :port s/Int
-   :transport s/Keyword
-   :clustername s/Str
-   :indexname s/Str
-   :refresh Refresh
-   :refresh_interval  s/Str
-   :replicas s/Num
-   :shards s/Num
-   :rollover {:max_docs s/Num
-              :max_age s/Str}
-   :aliased  s/Bool
-   :default_operator (s/enum "OR" "AND")
-   :timeout s/Num})
-
 (defn es-store-impl-properties [prefix store]
   {(str prefix store ".host") s/Str
    (str prefix store ".port") s/Int
