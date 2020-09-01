@@ -4,6 +4,7 @@
             [ctia.entity.entities :refer [entities]]
             [ctia.entity.feed :refer [feed-view-routes]]
             [ctia.entity.relationship :refer [incident-link-route]]
+            [ctia.schemas.core :refer [APIHandlerServices]]
             [compojure.api
              [core :refer [middleware]]
              [routes :as api-routes]
@@ -201,7 +202,7 @@
                       ;; always last
                       (metrics/wrap-metrics "ctia" api-routes/get-routes)]
            documentation-routes
-           (graphql-ui-routes)
+           (graphql-ui-routes services)
            (context
                "/ctia" []
              (context "/feed" []
@@ -225,6 +226,6 @@
                (observable-routes services)
                metrics-routes
                (properties-routes services)
-               graphql-routes)))
+               (graphql-routes services))))
          (undocumented
           (rt/not-found (ok (unk/err-html)))))))
