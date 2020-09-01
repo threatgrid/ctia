@@ -1,11 +1,14 @@
 (ns ctia.entity.asset-mapping
-  (:require [compojure.api.sweet :refer [POST routes]]
-            [ctia.domain.entities :refer [default-realize-fn]]
+  (:require [clj-momo.lib.clj-time.core :as time]
+            [compojure.api.sweet :refer [PATCH routes]]
+            [ctia.domain.entities :as entities]
+            [ctia.flows.crud :as flows]
             [ctia.http.routes.common :as routes.common]
             [ctia.http.routes.crud :refer [services->entity-crud-routes]]
             [ctia.schemas.core :refer [def-acl-schema def-stored-schema APIHandlerServices]]
             [ctia.schemas.sorting :as sorting]
             [ctia.schemas.utils :as csu]
+            [ctia.store]
             [ctia.stores.es.mapping :as em]
             [ctia.stores.es.store :refer [def-es-store]]
             [ctim.schemas.asset-mapping :as asset-mapping-schema]
@@ -31,11 +34,14 @@
 
 (def-stored-schema StoredAssetMapping AssetMapping)
 
+(s/defschema PartialNewAssetMapping
+  (csu/optional-keys-schema NewAssetMapping))
+
 (s/defschema PartialStoredAssetMapping
   (csu/optional-keys-schema StoredAssetMapping))
 
 (def realize-asset-mapping
-  (default-realize-fn "asset-mapping" NewAssetMapping StoredAssetMapping))
+  (entities/default-realize-fn "asset-mapping" NewAssetMapping StoredAssetMapping))
 
 (def asset-mapping-mapping
   {"asset-mapping"
@@ -99,18 +105,42 @@
    :valid_time.start_time
    :valid_time.end_time])
 
-(s/defn additional-routes [params :- APIHandlerServices]
+(s/defn additional-routes [{{:keys [get-in-config]}          :ConfigService
+                            {:keys [read-store write-store]} :StoreService
+                            :as                              services} :- APIHandlerServices]
   (routes
-   (POST "/expire/:id" []
-     :return nil
-     ;; :body [_ _ {:description "Expire AssetMapping"}]
-     :path-params [id :- s/Str]
-     :summary "Expire AssetMapping"
-     :capabilities :create-asset-mapping
-     :auth-identity identity
-     :identity-map identity-map
-     (println "🐱 ----------> you are expired!")
-     (http-response/ok "yo!"))))
+   (PATCH "/expire/:id" []
+     :return         AssetMapping
+     :path-params    [id :- s/Str]
+     :summary        "Expire Asset Mapping's valid-time property"
+     :capabilities   :create-asset-mapping
+     :auth-identity  identity
+     :identity-map   identity-map
+     (if-let [updated
+              (flows/patch-flow
+               :services services
+               :get-fn (fn [_]
+                         (read-store :asset-mapping
+                                     ctia.store/read-record
+                                     id
+                                     identity-map
+                                     {}))
+               :realize-fn realize-asset-mapping
+               :update-fn #(write-store :asset-mapping
+                                       ctia.store/update-record
+                                       (:id %)
+                                       (assoc-in % [:valid_time :end_time] (time/internal-now))
+                                       identity-map
+                                       {})
+               :long-id-fn #(entities/with-long-id % get-in-config)
+               :entity-type :asset-mapping
+               :entity-id id
+               :identity identity
+               :patch-operation :replace
+               :partial-entity {}
+               :spec :new-asset-mapping/map)]
+       (http-response/ok (entities/un-store updated))
+       (http-response/not-found {:error "asset-mapping not found"})))))
 
 (s/defn asset-mapping-routes [services :- APIHandlerServices]
   (routes
@@ -160,5 +190,4 @@
    :es-store              ->AssetMappingStore
    :es-mapping            asset-mapping-mapping
    :services->routes      asset-mapping-routes
-   :capabilities          capabilities
-   })
+   :capabilities          capabilities})
