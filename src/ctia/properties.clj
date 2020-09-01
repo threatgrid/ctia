@@ -230,8 +230,8 @@
                              ;; TOP-LEVEL STATE!!
                              (global-properties-atom)))
 
-(defn get-http-show []
-  (get-in-global-properties [:ctia :http :show]))
+(defn get-http-show [get-in-config]
+  (get-in-config [:ctia :http :show]))
 
 (defn get-http-swagger []
   (get-in-global-properties [:ctia :http :swagger]))
