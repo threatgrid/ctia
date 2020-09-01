@@ -1,7 +1,7 @@
 (ns ctia.entity.event.store
   (:require
    [ctia.entity.event.schemas :refer [PartialEvent]]
-   [ctia.store :refer :all]
+   [ctia.store :refer [IStore IQueryStringSearchableStore]]
    [ctia.entity.event.crud :as crud]
    [ctia.store :refer [IEventStore]]))
 

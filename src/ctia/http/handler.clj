@@ -168,7 +168,7 @@
 (s/defn api-handler [{{:keys [get-in-config]} :ConfigService
                       :as services} :- APIHandlerServices]
   (let [{:keys [oauth2]}
-        (get-http-swagger)]
+        (get-http-swagger get-in-config)]
     (api {:exceptions {:handlers exception-handlers}
           :swagger
           (cond-> {:ui "/"

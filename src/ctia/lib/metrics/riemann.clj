@@ -3,9 +3,9 @@
             [ctia.properties :as p]
             [clojure.tools.logging :as log]))
 
-(defn init! []
+(defn init! [get-in-config]
   (let [{enabled? :enabled :as config}
-        (p/get-in-global-properties [:ctia :metrics :riemann])]
+        (get-in-config [:ctia :metrics :riemann])]
     (when enabled?
       (log/info "riemann metrics reporting")
       (riemann/start (select-keys config
