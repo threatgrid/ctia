@@ -163,9 +163,9 @@
    an error is reported."
   [{:keys [external_ids]
     :as entity-data} :- EntityImportData
-   find-by-external-ids :- (s/=> s/Any (s/named s/Any 'external_id))
+   find-by-external-id :- (s/=> s/Any (s/named s/Any 'external_id))
    get-in-config]
-  (if-let [old-entities (mapcat find-by-external-ids external_ids)]
+  (if-let [old-entities (mapcat find-by-external-id external_ids)]
     (let [old-entity (some-> old-entities
                              first
                              :entity
