@@ -25,12 +25,13 @@
                                     es-helpers/fixture-properties:es-store
                                     fixture-properties:redismq-hook
                                     test-helpers/fixture-properties:events-enabled
-                                    test-helpers/fixture-ctia
-                                    test-helpers/fixture-allow-all-auth]))
+                                    test-helpers/fixture-allow-all-auth
+                                    test-helpers/fixture-ctia]))
 
 (deftest ^:integration test-redismq
   (testing "Events are published to redismq queue"
-    (let [queue (:queue (eh/redismq-publisher))]
+    (let [get-in-config (test-helpers/current-get-in-config-fn)
+          queue (:queue (eh/redismq-publisher get-in-config))]
       (rmq/flush-queue queue)
       (post "ctia/judgement"
             :body {:observable {:value "1.2.3.4"
