@@ -1,6 +1,5 @@
 (ns ctia.entity.event.obj-to-event
   (:require [ctia.entity.event.schemas :as vs]
-            [ctia.domain.entities :refer [with-long-id]]
             [clojure.data :refer [diff]]
             [clojure.set :as set]
             [clj-momo.lib.time :as time]

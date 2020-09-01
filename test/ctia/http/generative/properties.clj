@@ -9,7 +9,7 @@
             [ctia.properties :refer [get-http-show]]
             [ctia.schemas.core] ;; for spec side-effects
             [ctia.test-helpers.core
-             :refer [post get]]
+             :as helpers :refer [post get]]
             [ctim.domain.id :as id]
             [ctim.schemas
              [actor :refer [NewActor]]
@@ -39,7 +39,8 @@
 (defn api-for-route [model-type entity-gen]
   (for-all
     [new-entity entity-gen]
-    (let [{post-status :status
+    (let [get-in-config (helpers/current-get-in-config-fn)
+          {post-status :status
            {id :id
             type :type
             :as post-entity} :parsed-body}
@@ -51,7 +52,7 @@
                         post-entity)))
 
       (let [url-id
-            (-> (id/->id type id (get-http-show))
+            (-> (id/->id type id (get-http-show get-in-config))
                 :short-id
                 encode)
 
