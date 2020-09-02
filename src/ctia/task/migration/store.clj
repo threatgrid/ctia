@@ -54,8 +54,17 @@
 (def es-max-retry 3)
 (def migration-es-conn (atom nil))
 
-(def token-mapping
-  (dissoc em/token :fielddata))
+(defn prefixed-index [index prefix]
+  (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
+    (format "v%s_%s" prefix version-trimmed)))
+
+(defn target-store-properties
+  [prefix store-key]
+  (cond-> (es.init/get-store-properties store-key)
+    prefix (update :indexname
+                   #(prefixed-index % prefix))
+    :else (-> (into (p/get-in-global-properties [:ctia :migration :store :es :default]))
+              (into (p/get-in-global-properties [:ctia :migration :store :es store-key])))))
 
 (defn store-mapping
   [k]
@@ -83,7 +92,7 @@
                                (into {}))}}}})
 
 (defn migration-store-properties []
-  (into (es.init/get-store-properties :migration)
+  (into (target-store-properties nil :migration)
         {:shards 1
          :replicas 1
          :refresh true
@@ -166,10 +175,6 @@
            prepared
            "true"))
   migration)
-
-(defn prefixed-index [index prefix]
-  (let [version-trimmed (string/replace index #"^v[^_]*_" "")]
-    (format "v%s_%s" prefix version-trimmed)))
 
 (def conn-overrides {:cm (conn/make-connection-manager {:timeout timeout})})
 
@@ -503,14 +508,6 @@ Rollover requires refresh so we cannot just call ES with condition since refresh
     (log/infof "%s - creating store: %s" entity-type indexname)
     (retry es-max-retry es-index/create-template! conn indexname index-config)
     (retry es-max-retry es-index/create! conn (format "<%s-{now/d}-000001>" indexname) index-config)))
-
-(defn target-store-properties
-  [prefix store-key]
-  (-> (es.init/get-store-properties store-key)
-      (update :indexname
-              #(prefixed-index % prefix))
-      (into (p/get-in-global-properties [:ctia :migration :store :es :default]))
-      (into (p/get-in-global-properties [:ctia :migration :store :es store-key]))))
 
 (s/defn init-storemap :- StoreMap
   [props :- es.init/StoreProperties]

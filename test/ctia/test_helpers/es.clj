@@ -75,7 +75,6 @@
                       "ctia.store.es.asset.indexname" "ctia_assets"
                       "ctia.store.es.asset-mapping.indexname" "ctia_asset_mapping"
                       "ctia.store.es.asset-properties.indexname" "ctia_asset_properties"
-                      "ctia.store.es.migration.indexname" "ctia_migration"
                       "ctia.store.es.attack-pattern.indexname" "ctia_attack_pattern"
                       "ctia.store.es.campaign.indexname" "ctia_campaign"
                       "ctia.store.es.coa.indexname" "ctia_coa"
@@ -122,6 +121,7 @@
                       "ctia.store.weakness" "es"
                       "ctia.store.bulk-refresh" "true"
 
+                      "ctia.migration.store.es.migration.indexname" "ctia_migration"
                       "ctia.migration.store.es.default.rollover.max_docs" 50
                       "ctia.migration.store.es.event.rollover.max_docs" 1000]
     (t)))

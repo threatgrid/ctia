@@ -67,7 +67,7 @@
 
 ;; This a is a `defn` to prevent side-effects at compile time
 (defn migration-index []
-  (get-in (es-props) [:migration :indexname]))
+  (p/get-in-global-properties [:ctia :migration :store :es :migration :indexname]))
 
 (defn fixture-clean-migration [t]
   (t)
@@ -200,7 +200,6 @@
                                   :buffer-size  3
                                   :confirm?     true
                                   :restart?     false})
-
       (let [migration-state (es-doc/get-doc @es-conn
                                             (migration-index)
                                             "migration"
@@ -536,7 +535,7 @@
       (doseq [store (vals @stores)]
         (is (not (index-exists? store "0.0.0"))))
       (is (nil? (seq (es-doc/get-doc @es-conn
-                                     (get-in (es-props) [:migration :indexname])
+                                     (migration-index)
                                      "migration"
                                      "test-1"
                                      {}))))))

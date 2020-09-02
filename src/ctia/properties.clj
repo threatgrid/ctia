@@ -77,6 +77,7 @@
    with the properties file."
   (st/merge
    StorePropertiesSchema
+   (st/optional-keys (es-store-impl-properties "ctia.migration.store.es." "migration"))
    (st/required-keys {"ctia.auth.type" s/Keyword})
 
    (st/optional-keys {"ctia.auth.threatgrid.cache" s/Bool
@@ -218,7 +219,6 @@
                       "ctia.store.bulk-refresh" Refresh
                       "ctia.store.bundle-refresh" Refresh
 
-                      "ctia.store.es.migration.indexname" s/Str
                       "ctia.store.es.event.slicing.granularity"
                       (s/enum :minute :hour :day :week :month :year)})
    (st/optional-keys {"ctia.versions.config" s/Str})))
