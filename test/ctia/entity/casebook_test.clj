@@ -348,12 +348,11 @@
         sut/casebook-fields)))))
 
 (deftest test-casebook-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "casebook"
-                          new-casebook-minimal
-                          true
-                          true))))
+  (access-control-test "casebook"
+                       new-casebook-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-casebook-metric-routes
   ((:es-store store-fixtures)

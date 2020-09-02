@@ -102,12 +102,11 @@
         sut/relationship-fields)))))
 
 (deftest test-relationship-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "relationship"
-                          new-relationship-minimal
-                          true
-                          true))))
+  (access-control-test "relationship"
+                       new-relationship-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest links-routes-test
   (test-for-each-store

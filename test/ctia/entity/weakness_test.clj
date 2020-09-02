@@ -65,12 +65,11 @@
       sut/weakness-fields))))
 
 (deftest test-weakness-routes-access-control
-  (test-for-each-store
-   (fn []
-     (access-control-test "weakness"
-                          new-weakness-minimal
-                          true
-                          true))))
+  (access-control-test "weakness"
+                       new-weakness-minimal
+                       true
+                       true
+                       test-for-each-store))
 
 (deftest test-weakness-metric-routes
   ((:es-store store-fixtures)
